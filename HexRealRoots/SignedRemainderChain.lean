@@ -19,23 +19,23 @@ namespace Hex
 open scoped Hex
 
 /-- Positive scales and a literal quotient for a three-term identity. -/
-structure QueryStep (D : Type u) [Zero D] [DecidableEq D] where
+structure RemainderStep (D : Type u) [Zero D] [DecidableEq D] where
   leftScale : D
   quotient : DensePoly D
   rightScale : D
 
 /-- A signed remainder chain, its initial reduction, and a separate terminal
 zero identity. A singleton chain has no terminal pair. -/
-structure QueryChain (D : Type u) [Zero D] [DecidableEq D] where
+structure SignedRemainderChain (D : Type u) [Zero D] [DecidableEq D] where
   chain : Array (DensePoly D)
   /-- Literal degree data for serialized certificates; replay checks it against
   the stored entries as well as checking strict degree descent. -/
   degrees : Array Nat
-  initial : QueryStep D
-  steps : Array (QueryStep D)
+  initial : RemainderStep D
+  steps : Array (RemainderStep D)
   terminal : Option (D × DensePoly D)
 
-namespace QueryChain
+namespace SignedRemainderChain
 
 variable {D : Type u} [Zero D] [DecidableEq D] [One D] [Add D] [Sub D] [Mul D]
 
@@ -50,8 +50,8 @@ strict degree descent reaches the terminal zero branch within that bound.
 The zero-fuel value lacks terminal evidence and cannot pass replay for a pair. -/
 @[expose] def buildAux [Neg D] (sign : D → Int)
     (normalize : DensePoly D → D × DensePoly D) :
-    Nat → DensePoly D → DensePoly D → Array (DensePoly D) → Array (QueryStep D) →
-      Array (DensePoly D) × Array (QueryStep D) × Option (D × DensePoly D)
+    Nat → DensePoly D → DensePoly D → Array (DensePoly D) → Array (RemainderStep D) →
+      Array (DensePoly D) × Array (RemainderStep D) × Option (D × DensePoly D)
   | 0, _, _, chain, steps => (chain, steps, none)
   | fuel + 1, prev, cur, chain, steps =>
     let r := DensePoly.positivePseudoDiv sign prev cur
@@ -70,7 +70,7 @@ theorem buildAux_complete [Neg D] (sign : D → Int)
     (normalize : DensePoly D → D × DensePoly D)
     (hnext : ∀ r : DensePoly D, r ≠ 0 →
       -(normalize r).2 ≠ 0 ∧ (-(normalize r).2).size ≤ r.size)
-    (fuel : Nat) (prev cur : DensePoly D) (chain : Array (DensePoly D)) (steps : Array (QueryStep D))
+    (fuel : Nat) (prev cur : DensePoly D) (chain : Array (DensePoly D)) (steps : Array (RemainderStep D))
     (hcur : cur ≠ 0) (bound : cur.size ≤ fuel) :
     (buildAux sign normalize fuel prev cur chain steps).2.2.isSome = true := by
   induction fuel generalizing prev cur chain steps with
@@ -96,7 +96,7 @@ theorem buildAux_size [Neg D] (sign : D → Int)
     (normalize : DensePoly D → D × DensePoly D)
     (hnext : ∀ r : DensePoly D, r ≠ 0 →
       -(normalize r).2 ≠ 0 ∧ (-(normalize r).2).size ≤ r.size)
-    (fuel : Nat) (prev cur : DensePoly D) (chain : Array (DensePoly D)) (steps : Array (QueryStep D))
+    (fuel : Nat) (prev cur : DensePoly D) (chain : Array (DensePoly D)) (steps : Array (RemainderStep D))
     (hcur : cur ≠ 0) :
     (buildAux sign normalize fuel prev cur chain steps).1.size ≤ chain.size + cur.size - 1 := by
   induction fuel generalizing prev cur chain steps with
@@ -130,7 +130,7 @@ reduction. Normalization is a total polynomial backend operation: its laws
 require a positive factor and preservation of the polynomial up to that factor.
 It supplies no coefficient-operation certificates or arithmetic budgets. -/
 @[expose] def build [Neg D] [NatCast D] (sign : D → Int)
-    (normalize : DensePoly D → D × DensePoly D) (p f : DensePoly D) : QueryChain D :=
+    (normalize : DensePoly D → D × DensePoly D) (p f : DensePoly D) : SignedRemainderChain D :=
   let r := DensePoly.positivePseudoDiv sign (f * p.derivative) p
   if r.remainder.isZero then
     { chain := #[p], degrees := #[p.natDegree]
@@ -196,13 +196,13 @@ separate from the literal equality used for the head and context bindings. -/
 @[expose] def equal (p q : DensePoly D) : Bool := (p - q).isZero
 
 /-- Check a positive three-term recurrence without performing division. -/
-@[expose] def checkStep (sign : D → Int) (a b c : DensePoly D) (s : QueryStep D) : Bool :=
+@[expose] def checkStep (sign : D → Int) (a b c : DensePoly D) (s : RemainderStep D) : Bool :=
   decide (sign s.leftScale = 1) && decide (sign s.rightScale = 1) &&
     equal (DensePoly.scale s.leftScale a) (s.quotient * b - DensePoly.scale s.rightScale c)
 
 /-- Literal finite replay of the initial reduction, degree evidence, all
 recurrences and the terminal zero identity. No gcd or chain producer runs. -/
-@[expose] def check [NatCast D] (sign : D → Int) (p f : DensePoly D) (cert : QueryChain D) : Bool :=
+@[expose] def check [NatCast D] (sign : D → Int) (p f : DensePoly D) (cert : SignedRemainderChain D) : Bool :=
   let n := cert.chain.size
   !p.isZero && decide (0 < n) && decide (n ≤ p.size) &&
     decide (cert.chain[0]? = some p) &&
@@ -226,5 +226,5 @@ recurrences and the terminal zero identity. No gcd or chain producer runs. -/
           equal (DensePoly.scale factor (cert.chain.getD (n - 2) 0))
             (quotient * cert.chain.getD (n - 1) 0)
 
-end QueryChain
+end SignedRemainderChain
 end Hex

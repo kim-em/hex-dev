@@ -51,7 +51,7 @@ theorem integer_normalize (p : ZPoly) (hp : p ≠ 0) :
 /-- Every produced integer signed chain passes literal replay, including
 singleton chains and chains with a nonconstant terminal gcd. -/
 theorem integer_chain_checks (p g : ZPoly) (hp : p ≠ 0) :
-    QueryChain.check Int.sign p g (QueryChain.build Int.sign ZPoly.queryNormalize p g) = true :=
+    SignedRemainderChain.check Int.sign p g (SignedRemainderChain.build Int.sign ZPoly.queryNormalize p g) = true :=
   build_checks (fun z : Int => (z : Rat)) int_zero
     (fun a b => Int.cast_add a b) (fun a b => Int.cast_sub a b) (fun a b => Int.cast_mul a b)
     Int.cast_one (fun a => Int.cast_neg a) Int.sign

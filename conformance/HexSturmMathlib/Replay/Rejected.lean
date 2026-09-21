@@ -16,7 +16,7 @@ open Hex DensePoly Hex.Sturm.Fixtures
 /-- Reject a false polynomial identity through the ordinary kernel. -/
 theorem rejected : Sturm.Replay.check Sturm.orderSign 7 p 1 (.finite (-2)) (.finite 2) 2
     { literal with remainders := { literalChain with terminal := some (1, 1) } } = false := by
-  simp only [Sturm.Replay.check, QueryReplay.check, QueryChain.check, ← Array.all_toList, Array.toList_range]
+  simp only [Sturm.Replay.check, QueryReplay.check, SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
 /-- Context bindings remain literal even for otherwise valid evidence. -/

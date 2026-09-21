@@ -54,7 +54,7 @@ def chebyshev (n : Nat) : ZPoly :=
     | k + 1, prev, cur => go k cur (twoX * cur - prev)
   go n 1 (ofCoeffs #[0, 1])
 
-def chainHash (c : QueryChain Int) : UInt64 :=
+def chainHash (c : SignedRemainderChain Int) : UInt64 :=
   hash (c.chain, c.degrees, c.initial.leftScale, c.initial.quotient,
     c.initial.rightScale, c.steps.map (fun s => (s.leftScale, s.quotient, s.rightScale)), c.terminal)
 
@@ -93,7 +93,7 @@ def runInitial (i : Input) : UInt64 :=
   hash (r.multiplier, r.quotient, r.remainder)
 
 def runChain (i : Input) : UInt64 :=
-  chainHash (QueryChain.build Int.sign ZPoly.queryNormalize i.p i.f)
+  chainHash (SignedRemainderChain.build Int.sign ZPoly.queryNormalize i.p i.f)
 
 def runEndpoints (i : Input) : Array Int × Array Int :=
   match i.cert with
@@ -283,7 +283,7 @@ private def ratBits (q : Rat) : Nat := max (intBits q.num) (q.den.log2 + 1)
 private def polyBits [Zero D] [DecidableEq D] (bits : D → Nat) (p : DensePoly D) : Nat :=
   p.toArray.foldl (fun m c => max m (bits c)) 0
 
-private def chainBits [Zero D] [DecidableEq D] (bits : D → Nat) (c : QueryChain D) : Nat :=
+private def chainBits [Zero D] [DecidableEq D] (bits : D → Nat) (c : SignedRemainderChain D) : Nat :=
   let initial := max (bits c.initial.leftScale)
     (max (bits c.initial.rightScale) (polyBits bits c.initial.quotient))
   let entries := c.chain.foldl (fun m p => max m (polyBits bits p)) initial
@@ -293,7 +293,7 @@ private def chainBits [Zero D] [DecidableEq D] (bits : D → Nat) (c : QueryChai
   | none => steps
   | some (u, q) => max steps (max (bits u) (polyBits bits q))
 
-private def chainJson (c : QueryChain Int) : Lean.Json :=
+private def chainJson (c : SignedRemainderChain Int) : Lean.Json :=
   Lean.Json.mkObj [
     ("chain", Lean.toJson (c.chain.map DensePoly.toArray)),
     ("degrees", Lean.toJson c.degrees),

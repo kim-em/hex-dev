@@ -9,7 +9,7 @@ public import HexRealRoots.Query
 public import HexPoly.InterpretTests
 public meta import HexPoly.InterpretTests
 public meta import HexRealRoots.Query
-public meta import HexRealRoots.QueryChain
+public meta import HexRealRoots.SignedRemainderChain
 public meta import HexRealRoots.Basic
 public meta import HexPoly.Dense
 public meta import HexPoly.Operations
@@ -77,7 +77,7 @@ open scoped Hex
   (.finite interval.upper) (.finite interval.lower) == none
 
 /-- Literal certificate: replay does not regenerate a remainder chain. -/
-@[expose] def literalChain : QueryChain Int where
+@[expose] def literalChain : SignedRemainderChain Int where
   chain := #[p, x, 1]
   degrees := #[2, 1, 0]
   initial := ⟨1, 0, 2⟩
@@ -103,7 +103,7 @@ open scoped Hex
 
 
 theorem literal_checks : TarskiReplay.check p 1 interval 2 literal = true := by
-  simp only [TarskiReplay.check, QueryReplay.check, QueryChain.check,
+  simp only [TarskiReplay.check, QueryReplay.check, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
@@ -127,15 +127,15 @@ open HexPoly.InterpretTests
   evalSign p a := sign (p.eval a)
 
 @[expose] def head : Poly := ofCoeffs #[-1, 0, root]
-@[expose] def count : Option Int := QueryReplay.query sign adapter QueryChain.normalizeId head 1
+@[expose] def count : Option Int := QueryReplay.query sign adapter SignedRemainderChain.normalizeId head 1
   (.finite (pack (-2) 0)) (.finite (pack 2 0))
 #guard count == some 2
-#guard QueryReplay.query sign adapter QueryChain.normalizeId head (C root) .negInf .posInf == some 2
-#guard QueryReplay.query sign adapter QueryChain.normalizeId head 0 .negInf .posInf == some 0
+#guard QueryReplay.query sign adapter SignedRemainderChain.normalizeId head (C root) .negInf .posInf == some 2
+#guard QueryReplay.query sign adapter SignedRemainderChain.normalizeId head 0 .negInf .posInf == some 0
 
 -- The two literal query polynomials are semantically equal but replay bindings
 -- still reject substitution of the unbound representative.
-#guard match QueryReplay.certify sign adapter QueryChain.normalizeId () head (C root)
+#guard match QueryReplay.certify sign adapter SignedRemainderChain.normalizeId () head (C root)
     .negInf .posInf with
   | none => false
   | some cert => QueryReplay.check sign adapter () head (C root) .negInf .posInf 2 cert &&

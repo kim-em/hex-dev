@@ -180,7 +180,7 @@ private def queryCases : List (String × ZPoly × ZPoly × DyadicInterval) := Id
     ("rootEndpoint", p, 1, queryRootEnd), ("rootEndpointZeroQuery", p, 0, queryRootEnd)
   ]
 
-private def emitQueryChain (id : String) (c : QueryChain Int) : IO Unit := do
+private def emitSignedRemainderChain (id : String) (c : SignedRemainderChain Int) : IO Unit := do
   emitMatrixFixture lib (id ++ "/chain") (c.chain.toList.map (·.toArray.toList))
   emitMatrixFixture lib (id ++ "/degrees") [c.degrees.toList.map Int.ofNat]
   emitMatrixFixture lib (id ++ "/initial/scales") [[c.initial.leftScale, c.initial.rightScale]]
@@ -207,8 +207,8 @@ private def emitQueryCase (c : String × ZPoly × ZPoly × DyadicInterval) : IO 
   | some cert => do
     unless TarskiReplay.check p f interval cert.value cert do
       throw <| IO.userError s!"{lib}/{id}: produced certificate failed replay"
-    emitQueryChain (id ++ "/squarefree") cert.squarefree
-    emitQueryChain (id ++ "/remainders") cert.remainders
+    emitSignedRemainderChain (id ++ "/squarefree") cert.squarefree
+    emitSignedRemainderChain (id ++ "/remainders") cert.remainders
     emitMatrixFixture lib (id ++ "/signs") [cert.lowerSigns.toList, cert.upperSigns.toList]
     emitMatrixFixture lib (id ++ "/variations")
       [[Int.ofNat cert.lowerVariations, Int.ofNat cert.upperVariations]]

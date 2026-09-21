@@ -106,10 +106,10 @@ results, including the `none` cases and zero query polynomials. -/
 /- A genuine repeated-root chain passes all identities but has a nonconstant
 terminal gcd. The squarefree constant-tail guard must reject it. -/
 #guard
-  let chain : QueryChain Rat :=
+  let chain : SignedRemainderChain Rat :=
     { chain := #[x * x, x], degrees := #[2, 1], initial := ⟨1, 0, 2⟩,
       steps := #[], terminal := some (1, x) }
-  QueryChain.check orderSign (x * x) 1 chain && !QueryReplay.constantTail chain &&
+  SignedRemainderChain.check orderSign (x * x) 1 chain && !QueryReplay.constantTail chain &&
     !Replay.check orderSign 7 (x * x) 1 (.finite (-2)) (.finite 2) 1
       { literal with
         head := x * x
@@ -121,7 +121,7 @@ terminal gcd. The squarefree constant-tail guard must reject it. -/
         value := 1 }
 
 theorem literal_checks : Replay.check orderSign 7 p 1 (.finite (-2)) (.finite 2) 2 literal = true := by
-  simp only [Replay.check, QueryReplay.check, QueryChain.check, ← Array.all_toList, Array.toList_range]
+  simp only [Replay.check, QueryReplay.check, SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
 theorem stale_rejected : Replay.check orderSign 8 p 1 (.finite (-2)) (.finite 2) 2 literal = false := by

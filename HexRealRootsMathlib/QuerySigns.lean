@@ -21,7 +21,7 @@ theorem check_value {D : Type v} {A : Type w} {Ctx : Type u}
     (sign : D → Int) (adapter : EndpointAdapter D A) (context : Ctx)
     (p g : DensePoly D) (a b : Endpoint A) (value : Int) (cert : QueryReplay D A Ctx)
     (h : QueryReplay.check sign adapter context p g a b value cert = true) :
-    QueryChain.check sign p g cert.remainders = true ∧
+    SignedRemainderChain.check sign p g cert.remainders = true ∧
       value = (signVar (QueryReplay.signs sign adapter cert.remainders.chain a).toList : Int) -
         signVar (QueryReplay.signs sign adapter cert.remainders.chain b).toList := by
   simp only [QueryReplay.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h

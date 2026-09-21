@@ -42,7 +42,7 @@ def p : ZPoly := DensePoly.ofCoeffs #[-2, 0, 0, 0, 1]
 - `Hex.TarskiReplay.certify` retains the literal signed-remainder certificate;
   `check` checks its identities, signs, degree bounds and input bindings.
 
-The query uses the shared `QueryChain` kernel, also available with generic
+The query uses the shared `SignedRemainderChain` kernel, also available with generic
 endpoint adapters and noncanonical coefficient representations. Produced-chain
 and certificate acceptance and exact semantic domain equivalence are proved in
 the companion. The Sturm–Tarski root-sum theorem and new query performance

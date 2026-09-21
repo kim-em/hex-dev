@@ -107,7 +107,7 @@ theorem normalize_eq (p : DensePoly E) (hp : p ≠ 0) :
 include hz ha hs hm h1 hn hi hpos hneg in
 /-- The field frontend uses the shared producer with positive normalization. -/
 theorem chain_checks (p g : DensePoly E) (hp : p ≠ 0) :
-    QueryChain.check sign p g (QueryChain.build sign (Sturm.normalize sign) p g) = true := by
+    SignedRemainderChain.check sign p g (SignedRemainderChain.build sign (Sturm.normalize sign) p g) = true := by
   exact HexRealRootsMathlib.Query.build_checks f hz ha hs hm h1 hn sign hpos hneg
     (Sturm.normalize sign) (normalize_eq f hz hm sign hneg hn hi) p g hp
 

@@ -41,17 +41,17 @@ structure Prepared (E : Type u) [Zero E] [DecidableEq E] [One E] [Add E] [Sub E]
   head : DensePoly E
   lower : Endpoint E
   upper : Endpoint E
-  squarefree : QueryChain E
+  squarefree : SignedRemainderChain E
   guards : QueryReplay.endpointGuards (adapter sign) head lower upper = true
   constant : QueryReplay.constantTail squarefree = true
-  produced : squarefree = QueryChain.build sign (normalize sign) head 1
+  produced : squarefree = SignedRemainderChain.build sign (normalize sign) head 1
 
 /-- Validate nonzero head, endpoint guards and a nonzero constant derivative
 gcd using the shared chain producer. No query polynomial affects the domain. -/
 def prepare [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E) (a b : Endpoint E) :
     Option (Prepared E) :=
   if hg : QueryReplay.endpointGuards (adapter sign) p a b = true then
-    let sf := QueryChain.build sign (normalize sign) p 1
+    let sf := SignedRemainderChain.build sign (normalize sign) p 1
     if hc : QueryReplay.constantTail sf = true then
       some ⟨sign, p, a, b, sf, hg, hc, rfl⟩
     else none
@@ -74,13 +74,13 @@ theorem prepare_eq_some [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E)
 /-- Query a validated domain without repeating its squarefreeness computation. -/
 @[expose] def queryPrepared [Neg E] [Inv E] (domain : Prepared E) (f : DensePoly E) : Int :=
   (QueryReplay.fromChains domain.sign (adapter domain.sign) () domain.head f domain.lower domain.upper
-    domain.squarefree (QueryChain.build domain.sign (normalize domain.sign) domain.head f)).value
+    domain.squarefree (SignedRemainderChain.build domain.sign (normalize domain.sign) domain.head f)).value
 
 /-- Produce a literal query certificate with the caller's full context binding. -/
 @[expose] def certifyPrepared [Neg E] [Inv E] {Ctx : Type v} (context : Ctx)
     (domain : Prepared E) (f : DensePoly E) : QueryReplay E E Ctx :=
   QueryReplay.fromChains domain.sign (adapter domain.sign) context domain.head f domain.lower domain.upper
-    domain.squarefree (QueryChain.build domain.sign (normalize domain.sign) domain.head f)
+    domain.squarefree (SignedRemainderChain.build domain.sign (normalize domain.sign) domain.head f)
 
 /-- The literal context does not affect a prepared certificate's query value. -/
 theorem certifyPrepared_value [Neg E] [Inv E] {Ctx : Type v} (context : Ctx)

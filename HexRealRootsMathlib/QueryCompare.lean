@@ -112,8 +112,8 @@ variable (sign : D → Int) (hpos : ∀ a, sign a = 1 ↔ 0 < f a)
 omit [LinearOrder K] [IsStrictOrderedRing K] in
 /-- The zero-padded view of an accepted chain is zero precisely beyond its
 stored entries. This uses zero reflection, not injectivity of interpretation. -/
-theorem check_entry_zero (p g : DensePoly D) (cert : QueryChain D)
-    (h : QueryChain.check sign p g cert = true) (i : Nat) :
+theorem check_entry_zero (p g : DensePoly D) (cert : SignedRemainderChain D)
+    (h : SignedRemainderChain.check sign p g cert = true) (i : Nat) :
     interpret f hz (cert.chain.getD i 0) = 0 ↔ cert.chain.size ≤ i := by
   by_cases hi : i < cert.chain.size
   · have hnz := check_nonzero f hz sign p g cert h (cert.chain.getD i 0) (by
@@ -126,8 +126,8 @@ theorem check_entry_zero (p g : DensePoly D) (cert : QueryChain D)
 omit [LinearOrder K] [IsStrictOrderedRing K] in
 /-- Successive interpreted entries have strictly smaller degree, with the
 implicit zero after the last entry handled separately. -/
-theorem check_descent (p g : DensePoly D) (cert : QueryChain D)
-    (h : QueryChain.check sign p g cert = true) (i : Nat) :
+theorem check_descent (p g : DensePoly D) (cert : SignedRemainderChain D)
+    (h : SignedRemainderChain.check sign p g cert = true) (i : Nat) :
     interpret f hz (cert.chain.getD (i + 1) 0) = 0 ∨
       (interpret f hz (cert.chain.getD (i + 1) 0)).natDegree <
         (interpret f hz (cert.chain.getD i 0)).natDegree := by
@@ -139,7 +139,7 @@ theorem check_descent (p g : DensePoly D) (cert : QueryChain D)
       apply Nat.pos_of_ne_zero
       intro he
       exact hnz (by rw [(DensePoly.size_eq_zero_iff _).mp he, interpret_zero])
-    simp only [QueryChain.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+    simp only [SignedRemainderChain.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
     have hd := Array.all_eq_true_iff_forall_mem.mp h.2.2.2.2.2.2.1 i
       (Array.mem_range.mpr (by omega))
     simp only [decide_eq_true_eq] at hd
@@ -153,8 +153,8 @@ theorem check_descent (p g : DensePoly D) (cert : QueryChain D)
 include ha hs hm hn hpos in
 /-- An accepted initial reduction determines the second entry up to its
 recorded positive scalar, including the singleton/zero-remainder case. -/
-theorem check_initial_rem (p g : DensePoly D) (cert : QueryChain D)
-    (h : QueryChain.check sign p g cert = true) :
+theorem check_initial_rem (p g : DensePoly D) (cert : SignedRemainderChain D)
+    (h : SignedRemainderChain.check sign p g cert = true) :
     ∃ c : K, 0 < c ∧ interpret f hz (cert.chain.getD 1 0) =
       C c * ((interpret f hz g * (interpret f hz p).derivative) % interpret f hz p) := by
   obtain ⟨hl, hr, he⟩ := check_initial f hz ha hs hm hn sign hpos p g cert h
@@ -170,8 +170,8 @@ include ha hs hm hpos in
 /-- Each checked step determines the following entry up to a positive scalar.
 The terminal identity supplies the same equation with zero as the next entry;
 no constant-tail or coprimality hypothesis is needed. -/
-theorem check_next_rem (p g : DensePoly D) (cert : QueryChain D)
-    (h : QueryChain.check sign p g cert = true) (i : Nat) (hi : i + 1 < cert.chain.size) :
+theorem check_next_rem (p g : DensePoly D) (cert : SignedRemainderChain D)
+    (h : SignedRemainderChain.check sign p g cert = true) (i : Nat) (hi : i + 1 < cert.chain.size) :
     ∃ c : K, 0 < c ∧ interpret f hz (cert.chain.getD (i + 2) 0) =
       C c * -(interpret f hz (cert.chain.getD i 0) %
         interpret f hz (cert.chain.getD (i + 1) 0)) := by
@@ -215,8 +215,8 @@ theorem check_compare {E : Type w} [Zero E] [DecidableEq E] [Add E] [Sub E] [Mul
     (ja : ∀ a b, j (a + b) = j a + j b) (js : ∀ a b, j (a - b) = j a - j b)
     (jm : ∀ a b, j (a * b) = j a * j b) (jn : ∀ n : Nat, j (n : E) = (n : K))
     (sign' : E → Int) (jpos : ∀ a, sign' a = 1 ↔ 0 < j a)
-    (p g : DensePoly D) (cert : QueryChain D) (h : QueryChain.check sign p g cert = true)
-    (p' g' : DensePoly E) (cert' : QueryChain E) (h' : QueryChain.check sign' p' g' cert' = true)
+    (p g : DensePoly D) (cert : SignedRemainderChain D) (h : SignedRemainderChain.check sign p g cert = true)
+    (p' g' : DensePoly E) (cert' : SignedRemainderChain E) (h' : SignedRemainderChain.check sign' p' g' cert' = true)
     (a b : K) (ha' : 0 < a) (hb' : 0 < b)
     (hp : interpret j jz p' = C a * interpret f hz p)
     (hg : interpret j jz g' = C b * interpret f hz g) :

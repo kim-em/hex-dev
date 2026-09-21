@@ -9,7 +9,7 @@ public import HexRealRoots.Query
 
 public section
 
-namespace Hex.QueryChain
+namespace Hex.SignedRemainderChain
 
 private theorem getD_push_lt {A : Type u} (xs : Array A) (a d : A) (i : Nat) (hi : i < xs.size) :
     (xs.push a).getD i d = xs.getD i d := by
@@ -23,8 +23,8 @@ variable {D : Type u} [Zero D] [DecidableEq D] [Add D] [Sub D] [Mul D] [NatCast 
 
 /-- The part of a literal replay already established before its terminal
 zero identity. The array stores every actual quotient and positive scale. -/
-structure Prefix (sign : D → Int) (p f : DensePoly D) (initial : QueryStep D)
-    (chain : Array (DensePoly D)) (steps : Array (QueryStep D)) : Prop where
+structure Prefix (sign : D → Int) (p f : DensePoly D) (initial : RemainderStep D)
+    (chain : Array (DensePoly D)) (steps : Array (RemainderStep D)) : Prop where
   two_le : 2 ≤ chain.size
   head : chain[0]? = some p
   nonzero : ∀ r ∈ chain, r ≠ 0
@@ -38,7 +38,7 @@ structure Prefix (sign : D → Int) (p f : DensePoly D) (initial : QueryStep D)
     (chain.getD (i + 2) 0) (steps.getD i ⟨0, 0, 0⟩) = true
 
 /-- A correctly reduced initial pair starts a replay prefix. -/
-theorem Prefix.pair (sign : D → Int) (p f second : DensePoly D) (initial : QueryStep D)
+theorem Prefix.pair (sign : D → Int) (p f second : DensePoly D) (initial : RemainderStep D)
     (hp : p ≠ 0) (hs : second ≠ 0) (hd : second.size < p.size)
     (hl : sign initial.leftScale = 1) (hr : sign initial.rightScale = 1)
     (hi : equal (DensePoly.scale initial.leftScale (f * p.derivative))
@@ -65,9 +65,9 @@ theorem Prefix.pair (sign : D → Int) (p f second : DensePoly D) (initial : Que
 
 /-- Appending an actual signed-remainder step preserves all prior literal
 identities and adds precisely the new final recurrence. -/
-theorem Prefix.push {sign : D → Int} {p f : DensePoly D} {initial : QueryStep D}
-    {chain : Array (DensePoly D)} {steps : Array (QueryStep D)}
-    (h : Prefix sign p f initial chain steps) (next : DensePoly D) (step : QueryStep D)
+theorem Prefix.push {sign : D → Int} {p f : DensePoly D} {initial : RemainderStep D}
+    {chain : Array (DensePoly D)} {steps : Array (RemainderStep D)}
+    (h : Prefix sign p f initial chain steps) (next : DensePoly D) (step : RemainderStep D)
     (hn : next ≠ 0) (hd : next.size < (chain.getD (chain.size - 1) 0).size)
     (hs : checkStep sign (chain.getD (chain.size - 2) 0) (chain.getD (chain.size - 1) 0)
       next step = true) : Prefix sign p f initial (chain.push next) (steps.push step) := by
@@ -111,8 +111,8 @@ theorem Prefix.push {sign : D → Int} {p f : DensePoly D} {initial : QueryStep 
 
 /-- Finishing an established prefix with a positive terminal zero identity
 passes the actual finite checker, with the computed degree evidence. -/
-theorem Prefix.finish {sign : D → Int} {p f : DensePoly D} {initial : QueryStep D}
-    {chain : Array (DensePoly D)} {steps : Array (QueryStep D)}
+theorem Prefix.finish {sign : D → Int} {p f : DensePoly D} {initial : RemainderStep D}
+    {chain : Array (DensePoly D)} {steps : Array (RemainderStep D)}
     (h : Prefix sign p f initial chain steps) (hp : p ≠ 0) (bound : chain.size ≤ p.size)
     (u : D) (q : DensePoly D) (hu : sign u = 1)
     (ht : equal (DensePoly.scale u (chain.getD (chain.size - 2) 0))
@@ -140,7 +140,7 @@ theorem Prefix.finish {sign : D → Int} {p f : DensePoly D} {initial : QuerySte
 
 /-- A zero initial remainder has a singleton replay, with no fictitious
 second entry or terminal pair. -/
-theorem singleton_checks (sign : D → Int) (p f : DensePoly D) (initial : QueryStep D)
+theorem singleton_checks (sign : D → Int) (p f : DensePoly D) (initial : RemainderStep D)
     (hp : p ≠ 0) (hl : sign initial.leftScale = 1) (hr : sign initial.rightScale = 1)
     (hi : equal (DensePoly.scale initial.leftScale (f * p.derivative))
       (initial.quotient * p + DensePoly.scale initial.rightScale 0) = true) :
@@ -174,8 +174,8 @@ theorem buildAux_checks [One D] [Neg D] (sign : D → Int)
       sign (DensePoly.positivePseudoDiv sign a b).multiplier = 1 ∧
       equal (DensePoly.scale (DensePoly.positivePseudoDiv sign a b).multiplier a)
         ((DensePoly.positivePseudoDiv sign a b).quotient * b) = true)
-    (p f : DensePoly D) (initial : QueryStep D) (hp : p ≠ 0)
-    (fuel : Nat) (prev cur : DensePoly D) (chain : Array (DensePoly D)) (steps : Array (QueryStep D))
+    (p f : DensePoly D) (initial : RemainderStep D) (hp : p ≠ 0)
+    (fuel : Nat) (prev cur : DensePoly D) (chain : Array (DensePoly D)) (steps : Array (RemainderStep D))
     (h : Prefix sign p f initial chain steps)
     (hprev : chain.getD (chain.size - 2) 0 = prev)
     (hcur : chain.getD (chain.size - 1) 0 = cur)
@@ -220,7 +220,7 @@ theorem buildAux_checks [One D] [Neg D] (sign : D → Int)
       · simp only [Array.size_push]
         omega
 
-end Hex.QueryChain
+end Hex.SignedRemainderChain
 
 namespace Hex.Endpoint
 
@@ -273,7 +273,7 @@ theorem certify_checks [Neg D] [DecidableEq E] [DecidableEq Ctx]
     (sign : D → Int) (adapter : EndpointAdapter D E)
     (normalize : DensePoly D → D × DensePoly D)
     (hchains : ∀ p g : DensePoly D, p ≠ 0 →
-      QueryChain.check sign p g (QueryChain.build sign normalize p g) = true)
+      SignedRemainderChain.check sign p g (SignedRemainderChain.build sign normalize p g) = true)
     (hvalues : ∀ p : DensePoly D, ∀ e : Endpoint E,
       -1 ≤ e.signAt sign adapter p ∧ e.signAt sign adapter p ≤ 1)
     (context : Ctx) (p g : DensePoly D) (a b : Endpoint E) (cert : QueryReplay D E Ctx)
@@ -292,7 +292,7 @@ theorem certify_checks [Neg D] [DecidableEq E] [DecidableEq Ctx]
         apply hguard
         rw [hh]
         rfl
-      have hsf : constantTail (QueryChain.build sign normalize p 1) = true := by
+      have hsf : constantTail (SignedRemainderChain.build sign normalize p 1) = true := by
         apply Bool.of_not_eq_false
         intro hh
         apply hsquarefree

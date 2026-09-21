@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealRoots.QueryChain
+public import HexRealRoots.SignedRemainderChain
 public import HexRealRoots.Var
 
 public section
@@ -67,8 +67,8 @@ structure QueryReplay (D : Type u) (E : Type v) (Ctx : Type w) [Zero D] [Decidab
   queryPoly : DensePoly D
   lower : Endpoint E
   upper : Endpoint E
-  squarefree : QueryChain D
-  remainders : QueryChain D
+  squarefree : SignedRemainderChain D
+  remainders : SignedRemainderChain D
   lowerSigns : Array Int
   upperSigns : Array Int
   lowerVariations : Nat
@@ -93,14 +93,14 @@ These guards precede all constant and zero-query shortcuts. -/
 
 /-- A nonzero constant terminal gcd is the squarefree criterion; its stored
 leading coefficient need not be literal one. -/
-@[expose] def constantTail (cert : QueryChain D) : Bool :=
+@[expose] def constantTail (cert : SignedRemainderChain D) : Bool :=
   (cert.chain.getD (cert.chain.size - 1) 0).size == 1
 
 /-- Attach exact endpoint signs and variations to supplied producer chains.
 This is shared by ordinary and prepared-domain frontends. -/
 @[expose] def fromChains (sign : D → Int) (adapter : EndpointAdapter D E)
     (context : Ctx) (p f : DensePoly D) (a b : Endpoint E)
-    (squarefree remainders : QueryChain D) : QueryReplay D E Ctx :=
+    (squarefree remainders : SignedRemainderChain D) : QueryReplay D E Ctx :=
   let lowerSigns := signs sign adapter remainders.chain a
   let upperSigns := signs sign adapter remainders.chain b
   let lowerVariations := signVar lowerSigns.toList
@@ -120,14 +120,14 @@ This is shared by ordinary and prepared-domain frontends. -/
 
 /-- Produce a finite query certificate using the one shared signed-remainder
 kernel. The normalizer is a total positive-content backend; field callers may
-use `QueryChain.normalizeId`. No root search or isolation is performed. -/
+use `SignedRemainderChain.normalizeId`. No root search or isolation is performed. -/
 @[expose] def certify [Neg D] (sign : D → Int) (adapter : EndpointAdapter D E)
     (normalize : DensePoly D → D × DensePoly D) (context : Ctx)
     (p f : DensePoly D) (a b : Endpoint E) : Option (QueryReplay D E Ctx) :=
   if !endpointGuards adapter p a b then none else
-    let squarefree := QueryChain.build sign normalize p 1
+    let squarefree := SignedRemainderChain.build sign normalize p 1
     if !constantTail squarefree then none else
-      some (fromChains sign adapter context p f a b squarefree (QueryChain.build sign normalize p f))
+      some (fromChains sign adapter context p f a b squarefree (SignedRemainderChain.build sign normalize p f))
 
 /-- The query value of the shared producer. Negative values are retained. -/
 @[expose] def query [Neg D] (sign : D → Int) (adapter : EndpointAdapter D E)
@@ -144,8 +144,8 @@ context bindings remain literal equalities. The checker never calls a producer. 
   decide (cert.context = context) && decide (cert.head = p) && decide (cert.queryPoly = f) &&
     decide (cert.lower = a) && decide (cert.upper = b) && decide (cert.value = value) &&
     endpointGuards adapter p a b &&
-    QueryChain.check sign p 1 cert.squarefree && constantTail cert.squarefree &&
-    QueryChain.check sign p f cert.remainders &&
+    SignedRemainderChain.check sign p 1 cert.squarefree && constantTail cert.squarefree &&
+    SignedRemainderChain.check sign p f cert.remainders &&
     decide (cert.lowerSigns = signs sign adapter cert.remainders.chain a) &&
     decide (cert.upperSigns = signs sign adapter cert.remainders.chain b) &&
     cert.lowerSigns.all (fun s => -1 ≤ s && s ≤ 1) &&

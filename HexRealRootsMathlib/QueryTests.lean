@@ -23,15 +23,15 @@ private theorem value_neg (a : Rep) : value (-a) = -value a := by
 /-- The generic production/replay proof applies to a noninjective coefficient
 representation with no ring, order or field instance. -/
 theorem noncanonical_chains (p g : Poly) (hp : p ≠ 0) :
-    QueryChain.check Hex.QueryTests.Noncanonical.sign p g
-      (QueryChain.build Hex.QueryTests.Noncanonical.sign QueryChain.normalizeId p g) = true := by
+    SignedRemainderChain.check Hex.QueryTests.Noncanonical.sign p g
+      (SignedRemainderChain.build Hex.QueryTests.Noncanonical.sign SignedRemainderChain.normalizeId p g) = true := by
   apply build_checks value value_eq_zero value_add value_sub value_mul value_one value_neg
     Hex.QueryTests.Noncanonical.sign
     (fun a => by simp only [Hex.QueryTests.Noncanonical.sign, Int.sign_eq_one_iff_pos, Rat.num_pos])
     (fun a => by simp only [Hex.QueryTests.Noncanonical.sign, Int.sign_neg_iff, Rat.num_neg])
-    QueryChain.normalizeId _ p g hp
+    SignedRemainderChain.normalizeId _ p g hp
   intro r _
-  simp only [QueryChain.normalizeId, value_one, Polynomial.C_1, one_mul]
+  simp only [SignedRemainderChain.normalizeId, value_one, Polynomial.C_1, one_mul]
   exact ⟨zero_lt_one, True.intro⟩
 
 /-- Full certificate acceptance also preserves literal context and endpoint
@@ -39,7 +39,7 @@ bindings over the noncanonical coefficient representation. -/
 theorem noncanonical_certificates (context : Nat) (p g : Poly) (a b : Endpoint Rep)
     (cert : QueryReplay Rep Rep Nat)
     (hcert : QueryReplay.certify Hex.QueryTests.Noncanonical.sign Hex.QueryTests.Noncanonical.adapter
-      QueryChain.normalizeId context p g a b = some cert) :
+      SignedRemainderChain.normalizeId context p g a b = some cert) :
     QueryReplay.check Hex.QueryTests.Noncanonical.sign Hex.QueryTests.Noncanonical.adapter
       context p g a b cert.value cert = true := by
   refine QueryReplay.certify_checks _ _ _ noncanonical_chains ?_ context p g a b cert hcert

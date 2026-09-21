@@ -32,13 +32,13 @@ include ha hs hm in
 omit [One D] in
 /-- The actual replay step tests positive scales and a semantic zero difference. -/
 theorem step_iff [LinearOrder K] [IsStrictOrderedRing K] (sign : D → Int)
-    (hsign : ∀ a, sign a = 1 ↔ 0 < f a) (a b c : DensePoly D) (s : QueryStep D) :
-    QueryChain.checkStep sign a b c s = true ↔
+    (hsign : ∀ a, sign a = 1 ↔ 0 < f a) (a b c : DensePoly D) (s : RemainderStep D) :
+    SignedRemainderChain.checkStep sign a b c s = true ↔
       0 < f s.leftScale ∧ 0 < f s.rightScale ∧
       Polynomial.C (f s.leftScale) * interpret f hz a =
         interpret f hz s.quotient * interpret f hz b -
           Polynomial.C (f s.rightScale) * interpret f hz c := by
-  simp only [QueryChain.checkStep, QueryChain.equal, Bool.and_eq_true, decide_eq_true_eq,
+  simp only [SignedRemainderChain.checkStep, SignedRemainderChain.equal, Bool.and_eq_true, decide_eq_true_eq,
     sub_isZero f hz hs, interpret_sub f hz hs, interpret_mul f hz ha hm,
     interpret_scale f hz hm, hsign, and_assoc]
 
@@ -83,13 +83,13 @@ an algebraic identity, not yet the Sturm–Tarski root-sum theorem. -/
 theorem check_initial [NatCast D] [LinearOrder K] [IsStrictOrderedRing K]
     (hn : ∀ n : Nat, f (n : D) = (n : K)) (sign : D → Int)
     (hsign : ∀ a, sign a = 1 ↔ 0 < f a)
-    (p g : DensePoly D) (cert : QueryChain D) (h : QueryChain.check sign p g cert = true) :
+    (p g : DensePoly D) (cert : SignedRemainderChain D) (h : SignedRemainderChain.check sign p g cert = true) :
     0 < f cert.initial.leftScale ∧ 0 < f cert.initial.rightScale ∧
       Polynomial.C (f cert.initial.leftScale) *
         (interpret f hz g * (interpret f hz p).derivative) =
       interpret f hz cert.initial.quotient * interpret f hz p +
         Polynomial.C (f cert.initial.rightScale) * interpret f hz (cert.chain.getD 1 0) := by
-  simp only [QueryChain.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+  simp only [SignedRemainderChain.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
   obtain ⟨_, _, _, _, _, _, _, hl, hr, hi, _⟩ := h
   refine ⟨(hsign _).mp hl, (hsign _).mp hr, ?_⟩
   have hi' := (sub_isZero f hz hs _ _).mp hi
@@ -102,7 +102,7 @@ omit [One D] in
 interpretation. The checker reads the supplied quotient; it does not divide. -/
 theorem check_step [NatCast D] [LinearOrder K] [IsStrictOrderedRing K]
     (sign : D → Int) (hsign : ∀ a, sign a = 1 ↔ 0 < f a)
-    (p g : DensePoly D) (cert : QueryChain D) (h : QueryChain.check sign p g cert = true)
+    (p g : DensePoly D) (cert : SignedRemainderChain D) (h : SignedRemainderChain.check sign p g cert = true)
     (hn : cert.chain.size ≠ 1) (i : Nat) (hi : i < cert.steps.size) :
     0 < f (cert.steps.getD i ⟨0, 0, 0⟩).leftScale ∧
     0 < f (cert.steps.getD i ⟨0, 0, 0⟩).rightScale ∧
@@ -112,7 +112,7 @@ theorem check_step [NatCast D] [LinearOrder K] [IsStrictOrderedRing K]
           interpret f hz (cert.chain.getD (i + 1) 0) -
         Polynomial.C (f (cert.steps.getD i ⟨0, 0, 0⟩).rightScale) *
           interpret f hz (cert.chain.getD (i + 2) 0) := by
-  simp only [QueryChain.check, hn, ↓reduceIte, Bool.and_eq_true,
+  simp only [SignedRemainderChain.check, hn, ↓reduceIte, Bool.and_eq_true,
     decide_eq_true_eq, and_assoc] at h
   obtain ⟨_, _, _, _, _, _, _, _, _, _, _, hsteps, _⟩ := h
   have hstep := (Array.all_eq_true_iff_forall_mem.mp hsteps) i (Array.mem_range.mpr hi)
@@ -124,12 +124,12 @@ omit [One D] in
 the last polynomial is allowed to be nonconstant. -/
 theorem check_terminal [NatCast D] [LinearOrder K] [IsStrictOrderedRing K]
     (sign : D → Int) (hsign : ∀ a, sign a = 1 ↔ 0 < f a)
-    (p g : DensePoly D) (cert : QueryChain D) (h : QueryChain.check sign p g cert = true)
+    (p g : DensePoly D) (cert : SignedRemainderChain D) (h : SignedRemainderChain.check sign p g cert = true)
     (hn : cert.chain.size ≠ 1) (u : D) (q : DensePoly D)
     (ht : cert.terminal = some (u, q)) :
     0 < f u ∧ Polynomial.C (f u) * interpret f hz (cert.chain.getD (cert.chain.size - 2) 0) =
       interpret f hz q * interpret f hz (cert.chain.getD (cert.chain.size - 1) 0) := by
-  simp only [QueryChain.check, hn, ↓reduceIte, ht, Bool.and_eq_true,
+  simp only [SignedRemainderChain.check, hn, ↓reduceIte, ht, Bool.and_eq_true,
     decide_eq_true_eq, and_assoc] at h
   obtain ⟨_, _, _, _, _, _, _, _, _, _, _, _, hu, heq⟩ := h
   refine ⟨(hsign _).mp hu, ?_⟩
@@ -139,9 +139,9 @@ theorem check_terminal [NatCast D] [LinearOrder K] [IsStrictOrderedRing K]
 omit [One D] in
 /-- Replay's literal size guard supplies the mathematical chain bound. -/
 theorem check_bound [NatCast D] (sign : D → Int)
-    (p g : DensePoly D) (cert : QueryChain D) (h : QueryChain.check sign p g cert = true) :
+    (p g : DensePoly D) (cert : SignedRemainderChain D) (h : SignedRemainderChain.check sign p g cert = true) :
     0 < cert.chain.size ∧ cert.chain.size ≤ (interpret f hz p).natDegree + 1 := by
-  simp only [QueryChain.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+  simp only [SignedRemainderChain.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
   obtain ⟨_, hn, hb, _⟩ := h
   rw [natDegree_interpret, natDegree_eq_size_sub_one]
   exact ⟨hn, by omega⟩
@@ -149,9 +149,9 @@ theorem check_bound [NatCast D] (sign : D → Int)
 omit [One D] in
 /-- Every supplied entry of an accepted replay is semantically nonzero. -/
 theorem check_nonzero [NatCast D] (sign : D → Int)
-    (p g : DensePoly D) (cert : QueryChain D) (h : QueryChain.check sign p g cert = true)
+    (p g : DensePoly D) (cert : SignedRemainderChain D) (h : SignedRemainderChain.check sign p g cert = true)
     (r : DensePoly D) (hr : r ∈ cert.chain) : interpret f hz r ≠ 0 := by
-  simp only [QueryChain.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+  simp only [SignedRemainderChain.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
   obtain ⟨_, _, _, _, _, hentries, _⟩ := h
   have he := (Array.all_eq_true_iff_forall_mem.mp hentries) r hr
   change (!r.isZero) = true at he
@@ -170,8 +170,8 @@ theorem build_complete [Neg D] [NatCast D] (sign : D → Int)
       Polynomial.C (f (normalize r).1) * interpret f hz (normalize r).2 = interpret f hz r)
     (p g : DensePoly D) (hp : p ≠ 0)
     (hr : (positivePseudoDiv sign (g * p.derivative) p).remainder.isZero = false) :
-    (QueryChain.build sign normalize p g).terminal.isSome = true := by
-  apply QueryChain.build_terminal sign normalize _ _ p g hp hr
+    (SignedRemainderChain.build sign normalize p g).terminal.isSome = true := by
+  apply SignedRemainderChain.build_terminal sign normalize _ _ p g hp hr
   · intro r hr
     have h := normalize_bounds f hz hs normalize hnormalize r hr
     exact ⟨h.1, Nat.le_of_eq h.2.1⟩
@@ -187,8 +187,8 @@ theorem build_bound [Neg D] [NatCast D] (sign : D → Int)
       f (normalize r).1 ≠ 0 ∧
       Polynomial.C (f (normalize r).1) * interpret f hz (normalize r).2 = interpret f hz r)
     (p g : DensePoly D) (hp : p ≠ 0) :
-    (QueryChain.build sign normalize p g).chain.size ≤ p.size := by
-  apply QueryChain.build_size sign normalize _ _ p g hp
+    (SignedRemainderChain.build sign normalize p g).chain.size ≤ p.size := by
+  apply SignedRemainderChain.build_size sign normalize _ _ p g hp
   · intro r hr
     have h := normalize_bounds f hz hs normalize hnormalize r hr
     exact ⟨h.1, Nat.le_of_eq h.2.1⟩
@@ -211,7 +211,7 @@ include hz ha hs hm h1 hn hpos hneg hnormalize
 the positive three-term replay check. -/
 theorem step_produced (a b : DensePoly D) (hb : b ≠ 0)
     (hr : (positivePseudoDiv sign a b).remainder.isZero = false) :
-    QueryChain.checkStep sign a b (-(normalize (positivePseudoDiv sign a b).remainder).2)
+    SignedRemainderChain.checkStep sign a b (-(normalize (positivePseudoDiv sign a b).remainder).2)
       ⟨(positivePseudoDiv sign a b).multiplier, (positivePseudoDiv sign a b).quotient,
         (normalize (positivePseudoDiv sign a b).remainder).1⟩ = true := by
   have hrne : (positivePseudoDiv sign a b).remainder ≠ 0 := by
@@ -230,7 +230,7 @@ replay, independently of whether the last nonzero polynomial is constant. -/
 theorem terminal_produced (a b : DensePoly D) (hb : b ≠ 0)
     (hr : (positivePseudoDiv sign a b).remainder.isZero = true) :
     sign (positivePseudoDiv sign a b).multiplier = 1 ∧
-      QueryChain.equal (scale (positivePseudoDiv sign a b).multiplier a)
+      SignedRemainderChain.equal (scale (positivePseudoDiv sign a b).multiplier a)
         ((positivePseudoDiv sign a b).quotient * b) = true := by
   refine ⟨(hpos _).mpr (positive_multiplier f hz h1 ha hs hm hn sign hneg a b hb), ?_⟩
   have hrzero : (positivePseudoDiv sign a b).remainder = 0 :=
@@ -244,7 +244,7 @@ theorem terminal_produced (a b : DensePoly D) (hb : b ≠ 0)
 follows the array loop and discharges its backend laws through interpretation;
 no field structure is imposed on stored representatives. -/
 theorem build_checks [NatCast D] (p g : DensePoly D) (hp : p ≠ 0) :
-    QueryChain.check sign p g (QueryChain.build sign normalize p g) = true := by
+    SignedRemainderChain.check sign p g (SignedRemainderChain.build sign normalize p g) = true := by
   have hnorm' : ∀ r : DensePoly D, r ≠ 0 →
       f (normalize r).1 ≠ 0 ∧
       Polynomial.C (f (normalize r).1) * interpret f hz (normalize r).2 = interpret f hz r := by
@@ -258,12 +258,12 @@ theorem build_checks [NatCast D] (p g : DensePoly D) (hp : p ≠ 0) :
   have hleft := (hpos _).mpr (positive_multiplier f hz h1 ha hs hm hn sign hneg
     (g * p.derivative) p hp)
   have hrec := positive_reconstruct f hz h1 ha hs hm hn sign (g * p.derivative) p
-  simp only [QueryChain.build]
+  simp only [SignedRemainderChain.build]
   split
   · rename_i hr
     have hrzero : (positivePseudoDiv sign (g * p.derivative) p).remainder = 0 :=
       (size_eq_zero_iff _).mp ((isZero_eq_true_iff _).mp hr)
-    apply QueryChain.singleton_checks sign p g _ hp hleft ((hpos _).mpr (by rw [h1]; exact zero_lt_one))
+    apply SignedRemainderChain.singleton_checks sign p g _ hp hleft ((hpos _).mpr (by rw [h1]; exact zero_lt_one))
     apply (sub_isZero f hz hs _ _).mpr
     simp only [interpret_scale f hz hm, interpret_add f hz ha, interpret_mul f hz ha hm,
       interpret_zero, mul_zero, _root_.add_zero]
@@ -276,7 +276,7 @@ theorem build_checks [NatCast D] (p g : DensePoly D) (hp : p ≠ 0) :
     have hb := normalize_bounds f hz hs normalize hnorm' _ hrne
     obtain ⟨hc, hnorm⟩ := hnormalize _ hrne
     have hd := positivePseudoDiv_remainder_lt sign (g * p.derivative) p hp
-    have hi : QueryChain.equal
+    have hi : SignedRemainderChain.equal
         (scale (positivePseudoDiv sign (g * p.derivative) p).multiplier (g * p.derivative))
         ((positivePseudoDiv sign (g * p.derivative) p).quotient * p +
           scale (normalize (positivePseudoDiv sign (g * p.derivative) p).remainder).1
@@ -284,13 +284,13 @@ theorem build_checks [NatCast D] (p g : DensePoly D) (hp : p ≠ 0) :
       apply (sub_isZero f hz hs _ _).mpr
       simp only [interpret_scale f hz hm, interpret_add f hz ha, interpret_mul f hz ha hm, hnorm]
       simpa only [interpret_mul f hz ha hm] using hrec
-    have hpref := QueryChain.Prefix.pair sign p g
+    have hpref := SignedRemainderChain.Prefix.pair sign p g
       (normalize (positivePseudoDiv sign (g * p.derivative) p).remainder).2
       ⟨(positivePseudoDiv sign (g * p.derivative) p).multiplier,
         (positivePseudoDiv sign (g * p.derivative) p).quotient,
         (normalize (positivePseudoDiv sign (g * p.derivative) p).remainder).1⟩ hp hb.1
       (by omega) hleft ((hpos _).mpr hc) hi
-    refine QueryChain.buildAux_checks sign normalize hnext
+    refine SignedRemainderChain.buildAux_checks sign normalize hnext
       (step_produced f hz ha hs hm h1 hn sign hpos hneg normalize hnormalize)
       (terminal_produced f hz ha hs hm h1 hn sign hpos hneg)
       p g _ hp p.natDegree p _ #[p, _] #[] hpref rfl rfl hb.1 ?_ ?_
