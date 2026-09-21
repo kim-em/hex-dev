@@ -56,10 +56,6 @@ def main():
     cases = [c for c in CASES if args.cases is None or c[0] in args.cases]
     (root/'StructuralBaseline.lean.txt').write_text((PROBES/'StructuralBaseline.lean').read_text())
     (root/'run.py').write_text(Path(__file__).read_text())
-    production = {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
-                  for path in sorted((ROOT/'HexPolyDetMathlib').glob('*.lean'))
-                  if not path.name.endswith('Tests.lean')}
-    (root/'production-sources.json').write_text(json.dumps(production, indent=2))
     previous = None
     if args.recover_from:
         old = json.loads(args.recover_from.read_text())

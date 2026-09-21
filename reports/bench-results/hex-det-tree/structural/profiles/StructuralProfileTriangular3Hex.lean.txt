@@ -1,0 +1,23 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexPolyDetMathlib.Tactic
+import Mathlib.Tactic.NormDet
+set_option maxHeartbeats 0
+set_option maxRecDepth 100000
+set_option trace.HexMatrix.certificate false
+set_option profiler true
+set_option profiler.threshold 0
+
+open Lean Elab Tactic
+elab "structural_profile_call" t:tacticSeq : tactic => do
+  let start ← IO.monoNanosNow
+  evalTactic t
+  logInfo m!"CALL_NS {(← IO.monoNanosNow) - start}"
+namespace HexPolyDetMathlib.ProofProbe.StructuralProfileTriangular3Hex
+theorem result (x0 x1 x2 : Int) : Matrix.det (R := Int) (!![x0, 1, 2; 0, x1, 1; 0, 0, x2]) = x0*x1*x2 := by
+  structural_profile_call
+    det
+end HexPolyDetMathlib.ProofProbe.StructuralProfileTriangular3Hex

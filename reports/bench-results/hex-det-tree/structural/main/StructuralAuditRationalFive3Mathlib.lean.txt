@@ -1,0 +1,2 @@
+import HexPolyDetMathlib.ProofProbe.StructuralRationalFive3Mathlib
+#print axioms HexPolyDetMathlib.ProofProbe.StructuralRationalFive3Mathlib.result

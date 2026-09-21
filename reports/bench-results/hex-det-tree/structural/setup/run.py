@@ -45,40 +45,18 @@ ROUTES = {
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--recover-from', type=Path, help='retain an interrupted SIGTERM attempt and reuse its audited sources')
-    parser.add_argument('--budget-seconds', type=int, default=1800)
     parser.add_argument('--cases', nargs='+', choices=[c[0] for c in CASES])
     args = parser.parse_args()
-    if not 1 <= args.budget_seconds <= 1800:
-        parser.error("budget must be between 1 and 1800 seconds")
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=False)
     cases = [c for c in CASES if args.cases is None or c[0] in args.cases]
     (root/'StructuralBaseline.lean.txt').write_text((PROBES/'StructuralBaseline.lean').read_text())
     (root/'run.py').write_text(Path(__file__).read_text())
-    production = {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
-                  for path in sorted((ROOT/'HexPolyDetMathlib').glob('*.lean'))
-                  if not path.name.endswith('Tests.lean')}
-    (root/'production-sources.json').write_text(json.dumps(production, indent=2))
-    previous = None
-    if args.recover_from:
-        old = json.loads(args.recover_from.read_text())
-        if len(cases) != 1:
-            parser.error('recovery must select exactly one interrupted case')
-        previous = next((c for c in old['cases'] if c['name'] == cases[0][0]), None)
-        if previous is None or previous['state'] != 'stopped' or 'failed (-15)' not in previous.get('error', ''):
-            parser.error('only a SIGTERM-interrupted case can be recovered')
-        if len(previous['samples']) >= 12 or set(previous['audits']) != {'Hex', 'Mathlib'}:
-            parser.error('recovery requires an incomplete case and both completed audits')
-        hashes = json.loads((args.recover_from.parent/'production-sources.json').read_text())
-        for path, expected in hashes.items():
-            if not path.endswith('Tests.lean') and hashlib.sha256((ROOT/path).read_bytes()).hexdigest() != expected:
-                parser.error('production sources changed since the retained audits')
     records = []
     plan = dict(cases=cases, pairs=6, build_cap_seconds=60,
-                total_cap_seconds=args.budget_seconds, stop_on_confirmed_loss=True,
+                total_cap_seconds=1800, stop_on_confirmed_loss=True,
                 loss_rule='Mathlib wins >=5/6 whole-build deltas and median advantage >200 ms',
-                completed_pair_reruns=0, recovery_from=str(args.recover_from) if previous else None)
+                unchanged_reruns=0)
     (root/'plan.json').write_text(json.dumps(plan, indent=2))
 
     def run(deadline):
@@ -115,14 +93,6 @@ def main():
                     text = source.read_text()
                     (root/(source.name+'.txt')).write_text(text)
                     record.setdefault('sources', {})[arm] = hashlib.sha256(text.encode()).hexdigest()
-                    if previous is not None:
-                        if record['sources'][arm] != previous['sources'][arm]:
-                            raise RuntimeError('recovery source differs from the retained audit')
-                        record['audits'][arm] = previous['audits'][arm]
-                        record['audit_origin'] = str(args.recover_from)
-                        record['retained_interrupted_samples'] = previous['samples']
-                        save()
-                        continue
                     # Build the same quiet module once to audit it independently of timed pairs.
                     build(module)
                     audit_name = 'StructuralAudit'+name+arm
@@ -150,7 +120,7 @@ def main():
                         result = build(PREFIX+'.'+audit_name)
                     finally:
                         audit.unlink(missing_ok=True)
-                    match = re.search(r"'"+re.escape(target)+r"' depends on axioms: \[(.*?)\]", result['compiler_output'], re.S)
+                    match = re.search(r"'"+re.escape(target)+r"' depends on axioms: \[(.*?)\]", result['compiler_output'])
                     actual = None if match is None else [a.strip() for a in match[1].split(',')]
                     if actual != list(AXIOMS):
                         raise RuntimeError(f'{name} {arm}: unexpected axioms {actual}')
@@ -191,7 +161,7 @@ def main():
             raise
         finally:
             lease.close()
-    return supervise(run, args.budget_seconds, root/'status.json')
+    return supervise(run, 1800, root/'status.json')
 
 
 if __name__ == '__main__':

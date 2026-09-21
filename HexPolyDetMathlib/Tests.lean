@@ -582,4 +582,16 @@ example (a b : Int) : True := by
       throwError "triangular shortcut accepted non-ring multiplication"
   trivial
 
+-- A mixed-type multiplication must decline without constructing an ill-typed factor list.
+example (x : Nat) : True := by
+  letI : HMul Rat Nat Rat := ⟨fun a b => a + b⟩
+  let A : Matrix (Fin 2) (Fin 2) Rat := !![((1 : Rat)*x)/2, ((2 : Rat)*x)/2; ((3 : Rat)*x)/2, ((4 : Rat)*x)/2]
+  run_tac Lean.Elab.Tactic.withMainContext do
+    let a ← getFVarFromUserName `A
+    let some a := (← a.fvarId!.getDecl).value? | throwError "missing matrix"
+    let some lit ← literal? a (allowOpen := true) | throwError "missing literal"
+    if (← HexPolyDetMathlib.RatFactor.compute? a lit none).isSome then
+      throwError "accepted a factor of the wrong type"
+  trivial
+
 end StructuralBudgetTests

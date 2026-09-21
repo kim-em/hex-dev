@@ -851,3 +851,13 @@ and the small closed-form route. The diagnostic pilot is also retained.
 Those datasets are separate experiments, not adjacent paired before/after evidence.
 Compiled producer/checker observations are in
 [the executable report](hex-poly-det-performance.md).
+
+## Bounded structural routes
+
+The [structural-route comparison](hex-poly-det-structural-performance.md)
+measures integrated rational row factors, triangular identities and sparse
+cofactor proofs on nine fixed inputs. Six larger inputs favor `det` in every
+one of six adjacent AB/BA pairs; the three smallest comparisons are
+inconclusive. Quiet measurements and route/axiom audits are separate. These
+focused results retain the opt-in decision and do not establish the general
+tree-certificate attribution targets above.

@@ -1,0 +1,2 @@
+import HexPolyDetMathlib.ProofProbe.StructuralDiagonal2Mathlib
+#print axioms HexPolyDetMathlib.ProofProbe.StructuralDiagonal2Mathlib.result
