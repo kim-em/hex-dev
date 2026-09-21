@@ -16,10 +16,12 @@ absolute leading coefficient, preserving negative leading signs. The shared
 integer backend retains its content normalization.
 
 The [companion](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md) proves exact
-semantic domain equivalence, produced-certificate acceptance and prepared-query
-agreement. Root-sum/replay semantics, `rootCount`, singleton/sign bounds,
-whole-Option rational/backend correspondence and Phase-4 evidence remain
-required. No release or phase completion is claimed.
+semantic domain equivalence, produced-certificate acceptance, prepared-query
+agreement and whole-`Option` rational/integer agreement on finite ordered dyadic
+intervals after positive denominator clearing. Root-sum/replay semantics,
+`rootCount`, singleton/sign bounds, general backend correspondence, literal
+certificate translation and remaining Phase-4 evidence are still required.
+No release or phase completion is claimed.
 
 `HexSturm` depends on `HexPoly` and `HexRealRoots`, with no Mathlib or
 Batteries import. Its namespace is `Hex.Sturm`. Its substantive work is

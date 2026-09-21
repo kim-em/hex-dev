@@ -104,10 +104,16 @@ condition and the executable endpoint guards hold. `QueryDomain` completes the
 integer/dyadic endpoint interpretation, proves exact mathematical domain
 equivalence, and extracts that domain from accepted replay.
 
+`QueryCompare` proves that arbitrary accepted chains for positively scaled
+inputs have equal lengths and entrywise positive scaling. `QuerySigns` proves
+finite endpoint sign-array agreement and extracts the checked variation value.
+Together they support the rational/integer whole-`Option` agreement theorem
+in hex-sturm-mathlib without assuming root-sum semantics.
+
 The signed-remainder/Cauchy-index theorem and its polynomial IVT/Rolle
-foundation remain required for root-sum semantics, singleton-sign/count bounds
-and frontend backend agreement. These algebraic
-replay results do not assert those outstanding semantic theorems.
+foundation remain required for root-sum semantics and singleton-sign/count
+bounds. These algebraic replay results do not assert those outstanding
+semantic theorems.
 
 # Verification
 
