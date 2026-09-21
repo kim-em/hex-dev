@@ -32,6 +32,12 @@ def audit_dispatch(record, table):
         if sample['arm'] != 'Dispatch' or sample['candidate']['state'] != 'complete':
             continue
         stem = sample['stem']
+        if any(e['route'] == 'row-factor' for e in sample['routes']):
+            # Numeric row-factor certificates precede polynomial selection and
+            # provide no evidence for either polynomial crossover table.
+            if len(sample['routes']) != 1:
+                raise ValueError(f'{stem}: row-factor route mixed with another route')
+            continue
         classified = record['classification'][stem]
         if classified['classification'] not in ['eligible', 'packed-decline']:
             continue

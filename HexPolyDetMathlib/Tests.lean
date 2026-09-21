@@ -315,6 +315,40 @@ example (x : Int) : True := by
       throwError "row-factor shortcut accepted a non-ring multiplication"
   trivial
 
+-- A factor of the wrong type must decline without an application error.
+example (x : Nat) : True := by
+  letI : HMul Int Nat Int := ⟨fun a b => a + (b : Int)⟩
+  let A : Matrix (Fin 4) (Fin 4) Int :=
+    !![(1 : Int) * x, (0 : Int) * x, (0 : Int) * x, (0 : Int) * x;
+      (0 : Int) * x, (1 : Int) * x, (0 : Int) * x, (0 : Int) * x;
+      (0 : Int) * x, (0 : Int) * x, (1 : Int) * x, (0 : Int) * x;
+      (0 : Int) * x, (0 : Int) * x, (0 : Int) * x, (1 : Int) * x]
+  run_tac Lean.Elab.Tactic.withMainContext do
+    let a ← Lean.Meta.getFVarFromUserName `A
+    let some a := (← a.fvarId!.getDecl).value? | throwError "missing local literal"
+    let some lit ← HexMatrixMathlib.Literal.literal? a (allowOpen := true)
+      | throwError "mixed-type test did not recognize its literal"
+    if (← HexPolyDetMathlib.RowFactor.compute? a lit none).isSome then
+      throwError "row-factor shortcut accepted mixed-type multiplication"
+  trivial
+
+example (x : Int) : True := by
+  let A : Matrix (Fin 4) (Fin 4) Int :=
+    !![1 * x, 0 * x, 0 * x, 0 * x;
+      0 * x, 1 * x, 0 * x, 0 * x;
+      0 * x, 0 * x, 1 * x, 0 * x;
+      0 * x, 0 * x, 0 * x, 1 * x]
+  run_tac Lean.Elab.Tactic.withMainContext do
+    let a ← Lean.Meta.getFVarFromUserName `A
+    let some a := (← a.fvarId!.getDecl).value? | throwError "missing local literal"
+    let some lit ← HexMatrixMathlib.Literal.literal? a (allowOpen := true)
+      | throwError "metavariable test did not recognize its literal"
+    let rhs ← Lean.Meta.mkFreshExprMVar (Lean.mkConst ``Int)
+    if (← HexPolyDetMathlib.RowFactor.compute? a lit (some rhs)).isSome then
+      throwError "row-factor shortcut accepted an unresolved target"
+    if ← rhs.mvarId!.isAssigned then throwError "row-factor shortcut assigned the target"
+  trivial
+
 -- Arbitrary factors, arbitrary universe, and no characteristic restriction.
 theorem generic {R : Type u} [CommRing R] (a b c d : R) :
     Matrix.det !![(-3) * a, (-2) * a, (-3) * a, 3 * a;
@@ -337,14 +371,14 @@ theorem term (x : Rat) :
     0 * (x + 1), 0 * (x + 1), 1 * (x + 1), 0 * (x + 1);
     0 * (x ^ 2), 0 * (x ^ 2), 0 * (x ^ 2), 1 * (x ^ 2)]).proof
 
--- Swaps and characteristic reduction belong to the numeric transport too.
-example (x : ZMod 3) :
+-- Swaps transport to positive characteristic without an injectivity premise.
+theorem swapped (x : ZMod 3) :
     Matrix.det !![0 * x, 1 * x, 0 * x, 0 * x;
       1 * x, 0 * x, 0 * x, 0 * x;
       0 * x, 0 * x, 1 * x, 0 * x;
       0 * x, 0 * x, 0 * x, 1 * x] = (-1) * x * x * x * x := by det
 
-example {R : Type u} [CommRing R] (x : R) :
+theorem singular {R : Type u} [CommRing R] (x : R) :
     Matrix.det !![1 * x, 0 * x, 0 * x, 0 * x;
       1 * x, 0 * x, 0 * x, 0 * x;
       0 * x, 0 * x, 1 * x, 0 * x;
@@ -357,9 +391,29 @@ example (x : Int) :
       0 * x, 0 * x, 1 * x, 0 * x;
       0 * x, 0 * x, 0 * x, 1 * x] = x ^ 4 + x ^ 3 := by det
 
+-- A wrong coefficient in an otherwise factored target cannot be certified.
+example (x : Int) (h :
+    Matrix.det !![1 * x, 0 * x, 0 * x, 0 * x;
+      0 * x, 1 * x, 0 * x, 0 * x;
+      0 * x, 0 * x, 1 * x, 0 * x;
+      0 * x, 0 * x, 0 * x, 1 * x] = 2 * x * x * x * x) :
+    Matrix.det !![1 * x, 0 * x, 0 * x, 0 * x;
+      0 * x, 1 * x, 0 * x, 0 * x;
+      0 * x, 0 * x, 1 * x, 0 * x;
+      0 * x, 0 * x, 0 * x, 1 * x] = 2 * x * x * x * x := by
+  fail_if_success det
+  exact h
+
+theorem simplified (x : Int) :
+    Matrix.det !![1 * x, 0 * x, 0 * x, 0 * x;
+      0 * x, 1 * x, 0 * x, 0 * x;
+      0 * x, 0 * x, 1 * x, 0 * x;
+      0 * x, 0 * x, 0 * x, 1 * x] = 1 * x * x * x * x := by
+  simp only [Hex.normPolyDet]
+
 -- Pin the shortcut: valid proofs through a polynomial fallback do not suffice.
 run_meta do
-  for root in [``generic, ``term] do
+  for root in [``generic, ``term, ``swapped, ``singular, ``simplified] do
     let mut pending := [root]
     let mut found := false
     while let name :: rest := pending do

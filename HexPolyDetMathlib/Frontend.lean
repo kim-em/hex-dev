@@ -416,7 +416,7 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr
           for j in [:lit.n] do
             let some h ← treeEntry ctx ((reified[i]!).getD j seed) | return none
             let h ← match normalized with
-              | none => mkEqSymm h
+              | none => pure h
               | some rs => mkEqTrans h (rs[i]!.2[j]!).proof
             hs := hs.push h
           hrows := hrows.push hs
@@ -454,7 +454,9 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr
               if D == 1 then pure (displayed, ← mkEqTrans proof (← mkAppM ``div_one #[displayed]))
               else pure (← mkAppM ``HDiv.hDiv #[displayed, ← Normalize.natural D], proof)
           else do
-            let hA ← applyEntryHints (← mkAppM ``Polynomial.identify #[A, B]) hrows
+            -- Denotation gives B i j = A i j. Reverse the matrix equality
+            -- once, avoiding an Eq.symm application with each entry's payload.
+            let hA ← mkEqSymm (← applyEntryHints (← mkAppM ``Polynomial.identify #[B, A]) hrows)
             let proof ← if rhs?.isSome then do
                 pure <| mkAppN (← mkAppM ``Tree.target_det
                   #[toExpr k, toExpr lit.n, treesE, wE, ctx, A, qE, displayed])

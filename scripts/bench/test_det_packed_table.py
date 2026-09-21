@@ -41,6 +41,16 @@ class EntryEncodingTests(unittest.TestCase):
         self.assertEqual(tables['list'], [legacy])
         self.assertNotIn((32, 1, 4, 1, 2), tables['list'])
 
+    def test_row_factor_bypasses_polynomial_selection(self):
+        record = self.record()
+        _, tables = selected_tables(record)
+        record['samples'] = [dict(stem='Tree', arm='Dispatch', candidate=dict(state='complete'),
+            routes=[dict(route='row-factor')])]
+        audit_dispatch(record, dict(keys_by_entries=tables))
+        record['samples'][0]['routes'].append(dict(route='packed/plain'))
+        with self.assertRaisesRegex(ValueError, 'mixed'):
+            audit_dispatch(record, dict(keys_by_entries=tables))
+
     def test_wrong_encoding_cannot_fit_tree_table(self):
         record = self.record()
         record['samples'][1]['routes'][0]['entries'] = 'list'

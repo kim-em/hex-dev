@@ -82,7 +82,7 @@ private def castProof? (carrier coeff : Expr) (z : Int) : MetaM (Option Expr) :=
 /-- A common row factor avoids polynomial production entirely. A target must
 already have the factored result's form; otherwise the regular frontend runs. -/
 def compute? (A : Expr) (lit : Recognized) (rhs? : Option Expr) : MetaM (Option Result) := do
-  if A.hasExprMVar then return none
+  if A.hasExprMVar || rhs?.any (·.hasExprMVar) then return none
   if lit.n == 0 || lit.n > maxDimension then return none
   if HexMatrixMathlib.DetPoly.Certificate.arm (← getOptions) != .automatic then return none
   if Hex.Reflect.sourceNodeCount A 100001 +
@@ -90,32 +90,36 @@ def compute? (A : Expr) (lit : Recognized) (rhs? : Option Expr) : MetaM (Option 
   let .some _ ← trySynthInstance (← mkAppM ``CommRing #[lit.carrier]) | return none
   let mut rows : Array (Array Int) := #[]
   let mut factors : Array Expr := #[]
-  let mut hints : Array (Array Expr) := #[]
+  let mut sources : Array (Array (Expr × Expr)) := #[]
   for row in lit.entries do
     let mut coefficients := #[]
-    let mut proofs := #[]
+    let mut entries := #[]
     let mut factor? := none
     for entry in row do
       let entry ← reduceIndices entry
-      let_expr HMul.hMul _ _ _ _ coeff factor := entry | return none
+      let_expr HMul.hMul α β γ _ coeff factor := entry | return none
+      unless ← withTransparency .reducible
+          (isDefEq α lit.carrier <&&> isDefEq β lit.carrier <&&> isDefEq γ lit.carrier) do
+        return none
       let some z := coefficient? coeff | return none
       if z.natAbs.log2 > 4096 then return none
       match factor? with
       | none => factor? := some factor
       | some f => if f != factor then return none
-      let some hc ← castProof? lit.carrier coeff z | return none
-      let head ← mkAppM ``RowFactor.entry #[toExpr z, coeff, factor]
-      let .forallE _ expected _ _ ← inferType head | return none
-      unless ← withTransparency .default (isDefEq (← inferType hc) expected) do return none
-      let proof := mkApp head (mkExpectedPropHint hc expected)
-      let some (_, lhs, _) := (← inferType proof).eq? | return none
-      unless ← withTransparency .default (isDefEq entry lhs) do return none
       coefficients := coefficients.push z
-      proofs := proofs.push proof
+      entries := entries.push (entry, coeff)
     let some factor := factor? | return none
     rows := rows.push coefficients
     factors := factors.push factor
-    hints := hints.push proofs
+    sources := sources.push entries
+  -- Expanded targets cannot use this route. Reject their shape before any
+  -- coefficient proofs or elimination, without unfolding their polynomials.
+  if let some rhs := rhs? then
+    let mut head := rhs.consumeMData
+    for factor in factors.reverse do
+      let_expr HMul.hMul _ _ _ _ rest tail := head | return none
+      unless tail.consumeMData == factor.consumeMData do return none
+      head := rest.consumeMData
   let bits := rows.flatten.foldl (fun b z => max b (integerBits z)) 1
   if 2 * lit.n * (bits + lit.n.log2 + 2) > Hex.Reflect.Budget.default.coefficientBits then
     return none
@@ -128,6 +132,21 @@ def compute? (A : Expr) (lit : Recognized) (rhs? : Option Expr) : MetaM (Option 
   for f in factors do value ← mkAppM ``HMul.hMul #[value, f]
   if let some rhs := rhs? then
     unless ← withTransparency .default (isDefEq value rhs) do return none
+  let mut hints := #[]
+  for i in [:lit.n] do
+    let mut proofs := #[]
+    for j in [:lit.n] do
+      let (source, coeff) := (sources[i]!)[j]!
+      let z := (rows[i]!)[j]!
+      let some hc ← castProof? lit.carrier coeff z | return none
+      let head ← mkAppM ``RowFactor.entry #[toExpr z, coeff, factors[i]!]
+      let .forallE _ expected _ _ ← inferType head | return none
+      unless ← withTransparency .default (isDefEq (← inferType hc) expected) do return none
+      let proof := mkApp head (mkExpectedPropHint hc expected)
+      let some (_, lhs, _) := (← inferType proof).eq? | return none
+      unless ← withTransparency .default (isDefEq source lhs) do return none
+      proofs := proofs.push proof
+    hints := hints.push proofs
   let C ← mkAppM ``ofLists #[toExpr lit.n, toExpr lit.n, toExpr (rows.toList.map Array.toList)]
   let numeric : Det.Cert := {
     lit := { n := lit.n
