@@ -1,0 +1,37 @@
+{
+  "source": "summary.json",
+  "source_sha256": "6e7ab91d16a746b11ffe6e7d5d0d88995864ac62a8cf9ecbbb3a203b12313da8",
+  "aggregation": "sum of exclusive sampled periods for the listed symbols divided by kernel_event_period",
+  "groups": [
+    {
+      "name": "division_and_normalizer",
+      "symbols": [
+        "__gmpn_divrem_1_x86_64",
+        "__gmpz_tdiv_qr",
+        "__gmpn_tdiv_qr",
+        "__gmpz_tdiv_r",
+        "l_Int_trailingZeros_aux___redArg",
+        "lean_int_big_ediv",
+        "lean_int_big_emod",
+        "lean::mpz::ediv(lean::mpz const&, lean::mpz const&)",
+        "__gmpn_invert_limb"
+      ],
+      "period": 4994609051,
+      "percent": 27.623837924388
+    },
+    {
+      "name": "allocation_and_copy_without_caller_attribution",
+      "symbols": [
+        "malloc",
+        "cfree@GLIBC_2.2.5",
+        "__gmpz_init_set",
+        "__gmpz_clear",
+        "realloc",
+        "__gmpz_realloc",
+        "lean::mpz_to_int(lean::mpz const&)"
+      ],
+      "period": 6120236452,
+      "percent": 33.84938001806769
+    }
+  ]
+}

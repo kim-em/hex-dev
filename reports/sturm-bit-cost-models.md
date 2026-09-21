@@ -163,3 +163,12 @@ retained, including any timeout rows. This changes neither the scientific
 model nor the measured operation. The larger allowance accommodates the
 sixteenfold quartic scaling of both preparation and replay from degree 1024,
 with additional operational margin; it is not a timing acceptance threshold.
+
+The [completed extension](hex-sturm-performance.md#corrected-bit-cost-validation)
+is inconclusive for cubic wall time (residual +0.168613). The observed
+1024→2048 factor 9.97 lies between the independently counted iteration factor
+7.97 and division-bit-volume factor 16.02. This comparison introduces no
+fitted parameter and does not allocate the slowdown between normalization
+and recurrence products. The exact bit-work calculation remains valid; the
+current replay registration has no passing characterization on this full
+ladder. Any changed implementation needs a new derivation of its actual costs.

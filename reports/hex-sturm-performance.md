@@ -379,8 +379,12 @@ The [operation-only degree-512 profile](bench-results/sturm-replay-profile/)
 retains raw samples and monotonic-clock region boundaries. Its exclusive
 sampled periods include 11.63% in single-limb division, 9.57% in `cfree`,
 7.68% in `malloc`, 5.91% in GMP initialization/copy, and 3.20% directly in
-`Int.trailingZeros`' loop. The profile supports separating iteration/dispatch
-work from limb work; it does not establish a wall-time exponent. The source
+`Int.trailingZeros`' loop. The [explicit symbol groups](bench-results/sturm-replay-profile/groups.json)
+sum nine division/normalizer symbols to 27.62% of sampled periods. A separate
+seven-symbol allocation/copy group accounts for 33.85%; its callers are not
+attributed. These are exclusive symbol totals, not an inclusive normalizer
+percentage. The profile supports separating iteration/dispatch work from limb
+work; it does not establish a wall-time exponent. The source
 count of normalization iterations is Θ(n³), separately from Θ(n⁴) bit
 volume. The new finite-regime iteration-cost hypothesis and its fresh
 validation are specified in the derivation document. The
@@ -406,9 +410,15 @@ with residual +0.168613, outside the 0.15 tolerance. Median times at degrees
 all four degree-2048 times lie between 363.935 s and 367.265 s. The narrower
 cubic pass does not extend to this ladder. This result is compatible with the
 source-derived growing limb work, but it supplies no fitted mixed-cost model
-and no passing quartic wall-time characterization. The remaining finding is
-the repeated coefficient normalization in `ZPoly.evalDyadic`, not a failure
-of the checked polynomial identities or query results.
+and no passing quartic wall-time characterization. The measured 1024→2048
+factor is 9.97, between the independently counted iteration factor 7.97 and
+division-bit-volume factor 16.02; this comparison fits no constant or exponent.
+This is a performance finding: the polynomial identities and query checks
+continue to pass. The degree-512 profile identifies substantial normalization
+work in `ZPoly.evalDyadic`, but it does not apportion the degree-2048 residual
+between that work and the growing-integer products in recurrence verification.
+A local normalization improvement would need its own source-derived model
+and validation of the remaining checker work.
 
 The [rational query run](bench-results/sturm-rational-bit-cost/) also passes
 its independently derived quadratic model (residual −0.068144). At degrees
@@ -441,7 +451,7 @@ IVT/Rolle and signed-remainder/Cauchy-index foundation is delivered.
 The independent size sweeps and operation/normalization diagnostics above are
 available. The query-degree findings have corrected quadratic characterizations.
 The wider head-degree replay test fails its cubic characterization; the
-normalization performance finding remains open on #10375. Concrete
+replay performance finding remains open on #10375. Concrete
 extension-depth and nested-evidence probes belong downstream under #10376/#10378;
 general root-sum/replay soundness and its executable singleton/sign/bound
 consequences belong to #10389. The integer query-one finite/whole-line counts
