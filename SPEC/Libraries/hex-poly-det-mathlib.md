@@ -575,6 +575,35 @@ check, identification, total elaboration and composed fallback separately where 
 nodes, `.olean` size, support, degree bounds, packed bits and route. Collect
 one representative kernel profile per family, not a profile per change.
 
+Start performance investigation with a small representative subset: the main
+4×4 quadratic probe, a simple 4×4 control and the named monomial 8×8 probes.
+Report the observed wins and losses before considering broader coverage.
+Use the runner's `--case` selections and label the result as a subset; subset
+evidence cannot fit the shipping crossover table or establish family-wide wins.
+The maximum allowance is a backstop, not a target duration.
+
+The complete manual determinant measurement workflow has a hard one-hour
+wall-time allowance, including import warmup and attribution: at most ten
+minutes for classification, twenty for forced comparison and thirty for
+automatic dispatch. A persistent shared budget ledger reserves each stage
+before launching it; an interrupted stage does not obtain a fresh allowance
+on an implicit retry. The parent runner terminates the stage and its descendants
+at the deadline, including builds that start separate process sessions.
+This is an operational ceiling, not a performance claim about a tactic.
+
+After a timeout, do not repeat that case or attempt a coordinatewise larger
+case in the same arm, mathematical family and carrier. Compare dimension,
+atom count, degree and support; increasing one coordinate while decreasing
+another is incomparable. Modulus, quotient availability and scope mode must
+also agree. Preserve the timeout and record each skipped case with its blocking
+case and arm. Carry this evidence into later stages for the same arm only.
+A Hex timeout does not censor Mathlib measurements. Deadline skips are recorded
+separately. Neither kind of skip is a measured timeout or a successful sample;
+it supplies no median or crossover evidence. A complete schedule accounts for
+all rows, including skips, and does not imply complete measurement coverage.
+Only six successful observations per arm support the final paired medians.
+Preliminary results from fewer pairs must state their sample counts.
+
 The implementation updates the report and this SPEC with per-family medians
 for term lists, packed checking, automatic dispatch and Mathlib, plus
 completion counts, ratios and an explicit `default-on` / `opt-in` decision.
@@ -803,7 +832,7 @@ The table is fixed before the automatic comparison. No effect-size threshold
 was preregistered; small median differences and their spreads are reported
 without treating them as robust wins. Both
 full 2,064-observation schedules and all 14 family profiles are retained in the
-[packed report](../../reports/hex-poly-det-mathlib-performance.md#packed-certificate-comparison).
+[packed report](../../reports/hex-poly-det-mathlib-performance.md#historical-list-entry-packed-certificate-comparison).
 The report includes the complete 172-case ladder, 57 infeasible support requests,
 quotient generation, preflight, conversion, packing, multiplication, synchronous
 kernel checks, identification, elaboration and composed fallback costs. All

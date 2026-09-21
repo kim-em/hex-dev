@@ -34,3 +34,10 @@ accounting. `direct-tree` and `point-hint` retain experiments in direct quotatio
 and checked scalar-point hints. Neither established an improvement in the
 component observations, and neither refinement is in the retained implementation.
 The absolute entry-plus-target ceiling is not established by these diagnostics.
+
+`dispatch-interrupted` retains the incomplete automatic comparison stopped after
+the timeout-heavy schedule and session resource failure were reported. Its
+completed pairs support only the explicitly preliminary table in the report;
+they do not establish six-pair medians. `dispatch-user-interrupted` and
+`dispatch-systemd-interrupted` retain the two earlier interrupted dispatch
+attempts. They are not pooled with the reported pairs or used to replace samples.

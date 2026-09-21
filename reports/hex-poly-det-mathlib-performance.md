@@ -5,6 +5,52 @@ The symbolic simproc remains opt-in: no default `Hex.norm_det` dispatch is
 enabled. This uses the SPEC’s opt-in exception; fallback preserves scope but
 does not establish a performance win.
 
+## Preliminary tree-entry dispatch comparison
+
+The main requested example now wins; a general win over `norm_det` is not
+established. Simple 4×4 cases still lose, and every family remains opt-in.
+Probe names `NnKkDdSs` mean an n×n matrix, k variables, degree-d entries,
+and s terms per entry. These N-prefixed fixtures have correlated row-scaled
+entries; they are not arbitrary dense polynomial matrices.
+
+The interrupted dispatch run provides early evidence for the issue’s main
+probe: `N4K2D2S4` takes 0.67 s with `det` versus 1.14 s with unmodified
+`norm_det` followed by `ring`, approximately 41% less time. Hex wins both
+retained pairs. This is a preliminary two-pair observation, not the six-pair
+acceptance result. Simple linear 4×4 cases still lose.
+
+The [retained partial run](bench-results/hex-det-tree/diagnostics/dispatch-interrupted.json.gz)
+contains all 627 recorded observations, including timeouts and failures.
+The sources were unchanged. Values below are medians of two adjacent AB/BA
+pairs after subtracting their import-only baselines; no additional run was
+used to select these examples.
+
+| Case | Pairs | det ms | norm_det + ring ms | Reduction |
+|---|---:|---:|---:|---:|
+| N4K2D2S4 | 2 | 669.59 | 1142.82 | 41.4% |
+| N8K2D1S1 | 2 | 364.28 | 1104.79 | 67.0% |
+| N8K4D2S1 | 2 | 2467.78 | 4153.37 | 40.6% |
+| N8K2D8S1 | 2 | 2520.55 | 3001.61 | 16.0% |
+| N4K1D1S1 | 2 | 194.15 | 115.71 | -67.8% |
+| N4K2D1S1 | 2 | 180.67 | 100.26 | -80.2% |
+| N4K4D1S1 | 2 | 162.15 | 98.27 | -65.0% |
+
+`N8K4D1S1` also completed both pairs, but one baseline-subtracted Hex
+observation is negative. Its two-pair speedup ratio is not meaningful,
+so no numeric speedup is claimed for it here.
+
+All 19 monomial 8×8 cases reached the producer during classification.
+The full forced comparison completed before dispatch and fitted 238 tree
+keys and 54 list keys (including 50 retained historical keys). The fitted
+route remains opt-in. The incomplete dispatch run does not establish
+family-wide superiority or satisfy the six-pair shipping comparison.
+
+The old exhaustive dispatch record spent 11.2 of 14.3 build-hours on 896
+45-second timeouts. The manual runner now skips the same and coordinatewise
+larger cases after an arm-specific timeout and limits classification, forced
+comparison and dispatch together to one hour. Skips are retained without
+invented timing values or crossover credit.
+
 ## Historical list-entry packed certificate comparison
 
 The packed arm is available through the opt-in symbolic handler. Its fixed

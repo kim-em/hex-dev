@@ -5,7 +5,9 @@ All observations, including failures and expected declines, are retained. Each
 proof sample uses the existing fresh-module runner and an adjacent import-only
 baseline; six trial-major rounds alternate the two arms. The compiled driver
 classifies witness products before any timed comparisons; an untimed forced
-frontend build then records the actual tree or list product bounds.
+frontend build then records the actual tree or list product bounds. A shared
+ledger limits all stages to one hour; same-arm timeouts prune repeated and
+coordinatewise larger cases. Explicit skips never contribute timing evidence.
 """
 from __future__ import annotations
 import argparse
@@ -18,6 +20,7 @@ import re
 import statistics
 import subprocess
 import sys
+import time
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -25,6 +28,7 @@ from scripts.bench import fresh_module_sweep as sweep
 from scripts.bench.det_symbolic_sweep import AXIOMS, cpu_lease, routes
 from scripts.bench.det_packed_report import audit_dispatch
 from scripts.bench.det_packed_table import selected_tables
+from scripts.bench.det_bench_limits import TimeoutFrontier, reserve, supervise, STAGE_SECONDS
 
 PREFIX = 'HexPolyDetMathlib.ProofProbe.Packed'
 MANIFEST = ROOT / 'scripts/bench/det_packed_manifest.json'
@@ -43,14 +47,29 @@ def pairs(case, arms):
         dict(case, arm=arm, fresh_module_budget_ms=45000)) for arm in arms]
 
 
-def main():
+def main(deadline=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('stage', choices=['classify', 'forced', 'dispatch'])
     parser.add_argument('output', type=Path)
     parser.add_argument('--classification', type=Path)
     parser.add_argument('--forced', type=Path)
+    parser.add_argument('--budget-ledger', type=Path, help='shared across all three stages; default: output directory/det-budget.json')
     parser.add_argument('--case', action='append', help='diagnostic subset only')
     args = parser.parse_args()
+    if deadline is None:
+        ledger = args.budget_ledger or args.output.parent / 'det-budget.json'
+        seconds = reserve(ledger, args.stage)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        code = supervise(main, seconds, args.output.with_suffix('.status.json'))
+        raise SystemExit(code)
+    frontier = TimeoutFrontier()
+    def remaining():
+        # Leave time to save explicit skipped rows before the hard supervisor deadline.
+        return max(0, deadline - time.monotonic() - 10)
+    def blocker(case, arm):
+        if remaining() == 0:
+            return dict(state='skipped-budget', reason='determinant workflow wall-time budget')
+        return frontier.blocker(case, arm)
     manifest = json.loads(MANIFEST.read_text())
     retained = json.loads((ROOT / LIST_TABLE).read_text())
     list_provenance = dict(path=str(LIST_TABLE), sha256=hashlib.sha256((ROOT / LIST_TABLE).read_bytes()).hexdigest())
@@ -61,7 +80,7 @@ def main():
         'paired-fresh-module-olean-wall', 'hex-det-packed', required_samples=6,
         absolute_only=True, extra_sources=(LIST_TABLE, Path('scripts/bench/det_packed_manifest.json'),
         Path('scripts/bench/det_packed_probes.py'), Path('scripts/bench/det_packed_table.py'),
-        Path('scripts/bench/det_packed_report.py'),
+        Path('scripts/bench/det_packed_report.py'), Path('scripts/bench/det_bench_limits.py'),
         Path('bench/HexPolyDet/PackedBench.lean'),
         *(Path('bench/HexPolyDetMathlib/ProofProbe') / f'Packed{s}Profile.lean' for s in manifest['profiles'].values()),
         *(Path('bench/HexPolyDet/packed-inputs') / (c['stem'] + '.json') for c in cases)))
@@ -89,6 +108,13 @@ def main():
     args.output.parent.mkdir(parents=True, exist_ok=True)
     expected = len(cases) if args.stage == 'classify' else len(cases) * 12
 
+    # Carry timeout evidence forward only for the same arm; producer and packed
+    # classification timeouts must not censor the Mathlib comparator.
+    for prior in [classification, forced if args.stage == 'dispatch' else None]:
+        if prior:
+            for failure in prior.get('timeout_frontier', []):
+                frontier.observe(failure['case'], failure['arm'], 'timeout')
+
     def save():
         summary = {}
         for c in cases:
@@ -111,46 +137,65 @@ def main():
             forced_sha256=hashlib.sha256(args.forced.read_bytes()).hexdigest() if args.forced else None,
             samples=records, profiles=profiles, summary=summary,
             retained_list_keys=retained['keys'], list_table_provenance=list_provenance,
-            default_simproc_enabled=False)
+            default_simproc_enabled=False, timeout_frontier=frontier.failures,
+            resource_policy=dict(workflow_seconds=3600, stage_seconds=STAGE_SECONDS[args.stage],
+                budget_ledger=str(args.budget_ledger or args.output.parent / 'det-budget.json'),
+                timeout_pruning='same arm/family/carrier, coordinatewise dimension/atoms/degree/support',
+                skipped_rows_are_measurements=False))
         tmp = args.output.with_suffix('.tmp')
         tmp.write_text(json.dumps(obj, indent=2) + '\n')
         tmp.replace(args.output)
 
     def build(module):
+        if remaining() == 0:
+            return dict(state='skipped-budget')
         observed = []
         result = {}
+        timeout = min(45, remaining())
         try:
-            result = sweep.build_sample(module.module, 45, cpu, monitored,
+            result = sweep.build_sample(module.module, timeout, cpu, monitored,
                 lambda _m, r: observed.append(r), retain_compiler_output=True)
             sweep.validate_axioms(module.module, 'candidate', module, result)
             return dict(result, state='complete')
         except RuntimeError as e:
             result = dict(observed[-1]) if observed else dict(result)
-            return dict(result, state=result.get('state', 'failed'), error=str(e))
+            state = result.get('state', 'failed')
+            if state == 'timeout' and timeout < 45:
+                state = 'skipped-budget'
+            return dict(result, state=state, error=str(e))
 
     if args.stage == 'classify':
-        sweep.warm_imports(spec, 1200)
+        if remaining() > 0:
+            sweep.warm_imports(spec, min(1200, remaining()))
         for case in cases:
             stem = case['stem']
             print(f'[classify] {stem}', flush=True)
-            if case['dimension'] <= 3:
+            blocked = blocker(case, 'Producer') or blocker(case, 'Packed')
+            if blocked:
+                classified[stem] = dict(classification=blocked['state'], **blocked)
+            elif case['dimension'] <= 3:
                 classified[stem] = dict(classification='closed-form')
             else:
+                timeout = min(45, remaining())
                 try:
                     proc, wall, metrics = sweep.run_timed([
                         str(ROOT / '.lake/build/bin/hex_poly_det_packed'),
-                        str(ROOT / 'bench/HexPolyDet/packed-inputs' / (stem + '.json'))], 45)
+                        str(ROOT / 'bench/HexPolyDet/packed-inputs' / (stem + '.json'))], timeout)
                     classified[stem] = dict(json.loads(proc.stdout) if proc.returncode == 0 else
                         dict(classification='producer-failure'), wall_nanos=wall,
                         metrics=metrics, stdout=proc.stdout, stderr=proc.stderr)
                 except subprocess.TimeoutExpired as e:
-                    classified[stem] = dict(classification='producer-timeout', timeout_seconds=45,
+                    exhausted = timeout < 45
+                    if not exhausted:
+                        frontier.observe(case, 'Producer', 'timeout')
+                    classified[stem] = dict(classification='skipped-budget' if exhausted else 'producer-timeout', timeout_seconds=timeout,
                         stdout=str(e.stdout or ''), stderr=str(e.stderr or ''))
             native = classified[stem]
             if native['classification'] in ['eligible', 'packed-decline']:
                 # Tree bounds include syntax and the target, which canonical-list
                 # fixtures cannot recover. Classify the exact frontend route too.
                 frontend = build(sweep.ProbeModule(f'{PREFIX}{stem}Packed', AXIOMS))
+                frontier.observe(case, 'Packed', frontend['state'])
                 events = routes(frontend.get('compiler_output', ''))
                 certificates = [e for e in events if e['route'].startswith(('packed/', 'term-list'))]
                 classified[stem] = dict(native, native=dict(native), frontend=frontend)
@@ -168,9 +213,11 @@ def main():
                     result.update(classification='overall-decline', frontend_routes=events)
                 else:
                     result.update(classification='frontend-failure', frontend_routes=events)
-            save()
+            if remaining() > 0:
+                save()
     else:
-        sweep.warm_imports(spec, 1200)
+        if remaining() > 0:
+            sweep.warm_imports(spec, min(1200, remaining()))
         for trial in range(6):
             for case in sweep.rotate(cases, trial):
                 adjacent = pairs(case, arms)
@@ -180,12 +227,23 @@ def main():
                     arm = pair.metadata['arm']
                     status = classification['classification'][case['stem']]['classification']
                     print(f'[{trial+1}/6] {case["stem"]} {arm} ({status})', flush=True)
-                    if args.stage == 'forced' and arm == 'Packed' and status not in ['eligible', 'closed-form']:
+                    blocked = blocker(case, arm)
+                    if blocked:
+                        records.append(dict(stem=case['stem'], arm=arm, trial=trial+1,
+                            **blocked, candidate=dict(blocked), reference=dict(blocked), routes=[], delta_ns=None))
+                    elif args.stage == 'forced' and arm == 'Packed' and status not in ['eligible', 'closed-form']:
                         records.append(dict(stem=case['stem'], arm=arm, trial=trial+1,
                             state='expected-decline', classification=status, delta_ns=None))
                     else:
                         modules = sweep.ordered_modules(pair, trial)
-                        built = {role: build(module) for role, module in modules}
+                        built = {}
+                        for role, module in modules:
+                            built[role] = build(module)
+                            if built[role]['state'] == 'timeout':
+                                frontier.observe(case, arm, 'timeout')
+                                break
+                        for role, _ in modules:
+                            built.setdefault(role, dict(state='skipped-after-timeout'))
                         events = routes(built['candidate'].get('compiler_output', ''))
                         if args.stage == 'forced' and status == 'eligible' and built['candidate']['state'] == 'complete':
                             wanted = 'packed/plain' if arm == 'Packed' else 'term-list'
@@ -205,26 +263,38 @@ def main():
                             build_order=[r for r,_ in modules], **built,
                             routes=events,
                             delta_ns=(built['candidate']['wall_nanos']-built['reference']['wall_nanos']) if valid else None))
-                    save()
+                    if remaining() > 0:
+                        save()
         if args.stage == 'dispatch':
             for stem in manifest['profiles'].values():
                 if any(c['stem'] == stem for c in cases):
                     print(f'[profile] {stem}', flush=True)
-                    profiles.append(dict(stem=stem, result=build(sweep.ProbeModule(f'{PREFIX}{stem}Profile', AXIOMS))))
-                    save()
+                    case = next(c for c in cases if c['stem'] == stem)
+                    result = blocker(case, 'Dispatch') or build(sweep.ProbeModule(f'{PREFIX}{stem}Profile', AXIOMS))
+                    frontier.observe(case, 'Dispatch', result['state'])
+                    profiles.append(dict(stem=stem, result=result))
+                    if remaining() > 0:
+                        save()
         if args.stage == 'forced':
             for case in cases:
                 status = classification['classification'][case['stem']]['classification']
                 if status not in ['eligible', 'packed-decline']:
                     continue
+                blocked = blocker(case, 'Compiled') or blocker(case, 'Producer')
+                if blocked:
+                    profiles.append(dict(stem=case['stem'], **blocked))
+                    continue
                 print(f'[compiled phases] {case["stem"]}', flush=True)
+                timeout = min(45, remaining())
                 try:
                     proc, wall, metrics = sweep.run_timed([str(ROOT / '.lake/build/bin/hex_poly_det_packed'),
-                        str(ROOT / 'bench/HexPolyDet/packed-inputs' / (case['stem'] + '.json')), '--time'], 45)
+                        str(ROOT / 'bench/HexPolyDet/packed-inputs' / (case['stem'] + '.json')), '--time'], timeout)
                     profiles.append(dict(stem=case['stem'], compiled=json.loads(proc.stdout) if proc.returncode == 0 else None,
                         wall_nanos=wall, metrics=metrics, stdout=proc.stdout, stderr=proc.stderr))
                 except subprocess.TimeoutExpired as e:
-                    profiles.append(dict(stem=case['stem'], state='timeout', timeout_seconds=45))
+                    if timeout == 45:
+                        frontier.observe(case, 'Compiled', 'timeout')
+                    profiles.append(dict(stem=case['stem'], state='timeout' if timeout == 45 else 'skipped-budget', timeout_seconds=timeout))
                 save()
     if args.stage == 'dispatch':
         _, tables = selected_tables(read_record(args.forced))
