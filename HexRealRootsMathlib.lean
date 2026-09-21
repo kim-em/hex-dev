@@ -10,6 +10,7 @@ public import HexRealRootsMathlib.RealClosed
 public import HexRealRootsMathlib.TarskiInterpret
 public import HexRealRootsMathlib.TarskiGcd
 public import HexRealRootsMathlib.TarskiCompare
+public import HexRealRootsMathlib.TarskiSum
 public import HexRealRootsMathlib.TarskiSigns
 public import HexRealRootsMathlib.TarskiInteger
 public import HexRealRootsMathlib.TarskiDomain

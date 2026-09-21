@@ -7,6 +7,8 @@ Authors: Kim Morrison
 import HexRealRootsMathlib.ChainCorrespond
 import HexRealRootsMathlib.Isolations
 import HexRealRootsMathlib.TarskiTests
+import HexRealRootsMathlib.TarskiSum
+import HexRealRootsMathlib.TarskiSigns
 
 /-!
 Companion conformance checks for `HexRealRootsMathlib`.
@@ -255,6 +257,28 @@ private theorem quartic_root_pos :
   simp only [quarticIso, toReal_ofInt, quartic_isRoot_iff] at h
   convert h using 3
   all_goals norm_num
+
+
+/-- The mathematical sum at the unique root of `X` gives the sign of `X-1`. -/
+theorem rootSum_X : Tarski.rootSum (Polynomial.X : Polynomial Rat)
+    (Polynomial.X - 1) .negInf .posInf = -1 := by
+  simp only [Tarski.rootSum, Tarski.roots, Polynomial.roots_X, Multiset.toFinset_singleton,
+    Finset.filter_singleton, Tarski.InInterval, and_self, ↓reduceIte, Finset.sum_singleton]
+  norm_num
+
+/-- info: 'HexRealRootsMathlib.Tarski.abs_rootSum_le_degree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.abs_rootSum_le_degree
+/-- info: 'HexRealRootsMathlib.Tarski.rootSum_of_dvd' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.rootSum_of_dvd
+/-- info: 'HexRealRootsMathlib.Tarski.rootSum_one' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.rootSum_one
+
+/-- info: 'HexRealRootsMathlib.Tarski.check_constant' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.check_constant
 
 end Conformance
 end HexRealRootsMathlib

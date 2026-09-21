@@ -513,17 +513,8 @@ unsafe def axes : IO UInt32 := do
           ("sink", Lean.toJson (← sink.get))]).compress
   return 0
 
-unsafe def diagnostics : IO UInt32 := do
-  for n in #[8, 16, 32, 64, 128] do
-    IO.println (← SturmDiagnostics.inspect "head-degree" n (chebyshev n) 1 (-2) 2).compress
-  for n in #[16, 32, 64, 128, 256, 512, 1024] do
-    let i := queryInput n
-    IO.println (← SturmDiagnostics.inspect "query-degree" n i.p i.f (-2) 2).compress
-  return 0
-
 end Hex.SturmBench
 
 unsafe def main (args : List String) : IO UInt32 :=
-  if args == ["diagnostics"] then Hex.SturmBench.diagnostics else
   if args == ["axes"] then Hex.SturmBench.axes else
   if args == ["inspect"] then Hex.SturmBench.inspect else LeanBench.Cli.dispatch args

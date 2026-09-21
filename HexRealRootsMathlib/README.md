@@ -132,3 +132,11 @@ Development happens in the
 [`hex-dev`](https://github.com/kim-em/hex-dev) monorepo, not in this published
 mirror. Contributions are welcome as pull requests to the `SPEC/` directory:
 describe the behavior you want and leave the implementation to the maintainer.
+
+`TarskiSum.lean` defines the mathematical sum over distinct roots in an open
+interval, allowing infinite endpoints. It proves singleton and constant cases,
+query `1` as cardinality, zero/divisible queries, removal of common-root zero
+contributions, and absolute-value/cardinality/degree bounds with existing
+algebra. These lemmas do not identify the executable query with that sum.
+`Tarski.check_singleton` and `Tarski.check_constant` separately prove zero
+answers for those accepted literal certificates without an analytic foundation.

@@ -1,0 +1,9 @@
+{
+  "cpu": 48,
+  "binary_sha256": "5dc52bc96550254724bfe4f5027677dc2a6acd597616ff62360dea6f52564b67",
+  "command": [
+    ".lake/build/bin/hexsturm_bench",
+    "diagnostics"
+  ],
+  "timed": false
+}

@@ -674,6 +674,17 @@ Literal kernel replay belongs to the fresh-module proof evidence track;
 query construction and endpoint evaluation belong to the computational
 owner's ordinary benchmarks. A general comparison elaborator is deferred.
 
+### Effective and semantic delivery boundaries
+
+`TarskiSum.lean` supplies the mathematical finite root set and signed sum,
+with singleton evaluation, query-one cardinality, zero and divisible queries,
+constant heads, and cardinality/degree bounds. It uses existing algebra and
+has no real-closedness hypothesis. `Tarski.check_singleton` and
+`Tarski.check_constant` prove the corresponding zero-value facts directly
+from accepted literal data. The shared variation/root-sum identity and its
+executable semantic consequences belong to #10389; effective implementation,
+algebraic correspondence and independent evidence belong to #10375.
+
 ### Shared foundation and proof ownership
 
 The following are planned statement shapes, not available declarations at

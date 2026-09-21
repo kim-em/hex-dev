@@ -1,8 +1,8 @@
 # Shared Sturm–Tarski computation measurements
 
-Phase 4 remains incomplete. Nine of thirteen two-sided registrations are
-consistent with their declared models; four remain unresolved after the single
-unchanged rerun described below. All completed samples are retained, and the
+Phase 4 remains incomplete. Nine of thirteen two-sided registrations passed
+initially. The single unchanged rerun retained four unresolved registrations;
+the wider-ladder investigation below resolves one and retains three. All completed samples are retained, and the
 query registrations and models are unchanged. The observations cover the implemented query/checker paths, not the
 missing root-sum theorem or downstream extension infrastructure.
 
@@ -18,8 +18,9 @@ Reported `git_dirty` includes newly written evidence and subsequently added
 proof-probe sources; neither changed the measured executable. Its hash is
 recorded independently. The exact measured registration source is retained as
 `registration.lean.txt`, whose SHA256 matches the metadata. The current benchmark
-source differs from that snapshot only in module documentation; no measured
-function, registration parameter or ladder changed. The executable SHA256 is
+source adds separate axis diagnostics and observations; the original measured
+functions and registrations are retained. The wider runs record explicit
+schedule overrides and separate source/executable hashes. The executable SHA256 is
 identical across the initial run and the unchanged rerun.
 No absolute timing is a portable budget.
 
@@ -190,11 +191,108 @@ retained, with the same standard axiom set and `no-comparable-control` result.
 The source and dependency hashes identify the measured revision; subsequent
 rational-domain correspondence and frontend value/binding theorems are not part
 of this measured import graph. The current companion umbrella reaches `Mathlib` through the pre-existing
-`HexRealRootsMathlib.ChainCorrespond` import. Neither retained run measures that
+`HexRealRootsMathlib.ChainCorrespond` import. Those two runs do not measure that
 expanded import closure: both report 1984 build jobs. Equal job counts do not
 identify identical source graphs or isolate timing causes. These are separate
 source snapshots without a controlled comparison; the absolute timing difference
 is not attributed to a source change or claimed as an improvement.
+
+A [fresh run at `8a578a437`](bench-results/hex-sturm-mathlib-8a578a437.json)
+measures the expanded import closure: 9246 build jobs, with four adjacent
+alternating AB/BA pairs for each case on automatically leased CPU 45. The
+checkout was clean and all completed samples were retained. Acceptance medians
+were 7011.628 ms candidate, 6737.628 ms baseline and
+278.697 ms paired difference; rejection medians were 6992.222 ms,
+6735.845 ms and 264.191 ms, respectively. Each candidate's
+printed axiom set is exactly `propext`, `Classical.choice`, `Quot.sound`.
+Both results retain the harness's `no-comparable-control` classification.
+These measure the existing checker/domain proof modules with the current
+imports, not elaboration of the new universal transport/congruence proofs or
+root-sum semantics. The separate source snapshots do not form a controlled
+before/after comparison or support a regression/improvement claim.
+
+## Independent size axes and wider-ladder investigation
+
+The [retained axis run](bench-results/sturm-axes/metadata.json) contains eighteen
+exact fixtures, four fixed trial-major observations per fixture and stage, and
+32 calls per observation. Integer/rational arms are adjacent and alternate
+AB/BA. Domain preparation, initial reduction, chain production, endpoint
+Horner evaluation, coefficient signs and replay are recorded separately. These
+are descriptive fixed-workload timings, not additional fitted asymptotic
+verdicts. The CPU is leased automatically; source snapshots, executable hashes,
+load observations and every completed sample are retained. Preparation occurs
+outside measured calls; results are consumed through an IO reference.
+
+The coefficient-size family keeps degrees `(2,1)`, endpoints `(-2,2)` and chain
+length three fixed, using `P=(2^b+1)X²-2`, `F=X+1`, `b=8,32,128,512,2048`.
+The endpoint-size family keeps `P=T_8`, `F=1`, and its nine-entry chain fixed,
+with endpoints `±2^b`, `b=2,8,32,128,512`. The chain family fixes head degree
+32 and query degree 40, using `P=X^32-1` and `F=P*X^8+X*T_k`. Varying
+`k=1,2,4,8,12,16,24,30` produces chain lengths `3,3,4,6,8,10,14,17`.
+The latter holds degrees fixed, but does not claim to hold coefficient sizes
+fixed. All eighteen serialized certificates and query sums passed the pinned
+python-flint 0.9.0 / FLINT 3.6.0 oracle.
+
+| Axis endpoints | Integer query µs | Rational query µs | Integer replay µs | Certificate bytes |
+| --- | ---: | ---: | ---: | ---: |
+| Coefficient parameter 8 → 2048 | 3.478 → 480.749 | 17.029 → 37.387 | 2.869 → 469.035 | 463 → 10903 |
+| Endpoint parameter 2 → 512 | 20.331 → 29.240 | 105.336 → 155.638 | 13.196 → 22.137 | 959 → 963 |
+| Chain length 3 → 17 | 37.644 → 618.361 | 723.325 → 1980.143 | 34.461 → 552.423 | 951 → 16294 |
+
+Medians are over the four retained observations. Integer endpoint evaluation
+alone grows from 0.440 to 456.973 µs across the coefficient-size family: a
+fixed number of polynomial operations does not make these arithmetic calls
+constant-time. This observation is not a measured regression against an older
+implementation.
+
+Untimed instrumentation instantiates the **existing** generic producer and
+checker with counted integer operations. It delegates content normalization to
+`ZPoly.normalizeContent`, checks the resulting entries and value against the
+production integer backend, and runs the actual checker. It adds no polynomial
+or Tarski recurrence. Counts cover executed scalar add/sub/mul/neg/sign calls;
+peak bit length covers their integer operands/results and normalization inputs.
+Endpoint counts use integer Horner at the integral endpoints, whereas timed
+integer calls use the production dyadic evaluator. GMP internal temporary
+storage and instruction counts are not measured. Normalization coefficients
+and bit-volume count the two source-level content folds per normalization call;
+they describe gcd input work, not Euclidean iterations or an allocation count.
+Instrumented timings are not used as performance samples.
+
+On the coefficient-size family the producer performs 30 additions, 76
+multiplications and 15 subtractions throughout, while peak integer bits grow
+18 → 4098. On the endpoint family these counts also stay fixed while peak bits
+grow 23 → 4103. On the chain family, normalization calls grow 4 → 18, content
+fold coefficient visits 72 → 578, and summed input bit-volume 28 → 100986.
+This separates the polynomial-operation count from the coefficient costs.
+
+The wider timing schedules retain the original models, four trials, tuning
+settings and all samples. They are schedule extensions, not another unchanged
+rerun. Head-degree replay uses `8,16,32,64,128`; query-degree stages use
+`16,32,64,128,256,512,1024`.
+
+| Registration | Model | Wider verdict | Residual slope |
+| --- | --- | --- | ---: |
+| `runReplay` | `n²` | inconclusive | +1.399794 |
+| `runIntegerHigh` | `m` | inconclusive | +0.163958 |
+| `runInitialHigh` | `m` | inconclusive | +0.431976 |
+| `runReplayHigh` | `m` | consistent | +0.111655 |
+
+The wider replay-of-high-query result supplies a passing characterization on
+that measured range; its earlier inconclusive samples remain recorded. Three
+wall-time characterizations remain unresolved. They are not promoted to passes.
+The [degree diagnostics](bench-results/sturm-axes/degree-diagnostics.jsonl)
+confirm quadratic growth of counted head-family ring work and linear growth
+of query-family ring work while operand sizes grow: replay multiplications
+are 460 → 84100 at head degrees 8 → 128, with peak bits 17 → 405;
+query producer multiplications are 225 → 10305 at query degrees 16 → 1024,
+with peak bits 10 → 514. These counts support the stated **ring-operation**
+bounds, not the stronger wall-time models used in those registrations.
+
+The governing evidence rule forbids relabelling these failures, fitting a new
+model to the measurements, or treating them as Phase-4 completion. The concrete
+remaining question is the characterization of variable-size integer arithmetic
+and dyadic normalization in these registered families. No coefficient-operation
+bound, oracle agreement or fresh-module proof measurement answers that question.
 
 ## Remaining validation gates
 
@@ -203,11 +301,13 @@ false terminal identity, stale-context rejection and interpretation of the
 accepted domain. It cannot establish query root-sum semantics before the actual
 IVT/Rolle and signed-remainder/Cauchy-index foundation is delivered.
 
-Independent coefficient-bit and endpoint-size sweeps, independently varying
-chain length, peak intermediate sizes, gcd work and coefficient-operation call
-counts remain required. Extension-depth and nested-evidence probes require the
-downstream adapters. Root-sum/replay soundness, count/singleton/sign/bound
-consequences and whole-Option backend correspondence remain proof gates.
+The independent size sweeps and operation/normalization diagnostics above are
+available. Three declared wall-time models remain unresolved. Concrete
+extension-depth and nested-evidence probes belong downstream under #10376/#10378;
+root-sum/replay soundness and executable count/singleton/sign/bound consequences
+belong to #10389. Whole-`Option` field-representation and
+rational/integer agreement, and literal certificate transport, are proved in
+the companion; these timing observations do not discharge those proofs.
 The [recorded finding](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442)
 also records the original polynomial pseudo-gcd finding; its wider-ladder
 resolution is documented in the polynomial report.
