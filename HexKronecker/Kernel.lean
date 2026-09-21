@@ -104,16 +104,44 @@ def termsEqMod (k p : Nat) (lhs rhs q : Hex.MvPoly.Kernel.PolyList Int) : Bool :
 
 def matrix (k : Nat) (a : TermMatrix) : List (List Bounds) := a.map (List.map (terms k))
 
-def dot (k : Nat) : List Bounds → List Bounds → Bounds
-  | a :: as, b :: bs => add (mul a b) (dot k as bs)
+def dotImpl (k : Nat) : List Bounds → List Bounds → Bounds
+  | a :: as, b :: bs => add (mul a b) (dotImpl k as bs)
   | _, _ => Bounds.zero k
+
+/-- Bounds need only the immediately preceding fold result. A primitive
+recursor avoids constructing the course-of-values table during kernel replay. -/
+noncomputable def dot (k : Nat) (as : List Bounds) : List Bounds → Bounds :=
+  List.rec (fun _ => Bounds.zero k) (fun a _ rest bs => match bs with
+    | [] => Bounds.zero k
+    | b :: bs => add (mul a b) (rest bs)) as
+
+@[csimp] theorem dot_eq_impl : dot = dotImpl := by
+  funext k as bs
+  induction as generalizing bs with
+  | nil => cases bs <;> rfl
+  | cons a as ih => cases bs <;> simp_all [dot, dotImpl]
 
 def product (k : Nat) (cols rows : List (List Bounds)) : List (List Bounds) :=
   rows.map (fun row => cols.map (dot k row))
 
-def common (k : Nat) : List Bounds → List Bounds → Bounds
-  | a :: as, b :: bs => (add a b).sup (common k as bs)
+def commonImpl (k : Nat) : List Bounds → List Bounds → Bounds
+  | a :: as, b :: bs => (add a b).sup (commonImpl k as bs)
   | _, _ => Bounds.zero k
+
+/-- Replay the common box as a simple fold, without a recursion table. -/
+noncomputable def common (k : Nat) (as : List Bounds) : List Bounds → Bounds :=
+  List.rec (fun _ => Bounds.zero k) (fun a _ rest bs => match bs with
+    | [] => Bounds.zero k
+    | b :: bs => (add a b).sup (rest bs)) as
+
+@[simp] theorem common_cons (k : Nat) (a b : Bounds) (as bs : List Bounds) :
+    common k (a :: as) (b :: bs) = (add a b).sup (common k as bs) := rfl
+
+@[csimp] theorem common_eq_impl : common = commonImpl := by
+  funext k as bs
+  induction as generalizing bs with
+  | nil => cases bs <;> rfl
+  | cons a as ih => cases bs <;> simp_all [common, commonImpl]
 
 def difference : List Bounds → List Bounds → List Bounds
   | a :: as, b :: bs => add a b :: difference as bs
