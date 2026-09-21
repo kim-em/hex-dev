@@ -245,7 +245,7 @@ and `[IsRealClosed R]` on the Mathlib side.
 | `certify_checks` | Certificates produced on the domain pass replay and carry the same value as `query`. |
 | `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; companion. |
 | `query_congr` | Order-preserving field maps and transported endpoints preserve query results, including domain validity. |
-| `query_congr` | Optimized total backends agree on the whole `Option`; positive-rescaling correspondence translates certificates without requiring literal array equality. |
+| `check_congr`, `query_rat_eq` | Checked positive-scaled chains have equal values; producer acceptance gives whole-`Option` rational/integer agreement with different normalizers. |
 | `query_rat_eq` | Positive denominator clearing at rational coefficients and dyadic endpoints agrees, including `none`, with `ZPoly.tarskiQuery`; companion. |
 
 For the last theorem choose positive integers `dP,dF` separately so that

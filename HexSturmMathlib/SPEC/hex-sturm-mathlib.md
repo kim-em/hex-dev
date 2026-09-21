@@ -186,7 +186,7 @@ in the lawful semantic field described above.
 | `query_sign` | Under the domain and `Roots(P;a,b)={α}`, the query equals `sgn(Fᴿ.eval α)`. |
 | `certify_checks` | Certificates produced on the domain pass replay and have the same value as `query`. |
 | `query_congr` | Order-preserving field maps and transported endpoints preserve the entire query result and domain validity. |
-| `query_congr` | Lawful optimized realizations of the shared kernel agree on the whole `Option`; certificate translation need not preserve literal arrays. |
+| `check_congr`, `query_rat_eq` | Accepted certificates for positive-scaled inputs have equal values; produced-certificate acceptance gives whole-`Option` rational/integer agreement despite different normalizers. |
 | `query_rat_eq` | Rational coefficients and finite dyadic endpoints agree, after positive denominator clearing, with the whole `Option` returned by `ZPoly.tarskiQuery`. |
 
 The local squarefree guard proof may use a nonzero constant gcd of `P,P'`,
@@ -306,3 +306,9 @@ completed sample, and permit at most one unchanged inconclusive rerun. A CAS
 query time is not a Lean proof-checking baseline. Full BKR, `tower8` isolation
 and normalization ablations remain the respective family owners' requirements.
 This SPEC supplies requirements, not performance measurements or phase claims.
+
+The executable certificate translations are exported by Mathlib-free
+`HexSturm.Transport`; this companion proves their acceptance. Denominator
+clearing takes finite dyadic endpoints via `DyadicInterval`, recomputes exact
+signs and variations there, and preserves the accepted value when the source
+certificate binds those endpoints. Integer embedding also retains infinities.

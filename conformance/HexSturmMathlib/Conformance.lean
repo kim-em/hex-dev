@@ -169,25 +169,25 @@ theorem accepted : Sturm.check Sturm.orderSign (11, 23) p g
 theorem cleared : TarskiCertificate.check Int.sign EndpointSigns.intDyadic (11, 23)
     (ZPoly.clearDenominators p).2 (ZPoly.clearDenominators g).2
     (.finite Hex.TarskiTests.interval.lower) (.finite Hex.TarskiTests.interval.upper) 2
-    (DenominatorClearing.certificate p g Hex.TarskiTests.interval literal) = true :=
+    (TarskiCertificate.clearDenominators p g Hex.TarskiTests.interval literal) = true :=
   DenominatorClearing.certificate_checks _ _ _ _ _ _ accepted
 
 /-- The translated evidence embeds back into a checked rational certificate. -/
 theorem embedded : Sturm.check Sturm.orderSign (11, 23)
     (ZPoly.toRatPoly (ZPoly.clearDenominators p).2) (ZPoly.toRatPoly (ZPoly.clearDenominators g).2)
     (.finite Hex.TarskiTests.interval.lower.toRat) (.finite Hex.TarskiTests.interval.upper.toRat) 2
-    (IntCast.certificate (DenominatorClearing.certificate p g Hex.TarskiTests.interval literal)) = true := by
+    (TarskiCertificate.toRat (TarskiCertificate.clearDenominators p g Hex.TarskiTests.interval literal)) = true := by
   simpa only [Endpoint.map] using IntCast.certificate_checks (11, 23)
     (ZPoly.clearDenominators p).2 (ZPoly.clearDenominators g).2
     (.finite Hex.TarskiTests.interval.lower) (.finite Hex.TarskiTests.interval.upper) 2
-    (DenominatorClearing.certificate p g Hex.TarskiTests.interval literal) cleared
+    (TarskiCertificate.clearDenominators p g Hex.TarskiTests.interval literal) cleared
 
 /-- Denominator clearing does not erase the literal context binding. -/
 theorem stale : TarskiCertificate.check Int.sign EndpointSigns.intDyadic (11, 24)
     (ZPoly.clearDenominators p).2 (ZPoly.clearDenominators g).2
     (.finite Hex.TarskiTests.interval.lower) (.finite Hex.TarskiTests.interval.upper) 2
-    (DenominatorClearing.certificate p g Hex.TarskiTests.interval literal) = false := by
-  simp only [TarskiCertificate.check, DenominatorClearing.certificate, TarskiCertificate.fromChains,
+    (TarskiCertificate.clearDenominators p g Hex.TarskiTests.interval literal) = false := by
+  simp only [TarskiCertificate.check, TarskiCertificate.clearDenominators, TarskiCertificate.fromChains,
     literal, show (((11, 23) : Nat × Nat) ≠ (11, 24)) by decide, decide_false, Bool.false_and]
 
 end Transport

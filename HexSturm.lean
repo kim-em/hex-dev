@@ -6,3 +6,4 @@ Authors: Kim Morrison
 module
 
 public import HexSturm.Basic
+public import HexSturm.Transport

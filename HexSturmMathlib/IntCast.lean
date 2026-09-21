@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealRoots.Map
+public import HexSturm.Transport
 public import HexSturmMathlib.Rational
 
 public section
@@ -13,11 +13,6 @@ namespace HexSturmMathlib.IntCast
 
 open Hex HexRealRootsMathlib
 open HexPolyMathlib.Interpret
-
-/-- Embed the literal integer evidence and dyadic endpoints in the rationals.
-No polynomial producer or division is called; the context and value are retained. -/
-@[expose] def certificate {Ctx : Type u} (cert : TarskiCertificate Int Dyadic Ctx) : TarskiCertificate Rat Rat Ctx :=
-  cert.map (fun z : Int => (z : Rat)) (fun _ => Int.cast_eq_zero) Dyadic.toRat
 
 private theorem map_toRatPoly (p : ZPoly) :
     DensePoly.Interpret.map (fun z : Int => (z : Rat)) (fun _ => Int.cast_eq_zero) p = ZPoly.toRatPoly p := by
@@ -75,8 +70,8 @@ theorem certificate_checks {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
     (p g : ZPoly) (a b : Endpoint Dyadic) (value : Int) (cert : TarskiCertificate Int Dyadic Ctx)
     (h : TarskiCertificate.check Int.sign EndpointSigns.intDyadic context p g a b value cert = true) :
     Sturm.check Sturm.orderSign context (ZPoly.toRatPoly p) (ZPoly.toRatPoly g)
-      (a.map Dyadic.toRat) (b.map Dyadic.toRat) value (certificate cert) = true := by
-  simpa only [Sturm.check, certificate, map_toRatPoly] using
+      (a.map Dyadic.toRat) (b.map Dyadic.toRat) value (cert.toRat) = true := by
+  simpa only [Sturm.check, TarskiCertificate.toRat, map_toRatPoly] using
     TarskiCertificate.map_checks (fun z : Int => (z : Rat)) (fun _ => Int.cast_eq_zero) Dyadic.toRat
       Int.sign Sturm.orderSign sign_int EndpointSigns.intDyadic (EndpointSigns.ofSign Sturm.orderSign)
       compare_eq evalSign_eq Int.cast_add Int.cast_sub Int.cast_mul Int.cast_one

@@ -28,3 +28,9 @@ The signed root-sum theorem, semantic replay soundness, root-count and singleton
 results, and remaining Phase-4 evidence are still required. The shared IVT/Rolle and
 signed-remainder/Cauchy-index foundation is an explicit gate for root-sum
 semantics and their consequences. See [the specification](SPEC/hex-sturm-mathlib.md).
+
+The executable certificate translations are exported by Mathlib-free
+`HexSturm.Transport`; this companion proves their acceptance. Denominator
+clearing takes finite dyadic endpoints via `DyadicInterval`, recomputes exact
+signs and variations there, and preserves the accepted value when the source
+certificate binds those endpoints. Integer embedding also retains infinities.
