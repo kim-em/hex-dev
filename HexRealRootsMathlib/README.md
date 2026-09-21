@@ -106,7 +106,8 @@ equivalence, and extracts that domain from accepted replay.
 
 `TarskiCompare` proves that arbitrary accepted chains for positively scaled
 inputs have equal lengths and entrywise positive scaling. `TarskiSigns` proves
-finite endpoint sign-array agreement and extracts the checked variation value.
+finite and infinite endpoint sign-array agreement and extracts the checked
+variation value.
 Together they support the rational/integer whole-`Option` agreement theorem
 in hex-sturm-mathlib without assuming root-sum semantics.
 

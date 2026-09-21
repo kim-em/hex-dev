@@ -8,6 +8,7 @@ module
 
 public import HexRealRoots.Basic
 public import HexRealRoots.Tarski
+public import HexRealRoots.Map
 public import HexRealRoots.TarskiProofs
 public import HexRealRoots.Chain
 public import HexRealRoots.Prec

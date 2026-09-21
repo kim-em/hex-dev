@@ -19,6 +19,9 @@ to their query results; `check_bindings` exposes the exact bindings
 established by acceptance.
 
 The companion proves exact domain equivalence and produced-certificate
-acceptance. Root-sum and replay semantics, the root-count API, singleton/sign
-bounds, rational/integer backend correspondence and Phase-4 evidence remain
+acceptance, whole-Option backend agreement and certificate transport.
+`HexSturm.Transport` exports `TarskiCertificate.clearDenominators` for finite
+dyadic intervals and `TarskiCertificate.toRat` including infinities.
+Root-sum and replay semantics, the root-count API, singleton/sign
+bounds and Phase-4 evidence remain
 required; see [the specification](SPEC/hex-sturm.md).

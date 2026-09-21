@@ -7,3 +7,7 @@ module
 
 public import HexSturmMathlib.Domain
 public import HexSturmMathlib.Rational
+public import HexSturmMathlib.Compare
+
+public import HexSturmMathlib.DenominatorClearing
+public import HexSturmMathlib.IntCast

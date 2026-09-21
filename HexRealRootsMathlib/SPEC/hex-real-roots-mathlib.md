@@ -630,7 +630,7 @@ singleton-sign and count/bound results below remain proof gates.
 scaled inputs have equal lengths and entrywise positive scaling under their
 coefficient interpretations. It extracts the field remainder equations from
 the actual initial, step and terminal checks, including singleton chains and
-nonconstant terminal gcds. `TarskiSigns.lean` turns that comparison into finite
+nonconstant terminal gcds. `TarskiSigns.lean` turns that comparison into finite and infinite
 endpoint sign-array equality and extracts the checked variation value.
 These algebraic proofs do not assume the signed-remainder/root-sum theorem.
 

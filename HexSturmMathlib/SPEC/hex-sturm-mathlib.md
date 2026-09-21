@@ -21,11 +21,23 @@ values for arbitrary accepted certificates on the corresponding inputs.
 Conformance instantiates the generic theorems on canonical rationals and noncanonical
 representatives and inspects their axioms.
 
+`Compare.lean` proves `check_congr` for arbitrary accepted field certificates
+and `query_congr` for the whole producer `Option`, including invalid domains
+and infinities. Both allow positive scaling of the polynomial inputs and
+noninjective interpretations into a common ordered field.
+`HexSturm.Transport` owns executable denominator clearing and integer embedding.
+`DenominatorClearing.lean` proves integer-checker acceptance of a supplied
+rational certificate cleared at its bound finite dyadic interval.
+`IntCast.lean` proves acceptance of integer-to-rational embedding, including
+infinite endpoints. Both preserve the full literal context and accepted value;
+the target input bindings are the cleared or embedded polynomials. Clearing
+recomputes exact signs and variations at the supplied interval; its acceptance
+theorem requires the original certificate to bind that interval. Neither
+translation calls polynomial division, gcd, or a chain producer.
+
 The root-sum/replay semantics, root-count and singleton-sign theorems still
-require the foundation delivered through hex-real-roots-mathlib. General
-backend agreement, literal certificate translation in both directions, and
-the remaining Phase-4 evidence below are additional obligations; equality of
-accepted values does not construct a translated certificate. No axioms or
+require the foundation delivered through hex-real-roots-mathlib. The remaining
+Phase-4 evidence below is also required. No axioms or
 conditional stand-ins supply the missing Sturm–Tarski theorem. No release or
 phase completion is claimed.
 
@@ -177,7 +189,7 @@ in the lawful semantic field described above.
 | `query_sign` | Under the domain and `Roots(P;a,b)={α}`, the query equals `sgn(Fᴿ.eval α)`. |
 | `certify_checks` | Certificates produced on the domain pass replay and have the same value as `query`. |
 | `query_congr` | Order-preserving field maps and transported endpoints preserve the entire query result and domain validity. |
-| `query_backend_eq` | Lawful optimized realizations of the shared kernel agree on the whole `Option`; certificate translation need not preserve literal arrays. |
+| `check_congr` | Accepted certificates for positive-scaled inputs have equal values; produced-certificate acceptance gives whole-`Option` rational/integer agreement despite different normalizers. |
 | `query_rat_eq` | Rational coefficients and finite dyadic endpoints agree, after positive denominator clearing, with the whole `Option` returned by `ZPoly.tarskiQuery`. |
 
 The local squarefree guard proof may use a nonzero constant gcd of `P,P'`,

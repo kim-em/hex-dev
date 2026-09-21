@@ -78,4 +78,53 @@ theorem finite_signs_eq
     rw [← Array.getElem_eq_getD (h := hi₀) 0, ← Array.getElem_eq_getD (h := hi₁) 0] at heval
     exact signs_scale _ _ _ _ c hc heval (hbound _) (hbound' _) (hneg _) (hneg' _) (hzero _) (hzero' _)
 
+/-- Positive entrywise scaling preserves signs at both infinities: leading
+coefficient signs and degree parity agree, including zero entries. -/
+theorem infinite_signs_eq
+    {D : Type v} {E : Type w} {A : Type u₁} {B : Type u₂}
+    [Zero D] [DecidableEq D] [Zero E] [DecidableEq E]
+    (f : D → K) (hz : ∀ a, f a = 0 ↔ a = 0)
+    (j : E → K) (jz : ∀ a, j a = 0 ↔ a = 0)
+    (sign : D → Int) (sign' : E → Int)
+    (endpointSigns : EndpointSigns D A) (endpointSigns' : EndpointSigns E B)
+    (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
+    (hbound' : ∀ a, -1 ≤ sign' a ∧ sign' a ≤ 1)
+    (hneg : ∀ a, sign a < 0 ↔ f a < 0) (hneg' : ∀ a, sign' a < 0 ↔ j a < 0)
+    (hzero : ∀ a, sign a = 0 ↔ f a = 0) (hzero' : ∀ a, sign' a = 0 ↔ j a = 0)
+    (chain : Array (DensePoly D)) (chain' : Array (DensePoly E))
+    (hsize : chain.size = chain'.size)
+    (hscale : ∀ i, ∃ c : K, 0 < c ∧
+      interpret j jz (chain'.getD i 0) = C c * interpret f hz (chain.getD i 0)) :
+    TarskiCertificate.signs sign endpointSigns chain .negInf =
+        TarskiCertificate.signs sign' endpointSigns' chain' .negInf ∧
+      TarskiCertificate.signs sign endpointSigns chain .posInf =
+        TarskiCertificate.signs sign' endpointSigns' chain' .posInf := by
+  have hentries (i : Nat) :
+      sign (chain.getD i 0).leadingCoeff = sign' (chain'.getD i 0).leadingCoeff ∧
+        (chain.getD i 0).natDegree = (chain'.getD i 0).natDegree := by
+    obtain ⟨c, hc, he⟩ := hscale i
+    have hl := congrArg Polynomial.leadingCoeff he
+    simp only [Polynomial.leadingCoeff_mul, Polynomial.leadingCoeff_C, leadingCoeff_interpret] at hl
+    constructor
+    · exact signs_scale _ _ _ _ c hc hl (hbound _) (hbound' _) (hneg _) (hneg' _) (hzero _) (hzero' _)
+    · rw [← natDegree_interpret f hz, ← natDegree_interpret j jz, he,
+        Polynomial.natDegree_C_mul (ne_of_gt hc)]
+  constructor
+  · apply Array.ext
+    · simpa only [TarskiCertificate.signs, Hex.Array.size_map'] using hsize
+    · intro i hi hi'
+      have hi₀ : i < chain.size := by simpa only [TarskiCertificate.signs, Hex.Array.size_map'] using hi
+      have hi₁ : i < chain'.size := by simpa only [TarskiCertificate.signs, Hex.Array.size_map'] using hi'
+      have he := hentries i
+      rw [← Array.getElem_eq_getD (h := hi₀) 0, ← Array.getElem_eq_getD (h := hi₁) 0] at he
+      simp only [TarskiCertificate.signs, Hex.Array.getElem_map', Endpoint.signAt, he.1, he.2]
+  · apply Array.ext
+    · simpa only [TarskiCertificate.signs, Hex.Array.size_map'] using hsize
+    · intro i hi hi'
+      have hi₀ : i < chain.size := by simpa only [TarskiCertificate.signs, Hex.Array.size_map'] using hi
+      have hi₁ : i < chain'.size := by simpa only [TarskiCertificate.signs, Hex.Array.size_map'] using hi'
+      have he := (hentries i).1
+      rw [← Array.getElem_eq_getD (h := hi₀) 0, ← Array.getElem_eq_getD (h := hi₁) 0] at he
+      simpa only [TarskiCertificate.signs, Hex.Array.getElem_map', Endpoint.signAt] using he
+
 end HexRealRootsMathlib.Tarski

@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
+public import HexSturm.Transport
+public meta import HexSturm.Transport
 public import HexSturm.Fixtures
 public import HexRealRoots.TarskiTests
 public meta import HexSturm.Basic
@@ -156,5 +158,33 @@ theorem stale_rejected : check orderSign 8 p 1 (.finite (-2)) (.finite 2) 2 lite
 /-- info: 'Hex.Sturm.prepare_isSome' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Hex.Sturm.prepare_isSome
+
+/- Transport exercises singleton chains, proper common factors and constants.
+Each translated certificate is checked independently, including wrong bindings. -/
+#guard (#[0, p, x - 1, 1] : Array (DensePoly Rat)).all fun f =>
+  let p := scale (1 / 6 : Rat) p
+  let f := scale (1 / 10 : Rat) f
+  match certify orderSign (7 : Nat) p f (.finite (-2)) (.finite 2) with
+  | none => false
+  | some c =>
+    let z := c.clearDenominators p f Hex.TarskiTests.interval
+    let zp := (ZPoly.clearDenominators p).2
+    let zf := (ZPoly.clearDenominators f).2
+    let a := Endpoint.finite Hex.TarskiTests.interval.lower
+    let b := Endpoint.finite Hex.TarskiTests.interval.upper
+    TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 zp zf a b c.value z &&
+      !TarskiCertificate.check Int.sign EndpointSigns.intDyadic 8 zp zf a b c.value z &&
+      !TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 zp zf a b (c.value + 1) z &&
+      !TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 zp zf b a c.value z &&
+      !TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 zp zf a b c.value
+        { z with remainders := { z.remainders with
+          initial := { z.remainders.initial with leftScale := -z.remainders.initial.leftScale } } } &&
+      check orderSign 7 (ZPoly.toRatPoly zp) (ZPoly.toRatPoly zf)
+        (.finite (-2)) (.finite 2) c.value z.toRat
+
+#guard match TarskiCertificate.certify Int.sign EndpointSigns.intDyadic ZPoly.normalizeContent
+    (7 : Nat) Hex.TarskiTests.p (Hex.TarskiTests.x - 1) .negInf .posInf with
+  | none => false
+  | some c => check orderSign 7 p (x - 1) .negInf .posInf (-1) c.toRat
 
 end Hex.Sturm.Conformance
