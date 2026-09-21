@@ -82,6 +82,11 @@ theorem prepare_eq_some [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E)
   QueryReplay.fromChains domain.sign (adapter domain.sign) context domain.head f domain.lower domain.upper
     domain.squarefree (QueryChain.build domain.sign (normalize domain.sign) domain.head f)
 
+/-- The literal context does not affect a prepared certificate's query value. -/
+theorem certifyPrepared_value [Neg E] [Inv E] {Ctx : Type v} (context : Ctx)
+    (domain : Prepared E) (f : DensePoly E) :
+    (certifyPrepared context domain f).value = queryPrepared domain f := rfl
+
 /-- An ordered-field query on finite or infinite endpoints. The `Option`
 records mathematical domain failure; signs and arithmetic are total. -/
 @[expose] def query [Neg E] [Inv E] (sign : E → Int) (p f : DensePoly E) (a b : Endpoint E) : Option Int :=
@@ -91,6 +96,15 @@ records mathematical domain failure; signs and arithmetic are total. -/
 @[expose] def certify [Neg E] [Inv E] {Ctx : Type v} (sign : E → Int) (context : Ctx)
     (p f : DensePoly E) (a b : Endpoint E) : Option (QueryReplay E E Ctx) :=
   QueryReplay.certify sign (adapter sign) (normalize sign) context p f a b
+
+/-- Certification with any literal context has the same whole query result. -/
+theorem certify_value [Neg E] [Inv E] {Ctx : Type v} (sign : E → Int) (context : Ctx)
+    (p f : DensePoly E) (a b : Endpoint E) :
+    (certify sign context p f a b).map QueryReplay.value = query sign p f a b := by
+  simp only [certify, query, QueryReplay.query, QueryReplay.certify]
+  split
+  · rfl
+  · split <;> rfl
 
 /-- Reusing a validated domain gives the same whole result as the ordinary
 query, while retaining its existing squarefree chain. -/
@@ -129,6 +143,16 @@ namespace Replay
 @[expose] def check {Ctx : Type v} [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
     (p f : DensePoly E) (a b : Endpoint E) (value : Int) (cert : QueryReplay E E Ctx) : Bool :=
   QueryReplay.check sign (adapter sign) context p f a b value cert
+
+/-- Accepted replay retains every literal binding, independently of semantic
+coefficient interpretation or producer provenance. -/
+theorem check_bindings {Ctx : Type v} [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
+    (p f : DensePoly E) (a b : Endpoint E) (value : Int) (cert : QueryReplay E E Ctx)
+    (h : check sign context p f a b value cert = true) :
+    cert.context = context ∧ cert.head = p ∧ cert.queryPoly = f ∧
+      cert.lower = a ∧ cert.upper = b ∧ cert.value = value := by
+  simp only [check, QueryReplay.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+  exact ⟨h.1, h.2.1, h.2.2.1, h.2.2.2.1, h.2.2.2.2.1, h.2.2.2.2.2.1⟩
 
 end Replay
 end Hex.Sturm

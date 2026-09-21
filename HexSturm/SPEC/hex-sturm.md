@@ -317,6 +317,11 @@ without a reverse import. Pin Z3's RCF API for these differential fixtures;
 BKR/Thom reconstruction and the family's full `tower8` isolation benchmark
 remain their owners' obligations.
 
+The registered input families are `head-degree` (Chebyshev heads `T_n` with
+query `1` on `(-2,2)`) and `query-degree` (fixed head `x²-2`, query `x^m+1`
+on `(-2,2)`). They exercise normal degree descent and initial reduction,
+respectively; the additional sweep dimensions below remain required.
+
 Phase 4 measures domain/squarefree checks, initial reduction, subsequent chain
 production, endpoint evaluation, coefficient signs and literal replay
 separately. Sweep `degree P`, `degree F`, coefficient bit size, endpoint size,

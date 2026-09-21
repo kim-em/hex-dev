@@ -166,7 +166,8 @@ pairs per case on automatically selected CPU 3. The runner is
 `scripts/bench/sturm_mathlib_sweep.py --shared-host --cpu 3 --samples 4`.
 Every candidate rebuild printed only `propext`, `Classical.choice` and
 `Quot.sound`; compiler output and artifact sizes are retained. The source hashes
-remained unchanged. All completed samples, including concurrent host activity,
+remained unchanged during that run. The later shared-fixture and axiom-guard
+changes are measured separately below. All completed samples, including concurrent host activity,
 are included.
 
 The acceptance/domain module's median fresh build was 5282.507 ms against

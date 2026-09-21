@@ -1569,9 +1569,9 @@ libraries:
     status: active
     phase4:
       input_families:
-        - name: chebyshev-head-degree
+        - name: head-degree
           description: Chebyshev heads T_n with query 1 on (-2,2), measuring the normal signed chain and endpoint passes as head degree grows.
-        - name: quadratic-query-degree
+        - name: query-degree
           description: Fixed head x²−2 with query x^m+1 on (-2,2), measuring initial reduction and replay as query degree grows.
   HexSturmMathlib:
     deps: [HexSturm, HexPolyMathlib, HexRealRootsMathlib]

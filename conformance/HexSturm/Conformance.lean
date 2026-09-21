@@ -103,6 +103,23 @@ results, including the `none` cases and zero query polynomials. -/
 #guard !Replay.check orderSign 7 p 1 (.finite (-2)) (.finite 2) 2
   { literal with remainders := { literalChain with initial := ⟨1, 1, 2⟩ } }
 
+/- A genuine repeated-root chain passes all identities but has a nonconstant
+terminal gcd. The squarefree constant-tail guard must reject it. -/
+#guard
+  let chain : QueryChain Rat :=
+    { chain := #[x * x, x], degrees := #[2, 1], initial := ⟨1, 0, 2⟩,
+      steps := #[], terminal := some (1, x) }
+  QueryChain.check orderSign (x * x) 1 chain && !QueryReplay.constantTail chain &&
+    !Replay.check orderSign 7 (x * x) 1 (.finite (-2)) (.finite 2) 1
+      { literal with
+        head := x * x
+        squarefree := chain
+        remainders := chain
+        lowerSigns := #[1, -1]
+        upperSigns := #[1, 1]
+        lowerVariations := 1
+        value := 1 }
+
 theorem literal_checks : Replay.check orderSign 7 p 1 (.finite (-2)) (.finite 2) 2 literal = true := by
   simp only [Replay.check, QueryReplay.check, QueryChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
@@ -116,5 +133,18 @@ theorem stale_rejected : Replay.check orderSign 8 p 1 (.finite (-2)) (.finite 2)
 /-- info: 'Hex.Sturm.Conformance.stale_rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms stale_rejected
+
+/-- info: 'Hex.Sturm.prepare_eq_some' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.Sturm.prepare_eq_some
+/-- info: 'Hex.Sturm.certifyPrepared_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.Sturm.certifyPrepared_value
+/-- info: 'Hex.Sturm.certify_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.Sturm.certify_value
+/-- info: 'Hex.Sturm.Replay.check_bindings' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.Sturm.Replay.check_bindings
 
 end Hex.Sturm.Conformance

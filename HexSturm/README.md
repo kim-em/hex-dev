@@ -14,6 +14,9 @@ negative leading signs are retained. Integers use the separate content backend.
 squarefree chain. Prepared values have a private constructor. `certify` and
 `certifyPrepared` retain finite evidence with the caller's full literal context;
 `Replay.check` checks that evidence through the shared checker.
+`certify_value` and `certifyPrepared_value` relate certificates with any context
+to their query results; `Replay.check_bindings` exposes the exact bindings
+established by acceptance.
 
 The companion proves exact domain equivalence and produced-certificate
 acceptance. Root-sum and replay semantics, the root-count API, singleton/sign
