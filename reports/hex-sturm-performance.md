@@ -1,9 +1,9 @@
 # Shared Sturm–Tarski computation measurements
 
 Phase 4 remains incomplete. Nine of thirteen two-sided registrations are
-consistent with their declared models; four are inconclusive. All completed
-samples are retained, and no rerun or timing-driven change to the registrations
-was made. The observations cover the implemented query/checker paths, not the
+consistent with their declared models; four remain unresolved after the single
+unchanged rerun described below. All completed samples are retained, and the
+query registrations and models are unchanged. The observations cover the implemented query/checker paths, not the
 missing root-sum theorem or downstream extension infrastructure.
 
 ## Protocol and provenance
@@ -45,8 +45,9 @@ scalars where the stage returns a certificate hash.
 ## Results
 
 Final-rung times are medians in microseconds. The harness omits a fitted slope
-when its five-rung ladder has too few retained rungs for that statistic; these
-verdicts must not be described as regression-slope estimates.
+when the retained log-parameter span is less than one. For the head-degree
+ladder, trimming degree 8 leaves `log(20/10) < 1`, so its verdict uses the
+normalized-time range check, not a fitted slope.
 
 | Registration | Declared model | Verdict | Final parameter | Median µs |
 | --- | --- | --- | --- | --- |
@@ -72,6 +73,42 @@ characterization. These results leave the performance obligation open under
 replaced with a fixed budget. Further work must distinguish fixed overhead,
 integer representation thresholds and intermediate coefficient growth before
 claiming a valid performance characterization.
+
+### Investigation of the inconclusive results
+
+[The single unchanged rerun](bench-results/sturm-repeat-ff2086080/) uses the
+same executable SHA256 and registration settings as the initial run, with a
+new automatically leased CPU and retained host observations. The residual
+slopes for `runIntegerHigh`, `runInitialHigh` and `runReplayHigh` were
+−0.212, +0.267 and −0.212: all remain inconclusive. `runReplay` passed the
+range check on this run, with normalized times spanning 321.563–480.641,
+against 168.685–263.694 initially. The mixed result leaves replay unresolved;
+neither run supersedes the other. No further unchanged rerun is permitted.
+
+The runtime threshold is concrete: Lean 4.34.0's `include/lean/lean.h` defines
+`LEAN_MAX_SMALL_INT` as `INT_MAX` on this 64-bit host, namely 2³¹−1.
+`lean_int_mul` uses `lean_int64_to_int` for scalar operands and calls the big
+integer path for boxed operands. A 50-bit stored coefficient is therefore
+already outside the small-integer range. This agrees with the retained GMP
+profiles; it does not identify every allocation's cause.
+
+[Certificate diagnostics](bench-results/sturm-repeat-ff2086080/diagnostics.json),
+reproducible with the adjacent `analyze.py`, show replay identity products of
+31, 42 and 57 bits at head degrees 12, 16 and 20. Stored query-degree
+coefficients reach 26, 34 and 50 bits at query degrees 48, 64 and 96, crossing
+the small-integer threshold. These inspect explicit certificate operands and
+products, not peak producer intermediates. The near-flat initial-reduction
+normalized times before the threshold and their rise afterward support a
+representation-cost explanation. Fixed domain/replay overhead also weighs
+more heavily at small query degrees. Their individual contributions remain
+unquantified: the coefficient-operation models alone do not establish the
+wall-time characterizations on these mixed arithmetic regimes.
+
+The separate fixed-field pseudo-gcd gap is resolved by the wider degree
+ladder, with the same quadratic model and all original rungs retained; see
+[the polynomial report](hex-poly-performance.md#concerns). Across the fifteen
+new registrations, eleven now have consistent characterizations and four
+query registrations remain unresolved. No existing library phase is changed.
 
 Stored certificate sizes rise from 959 to 3506 bytes on the head-degree ladder
 and 496 to 1152 bytes on the query-degree ladder. Maximum stored integer
@@ -154,7 +191,8 @@ counts remain required. Extension-depth and nested-evidence probes require the
 downstream adapters. Root-sum/replay soundness, count/singleton/sign/bound
 consequences and whole-Option backend correspondence remain proof gates.
 The [recorded finding](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442)
-also covers the owning polynomial library's separate pseudo-gcd scaling gap.
+also records the original polynomial pseudo-gcd finding; its wider-ladder
+resolution is documented in the polynomial report.
 Nothing in these measurements advances the library phase or closes #10375.
 
 The exact benchmark fixtures can be checked again with the pinned oracle

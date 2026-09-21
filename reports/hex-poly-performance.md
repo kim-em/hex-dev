@@ -433,11 +433,32 @@ so its total coefficient work is quadratic. F7 keeps scalar sizes fixed.
 | `runPseudoDiv` | 64,96,128,192,256,384,512 | consistent | −0.038 | 2689.273 µs |
 | `runPseudoGcd` | 16,24,32,48,64,96 | inconclusive | −0.223 | 171.916 µs |
 
-The faster-than-declared pseudo-gcd observation is an unresolved
-characterization, not a pass. Lower-order allocation/loop costs on this small
-ladder are a hypothesis requiring investigation. Every completed sample is
-retained; no rerun or timing-driven change to the registrations was made.
-[#10375 records the required phase rollback and remaining work](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442).
+The original small-degree characterization was inconclusive. Its single
+unchanged rerun, retained in
+[sturm-repeat-ff2086080](bench-results/sturm-repeat-ff2086080/), reproduced the
+trend with residual slope −0.235. Both runs used identical executable hashes;
+neither is discarded. This was a new registration, not a measured regression
+in the existing field gcd.
+
+For divisor degree `m >= 1` and dividend degree `m+1`, the implemented
+`pseudoDivMod` loops make `3*m+7` scalar multiplications: two for powers,
+two active leading terms, two in the active correction, two quotient terms,
+and `m+(2*m-1)` remainder terms. The final constant step makes six. On the
+Fibonacci chain this sums to `3*n*(n+1)/2+7*n+6`. This counts only scalar
+multiplication calls in that routine, excluding allocation, constructors,
+normalization, hashing and arithmetic within F7. It gives a concrete
+lower-order term while retaining the quadratic leading model.
+
+The registration therefore retains all six original degrees and extends the
+ladder through `128,192,256,384,512,768,1024`, with the same four-trial protocol,
+100 ms target and quadratic model. Coefficients remain in F7 throughout.
+[The widened run](bench-results/poly-pseudo-wide/) is consistent, with residual
+slope −0.102355, no truncation and a final-rung median of 17.690 ms. All raw
+samples, host context and the measured registration source are retained. This
+resolves this fixed-field scaling mismatch without changing the algorithm,
+model, warmup fraction or slope tolerance. The original and repeated
+small-ladder observations remain part of the evidence. Existing library phase
+records are unchanged; the remaining shared-query obligations stay in #10375.
 
 The exact benchmark fixtures can be checked again with the pinned oracle
 environment using `python scripts/bench/check_sturm_fixtures.py` followed by

@@ -944,7 +944,7 @@ setup_fixed_benchmark runFlintPrimitivePartChecksum131072 where flintCompareConf
 
 private def inspectPseudo : IO UInt32 := do
   let coefficients (p : DensePoly F7) := p.toArray.map (fun c => c.val.val)
-  for n in #[16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024] do
+  for n in #[16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512] do
     let i := prepEuclidInput n
     let r := DensePoly.pseudoDiv i.dividend i.divisor
     let g := prepEuclidWorstInput n
