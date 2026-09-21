@@ -551,3 +551,15 @@ because repository metadata and report artifacts changed during collection.
 Its [failure log](bench-results/sturm-replay-deferred-proof-aborted.log) is
 retained. The runner emitted no result artifact, so no timing values from that
 attempt are claimed or used; the replacement collection uses a fixed checkout.
+
+The replacement [fresh-module collection](bench-results/hex-sturm-mathlib-deferred.json)
+completed all four adjacent AB/BA pairs per case with the checkout fixed.
+Acceptance/domain candidate and baseline median builds were 7.045 s and
+6.790 s; the median paired difference was 0.268 s. The rejection results and
+all compiler output, source/dependency fingerprints, artifact sizes and axiom
+sets are retained in the JSON. Both cases have `no-comparable-control`:
+these are fresh whole-build observations, not a resolved incremental kernel
+cost or a speedup claim. This rational literal track checks the current
+companion import closure; it does not itself measure dyadic evaluation or
+supply the deferred general semantic theorem. The new dyadic ordinary-kernel
+examples and equality axiom audit are covered by conformance above.
