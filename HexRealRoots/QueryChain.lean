@@ -28,6 +28,8 @@ structure QueryStep (D : Type u) [Zero D] [DecidableEq D] where
 zero identity. A singleton chain has no terminal pair. -/
 structure QueryChain (D : Type u) [Zero D] [DecidableEq D] where
   chain : Array (DensePoly D)
+  /-- Literal degree data for serialized certificates; replay checks it against
+  the stored entries as well as checking strict degree descent. -/
   degrees : Array Nat
   initial : QueryStep D
   steps : Array (QueryStep D)
@@ -37,7 +39,9 @@ namespace QueryChain
 
 variable {D : Type u} [Zero D] [DecidableEq D] [One D] [Add D] [Sub D] [Mul D]
 
-/-- No content removal; useful for arbitrary executable coefficient domains. -/
+/-- No content removal; useful for small generic interpretation probes.
+Unnormalized pseudo-remainder sequences can have exponential coefficient growth.
+Production backends should supply a proved positive normalization. -/
 @[expose] def normalizeId (p : DensePoly D) : D × DensePoly D := (1, p)
 
 /-- Extend the chain using only positive-scaled pseudo-division. The internal

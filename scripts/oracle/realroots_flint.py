@@ -278,6 +278,87 @@ def _tarski_expected(coeffs: list[int], query: list[int], endpoints: list[list[i
         raise OracleMismatch(f"exact qqbar Tarski oracle failed: {exc}") from exc
 
 
+def _certificate_chain(cases: dict, lib: str, prefix: str, p: Any, f: Any) -> list[Any]:
+    """Check supplied positive identities independently with FLINT polynomial arithmetic."""
+    from flint import fmpz_poly
+
+    def fixture(suffix: str, kind: str, field: str) -> Any:
+        record = cases.get((lib, prefix + suffix))
+        if record is None or record["kind"] != kind:
+            raise OracleMismatch(f"missing certificate {prefix + suffix}")
+        return record[field]
+
+    rows = fixture("/chain", "matrix", "rows")
+    chain = [fmpz_poly(row) for row in rows]
+    if not chain or chain[0] != p or len(chain) > p.degree() + 1:
+        raise OracleMismatch(f"{prefix}: invalid chain head or length")
+    degrees = [s.degree() for s in chain]
+    if any(s.is_zero() for s in chain) or any(a <= b for a, b in zip(degrees, degrees[1:])):
+        raise OracleMismatch(f"{prefix}: zero entry or nondecreasing degree")
+    if fixture("/degrees", "matrix", "rows") != [degrees]:
+        raise OracleMismatch(f"{prefix}: incorrect literal degrees")
+
+    initial = fixture("/initial/scales", "matrix", "rows")
+    if len(initial) != 1 or len(initial[0]) != 2 or min(initial[0]) <= 0:
+        raise OracleMismatch(f"{prefix}: nonpositive or malformed initial scales")
+    u, v = initial[0]
+    q = fmpz_poly(fixture("/initial/quotient", "poly", "coeffs"))
+    second = chain[1] if len(chain) > 1 else fmpz_poly([])
+    if u * f * p.derivative() != q * p + v * second:
+        raise OracleMismatch(f"{prefix}: incorrect initial polynomial identity")
+
+    scales = fixture("/steps/scales", "matrix", "rows")
+    quotients = fixture("/steps/quotients", "matrix", "rows")
+    if len(scales) != max(0, len(chain) - 2) or len(quotients) != len(scales):
+        raise OracleMismatch(f"{prefix}: incorrect number of signed steps")
+    for i, (pair, coeffs) in enumerate(zip(scales, quotients)):
+        if len(pair) != 2 or min(pair) <= 0:
+            raise OracleMismatch(f"{prefix}: nonpositive or malformed step scales")
+        if pair[0] * chain[i] != fmpz_poly(coeffs) * chain[i + 1] - pair[1] * chain[i + 2]:
+            raise OracleMismatch(f"{prefix}: incorrect signed identity at step {i}")
+
+    terminal = fixture("/terminal/scale", "matrix", "rows")
+    q = fmpz_poly(fixture("/terminal/quotient", "poly", "coeffs"))
+    if len(chain) == 1:
+        if terminal or not q.is_zero():
+            raise OracleMismatch(f"{prefix}: singleton has terminal evidence")
+    else:
+        if len(terminal) != 1 or len(terminal[0]) != 1 or terminal[0][0] <= 0:
+            raise OracleMismatch(f"{prefix}: missing or nonpositive terminal scale")
+        if terminal[0][0] * chain[-2] != q * chain[-1]:
+            raise OracleMismatch(f"{prefix}: incorrect terminal polynomial identity")
+    return chain
+
+
+def _check_tarski_certificate(cases: dict, lib: str, case_id: str, coeffs: list[int],
+                             query: list[int], endpoints: list[list[int]], value: int) -> None:
+    from flint import fmpz_poly
+
+    p = fmpz_poly(coeffs)
+    sf = _certificate_chain(cases, lib, case_id + "/squarefree", p, fmpz_poly([1]))
+    if sf[-1].degree() != 0:
+        raise OracleMismatch("squarefreeness certificate has nonconstant tail")
+    chain = _certificate_chain(cases, lib, case_id + "/remainders", p, fmpz_poly(query))
+    signs = []
+    variations = []
+    for endpoint in map(_dyadic_value, endpoints):
+        row = []
+        for polynomial in chain:
+            evaluated = Fraction(0)
+            for c in reversed(polynomial.coeffs()):
+                evaluated = endpoint * evaluated + int(c)
+            row.append((evaluated > 0) - (evaluated < 0))
+        nonzero = [s for s in row if s]
+        signs.append(row)
+        variations.append(sum(a != b for a, b in zip(nonzero, nonzero[1:])))
+    for suffix, expected in (("/signs", signs), ("/variations", [variations])):
+        record = cases.get((lib, case_id + suffix))
+        if record is None or record["kind"] != "matrix" or record["rows"] != expected:
+            raise OracleMismatch(f"incorrect certificate {suffix}")
+    if variations[0] - variations[1] != value:
+        raise OracleMismatch("certificate variation drop differs from query value")
+
+
 def check(
     source: str | Path | None,
     *,
@@ -318,6 +399,9 @@ def check(
                     raise OracleMismatch(f"Tarski result must be an integer or null: {actual!r}")
                 if actual != expected:
                     raise OracleMismatch(f"Tarski query mismatch: Lean={actual}, qqbar={expected}")
+                if actual is not None:
+                    _check_tarski_certificate(cases, lib, case_id, coeffs,
+                                             list(query["coeffs"]), endpoints["rows"], actual)
                 checked["tarski"] += 1
                 continue
             if "isolate_none" in ops:

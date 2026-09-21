@@ -1139,8 +1139,8 @@ gcd and extended gcd. Generic characteristic-zero Yun decomposition over
 `DensePoly K` is missing; `hex-real-closure` owns its specification, including
 multiplicities over lawful exact coefficient fields.
 [hex-real-roots](../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries) owns
-integer Sturm chains and the specified, not yet implemented,
-`ZPoly.tarskiQuery` and `TarskiReplay`. Its ordinary root counts and
+integer Sturm chains and the implemented `ZPoly.tarskiQuery` and `TarskiReplay`.
+Their abstract root-sum and replay soundness proofs remain required. Its ordinary root counts and
 `hex-rcf`'s derivative-seeded `SturmReplay` cannot certify general Tarski
 queries. Transcendental sign refinement consumes a caller-supplied approximation
 procedure. `hex-ordered-fn` owns the small exact finite-bound representation and

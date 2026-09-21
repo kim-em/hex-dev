@@ -180,6 +180,18 @@ private def queryCases : List (String × ZPoly × ZPoly × DyadicInterval) := Id
     ("rootEndpoint", p, 1, queryRootEnd), ("rootEndpointZeroQuery", p, 0, queryRootEnd)
   ]
 
+private def emitQueryChain (id : String) (c : QueryChain Int) : IO Unit := do
+  emitMatrixFixture lib (id ++ "/chain") (c.chain.toList.map (·.toArray.toList))
+  emitMatrixFixture lib (id ++ "/degrees") [c.degrees.toList.map Int.ofNat]
+  emitMatrixFixture lib (id ++ "/initial/scales") [[c.initial.leftScale, c.initial.rightScale]]
+  emitPolyFixture lib (id ++ "/initial/quotient") c.initial.quotient.toArray.toList
+  emitMatrixFixture lib (id ++ "/steps/scales")
+    (c.steps.toList.map (fun s => [s.leftScale, s.rightScale]))
+  emitMatrixFixture lib (id ++ "/steps/quotients") (c.steps.toList.map (·.quotient.toArray.toList))
+  emitMatrixFixture lib (id ++ "/terminal/scale") (c.terminal.toList.map (fun t => [t.1]))
+  emitPolyFixture lib (id ++ "/terminal/quotient")
+    (c.terminal.map (·.2.toArray.toList) |>.getD [])
+
 private def emitQueryCase (c : String × ZPoly × ZPoly × DyadicInterval) : IO Unit := do
   let (name, p, f, interval) := c
   let id := "tarski/" ++ name
@@ -192,9 +204,14 @@ private def emitQueryCase (c : String × ZPoly × ZPoly × DyadicInterval) : IO 
   emitResult lib id "tarski" value
   match TarskiReplay.certify p f interval with
   | none => pure ()
-  | some cert =>
+  | some cert => do
     unless TarskiReplay.check p f interval cert.value cert do
       throw <| IO.userError s!"{lib}/{id}: produced certificate failed replay"
+    emitQueryChain (id ++ "/squarefree") cert.squarefree
+    emitQueryChain (id ++ "/remainders") cert.remainders
+    emitMatrixFixture lib (id ++ "/signs") [cert.lowerSigns.toList, cert.upperSigns.toList]
+    emitMatrixFixture lib (id ++ "/variations")
+      [[Int.ofNat cert.lowerVariations, Int.ofNat cert.upperVariations]]
 
 end Hex.RealRootsEmit
 
