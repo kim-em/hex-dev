@@ -36,7 +36,8 @@ both division outputs agree with Mathlib. The raw gcd is associated to
 Mathlib's normalized gcd, and interpreted xgcd coefficients satisfy the
 Bézout identity. `Interpret.sub_isZero` identifies zero-difference checks
 with semantic polynomial equality without assuming an injective coefficient
-map.
+map. `Interpret.monicize_leading` proves semantic monicity of the actual
+monicization output for every nonzero input.
 
 # Verification
 

@@ -38,7 +38,9 @@ coefficient map. Its lemmas cover arithmetic, derivative, Horner evaluation,
 division, gcd, extended gcd, powers and monicization without ring or field
 instances on the source. Scalar operation preservation is an explicit
 hypothesis. Structural equality remains distinct from equality after
-interpretation.
+interpretation. Semantic monicization does not supply the literal
+`leadingCoeff = 1` witness required by `divModMonic` and `modByMonic`;
+use general division unless that structural witness is available.
 
 # Verification
 

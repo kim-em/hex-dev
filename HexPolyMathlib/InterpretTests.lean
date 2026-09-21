@@ -40,6 +40,13 @@ example (p : Poly) : denote p.derivative = (denote p).derivative :=
 example (p : Poly) (x : Rep) : (denote p).eval (value x) = value (p.eval x) :=
   eval_interpret value value_eq_zero value_add value_mul p x
 
+example (p : Poly) : denote (-p) = -denote p :=
+  interpret_neg value value_eq_zero value_sub p
+example (p q : Poly) : denote (p % q) = denote p % denote q :=
+  interpret_mod value value_eq_zero value_sub value_mul value_div p q
+example (p : Poly) (hp : p ≠ 0) : (denote (monicize p)).leadingCoeff = 1 :=
+  monicize_leading value value_eq_zero value_mul value_inv p hp
+
 example : a ≠ b := by decide +kernel
 example : denote a = denote b :=
   (sub_isZero value value_eq_zero value_sub a b).mp (by decide +kernel)

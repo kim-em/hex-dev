@@ -1,6 +1,6 @@
 {
   "path": "HexPoly/Interpret.lean",
   "baseline_blob": null,
-  "current_blob": "263734fabddaea3cd89a4661aca5d02fc47f269a",
+  "current_blob": "7604a3e22a6c3b57dbf20af41a4836c1aa2a6053",
   "reason": "Adds a new coefficient-interpretation map and transfer theorems for existing polynomial algorithms. No existing factorization-service computation calls Interpret.map or Interpret.mapImpl; the csimp rule matches only the new Interpret.map constant. Existing polynomial arithmetic, division and gcd implementations are unchanged. This exemption covers the existing integer-factorization sweep, not measurements of the new interpretation API."
 }

@@ -264,8 +264,8 @@ workflows:
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
-          - name: Build library
-            run: lake build
+          - name: Build library and release regressions
+            run: lake build HexPoly HexPolyTests
           - name: Assert Mathlib-free
             run: |
               if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
@@ -410,7 +410,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexPolyMathlib 2>&1 | tee build.log
+              lake build HexPolyMathlib HexPolyMathlibTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs

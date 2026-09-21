@@ -64,6 +64,19 @@ theorem interpret_sub [Sub E] (hs : ∀ a b, f (a - b) = f a - f b)
   rw [interpret, DensePoly.Interpret.map_sub f hz hs, toPolynomial_sub]
   rfl
 
+theorem interpret_neg [Sub E] (hs : ∀ a b, f (a - b) = f a - f b)
+    (p : DensePoly E) : interpret f hz (-p) = -(interpret f hz p) := by
+  rw [interpret, DensePoly.Interpret.map_neg f hz hs, toPolynomial_neg]
+  rfl
+
+/-- A nonzero monicized representation has leading value one under interpretation. -/
+theorem monicize_leading [Mul E] [Inv E]
+    (hm : ∀ a b, f (a * b) = f a * f b) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
+    (p : DensePoly E) (hp : p ≠ 0) :
+    (interpret f hz (monicize p)).leadingCoeff = 1 := by
+  rw [interpret, DensePoly.Interpret.map_monicize f hz hm hi, leadingCoeff_toPolynomial]
+  exact DensePoly.monicize_monic (fun h => hp ((DensePoly.Interpret.map_eq_zero f hz p).mp h))
+
 /-- A zero difference decides semantic equality, even for unequal stored polynomials. -/
 theorem sub_isZero [Sub E] (hs : ∀ a b, f (a - b) = f a - f b)
     (p q : DensePoly E) :
@@ -106,6 +119,11 @@ theorem interpret_rem (p q : DensePoly E) :
   change toPolynomial _ = _
   rw [h]
   exact toPolynomial_mod _ _
+
+/-- Polynomial modulus notation has the same interpreted remainder. -/
+theorem interpret_mod (p q : DensePoly E) :
+    interpret f hz (p % q) = interpret f hz p % interpret f hz q :=
+  interpret_rem f hz hs hm hd p q
 
 /-- Both division outputs agree with Mathlib, including a zero divisor. -/
 theorem interpret_divMod (p q : DensePoly E) :

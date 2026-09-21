@@ -31,13 +31,6 @@ instance [DecidableEq A] : DecidableEq (ZeroRep A isZero) :=
 @[expose] def ofRaw (a : A) : ZeroRep A isZero :=
   if h : isZero a = false then some ⟨a, h⟩ else none
 
-theorem ofRaw_eq_zero (a : A) : ofRaw (isZero := isZero) a = 0 ↔ isZero a = true := by
-  unfold ofRaw
-  by_cases h : isZero a = false
-  · simp [h, show (0 : ZeroRep A isZero) = none from rfl]
-  · simp [h, show (0 : ZeroRep A isZero) = none from rfl]
-    cases hval : isZero a <;> simp_all
-    rfl
 end ZeroRep
 
 -- a+bX interpreted at the selected root +1 of the reducible polynomial X²-1.
@@ -106,6 +99,7 @@ theorem value_div (a b : Rep) : value (a/b) = value a / value b := by
 example : root ≠ (1 : Rep) := by decide +kernel
 example : value root = value (1 : Rep) := by decide +kernel
 example : root - 1 = (0 : Rep) := by decide +kernel
+example : value (-root) = -1 := by decide +kernel
 example : pack (-1) 1 = (0 : Rep) := by decide +kernel
 
 -- DensePoly's existing zero normalization works without a Field instance.
@@ -181,8 +175,22 @@ example : value (product.eval root) = 0 := by decide +kernel
 example : mapped (monicize product) = monicize (mapped product) :=
   Interpret.map_monicize value value_eq_zero value_mul value_inv product
 
+-- Division must interpret a noncanonical, nonunit leading coefficient.
+@[expose] def noncanonicalDivisor : Poly := ofCoeffs #[1, pack 0 2]
+example : noncanonicalDivisor.leadingCoeff ≠ pack 2 0 := by decide +kernel
+example : value noncanonicalDivisor.leadingCoeff = 2 := by decide +kernel
+example : mapped (divMod product noncanonicalDivisor).1 =
+    (ofCoeffs #[-5/4, 1/2] : DensePoly Rat) := by decide +kernel
+example : mapped (divMod product noncanonicalDivisor).2 = C (9/4 : Rat) := by decide +kernel
+example (p : Poly) : mapped (-p) = -mapped p :=
+  Interpret.map_neg value value_eq_zero value_sub p
+example (p q : Poly) : mapped (p % q) = mapped p % mapped q :=
+  Interpret.map_mod value value_eq_zero value_sub value_mul value_div p q
+
 -- Compiled conformance uses the csimp implementations of these same operations.
 #guard (divMod a b).2.isZero
+#guard mapped (divMod product noncanonicalDivisor).1 == (ofCoeffs #[-5/4, 1/2] : DensePoly Rat)
+#guard mapped (divMod product noncanonicalDivisor).2 == C (9/4 : Rat)
 #guard (mapped (gcd product a)).natDegree == 1
 #guard mapped product.derivative == (mapped product).derivative
 
@@ -192,5 +200,17 @@ example : mapped (monicize product) = monicize (mapped product) :=
 /-- info: 'HexPoly.InterpretTests.bezout_transfer' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms bezout_transfer
+
+/-- info: 'HexPoly.InterpretTests.gcd_transfer' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms gcd_transfer
+
+/-- info: 'HexPoly.InterpretTests.derivative_transfer' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms derivative_transfer
+
+/-- info: 'HexPoly.InterpretTests.eval_transfer' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms eval_transfer
 
 end HexPoly.InterpretTests

@@ -39,7 +39,8 @@ include hz
 omit [DecidableEq E] [DecidableEq F] in
 theorem map_zero : f (Zero.zero : E) = (Zero.zero : F) := (hz _).mpr rfl
 
-/-- Map each stored coefficient, retaining normalization by zero reflection. -/
+/-- Map each stored coefficient, retaining normalization by zero reflection.
+The proof argument preserves stored length without a trailing-zero scan. -/
 @[expose] def map (p : DensePoly E) : DensePoly F where
   coeffs := (p.toArray.toList.map f).toArray
   normalized := by
@@ -161,6 +162,13 @@ theorem map_sub [Sub E] [Sub F]
   · simp
   · intro i hi hi'
     simp only [Array.getElem_map, Array.getElem_ofFn, map_coeff, hs]
+
+/-- Polynomial negation uses the executable subtraction operation. -/
+theorem map_neg [Sub E] [Sub F]
+    (hs : ∀ a b, f (a - b) = f a - f b) (p : DensePoly E) :
+    map f hz (-p) = -(map f hz p) := by
+  change map f hz (0 - p) = 0 - map f hz p
+  rw [map_sub f hz hs, map_zero_poly]
 
 /-- Scaling transfers even when nonzero representations are not canonical. -/
 theorem map_scale [Mul E] [Mul F]
@@ -310,6 +318,16 @@ theorem map_divMod (p q : DensePoly E) :
     intro a
     rw [hd, map_leading]
 
+
+/-- Transfer of the quotient selected by polynomial division notation. -/
+theorem map_div (p q : DensePoly E) :
+    map f hz (p / q) = map f hz p / map f hz q :=
+  congrArg Prod.fst (map_divMod f hz hs hm hd p q)
+
+/-- Transfer of the remainder selected by polynomial modulus notation. -/
+theorem map_mod (p q : DensePoly E) :
+    map f hz (p % q) = map f hz p % map f hz q :=
+  congrArg Prod.snd (map_divMod f hz hs hm hd p q)
 
 /-- Transfer of every iteration of the existing Euclidean loop. -/
 private theorem gcd_loop (p q : DensePoly E) (fuel : Nat) :
