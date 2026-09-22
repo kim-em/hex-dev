@@ -94,10 +94,34 @@ check avoids assuming an inverse-format or permutation adapter. -/
    decide (n.basis.adj * Matrix.selectedSubmatrix retained n.basis.rows n.basis.cols =
      Matrix.scale n.basis.denom (Matrix.identity n.basis.rank)) &&
    (match n.preparation with | none => true | some r => r.check sign p qs) &&
+   (let cache := n.moments.toArray[0]?.bind fun cert =>
+      TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
+    (List.finRange n.size).all (fun i =>
+     checkMoment sign context p a b (QueryReduction.operands qs n.preparation)
+       n.system.rows[i] n.system.values[i]
+       n.moments[i] n.reductions[i] cache)))
+
+/-- Sharing the first moment's validated domain leaves the result unchanged
+for all supplied nodes, including empty systems and differing valid witnesses. -/
+theorem Node.check_eq [DecidableEq Ctx] (sign : E → Int)
+    (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
+    (qs : List (DensePoly E)) (n : Node E Ctx) :
+    n.check sign context p a b qs = (
+  let k := n.system.positive.length
+  decide (n.context = context ∧ n.head = p ∧ n.lower = a ∧ n.upper = b ∧ n.queries = qs) &&
+  n.system.check qs.length &&
+  decide (n.basis.rank = k) &&
+  decide (n.basis.cols.toList.map Fin.val = List.range k) &&
+  (let retained := n.system.retainedMatrix
+   Matrix.checkRank retained n.basis &&
+   decide (n.basis.adj * Matrix.selectedSubmatrix retained n.basis.rows n.basis.cols =
+     Matrix.scale n.basis.denom (Matrix.identity n.basis.rank)) &&
+   (match n.preparation with | none => true | some r => r.check sign p qs) &&
    (List.finRange n.size).all (fun i =>
      checkMoment sign context p a b (QueryReduction.operands qs n.preparation)
        n.system.rows[i] n.system.values[i]
-       n.moments[i] n.reductions[i]))
+       n.moments[i] n.reductions[i]))) := by
+  simp only [Node.check, checkMoment_eq]
 
 /-- Empty and singleton lists have complete fixed supports. Larger leaves
 are rejected, so this is not an exponential full-table fallback. -/
@@ -154,7 +178,7 @@ theorem Node.check_bindings [DecidableEq Ctx] {sign : E → Int}
     (h : n.check sign context p a b qs = true) :
     (n.context = context ∧ n.head = p ∧ n.lower = a ∧ n.upper = b ∧ n.queries = qs) ∧
     n.system.check qs.length = true := by
-  simp only [Node.check, Bool.and_eq_true, decide_eq_true_eq] at h
+  simp only [Node.check_eq, Bool.and_eq_true, decide_eq_true_eq] at h
   exact h.1.1.1
 
 /-- Every accepted row has moment evidence for its exact exponent positions,
@@ -165,7 +189,7 @@ theorem Node.check_moment [DecidableEq Ctx] {sign : E → Int}
     (h : n.check sign context p a b qs = true) (i : Fin n.size) :
     checkMoment sign context p a b (QueryReduction.operands qs n.preparation) n.system.rows[i]
       n.system.values[i] n.moments[i] n.reductions[i] = true := by
-  simp only [Node.check, Bool.and_eq_true] at h
+  simp only [Node.check_eq, Bool.and_eq_true] at h
   exact List.all_eq_true.mp h.2.2 i (List.mem_finRange i)
 
 /-- Shared query reductions are checked against the exact original ordered
@@ -175,7 +199,7 @@ theorem Node.check_preparation [DecidableEq Ctx] {sign : E → Int}
     {qs : List (DensePoly E)} {n : Node E Ctx}
     (h : n.check sign context p a b qs = true) :
     (match n.preparation with | none => true | some r => r.check sign p qs) = true := by
-  simp only [Node.check, Bool.and_eq_true] at h
+  simp only [Node.check_eq, Bool.and_eq_true] at h
   exact h.2.1.2
 
 /-- Even an empty root system reaches a checked Tarski query at a leaf.

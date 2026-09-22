@@ -106,6 +106,37 @@ theorem checkShared_replay (sign : D → Int) (endpointSigns : EndpointSigns D E
   · have hf := Bool.eq_false_iff.mpr h
     simp [Domain.replay?, hf]
 
+/-- Use a validated domain when its literals match. A different squarefree
+witness is replayed in full, so a cache miss cannot reject otherwise valid
+certificate evidence. The query-dependent checks use the same shared kernel. -/
+@[expose] def checkCached (sign : D → Int) (endpointSigns : EndpointSigns D E)
+    (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
+    (cache : Option (Domain.Checked (Ctx := Ctx) sign endpointSigns))
+    (cert : TarskiCertificate D E Ctx) : Bool :=
+  match cache with
+  | none => check sign endpointSigns context p f a b value cert
+  | some d =>
+    if d.data.binds context p a b cert.squarefree then
+      checkBindings context p f a b value cert && checkQuery sign endpointSigns p f a b value cert
+    else check sign endpointSigns context p f a b value cert
+
+/-- Cached replay has exactly the original Boolean result for every supplied
+certificate and every validated cache, including cache misses and rejections. -/
+theorem checkCached_eq (sign : D → Int) (endpointSigns : EndpointSigns D E)
+    (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
+    (cache : Option (Domain.Checked (Ctx := Ctx) sign endpointSigns))
+    (cert : TarskiCertificate D E Ctx) :
+    checkCached sign endpointSigns context p f a b value cache cert =
+      check sign endpointSigns context p f a b value cert := by
+  cases cache with
+  | none => rfl
+  | some d =>
+    cases hb : d.data.binds context p a b cert.squarefree with
+    | false => simp only [checkCached, hb, Bool.false_eq_true, ↓reduceIte]
+    | true =>
+      have h := checkShared_eq sign endpointSigns context p f a b value d cert
+      simpa only [checkShared, checkCached, hb, Bool.true_and, ↓reduceIte] using h
+
 /-- Arbitrary supplied query evidence accepted using a shared domain also
 passes the complete shared-kernel checker, regardless of producer provenance. -/
 theorem checkShared_checks {sign : D → Int} {endpointSigns : EndpointSigns D E}

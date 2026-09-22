@@ -52,15 +52,20 @@ arbitrary accepted graph with its checked tree. Consequently
 for every input, preserving rejection as well as acceptance. Ordinary-kernel
 probes exercise a forged inverse witness through these theorems.
 Complete encoder performance accounting remains required. This typed graph also needs a
-byte decoder, lower-level coefficient-sign edges and shared verification of the
-domain inside each Tarski certificate.
+byte decoder, lower-level coefficient-sign edges and shared domain verification
+across graph nodes.
 
 Context, head, interval and query-list bindings use literal equality. Tarski
 polynomial identities use the shared zero-difference checks. Context values
 must contain the caller's full immutable context data, including any refinement;
 a hash or reused numeric identifier is insufficient. The current certificate
-tree repeats the head squarefree evidence in each moment and rechecks it there;
-shared domain replay remains an integration and performance obligation.
+tree retains the head squarefree evidence in each moment. Each node replays its
+first moment's domain once, then reuses it for exact literal matches in that
+node. Different witnesses fall back to complete replay. `Node.check_eq` proves
+that this preserves the original result for every supplied node, including
+rejection and empty systems. `TarskiCertificate.checkCached_eq` proves the
+underlying shared-kernel agreement for arbitrary caches and certificates. Domain
+sharing across nodes and performance measurements remain obligations.
 Each moment may supply a positive-scaled reduction chain. Replay checks its
 ordered factor indices, positive scales, degree bounds and zero-difference
 identities, then checks the Tarski certificate on the bound reduced polynomial.
@@ -211,7 +216,7 @@ using descriptor shape alone. Constants retain the literal checking path.
 Each descriptor still constructs its full index list. Every insertion comparison
 rebuilds both canonical index lists and compares the heads; for N descriptors
 of degree n this can add O(N²n) guard work. Hoisting that repeated work, sharing
-domain checks inside the query tree and measuring all required costs remain
+domain checks across query-tree nodes and measuring all required costs remain
 obligations.
 
 `CommonProduct.build` uses the shared polynomial gcd and division to form a

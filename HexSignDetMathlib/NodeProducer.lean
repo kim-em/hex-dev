@@ -157,7 +157,7 @@ theorem Node.check_of_basis [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
       (QueryReduction.operands qs n.preparation) n.system.rows[i] n.system.values[i]
       n.moments[i] n.reductions[i] = true) :
     n.check sign context p lo hi qs = true := by
-  simp only [Node.check, Bool.and_eq_true, decide_eq_true_eq]
+  simp only [Node.check_eq, Bool.and_eq_true, decide_eq_true_eq]
   refine ⟨⟨⟨⟨hb, hs⟩, ?_⟩, ?_⟩,
     ⟨⟨⟨?_, ?_⟩, hp⟩, List.all_eq_true.mpr (fun i _ => hm i)⟩⟩
   · rw [hr]; exact n.system.basis_rank hs

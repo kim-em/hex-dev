@@ -197,6 +197,23 @@ theorem shared_kernel :
   !sharedProbe sharedDomain alternate &&
   sharedProbe {sharedDomain with squarefree := alternate.squarefree} alternate
 
+-- Cache misses fall back to complete replay, while malformed evidence never
+-- inherits acceptance from another query's valid squarefree witness.
+#guard match sharedDomain.replay? Int.sign EndpointSigns.intDyadic with
+  | none => false
+  | some d =>
+    let check := TarskiCertificate.checkCached Int.sign EndpointSigns.intDyadic
+      7 p 1 (.finite interval.lower) (.finite interval.upper) 2 (some d)
+    let alternate := {sharedLiteral with squarefree :=
+      {literalChain with initial := ⟨2, 0, 4⟩}}
+    check sharedLiteral && check alternate &&
+      !check {alternate with squarefree := {alternate.squarefree with terminal := none}} &&
+      !check {sharedLiteral with context := 8}
+
+/-- info: 'Hex.TarskiCertificate.checkCached_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms TarskiCertificate.checkCached_eq
+
 /-- info: 'Hex.TarskiCertificate.check_eq' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms TarskiCertificate.check_eq

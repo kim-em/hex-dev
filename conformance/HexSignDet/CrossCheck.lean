@@ -35,7 +35,7 @@ set_option maxRecDepth 32768 in
 /-- Both full derivative slots are bound by graph replay in the ordinary kernel. -/
 theorem full_kernel : check full (singletonRaw.full []).queries = true := by
   simp only [check, Dag.check, Dag.replay?, Dag.step, full,
-    Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
+    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
     TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
@@ -45,7 +45,7 @@ set_option maxRecDepth 32768 in
 once, while both ordered parent edges remain checked. -/
 theorem shared_kernel : check shared sharedParent.queries = true := by
   simp only [check, Dag.check, Dag.replay?, Dag.step, shared,
-    Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
+    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
     TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
@@ -57,7 +57,7 @@ theorem rejected_kernel :
     check ⟨#[⟨fullNode, some (0, 0)⟩], 0⟩ fullNode.queries = false ∧
     check {full with entries := full.entries.pop} fullNode.queries = false := by
   simp only [check, Dag.check, Dag.replay?, Dag.step, full,
-    Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
+    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
     TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
@@ -68,10 +68,28 @@ any producer or substituting a compiled truth value for kernel replay. -/
 theorem descriptor_kernel :
     (full.descriptor? Sturm.orderSign 7 (singletonRaw.full [1, 1])).isSome = true := by
   simp only [Dag.descriptor?, Dag.replay?, Dag.step, full, Replay.table_lookup,
-    Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
+    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
     TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
+
+-- The first query supplies a valid shared domain. Later queries with distinct
+-- valid witnesses fall back to full replay; invalid witnesses are rejected.
+#guard let alternate := {constantQuery 2 with squarefree :=
+    {Sturm.Fixtures.literalChain with initial := ⟨2, 0, 4⟩}}
+  let valid := {derivativeNode with
+    moments := #v[singletonQuery, alternate, constantQuery 4]}
+  let invalid := {valid with moments := #v[singletonQuery,
+    {alternate with squarefree := {alternate.squarefree with terminal := none}}, constantQuery 4]}
+  check ⟨#[⟨valid, none⟩], 0⟩ valid.queries &&
+    !check ⟨#[⟨invalid, none⟩], 0⟩ invalid.queries
+
+/-- info: 'Hex.SignDet.checkMoment_eq' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms checkMoment_eq
+/-- info: 'Hex.SignDet.Node.check_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.check_eq
 
 #guard !check ⟨#[], 0⟩ []
 
@@ -96,7 +114,7 @@ theorem encoded_rejected_kernel :
       sharedParent.queries = false := by
   unfold check
   rw [Dag.check_encode_eq]
-  simp only [Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
+  simp only [Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
     TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel

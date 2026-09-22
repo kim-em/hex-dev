@@ -784,7 +784,7 @@ set_option maxRecDepth 8192 in
 /-- Ordinary-kernel acceptance of literal evidence, without any producer. -/
 theorem literal_accepts : (Replay.leaf literalNode).check Sturm.orderSign 7
     Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] = true := by
-  simp only [Replay.check, Node.check, checkMoment, queryPoly, Sturm.check, TarskiCertificate.check_eq,
+  simp only [Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check, TarskiCertificate.check_eq,
     SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
@@ -835,8 +835,8 @@ theorem selected_kernel :
     singletonRaw.checkSigns Sturm.orderSign 7 [1] #v[1] (.leaf selectedNode) = true ∧
     singletonRaw.checkSigns Sturm.orderSign 7 [1] #v[0] (.leaf selectedNode) = false ∧
     singletonRaw.checkSigns Sturm.orderSign 8 [1] #v[1] (.leaf selectedNode) = false := by
-  simp only [RawDescriptor.check, RawDescriptor.checkSigns, Replay.check, Node.check,
-    checkMoment, queryPoly, Sturm.check, TarskiCertificate.check_eq,
+  simp only [RawDescriptor.check, RawDescriptor.checkSigns, Replay.check, Node.check_eq,
+    checkMoment_eq, queryPoly, Sturm.check, TarskiCertificate.check_eq,
     SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
@@ -861,7 +861,7 @@ for the sign-equivalent constant one is rejected by literal query binding. -/
 theorem derivative_kernel :
     derivativeRaw.check Sturm.orderSign 7 (.leaf derivativeNode) = true ∧
     derivativeRaw.check Sturm.orderSign 7 (.leaf selectedNode) = false := by
-  simp only [RawDescriptor.check, Replay.check, Node.check, checkMoment, queryPoly,
+  simp only [RawDescriptor.check, Replay.check, Node.check_eq, checkMoment_eq, queryPoly,
     Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
@@ -904,7 +904,7 @@ set_option maxRecDepth 32768 in
 leaf supports and the exact Cartesian parent. No producer is evaluated. -/
 theorem full_kernel : fullReplay.check Sturm.orderSign 7 singletonRaw.head
     singletonRaw.lower singletonRaw.upper (singletonRaw.full []).queries = true := by
-  simp only [fullReplay, Replay.check, Node.check, checkMoment, queryPoly,
+  simp only [fullReplay, Replay.check, Node.check_eq, checkMoment_eq, queryPoly,
     Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
@@ -937,7 +937,7 @@ set_option maxRecDepth 8192 in
 /-- Local query/matrix evidence really passes for the omitted-support forgery. -/
 theorem forged_local : forgedNode.check Sturm.orderSign 7 Sturm.Fixtures.p
     (.finite (-2)) (.finite 2) [Sturm.Fixtures.x] = true := by
-  simp only [Node.check, checkMoment, queryPoly, Sturm.check, TarskiCertificate.check_eq,
+  simp only [Node.check_eq, checkMoment_eq, queryPoly, Sturm.check, TarskiCertificate.check_eq,
     SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
