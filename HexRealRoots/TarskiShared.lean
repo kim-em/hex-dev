@@ -53,7 +53,7 @@ theorem replay_data {sign : D → Int} {endpointSigns : EndpointSigns D E}
   split at h
   · cases Option.some.inj h
     rfl
-  · simp at h
+  · cases h
 
 /-- Reuse requires the caller's exact context, head, interval and squarefree
 witness. Equal interpretations never replace these literal bindings. -/
@@ -65,46 +65,53 @@ end Domain
 
 variable [One D] [Add D] [Sub D] [Mul D] [NatCast D] [DecidableEq E] [DecidableEq Ctx]
 
-/-- Check query evidence against an already replayed domain, retaining every
-literal binding and all query-dependent checks. No domain replay is repeated. -/
-@[expose] def checkShared (sign : D → Int) (endpointSigns : EndpointSigns D E)
+/-- The query-dependent part of replay, including all certificate bindings. -/
+@[expose] def checkBody (sign : D → Int) (endpointSigns : EndpointSigns D E)
+    (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
+    (cert : TarskiCertificate D E Ctx) : Bool :=
+  checkBindings context p f a b value cert && checkQuery sign endpointSigns p f a b value cert
+
+/-- Check a cache hit against an already replayed domain. A literal mismatch
+returns false; use `checkCached` for complete replay with fallback. All query
+bindings and query-dependent checks remain mandatory on a hit. -/
+@[expose] def checkHit (sign : D → Int) (endpointSigns : EndpointSigns D E)
     (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
     (d : Domain.Checked (Ctx := Ctx) sign endpointSigns) (cert : TarskiCertificate D E Ctx) : Bool :=
-  d.data.binds context p a b cert.squarefree && checkBindings context p f a b value cert &&
-    checkQuery sign endpointSigns p f a b value cert
+  d.data.binds context p a b cert.squarefree &&
+    checkBody sign endpointSigns context p f a b value cert
 
 /-- Shared replay is precisely full replay with an additional literal-cache
 binding guard. The full certificate checker is neither weakened nor bypassed. -/
-theorem checkShared_eq (sign : D → Int) (endpointSigns : EndpointSigns D E)
+theorem checkHit_eq (sign : D → Int) (endpointSigns : EndpointSigns D E)
     (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
     (d : Domain.Checked (Ctx := Ctx) sign endpointSigns) (cert : TarskiCertificate D E Ctx) :
-    checkShared sign endpointSigns context p f a b value d cert =
+    checkHit sign endpointSigns context p f a b value d cert =
       (d.data.binds context p a b cert.squarefree &&
         check sign endpointSigns context p f a b value cert) := by
   cases hb : d.data.binds context p a b cert.squarefree with
-  | false => simp only [checkShared, hb, Bool.false_and]
+  | false => simp only [checkHit, hb, Bool.false_and]
   | true =>
     have hd := d.accepted
     have hfields := hb
     simp only [Domain.binds, decide_eq_true_eq] at hfields
     rcases hfields with ⟨_, hp, ha, hb', hs⟩
     rw [hp, ha, hb', hs] at hd
-    simp only [checkShared, check, hb, hd, Bool.true_and, Bool.and_true]
+    simp only [checkHit, checkBody, check, hb, hd, Bool.true_and, Bool.and_true]
 
 /-- Boolean elimination rule for the opaque validated-domain constructor.
 It exposes every check performed when a raw domain is replayed and then used. -/
-theorem checkShared_replay (sign : D → Int) (endpointSigns : EndpointSigns D E)
+theorem checkHit_replay (sign : D → Int) (endpointSigns : EndpointSigns D E)
     (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
     (raw : Domain D E Ctx) (cert : TarskiCertificate D E Ctx) :
     (Domain.replay? sign endpointSigns raw).elim false
-      (fun d => checkShared sign endpointSigns context p f a b value d cert) =
+      (fun d => checkHit sign endpointSigns context p f a b value d cert) =
     (checkDomain sign endpointSigns raw.head raw.lower raw.upper raw.squarefree &&
       raw.binds context p a b cert.squarefree && checkBindings context p f a b value cert &&
       checkQuery sign endpointSigns p f a b value cert) := by
   by_cases h : checkDomain sign endpointSigns raw.head raw.lower raw.upper raw.squarefree = true
-  · simp only [Domain.replay?, h, dite_eq_left, Option.elim_some, checkShared, Bool.true_and]
+  · simp only [Domain.replay?, h, dite_eq_left, Option.elim_some, checkHit, checkBody, Bool.true_and, Bool.and_assoc]
   · have hf := Bool.eq_false_iff.mpr h
-    simp [Domain.replay?, hf]
+    simp only [Domain.replay?, hf, Bool.false_eq_true, ↓reduceDIte, Option.elim_none, Bool.false_and]
 
 /-- Use a validated domain when its literals match. A different squarefree
 witness is replayed in full, so a cache miss cannot reject otherwise valid
@@ -117,7 +124,7 @@ certificate evidence. The query-dependent checks use the same shared kernel. -/
   | none => check sign endpointSigns context p f a b value cert
   | some d =>
     if d.data.binds context p a b cert.squarefree then
-      checkBindings context p f a b value cert && checkQuery sign endpointSigns p f a b value cert
+      checkBody sign endpointSigns context p f a b value cert
     else check sign endpointSigns context p f a b value cert
 
 /-- Cached replay has exactly the original Boolean result for every supplied
@@ -134,17 +141,17 @@ theorem checkCached_eq (sign : D → Int) (endpointSigns : EndpointSigns D E)
     cases hb : d.data.binds context p a b cert.squarefree with
     | false => simp only [checkCached, hb, Bool.false_eq_true, ↓reduceIte]
     | true =>
-      have h := checkShared_eq sign endpointSigns context p f a b value d cert
-      simpa only [checkShared, checkCached, hb, Bool.true_and, ↓reduceIte] using h
+      have h := checkHit_eq sign endpointSigns context p f a b value d cert
+      simpa only [checkHit, checkCached, hb, Bool.true_and, ↓reduceIte] using h
 
 /-- Arbitrary supplied query evidence accepted using a shared domain also
 passes the complete shared-kernel checker, regardless of producer provenance. -/
-theorem checkShared_checks {sign : D → Int} {endpointSigns : EndpointSigns D E}
+theorem checkHit_checks {sign : D → Int} {endpointSigns : EndpointSigns D E}
     {context : Ctx} {p f : DensePoly D} {a b : Endpoint E} {value : Int}
     {d : Domain.Checked (Ctx := Ctx) sign endpointSigns} {cert : TarskiCertificate D E Ctx}
-    (h : checkShared sign endpointSigns context p f a b value d cert = true) :
+    (h : checkHit sign endpointSigns context p f a b value d cert = true) :
     check sign endpointSigns context p f a b value cert = true := by
-  rw [checkShared_eq] at h
+  rw [checkHit_eq] at h
   simp only [Bool.and_eq_true] at h
   exact h.2
 

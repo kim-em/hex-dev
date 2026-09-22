@@ -49,9 +49,10 @@ the companion. The Sturm–Tarski root-sum theorem and new query performance
 evidence remain outstanding; see the SPEC's proof gates.
 
 `TarskiCertificate.Domain.replay?` validates supplied endpoint and squarefree
-chain evidence once. `checkShared` reuses that evidence after exact context,
-head, interval and witness bindings. `checkCached` falls back to complete replay
-on a literal mismatch. `checkCached_eq` proves identical Boolean results to the
+chain evidence once. `checkHit` reuses that evidence after exact context,
+head, interval and witness bindings; it rejects cache misses. `checkCached` is
+the complete checker and falls back to full replay on a literal mismatch.
+`checkCached_eq` proves identical Boolean results to the
 full checker for every certificate and cache, including invalid certificates.
 These are finite replay guarantees, independent of the pending root-sum theorem.
 

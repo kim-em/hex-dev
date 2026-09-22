@@ -133,7 +133,7 @@ theorem literal_checks : IntTarskiCertificate.check p 1 interval 2 literal = tru
     (cert : TarskiCertificate Int Dyadic Nat) : Bool :=
   match raw.replay? Int.sign EndpointSigns.intDyadic with
   | none => false
-  | some d => TarskiCertificate.checkShared Int.sign EndpointSigns.intDyadic
+  | some d => TarskiCertificate.checkHit Int.sign EndpointSigns.intDyadic
       7 p 1 (.finite interval.lower) (.finite interval.upper) 2 d cert
 
 private theorem sharedProbe_eq (raw : TarskiCertificate.Domain Int Dyadic Nat)
@@ -145,7 +145,7 @@ private theorem sharedProbe_eq (raw : TarskiCertificate.Domain Int Dyadic Nat)
        TarskiCertificate.checkBindings 7 p 1 (.finite interval.lower) (.finite interval.upper) 2 cert &&
        TarskiCertificate.checkQuery Int.sign EndpointSigns.intDyadic p 1
         (.finite interval.lower) (.finite interval.upper) 2 cert) := by
-  have h := TarskiCertificate.checkShared_replay Int.sign EndpointSigns.intDyadic
+  have h := TarskiCertificate.checkHit_replay Int.sign EndpointSigns.intDyadic
     (7 : Nat) p 1 (.finite interval.lower) (.finite interval.upper) 2 raw cert
   cases hr : raw.replay? Int.sign EndpointSigns.intDyadic with
   | none => simpa only [sharedProbe, hr, Option.elim_none] using h
@@ -180,13 +180,13 @@ theorem shared_kernel :
 #guard match sharedDomain.replay? Int.sign EndpointSigns.intDyadic with
   | none => false
   | some d =>
-    let checkShared := TarskiCertificate.checkShared Int.sign EndpointSigns.intDyadic
+    let checkHit := TarskiCertificate.checkHit Int.sign EndpointSigns.intDyadic
       7 p 1 (.finite interval.lower) (.finite interval.upper) 2 d
     let checkFull := TarskiCertificate.check Int.sign EndpointSigns.intDyadic
       7 p 1 (.finite interval.lower) (.finite interval.upper) 2
     let bad := {sharedLiteral with upperVariations := 1}
-    checkShared sharedLiteral && !checkShared bad &&
-      checkShared sharedLiteral == checkFull sharedLiteral && checkShared bad == checkFull bad
+    checkHit sharedLiteral && !checkHit bad &&
+      checkHit sharedLiteral == checkFull sharedLiteral && checkHit bad == checkFull bad
 
 -- A different valid squarefree witness passes full replay, but cannot reuse
 -- a cache bound to the original literal witness.
@@ -220,15 +220,15 @@ theorem shared_kernel :
 /-- info: 'Hex.TarskiCertificate.Domain.replay_data' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms TarskiCertificate.Domain.replay_data
-/-- info: 'Hex.TarskiCertificate.checkShared_eq' depends on axioms: [propext] -/
+/-- info: 'Hex.TarskiCertificate.checkHit_eq' depends on axioms: [propext] -/
 #guard_msgs in
-#print axioms TarskiCertificate.checkShared_eq
-/-- info: 'Hex.TarskiCertificate.checkShared_replay' depends on axioms: [propext] -/
+#print axioms TarskiCertificate.checkHit_eq
+/-- info: 'Hex.TarskiCertificate.checkHit_replay' depends on axioms: [propext] -/
 #guard_msgs in
-#print axioms TarskiCertificate.checkShared_replay
-/-- info: 'Hex.TarskiCertificate.checkShared_checks' depends on axioms: [propext] -/
+#print axioms TarskiCertificate.checkHit_replay
+/-- info: 'Hex.TarskiCertificate.checkHit_checks' depends on axioms: [propext] -/
 #guard_msgs in
-#print axioms TarskiCertificate.checkShared_checks
+#print axioms TarskiCertificate.checkHit_checks
 /-- info: 'Hex.TarskiTests.shared_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms shared_kernel

@@ -59,18 +59,20 @@ Context, head, interval and query-list bindings use literal equality. Tarski
 polynomial identities use the shared zero-difference checks. Context values
 must contain the caller's full immutable context data, including any refinement;
 a hash or reused numeric identifier is insufficient. The current certificate
-tree retains the head squarefree evidence in each moment. Each node replays its
-first moment's domain once, then reuses it for exact literal matches in that
-node. Graph replay instead passes the first entry's validated domain to all
-nodes. Different witnesses fall back to complete replay. `Node.check_eq` proves
-that this preserves the original result for every supplied node, including
-rejection and empty systems. `TarskiCertificate.checkCached_eq` proves the
-underlying shared-kernel agreement for arbitrary caches and certificates.
+tree retains the head squarefree evidence in each moment. Graph replay offers
+the first entry's validated domain to every node. A node reuses that domain when
+it matches the node's first witness; otherwise a node with several moments
+validates its own first domain once. A single moment without a matching shared
+domain uses full replay directly. Later matching witnesses reuse the selected
+domain; different witnesses fall back to complete replay. `Node.check_eq` proves
+unconditional equality with the original result for every node and cache.
+`TarskiCertificate.checkCached_eq` proves the underlying shared-kernel agreement
+for arbitrary caches and certificates.
 `Dag.step_eq` and `Dag.replay_eq` preserve the exact original checked step and
-prefix replay, including returned trees and all rejections. There is one shared
-domain entry, not a map of every possible squarefree witness; nonmatching
-witnesses still incur full replay at each occurrence. Domain replay and literal
-binding costs require performance measurements.
+prefix replay, including returned trees and all rejections. Each node selects
+one domain witness for reuse; other witnesses within that node still incur full
+replay at each occurrence. Domain replay and literal binding costs require
+performance measurements, including heterogeneous witnesses and one-moment nodes.
 Each moment may supply a positive-scaled reduction chain. Replay checks its
 ordered factor indices, positive scales, degree bounds and zero-difference
 identities, then checks the Tarski certificate on the bound reduced polynomial.

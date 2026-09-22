@@ -204,6 +204,18 @@ shared by the first node. Every one of its query certificates retains it. -/
   {alternate with moments := #v[corruptCert singletonQuery,
     corruptCert (constantQuery 2), corruptCert (constantQuery 4)]}
 
+-- A graph cache miss selects the node's own valid domain, rather than replaying
+-- that same witness separately for every moment in the node.
+#guard let shared := singletonQuery.domain.replay? Sturm.orderSign (EndpointSigns.ofSign Sturm.orderSign)
+  (alternate.cache Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper shared).any
+    (fun d => d.data.squarefree == (alternateCert singletonQuery).squarefree)
+#guard (fullNode.cache Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper none).isNone
+#guard let invalid := {derivativeNode with moments :=
+    #v[corruptCert singletonQuery, constantQuery 2, constantQuery 4]}
+  (invalid.cache Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper none).isNone &&
+    !(Replay.leaf invalid).check Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
+      invalid.queries
+
 set_option maxRecDepth 32768 in
 /-- Cross-node reuse accepts a different valid witness through full replay,
 and rejects a malformed later witness despite the valid shared domain. -/

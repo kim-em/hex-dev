@@ -31,7 +31,7 @@ positive reduction chain. All query/domain/context bindings remain literal. -/
   (match reduction with
    | none => decide (qs.length = es.length) && es.all (· ≤ 2)
    | some r => r.check sign p qs es) &&
-  TarskiCertificate.checkCached sign (EndpointSigns.ofSign sign) context p
+  Sturm.checkCached sign context p
     (queryPoly qs es reduction) a b value cache cert
 
 /-- Optional domain reuse preserves every moment result, independently of the
@@ -46,7 +46,7 @@ theorem checkMoment_eq [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
         | none => decide (qs.length = es.length) && es.all (· ≤ 2)
         | some r => r.check sign p qs es) &&
       Sturm.check sign context p (queryPoly qs es reduction) a b value cert) := by
-  simp only [checkMoment, TarskiCertificate.checkCached_eq, Sturm.check]
+  simp only [checkMoment, Sturm.checkCached_eq]
 
 /-- Accepted moment replay always includes checked query evidence, regardless
 of the chosen product representation. -/

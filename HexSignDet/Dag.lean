@@ -97,7 +97,7 @@ returned literal tree and every rejection branch. -/
 theorem step_eq (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
     (memo : Array (Checked sign context p a b)) (entry : Entry E Ctx)
     (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
-      (EndpointSigns.ofSign sign)) := none) :
+      (EndpointSigns.ofSign sign))) :
     step sign context p a b memo entry shared = (do
   let n := entry.node
   match entry.children with

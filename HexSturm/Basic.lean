@@ -137,6 +137,22 @@ theorem prepare_isSome [Neg E] [Inv E] (sign : E → Int) (p f : DensePoly E) (a
     (p f : DensePoly E) (a b : Endpoint E) (value : Int) (cert : TarskiCertificate E E Ctx) : Bool :=
   TarskiCertificate.check sign (EndpointSigns.ofSign sign) context p f a b value cert
 
+/-- Reuse checked domain evidence through the same shared finite query checker.
+Cache misses retain full replay, including for different valid witnesses. -/
+@[expose] def checkCached {Ctx : Type v} [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
+    (p f : DensePoly E) (a b : Endpoint E) (value : Int)
+    (cache : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign (EndpointSigns.ofSign sign)))
+    (cert : TarskiCertificate E E Ctx) : Bool :=
+  TarskiCertificate.checkCached sign (EndpointSigns.ofSign sign) context p f a b value cache cert
+
+/-- Optional domain reuse preserves the complete field-query checker result. -/
+theorem checkCached_eq {Ctx : Type v} [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
+    (p f : DensePoly E) (a b : Endpoint E) (value : Int)
+    (cache : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign (EndpointSigns.ofSign sign)))
+    (cert : TarskiCertificate E E Ctx) :
+    checkCached sign context p f a b value cache cert = check sign context p f a b value cert :=
+  TarskiCertificate.checkCached_eq sign (EndpointSigns.ofSign sign) context p f a b value cache cert
+
 /-- Accepted replay retains every literal binding, independently of semantic
 coefficient interpretation or producer provenance. -/
 theorem check_bindings {Ctx : Type v} [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
