@@ -4,6 +4,9 @@
 from __future__ import annotations
 
 import unittest
+import json
+
+from scripts.bench.ecm_cost import parse_result
 
 from scripts.bench import fresh_module_sweep
 from scripts.bench import primality_elab_sweep as elab
@@ -159,6 +162,41 @@ class ElaboratorSweepTests(unittest.TestCase):
         self.assertNotRegex(core, total_decision)
         self.assertNotRegex(cert_handler, total_decision)
         self.assertNotRegex(tactic_handler, total_decision)
+
+
+class EcmMeasurementRecords(unittest.TestCase):
+    def record(self, **updates):
+        value = dict(nanos=1, heartbeats_raw=2, attempts=0, status='ok',
+                     subject=7, certificate='Hex.Nat.PrimeCert.small 7')
+        value.update(updates)
+        return json.dumps(value)
+
+    def test_smoke_and_missing_records_rejected(self):
+        for output in ['', 'ECM_SMOKE '+self.record(), 'ECM_COST {}']:
+            with self.subTest(output=output), self.assertRaises(ValueError):
+                parse_result(output, 'construction', '7', 'small')
+
+    def test_duplicate_records_rejected(self):
+        with self.assertRaises(ValueError):
+            parse_result(('ECM_COST '+self.record()+'\n')*2, 'construction', '7', 'small')
+
+    def test_wrong_subject_rejected(self):
+        with self.assertRaises(ValueError):
+            parse_result('ECM_COST '+self.record(), 'construction', '1009', 'field')
+
+    def test_archived_certificate_subject_checked(self):
+        value = json.loads(self.record())
+        del value['subject']
+        with self.assertRaises(ValueError):
+            parse_result('ECM_COST '+json.dumps(value), 'construction', '1009', 'field')
+
+    def test_native_diagnostic_banner_preserved(self):
+        self.assertEqual(parse_result('banner\n'+self.record(), 'native', '7', 'small')['subject'], 7)
+
+    def test_residual_case_checked(self):
+        value = dict(nanos=1, heartbeats_raw=2, attempts=2, result='whole', case='recovery')
+        with self.assertRaises(ValueError):
+            parse_result('ECM_COST '+json.dumps(value), 'residual', '0', 'failure')
 
 
 if __name__ == "__main__":

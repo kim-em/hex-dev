@@ -19,9 +19,12 @@ meta def namedProvider : Hex.Nat.FactorSearch := Hex.Nat.ecmFactorSearch
 
 open Lean Meta Elab in
 run_cmd Command.liftTermElabM do
-  let arg := (← IO.getEnv "ECM_SUBJECT").getD "7"
+  -- The CI smoke build is deliberately not a measurement record.
+  let arg? ← IO.getEnv "ECM_SUBJECT"
+  let arg := arg?.getD "7"
   let some n := arg.toNat? | throwError "invalid subject"
   let mode := (← IO.getEnv "ECM_DISPATCH").getD "expression"
+  unless mode == "name" || mode == "expression" do throwError "invalid dispatch"
   let dispatchStart ← IO.monoNanosNow
   let factor ← if mode == "name" then
       unsafe evalConst Hex.Nat.FactorSearch ``namedProvider
@@ -37,7 +40,7 @@ run_cmd Command.liftTermElabM do
   let result ← cell.get
   let stop ← IO.monoNanosNow
   let hbStop ← IO.getNumHeartbeats
-  let fields := [("nanos", toJson (stop-start)), ("heartbeats_raw", toJson (hbStop-hb)),
+  let fields := [("subject", toJson n), ("nanos", toJson (stop-start)), ("heartbeats_raw", toJson (hbStop-hb)),
     ("dispatch_nanos", toJson (dispatchStop-dispatchStart))]
   let fields ← match result with
     | .error f => pure (fields ++ [("status", toJson (reprStr f.stop)),
@@ -47,4 +50,5 @@ run_cmd Command.liftTermElabM do
         throwError "certificate check failed"
       pure (fields ++ [("status", toJson "ok"), ("attempts", toJson s.attempts),
         ("rand", toJson (reprStr s.rand)), ("events", toJson (reprStr s.events)), ("certificate", toJson (reprStr s.cert.raw))])
-  logInfo m!"ECM_COST {(Json.mkObj fields).compress}"
+  let tag := if arg?.isSome then "ECM_COST" else "ECM_SMOKE"
+  logInfo m!"{tag} {(Json.mkObj fields).compress}"

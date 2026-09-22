@@ -464,12 +464,13 @@ Median construction seconds (the producer region, including its self-check):
 
 The native-per-curve column uses the sharing comparison's own adjacent control;
 its medians in the execution comparison were 15.147, 31.532, 20.250 and 1.366
-seconds. Every paired field sample favors sharing, while P-521 shows no useful
+seconds. Every paired sample for the three ECM-using fields favors sharing; P-521 shows no useful
 change. Its already-sufficient factor subset avoids ECM preparation entirely.
 The two experiments separate native compilation from table reuse.
 
 [Whole-module profiles and loaded mappings](bench-results/ecm-cost-profile-10374/record.json)
-verify execution rather than inferring it from a meta import. The interpreted
+verify execution in the two per-curve checkouts, before table sharing,
+rather than inferring it from a meta import. The interpreted
 profile spends 13.74% in `interpreter::eval_body` and 12.86% in
 `interpreter::call`; the native profile contains compiled ECM addition,
 doubling and continuation symbols from `libHex_HexIntFactor.so`. The saved
@@ -490,14 +491,19 @@ is approximately 0.88–1.08 GiB, distinct from native executable peaks of 65–
 The extra build and loading costs do not make the native-producer policy
 untenable on this host.
 
-A separate preparation observation at the production bounds takes 1.61 ms for
-stage-1 powers and 48.85 ms for the stage-2 interval, with 74848 raw heartbeat
-increments in total. Avoiding repeated stage-2 sieving across dozens of curves
-explains the field reductions. Single-call residual comparisons show no useful
+Preparation observations at the production bounds take 1.61/1.71 ms for
+stage-1 powers and 48.85/60.96 ms for the stage-2 interval, with 74848/74847
+raw heartbeat increments. Both observations are retained. Avoiding repeated
+stage-2 sieving is consistent with the field reductions; these isolated costs
+are not an exact reconstruction of whole-construction time. Attempts include
+core factoring, stage-1-only calls and several residuals, so dividing attempts
+by two does not give the executed continuation count. The bit-packed sieve
+spends time updating large integers; removing that work saves proportionally
+more time than allocation-count heartbeats. Single-call residual comparisons show no useful
 sharing benefit; their small preparation overhead is retained. The schedules
 contain 3512 powers and 39878 interval primes (about 1.04 MB of list cells).
-Allowing the full 43390-prime list to coexist during filtering gives a
-conservative 2.08 MB list-cell peak, plus the sieve, handle, allocator overhead
+Allowing two full-size 43390-prime lists alongside the powers during filtering
+gives a conservative 2.17 MB list-cell peak, plus the sieve, handle, allocator overhead
 and curve-local residues. There is no process-global cache.
 
 The residual suite retains stage-1 factor 3 for `(51,13,5,1024)`, stage-2

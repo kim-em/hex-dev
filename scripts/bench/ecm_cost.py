@@ -2,7 +2,7 @@
 """Four fixed trial-major paired ECM construction measurements in two checkouts.
 
 Checkouts differ only in the implementation/configuration under study. Each
-fresh-module sample removes its own probe artifact; dependencies are built first.
+fresh-module sample removes its own probe artifact; the caller must build its dependencies first.
 No sample is retried or discarded. Failed builds are retained and do not stop the
 schedule. The caller supplies the same finite resource settings in both arms.
 """
@@ -13,9 +13,11 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import subprocess
 import sys
 import tempfile
+import time
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -32,6 +34,28 @@ r=subprocess.run(sys.argv[2:])
 with open(sys.argv[1],'w') as f: json.dump(dict(seconds=time.monotonic()-start,returncode=r.returncode,maxrss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss),f)
 sys.exit(r.returncode)
 '''
+
+def parse_result(stdout, phase, subject, case):
+    """Require one complete result; CI smoke output cannot become a sample."""
+    lines = ([line for line in stdout.splitlines() if line.startswith('{')]
+             if phase == 'native' else
+             [line.split('ECM_COST ', 1)[1] for line in stdout.splitlines() if 'ECM_COST ' in line])
+    if len(lines) != 1:
+        raise ValueError(f'expected one measurement record, got {len(lines)}')
+    result = json.loads(lines[0])
+    required = {'nanos', 'heartbeats_raw', 'attempts', 'result' if phase == 'residual' else 'status'}
+    if not isinstance(result, dict) or not required <= result.keys():
+        raise ValueError('incomplete measurement record')
+    if 'subject' in result and str(result['subject']) != str(subject):
+        raise ValueError('measurement subject changed')
+    if 'case' in result and result['case'] != case:
+        raise ValueError('measurement case changed')
+    if 'certificate' in result:
+        match = re.search(r'PrimeCert\.\w+\s+(\d+)', result['certificate'])
+        if match is None or match[1] != str(subject):
+            raise ValueError('certificate subject changed')
+    return result
+
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
@@ -74,7 +98,6 @@ def main():
     if args.phase == 'residual':
         cases = [dict(name=n,n='0') for n in ['stage1','stage2','failure','recovery']]
     if args.phase == 'loading':
-        module = args.module.replace('EcmCost','EcmLoading')
         cases = [dict(name='imports',n='7')]
     for block in range(4):
         for case in cases:
@@ -90,22 +113,28 @@ def main():
                 env = dict(os.environ, ECM_SUBJECT=case['n'], ECM_DISPATCH='expression', ECM_CASE=case['name'], LEAN_NUM_THREADS='1')
                 before = os.getloadavg()
                 with tempfile.NamedTemporaryFile() as stats:
+                    start = time.monotonic()
                     result = subprocess.run(['taskset','-c',str(record['cpu']),sys.executable,
                         '-c',OBSERVER,stats.name,*command], cwd=path, env=env, text=True, capture_output=True)
-                    row = json.loads(Path(stats.name).read_text())
+                    try:
+                        row = json.loads(Path(stats.name).read_text())
+                    except (ValueError, OSError):
+                        # Preserve observer failures too (e.g. an OOM kill).
+                        row = dict(seconds=time.monotonic()-start, returncode=result.returncode,
+                                   maxrss_kib=None, parse_error='observer statistics unavailable')
                 row.update(block=block,case=case['name'],arm=arm,command=command,
                     stdout=result.stdout,stderr=result.stderr,load_before=before,load_after=os.getloadavg())
                 record['samples'].append(row)
                 save()
-                for line in result.stdout.splitlines():
-                    if 'ECM_COST ' in line:
-                        row['result'] = json.loads(line.split('ECM_COST ',1)[1])
-                if args.phase == 'native' and result.returncode == 0:
-                    row['result'] = json.loads(result.stdout)
+                if result.returncode == 0 and args.phase != 'loading':
+                    try:
+                        row['result'] = parse_result(result.stdout, args.phase, case['n'], case['name'])
+                    except (ValueError, TypeError) as error:
+                        row['parse_error'] = str(error)
                 save()
                 print(block,case['name'],arm,row['returncode'],round(row['seconds'],3),flush=True)
     record['complete'] = True
-    record['failed_samples'] = [i for i,r in enumerate(record['samples']) if r['returncode']]
+    record['failed_samples'] = [i for i,r in enumerate(record['samples']) if r['returncode'] or 'parse_error' in r]
     # Compare semantic outputs independently of timing, allocation and host data.
     references = {}
     mismatches = []
@@ -118,8 +147,8 @@ def main():
             mismatches.append(i)
     record['semantic_mismatches'] = mismatches
     save()
-    if mismatches:
-        raise SystemExit('semantic output changed; see retained samples')
+    if mismatches or record['failed_samples']:
+        raise SystemExit('failed or inconsistent measurements; see retained samples')
 
 if __name__ == '__main__':
     main()

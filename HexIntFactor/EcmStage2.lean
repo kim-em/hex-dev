@@ -169,6 +169,20 @@ def searchPrepared (n sigma allowance : Nat) (t : Tables) :
     | .factor d => classifyGcd n d
     | other => other, work), t)
 
+/-- The provider's prepared entry point only returns proper divisors. -/
+theorem searchPrepared_spec {n sigma allowance d : Nat} {t : Tables}
+    (h : (searchPrepared n sigma allowance t).1.1 = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n := by
+  unfold searchPrepared at h
+  dsimp at h
+  split at h
+  · cases h
+  · split at h
+    · exact classifyGcd_spec h
+    · rename_i result notFactor
+      exact False.elim (notFactor d h)
+
+
 end Internal
 
 private def searchCore (n sigma b₁ b₂ allowance : Nat) : EcmResult × Nat :=

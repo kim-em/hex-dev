@@ -8,6 +8,7 @@ import HexIntFactor.Construction
 
 -- A handle cannot be forged or edited through public record syntax.
 example (t : Hex.Nat.Ecm.Tables) : Hex.Nat.Ecm.Tables := by
+  fail_if_success exact Hex.Nat.Ecm.Tables.mk 0 0 none none
   fail_if_success exact { t with powers := some [] }
   exact t
 

@@ -15,7 +15,10 @@ set_option maxRecDepth 1024
 
 open Lean Elab Hex.Nat in
 run_cmd do
-  let kind := (← IO.getEnv "ECM_CASE").getD "stage2"
+  let kind? ← IO.getEnv "ECM_CASE"
+  let kind := kind?.getD "stage2"
+  unless ["stage1", "stage2", "failure", "recovery"].contains kind do
+    throwError "invalid residual case"
   let (n, sigma, b₁, b₂) := match kind with
     | "stage1" => (51, 13, 5, 1024)
     | "stage2" => (1022117, 6, 16, 1024)
@@ -35,7 +38,8 @@ run_cmd do
   unless Ecm.search n sigma b₁ b₂ 2 == (result, attempts) do throwError "search disagrees"
   unless Ecm.Internal.flush 1081 0 #[0,23] == (.factor 23,[1081,23]) do
     throwError "proper-factor gcd recovery failed"
-  logInfo m!"ECM_COST {(Json.mkObj [
+  let tag := if kind?.isSome then "ECM_COST" else "ECM_SMOKE"
+  logInfo m!"{tag} {(Json.mkObj [("case", toJson kind),
     ("result", toJson (reprStr result)), ("attempts", toJson attempts),
     ("stage1", toJson (reprStr first)), ("trace", toJson (reprStr second)),
     ("stage1_nanos", toJson (middle-start)), ("stage2_nanos", toJson (stop-middle)),
