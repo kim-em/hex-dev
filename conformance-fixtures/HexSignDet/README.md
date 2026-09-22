@@ -1,4 +1,4 @@
-# Rational sign-table and descriptor fixtures
+# Exact sign-table and descriptor fixtures
 
 `sign_det.jsonl` contains 101 cases emitted by `hexsigndet_emit_fixtures`.
 The 59 table records include ascending rational polynomial coefficients as exact
@@ -52,7 +52,29 @@ python3 scripts/oracle/sign_det_flint.py --check
 python3 -m unittest scripts.oracle.test_sign_det_flint
 ```
 
-These fixtures validate rational sign tables and the implemented descriptor
-operations, including cross-polynomial comparison and re-encoding.
-Extension-field and nested-context conformance remain required. None of these fixtures proves general
-root-sum/Thom semantics or supplies Phase-4 performance evidence.
+`infinitesimal.jsonl` contains 29 cases emitted by `hexsigndet_emit_infinitesimal`
+using the existing rational-function fields over one and two positive
+infinitesimals. The independent Z3 RCF oracle requires `z3-solver==4.15.4.0`
+and numeric runtime version `(4, 15, 4, 0)`. Each record creates a fresh context
+and reconstructs the serialized coefficients with exact arithmetic. The oracle
+enforces the coefficient depth of each case and the corrected Passmore
+polynomial `(εx²−1)(εx³−1)`, then computes roots, signs and order independently.
+The cases cover sign tables, invalid domains, all five descriptor-error reasons,
+completion, selected signs, comparisons and re-encoding. Negative replay checks
+change context, head and derivative-query bindings or present a multi-query
+table as a leaf; the latter checks leaf arity, not identity-preserving incomplete
+support. The 16 adversarial Python tests also reject substituted case inputs,
+omitted support with preserved totals, wrong root order and version drift.
+
+```sh
+lake build hexsigndet_emit_infinitesimal
+.lake/build/bin/hexsigndet_emit_infinitesimal > conformance-fixtures/HexSignDet/infinitesimal.jsonl
+python3 scripts/oracle/sign_det_z3.py --check
+python3 -m unittest scripts.oracle.test_sign_det_z3
+```
+
+These fixtures validate rational and nested-infinitesimal sign tables and the
+implemented descriptor operations, including comparison and re-encoding.
+The infinitesimal sign callbacks are test providers. General coefficient
+interpretation, nested semantic replay and root-sum/Thom correspondence proofs
+remain required. None of these fixtures supplies Phase-4 performance evidence.

@@ -219,16 +219,17 @@ for the remaining assignment.
 The extension conformance target uses the existing `RationalFn Rat` and
 `RationalFn (RationalFn Rat)` coefficient fields with explicit exact signs at
 successive positive infinitesimals. Its independent oracle is pinned to
-`z3-solver==4.15.4.0`, upstream tag `z3-4.15.4`, commit
-`745087e237e669d709ae35694728a0c479e572b3`; the
-[pinned RCF API](https://github.com/Z3Prover/z3/blob/745087e237e669d709ae35694728a0c479e572b3/src/api/python/z3/z3rcf.py)
-constructs roots and compares them exactly. Every fixture records the ordered
+`z3-solver==4.15.4.0` and numeric runtime version `(4, 15, 4, 0)`;
+its RCF API constructs roots and compares them exactly. Every fixture records the ordered
 coefficient levels and starts a fresh oracle context. The corrected
 `(εx²−1)(εx³−1)` example exercises the two positive partial descriptors,
 completion, root order, selected signs and cross-polynomial re-encoding without
 a rational separator. Two-level fixtures isolate `δ` from `ε` and `ε+δ` using
-an endpoint `2δ`. Both coefficient levels reject stale descendant contexts,
-missing support children and copied derivative evidence. The oracle separately
+an endpoint `2δ`. Both coefficient levels reject changed context, head and
+derivative-query bindings, and reject a multi-query table presented as a leaf.
+These leaf-arity checks do not test an identity-preserving incomplete support
+forgery. The oracle enforces each case’s coefficient depth and the corrected
+Passmore polynomial, and checks all five descriptor-error reasons. It separately
 rejects forged counts, reordered roots, altered encodings and context metadata.
 These test-only sign callbacks do not implement the ordered-function provider;
 tower-generated coefficient proofs, nested semantic replay, literal DAG
@@ -237,5 +238,8 @@ serialization and all Phase-4 measurements remain required.
 Build the library and its regression target with:
 
 ```sh
-lake build HexSignDet +HexSignDet.Conformance
+lake build HexSignDet +HexSignDet.Conformance hexsigndet_emit_infinitesimal
+.lake/build/bin/hexsigndet_emit_infinitesimal > conformance-fixtures/HexSignDet/infinitesimal.jsonl
+python3 scripts/oracle/sign_det_z3.py --check
+python3 -m unittest scripts.oracle.test_sign_det_z3
 ```

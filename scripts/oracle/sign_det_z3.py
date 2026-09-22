@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Exact Z3 RCF oracle for sign determination over nested infinitesimals.
 
-Pin: z3-solver 4.15.4.0, upstream z3-4.15.4, commit
-745087e237e669d709ae35694728a0c479e572b3. Each record gets a fresh RCF context;
+Pin: z3-solver 4.15.4.0 and numeric runtime version (4, 15, 4, 0).
+Each record gets a fresh RCF context;
 each successive infinitesimal is smaller than positive base-field elements.
 Roots, signs and comparisons use exact RCF operations, never decimal output.
 """
@@ -19,9 +19,9 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from scripts.oracle.common import OracleMismatch, read_fixtures, write_failure
-from scripts.oracle.sign_det_flint import require, check_encoding, check_output, sign_vector
+from scripts.oracle.sign_det_common import require, check_encoding, check_output, sign_vector
 
-VERSION = "z3-solver 4.15.4.0 (745087e237e669d709ae35694728a0c479e572b3)"
+VERSION = "z3-solver 4.15.4.0"
 DEFAULT_FIXTURE = ROOT / "conformance-fixtures/HexSignDet/infinitesimal.jsonl"
 REQUIRED_CASES = {"infinitesimal/" + name for name in (
     "passmore/whole", "passmore/positive", "passmore/empty", "descriptor/passmore/cubic",
@@ -31,13 +31,14 @@ REQUIRED_CASES = {"infinitesimal/" + name for name in (
     "nested/singleton", "descriptor/nested/singleton", "descriptor/nested/stale-context",
     "reencode/nested/reencode", "descriptor/square/negative-head", "compare/square/scaled-equal",
     "compare/passmore/shared-cubic", "square/zero-root", "square/constant", "square/root-free",
-    "nested/reversed", "nested/root-endpoint",
+    "nested/reversed", "nested/root-endpoint", "descriptor/passmore/absent",
+    "descriptor/passmore/malformed", "descriptor/nested/reversed",
 )}
 
 
 def check_version() -> None:
     import z3
-    require(version("z3-solver") == "4.15.4.0" and z3.get_full_version() == "4.15.4.0",
+    require(version("z3-solver") == "4.15.4.0" and z3.get_version()[:4] == (4, 15, 4, 0),
             "the exact pinned z3-solver 4.15.4.0 is required")
 
 
@@ -253,11 +254,21 @@ def check_record(record):
             record.get("op") in ("table", "descriptor", "compare", "reencode"),
             "unexpected infinitesimal fixture record")
     payload = record["value"]
-    oracle = RCF(payload["coefficientContext"])
+    context = payload["coefficientContext"]
+    oracle = RCF(context)
+    parts = record["case"].split("/")
+    require(len(oracle.levels) == (2 if "nested" in parts else 1),
+            "case has the wrong coefficient depth")
     data = payload["data"]
     require(isinstance(data, dict) and type(data.get("schema")) is int and data["schema"] == 1,
             "unsupported infinitesimal fixture schema")
     operation = record["op"]
+    if "passmore" in parts:
+        raw = data["source"] if operation == "reencode" else data["left"] if operation == "compare" else data
+        epsilon = oracle.levels[0]
+        require(oracle.poly(raw["head"]) ==
+                [oracle.one, oracle.zero, -epsilon, -epsilon, oracle.zero, epsilon * epsilon],
+                "case does not contain the required Passmore polynomial")
     if operation == "table":
         expected = oracle.table(data)
         for mode in ("reduced", "direct"):
@@ -266,7 +277,7 @@ def check_record(record):
                 require(data[mode].get("staleChildReplay") is False, "stale child evidence accepted")
                 if len(data["queries"]) > 1:
                     require(data[mode].get("missingSupportReplay") is False,
-                            "missing child support evidence accepted")
+                            "multi-query table accepted as a leaf")
                 else:
                     require(data[mode].get("missingSupportReplay", "missing") is None,
                             "unexpected missing-support test for a leaf")

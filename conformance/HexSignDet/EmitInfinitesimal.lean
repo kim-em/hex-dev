@@ -174,6 +174,8 @@ def run : IO Unit := do
   emitDescriptor first firstSign 1 "passmore/cubic" raw [third, x, p]
   emitDescriptor first firstSign 1 "passmore/square" {raw with signs := [1]} [third, x, p]
   emitDescriptor first firstSign 1 "passmore/ambiguous" {raw with indices := [], signs := []} []
+  emitDescriptor first firstSign 1 "passmore/absent" {raw with signs := [0]} []
+  emitDescriptor first firstSign 1 "passmore/malformed" {raw with indices := [9]} []
   emitComparison first firstSign 1 "passmore/order" raw {raw with signs := [1]}
   emitReencoding first firstSign 1 "passmore/reencode" raw
     (DensePoly.C epsilon * x.natPow 3 - 1) .negInf .posInf
@@ -204,6 +206,8 @@ def run : IO Unit := do
   let nr : RawDescriptor Second Nat := ⟨10377, n, .finite 0, .finite (2 * delta), [], []⟩
   emitDescriptor second secondSign 2 "nested/singleton" nr
     [x - DensePoly.C delta, x - DensePoly.C (lift epsilon)]
+  emitDescriptor second secondSign 2 "nested/reversed"
+    {nr with lower := .finite (lift epsilon)} []
   emitDescriptor second secondSign 2 "nested/stale-context" {nr with context := 10378} []
   emitReencoding second secondSign 2 "nested/reencode" nr
     (x - DensePoly.C delta) .negInf .posInf

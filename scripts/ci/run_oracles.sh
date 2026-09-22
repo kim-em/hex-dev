@@ -130,6 +130,7 @@ import flint
 import cypari2
 import conway_polynomials
 import sympy
+import z3
 PY
   then
     echo "FAIL: required oracle dependencies are unavailable" >&2

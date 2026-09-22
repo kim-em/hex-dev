@@ -72,6 +72,35 @@ class InfinitesimalOracle(unittest.TestCase):
             record["value"]["coefficientContext"][key] = value
             self.reject(record)
 
+    def test_required_case_inputs(self):
+        for original, replacement, message in (
+                ("nested/whole", "square/zero-repeat", "coefficient depth"),
+                ("descriptor/nested/singleton", "descriptor/square/negative-head", "coefficient depth"),
+                ("reencode/nested/reencode", "reencode/passmore/reencode", "coefficient depth"),
+                ("square/zero-repeat", "nested/whole", "coefficient depth"),
+                ("passmore/whole", "square/zero-repeat", "Passmore polynomial"),
+                ("descriptor/passmore/cubic", "descriptor/square/negative-head", "Passmore polynomial"),
+                ("compare/passmore/order", "compare/square/scaled-equal", "Passmore polynomial")):
+            record = self.record(replacement)
+            record["case"] = "infinitesimal/" + original
+            with self.assertRaisesRegex(OracleMismatch, message):
+                oracle.check_record(record)
+        record = self.record("reencode/passmore/reencode")
+        record["value"]["data"]["source"]["head"] = self.record(
+            "square/zero-repeat")["value"]["data"]["head"]
+        with self.assertRaisesRegex(OracleMismatch, "Passmore polynomial"):
+            oracle.check_record(record)
+
+    def test_descriptor_error_reasons(self):
+        for name, reason in (("passmore/absent", "absent"), ("passmore/malformed", "malformed"),
+                             ("nested/reversed", "domain")):
+            record = self.record("descriptor/" + name)
+            self.assertEqual(record["value"]["data"]["validation"],
+                             {"status": "invalid-descriptor", "reason": reason})
+            oracle.check_record(record)
+            record["value"]["data"]["validation"]["reason"] = "ambiguous"
+            self.reject(record)
+
     def test_bad_coefficient_denominator(self):
         record = self.record("passmore/whole")
         record["value"]["data"]["head"][0]["den"] = []
@@ -110,7 +139,7 @@ class InfinitesimalOracle(unittest.TestCase):
         record["value"]["data"]["validation"]["selected"]["signs"][0] = True
         self.reject(record)
 
-    def test_stale_descriptor_and_copied_derivatives(self):
+    def test_stale_descriptor_and_changed_queries(self):
         for name in ("descriptor/passmore/cubic", "descriptor/nested/singleton"):
             for key in ("staleContextReplay", "changedHeadReplay"):
                 record = self.record(name)
@@ -146,6 +175,11 @@ class InfinitesimalOracle(unittest.TestCase):
         with patch.object(oracle, "version", return_value="4.15.3.0"):
             with self.assertRaises(OracleMismatch):
                 oracle.check_version()
+        with patch("z3.get_version", return_value=(4, 15, 3, 0)):
+            with self.assertRaises(OracleMismatch):
+                oracle.check_version()
+        with patch("z3.get_full_version", return_value="Z3 4.15.4.0 custom build"):
+            oracle.check_version()
 
 
 if __name__ == "__main__":
