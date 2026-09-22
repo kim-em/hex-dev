@@ -1,0 +1,6 @@
+{
+  "path": "HexMatrix/Scaled.lean",
+  "baseline_blob": "a69f627817fd4403771b40a4089f72b4ea7bb38c",
+  "current_blob": "a83599dbfe08bf50129605c05e204d4a5f3559e1",
+  "reason": "The complete diff only adds the module-system expose attribute to Scaled.encode and ScaledRows.encode so companion proofs can unfold their existing bodies. Their types, implementation bodies, arithmetic operations, instances, call sites and compiler inlining attributes are unchanged. These are value-producing functions, not type definitions whose unfolding changes runtime representation. The measured native factorization service continues to call the same common-denominator implementations. This exemption concerns native runtime only; it does not exempt proof-elaboration costs or establish any sign-determination Phase-4 evidence."
+}
