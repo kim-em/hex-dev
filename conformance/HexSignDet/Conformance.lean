@@ -206,6 +206,21 @@ def solveError (values : Vector Int 3) (expected : BuildError) : Bool :=
 
 #guard solveError #v[0, 1, 0] .nonintegral
 #guard solveError #v[0, 2, 0] .negative
+#guard match solveScaled 1 #v[[0]] #v[[1]] #v[2] (-3) (Matrix.ofRows #v[#v[-3]]) with
+  | .ok s => s.counts == #v[2] && s.check 1
+  | _ => false
+#guard match solveScaled 1 #v[[0]] #v[[1]] #v[1] 2 (Matrix.ofRows #v[#v[1]]) with
+  | .error .nonintegral => true
+  | _ => false
+#guard match solveScaled 1 #v[[0]] #v[[1]] #v[-1] 1 (Matrix.ofRows #v[#v[1]]) with
+  | .error .negative => true
+  | _ => false
+#guard match solveScaled 1 #v[[0]] #v[[1]] #v[2] 0 (Matrix.ofRows #v[#v[1]]) with
+  | .error .singular => true
+  | _ => false
+#guard match solveScaled 1 #v[[0]] #v[[1]] #v[2] 1 (Matrix.ofRows #v[#v[2]]) with
+  | .error .system => true
+  | _ => false
 #guard match solveSystem 1 #v[[0], [1]] #v[[1], [1]] #v[1, 1] with
   | .error .singular => true
   | _ => false
@@ -395,6 +410,20 @@ def rejectsProduced (f : Replay Rat Nat → Replay Rat Nat) : Bool :=
     | .ok t => !accepts [x, x - 1] (f t.val)
 
 #guard rejectsProduced (mapNode fun n => {n with context := 8})
+#guard rejectsProduced (mapNode fun n => {n with preparation := n.preparation.map fun r =>
+  {r with steps := r.steps.reverse}})
+#guard rejectsProduced (mapNode fun n => {n with preparation := n.preparation.map fun r =>
+  {r with steps := []}})
+#guard rejectsProduced (mapNode fun n => {n with preparation := n.preparation.map fun r =>
+  {r with steps := r.steps.map fun s => {s with index := s.index + 1}}})
+#guard rejectsProduced (mapNode fun n => {n with preparation := n.preparation.map fun r =>
+  {r with steps := r.steps.map fun s => {s with next := s.next + 1}}})
+#guard rejectsProduced (mapNode fun n => {n with preparation := n.preparation.map fun r =>
+  {r with steps := r.steps.map fun s =>
+    {s with witness := {s.witness with leftScale := -s.witness.leftScale}}}})
+#guard rejectsProduced (fun t => match t with
+  | .leaf n => .leaf n
+  | .split n l r => .split {n with preparation := l.node.preparation} l r)
 #guard rejectsProduced (mapNode fun n => replaceSystem n {n.system with counts := n.system.counts.map (· + 1)})
 #guard rejectsProduced (fun t => match t with | .leaf n => .leaf n | .split n l r => .split n r l)
 #guard rejectsProduced (mapNode fun n => {n with reductions := n.reductions.map (fun r =>

@@ -409,7 +409,7 @@ jobs:
             hexsmith_emit_fixtures hexcharpoly_emit_fixtures hexcharpoly_emit_carrier_fixtures \
             hexminpoly_emit_fixtures \
             hexgramschmidt_emit_fixtures hexlatticeenum_emit_fixtures \
-            hexlll_emit_fixtures hexrealroots_emit_fixtures \
+            hexlll_emit_fixtures hexrealroots_emit_fixtures hexsigndet_emit_fixtures \
             hexrcf_emit_fixtures \
             hexroots_emit_fixtures hexresultant_emit_fixtures \
             hexnumberfield_emit_fixtures hexrealalgebraic_emit_fixtures hexrealalgebraic_conformance \

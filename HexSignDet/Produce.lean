@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.Replay
+public import HexSignDet.Tensor
 public import HexRank.Int
 public import HexRowReduce.Inverse
 
@@ -51,14 +52,34 @@ its integer identity is checked in the original row and column orders. -/
     denominator := den }
   if s.check arity then return s else throw .system
 
+/-- Solve using a supplied scaled integer inverse. This is the parent-node
+path when child inverse witnesses have already been combined by a tensor
+product. Exact divisibility is checked before extracting counts. -/
+@[expose] def solveScaled {r : Nat} (arity : Nat) (rows : Vector (List Nat) r)
+    (columns : Vector (List Int) r) (values : Vector Int r)
+    (denominator : Int) (inverse : Matrix Int r r) : Except BuildError (System r) := do
+  if denominator = 0 then throw .singular
+  let numerators := inverse * values
+  if !numerators.toList.all (fun z => z % denominator == 0) then throw .nonintegral
+  let counts := numerators.map (· / denominator)
+  if !counts.toList.all (· ≥ 0) then throw .negative
+  let s : System r := {rows, columns, values, counts, inverse, denominator}
+  if s.check arity then return s else throw .system
+
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
   [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E]
+
+/-- The shared positive-degree reduction guard, also used at the tree root. -/
+@[expose] def useReduction (reduced : Bool) (domain : Sturm.PreparedDomain E) : Bool :=
+  reduced && decide (0 < domain.head.natDegree)
 
 /-- Assemble one node using the same prepared domain for every moment.
 No roots, root counts or guessed sign conditions are supplied by a caller. -/
 @[expose] def buildNode (context : Ctx) (domain : Sturm.PreparedDomain E)
     (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int))
-    (reduced : Bool := true) :
+    (reduced : Bool := true)
+    (inverse : Option (Int × Matrix Int rows.length rows.length) := none)
+    (preparation : Option (QueryReduction E) := none) :
     Except BuildError (Node E Ctx) := do
   if h : rows.length = columns.length then
     if !rows.all (fun e => decide (e.length = qs.length) && e.all (· ≤ 2)) then
@@ -68,35 +89,67 @@ No roots, root counts or guessed sign conditions are supplied by a caller. -/
       throw .system
     let es := rows.toArray.toVector
     let cs : Vector (List Int) rows.length := h ▸ columns.toArray.toVector
-    let reductions := es.map fun e =>
-      if reduced && decide (0 < domain.head.natDegree) then
-        some (Reduction.build domain.sign domain.head qs e)
+    let preparation := if useReduction reduced domain then
+      match preparation with
+      | some r => some r
+      | none => some (QueryReduction.build domain.sign domain.head qs)
       else none
-    let moments := Vector.ofFn fun i =>
-      Sturm.certifyPrepared context domain (queryPoly qs es[i] reductions[i])
-    match solveSystem qs.length es cs (moments.map (·.value)) with
+    let operands := QueryReduction.operands qs preparation
+    let reductions := es.map fun e =>
+      if useReduction reduced domain then
+        some (Reduction.build domain.sign domain.head operands e)
+      else none
+    let moments : Vector (TarskiCertificate E E Ctx) rows.length := Vector.ofFn fun i =>
+      Sturm.certifyPrepared context domain (queryPoly operands es[i] reductions[i])
+    let values := moments.map (fun (c : TarskiCertificate E E Ctx) => c.value)
+    let solved := match inverse with
+      | none => solveSystem qs.length es cs values
+      | some (d, a) => solveScaled qs.length es cs values d a
+    match solved with
     | .error err => throw err
     | .ok s => return {
         context, head := domain.head, lower := domain.lower, upper := domain.upper
-        queries := qs, size := rows.length, system := s, moments, reductions
+        queries := qs, size := rows.length, system := s, moments, reductions, preparation
         basis := Matrix.rankCert s.retainedMatrix }
   else throw .dimensions
 
 /-- Balanced support reduction. Recursion decreases the actual query length;
-there is no fuel limit and no full-ternary fallback at internal nodes. -/
-@[expose] def buildTree (context : Ctx) (domain : Sturm.PreparedDomain E)
-    (qs : List (DensePoly E)) (reduced : Bool := true) : Except BuildError (Replay E Ctx) := do
+there is no fuel limit and no full-ternary fallback at internal nodes.
+Call `buildTree` to preprocess each query once; a direct call with no supplied
+preparation lets individual nodes construct their own reductions. -/
+@[expose] def buildTreeFrom (context : Ctx) (domain : Sturm.PreparedDomain E)
+    (qs : List (DensePoly E)) (reduced : Bool) (preparation : Option (QueryReduction E)) :
+    Except BuildError (Replay E Ctx) := do
   if h : qs.length ≤ 1 then
-    return .leaf (← buildNode context domain qs (leafRows qs.length) (leafColumns qs.length) reduced)
+    return .leaf (← buildNode context domain qs (leafRows qs.length) (leafColumns qs.length)
+      reduced none preparation)
   else
-    let l ← buildTree context domain (qs.take (qs.length / 2)) reduced
-    let r ← buildTree context domain (qs.drop (qs.length / 2)) reduced
+    let l ← buildTreeFrom context domain (qs.take (qs.length / 2)) reduced
+      (preparation.map fun r => r.slice 0 (qs.length / 2))
+    let r ← buildTreeFrom context domain (qs.drop (qs.length / 2)) reduced
+      (preparation.map fun r => r.slice (qs.length / 2) (qs.length - qs.length / 2))
+    have hd : (product l.node.rows r.node.rows).length = l.node.basis.rank * r.node.basis.rank := by
+      rw [length_product]
+      simp [Node.rows]
+    -- The original support order and left inverse are justified by
+    -- System.basis_columns and System.basis_inverse in the companion.
+    let inverse : Matrix Int (product l.node.rows r.node.rows).length
+        (product l.node.rows r.node.rows).length := hd.symm ▸ tensor l.node.basis.adj r.node.basis.adj
     let n ← buildNode context domain qs (product l.node.rows r.node.rows)
       (product l.node.system.support r.node.system.support) reduced
+      (some (l.node.basis.denom * r.node.basis.denom, inverse)) preparation
     return .split n l r
 termination_by qs.length
 decreasing_by
   all_goals simp only [List.length_take, List.length_drop]; omega
+
+/-- Prepare every original query once, then reuse its evidence throughout
+the balanced support tree and across all moment rows. -/
+@[expose] def buildTree (context : Ctx) (domain : Sturm.PreparedDomain E)
+    (qs : List (DensePoly E)) (reduced : Bool := true) : Except BuildError (Replay E Ctx) :=
+  let preparation := if useReduction reduced domain then
+    some (QueryReduction.build domain.sign domain.head qs) else none
+  buildTreeFrom context domain qs reduced preparation
 
 /-- A returned construction has passed the independent literal replay.
 This is an executable acceptance guarantee, not root-sum soundness. -/

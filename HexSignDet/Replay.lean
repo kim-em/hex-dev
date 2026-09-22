@@ -7,6 +7,7 @@ module
 
 public import HexSignDet.Support
 public import HexSignDet.MomentReplay
+public import HexSignDet.QueryReduction
 
 public section
 
@@ -31,6 +32,7 @@ structure Node (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
   system : System size
   moments : Vector (TarskiCertificate E E Ctx) size
   reductions : Vector (Option (Reduction E)) size := Vector.replicate size none
+  preparation : Option (QueryReduction E) := none
   basis : Matrix.RankCert Int size system.positive.length
 
 /-- Retained independent rows in the order certified by HexRank. -/
@@ -63,8 +65,10 @@ check avoids assuming an inverse-format or permutation adapter. -/
    Matrix.checkRank retained n.basis &&
    decide (n.basis.adj * Matrix.selectedSubmatrix retained n.basis.rows n.basis.cols =
      Matrix.scale n.basis.denom (Matrix.identity n.basis.rank)) &&
+   (match n.preparation with | none => true | some r => r.check sign p qs) &&
    (List.finRange n.size).all (fun i =>
-     checkMoment sign context p a b qs n.system.rows[i] n.system.values[i]
+     checkMoment sign context p a b (QueryReduction.operands qs n.preparation)
+       n.system.rows[i] n.system.values[i]
        n.moments[i] n.reductions[i]))
 
 /-- Empty and singleton lists have complete fixed supports. Larger leaves
@@ -131,10 +135,20 @@ theorem Node.check_moment [DecidableEq Ctx] {sign : E → Int}
     {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
     {qs : List (DensePoly E)} {n : Node E Ctx}
     (h : n.check sign context p a b qs = true) (i : Fin n.size) :
-    checkMoment sign context p a b qs n.system.rows[i]
+    checkMoment sign context p a b (QueryReduction.operands qs n.preparation) n.system.rows[i]
       n.system.values[i] n.moments[i] n.reductions[i] = true := by
   simp only [Node.check, Bool.and_eq_true] at h
   exact List.all_eq_true.mp h.2.2 i (List.mem_finRange i)
+
+/-- Shared query reductions are checked against the exact original ordered
+query list before any moment uses them. -/
+theorem Node.check_preparation [DecidableEq Ctx] {sign : E → Int}
+    {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
+    {qs : List (DensePoly E)} {n : Node E Ctx}
+    (h : n.check sign context p a b qs = true) :
+    (match n.preparation with | none => true | some r => r.check sign p qs) = true := by
+  simp only [Node.check, Bool.and_eq_true] at h
+  exact h.2.1.2
 
 /-- Even an empty root system reaches a checked Tarski query at a leaf.
 Hence empty matrix identities can never bypass the shared domain guards. -/

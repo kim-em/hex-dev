@@ -1346,6 +1346,10 @@ lean_exe hexrealroots_emit_fixtures where
   srcDir := "conformance"
   root := `HexRealRoots.EmitFixtures
 
+lean_exe hexsigndet_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexSignDet.EmitFixtures
+
 lean_exe hexrealformula_emit_fixtures where
   srcDir := "conformance"
   root := `HexRealFormula.EmitFixtures

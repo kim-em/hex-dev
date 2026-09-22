@@ -35,10 +35,13 @@ comparison. Neither path runs a query producer, gcd search or row search.
 `Replay.query_evidence` proves that every accepted tree reaches a checked Tarski
 query, including when its root matrix is empty.
 
-`buildTree` constructs the balanced support tree from prepared Tarski queries,
-using existing rational inversion and integer rank producers. It checks rational
-integrality and nonnegativity before extracting integer counts and clears inverse
-denominators by their least common multiple. `buildPrepared` additionally returns
+`buildTree` constructs the balanced support tree from prepared Tarski queries.
+Leaves use existing rational inversion, checking integrality/nonnegativity and
+clearing inverse denominators by their least common multiple. Internal nodes
+combine the children's retained integer inverses by a tensor product and solve
+by exact divisibility, without another rational inversion. Both paths use the
+existing integer rank producer to select the retained row basis.
+`buildPrepared` additionally returns
 a proof that the independent replay accepts the resulting tree. Its `BuildError`
 diagnostics expose outstanding producer-completeness obligations; they are not
 mathematical domain failures and this is not yet the total `determinePrepared`
@@ -50,13 +53,31 @@ Construction reduces moments by default after each indexed multiplication,
 using the shared positive pseudo-division and normalization routines. The
 optional `reduced := false` mode constructs full products, as does the reference
 solver. Constant heads use the direct path and their zero-root domain evidence.
-The current producer still uses each raw query factor at every step. Initial
-query reductions shared across moment rows, and their separately bound replay
-evidence, remain required for the specification's reduced-degree cost bound.
+`QueryReduction` preprocesses every original query once. All moment rows and
+balanced child sublists reuse those reduced operands and their indexed
+polynomial witnesses. Child slices rebind local indices without rerunning
+pseudo-division. Each node checks its preprocessing against the original query
+list before using the reduced factors. The current tree repeats these checks
+across nodes; finite DAG sharing and its performance accounting remain required.
 `HexSignDetMathlib` proves that produced reductions pass the checker and that
 arbitrary accepted reductions preserve each full moment's sign at every root.
+`Node.check_sign` composes preprocessing and moment reduction for the actual
+Tarski operand; `QueryReduction.slice_checks` validates the child restrictions.
+`QueryReduction.check_bounds` proves that every accepted preprocessing keeps
+the original query length and supplies only zero or degree-bounded operands.
 These algebraic proofs allow noninjective coefficient interpretations; they do
 not assert a Tarski root-sum theorem.
+
+The companion also proves full column rank after pruning, correctness and
+column order of the actual retained rank certificate, and its left-inverse
+identity. Tensor correspondence preserves the exact Cartesian-product order.
+`Node.basis_matrix` identifies the selected minor with the actual retained
+exponent/sign vectors. `Node.product_inverse` then proves the parent witness
+identity with the precise retained row and support lists used by `buildTreeFrom`.
+`solveScaled_eq` proves that solving a checked integer system recovers its
+counts, including zero dimensions and non-unit denominators. Integrating these
+finite facts with root/query semantics into full producer completeness remains
+required.
 
 `count_moments` proves the finite counting identity on an independently complete
 candidate support. `Replay.support_complete` then proves recursive coverage and
@@ -76,12 +97,16 @@ Construction regressions also cover irrational roots, finite intervals, twelve
 repeated queries, exact-conversion rejection and full/reduced small-case agreement.
 A downstream ordinary-kernel probe instantiates the recursive moment contract
 on a two-query tree, and compiled replay independently checks that same tree.
-Their numeric context labels exercise literal binding over the fixed rational
+The fixture emitter compares 59 rational cases against independent FLINT
+`qqbar` root/sign evaluation and the existing real-algebraic API, including
+complete sparse counts and invalid-domain cases. The oracle rejects omitted
+conditions even when totals agree. See the [fixture provenance](../conformance-fixtures/HexSignDet/README.md).
+The numeric context labels exercise literal binding over the fixed rational
 base only; full tower/refinement context fixtures remain required.
 
 The library currently exposes raw replay data and checked construction, not a
 validated `SignTable` or the total `determinePrepared` API. Producer completeness,
-tensor/retained-row-basis existence, Thom descriptors
+full constructor correspondence, Thom descriptors
 and selected-root operations, serialization and
 nested evidence sharing remain required. The finite lemmas above do not prove
 root-count correctness. Those proofs must interpret the actual query replays

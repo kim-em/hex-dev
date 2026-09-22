@@ -17,6 +17,17 @@ namespace Hex.SignDet
 @[expose] def product (xs ys : List (List α)) : List (List α) :=
   xs.flatMap fun x => ys.map (x ++ ·)
 
+/-- The ordered Cartesian product has the tensor dimension, including an
+empty support on either side. -/
+theorem length_product (xs ys : List (List α)) :
+    (product xs ys).length = xs.length * ys.length := by
+  induction xs with
+  | nil => simp [product]
+  | cons x xs ih =>
+    change ((ys.map (x ++ ·)) ++ product xs ys).length = (x :: xs).length * ys.length
+    simp only [List.length_append, List.length_map, ih, List.length_cons, Nat.succ_mul]
+    omega
+
 /-- Restriction to complete child supports puts a parent condition in their
 Cartesian product. This step requires both child membership hypotheses. -/
 theorem mem_product {xs ys : List (List α)} {x y : List α}
