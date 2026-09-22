@@ -71,6 +71,9 @@ not assert a Tarski root-sum theorem.
 The companion also proves full column rank after pruning, correctness and
 column order of the actual retained rank certificate, and its left-inverse
 identity. Tensor correspondence preserves the exact Cartesian-product order.
+`Node.basis_matrix` identifies the selected minor with the actual retained
+exponent/sign vectors. `Node.product_inverse` then proves the parent witness
+identity with the precise retained row and support lists used by `buildTreeFrom`.
 `solveScaled_eq` proves that solving a checked integer system recovers its
 counts, including zero dimensions and non-unit denominators. Integrating these
 finite facts with root/query semantics into full producer completeness remains

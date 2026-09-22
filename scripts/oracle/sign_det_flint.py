@@ -127,6 +127,8 @@ def check_table(table: Any, expected: list[dict[str, Any]], arity: int) -> None:
         key = tuple(signs)
         require(key not in seen, "duplicate sign condition")
         seen.add(key)
+    require(table == sorted(table, key=lambda row: row["signs"]),
+            "produced table rows are not in the serialization order")
     require(table == expected, f"complete sign table differs: Lean={table!r}, FLINT={expected!r}")
 
 
@@ -184,7 +186,7 @@ def main() -> int:
             pass
         return check(args.source or (DEFAULT_FIXTURE if args.check else None),
                      args.failure_dir, args.profile, args.seed)
-    except (Unavailable, OracleMismatch, OSError) as exc:
+    except (Unavailable, OracleMismatch, OSError, ImportError) as exc:
         print(f"FAIL HexSignDet oracle: {exc}", file=sys.stderr)
         return 1
 

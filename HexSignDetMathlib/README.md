@@ -25,8 +25,10 @@ the child-sublist restrictions used by the producer without rerunning division.
 `System.retained_rank` proves that removing zero-count columns preserves full
 column rank. `basis_checks`, `basis_rank`, `basis_columns` and `basis_inverse`
 verify the actual integer rank producer's retained basis, exact column order
-and scaled left inverse. Tensor correspondence identifies the executable
-witness product with the literal ordered moment matrix. `solveScaled_eq`
+and scaled left inverse. `Node.basis_matrix` identifies the selected minor
+with its actual retained exponent/sign vectors. `Node.product_inverse` proves
+the tensor witness identity and identifies both vector orders with the exact
+list products used by `buildTreeFrom`. `solveScaled_eq`
 proves that the integer solver recovers any accepted system's counts without
 rounding or sign clamping. These finite algebra results do not assume roots
 or query semantics and do not yet prove completeness of the full constructor.

@@ -62,6 +62,8 @@ class ExactSigns(unittest.TestCase):
     def test_sparse_completeness_not_just_total(self):
         expected = oracle.expected_table(case())
         oracle.check_output(output([row([-1]), row([1])]), expected, 1)
+        with self.assertRaisesRegex(OracleMismatch, "serialization order"):
+            oracle.check_output(output([row([1]), row([-1])]), expected, 1)
         for table in ([row([1], 2)], [], [row([-1], 2)], [row([-1]), row([-1])],
                       [row([1]), row([-1])], [row([-1]), row([0], 0), row([1])],
                       [row([-1], -1), row([1], 3)], [row([-1], True), row([1])],

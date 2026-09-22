@@ -69,6 +69,10 @@ product. Exact divisibility is checked before extracting counts. -/
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
   [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E]
 
+/-- The shared positive-degree reduction guard, also used at the tree root. -/
+@[expose] def useReduction (reduced : Bool) (domain : Sturm.PreparedDomain E) : Bool :=
+  reduced && decide (0 < domain.head.natDegree)
+
 /-- Assemble one node using the same prepared domain for every moment.
 No roots, root counts or guessed sign conditions are supplied by a caller. -/
 @[expose] def buildNode (context : Ctx) (domain : Sturm.PreparedDomain E)
@@ -85,14 +89,14 @@ No roots, root counts or guessed sign conditions are supplied by a caller. -/
       throw .system
     let es := rows.toArray.toVector
     let cs : Vector (List Int) rows.length := h ▸ columns.toArray.toVector
-    let preparation := if reduced && decide (0 < domain.head.natDegree) then
+    let preparation := if useReduction reduced domain then
       match preparation with
       | some r => some r
       | none => some (QueryReduction.build domain.sign domain.head qs)
       else none
     let operands := QueryReduction.operands qs preparation
     let reductions := es.map fun e =>
-      if reduced && decide (0 < domain.head.natDegree) then
+      if useReduction reduced domain then
         some (Reduction.build domain.sign domain.head operands e)
       else none
     let moments : Vector (TarskiCertificate E E Ctx) rows.length := Vector.ofFn fun i =>
@@ -110,7 +114,9 @@ No roots, root counts or guessed sign conditions are supplied by a caller. -/
   else throw .dimensions
 
 /-- Balanced support reduction. Recursion decreases the actual query length;
-there is no fuel limit and no full-ternary fallback at internal nodes. -/
+there is no fuel limit and no full-ternary fallback at internal nodes.
+Call `buildTree` to preprocess each query once; a direct call with no supplied
+preparation lets individual nodes construct their own reductions. -/
 @[expose] def buildTreeFrom (context : Ctx) (domain : Sturm.PreparedDomain E)
     (qs : List (DensePoly E)) (reduced : Bool) (preparation : Option (QueryReduction E)) :
     Except BuildError (Replay E Ctx) := do
@@ -125,6 +131,8 @@ there is no fuel limit and no full-ternary fallback at internal nodes. -/
     have hd : (product l.node.rows r.node.rows).length = l.node.basis.rank * r.node.basis.rank := by
       rw [length_product]
       simp [Node.rows]
+    -- The original support order and left inverse are justified by
+    -- System.basis_columns and System.basis_inverse in the companion.
     let inverse : Matrix Int (product l.node.rows r.node.rows).length
         (product l.node.rows r.node.rows).length := hd.symm ▸ tensor l.node.basis.adj r.node.basis.adj
     let n ← buildNode context domain qs (product l.node.rows r.node.rows)
@@ -139,7 +147,7 @@ decreasing_by
 the balanced support tree and across all moment rows. -/
 @[expose] def buildTree (context : Ctx) (domain : Sturm.PreparedDomain E)
     (qs : List (DensePoly E)) (reduced : Bool := true) : Except BuildError (Replay E Ctx) :=
-  let preparation := if reduced && decide (0 < domain.head.natDegree) then
+  let preparation := if useReduction reduced domain then
     some (QueryReduction.build domain.sign domain.head qs) else none
   buildTreeFrom context domain qs reduced preparation
 
