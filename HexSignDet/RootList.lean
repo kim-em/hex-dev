@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSignDet.Complete
+public import HexSignDet.ThomOrder
 
 public section
 
@@ -52,14 +52,9 @@ theorem Thom.insert_perm {sign : E → Int} {context : Ctx}
           rw [he]
           exact (List.Perm.cons e (ih hi)).trans (List.Perm.swap _ _ _)
 
-/-- Finite insertion preserves strict sortedness under the stated comparator
-laws. The companion must obtain those laws for realized encodings from Thom
-order; this theorem does not assume or assert that foundation. -/
+/-- Finite insertion preserves strict sortedness by the proved comparator
+laws. Correspondence with the ordering of real roots remains separate. -/
 theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
-    (htrans : ∀ a b c : Descriptor E Ctx sign context,
-      a.fullOrder b = some .lt → b.fullOrder c = some .lt → a.fullOrder c = some .lt)
-    (hreverse : ∀ a b : Descriptor E Ctx sign context,
-      a.fullOrder b = some .gt → b.fullOrder a = some .lt)
     (d : Descriptor E Ctx sign context) {ds out : List (Descriptor E Ctx sign context)}
     (hs : ds.Pairwise (fun a b => a.fullOrder b = some .lt))
     (h : insert d ds = .ok out) : out.Pairwise (fun a b => a.fullOrder b = some .lt) := by
@@ -82,7 +77,7 @@ theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
         intro x hx
         rcases List.mem_cons.mp hx with rfl | hx
         · exact hc
-        · exact htrans d e x hc (he x hx)
+        · exact Descriptor.fullOrder_trans hc (he x hx)
       | gt =>
         cases hi : insert d es with
         | error err => simp [insert, hc, hi] at h
@@ -94,7 +89,7 @@ theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
           intro x hx
           have hm := (insert_perm d hi).mem_iff.mp hx
           rcases List.mem_cons.mp hm with rfl | hm
-          · exact hreverse x e hc
+          · exact Descriptor.fullOrder_reverse hc
           · exact he x hm
 
 /-- Extract a full count-one row from a shared checked table. Table invariants
@@ -238,13 +233,9 @@ theorem Descriptor.rootsFrom_raw (sign : E → Int) (context : Ctx)
           · exact ⟨signs, ofReplay_raw hd⟩
           · exact ih hr e he
 
-/-- Successful enumeration is strictly sorted under the finite comparator
-laws. Their correspondence with real-root order is a separate companion gate. -/
+/-- Successful enumeration is strictly sorted by the actual finite comparator.
+Correspondence with real-root order is a separate companion gate. -/
 theorem Descriptor.rootsFrom_sorted (sign : E → Int) (context : Ctx)
-    (htrans : ∀ a b c : Descriptor E Ctx sign context,
-      a.fullOrder b = some .lt → b.fullOrder c = some .lt → a.fullOrder c = some .lt)
-    (hreverse : ∀ a b : Descriptor E Ctx sign context,
-      a.fullOrder b = some .gt → b.fullOrder a = some .lt)
     (raw : RawDescriptor E Ctx) (t : Replay E Ctx) {rows : List (List Int × Nat)}
     {out : List (Descriptor E Ctx sign context)}
     (h : rootsFrom sign context raw t rows = .ok out) :
@@ -264,7 +255,7 @@ theorem Descriptor.rootsFrom_sorted (sign : E → Int) (context : Ctx)
         | error err => simp [rootsFrom, hn, hd, hr] at h
         | ok ds =>
           have hi : Thom.insert d ds = .ok out := by simpa [rootsFrom, hn, hd, hr] using h
-          exact Thom.insert_sorted htrans hreverse d (ih hr) hi
+          exact Thom.insert_sorted d (ih hr) hi
 
 /-- Shared extraction preserves every input row, by its exact correspondence
 with the literal per-descriptor checking path. -/
@@ -280,10 +271,6 @@ theorem Descriptor.rootsFromTable_perm {sign : E → Int} {context : Ctx}
 
 /-- Shared extraction retains the finite strict sortedness guarantee. -/
 theorem Descriptor.rootsFromTable_sorted {sign : E → Int} {context : Ctx}
-    (htrans : ∀ a b c : Descriptor E Ctx sign context,
-      a.fullOrder b = some .lt → b.fullOrder c = some .lt → a.fullOrder c = some .lt)
-    (hreverse : ∀ a b : Descriptor E Ctx sign context,
-      a.fullOrder b = some .gt → b.fullOrder a = some .lt)
     (raw : RawDescriptor E Ctx) (t : Replay E Ctx)
     (hp : 0 < raw.head.natDegree) (hctx : raw.context = context)
     (hc : t.check sign context raw.head raw.lower raw.upper (raw.full []).queries = true)
@@ -291,7 +278,7 @@ theorem Descriptor.rootsFromTable_sorted {sign : E → Int} {context : Ctx}
     {out : List (Descriptor E Ctx sign context)}
     (h : rootsFromTable raw t hp hctx hc rows hrows = .ok out) :
     out.Pairwise (fun a b => a.fullOrder b = some .lt) :=
-  rootsFrom_sorted sign context htrans hreverse raw t
+  rootsFrom_sorted sign context raw t
     ((rootsFromTable_eq raw t hp hctx hc rows hrows).symm.trans h)
 
 variable [Neg E] [Inv E]
@@ -379,17 +366,13 @@ theorem Descriptor.buildRoots_perm {sign : E → Int} {context : Ctx} {p : Dense
   obtain ⟨domain, hd, t, ht, hs⟩ := buildRoots_spec h
   exact ⟨domain, hd, t, ht, rootsFrom_perm sign context _ _ hs⟩
 
-/-- The public entry point is strictly sorted under the same explicit finite
-comparator laws as insertion. Thom semantics must still supply those laws. -/
+/-- The public entry point is strictly sorted by its actual finite comparator,
+without caller-supplied order laws. Real-root order needs Thom semantics. -/
 theorem Descriptor.buildRoots_sorted {sign : E → Int} {context : Ctx}
-    (htrans : ∀ a b c : Descriptor E Ctx sign context,
-      a.fullOrder b = some .lt → b.fullOrder c = some .lt → a.fullOrder c = some .lt)
-    (hreverse : ∀ a b : Descriptor E Ctx sign context,
-      a.fullOrder b = some .gt → b.fullOrder a = some .lt)
     {p : DensePoly E} {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
     (h : buildRoots sign context p a b = .ok (some out)) :
     out.Pairwise (fun a b => a.fullOrder b = some .lt) := by
   obtain ⟨_, _, t, _, hs⟩ := buildRoots_spec h
-  exact rootsFrom_sorted sign context htrans hreverse _ t.val hs
+  exact rootsFrom_sorted sign context _ t.val hs
 
 end Hex.SignDet

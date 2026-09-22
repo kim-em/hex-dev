@@ -1075,4 +1075,26 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 #guard_msgs in
 #print axioms Descriptor.buildRoots_constant
 
+/-- info: 'Hex.SignDet.Thom.compareFrom_cons_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Thom.compareFrom_cons_lt
+/-- info: 'Hex.SignDet.Thom.compareFrom_trans' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Thom.compareFrom_trans
+/-- info: 'Hex.SignDet.Thom.compareFrom_swap' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Thom.compareFrom_swap
+/-- info: 'Hex.SignDet.Thom.compareSigns_trans' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Thom.compareSigns_trans
+/-- info: 'Hex.SignDet.Thom.compareSigns_swap' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Thom.compareSigns_swap
+/-- info: 'Hex.SignDet.Descriptor.fullOrder_trans' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.fullOrder_trans
+/-- info: 'Hex.SignDet.Descriptor.fullOrder_reverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.fullOrder_reverse
+
 end Hex.SignDet.Conformance
