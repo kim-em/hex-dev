@@ -1898,3 +1898,7 @@ lean_exe cad_sample_costs where
 lean_lib DeterminantExperiment where
   srcDir := "experiments"
   globs := #[.submodules `Determinant]
+
+lean_exe determinant_experiment where
+  srcDir := "experiments"
+  root := `Determinant.Runtime

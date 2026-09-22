@@ -1,5 +1,5 @@
 {
-  "elapsed_seconds": 229.74942688108422,
+  "elapsed_seconds": 340.8252934310585,
   "batches": [
     {
       "batch": "arithmetic",
@@ -13,6 +13,13 @@
       "state": "finished",
       "exit_status": 1,
       "elapsed_seconds": 64.04193034104537,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "arithmetic-sealed",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 14.709429375012405,
       "limit_seconds": 240
     },
     {
@@ -35,6 +42,83 @@
       "exit_status": 0,
       "elapsed_seconds": 47.730971634038724,
       "limit_seconds": 240
+    },
+    {
+      "batch": "full-synchronous",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 26.41650834493339,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "full-transport",
+      "state": "finished",
+      "exit_status": 1,
+      "elapsed_seconds": 14.410263099009171,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "transport-controls",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 33.721293054986745,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "value-dyadic8",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 0.5008876309730113,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "value-dyadic8-wide",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 0.6009659320116043,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "value-flat128",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 6.80486513802316,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "value-int16",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 0.5008929290343076,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "value-modular128",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 11.307669415022247,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "value-modular32",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 0.9011511009884998,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "value-poly4",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 0.5008953739888966,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "value-rat8",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 0.7010451559908688,
+      "limit_seconds": 240
     }
   ],
   "policy": {
@@ -43,5 +127,11 @@
     "next_decision_before_total_seconds": 1800,
     "serial": true,
     "memory_cap": null
+  },
+  "validation": {
+    "state": "finished",
+    "exit_status": 0,
+    "elapsed_seconds": 1.0010632650228217,
+    "limit_seconds": 240
   }
 }

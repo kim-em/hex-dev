@@ -1,0 +1,9 @@
+{
+  "output": "reports/bench-results/determinant-redesign/value-modular128",
+  "ring": "int",
+  "dimension": 128,
+  "bits": 8,
+  "shape": "dense",
+  "modular": true,
+  "spread": 1
+}

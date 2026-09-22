@@ -1,0 +1,6 @@
+{
+  "experiments/Determinant/full_measure.py": "834796ea3305b25e8c8b5821fa4fce0a6e5b18949107315f84592e418d3a23b1",
+  "experiments/Determinant/full.py": "62acd16518bf7497b68676056e7683c8a831359de7abc0b22f6ceed2f3ab0548",
+  "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+  "experiments/Determinant/Transport.lean": "f87b1cb3ca3e91f3c98dbae2e175f9650f567ce297156143670c1cf41097a212"
+}
