@@ -140,6 +140,62 @@ private theorem toReal_horner_foldr (x : Dyadic) : ∀ cs : List Int,
               (cs.map (Int.cast : ℤ → ℝ)).foldr (fun c acc => c + Dyadic.toReal x * acc) 0
       rw [toReal_add, toReal_mul, HexRealRootsMathlib.toReal_ofInt, toReal_horner_foldr x cs]
 
+private theorem hornerDyadic_value (n e c a k : Int) :
+    let r := Hex.ZPoly.hornerDyadic n e c (a, k)
+    (r.1 : ℝ) * 2 ^ (-r.2) = c + (n : ℝ) * 2 ^ (-e) * ((a : ℝ) * 2 ^ (-k)) := by
+  have shift (b t : Int) (ht : 0 ≤ t) :
+      ((b <<< t.toNat : Int) : ℝ) = (b : ℝ) * 2 ^ t := by
+    simp [Int.shiftLeft_eq, ← zpow_natCast, Int.toNat_of_nonneg ht]
+  dsimp only
+  by_cases ha : a = 0
+  · simp [Hex.ZPoly.hornerDyadic, ha]
+  · by_cases hc : c = 0
+    · simp [Hex.ZPoly.hornerDyadic, ha, hc, zpow_add₀, mul_assoc, mul_left_comm]
+    simp only [Hex.ZPoly.hornerDyadic, ha, hc, ↓reduceIte]
+    split
+    · rename_i hk
+      dsimp only
+      rw [Int.cast_add, shift c (k + e) hk, Int.cast_mul]
+      simp only [zpow_neg, zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+      field_simp
+    · rename_i hk
+      dsimp only
+      rw [Int.cast_add, shift (n * a) (-(k + e)) (by omega), Int.cast_mul]
+      simp only [neg_zero, zpow_zero, mul_one, zpow_neg,
+        zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+      ring
+
+private theorem hornerDyadic_fold (n e : Int) (cs : List Int) :
+    let r := cs.foldr (Hex.ZPoly.hornerDyadic n e) (0, 0)
+    (r.1 : ℝ) * 2 ^ (-r.2) =
+      (cs.map (Int.cast : ℤ → ℝ)).foldr (fun c acc => c + (n : ℝ) * 2 ^ (-e) * acc) 0 := by
+  induction cs with
+  | nil => simp
+  | cons c cs ih =>
+    exact (hornerDyadic_value n e c _ _).trans
+      (congrArg (fun v : ℝ => (c : ℝ) + (n : ℝ) * 2 ^ (-e) * v) ih)
+
+/-- Deferred normalization preserves the exact, canonical result of the
+ordinary dyadic Horner fold. -/
+theorem evalDyadic_eq_fold (q : Hex.ZPoly) (x : Dyadic) :
+    q.evalDyadic x = q.toArray.foldr (fun c acc => Dyadic.ofInt c + x * acc) 0 := by
+  apply Dyadic.toRat_inj.mp
+  apply Rat.cast_injective (α := ℝ)
+  change Dyadic.toReal _ = Dyadic.toReal _
+  rw [← Array.foldr_toList, toReal_horner_foldr]
+  unfold Hex.ZPoly.evalDyadic
+  cases x with
+  | zero =>
+    simp only [← Array.foldr_toList, Dyadic.toReal,
+      Dyadic.toRat_ofIntWithPrec_eq_mul_two_pow]
+    push_cast
+    simpa using hornerDyadic_fold 0 0 q.toArray.toList
+  | ofOdd n e hn =>
+    simp only [← Array.foldr_toList, Dyadic.toReal,
+      Dyadic.toRat_ofIntWithPrec_eq_mul_two_pow, Dyadic.toRat_ofOdd_eq_mul_two_pow]
+    push_cast
+    exact hornerDyadic_fold n e q.toArray.toList
+
 /-- **Evaluation correspondence.** The exact dyadic Horner evaluation of an
 integer polynomial, cast to `ℝ`, agrees with the Mathlib evaluation of its real
 cast at the real value of the dyadic point. -/
@@ -153,7 +209,7 @@ theorem toReal_evalDyadic (q : Hex.ZPoly) (x : Dyadic) :
     have h := Hex.DensePoly.toArray_getD q n
     rw [Array.getD_eq_getD_getElem?] at h
     exact h
-  unfold Hex.ZPoly.evalDyadic
+  rw [evalDyadic_eq_fold]
   rw [← Array.foldr_toList, toReal_horner_foldr, ← eval_hornerPoly, hcoeffs]
 
 /-- **Sign correspondence.** The exact integer sign of a dyadic value has, as a

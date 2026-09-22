@@ -1,0 +1,493 @@
+{
+  "method": "exclusive period-weighted samples restricted to child PID and timed kernel regions",
+  "total_samples": 3905,
+  "kernel_samples": 1554,
+  "kernel_event_period": 3380657574,
+  "symbols": [
+    {
+      "symbol": "__gmpn_addmul_1_x86_64",
+      "period": 574918830,
+      "percent": 17.00612432390646
+    },
+    {
+      "symbol": "__gmpn_copyi_x86_64",
+      "period": 336044894,
+      "percent": 9.940222771583194
+    },
+    {
+      "symbol": "__gmpz_init_set",
+      "period": 206870600,
+      "percent": 6.119241463288171
+    },
+    {
+      "symbol": "__gmpn_mul_2",
+      "period": 154496608,
+      "percent": 4.570016472185893
+    },
+    {
+      "symbol": "cfree@GLIBC_2.2.5",
+      "period": 130571489,
+      "percent": 3.862310397959282
+    },
+    {
+      "symbol": "malloc",
+      "period": 125264215,
+      "percent": 3.7053209991861777
+    },
+    {
+      "symbol": "_int_malloc",
+      "period": 111927239,
+      "percent": 3.3108126614422972
+    },
+    {
+      "symbol": "_int_free_chunk",
+      "period": 95943329,
+      "percent": 2.8380078993472173
+    },
+    {
+      "symbol": "lean::mpz_to_int(lean::mpz const&)",
+      "period": 91411549,
+      "percent": 2.703957647264514
+    },
+    {
+      "symbol": "lean_int_big_mul",
+      "period": 65141814,
+      "percent": 1.9268977284476667
+    },
+    {
+      "symbol": "lean_dec_ref_cold",
+      "period": 63397694,
+      "percent": 1.875306581996938
+    },
+    {
+      "symbol": "__gmpn_addmul_2_fat",
+      "period": 60835352,
+      "percent": 1.799512392733095
+    },
+    {
+      "symbol": "__gmpn_mul_basecase_fat",
+      "period": 54146734,
+      "percent": 1.6016627775741714
+    },
+    {
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+      "period": 52732886,
+      "percent": 1.559841091436136
+    },
+    {
+      "symbol": "__gmpn_mul_1_x86_64",
+      "period": 50332230,
+      "percent": 1.4888295811766235
+    },
+    {
+      "symbol": "lean::mpz::~mpz()",
+      "period": 50257873,
+      "percent": 1.4866300978402494
+    },
+    {
+      "symbol": "realloc",
+      "period": 47606140,
+      "percent": 1.408191718857593
+    },
+    {
+      "symbol": "__gmpz_sub",
+      "period": 43715230,
+      "percent": 1.2930984296133863
+    },
+    {
+      "symbol": "_int_free_merge_chunk",
+      "period": 43643088,
+      "percent": 1.2909644660746111
+    },
+    {
+      "symbol": "__gmpz_cmp_si",
+      "period": 39758395,
+      "percent": 1.1760550759643424
+    },
+    {
+      "symbol": "_int_free_create_chunk",
+      "period": 39409924,
+      "percent": 1.1657472884297508
+    },
+    {
+      "symbol": "__gmpz_clear",
+      "period": 36930917,
+      "percent": 1.0924181521378775
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_DensePoly_scaleImpl___at___00Hex_SignedRemainderChain_check___at___00Hex_TarskiCertificate_check___at___00Hex_IntTarskiCertificate_check_spec__0_spec__2_spec__3_spec__4",
+      "period": 36826710,
+      "percent": 1.0893357044862302
+    },
+    {
+      "symbol": "__gmpz_realloc",
+      "period": 32843123,
+      "percent": 0.9715010254984198
+    },
+    {
+      "symbol": "__gmpz_mul",
+      "period": 32596334,
+      "percent": 0.964200996004217
+    },
+    {
+      "symbol": "__gmpn_add_n_x86_64",
+      "period": 30440656,
+      "percent": 0.9004359457791096
+    },
+    {
+      "symbol": "mi_free",
+      "period": 30367569,
+      "percent": 0.8982740290986951
+    },
+    {
+      "symbol": "lean_apply_1",
+      "period": 30053394,
+      "percent": 0.8889807187552796
+    },
+    {
+      "symbol": "__gmpz_add",
+      "period": 28136335,
+      "percent": 0.8322740290643823
+    },
+    {
+      "symbol": "mi_malloc_small",
+      "period": 28113572,
+      "percent": 0.8316006985213819
+    },
+    {
+      "symbol": "__libc_malloc2",
+      "period": 28052481,
+      "percent": 0.8297936240495442
+    },
+    {
+      "symbol": "__gmp_default_allocate",
+      "period": 26095647,
+      "percent": 0.7719103881060507
+    },
+    {
+      "symbol": "lean::cmp(lean::mpz const&, int)",
+      "period": 26092861,
+      "percent": 0.771827978103292
+    },
+    {
+      "symbol": "__gmpz_mul_si",
+      "period": 26038499,
+      "percent": 0.7702199477479525
+    },
+    {
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignedRemainderChain_build___at___00Hex_TarskiCertificate_certify___at___00Hex_TarskiCertificate_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__10_spec__13",
+      "period": 25933317,
+      "percent": 0.7671086595533441
+    },
+    {
+      "symbol": "lp_Hex_Hex_DensePoly_subImpl___at___00Hex_SignedRemainderChain_subIsZero___at___00Hex_SignedRemainderChain_check___at___00Hex_TarskiCertificate_check___at___00Hex_IntTarskiCertificate_check_spec__0_spec__2_spec__5_spec__7___lam__0",
+      "period": 25933060,
+      "percent": 0.76710105748202
+    },
+    {
+      "symbol": "__gmpn_mul",
+      "period": 23978548,
+      "percent": 0.7092865064008402
+    },
+    {
+      "symbol": "lp_Hex_Hex_DensePoly_trimTrailingZerosGo___at___00Hex_DensePoly_trimTrailingZerosImpl___at___00Hex_DensePoly_ofCoeffs___at___00Hex_DensePoly_C___at___00Hex_TarskiCertificate_certify___at___00Hex_TarskiCertificate_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__2_spec__6_spec__7_spec__13",
+      "period": 23743236,
+      "percent": 0.7023259670723456
+    },
+    {
+      "symbol": "_int_realloc",
+      "period": 23516400,
+      "percent": 0.695616148197327
+    },
+    {
+      "symbol": "lp_Hex_Hex_ZPoly_hornerDyadic",
+      "period": 22074842,
+      "percent": 0.6529747990383128
+    },
+    {
+      "symbol": "__gmpz_mul_2exp",
+      "period": 21916119,
+      "percent": 0.6482797657045404
+    },
+    {
+      "symbol": "l___private_Init_Data_Array_Basic_0__Array_ofFn_go___redArg",
+      "period": 21329705,
+      "percent": 0.6309336137455251
+    },
+    {
+      "symbol": "l_Int_shiftLeft",
+      "period": 19817317,
+      "percent": 0.5861971100655461
+    },
+    {
+      "symbol": "l_List_range_loop",
+      "period": 19756559,
+      "percent": 0.5843998857483813
+    },
+    {
+      "symbol": "unlink_chunk.isra.0",
+      "period": 17455020,
+      "percent": 0.5163202607162366
+    },
+    {
+      "symbol": "lean_inc_heartbeat",
+      "period": 17187863,
+      "percent": 0.5084177448845637
+    },
+    {
+      "symbol": "lean_apply_2",
+      "period": 15398712,
+      "percent": 0.45549457946964494
+    },
+    {
+      "symbol": "free@plt",
+      "period": 14649784,
+      "percent": 0.43334125622981534
+    },
+    {
+      "symbol": "lean_int_big_sub",
+      "period": 13225806,
+      "percent": 0.39121992424542434
+    },
+    {
+      "symbol": "lean_big_int_to_nat",
+      "period": 13097915,
+      "percent": 0.3874369028301948
+    },
+    {
+      "symbol": "__gmpn_lshift_x86_64",
+      "period": 11159660,
+      "percent": 0.33010323452534324
+    },
+    {
+      "symbol": "l_Option_instDecidableEq___redArg",
+      "period": 11053720,
+      "percent": 0.3269695246573352
+    },
+    {
+      "symbol": "lean_array_push",
+      "period": 10947145,
+      "percent": 0.32381703146134727
+    },
+    {
+      "symbol": "lean::mpz::operator*=(int)",
+      "period": 10938463,
+      "percent": 0.3235602175187945
+    },
+    {
+      "symbol": "lean_int_big_add",
+      "period": 10523371,
+      "percent": 0.31128177786869815
+    },
+    {
+      "symbol": "lean_copy_expand_array",
+      "period": 10474823,
+      "percent": 0.3098457258895396
+    },
+    {
+      "symbol": "lean_nat_shiftl",
+      "period": 9082872,
+      "percent": 0.2686717539763464
+    },
+    {
+      "symbol": "lean_nat_big_sub",
+      "period": 8802287,
+      "percent": 0.2603720373129988
+    },
+    {
+      "symbol": "__gmpn_sub_n_x86_64",
+      "period": 6621367,
+      "percent": 0.1958603276156593
+    },
+    {
+      "symbol": "__gmp_default_free",
+      "period": 6603827,
+      "percent": 0.19534149364279862
+    },
+    {
+      "symbol": "mi_malloc",
+      "period": 6589398,
+      "percent": 0.19491468318701716
+    },
+    {
+      "symbol": "mi_page_free_list_extend(mi_page_s*, unsigned long, unsigned long)",
+      "period": 6576309,
+      "percent": 0.1945275099902798
+    },
+    {
+      "symbol": "__memmove_avx512_unaligned_erms",
+      "period": 6572105,
+      "percent": 0.19440315548503997
+    },
+    {
+      "symbol": "lean::mpz::get_int() const",
+      "period": 6527629,
+      "percent": 0.19308755344530495
+    },
+    {
+      "symbol": "lean_free_object",
+      "period": 6462493,
+      "percent": 0.19116082769523346
+    },
+    {
+      "symbol": "__gmp_default_reallocate",
+      "period": 6434101,
+      "percent": 0.19032099108420378
+    },
+    {
+      "symbol": "[unknown]",
+      "period": 6364656,
+      "percent": 0.1882668049242659
+    },
+    {
+      "symbol": "lp_Hex_Hex_DensePoly_subImpl___at___00Hex_SignedRemainderChain_subIsZero___at___00Hex_SignedRemainderChain_check___at___00Hex_TarskiCertificate_check___at___00Hex_IntTarskiCertificate_check_spec__0_spec__2_spec__5_spec__7___lam__0___boxed",
+      "period": 6286972,
+      "percent": 0.185968908781295
+    },
+    {
+      "symbol": "lean_int_big_lt",
+      "period": 4422083,
+      "percent": 0.1308054099891514
+    },
+    {
+      "symbol": "__gmpz_add_ui",
+      "period": 4410930,
+      "percent": 0.13047550375771955
+    },
+    {
+      "symbol": "lean::mpz::mpz(lean::mpz const&)",
+      "period": 4396601,
+      "percent": 0.13005165130634436
+    },
+    {
+      "symbol": "__gmpn_toom32_mul",
+      "period": 4324018,
+      "percent": 0.12790464296813753
+    },
+    {
+      "symbol": "lean_nat_big_add",
+      "period": 4288927,
+      "percent": 0.12686664964193148
+    },
+    {
+      "symbol": "l_Int_instDecidableEq___boxed",
+      "period": 4258009,
+      "percent": 0.12595209383959927
+    },
+    {
+      "symbol": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)",
+      "period": 4249349,
+      "percent": 0.12569593065801582
+    },
+    {
+      "symbol": "l_Int_toNat",
+      "period": 4213326,
+      "percent": 0.12463036873074326
+    },
+    {
+      "symbol": "lean_alloc_object",
+      "period": 4119328,
+      "percent": 0.1218499037489326
+    },
+    {
+      "symbol": "__gmpz_init_set_ui",
+      "period": 2214330,
+      "percent": 0.06549997896947607
+    },
+    {
+      "symbol": "__gmpz_swap",
+      "period": 2213643,
+      "percent": 0.06547965747920496
+    },
+    {
+      "symbol": "lean::mpz::mpz(lean::mpz&&)",
+      "period": 2213269,
+      "percent": 0.0654685945427255
+    },
+    {
+      "symbol": "lean_int_big_neg",
+      "period": 2213171,
+      "percent": 0.06546569569840734
+    },
+    {
+      "symbol": "lp_Hex_Hex_ZPoly_evalDyadic",
+      "period": 2211032,
+      "percent": 0.06540242398415712
+    },
+    {
+      "symbol": "lean::mpz::operator-=(lean::mpz const&)",
+      "period": 2208161,
+      "percent": 0.06531749967765295
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_anyMUnsafe_any___at___00Hex_SignedRemainderChain_check___at___00Hex_TarskiCertificate_check___at___00Hex_IntTarskiCertificate_check_spec__0_spec__2_spec__7",
+      "period": 2206823,
+      "percent": 0.06527792157869698
+    },
+    {
+      "symbol": "mi_arena_schedule_purge(mi_arena_s*, unsigned long, unsigned long)",
+      "period": 2205218,
+      "percent": 0.06523044560797626
+    },
+    {
+      "symbol": "malloc@plt",
+      "period": 2204940,
+      "percent": 0.06522222235572682
+    },
+    {
+      "symbol": "mi_page_extend_free(mi_theap_s*, mi_page_s*)",
+      "period": 2202510,
+      "percent": 0.06515034284865433
+    },
+    {
+      "symbol": "__gmpn_rsh1sub_n",
+      "period": 2200676,
+      "percent": 0.06509609304784324
+    },
+    {
+      "symbol": "realloc@plt",
+      "period": 2200407,
+      "percent": 0.06508813601599037
+    },
+    {
+      "symbol": "mi_bitmap_clearN(mi_bitmap_s*, unsigned long, unsigned long)",
+      "period": 2199987,
+      "percent": 0.06507571239748401
+    },
+    {
+      "symbol": "__gmpn_rsh1add_n",
+      "period": 2199953,
+      "percent": 0.06507470667598587
+    },
+    {
+      "symbol": "mi_page_queue_find_free_ex(mi_theap_s*, mi_page_queue_s*, bool)",
+      "period": 2195597,
+      "percent": 0.06494585600404852
+    },
+    {
+      "symbol": "lean::mpz::operator+=(lean::mpz const&)",
+      "period": 2183659,
+      "percent": 0.06459272943802737
+    },
+    {
+      "symbol": "__gmpz_get_si",
+      "period": 2179671,
+      "percent": 0.06447476422230511
+    },
+    {
+      "symbol": "__vdso_clock_gettime",
+      "period": 2169356,
+      "percent": 0.06416964606779782
+    },
+    {
+      "symbol": "__gmpn_add_n",
+      "period": 2167047,
+      "percent": 0.06410134574605691
+    },
+    {
+      "symbol": "lean::mpz::is_size_t() const",
+      "period": 2135941,
+      "percent": 0.06318122889544092
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{"all_retained_head_step_formulas": true}
+{"degree": 128, "recurrence_operand_bits": 1008572, "schoolbook_limb_products": 74392, "tail_horner_accumulator_bits": 997757, "tail_final_normalization_iterations": 64}
+{"degree": 256, "recurrence_operand_bits": 8204288, "schoolbook_limb_products": 971817, "tail_horner_accumulator_bits": 8030539, "tail_final_normalization_iterations": 128}
+{"degree": 512, "recurrence_operand_bits": 66273482, "schoolbook_limb_products": 14023892, "tail_horner_accumulator_bits": 64464326, "tail_final_normalization_iterations": 256}
+{"degree": 1024, "recurrence_operand_bits": 533138095, "schoolbook_limb_products": 212621263, "tail_horner_accumulator_bits": 516737386, "tail_final_normalization_iterations": 512}
+{"degree": 2048, "recurrence_operand_bits": 4278464362, "schoolbook_limb_products": 3310145368, "tail_horner_accumulator_bits": 4138449751, "tail_final_normalization_iterations": 1024}

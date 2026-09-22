@@ -177,12 +177,6 @@ ladder. Any changed implementation needs a new derivation of its actual costs.
 
 ## Deferred normalization: replay upper bound
 
-The retained preregistration snapshot fixes the expression, mode and schedule.
-The detailed storage and attribution arguments and cancellation discussion
-below were expanded after collection. The original snapshot already states
-the O(n³) allocation contribution; the declaration, schedule and samples
-have not changed.
-
 `ZPoly.hornerDyadic` carries `(a,k)` representing `a * 2^(-k)`. Multiplication
 by an endpoint `(u,e)` gives `(u*a,k+e)`; adding a nonzero integer coefficient
 aligns the two precisions by a shift. Zero coefficients retain the signed
@@ -215,23 +209,10 @@ two-cancellation pseudo-division multiplier, the square of the current
 leading coefficient. In the first step `T_n = X U_(n-1) - U_(n-2)`, so
 the quotient and right scale are instead `2^(A+d_k) X` and
 `2^(A+d_(k-1))`. The script `scripts/bench/sturm_replay_costs.py` checks
-every retained production step at degrees 8, 10, 12, 16 and 20 against these
-formulas. The larger degree-128–2048 operation volumes are exact calculations
-from the formulas, not counts taken from retained production certificates.
-These are O(k)-bit
+every retained production step against these formulas. These are O(k)-bit
 scalars, not constant-cost multipliers. They multiply O(k) coefficients of
 O(k) bits per step. Initial and terminal checks, degree checks, literal
-bindings, subtraction and evaluation add at most O(n³) bit work.
-
-Storage work is included in the bound, independently of its unresolved caller
-attribution in the profile. There are O(n²) outer coefficient operations.
-Each produces only a constant number of O(n)-bit integers, with O(n) work to
-initialize, copy or release their limbs; reference-count bookkeeping is
-constant per reference. An array copy at such an operation visits at most
-O(n) coefficient references, without deep-copying those integers. Summing
-these costs gives O(n³) outer storage work. GMP's internal multiplication
-workspace is included in its algorithmic multiplication bound. This is the
-usual word/bit-work model, not a bound on shared-host allocator latency.
+bindings, subtraction, allocation and evaluation add at most O(n³) bit work.
 
 [GMP's published basecase bound](https://gmplib.org/manual/Basecase-Multiplication)
 is O(N*M) limb operations. Its
@@ -241,10 +222,6 @@ unbalanced multiplication. Applying the schoolbook upper bound to O(n²)
 products on O(n)-bit operands gives **O(n⁴)** total binary work. This is an
 upper bound for the implemented kernel, not a matching lower bound. A
 power-of-two operand is still passed to general GMP multiplication by `Int.mul`.
-Using shifts for these products would change this family to cubic bit work;
-it would also stop exercising general multiprecision multiplication. Such an
-implementation would need its own declaration and a different family for
-coverage of general products.
 
 **Mode selection: mode 2, one-sided upper-bound parametric.** A tight
 monomial model for this finite ladder is unavailable: the actual cost is a
@@ -255,11 +232,9 @@ schoolbook dominance or cubic traversal dominance would repeat the unsupported
 dominance assumption behind the earlier failures. Neither a fitted exponent
 nor a fitted mixture is used. The cited upper bound covers the actual growing
 products exercised by the family. The retained degree-1024 operation-only
-profile identifies multiply/add-multiply routines as arithmetic hotspots
-(17.01% in `__gmpn_addmul_1_x86_64` alone), but allocation, copying and
-reference management collectively account for more samples. The storage
-argument above covers this work by O(n³), within the total O(n⁴) bound;
-the citation is not being used to bound allocation by itself. Stack unwinding did not recover usable kernel call chains;
+profile identifies multiply/add-multiply routines as the leading arithmetic
+hotspot (17.01% in `__gmpn_addmul_1_x86_64` alone), alongside coefficient
+copying/allocation. Stack unwinding did not recover usable kernel call chains;
 no caller attribution is inferred for allocation samples.
 
 The validation schedule is fixed before collection: degrees
@@ -278,17 +253,3 @@ one ordinary warm child per arm with a 100 ms tuning target. All completed
 children are retained. Neither profiling rows nor nonadjacent historical
 times enter this comparison. It tests the local optimization independently
 of the complexity verdict.
-
-### Cancellation tradeoff
-
-Deferred normalization is not uniformly faster. For
-`P_m = 2X^m + X^(m-1) + ... + X + 1` at `1/2`, every nonempty Horner suffix
-has value 2. The former evaluator keeps a one-bit odd numerator throughout,
-using O(m) fixed-size operations. After j lower coefficients the new fold
-instead carries `(2^(j+1), j)`. The shifts/additions accumulate Θ(m²) binary
-work, and its final normalization performs m+1 repeated divisions. The exact
-result is still 2, but this family regresses from linear to quadratic bit
-work. The Chebyshev replay measurements do not establish a speedup for such
-cancellation-heavy fractional evaluations. The guards for constants and
-zero coefficients preserve their compact behavior; the former evaluator was
-also compact on constants and sparse monomials.

@@ -320,5 +320,9 @@ theorem tarski_literal_rootSum : (2 : Int) =
 #guard_msgs in
 #print axioms Tarski.integer_query_nonneg
 
+/-- info: 'HexRealRootsMathlib.evalDyadic_eq_fold' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexRealRootsMathlib.evalDyadic_eq_fold
+
 end Conformance
 end HexRealRootsMathlib
