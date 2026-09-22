@@ -125,6 +125,15 @@ nonexistence when a supplied certificate fails. `Descriptor.build` constructs
 the evidence, distinguishing absent and ambiguous conditions, malformed inputs,
 invalid domains and context mismatches. Internal BKR failures retain a separate
 outer diagnostic result until general producer completeness is proved.
+
+The companion proves that every successful `buildTree` result passes the
+independent replay under the generic coefficient interpretation laws.
+The proof follows the actual query certificates, integer systems, retained
+bases, child preprocessing slices and Cartesian supports. Thus the final
+`buildPrepared` replay guard cannot fail after successful tree construction
+under those laws. This acceptance theorem does not rule out construction
+failures or establish root-count semantics.
+
 `Thom.compareSigns` implements
 the largest-differing-index rule as a finite operation on sign words; root
 comparison still requires realized full encodings of the same head and the

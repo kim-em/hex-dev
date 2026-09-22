@@ -54,6 +54,19 @@ identities follow from those inputs.
 their Cartesian product, deriving all parent-system checks from complete
 child supports without assuming an accepted parent.
 
+`buildNode_spec` and `buildNode_evidence` connect successful construction to
+its exact context, domain, ordered rows/columns, retained rank certificate,
+indexed reductions and prepared query certificates. `buildNode_checks` proves
+local replay acceptance under the shared generic coefficient interpretation
+laws, using the existing prepared-query and reduction producer theorems.
+`buildTreeFrom_checks` propagates accepted preprocessing slices and child
+evidence through the actual balanced recursion. `buildTree_checks` and
+`buildPrepared_eq` show that successful tree construction passes the final
+replay guard, including noncanonical coefficient representations. These
+theorems do not establish that tree construction always succeeds: excluding
+all finite solving failures and interpreting query values remain separate
+obligations. They do not assert arbitrary-certificate root-sum soundness.
+
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient
 interpretation. It neither assumes a gcd normalization nor supplies squarefreeness;
