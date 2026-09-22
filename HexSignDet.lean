@@ -12,3 +12,6 @@ public import HexSignDet.Counts
 public import HexSignDet.Induction
 public import HexSignDet.Produce
 public import HexSignDet.Reference
+public import HexSignDet.Reduction
+public import HexSignDet.Moment
+public import HexSignDet.MomentReplay

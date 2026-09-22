@@ -269,6 +269,9 @@ lean_lib HexSturm where
 lean_lib HexSignDet where
 
 @[default_target]
+lean_lib HexSignDetMathlib where
+
+@[default_target]
 lean_lib HexSturmMathlib where
 
 lean_lib HexInterval where
@@ -1002,7 +1005,7 @@ lean_lib HexConformance where
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
-    ++ #[`HexSignDet.Conformance].map Glob.one
+    ++ #[`HexSignDet.Conformance, `HexSignDetMathlib.Conformance].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]

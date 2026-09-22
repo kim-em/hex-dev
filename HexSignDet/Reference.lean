@@ -24,6 +24,6 @@ it is a reference for conformance and performance comparisons, not a fallback. -
     [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E]
     (context : Ctx) (domain : Sturm.PreparedDomain E) (qs : List (DensePoly E)) :
     Except BuildError (Node E Ctx) :=
-  buildNode context domain qs (words [0, 1, 2] qs.length) (words [-1, 0, 1] qs.length)
+  buildNode context domain qs (words [0, 1, 2] qs.length) (words [-1, 0, 1] qs.length) false
 
 end Hex.SignDet

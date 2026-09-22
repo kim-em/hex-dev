@@ -9,6 +9,7 @@ public import HexSignDet
 public import HexRank.Int
 public import HexRowReduce.Inverse
 public import HexSturm.Fixtures
+public import HexRealRoots.TarskiTests
 
 public meta import HexSignDet.Replay
 public meta import HexSignDet.Matrix
@@ -17,6 +18,8 @@ public meta import HexSignDet.Produce
 public meta import HexSignDet.Reference
 public meta import HexRank.Cert
 public meta import HexSturm.Basic
+public meta import HexSignDet.Reduction
+public meta import HexRealRoots.TarskiTests
 
 public section
 
@@ -76,6 +79,124 @@ def agrees (head : DensePoly Rat) (qs : List (DensePoly Rat)) : Bool :=
 
 #guard [p, x, (1 : DensePoly Rat), x * x + 1, x * x - 2, x * x * x - x].all fun h =>
   [[], [x], [x, x - 1], [x, 0, x]].all (agrees h)
+
+/-- Compare the two actual recursive constructors, not only the reference
+solver. The high-degree queries exercise reduction before Tarski production. -/
+def momentModes (head : DensePoly Rat) (qs : List (DensePoly Rat)) : Bool :=
+  match Sturm.prepare sign head .negInf .posInf with
+  | none => false
+  | some d => match buildPrepared 7 d qs true, buildPrepared 7 d qs false with
+    | .ok reduced, .ok direct =>
+      entries reduced.val.node.system == entries direct.val.node.system &&
+      reduced.val.node.system.rows.toList == direct.val.node.system.rows.toList &&
+      reduced.val.node.system.values.toList == direct.val.node.system.values.toList
+    | _, _ => false
+
+#guard [p, -p, x, (1 : DensePoly Rat), x * x + 1, x * x - 2,
+    DensePoly.ofCoeffs #[-1, 0, 2], DensePoly.ofCoeffs #[1, 0, -2],
+    DensePoly.ofCoeffs #[2, -3], DensePoly.ofCoeffs #[1, -2, 0, 3]].all fun h =>
+  [[], [x], [x, x - 1], [x, 0, x], [x.natPow 7 + 1, x.natPow 6 - 1]].all (momentModes h)
+
+#guard [p, -p, x].all fun h =>
+  [([], []), ([x], [0]), ([x], [1]), ([x], [2]), ([x, x + 1], [2, 2]),
+    ([0, x], [1, 2]), ([p, x], [2, 1])].all fun (qs, es) =>
+      (Reduction.build sign h qs es).check sign h qs es
+
+#guard !(Reduction.build sign p [x] [3]).check sign p [x] [3]
+#guard !(Reduction.build sign p [x] []).check sign p [x] []
+#guard !(Reduction.build sign 1 [x] [1]).check sign 1 [x] [1]
+#guard !(Reduction.build sign 0 [x] [1]).check sign 0 [x] [1]
+
+/- Reject malformed indices before constructing a repeated-factor list. -/
+#guard match Sturm.prepare sign p .negInf .posInf with
+  | none => false
+  | some d => match buildNode 7 d [x] [[100000000]] [[1]] with
+    | .error .system => true
+    | _ => false
+
+/-- Mutate every independently checked component of a supplied chain. -/
+def corruptReduction : Bool :=
+  let qs := [x, x + 1]
+  let es := [1, 2]
+  let r := Reduction.build sign p qs es
+  let badSteps : List (ReductionStep Rat → ReductionStep Rat) := [
+    fun s => {s with index := s.index + 1},
+    fun s => {s with next := s.next + 1},
+    fun s => {s with witness := {s.witness with quotient := s.witness.quotient + 1}},
+    fun s => {s with witness := {s.witness with leftScale := 0}},
+    fun s => {s with witness := {s.witness with leftScale := -1}},
+    fun s => {s with witness := {s.witness with rightScale := 0}},
+    fun s => {s with witness := {s.witness with rightScale := -1}}]
+  r.check sign p qs es &&
+    badSteps.all (fun change => !({r with steps := r.steps.map change}.check sign p qs es)) &&
+    !({r with steps := r.steps.reverse}.check sign p qs es) &&
+    !({r with steps := r.steps.drop 1}.check sign p qs es) &&
+    !({r with steps := r.steps ++ r.steps}.check sign p qs es) &&
+    !({r with result := r.result + 1}.check sign p qs es) &&
+    !r.check sign p qs [2, 1] && !r.check sign p qs.reverse es
+
+#guard corruptReduction
+
+/- These forged identities hold exactly; only positivity prevents their
+false sign claims. The first flips a nonzero sign, the second invents zero,
+and the third invents a nonzero sign for a product divisible by the head. -/
+#guard
+  let step : ReductionStep Rat := ⟨0, -x, ⟨1, 0, -1⟩⟩
+  SignedRemainderChain.subIsZero (1 * x) (0 * p + DensePoly.scale (-1) (-x)) &&
+    !({steps := [step], result := -x} : Reduction Rat).check sign p [x] [1]
+#guard
+  let step : ReductionStep Rat := ⟨0, 0, ⟨0, 0, 1⟩⟩
+  SignedRemainderChain.subIsZero (DensePoly.scale 0 (1 * x)) (0 * p + 0) &&
+    !({steps := [step], result := 0} : Reduction Rat).check sign p [x] [1]
+#guard
+  let first : ReductionStep Rat := ⟨0, x - 1, ⟨1, 0, 1⟩⟩
+  let last : ReductionStep Rat := ⟨1, 1, ⟨1, 1, 0⟩⟩
+  SignedRemainderChain.subIsZero ((x - 1) * (x + 1)) (1 * p + DensePoly.scale 0 1) &&
+    !({steps := [first, last], result := 1} : Reduction Rat).check sign p [x - 1, x + 1] [1, 1]
+
+/- End-to-end replay binds the reduced query, exponent vector and context.
+The certificate for a correct reduced polynomial cannot justify an altered
+reduction, or stand in for the full product's literal query binding. -/
+#guard match Sturm.prepare sign p .negInf .posInf with
+  | none => false
+  | some d =>
+    let qs := [x.natPow 7, x + 1]
+    let es := [2, 1]
+    let r := Reduction.build sign p qs es
+    let cert := Sturm.certifyPrepared (7 : Nat) d r.result
+    checkMoment sign 7 p .negInf .posInf qs es cert.value cert (some r) &&
+    !checkMoment sign 8 p .negInf .posInf qs es cert.value cert (some r) &&
+    !checkMoment sign 7 p .negInf .posInf qs [1, 1] cert.value cert (some r) &&
+    !checkMoment sign 7 p .negInf .posInf qs es cert.value cert
+      (some {r with result := r.result + 1}) &&
+    !checkMoment sign 7 p .negInf .posInf qs es cert.value cert none &&
+    r.steps.all (fun s => s.next.isZero || decide (s.next.natDegree < p.natDegree)) &&
+    decide (r.result.natDegree < p.natDegree) && decide (14 < (moment qs es).natDegree)
+
+/- Zero differences accept semantically equal final representatives while
+the Tarski certificate still binds the exact representative supplied to it. -/
+#guard
+  let head := Hex.TarskiTests.Noncanonical.head
+  let sign := Hex.TarskiTests.Noncanonical.sign
+  let q := DensePoly.C HexPoly.InterpretTests.root
+  let r := Reduction.build sign head [q] [1]
+  let r' := {r with result := (1 : HexPoly.InterpretTests.Poly)}
+  r'.check sign head [q] [1] &&
+    match Sturm.prepare sign head .negInf .posInf with
+    | none => false
+    | some d =>
+      let cert := Sturm.certifyPrepared (7 : Nat) d q
+      checkMoment sign 7 head .negInf .posInf [q] [1] cert.value cert
+        (some {r with result := q}) &&
+      !checkMoment sign 7 head .negInf .posInf [q] [1] cert.value cert (some r')
+
+#guard match Sturm.prepare Hex.TarskiTests.Noncanonical.sign
+    Hex.TarskiTests.Noncanonical.head .negInf .posInf with
+  | none => false
+  | some d => match buildPrepared 7 d [HexPoly.InterpretTests.x,
+      HexPoly.InterpretTests.x - DensePoly.C HexPoly.InterpretTests.root] with
+    | .error _ => false
+    | .ok t => entries t.val.node.system == [([-1, -1], 1), ([1, 0], 1)]
 
 /-- Malformed moment right-hand sides exercise exact conversion diagnostics. -/
 def solveError (values : Vector Int 3) (expected : BuildError) : Bool :=
@@ -276,6 +397,14 @@ def rejectsProduced (f : Replay Rat Nat → Replay Rat Nat) : Bool :=
 #guard rejectsProduced (mapNode fun n => {n with context := 8})
 #guard rejectsProduced (mapNode fun n => replaceSystem n {n.system with counts := n.system.counts.map (· + 1)})
 #guard rejectsProduced (fun t => match t with | .leaf n => .leaf n | .split n l r => .split n r l)
+#guard rejectsProduced (mapNode fun n => {n with reductions := n.reductions.map (fun r =>
+  r.map fun r => {r with result := r.result + 1})})
+#guard rejectsProduced (mapNode fun n => {n with reductions := n.reductions.map (fun r =>
+  r.map fun r => {r with steps := r.steps.map fun s => {s with index := s.index + 1}})})
+#guard rejectsProduced (fun t => match t with
+  | .leaf n => .leaf n
+  | .split n l r => .split n (mapNode (fun c => {c with reductions := c.reductions.map (fun r =>
+      r.map fun r => {r with steps := []})}) l) r)
 #guard mutate (mapNode fun n => {n with basis := {n.basis with
   rows := n.basis.rows.map (fun i => ⟨0, Nat.zero_lt_of_lt i.isLt⟩)}})
 #guard mutate (mapNode fun n => {n with basis := {n.basis with
@@ -372,6 +501,7 @@ example : forged.columns.toList ≠ leafColumns 1 := by decide +kernel
   size := 1
   system := literalSystem
   moments := #v[Sturm.Fixtures.literal]
+  reductions := #v[none]
   basis := {
     rank := 1
     rows := #v[0]
@@ -383,7 +513,7 @@ set_option maxRecDepth 8192 in
 /-- Ordinary-kernel acceptance of literal evidence, without any producer. -/
 theorem literal_accepts : (Replay.leaf literalNode).check Sturm.orderSign 7
     Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] = true := by
-  simp only [Replay.check, Node.check, Sturm.check, TarskiCertificate.check,
+  simp only [Replay.check, Node.check, checkMoment, queryPoly, Sturm.check, TarskiCertificate.check,
     SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
@@ -394,7 +524,7 @@ set_option maxRecDepth 8192 in
 /-- Local query/matrix evidence really passes for the omitted-support forgery. -/
 theorem forged_local : forgedNode.check Sturm.orderSign 7 Sturm.Fixtures.p
     (.finite (-2)) (.finite 2) [Sturm.Fixtures.x] = true := by
-  simp only [Node.check, Sturm.check, TarskiCertificate.check,
+  simp only [Node.check, checkMoment, queryPoly, Sturm.check, TarskiCertificate.check,
     SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
