@@ -37,6 +37,13 @@ proves that the integer solver recovers any accepted system's counts without
 rounding or sign clamping. These finite algebra results do not assume roots
 or query semantics and do not yet prove completeness of the full constructor.
 
+`CommonProduct.check_roots` proves the root-union property from arbitrary
+accepted literal multiplication/division identities under noninjective coefficient
+interpretation. It neither assumes a gcd normalization nor supplies squarefreeness;
+the latter remains a separate shared-domain check. `endpoint_eval`, `endpoint_lower`
+and `endpoint_upper` prove the semantics of the actual finite-boundary polynomials
+used by joint re-encoding.
+
 Complete sign-table and Thom semantics, total producer correspondence and
 Phase-4 evidence remain required. The root-sum/replay bridge in #10389 and the
 specified Tau Ceti BKR/Thom foundations remain separate proof gates; the

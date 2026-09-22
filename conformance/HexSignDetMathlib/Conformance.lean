@@ -174,6 +174,15 @@ example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := 
 /-- info: 'Hex.SignDet.System.basis_inverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms System.basis_inverse
+/-- info: 'Hex.SignDet.CommonProduct.check_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms CommonProduct.check_roots
+/-- info: 'Hex.SignDet.endpoint_lower' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms endpoint_lower
+/-- info: 'Hex.SignDet.endpoint_upper' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms endpoint_upper
 /-- info: 'Hex.SignDet.tensor_inverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms tensor_inverse

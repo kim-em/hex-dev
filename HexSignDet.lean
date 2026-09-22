@@ -24,3 +24,6 @@ public import HexSignDet.Descriptor
 public import HexSignDet.Complete
 public import HexSignDet.SelectedSigns
 public import HexSignDet.RootList
+public import HexSignDet.CommonProduct
+public import HexSignDet.Reencode
+public import HexSignDet.Compare

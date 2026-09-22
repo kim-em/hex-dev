@@ -102,7 +102,8 @@ The fixture emitter compares 59 rational cases against independent FLINT
 complete sparse counts and invalid-domain cases. The oracle rejects omitted
 conditions even when totals agree. Another 27 fixtures compare descriptor
 validation, completion, selected-query signs and full encodings in numerical
-root order against FLINT. See the [fixture provenance](../conformance-fixtures/HexSignDet/README.md).
+root order against FLINT. Ten comparisons and five re-encodings additionally
+check common-head squarefreeness/divisibility and numerical root identity. See the [fixture provenance](../conformance-fixtures/HexSignDet/README.md).
 The numeric context labels exercise literal binding over the fixed rational
 base only; full tower/refinement context fixtures remain required.
 
@@ -147,12 +148,34 @@ Thom foundation; no default order or omitted row conceals such a failure.
 These constructors currently repeat replay checks when extracting descriptors.
 Sharing their domain/table verification and measuring that cost remain required.
 
+`CommonProduct.build` uses the shared polynomial gcd and division to form a
+common head. Replay checks the exact context/old heads and three polynomial
+zero-difference identities: the head divides the old product and each old head
+divides the common head. `CommonProduct.check_roots` proves that arbitrary
+accepted identities give exactly the union of the old root sets. A separate
+prepared-domain check is essential: the unreduced product can satisfy all three
+identities while still having repeated factors.
+
+`Descriptor.buildReencoding` determines signs on the target domain, including
+its full derivatives and the old defining equation, selected derivatives and
+strict finite-endpoint queries. It retains joint count-one evidence and a
+validated target descriptor. Invalid target domains and absent selected roots
+return `none`; internal invariant failures remain diagnostic. The companion
+proves that each actual endpoint query expresses its strict bound.
+`Descriptor.buildComparison` re-encodes both roots on the common head over the
+whole line, then applies the guarded full Thom rule. It retains both joint
+replays and the common-product witness. This handles shared roots, different
+old intervals and equivalent noncanonical coefficient expressions without
+comparing unrelated derivative vectors. The current producer repeats some
+full-derivative table and domain work across these operations; sharing and
+cost attribution remain required.
+
 The total `determinePrepared` API, producer completeness, full constructor
 correspondence and the domain-exact `validate` API remain required. Completion,
 root lists and selected signs still expose internal diagnostics until their
-totality proofs are supplied. Cross-polynomial comparison, re-encoding, the
-sample-point interface, serialization and nested evidence sharing also remain
-required. The finite lemmas above do not prove
+totality proofs are supplied. Comparison/re-encoding correspondence and
+domain-exact totality, the consumer sample-point interface, serialization and
+nested evidence sharing also remain required. The finite lemmas above do not prove
 root-count correctness. Those proofs must interpret the actual query replays
 through #10389 and consume the
 specified BKR/Thom foundations in the companion. No semantic theorem or

@@ -41,6 +41,11 @@ REQUIRED_CASES = {
         "absent", "ambiguous", "empty-ambiguous", "unrealized-full", "duplicate-slot", "zero-slot",
         "large-slot", "short-signs", "bad-sign", "stale-context", "constant", "root-free",
         "zero-head", "repeated-head", "root-endpoint", "reversed-interval")),
+    *(f"compare/{name}" for name in ("equal-linear-vectors", "reverse-linear", "permuted-slots",
+        "shared-irrational", "distinct-irrational", "negative-head", "scaled-head",
+        "foreign-endpoint", "disjoint-intervals", "overlapping-equal")),
+    *(f"reencode/{name}" for name in ("shared-irrational", "outside-target", "missing-root",
+        "invalid-target", "foreign-endpoints")),
 }
 
 
@@ -174,6 +179,7 @@ def check_encoding(value: Any, degree: int) -> None:
 
 
 def check_descriptor(data: dict[str, Any]) -> None:
+    require(type(data["context"]) is int and data["context"] >= 0, "malformed descriptor context")
     derivatives = derivative_queries(data["head"])
     n = len(derivatives)
     words = root_words({**data, "queries": derivatives + data["queries"]})
@@ -228,12 +234,85 @@ def check_descriptor(data: dict[str, Any]) -> None:
             "selected-root query signs differ from exact evaluation")
 
 
+def selection_constraints(raw: dict[str, Any]) -> tuple[list[Any], list[int]]:
+    derivatives = derivative_queries(raw["head"])
+    indices, signs = raw["indices"], raw["signs"]
+    require(type(raw["context"]) is int and raw["context"] == 10377 and derivatives and
+            isinstance(indices, list) and all(type(i) is int and 1 <= i <= len(derivatives) for i in indices)
+            and len(set(indices)) == len(indices) and sign_vector(signs, len(indices)),
+            "malformed source descriptor")
+    queries = [derivatives[i - 1] for i in indices]
+    words = root_words({**raw, "queries": queries})
+    require(words is not None and words.count(signs) == 1, "source descriptor is not uniquely realized")
+    queries = [raw["head"]] + queries
+    required = [0] + signs
+    for boundary, sign in ((raw["lower"], 1), (raw["upper"], -1)):
+        tag, value = endpoint(boundary)
+        if tag == 1:
+            queries.append([[(-value).numerator, value.denominator], [1, 1]])
+            required.append(sign)
+    return queries, required
+
+
+def check_comparison(data: dict[str, Any]) -> None:
+    from flint import fmpq, fmpq_poly
+
+    lq, ls = selection_constraints(data["left"])
+    rq, rs = selection_constraints(data["right"])
+    actual = data["result"]
+    require(actual.get("status") == "ok", "comparison construction failed")
+    for flag in ("commonReplay", "leftReplay", "rightReplay"):
+        require(actual.get(flag) is True, f"comparison lacks {flag}")
+    def flint_poly(coefficients):
+        return fmpq_poly([fmpq(c.numerator, c.denominator) for c in polynomial(coefficients)])
+    left, right, head = (flint_poly(coefficients) for coefficients in
+                         (data["left"]["head"], data["right"]["head"], actual["commonHead"]))
+    require(not head.is_zero() and head.gcd(head.derivative()).degree() == 0 and
+            (left * right) % head == 0 and head % left == 0 and head % right == 0,
+            "common head is not a squarefree root union")
+    derivatives = derivative_queries(actual["commonHead"])
+    n = len(derivatives)
+    words = root_words({"head": actual["commonHead"], "lower": "-inf", "upper": "+inf",
+                        "queries": derivatives + lq + rq})
+    require(words is not None, "invalid common root domain")
+    li = [i for i, word in enumerate(words) if word[n:n + len(ls)] == ls]
+    ri = [i for i, word in enumerate(words) if word[n + len(ls):] == rs]
+    require(len(li) == len(ri) == 1, "common head loses a selected root")
+    expected_order = "lt" if li[0] < ri[0] else "gt" if li[0] > ri[0] else "eq"
+    require(actual.get("order") == expected_order, "comparison differs from exact numerical root order")
+    for field, index in (("leftSigns", li[0]), ("rightSigns", ri[0])):
+        require(sign_vector(actual.get(field), n) and actual[field] == words[index][:n],
+                f"{field} encodes a different common-head root")
+
+
+def check_reencoding(data: dict[str, Any]) -> None:
+    queries, signs = selection_constraints(data["source"])
+    derivatives = derivative_queries(data["head"])
+    n = len(derivatives)
+    words = root_words({**data, "queries": derivatives + queries})
+    selected = [] if words is None else [word for word in words if word[n:] == signs]
+    require(len(selected) <= 1, "multiple roots satisfy a validated source descriptor")
+    actual = data["result"]
+    if not selected:
+        require(actual == {"status": "none"}, "re-encoding accepted an invalid or absent target root")
+    else:
+        check_encoding(actual, n)
+        require(actual.get("status") == "ok" and actual["signs"] == selected[0][:n],
+                "re-encoding changes the selected root")
+
+
 def check_record(record: dict[str, Any]) -> None:
     require(record.get("kind") == "result" and record.get("lib") == "HexSignDet" and
-            record.get("op") in ("table", "descriptor"), "unexpected sign-determination fixture record")
+            record.get("op") in ("table", "descriptor", "compare", "reencode"), "unexpected sign-determination fixture record")
     data = record["value"]
     require(isinstance(data, dict) and type(data.get("schema")) is int and data["schema"] == 1,
             "unsupported sign-table schema")
+    if record["op"] == "compare":
+        check_comparison(data)
+        return
+    if record["op"] == "reencode":
+        check_reencoding(data)
+        return
     if record["op"] == "descriptor":
         check_descriptor(data)
         return

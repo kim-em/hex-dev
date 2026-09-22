@@ -13,3 +13,5 @@ public import HexSignDetMathlib.Tensor
 public import HexSignDetMathlib.NodeBasis
 public import HexSignDetMathlib.QueryReduction
 public import HexSignDetMathlib.Derivatives
+public import HexSignDetMathlib.CommonProduct
+public import HexSignDetMathlib.Reencode

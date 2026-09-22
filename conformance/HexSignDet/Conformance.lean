@@ -26,6 +26,9 @@ public meta import HexSignDet.Descriptor
 public meta import HexSignDet.Complete
 public meta import HexSignDet.SelectedSigns
 public meta import HexSignDet.RootList
+public meta import HexSignDet.Compare
+public meta import HexSignDet.Reencode
+public meta import HexSignDet.CommonProduct
 public meta import HexRealRoots.TarskiTests
 
 public section
@@ -199,6 +202,71 @@ but cannot justify a wrong selected sign or a different query/context. -/
        | _ => false)
     | _ => false
   | _ => false
+
+def compared (left right : RawDescriptor Rat Nat) (expected : Ordering) : Bool :=
+  match Descriptor.build sign 7 left, Descriptor.build sign 7 right with
+  | .ok (.ok l), .ok (.ok r) => match l.buildComparison r with
+    | .ok c => c.order == expected && c.common.check 7 left.head right.head &&
+      l.checkReencoding c.leftEncoding.target c.common.head .negInf .posInf c.leftEncoding.evidence &&
+      r.checkReencoding c.rightEncoding.target c.common.head .negInf .posInf c.rightEncoding.evidence
+    | _ => false
+  | _, _ => false
+
+def reencoded (source : RawDescriptor Rat Nat) (head : DensePoly Rat) (a b : Endpoint Rat)
+    (expected : Option (List Int)) : Bool :=
+  match Descriptor.build sign 7 source with
+  | .ok (.ok d) => match d.buildReencoding head a b, expected with
+    | .ok none, none => true
+    | .ok (some r), some signs => r.target.raw.signs == signs &&
+      d.checkReencoding r.target head a b r.evidence
+    | _, _ => false
+  | _ => false
+
+#guard compared {descriptor [1] [1] with head := x - 1}
+  {descriptor [1] [1] with head := x - 2} .lt
+#guard compared (descriptor [1] [-1]) (descriptor [2, 1] [1, -1]) .eq
+#guard compared {descriptor [1] [1] with head := x * x - 2}
+  {descriptor [1] [-1] with head := (x * x - 2) * (x - 3)} .eq
+#guard compared {descriptor [1] [-1] with head := x * x - 2}
+  {descriptor [1] [-1] with head := (x * x - 2) * (x - 3)} .lt
+#guard compared (descriptor [1] [1]) {descriptor [1] [-1] with head := -p} .eq
+#guard compared (descriptor [1] [1]) {descriptor [1] [1] with head := 2 * p} .eq
+#guard compared {descriptor [1] [1] with head := x - 1, lower := .finite 0, upper := .finite 2}
+  {descriptor [1] [1] with head := x - 2, lower := .finite 1, upper := .finite 3} .lt
+#guard compared {descriptor [] [] with lower := .finite (-2), upper := .finite 0}
+  {descriptor [] [] with lower := .finite 0, upper := .finite 2} .lt
+#guard reencoded {descriptor [1] [1] with head := x * x - 2}
+  ((x * x - 2) * (x - 3)) .negInf .posInf (some [-1, 1, 1])
+#guard reencoded (descriptor [1] [-1]) p (.finite 0) .posInf none
+#guard reencoded (descriptor [1] [1]) (x - 3) .negInf .posInf none
+#guard reencoded (descriptor [1] [1]) p (.finite 1) .posInf none
+#guard reencoded {descriptor [] [] with head := x - 1, lower := .finite 0, upper := .finite 2}
+  (x * (x - 1) * (x - 2)) .negInf .posInf (some [-1, 0, 1])
+
+/- The product with an unremoved common factor satisfies the root-union
+identities but fails the independent squarefree-domain guard. -/
+#guard
+  let q := p * (x - 3)
+  let c : CommonProduct Rat Nat := ⟨7, p, q, p * q, 1, q, p⟩
+  c.check 7 p q && (Sturm.prepare sign c.head .negInf .posInf).isNone &&
+    !({c with context := 8}).check 7 p q &&
+    !({c with leftQuotient := 1}).check 7 p q &&
+    !({c with factor := 2}).check 7 p q
+
+/- Distinct stored coefficients with equal values must select equal roots.
+No Field instance exists on this representation carrier. -/
+#guard
+  let sign := Hex.TarskiTests.Noncanonical.sign
+  let head := Hex.TarskiTests.Noncanonical.head
+  let x := HexPoly.InterpretTests.x
+  let left : RawDescriptor HexPoly.InterpretTests.Rep Nat := ⟨7, head, .negInf, .posInf, [1], [1]⟩
+  let right := {left with head := x * x - 1}
+  decide (left.head ≠ right.head) &&
+    match Descriptor.build sign 7 left, Descriptor.build sign 7 right with
+    | .ok (.ok l), .ok (.ok r) => match l.buildComparison r with
+      | .ok result => result.order == .eq
+      | _ => false
+    | _, _ => false
 
 example : Thom.select [2, 1] [-1, 1] = some [1, -1] ∧
     Thom.select [0] [0] = none ∧ Thom.select [2] [0] = none := by decide +kernel
@@ -835,6 +903,9 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Conformance.selected_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms selected_kernel
+/-- info: 'Hex.SignDet.Reencoding.count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Reencoding.count
 /-- info: 'Hex.SignDet.SelectedSigns.signs_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms SelectedSigns.signs_eq
