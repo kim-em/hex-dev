@@ -66,6 +66,11 @@ replay guard, including noncanonical coefficient representations. These
 theorems do not establish that tree construction always succeeds: excluding
 all finite solving failures and interpreting query values remain separate
 obligations. They do not assert arbitrary-certificate root-sum soundness.
+`buildNode_complete` supplies the finite assembly step for both rational and
+scaled solving: a checked candidate system, a matching supplied inverse when
+present, and equality of its values with the actual prepared queries produce
+a node with exactly its counts. Candidate support and query-value semantics
+must be established independently; neither follows from this assembly lemma.
 
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient

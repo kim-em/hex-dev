@@ -290,6 +290,9 @@ example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := 
 /-- info: 'Hex.SignDet.buildPrepared_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms buildPrepared_eq
+/-- info: 'Hex.SignDet.buildNode_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildNode_complete
 /-- info: 'Hex.SignDetMathlib.Conformance.noncanonical_tree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms noncanonical_tree
