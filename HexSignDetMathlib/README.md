@@ -71,6 +71,11 @@ scaled solving: a checked candidate system, a matching supplied inverse when
 present, and equality of its values with the actual prepared queries produce
 a node with exactly its counts. Candidate support and query-value semantics
 must be established independently; neither follows from this assembly lemma.
+`Node.parent_system` transports the finite child-product system to the exact
+list-length dimension used by `buildTreeFrom`, retaining literal row/column
+orders, counts, values, denominator and its transported tensor inverse. Thus
+the parent construction and the node assembly lemma use the same dimension
+and inverse witness.
 
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient

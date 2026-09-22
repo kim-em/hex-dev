@@ -7,15 +7,11 @@ module
 
 public import HexSignDetMathlib.NodeProducer
 public import HexSignDetMathlib.Solve
+public import HexSignDetMathlib.ParentSystem
 
 public section
 
 namespace Hex.SignDet
-
-private theorem list_transport {α : Type*} {m n : Nat} (h : m = n) (v : Vector α n) :
-    (h ▸ v : Vector α m).toList = v.toList := by
-  cases h
-  rfl
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
   [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E]
@@ -32,16 +28,11 @@ theorem buildNode_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
     (hvalid : s.check qs.length = true)
     (hinv : ∀ d a, inverse = some (d, a) → d = s.denominator ∧ a = s.inverse)
     (hvalues :
-      let prep := if useReduction reduced domain then
-        match preparation with
-        | some r => some r
-        | none => some (QueryReduction.build domain.sign domain.head qs)
-        else none
+      let prep := nodePreparation reduced domain qs preparation
       let operands := QueryReduction.operands qs prep
       ∀ i : Fin rows.length,
         (Sturm.certifyPrepared context domain (queryPoly operands s.rows[i]
-          (if useReduction reduced domain then
-            some (Reduction.build domain.sign domain.head operands s.rows[i]) else none))).value =
+          (nodeReduction reduced domain operands s.rows[i]))).value =
           s.values[i]) :
     ∃ n, buildNode context domain qs rows columns reduced inverse preparation = .ok n ∧
       n.system.counts.toList = s.counts.toList := by
@@ -66,14 +57,9 @@ theorem buildNode_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
   have hd : decide columns.Nodup = true := by
     rw [← hcols]
     exact hh.1.1.1.2
-  let prep := if useReduction reduced domain then
-    match preparation with
-    | some r => some r
-    | none => some (QueryReduction.build domain.sign domain.head qs)
-    else none
+  let prep := nodePreparation reduced domain qs preparation
   let operands := QueryReduction.operands qs prep
-  let reductions := s.rows.map fun e => if useReduction reduced domain then
-    some (Reduction.build domain.sign domain.head operands e) else none
+  let reductions := s.rows.map (nodeReduction reduced domain operands)
   let certs : Vector (TarskiCertificate E E Ctx) rows.length := Vector.ofFn fun i =>
     Sturm.certifyPrepared context domain (queryPoly operands s.rows[i] reductions[i])
   have hv : certs.map (fun c => c.value) = s.values := by
@@ -115,5 +101,52 @@ theorem buildNode_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
     n.system.counts.toList = s.counts.toList
   rw [hv, hu]
   exact ⟨_, rfl, congrArg Vector.toList hcounts⟩
+
+omit [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E] in
+/-- The finite child-product system has exactly the dimension and transported
+inverse supplied by `buildTreeFrom` to `buildNode_complete`. No permutation,
+new inverse search or root-sum premise is needed for this adapter. -/
+theorem Node.parent_system (l r : Node E Ctx) {a b : Nat}
+    (hl : l.system.check a = true) (hr : r.system.check b = true)
+    (hbl : l.basis = Matrix.rankCert l.system.retainedMatrix)
+    (hbr : r.basis = Matrix.rankCert r.system.retainedMatrix)
+    (xs : List (List Int))
+    (cl : ∀ x ∈ xs, x.take a ∈ l.system.support)
+    (cr : ∀ x ∈ xs, x.drop a ∈ r.system.support) :
+    ∃ s : System (product l.rows r.rows).length,
+      s.rows.toList = product l.rows r.rows ∧
+      s.columns.toList = product l.system.support r.system.support ∧
+      s.check (a + b) = true ∧
+      s.denominator = l.basis.denom * r.basis.denom ∧
+      s.inverse = (by
+        have hd : (product l.rows r.rows).length = l.basis.rank * r.basis.rank := by
+          rw [length_product]
+          simp [Node.rows]
+        exact hd.symm ▸ tensor l.basis.adj r.basis.adj) ∧
+      s.counts.toList = (counts (productVector l.basisCols r.basisCols) xs).toList ∧
+      s.values.toList = (SignDet.moments (productVector l.basisRows r.basisRows) xs).toList := by
+  have transport {m n : Nat} (h : m = n) (s : System m) (arity : Nat) :
+      (h ▸ s : System n).rows.toList = s.rows.toList ∧
+      (h ▸ s : System n).columns.toList = s.columns.toList ∧
+      (h ▸ s : System n).check arity = s.check arity ∧
+      (h ▸ s : System n).denominator = s.denominator ∧
+      (h ▸ s : System n).inverse = (h ▸ s.inverse : Matrix Int n n) ∧
+      (h ▸ s : System n).counts.toList = s.counts.toList ∧
+      (h ▸ s : System n).values.toList = s.values.toList := by
+    cases h
+    exact ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+  have hd : (product l.rows r.rows).length = l.basis.rank * r.basis.rank := by
+    rw [length_product]
+    simp [Node.rows]
+  let s := System.mk (productVector l.basisRows r.basisRows)
+    (productVector l.basisCols r.basisCols)
+    (counts (productVector l.basisCols r.basisCols) xs)
+    (SignDet.moments (productVector l.basisRows r.basisRows) xs)
+    (tensor l.basis.adj r.basis.adj) (l.basis.denom * r.basis.denom)
+  obtain ⟨hrows, hcols, hcheck, hden, hinv, hcounts, hvalues⟩ := transport hd.symm s (a + b)
+  obtain ⟨rowsEq, colsEq, _⟩ := l.product_inverse r hl hr hbl hbr
+  exact ⟨hd.symm ▸ s, hrows.trans rowsEq, hcols.trans colsEq,
+    hcheck.trans (l.product_system r hl hr hbl hbr xs cl cr),
+    hden, hinv, hcounts, hvalues⟩
 
 end Hex.SignDet

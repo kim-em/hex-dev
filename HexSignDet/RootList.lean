@@ -270,7 +270,8 @@ variable [Neg E] [Inv E]
 
 /-- Enumerate all full encodings and order them by Thom's rule. Only invalid
 root domains return `none`; unproved producer/Thom invariants stay separate
-internal diagnostics. Constants have an empty table and therefore no roots. -/
+internal diagnostics. Constants admit no well-formed full encoding; their
+branch retains the literal per-descriptor checking path. -/
 def Descriptor.buildRoots (sign : E → Int) (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E) : Except BuildError (Option (List (Descriptor E Ctx sign context))) :=
   match hd : Sturm.prepare sign p a b with
@@ -290,5 +291,55 @@ def Descriptor.buildRoots (sign : E → Int) (context : Ctx) (p : DensePoly E)
       match result with
       | .error err => .error err
       | .ok roots => .ok (some roots)
+
+/-- Successful public root construction extracts from its actual prepared
+BKR table. Both degree branches agree with literal per-descriptor replay. -/
+theorem Descriptor.buildRoots_spec {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
+    (h : buildRoots sign context p a b = .ok (some out)) :
+    let raw : RawDescriptor E Ctx := ⟨context, p, a, b, [], []⟩
+    ∃ domain, Sturm.prepare sign p a b = some domain ∧
+      ∃ t, buildPrepared context domain (raw.full []).queries = .ok t ∧
+        rootsFrom sign context raw t.val t.val.node.system.tableRows.toList = .ok out := by
+  dsimp only
+  unfold buildRoots at h
+  split at h
+  · cases h
+  · rename_i domain hd
+    dsimp only at h
+    split at h
+    · contradiction
+    · rename_i t ht
+      refine ⟨domain, hd, t, ht, ?_⟩
+      simp only [rootsFromTable_eq, dite_eq_ite, ite_self, Replay.table_rows] at h
+      split at h
+      · contradiction
+      · cases h
+        assumption
+
+/-- The public entry point preserves all full sign words of the actual
+produced table, including when the constant branch returns an empty list. -/
+theorem Descriptor.buildRoots_perm {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
+    (h : buildRoots sign context p a b = .ok (some out)) :
+    let raw : RawDescriptor E Ctx := ⟨context, p, a, b, [], []⟩
+    ∃ domain, Sturm.prepare sign p a b = some domain ∧
+      ∃ t, buildPrepared context domain (raw.full []).queries = .ok t ∧
+        (out.map fun d => d.raw.signs).Perm (t.val.node.system.tableRows.toList.map Prod.fst) := by
+  obtain ⟨domain, hd, t, ht, hs⟩ := buildRoots_spec h
+  exact ⟨domain, hd, t, ht, rootsFrom_perm sign context _ _ hs⟩
+
+/-- The public entry point is strictly sorted under the same explicit finite
+comparator laws as insertion. Thom semantics must still supply those laws. -/
+theorem Descriptor.buildRoots_sorted {sign : E → Int} {context : Ctx}
+    (htrans : ∀ a b c : Descriptor E Ctx sign context,
+      a.fullOrder b = some .lt → b.fullOrder c = some .lt → a.fullOrder c = some .lt)
+    (hreverse : ∀ a b : Descriptor E Ctx sign context,
+      a.fullOrder b = some .gt → b.fullOrder a = some .lt)
+    {p : DensePoly E} {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
+    (h : buildRoots sign context p a b = .ok (some out)) :
+    out.Pairwise (fun a b => a.fullOrder b = some .lt) := by
+  obtain ⟨_, _, t, _, hs⟩ := buildRoots_spec h
+  exact rootsFrom_sorted sign context htrans hreverse _ t.val hs
 
 end Hex.SignDet

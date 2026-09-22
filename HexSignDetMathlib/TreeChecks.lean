@@ -93,7 +93,7 @@ theorem buildTree_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
     (h : buildTree context domain qs reduced = .ok t) :
     t.check sign context domain.head domain.lower domain.upper qs = true := by
   subst sign
-  unfold buildTree at h
+  unfold buildTree nodePreparation at h
   apply buildTreeFrom_checks f hz h1 ha hs hm hn hi domain.sign hpos hneg hbound
     context domain rfl qs reduced _ _ h
   by_cases hu : useReduction reduced domain = true

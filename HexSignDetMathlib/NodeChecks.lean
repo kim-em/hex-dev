@@ -38,6 +38,7 @@ theorem buildNode_preparation (context : Ctx) (domain : Sturm.PreparedDomain E)
     (match n.preparation with | none => true | some r => r.check sign domain.head qs) = true := by
   subst sign
   rw [(buildNode_evidence context domain qs rows columns reduced inverse preparation h).1]
+  unfold nodePreparation
   by_cases hu : useReduction reduced domain = true
   · simp only [hu, ↓reduceIte]
     cases preparation with
@@ -84,6 +85,7 @@ theorem buildNode_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
   simp only [checkMoment, Bool.and_eq_true]
   constructor
   · rw [(he.2 i).1]
+    unfold nodeReduction
     by_cases hu : useReduction reduced domain = true
     · simp only [hu, ↓reduceIte]
       apply Reduction.build_checks f hz h1 ha hs hm hn hi domain.sign hpos hneg

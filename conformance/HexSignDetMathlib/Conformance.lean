@@ -297,4 +297,8 @@ example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := 
 #guard_msgs in
 #print axioms noncanonical_tree
 
+/-- info: 'Hex.SignDet.Node.parent_system' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.parent_system
+
 end Hex.SignDetMathlib.Conformance

@@ -73,6 +73,24 @@ variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 @[expose] def useReduction (reduced : Bool) (domain : Sturm.PreparedDomain E) : Bool :=
   reduced && decide (0 < domain.head.natDegree)
 
+/-- Retain supplied preprocessing or build it on a positive-degree reduced
+path. Node construction and its companion statements use this same decision. -/
+@[expose] def nodePreparation (reduced : Bool) (domain : Sturm.PreparedDomain E)
+    (qs : List (DensePoly E)) (preparation : Option (QueryReduction E)) :
+    Option (QueryReduction E) :=
+  if useReduction reduced domain then
+    match preparation with
+    | some r => some r
+    | none => some (QueryReduction.build domain.sign domain.head qs)
+  else none
+
+/-- The actual per-row reduction, shared by construction and correspondence. -/
+@[expose] def nodeReduction (reduced : Bool) (domain : Sturm.PreparedDomain E)
+    (operands : List (DensePoly E)) (row : List Nat) : Option (Reduction E) :=
+  if useReduction reduced domain then
+    some (Reduction.build domain.sign domain.head operands row)
+  else none
+
 /-- Assemble one node using the same prepared domain for every moment.
 No roots, root counts or guessed sign conditions are supplied by a caller. -/
 @[expose] def buildNode (context : Ctx) (domain : Sturm.PreparedDomain E)
@@ -89,16 +107,9 @@ No roots, root counts or guessed sign conditions are supplied by a caller. -/
       throw .system
     let es := rows.toArray.toVector
     let cs : Vector (List Int) rows.length := h ▸ columns.toArray.toVector
-    let preparation := if useReduction reduced domain then
-      match preparation with
-      | some r => some r
-      | none => some (QueryReduction.build domain.sign domain.head qs)
-      else none
+    let preparation := nodePreparation reduced domain qs preparation
     let operands := QueryReduction.operands qs preparation
-    let reductions := es.map fun e =>
-      if useReduction reduced domain then
-        some (Reduction.build domain.sign domain.head operands e)
-      else none
+    let reductions := es.map (nodeReduction reduced domain operands)
     let moments : Vector (TarskiCertificate E E Ctx) rows.length := Vector.ofFn fun i =>
       Sturm.certifyPrepared context domain (queryPoly operands es[i] reductions[i])
     let values := moments.map (fun (c : TarskiCertificate E E Ctx) => c.value)
@@ -147,8 +158,7 @@ decreasing_by
 the balanced support tree and across all moment rows. -/
 @[expose] def buildTree (context : Ctx) (domain : Sturm.PreparedDomain E)
     (qs : List (DensePoly E)) (reduced : Bool := true) : Except BuildError (Replay E Ctx) :=
-  let preparation := if useReduction reduced domain then
-    some (QueryReduction.build domain.sign domain.head qs) else none
+  let preparation := nodePreparation reduced domain qs none
   buildTreeFrom context domain qs reduced preparation
 
 /-- A returned construction has passed the independent literal replay.

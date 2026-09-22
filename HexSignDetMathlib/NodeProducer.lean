@@ -56,7 +56,8 @@ theorem solveScaled_spec {r arity : Nat} {rows : Vector (List Nat) r}
           exact ⟨rfl, rfl, rfl, rfl, rfl, hc⟩
         · contradiction
 
-private theorem list_transport {α : Type*} {m n : Nat} (h : m = n) (v : Vector α n) :
+/-- Transporting a vector dimension preserves its ordered entries. -/
+theorem list_transport {α : Type*} {m n : Nat} (h : m = n) (v : Vector α n) :
     (h ▸ v : Vector α m).toList = v.toList := by
   cases h
   rfl
@@ -112,15 +113,10 @@ theorem buildNode_evidence (context : Ctx) (domain : Sturm.PreparedDomain E)
     (reduced : Bool) (inverse : Option (Int × Matrix Int rows.length rows.length))
     (preparation : Option (QueryReduction E)) {n : Node E Ctx}
     (h : buildNode context domain qs rows columns reduced inverse preparation = .ok n) :
-    n.preparation = (if useReduction reduced domain then
-      match preparation with
-      | some r => some r
-      | none => some (QueryReduction.build domain.sign domain.head qs)
-      else none) ∧
+    n.preparation = nodePreparation reduced domain qs preparation ∧
     ∀ i : Fin n.size,
-      n.reductions[i] = (if useReduction reduced domain then
-        some (Reduction.build domain.sign domain.head
-          (QueryReduction.operands qs n.preparation) n.system.rows[i]) else none) ∧
+      n.reductions[i] = nodeReduction reduced domain
+        (QueryReduction.operands qs n.preparation) n.system.rows[i] ∧
       n.moments[i] = Sturm.certifyPrepared context domain
         (queryPoly (QueryReduction.operands qs n.preparation) n.system.rows[i] n.reductions[i]) ∧
       n.system.values[i] = n.moments[i].value := by

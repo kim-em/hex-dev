@@ -41,6 +41,8 @@ clearing inverse denominators by their least common multiple. Internal nodes
 combine the children's retained integer inverses by a tensor product and solve
 by exact divisibility, without another rational inversion. Both paths use the
 existing integer rank producer to select the retained row basis.
+`nodePreparation` and `nodeReduction` define the shared preprocessing decision
+and per-row operands used by both construction and its companion statements.
 `buildPrepared` additionally returns
 a proof that the independent replay accepts the resulting tree. Its `BuildError`
 diagnostics expose outstanding producer-completeness obligations; they are not
@@ -48,6 +50,14 @@ mathematical domain failures and this is not yet the total `determinePrepared`
 API. No supplied roots or guessed counts enter construction. `referencePrepared`
 builds the exponential full-ternary system for small-case comparisons; production
 recursion never calls it.
+
+The companion proves that every successful `buildTree` result passes the
+independent replay under the generic coefficient interpretation laws.
+The proof follows the actual query certificates, integer systems, retained
+bases, child preprocessing slices and Cartesian supports. Thus the final
+`buildPrepared` replay guard cannot fail after successful tree construction
+under those laws. This acceptance theorem does not rule out construction
+failures or establish root-count semantics.
 
 Construction reduces moments by default after each indexed multiplication,
 using the shared positive pseudo-division and normalization routines. The
@@ -126,14 +136,6 @@ the evidence, distinguishing absent and ambiguous conditions, malformed inputs,
 invalid domains and context mismatches. Internal BKR failures retain a separate
 outer diagnostic result until general producer completeness is proved.
 
-The companion proves that every successful `buildTree` result passes the
-independent replay under the generic coefficient interpretation laws.
-The proof follows the actual query certificates, integer systems, retained
-bases, child preprocessing slices and Cartesian supports. Thus the final
-`buildPrepared` replay guard cannot fail after successful tree construction
-under those laws. This acceptance theorem does not rule out construction
-failures or establish root-count semantics.
-
 `Thom.compareSigns` implements
 the largest-differing-index rule as a finite operation on sign words; root
 comparison still requires realized full encodings of the same head and the
@@ -165,10 +167,15 @@ query/context bindings, derives sign shape from the table, and establishes
 count one from membership. Each row performs its count guard and insertion;
 it does not rerun the complete replay, rebuild derivatives or test full-slot
 distinctness. `rootsFromTable_eq` proves exact agreement with the literal
-per-descriptor checking path, including diagnostics; the row-preservation and
-finite sortedness proofs apply to this actual shared extraction. Constants
-retain the literal empty-table path. Sharing domain checks inside the query
-tree and measuring all required costs remain obligations.
+per-descriptor checking path, including diagnostics. `buildRoots_spec` connects
+both degree branches of the public entry point to the actual prepared table;
+`buildRoots_perm` and `buildRoots_sorted` give its row preservation and finite
+conditional sortedness. Constants retain the literal checking path.
+Each descriptor still constructs its full index list. Every insertion comparison
+rebuilds both canonical index lists and compares the heads; for N descriptors
+of degree n this can add O(N²n) guard work. Hoisting that repeated work, sharing
+domain checks inside the query tree and measuring all required costs remain
+obligations.
 
 `CommonProduct.build` uses the shared polynomial gcd and division to form a
 common head. Replay checks the exact context/old heads and three polynomial

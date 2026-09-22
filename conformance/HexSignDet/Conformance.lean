@@ -1055,4 +1055,14 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 #guard_msgs in
 #print axioms empty_rejected
 
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.buildRoots_spec
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_perm' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.buildRoots_perm
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_sorted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.buildRoots_sorted
+
 end Hex.SignDet.Conformance
