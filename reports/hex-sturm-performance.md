@@ -14,7 +14,7 @@ All earlier declarations, failures and samples are retained. These observations
 cover effective query/checker paths. They do not complete the companions'
 Phase 4, the general signed-root-sum theorem or downstream extension evidence.
 
-## Protocol and provenance
+## Original protocol and provenance
 
 [Raw results and fixtures](bench-results/sturm-ec8f7c14f914/) were collected from
 `ec8f7c14f91432f97ac130595bce7600e41c1562` on `chungus2`, AMD EPYC 9455,
@@ -32,9 +32,9 @@ schedule overrides and separate source/executable hashes. The executable SHA256 
 identical across the initial run and the unchanged rerun.
 No absolute timing is a portable budget.
 
-Each complexity registration used its declared custom ladder, four trial-major
+Each original complexity registration used its declared custom ladder, four trial-major
 outer trials, a 100 ms tuning target and a three-second operational cap. All
-registrations use mode 1 (two-sided parametric). The source derivations precede
+original registrations used mode 1 (two-sided parametric). The source derivations precede
 measurement: normal Chebyshev derivative chains have one degree drop per step,
 so the summed dense work is quadratic; with a fixed quadratic head, the dynamic
 pseudo-division recurrence has at most two correction summands per output
@@ -51,7 +51,7 @@ python-flint 0.9.0 / FLINT 3.6.0 exact qqbar root sums agree on all eleven input
 Hashes consume the actual outputs, including coefficients and certificate
 scalars where the stage returns a certificate hash.
 
-## Results
+## Original results
 
 Final-rung times are medians in microseconds. The harness omits a fitted slope
 when the retained log-parameter span is less than one. For the head-degree
@@ -484,20 +484,44 @@ materializing enormous powers of two for constants or sparse monomials.
 operation at every polynomial and dyadic point. The existing evaluation,
 Sturm and Tarski correspondence proofs build through that equality.
 
+This is a targeted replay improvement, not a universal evaluation speedup.
+For `2X^m + X^(m-1) + ... + X + 1` at `1/2`, every suffix has value 2:
+the old evaluator keeps fixed-size numerators, whereas the new fold carries
+`(2^(j+1), j)` after j lower coefficients. That family regresses from linear
+to quadratic binary work; see the
+[cancellation analysis](sturm-bit-cost-models.md#cancellation-tradeoff).
+Constants and sparse monomials retain their former compact behavior.
+
+| Current registration | Declared expression | Mode | Degree ladder | Result |
+| --- | --- | --- | --- | --- |
+| `runReplay` | `n ^ 4` | 2: one-sided upper bound | 256, 512, 1024, 2048 | within declared upper bound (observed faster) |
+
+The original `n²` tables above preserve historical declarations and verdicts;
+they are not the current registration.
+
 The [declaration](sturm-bit-cost-models.md#deferred-normalization-replay-upper-bound)
 selects mode 2 before scientific collection, citing GMP's published schoolbook
 upper bound and explaining why neither cubic traversal nor schoolbook
 multiplication is assumed to dominate. It applies that bound to the actual
 O(n²) products on O(n)-bit recurrence scalars and coefficients. The
 [untimed calculation](bench-results/sturm-replay-deferred-costs/) verifies all
-retained production step formulas, distinguishes Horner volume from recurrence
-products, and counts a schoolbook upper bound rather than GMP instructions.
+retained production steps at degrees 8, 10, 12, 16 and 20 against the formulas.
+The degree-128–2048 volumes are formula-derived calculations; no production
+certificates at those degrees are retained by this script. It distinguishes
+Horner volume from recurrence products and counts a schoolbook upper bound,
+not GMP instructions.
 
 The [operation-only profile](bench-results/sturm-replay-deferred-profile/)
 at degree 1024 identifies `__gmpn_addmul_1_x86_64` (17.01%), copying (9.94% in
 `__gmpn_copyi_x86_64`), and `__gmpn_mul_2` (4.57%) among the leading exclusive
-samples. This covers the growing coefficient-product phase addressed by the
-published bound. Allocation/copy samples are not assigned to a caller:
+samples. A single hottest symbol does not establish phase dominance:
+allocation/copy/reference-management work collectively accounts for more
+samples than multiplication. The bound covers both: O(n²) outer coefficient
+operations allocate or copy O(n)-bit integers and at most O(n) array references
+each, giving O(n³) storage work; GMP's internal workspace is covered by its
+multiplication algorithm. Thus the upper bound does not depend on assigning
+allocation samples to multiplication callers. Allocation/copy samples are
+not assigned to a caller:
 DWARF unwinding recovered no usable kernel call chains, as the retained
 `phases.json` records. The 0.784 s profiled operation is attribution only,
 not a scientific baseline or a speedup measurement.
@@ -519,6 +543,20 @@ were dropped or timed out; peak RSS was 580624 KiB. The large spreads (47–66%)
 remain visible; no sample was rejected because of shared-host activity and no
 rerun was used. This result does not assert unbounded cubic timing or turn the
 old failed runs into passes.
+
+This collection ran on CPU 61 from 22:34:57 to 22:36:08 UTC on September 21.
+This PR's own adjacent before/after collection ran on CPU 13 from 22:35:35
+to 22:40:56, overlapping the later scientific trials. The untimed formula
+calculation and an attempted fresh proof build also ran during part of the
+collection. The overlap is recorded context, not proof of the cause of the
+larger samples and not a reason to discard them. The paired comparison
+continues to use adjacent arms on its own CPU.
+
+`metadata.json` records a clean checkout at the start, while the child logs
+record `0c4c946-dirty`: the runner collects git status before writing its
+registration/derivation snapshots and logs. Those new untracked result files
+make the checkout dirty before the benchmark children start. This does not
+indicate a change to the measured binary or its source.
 
 The preregistration commit's message was amended solely to include the cost
 model derivation required by the structural checker. Recorded head
