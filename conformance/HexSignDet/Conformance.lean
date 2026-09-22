@@ -92,7 +92,9 @@ def momentModes (head : DensePoly Rat) (qs : List (DensePoly Rat)) : Bool :=
       reduced.val.node.system.values.toList == direct.val.node.system.values.toList
     | _, _ => false
 
-#guard [p, -p, x, (1 : DensePoly Rat), x * x + 1, x * x - 2].all fun h =>
+#guard [p, -p, x, (1 : DensePoly Rat), x * x + 1, x * x - 2,
+    DensePoly.ofCoeffs #[-1, 0, 2], DensePoly.ofCoeffs #[1, 0, -2],
+    DensePoly.ofCoeffs #[2, -3], DensePoly.ofCoeffs #[1, -2, 0, 3]].all fun h =>
   [[], [x], [x, x - 1], [x, 0, x], [x.natPow 7 + 1, x.natPow 6 - 1]].all (momentModes h)
 
 #guard [p, -p, x].all fun h =>
@@ -134,6 +136,23 @@ def corruptReduction : Bool :=
     !r.check sign p qs [2, 1] && !r.check sign p qs.reverse es
 
 #guard corruptReduction
+
+/- These forged identities hold exactly; only positivity prevents their
+false sign claims. The first flips a nonzero sign, the second invents zero,
+and the third invents a nonzero sign for a product divisible by the head. -/
+#guard
+  let step : ReductionStep Rat := ⟨0, -x, ⟨1, 0, -1⟩⟩
+  SignedRemainderChain.subIsZero (1 * x) (0 * p + DensePoly.scale (-1) (-x)) &&
+    !({steps := [step], result := -x} : Reduction Rat).check sign p [x] [1]
+#guard
+  let step : ReductionStep Rat := ⟨0, 0, ⟨0, 0, 1⟩⟩
+  SignedRemainderChain.subIsZero (DensePoly.scale 0 (1 * x)) (0 * p + 0) &&
+    !({steps := [step], result := 0} : Reduction Rat).check sign p [x] [1]
+#guard
+  let first : ReductionStep Rat := ⟨0, x - 1, ⟨1, 0, 1⟩⟩
+  let last : ReductionStep Rat := ⟨1, 1, ⟨1, 1, 0⟩⟩
+  SignedRemainderChain.subIsZero ((x - 1) * (x + 1)) (1 * p + DensePoly.scale 0 1) &&
+    !({steps := [first, last], result := 1} : Reduction Rat).check sign p [x - 1, x + 1] [1, 1]
 
 /- End-to-end replay binds the reduced query, exponent vector and context.
 The certificate for a correct reduced polynomial cannot justify an altered

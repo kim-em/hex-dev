@@ -93,7 +93,9 @@ and positive normalization. The result is independently replayable. -/
     ⟨step :: tail.steps, tail.result⟩
 
 /-- Construct a reduced moment; validity is supplied by `Reduction.check` and
-its algebraic correspondence, not by an assumption about this producer. -/
+its algebraic correspondence, not by an assumption about this producer.
+This producer-internal primitive assumes well-shaped exponents; `buildNode`
+validates their lengths and range before allocating the repeated factors. -/
 @[expose] def Reduction.build (sign : E → Int) (p : DensePoly E)
     (qs : List (DensePoly E)) (es : List Nat) : Reduction E :=
   buildFrom sign p 1 (factors qs es)

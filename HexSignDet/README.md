@@ -50,6 +50,9 @@ Construction reduces moments by default after each indexed multiplication,
 using the shared positive pseudo-division and normalization routines. The
 optional `reduced := false` mode constructs full products, as does the reference
 solver. Constant heads use the direct path and their zero-root domain evidence.
+The current producer still uses each raw query factor at every step. Initial
+query reductions shared across moment rows, and their separately bound replay
+evidence, remain required for the specification's reduced-degree cost bound.
 `HexSignDetMathlib` proves that produced reductions pass the checker and that
 arbitrary accepted reductions preserve each full moment's sign at every root.
 These algebraic proofs allow noninjective coefficient interpretations; they do

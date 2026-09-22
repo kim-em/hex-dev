@@ -237,8 +237,9 @@ hypothesis is needed. The proof must follow this order at each node:
    exponents. For reduced moments, check each identity
    `u*(Gprev*F)=B*P+v*Gnext`, with `u,v>0` and `Gnext=0` or
    `degree Gnext<degree P`, where `F` is the next certified query factor.
-   Consume HexSignDet's conditional positive-scaling sign lemma and
-   discharge its coefficient laws in the ambient field; induction from
+   Consume HexSignDet's literal extraction `ReductionStep.check_eq` and
+   prove `ReductionStep.check_sign` and `Reduction.check_sign` in the companion
+   using the shared coefficient interpretation; induction from
    `Gprev=1` identifies the final query with `Fₑ`'s moment.
    It need not preserve values. Constants use certified zero root count
    rather than a degree-negative remainder. No expanded high-degree

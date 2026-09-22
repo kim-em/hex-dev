@@ -64,6 +64,15 @@ theorem negative_rejected :
       Reduction Rat).check Sturm.orderSign head [indeterminate] [2] = false := by
   decide +kernel
 
+/-- A negative right scale can preserve the polynomial identity while
+reversing the result sign. Kernel replay rejects that exact forgery. -/
+theorem flipped_rejected :
+    SignedRemainderChain.subIsZero indeterminate (DensePoly.scale (-1) (-indeterminate)) = true ∧
+    ({steps := [⟨0, -indeterminate, ⟨1, 0, -1⟩⟩], result := -indeterminate} : Reduction Rat).check
+      Sturm.orderSign head [indeterminate] [1] = false ∧
+    (-indeterminate).eval 1 = -1 ∧ indeterminate.eval 1 = 1 := by
+  decide +kernel
+
 /-- Ordinary-kernel acceptance is consumed by the actual general soundness
 theorem, not replaced by a compiled comparison of the final signs. -/
 theorem literal_sign (a : Rat) (hp : (interpret id (fun _ => Iff.rfl) head).eval a = 0) :
@@ -85,6 +94,9 @@ theorem literal_sign (a : Rat) (hp : (interpret id (fun _ => Iff.rfl) head).eval
 /-- info: 'Hex.SignDetMathlib.Conformance.negative_rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms negative_rejected
+/-- info: 'Hex.SignDetMathlib.Conformance.flipped_rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms flipped_rejected
 /-- info: 'Hex.SignDetMathlib.Conformance.literal_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms literal_sign
