@@ -725,6 +725,16 @@ example (x : Int) (h : ∀ A : Matrix (Fin 17) (Fin 17) Int, A.det = x ^ 17) :
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0;
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0;
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x] = x ^ 17 := by
-  fail_if_success det
+  run_tac do
+    let saved ← Lean.Elab.Tactic.saveState
+    let failure ← try
+      Lean.Elab.Tactic.evalTactic (← `(tactic| det))
+      pure none
+    catch e => pure (some e)
+    saved.restore
+    let some failure := failure | throwError "expected the dimension-budget decline"
+    unless (← failure.toMessageData.toString) ==
+        "det: symbolic determinant declined: dimension budget exhausted (limit 16)" do
+      throwError "unexpected failure: {failure.toMessageData}"
   fail_if_success simp only [Hex.normPolyDet]
   exact h _
