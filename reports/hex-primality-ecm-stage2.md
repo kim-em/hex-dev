@@ -491,9 +491,11 @@ is approximately 0.88–1.08 GiB, distinct from native executable peaks of 65–
 The extra build and loading costs do not make the native-producer policy
 untenable on this host.
 
-Preparation observations at the production bounds take 1.61/1.71 ms for
+Two unpinned build-log preparation observations at the production bounds take
+1.61/1.71 ms for
 stage-1 powers and 48.85/60.96 ms for the stage-2 interval, with 74848/74847
-raw heartbeat increments. Both observations are retained. Avoiding repeated
+raw heartbeat increments. Both observations are retained as context; the
+pinned whole-construction comparisons include preparation in every sample. Avoiding repeated
 stage-2 sieving is consistent with the field reductions; these isolated costs
 are not an exact reconstruction of whole-construction time. Attempts include
 core factoring, stage-1-only calls and several residuals, so dividing attempts

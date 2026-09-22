@@ -74,9 +74,11 @@ def graphiso_blocks(text: str) -> dict[str, str]:
             relevant[name] = body
     # Lake's LeanLib.recBuildShared loads the shared libraries of *all*
     # transitive imports, regardless of their precompileModules setting.
-    # HexGraphIso already being precompiled therefore forces native HexBasic
-    # both in the cactus executable and in the graph tactic. Explicitly
-    # enabling HexBasic's module dynlibs adds build artifacts, not another
+    # The measured tactic module imports HexGraphIso, so precompiling that
+    # library already loads native HexBasic. The cactus executable independently
+    # links native facets, which do not depend on precompileModules. This rule
+    # must be revisited if a future figure measures elaboration below HexGraphIso.
+    # Explicit HexBasic precompilation thus adds artifacts, not a new measured
     # execution/loading path. Admit only the literal flag; retain every other
     # field, and retain changes to HexGraphIso's own precompilation setting.
     graph = freshness.strip_lean_comments(relevant.get("lean_lib HexGraphIso", "")).strip()

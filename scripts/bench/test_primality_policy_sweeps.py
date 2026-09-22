@@ -193,6 +193,12 @@ class EcmMeasurementRecords(unittest.TestCase):
     def test_native_diagnostic_banner_preserved(self):
         self.assertEqual(parse_result('banner\n'+self.record(), 'native', '7', 'small')['subject'], 7)
 
+    def test_native_record_without_subject_echo(self):
+        value = json.loads(self.record())
+        del value['subject']
+        value.update(bits=3, over_bit_limit=False, check_nanos=1, rand='{ state := 7 }', events='[]')
+        self.assertEqual(parse_result(json.dumps(value), 'native', '7', 'small')['bits'], 3)
+
     def test_residual_case_checked(self):
         value = dict(nanos=1, heartbeats_raw=2, attempts=2, result='whole', case='recovery')
         with self.assertRaises(ValueError):

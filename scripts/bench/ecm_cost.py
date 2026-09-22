@@ -130,7 +130,8 @@ def main():
                     try:
                         row['result'] = parse_result(result.stdout, args.phase, case['n'], case['name'])
                     except (ValueError, TypeError) as error:
-                        row['parse_error'] = str(error)
+                        previous = row.get('parse_error')
+                        row['parse_error'] = f'{previous}; {error}' if previous else str(error)
                 save()
                 print(block,case['name'],arm,row['returncode'],round(row['seconds'],3),flush=True)
     record['complete'] = True
