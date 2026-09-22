@@ -18,6 +18,9 @@ The list retains duplicate queries as separate positions. -/
 structure QueryReduction (E : Type u) [Zero E] [DecidableEq E] where
   steps : List (ReductionStep E)
 
+instance : DecidableEq (QueryReduction E) := fun a b =>
+  decidable_of_iff (a.steps = b.steps) (by cases a; cases b; simp only [QueryReduction.mk.injEq])
+
 /-- Reduced query operands in their original order. -/
 @[expose] def QueryReduction.queries (r : QueryReduction E) : List (DensePoly E) :=
   r.steps.map (·.next)

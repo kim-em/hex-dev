@@ -27,3 +27,8 @@ public import HexSignDet.RootList
 public import HexSignDet.CommonProduct
 public import HexSignDet.Reencode
 public import HexSignDet.Compare
+
+public import HexSignDet.Dag
+public import HexSignDet.DagEncode
+public import HexSignDet.DagReplay
+public import HexSignDet.DagExpand

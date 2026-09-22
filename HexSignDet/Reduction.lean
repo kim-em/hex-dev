@@ -27,6 +27,14 @@ structure Reduction (E : Type u) [Zero E] [DecidableEq E] where
   steps : List (ReductionStep E)
   result : DensePoly E
 
+instance : DecidableEq (ReductionStep E) := fun a b =>
+  decidable_of_iff (a.index = b.index ∧ a.next = b.next ∧ a.witness = b.witness)
+    (by cases a; cases b; simp only [ReductionStep.mk.injEq])
+
+instance : DecidableEq (Reduction E) := fun a b =>
+  decidable_of_iff (a.steps = b.steps ∧ a.result = b.result)
+    (by cases a; cases b; simp only [Reduction.mk.injEq])
+
 /-- Ordered indexed factors, repeated by their exponent. The outer checker
 validates vector length and exponents before this list is constructed. -/
 @[expose] def factors (qs : List (DensePoly E)) (es : List Nat) : List (Nat × DensePoly E) :=

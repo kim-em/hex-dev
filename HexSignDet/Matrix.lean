@@ -50,6 +50,12 @@ structure System (r : Nat) where
   inverse : Matrix Int r r
   denominator : Int
 
+/-- Literal field comparisons also reduce in ordinary kernel evaluation. -/
+instance : DecidableEq (System n) := fun a b =>
+  decidable_of_iff (a.rows = b.rows ∧ a.columns = b.columns ∧ a.counts = b.counts ∧
+    a.values = b.values ∧ a.inverse = b.inverse ∧ a.denominator = b.denominator)
+    (by cases a; cases b; simp only [System.mk.injEq])
+
 /-- Check every dimension-dependent literal before using the moment equations.
 Counts are kept as integers; no rounding, truncation or clamping occurs. -/
 @[expose] def System.check {r : Nat} (arity : Nat) (s : System r) : Bool :=

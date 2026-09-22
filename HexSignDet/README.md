@@ -21,6 +21,40 @@ zero counts, and the row basis preserves their order. The scaled left-inverse
 identity is checked directly; no conversion from a differently ordered rank
 witness is assumed.
 
+`Dag.replay?` accepts a topologically ordered array of same-level BKR entries
+and a root index. References address earlier accepted entries only. Each entry
+checks its own query/matrix certificates once; both child edges still bind the
+exact ordered query slices, support product, row product and fixed caller
+context/head/interval. The returned tree shares accepted child values and
+carries a proof of the original `Replay.check` result. Invalid unreachable
+entries, forward edges, cycles and missing roots are rejected as well.
+`Dag.descriptor?` consumes that proof directly, checks raw descriptor shape and
+count one, and preserves the complete raw descriptor. Ordinary-kernel probes
+cover the full derivative graph, repeated references to one child, selected-root
+extraction and truncated/cyclic graphs.
+
+`Dag.encode` converts supplied trees using bottom-up hash consing. It preserves
+first-occurrence order and shares entries only after exact equality of every
+node field and both child indices. Hash collisions, different witnesses and
+stale contexts cannot substitute one literal entry for another. Conformance
+includes deliberately colliding inverse witnesses and repeated internal
+subtrees from the actual producer. Encoding supplies raw evidence; callers use
+`Dag.replay?` to validate it. For every accepted input tree, `Dag.replay_encode`
+proves that checked graph replay returns that same literal tree with its original
+caller bindings; `Dag.check_encode` gives Boolean acceptance. The proof follows
+the actual hash-table insertion and recursive encoder, maintaining acceptance
+of every graph entry and exact cache bindings. It uses no root-sum premise.
+`Dag.expand?` reconstructs the literal tree without validating mathematical
+claims. `Dag.expand_encode` proves an exact roundtrip for every tree, including
+malformed witnesses. `Dag.replay_expands` identifies the expansion of an
+arbitrary accepted graph with its checked tree. Consequently
+`Dag.check_encode_eq` proves equality of the graph and tree checker results
+for every input, preserving rejection as well as acceptance. Ordinary-kernel
+probes exercise a forged inverse witness through these theorems.
+Complete encoder performance accounting remains required. This typed graph also needs a
+byte decoder, lower-level coefficient-sign edges and shared verification of the
+domain inside each Tarski certificate.
+
 Context, head, interval and query-list bindings use literal equality. Tarski
 polynomial identities use the shared zero-difference checks. Context values
 must contain the caller's full immutable context data, including any refinement;
@@ -243,3 +277,16 @@ lake build HexSignDet +HexSignDet.Conformance hexsigndet_emit_infinitesimal
 python3 scripts/oracle/sign_det_z3.py --check
 python3 -m unittest scripts.oracle.test_sign_det_z3
 ```
+
+Structural expansion and checked graph replay deliberately treat unreachable
+entries differently: both reject invalid references, while only replay checks
+all arithmetic witnesses. An unreachable false witness can therefore coexist
+with a structurally expandable root, but causes the whole graph replay to fail.
+`Dag.descriptor_replay` proves exact graph/tree descriptor agreement on any
+accepted supplied graph's actual replay result. For encoded trees,
+`Dag.descriptor_encode` also covers rejection. Descriptor shape and context
+checks run before graph replay.
+
+A cross-level coefficient-sign certificate will require a separate type with
+its own level and context bindings. `Dag` is its same-level BKR component; its
+fixed-domain memo does not satisfy the separate nested-evidence obligation.
