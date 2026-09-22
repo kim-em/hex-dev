@@ -52,8 +52,8 @@ arbitrary accepted graph with its checked tree. Consequently
 for every input, preserving rejection as well as acceptance. Ordinary-kernel
 probes exercise a forged inverse witness through these theorems.
 Complete encoder performance accounting remains required. This typed graph also needs a
-byte decoder, lower-level coefficient-sign edges and shared domain verification
-across graph nodes.
+byte decoder and lower-level coefficient-sign edges. Shared domain replay needs
+performance measurements.
 
 Context, head, interval and query-list bindings use literal equality. Tarski
 polynomial identities use the shared zero-difference checks. Context values
@@ -61,11 +61,16 @@ must contain the caller's full immutable context data, including any refinement;
 a hash or reused numeric identifier is insufficient. The current certificate
 tree retains the head squarefree evidence in each moment. Each node replays its
 first moment's domain once, then reuses it for exact literal matches in that
-node. Different witnesses fall back to complete replay. `Node.check_eq` proves
+node. Graph replay instead passes the first entry's validated domain to all
+nodes. Different witnesses fall back to complete replay. `Node.check_eq` proves
 that this preserves the original result for every supplied node, including
 rejection and empty systems. `TarskiCertificate.checkCached_eq` proves the
-underlying shared-kernel agreement for arbitrary caches and certificates. Domain
-sharing across nodes and performance measurements remain obligations.
+underlying shared-kernel agreement for arbitrary caches and certificates.
+`Dag.step_eq` and `Dag.replay_eq` preserve the exact original checked step and
+prefix replay, including returned trees and all rejections. There is one shared
+domain entry, not a map of every possible squarefree witness; nonmatching
+witnesses still incur full replay at each occurrence. Domain replay and literal
+binding costs require performance measurements.
 Each moment may supply a positive-scaled reduction chain. Replay checks its
 ordered factor indices, positive scales, degree bounds and zero-difference
 identities, then checks the Tarski certificate on the bound reduced polynomial.
@@ -215,9 +220,8 @@ the requested context, head, interval and full derivative slots.
 using descriptor shape alone. Constants retain the literal checking path.
 Each descriptor still constructs its full index list. Every insertion comparison
 rebuilds both canonical index lists and compares the heads; for N descriptors
-of degree n this can add O(N²n) guard work. Hoisting that repeated work, sharing
-domain checks across query-tree nodes and measuring all required costs remain
-obligations.
+of degree n this can add O(N²n) guard work. Hoisting that repeated work and
+measuring all required costs, including shared domain replay, remain obligations.
 
 `CommonProduct.build` uses the shared polynomial gcd and division to form a
 common head. Replay checks the exact context/old heads and three polynomial

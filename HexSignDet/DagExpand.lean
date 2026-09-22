@@ -104,7 +104,7 @@ variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
 theorem step_expands {memo : Array (Checked sign context p a b)} {entry : Entry E Ctx}
     {t : Checked sign context p a b} (h : step sign context p a b memo entry = some t) :
     Expansion.step (memo.map Checked.value) entry = some t.value := by
-  unfold step at h
+  rw [step_eq] at h
   cases hc : entry.children with
   | none =>
     simp only [hc] at h
@@ -160,7 +160,7 @@ This applies to arbitrary supplied graph literals, including shared children. -/
 theorem replay_expands {dag : Dag E Ctx} {qs : List (DensePoly E)}
     {t : {tree : Replay E Ctx // tree.check sign context p a b qs = true}}
     (h : replay? sign context p a b qs dag = some t) : expand? dag = some t.val := by
-  unfold replay? at h
+  rw [replay_eq] at h
   cases hm : dag.entries.foldlM (init := #[]) (fun memo entry => do
       let next ← step sign context p a b memo entry
       pure (memo.push next)) with

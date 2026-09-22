@@ -83,7 +83,9 @@ Its full HexRank check is retained unchanged; the additional direct left-inverse
 check avoids assuming an inverse-format or permutation adapter. -/
 @[expose] def Node.check [DecidableEq Ctx] (sign : E → Int)
     (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
-    (qs : List (DensePoly E)) (n : Node E Ctx) : Bool :=
+    (qs : List (DensePoly E)) (n : Node E Ctx)
+    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
+      (EndpointSigns.ofSign sign)) := none) : Bool :=
   let k := n.system.positive.length
   decide (n.context = context ∧ n.head = p ∧ n.lower = a ∧ n.upper = b ∧ n.queries = qs) &&
   n.system.check qs.length &&
@@ -94,19 +96,23 @@ check avoids assuming an inverse-format or permutation adapter. -/
    decide (n.basis.adj * Matrix.selectedSubmatrix retained n.basis.rows n.basis.cols =
      Matrix.scale n.basis.denom (Matrix.identity n.basis.rank)) &&
    (match n.preparation with | none => true | some r => r.check sign p qs) &&
-   (let cache := n.moments.toArray[0]?.bind fun cert =>
-      TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
+   (let cache := match shared with
+      | some d => some d
+      | none => n.moments.toArray[0]?.bind fun cert =>
+          TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
     (List.finRange n.size).all (fun i =>
      checkMoment sign context p a b (QueryReduction.operands qs n.preparation)
        n.system.rows[i] n.system.values[i]
        n.moments[i] n.reductions[i] cache)))
 
-/-- Sharing the first moment's validated domain leaves the result unchanged
+/-- Sharing a validated domain leaves the result unchanged
 for all supplied nodes, including empty systems and differing valid witnesses. -/
 theorem Node.check_eq [DecidableEq Ctx] (sign : E → Int)
     (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
-    (qs : List (DensePoly E)) (n : Node E Ctx) :
-    n.check sign context p a b qs = (
+    (qs : List (DensePoly E)) (n : Node E Ctx)
+    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
+      (EndpointSigns.ofSign sign)) := none) :
+    n.check sign context p a b qs shared = (
   let k := n.system.positive.length
   decide (n.context = context ∧ n.head = p ∧ n.lower = a ∧ n.upper = b ∧ n.queries = qs) &&
   n.system.check qs.length &&
@@ -122,6 +128,16 @@ theorem Node.check_eq [DecidableEq Ctx] (sign : E → Int)
        n.system.rows[i] n.system.values[i]
        n.moments[i] n.reductions[i]))) := by
   simp only [Node.check, checkMoment_eq]
+
+/-- Passing a previously validated domain changes only replay work, never a
+node's acceptance or the tree evidence that its result can justify. -/
+theorem Node.check_cache [DecidableEq Ctx] (sign : E → Int)
+    (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
+    (qs : List (DensePoly E)) (n : Node E Ctx)
+    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
+      (EndpointSigns.ofSign sign))) :
+    n.check sign context p a b qs shared = n.check sign context p a b qs := by
+  simp only [Node.check_eq]
 
 /-- Empty and singleton lists have complete fixed supports. Larger leaves
 are rejected, so this is not an exponential full-table fallback. -/

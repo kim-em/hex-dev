@@ -34,7 +34,7 @@ open Hex.SignDet.Conformance
 set_option maxRecDepth 32768 in
 /-- Both full derivative slots are bound by graph replay in the ordinary kernel. -/
 theorem full_kernel : check full (singletonRaw.full []).queries = true := by
-  simp only [check, Dag.check, Dag.replay?, Dag.step, full,
+  simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq, full,
     Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
     TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
@@ -44,7 +44,7 @@ set_option maxRecDepth 32768 in
 /-- Two logical child slots share one accepted leaf; its certificate is supplied
 once, while both ordered parent edges remain checked. -/
 theorem shared_kernel : check shared sharedParent.queries = true := by
-  simp only [check, Dag.check, Dag.replay?, Dag.step, shared,
+  simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq, shared,
     Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
     TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
@@ -56,7 +56,7 @@ including a truncated graph whose remaining leaves themselves are valid. -/
 theorem rejected_kernel :
     check ⟨#[⟨fullNode, some (0, 0)⟩], 0⟩ fullNode.queries = false ∧
     check {full with entries := full.entries.pop} fullNode.queries = false := by
-  simp only [check, Dag.check, Dag.replay?, Dag.step, full,
+  simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq, full,
     Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
     TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
@@ -67,7 +67,7 @@ set_option maxRecDepth 32768 in
 any producer or substituting a compiled truth value for kernel replay. -/
 theorem descriptor_kernel :
     (full.descriptor? Sturm.orderSign 7 (singletonRaw.full [1, 1])).isSome = true := by
-  simp only [Dag.descriptor?, Dag.replay?, Dag.step, full, Replay.table_lookup,
+  simp only [Dag.descriptor?, Dag.replay_eq, Dag.step_eq, full, Replay.table_lookup,
     Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
     TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
@@ -157,8 +157,8 @@ theorem reduction_kernel :
     decide (reductionNode = {reductionNode with preparation := some ⟨[constantStep 4]⟩}) = false ∧
     (Replay.leaf reductionNode).check Sturm.orderSign 7 singletonRaw.head
       singletonRaw.lower singletonRaw.upper reductionNode.queries = true := by
-  simp only [Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
-    TarskiCertificate.check, SignedRemainderChain.check,
+  simp only [Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
@@ -187,6 +187,61 @@ theorem reduction_kernel :
 #guard let encoded := Dag.encode (.split sharedParent
     (.leaf derivativeNode) (.leaf {derivativeNode with context := 8}))
   encoded.entries.size == 3 && !check encoded sharedParent.queries
+
+/-- The second node has a different valid squarefree witness from the domain
+shared by the first node. Every one of its query certificates retains it. -/
+@[expose] def alternateCert (cert : TarskiCertificate Rat Rat Nat) : TarskiCertificate Rat Rat Nat :=
+  {cert with squarefree := {cert.squarefree with initial := ⟨2, 0, 4⟩}}
+
+@[expose] def alternate : Node Rat Nat :=
+  {derivativeNode with moments := #v[alternateCert singletonQuery,
+    alternateCert (constantQuery 2), alternateCert (constantQuery 4)]}
+
+@[expose] def corruptCert (cert : TarskiCertificate Rat Rat Nat) : TarskiCertificate Rat Rat Nat :=
+  {cert with squarefree := {cert.squarefree with terminal := none}}
+
+@[expose] def corrupt : Node Rat Nat :=
+  {alternate with moments := #v[corruptCert singletonQuery,
+    corruptCert (constantQuery 2), corruptCert (constantQuery 4)]}
+
+set_option maxRecDepth 32768 in
+/-- Cross-node reuse accepts a different valid witness through full replay,
+and rejects a malformed later witness despite the valid shared domain. -/
+theorem domain_kernel :
+    check ⟨#[⟨firstNode, none⟩, ⟨alternate, none⟩,
+      ⟨fullNode, some (0, 1)⟩], 2⟩ fullNode.queries = true ∧
+    check ⟨#[⟨firstNode, none⟩, ⟨corrupt, none⟩,
+      ⟨fullNode, some (0, 1)⟩], 2⟩ fullNode.queries = false := by
+  simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq,
+    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+#guard check ⟨#[⟨firstNode, none⟩, ⟨alternate, none⟩,
+  ⟨fullNode, some (0, 1)⟩], 2⟩ fullNode.queries
+#guard !check ⟨#[⟨firstNode, none⟩, ⟨corrupt, none⟩,
+  ⟨fullNode, some (0, 1)⟩], 2⟩ fullNode.queries
+#guard let stale := {derivativeNode with moments := derivativeNode.moments.map fun cert =>
+    {cert with context := 8}}
+  !check ⟨#[⟨firstNode, none⟩, ⟨stale, none⟩,
+    ⟨fullNode, some (0, 1)⟩], 2⟩ fullNode.queries
+
+/-- info: 'Hex.SignDet.Node.check_cache' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.check_cache
+/-- info: 'Hex.SignDet.Dag.step_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Dag.step_eq
+/-- info: 'Hex.SignDet.Dag.step_cache' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Dag.step_cache
+/-- info: 'Hex.SignDet.Dag.replay_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Dag.replay_eq
+/-- info: 'Hex.SignDet.CrossCheck.domain_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms domain_kernel
 
 -- A produced four-query tree has seven occurrences but four distinct entries,
 -- including two different leaves and one repeated internal subtree.

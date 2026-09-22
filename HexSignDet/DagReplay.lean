@@ -21,7 +21,7 @@ theorem step_mono {before after : Array (Checked sign context p a b)}
     (hm : Prefix before after) {entry : Entry E Ctx} {t : Checked sign context p a b}
     (h : step sign context p a b before entry = some t) :
     step sign context p a b after entry = some t := by
-  unfold step at h ⊢
+  rw [step_eq] at h ⊢
   cases hc : entry.children with
   | none => simpa only [hc] using h
   | some children =>
@@ -38,7 +38,7 @@ theorem step_mono {before after : Array (Checked sign context p a b)}
 theorem step_leaf (memo : Array (Checked sign context p a b)) {n : Node E Ctx}
     (h : (Replay.leaf n).check sign context p a b n.queries = true) :
     step sign context p a b memo ⟨n, none⟩ = some ⟨.leaf n, h⟩ := by
-  simp only [step, h, dite_eq_left, pure]
+  simp only [step_eq, h, dite_eq_left, pure]
 
 theorem step_split {memo : Array (Checked sign context p a b)} {n : Node E Ctx}
     {l r : Checked sign context p a b} {left right : Nat}
@@ -56,7 +56,7 @@ theorem step_split {memo : Array (Checked sign context p a b)} {n : Node E Ctx}
     simp only [Replay.check, Bool.and_eq_true] at h
     simp only [Bool.and_eq_true]
     exact ⟨⟨⟨h.1.1.1.1.1, h.1.1.2⟩, h.1.2⟩, h.2⟩
-  simp only [step, hl, hr, bind, Option.bind, hlq, hrq, dite_eq_left, hn, pure]
+  simp only [step_eq, hl, hr, bind, Option.bind, hlq, hrq, dite_eq_left, hn, pure]
 
 variable [Hashable E] [Hashable Ctx]
 
@@ -98,7 +98,8 @@ theorem replay_encode {tree : Replay E Ctx} {qs : List (DensePoly E)}
   have ht : tree.check sign context p a b tree.node.queries = true := by
     simpa only [hq] using h
   obtain ⟨memo, hv, _, hi⟩ := encodeFrom_checks (Encoder.valid_empty _) tree ht
-  unfold replay? encode
+  rw [replay_eq]
+  unfold encode
   rw [hv.fold]
   simp only [bind, Option.bind, hi, hq, dite_eq_left, pure]
 
