@@ -8,3 +8,7 @@ module
 public import HexSignDet.Matrix
 public import HexSignDet.Support
 public import HexSignDet.Replay
+public import HexSignDet.Counts
+public import HexSignDet.Induction
+public import HexSignDet.Produce
+public import HexSignDet.Reference

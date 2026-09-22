@@ -13,6 +13,8 @@ public import HexSturm.Fixtures
 public meta import HexSignDet.Replay
 public meta import HexSignDet.Matrix
 public meta import HexSignDet.Support
+public meta import HexSignDet.Produce
+public meta import HexSignDet.Reference
 public meta import HexRank.Cert
 public meta import HexSturm.Basic
 
@@ -30,6 +32,141 @@ def sign : Rat → Int := Sturm.orderSign
 
 def p : DensePoly Rat := DensePoly.ofCoeffs #[-1, 0, 1]
 def x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
+
+/-- Compare observable sparse integer counts without hiding zero pruning. -/
+def entries {r : Nat} (s : System r) : List (List Int × Int) :=
+  s.positive.map fun i => (s.columns[i], s.counts[i])
+
+/-- Counts are computed solely from Tarski queries; the expected table is
+supplied independently by each regression. -/
+def produced (head : DensePoly Rat) (qs : List (DensePoly Rat))
+    (expected : List (List Int × Int))
+    (a : Endpoint Rat := .negInf) (b : Endpoint Rat := .posInf) : Bool :=
+  match Sturm.prepare sign head a b with
+  | none => false
+  | some d => match buildPrepared 7 d qs with
+    | .error _ => false
+    | .ok t => entries t.val.node.system == expected
+
+#guard produced p [x, x - 1] [([-1, -1], 1), ([1, 0], 1)]
+#guard produced (-p) [x] [([-1], 1), ([1], 1)]
+#guard produced p [] [([], 2)]
+#guard produced p [0, 1, x, x] [([0, 1, -1, -1], 1), ([0, 1, 1, 1], 1)]
+#guard produced x [x, 0] [([0, 0], 1)]
+#guard produced 1 [] []
+#guard produced 1 [x, x, 0] []
+#guard produced (x * x + 1) [] []
+#guard produced (x * x + 1) [x, x, 0] []
+#guard produced (x * x - 2) [x, x * x - 2, x * x - 3, x - 1]
+  [([-1, 0, -1, -1], 1), ([1, 0, -1, 1], 1)]
+#guard produced (x * x * x - x) [x] [([-1], 1), ([0], 1), ([1], 1)]
+#guard produced (x * x * x - x) [x] [([0], 1)] (.finite (-1 / 2)) (.finite (1 / 2))
+#guard produced p (List.replicate 12 x)
+  [(List.replicate 12 (-1), 1), (List.replicate 12 1, 1)]
+
+/-- The exponential reference and reduced producer must agree on small lists.
+Both also have to pass the ordinary checker for their literal moments. -/
+def agrees (head : DensePoly Rat) (qs : List (DensePoly Rat)) : Bool :=
+  match Sturm.prepare sign head .negInf .posInf with
+  | none => false
+  | some d => match buildPrepared 7 d qs, referencePrepared 7 d qs with
+    | .ok t, .ok n => n.check sign 7 head .negInf .posInf qs &&
+      entries t.val.node.system == entries n.system
+    | _, _ => false
+
+#guard [p, x, (1 : DensePoly Rat), x * x + 1, x * x - 2, x * x * x - x].all fun h =>
+  [[], [x], [x, x - 1], [x, 0, x]].all (agrees h)
+
+/-- Malformed moment right-hand sides exercise exact conversion diagnostics. -/
+def solveError (values : Vector Int 3) (expected : BuildError) : Bool :=
+  match solveSystem 1 #v[[0], [1], [2]] #v[[-1], [0], [1]] values with
+  | .error e => e == expected
+  | .ok _ => false
+
+#guard solveError #v[0, 1, 0] .nonintegral
+#guard solveError #v[0, 2, 0] .negative
+#guard match solveSystem 1 #v[[0], [1]] #v[[1], [1]] #v[1, 1] with
+  | .error .singular => true
+  | _ => false
+#guard match solveSystem 1 #v[[3]] #v[[1]] #v[1] with
+  | .error .system => true
+  | _ => false
+#guard match Sturm.prepare sign p .negInf .posInf with
+  | some d => match buildNode 7 d [] [] [[]] with
+    | .error .dimensions => true
+    | _ => false
+  | none => false
+
+example : words [-1, 0, 1] 0 = leafColumns 0 := by decide +kernel
+example : words [-1, 0, 1] 1 = leafColumns 1 := by decide +kernel
+example : words [0, 1, 2] 0 = leafRows 0 := by decide +kernel
+example : words [0, 1, 2] 1 = leafRows 1 := by decide +kernel
+
+/-- Literal finite systems keep the downstream moment-contract probe small;
+the query and rank certificates are independently produced for replay testing. -/
+@[expose] def observedLeaf (cs vs : Vector Int 3) : System 3 where
+  rows := #v[[0], [1], [2]]
+  columns := #v[[-1], [0], [1]]
+  counts := cs
+  values := vs
+  inverse := Matrix.ofRows #v[#v[0, -1, 1], #v[2, 0, -2], #v[0, 1, 1]]
+  denominator := 2
+
+@[expose] def observedParent : System 4 where
+  rows := #v[[0, 0], [0, 1], [1, 0], [1, 1]]
+  columns := #v[[-1, -1], [-1, 0], [1, -1], [1, 0]]
+  counts := #v[1, 0, 0, 1]
+  values := #v[2, -1, 0, 1]
+  inverse := Matrix.ofRows #v[#v[0, -1, 0, 1], #v[1, 1, -1, -1],
+    #v[0, -1, 0, -1], #v[1, 1, 1, 1]]
+  denominator := 2
+
+@[expose] def observedNode {r : Nat} (d : Sturm.PreparedDomain Rat)
+    (qs : List (DensePoly Rat)) (s : System r) : Node Rat Nat where
+  context := 7
+  head := d.head
+  lower := d.lower
+  upper := d.upper
+  queries := qs
+  size := r
+  system := s
+  moments := s.rows.map fun e => Sturm.certifyPrepared 7 d (moment qs e)
+  basis := Matrix.rankCert s.retainedMatrix
+
+@[expose] def observedTree (d : Sturm.PreparedDomain Rat) : Replay Rat Nat :=
+  .split (observedNode d [x, x - 1] observedParent)
+    (.leaf (observedNode d [x] (observedLeaf #v[1, 0, 1] #v[2, 0, 2])))
+    (.leaf (observedNode d [x - 1] (observedLeaf #v[1, 1, 0] #v[2, -1, 1])))
+
+/-- This downstream ordinary-kernel proof pins both observation restrictions
+and all node moments. It also detects hidden bodies at the module boundary. -/
+theorem observed_interprets (d : Sturm.PreparedDomain Rat) :
+    (observedTree d).Interprets 2 [[-1, -1], [1, 0]] := by
+  simp only [observedTree, Replay.Interprets, observedNode, observedLeaf, observedParent]
+  simp only [moments, ← Hex.Vector.ofFn'_eq_ofFn]
+  decide +kernel
+
+example (d : Sturm.PreparedDomain Rat)
+    (h : (observedTree d).check sign 7 d.head d.lower d.upper [x, x - 1] = true)
+    (σ : List Int) : σ ∈ (observedTree d).node.system.support ↔ σ ∈ [[-1, -1], [1, 0]] :=
+  Replay.support_iff h (by simp [Observations]) (observed_interprets d) σ
+
+#guard match Sturm.prepare sign p .negInf .posInf with
+  | some d => (observedTree d).check sign 7 p .negInf .posInf [x, x - 1]
+  | none => false
+
+/- The recursive theorem has no semantic root-sum axiom hidden in its proof. -/
+/-- info: 'Hex.SignDet.Replay.support_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Replay.support_complete
+
+/-- info: 'Hex.SignDet.Replay.support_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Replay.support_iff
+
+/-- info: 'Hex.SignDet.count_moments' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms count_moments
 
 /-- Test-only certificate assembly, using the existing rational inverse and
 integer rank producers. Counts come from a supplied list of exact roots. -/
@@ -127,6 +264,18 @@ def mutate (f : Replay Rat Nat → Replay Rat Nat) : Bool :=
   | .leaf n => .leaf n
   | .split n l r => .split n (mapNode (fun c => {c with context := 8}) l) r)
 #guard mutate (fun t => .leaf t.node)
+
+/-- Mutate the actual constructor's output as well as independent fixtures. -/
+def rejectsProduced (f : Replay Rat Nat → Replay Rat Nat) : Bool :=
+  match Sturm.prepare sign p .negInf .posInf with
+  | none => false
+  | some d => match buildPrepared 7 d [x, x - 1] with
+    | .error _ => false
+    | .ok t => !accepts [x, x - 1] (f t.val)
+
+#guard rejectsProduced (mapNode fun n => {n with context := 8})
+#guard rejectsProduced (mapNode fun n => replaceSystem n {n.system with counts := n.system.counts.map (· + 1)})
+#guard rejectsProduced (fun t => match t with | .leaf n => .leaf n | .split n l r => .split n r l)
 #guard mutate (mapNode fun n => {n with basis := {n.basis with
   rows := n.basis.rows.map (fun i => ⟨0, Nat.zero_lt_of_lt i.isLt⟩)}})
 #guard mutate (mapNode fun n => {n with basis := {n.basis with
