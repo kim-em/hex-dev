@@ -66,8 +66,11 @@ actual decoder, for arbitrary supplied bytes and codecs. The returned tree
 also carries the existing finite checker proof. Conformance compares all
 literal fields after rational/context roundtrips, including a produced graph
 with query preprocessing and moment reductions. It covers stale composite
-contexts, truncated and false evidence, invalid references, malformed sizes,
-noncanonical literals and lexical bounds. Byte parsing uses compiled execution;
+contexts, empty-query and zero-root systems, truncated and false evidence,
+invalid references, malformed sizes, noncanonical literals and lexical bounds.
+A canonical-zero coefficient probe preserves distinct nonzero representations
+without a ring or field instance and rejects substitution of an equal-denotation
+head with different literal coefficients. Byte parsing uses compiled execution;
 the separate ordinary-kernel graph probes and axiom audits remain in place.
 
 This format encodes same-level BKR graphs and coefficient values. It does not

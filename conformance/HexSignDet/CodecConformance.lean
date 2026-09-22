@@ -6,6 +6,8 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.Codec
+public import HexPoly.InterpretTests
+public meta import HexPoly.InterpretTests
 public import HexSignDet.DagConformance
 public meta import HexSignDet.DagConformance
 public meta import HexSignDet.Codec
@@ -117,6 +119,65 @@ private def readNode (j : Json) : Bool :=
         singletonRaw.lower singletonRaw.upper tree.val.node.queries bytes).isOk &&
       (Dag.decodeBytes ValueCodec.rat ctx Sturm.orderSign [7, 2] singletonRaw.head
         singletonRaw.lower singletonRaw.upper tree.val.node.queries bytes).toOption.isNone
+
+-- Empty query lists and zero-root parents retain their actual empty vectors
+-- and rank-zero matrices, rather than being confused with malformed graphs.
+#guard match Sturm.prepare Sturm.orderSign singletonRaw.head singletonRaw.lower singletonRaw.upper with
+  | none => false
+  | some domain =>
+    match buildPrepared (7 : Nat) domain [] with
+    | .error _ => false
+    | .ok t => roundtrip (Dag.encode t.val) && checked [] (encoded (Dag.encode t.val))
+
+#guard let p : DensePoly Rat := DensePoly.C 5
+  match Sturm.prepare Sturm.orderSign p .negInf .posInf with
+  | none => false
+  | some domain =>
+    match buildPrepared (7 : Nat) domain [0, 1] with
+    | .error _ => false
+    | .ok t =>
+      let graph := Dag.encode t.val
+      t.val.node.size == 0 && graph.entries.size == 3 &&
+      (Dag.decodeBytes ValueCodec.rat ValueCodec.nat Sturm.orderSign 7 p
+        .negInf .posInf [0, 1] (encoded graph)).isOk
+
+namespace Noncanonical
+open HexPoly.InterpretTests
+
+local instance : Hashable Rep := ⟨fun r => hash (raw r)⟩
+
+/-- Preserve both rational coordinates of every nonzero representative. -/
+private def codec : ValueCodec Rep where
+  encode r := Codec.option (fun a => Json.arr #[ValueCodec.rat.encode a.val.1,
+    ValueCodec.rat.encode a.val.2]) r
+  decode j := Codec.readOption (fun j => do
+    let a ← Codec.tuple 2 j
+    let left ← ValueCodec.rat.decode a[0]
+    let right ← ValueCodec.rat.decode a[1]
+    if h : testZero (left, right) = false then return ⟨(left, right), h⟩
+    else throw "noncanonical zero representative") j
+
+private def sign (r : Rep) : Int := (value r).num.sign
+
+#guard codec.encode (pack 0 1) != codec.encode (1 : Rep)
+#guard let p : DensePoly Rep := DensePoly.ofCoeffs #[pack (-1) 0, 0, pack 0 1]
+  let canonical : DensePoly Rep := DensePoly.ofCoeffs #[pack (-1) 0, 0, 1]
+  let qs := [DensePoly.C (pack 0 1)]
+  match Sturm.prepare sign p .negInf .posInf with
+  | none => false
+  | some domain =>
+    match buildPrepared (7 : Nat) domain qs with
+    | .error _ => false
+    | .ok t =>
+      let graph := Dag.encode t.val
+      let bytes := graph.encodeBytes codec ValueCodec.nat
+      match Codec.decodeGraph codec ValueCodec.nat 7 p .negInf .posInf bytes with
+      | .error _ => false
+      | .ok actual => actual.entries == graph.entries && actual.root == graph.root &&
+          (Dag.decodeBytes codec ValueCodec.nat sign 7 p .negInf .posInf qs bytes).isOk &&
+          (Dag.decodeBytes codec ValueCodec.nat sign 7 canonical .negInf .posInf qs bytes).toOption.isNone
+
+end Noncanonical
 
 /-- info: 'Hex.SignDet.Dag.decode_replays' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
