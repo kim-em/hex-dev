@@ -1005,7 +1005,7 @@ lean_lib HexConformance where
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
-    ++ #[`HexSignDet.Conformance, `HexSignDetMathlib.Conformance].map Glob.one
+    ++ #[`HexSignDet.Conformance, `HexSignDet.Infinitesimal, `HexSignDetMathlib.Conformance].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]
@@ -1349,6 +1349,10 @@ lean_exe hexrealroots_emit_fixtures where
 lean_exe hexsigndet_emit_fixtures where
   srcDir := "conformance"
   root := `HexSignDet.EmitFixtures
+
+lean_exe hexsigndet_emit_infinitesimal where
+  srcDir := "conformance"
+  root := `HexSignDet.EmitInfinitesimal
 
 lean_exe hexrealformula_emit_fixtures where
   srcDir := "conformance"
