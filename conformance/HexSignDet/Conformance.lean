@@ -156,6 +156,42 @@ def internalForgery : Option (Replay Rat Nat) := do
     !accepts [x, x - 1] (.split n l r)
   | _ => false
 
+/-- Preserve the local equations while reversing candidate-column order. -/
+def reverseColumns (n : Node Rat Nat) : Node Rat Nat :=
+  replaceSystem n {n.system with
+    columns := Vector.ofFn fun i => n.system.columns[i.rev]
+    counts := Vector.ofFn fun i => n.system.counts[i.rev]
+    inverse := Matrix.ofFn fun i j => n.system.inverse[(i.rev, j)]}
+
+/-- Preserve local equations and query evidence while reversing moment rows. -/
+def reverseRows (n : Node Rat Nat) : Node Rat Nat :=
+  let s := {n.system with
+    rows := Vector.ofFn fun i => n.system.rows[i.rev]
+    values := Vector.ofFn fun i => n.system.values[i.rev]
+    inverse := Matrix.ofFn fun i j => n.system.inverse[(i, j.rev)]}
+  {n with
+    system := s
+    basis := Matrix.rankCert s.retainedMatrix
+    moments := Vector.ofFn fun i => n.moments[i.rev]}
+
+/-- Length-only product comparisons would accept these valid local systems.
+The full checker must enforce the exact child-product orders. -/
+def rejectsOrder (f : Node Rat Nat → Node Rat Nat) : Bool :=
+  match fixture p [-1, 1] [x, x - 1] with
+  | some (.split n l r) =>
+    let changed := f n
+    changed.check sign 7 p .negInf .posInf [x, x - 1] &&
+    l.check sign 7 p .negInf .posInf [x] &&
+    r.check sign 7 p .negInf .posInf [x - 1] &&
+    decide (changed.system.columns.toList.length =
+      (product l.node.system.support r.node.system.support).length) &&
+    decide (changed.system.rows.toList.length = (product l.node.rows r.node.rows).length) &&
+    !accepts [x, x - 1] (.split changed l r)
+  | _ => false
+
+#guard rejectsOrder reverseColumns
+#guard rejectsOrder reverseRows
+
 /-- The SPEC's forged support satisfies both matrix identities and has the
 correct total count. It still lacks the required full singleton leaf support. -/
 @[expose] def forged : System 1 where
@@ -259,5 +295,21 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Replay.check_children' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Replay.check_children
+
+/-- info: 'Hex.SignDet.Node.check_bindings' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.check_bindings
+/-- info: 'Hex.SignDet.mem_product' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms mem_product
+/-- info: 'Hex.SignDet.Conformance.forged_local' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms forged_local
+/-- info: 'Hex.SignDet.Conformance.forged_rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms forged_rejected
+/-- info: 'Hex.SignDet.Conformance.empty_rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms empty_rejected
 
 end Hex.SignDet.Conformance

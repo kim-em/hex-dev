@@ -26,8 +26,9 @@ polynomial identities use the shared zero-difference checks. Context values
 must contain the caller's full immutable context data, including any refinement;
 a hash or reused numeric identifier is insufficient. The current certificate
 tree repeats the head squarefree evidence in each moment and rechecks it there;
-shared domain replay remains an integration and performance obligation. The checker reconstructs unreduced moment products
-and runs no query producer, gcd search or row search.
+shared domain replay remains an integration and performance obligation.
+The checker reconstructs unreduced moment products and runs no query producer,
+gcd search or row search.
 `Replay.query_evidence` proves that every accepted tree reaches a checked Tarski
 query, including when its root matrix is empty.
 
