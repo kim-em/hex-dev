@@ -9,19 +9,19 @@ public import HexSignDet.Codec
 public import HexSignDet.Codec.EvidenceLaws
 public import HexPoly.InterpretTests
 public meta import HexPoly.InterpretTests
-public import HexSignDet.DagConformance
-public meta import HexSignDet.DagConformance
+public import HexSignDet.CrossCheck
+public meta import HexSignDet.CrossCheck
 public meta import HexSignDet.Codec
 
 public section
 
 /-! Computational conformance owner: `HexSignDet`. Byte parsing is tested by
 compiled execution. Ordinary-kernel graph replay and axiom probes remain in
-DagConformance; successful byte decoding retains that finite checker evidence. -/
-namespace Hex.SignDet.CodecConformance
+CrossCheck; successful byte decoding retains that finite checker evidence. -/
+namespace Hex.SignDet.FastCheck
 open Lean
 open Hex.SignDet.Conformance
-open Hex.SignDet.DagConformance
+open Hex.SignDet.CrossCheck
 
 private def encoded (d : Dag Rat Nat) : ByteArray := d.encodeBytes ValueCodec.rat ValueCodec.nat
 private def decoded (bytes : ByteArray) : Except String (Dag Rat Nat) :=
@@ -237,8 +237,8 @@ theorem false_evidence_roundtrip :
 /-- info: 'Hex.SignDet.Codec.read_reduction' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Codec.read_reduction
-/-- info: 'Hex.SignDet.CodecConformance.false_evidence_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.FastCheck.false_evidence_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms false_evidence_roundtrip
 
-end Hex.SignDet.CodecConformance
+end Hex.SignDet.FastCheck
