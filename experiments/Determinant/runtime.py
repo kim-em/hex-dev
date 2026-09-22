@@ -76,8 +76,9 @@ def main():
     parser.add_argument('--modular', action='store_true')
     parser.add_argument('--spread', type=int, default=1)
     args = parser.parse_args()
-    if args.ring in ('poly', 'univariate') and (args.dimension != 4 or args.shape != 'dense'):
-        parser.error('polynomial input is the fixed dense 4x4 fixture')
+    if args.ring in ('poly', 'univariate') and (
+            args.dimension != 4 or args.shape != 'dense' or args.bits != 8 or args.spread != 1):
+        parser.error('polynomial input is fixed: dimension 4, dense, default bits/spread only')
     output = args.output
     output.mkdir(parents=True, exist_ok=False)
     exe = ROOT / '.lake/build/bin/determinant_experiment'

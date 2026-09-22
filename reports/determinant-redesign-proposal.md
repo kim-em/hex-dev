@@ -13,6 +13,9 @@ result in an explicitly requested representation, and proving equality to a
 supplied expression. Do not require them to construct the same witness or use
 the same determinant algorithm. Share algebraic theorems and coefficient
 operations where useful; do not mandate a universal intermediate interpreter.
+The symbolic-result contract is a design hypothesis: the proof experiments
+all receive a supplied target and do not measure constructing an expanded
+result. Result-producing consumers require their own evidence before migration.
 
 For symbolic proofs, implement one general backend based on a division-free
 determinant recurrence and cached proof-producing arithmetic. The best current
@@ -43,11 +46,11 @@ shared algebraic interfaces have demonstrated uses and should survive.
 | Shared Bird expressions with cached normalization | Implement behind an explicit experimental entry point | Wins on three tested families; the common-factor case remains an unresolved loss |
 | Blanket opacity for reused arithmetic proofs | Reject | Additional auxiliary checking outweighs the saved outer check |
 | Deferred expression followed by independent `ring` traversal | Reject as default | Loses to cached traversal on the same recurrence and target |
-| Eager Bird as a universal value algorithm | Reject | Loses substantially on integer and rational values |
+| Eager Bird value prototype | Do not pursue this implementation | Loses on integer/rational values; list allocation and bounds checks confound any schedule-wide conclusion |
 | Existing recursive/flat modular elimination | Retain as correctness controls; replace hot execution when proved | Both remain far slower than the same-prime external comparison |
 | Owned Lean array loop or raw words alone | Reject these prototypes | Neither removes the large modular gap |
-| Unboxed native word loop | Develop a checked implementation/refinement | C diagnostic closes most of the execution gap without a new determinant algorithm |
-| Row scaling for rational/dyadic values | Implement and prove, then measure coverage | Includes scaling and normalization and wins in the tested modest/wide precision cases |
+| C modular word loop | Develop an `@[extern]` value implementation with a proved Lean logical model | C diagnostic closes most of the execution gap; the tested Lean buffer loops do not |
+| Row scaling for rational/dyadic values | Confirm with in-process repetitions, then implement and prove | Promising cold single-call measurements include scaling and normalization |
 | Direct small-degree dense polynomial arithmetic | Retain and expose to selection | Representation comparison favors it over sparse arithmetic and interpolation |
 | General evaluation/interpolation framework | Defer | The small cold interpolation experiment loses; no crossover is established |
 
@@ -122,8 +125,8 @@ repeated tactic-driven entry case splits without changing the theorem claimed.
 
 ### `HexDet/SPEC/hex-det.md`: API, coefficient adapters and selection
 
-Correct statements that modular/divisor implementations do not yet exist;
-distinguish implemented lower operations from enabled dispatch policies.
+Clarify the distinction between implemented lower modular/divisor operations
+and enabled dispatch policies; their existence alone does not enable a policy.
 
 > Exact coefficient adapters may transform the matrix before determinant
 > computation and restore the result afterward. Their mathematical equations,
@@ -140,8 +143,11 @@ must be visible. No threshold is supplied by this exploratory report.
 
 ### `HexModularMatrix/SPEC/hex-modular-matrix.md`: one image and benchmarking
 
-> The modular image routine may use an owned unboxed word buffer and trailing
-> block updates. It must refine the same row-pivoted determinant operation,
+> A native modular image routine may use an `@[extern]` C implementation with
+> contiguous word storage, backed by a Lean logical implementation proved to
+> compute the row-pivoted determinant. The C implementation must match that model,
+> supported by differential tests and explicit representation bounds. The model
+> and execution implementation must agree on the determinant operation,
 > including pivot sign and singular zero results. A nonunit pivot over a
 > composite modulus may decline; it must not silently be treated as zero.
 > Matrix storage in unrelated libraries need not change to support this kernel.
@@ -175,35 +181,59 @@ continues through proved algebraic or reflective evidence, never native evaluati
    entire scalar normalizer. Add explicit size/work budgets, reverse equalities,
    the shared literal recognizer and result-term handling. Prove/verify every
    generated declaration and audit axioms. Measure all work with the producer
-   inside the call. Require the six-pair fresh-module shipping protocol before
-   changing default dispatch. The current two-pair results select a candidate,
-   not a release decision.
+   inside the call. Before committing to a schedule, compare Bareiss, Bird and
+   Berkowitz on the same polynomial input with a common scalar representation
+   and proof/checking method, charging Bareiss's nonzero/division obligations.
+   The current value experiments control representation and external checking;
+   they do not rank complete kernel-checked proofs of the three schedules.
+   Bird is the first candidate because it already has a generic-ring theorem
+   and a measured shared-proof prototype, not because the alternatives have
+   been ruled out. Treat that proof-side comparison as an exit criterion.
+   Separately measure constructing an expanded result without a supplied target,
+   including expansion, normalization, result quotation and all proof checks.
+   Preserve existing result-producing routes until that test passes. Require
+   the six-pair fresh-module shipping protocol before changing default dispatch.
+   The current two-pair results select a candidate, not a release decision.
 
 3. **Replace symbolic dispatch and retire redundant strategies.** Exercise
    `HexPolyDetMathlib/{Small,Structural,RowFactor,RatFactor,Tactic}.lean` inputs
    against the new backend. Remove shape selection and duplicate proof assembly
    from production only as those inputs pass correctness, coverage and timing
-   gates. Retain mathematical lemmas independently of strategy code. Universal
+   gates for both supplied equalities and result-producing forms. A win on a
+   supplied equality does not satisfy result-construction coverage. Retain
+   mathematical lemmas independently of strategy code. Universal
    boundary cases `n=0,1,2` may remain simple definitions; they need no tuned
    policy. Keep residue/scaling certificate paths only for demonstrated
    uncovered capabilities, not as permanent unmeasured alternatives. Once all
    consumers move, delete unused polynomial frontend/quotation/checker glue and
    its option branches, replacing tests with the new public-path tests.
 
-4. **Implement exact scaling adapters.** Prove the row-scaling determinant
-   equation, positivity/nonzeroness of row factors, rational denominator
+4. **Implement coefficient adapters.** First confirm the small rational/dyadic
+   scaling observations with bounded in-process repetitions and a timing barrier
+   for each invocation: the present native measurements are cold single calls.
+   Prove the row-scaling determinant equation, positivity/nonzeroness of row
+   factors, rational denominator
    divisibility, dyadic shifts and the restoration map. Use the actual normalized
    input, including zeros and negative dyadic precisions. Compare direct and
    scaled methods including discovery, conversion and result normalization.
    Keep direct methods where denominator growth or exponent separation loses.
    Install measured policy regions only after independent dimension and size
    checks. Do not make all fields pass through rational or integer conversion.
+   Expose dense univariate arithmetic as an explicit representation option,
+   preserving the requested output contract. Include representation conversion
+   in any subsequent selection measurement; the current arithmetic comparison
+   supplies already represented inputs and establishes no automatic threshold.
 
 5. **Replace the modular hot loop.** Start with one modulus and the existing
-   field operations. Implement an unboxed-buffer loop with a logical reference;
-   prove row swaps, row updates, pivot accumulation and singular termination
-   against `Matrix.det`. Reuse/refine existing `DetImage`/`Dixon.Echelon`
-   correctness instead of duplicating determinant theory. Add bounded native
+   field operations. Implement the fast value loop in C behind `@[extern]`, with
+   a Lean logical implementation following the existing repository FFI pattern.
+   Pure Lean owned-array/raw-word variants did not close the measured gap; this
+   stage does not assume that repackaging them will. Prove the logical model's
+   row swaps, row updates, pivot accumulation and singular termination against
+   `Matrix.det`. Reuse/refine existing `DetImage`/`Dixon.Echelon` correctness
+   instead of duplicating determinant theory. Differential tests check the C
+   implementation against the model; they are not a formal proof of the C code.
+   Native results never replace kernel-checked proof evidence. Add bounded native
    cross-checks, including singular matrices, swap parity, boundary residues,
    zero multipliers and composite-modulus declines. Only then connect it to the
    existing CRT/divisor producers. Re-measure complete values and either remove

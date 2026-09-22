@@ -53,8 +53,13 @@ def source(obligations, arm):
 
 def main():
     fixture_log, output = map(Path, sys.argv[1:])
+    match = re.search(r'FIXTURE (.*)', fixture_log.read_text())
+    if match is None:
+        raise SystemExit('No FIXTURE record in log; use an archived fixture log or '
+                         'remove .lake/build/lib/lean/Determinant/Fixture.olean '
+                         'and rebuild Determinant.Fixture before running this script.')
+    obligations = json.loads(match[1])
     output.mkdir(parents=True, exist_ok=False)
-    obligations = json.loads(re.search(r'FIXTURE (.*)', fixture_log.read_text())[1])
     (output / 'fixture.json').write_text(json.dumps(obligations, indent=2) + '\n')
     files = [Path(__file__), ROOT / 'experiments/Determinant/Arithmetic.lean',
              ROOT / 'experiments/Determinant/Fixture.lean', ROOT / 'HexMvPoly/Kernel.lean']

@@ -115,4 +115,7 @@ def main (args : List String) : IO Unit := do
     | "univariate" => ["sparse", "dense", "interpolate"]
     | _ => []
   unless arm ∈ supported do throw <| IO.userError "unsupported coefficient operation"
+  if kind == "poly" || kind == "univariate" then
+    unless n == "4" && bits == "8" && shape == "dense" && spread == "1" do
+      throw <| IO.userError "fixed polynomial fixture requires 4 8 dense 1"
   Determinant.Runtime.run kind arm n.toNat! bits.toNat! shape spread.toNat!

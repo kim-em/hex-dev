@@ -31,6 +31,12 @@ Two adjacent AB/BA pairs were collected per comparison on `chungus2`.
 Milliseconds below include tactic execution and the final kernel check.
 Auxiliary checks inside the tactic are already inside its clock.
 
+This table used the integer-specific support module retained in
+[`arithmetic-typed/Arithmetic.lean.txt`](bench-results/determinant-redesign/arithmetic-typed/Arithmetic.lean.txt).
+The working `Arithmetic.lean` now synthesizes arbitrary commutative-ring
+instances. Reproducing this exact implementation requires the archived source;
+the README commands exercise the generalized version.
+
 | Comparison | Arm | Tactic median | Final kernel median | Total proof work |
 |---|---|---:|---:|---:|
 | Replay / independent | Replay | 259.9 | <1 | [259.9, 260.9) |
@@ -148,7 +154,9 @@ storage across arms. Bareiss is the existing pivoted exact-division routine;
 Berkowitz is the existing characteristic-polynomial schedule, consuming just
 the signed final coefficient. Bird is a new **eager** full-matrix recurrence.
 It does not reproduce Mathlib's demand-driven evaluator. Internals of the
-three schedules still differ in storage/allocation; these measurements hold
+three schedules still differ in storage/allocation: the eager Bird prototype
+allocates `List.range` during every entry's diagonal sum and performs dynamic
+bounds checks for entry access. These measurements hold
 the public input and coefficient representation fixed, not every memory access.
 
 The shared `Hex.Matrix` input is flat row-major storage. Bareiss converts to
@@ -166,6 +174,11 @@ representation for all three schedules.
 
 Each comparison has two adjacent AB/BA pairs. Repeated Bareiss/scaled controls
 are pooled only for this compact table; raw pair membership remains available.
+This descriptive summary is not used for paired speedup claims. For example,
+all six rational Bareiss observations lie between 0.149 and 0.156 ms. The proof
+table keeps comparator groups separate because their variation is substantial.
+Native timings are one cold call per fresh process; confirm these small costs
+with in-process repetitions before implementing a selection policy.
 These sub-millisecond observations motivate experiments, not dispatch thresholds.
 No point timed out and there was no ladder expansion after a timeout.
 
@@ -190,8 +203,9 @@ small reference allocation is included. Merely reading an input reference is
 not a sufficient timing barrier.
 
 Decision: retain fraction-free integer computation as a control; investigate
-exact scaling as a general coefficient adapter. Do not adopt eager Bird as a
-universal value engine. The polynomial Berkowitz result warrants a controlled
+exact scaling as a general coefficient adapter. Do not pursue this eager Bird
+value implementation; its allocation/access confounds preclude rejecting the
+schedule itself. The polynomial Berkowitz result warrants a controlled
 proof/symbolic-representation comparison, not a conclusion that computing every
 characteristic coefficient is intrinsically best.
 
@@ -273,15 +287,17 @@ also differs from eager normal-form zero detection, so it is not an isolation
 of cache lookup cost alone.
 
 Direct paired comparisons use the synchronous complete-declaration clock.
-Each table cell is the median of its own two AB/BA samples; candidate samples
-from different comparator pairs are deliberately **not pooled**.
+Each table cell gives median [minimum, maximum] in milliseconds for its own
+two AB/BA samples, rounded to whole milliseconds; these are observed ranges,
+not confidence intervals. Candidate samples from different comparator pairs
+are deliberately **not pooled**.
 
 | Input and supplied target | Mathlib, ms | Shared alongside Mathlib, ms | Production Hex, ms | Shared alongside Hex, ms |
 |---|---:|---:|---:|---:|
-| Dense quadratic 4×4, two variables; expanded target | 287.6 | 218.4 | 757.4 | 240.2 |
-| Independent-variable 4×4; expanded target | 158.3 | 88.0 | 347.2 | 87.8 |
-| Dense linear 6×6, two variables; expanded target | 5019.8 | 3312.4 | 5286.9 | 3476.9 |
-| Quadratic 4×4 multiplied entrywise by a third variable; factored target | 453.0 | 579.6 | 1147.5 | 363.9 |
+| Dense quadratic 4×4, two variables; expanded target | 288 [287, 289] | 218 [218, 219] | 757 [599, 916] | 240 [211, 270] |
+| Independent-variable 4×4; expanded target | 158 [157, 159] | 88 [88, 88] | 347 [346, 349] | 88 [88, 88] |
+| Dense linear 6×6, two variables; expanded target | 5020 [4935, 5105] | 3312 [3270, 3354] | 5287 [4645, 5929] | 3477 [3216, 3738] |
+| Quadratic 4×4 multiplied entrywise by a third variable; factored target | 453 [423, 483] | 580 [448, 712] | 1148 [950, 1345] | 364 [316, 412] |
 
 The last input supplies `z^4 * d(x0,x1)`; every algorithm receives the same
 factored target. Its shared/Mathlib pairs disagree: 711.7 versus 423.4 ms in
@@ -374,10 +390,12 @@ profiling as the cause. Below-threshold kernel checks are reported as
 intervals, never silently as zero cost.
 
 All batches are serial, automatically CPU-leased, limited to 60 seconds per
-build and four minutes per batch. The measurement ledger records every batch, including failed ones, and
+invocation and at most four minutes per batch (the C diagnostic and validation
+runners use a stricter one-minute batch limit). The measurement ledger records
+every batch, including failed ones, and
 separates differential validation from performance runs. Small development/
 diagnostic builds are retained separately. No larger input followed a timeout, no memory cap
-was imposed, and no background service or CI monitor was installed.
+was imposed, and no background monitoring service was installed.
 
 The fixture producer is Mathlib-free. Proof experiments are build-only Lean
 modules. `Determinant.Audit` builds successfully, checks the complete theorem's

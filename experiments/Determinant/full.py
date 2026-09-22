@@ -87,7 +87,7 @@ variable {S : Type} [CommRing S]
     intro h
     have he := congrArg (MvPolynomial.eval₂Hom (RingHom.id Int) (fun _ : Fin 2 => 0)) h
     simp only [map_add, map_mul, map_neg, map_pow, map_ofNat, map_one, map_zero,
-      MvPolynomial.eval₂Hom_X', RingHom.id_apply] at he
+      MvPolynomial.eval₂Hom_X'] at he
     norm_num at he
 '''
     code += f'theorem result (x0 x1 : S) : {goal} := by\n'

@@ -6,6 +6,8 @@ CI. The fixture producer is Mathlib-free; proof probes are module builds.
 From the repository root:
 
 ```sh
+# Force the fixture-producing declaration to run even with a warm Lake cache.
+rm -f .lake/build/lib/lean/Determinant/Fixture.olean
 lake build Determinant.Fixture > /tmp/determinant-fixture.log 2>&1
 lake build Determinant.Arithmetic
 python3 experiments/Determinant/arithmetic.py /tmp/determinant-fixture.log /tmp/determinant-arithmetic
@@ -19,7 +21,7 @@ python3 experiments/Determinant/full_measure.py /tmp/determinant-arithmetic/fixt
 
 Use new output directories and run serially. Runners refuse to overwrite
 results and stop the batch on failure/timeout. Every measured invocation has
-a 60-second ceiling; each batch has a four-minute ceiling. All observations
+a 60-second ceiling; each batch has at most a four-minute ceiling. All observations
 are retained. The generator is limited to the fixed 4×4 quadratic witness;
 it is not a general determinant implementation.
 
@@ -66,7 +68,8 @@ These are independent commands, not instructions to run a grid. Choose the
 next case from the preceding result. The runtime runner stops its whole batch
 on a timeout/failure, and never launches a larger case automatically. After a
 timeout, do not manually advance a comparable dimension/coefficient ladder.
-The polynomial case is the fixed witness fixture; other dimensions are rejected.
+The polynomial cases use fixed fixtures: only dimension 4, dense shape, and
+the default bits/spread arguments are accepted.
 `--modular` compares existing ordinary CRT and divisor routes without fallback
 and attributes ordinary CRT stages. `--flat` changes just its elimination route.
 `--owned` and `--word` compare the experimental owned Lean buffer and hoisted
