@@ -123,7 +123,7 @@ terminal gcd. The squarefree constant-tail guard must reject it. -/
         value := 1 }
 
 theorem literal_checks : check orderSign 7 p 1 (.finite (-2)) (.finite 2) 2 literal = true := by
-  simp only [check, TarskiCertificate.check, SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
+  simp only [check, TarskiCertificate.check_eq, SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
 theorem stale_rejected : check orderSign 8 p 1 (.finite (-2)) (.finite 2) 2 literal = false := by

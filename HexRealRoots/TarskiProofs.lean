@@ -307,7 +307,7 @@ theorem certify_checks [Neg D] [DecidableEq E] [DecidableEq Ctx]
         have hs := (DensePoly.size_eq_zero_iff p).mpr hz
         omega
       cases Option.some.inj hcert
-      simp only [check, fromChains]
+      simp only [check_eq, fromChains]
       simp only [decide_true, hg, hsf, hchains p _ hp,
         signs_bounded sign endpointSigns hvalues, Bool.and_true]
 

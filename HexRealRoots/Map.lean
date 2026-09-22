@@ -194,12 +194,12 @@ theorem map_checks {Ctx : Type w''} [DecidableEq Ctx] [DecidableEq A] [Decidable
     (cert : TarskiCertificate D A Ctx) (h : check sign ends context p g a b value cert = true) :
     check sign' ends' context (DensePoly.Interpret.map f hz p) (DensePoly.Interpret.map f hz g)
       (a.map k) (b.map k) value (cert.map f hz k) = true := by
-  simp only [check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+  simp only [check_eq, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
   obtain ⟨hctx, hp, hg, hl, hu, hv, hends, hsf, hc, hr, hls, hus, hbl, hbu, hvl, hvu, hval⟩ := h
   have hsf' := SignedRemainderChain.map_checks f hz ha hs hm sign sign' hsgn hn p 1 cert.squarefree hsf
   rw [map_one f hz h1] at hsf'
   have hr' := SignedRemainderChain.map_checks f hz ha hs hm sign sign' hsgn hn p g cert.remainders hr
-  simp only [check, map, hp, hg, hl, hu, hctx, hv, map_checkEndpoints f hz k ends ends' hcmp heval,
+  simp only [check_eq, map, hp, hg, hl, hu, hctx, hv, map_checkEndpoints f hz k ends ends' hcmp heval,
     hends, hsf', hr', map_lastIsConstant, hc, decide_true, Bool.true_and]
   simp only [SignedRemainderChain.map, map_signs f hz k sign sign' hsgn ends ends' heval,
     hls, hus, hvl, hvu, Bool.and_eq_true, decide_eq_true_eq, and_assoc, true_and]

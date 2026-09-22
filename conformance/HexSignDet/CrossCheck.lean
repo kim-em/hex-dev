@@ -36,7 +36,7 @@ set_option maxRecDepth 32768 in
 theorem full_kernel : check full (singletonRaw.full []).queries = true := by
   simp only [check, Dag.check, Dag.replay?, Dag.step, full,
     Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
-    TarskiCertificate.check, SignedRemainderChain.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
@@ -46,7 +46,7 @@ once, while both ordered parent edges remain checked. -/
 theorem shared_kernel : check shared sharedParent.queries = true := by
   simp only [check, Dag.check, Dag.replay?, Dag.step, shared,
     Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
-    TarskiCertificate.check, SignedRemainderChain.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
@@ -58,7 +58,7 @@ theorem rejected_kernel :
     check {full with entries := full.entries.pop} fullNode.queries = false := by
   simp only [check, Dag.check, Dag.replay?, Dag.step, full,
     Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
-    TarskiCertificate.check, SignedRemainderChain.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
@@ -69,7 +69,7 @@ theorem descriptor_kernel :
     (full.descriptor? Sturm.orderSign 7 (singletonRaw.full [1, 1])).isSome = true := by
   simp only [Dag.descriptor?, Dag.replay?, Dag.step, full, Replay.table_lookup,
     Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
-    TarskiCertificate.check, SignedRemainderChain.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
@@ -97,7 +97,7 @@ theorem encoded_rejected_kernel :
   unfold check
   rw [Dag.check_encode_eq]
   simp only [Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
-    TarskiCertificate.check, SignedRemainderChain.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 

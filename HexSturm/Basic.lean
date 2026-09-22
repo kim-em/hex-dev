@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealRoots.Tarski
+public import HexRealRoots.TarskiShared
 
 public section
 
@@ -144,7 +144,7 @@ theorem check_bindings {Ctx : Type v} [DecidableEq Ctx] (sign : E → Int) (cont
     (h : check sign context p f a b value cert = true) :
     cert.context = context ∧ cert.head = p ∧ cert.queryPoly = f ∧
       cert.lower = a ∧ cert.upper = b ∧ cert.value = value := by
-  simp only [check, TarskiCertificate.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+  simp only [check, TarskiCertificate.check_eq, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
   exact ⟨h.1, h.2.1, h.2.2.1, h.2.2.2.1, h.2.2.2.2.1, h.2.2.2.2.2.1⟩
 
 end Hex.Sturm

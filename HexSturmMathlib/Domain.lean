@@ -183,7 +183,7 @@ squarefree witness, without running a gcd or query producer. -/
 theorem check_domain {Ctx : Type w} [DecidableEq Ctx] (context : Ctx)
     (p g : DensePoly E) (a b : Endpoint E) (value : Int) (cert : TarskiCertificate E E Ctx)
     (hc : Sturm.check sign context p g a b value cert = true) : Domain f hz p a b := by
-  simp only [Sturm.check, TarskiCertificate.check, Bool.and_eq_true,
+  simp only [Sturm.check, TarskiCertificate.check_eq, Bool.and_eq_true,
     decide_eq_true_eq, and_assoc] at hc
   obtain ⟨_, _, _, _, _, _, hg, hsf, hconst, _⟩ := hc
   obtain ⟨hp, hab, ha', hb'⟩ := (checkEndpoints_iff f hz ha hs hm sign hneg hzero p a b).mp hg

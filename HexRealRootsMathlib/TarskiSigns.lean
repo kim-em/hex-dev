@@ -24,7 +24,7 @@ theorem check_value {D : Type v} {A : Type w} {Ctx : Type u}
     SignedRemainderChain.check sign p g cert.remainders = true ∧
       value = (signVar (TarskiCertificate.signs sign endpointSigns cert.remainders.chain a).toList : Int) -
         signVar (TarskiCertificate.signs sign endpointSigns cert.remainders.chain b).toList := by
-  simp only [TarskiCertificate.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+  simp only [TarskiCertificate.check_eq, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
   obtain ⟨_, _, _, _, _, _, _, _, _, hr, hl, hu, _, _, hvl, hvu, hv⟩ := h
   exact ⟨hr, by simpa only [hvl, hvu, hl, hu] using hv⟩
 

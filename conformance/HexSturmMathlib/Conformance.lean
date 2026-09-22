@@ -161,7 +161,7 @@ Its entries and scales were chosen independently of the producer. -/
 theorem accepted : Sturm.check Sturm.orderSign (11, 23) p g
     (.finite Hex.TarskiTests.interval.lower.toRat) (.finite Hex.TarskiTests.interval.upper.toRat)
     2 literal = true := by
-  simp only [Sturm.check, TarskiCertificate.check, SignedRemainderChain.check,
+  simp only [Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
@@ -187,7 +187,7 @@ theorem stale : TarskiCertificate.check Int.sign EndpointSigns.intDyadic (11, 24
     (ZPoly.clearDenominators p).2 (ZPoly.clearDenominators g).2
     (.finite Hex.TarskiTests.interval.lower) (.finite Hex.TarskiTests.interval.upper) 2
     (TarskiCertificate.clearDenominators p g Hex.TarskiTests.interval literal) = false := by
-  simp only [TarskiCertificate.check, TarskiCertificate.clearDenominators, TarskiCertificate.fromChains,
+  simp only [TarskiCertificate.check_eq, TarskiCertificate.clearDenominators, TarskiCertificate.fromChains,
     literal, show (((11, 23) : Nat × Nat) ≠ (11, 24)) by decide, decide_false, Bool.false_and]
 
 end Transport
