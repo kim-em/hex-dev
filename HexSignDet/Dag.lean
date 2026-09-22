@@ -22,6 +22,10 @@ structure Entry (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
   node : Node E Ctx
   children : Option (Nat × Nat)
 
+instance [DecidableEq Ctx] : DecidableEq (Entry E Ctx) := fun a b =>
+  decidable_of_iff (a.node = b.node ∧ a.children = b.children)
+    (by cases a; cases b; simp only [Entry.mk.injEq])
+
 end Dag
 
 /-- A topologically ordered graph of same-level BKR nodes. Every serialized
@@ -113,9 +117,9 @@ replay. Raw shape, immutable context and the exact count-one condition are
 still checked. Invalid supplied evidence does not decide root nonexistence. -/
 @[expose] def descriptor? (sign : E → Int) (context : Ctx) (raw : RawDescriptor E Ctx)
     (dag : Dag E Ctx) : Option (Descriptor E Ctx sign context) := do
-  let t ← replay? sign context raw.head raw.lower raw.upper raw.queries dag
   if hw : raw.wellFormed = true then
     if hctx : raw.context = context then
+      let t ← replay? sign context raw.head raw.lower raw.upper raw.queries dag
       if hone : (t.val.table t.property).count raw.signs = 1 then
         return Descriptor.ofTable raw t.val hw hctx t.property hone
       else none
@@ -127,19 +131,19 @@ theorem descriptor_raw {sign : E → Int} {context : Ctx} {raw : RawDescriptor E
     {dag : Dag E Ctx} {d : Descriptor E Ctx sign context}
     (h : descriptor? sign context raw dag = some d) : d.raw = raw := by
   unfold descriptor? at h
-  cases ht : replay? sign context raw.head raw.lower raw.upper raw.queries dag with
-  | none => simp [ht, bind, Option.bind] at h
-  | some t =>
-    simp only [ht, bind, Option.bind] at h
-    split at h
-    · split at h
-      · split at h
+  split at h
+  · split at h
+    · cases ht : replay? sign context raw.head raw.lower raw.upper raw.queries dag with
+      | none => simp [ht, bind, Option.bind] at h
+      | some t =>
+        simp only [ht, bind, Option.bind] at h
+        split at h
         · simp only [pure, Option.some.injEq] at h
           subst d
           exact Descriptor.ofTable_raw _ _ _ _ _ _
         · simp at h
-      · simp at h
     · simp at h
+  · simp at h
 
 end Dag
 end Hex.SignDet

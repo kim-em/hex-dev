@@ -12,76 +12,6 @@ public section
 
 namespace Hex
 
-instance {E : Type u} [Zero E] [DecidableEq E] : DecidableEq (RemainderStep E) := by
-  intro a b
-  cases a
-  cases b
-  simp only [RemainderStep.mk.injEq]
-  infer_instance
-
-instance {E : Type u} [Zero E] [DecidableEq E] : DecidableEq (SignedRemainderChain E) := by
-  intro a b
-  cases a
-  cases b
-  simp only [SignedRemainderChain.mk.injEq]
-  infer_instance
-
-instance {D : Type u} {E : Type v} {Ctx : Type w} [Zero D] [DecidableEq D]
-    [DecidableEq E] [DecidableEq Ctx] : DecidableEq (TarskiCertificate D E Ctx) := by
-  intro a b
-  cases a
-  cases b
-  simp only [TarskiCertificate.mk.injEq]
-  infer_instance
-
-deriving instance DecidableEq for Matrix.RankCert
-deriving instance DecidableEq for SignDet.System
-
-instance {E : Type u} [Zero E] [DecidableEq E] : DecidableEq (SignDet.ReductionStep E) := by
-  intro a b
-  cases a
-  cases b
-  simp only [SignDet.ReductionStep.mk.injEq]
-  infer_instance
-
-instance {E : Type u} [Zero E] [DecidableEq E] : DecidableEq (SignDet.Reduction E) := by
-  intro a b
-  cases a
-  cases b
-  simp only [SignDet.Reduction.mk.injEq]
-  infer_instance
-
-instance {E : Type u} [Zero E] [DecidableEq E] : DecidableEq (SignDet.QueryReduction E) := by
-  intro a b
-  cases a
-  cases b
-  simp only [SignDet.QueryReduction.mk.injEq]
-  infer_instance
-
-instance {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] [DecidableEq Ctx] :
-    DecidableEq (SignDet.Node E Ctx) := by
-  intro a b
-  cases a with
-  | mk ca pa la ua qa na sa ma ra da ba =>
-    cases b with
-    | mk cb pb lb ub qb nb sb mb rb db bb =>
-      by_cases h : na = nb
-      · subst nb
-        by_cases hs : sa = sb
-        · subst sb
-          simp only [SignDet.Node.mk.injEq, heq_eq_eq]
-          infer_instance
-        · exact isFalse fun he => hs (by cases he; rfl)
-      · exact isFalse fun he => h (by cases he; rfl)
-
-instance {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] [DecidableEq Ctx] :
-    DecidableEq (SignDet.Dag.Entry E Ctx) := by
-  intro a b
-  cases a
-  cases b
-  simp only [SignDet.Dag.Entry.mk.injEq]
-  infer_instance
-
 namespace SignDet.Dag
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] [DecidableEq Ctx]
@@ -122,6 +52,10 @@ children, so generated child references point into the preceding prefix. -/
 nodes with the same child references. This does not validate the input or attach
 an acceptance proof; use `replay?` to check the resulting graph. Hash consing
 visits every input occurrence and retains the first occurrence of each entry.
+Traversal follows every tree occurrence. Expansion can have exponentially
+more occurrences than graph entries; re-encoding shared trees is not bounded
+by entry count alone. Graph transformations should traverse entries with an
+index remapping, retaining their shared representation.
 It does not serialize coefficient values or lower-level coefficient proofs. -/
 @[expose] def encode (tree : Replay E Ctx) : Dag E Ctx :=
   let (state, root) := encodeFrom {} tree

@@ -277,3 +277,15 @@ lake build HexSignDet +HexSignDet.Conformance hexsigndet_emit_infinitesimal
 python3 scripts/oracle/sign_det_z3.py --check
 python3 -m unittest scripts.oracle.test_sign_det_z3
 ```
+
+Structural expansion and checked graph replay deliberately treat unreachable
+entries differently: both reject invalid references, while only replay checks
+all arithmetic witnesses. An unreachable false witness can therefore coexist
+with a structurally expandable root, but causes the whole graph replay to fail.
+For encoded trees, `Dag.descriptor_encode` proves exact agreement of graph and
+tree descriptor extraction, including rejection. Descriptor shape and context
+checks run before graph replay.
+
+A cross-level coefficient-sign certificate will require a separate type with
+its own level and context bindings. `Dag` is its same-level BKR component; its
+fixed-domain memo does not satisfy the separate nested-evidence obligation.

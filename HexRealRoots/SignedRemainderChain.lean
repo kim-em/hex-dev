@@ -35,6 +35,24 @@ structure SignedRemainderChain (D : Type u) [Zero D] [DecidableEq D] where
   steps : Array (RemainderStep D)
   terminal : Option (D × DensePoly D)
 
+instance {E : Type u} [Zero E] [DecidableEq E] : DecidableEq (RemainderStep E) := by
+  intro a b
+  cases a with
+  | mk al aq ar =>
+    cases b with
+    | mk bl bq br =>
+      exact decidable_of_iff (al = bl ∧ aq = bq ∧ ar = br) (by simp only [RemainderStep.mk.injEq])
+
+instance {E : Type u} [Zero E] [DecidableEq E] : DecidableEq (SignedRemainderChain E) := by
+  intro a b
+  cases a with
+  | mk ac ad ai ast atr =>
+    cases b with
+    | mk bc bd bi bst bt =>
+      exact decidable_of_iff (ac = bc ∧ ad = bd ∧ ai = bi ∧ ast = bst ∧ atr = bt)
+        (by simp only [SignedRemainderChain.mk.injEq])
+
+
 namespace SignedRemainderChain
 
 variable {D : Type u} [Zero D] [DecidableEq D] [One D] [Add D] [Sub D] [Mul D]

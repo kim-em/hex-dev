@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.DagReplay
+import all HexSignDet.Descriptor
 
 public section
 
@@ -31,20 +32,6 @@ certificate validity decision is made here. -/
     let tree ← step memo entry
     pure (memo.push tree)
 
-/-- Existing tree lookups retain their literal value. -/
-def Prefix (before after : Array (Replay E Ctx)) : Prop :=
-  ∀ (i : Nat) t, before[i]? = some t → after[i]? = some t
-
-theorem Prefix.refl (memo : Array (Replay E Ctx)) : Prefix memo memo := fun _ _ h => h
-
-theorem Prefix.trans {x y z : Array (Replay E Ctx)} (hxy : Prefix x y) (hyz : Prefix y z) :
-    Prefix x z := fun i t h => hyz i t (hxy i t h)
-
-theorem Prefix.push (memo : Array (Replay E Ctx)) (t) : Prefix memo (memo.push t) := by
-  intro i v h
-  obtain ⟨hi, hv⟩ := Array.getElem?_eq_some_iff.mp h
-  simpa only [Array.getElem?_push_lt hi] using congrArg some hv
-
 theorem step_mono {before after : Array (Replay E Ctx)} (hm : Prefix before after)
     {entry : Entry E Ctx} {t : Replay E Ctx} (h : step before entry = some t) :
     step after entry = some t := by
@@ -63,55 +50,18 @@ theorem step_mono {before after : Array (Replay E Ctx)} (hm : Prefix before afte
 
 variable [DecidableEq Ctx] [Hashable E] [Hashable Ctx]
 
-/-- An encoder prefix expands, and its hash-map indices refer to the same
-literal expansion. This invariant allows invalid certificate contents. -/
-structure Valid (state : Encoder E Ctx) (memo : Array (Replay E Ctx)) : Prop where
-  expansion : run state.entries = some memo
-  size : state.entries.size = memo.size
-  indices : ∀ entry i, state.indices[entry]? = some i →
-    ∃ t, memo[i]? = some t ∧ step memo entry = some t
+/-- The shared encoder invariant specialized to structural expansion. -/
+abbrev Valid (state : Encoder E Ctx) (memo : Array (Replay E Ctx)) : Prop :=
+  Encoder.Valid step state memo
 
-theorem valid_empty : Valid ({} : Encoder E Ctx) #[] := by
-  constructor
-  · simp [run]
-  · rfl
-  · intro entry i h
-    simp at h
+theorem valid_empty : Valid ({} : Encoder E Ctx) #[] := Encoder.valid_empty step
 
 theorem insert_valid {state : Encoder E Ctx} {memo : Array (Replay E Ctx)}
     (hv : Valid state memo) {entry : Entry E Ctx} {t : Replay E Ctx}
     (ht : step memo entry = some t) :
     ∃ next, Valid (state.insert entry).1 next ∧ Prefix memo next ∧
-      next[(state.insert entry).2]? = some t := by
-  cases hi : state.indices[entry]? with
-  | some i =>
-    obtain ⟨u, hu, hs⟩ := hv.indices entry i hi
-    have he : u = t := Option.some.inj (hs.symm.trans ht)
-    subst u
-    exact ⟨memo, by simpa only [Encoder.insert, hi] using hv,
-      Prefix.refl memo, by simpa only [Encoder.insert, hi] using hu⟩
-  | none =>
-    refine ⟨memo.push t, ?_, Prefix.push memo t, ?_⟩
-    · constructor
-      · simp only [Encoder.insert, hi, run]
-        have hexp := hv.expansion
-        unfold run at hexp
-        rw [Array.foldlM_push, hexp]
-        simp only [bind, Option.bind, ht, pure]
-      · simp only [Encoder.insert, hi, Array.size_push, hv.size]
-      · intro e i h
-        simp only [Encoder.insert, hi, Std.HashMap.getElem?_insert] at h
-        split at h
-        · rename_i he
-          have heq : entry = e := eq_of_beq he
-          subst e
-          cases Option.some.inj h
-          exact ⟨t, by simpa only [hv.size] using
-            (Array.getElem?_push_size (xs := memo) (x := t)), step_mono (Prefix.push memo t) ht⟩
-        · obtain ⟨u, hu, hs⟩ := hv.indices e i h
-          exact ⟨u, Prefix.push memo t i u hu, step_mono (Prefix.push memo t) hs⟩
-    · simpa only [Encoder.insert, hi, hv.size] using
-        (Array.getElem?_push_size (xs := memo) (x := t))
+      next[(state.insert entry).2]? = some t :=
+  Encoder.insert_valid step_mono hv ht
 
 /-- Expansion follows the actual encoder even when the supplied tree fails
 replay. Every node and every child occurrence is retained literally. -/
@@ -144,7 +94,9 @@ assuming its mathematical claims or checked replay are valid. -/
 theorem expand_encode [DecidableEq Ctx] [Hashable E] [Hashable Ctx] (tree : Replay E Ctx) :
     expand? (encode tree) = some tree := by
   obtain ⟨memo, hv, _, hi⟩ := Expansion.encodeFrom_expands Expansion.valid_empty tree
-  simp only [expand?, encode, hv.expansion, bind, Option.bind, hi]
+  unfold expand? encode Expansion.run
+  rw [hv.replay]
+  simp only [bind, Option.bind, hi]
 
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
     {sign : E → Int} {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
@@ -249,5 +201,31 @@ theorem check_encode_eq [Hashable E] [Hashable Ctx] (tree : Replay E Ctx)
       have ha := t.property
       rw [← he, ht] at ha
       cases ha
+
+/-- Graph and tree descriptor extraction agree on every encoded literal tree,
+including malformed descriptors and rejected certificate contents. -/
+theorem descriptor_encode [Hashable E] [Hashable Ctx] {raw : RawDescriptor E Ctx} (tree : Replay E Ctx) :
+    descriptor? sign context raw (encode tree) = Descriptor.ofReplay? sign context raw tree := by
+  by_cases hw : raw.wellFormed = true
+  · by_cases hctx : raw.context = context
+    · by_cases hc : tree.check sign context raw.head raw.lower raw.upper raw.queries = true
+      · simp only [descriptor?, hw, hctx, dite_eq_left, replay_encode hc, bind, Option.bind]
+        by_cases hone : (tree.table hc).count raw.signs = 1
+        · rw [dite_eq_left hone]
+          exact (Descriptor.ofReplay_ofTable raw tree hw hctx hc hone).symm
+        · have hn : tree.node.system.count raw.signs ≠ 1 := by
+            simpa only [Replay.table_lookup] using hone
+          simp [hone, Descriptor.ofReplay?, RawDescriptor.check, hw, hctx, hc, hn]
+      · have hn : replay? sign context raw.head raw.lower raw.upper raw.queries (encode tree) = none := by
+          have he := check_encode_eq (sign := sign) (context := context)
+            (p := raw.head) (a := raw.lower) (b := raw.upper) (qs := raw.queries) tree
+          simp only [check] at he
+          cases hr : replay? sign context raw.head raw.lower raw.upper raw.queries (encode tree) with
+          | none => rfl
+          | some t => simp [hr, hc] at he
+        simp [descriptor?, hw, hctx, hn, bind, Option.bind,
+          Descriptor.ofReplay?, RawDescriptor.check, hc]
+    · simp [descriptor?, hw, hctx, Descriptor.ofReplay?, RawDescriptor.check]
+  · simp [descriptor?, hw, Descriptor.ofReplay?, RawDescriptor.check]
 
 end Hex.SignDet.Dag

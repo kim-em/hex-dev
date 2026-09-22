@@ -35,6 +35,30 @@ structure Node (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
   preparation : Option (QueryReduction E) := none
   basis : Matrix.RankCert Int size system.positive.length
 
+/-- Compare all fields literally, aligning dependent dimensions using their
+natural-number decisions before comparing the supplied rank witnesses. -/
+instance [DecidableEq Ctx] : DecidableEq (Node E Ctx) := by
+  intro a b
+  cases a with
+  | mk ca pa la ua qa na sa ma ra da ba =>
+    cases b with
+    | mk cb pb lb ub qb nb sb mb rb db bb =>
+      by_cases h : na = nb
+      · subst nb
+        by_cases hl : sa.positive.length = sb.positive.length
+        · let basis : Matrix.RankCert Int na sb.positive.length := hl ▸ ba
+          exact decidable_of_iff
+            (ca = cb ∧ pa = pb ∧ la = lb ∧ ua = ub ∧ qa = qb ∧ sa = sb ∧
+              ma = mb ∧ ra = rb ∧ da = db ∧ basis = bb) (by
+                constructor
+                · rintro ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, hb⟩
+                  simpa [basis, Node.mk.injEq, heq_eq_eq] using hb
+                · intro he
+                  cases he
+                  simp [basis])
+        · exact isFalse fun he => hl (by cases he; rfl)
+      · exact isFalse fun he => h (by cases he; rfl)
+
 /-- Retained independent rows in the order certified by HexRank. -/
 @[expose] def Node.rows (n : Node E Ctx) : List (List Nat) :=
   n.basis.rows.toList.map fun i => n.system.rows[i]

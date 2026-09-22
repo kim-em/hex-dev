@@ -16,7 +16,7 @@ public section
 
 /-! Literal graph replay and rejection tests. Computational conformance owner:
 `HexSignDet`. The successful probes run through the ordinary kernel. -/
-namespace Hex.SignDet.DagConformance
+namespace Hex.SignDet.CrossCheck
 open Hex.SignDet.Conformance
 
 @[expose] def full : Dag Rat Nat :=
@@ -107,6 +107,37 @@ theorem invalid_roundtrip :
     Dag.expand? (Dag.encode (.leaf badDenominator)) = some (.leaf badDenominator) :=
   Dag.expand_encode _
 
+set_option maxRecDepth 32768 in
+/-- Upstream literal certificate equality reduces in the ordinary kernel,
+including complete query chains and rank witnesses. -/
+theorem equality_kernel :
+    decide (singletonQuery = singletonQuery) = true ∧
+    decide (singletonQuery = constantQuery 2) = false ∧
+    decide (derivativeNode.basis = derivativeNode.basis) = true ∧
+    decide (derivativeNode.basis = {derivativeNode.basis with denom := 0}) = false ∧
+    decide (derivativeNode.system = derivativeNode.system) = true ∧
+    decide (derivativeNode.moments = derivativeNode.moments) = true ∧
+    decide (derivativeNode.reductions = derivativeNode.reductions) = true ∧
+    decide (derivativeNode = derivativeNode) = true ∧
+    decide (derivativeNode = badDenominator) = false := by
+  decide +kernel
+
+-- Run the structural expander itself, including invalid unreachable entries.
+#guard match full.expand? with
+  | some (.split n (.leaf l) (.leaf r)) => n == fullNode && l == firstNode && r == derivativeNode
+  | _ => false
+#guard match shared.expand? with
+  | some (.split n (.leaf l) (.leaf r)) => n == sharedParent && l == derivativeNode && r == derivativeNode
+  | _ => false
+#guard (Dag.expand? (⟨#[⟨fullNode, some (0, 0)⟩], 0⟩ : Dag Rat Nat)).isNone
+#guard (Dag.expand? (⟨#[⟨fullNode, some (1, 2)⟩, ⟨firstNode, none⟩,
+  ⟨derivativeNode, none⟩], 0⟩ : Dag Rat Nat)).isNone
+#guard ({full with root := 3} : Dag Rat Nat).expand?.isNone
+#guard ({full with entries := full.entries.push ⟨fullNode, some (3, 3)⟩} : Dag Rat Nat).expand?.isNone
+#guard ({full with entries := full.entries.push ⟨badDenominator, none⟩} : Dag Rat Nat).expand?.isSome
+#guard !check {full with entries := full.entries.push ⟨badDenominator, none⟩} fullNode.queries
+#guard !check {full with entries := full.entries.push ⟨derivativeNode, some (0, 1)⟩} fullNode.queries
+
 #guard hash (⟨derivativeNode, none⟩ : Dag.Entry Rat Nat) ==
   hash (⟨badDenominator, none⟩ : Dag.Entry Rat Nat)
 #guard (⟨derivativeNode, none⟩ : Dag.Entry Rat Nat) != ⟨badDenominator, none⟩
@@ -164,23 +195,27 @@ theorem invalid_roundtrip :
 #guard (full.descriptor? Sturm.orderSign 7
   {singletonRaw.full [1, 1] with indices := [2, 2]}).isNone
 
+/-- info: 'Hex.SignDet.CrossCheck.equality_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms equality_kernel
+
 /-- info: 'Hex.SignDet.Dag.check_replay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Dag.check_replay
-/-- info: 'Hex.SignDet.DagConformance.full_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.CrossCheck.full_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms full_kernel
-/-- info: 'Hex.SignDet.DagConformance.shared_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.CrossCheck.shared_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms shared_kernel
 
 /-- info: 'Hex.SignDet.Dag.descriptor_raw' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Dag.descriptor_raw
-/-- info: 'Hex.SignDet.DagConformance.rejected_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.CrossCheck.rejected_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms rejected_kernel
-/-- info: 'Hex.SignDet.DagConformance.descriptor_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.CrossCheck.descriptor_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms descriptor_kernel
 
@@ -206,11 +241,15 @@ theorem invalid_roundtrip :
 /-- info: 'Hex.SignDet.Dag.check_encode_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Dag.check_encode_eq
-/-- info: 'Hex.SignDet.DagConformance.encoded_rejected_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.CrossCheck.encoded_rejected_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms encoded_rejected_kernel
-/-- info: 'Hex.SignDet.DagConformance.invalid_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.CrossCheck.invalid_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms invalid_roundtrip
 
-end Hex.SignDet.DagConformance
+end Hex.SignDet.CrossCheck
+
+/-- info: 'Hex.SignDet.Dag.descriptor_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Dag.descriptor_encode

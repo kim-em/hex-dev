@@ -81,6 +81,19 @@ structure TarskiCertificate (D : Type u) (E : Type v) (Ctx : Type w) [Zero D] [D
   upperVariations : Nat
   value : Int
 
+instance {D : Type u} {E : Type v} {Ctx : Type w} [Zero D] [DecidableEq D]
+    [DecidableEq E] [DecidableEq Ctx] : DecidableEq (TarskiCertificate D E Ctx) := by
+  intro a b
+  cases a with
+  | mk ac ah aq al au asf ar als aus alv auv av =>
+    cases b with
+    | mk bc bh bq bl bu bsf br bls bus blv buv bv =>
+      exact decidable_of_iff
+        (ac = bc ∧ ah = bh ∧ aq = bq ∧ al = bl ∧ au = bu ∧ asf = bsf ∧ ar = br ∧
+          als = bls ∧ aus = bus ∧ alv = blv ∧ auv = buv ∧ av = bv)
+        (by simp only [TarskiCertificate.mk.injEq])
+
+
 /-- A nonzero constant terminal gcd is the squarefree criterion; its stored
 leading coefficient need not be literal one. -/
 @[expose] def SignedRemainderChain.lastIsConstant [Zero D] [DecidableEq D] (chain : SignedRemainderChain D) : Bool :=
