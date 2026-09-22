@@ -59,7 +59,82 @@ private def runConstruction (n maxBits maxFactors rhoSteps : Nat)
   IO.println (Lean.Json.mkObj fields).compress
   return 0
 
+/-- Prototype of one complete retry, without changing the production dispatcher. -/
+private def retry (n : Nat) : Except PrimeCertFailure (Internal.PrimeCertSuccess n) :=
+  match Construction.run n (Hex.Rand.ofSeed n) with
+  | .ok success => .ok success
+  | .error first =>
+    if first.stop != .exhausted || first.attempts ≥ constructionBudget.maxAttempts then
+      .error first
+    else
+      let b := { constructionBudget with maxAttempts := constructionBudget.maxAttempts - first.attempts }
+      match Construction.run n first.rand b ecmFactorSearch with
+      | .ok s => .ok { s with attempts := first.attempts + s.attempts, events := first.events ++ s.events }
+      | .error f => .error { f with attempts := first.attempts + f.attempts, events := first.events ++ f.events }
+
+private def measure (n : Nat) (arm : String) : IO UInt32 := do
+  let input ← IO.mkRef n
+  let n ← input.get
+  let start ← IO.monoNanosNow
+  let hb ← IO.getNumHeartbeats
+  let result ← IO.mkRef (if arm == "auto" then retry n else
+    Construction.run n (Hex.Rand.ofSeed n) constructionBudget
+      (if arm == "explicit" then ecmFactorSearch else Construction.factorSearch))
+  let result ← result.get
+  let used ← IO.getNumHeartbeats
+  let stop ← IO.monoNanosNow
+  let (attempts, rand, events, status, cert) := match result with
+    | .error f => (f.attempts, f.rand, f.events, reprStr f.stop, "")
+    | .ok s => (s.attempts, s.rand, s.events, "ok", reprStr s.cert.raw)
+  IO.println (Lean.Json.mkObj [
+    ("arm", Lean.toJson arm), ("attempts", Lean.toJson attempts),
+    ("seed_out", Lean.toJson rand.state.toNat), ("events", Lean.toJson (reprStr events)),
+    ("status", Lean.toJson status), ("certificate", Lean.toJson cert),
+    ("heartbeats_raw", Lean.toJson (used - hb)), ("nanos", Lean.toJson (stop - start))]).compress
+  return 0
+
+/-- Complete-retry experiment, with the original shared allowance and random state. -/
+private def fallback (n : Nat) : IO UInt32 := do
+  let mut total := 0
+  let mut rand := Hex.Rand.ofSeed n
+  let mut events : List FactorEvent := []
+  for (name, provider) in [("core", Construction.factorSearch), ("ecm", ecmFactorSearch)] do
+    let allocation := { constructionBudget with maxAttempts := 1024 - total }
+    let factor : FactorSearch := fun b m r =>
+      let result := provider b m r
+      dbg_trace "factor {name} {m}: {repr result.raw}; attempts {result.attempts}; allowance {b.attemptLimit}; seed {r.state} -> {result.rand.state}; events {repr result.events}"
+      result
+    let start ← IO.monoNanosNow
+    let hb ← IO.getNumHeartbeats
+    let input ← IO.mkRef (n, rand, allocation)
+    let (n, r, b) ← input.get
+    let result ← IO.mkRef (Construction.run n r b factor)
+    let result ← result.get
+    let used ← IO.getNumHeartbeats
+    let stop ← IO.monoNanosNow
+    let (attempts, next, es, status, cert) := match result with
+      | .error f => (f.attempts, f.rand, f.events, reprStr f.stop, "")
+      | .ok s => (s.attempts, s.rand, s.events, "ok", reprStr s.cert.raw)
+    total := total + attempts
+    events := events ++ es
+    IO.println (Lean.Json.mkObj [
+      ("provider", Lean.toJson name), ("allowance", Lean.toJson b.maxAttempts),
+      ("attempts", Lean.toJson attempts), ("total", Lean.toJson total),
+      ("seed_in", Lean.toJson r.state.toNat), ("seed_out", Lean.toJson next.state.toNat),
+      ("events", Lean.toJson (reprStr es)), ("all_events", Lean.toJson (reprStr events)),
+      ("status", Lean.toJson status), ("certificate", Lean.toJson cert),
+      ("heartbeats_raw", Lean.toJson (used - hb)), ("nanos", Lean.toJson (stop - start))]).compress
+    if status == "ok" || status == "Hex.Nat.PrimeCertStop.composite" || total ≥ 1024 then return 0
+    rand := next
+  return 0
+
 def run (args : List String) : IO UInt32 := do
+  if let ["measure-fallback", arm, nArg] := args then
+    let some n := nArg.toNat? | return 2
+    return ← measure n arm
+  if let ["fallback", nArg] := args then
+    let some n := nArg.toNat? | return 2
+    return ← fallback n
   if args == ["verify-ecm2"] then
     for n in [4, 15, 1009, 1022117, 1000036000099, 2^127 - 1] do
       for sigma in [5:14] do

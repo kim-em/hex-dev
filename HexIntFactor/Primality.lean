@@ -10,6 +10,8 @@ public meta import HexPrimality.Elab
 public meta import HexIntFactor.Factor
 public import HexPrimality.Elab
 public import HexIntFactor.Factor
+public import HexIntFactor.Construction
+public meta import HexIntFactor.Construction
 
 public section
 
@@ -61,5 +63,10 @@ namespace HexIntFactor.PrimalityTactic
 public meta def extension : Hex.PrimalityTactic.SearchExtension where
   version := 3
   factorName := ``Hex.Nat.intFactorSearch
+
+/-- Total-limit-aware construction provider, independent of ordinary search. -/
+public meta def constructionExtension : Hex.PrimalityTactic.ConstructionExtension where
+  version := 1
+  factorName := ``Hex.Nat.ecmConstructionFactor
 
 end HexIntFactor.PrimalityTactic

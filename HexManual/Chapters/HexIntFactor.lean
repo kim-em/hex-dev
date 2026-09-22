@@ -154,9 +154,11 @@ claim to make a partial search total.
 
 {docstring Hex.Nat.defaultFuel}
 
-For `primality?`, the explicit provider
-{name}`Hex.Nat.ecmFactorSearch` tries the ordinary construction search before
-bounded ECM stages 1 and 2:
+After `import HexIntFactor`, plain `primality?` first uses HexPrimality's
+construction route, then retries with {name}`Hex.Nat.ecmConstructionFactor`
+only on exhaustion with attempts left. This provider uses
+{name}`Hex.Nat.ecmFactorSearch`, which tries core factoring before bounded
+ECM stages 1 and 2. Explicit `factor :=` syntax selects a provider directly:
 
 {docstring Hex.Nat.ecmFactorSearch}
 

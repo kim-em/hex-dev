@@ -2259,6 +2259,9 @@ import configuration, so a HexPrimality-only failure does not stand in for
 failure with registered ECM. Include bounded unsuccessful fallback in cost
 evidence without adding expensive searches to the unfiltered conformance suite.
 Link complete retained measurements and state any unsupported inputs.
+The [automatic construction report](../../reports/hex-primality-fallback.md)
+records the complete retained comparisons, caller-resource probes and the
+remaining unsupported 507-bit fixture.
 
 ## Certificate language and extension policy
 

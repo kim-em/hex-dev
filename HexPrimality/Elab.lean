@@ -95,6 +95,64 @@ meta def searchExtensions : MetaM (List SearchExtension) := do
       found := found ++ [ext]
   return found
 
+/-- ABI version of construction providers supporting a shared total allowance. -/
+meta def constructionExtensionVersion : Nat := 1
+
+/-- A downstream bounded construction provider, separate from ordinary search. -/
+meta structure ConstructionExtension where
+  /-- Version of the bounded-construction registration ABI. -/
+  version : Nat
+  /-- An ordinary definition at `Hex.Nat.FactorSearch`. -/
+  factorName : Name
+
+/-- Fixed discovery order. Each retry repeats the complete construction with
+the remaining allowance. Changes require a HexPrimality release. -/
+meta def constructionExtensionNames : List Name :=
+  [`HexIntFactor.PrimalityTactic.constructionExtension]
+
+private meta unsafe def evalConstructionExtensionUnsafe (n : Name) :
+    MetaM ConstructionExtension :=
+  evalConst ConstructionExtension n
+
+@[implemented_by evalConstructionExtensionUnsafe]
+private meta opaque evalConstructionExtension (n : Name) : MetaM ConstructionExtension
+
+/-- Validate a present registration before evaluating its factor provider.
+Absence is allowed; malformed registrations are errors, not silent skips. -/
+meta def constructionExtension? (n : Name) : MetaM (Option ConstructionExtension) := do
+  let env ← getEnv
+  let some info := env.find? n | return none
+  unless info.type.isConstOf ``ConstructionExtension do
+    throwError "primality?: construction extension {n} has unexpected type{indentExpr info.type}"
+  let ext ← evalConstructionExtension n
+  unless ext.version == constructionExtensionVersion do
+    throwError "primality?: construction extension {n} uses ABI version \
+      {ext.version}; expected {constructionExtensionVersion}"
+  let some factor := env.find? ext.factorName
+    | throwError "primality?: construction extension {n} names missing factor declaration {ext.factorName}"
+  unless ← isDefEq factor.type (mkConst ``Hex.Nat.FactorSearch) do
+    throwError "primality?: factor declaration {ext.factorName} from construction extension \
+      {n} has unexpected type{indentExpr factor.type}"
+  return some ext
+
+/-- Retry registered providers lazily after exhaustion. Each receives the remaining
+shared allowance and the last random state; the core success is returned untouched. -/
+meta def construct (n : Nat) (budget : Hex.Nat.ConstructionBudget) :
+    MetaM (Except Hex.Nat.Construction.Failure (Hex.Nat.Internal.PrimeCertSuccess n) ×
+      List (Name × Nat)) := do
+  let mut result := Hex.Nat.Construction.runTraced n (Hex.Rand.ofSeed n) budget
+  let mut allocations := []
+  for name in constructionExtensionNames do
+    match result with
+    | .ok _ => break
+    | .error f =>
+      unless Hex.Nat.Construction.retryable n budget f do break
+      let some ext ← constructionExtension? name | continue
+      let factor ← evalFactorSearchCore ext.factorName
+      allocations := allocations ++ [(ext.factorName, budget.maxAttempts - f.attempts)]
+      result := Hex.Nat.Construction.retry n budget f factor
+  return (result, allocations)
+
 /-- `Eq.refl true` as a raw proof slot: the kernel verifies the reified
 Bool equation by reduction alone. -/
 meta def reflTrue : Expr :=
@@ -462,12 +520,19 @@ meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Un
               some source.raw.prettyPrint.pretty
           | _ => none
         let description := constructionDescription budget provider
-        match Hex.Nat.Construction.run n (Hex.Rand.ofSeed n) budget factor with
+        let (result, allocations) ← if provider.isSome then
+          pure (Hex.Nat.Construction.runTraced n (Hex.Rand.ofSeed n) budget factor, [])
+        else construct n budget
+        let description := if allocations.isEmpty then description else
+          s!"core allocation: {description}"
+        let retries := if allocations.isEmpty then "" else
+          s!"; construction retries {allocations.map fun (name, allowance) => s!"{name} allocated {allowance} attempts"} (their per-attempt bounds apply)"
+        match result with
         | .error f =>
             if f.stop == .composite then
               throwError "primality?: {n} is not prime"
             throwError "primality?: certificate construction for {n} exhausted after \
-              {f.attempts} attempts (seed {n}; {description})"
+              {f.attempts} attempts (seed {n}; {description}{retries}); unresolved obligation {f.obligation.getD n}"
         | .ok success =>
             let cert := success.cert.raw
             unless cert.subject == n && Hex.Nat.checkPrime cert do

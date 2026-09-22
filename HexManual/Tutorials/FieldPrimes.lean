@@ -5,8 +5,7 @@ Authors: Kim Morrison
 -/
 
 import VersoManual
-import HexIntFactor.Construction
-import HexPrimality.Elab
+import HexIntFactor
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -36,8 +35,7 @@ part of `HexIntFactor`, which is not yet included in the published split
 libraries. Start a Lean file with these imports:
 
 ```imports
-import HexIntFactor.Construction
-import HexPrimality.Elab
+import HexIntFactor
 ```
 
 The examples use {name}`Hex.Nat.Prime`, so they need no Mathlib import.
@@ -49,13 +47,14 @@ Put the examples in a section with local options:
 ```lean
 section
 set_option maxHeartbeats 4000000
-set_option maxRecDepth 1024
-set_option exponentiation.threshold 448
 ```
 
-The heartbeat allowance accommodates certificate construction. The other
-two options let Lean normalize the powers in the displayed formulas. They
-do not increase the factor search's finite budget.
+The finite heartbeat allowance accommodates certificate construction. All three
+examples pass with this option alone; it is a tested allowance, not a measured
+minimum. It does not increase the factor search's shared 1024-attempt budget.
+Lean 4.34.0 may warn that the powers with exponents 384 and 448 exceed its
+shortcut threshold of 256. The goals still normalize and the proofs succeed;
+these examples leave that warning visible.
 
 # Three proofs
 %%%
@@ -66,7 +65,7 @@ The secp256k1 field prime is `2^256 - 2^32 - 977`:
 
 ```
 example : Hex.Nat.Prime (2 ^ 256 - 2 ^ 32 - 977) := by
-  primality? (factor := Hex.Nat.ecmFactorSearch)
+  primality?
 ```
 
 The P-384 field prime is `2^384 - 2^128 - 2^96 + 2^32 - 1`:
@@ -74,14 +73,14 @@ The P-384 field prime is `2^384 - 2^128 - 2^96 + 2^32 - 1`:
 ```
 example : Hex.Nat.Prime
     (2 ^ 384 - 2 ^ 128 - 2 ^ 96 + 2 ^ 32 - 1) := by
-  primality? (factor := Hex.Nat.ecmFactorSearch)
+  primality?
 ```
 
 The Curve448 field prime is `2^448 - 2^224 - 1`:
 
 ```
 example : Hex.Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := by
-  primality? (factor := Hex.Nat.ecmFactorSearch)
+  primality?
 ```
 
 Close the section after the examples:
@@ -95,14 +94,21 @@ certificate. Apply the suggestion to replace the search with a proof that
 replays that certificate. This is particularly useful when sharing a file:
 other people can check the proof without repeating the factor search.
 
-The explicit `factor` argument selects bounded ECM stage 2. It is currently
-required for these three primes. Plain `primality?` supports P-521 but
-exhausts on these three inputs. You do not need to supply factors, curve
-parameters, seeds or certificates for the examples above.
+The standard import makes bounded ECM available automatically. Construction
+first tries HexPrimality's own methods. If they exhaust with attempts left,
+it retries with ECM, carrying forward the random state and charging both
+routes to the same allowance. P-521 and Curve25519 finish on the first route.
+You do not need to supply factors, curve parameters, seeds or certificates.
+The expert override `primality? (factor := Hex.Nat.ecmFactorSearch)` selects
+that provider directly and bypasses automatic selection. To retain the core-only
+route, including its faster exhaustion on some unsupported inputs, use
+`primality? (factor := Hex.Nat.Construction.factorSearch)`. Automatic retry can
+add substantial work even when it ultimately fails: the tested 507-bit fixture
+increased from about 0.9 seconds to 20.7 seconds.
 
-If Lean reports a heartbeat or recursion-depth limit, include the local
-options from the setup. A message saying that certificate construction
-exhausted its attempts instead refers to the factor search budget.
+If Lean reports a heartbeat limit, include the local option from the setup.
+A message saying that certificate construction exhausted its attempts instead
+refers to the factor search budget and identifies the unresolved subject.
 The {ref "hex-int-factor-search"}[factor-search reference] describes the
 optional bounds, curve count and tracing arguments.
 
@@ -148,17 +154,24 @@ also include P-384 and Curve448.
 tag := "tutorial-field-primes-cost"
 %%%
 
-Allow a few minutes to try all three searches in Lean. The tactic runs
-search through Lean's interpreter, so compiled search timings alone do not
-predict the time spent in the editor.
+Allow a few minutes to try all three searches in Lean. Construction and its
+factor provider run natively during elaboration; the complete module build
+also includes imports, certificate rendering and kernel checking.
 
-The recorded shared-host experiments measured compiled construction at
-18–19 seconds for secp256k1, 37–39 seconds for P-384, and 24–25 seconds for
-Curve448. Direct kernel replay of the saved proofs took about 4–15
-milliseconds per proof, excluding imports and elaboration. These are
-host-specific observations, not time limits or guarantees. See the
+The recorded shared-host automatic-construction medians were 26.0 seconds for
+secp256k1, 32.2 seconds for P-384, and 21.6 seconds for Curve448. Direct kernel
+replay medians were about 3.6–11.8 milliseconds per proof, excluding imports
+and elaboration. These are host-specific observations, not time limits or
+guarantees. See the
+[automatic construction report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-fallback.md)
+for separate construction, rendering, kernel and caller-resource measurements,
+and the
 [ECM construction report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-ecm-stage2.md)
-for separate construction, rendering and kernel measurements.
+for the explicit-provider experiments.
+
+The native search is synchronous. Lean can report a heartbeat overrun only
+after that computation returns; the heartbeat allowance is not a wall-clock
+timeout. The finite attempt limit bounds the search schedule.
 
 The search has a fixed, bounded schedule and can still exhaust on other
 primes. The
