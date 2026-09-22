@@ -545,18 +545,50 @@ These are observational allocation counters, not estimates obtained by adjusting
 limits. Lean's user-facing heartbeat units are thousands of raw increments.
 The first three searches alone still exceed the default 200000-heartbeat
 allowance; native compilation does not establish default-heartbeat success.
-For the exact complete tactic guards, retain the verified caller settings:
+The paired explicit-provider comparisons above use caller-set
+`maxHeartbeats 4000000` and `maxRecDepth 1024` in both arms. The integrated
+plain `primality?` path with automatic fallback (#10373) succeeds with only:
 
 ```lean
 set_option maxHeartbeats 4000000
-set_option maxRecDepth 1024
 ```
 
-They are explicit caller options, not internal overrides. The constructor never
-moves work into a fresh task or process to evade accounting. Measurement
-processes isolate separate complete invocations only. Automatic fallback remains
-a separate task (#10373); its complete user-facing path needs measurement after
-integration because it also pays for the initial exhausted core construction.
+The [integrated resource observations](bench-results/ecm-cost-fallback-options-10374.json)
+retain all twelve fresh-module calls: numeral and power-expression forms for
+three fields, each at the default limit and at the explicit finite allowance.
+All six default calls fail at the heartbeat limit, and all six finite-allowance
+calls succeed with the exact expected suggestions. No recursion-depth override
+is needed. Successful raw counter deltas and complete fresh-module wall times
+are:
+
+| Subject | Numeral raw delta | Power raw delta | Numeral wall | Power wall |
+|---|---:|---:|---:|---:|
+| secp256k1 | 358042364 | 358042587 | 24.11 s | 24.33 s |
+| P-384 | 433262417 | 433305454 | 28.54 s | 28.44 s |
+| Curve448 | 282311324 | 282372922 | 19.53 s | 19.43 s |
+
+These complete automatic-path observations include the initial exhausted core
+construction, ECM retry, rendering and checking, plus the small observational
+wrapper. Each time is one confirmation sample, not another paired speedup claim
+or a measured minimum limit. The [P-521 control](bench-results/ecm-cost-fallback-p521-10374.json)
+uses the same runner with its recorded case override. Its numeral form succeeds
+at both limits (about 9714 user heartbeat units). The power form hits the default
+recursion-depth limit before construction; that completed failure is retained,
+and the three-field runner stops because it expects only heartbeat failures.
+A [separate fixed-depth control](bench-results/ecm-cost-fallback-p521-depth-10374.json)
+sets the already-tested caller option `maxRecDepth 1024`: both forms then succeed
+with default heartbeats and with the explicit finite allowance. These are
+resource observations, not a limit search. The automatic P-521 path takes the
+existing successful core route and does not prepare ECM schedules. The
+[integrated native validation](bench-results/ecm-cost-fallback-validation-10374.json)
+retains unchanged P-521 attempts (170), random state, events and certificate,
+and all nine fixed explicit/automatic construction and checker checks pass.
+
+The options are explicit caller settings, not internal overrides. The constructor
+never moves work into a fresh task or process to evade accounting. Measurement
+processes isolate separate complete invocations only. Reproduce the integrated
+field resource observations with `scripts/bench/primality_fallback_options.py`;
+its embedded sources and the recorded commit identify the measured implementation.
 
 Reproduce comparisons with `scripts/bench/ecm_cost.py --a CHECKOUT_A --b
 CHECKOUT_B --output OUTPUT.json`; select `--phase native`, `residual` or

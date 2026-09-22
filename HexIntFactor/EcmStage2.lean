@@ -12,7 +12,7 @@ import all HexIntFactor.Ecm
 public section
 
 /-! Bounded Montgomery ECM continuation. Search is untrusted: only a dynamically
-validated proper divisor crosses the public boundary. See the HexIntFactor SPEC
+validated proper divisor leaves either search entry point. See the HexIntFactor SPEC
 and reports/hex-primality-ecm-stage2.md for the interval and work contracts. -/
 
 namespace Hex.Nat.Ecm
