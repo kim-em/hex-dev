@@ -74,9 +74,9 @@ changes neither the library registry nor the released manifest.
   not enter this shortcut. Count actual scalar-product leaves in the selected
   expansion, including the terminal formulas, with a limit of 64. Check the
   shared proof-node budget during construction; exhaustion stops expansion and
-  selects the existing fallback. Residual `ring` may compare the structural
+  selects the polynomial frontend. Residual `ring` may compare the structural
   expression with an expanded target. If it cannot close the goal, restore the
-  original goal and continue through the existing fallback.
+  original goal and try the polynomial frontend; report its decline if unavailable.
 - **Proof construction.** Share matrix/factor payloads and assemble applications
   with explicit arguments and expected-type hints. Count distinct proof nodes
   with the compiled shared counter, not unshared interpreted traversals for
@@ -558,9 +558,8 @@ this arm does not clear the strict bar, since its certificate fragment
 is not strictly larger than `norm_det`'s and a shared family may lose. The handler and term
 form ship regardless, as opt-in; the simproc enters the default chain only
 for families where the fresh-module median is smaller than `norm_det`'s,
-and the table records every family either way. Fallback preserves scope
-but does not establish a runtime win; a win on selected rungs enables the
-chain on those rungs only.
+and the table records every family either way. Declines count as failures to solve, not scope preservation. A win on selected
+rungs enables the chain on those rungs only.
 
 ### Packed-arm comparison
 
@@ -761,7 +760,8 @@ All Hex sweep modules emit the route taken (closed formula, polynomial
 certificate, or decline), including the reason for a budget decline. The
 packed implementation extends certificate traces as specified above. The
 conservative preflight bound declines some high-degree, four-variable 8×8
-cases before elimination; their complete composed calls remain in the ladder.
+cases before elimination in the retained historical sweep. Their recorded
+fallback calls remain in that archive, not as successful Hex measurements.
 The sweep reports faster cases separately from the opt-in release decision.
 Its 70 cases include 4×4 function and array literals and a certificate whose
 nonzero polynomial determinant vanishes at a stated atom valuation.
@@ -785,8 +785,10 @@ raw data. N-prefixed rows below are the correlated row-scaled family
 Times are fresh-module, baseline-subtracted medians in milliseconds. All six
 samples are required; ratios use positive medians only. This retained dataset
 includes implicit Mathlib fallbacks from the older dispatch. Rows labelled
-`fallback` are not Hex completions under the current policy; their historical
-ratios do not establish a Hex speedup or justify default integration.
+`fallback` did not finish through Hex in that measurement; their historical
+ratios do not establish a Hex speedup or justify default integration. Those
+inputs have not been re-measured here under current dispatch, which may select
+a different Hex route.
 
 | Case | Mathlib ms | Hex ms | M/H | Completed M/H | Hex route |
 |---|---:|---:|---:|---:|---|
@@ -877,11 +879,13 @@ full 2,064-observation schedules and all 14 family profiles are retained in the
 [packed report](../../reports/hex-poly-det-mathlib-performance.md#historical-list-entry-packed-certificate-comparison).
 The report includes the complete 172-case ladder, 57 infeasible support requests,
 quotient generation, preflight, conversion, packing, multiplication, synchronous
-kernel checks, identification, elaboration and composed fallback costs. All
+kernel checks, identification, elaboration and historical Mathlib fallback costs.
+The fallback samples are not independent Hex completions. All
 selected modes are plain; outer signed packing is inapplicable.
 
 Every family remains **opt-in**. Family-wide wins against unmodified `norm_det`
-are not established, including fallback costs; `Hex.normPolyDet` stays outside
+are not established; historical fallback timings do not establish them.
+`Hex.normPolyDet` stays outside
 the default chain. Faster individual rungs, including Rational4, do not change
 this decision. N-prefixed cases retain correlated row-scaled entries. Family
 medians aggregate the completed cases in each column, while M/D uses only
@@ -948,7 +952,7 @@ row-scaled 3×3), plus the rational and sparse cases at approximately one and
 ten seconds of Mathlib proof work. Require route assertions, both equality
 orientations, term/simproc forms, generic carriers, changed numeric coefficients,
 permuted sparse positions, false targets, unfamiliar operation instances,
-metavariable preservation, and budget/fallback tests. Accepted proofs depend
+metavariable preservation, and explicit budget/capability-decline tests. Accepted proofs depend
 only on `propext`, `Classical.choice` and `Quot.sound`.
 
 Compare the integrated tactic against unmodified `norm_det` followed by `ring`

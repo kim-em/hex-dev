@@ -38,6 +38,35 @@ def routes(output):
     return events
 
 
+
+def failed_build(result, error):
+    """Retain failed output and distinguish explicit Hex declines from build errors.
+
+    A trace from an earlier attempt cannot turn a timeout, crash, failed axiom
+    audit or unrelated Lean error into an expected decline.
+    """
+    state = result.get('state', 'failed')
+    result = dict(result, state='failed' if state == 'complete' else state, error=str(error))
+    if result['state'] != 'failed' or result.get('returncode', 1) != 1:
+        return result
+    outcomes = []
+    for line in result.get('compiler_output', '').splitlines():
+        if not line.startswith('error: ') or line == 'error: build failed':
+            continue
+        diagnostic = re.fullmatch(r'error: .*?:\d+:\d+: (.*)', line)
+        if diagnostic is None:
+            return result
+        match = re.fullmatch(r'det: (symbolic determinant declined|declined|not applicable): (.*)', diagnostic[1])
+        if match is None:
+            return result
+        state = 'not-applicable' if match[1] == 'not applicable' else 'declined'
+        outcomes.append(dict(state=state, reason=match[2],
+            kind='budget' if 'budget exhausted' in match[2] else 'capability'))
+    if outcomes and len({o['state'] for o in outcomes}) == 1:
+        result.update(state=outcomes[0]['state'], declines=outcomes)
+    return result
+
+
 def cpu_lease():
     cpus = sorted(os.sched_getaffinity(0))
     offset = os.getpid() % len(cpus)
@@ -131,7 +160,7 @@ def main():
             return dict(result, state='complete')
         except RuntimeError as e:
             result = dict(observed[-1]) if observed else {}
-            return dict(result, state=result.get('state', 'failed'), error=str(e))
+            return failed_build(result, e)
 
     for trial in range(6):
         for case in sweep.rotate(cases, trial):

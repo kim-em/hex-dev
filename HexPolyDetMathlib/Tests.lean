@@ -3,7 +3,7 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexPolyDetMathlib.Tactic
+import HexPolyDetMathlib.NoFallbackTests
 import Mathlib.Tactic.NormDet
 import Mathlib.Algebra.QuadraticAlgebra.Basic
 import Mathlib.Algebra.Field.ZMod
@@ -738,3 +738,16 @@ example (x : Int) (h : ∀ A : Matrix (Fin 17) (Fin 17) Int, A.det = x ^ 17) :
       throwError "unexpected failure: {failure.toMessageData}"
   fail_if_success simp only [Hex.normPolyDet]
   exact h _
+
+/-- error: det: symbolic determinant declined: target is not a ring expression in the matrix atoms -/
+#guard_msgs in
+example (x y : Int) :
+    Matrix.det !![x, 1, 2, 3; 4, x, 5, 6; 7, 8, x, 9; 10, 11, 12, x] =
+      x ^ 4 - 262 * x ^ 2 + 1794 * x - 2457 + y - y := by det
+
+-- The same declined identity is accepted only when the caller explicitly chooses Mathlib.
+example (x y : Int) :
+    Matrix.det !![x, 1, 2, 3; 4, x, 5, 6; 7, 8, x, 9; 10, 11, 12, x] =
+      x ^ 4 - 262 * x ^ 2 + 1794 * x - 2457 + y - y := by
+  simp only [norm_det]
+  ring

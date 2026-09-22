@@ -83,7 +83,8 @@ example : Matrix.det (R := ℤ) !![1, 2; 3, 4] = -2 := by
   determinants of closed integer and rational literals (`!![…]`,
   `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray`), checked in the
   kernel as a triangularization, faster than Mathlib's `eval_det` on every
-  measured shared family. Unsupported inputs are reported explicitly.
+  measured shared family. The tactic reports unsupported inputs; the simproc
+  leaves them unchanged.
 
 `Rat` can use the generic correspondence directly. Multivariate polynomials
 also have Mathlib ring structures, supplied separately by `HexMvPolyMathlib`.

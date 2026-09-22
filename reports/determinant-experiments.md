@@ -47,6 +47,8 @@ and its companion are present. Integrating that code is a different question
 from whether it is competitive. Start from the existing implementations before
 writing new modular, storage or characteristic-polynomial prototypes. A new
 storage experiment must identify what it changes relative to the current arrays.
+`HexDet/SPEC/hex-det.md` also describes the now-existing modular operations as
+planned; reconcile that integration contract before choosing its replacement.
 There is no dedicated dyadic integration module in `HexDet`; test the proposed
 exact scaling independently before deciding its dispatch interface.
 
@@ -55,22 +57,21 @@ exact scaling independently before deciding its dispatch interface.
 The [symbolic replay report](hex-poly-det-kernel-performance.md) retains three
 counterexamples. General replay improvements reduce observed proof work by
 8–23%, but Mathlib still wins every pair in the six-pair comparison. In the
-quadratic 4×4 example, earlier component attribution puts compiled production
-near 25 ms and the auxiliary proof check near 800 ms. The final diagnostic
-recheck is about 897 ms of Hex proof work against about 350 ms for Mathlib.
-Optimizing the producer cannot close that gap. Separate checking after a prior
-whole-proof check overestimated the benefit of splitting; experiments must
+quadratic 4×4 example, the committed final diagnostic recheck on `chungus2`
+is about 897 ms of Hex proof work against about 350 ms for Mathlib.
+Those totals alone do not isolate producer and checker costs. Separate checking
+after a prior whole-proof check overestimated the benefit of splitting; experiments must
 include the first kernel check in a fresh module.
 
 The [numeric proof measurements](../HexBareissMathlib/SPEC/hex-bareiss-mathlib.md#the-det-tactic)
 tell a different story: retained dense integer cases at dimensions 8 and 16
-take about 0.16/0.52 s with Hex against 0.51/18.8 s with Mathlib. These are
-historical host-specific measurements, not new results or a promise that the
+take about 0.16/0.52 s with Hex against 0.51/18.8 s with Mathlib on `chungus2`.
+These are historical host-specific measurements, not new results or a promise that the
 same ratios hold after replacement.
 
 The [compiled Bareiss comparisons](hex-bareiss-performance.md) expose another
-problem: on their structured integer family, FLINT overtakes Hex between
-dimensions 24 and 32 and is about 8.6 times faster at dimension 512. That is
+problem: on their salt-71 tridiagonal integer family on `chungus2`, FLINT
+overtakes Hex between dimensions 24 and 32 and is about 8.6 times faster at dimension 512. That is
 evidence against making one fraction-free implementation the universal value
 engine. It does not identify the complete cause: algorithm, representation,
 coefficient growth, compiler specialization and external-call overhead differ.
@@ -78,14 +79,18 @@ The same report shows that the choice of exact-division primitive materially
 affects runtime. Ring-operation counts alone are inadequate.
 
 The [modular-matrix report](hex-modular-matrix-performance.md) is essential
-additional evidence. On its structured dimension-512 fixture, the divisor route
-takes 0.288 s against 1.278 s for Bareiss and 0.144 s for FLINT. On dense 8-bit
+additional evidence from `chungus2`. On its salt-71 tridiagonal dimension-512
+fixture, the divisor route takes 0.288 s against 1.278 s for Bareiss and 0.144 s for FLINT. On dense 8-bit
 matrices at dimension 256 it instead takes 3.623 s against 2.158 s and 0.0466 s.
 Simply choosing the existing modular method would therefore not solve the
 computational problem. Retained attribution also identifies prime generation,
 bounds, decomposition and reconstruction costs. These data are compiled value
 measurements, not kernel-checking measurements, and must not be mixed with the
-symbolic proof timings.
+symbolic proof timings. The earlier ordinary-CRT table also records 1.584 s
+against FLINT's 0.007588 s for dense 128×128 8-bit entries. That much larger
+gap merits per-stage investigation before another algorithm portfolio is
+proposed. FLINT selects its own algorithm: this is not a controlled isolation
+of modular-elimination implementation cost.
 
 Mathlib's installed
 [`Bird/Cert.lean`](https://github.com/leanprover-community/mathlib4/blob/1cf325a0cf67aca2b04d76b5380ff6a9e410aefa/Mathlib/Tactic/Determinant/Bird/Cert.lean)
@@ -129,10 +134,24 @@ to compare, not a prediction of polynomial bit complexity or Lean proof time.
 Any CRT checker must certify the congruences and a uniqueness bound: for
 example, both the candidate and true integer determinant lie in `[-B,B]`
 and the combined pairwise-coprime modulus exceeds `2B`. Candidate verification
-must include its bound. Proving a proposed divisor divides the determinant is
-an additional obligation; never assume it from a producer hint. Randomness may
+must include its bound. The existing `Hex.Matrix.dvd_det_of_mulVec` in
+`HexModularMatrix/Algebra.lean`
+proves divisibility from a nonsingular integer matrix, a checked equation
+`A * y = d * b`, positive `d`, and joint reducedness of `y` and `d`. Reuse or
+replace that theorem explicitly. Checking the equation and reducedness is only
+part of the payload: the cofactor congruences and bound must also be justified.
+The current theorem additionally requests nonsingularity; test eliminating that
+assumption rather than making it an architectural requirement (a positive `d`
+also divides a zero determinant). Never assume divisibility from a producer hint. Randomness may
 guide production, but random evaluations or repeated stable reconstructions
 alone cannot justify a theorem.
+
+Two existing bound options are the Mathlib-free row-ℓ¹ product
+`rowNormBound` / `natAbs_det_le_rowNormBound`, and the tighter row/column
+Hadamard bound justified by the companion's `LawfulDetBound` instance. Compare
+bound computation and proof cost against the extra modulus bits needed with
+the weaker bound. With a certified positive divisor `d`, the cofactor can use
+`floor(B / d)`; neither the bound nor its correctness proof is free.
 
 Polynomial identity certificates similarly need degree and coefficient bounds
 or a deterministic interpolation argument. A few matching evaluations do not
@@ -166,8 +185,12 @@ schedule, not to add another dispatch shortcut.
 Use the same coefficient representation and instrumentation to compare
 fraction-free elimination with division-free Bird, and a determinant-only
 use of Berkowitz where feasible. First compare compiled computation without
-proofs, then compare complete proofs for promising combinations. Measure
-operation counts, coefficient bit sizes, intermediate supports, live storage
+proofs. Compare complete proofs under a common checking method, using the
+proof-producing arithmetic from experiment 1 where applicable; the existing
+Bareiss, Bird and Berkowitz proof paths do not isolate schedule cost because
+they check different payloads in different ways. Report any full-system
+comparison as such. Measure operation counts, coefficient bit sizes,
+intermediate supports, live storage
 and output size alongside elapsed time. Account for exact-division obligations.
 
 Within a fixed schedule, compare eager polynomial normalization with shared
@@ -178,10 +201,12 @@ symbolic obstruction.
 
 ### 3. Establish fixed-ring value performance independently
 
-Start with small dense integer matrices, then vary dimension and coefficient
-bits independently. Compare the existing Bareiss, modular CRT and divisor value routines before
-introducing storage or arithmetic variants, using FLINT as an external reference. Include singular
-inputs and pivot swaps. Add rational and dyadic matrices derived from the same
+Start by attributing the existing dense ordinary-CRT/FLINT gap: bounds, prime
+generation, modular images, elimination, reconstruction and external-call cost.
+Then use small dense integer matrices and vary dimension and coefficient
+bits independently. Compare the existing Bareiss, modular CRT and divisor value
+routines before introducing storage or arithmetic variants, using FLINT as an
+external reference. Include singular inputs and pivot swaps. Add rational and dyadic matrices derived from the same
 integer matrices with exact scaling, recording scaling and normalization cost.
 Test widely separated dyadic exponents as well as modest ones.
 
@@ -203,8 +228,10 @@ proof backend before being considered for the value API.
 ## Measurement and decision rules
 
 - Computational benchmarks import no Mathlib. Proof experiments are build-only
-  fresh Lean modules, not Mathlib-importing benchmark executables. Mathlib runs
-  only in an explicitly named comparison arm.
+  fresh Lean modules, not Mathlib-importing benchmark executables. Mathlib
+  determinant tactics (`norm_det`/`eval_det`) run only in an explicitly named
+  comparison arm. Proof candidates may use Mathlib arithmetic lemmas and proof
+  construction; computational libraries remain Mathlib-free.
 - Begin each hypothesis with one input and two adjacent AB/BA diagnostic pairs.
   Expand to the small representative set only when the result warrants it.
   Use six adjacent pairs for a shipping claim, with matched import baselines.

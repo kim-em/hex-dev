@@ -299,14 +299,6 @@ for the transposition. For `ℚ`, `scaledRows_spec` gives
 `(∏ s) · det = value`, and the kernel-checked `v · ∏ s = value` cancels the
 nonzero product (`prodNat_cast`).
 
-## Naming note
-
-The simproc is documented below as `Hex.norm_det`; the shipped declaration
-is still the global `hex_norm_det`, and the rename (tactic and simproc
-names carry no `hex_` prefix) is an implementation obligation of
-https://github.com/kim-em/hex-dev/issues/10236, with the tests and README
-updated in the same change.
-
 ## Symbolic determinant
 
 The symbolic arm of `det` (entries that are ring expressions) is specified
@@ -373,11 +365,11 @@ leaving a residual value equality. Symbolic inputs and unsupported carriers
 require a Hex extension or an explicit user invocation of another tactic.
 
 An entry or closed value that cannot be evaluated is still declined with
-the reason; the numeric handler retains the same simp fallback for these
+the reason; the numeric handler retains the same Hex certificate normalization for these
 capability declines. Its `@[no_fallback]` attribute commits ordinary errors,
 so producer failures, rejected certificates and budget errors cannot be
 masked by a later tactic handler. Unsupported syntax still delegates.
-The simp fallback propagates errors unchanged, including certificate errors
+Hex certificate normalization propagates errors unchanged, including certificate errors
 from its simproc; it reports the original reason only when simp makes no
 progress.
 The `det%` form reports the classification reason directly; the simproc
