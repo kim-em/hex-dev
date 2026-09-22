@@ -124,6 +124,14 @@ No roots, root counts or guessed sign conditions are supplied by a caller. -/
         basis := Matrix.rankCert s.retainedMatrix }
   else throw .dimensions
 
+/-- The exact transported tensor inverse used when combining child supports. -/
+@[expose] def parentInverse (l r : Node E Ctx) :
+    Matrix Int (product l.rows r.rows).length (product l.rows r.rows).length :=
+  have hd : (product l.rows r.rows).length = l.basis.rank * r.basis.rank := by
+    rw [length_product]
+    simp [Node.rows]
+  hd.symm ▸ tensor l.basis.adj r.basis.adj
+
 /-- Balanced support reduction. Recursion decreases the actual query length;
 there is no fuel limit and no full-ternary fallback at internal nodes.
 Call `buildTree` to preprocess each query once; a direct call with no supplied
@@ -139,16 +147,9 @@ preparation lets individual nodes construct their own reductions. -/
       (preparation.map fun r => r.slice 0 (qs.length / 2))
     let r ← buildTreeFrom context domain (qs.drop (qs.length / 2)) reduced
       (preparation.map fun r => r.slice (qs.length / 2) (qs.length - qs.length / 2))
-    have hd : (product l.node.rows r.node.rows).length = l.node.basis.rank * r.node.basis.rank := by
-      rw [length_product]
-      simp [Node.rows]
-    -- The original support order and left inverse are justified by
-    -- System.basis_columns and System.basis_inverse in the companion.
-    let inverse : Matrix Int (product l.node.rows r.node.rows).length
-        (product l.node.rows r.node.rows).length := hd.symm ▸ tensor l.node.basis.adj r.node.basis.adj
     let n ← buildNode context domain qs (product l.node.rows r.node.rows)
       (product l.node.system.support r.node.system.support) reduced
-      (some (l.node.basis.denom * r.node.basis.denom, inverse)) preparation
+      (some (l.node.basis.denom * r.node.basis.denom, parentInverse l.node r.node)) preparation
     return .split n l r
 termination_by qs.length
 decreasing_by

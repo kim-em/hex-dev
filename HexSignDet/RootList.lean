@@ -210,6 +210,34 @@ theorem Descriptor.rootsFrom_perm (sign : E → Int) (context : Ctx)
           simp only [List.map_cons, hs] at hp
           exact hp.trans (List.Perm.cons signs (ih hr))
 
+/-- Every extracted descriptor retains the caller's literal domain and the
+canonical full derivative slots. Sorting changes only its list position. -/
+theorem Descriptor.rootsFrom_raw (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (t : Replay E Ctx) {rows : List (List Int × Nat)}
+    {out : List (Descriptor E Ctx sign context)}
+    (h : rootsFrom sign context raw t rows = .ok out) :
+    ∀ d ∈ out, ∃ signs, d.raw = raw.full signs := by
+  induction rows generalizing out with
+  | nil =>
+    have he : out = [] := by simpa [rootsFrom] using h.symm
+    simp [he]
+  | cons row rows ih =>
+    obtain ⟨signs, count⟩ := row
+    by_cases hn : count ≠ 1
+    · simp [rootsFrom, hn] at h
+    · cases hd : ofReplay? sign context (raw.full signs) t with
+      | none => simp [rootsFrom, hn, hd] at h
+      | some d =>
+        cases hr : rootsFrom sign context raw t rows with
+        | error err => simp [rootsFrom, hn, hd, hr] at h
+        | ok ds =>
+          have hi : Thom.insert d ds = .ok out := by simpa [rootsFrom, hn, hd, hr] using h
+          intro e he
+          have he := (Thom.insert_perm d hi).mem_iff.mp he
+          rcases List.mem_cons.mp he with rfl | he
+          · exact ⟨signs, ofReplay_raw hd⟩
+          · exact ih hr e he
+
 /-- Successful enumeration is strictly sorted under the finite comparator
 laws. Their correspondence with real-root order is a separate companion gate. -/
 theorem Descriptor.rootsFrom_sorted (sign : E → Int) (context : Ctx)
@@ -316,6 +344,28 @@ theorem Descriptor.buildRoots_spec {sign : E → Int} {context : Ctx} {p : Dense
       · contradiction
       · cases h
         assumption
+
+/-- Every public result retains the requested context, polynomial, interval
+and canonical full derivative indices, including singleton output lists. -/
+theorem Descriptor.buildRoots_raw {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
+    (h : buildRoots sign context p a b = .ok (some out)) :
+    ∀ d ∈ out, ∃ signs,
+      d.raw = ({context, head := p, lower := a, upper := b, indices := [], signs := []} :
+        RawDescriptor E Ctx).full signs := by
+  obtain ⟨_, _, t, _, hs⟩ := buildRoots_spec h
+  exact rootsFrom_raw sign context _ t.val hs
+
+/-- Successful enumeration of a constant head must be empty: every returned
+full descriptor has a well-formed positive-degree head. This uses only shape. -/
+theorem Descriptor.buildRoots_constant {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
+    (hp : p.natDegree = 0) (h : buildRoots sign context p a b = .ok (some out)) : out = [] := by
+  apply List.eq_nil_iff_forall_not_mem.mpr
+  intro d hd
+  obtain ⟨signs, he⟩ := buildRoots_raw h d hd
+  have hw := (RawDescriptor.check_eq d.accepted).1
+  simp [he, RawDescriptor.wellFormed, RawDescriptor.full, hp] at hw
 
 /-- The public entry point preserves all full sign words of the actual
 produced table, including when the constant branch returns an empty list. -/

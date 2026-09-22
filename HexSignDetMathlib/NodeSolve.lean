@@ -43,7 +43,7 @@ theorem buildNode_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
     simpa using hrows.symm
   have hcs : (hdim ▸ columns.toArray.toVector : Vector (List Int) rows.length) = s.columns := by
     apply Vector.toList_inj.mp
-    exact (list_transport hdim (columns.toArray.toVector : Vector _ columns.length)).trans
+    exact (Vector.toList_transport hdim (columns.toArray.toVector : Vector _ columns.length)).trans
       (by simpa using hcols.symm)
   have hh := hvalid
   simp only [System.check, Bool.and_eq_true] at hh
@@ -77,8 +77,8 @@ theorem buildNode_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
       exact ⟨u, hu, hcounts⟩
     | some pair =>
       obtain ⟨d, a⟩ := pair
-      obtain ⟨hd, ha⟩ := hinv d a rfl
-      exact ⟨s, by simpa only [hd, ha] using solveScaled_eq s hvalid, rfl⟩
+      obtain ⟨hden, hadj⟩ := hinv d a rfl
+      exact ⟨s, by simpa only [hden, hadj] using solveScaled_eq s hvalid, rfl⟩
   obtain ⟨u, hu, hcounts⟩ := solved
   simp only [buildNode, hdim, ↓reduceDIte, hr, hc, hd, Bool.not_true,
     Bool.false_or, Bool.false_eq_true, ↓reduceIte, hes, hcs]
@@ -118,11 +118,7 @@ theorem Node.parent_system (l r : Node E Ctx) {a b : Nat}
       s.columns.toList = product l.system.support r.system.support ∧
       s.check (a + b) = true ∧
       s.denominator = l.basis.denom * r.basis.denom ∧
-      s.inverse = (by
-        have hd : (product l.rows r.rows).length = l.basis.rank * r.basis.rank := by
-          rw [length_product]
-          simp [Node.rows]
-        exact hd.symm ▸ tensor l.basis.adj r.basis.adj) ∧
+      s.inverse = parentInverse l r ∧
       s.counts.toList = (counts (productVector l.basisCols r.basisCols) xs).toList ∧
       s.values.toList = (SignDet.moments (productVector l.basisRows r.basisRows) xs).toList := by
   have transport {m n : Nat} (h : m = n) (s : System m) (arity : Nat) :

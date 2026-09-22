@@ -170,7 +170,10 @@ distinctness. `rootsFromTable_eq` proves exact agreement with the literal
 per-descriptor checking path, including diagnostics. `buildRoots_spec` connects
 both degree branches of the public entry point to the actual prepared table;
 `buildRoots_perm` and `buildRoots_sorted` give its row preservation and finite
-conditional sortedness. Constants retain the literal checking path.
+conditional sortedness. `buildRoots_raw` binds every returned descriptor to
+the requested context, head, interval and full derivative slots.
+`buildRoots_constant` proves that any successful constant-head result is empty
+using descriptor shape alone. Constants retain the literal checking path.
 Each descriptor still constructs its full index list. Every insertion comparison
 rebuilds both canonical index lists and compares the heads; for N descriptors
 of degree n this can add O(N²n) guard work. Hoisting that repeated work, sharing
