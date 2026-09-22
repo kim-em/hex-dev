@@ -177,6 +177,12 @@ ladder. Any changed implementation needs a new derivation of its actual costs.
 
 ## Deferred normalization: replay upper bound
 
+The retained preregistration snapshot fixes the expression, mode and schedule.
+The detailed storage and attribution arguments and cancellation discussion
+below were expanded after collection. The original snapshot already states
+the O(n³) allocation contribution; the declaration, schedule and samples
+have not changed.
+
 `ZPoly.hornerDyadic` carries `(a,k)` representing `a * 2^(-k)`. Multiplication
 by an endpoint `(u,e)` gives `(u*a,k+e)`; adding a nonzero integer coefficient
 aligns the two precisions by a shift. Zero coefficients retain the signed

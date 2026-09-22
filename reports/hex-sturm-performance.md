@@ -547,8 +547,10 @@ old failed runs into passes.
 This collection ran on CPU 61 from 22:34:57 to 22:36:08 UTC on September 21.
 This PR's own adjacent before/after collection ran on CPU 13 from 22:35:35
 to 22:40:56, overlapping the later scientific trials. The untimed formula
-calculation and an attempted fresh proof build also ran during part of the
-collection. The overlap is recorded context, not proof of the cause of the
+calculation and an attempted fresh proof build were also observed running,
+but their overlapping start/end times were not retained; that observation
+supplies no quantitative concurrency attribution. The timestamped overlap
+between the two timing runs is context, not proof of the cause of the
 larger samples and not a reason to discard them. The paired comparison
 continues to use adjacent arms on its own CPU.
 
