@@ -15,6 +15,15 @@ correspondence. No parallel polynomial algorithm or root-sum premise is used.
 Conformance includes universal noncanonical instantiations, literal ordinary
 kernel acceptance/rejection, and theorem axiom inventories.
 
+`System.retained_rank` proves that removing zero-count columns preserves full
+column rank. `basis_checks`, `basis_rank`, `basis_columns` and `basis_inverse`
+verify the actual integer rank producer's retained basis, exact column order
+and scaled left inverse. Tensor correspondence identifies the executable
+witness product with the literal ordered moment matrix. `solveScaled_eq`
+proves that the integer solver recovers any accepted system's counts without
+rounding or sign clamping. These finite algebra results do not assume roots
+or query semantics and do not yet prove completeness of the full constructor.
+
 Complete sign-table and Thom semantics, total producer correspondence and
 Phase-4 evidence remain required. The root-sum/replay bridge in #10389 and the
 specified Tau Ceti BKR/Thom foundations remain separate proof gates; the

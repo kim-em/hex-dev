@@ -7,3 +7,6 @@ module
 
 public import HexSignDetMathlib.Reduction
 public import HexSignDetMathlib.ReductionProducer
+public import HexSignDetMathlib.Basis
+public import HexSignDetMathlib.Solve
+public import HexSignDetMathlib.Tensor

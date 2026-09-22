@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.Replay
+public import HexSignDet.Tensor
 public import HexRank.Int
 public import HexRowReduce.Inverse
 
@@ -51,6 +52,20 @@ its integer identity is checked in the original row and column orders. -/
     denominator := den }
   if s.check arity then return s else throw .system
 
+/-- Solve using a supplied scaled integer inverse. This is the parent-node
+path when child inverse witnesses have already been combined by a tensor
+product. Exact divisibility is checked before extracting counts. -/
+@[expose] def solveScaled {r : Nat} (arity : Nat) (rows : Vector (List Nat) r)
+    (columns : Vector (List Int) r) (values : Vector Int r)
+    (denominator : Int) (inverse : Matrix Int r r) : Except BuildError (System r) := do
+  if denominator = 0 then throw .singular
+  let numerators := inverse * values
+  if !numerators.toList.all (fun z => z % denominator == 0) then throw .nonintegral
+  let counts := numerators.map (· / denominator)
+  if !counts.toList.all (· ≥ 0) then throw .negative
+  let s : System r := {rows, columns, values, counts, inverse, denominator}
+  if s.check arity then return s else throw .system
+
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
   [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E]
 
@@ -58,7 +73,8 @@ variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 No roots, root counts or guessed sign conditions are supplied by a caller. -/
 @[expose] def buildNode (context : Ctx) (domain : Sturm.PreparedDomain E)
     (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int))
-    (reduced : Bool := true) :
+    (reduced : Bool := true)
+    (inverse : Option (Int × Matrix Int rows.length rows.length) := none) :
     Except BuildError (Node E Ctx) := do
   if h : rows.length = columns.length then
     if !rows.all (fun e => decide (e.length = qs.length) && e.all (· ≤ 2)) then
@@ -72,9 +88,13 @@ No roots, root counts or guessed sign conditions are supplied by a caller. -/
       if reduced && decide (0 < domain.head.natDegree) then
         some (Reduction.build domain.sign domain.head qs e)
       else none
-    let moments := Vector.ofFn fun i =>
+    let moments : Vector (TarskiCertificate E E Ctx) rows.length := Vector.ofFn fun i =>
       Sturm.certifyPrepared context domain (queryPoly qs es[i] reductions[i])
-    match solveSystem qs.length es cs (moments.map (·.value)) with
+    let values := moments.map (fun (c : TarskiCertificate E E Ctx) => c.value)
+    let solved := match inverse with
+      | none => solveSystem qs.length es cs values
+      | some (d, a) => solveScaled qs.length es cs values d a
+    match solved with
     | .error err => throw err
     | .ok s => return {
         context, head := domain.head, lower := domain.lower, upper := domain.upper
@@ -91,8 +111,14 @@ there is no fuel limit and no full-ternary fallback at internal nodes. -/
   else
     let l ← buildTree context domain (qs.take (qs.length / 2)) reduced
     let r ← buildTree context domain (qs.drop (qs.length / 2)) reduced
+    have hd : (product l.node.rows r.node.rows).length = l.node.basis.rank * r.node.basis.rank := by
+      rw [length_product]
+      simp [Node.rows]
+    let inverse : Matrix Int (product l.node.rows r.node.rows).length
+        (product l.node.rows r.node.rows).length := hd.symm ▸ tensor l.node.basis.adj r.node.basis.adj
     let n ← buildNode context domain qs (product l.node.rows r.node.rows)
       (product l.node.system.support r.node.system.support) reduced
+      (some (l.node.basis.denom * r.node.basis.denom, inverse))
     return .split n l r
 termination_by qs.length
 decreasing_by

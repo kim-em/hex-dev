@@ -73,7 +73,8 @@ theorem System.identities {r : Nat} {arity : Nat} {s : System r}
   simp only [System.check, Bool.and_eq_true, decide_eq_true_eq] at h
   exact ⟨h.1.2, h.2.1, h.2.2⟩
 
-private theorem scale_identity_vec {r : Nat} (d : Int) (v : Vector Int r) :
+/-- Apply a scaled identity without changing vector order. -/
+theorem scale_identity_vec {r : Nat} (d : Int) (v : Vector Int r) :
     Matrix.scale d (Matrix.identity r) * v = d • v := by
   apply Vector.ext
   intro i hi

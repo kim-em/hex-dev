@@ -1579,7 +1579,7 @@ libraries:
     done_through: 0
     status: active
   HexSignDetMathlib:
-    deps: [HexSignDet, HexSturmMathlib, HexPolyMathlib]
+    deps: [HexSignDet, HexSturmMathlib, HexPolyMathlib, HexMatrixMathlib, HexRankMathlib]
     mathlib: true
     done_through: 0
     status: active

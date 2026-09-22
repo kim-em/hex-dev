@@ -82,6 +82,57 @@ theorem literal_sign (a : Rat) (hp : (interpret id (fun _ => Iff.rfl) head).eval
     (fun _ _ => rfl) Sturm.orderSign (fun x => (HexSturmMathlib.orderSign_spec x).1) rfl
     head [indeterminate] [2] square literal_checks a hp
 
+@[expose] def twoSigns : System 2 where
+  rows := #v[[0], [1]]
+  columns := #v[[-1], [1]]
+  counts := #v[1, 1]
+  values := #v[2, 0]
+  inverse := Matrix.ofRows #v[#v[1, -1], #v[1, 1]]
+  denominator := 2
+
+theorem twoSigns_checks : twoSigns.check 1 = true := by decide +kernel
+
+/-- The exact solver theorem consumes a kernel-checked moment system. -/
+theorem twoSigns_solved : solveScaled 1 twoSigns.rows twoSigns.columns twoSigns.values
+    twoSigns.denominator twoSigns.inverse = .ok twoSigns :=
+  solveScaled_eq twoSigns twoSigns_checks
+
+example : (Matrix.rankCert twoSigns.retainedMatrix).rank = twoSigns.positive.length :=
+  twoSigns.basis_rank twoSigns_checks
+
+example : (productVector #v[[0], [1]] #v[[2], [0]]).toList =
+    [[0, 2], [0, 0], [1, 2], [1, 0]] := by
+  rw [productVector_toList]
+  decide +kernel
+
+example : tensor (Matrix.identity 0) (Matrix.identity 2) = Matrix.identity 0 := by
+  decide +kernel
+
+example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := by
+  decide +kernel
+
+/-- info: 'Hex.SignDet.System.retained_rank' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms System.retained_rank
+/-- info: 'Hex.SignDet.System.basis_columns' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms System.basis_columns
+/-- info: 'Hex.SignDet.System.basis_inverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms System.basis_inverse
+/-- info: 'Hex.SignDet.tensor_inverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms tensor_inverse
+/-- info: 'Hex.SignDet.momentMatrix_product' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms momentMatrix_product
+/-- info: 'Hex.SignDet.solveScaled_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms solveScaled_eq
+/-- info: 'Hex.SignDetMathlib.Conformance.twoSigns_solved' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms twoSigns_solved
+
 /-- info: 'Hex.SignDetMathlib.Conformance.noncanonical_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms noncanonical_checks

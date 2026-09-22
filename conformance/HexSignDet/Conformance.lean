@@ -206,6 +206,21 @@ def solveError (values : Vector Int 3) (expected : BuildError) : Bool :=
 
 #guard solveError #v[0, 1, 0] .nonintegral
 #guard solveError #v[0, 2, 0] .negative
+#guard match solveScaled 1 #v[[0]] #v[[1]] #v[2] (-3) (Matrix.ofRows #v[#v[-3]]) with
+  | .ok s => s.counts == #v[2] && s.check 1
+  | _ => false
+#guard match solveScaled 1 #v[[0]] #v[[1]] #v[1] 2 (Matrix.ofRows #v[#v[1]]) with
+  | .error .nonintegral => true
+  | _ => false
+#guard match solveScaled 1 #v[[0]] #v[[1]] #v[-1] 1 (Matrix.ofRows #v[#v[1]]) with
+  | .error .negative => true
+  | _ => false
+#guard match solveScaled 1 #v[[0]] #v[[1]] #v[2] 0 (Matrix.ofRows #v[#v[1]]) with
+  | .error .singular => true
+  | _ => false
+#guard match solveScaled 1 #v[[0]] #v[[1]] #v[2] 1 (Matrix.ofRows #v[#v[2]]) with
+  | .error .system => true
+  | _ => false
 #guard match solveSystem 1 #v[[0], [1]] #v[[1], [1]] #v[1, 1] with
   | .error .singular => true
   | _ => false

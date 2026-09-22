@@ -15,3 +15,4 @@ public import HexSignDet.Reference
 public import HexSignDet.Reduction
 public import HexSignDet.Moment
 public import HexSignDet.MomentReplay
+public import HexSignDet.Tensor
