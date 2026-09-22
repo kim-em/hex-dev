@@ -26,7 +26,7 @@ expanded targets use the polynomial frontend. The term form and simproc
 retain that factored value. Forced polynomial checker options bypass this
 shortcut, whose trace route is `row-factor`.
 
-`Hex.normPolyDet` is an opt-in simproc. The published `Hex.norm_det` retains the numeric certificate and Mathlib fallback, and does not import this companion. On a symbolic decline, `det` tries Mathlib directly without repeating the symbolic work. Consequently success through the composed tactic can also come from a closed formula or fallback.
+`Hex.normPolyDet` is an opt-in simproc. The published `Hex.norm_det` retains only the numeric certificate and does not import this companion. Neither simproc invokes Mathlib determinant tactics: unsupported inputs remain unchanged. On a symbolic decline, `det` reports the reason. Success uses a Hex-selected structural proof or a checked certificate; Mathlib can be invoked separately by the caller.
 
 The polynomial certificate treats atoms independently: it does not use a hypothesis `x = 0` or an algebraic relation such as `α ^ 2 = 2`. A target that adds atoms or requires such a relation may decline. Prime-characteristic domains use the shared canonical Nat residue lists and modular operations. Coefficients are reduced modulo the prime; exponents remain formal, so `X ^ 3 - X` over `ZMod 3` is not the zero polynomial. When the residue provider declines its capability conditions, including composite characteristic or a missing domain instance, the universal integer certificate remains available. Denominator clearing currently recognizes rational expressions over `Rat`; division in another carrier can still be treated as an atom.
 

@@ -64,10 +64,10 @@ Rules that follow from the table:
   handler reports `notApplicable` for them. For `rank` that handler is specified in
   [hex-generic-rank-mathlib](../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md), with
   the three outputs (generic, conditional, locus) that a symbolic rank may
-  take. Until a symbolic handler exists for an operation, a Mathlib tactic
-  that also handles symbolic input (`norm_det`) is composed as the fallback
-  of the Hex tactic in one explicit simp set, so no input that Mathlib
-  accepts today regresses.
+  take. Determinant tactics and simprocs invoke only Hex determinant paths.
+  They must not call Mathlib's `norm_det` or `eval_det` on an unsupported input
+  or decline. A user may invoke those tactics explicitly. A decline is a
+  capability result, never a successful Hex performance sample.
 
 ## Outcome protocol and diagnostics
 
@@ -106,7 +106,7 @@ fragment; otherwise the last diagnostic handler can mask an extension error.
 The diagnostic handler reclassifies and reports `rank: not applicable: …`
 or `det: not applicable: …` when no handler accepts. For determinant
 equations, the last-resort handler first tries `simp only [Hex.norm_det]`,
-preserving Mathlib's symbolic and other-carrier normalization. The numeric
+using only the Hex numeric certificate. The numeric
 `det` handler also retains that simp fallback for an in-fragment capability
 decline. Errors raised during simp, including producer failures and rejected
 certificates, propagate unchanged; only a no-progress result is replaced

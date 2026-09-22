@@ -329,9 +329,9 @@ of the literal layer of `hex-matrix-mathlib` (`!![…]`, `Matrix.of ![…]`,
 (unfolded within a small budget), and `d` a closed value; the term form
 `det% A` returning `Certified Matrix.det A` with its `value` and `proof`
 (the `!![…]` notations are given an integer expectation); and the simproc
-`Hex.norm_det`, which rewrites `Matrix.det A` to its value and falls back
-to Mathlib's `norm_det` when the Hex frontend declines, so that the two
-form one simp set and no input `norm_det` accepts regresses. Entries are
+`Hex.norm_det`, which rewrites `Matrix.det A` using a Hex certificate and
+leaves unsupported inputs unchanged. No entry point implicitly invokes
+Mathlib's `norm_det` or `eval_det`. Entries are
 closed numeric expressions that `norm_num` evaluates (the `fun` form's
 entries first pass through the default simp set, for `Fin.val`, casts and
 `if i = j` tests) and that the kernel reduces to their numerals.
@@ -367,10 +367,10 @@ tries it **after** the numeric one and any later extensions. Extensions
 must also use `@[no_fallback]` for their own errors and
 `throwUnsupportedSyntax` outside their fragments. It reclassifies
 the target and, for determinant equations, tries `simp only [Hex.norm_det]`
-before reporting `det: not applicable: …` with the reason. This preserves
-`norm_det` for symbolic entries and other commutative rings, normalizing
-the determinant as `eval_det` does and leaving a residual goal for `ring`
-or `decide`.
+before reporting `det: not applicable: …` with the reason. This can normalize
+a closed numeric determinant with an open target value using a Hex certificate,
+leaving a residual value equality. Symbolic inputs and unsupported carriers
+require a Hex extension or an explicit user invocation of another tactic.
 
 An entry or closed value that cannot be evaluated is still declined with
 the reason; the numeric handler retains the same simp fallback for these
@@ -381,8 +381,7 @@ The simp fallback propagates errors unchanged, including certificate errors
 from its simproc; it reports the original reason only when simp makes no
 progress.
 The `det%` form reports the classification reason directly; the simproc
-returns no result for either inapplicability or a capability decline and
-continues to compose with `norm_det`.
+returns no result for either inapplicability or a capability decline.
 A false target is reported with the certified value
 before any proof is built; a rejection by the kernel is diagnosed by
 evaluating the certificate check and the identification of the literal in
@@ -482,9 +481,9 @@ and symbolic entries are out of scope here
   `16 × 16` literal with `8`-bit entries;
 - `det%` on a definition, inline and on a rational literal, and its
   `proof` field closing the determinant equation;
-- `simp only [Hex.norm_det]` on integer and rational literals, and on
-  symbolic entries through `norm_det` (with `ring`), plus the `det` tactic
-  reaching `norm_det` on symbolic entries and on `ZMod 7`;
+- `simp only [Hex.norm_det]` on integer and rational literals; both the simproc
+  and tactic reject unsupported symbolic and `ZMod 7` inputs even with
+  Mathlib's `norm_det` imported; the caller can invoke Mathlib explicitly;
 - the messages on a false target, a closed non-literal and a goal that is
   not a determinant equation, plus open-matrix and open-value diagnostics
   without a test stub (`#guard_msgs`);

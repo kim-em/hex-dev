@@ -50,7 +50,7 @@ example (x y : Int) (h : Matrix.det !![x, 1; 1, x] = y) :
   fail_if_success det
   exact h
 
--- The composed fallback remains available on unsupported positive characteristic.
+-- The Hex small-formula route handles positive characteristic.
 example (x : ZMod 3) : Matrix.det !![x, 1; 1, x] = x ^ 2 - 1 := by
   det
 
@@ -114,7 +114,7 @@ namespace HexPolyDetTests
 
 open Lean Elab Tactic Meta in
 /-- Regression helper requiring the polynomial certificate, without the small
-formula route or Mathlib fallback. -/
+formula route. -/
 elab "certificate_det" : tactic => withMainContext do
   let target ← instantiateMVars (← getMainTarget)
   let some (A, rhs, reverse) := HexMatrixMathlib.Det.detTarget? target |
@@ -267,12 +267,12 @@ example (x : Int) : (symbolicMatrix x).det = x ^ 2 - 1 := by det
 example (x : Int) : (symbolicMatrix x).det = (det% (symbolicMatrix x)).value :=
   (det% (symbolicMatrix x)).proof
 
--- A new target atom forces a polynomial decline; the composed fallback closes it.
+-- The Hex structural formula can compare a target containing a canceled atom.
 example (x y : Int) :
     Matrix.det !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x] =
       x ^ 4 - 3 * x ^ 2 + 1 + y - y := by det
 
--- Numeric delegation and its Hex simp fallback retain their original behavior.
+-- Numeric delegation may still normalize using a Hex certificate.
 example (y : Int) (h : y = -2) : Matrix.det !![(1 : Int), 2; 3, 4] = y := by
   det
   exact h.symm
@@ -704,3 +704,27 @@ theorem assignedProof {α : Type u} (x : α) : x = x := by
 #print axioms assignedProof
 
 end ComponentTests
+
+-- Exceeding Hex's dimension budget cannot invoke Mathlib, even when imported.
+example (x : Int) (h : ∀ A : Matrix (Fin 17) (Fin 17) Int, A.det = x ^ 17) :
+    Matrix.det !![
+    x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x] = x ^ 17 := by
+  fail_if_success det
+  fail_if_success simp only [Hex.normPolyDet]
+  exact h _

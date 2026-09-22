@@ -37,8 +37,8 @@ changes neither the library registry nor the released manifest.
   `norm_det` followed by `ring` also closes targets that mention atoms
   absent from the matrix (`x + y - y`) and identities with variable
   exponents (`2 * 2 ^ m`), which this arm declines; those inputs are
-  preserved only through the fallback, which is scope kept, not scope
-  won.
+  outside the certificate fragment. Structural proofs may accept some of
+  them; otherwise Hex reports a decline without invoking Mathlib.
 - **Structural dispatch.** After numeric delegation, automatic dispatch tries
   direct triangular/zero identities, common row factors, the existing formulas
   for `n ≤ 3`, bounded sparse cofactor expansion, then the polynomial frontend.
@@ -82,7 +82,7 @@ changes neither the library registry nor the released manifest.
   with the compiled shared counter, not unshared interpreted traversals for
   tracing. Structural proofs receive the existing synchronous kernel check.
 - **Opt-in until measured.** The symbolic handler is not placed in the
-  default `Hex.norm_det` fallback chain. It ships as the `det` handler and
+  default `Hex.norm_det` chain. It ships as the `det` handler and
   `det%` term form for symbolic input, and enters the simp-set chain only
   for the size regime where the sweep below shows a win, if one exists.
 
@@ -104,8 +104,8 @@ witness-dependent packing bound cannot be known from matrix entries alone.
 | Remaining symbolic `n ≤ 3` | Existing closed form |
 | Automatic mode, sparse cofactor expansion within 64 leaves and proof budget | Structural cofactor proof |
 | Malformed supplied certificate, including its quotient payload | `failure` |
-| Symbolic capability unavailable | Existing decline and Mathlib fallback |
-| Producer exhausts its intermediate or certificate budget | Structured decline naming the budget, count reached and limit; Mathlib fallback |
+| Symbolic capability unavailable | Explicit decline |
+| Producer exhausts its intermediate or certificate budget | Structured decline naming the budget, count reached and limit |
 | Tree product or target preflight exceeds a packing limit | Apply the existing packed/list selection to canonical entry lists, restoring list quotation and entry interpretation proofs |
 | Supported certificate, every packed product within digit/bit limits and covered by the crossover table | `checkDetPolyPackedTree` for retained integer trees; `checkDetPolyPacked` or `checkDetPolyPackedMod` for term-list inputs |
 | Packing budget exceeded, crossover absent/selects sparse, or residue quotient payload absent | `checkDetPolyList` with the appropriate integer/residue operations |
@@ -148,9 +148,10 @@ If residue lists are unavailable too, use the existing carrier decline.
 The certificate trace records `term-list`, `packed/plain`, or
 `packed/signedPacked`, plus integer/residue encoding, each product's
 `SizeBound`, quotient support where present, and any packing-decline reason.
-Retain the existing `closed-form` and `fallback` routes. Trace the chosen
-checker in tactic, term and simproc forms, including composed fallbacks, so
-the sweep cannot count a sparse or Mathlib success as a packed success.
+Retain the `closed-form` route and report unsupported symbolic attempts as
+`declined`. Trace the chosen checker in tactic, term and simproc forms, so
+the sweep cannot count a structural success as a packed success. Mathlib
+determinant tactics are never an implicit route.
 
 ## Prerequisites and input classification
 
@@ -489,21 +490,17 @@ through `HexReflectMathlib.residueHom`. Entry replay uses the shared
 4×4 multivariate determinants, singular witnesses, and malformed residues.
 The packed residue arm remains a separate implementation obligation (#10274).
 
-hex-bareiss-mathlib's simproc `Hex.norm_det` (renamed from `hex_norm_det`;
-tactic and simproc names carry no `hex_` prefix, the namespace does the
-work) tries the numeric certificate, then the unmodified Mathlib
-`norm_det` fallback in the same simp set. This library provides a second
-simproc, `Hex.normPolyDet`, that tries the symbolic certificate and falls
-back to `norm_det`; it is opt-in and not added to the default chain until
-the sweep below shows the regime in which it wins, at which point the
-chain dispatches on that regime. A symbolic success rewrites to `φ d`; a
-decline leaves the original expression available to Mathlib. Check budgets
-before invoking the producer, and preserve the attempt's outcome/batch
-within the invocation: a tactic decline must not re-enter the same symbolic
-attempt through the simproc. No input `norm_det` accepts today regresses. Unsupported goals return `notApplicable`;
-capability or budget declines retain
-`det: symbolic determinant declined: <reason>`, including carrier or entry
-coordinate where relevant, for reporting if the composed tactic fails.
+hex-bareiss-mathlib's simproc `Hex.norm_det` uses the numeric Hex certificate.
+This library provides the opt-in symbolic simproc `Hex.normPolyDet`.
+Neither invokes Mathlib's `norm_det` or `eval_det`. A symbolic success rewrites
+to `φ d`; inapplicability or decline leaves the original expression unchanged.
+The tactic reports `det: symbolic determinant declined: <reason>` immediately
+on a capability or budget decline, including carrier or entry coordinate where
+relevant. It must not re-enter the symbolic attempt through a simproc.
+Mathlib determinant tactics remain explicit user choices and independent
+comparators, never a means of making a declined Hex attempt appear successful.
+Check budgets before invoking the producer where the required bounds are
+available; production itself uses the actual intermediate and certificate budgets.
 A malformed or rejected producer certificate is `failure`, never a weaker
 result disguised as success. The axiom audit permits only `propext`,
 `Classical.choice` and `Quot.sound`, as for the numeric arm.
@@ -543,8 +540,8 @@ one kernel-only profile per family and median ratios in this SPEC before
 shipping; these are planned measurements, not inferred timing results.
 Preregister per-case cleanup timeouts and proof-build ceilings in the runner
 manifest; a timeout is reported as such and never removed from the ladder.
-Measure the full composed invocation on declines too, including work before
-fallback, so no decline can hide a regression against bare `norm_det`.
+Measure time to decline separately from successful proof time. A declined Hex
+invocation is never counted as a completion or assigned a speedup ratio.
 
 Bird's `O(n⁴)` ring-normalised certificate chain is expected to lose as
 matrix dimension grows while minor support remains modest: the fraction-free
@@ -599,7 +596,7 @@ upper bound, with `p` and quotient support recorded alongside packed bits.
 Classify the grid by actual product/witness bounds before timing: large
 three- and four-atom identities often exceed the digit envelope stated in
 hex-poly-det. Keep these rows as expected declines, distinct from infeasible
-support requests or timeouts. They measure the preflight and composed fallback,
+support requests or timeouts. They measure the preflight and any supported Hex list route,
 not forced packed evaluation. Retain the full shared ladder and report the
 accepted few-atom region explicitly; do not omit losing or declined cells.
 
@@ -610,7 +607,7 @@ host context, with at most one unchanged rerun if inconclusive. Preregister
 the cases, crossover keys and the existing 45-second cleanup/proof ceilings
 before collecting samples. Time quotient generation, preflight and list
 conversion, repeated inner/outer packing, integer multiplication, kernel
-check, identification, total elaboration and composed fallback separately where applicable; record proof
+check, identification, total elaboration and time to decline separately where applicable; record proof
 nodes, `.olean` size, support, degree bounds, packed bits and route. Collect
 one representative kernel profile per family, not a profile per change.
 
@@ -650,7 +647,7 @@ The crossover table is fixed from the preregistered comparisons before
 activation. Reconsider `Hex.normPolyDet` under
 [matrix-tactics §The bar against Mathlib](../matrix-tactics.md#the-bar-against-mathlib):
 only an identifiable family whose full dispatched invocation has a smaller
-median than `norm_det`, including decline/fallback costs, may enter the
+median than `norm_det`, with declines counted as failures to solve, may enter the
 default chain. Every other family remains opt-in. Faster packed kernel work
 alone does not satisfy this rule. No family is enabled by default; the packed comparison outcome below records
 the complete forced and automatic measurements and their opt-in decisions.
@@ -761,7 +758,7 @@ The symbolic simproc remains opt-in until the recorded sweep establishes a
 smaller median for a size regime; no default integration is claimed here.
 
 All Hex sweep modules emit the route taken (closed formula, polynomial
-certificate, or fallback), including the reason for a budget decline. The
+certificate, or decline), including the reason for a budget decline. The
 packed implementation extends certificate traces as specified above. The
 conservative preflight bound declines some high-degree, four-variable 8×8
 cases before elimination; their complete composed calls remain in the ladder.
@@ -786,7 +783,10 @@ and 14 profiles, including every failure and timeout, are retained in
 raw data. N-prefixed rows below are the correlated row-scaled family
 (except N2K4D1S1); these ratios do not describe independent dense entries.
 Times are fresh-module, baseline-subtracted medians in milliseconds. All six
-samples are required; ratios use positive medians only.
+samples are required; ratios use positive medians only. This retained dataset
+includes implicit Mathlib fallbacks from the older dispatch. Rows labelled
+`fallback` are not Hex completions under the current policy; their historical
+ratios do not establish a Hex speedup or justify default integration.
 
 | Case | Mathlib ms | Hex ms | M/H | Completed M/H | Hex route |
 |---|---:|---:|---:|---:|---|

@@ -8,8 +8,6 @@ module
 
 public meta import HexBareissMathlib.Kernel
 public import HexBareissMathlib.Kernel
-public meta import Mathlib.Tactic.NormDet
-public import Mathlib.Tactic.NormDet
 public meta import Lean
 
 public meta section
@@ -20,9 +18,9 @@ for a closed integer or rational matrix literal `A` in one of the four
 syntaxes of `HexMatrixMathlib.Literal` (`!![…]`, `Matrix.of ![…]`,
 `fun i j => …`, `Matrix.ofArray xs h`), possibly behind definitions; the
 term form `det% A` returns the certified value as a `Certified` record; and
-the simproc `Hex.norm_det` rewrites `Matrix.det A` to its value, falling
-back to Mathlib's `norm_det` (symbolic entries, other carriers) when the
-Hex frontend declines, so the two are one simp set.
+the simproc `Hex.norm_det` rewrites `Matrix.det A` using a Hex certificate.
+It leaves unsupported inputs unchanged; Mathlib determinant tactics are never
+invoked implicitly.
 
 Compiled code evaluates the entries with `norm_num`, runs the fraction-free
 elimination `detWitnessOfLists` and builds a `DetWitness`; the proof is
@@ -39,9 +37,9 @@ type check first, and a rejection is reported by the tactic.
 Outcomes follow the matrix-tactic protocol: a goal that is not a
 determinant equation, a matrix that is not a closed integer or rational
 literal, or an open value is not applicable and delegates to the next
-handler. The last-resort handler tries the fallback simp set on determinant
-equations. A closed value that is not evaluable is declined (and the numeric
-handler runs the fallback simp set); a false
+handler. The last-resort handler may normalize a closed numeric determinant
+using the Hex certificate even when the target value is open. A closed value
+that is not evaluable similarly permits this Hex-only normalization; a false
 target is reported with the certified value before any proof is built; a
 producer whose witness fails its own check, or a certificate the kernel
 rejects, is a failure, never a fallback.
@@ -319,14 +317,12 @@ end HexMatrixMathlib.Det
 
 open Lean Meta in
 /-- The `Hex.norm_det` simproc rewrites the determinant of a closed integer or
-rational matrix literal to its value through the Hex certificate, and falls
-back to Mathlib's `norm_det` when the Hex frontend declines (symbolic
-entries, other carriers); a producer failure or a certificate the kernel
-rejects is an error, not a fallback. -/
+rational matrix literal to its value through the Hex certificate. Unsupported
+inputs are unchanged; a producer failure or kernel rejection is an error. -/
 simproc_decl Hex.norm_det (Matrix.det _) := fun e => do
   match ← HexMatrixMathlib.Det.normDet? e with
   | some r => return .done r
-  | none => _root_.norm_det e
+  | none => return .continue
 
 namespace HexMatrixMathlib.Det
 
@@ -334,33 +330,33 @@ open Lean Elab
 
 /-- `det` closes `A.det = d` and `d = A.det` for a closed integer or rational
 matrix literal `A`, with the kernel checking a determinant certificate; an
-equation outside that fragment delegates to other handlers and then to the
-simp set `Hex.norm_det`, whose fallback is Mathlib's `norm_det`. Extensions
+equation outside that fragment delegates to other Hex handlers. A final
+Hex-only normalization may leave a residual value equality. Extensions
 must use `@[no_fallback]` to preserve their errors and `throwUnsupportedSyntax`
 to delegate outside their fragment. The keyword is non-reserved, so `det`
 stays usable as an identifier. -/
 syntax (name := detTac) &"det" optConfig : tactic
 
-/-- Try the simp fallback, reporting the classification or capability reason
-only when it makes no progress. Errors from simprocs must propagate unchanged. -/
-def simpFallback (msg : MessageData) : Tactic.TacticM Unit := do
+/-- Normalize using only the Hex certificate, reporting the original reason
+when it makes no progress. Errors from the simproc propagate unchanged. -/
+def simpCertificate (msg : MessageData) : Tactic.TacticM Unit := do
   let goals ← Tactic.getGoals
   Tactic.evalTactic (← `(tactic| simp (config := { failIfUnchanged := false }) only [Hex.norm_det]))
   if (← Tactic.getGoals) == goals then
     throwError "{msg}"
 
 /-- Registered before the numeric handler, so tried after it (Lean reverses
-registration order at equal priority). Preserve the Mathlib simp fallback for
-determinant equations outside the numeric fragment, reporting the classification
-reason if it cannot make progress. Classification itself produces no certificate. -/
+registration order at equal priority). Try Hex certificate normalization for
+determinant equations, reporting the classification reason when it makes no
+progress. Classification itself produces no certificate. -/
 @[tactic detTac, no_fallback]
-def detFallback : Tactic.Tactic := fun _ => Tactic.withMainContext do
+def detDiagnostic : Tactic.Tactic := fun _ => Tactic.withMainContext do
   let target ← instantiateMVars (← Tactic.getMainTarget)
   match ← classify target with
   | .notApplicable msg =>
       if (detTarget? target).isNone then
         throwError "det: not applicable: {msg}"
-      simpFallback m!"det: not applicable: {msg}"
+      simpCertificate m!"det: not applicable: {msg}"
   | _ => throwUnsupportedSyntax
 
 -- Ordinary errors commit; unsupported syntax still tries the next handler.
@@ -371,6 +367,6 @@ def evalDetTac : Tactic.Tactic := fun stx => Tactic.withMainContext do
   | .success proof => Tactic.closeMainGoal `det proof
   | .notApplicable _ => throwUnsupportedSyntax
   | .declined msg =>
-      simpFallback m!"det: declined: {msg}"
+      simpCertificate m!"det: declined: {msg}"
 
 end HexMatrixMathlib.Det
