@@ -612,6 +612,12 @@ lean_lib HexPrimalityMathlibProofProbe where
     `HexPrimalityMathlib.ProofProbe.Negative512Odd,
     `HexPrimalityMathlib.ProofProbe.NegativeExhausted512].map Glob.one
 
+-- Computational diagnostics observe clocks/counters; they emit no proof.
+-- Keep them outside the clock-free proof-probe subtree.
+lean_lib HexPrimalityEcmDiagnostics where
+  srcDir := "bench"
+  globs := #[.submodules `HexPrimality.EcmDiagnostics]
+
 lean_lib HexPrimalityConstructionProbe where
   srcDir := "bench"
   globs := #[.submodules `HexPrimality.ProofProbe.Curve25519]

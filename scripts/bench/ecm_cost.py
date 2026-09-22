@@ -22,7 +22,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.bench.idle_core import pick
 from scripts.bench.primality_cactus import corpus
 
-MODULE = 'HexPrimality.ProofProbe.Curve25519.EcmCost'
+MODULE = 'HexPrimality.EcmDiagnostics.EcmCost'
 SOURCE = Path('bench') / (MODULE.replace('.', '/') + '.lean')
 # A separate observer process reports resource.getrusage for its single child.
 # This is measurement isolation, never a route around an elaborator's budget.
