@@ -63,6 +63,8 @@ across nodes; finite DAG sharing and its performance accounting remain required.
 arbitrary accepted reductions preserve each full moment's sign at every root.
 `Node.check_sign` composes preprocessing and moment reduction for the actual
 Tarski operand; `QueryReduction.slice_checks` validates the child restrictions.
+`QueryReduction.check_bounds` proves that every accepted preprocessing keeps
+the original query length and supplies only zero or degree-bounded operands.
 These algebraic proofs allow noninjective coefficient interpretations; they do
 not assert a Tarski root-sum theorem.
 

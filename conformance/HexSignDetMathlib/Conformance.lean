@@ -68,6 +68,10 @@ theorem noncanonical_queries (p : Poly) (qs : List Poly) (hp : 0 < p.natDegree) 
 theorem queries_checked : preparedQueries.check Sturm.orderSign head
     [indeterminate * indeterminate, indeterminate] = true := by decide +kernel
 
+example : preparedQueries.queries.length = 2 ∧
+    ∀ q ∈ preparedQueries.queries, q.isZero = true ∨ q.natDegree < head.natDegree :=
+  QueryReduction.check_bounds queries_checked
+
 example : (preparedQueries.slice 1 1).check Sturm.orderSign head [indeterminate] = true :=
   QueryReduction.slice_checks queries_checked 1 1
 

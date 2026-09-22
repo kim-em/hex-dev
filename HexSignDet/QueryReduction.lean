@@ -49,6 +49,37 @@ Length mismatches and reordered witnesses are rejected. -/
     (qs : List (DensePoly E)) (r : QueryReduction E) : Bool :=
   decide (0 < p.natDegree) && checkFrom sign p 0 qs r.steps
 
+theorem QueryReduction.checkFrom_bounds {sign : E → Int} {p : DensePoly E}
+    {qs : List (DensePoly E)} {ss : List (ReductionStep E)} {i : Nat}
+    (h : checkFrom sign p i qs ss = true) :
+    ss.length = qs.length ∧ ∀ s ∈ ss, s.next.isZero = true ∨ s.next.natDegree < p.natDegree := by
+  induction qs generalizing ss i with
+  | nil => cases ss <;> simp_all [checkFrom]
+  | cons q qs ih =>
+    cases ss with
+    | nil => simp [checkFrom] at h
+    | cons s ss =>
+      simp only [checkFrom, Bool.and_eq_true] at h
+      obtain ⟨hlen, hbounds⟩ := ih h.2
+      refine ⟨by simp only [List.length_cons, hlen], ?_⟩
+      intro t ht
+      rcases List.mem_cons.mp ht with rfl | ht
+      · exact (ReductionStep.check_eq h.1).2.2.2.1
+      · exact hbounds t ht
+
+/-- All shared operands retain their original positions and have the degree
+bound required by reduced moment multiplication. Zero factors are explicit. -/
+theorem QueryReduction.check_bounds {sign : E → Int} {p : DensePoly E}
+    {qs : List (DensePoly E)} {r : QueryReduction E} (h : r.check sign p qs = true) :
+    r.queries.length = qs.length ∧
+      ∀ q ∈ r.queries, q.isZero = true ∨ q.natDegree < p.natDegree := by
+  simp only [check, Bool.and_eq_true] at h
+  obtain ⟨hlen, hbounds⟩ := checkFrom_bounds h.2
+  refine ⟨by simpa only [queries, List.length_map] using hlen, ?_⟩
+  intro q hq
+  obtain ⟨s, hs, rfl⟩ := List.mem_map.mp hq
+  exact hbounds s hs
+
 theorem QueryReduction.checkFrom_take {sign : E → Int} {p : DensePoly E}
     {qs : List (DensePoly E)} {ss : List (ReductionStep E)} {i : Nat}
     (h : checkFrom sign p i qs ss = true) (k : Nat) :
