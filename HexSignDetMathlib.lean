@@ -9,6 +9,9 @@ public import HexSignDetMathlib.Reduction
 public import HexSignDetMathlib.ReductionProducer
 public import HexSignDetMathlib.Basis
 public import HexSignDetMathlib.Solve
+public import HexSignDetMathlib.RationalSolve
+public import HexSignDetMathlib.FiniteSolve
+public import HexSignDetMathlib.ParentSystem
 public import HexSignDetMathlib.Tensor
 public import HexSignDetMathlib.NodeBasis
 public import HexSignDetMathlib.QueryReduction

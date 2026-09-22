@@ -40,12 +40,12 @@ arithmetic in the certificate checker. -/
   | _, _ => false
 
 /-- Choose a common denominator once, in the compiled producer. -/
-def Scaled.encode (xs : List Rat) : Scaled :=
+@[expose] def Scaled.encode (xs : List Rat) : Scaled :=
   let d := xs.foldl (fun d q => Nat.lcm d q.den) 1
   ⟨d, xs.map (fun q => q.num * Int.ofNat (d / q.den))⟩
 
 /-- Choose one common denominator for the entire matrix. -/
-def ScaledRows.encode (xs : List (List Rat)) : ScaledRows :=
+@[expose] def ScaledRows.encode (xs : List (List Rat)) : ScaledRows :=
   let d := (Scaled.encode xs.flatten).denom
   ⟨d, xs.map (fun row => row.map (fun q => q.num * Int.ofNat (d / q.den)))⟩
 

@@ -195,6 +195,27 @@ example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := 
 /-- info: 'Hex.SignDet.solveScaled_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms solveScaled_eq
+/-- info: 'Hex.SignDet.solveSystem_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms solveSystem_complete
+/-- info: 'Hex.SignDet.empty_system' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms empty_system
+/-- info: 'Hex.SignDet.singleton_system' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms singleton_system
+/-- info: 'Hex.SignDet.system_counts' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms system_counts
+/-- info: 'Hex.SignDet.Node.product_system' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.product_system
+/-- info: 'HexMatrixMathlib.decode_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexMatrixMathlib.decode_encode
+/-- info: 'HexMatrixMathlib.decodeRows_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexMatrixMathlib.decodeRows_encode
 /-- info: 'Hex.SignDetMathlib.Conformance.twoSigns_solved' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms twoSigns_solved

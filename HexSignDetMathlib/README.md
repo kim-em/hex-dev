@@ -37,6 +37,23 @@ proves that the integer solver recovers any accepted system's counts without
 rounding or sign clamping. These finite algebra results do not assume roots
 or query semantics and do not yet prove completeness of the full constructor.
 
+`solveSystem_complete` proves that the actual rational solver also succeeds
+on every accepted integer system, preserving its input orders and exact counts.
+It uses the core rank theorem at the executable rational field instance, then
+proves positivity and divisibility of the chosen denominator and its literal
+integer inverse identity. The shared denominator encoder has corresponding
+acceptance and decoding proofs in `HexMatrixMathlib.Rational`.
+`System.check_counts` constructs a checked system from finite observations
+covered by its candidate support. `empty_system` and `singleton_system` provide
+the two complete leaf systems, with their explicit inverses checked by the
+ordinary kernel before any solving or pruning.
+`system_counts` requires only the literal shape guards, a scaled inverse and
+complete support: column distinctness, nonnegative counts and both system
+identities follow from those inputs.
+`Node.product_system` applies this construction to the actual child bases and
+their Cartesian product, deriving all parent-system checks from complete
+child supports without assuming an accepted parent.
+
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient
 interpretation. It neither assumes a gcd normalization nor supplies squarefreeness;
