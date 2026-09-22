@@ -1,0 +1,203 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cpu/cycles/P'
+# Event count (approx.): 71586769177
+#
+# Overhead  Command  Shared Object           Symbol                                                                                                                                                                                                                                                                
+# ........  .......  ......................  ......................................................................................................................................................................................................................................................................
+#
+    11.96%  lean     libleanshared.so        [.] __gmpn_copyi_x86_64
+     7.94%  lean     libleanshared.so        [.] __gmpz_init_set
+     5.51%  lean     libleanshared.so        [.] __gmpn_sbpi1_div_qr
+     5.46%  lean     libc.so.6               [.] cfree@GLIBC_2.2.5
+     4.77%  lean     libleanshared.so        [.] __gmpn_divrem_1_x86_64
+     4.70%  lean     libc.so.6               [.] malloc
+     4.45%  lean     libleanshared.so        [.] __gmpn_tdiv_qr
+     2.98%  lean     libleanshared.so        [.] lean_nat_big_mod
+     2.86%  lean     libleanshared.so        [.] __gmpz_tdiv_r
+     2.54%  lean     libleanshared.so        [.] __gmpn_submul_1_x86_64
+     2.42%  lean     libleanshared.so        [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)
+     1.80%  lean     libleanshared.so        [.] lean_dec_ref_cold
+     1.74%  lean     libleanshared.so        [.] lean::mpz::~mpz()
+     1.68%  lean     libleanshared.so        [.] __gmpn_lshift_x86_64
+     1.61%  lean     libleanshared.so        [.] __gmp_default_allocate
+     1.55%  lean     libleanshared.so        [.] mi_free
+     1.49%  lean     libleanshared.so        [.] lean_nat_big_mul
+     1.43%  lean     libc.so.6               [.] _int_malloc
+     1.30%  lean     libleanshared.so        [.] __gmpz_mul
+     1.18%  lean     libleanshared.so        [.] __gmpn_rshift_x86_64
+     1.17%  lean     libleanshared.so        [.] __gmpn_mul_basecase_fat
+     1.12%  lean     libHex_HexIntFactor.so  [.] lp_Hex___private_HexIntFactor_Ecm_0__Hex_Nat_subMod
+     1.06%  lean     libHex_HexIntFactor.so  [.] lp_Hex_List_forIn_x27_loop___at___00Hex_Nat_Ecm_Internal_stage2_spec__3___redArg
+     1.06%  lean     libleanshared.so        [.] __gmpz_clear
+     1.05%  lean     libleanshared.so        [.] __gmpz_n_pow_ui
+     0.99%  lean     libleanshared.so        [.] __gmpn_ior_n
+     0.87%  lean     libleanshared.so        [.] lean_nat_big_add
+     0.75%  lean     libleanshared.so        [.] __gmpz_sub
+     0.75%  lean     libHex_HexIntFactor.so  [.] lp_Hex___private_HexIntFactor_Ecm_0__Hex_Nat_xAdd
+     0.74%  lean     libleanshared.so        [.] __gmpz_realloc
+     0.68%  lean     libleanshared.so        [.] mi_malloc_small
+     0.68%  git      git                     [.] sha1_compression_states
+     0.68%  lean     libc.so.6               [.] realloc
+     0.68%  lean     libleanshared.so        [.] __gmpz_add
+     0.62%  lean     libleanshared.so        [.] __gmpn_addmul_1_x86_64
+     0.62%  lean     libleanshared.so        [.] __gmpn_addmul_2_fat
+     0.56%  lean     libleanshared.so        [.] __gmpn_mul
+     0.56%  lean     libc.so.6               [.] _int_free_chunk
+     0.50%  lean     libleanshared.so        [.] lean::mpz::operator*=(lean::mpz const&)
+     0.50%  lean     libleanshared.so        [.] __gmp_default_free
+     0.49%  lean     libleanshared.so        [.] __gmpz_mul_2exp
+     0.49%  lean     libHex_HexIntFactor.so  [.] lp_Hex___private_HexIntFactor_Ecm_0__Hex_Nat_xDouble
+     0.47%  lake     [unknown]               [k] 0xffffffffbc334643
+     0.43%  lean     libleanshared.so        [.] __gmpn_mul_2
+     0.42%  lean     libleanshared.so        [.] lean_mark_persistent
+     0.37%  lean     libleanshared.so        [.] __gmpn_invert_limb
+     0.37%  lean     libleanshared.so        [.] lean_inc_heartbeat
+     0.37%  lean     libleanshared.so        [.] __gmpn_sub_n_x86_64
+     0.37%  lean     libHex_HexIntFactor.so  [.] lp_Hex___private_HexIntFactor_Ecm_0__Hex_Nat_addMod
+     0.36%  lean     libHex_HexIntFactor.so  [.] lp_Hex___private_HexIntFactor_Ecm_0__Hex_Nat_mulMod
+     0.31%  lean     libleanshared.so        [.] __gmp_default_reallocate
+     0.31%  lean     libleanshared.so        [.] lean::mpz::is_size_t() const
+     0.31%  lean     libleanshared.so        [.] lean::mpz::operator%=(lean::mpz const&)
+     0.25%  lean     libleanshared.so        [.] malloc@plt
+     0.25%  lean     libleanshared.so        [.] __gmpn_hgcd2
+     0.25%  lean     libleanshared.so        [.] lean::mpz::mpz(lean::mpz const&)
+     0.25%  lean     libc.so.6               [.] __libc_malloc2
+     0.24%  git      git                     [.] ubc_check
+     0.24%  lean     libc.so.6               [.] __memmove_avx512_unaligned_erms
+     0.19%  lean     libleanshared.so        [.] __gmpz_cmp
+     0.19%  lean     libleanshared.so        [.] __gmpz_tdiv_q_2exp
+     0.19%  lean     libleanshared.so        [.] __gmpn_mul_1_x86_64
+     0.19%  lean     libleanshared.so        [.] __gmpn_add_n_x86_64
+     0.19%  lean     libleanshared.so        [.] lean_nat_big_sub
+     0.19%  lean     libleanshared.so        [.] lean::mpz::mpz(unsigned long)
+     0.18%  lake     libleanshared.so        [.] lean_mark_mt
+     0.12%  lean     libleanshared.so        [.] lean_nat_big_shiftr
+     0.12%  lean     libleanshared.so        [.] l___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Lean_finalizeImport_spec__1
+     0.12%  lean     libc.so.6               [.] __strlen_evex
+     0.12%  lean     libHex_HexIntFactor.so  [.] mi_malloc_small@plt
+     0.12%  lean     libleanshared.so        [.] l_Nat_testBit
+     0.12%  lean     libHex_HexIntFactor.so  [.] lean_dec_ref_cold@plt
+     0.12%  lean     libleanshared.so        [.] _mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)
+     0.12%  lean     libleanshared.so        [.] __gmpz_init_set_ui
+     0.12%  lean     libleanshared.so        [.] free@plt
+     0.12%  lake     libleanshared.so        [.] lean_name_eq
+     0.06%  lean     [unknown]               [k] 0xffffffffbb98d36d
+     0.06%  lean     libHex_HexPrimality.so  [.] lean_nat_big_mod@plt
+     0.06%  lean     libHex_HexIntFactor.so  [.] lean_nat_big_mul@plt
+     0.06%  lean     libc.so.6               [.] __memset_avx512_unaligned_erms
+     0.06%  lean     libHex_HexPrimality.so  [.] lp_Hex___private_HexPrimality_Search_0__Hex_Nat_trialGo
+     0.06%  lean     libHex_HexIntFactor.so  [.] lean_nat_big_sub@plt
+     0.06%  lake     ld-linux-x86-64.so.2    [.] strlen
+     0.06%  lean     [unknown]               [k] 0xffffffffbba692d0
+     0.06%  lake     [unknown]               [k] 0xffffffffbb973be5
+     0.06%  lean     libleanshared.so        [.] lean::div2k(lean::mpz&, lean::mpz const&, unsigned int)
+     0.06%  git      [unknown]               [k] 0xffffffffbb9363c6
+     0.06%  git      [unknown]               [k] 0xffffffffbb93d814
+     0.06%  lake     libleanshared.so        [.] lean::utf8_strlen(char const*, unsigned long)
+     0.06%  lean     [unknown]               [k] 0xffffffffbb78b861
+     0.06%  lake     libleanshared.so        [.] l_Lean_mkModuleInitializationStem
+     0.06%  lean     libleanshared.so        [.] l_WellFounded_opaqueFix_u2083___at___00__private_Lean_Compiler_LCNF_ExplicitRC_0__Lean_Compiler_LCNF_getNumConsumptions_spec__0___redArg
+     0.06%  lean     libleanshared.so        [.] l_Std_DTreeMap_Internal_Impl_Const_get_x3f___at___00Lean_NameMap_find_x3f_spec__0___redArg
+     0.06%  lean     [unknown]               [k] 0xffffffffbb971cb6
+     0.06%  lean     libleanshared.so        [.] __gmpn_gcd_11_x86_64
+     0.06%  lean     libHex_HexIntFactor.so  [.] lp_Hex___private_Init_While_0__repeatM_erased___at___00Hex_Nat_Ecm_Internal_stage2_spec__2___redArg
+     0.06%  lean     libleanshared.so        [.] l_Lean_PersistentHashMap_insertAtCollisionNodeAux___at___00Lean_PersistentHashMap_insertAtCollisionNode___at___00Lean_PersistentHashMap_insertAux___at___00Lean_PersistentHashMap_insert___at___00Lean_assignLevelMVarExp_spec__0_spec__0_spec__1_spec__2___redArg
+     0.06%  lean     libleanshared.so        [.] __gmpz_gcd
+     0.06%  git      git                     [.] match_stat_with_submodule
+     0.06%  lean     libleanshared.so        [.] l___private_Lean_Compiler_LCNF_Simp_FunDeclInfo_0__Lean_Compiler_LCNF_Simp_FunDeclInfoMap_update_addArgOcc___redArg
+     0.06%  lean     libleanshared.so        [.] lean_apply_1
+     0.06%  lean     libc.so.6               [.] __memcmp_evex_movbe
+     0.06%  lean     libleanshared.so        [.] l_Lean_Meta_DiscrTree_Key_lt
+     0.06%  lean     libHex_HexIntFactor.so  [.] lp_Hex___private_HexIntFactor_Ecm_0__Hex_Nat_scalarPair
+     0.06%  lean     [unknown]               [k] 0xffffffffbba6b40b
+     0.06%  lean     [unknown]               [k] 0xffffffffbc353810
+     0.06%  lean     [unknown]               [k] 0xffffffffbb92c55b
+     0.06%  lake     [unknown]               [k] 0xffffffffbb98d01d
+     0.06%  lean     libleanshared.so        [.] lean::check_memory(char const*)
+     0.06%  lean     libleanshared.so        [.] lean::mpz::get_size_t() const
+     0.06%  lean     [unknown]               [k] 0xffffffffbbc884c0
+     0.06%  lean     libHex_HexPrimality.so  [.] lp_Hex_Hex_Nat_markMask
+     0.06%  lean     libleanshared.so        [.] lean_name_eq
+     0.06%  lean     libleanshared.so        [.] __gmpn_gcd_11
+     0.06%  lean     libleanshared.so        [.] lean_string_utf8_get
+     0.06%  lean     [unknown]               [k] 0xffffffffbba69374
+     0.06%  lean     libHex_HexPrimality.so  [.] lp_Hex_Hex_Nat_doubleRounds
+     0.06%  lean     libleanshared.so        [.] l___private_Lean_Meta_Basic_0__Lean_Meta_withNewLocalInstancesImp___redArg
+     0.06%  lean     [unknown]               [k] 0xffffffffbba69369
+     0.06%  lean     libleanshared.so        [.] realloc@plt
+     0.06%  lean     libleanshared.so        [.] __gmpn_xor_n
+     0.06%  lean     [unknown]               [k] 0xffffffffbba81a7f
+     0.06%  lean     [unknown]               [k] 0xffffffffbb9983da
+     0.06%  lean     [unknown]               [k] 0xffffffffbc401280
+     0.06%  lean     [unknown]               [k] 0xffffffffbb68c786
+     0.06%  lean     libc.so.6               [.] alloc_perturb
+     0.06%  lake     libleanshared.so        [.] l___private_Lean_Parser_Extension_0__Lean_Parser_ParserExtension_OLeanEntry_toEntry
+     0.06%  lean     [unknown]               [k] 0xffffffffbc400080
+     0.06%  lean     libHex_HexPrimality.so  [.] lp_Hex___private_HexPrimality_Search_0__Hex_Nat_brentGo
+     0.06%  lean     libleanshared.so        [.] l___private_Lean_Meta_ExprDefEq_0__Lean_Meta_getDefEqCacheKind___redArg
+     0.06%  lean     libleanshared.so        [.] mi_bin(unsigned long)
+     0.06%  lean     [unknown]               [k] 0xffffffffbb7ccc15
+     0.06%  lean     libc.so.6               [.] _int_free_create_chunk
+     0.06%  lean     [unknown]               [k] 0xffffffffbc35259b
+     0.06%  git      [unknown]               [k] 0xffffffffbb795cc4
+     0.06%  lean     libleanshared.so        [.] l_Lean_PersistentHashMap_findAtAux___at___00Lean_PersistentHashMap_findAux___at___00Lean_PersistentHashMap_find_x3f___at___00Lean_LocalContext_find_x3f_spec__0_spec__0_spec__1___redArg
+     0.06%  lean     libleanshared.so        [.] l___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Lean_finalizeImport_spec__7
+     0.06%  lean     [unknown]               [k] 0xffffffffbc3c528f
+     0.06%  lean     [unknown]               [k] 0xffffffffbc40186b
+     0.06%  lean     [unknown]               [k] 0xffffffffbc3c0e0f
+     0.06%  lake     [unknown]               [k] 0xffffffffbb9b83ad
+     0.06%  lean     [unknown]               [k] 0xffffffffbb7cdaeb
+     0.06%  lean     libleanshared.so        [.] lean::utf8_strlen(char const*, unsigned long)
+     0.06%  lean     [unknown]               [k] 0xffffffffbb92c196
+     0.06%  lean     libleanshared.so        [.] uv__fs_work
+     0.06%  lean     [unknown]               [k] 0xffffffffbba68428
+     0.06%  lean     [unknown]               [k] 0xffffffffbb98266e
+     0.06%  lake     [unknown]               [k] 0xffffffffbc352aea
+     0.06%  lean     [unknown]               [k] 0xffffffffbb92c526
+     0.06%  lean     libHex_HexArith.so      [.] lp_Hex_HexArith_powModNatGo
+     0.06%  lake     [unknown]               [k] 0xffffffffbb985a6d
+     0.06%  lean     libleanshared.so        [.] lean::cmp(lean::mpz const&, lean::mpz const&)
+     0.06%  lake     libleanshared.so        [.] l_Std_DHashMap_Internal_Raw_u2080_insertIfNew___at___00Lean_finalizeImport_spec__5___redArg
+     0.06%  lean     [unknown]               [k] 0xffffffffbba692df
+     0.06%  lean     libleanshared.so        [.] __gmpn_copyd_x86_64
+     0.06%  lean     libleanshared.so        [.] lean_free_object
+     0.06%  lake     [unknown]               [k] 0xffffffffbb985b5c
+     0.06%  lake     libleanshared.so        [.] l_Lean_Meta_DiscrTree_Key_lt
+     0.06%  lean     libleanshared.so        [.] __gmpn_and_n
+     0.06%  lean     [unknown]               [k] 0xffffffffbb985b53
+     0.06%  lake     [unknown]               [k] 0xffffffffbb98599b
+     0.06%  lean     [unknown]               [k] 0xffffffffbba8e2b8
+     0.06%  lean     [unknown]               [k] 0xffffffffbb713942
+     0.06%  lake     libLake_shared.so       [.] l_Lake_LeanLibConfig_isBuildableModule___redArg
+     0.06%  lean     libleanshared.so        [.] l___private_Lean_Compiler_LCNF_Basic_0__Lean_Compiler_LCNF_Arg_updateTypeImp
+     0.06%  lean     libleanshared.so        [.] l_Lean_PersistentEnvExtension_getModuleIREntries___redArg
+     0.06%  lean     libleanshared.so        [.] l_Lean_Compiler_LCNF_hasLocalInst___redArg
+     0.06%  lean     libHex_HexPrimality.so  [.] lp_Hex_Hex_Nat_Sieve_readBits
+     0.06%  lean     libleanshared.so        [.] l_Lean_Level_succ___override
+     0.06%  lean     libleanshared.so        [.] lean_st_ref_set
+     0.06%  lake     [vdso]                  [.] __vdso_clock_gettime
+     0.06%  lean     libleanshared.so        [.] l___private_Init_Data_Array_Basic_0__Array_insertIdx_loop___redArg
+     0.00%  lake     [unknown]               [k] 0xffffffffbb97400f
+     0.00%  taskset  [unknown]               [k] 0xffffffffbc338a8c
+     0.00%  taskset  [unknown]               [k] 0xffffffffbbc828b4
+     0.00%  perf-ex  [unknown]               [k] 0xffffffffbb697298
+     0.00%  taskset  [unknown]               [k] 0xffffffffbb697298
+
+
+#
+# (Tip: Treat branches as callchains: perf record -b ... ; perf report --branch-history)
+#
+Warning:
+Kernel address maps (/proc/{kallsyms,modules}) were restricted.
+
+Check /proc/sys/kernel/kptr_restrict before running 'perf record'.
+
+As no suitable kallsyms nor vmlinux was found, kernel samples
+can't be resolved.
+
+Samples in kernel modules can't be resolved as well.
+

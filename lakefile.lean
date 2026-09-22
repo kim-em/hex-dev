@@ -118,7 +118,9 @@ extern_lib hexnautyffi (pkg) := do
 
 lean_lib Hex where
 
+-- Mathlib-free dependencies and producers called during elaboration.
 lean_lib HexBasic where
+  precompileModules := true
 
 lean_lib HexTruncatedSeries where
 
@@ -1014,7 +1016,7 @@ lean_lib HexConformance where
 
     ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
 
-    ++ #[`HexIntFactor.Conformance,
+    ++ #[`HexIntFactor.Conformance, `HexIntFactor.EcmTables,
       `HexIntFactor.FieldReplay,
       `HexIntFactor.PrimalityConformance].map Glob.one
 

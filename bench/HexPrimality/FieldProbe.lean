@@ -24,6 +24,7 @@ private def runConstruction (n maxBits maxFactors rhoSteps : Nat)
     (trace : Bool) (provider : FactorSearch := Construction.factorSearch) : IO UInt32 := do
   let input ← IO.mkRef n
   let n ← input.get
+  let hb ← IO.getNumHeartbeats
   let start ← IO.monoNanosNow
   let factor : FactorSearch := fun allocation m r =>
     let result := provider allocation m r
@@ -39,11 +40,13 @@ private def runConstruction (n maxBits maxFactors rhoSteps : Nat)
         primeBudget := { constructionBudget.factor.primeBudget with rhoSteps := rhoSteps } } } factor)
   let result ← result.get
   let stop ← IO.monoNanosNow
-  let fields := [("nanos", Lean.toJson (stop - start)),
+  let hbStop ← IO.getNumHeartbeats
+  let fields := [("heartbeats_raw", Lean.toJson (hbStop - hb)), ("nanos", Lean.toJson (stop - start)),
     ("bits", Lean.toJson (n.log2 + 1)), ("over_bit_limit", Lean.toJson (decide (n.log2 + 1 > maxBits)))]
   let fields ← match result with
     | .error f => pure (fields ++ [("status", Lean.toJson (reprStr f.stop)),
-        ("attempts", Lean.toJson f.attempts)])
+        ("attempts", Lean.toJson f.attempts), ("rand", Lean.toJson (reprStr f.rand)),
+        ("events", Lean.toJson (reprStr f.events))])
     | .ok s => do
         let cert ← IO.mkRef s.cert.raw
         let cert ← cert.get
@@ -53,7 +56,8 @@ private def runConstruction (n maxBits maxFactors rhoSteps : Nat)
         let checkStop ← IO.monoNanosNow
         unless checked do throw (IO.userError "invalid certificate")
         pure (fields ++ [("status", Lean.toJson "ok"),
-          ("attempts", Lean.toJson s.attempts),
+          ("attempts", Lean.toJson s.attempts), ("rand", Lean.toJson (reprStr s.rand)),
+          ("events", Lean.toJson (reprStr s.events)),
           ("check_nanos", Lean.toJson (checkStop - checkStart)),
           ("certificate", Lean.toJson (reprStr cert))])
   IO.println (Lean.Json.mkObj fields).compress
