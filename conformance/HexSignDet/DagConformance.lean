@@ -9,6 +9,7 @@ public import HexSignDet.Conformance
 public meta import HexSignDet.Dag
 public meta import HexSignDet.DagEncode
 public meta import HexSignDet.DagReplay
+public meta import HexSignDet.DagExpand
 public meta import HexSignDet.Conformance
 
 public section
@@ -86,6 +87,25 @@ theorem descriptor_kernel :
 @[expose] def badDenominator : Node Rat Nat :=
   {derivativeNode with system :=
     {derivativeNode.system with denominator := derivativeNode.system.denominator + 1}}
+
+set_option maxRecDepth 32768 in
+/-- The general encoding theorem also preserves rejection of a literal forged
+inverse witness. The tree rejection is checked by the ordinary kernel. -/
+theorem encoded_rejected_kernel :
+    check (Dag.encode (.split sharedParent (.leaf derivativeNode) (.leaf badDenominator)))
+      sharedParent.queries = false := by
+  unfold check
+  rw [Dag.check_encode_eq]
+  simp only [Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
+    TarskiCertificate.check, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+/-- Structural expansion retains the forged witness, without assuming that
+its replay is accepted or evaluating any coefficient-sign callback. -/
+theorem invalid_roundtrip :
+    Dag.expand? (Dag.encode (.leaf badDenominator)) = some (.leaf badDenominator) :=
+  Dag.expand_encode _
 
 #guard hash (⟨derivativeNode, none⟩ : Dag.Entry Rat Nat) ==
   hash (⟨badDenominator, none⟩ : Dag.Entry Rat Nat)
@@ -176,5 +196,21 @@ theorem descriptor_kernel :
 /-- info: 'Hex.SignDet.Dag.check_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Dag.check_encode
+
+/-- info: 'Hex.SignDet.Dag.expand_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Dag.expand_encode
+/-- info: 'Hex.SignDet.Dag.replay_expands' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Dag.replay_expands
+/-- info: 'Hex.SignDet.Dag.check_encode_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Dag.check_encode_eq
+/-- info: 'Hex.SignDet.DagConformance.encoded_rejected_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms encoded_rejected_kernel
+/-- info: 'Hex.SignDet.DagConformance.invalid_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms invalid_roundtrip
 
 end Hex.SignDet.DagConformance

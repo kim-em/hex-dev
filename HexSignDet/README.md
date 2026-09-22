@@ -44,7 +44,14 @@ proves that checked graph replay returns that same literal tree with its origina
 caller bindings; `Dag.check_encode` gives Boolean acceptance. The proof follows
 the actual hash-table insertion and recursive encoder, maintaining acceptance
 of every graph entry and exact cache bindings. It uses no root-sum premise.
-Encoder performance accounting remains required. This typed graph also needs a
+`Dag.expand?` reconstructs the literal tree without validating mathematical
+claims. `Dag.expand_encode` proves an exact roundtrip for every tree, including
+malformed witnesses. `Dag.replay_expands` identifies the expansion of an
+arbitrary accepted graph with its checked tree. Consequently
+`Dag.check_encode_eq` proves equality of the graph and tree checker results
+for every input, preserving rejection as well as acceptance. Ordinary-kernel
+probes exercise a forged inverse witness through these theorems.
+Complete encoder performance accounting remains required. This typed graph also needs a
 byte decoder, lower-level coefficient-sign edges and shared verification of the
 domain inside each Tarski certificate.
 
