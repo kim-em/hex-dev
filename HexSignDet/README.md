@@ -31,10 +31,18 @@ entries, forward edges, cycles and missing roots are rejected as well.
 `Dag.descriptor?` consumes that proof directly, checks raw descriptor shape and
 count one, and preserves the complete raw descriptor. Ordinary-kernel probes
 cover the full derivative graph, repeated references to one child, selected-root
-extraction and truncated/cyclic graphs. This typed graph does not yet provide a
-byte decoder, lower-level coefficient-sign edges, automatic deduplication or
-shared verification of the domain inside each Tarski certificate. Those
-integration tasks and measured node/edge/byte costs remain required.
+extraction and truncated/cyclic graphs.
+
+`Dag.encode` converts supplied trees using bottom-up hash consing. It preserves
+first-occurrence order and shares entries only after exact equality of every
+node field and both child indices. Hash collisions, different witnesses and
+stale contexts cannot substitute one literal entry for another. Conformance
+includes deliberately colliding inverse witnesses and repeated internal
+subtrees from the actual producer. Encoding supplies raw evidence; callers use
+`Dag.replay?` to validate it. A general encoder round-trip proof and its
+performance accounting remain required. This typed graph also needs a byte
+decoder, lower-level coefficient-sign edges and shared verification of the
+domain inside each Tarski certificate.
 
 Context, head, interval and query-list bindings use literal equality. Tarski
 polynomial identities use the shared zero-difference checks. Context values

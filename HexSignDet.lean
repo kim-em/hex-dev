@@ -29,3 +29,4 @@ public import HexSignDet.Reencode
 public import HexSignDet.Compare
 
 public import HexSignDet.Dag
+public import HexSignDet.DagEncode

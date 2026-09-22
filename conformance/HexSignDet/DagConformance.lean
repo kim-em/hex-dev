@@ -7,6 +7,7 @@ module
 
 public import HexSignDet.Conformance
 public meta import HexSignDet.Dag
+public meta import HexSignDet.DagEncode
 public meta import HexSignDet.Conformance
 
 public section
@@ -71,6 +72,45 @@ theorem descriptor_kernel :
   decide +kernel
 
 #guard !check ⟨#[], 0⟩ []
+
+-- Encoding preserves first-occurrence order and shares the repeated leaf.
+#guard let encoded := Dag.encode (.split fullNode (.leaf firstNode) (.leaf derivativeNode))
+  encoded.entries == full.entries && encoded.root == full.root && check encoded fullNode.queries
+#guard let encoded := Dag.encode (.split sharedParent (.leaf derivativeNode) (.leaf derivativeNode))
+  encoded.entries == shared.entries && encoded.root == shared.root && check encoded sharedParent.queries
+
+-- These entries collide under the encoder hash but have distinct literal
+-- inverse witnesses. Deduplication must not replace the bad child with the good
+-- one, even though their queries, columns and claimed counts are identical.
+@[expose] def badDenominator : Node Rat Nat :=
+  {derivativeNode with system :=
+    {derivativeNode.system with denominator := derivativeNode.system.denominator + 1}}
+
+#guard hash (⟨derivativeNode, none⟩ : Dag.Entry Rat Nat) ==
+  hash (⟨badDenominator, none⟩ : Dag.Entry Rat Nat)
+#guard (⟨derivativeNode, none⟩ : Dag.Entry Rat Nat) != ⟨badDenominator, none⟩
+#guard let encoded := Dag.encode (.split sharedParent (.leaf derivativeNode) (.leaf badDenominator))
+  encoded.entries.size == 3 && encoded.root == 2 && !check encoded sharedParent.queries
+#guard let encoded := Dag.encode (.split sharedParent
+    (.leaf derivativeNode) (.leaf {derivativeNode with context := 8}))
+  encoded.entries.size == 3 && !check encoded sharedParent.queries
+
+-- A produced four-query tree has seven occurrences but four distinct entries,
+-- including two different leaves and one repeated internal subtree.
+#guard match Sturm.prepare Sturm.orderSign singletonRaw.head singletonRaw.lower singletonRaw.upper with
+  | none => false
+  | some domain =>
+    let qs := [DensePoly.ofCoeffs #[0, 1], 0, DensePoly.ofCoeffs #[0, 1], 0]
+    match buildPrepared (7 : Nat) domain qs with
+    | .error _ => false
+    | .ok tree =>
+      let encoded := Dag.encode tree.val
+      match encoded.replay? Sturm.orderSign 7 singletonRaw.head
+          singletonRaw.lower singletonRaw.upper qs with
+      | none => false
+      | some replay => encoded.entries.size == 4 && encoded.root == 3 &&
+          replay.val.node == tree.val.node
+
 #guard !check {full with root := 3} (singletonRaw.full []).queries
 #guard !check {full with entries := full.entries.pop} (singletonRaw.full []).queries
 #guard !check ⟨#[⟨fullNode, some (0, 0)⟩], 0⟩ fullNode.queries
