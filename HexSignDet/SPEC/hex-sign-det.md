@@ -12,15 +12,6 @@ and theorem statements below remain required shapes unless implemented there;
 registration does not claim phase completion. The combined computational and
 companion assignment is [#10377](https://github.com/kim-em/hex-dev/issues/10377).
 
-Follow the shared [delivery order](../../SPEC/real-closure-execution.md#delivery-order-and-experimental-integration):
-prioritize the prepared-query, sign-table and selected-root operations needed by
-the first real-valued tactic examples. Connect these operations to their consumer
-before completing every remaining operation or detailed performance campaign.
-The tactic remains downstream; it is not implemented in this library. Missing
-semantic foundations do not block executable integration or independent
-conformance. The proofs and Phase-4 evidence below remain final completion gates,
-and computational replay acceptance alone is not semantic soundness.
-
 `HexSignDet`, in namespace `Hex.SignDet`, depends on `HexSturm`, `HexPoly`,
 `HexMatrix`, `HexRowReduce` and `HexRank`. Matrix construction and exact
 rational solving reuse HexMatrix and HexRowReduce; row selection and rank

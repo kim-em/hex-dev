@@ -1200,22 +1200,6 @@ Ordinary ordered-domain pseudo-division is the missing lower arithmetic.
 
 #### Execution policy and implementation boundary
 
-The family follows the shared [delivery order](real-closure-execution.md#delivery-order-and-experimental-integration):
-first demonstrate the real-valued tactic on representative user examples with
-practical end-to-end timings, then complete the remaining proof and detailed
-performance obligations. Integrate available tranches across existing owners
-without waiting for whole-issue closure. Experimental answers, proof assembly
-with tracked admissions, and fully verified proofs are distinct milestones;
-none changes final soundness requirements or phase exit criteria.
-
-Infinitesimals primarily support internal sample construction for ordinary real
-problems. They remain explicit in the exploration API, but are not required in
-the user's tactic statement or for the first ordinary-real sample path. Real
-conclusions from infinitesimal samples still require joint finite-sign
-realization. The Sturm–Tarski, Thom/BKR, coefficient and realization proof gates
-remain distinct; one missing foundation is not a reason to postpone all
-executable integration.
-
 The [shared execution contract](real-closure-execution.md) fixes ordinary
 operation instances including natural casts, an explicit total sign, unique
 stored zero, and semantic polynomial equality through zero differences.

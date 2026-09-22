@@ -7,68 +7,34 @@ benchmarks import no Mathlib. Companions establish their mathematical meaning;
 constructing an algebraic context does not require a companion law theorem.
 This does not put field instances on noncanonical representations.
 
-## Delivery order and experimental integration
+## Experimental proof assembly
 
-The first integration milestone is a useful executable tactic on representative
-ordinary real statements, from source syntax through coefficient preparation,
-root/sign computation, certificate checking and proof assembly. This milestone
-precedes completing every family proof and the detailed Phase-4 performance
-campaigns. It does not change the final mathematical contracts or phase exit
-criteria. Use actual available API tranches; neither whole-issue closure nor
-unrelated upstream performance evidence is a universal start gate.
+An experimental proof-assembly interface must be opt-in and separate from the
+verified tactic. It uses distinct syntax, is not registered with
+`@[rcf_handler]`, and is never invoked by `rcf` dispatch. The verified
+handler's axiom checks and soundness requirements apply unchanged.
 
-The tactic consumer is [#10358](https://github.com/kim-em/hex-dev/issues/10358),
-coordinated under [#10331](https://github.com/kim-em/hex-dev/issues/10331).
-Arithmetic, sign determination and samples remain with their existing owners.
-Select a small suite containing rational compatibility cases, new algebraic
-coefficient cases that exercise the family implementation, and meaningful
-false/refusal cases. Add caller-registered constants when their required APIs
-are available; do not implement bundled constant providers. Passing existing
-rational examples through the old fast path alone is not the new milestone.
+Experimental admissions are confined to named, example-independent foundation
+or correspondence lemmas with the owning SPEC's semantics and required theorem
+shapes. They must describe the actual algorithms. Do not admit a particular
+input's certificate acceptance, authentication or divisor guards, or use an
+admission of the user's goal as a fallback. Generic correspondence lemmas must
+be instantiated at the exact source statement and checked data.
 
-Infinitesimals are primarily internal tools for the real-valued tactic, not
-required syntax in a user's problem. Ordinary real sector points are sufficient
-for initial examples. Infinitesimal construction remains part of the exploration
-API and later algorithms; using it for a real conclusion still requires joint
-finite-sign realization. No symbolic infinitesimal is itself a real witness.
+Admitted declarations belong only in Mathlib-importing experimental modules
+outside the [released managed paths](../scripts/release/released.yml), such as
+`adapters/` for the real-coefficient tactic. Production umbrellas, computational
+libraries and executable benchmarks must not import them. An experimental
+admission must not replace an existing proof, introduce an axiom or manufacture
+a field instance.
 
-Distinguish three kinds of evidence for each example: an executable answer with
-checked data, experimental proof assembly with recorded admissions, and an
-ordinary-kernel proof with an audited axiom set excluding `sorryAx`. Missing
-foundation theorems do not prevent the first two, but prevent the third wherever
-they are dependencies. A computation-only experiment leaves the mathematical
-goal open. An admitted proof is not a verified success.
-
-If experimental proof assembly needs `sorry`, confine it to accurately stated,
-named foundation or correspondence lemmas in explicitly experimental companion
-or tactic modules. Record each admitted declaration, its owning issue and the
-examples that depend on it; audit their transitive axioms. Keep this entry point
-opt-in and separate from the verified `rcf` handler and its soundness tests.
-Never admit the user's goal as a fallback, weaken the intended theorem, replace
-an existing proof with an admission, add an axiom or fabricate a field instance.
-The prohibition on companion proofs depending on sorry-bearing Mathlib-free
-lemmas remains in force. Executable algorithms and checkers must be real
-implementations, not placeholders. This policy does not authorize admissions
-in the production semantic bridge owned by
-[#10389](https://github.com/kim-em/hex-dev/issues/10389).
-
-Track the missing Sturm–Tarski bridge separately from Thom/BKR foundations,
-coefficient interpretation, sample realization and frontend correspondence.
-Finishing #10389 alone does not certify the whole tactic. Preserve independent
-conformance and adversarial replay tests while these proofs are incomplete.
-
-For the initial milestone, record reproducible end-to-end elapsed times with
-the source revision, inputs, invocation, host context and proof status, separating
-compiled execution from elaboration/kernel checking where available. Establish
-practical example budgets before claiming the milestone; failures and timeouts
-remain visible. These observations guide integration and are not Phase-4 scaling
-evidence. Keep canonical algorithms and their specified complexity; this does
-not require proving optimality or running micro-optimization campaigns before
-integration. Profile or optimize when an example exposes a material bottleneck,
-or later to meet a required evidence gate. Detailed scaling, attribution and
-ablation campaigns follow the executable demonstration. Full proofs, axiom
-audits and prescribed performance evidence remain required for final completion;
-partial milestones do not advance phases or close the family assignments.
+The experimental interface must run actual certificate construction and replay.
+Report its computational result and proof status separately. Record admitted
+declarations and their dependent examples in the experimental directory's
+README and audit the examples' transitive axioms. An axiom list containing
+`sorryAx` does not enumerate the admitted declarations. Such a result is not
+verified tactic success and cannot satisfy production soundness or axiom checks.
+A computation-only interface leaves the mathematical goal open.
 
 ## Polynomial coefficients and equality
 
