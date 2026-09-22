@@ -6,11 +6,13 @@
   "settings": {
     "maxHeartbeats": 4000000,
     "maxRecDepth": 1024,
-    "bounds": [
-      32768,
-      524288
-    ],
-    "curves": 64
+    "construction_defaults": {
+      "bounds": [
+        32768,
+        524288
+      ],
+      "curves": 64
+    }
   },
   "arms": {
     "A": {

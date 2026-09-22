@@ -38,14 +38,16 @@ def main():
     p.add_argument('--a', type=Path, required=True)
     p.add_argument('--b', type=Path, required=True)
     p.add_argument('--output', type=Path, required=True)
+    p.add_argument('--module', default=MODULE,
+                   help='construction module name; allows replay of archived layouts')
     p.add_argument('--phase', choices=['construction', 'native', 'residual', 'loading'], default='construction')
     args = p.parse_args()
     if args.output.exists():
         p.error('output already exists')
     paths = dict(A=args.a.resolve(), B=args.b.resolve())
-    module = MODULE
+    module = args.module
     if args.phase in ['residual', 'loading']:
-        module = MODULE.replace('EcmCost', 'Ecm' + args.phase.capitalize())
+        module = args.module.replace('EcmCost', 'Ecm' + args.phase.capitalize())
     measured = Path('bench') / (module.replace('.', '/') + '.lean')
     record = dict(host=platform.node(), platform=platform.platform(), cpu=pick(), phase=args.phase,
         toolchain=(ROOT/'lean-toolchain').read_text().strip(),
@@ -55,7 +57,7 @@ def main():
         settings=dict(maxHeartbeats=4000000 if args.phase in ['construction','residual'] else None,
             maxRecDepth=1024 if args.phase in ['construction','residual'] else None,
             options_note='null means no explicit elaborator option; native executable observes counters only',
-            bounds=[32768,524288], curves=64),
+            construction_defaults=dict(bounds=[32768,524288], curves=64)),
         arms={}, samples=[], complete=False)
     for arm, path in paths.items():
         files = [measured, Path('bench/HexPrimality/FieldProbe.lean'), Path('lakefile.lean'), Path('HexIntFactor/EcmStage2.lean'),
@@ -69,11 +71,10 @@ def main():
     def save():
         args.output.write_text(json.dumps(record, indent=2)+'\n')
     cases = [c for c in corpus() if c['name'] in ['secp256k1','P-384','Curve448','P-521']]
-    module = MODULE if args.phase != 'residual' else MODULE.replace('EcmCost','EcmResidual')
     if args.phase == 'residual':
         cases = [dict(name=n,n='0') for n in ['stage1','stage2','failure','recovery']]
     if args.phase == 'loading':
-        module = MODULE.replace('EcmCost','EcmLoading')
+        module = args.module.replace('EcmCost','EcmLoading')
         cases = [dict(name='imports',n='7')]
     for block in range(4):
         for case in cases:

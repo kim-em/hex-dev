@@ -554,5 +554,9 @@ Reproduce comparisons with `scripts/bench/ecm_cost.py --a CHECKOUT_A --b
 CHECKOUT_B --output OUTPUT.json`; select `--phase native`, `residual` or
 `loading` for the other records. Build both checkouts' producer dependencies
 and `hexprimality_field_probe` first. Restore the differing sources embedded in
-the records to reproduce these exact arms. `scripts/bench/ecm_profile.py`
+the records to reproduce these exact arms, and pass
+`--module HexPrimality.ProofProbe.Curve25519.EcmCost` for their archived module
+layout. The maintained computational diagnostics live under
+`bench/HexPrimality/EcmDiagnostics`; they observe counters and clocks without
+emitting proofs. `scripts/bench/ecm_profile.py`
 records the representative execution profiles and mappings.

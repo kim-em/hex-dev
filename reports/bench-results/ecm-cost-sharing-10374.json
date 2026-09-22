@@ -6,12 +6,14 @@
   "settings": {
     "maxHeartbeats": null,
     "maxRecDepth": null,
-    "bounds": [
-      32768,
-      524288
-    ],
-    "curves": 64,
-    "options_note": "native IO execution has no elaborator limit"
+    "options_note": "native IO execution has no elaborator limit",
+    "construction_defaults": {
+      "bounds": [
+        32768,
+        524288
+      ],
+      "curves": 64
+    }
   },
   "arms": {
     "A": {

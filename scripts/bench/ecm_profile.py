@@ -15,25 +15,27 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.bench.idle_core import pick
-from scripts.bench.ecm_cost import MODULE, SOURCE
+from scripts.bench.ecm_cost import MODULE
 
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('--interpreted', type=Path, required=True)
 p.add_argument('--native', type=Path, required=True)
 p.add_argument('--output', type=Path, required=True)
+p.add_argument('--module', default=MODULE)
 a = p.parse_args()
 if a.output.exists(): p.error('output exists')
 a.output.mkdir(parents=True)
+module_source = Path('bench') / (a.module.replace('.', '/') + '.lean')
 record = dict(cpu=pick(), samples=[], scope='whole fresh module, including import and rendering')
 for arm,path in [('interpreted',a.interpreted.resolve()),('native',a.native.resolve())]:
-    source = (path/SOURCE).read_text() + '''\nopen Lean Elab in
+    source = (path/module_source).read_text() + '''\nopen Lean Elab in
 run_cmd do
   let maps ← IO.FS.readFile "/proc/self/maps"
   for line in maps.splitOn "\\n" do
     if (line.splitOn "Hex_Hex").length > 1 then IO.println s!"LOADED {line}"
 '''
-    module = MODULE.replace('EcmCost','EcmProfile')
-    (path/SOURCE.with_name('EcmProfile.lean')).write_text(source)
+    module = a.module.replace('EcmCost','EcmProfile')
+    (path/module_source.with_name('EcmProfile.lean')).write_text(source)
     artifact = path/'.lake/build/lib/lean'/Path(module.replace('.','/')+'.olean')
     artifact.unlink(missing_ok=True)
     data = Path('/tmp')/f'ecm-10374-{arm}.perf'

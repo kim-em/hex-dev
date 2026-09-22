@@ -19,7 +19,8 @@
     "name-smoke": "\u2139 [79/79] Built HexPrimality.ProofProbe.Curve25519.EcmNamed (587ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/EcmNamed.lean:15:0: ECM_COST {\"attempts\":0,\"certificate\":\"Hex.Nat.PrimeCert.small 7\",\"dispatch_nanos\":68943,\"events\":\"[]\",\"heartbeats_raw\":512,\"nanos\":524076,\"rand\":\"{ state := 7 }\",\"status\":\"ok\"}\nBuild completed successfully (79 jobs).\n",
     "final-dispatch": "\u2139 [109/180] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10374/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2139 [180/180] Built HexPrimality.ProofProbe.Curve25519.EcmCost (608ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/EcmCost.lean:15:0: ECM_COST {\"attempts\":0,\"certificate\":\"Hex.Nat.PrimeCert.small 7\",\"dispatch_nanos\":66649,\"events\":\"[]\",\"heartbeats_raw\":46,\"nanos\":29624,\"rand\":\"{ state := 7 }\",\"status\":\"ok\"}\nBuild completed successfully (180 jobs).\n",
     "diagnostic-modules": "\u2139 [109/185] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10374/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [180/185] Built HexPrimality.EcmDiagnostics.EcmLoading (661ms)\n\u2139 [181/185] Built HexPrimality.EcmDiagnostics.EcmCost (726ms)\ninfo: bench/HexPrimality/EcmDiagnostics/EcmCost.lean:21:0: ECM_COST {\"attempts\":0,\"certificate\":\"Hex.Nat.PrimeCert.small 7\",\"dispatch_nanos\":923098,\"events\":\"[]\",\"heartbeats_raw\":56,\"nanos\":45337,\"rand\":\"{ state := 7 }\",\"status\":\"ok\"}\n\u2139 [182/185] Built HexPrimality.EcmDiagnostics.EcmPreparation (712ms)\ninfo: bench/HexPrimality/EcmDiagnostics/EcmPreparation.lean:15:0: ECM_PREPARATION {\"heartbeats_raw\":74847,\"powers\":3512,\"primes\":39878,\"stage1_nanos\":1714091,\"stage2_nanos\":60961481}\n\u2139 [183/185] Built HexPrimality.EcmDiagnostics.EcmResidual (719ms)\ninfo: bench/HexPrimality/EcmDiagnostics/EcmResidual.lean:17:0: ECM_COST {\"advances\":0,\"attempts\":2,\"batches\":1,\"candidates\":32,\"heartbeats_raw\":3143,\"nanos\":257892,\"result\":\"Hex.Nat.EcmResult.factor 1013\",\"stage1\":\"Hex.Nat.EcmResult.noFactor\",\"stage1_nanos\":39819,\"stage2_nanos\":218073,\"trace\":\"some { result := Hex.Nat.EcmResult.factor 1013,\\n  candidates := 32,\\n  advances := 0,\\n  batches := 1,\\n  recovery := [1013],\\n  lastPrime := 163,\\n  oracleMismatch := false }\"}\n\u2139 [185/185] Built HexIntFactor.EcmTables (1.0s)\ninfo: conformance/HexIntFactor/EcmTables.lean:29:0: ECM schedule conformance passed\nBuild completed successfully (185 jobs).\n",
-    "release-manifest": "release manifest: 57 split repositories + 1 aggregate; paths, CI, pins, import closure, test targets, and topological constraints valid\n"
+    "release-manifest": "release manifest: 57 split repositories + 1 aggregate; paths, CI, pins, import closure, test targets, and topological constraints valid\n",
+    "primality-conformance": "\u2139 [108/404] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10374/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [997/1003] Built HexPrimality.Curve448Replay (288ms)\n\u2714 [998/1003] Built HexPrimality.Curve25519Replay (451ms)\n\u2714 [999/1003] Built HexPrimality.CertificateProducer (511ms)\n\u2714 [1000/1003] Built HexPrimalityMathlibConformance.OptIn (1.6s)\n\u2139 [1001/1003] Built HexPrimality.ConstructionConformance (5.4s)\ninfo: conformance/HexPrimality/ConstructionConformance.lean:299:2: Try this:\n  [apply] exact Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.small 23) (by decide +kernel)\n\u2714 [1002/1003] Built HexPrimalityMathlib.Conformance (4.2s)\n\u2714 [1003/1003] Built HexPrimality.Conformance (1.8s)\nBuild completed successfully (1003 jobs).\n"
   },
   "source_sha256": {
     "HexBasic.lean": "01a3583d9c351051ace352ee61bea8c42afd6d56488a84b94b7127642296c4fb",
@@ -83,31 +84,31 @@
       "samples": 32,
       "complete": true,
       "failures_or_mismatches": [],
-      "sha256": "400bf3ec19c0a74487e03bb38d74287208ebfc9d54afa5037c41d13518b53e8b"
+      "sha256": "c247cd902ec5e4b269a38b3e3a84ba06ef31e1cb53c737c1d775680c19dfdf4d"
     },
     "sharing": {
       "samples": 32,
       "complete": true,
       "failures_or_mismatches": [],
-      "sha256": "f0eac1df2fbad1fde669bb12be9132a33a6fba349634cac87afd1392f50567af"
+      "sha256": "8cebd27ce2aaa411769f970b0a2de966f4d372a1f8a74b490d067b223ce3cd0e"
     },
     "residual-execution": {
       "samples": 32,
       "complete": true,
       "failures_or_mismatches": [],
-      "sha256": "5972cfee2fe83ae02969f78d056c9c66cc1b8f119e69ed83dae80cae4fcca69a"
+      "sha256": "12708828b32612c530b425fa115ead7a1418a03410888a5d983e1d5d6b594b4e"
     },
     "residual-sharing": {
       "samples": 32,
       "complete": true,
       "failures_or_mismatches": [],
-      "sha256": "651f6f9e3142c9a6b70eef0c7c73b4431e94b5f55572c46c835af1e47f74ba51"
+      "sha256": "5d9f9c6f4448d9e71578446b488938c4ab4f2e0c8bd7602e57030c4b7662dbea"
     },
     "loading": {
       "samples": 8,
       "complete": true,
       "failures_or_mismatches": [],
-      "sha256": "16c2c1fbf4a5c10ec73db4ebe45cc25020a739411c9e325facfc15aa40820ce8"
+      "sha256": "8435fa72fb618b8b43d1b8d69e7c7b1308b5eb6aca2afd6c3361f65ffadb2e2a"
     }
   },
   "producer_import_closure": [

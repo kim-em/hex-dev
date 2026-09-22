@@ -6,12 +6,14 @@
   "settings": {
     "maxHeartbeats": null,
     "maxRecDepth": null,
-    "bounds": [
-      32768,
-      524288
-    ],
-    "curves": 64,
-    "options_note": "import-only source uses default Lean options"
+    "options_note": "import-only source uses default Lean options",
+    "construction_defaults": {
+      "bounds": [
+        32768,
+        524288
+      ],
+      "curves": 64
+    }
   },
   "arms": {
     "A": {
