@@ -55,7 +55,9 @@ Complete encoder performance accounting remains required. The versioned
 [byte codec](Codec/README.md) serializes every literal field and checks dimensions,
 indices, earlier references and full context/domain bindings before replay.
 `Dag.decodeBytes` retains the ordinary tree checker's evidence;
-`Dag.decode_replays` connects it to the actual decoded graph. Supplied coefficient
+`Dag.decode_replays` connects it to the actual decoded graph. `Dag.decodeDescriptor`
+uses the same bytes for an exact requested Thom descriptor and preserves every
+raw field through the existing derivative and count-one checks. Supplied coefficient
 and context codecs must preserve their whole values. General codec roundtrip
 proofs, lower-level coefficient-sign edges and performance measurements remain
 required.

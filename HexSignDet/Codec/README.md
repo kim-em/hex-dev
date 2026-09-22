@@ -8,6 +8,12 @@ a decoding limit or failed certificate replay; it does not decide root
 nonexistence. No query producer, root isolation or coefficient refinement runs
 inside decoding or replay.
 
+`Dag.decodeDescriptor` consumes the same bytes for a caller-supplied raw Thom
+descriptor. It reuses the graph descriptor checker, deriving formal derivatives
+from the requested head and indices and requiring count one. The theorem
+`Dag.decodeDescriptor_raw` proves exact preservation of every requested raw
+descriptor field. Wrong derivative slots, signs or contexts are rejected.
+
 `ValueCodec` supplies encoders and decoders for coefficient values and the
 full immutable context. The provided codecs cover canonical `Rat` and `Nat`.
 A composite context must encode all its components, including refinement and

@@ -82,6 +82,35 @@ def Dag.decodeBytes (value : ValueCodec E) (ctx : ValueCodec Ctx) (sign : E → 
   | none => throw "graph replay rejected"
   | some checked => return checked
 
+/-- Decode graph bytes for an exact caller-supplied Thom descriptor. Formal
+derivatives are derived from that descriptor's head and indices by the existing
+checker; no serialized derivative vector or count-one claim is trusted. -/
+def Dag.decodeDescriptor (value : ValueCodec E) (ctx : ValueCodec Ctx) (sign : E → Int)
+    (context : Ctx) (raw : RawDescriptor E Ctx) (input : ByteArray)
+    (limits : Codec.Limits := {}) : Except String (Descriptor E Ctx sign context) := do
+  let dag ← Codec.decodeGraph value ctx context raw.head raw.lower raw.upper input limits
+  match dag.descriptor? sign context raw with
+  | none => throw "descriptor replay rejected"
+  | some d => return d
+
+/-- Descriptor byte replay preserves the entire requested root identity,
+including its exact derivative slots and signs. -/
+theorem Dag.decodeDescriptor_raw (value : ValueCodec E) (ctx : ValueCodec Ctx) (sign : E → Int)
+    (context : Ctx) (raw : RawDescriptor E Ctx) (input : ByteArray) (limits : Codec.Limits)
+    {d : Descriptor E Ctx sign context}
+    (h : decodeDescriptor value ctx sign context raw input limits = .ok d) : d.raw = raw := by
+  unfold decodeDescriptor at h
+  cases hd : Codec.decodeGraph value ctx context raw.head raw.lower raw.upper input limits with
+  | error e => simp [hd, bind, Except.bind] at h
+  | ok dag =>
+    simp only [hd, bind, Except.bind] at h
+    cases hr : dag.descriptor? sign context raw with
+    | none => simp [hr] at h
+    | some result =>
+      simp only [hr, pure, Except.pure, Except.ok.injEq] at h
+      subst d
+      exact Dag.descriptor_raw hr
+
 /-- Acceptance comes from replay of the actual decoded graph. This finite
 correspondence theorem applies to arbitrary supplied bytes and value codecs;
 it does not assume that the bytes were produced by the encoder. -/

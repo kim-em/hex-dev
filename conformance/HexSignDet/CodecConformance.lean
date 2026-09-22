@@ -120,6 +120,24 @@ private def readNode (j : Json) : Bool :=
       (Dag.decodeBytes ValueCodec.rat ctx Sturm.orderSign [7, 2] singletonRaw.head
         singletonRaw.lower singletonRaw.upper tree.val.node.queries bytes).toOption.isNone
 
+#guard match Dag.decodeDescriptor ValueCodec.rat ValueCodec.nat Sturm.orderSign 7
+    (singletonRaw.full [1, 1]) (encoded full) with
+  | .error _ => false
+  | .ok d => d.raw.context == 7 && d.raw.head == singletonRaw.head &&
+      d.raw.indices == [1, 2] && d.raw.signs == [1, 1]
+#guard (Dag.decodeDescriptor ValueCodec.rat ValueCodec.nat Sturm.orderSign 7
+  (singletonRaw.full [-1, 1]) (encoded full)).toOption.isNone
+#guard (Dag.decodeDescriptor ValueCodec.rat ValueCodec.nat Sturm.orderSign 7
+  {singletonRaw.full [1, 1] with indices := [2, 2]} (encoded full)).toOption.isNone
+#guard (Dag.decodeDescriptor ValueCodec.rat ValueCodec.nat Sturm.orderSign 8
+  (singletonRaw.full [1, 1]) (encoded full)).toOption.isNone
+#guard (Dag.decodeDescriptor ValueCodec.rat ValueCodec.nat Sturm.orderSign 7
+  derivativeRaw (encoded full)).toOption.isNone
+
+/-- info: 'Hex.SignDet.Dag.decodeDescriptor_raw' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Dag.decodeDescriptor_raw
+
 -- Empty query lists and zero-root parents retain their actual empty vectors
 -- and rank-zero matrices, rather than being confused with malformed graphs.
 #guard match Sturm.prepare Sturm.orderSign singletonRaw.head singletonRaw.lower singletonRaw.upper with
