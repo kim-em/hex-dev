@@ -216,6 +216,24 @@ performance milestone is claimed here. See the [specification](SPEC/hex-sign-det
 for the complete contract and [#10377](https://github.com/kim-em/hex-dev/issues/10377)
 for the remaining assignment.
 
+The extension conformance target uses the existing `RationalFn Rat` and
+`RationalFn (RationalFn Rat)` coefficient fields with explicit exact signs at
+successive positive infinitesimals. Its independent oracle is pinned to
+`z3-solver==4.15.4.0`, upstream tag `z3-4.15.4`, commit
+`745087e237e669d709ae35694728a0c479e572b3`; the
+[pinned RCF API](https://github.com/Z3Prover/z3/blob/745087e237e669d709ae35694728a0c479e572b3/src/api/python/z3/z3rcf.py)
+constructs roots and compares them exactly. Every fixture records the ordered
+coefficient levels and starts a fresh oracle context. The corrected
+`(εx²−1)(εx³−1)` example exercises the two positive partial descriptors,
+completion, root order, selected signs and cross-polynomial re-encoding without
+a rational separator. Two-level fixtures isolate `δ` from `ε` and `ε+δ` using
+an endpoint `2δ`. Both coefficient levels reject stale descendant contexts,
+missing support children and copied derivative evidence. The oracle separately
+rejects forged counts, reordered roots, altered encodings and context metadata.
+These test-only sign callbacks do not implement the ordered-function provider;
+tower-generated coefficient proofs, nested semantic replay, literal DAG
+serialization and all Phase-4 measurements remain required.
+
 Build the library and its regression target with:
 
 ```sh

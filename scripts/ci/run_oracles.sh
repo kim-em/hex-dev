@@ -59,6 +59,8 @@ ORACLES=(
   "HexRCF|hexrcf_emit_fixtures|scripts/oracle/rcf_flint.py|conformance-fixtures/HexRCF/rcf.jsonl"
   "HexRoots|hexroots_emit_fixtures|scripts/oracle/roots_flint.py|conformance-fixtures/HexRoots/roots.jsonl"
   "HexRealAlgebraic|hexrealalgebraic_emit_fixtures|scripts/oracle/real_algebraic_flint.py|conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl"
+  # Pinned Z3 RCF, exact nested-infinitesimal roots
+  "HexSignDet|hexsigndet_emit_infinitesimal|scripts/oracle/sign_det_z3.py|conformance-fixtures/HexSignDet/infinitesimal.jsonl"
   # SymPy backed
   "HexKronecker|hexkronecker_emit_fixtures|scripts/oracle/kronecker_sympy.py|conformance-fixtures/HexKronecker/identities.jsonl"
   "HexPolyDet|hexpolydet_emit_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexPolyDet/det.jsonl"
@@ -204,9 +206,16 @@ run_tuple() {
     fi
   fi
 
-  if [ "$lib" = "HexSignDet" ]; then
+  if [ "$oracle" = "scripts/oracle/sign_det_flint.py" ]; then
     if ! python3 -m unittest scripts.oracle.test_sign_det_flint; then
       echo "FAIL: $lib :: oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/sign_det_z3.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_sign_det_z3; then
+      echo "FAIL: $lib :: infinitesimal oracle rejection checks failed"
       return 1
     fi
   fi
