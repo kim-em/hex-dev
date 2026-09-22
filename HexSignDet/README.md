@@ -21,6 +21,21 @@ zero counts, and the row basis preserves their order. The scaled left-inverse
 identity is checked directly; no conversion from a differently ordered rank
 witness is assumed.
 
+`Dag.replay?` accepts a topologically ordered array of same-level BKR entries
+and a root index. References address earlier accepted entries only. Each entry
+checks its own query/matrix certificates once; both child edges still bind the
+exact ordered query slices, support product, row product and fixed caller
+context/head/interval. The returned tree shares accepted child values and
+carries a proof of the original `Replay.check` result. Invalid unreachable
+entries, forward edges, cycles and missing roots are rejected as well.
+`Dag.descriptor?` consumes that proof directly, checks raw descriptor shape and
+count one, and preserves the complete raw descriptor. Ordinary-kernel probes
+cover the full derivative graph, repeated references to one child, selected-root
+extraction and truncated/cyclic graphs. This typed graph does not yet provide a
+byte decoder, lower-level coefficient-sign edges, automatic deduplication or
+shared verification of the domain inside each Tarski certificate. Those
+integration tasks and measured node/edge/byte costs remain required.
+
 Context, head, interval and query-list bindings use literal equality. Tarski
 polynomial identities use the shared zero-difference checks. Context values
 must contain the caller's full immutable context data, including any refinement;
