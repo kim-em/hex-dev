@@ -1,0 +1,231 @@
+ℹ [1115/1220] Replayed HexBareiss.Bareiss
+info: HexBareiss/Bareiss.lean:240:2: Try these:
+  [apply] [grind
+    .] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @findPivot? _ #8 #7 #6 #5 #4 #3]
+  [apply] [grind →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind
+    <=] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind! →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @Fin.val #8 #1]
+info: HexBareiss/Bareiss.lean:982:2: Try this:
+  [apply] [grind =] for pattern: [@pivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:990:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @pivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1000:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @pivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1017:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #11 #10 #9 #8 #7 #6 #5 (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #11 #10 #3) + 2) #10, @findPivot? _ #10 #9 #6 (@BareissState.matrix _ #10 #3) (@Fin.mk #10 (@BareissState.step _ #10 #3) _) ((@BareissState.step _ #10 #3) + 1), @pivotLoopWith _ #10 _ #8 #7 _ #5 (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1033:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @pivotLoopWith _ #12 _ _ _ _ #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #13 #12 #5) + 2) #12, @findPivot? _ #12 #11 #8 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) ((@BareissState.step _ #12 #5) + 1), @some (Fin _) #2, @pivotLoopWith _ #12 _ #10 #9 _ #7 (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1141:2: Try this:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:1149:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @noPivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1158:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1168:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1185:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector #11 #10) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @getElem (Vector _ _) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3]
+info: HexBareiss/Bareiss.lean:1660:2: Try this:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1665:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1671:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1685:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #5 #3) + 2) #5, @pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1697:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #7 #5) + 2) #7, @some (Fin _) #2, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1729:2: Try this:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1734:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1740:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1747:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1761:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector `[Int] #5) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @getElem (Vector `[Int] _) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3]
+⚠ [2654/2735] Replayed HexMatrixMathlib.Packed
+warning: HexMatrixMathlib/Packed.lean:141:10: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexMatrixMathlib/Packed.lean:149:10: `if_neg` has been deprecated: Use `ite_eq_right` instead
+⚠ [2843/2940] Replayed HexMvPolyMathlib.Equiv
+warning: HexMvPolyMathlib/Equiv.lean:193:4: `MvPolynomial.coeff_add` has been deprecated: Use `AddMonoidAlgebra.coeff_add` instead
+
+Note: The updated constant has a different type:
+  ∀ {R : Type u_1} {M : Type u_4} [inst : Semiring R] (x y : AddMonoidAlgebra R M), (x + y).coeff = x.coeff + y.coeff
+instead of
+  ∀ {R : Type u} {σ : Type u_1} [inst : CommSemiring R] (m : σ →₀ ℕ) (p q : MvPolynomial σ R),
+    (p + q).coeff m = p.coeff m + q.coeff m
+
+Note: The updated constant is in a different namespace. Dot notation may need to be changed (e.g., from `x.coeff_add` to `AddMonoidAlgebra.coeff_add x`).
+⚠ [2845/2940] Replayed HexMvPolyMathlib.Aeval
+warning: HexMvPolyMathlib/Aeval.lean:63:0: automatically included section variable(s) unused in theorem `HexMvPolyMathlib.eval₂_toMvPolynomial`:
+  [BEq R]
+  [LawfulBEq R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [BEq R] [LawfulBEq R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [2859/2940] Replayed HexPolyDetMathlib.Sound
+warning: HexPolyDetMathlib/Sound.lean:22:8: Overlapping instance parameters in `check_of_ok`:
+
+⚠️ `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.
+💡️ Of these, `[Std.TransCmp cmp]` may be removed.
+⚠️ `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.
+💡️ Of these, `[Std.LawfulEqCmp cmp]` may be removed.
+
+Note: This linter can be disabled with `set_option linter.overlappingInstances false`
+warning: HexPolyDetMathlib/Sound.lean:31:8: Overlapping instance parameters in `produce_check`:
+
+⚠️ `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.
+💡️ Of these, `[Std.TransCmp cmp]` may be removed.
+⚠️ `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.
+💡️ Of these, `[Std.LawfulEqCmp cmp]` may be removed.
+
+Note: This linter can be disabled with `set_option linter.overlappingInstances false`
+warning: HexPolyDetMathlib/Sound.lean:250:20: This simp argument is unused:
+  mul_assoc
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [pow_succ]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexPolyDetMathlib/Sound.lean:314:5: Variable name `hd` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _hd
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexPolyDetMathlib/Sound.lean:391:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_row`:
+  [CommRing S]
+  D
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [CommRing S] D in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexPolyDetMathlib/Sound.lean:400:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_replace`:
+  [CommRing S]
+  D
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [CommRing S] D in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexPolyDetMathlib/Sound.lean:454:20: This simp argument is unused:
+  mul_assoc
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [pow_succ, mul_left_comm, mul_comm]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexPolyDetMathlib/Sound.lean:454:31: This simp argument is unused:
+  mul_left_comm
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [pow_succ, mul_assoc, mul_comm]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexPolyDetMathlib/Sound.lean:621:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexPolyDetMathlib/Sound.lean:693:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.transport_det`:
+  [DecidableEq C]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq C] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexPolyDetMathlib/Sound.lean:838:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.identify`:
+  [CommRing F]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [CommRing F] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [2904/2940] Replayed HexPolyDetMathlib.Packed
+warning: HexPolyDetMathlib/Packed.lean:71:37: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: HexPolyDetMathlib/Packed.lean:80:38: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexPolyDetMathlib/Packed.lean:80:38: This simp argument is unused:
+  if_pos rfl
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [entry_replicate] at he
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexPolyDetMathlib/Packed.lean:276:12: This simp argument is unused:
+  MvPolynomial.eval₂Hom_monomial
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [MvPolynomial.monomial_eq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✖ [2940/2940] Building Determinant.Arithmetic (1.6s)
+trace: .> LEAN_PATH=/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/subverso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/MD4Lean/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/illuminate/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/Cli/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/batteries/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/Qq/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/aesop/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/importGraph/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/plausible/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/verso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/NautyFFI/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/lean-bench/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/mathlib/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/build/lib/lean /home/kim/.elan/toolchains/leanprover--lean4---v4.34.0/bin/lean /home/kim/worktrees/hex-dev/hex-dev-issue-10320/experiments/Determinant/Arithmetic.lean -o /home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/build/lib/lean/Determinant/Arithmetic.olean -i /home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/build/lib/lean/Determinant/Arithmetic.ilean -c /home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/build/ir/Determinant/Arithmetic.c --setup /home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/build/ir/Determinant/Arithmetic.setup.json --json
+error: experiments/Determinant/Arithmetic.lean:20:19: failed to synthesize instance of type class
+  GetElem? (ExprMap (Cert intRing)) Q(ℤ) ?m.16 ?m.17
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
+error: experiments/Determinant/Arithmetic.lean:64:2: Unknown identifier `AtomM.run`
+Some required targets logged failures:
+- Determinant.Arithmetic
+error: build failed

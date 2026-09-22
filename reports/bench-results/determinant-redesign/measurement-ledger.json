@@ -1,0 +1,47 @@
+{
+  "elapsed_seconds": 229.74942688108422,
+  "batches": [
+    {
+      "batch": "arithmetic",
+      "state": "finished",
+      "exit_status": 1,
+      "elapsed_seconds": 64.0423476510914,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "arithmetic-direct",
+      "state": "finished",
+      "exit_status": 1,
+      "elapsed_seconds": 64.04193034104537,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "arithmetic-threshold",
+      "state": "finished",
+      "exit_status": 1,
+      "elapsed_seconds": 24.41463885293342,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "arithmetic-typed",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 29.519538401975296,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "full",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 47.730971634038724,
+      "limit_seconds": 240
+    }
+  ],
+  "policy": {
+    "invocation_limit_seconds": 60,
+    "batch_limit_seconds": 240,
+    "next_decision_before_total_seconds": 1800,
+    "serial": true,
+    "memory_cap": null
+  }
+}
