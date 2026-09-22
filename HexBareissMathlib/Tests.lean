@@ -5,12 +5,14 @@ Authors: Kim Morrison
 -/
 import HexBareissMathlib
 import Mathlib.Data.ZMod.Basic
+import Mathlib.Tactic.NormDet
+import Mathlib.Tactic.Ring
 
 /-! Build-only examples for the kernel determinant certificate and the `det`
 tactic: a hand-written certificate discharged in the kernel, and the tactic in both orientations, on the four literal syntaxes, behind
 definitions, on rational entries, on the empty matrix, on odd and even
 dimensions with pivot swaps, on singular inputs, on a false target, on
-symbolic entries (through `norm_det`), with `det` and `det%` leaving the
+explicit rejection of unsupported symbolic entries, with `det` and `det%` leaving the
 ordinary `det` identifiers untouched, and the axiom audit. -/
 
 open Hex Hex.Matrix HexMatrixMathlib
@@ -102,18 +104,18 @@ example : detTestLit.det = (det% detTestLit).value := (det% detTestLit).proof
 example : (det% !![1, 2; 3, 4]).value = -2 := rfl
 example : (det% (!![1 / 2, -1; 3, 5 / 3] : Matrix (Fin 2) (Fin 2) ℚ)).value = 23 / 6 := rfl
 
--- the simp set; symbolic entries and other carriers go through `norm_det`, which
--- normalizes the determinant as `eval_det` does and leaves the rest to `ring`
+-- Mathlib is imported, but neither Hex entry point may call its determinant tactic.
 example : Matrix.det (R := ℤ) !![1, 2; 3, 4] = -2 := by simp only [Hex.norm_det]
 example : Matrix.det (R := ℚ) !![1 / 2, -1; 3, 5 / 3] = 23 / 6 := by simp only [Hex.norm_det]
 example (a b c d : ℤ) : Matrix.det !![a, b; c, d] = a * d - b * c := by
-  simp only [Hex.norm_det]
-  ring
-example (a b c d : ℤ) : Matrix.det !![a, b; c, d] = a * d - b * c := by
-  det
+  fail_if_success simp only [Hex.norm_det]
+  fail_if_success det
+  simp only [_root_.norm_det]
   ring
 example : Matrix.det (R := ZMod 7) !![1, 2; 3, 4] = 5 := by
-  det
+  fail_if_success simp only [Hex.norm_det]
+  fail_if_success det
+  simp only [_root_.norm_det]
   decide
 
 /-- error: det: the target is false: the determinant is -32 -/
@@ -140,8 +142,8 @@ example : Matrix.det (Matrix.of ![![(1 : ℤ), 2], detRowFn]) = -2 := by det
 /-- A closed value that `norm_num` does not evaluate. -/
 def detTarget : ℤ := -2
 
--- declined as a value, so the simp set rewrites the determinant and, as with
--- `eval_det`, leaves the rest of the goal
+-- The Hex certificate still rewrites a closed numeric determinant when its
+-- target is not directly evaluable, leaving the value equality.
 example : Matrix.det (R := ℤ) !![1, 2; 3, 4] = detTarget := by
   det
   rfl
@@ -190,7 +192,7 @@ run_cmd do
   let handlers := (tacticElabAttribute.getEntries (← getEnv)
     ``HexMatrixMathlib.Det.detTac).map (·.declName)
   unless handlers ==
-      [``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.detFallback] do
+      [``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.detDiagnostic] do
     throwError "unexpected shipped det handler order: {handlers}"
 
 /-! Numeric delegation must be tested with the numeric handler first. A stub
@@ -210,7 +212,7 @@ run_cmd do
     ``HexMatrixMathlib.Det.detTac).map (·.declName)
   unless handlers ==
       [``HexMatrixMathlib.Det.evalDetTac, ``detStub,
-        ``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.detFallback] do
+        ``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.detDiagnostic] do
     throwError "unexpected det handler order: {handlers}"
 
 /-- info: det stub -/
@@ -247,8 +249,8 @@ example (h : Matrix.det (R := ℤ) !![1, 2; 3, 4] = 1) :
 example (_h : Matrix.det (R := ℤ) !![1] = 1) :
     Matrix.det (R := ℤ) !![1] = 1 := by det
 
--- A closed value that cannot be evaluated uses the numeric handler's simp
--- fallback, without reaching the stub or losing the remaining goal.
+-- A closed value that cannot be evaluated uses Hex certificate normalization
+-- without reaching the stub or losing the remaining goal.
 #guard_msgs in
 example (_h : Matrix.det (R := ℤ) !![1, 2; 3, 4] = detTarget) :
     Matrix.det (R := ℤ) !![1, 2; 3, 4] = detTarget := by

@@ -44,16 +44,11 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
   trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "certificate-attempt")]).compress}"
   return ← HexMatrixMathlib.DetPoly.Frontend.compute A rhs? recognized?
 
-/-- Preserve the diagnostic if Mathlib cannot close the original goal. The
-symbolic attempt is never repeated through a simproc. -/
-def fallback (msg : MessageData) : Tactic.TacticM Unit := do
-  trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "fallback"),
+/-- Report a symbolic decline without invoking another determinant tactic. -/
+def decline (msg : MessageData) : Tactic.TacticM Unit := do
+  trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "declined"),
     ("reason", toJson (← msg.toString))]).compress}"
-  Tactic.evalTactic (← `(tactic| simp (config := { failIfUnchanged := false }) only [_root_.norm_det]))
-  unless (← Tactic.getGoals).isEmpty do
-    try Tactic.evalTactic (← `(tactic| all_goals ring)) catch _ => pure ()
-  unless (← Tactic.getGoals).isEmpty do
-    throwError "det: symbolic determinant declined: {msg}"
+  throwError "det: symbolic determinant declined: {msg}"
 
 /-- Importing this companion opts into symbolic `det`. Numeric goals delegate
 before any symbolic reification; Lean tries this later registration first. -/
@@ -64,7 +59,7 @@ def evalDet : Tactic.Tactic := fun _ => Tactic.withMainContext do
   if let .success _ ← HexMatrixMathlib.Det.recognize A then throwUnsupportedSyntax
   match ← compute A rhs with
   | .notApplicable _ => throwUnsupportedSyntax
-  | .declined msg => fallback msg
+  | .declined msg => decline msg
   | .success p =>
     if ← isDefEq p.value rhs then
       let proof ← if reverse then mkEqSymm p.proof else pure p.proof
@@ -96,7 +91,7 @@ def evalDet : Tactic.Tactic := fun _ => Tactic.withMainContext do
           let proof ← if reverse then mkEqSymm p.proof else pure p.proof
           Tactic.closeMainGoal `det proof
         | .notApplicable _ | .declined _ =>
-          fallback m!"structural formula did not close the target: {e.toMessageData}"
+          decline m!"structural formula did not close the target: {e.toMessageData}"
 
 /-- The symbolic term form uses the existing syntax kind and result record. -/
 @[term_elab HexMatrixMathlib.Det.detTerm]
@@ -123,13 +118,13 @@ end HexPolyDetMathlib
 
 open Lean Meta in
 /-- Opt-in symbolic determinant simplification. The published `Hex.norm_det`
-keeps its numeric path and unmodified Mathlib fallback. -/
+keeps its numeric certificate path. Neither simproc invokes Mathlib's `norm_det`. -/
 simproc_decl Hex.normPolyDet (Matrix.det _) := fun e => do
   if let .success _ ← HexMatrixMathlib.Det.recognize e.appArg! then
     return ← Hex.norm_det e
   match ← HexPolyDetMathlib.compute e.appArg! with
   | .success p => return .done { expr := p.value, proof? := some p.proof }
   | .notApplicable msg | .declined msg =>
-    trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "fallback"),
+    trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "declined"),
       ("reason", toJson (← msg.toString))]).compress}"
-    _root_.norm_det e
+    return .continue

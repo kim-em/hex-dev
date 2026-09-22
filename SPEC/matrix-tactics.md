@@ -64,10 +64,10 @@ Rules that follow from the table:
   handler reports `notApplicable` for them. For `rank` that handler is specified in
   [hex-generic-rank-mathlib](../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md), with
   the three outputs (generic, conditional, locus) that a symbolic rank may
-  take. Until a symbolic handler exists for an operation, a Mathlib tactic
-  that also handles symbolic input (`norm_det`) is composed as the fallback
-  of the Hex tactic in one explicit simp set, so no input that Mathlib
-  accepts today regresses.
+  take. Determinant tactics and simprocs invoke only Hex determinant paths.
+  They must not call Mathlib's `norm_det` or `eval_det` on an unsupported input
+  or decline. A user may invoke those tactics explicitly. A decline is a
+  capability result, never a successful Hex performance sample.
 
 ## Outcome protocol and diagnostics
 
@@ -106,8 +106,8 @@ fragment; otherwise the last diagnostic handler can mask an extension error.
 The diagnostic handler reclassifies and reports `rank: not applicable: …`
 or `det: not applicable: …` when no handler accepts. For determinant
 equations, the last-resort handler first tries `simp only [Hex.norm_det]`,
-preserving Mathlib's symbolic and other-carrier normalization. The numeric
-`det` handler also retains that simp fallback for an in-fragment capability
+using only the Hex numeric certificate. The numeric
+`det` handler also retains that Hex certificate normalization for an in-fragment capability
 decline. Errors raised during simp, including producer failures and rejected
 certificates, propagate unchanged; only a no-progress result is replaced
 with the classification or capability diagnostic.
@@ -272,11 +272,18 @@ superior" means both:
   on that regime. The symbolic `det` arm of
   [hex-poly-det-mathlib](Libraries/hex-poly-det-mathlib.md) is the first
   use.)
-- **scope**: every input the Mathlib tactic accepts is accepted (or, for
-  symbolic entries, delegated to it inside the same tactic), and at least
+- **scope**: every input the Mathlib tactic accepts is accepted by Hex, and at least
   one class of input beyond it is accepted: `fun i j => …` and
   `Matrix.ofArray` literals, definitions unfolded within a budget, `ℚ`
   entries, the empty and rectangular shapes, the `%` term forms.
+
+Coverage must be reported per declared arm and across the whole advertised
+interface. A numeric-only arm does not establish full Mathlib scope coverage by
+delegating symbolic inputs. The existing numeric `det` remains available as an
+explicitly selected integer/rational certificate API; its measurements support
+claims on those families, not unrestricted superiority to Mathlib. Unsupported
+carriers and symbolic inputs require a Hex extension or an explicit user choice
+of another tactic. A decline is never a scope success.
 
 The comparators are the unmodified pinned `eval_det`/`norm_det`
 (`Mathlib/Tactic/NormDet.lean`, Bird's algorithm with a certificate chain

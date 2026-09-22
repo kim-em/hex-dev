@@ -59,11 +59,10 @@ example : Matrix.det (R := ℚ) !![1 / 2, -1; 3, 5 / 3] = 23 / 6 := by det
 #check (det% !![1, 2; 3, 4]).proof
 -- (det% !![1, 2; 3, 4]).proof : Matrix.det !![1, 2; 3, 4] = -2
 
--- `Hex.norm_det` is the same certificate as a simproc, with Mathlib's
--- `norm_det` as its fallback for symbolic entries.
-example (a b c d : ℤ) : Matrix.det !![a, b; c, d] = a * d - b * c := by
+-- `Hex.norm_det` uses the same Hex certificate as a simproc.
+-- Unsupported inputs are unchanged; it never invokes Mathlib's `norm_det`.
+example : Matrix.det (R := ℤ) !![1, 2; 3, 4] = -2 := by
   simp only [Hex.norm_det]
-  ring
 ```
 
 # Functionality
@@ -84,7 +83,8 @@ example (a b c d : ℤ) : Matrix.det !![a, b; c, d] = a * d - b * c := by
   determinants of closed integer and rational literals (`!![…]`,
   `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray`), checked in the
   kernel as a triangularization, faster than Mathlib's `eval_det` on every
-  shared family, with `norm_det` composed as the fallback.
+  measured shared family. The tactic reports unsupported inputs; the simproc
+  leaves them unchanged.
 
 `Rat` can use the generic correspondence directly. Multivariate polynomials
 also have Mathlib ring structures, supplied separately by `HexMvPolyMathlib`.

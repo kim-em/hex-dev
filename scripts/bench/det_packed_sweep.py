@@ -25,7 +25,7 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.bench import fresh_module_sweep as sweep
-from scripts.bench.det_symbolic_sweep import AXIOMS, cpu_lease, routes
+from scripts.bench.det_symbolic_sweep import AXIOMS, cpu_lease, routes, failed_build
 from scripts.bench.det_packed_report import audit_dispatch
 from scripts.bench.det_packed_table import selected_tables
 from scripts.bench.det_bench_limits import TimeoutFrontier, reserve, supervise, STAGE_SECONDS
@@ -81,6 +81,7 @@ def main(deadline=None):
         absolute_only=True, extra_sources=(LIST_TABLE, Path('scripts/bench/det_packed_manifest.json'),
         Path('scripts/bench/det_packed_probes.py'), Path('scripts/bench/det_packed_table.py'),
         Path('scripts/bench/det_packed_report.py'), Path('scripts/bench/det_bench_limits.py'),
+        Path('scripts/bench/det_symbolic_sweep.py'),
         Path('bench/HexPolyDet/PackedBench.lean'),
         *(Path('bench/HexPolyDetMathlib/ProofProbe') / f'Packed{s}Profile.lean' for s in manifest['profiles'].values()),
         *(Path('bench/HexPolyDet/packed-inputs') / (c['stem'] + '.json') for c in cases)))
@@ -162,7 +163,7 @@ def main(deadline=None):
             state = result.get('state', 'failed')
             if state == 'timeout' and timeout < 45:
                 state = 'skipped-budget'
-            return dict(result, state=state, error=str(e))
+            return failed_build(dict(result, state=state), e)
 
     if args.stage == 'classify':
         if remaining() > 0:
@@ -200,7 +201,9 @@ def main(deadline=None):
                 certificates = [e for e in events if e['route'].startswith(('packed/', 'term-list'))]
                 classified[stem] = dict(native, native=dict(native), frontend=frontend)
                 result = classified[stem]
-                if frontend['state'] != 'complete':
+                if frontend['state'] in ['declined', 'not-applicable']:
+                    result.update(classification='overall-decline', frontend_routes=events)
+                elif frontend['state'] != 'complete':
                     result.update(classification='frontend-failure')
                 elif len(certificates) == 1:
                     event = certificates[0]
@@ -209,7 +212,7 @@ def main(deadline=None):
                     result.update(classification='eligible' if event['route'] == 'packed/plain' else 'packed-decline',
                         selection=dict(native['selection'], products=products, route=event['route']),
                         entries=event.get('entries', 'list'))
-                elif any(e['route'] == 'fallback' for e in events):
+                elif any(e['route'] in ['declined', 'not-applicable', 'fallback'] for e in events):
                     result.update(classification='overall-decline', frontend_routes=events)
                 else:
                     result.update(classification='frontend-failure', frontend_routes=events)

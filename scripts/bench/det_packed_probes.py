@@ -134,7 +134,7 @@ def main():
         crossover_keys=['packedBits','leftSupport','rightSize','resultSupport','inner'],
         limits=dict(digits=65536,bits=16777216,seconds=45), profiles=profiles,
         schedule='six adjacent pairs, trial-major rotation, AB/BA, retained failures and declines',
-        stages=['forced term-list versus forced packed on identical witnesses','fixed-table dispatch versus unmodified Mathlib norm_det']),indent=2)+'\n')
+        stages=['forced term-list versus forced packed on identical witnesses','Hex-only fixed-table dispatch versus unmodified Mathlib norm_det; declines are not completions']),indent=2)+'\n')
     print(f'{len(cases)} cases; {len(infeasible)} infeasible cells; {len(profiles)} profiles')
 
 if __name__ == '__main__':

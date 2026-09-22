@@ -3,7 +3,7 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexPolyDetMathlib.Tactic
+import HexPolyDetMathlib.NoFallbackTests
 import Mathlib.Tactic.NormDet
 import Mathlib.Algebra.QuadraticAlgebra.Basic
 import Mathlib.Algebra.Field.ZMod
@@ -50,7 +50,7 @@ example (x y : Int) (h : Matrix.det !![x, 1; 1, x] = y) :
   fail_if_success det
   exact h
 
--- The composed fallback remains available on unsupported positive characteristic.
+-- The Hex small-formula route handles positive characteristic.
 example (x : ZMod 3) : Matrix.det !![x, 1; 1, x] = x ^ 2 - 1 := by
   det
 
@@ -114,7 +114,7 @@ namespace HexPolyDetTests
 
 open Lean Elab Tactic Meta in
 /-- Regression helper requiring the polynomial certificate, without the small
-formula route or Mathlib fallback. -/
+formula route. -/
 elab "certificate_det" : tactic => withMainContext do
   let target ← instantiateMVars (← getMainTarget)
   let some (A, rhs, reverse) := HexMatrixMathlib.Det.detTarget? target |
@@ -267,12 +267,12 @@ example (x : Int) : (symbolicMatrix x).det = x ^ 2 - 1 := by det
 example (x : Int) : (symbolicMatrix x).det = (det% (symbolicMatrix x)).value :=
   (det% (symbolicMatrix x)).proof
 
--- A new target atom forces a polynomial decline; the composed fallback closes it.
+-- The Hex structural formula can compare a target containing a canceled atom.
 example (x y : Int) :
     Matrix.det !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x] =
       x ^ 4 - 3 * x ^ 2 + 1 + y - y := by det
 
--- Numeric delegation and its Hex simp fallback retain their original behavior.
+-- Numeric delegation may still normalize using a Hex certificate.
 example (y : Int) (h : y = -2) : Matrix.det !![(1 : Int), 2; 3, 4] = y := by
   det
   exact h.symm
@@ -704,3 +704,50 @@ theorem assignedProof {α : Type u} (x : α) : x = x := by
 #print axioms assignedProof
 
 end ComponentTests
+
+-- Exceeding Hex's dimension budget cannot invoke Mathlib, even when imported.
+example (x : Int) (h : ∀ A : Matrix (Fin 17) (Fin 17) Int, A.det = x ^ 17) :
+    Matrix.det !![
+    x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x, 0;
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x] = x ^ 17 := by
+  run_tac do
+    let saved ← Lean.Elab.Tactic.saveState
+    let failure ← try
+      Lean.Elab.Tactic.evalTactic (← `(tactic| det))
+      pure none
+    catch e => pure (some e)
+    saved.restore
+    let some failure := failure | throwError "expected the dimension-budget decline"
+    unless (← failure.toMessageData.toString) ==
+        "det: symbolic determinant declined: dimension budget exhausted (limit 16)" do
+      throwError "unexpected failure: {failure.toMessageData}"
+  fail_if_success simp only [Hex.normPolyDet]
+  exact h _
+
+/-- error: det: symbolic determinant declined: target is not a ring expression in the matrix atoms -/
+#guard_msgs in
+example (x y : Int) :
+    Matrix.det !![x, 1, 2, 3; 4, x, 5, 6; 7, 8, x, 9; 10, 11, 12, x] =
+      x ^ 4 - 262 * x ^ 2 + 1794 * x - 2457 + y - y := by det
+
+-- The same declined identity is accepted only when the caller explicitly chooses Mathlib.
+example (x y : Int) :
+    Matrix.det !![x, 1, 2, 3; 4, x, 5, 6; 7, 8, x, 9; 10, 11, 12, x] =
+      x ^ 4 - 262 * x ^ 2 + 1794 * x - 2457 + y - y := by
+  simp only [norm_det]
+  ring
