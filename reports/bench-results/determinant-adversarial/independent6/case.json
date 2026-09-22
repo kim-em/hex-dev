@@ -1,0 +1,14 @@
+{
+  "family": "independent",
+  "n": 6,
+  "atoms": 2,
+  "degree": 1,
+  "support": 3,
+  "bits": 2,
+  "modulus": 0,
+  "seed": 10320,
+  "entry_form": "factored",
+  "diagnostic": false,
+  "rational": false,
+  "target": "expanded"
+}

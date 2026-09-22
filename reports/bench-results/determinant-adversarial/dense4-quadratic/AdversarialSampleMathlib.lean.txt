@@ -1,0 +1,20 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Deferred
+import Mathlib.Tactic.NormDet
+import Mathlib.Data.ZMod.Basic
+open Determinant
+set_option maxHeartbeats 0
+set_option maxRecDepth 10000
+set_option Elab.async false
+set_option profiler false
+namespace Determinant.Adversarial
+variable {S : Type} [CommRing S]
+#measure_decl theorem result (x0 x1 : S) :
+    Matrix.det (!![(((1 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (1 : Nat))) + ((2 : S) * (x1 ^ (2 : Nat))) + ((-1 : S) * (x1 ^ (1 : Nat)))), (((1 : S) * (x0 ^ (2 : Nat))) + ((1 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (1 : Nat))) + ((3 : S) * (x1 ^ (1 : Nat)))), (((3 : S) * (x0 ^ (1 : Nat))) + ((-2 : S) * (x1 ^ (1 : Nat))) + ((-3 : S))), (((-2 : S) * (x0 ^ (1 : Nat))) + ((1 : S) * (x1 ^ (1 : Nat))) + ((3 : S))); (((1 : S) * (x0 ^ (2 : Nat))) + ((-3 : S) * (x0 ^ (1 : Nat))) + ((3 : S) * (x1 ^ (1 : Nat)))), (((-3 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (1 : Nat))) + ((-3 : S) * (x0 ^ (1 : Nat))) + ((2 : S))), (((-1 : S) * (x0 ^ (2 : Nat))) + ((1 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (1 : Nat))) + ((-3 : S))), (((2 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (1 : Nat))) + ((-2 : S) * (x1 ^ (2 : Nat))) + ((-1 : S) * (x1 ^ (1 : Nat)))); (((3 : S) * (x0 ^ (2 : Nat))) + ((-3 : S) * (x1 ^ (1 : Nat))) + ((1 : S))), (((-3 : S) * (x0 ^ (2 : Nat))) + ((-2 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (1 : Nat))) + ((1 : S) * (x1 ^ (2 : Nat)))), (((1 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (1 : Nat))) + ((3 : S) * (x1 ^ (1 : Nat))) + ((2 : S))), (((-3 : S) * (x1 ^ (2 : Nat))) + ((2 : S) * (x1 ^ (1 : Nat))) + ((-2 : S))); (((2 : S) * (x0 ^ (2 : Nat))) + ((-1 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (1 : Nat))) + ((-2 : S) * (x1 ^ (2 : Nat)))), (((-1 : S) * (x0 ^ (2 : Nat))) + ((-1 : S) * (x1 ^ (2 : Nat))) + ((1 : S))), (((3 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (1 : Nat))) + ((2 : S) * (x0 ^ (1 : Nat))) + ((2 : S) * (x1 ^ (2 : Nat)))), (((1 : S) * (x0 ^ (1 : Nat))) + ((-3 : S) * (x1 ^ (2 : Nat))) + ((3 : S)))] : Matrix (Fin 4) (Fin 4) S) = (((-9 : S) * (x0 ^ (7 : Nat))) + ((-11 : S) * (x0 ^ (6 : Nat)) * (x1 ^ (2 : Nat))) + ((-3 : S) * (x0 ^ (6 : Nat)) * (x1 ^ (1 : Nat))) + ((-25 : S) * (x0 ^ (6 : Nat))) + ((-27 : S) * (x0 ^ (5 : Nat)) * (x1 ^ (3 : Nat))) + ((50 : S) * (x0 ^ (5 : Nat)) * (x1 ^ (2 : Nat))) + ((145 : S) * (x0 ^ (5 : Nat)) * (x1 ^ (1 : Nat))) + ((86 : S) * (x0 ^ (5 : Nat))) + ((-27 : S) * (x0 ^ (4 : Nat)) * (x1 ^ (4 : Nat))) + ((-71 : S) * (x0 ^ (4 : Nat)) * (x1 ^ (3 : Nat))) + ((-199 : S) * (x0 ^ (4 : Nat)) * (x1 ^ (2 : Nat))) + ((-334 : S) * (x0 ^ (4 : Nat)) * (x1 ^ (1 : Nat))) + ((6 : S) * (x0 ^ (4 : Nat))) + ((-17 : S) * (x0 ^ (3 : Nat)) * (x1 ^ (5 : Nat))) + ((125 : S) * (x0 ^ (3 : Nat)) * (x1 ^ (4 : Nat))) + ((51 : S) * (x0 ^ (3 : Nat)) * (x1 ^ (3 : Nat))) + ((31 : S) * (x0 ^ (3 : Nat)) * (x1 ^ (2 : Nat))) + ((-95 : S) * (x0 ^ (3 : Nat)) * (x1 ^ (1 : Nat))) + ((-146 : S) * (x0 ^ (3 : Nat))) + ((-22 : S) * (x0 ^ (2 : Nat)) * (x1 ^ (6 : Nat))) + ((2 : S) * (x0 ^ (2 : Nat)) * (x1 ^ (5 : Nat))) + ((369 : S) * (x0 ^ (2 : Nat)) * (x1 ^ (4 : Nat))) + ((58 : S) * (x0 ^ (2 : Nat)) * (x1 ^ (3 : Nat))) + ((-161 : S) * (x0 ^ (2 : Nat)) * (x1 ^ (2 : Nat))) + ((62 : S) * (x0 ^ (2 : Nat)) * (x1 ^ (1 : Nat))) + ((46 : S) * (x0 ^ (2 : Nat))) + ((-20 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (7 : Nat))) + ((20 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (6 : Nat))) + ((17 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (5 : Nat))) + ((-520 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (4 : Nat))) + ((-185 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (3 : Nat))) + ((340 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (2 : Nat))) + ((95 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (1 : Nat))) + ((-33 : S) * (x0 ^ (1 : Nat))) + ((-8 : S) * (x1 ^ (8 : Nat))) + ((-4 : S) * (x1 ^ (7 : Nat))) + ((-14 : S) * (x1 ^ (6 : Nat))) + ((211 : S) * (x1 ^ (5 : Nat))) + ((-78 : S) * (x1 ^ (4 : Nat))) + ((25 : S) * (x1 ^ (3 : Nat))) + ((27 : S) * (x1 ^ (2 : Nat))) + ((-108 : S) * (x1 ^ (1 : Nat))) + ((27 : S))) := by
+  simp only [norm_det] <;> ring
+#print axioms result
+end Determinant.Adversarial

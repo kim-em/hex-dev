@@ -1,0 +1,68 @@
+[
+  {
+    "check": "timeout frontier cancel9",
+    "exit_status": 1,
+    "diagnostic": "skipped: larger than timeout at reports/bench-results/determinant-adversarial/cancel8",
+    "proof_started": false
+  },
+  {
+    "check": "timeout frontier rankone22",
+    "exit_status": 1,
+    "diagnostic": "skipped: larger than timeout at reports/bench-results/determinant-adversarial/rankone20",
+    "proof_started": false
+  },
+  {
+    "check": "timeout frontier dense-seven-atoms",
+    "exit_status": 1,
+    "diagnostic": "skipped: larger than timeout at reports/bench-results/determinant-adversarial/dense4-six-atoms",
+    "proof_started": false
+  },
+  {
+    "check": "timeout frontier circulant9",
+    "exit_status": 1,
+    "diagnostic": "skipped: larger than timeout at reports/bench-results/determinant-adversarial/circulant8",
+    "proof_started": false
+  },
+  {
+    "check": "timeout frontier independent7",
+    "exit_status": 1,
+    "diagnostic": "skipped: larger than timeout at reports/bench-results/determinant-adversarial/independent6",
+    "proof_started": false
+  },
+  {
+    "check": "timeout frontier singular8",
+    "exit_status": 1,
+    "diagnostic": "skipped: larger than timeout at reports/bench-results/determinant-adversarial/singular7",
+    "proof_started": false
+  },
+  {
+    "check": "cumulative ceiling",
+    "exit_status": 1,
+    "diagnostic": "stop for a scientific decision: 2300.0s used; insufficient remaining allowance for four invocations within 40 minutes",
+    "proof_started": false
+  },
+  {
+    "check": "cancel4/triangular4: exact source equality after replacing the zero expression",
+    "passed": true
+  },
+  {
+    "check": "sparse-cancel6/sparse6: exact source equality after replacing the zero expression",
+    "passed": true
+  },
+  {
+    "check": "rankone4: direct zero target reproduces archived statement",
+    "passed": true
+  },
+  {
+    "check": "rankone6: direct zero target reproduces archived statement",
+    "passed": true
+  },
+  {
+    "check": "rankone10: direct zero target reproduces archived statement",
+    "passed": true
+  },
+  {
+    "check": "rankone16: direct zero target reproduces archived statement",
+    "passed": true
+  }
+]

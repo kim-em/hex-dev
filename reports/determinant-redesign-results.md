@@ -5,6 +5,11 @@ replacement plan](determinant-redesign-proposal.md). They do not establish
 production dispatch thresholds or universal superiority. The broader questions are in
 [the design document](determinant-experiments.md).
 
+The [adversarial search](determinant-adversarial-search.md) extends the initial
+four-case shared-proof comparison. It finds losses with Mathlib below one
+minute, including prototype timeouts. Those results constrain the normalization
+policy; the initial wins do not establish a production architecture.
+
 ## Fixed witness: arithmetic proofs
 
 The input is the retained dense 4×4 matrix with quadratic entries in two

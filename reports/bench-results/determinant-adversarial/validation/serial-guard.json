@@ -1,0 +1,5 @@
+{
+  "exit_status": 1,
+  "stderr": "another adversarial measurement is active in this worktree\n",
+  "output_created": false
+}

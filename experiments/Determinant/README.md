@@ -109,3 +109,53 @@ is not byte-for-byte reproduction of that integer-only implementation.
 
 See [results](../../reports/determinant-redesign-results.md) for measurements,
 limitations, negative results and the next hypotheses.
+
+## Adversarial proof search
+
+`adversarial.py` compares the unchanged `shared_bird` prototype with explicit
+`simp only [norm_det] <;> ring`. Select one case at a time; this is not a grid.
+The [search report](../../reports/determinant-adversarial-search.md) describes
+the losses, controls, and untested regions. Every retained `case.json` records
+the command parameters, and each directory preserves the actual Lean statements.
+
+```sh
+lake build Determinant.Deferred Mathlib.Tactic.NormDet Mathlib.Data.ZMod.Basic
+python experiments/Determinant/adversarial.py /tmp/det-search/cancel6 --family cancel --n 6 --degree 2
+python3 experiments/Determinant/adversarial_report.py /tmp/det-search
+```
+
+Use a Python environment with python-flint (the retained search uses 0.9.0).
+Ordinary cases have two fresh adjacent AB/BA pairs and synchronous complete
+declaration clocks. All theorem/kernel checking is included. Import loading,
+parsing and target generation are outside that clock; the 60-second process
+ceiling includes loading and build overhead, so a timeout is not an exact
+60-second tactic measurement. Every successful result theorem's axioms are
+audited by its qualified name, not by the first axiom message from an import.
+
+The runner enforces serial use of this worktree, refuses existing output
+directories, gives a case at most six minutes, and caps its allowance by the
+remaining 40-minute cumulative search budget. It refuses to start without
+allowance for four full invocation ceilings plus coordination overhead. Preserve
+a common output parent across the search: its recorded timeouts block
+coordinatewise larger cases in the same
+family/carrier/representation. Changing an independent input direction is a new
+scientific decision, never an automatically scheduled escape from a timeout.
+
+`dense` varies dimension, atoms, degree, support and coefficient bits.
+`cancel`/`triangular` and `sparse-cancel`/`sparse` pair algebraically zero entries
+with literal zeros. `decorated` adds a zero polynomial to nonzero entries.
+`singular`, `skew`, `rankone`, `independent`, `vandermonde` and `circulant` supply
+other constructions. For the last four, dimension determines the entries;
+the unrelated polynomial-shape flags must stay at their defaults. Independent
+entries use `n²` variables, rank-one entries use `2n`, and Vandermonde/circulant
+entries use `n`. Rank-one targets are supplied as zero directly; ordinary targets use independent subset
+expansion with FLINT polynomial arithmetic, outside both proof arms' clocks.
+
+`--rational` uses rational coefficients, and `--modulus` specializes to `ZMod`.
+`factor --target factored` retains a common factor in the supplied target;
+`shared --entry-form factored` retains a repeated expression in the entries.
+The corresponding `expanded` spelling is a separate selected control.
+`--diagnostic` adds a tactic clock, and `--kernel-profile` additionally profiles
+final declaration processing. Keep these diagnostics separate from the ordinary
+comparisons. The inventory reparses multiline kernel/profile messages from the
+saved compiler output and verifies that the prototype source hashes never changed.

@@ -17,12 +17,14 @@ The symbolic-result contract is a design hypothesis: the proof experiments
 all receive a supplied target and do not measure constructing an expanded
 result. Result-producing consumers require their own evidence before migration.
 
-For symbolic proofs, implement one general backend based on a division-free
-determinant recurrence and cached proof-producing arithmetic. The best current
-candidate is Bird: construct a shared expression with proofs of its relation
-to the determinant, then normalize shared intermediate expressions and the
-supplied target in a common atom context. This borrows the mathematics and
-scalar proof machinery of Mathlib directly. It does not call `norm_det`,
+For symbolic proofs, investigate a general division-free backend with cached
+proof-producing arithmetic. Its normalization policy is unresolved. The
+[adversarial search](determinant-adversarial-search.md) finds substantial losses
+for unconditional deferral, including inputs Mathlib proves in under a minute
+while the shared-expression prototype times out. Compare Mathlib’s normalized
+Bird certificate evaluator with target comparison in the same atom context
+against deferred/shared normalization before choosing the backend. This borrows
+the mathematics and scalar proof machinery of Mathlib directly. It does not call `norm_det`,
 `eval_det`, or any hidden determinant fallback. Importing Mathlib arithmetic
 lemmas in the companion is compatible with Mathlib-free computational libraries.
 
@@ -43,7 +45,7 @@ shared algebraic interfaces have demonstrated uses and should survive.
 | Integer Bareiss value routine | Retain as baseline and available method | Beats the tested Lean Bird/Berkowitz and modular methods on dense integers |
 | Numeric determinant certificates | Retain | Symbolic experiments do not invalidate their measured numeric advantages |
 | Polynomial triangular witness as the mandatory symbolic backend | Replace as a requirement | Fixed-witness proof construction loses after arithmetic and transport improvements |
-| Shared Bird expressions with cached normalization | Implement behind an explicit experimental entry point | Wins on three tested families; the common-factor case remains an unresolved loss |
+| Shared Bird expressions with cached normalization | Retain as an experimental comparator; resolve normalization before migration | Wins on many dense inputs, but loses on hidden zeros and larger rank-one matrices; see the adversarial report |
 | Blanket opacity for reused arithmetic proofs | Reject | Additional auxiliary checking outweighs the saved outer check |
 | Deferred expression followed by independent `ring` traversal | Reject as default | Loses to cached traversal on the same recurrence and target |
 | Eager Bird value prototype | Do not pursue this implementation | Loses on integer/rational values; list allocation and bounds checks confound any schedule-wide conclusion |
@@ -173,8 +175,13 @@ continues through proved algebraic or reflective evidence, never native evaluati
    false targets, unsupported syntax and budget exhaustion. This is coverage,
    not a large timing grid.
 
-2. **Build the general symbolic proof backend.** Port the deferred Bird
-   construction and shared arithmetic traversal into the companion without
+2. **Resolve normalization, then build the general symbolic proof backend.**
+   First compare the normalized Bird certificate evaluator with a shared atom
+   context for the supplied target, and general early normalization within the
+   deferred prototype. Include every retained adversarial loss and the dense
+   controls; charge proof-term sharing and all kernel checks. Do not replace
+   these obligations with triangular/rank-one recognition strategies. Only
+   after selecting a supported construction, port it into the companion without
    importing the experimental namespace. Reuse the universal Bird correctness
    theorem, or supply the equivalent Mathlib-free theorem if the computational
    API needs it. Keep a single atom context and cache; do not copy Mathlib's

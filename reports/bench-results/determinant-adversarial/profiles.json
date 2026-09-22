@@ -1,0 +1,94 @@
+[
+  {
+    "case": "cancel6-kernel-profile-corrected",
+    "arm": "Mathlib",
+    "pair": 0,
+    "declaration_ms": 733.393043,
+    "tactic_ms": [
+      201.947891
+    ],
+    "components_ms": {
+      "share common exprs": [
+        103.0
+      ],
+      "fix level params": [
+        4.94
+      ],
+      "type checking": [
+        192.0
+      ],
+      "process pre-definitions": [
+        19.9
+      ]
+    }
+  },
+  {
+    "case": "cancel6-kernel-profile-corrected",
+    "arm": "Shared",
+    "pair": 0,
+    "declaration_ms": 5108.435359,
+    "tactic_ms": [
+      421.037292
+    ],
+    "components_ms": {
+      "share common exprs": [
+        1150.0
+      ],
+      "fix level params": [
+        44.1
+      ],
+      "type checking": [
+        2360.0
+      ],
+      "process pre-definitions": [
+        264.0
+      ]
+    }
+  },
+  {
+    "case": "cancel6-kernel-profile-corrected",
+    "arm": "Shared",
+    "pair": 1,
+    "declaration_ms": 3911.07941,
+    "tactic_ms": [
+      420.939646
+    ],
+    "components_ms": {
+      "share common exprs": [
+        1020.0
+      ],
+      "fix level params": [
+        41.7
+      ],
+      "type checking": [
+        1360.0
+      ],
+      "process pre-definitions": [
+        226.0
+      ]
+    }
+  },
+  {
+    "case": "cancel6-kernel-profile-corrected",
+    "arm": "Mathlib",
+    "pair": 1,
+    "declaration_ms": 520.294421,
+    "tactic_ms": [
+      177.903088
+    ],
+    "components_ms": {
+      "share common exprs": [
+        67.6
+      ],
+      "fix level params": [
+        2.05
+      ],
+      "type checking": [
+        100.0
+      ],
+      "process pre-definitions": [
+        9.28
+      ]
+    }
+  }
+]

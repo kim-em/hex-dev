@@ -1,0 +1,12 @@
+{
+  "family": "dense",
+  "n": 6,
+  "atoms": 2,
+  "degree": 2,
+  "support": 3,
+  "bits": 2,
+  "modulus": 2,
+  "seed": 10320,
+  "rational": false,
+  "target": "expanded"
+}
