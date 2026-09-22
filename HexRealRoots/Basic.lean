@@ -83,6 +83,12 @@ def evalDyadic (p : ZPoly) (x : Dyadic) : Dyadic :=
   let (n, e) := match x with
     | .zero => (0, 0)
     | .ofOdd n e _ => (n, e)
+  -- TODO: When the toolchain includes the fix for https://github.com/leanprover/lean4/issues/15264,
+  -- verify that Dyadic.ofIntWithPrec uses the faster trailing-zero counter.
+  -- On that toolchain, compare this split with normalized Horner at all points
+  -- using Hex.RealRootsBench.runCancellation and Hex.SturmBench.runReplay; simplify
+  -- if the integer specialization no longer helps. Keep intermediate fractional
+  -- normalization: a faster final count alone does not prevent numerator growth.
   if 0 < e then
     p.toArray.foldr (fun c acc => Dyadic.ofInt c + x * acc) 0
   else
