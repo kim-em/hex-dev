@@ -1,7 +1,7 @@
 # hex-sign-det
 
-Finite BKR replay over the shared HexSturm query checker. This development
-library is Mathlib-free and is not yet released.
+Finite BKR construction and replay over the shared HexSturm prepared-query
+API. This development library is Mathlib-free and is not yet released.
 
 `System.check` validates the integer moment system, including exponent/sign
 codes, vector lengths, distinct columns, nonnegative counts, a nonzero scaled
@@ -32,19 +32,42 @@ gcd search or row search.
 `Replay.query_evidence` proves that every accepted tree reaches a checked Tarski
 query, including when its root matrix is empty.
 
+`buildTree` constructs the balanced support tree from prepared Tarski queries,
+using existing rational inversion and integer rank producers. It checks rational
+integrality and nonnegativity before extracting integer counts and clears inverse
+denominators by their least common multiple. `buildPrepared` additionally returns
+a proof that the independent replay accepts the resulting tree. Its `BuildError`
+diagnostics expose outstanding producer-completeness obligations; they are not
+mathematical domain failures and this is not yet the total `determinePrepared`
+API. No supplied roots or guessed counts enter construction. `referencePrepared`
+builds the exponential full-ternary system for small-case comparisons; production
+recursion never calls it.
+
+`count_moments` proves the finite counting identity on an independently complete
+candidate support. `Replay.support_complete` then proves recursive coverage and
+exact counts for the actual checked tree, conditional on `Replay.Interprets`:
+each node's moments must be the sums over the same finite observations restricted
+to its query positions. `Replay.support_iff` excludes both missing and spurious
+positive conditions. The companion must establish this explicit moment contract
+from query/root semantics through #10389; the executable checker does not assume
+it, and the finite induction is not a root-sum soundness theorem.
+
 The conformance target includes recursive rational examples with supplied exact
 roots, malformed matrices and tree mutations, and ordinary-kernel literal
 acceptance/rejection probes. In particular, the omitted-support forgery for
 `x²−1` passes local matrix/query checks and fails recursive replay. These tests
 are regressions, not the complete independent-oracle or Phase-4 evidence suite.
+Construction regressions also cover irrational roots, finite intervals, twelve
+repeated queries, exact-conversion rejection and full/reduced small-case agreement.
 Their numeric context labels exercise literal binding over the fixed rational
 base only; full tower/refinement context fixtures remain required.
 
-The library currently exposes raw replay data, not a validated `SignTable` or
-the total `determinePrepared` API. Production sign determination, reduced-moment
+The library currently exposes raw replay data and checked construction, not a
+validated `SignTable` or the total `determinePrepared` API. Producer completeness,
+tensor/retained-row-basis existence, reduced-moment
 evidence, Thom descriptors and selected-root operations, serialization and
 nested evidence sharing remain required. The finite lemmas above do not prove
-root-count correctness or full recursive semantic support induction. Those
+root-count correctness. Those
 proofs must interpret the actual query replays through #10389 and consume the
 specified BKR/Thom foundations in the companion. No semantic theorem or
 performance milestone is claimed here. See the [specification](SPEC/hex-sign-det.md)

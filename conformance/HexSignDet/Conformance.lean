@@ -13,6 +13,8 @@ public import HexSturm.Fixtures
 public meta import HexSignDet.Replay
 public meta import HexSignDet.Matrix
 public meta import HexSignDet.Support
+public meta import HexSignDet.Produce
+public meta import HexSignDet.Reference
 public meta import HexRank.Cert
 public meta import HexSturm.Basic
 
@@ -30,6 +32,72 @@ def sign : Rat → Int := Sturm.orderSign
 
 def p : DensePoly Rat := DensePoly.ofCoeffs #[-1, 0, 1]
 def x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
+
+/-- Compare observable sparse integer counts without hiding zero pruning. -/
+def entries {r : Nat} (s : System r) : List (List Int × Int) :=
+  s.positive.map fun i => (s.columns[i], s.counts[i])
+
+/-- Counts are computed solely from Tarski queries; the expected table is
+supplied independently by each regression. -/
+def produced (head : DensePoly Rat) (qs : List (DensePoly Rat))
+    (expected : List (List Int × Int))
+    (a : Endpoint Rat := .negInf) (b : Endpoint Rat := .posInf) : Bool :=
+  match Sturm.prepare sign head a b with
+  | none => false
+  | some d => match buildPrepared 7 d qs with
+    | .error _ => false
+    | .ok t => entries t.val.node.system == expected
+
+#guard produced p [x, x - 1] [([-1, -1], 1), ([1, 0], 1)]
+#guard produced (-p) [x] [([-1], 1), ([1], 1)]
+#guard produced p [] [([], 2)]
+#guard produced p [0, 1, x, x] [([0, 1, -1, -1], 1), ([0, 1, 1, 1], 1)]
+#guard produced x [x, 0] [([0, 0], 1)]
+#guard produced 1 [] []
+#guard produced 1 [x, x, 0] []
+#guard produced (x * x + 1) [] []
+#guard produced (x * x + 1) [x, x, 0] []
+#guard produced (x * x - 2) [x, x * x - 2, x * x - 3, x - 1]
+  [([-1, 0, -1, -1], 1), ([1, 0, -1, 1], 1)]
+#guard produced (x * x * x - x) [x] [([-1], 1), ([0], 1), ([1], 1)]
+#guard produced (x * x * x - x) [x] [([0], 1)] (.finite (-1 / 2)) (.finite (1 / 2))
+#guard produced p (List.replicate 12 x)
+  [(List.replicate 12 (-1), 1), (List.replicate 12 1, 1)]
+
+/-- The exponential reference and reduced producer must agree on small lists.
+Both also have to pass the ordinary checker for their literal moments. -/
+def agrees (head : DensePoly Rat) (qs : List (DensePoly Rat)) : Bool :=
+  match Sturm.prepare sign head .negInf .posInf with
+  | none => false
+  | some d => match buildPrepared 7 d qs, referencePrepared 7 d qs with
+    | .ok t, .ok n => n.check sign 7 head .negInf .posInf qs &&
+      entries t.val.node.system == entries n.system
+    | _, _ => false
+
+#guard [p, x, (1 : DensePoly Rat), x * x + 1, x * x - 2, x * x * x - x].all fun h =>
+  [[], [x], [x, x - 1], [x, 0, x]].all (agrees h)
+
+/-- Malformed moment right-hand sides exercise exact conversion diagnostics. -/
+def solveError (values : Vector Int 3) (expected : BuildError) : Bool :=
+  match solveSystem 1 #v[[0], [1], [2]] #v[[-1], [0], [1]] values with
+  | .error e => e == expected
+  | .ok _ => false
+
+#guard solveError #v[0, 1, 0] .nonintegral
+#guard solveError #v[0, 2, 0] .negative
+
+/- The recursive theorem has no semantic root-sum axiom hidden in its proof. -/
+/-- info: 'Hex.SignDet.Replay.support_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Replay.support_complete
+
+/-- info: 'Hex.SignDet.Replay.support_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Replay.support_iff
+
+/-- info: 'Hex.SignDet.count_moments' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms count_moments
 
 /-- Test-only certificate assembly, using the existing rational inverse and
 integer rank producers. Counts come from a supplied list of exact roots. -/
