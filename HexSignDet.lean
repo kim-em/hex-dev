@@ -16,3 +16,4 @@ public import HexSignDet.Reduction
 public import HexSignDet.Moment
 public import HexSignDet.MomentReplay
 public import HexSignDet.Tensor
+public import HexSignDet.QueryReduction

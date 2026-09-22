@@ -53,11 +53,16 @@ Construction reduces moments by default after each indexed multiplication,
 using the shared positive pseudo-division and normalization routines. The
 optional `reduced := false` mode constructs full products, as does the reference
 solver. Constant heads use the direct path and their zero-root domain evidence.
-The current producer still uses each raw query factor at every step. Initial
-query reductions shared across moment rows, and their separately bound replay
-evidence, remain required for the specification's reduced-degree cost bound.
+`QueryReduction` preprocesses every original query once. All moment rows and
+balanced child sublists reuse those reduced operands and their indexed
+polynomial witnesses. Child slices rebind local indices without rerunning
+pseudo-division. Each node checks its preprocessing against the original query
+list before using the reduced factors. The current tree repeats these checks
+across nodes; finite DAG sharing and its performance accounting remain required.
 `HexSignDetMathlib` proves that produced reductions pass the checker and that
 arbitrary accepted reductions preserve each full moment's sign at every root.
+`Node.check_sign` composes preprocessing and moment reduction for the actual
+Tarski operand; `QueryReduction.slice_checks` validates the child restrictions.
 These algebraic proofs allow noninjective coefficient interpretations; they do
 not assert a Tarski root-sum theorem.
 

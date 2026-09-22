@@ -410,6 +410,20 @@ def rejectsProduced (f : Replay Rat Nat → Replay Rat Nat) : Bool :=
     | .ok t => !accepts [x, x - 1] (f t.val)
 
 #guard rejectsProduced (mapNode fun n => {n with context := 8})
+#guard rejectsProduced (mapNode fun n => {n with preparation := n.preparation.map fun r =>
+  {r with steps := r.steps.reverse}})
+#guard rejectsProduced (mapNode fun n => {n with preparation := n.preparation.map fun r =>
+  {r with steps := []}})
+#guard rejectsProduced (mapNode fun n => {n with preparation := n.preparation.map fun r =>
+  {r with steps := r.steps.map fun s => {s with index := s.index + 1}}})
+#guard rejectsProduced (mapNode fun n => {n with preparation := n.preparation.map fun r =>
+  {r with steps := r.steps.map fun s => {s with next := s.next + 1}}})
+#guard rejectsProduced (mapNode fun n => {n with preparation := n.preparation.map fun r =>
+  {r with steps := r.steps.map fun s =>
+    {s with witness := {s.witness with leftScale := -s.witness.leftScale}}}})
+#guard rejectsProduced (fun t => match t with
+  | .leaf n => .leaf n
+  | .split n l r => .split {n with preparation := l.node.preparation} l r)
 #guard rejectsProduced (mapNode fun n => replaceSystem n {n.system with counts := n.system.counts.map (· + 1)})
 #guard rejectsProduced (fun t => match t with | .leaf n => .leaf n | .split n l r => .split n r l)
 #guard rejectsProduced (mapNode fun n => {n with reductions := n.reductions.map (fun r =>

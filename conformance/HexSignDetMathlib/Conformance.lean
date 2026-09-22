@@ -52,6 +52,38 @@ theorem noncanonical_sign (p : Poly) (qs : List Poly) (es : List Nat) (r : Reduc
 @[expose] def head : DensePoly Rat := DensePoly.ofCoeffs #[-1, 0, 1]
 @[expose] def indeterminate : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
 
+theorem noncanonical_queries (p : Poly) (qs : List Poly) (hp : 0 < p.natDegree) :
+    (QueryReduction.build Hex.TarskiTests.Noncanonical.sign p qs).check
+      Hex.TarskiTests.Noncanonical.sign p qs = true := by
+  apply QueryReduction.build_checks value value_eq_zero value_one value_add value_sub value_mul
+    Hex.TarskiTests.Noncanonical.sign _ value_neg value_inv _ p qs hp
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_eq_one_iff_pos, Rat.num_pos]
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_neg_iff, Rat.num_neg]
+
+@[expose] def preparedQueries : QueryReduction Rat :=
+  ⟨[⟨0, 1, ⟨1, 1, 1⟩⟩, ⟨1, indeterminate, ⟨1, 0, 1⟩⟩]⟩
+
+theorem queries_checked : preparedQueries.check Sturm.orderSign head
+    [indeterminate * indeterminate, indeterminate] = true := by decide +kernel
+
+example : (preparedQueries.slice 1 1).check Sturm.orderSign head [indeterminate] = true :=
+  QueryReduction.slice_checks queries_checked 1 1
+
+theorem queries_sign (a : Rat)
+    (hp : (interpret id (fun _ => Iff.rfl) head).eval a = 0) :
+    preparedQueries.queries.map (fun q => SignType.sign ((interpret id (fun _ => Iff.rfl) q).eval a)) =
+      [indeterminate * indeterminate, indeterminate].map
+        (fun q => SignType.sign ((interpret id (fun _ => Iff.rfl) q).eval a)) :=
+  QueryReduction.check_signs id (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl)
+    (fun _ _ => rfl) Sturm.orderSign (fun x => (HexSturmMathlib.orderSign_spec x).1)
+    head _ preparedQueries queries_checked a hp
+
+theorem queries_rejected :
+    ({steps := [⟨0, -1, ⟨1, 1, -1⟩⟩]} : QueryReduction Rat).check
+      Sturm.orderSign head [indeterminate * indeterminate] = false := by decide +kernel
+
 /-- The literal reduction X² = (X²-1) + 1 includes both indexed factors. -/
 @[expose] def square : Reduction Rat :=
   ⟨[⟨0, indeterminate, ⟨1, 0, 1⟩⟩, ⟨0, 1, ⟨1, 1, 1⟩⟩], 1⟩
@@ -114,6 +146,21 @@ example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := 
 /-- info: 'Hex.SignDet.System.retained_rank' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms System.retained_rank
+/-- info: 'Hex.SignDet.QueryReduction.slice_checks' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms QueryReduction.slice_checks
+/-- info: 'Hex.SignDet.Node.check_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.check_sign
+/-- info: 'Hex.SignDetMathlib.Conformance.noncanonical_queries' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms noncanonical_queries
+/-- info: 'Hex.SignDetMathlib.Conformance.queries_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms queries_sign
+/-- info: 'Hex.SignDetMathlib.Conformance.queries_rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms queries_rejected
 /-- info: 'Hex.SignDet.System.basis_columns' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms System.basis_columns

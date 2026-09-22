@@ -106,20 +106,23 @@ private theorem interpret_power (p : DensePoly E) (n : Nat) :
         congr 1
         omega
 
+include ha hm in
+omit [Sub E] [One E] in
+private theorem fold_sign (ps : List (DensePoly E)) (init : DensePoly E) (a : K) :
+    SignType.sign ((interpret f hz (ps.foldl (· * ·) init)).eval a) =
+      SignType.sign ((interpret f hz init).eval a) *
+        (ps.map fun p => SignType.sign ((interpret f hz p).eval a)).prod := by
+  induction ps generalizing init with
+  | nil => simp
+  | cons p ps ih =>
+    simp only [List.foldl_cons, ih, interpret_mul f hz ha hm, Polynomial.eval_mul,
+      sign_mul, List.map_cons, List.prod_cons, mul_assoc]
+
 include ha hm h1 in
 omit [Sub E] in
 private theorem moment_sign (qs : List (DensePoly E)) (es : List Nat) (a : K) :
     SignType.sign ((interpret f hz (moment qs es)).eval a) =
       ((factors qs es).map fun item => SignType.sign ((interpret f hz item.2).eval a)).prod := by
-  have hfold (ps : List (DensePoly E)) (init : DensePoly E) :
-      SignType.sign ((interpret f hz (ps.foldl (· * ·) init)).eval a) =
-        SignType.sign ((interpret f hz init).eval a) *
-          (ps.map fun p => SignType.sign ((interpret f hz p).eval a)).prod := by
-    induction ps generalizing init with
-    | nil => simp
-    | cons p ps ih =>
-      simp only [List.foldl_cons, ih, interpret_mul f hz ha hm, Polynomial.eval_mul,
-        sign_mul, List.map_cons, List.prod_cons, mul_assoc]
   have hf (ps : List (DensePoly E × Nat)) (start : Nat) :
       (((ps.zipIdx start).flatMap fun ((p, k), i) => List.replicate k (i, p)).map
         fun item => SignType.sign ((interpret f hz item.2).eval a)).prod =
@@ -130,10 +133,27 @@ private theorem moment_sign (qs : List (DensePoly E)) (es : List Nat) (a : K) :
       obtain ⟨p, k⟩ := pk
       simp only [List.zipIdx_cons, List.flatMap_cons, List.map_append, List.prod_append,
         List.map_replicate, List.prod_replicate, ih, List.map_cons, List.prod_cons]
-  rw [moment, hfold, interpret_one f hz h1]
+  rw [moment, fold_sign f hz ha hm, interpret_one f hz h1]
   simp only [Polynomial.eval_one, sign_one, one_mul, List.map_map,
     Function.comp_def, interpret_power f hz ha hm h1, Polynomial.eval_pow, sign_pow]
   exact (hf (qs.zip es) 0).symm
+
+include ha hm h1 in
+omit [Sub E] in
+/-- Replacing each indexed query by one with the same sign preserves every
+moment sign, without requiring equality of polynomial values. -/
+theorem moment_congr (qs rs : List (DensePoly E)) (es : List Nat) (a : K)
+    (h : qs.map (fun q => SignType.sign ((interpret f hz q).eval a)) =
+      rs.map (fun q => SignType.sign ((interpret f hz q).eval a))) :
+    SignType.sign ((interpret f hz (moment qs es)).eval a) =
+      SignType.sign ((interpret f hz (moment rs es)).eval a) := by
+  have hh := congrArg (fun xs : List SignType =>
+    ((xs.zip es).map fun (s, e) => s ^ e).prod) h
+  simp only [List.zip_map_left, List.map_map, Function.comp_def, Prod.map_fst,
+    Prod.map_snd, id_eq] at hh
+  simpa only [moment, fold_sign f hz ha hm, interpret_one f hz h1,
+    Polynomial.eval_one, sign_one, one_mul, List.map_map, Function.comp_def,
+    interpret_power f hz ha hm h1, Polynomial.eval_pow, sign_pow] using hh
 
 include ha hs hm hsign h1 in
 /-- An arbitrary accepted reduced-moment certificate has the same sign as the
