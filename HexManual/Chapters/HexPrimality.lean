@@ -170,6 +170,15 @@ can trade up to 63 small-divisor checks for a smaller factored part of the
 predecessor. These checks are included in the reusable certificate and replayed
 by the kernel. The ordinary `primality` policy keeps its existing smaller budget.
 
+With the standard `import HexIntFactor`, plain `primality?` also discovers
+secp256k1, P-384 and Curve448. It preserves the first route's successful
+certificate; only exhaustion with attempts left triggers a complete retry with
+bounded ECM. Both routes share the same 1024 attempts and advancing random
+state. These three fields need an explicit finite Lean heartbeat allowance;
+`set_option maxHeartbeats 4000000` is tested, without a recursion-depth option.
+See the {ref "tutorial-field-primes"}[field-prime tutorial] for complete examples.
+An explicit `factor :=` provider or `using` certificate bypasses automatic selection.
+
 The Curve25519 result has three non-leaf certificate nodes and eight factor
 entries. Kernel replay reads the already verified sieve bitset for table
 leaves, and compiled prime enumeration reads 64 candidate bits at a time.

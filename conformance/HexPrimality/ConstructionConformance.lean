@@ -179,8 +179,9 @@ end Shadow
   | .ok s => checkPrime s.cert.raw
   | _ => false)
 
+-- HexPrimality-only imports: no automatic ECM registration is available.
 /--
-error: primality?: certificate construction for 57896044618658097711785492504343953926634992332820282019728792003956564819949 exhausted after 1 attempts (seed 57896044618658097711785492504343953926634992332820282019728792003956564819949; maximum 521 bits, recursive depth 32, total attempts 1, factor fuel 1024, p-minus-one bounds [64, 512, 4096, 32768, 262144, 524288] at bases [2, 3], 2 rho restarts with 32768 steps, ECM bounds [] and 0 curves, witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 32 factors and 4096 subsets, sieve bound at most 64)
+error: primality?: certificate construction for 57896044618658097711785492504343953926634992332820282019728792003956564819949 exhausted after 1 attempts (seed 57896044618658097711785492504343953926634992332820282019728792003956564819949; maximum 521 bits, recursive depth 32, total attempts 1, factor fuel 1024, p-minus-one bounds [64, 512, 4096, 32768, 262144, 524288] at bases [2, 3], 2 rho restarts with 32768 steps, ECM bounds [] and 0 curves, witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 32 factors and 4096 subsets, sieve bound at most 64); unresolved obligation 74058212732561358302231226437062788676166966415465897661863160754340907
 -/
 #guard_msgs in
 example : Hex.Nat.Prime (2 ^ 255 - 19) := by primality? (maxAttempts := 1)

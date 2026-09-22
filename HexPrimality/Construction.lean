@@ -36,6 +36,11 @@ def constructionBudget : ConstructionBudget := {}
 
 namespace Construction
 
+/-- Construction exhaustion with an unresolved recursive subject.
+The ordinary search failure API remains available through `run`. -/
+structure Failure extends PrimeCertFailure where
+  obligation : Option Nat := none
+
 /-- The least positive sieve bound satisfying the cube-root size inequality, or zero.
 This runs only during construction; the checker validates the chosen literal directly. -/
 private def sieveBound (twoF r s : Nat) : Nat :=
@@ -230,20 +235,20 @@ private structure Built (α : Type) where
 mutual
 
 private def generate (budget : ConstructionBudget) (factor : FactorSearch)
-    (fuel n : Nat) (r : Hex.Rand) : Except PrimeCertFailure (Built PrimeCert) :=
-  if n.log2 + 1 > budget.maxBits then .error ⟨.exhausted, 0, r, []⟩
+    (fuel n : Nat) (r : Hex.Rand) : Except Failure (Built PrimeCert) :=
+  if n.log2 + 1 > budget.maxBits then .error ⟨⟨.exhausted, 0, r, []⟩, none⟩
   else if isTablePrime n then .ok ⟨.small n, 0, r, []⟩
-  else if !isProbablePrime n then .error ⟨.composite, 0, r, []⟩
+  else if !isProbablePrime n then .error ⟨⟨.composite, 0, r, []⟩, none⟩
   else match fuel with
-  | 0 => .error ⟨.exhausted, 0, r, []⟩
+  | 0 => .error ⟨⟨.exhausted, 0, r, []⟩, none⟩
   | fuel + 1 =>
       let cheap := subsets budget n (trial (n - 1)).factors
-      match choose budget factor fuel n cheap [] 0 r [] with
+      match choose budget factor fuel n cheap [] 0 r [] none with
       | .ok result => .ok result
       | .error first =>
         let remaining := { budget with maxAttempts := budget.maxAttempts - first.attempts }
         let r := first.rand
-        let result : Except PrimeCertFailure (Built PrimeCert) := Id.run do
+        let result : Except Failure (Built PrimeCert) := Id.run do
           let allocation := { budget.factor with
             primeFuel := fuel
             attemptLimit := some remaining.maxAttempts }
@@ -251,63 +256,68 @@ private def generate (budget : ConstructionBudget) (factor : FactorSearch)
           let events := first.events ++ result.events
           return if result.attempts > remaining.maxAttempts ||
               result.raw.factors.length > budget.maxFactors then
-            .error ⟨.exhausted, result.attempts, result.rand, events⟩
+            .error ⟨⟨.exhausted, result.attempts, result.rand, events⟩, none⟩
           else match product n result.raw.factors with
-          | none => .error ⟨.exhausted, result.attempts, result.rand, events⟩
+          | none => .error ⟨⟨.exhausted, result.attempts, result.rand, events⟩, none⟩
           | some F =>
               if result.raw.residual == 0 || result.raw.residual > n - 1 ||
                   F * result.raw.residual != n - 1 then
-                .error ⟨.exhausted, result.attempts, result.rand, events⟩
+                .error ⟨⟨.exhausted, result.attempts, result.rand, events⟩, none⟩
               else
                 let choices := (subsets remaining n result.raw.factors).filter
                   (fun fs => !cheap.contains fs)
-                choose remaining factor fuel n choices [] result.attempts result.rand events
+                choose remaining factor fuel n choices [] result.attempts result.rand events none
         match result with
         | .ok result => .ok { result with attempts := first.attempts + result.attempts }
-        | .error failure => .error { failure with attempts := first.attempts + failure.attempts }
+        | .error failure => .error { failure with
+            attempts := first.attempts + failure.attempts
+            obligation := failure.obligation.or first.obligation }
 termination_by (fuel, 0, 0)
 
 private def choose (budget : ConstructionBudget) (factor : FactorSearch)
     (fuel n : Nat) : List (List (Nat × Nat)) → List PrimeCert → Nat → Hex.Rand →
-      List FactorEvent → Except PrimeCertFailure (Built PrimeCert)
-  | [], _, work, r, events => .error ⟨.exhausted, work, r, events⟩
-  | selected :: rest, cache, work, r, events =>
-      if work ≥ budget.maxAttempts then .error ⟨.exhausted, work, r, events⟩ else
+      List FactorEvent → Option Nat → Except Failure (Built PrimeCert)
+  | [], _, work, r, events, obligation => .error ⟨⟨.exhausted, work, r, events⟩, obligation.or (some n)⟩
+  | selected :: rest, cache, work, r, events, obligation =>
+      if work ≥ budget.maxAttempts then .error ⟨⟨.exhausted, work, r, events⟩, obligation.or (some n)⟩ else
       let (result, cache) := assemble budget factor fuel n selected [] cache work r events
       match result with
-      | .error f => choose budget factor fuel n rest cache f.attempts f.rand f.events
+      | .error f =>
+          -- A later subset may certify a child that previously failed.
+          choose budget factor fuel n rest cache f.attempts f.rand f.events
+            (f.obligation.or (some n))
       | .ok built =>
           match certProduct (n - 1) built.value with
-          | none => choose budget factor fuel n rest cache built.attempts built.rand built.events
+          | none => choose budget factor fuel n rest cache built.attempts built.rand built.events (some n)
           | some F =>
               let cert := node n F built.value
               if checkPrime cert then .ok ⟨cert, built.attempts, built.rand, built.events⟩
-              else choose budget factor fuel n rest cache built.attempts built.rand built.events
+              else choose budget factor fuel n rest cache built.attempts built.rand built.events (some n)
 termination_by choices => (fuel, choices.length + 1, 0)
 
 private def assemble (budget : ConstructionBudget) (factor : FactorSearch)
     (fuel n : Nat) : List (Nat × Nat) → List (Nat × Nat × PrimeCert) →
       List PrimeCert → Nat → Hex.Rand → List FactorEvent →
-      (Except PrimeCertFailure (Built (List (Nat × Nat × PrimeCert)))) × List PrimeCert
+      (Except Failure (Built (List (Nat × Nat × PrimeCert)))) × List PrimeCert
   | [], acc, cache, work, r, events => (.ok ⟨acc.reverse, work, r, events⟩, cache)
   | (q, e) :: rest, acc, cache, work, r, events =>
-      if work ≥ budget.maxAttempts then (.error ⟨.exhausted, work, r, events⟩, cache) else
-      let child : Except PrimeCertFailure (Built PrimeCert) :=
+      if work ≥ budget.maxAttempts then (.error ⟨⟨.exhausted, work, r, events⟩, none⟩, cache) else
+      let child : Except Failure (Built PrimeCert) :=
         match cache.find? (fun c => c.subject == q) with
         | some c => .ok ⟨c, 0, r, []⟩
         | none => generate { budget with maxAttempts := budget.maxAttempts - work }
             factor fuel q r
       match child with
       | .error f =>
-          (.error ⟨.exhausted, work + f.attempts, f.rand, events ++ f.events⟩, cache)
+          (.error ⟨⟨.exhausted, work + f.attempts, f.rand, events ++ f.events⟩, f.obligation.or (some q)⟩, cache)
       | .ok child =>
           let cache := if cache.any (fun c => c.subject == q) then cache else child.value :: cache
           let events := events ++ child.events
           match witness { budget with maxAttempts := budget.maxAttempts - work - child.attempts }
               n q child.rand with
           | .error f =>
-              (.error ⟨.exhausted, work + child.attempts + f.attempts, f.rand,
-                events ++ f.events⟩, cache)
+              (.error ⟨⟨.exhausted, work + child.attempts + f.attempts, f.rand,
+                events ++ f.events⟩, some n⟩, cache)
           | .ok (a, witnessWork, r) =>
               assemble budget factor fuel n rest ((a, e - 1, child.value) :: acc) cache
                 (work + child.attempts + witnessWork) r events
@@ -318,18 +328,41 @@ end
 /-- Construct and self-check the exact certificate to be reified. Factor data,
 subset estimates and witnesses are untrusted; every success passes `checkPrime`.
 A malformed producer can only prevent certificate construction. -/
-def run (n : Nat) (r : Hex.Rand) (budget : ConstructionBudget := constructionBudget)
+def runTraced (n : Nat) (r : Hex.Rand) (budget : ConstructionBudget := constructionBudget)
     (factor : FactorSearch := factorSearch) :
-    Except PrimeCertFailure (Internal.PrimeCertSuccess n) :=
+    Except Failure (Internal.PrimeCertSuccess n) :=
   match generate budget factor budget.maxDepth n r with
-  | .error f => .error f
+  | .error f => .error { f with obligation := f.obligation.or (some n) }
   | .ok result =>
       let cert := result.value
       if hs : cert.subject = n then
         if hc : checkPrime cert = true then
           .ok ⟨⟨cert, hs, hc⟩, result.attempts, result.rand, result.events⟩
-        else .error ⟨.exhausted, result.attempts, result.rand, result.events⟩
-      else .error ⟨.exhausted, result.attempts, result.rand, result.events⟩
+        else .error ⟨⟨.exhausted, result.attempts, result.rand, result.events⟩, none⟩
+      else .error ⟨⟨.exhausted, result.attempts, result.rand, result.events⟩, none⟩
+
+/-- Construct and self-check a certificate with the ordinary search failure API. -/
+def run (n : Nat) (r : Hex.Rand) (budget : ConstructionBudget := constructionBudget)
+    (factor : FactorSearch := factorSearch) :
+    Except PrimeCertFailure (Internal.PrimeCertSuccess n) :=
+  match runTraced n r budget factor with
+  | .ok s => .ok s
+  | .error f => .error f.toPrimeCertFailure
+
+/-- One complete bounded retry after exhaustion. Repeated work is charged,
+random state advances, and events remain in execution order. -/
+def retry (n : Nat) (budget : ConstructionBudget) (first : Failure)
+    (factor : FactorSearch) : Except Failure (Internal.PrimeCertSuccess n) :=
+  if first.stop != .exhausted || first.attempts ≥ budget.maxAttempts ||
+      n.log2 + 1 > budget.maxBits || n < 2 then .error first else
+    let remaining := { budget with maxAttempts := budget.maxAttempts - first.attempts }
+    match runTraced n first.rand remaining factor with
+    | .ok s => .ok { s with
+        attempts := first.attempts + s.attempts
+        events := first.events ++ s.events }
+    | .error f => .error { f with
+        attempts := first.attempts + f.attempts
+        events := first.events ++ f.events }
 
 end Construction
 end Hex.Nat

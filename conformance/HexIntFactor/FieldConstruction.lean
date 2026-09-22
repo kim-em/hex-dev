@@ -4,20 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.Construction
-import HexPrimality.Elab
+import HexIntFactor
 
--- The explicit provider is bounded independently of elaborator heartbeats.
+-- Standard import: automatic construction shares one finite attempt allowance.
+-- Numerals isolate construction from power-expression normalization.
 set_option maxHeartbeats 4000000
-set_option maxRecDepth 1024
-set_option exponentiation.threshold 448
 
 /-- info: Try this:
   [apply] exact Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.small 7) (by decide +kernel)
 -/
 #guard_msgs in
 example : Hex.Nat.Prime 7 := by
-  primality? (factor := Hex.Nat.ecmFactorSearch)
+  primality?
 
 /--
 info: Try this:
@@ -34,8 +32,8 @@ info: Try this:
       (by decide +kernel)
 -/
 #guard_msgs in
-example : Hex.Nat.Prime (2 ^ 256 - 2 ^ 32 - 977) := by
-  primality? (factor := Hex.Nat.ecmFactorSearch)
+example : Hex.Nat.Prime 115792089237316195423570985008687907853269984665640564039457584007908834671663 := by
+  primality?
 
 /--
 info: Try this:
@@ -58,8 +56,8 @@ info: Try this:
 -/
 #guard_msgs in
 example : Hex.Nat.Prime
-    (2 ^ 384 - 2 ^ 128 - 2 ^ 96 + 2 ^ 32 - 1) := by
-  primality? (factor := Hex.Nat.ecmFactorSearch)
+    39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112319 := by
+  primality?
 
 /--
 info: Try this:
@@ -82,18 +80,27 @@ info: Try this:
       (by decide +kernel)
 -/
 #guard_msgs in
-example : Hex.Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := by
-  primality? (factor := Hex.Nat.ecmFactorSearch)
+example : Hex.Nat.Prime 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439 := by
+  primality?
 
 -- An open provider expression is rejected before even a table-prime search.
 example (_factor : Hex.Nat.FactorSearch) : Hex.Nat.Prime 7 := by
   fail_if_success primality? (factor := _factor)
   primality
 
--- The explicit route honors an exhausted total allowance.
+-- Standard HexIntFactor import; the explicit override still bypasses automatic
+-- selection and honors an exhausted total allowance.
 /--
-error: primality?: certificate construction for 100003 exhausted after 0 attempts (seed 100003; maximum 521 bits, recursive depth 32, total attempts 0, factor fuel 1024, explicit factor provider Hex.Nat.ecmFactorSearch (its per-attempt bounds apply), witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 32 factors and 4096 subsets, sieve bound at most 64)
+error: primality?: certificate construction for 100003 exhausted after 0 attempts (seed 100003; maximum 521 bits, recursive depth 32, total attempts 0, factor fuel 1024, explicit factor provider Hex.Nat.ecmFactorSearch (its per-attempt bounds apply), witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 32 factors and 4096 subsets, sieve bound at most 64); unresolved obligation 100003
 -/
 #guard_msgs in
 example : Hex.Nat.Prime 100003 := by
   primality? (factor := Hex.Nat.ecmFactorSearch) (maxAttempts := 0)
+
+-- Standard HexIntFactor import: this 507-bit input also exhausts with the
+-- registered ECM retry. Its failure belongs only to the filtered field target.
+/--
+error: primality?: certificate construction for 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771 exhausted after 156 attempts (seed 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771; core allocation: maximum 521 bits, recursive depth 32, total attempts 1024, factor fuel 1024, p-minus-one bounds [64, 512, 4096, 32768, 262144, 524288] at bases [2, 3], 2 rho restarts with 32768 steps, ECM bounds [] and 0 curves, witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 32 factors and 4096 subsets, sieve bound at most 64; construction retries [Hex.Nat.ecmConstructionFactor allocated 1010 attempts] (their per-attempt bounds apply)); unresolved obligation 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771 := by primality?

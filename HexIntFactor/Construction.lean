@@ -11,7 +11,7 @@ public import HexPrimality.Construction
 
 public section
 
-/-! Explicit bounded ECM factor provider for certificate construction.
+/-! Bounded ECM factor provider for certificate construction.
 It is not registered in the ordinary factorization or primality portfolio. -/
 
 namespace Hex.Nat
@@ -66,5 +66,8 @@ def ecmFactorSearch (b₁ : Nat := 32768) (b₂ : Nat := 524288)
           factors := insert p e factors
         stack := found.raw.residual :: stack
   return ⟨⟨factors, stack.foldl (· * ·) residual⟩, rand, work, events⟩
+
+/-- The default bounded ECM closure exported through the construction ABI. -/
+def ecmConstructionFactor : FactorSearch := ecmFactorSearch
 
 end Hex.Nat
