@@ -991,6 +991,27 @@ providers nor depends on HexInterval or HexIntervalMathlib. Constant-specific
 analytic implementation, interval-library admission and their measurement
 work are outside the family. Implementation is coordinated by [#10331](https://github.com/kim-em/hex-dev/issues/10331).
 
+### First executable integration milestone
+
+Follow the shared [delivery order](../../SPEC/real-closure-execution.md#delivery-order-and-experimental-integration).
+Connect a small representative suite of user statements through the actual new
+coefficient adapter and family algorithms before completing all family proofs
+or detailed performance campaigns. Include rational regressions, algebraic
+coefficient examples with fixed embeddings, root/sector decisions and
+false/refusal cases. Reusing only the existing rational solver does not establish
+this milestone. Ordinary real samples suffice initially; general infinitesimal
+towers and caller-registered constants are subsequent extensions where their
+APIs are not yet available.
+
+Record end-to-end timings and explicit proof status for each example. A
+computation-only experiment leaves the goal open; experimental proof assembly
+may use only the isolated, tracked admissions permitted by the shared policy.
+Such an entry point must not register as the verified handler or count toward
+its soundness tests. The production quotation and `check_sound` contract below
+still excludes `sorryAx`. Prioritize semantic proofs for the demonstrated
+fragment without waiting for unrelated foundation or performance work; complete
+the remaining coverage, proofs and prescribed evidence before closing the issue.
+
 ### Coefficients and supported sentences
 
 Retain exactly one real variable under one `∀` or `∃`, with the six
@@ -1511,7 +1532,8 @@ preregister bounded extension cases when implementation permits measurements.
 
 ### Implementation prerequisites
 
-The following are prerequisites for implementation/proof claims, not new assignments.
+The following are prerequisites for the corresponding completed implementation
+and proof claims, not universal start gates for experimental integration or new assignments.
 The coordinator owns dispatch; a merged SPEC alone satisfies none of the
 missing algorithm or theorem obligations.
 

@@ -18,6 +18,16 @@ the [real-closure family](../../SPEC/future-work.md#real-closures-of-ordered-fie
 no phase or release is advanced. Full sign-table and Thom correspondence still
 consume the separately specified foundations.
 
+The shared [delivery order](../../SPEC/real-closure-execution.md#delivery-order-and-experimental-integration)
+permits executable consumer integration before every correspondence proof is
+finished. Any experimental admitted proof boundary is named, isolated and
+tracked under that policy; it does not satisfy the soundness theorems or axiom
+audits specified here. The shared Sturm–Tarski bridge is owned by
+[#10389](https://github.com/kim-em/hex-dev/issues/10389); Thom/BKR foundations and
+the actual sign-determination correspondence remain separate obligations.
+Prioritize proofs needed by the selected tactic examples, then complete the
+remaining contracts and detailed proof-performance evidence.
+
 `HexSignDetMathlib`, in namespace `Hex.SignDet`, imports `HexSignDet`,
 `HexSturmMathlib`, `HexPolyMathlib`, `HexMatrixMathlib`,
 `HexRowReduceMathlib` and `HexRankMathlib`, plus the Tau Ceti foundations
