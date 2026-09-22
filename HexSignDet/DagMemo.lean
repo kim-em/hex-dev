@@ -38,7 +38,7 @@ cached index resolves to that function's exact result. This invariant serves
 both checked replay and structural expansion. -/
 structure Encoder.Valid (f : Array α → Entry E Ctx → Option α) (state : Encoder E Ctx)
     (memo : Array α) : Prop where
-  replay : state.entries.foldlM (init := #[]) (fun memo entry => do
+  fold : state.entries.foldlM (init := #[]) (fun memo entry => do
     let next ← f memo entry
     pure (memo.push next)) = some memo
   size : state.entries.size = memo.size
@@ -76,7 +76,7 @@ theorem Encoder.insert_valid {f : Array α → Entry E Ctx → Option α}
     refine ⟨memo.push t, ?_, Prefix.push memo t, ?_⟩
     · constructor
       · simp only [Encoder.insert, hi]
-        rw [Array.foldlM_push, hv.replay]
+        rw [Array.foldlM_push, hv.fold]
         simp only [bind, Option.bind, ht, pure]
       · simp only [Encoder.insert, hi, Array.size_push, hv.size]
       · intro e i h

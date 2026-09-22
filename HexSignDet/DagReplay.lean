@@ -99,7 +99,7 @@ theorem replay_encode {tree : Replay E Ctx} {qs : List (DensePoly E)}
     simpa only [hq] using h
   obtain ⟨memo, hv, _, hi⟩ := encodeFrom_checks (Encoder.valid_empty _) tree ht
   unfold replay? encode
-  rw [hv.replay]
+  rw [hv.fold]
   simp only [bind, Option.bind, hi, hq, dite_eq_left, pure]
 
 /-- Graph encoding cannot fail checked replay for an accepted tree. -/

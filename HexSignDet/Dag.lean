@@ -126,6 +126,28 @@ still checked. Invalid supplied evidence does not decide root nonexistence. -/
     else none
   else none
 
+/-- Descriptor extraction from any accepted supplied graph agrees exactly
+with the tree-level interface on that graph's actual replay result. -/
+theorem descriptor_replay {sign : E → Int} {context : Ctx} {raw : RawDescriptor E Ctx}
+    {dag : Dag E Ctx}
+    {t : {t : Replay E Ctx // t.check sign context raw.head raw.lower raw.upper raw.queries = true}}
+    (h : replay? sign context raw.head raw.lower raw.upper raw.queries dag = some t) :
+    descriptor? sign context raw dag = Descriptor.ofReplay? sign context raw t.val := by
+  by_cases hw : raw.wellFormed = true
+  · by_cases hctx : raw.context = context
+    · simp only [descriptor?, hw, hctx, dite_eq_left, h, bind, Option.bind]
+      by_cases hone : (t.val.table t.property).count raw.signs = 1
+      · rw [dite_eq_left hone]
+        exact (Descriptor.ofReplay_ofTable raw t.val hw hctx t.property hone).symm
+      · have hn : t.val.node.system.count raw.signs ≠ 1 := by
+          simpa only [Replay.table_lookup] using hone
+        rw [dite_eq_right hone]
+        exact (Descriptor.ofReplay_none (by simp [RawDescriptor.check, hn])).symm
+    · simp only [descriptor?, hw, dite_eq_left, hctx]
+      exact (Descriptor.ofReplay_none (by simp [RawDescriptor.check, hctx])).symm
+  · simp only [descriptor?, hw]
+    exact (Descriptor.ofReplay_none (by simp [RawDescriptor.check, hw])).symm
+
 /-- Graph descriptor extraction preserves the entire supplied raw descriptor. -/
 theorem descriptor_raw {sign : E → Int} {context : Ctx} {raw : RawDescriptor E Ctx}
     {dag : Dag E Ctx} {d : Descriptor E Ctx sign context}

@@ -122,6 +122,28 @@ theorem equality_kernel :
     decide (derivativeNode = badDenominator) = false := by
   decide +kernel
 
+@[expose] def constantStep (q : DensePoly Rat) : ReductionStep Rat :=
+  ⟨0, q, ⟨1, 0, 1⟩⟩
+
+@[expose] def reductionNode : Node Rat Nat :=
+  {derivativeNode with
+    preparation := some ⟨[constantStep 2]⟩
+    reductions := #v[some ⟨[], 1⟩, some ⟨[constantStep 2], 2⟩,
+      some ⟨[constantStep 2, constantStep 4], 4⟩]}
+
+set_option maxRecDepth 32768 in
+/-- Nonempty reduction and preparation records reach every inner equality
+instance. The complete literal node also passes ordinary-kernel replay. -/
+theorem reduction_kernel :
+    decide (reductionNode = reductionNode) = true ∧
+    decide (reductionNode = {reductionNode with preparation := some ⟨[constantStep 4]⟩}) = false ∧
+    (Replay.leaf reductionNode).check Sturm.orderSign 7 singletonRaw.head
+      singletonRaw.lower singletonRaw.upper reductionNode.queries = true := by
+  simp only [Replay.check, Node.check, checkMoment, queryPoly, Sturm.check,
+    TarskiCertificate.check, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
 -- Run the structural expander itself, including invalid unreachable entries.
 #guard match full.expand? with
   | some (.split n (.leaf l) (.leaf r)) => n == fullNode && l == firstNode && r == derivativeNode
@@ -135,6 +157,7 @@ theorem equality_kernel :
 #guard ({full with root := 3} : Dag Rat Nat).expand?.isNone
 #guard ({full with entries := full.entries.push ⟨fullNode, some (3, 3)⟩} : Dag Rat Nat).expand?.isNone
 #guard ({full with entries := full.entries.push ⟨badDenominator, none⟩} : Dag Rat Nat).expand?.isSome
+#guard check {full with entries := full.entries.push ⟨derivativeNode, none⟩} fullNode.queries
 #guard !check {full with entries := full.entries.push ⟨badDenominator, none⟩} fullNode.queries
 #guard !check {full with entries := full.entries.push ⟨derivativeNode, some (0, 1)⟩} fullNode.queries
 
@@ -198,6 +221,16 @@ theorem equality_kernel :
 /-- info: 'Hex.SignDet.CrossCheck.equality_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms equality_kernel
+
+/-- info: 'Hex.SignDet.CrossCheck.reduction_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms reduction_kernel
+/-- info: 'Hex.SignDet.Dag.descriptor_replay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Dag.descriptor_replay
+/-- info: 'Hex.SignDet.Descriptor.ofReplay_none' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.ofReplay_none
 
 /-- info: 'Hex.SignDet.Dag.check_replay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

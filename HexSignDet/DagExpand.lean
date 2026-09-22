@@ -6,7 +6,6 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.DagReplay
-import all HexSignDet.Descriptor
 
 public section
 
@@ -95,7 +94,7 @@ theorem expand_encode [DecidableEq Ctx] [Hashable E] [Hashable Ctx] (tree : Repl
     expand? (encode tree) = some tree := by
   obtain ⟨memo, hv, _, hi⟩ := Expansion.encodeFrom_expands Expansion.valid_empty tree
   unfold expand? encode Expansion.run
-  rw [hv.replay]
+  rw [hv.fold]
   simp only [bind, Option.bind, hi]
 
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
@@ -206,26 +205,21 @@ theorem check_encode_eq [Hashable E] [Hashable Ctx] (tree : Replay E Ctx)
 including malformed descriptors and rejected certificate contents. -/
 theorem descriptor_encode [Hashable E] [Hashable Ctx] {raw : RawDescriptor E Ctx} (tree : Replay E Ctx) :
     descriptor? sign context raw (encode tree) = Descriptor.ofReplay? sign context raw tree := by
-  by_cases hw : raw.wellFormed = true
-  · by_cases hctx : raw.context = context
-    · by_cases hc : tree.check sign context raw.head raw.lower raw.upper raw.queries = true
-      · simp only [descriptor?, hw, hctx, dite_eq_left, replay_encode hc, bind, Option.bind]
-        by_cases hone : (tree.table hc).count raw.signs = 1
-        · rw [dite_eq_left hone]
-          exact (Descriptor.ofReplay_ofTable raw tree hw hctx hc hone).symm
-        · have hn : tree.node.system.count raw.signs ≠ 1 := by
-            simpa only [Replay.table_lookup] using hone
-          simp [hone, Descriptor.ofReplay?, RawDescriptor.check, hw, hctx, hc, hn]
-      · have hn : replay? sign context raw.head raw.lower raw.upper raw.queries (encode tree) = none := by
-          have he := check_encode_eq (sign := sign) (context := context)
-            (p := raw.head) (a := raw.lower) (b := raw.upper) (qs := raw.queries) tree
-          simp only [check] at he
-          cases hr : replay? sign context raw.head raw.lower raw.upper raw.queries (encode tree) with
-          | none => rfl
-          | some t => simp [hr, hc] at he
-        simp [descriptor?, hw, hctx, hn, bind, Option.bind,
-          Descriptor.ofReplay?, RawDescriptor.check, hc]
-    · simp [descriptor?, hw, hctx, Descriptor.ofReplay?, RawDescriptor.check]
-  · simp [descriptor?, hw, Descriptor.ofReplay?, RawDescriptor.check]
+  by_cases hc : tree.check sign context raw.head raw.lower raw.upper raw.queries = true
+  · exact descriptor_replay (replay_encode hc)
+  · have hn : replay? sign context raw.head raw.lower raw.upper raw.queries (encode tree) = none := by
+      have he := check_encode_eq (sign := sign) (context := context)
+        (p := raw.head) (a := raw.lower) (b := raw.upper) (qs := raw.queries) tree
+      simp only [check] at he
+      cases hr : replay? sign context raw.head raw.lower raw.upper raw.queries (encode tree) with
+      | none => rfl
+      | some t => simp [hr, hc] at he
+    rw [Descriptor.ofReplay_none (by simp [RawDescriptor.check, hc])]
+    unfold descriptor?
+    split
+    · split
+      · simp [hn, bind, Option.bind]
+      · rfl
+    · rfl
 
 end Hex.SignDet.Dag

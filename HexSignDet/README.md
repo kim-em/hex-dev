@@ -282,8 +282,9 @@ Structural expansion and checked graph replay deliberately treat unreachable
 entries differently: both reject invalid references, while only replay checks
 all arithmetic witnesses. An unreachable false witness can therefore coexist
 with a structurally expandable root, but causes the whole graph replay to fail.
-For encoded trees, `Dag.descriptor_encode` proves exact agreement of graph and
-tree descriptor extraction, including rejection. Descriptor shape and context
+`Dag.descriptor_replay` proves exact graph/tree descriptor agreement on any
+accepted supplied graph's actual replay result. For encoded trees,
+`Dag.descriptor_encode` also covers rejection. Descriptor shape and context
 checks run before graph replay.
 
 A cross-level coefficient-sign certificate will require a separate type with

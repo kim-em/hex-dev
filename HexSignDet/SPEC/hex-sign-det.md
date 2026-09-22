@@ -420,6 +420,25 @@ Check dimensions, indices and references before using supplied data. Supplied
 rational solutions alone are not certificates; the integer identities and
 support derivation remain necessary.
 
+Same-level BKR certificates may share subtrees through `Dag`: a topological
+array of complete literal `Entry` nodes with ordered child references.
+`Dag.replay?` checks every entry, including unreachable entries, against the
+caller's fixed context, head, interval and ordered root query list. Children
+must refer to earlier entries and bind the exact query slices. Structural
+`expand?` checks all references but leaves arithmetic witnesses to replay;
+therefore a structurally valid false unreachable witness still rejects the
+whole checked graph. `Dag.descriptor?` checks raw shape and context before
+replay and agrees exactly with the tree descriptor interface on any accepted
+supplied graph's actual replay result.
+
+`Dag.encode` uses exact equality for sharing; hashes only narrow lookup.
+Expansion recovers every encoded tree literally, and graph checking preserves
+both acceptance and rejection of that tree. Encoding visits every input tree
+occurrence, which can exceed the number of shared entries exponentially.
+Graph transformations should retain entry sharing through an index remapping.
+This fixed-domain format is the same-level component; it does not discharge
+the separate cross-level coefficient-evidence requirement below.
+
 For nested coefficient levels, certificates form a finite DAG with references
 to earlier nodes only. A coefficient-sign dependency at level `ℓ` refers to
 strictly lower levels; same-level table recursion separately decreases query

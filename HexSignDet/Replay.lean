@@ -35,8 +35,9 @@ structure Node (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
   preparation : Option (QueryReduction E) := none
   basis : Matrix.RankCert Int size system.positive.length
 
-/-- Compare all fields literally, aligning dependent dimensions using their
-natural-number decisions before comparing the supplied rank witnesses. -/
+/-- Compare literal context and ordinary fields before computing support
+lengths. Natural-number decisions then align dependent rank witnesses while
+keeping the complete equality decision reducible in the ordinary kernel. -/
 instance [DecidableEq Ctx] : DecidableEq (Node E Ctx) := by
   intro a b
   cases a with
@@ -45,18 +46,21 @@ instance [DecidableEq Ctx] : DecidableEq (Node E Ctx) := by
     | mk cb pb lb ub qb nb sb mb rb db bb =>
       by_cases h : na = nb
       · subst nb
-        by_cases hl : sa.positive.length = sb.positive.length
-        · let basis : Matrix.RankCert Int na sb.positive.length := hl ▸ ba
-          exact decidable_of_iff
-            (ca = cb ∧ pa = pb ∧ la = lb ∧ ua = ub ∧ qa = qb ∧ sa = sb ∧
-              ma = mb ∧ ra = rb ∧ da = db ∧ basis = bb) (by
-                constructor
-                · rintro ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, hb⟩
-                  simpa [basis, Node.mk.injEq, heq_eq_eq] using hb
-                · intro he
-                  cases he
-                  simp [basis])
-        · exact isFalse fun he => hl (by cases he; rfl)
+        by_cases hf : ca = cb ∧ pa = pb ∧ la = lb ∧ ua = ub ∧ qa = qb ∧
+            sa = sb ∧ ma = mb ∧ ra = rb ∧ da = db
+        · by_cases hl : sa.positive.length = sb.positive.length
+          · let basis : Matrix.RankCert Int na sb.positive.length := hl ▸ ba
+            exact decidable_of_iff (basis = bb) (by
+              constructor
+              · intro hb
+                rcases hf with ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+                simpa [basis, Node.mk.injEq, heq_eq_eq] using hb
+              · intro he
+                cases he
+                simp [basis])
+          · exact isFalse fun he => hl (by cases he; rfl)
+        · exact isFalse fun he => hf (by cases he; simp)
+
       · exact isFalse fun he => h (by cases he; rfl)
 
 /-- Retained independent rows in the order certified by HexRank. -/

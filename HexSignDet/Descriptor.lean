@@ -81,6 +81,14 @@ theorem Descriptor.ofReplay_isSome (sign : E → Int) (context : Ctx)
   unfold ofReplay?
   split <;> simp_all
 
+/-- Rejected raw evidence yields no descriptor. This exposes the failure
+case without exposing the descriptor's private constructor. -/
+theorem Descriptor.ofReplay_none {sign : E → Int} {context : Ctx}
+    {raw : RawDescriptor E Ctx} {evidence : Replay E Ctx}
+    (h : raw.check sign context evidence = false) :
+    ofReplay? sign context raw evidence = none := by
+  simp [ofReplay?, h]
+
 /-- Successful replay validation preserves the supplied descriptor literally. -/
 theorem Descriptor.ofReplay_raw {sign : E → Int} {context : Ctx}
     {raw : RawDescriptor E Ctx} {evidence : Replay E Ctx}
