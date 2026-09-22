@@ -1,0 +1,14 @@
+verifying 12 benchmark(s)...
+  [ok ] Hex.RealRootsBench.runCancellation
+  [ok ] Hex.RealRootsBench.runIsolateDescartesFirst
+  [ok ] Hex.RealRootsBench.runMobiusTransform
+  [ok ] Hex.RealRootsBench.runIsolateWellSep
+  [ok ] Hex.RealRootsBench.runIsolateChebyshev
+  [ok ] Hex.RealRootsBench.runSepPrec
+  [ok ] Hex.RealRootsBench.runIsolateSturm
+  [ok ] Hex.RealRootsBench.runRootBound
+  [ok ] Hex.RealRootsBench.runSturmChain
+  [ok ] Hex.RealRootsBench.runIsolateMignotte
+  [ok ] Hex.RealRootsBench.runRefineTo
+  [ok ] Hex.RealRootsBench.runSturmVarAt
+all 12 benchmark(s) passed

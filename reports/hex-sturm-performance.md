@@ -477,19 +477,20 @@ identities/signs and polynomial multipliers/quotients/gcds are rejected.
 ## Deferred-normalization validation
 
 The executable `ZPoly.evalDyadic` retains its array fold and exact canonical
-result. The numerator/precision fold normalizes once; zero coefficients retain
+result. At integer endpoints the numerator/precision fold normalizes once; zero coefficients retain
 signed exponents and zero accumulators reset unused precision. This avoids
 materializing enormous powers of two for constants or sparse monomials.
 `HexRealRootsMathlib.evalDyadic_eq_fold` proves equality with the former
 operation at every polynomial and dyadic point. The existing evaluation,
 Sturm and Tarski correspondence proofs build through that equality.
 
-This is a targeted replay improvement, not a universal evaluation speedup.
-For `2X^m + X^(m-1) + ... + X + 1` at `1/2`, every suffix has value 2:
-the old evaluator keeps fixed-size numerators, whereas the new fold carries
-`(2^(j+1), j)` after j lower coefficients. That family regresses from linear
-to quadratic binary work; see the
-[cancellation analysis](sturm-bit-cost-models.md#cancellation-tradeoff).
+Fractional endpoints use normalized dyadic arithmetic at every Horner step.
+For `2X^m + X^(m-1) + ... + X + 1` at `1/2`, this keeps each suffix value 2
+compact and takes linear bit work. Deferring normalization there would grow
+`(2^(j+1), j)` and take quadratic work; see the
+[cancellation analysis](sturm-bit-cost-models.md#fractional-cancellation) and
+[the fractional-evaluation report](hex-real-roots-performance.md#fractional-evaluation).
+The integer-endpoint measurements below remain scoped to that replay family.
 Constants and sparse monomials retain their former compact behavior.
 
 | Current registration | Declared expression | Mode | Degree ladder | Result |

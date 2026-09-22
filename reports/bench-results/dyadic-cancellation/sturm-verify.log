@@ -1,0 +1,15 @@
+verifying 13 benchmark(s)...
+  [ok ] Hex.SturmBench.runSigns
+  [ok ] Hex.SturmBench.runClearing
+  [ok ] Hex.SturmBench.runInteger
+  [ok ] Hex.SturmBench.runInitial
+  [ok ] Hex.SturmBench.runReplayHigh
+  [ok ] Hex.SturmBench.runChain
+  [ok ] Hex.SturmBench.runInitialHigh
+  [ok ] Hex.SturmBench.runDomain
+  [ok ] Hex.SturmBench.runIntegerHigh
+  [ok ] Hex.SturmBench.runReplay
+  [ok ] Hex.SturmBench.runRational
+  [ok ] Hex.SturmBench.runEndpoints
+  [ok ] Hex.SturmBench.runRationalHigh
+all 13 benchmark(s) passed

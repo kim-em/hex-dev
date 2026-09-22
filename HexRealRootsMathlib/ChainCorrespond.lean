@@ -175,8 +175,8 @@ private theorem hornerDyadic_fold (n e : Int) (cs : List Int) :
     exact (hornerDyadic_value n e c _ _).trans
       (congrArg (fun v : ℝ => (c : ℝ) + (n : ℝ) * 2 ^ (-e) * v) ih)
 
-/-- Deferred normalization preserves the exact, canonical result of the
-ordinary dyadic Horner fold. -/
+/-- Selecting normalization by endpoint preserves the exact, canonical result
+of the ordinary dyadic Horner fold. -/
 theorem evalDyadic_eq_fold (q : Hex.ZPoly) (x : Dyadic) :
     q.evalDyadic x = q.toArray.foldr (fun c acc => Dyadic.ofInt c + x * acc) 0 := by
   apply Dyadic.toRat_inj.mp
@@ -186,15 +186,18 @@ theorem evalDyadic_eq_fold (q : Hex.ZPoly) (x : Dyadic) :
   unfold Hex.ZPoly.evalDyadic
   cases x with
   | zero =>
-    simp only [← Array.foldr_toList, Dyadic.toReal,
+    simp only [lt_self_iff_false, ↓reduceIte, ← Array.foldr_toList, Dyadic.toReal,
       Dyadic.toRat_ofIntWithPrec_eq_mul_two_pow]
     push_cast
     simpa using hornerDyadic_fold 0 0 q.toArray.toList
   | ofOdd n e hn =>
-    simp only [← Array.foldr_toList, Dyadic.toReal,
-      Dyadic.toRat_ofIntWithPrec_eq_mul_two_pow, Dyadic.toRat_ofOdd_eq_mul_two_pow]
-    push_cast
-    exact hornerDyadic_fold n e q.toArray.toList
+    dsimp only
+    split
+    · rw [← Array.foldr_toList, toReal_horner_foldr]
+    · simp only [← Array.foldr_toList, Dyadic.toReal,
+        Dyadic.toRat_ofIntWithPrec_eq_mul_two_pow, Dyadic.toRat_ofOdd_eq_mul_two_pow]
+      push_cast
+      exact hornerDyadic_fold n e q.toArray.toList
 
 /-- **Evaluation correspondence.** The exact dyadic Horner evaluation of an
 integer polynomial, cast to `ℝ`, agrees with the Mathlib evaluation of its real

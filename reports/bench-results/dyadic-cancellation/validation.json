@@ -1,0 +1,14 @@
+{
+  "fixture_commands": [
+    ".lake/build/bin/hexsturm_bench axes",
+    ".lake/build/bin/hexsturm_bench coefficient-control"
+  ],
+  "oracle_command": "/tmp/hexvenv/bin/python scripts/bench/check_sturm_fixtures.py reports/bench-results/dyadic-cancellation/axes.jsonl reports/bench-results/dyadic-cancellation/controls.jsonl",
+  "python_flint_version": "0.9.0",
+  "checker_sha256": "f6074ae20fdc6e39bd8b87217f3ea4989272cf21680917af8e10306d98b9766d",
+  "fixtures": {
+    "axes.jsonl": "cb3ffafd06b799932813d479e35121fa517439edc3cde88a3935e794181e6de2",
+    "controls.jsonl": "97d435e081f2f3bd83d44829dfb60dfdc27d97a18d9d992a2644a4562a8ae772"
+  },
+  "previous_fixtures": "byte-identical to reports/bench-results/sturm-replay-deferred-oracles/{axes,controls}.jsonl"
+}
