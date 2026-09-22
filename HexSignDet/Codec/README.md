@@ -42,6 +42,17 @@ and the root index is in range. The proof follows the actual decoder's left
 fold and includes unreachable entries. Arbitrary user codecs need not be lawful,
 and no JSON byte-parser roundtrip theorem is claimed.
 
+The structured codec law does not imply a byte roundtrip, even when the printer
+emits only valid integer tokens. For example, the internal JSON number with
+mantissa 10 and exponent 1 prints as `1` and parses with mantissa 1 and exponent
+0. A decoder that accepts only the original internal representation satisfies
+the structured law for its single value but rejects the parsed bytes. The
+`NumberForm` conformance probe proves that structured law in the ordinary kernel
+and separately checks the normalization and byte rejection by compiled execution.
+A byte-roundtrip proof must establish the actual printer/parser correspondence
+and each value decoder's preservation across it; `ValueCodec.Lawful` alone is
+insufficient. This example does not affect soundness of accepted graph replay.
+
 Every structural record is a positional array with exactly the listed fields.
 An optional value is `[]` or `[value]`. Arrays and lists retain their original
 order; matrices are arrays of rows.

@@ -307,4 +307,32 @@ theorem graph_rejected : check literalGraph sharedParent.queries = false := by
 #guard_msgs in
 #print axioms false_evidence_roundtrip
 
+namespace NumberForm
+
+/-- A codec can distinguish the internal number representation even though
+its printer emits a valid integer token. Structured laws alone allow this. -/
+@[expose] def codec : ValueCodec Unit where
+  encode _ := .num ⟨10, 1⟩
+  decode
+    | .num n => if n.mantissa == 10 && n.exponent == 1 then .ok () else .error "changed number form"
+    | _ => .error "expected a number"
+
+/-- This codec satisfies the existing structured law in the ordinary kernel. -/
+theorem lawful : codec.Lawful := by
+  intro x
+  cases x
+  rfl
+
+#guard (codec.encode ()).compress == "1"
+#guard match Codec.parse {} (codec.encode ()).compress.toUTF8 with
+  | .ok (.num n) => n.mantissa == 1 && n.exponent == 0
+  | _ => false
+#guard ((Codec.parse {} (codec.encode ()).compress.toUTF8).bind codec.decode).toOption.isNone
+
+/-- info: 'Hex.SignDet.FastCheck.NumberForm.lawful' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms lawful
+
+end NumberForm
+
 end Hex.SignDet.FastCheck

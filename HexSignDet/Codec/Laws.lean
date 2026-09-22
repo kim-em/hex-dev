@@ -15,8 +15,9 @@ public section
 namespace Hex.SignDet
 open Lean
 
-/-- A literal value codec preserves the entire input value. This property is
-needed for encoding roundtrips, not for soundness of independent replay. -/
+/-- Structured encoding followed by decoding preserves the entire input value.
+This law does not include JSON printing or byte parsing. It is needed for
+structured roundtrips, not for soundness of independent replay. -/
 @[expose] def ValueCodec.Lawful (codec : ValueCodec α) : Prop :=
   ∀ x, codec.decode (codec.encode x) = .ok x
 
