@@ -41,6 +41,7 @@ def ecmFactorSearch (b₁ : Nat := 32768) (b₂ : Nat := 524288)
   let mut factors := initial.raw.factors
   let mut residual := 1
   let mut stack := [initial.raw.residual]
+  let mut tables := Ecm.prepare b₁ b₂
   for _ in [:allocation.factorFuel] do
     let m :: rest := stack | break
     stack := rest
@@ -48,7 +49,9 @@ def ecmFactorSearch (b₁ : Nat := 32768) (b₂ : Nat := 524288)
     let mut divisor := 0
     for curve in [:min curves 64] do
       if work ≥ limit then break
-      let (result, used) := Ecm.search m (6 + curve) b₁ b₂ (limit - work)
+      let some t := tables | break
+      let ((result, used), t) := Ecm.Internal.searchPrepared m (6 + curve) (limit - work) t
+      tables := some t
       work := work + used
       if trace then
         dbg_trace "ecm {m}: sigma {6+curve}; bounds {b₁}/{b₂}; {repr result}; attempts {used}"

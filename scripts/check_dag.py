@@ -42,8 +42,10 @@ RUNTIME_CHECK_RE = re.compile(r"^\s*#(?:eval|guard|reduce|run)\b")
 # Private constructors in these modules are an ordinary/public-import API
 # boundary. `import all` is a deliberate trusted-internals escape hatch, so
 # every owning exception must be an exact reviewed path rather than a suffix or
-# directory convention. There are currently no required exceptions.
+# directory convention. The ECM diagnostic observes private preparation costs.
 SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
+    "HexIntFactor.EcmStage2": frozenset({
+        Path("bench/HexPrimality/EcmDiagnostics/EcmPreparation.lean")}),
     "HexSturm.Basic": frozenset(),
     "HexInterval.Executable": frozenset(),
     "HexInterval.Runtime": frozenset(),

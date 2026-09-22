@@ -734,6 +734,29 @@ measurements. Table sharing requires an explained cost reduction and unchanged
 coverage and accounting. A result within shared-host noise is inconclusive,
 not a speedup. Negative or inconclusive evidence does not justify adoption.
 
+The production `Ecm.Tables` handle has a private constructor and read-only
+bounds and optional schedule views. `Ecm.prepare` checks bounds without building
+either list. `Internal.searchPrepared` returns both the validated search result
+and the updated immutable handle, with proper-divisor validation proved by
+`Internal.searchPrepared_spec`. Stage-1 preparation follows successful curve
+setup; stage-2 preparation follows a saved stage-1 state with remaining allowance.
+`Ecm.search` uses a fresh handle; `ecmFactorSearch` threads one handle across its
+eligible curves and residuals. No curve-dependent values enter the handle.
+
+At the default bounds, the retained schedules contain 3512 largest prime powers
+and 39878 interval primes. On a 64-bit runtime their list cells occupy about
+1.04 MB (24 bytes per cell, immediate natural-number entries), plus the handle.
+During stage-2 preparation, also account for the full 43390-prime list before
+filtering and the sieve workspace; conservatively allowing two full-size
+43390-prime lists alongside the powers gives about 2.17 MB of list cells. This excludes allocator overhead and
+per-curve residues; process peak RSS is recorded separately. Preparation is
+included in complete construction time and heartbeat counts. The
+[construction execution report](../../reports/hex-primality-ecm-stage2.md#construction-execution-and-shared-schedules)
+retains the paired measurements, preparation observation, native-loading evidence,
+and caller resource advice. The measured path uses precompiled HexBasic,
+HexPrimality and HexIntFactor, with HexArith already precompiled; their Mathlib
+bridges remain unprecompiled.
+
 The heartbeat policy is owned by
 [HexPrimality's caller-resource contract](../../HexPrimality/SPEC/hex-primality.md#automatic-construction-fallback-and-caller-resources)
 and applies to all provider execution modes and table preparation. Examples

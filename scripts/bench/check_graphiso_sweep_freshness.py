@@ -25,7 +25,9 @@ Hex library namespaces outside the measured import closure. Target additions
 cannot change existing declarations, build options, defaults, or module
 ownership within that closure. The check also compares the Lake declarations
 that build the cactus executable, allowing edits confined to unrelated build
-helpers. Prose under the library tree is edited often enough, and cannot move
+helpers, plus a literal HexBasic precompile flag when HexGraphIso already
+forces that dependency to load natively through Lake shared-library dependencies.
+Prose under the library tree is edited often enough, and cannot move
 a curve, that making every docstring cost a sweep would either stop the prose
 being written or make regeneration routine enough to stop meaning anything.
 """
@@ -70,6 +72,23 @@ def graphiso_blocks(text: str) -> dict[str, str]:
             relevant[name] = body
         elif kind == "def" and declaration in GRAPHISO_BUILD_DEFS:
             relevant[name] = body
+    # Lake's LeanLib.recBuildShared loads the shared libraries of *all*
+    # transitive imports, regardless of their precompileModules setting.
+    # The measured tactic module imports HexGraphIso, so precompiling that
+    # library already loads native HexBasic. The cactus executable independently
+    # links native facets, which do not depend on precompileModules. This rule
+    # must be revisited if a future figure measures elaboration below HexGraphIso.
+    # Explicit HexBasic precompilation thus adds artifacts, not a new measured
+    # execution/loading path. Admit only the literal flag; retain every other
+    # field, and retain changes to HexGraphIso's own precompilation setting.
+    graph = freshness.strip_lean_comments(relevant.get("lean_lib HexGraphIso", "")).strip()
+    if graph == "lean_lib HexGraphIso where\n  precompileModules := true":
+        key = "lean_lib HexBasic"
+        if key in relevant:
+            basic = freshness.strip_lean_comments(relevant[key]).strip()
+            bare = "lean_lib HexBasic where"
+            if basic in (bare, bare + "\n  precompileModules := true"):
+                relevant[key] = bare
     return relevant
 
 

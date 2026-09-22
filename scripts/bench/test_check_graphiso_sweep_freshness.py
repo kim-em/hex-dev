@@ -16,6 +16,35 @@ LIB = ('lean_lib IndependentSupport where\n  srcDir := "bench"\n'
 NEXT = 'lean_exe next where\n  root := `Main\n'
 
 
+class NativeDependencyTests(unittest.TestCase):
+    BASE = "lean_lib HexBasic where\n\nlean_lib HexGraphIso where\n  precompileModules := true\n"
+
+    def test_already_native_dependency(self):
+        after = self.BASE.replace("lean_lib HexBasic where", "lean_lib HexBasic where\n  precompileModules := true")
+        self.assertFalse(check.lakefile_texts_differ(self.BASE, after))
+
+    def test_interpreted_graph_cannot_use_allowance(self):
+        before = self.BASE.replace("  precompileModules := true\n", "")
+        after = before.replace("lean_lib HexBasic where", "lean_lib HexBasic where\n  precompileModules := true")
+        self.assertTrue(check.lakefile_texts_differ(before, after))
+
+    def test_native_codegen_options_still_matter(self):
+        after = self.BASE.replace("lean_lib HexBasic where",
+            'lean_lib HexBasic where\n  precompileModules := true\n  moreLeancArgs := #["-O1"]')
+        self.assertTrue(check.lakefile_texts_differ(self.BASE, after))
+
+    def test_quoted_flag_does_not_establish_native_loading(self):
+        before = self.BASE.replace('  precompileModules := true',
+            '  moreLeancArgs := #["\n  precompileModules := true\n"]')
+        after = before.replace("lean_lib HexBasic where", "lean_lib HexBasic where\n  precompileModules := true")
+        self.assertTrue(check.lakefile_texts_differ(before, after))
+
+    def test_nonliteral_flags_are_not_ignored(self):
+        after = self.BASE.replace("lean_lib HexBasic where",
+            "lean_lib HexBasic where\n  precompileModules := (true && true)")
+        self.assertTrue(check.lakefile_texts_differ(self.BASE, after))
+
+
 class IndependentTargetTests(unittest.TestCase):
     def allowed(self, before, after):
         return check.independent_target_additions(before, after, {"HexOther"},

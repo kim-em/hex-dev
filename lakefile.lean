@@ -118,7 +118,9 @@ extern_lib hexnautyffi (pkg) := do
 
 lean_lib Hex where
 
+-- Mathlib-free dependencies and producers called during elaboration.
 lean_lib HexBasic where
+  precompileModules := true
 
 lean_lib HexTruncatedSeries where
 
@@ -560,7 +562,9 @@ lean_lib HexPrimalityKernelProbe where
   srcDir := "bench"
   globs := #[`HexPrimalityBench.Inputs, `HexBench.PrimalityKernel,
     `HexPrimality.PMinusOneFixtures, `HexIntFactor.PMinusOneFixtures,
-    `HexPrimality.PMinusOneMeasure, `HexPrimality.PMinusOneParents]
+    `HexPrimality.PMinusOneMeasure, `HexPrimality.PMinusOneParents].map Glob.one ++
+    -- Computational diagnostics emit no proof and observe clocks/counters.
+    #[.submodules `HexPrimality.EcmDiagnostics]
 
 lean_lib HexPrimalityElabProbe where
   srcDir := "bench"
@@ -1019,7 +1023,7 @@ lean_lib HexConformance where
 
     ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
 
-    ++ #[`HexIntFactor.Conformance,
+    ++ #[`HexIntFactor.Conformance, `HexIntFactor.EcmTables,
       `HexIntFactor.FieldReplay,
       `HexIntFactor.PrimalityConformance].map Glob.one
 

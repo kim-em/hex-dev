@@ -423,3 +423,180 @@ either switch setting. These supplemental calls do not repeat rendering or
 kernel timings of that unchanged literal. Thus this independent implementation
 does not replace the explicit ECM route for the three open targets under its
 tested policy. No unverified result from it enters an ECM certificate.
+
+## Construction execution and shared schedules
+
+The shipped execution path precompiles HexBasic, HexPrimality and HexIntFactor
+(HexArith already exports native code), and shares immutable ECM schedules
+within each provider invocation. Mathlib bridge libraries are not precompiled.
+The bounds remain 32768/524288, the curve cap remains 64, and no heartbeat
+counter, baseline, limit, allocation accounting or checker is changed.
+
+The retained comparisons are [interpreter versus native construction](bench-results/ecm-cost-execution-10374.json),
+[native per-curve versus shared schedules](bench-results/ecm-cost-sharing-10374.json),
+[residual execution](bench-results/ecm-cost-residual-execution-10374.json),
+[residual preparation](bench-results/ecm-cost-residual-sharing-10374.json), and
+[import-only builds](bench-results/ecm-cost-loading-10374.json).
+Each uses four fixed trial-major blocks, adjacent alternating AB/BA arms, one
+automatically selected CPU per comparison, identical paired Lean options, and
+all completed samples. There were no failed samples, reruns or semantic
+mismatches. Host activity is retained as context. These are fixed-input cost
+experiments, not asymptotic benchmark registrations.
+
+The sources start from `e9206227f` on Lean 4.34.0. Each record embeds its differing
+sources; the [provenance supplement](bench-results/ecm-cost-provenance-10374.json)
+identifies the unchanged dependency sources,
+binaries and toolchain. The two execution checkouts have identical producer
+code and differ in precompilation. Their first complete builds include Lake
+configuration startup, retained rather than removed. The sharing comparison
+runs compiled executables and includes lazy preparation in the timed operation.
+Its single-call residual controls deliberately do not reuse a table: they
+check outcomes and the preparation overhead when reuse is unavailable.
+
+Median construction seconds (the producer region, including its self-check):
+
+| Subject | Interpreted per curve | Native per curve | Native shared | Shared reduction |
+|---|---:|---:|---:|---:|
+| secp256k1 | 31.107 | 15.150 | 11.800 | 22.1% |
+| P-384 | 61.894 | 31.417 | 25.577 | 18.6% |
+| Curve448 | 40.352 | 20.309 | 16.700 | 17.8% |
+| P-521 | 2.440 | 1.383 | 1.379 | inconclusive |
+
+The native-per-curve column uses the sharing comparison's own adjacent control;
+its medians in the execution comparison were 15.147, 31.532, 20.250 and 1.366
+seconds. Every paired sample for the three ECM-using fields favors sharing; P-521 shows no useful
+change. Its already-sufficient factor subset avoids ECM preparation entirely.
+The two experiments separate native compilation from table reuse.
+
+[Whole-module profiles and loaded mappings](bench-results/ecm-cost-profile-10374/record.json)
+verify execution in the two per-curve checkouts, before table sharing,
+rather than inferring it from a meta import. The interpreted
+profile spends 13.74% in `interpreter::eval_body` and 12.86% in
+`interpreter::call`; the native profile contains compiled ECM addition,
+doubling and continuation symbols from `libHex_HexIntFactor.so`. The saved
+flat profiles are [interpreted](bench-results/ecm-cost-profile-10374/interpreted.txt)
+and [native](bench-results/ecm-cost-profile-10374/native.txt). These profiles
+cover complete module builds, not a LeanBench timed region. Both `evalExpr`
+and `evalConst` can dispatch interpreted code. An interpreted named-provider
+smoke check also succeeds; measured expression dispatch is under two milliseconds
+against seconds of search, so no separate name-versus-expression performance
+comparison is warranted and no dispatch API change is adopted.
+
+Enabling precompilation with producer dependencies already built took 33.07
+seconds and peaked at 1.74 GiB RSS. The module dynlibs total 2.55 MB versus
+0.23 MB in the interpreter checkout; aggregate libraries and hashes are retained
+with the loading evidence. Import-only fresh builds have 1.088-second medians
+in both arms, an inconclusive loading-cost difference. Fresh-module peak RSS
+is approximately 0.88–1.08 GiB, distinct from native executable peaks of 65–69 MiB.
+The extra build and loading costs do not make the native-producer policy
+untenable on this host.
+
+Two unpinned build-log preparation observations at the production bounds take
+1.61/1.71 ms for
+stage-1 powers and 48.85/60.96 ms for the stage-2 interval, with 74848/74847
+raw heartbeat increments. Both observations are retained as context; the
+pinned whole-construction comparisons include preparation in every sample. Avoiding repeated
+stage-2 sieving is consistent with the field reductions; these isolated costs
+are not an exact reconstruction of whole-construction time. Attempts include
+core factoring, stage-1-only calls and several residuals, so dividing attempts
+by two does not give the executed continuation count. The bit-packed sieve
+spends time updating large integers; removing that work saves proportionally
+more time than allocation-count heartbeats. Single-call residual comparisons show no useful
+sharing benefit; their small preparation overhead is retained. The schedules
+contain 3512 powers and 39878 interval primes (about 1.04 MB of list cells).
+Allowing two full-size 43390-prime lists alongside the powers during filtering
+gives a conservative 2.17 MB list-cell peak, plus the sieve, handle, allocator overhead
+and curve-local residues. There is no process-global cache.
+
+The residual suite retains stage-1 factor 3 for `(51,13,5,1024)`, stage-2
+factor 1013 for `(1022117,6,16,1024)`, failure for
+`(2^127-1,6,64,8191)`, and whole-modulus recovery for
+`(1009,6,16,1024)`. Records include candidate, giant-advance, batch and recovery
+gcd counts and the last prime. The stage-2 success itself recovers the proper
+factor from a whole-modulus batch. The explicit `[0,23]` recovery control at
+modulus 1081 ensures a whole leaf does not mask a later proper divisor.
+Independent trial-division conformance checks the prepared lists and largest
+powers, including small primes, empty/reversed intervals and wheel endpoints.
+Additional guards cover invalid bounds, zero/one remaining attempt, invalid
+setup, reuse across curves and moduli, and inability to forge a public handle.
+
+Attempts are exactly 145, 290, 259 and 170 for the four fields. Certificates,
+checker outcomes, random states and events agree in every arm and block.
+The existing exact `primality?` suggestions, native fixed construction/checker
+registrations and ordinary replay all pass. The complete three-field tactic
+output guard module builds in 54 seconds, including suggestion rendering and
+proof checking (an unpaired verification observation). [Final construction, rendering and
+replay observations](bench-results/ecm-cost-validation-10374.json) keep these
+costs separate: shared fresh-module construction takes 13.21, 27.32, 18.23 and
+2.71 seconds in single confirmation samples. Rendering/elaboration takes 2.7,
+4.1, 5.8 and 12.6 ms; ordinary direct kernel replay takes 3.8, 8.0, 12.0 and
+48.7 ms. These confirmation observations are not another paired speedup claim.
+
+Heartbeat reductions are much smaller than wall-time reductions:
+
+| Subject | Native per-curve raw counter delta | Native shared raw counter delta |
+|---|---:|---:|
+| secp256k1 | 225250283 | 220688894 |
+| P-384 | 433019167 | 424486935 |
+| Curve448 | 276892161 | 271425777 |
+| P-521 | 9475174 | 9475174 |
+
+These are observational allocation counters, not estimates obtained by adjusting
+limits. Lean's user-facing heartbeat units are thousands of raw increments.
+The first three searches alone still exceed the default 200000-heartbeat
+allowance; native compilation does not establish default-heartbeat success.
+The paired explicit-provider comparisons above use caller-set
+`maxHeartbeats 4000000` and `maxRecDepth 1024` in both arms. The integrated
+plain `primality?` path with automatic fallback (#10373) succeeds with only:
+
+```lean
+set_option maxHeartbeats 4000000
+```
+
+The [integrated resource observations](bench-results/ecm-cost-fallback-options-10374.json)
+retain all twelve fresh-module calls: numeral and power-expression forms for
+three fields, each at the default limit and at the explicit finite allowance.
+All six default calls fail at the heartbeat limit, and all six finite-allowance
+calls succeed with the exact expected suggestions. No recursion-depth override
+is needed. Successful raw counter deltas and complete fresh-module wall times
+are:
+
+| Subject | Numeral raw delta | Power raw delta | Numeral wall | Power wall |
+|---|---:|---:|---:|---:|
+| secp256k1 | 358042364 | 358042587 | 24.11 s | 24.33 s |
+| P-384 | 433262417 | 433305454 | 28.54 s | 28.44 s |
+| Curve448 | 282311324 | 282372922 | 19.53 s | 19.43 s |
+
+These complete automatic-path observations include the initial exhausted core
+construction, ECM retry, rendering and checking, plus the small observational
+wrapper. Each time is one confirmation sample, not another paired speedup claim
+or a measured minimum limit. The [P-521 control](bench-results/ecm-cost-fallback-p521-10374.json)
+uses the same runner with its recorded case override. Its numeral form succeeds
+at both limits (about 9714 user heartbeat units). The power form hits the default
+recursion-depth limit before construction; that completed failure is retained,
+and the three-field runner stops because it expects only heartbeat failures.
+A [separate fixed-depth control](bench-results/ecm-cost-fallback-p521-depth-10374.json)
+sets the already-tested caller option `maxRecDepth 1024`: both forms then succeed
+with default heartbeats and with the explicit finite allowance. These are
+resource observations, not a limit search. The automatic P-521 path takes the
+existing successful core route and does not prepare ECM schedules. The
+[integrated native validation](bench-results/ecm-cost-fallback-validation-10374.json)
+retains unchanged P-521 attempts (170), random state, events and certificate,
+and all nine fixed explicit/automatic construction and checker checks pass.
+
+The options are explicit caller settings, not internal overrides. The constructor
+never moves work into a fresh task or process to evade accounting. Measurement
+processes isolate separate complete invocations only. Reproduce the integrated
+field resource observations with `scripts/bench/primality_fallback_options.py`;
+its embedded sources and the recorded commit identify the measured implementation.
+
+Reproduce comparisons with `scripts/bench/ecm_cost.py --a CHECKOUT_A --b
+CHECKOUT_B --output OUTPUT.json`; select `--phase native`, `residual` or
+`loading` for the other records. Build both checkouts' producer dependencies
+and `hexprimality_field_probe` first. Restore the differing sources embedded in
+the records to reproduce these exact arms, and pass
+`--module HexPrimality.ProofProbe.Curve25519.EcmCost` for their archived module
+layout. The maintained computational diagnostics live under
+`bench/HexPrimality/EcmDiagnostics`; they observe counters and clocks without
+emitting proofs. `scripts/bench/ecm_profile.py`
+records the representative execution profiles and mappings.

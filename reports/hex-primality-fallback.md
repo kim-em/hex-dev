@@ -247,3 +247,9 @@ recursive failures, rejected factor data, random-state advancement and event
 order. Manual native benchmarks retain explicit targets and add automatic
 construction targets with expected attempt hashes 417, 304 and 326. The ordinary
 bench suite retains the fixed checker targets.
+
+The [integrated ECM resource observations](hex-primality-ecm-stage2.md#construction-execution-and-shared-schedules)
+cover automatic fallback with invocation-local schedules from #10374. They
+preserve the exact suggestions and confirm that the three ECM fields still need
+an explicit caller heartbeat allowance. The earlier measurements above retain
+their original per-curve enumeration implementation.
