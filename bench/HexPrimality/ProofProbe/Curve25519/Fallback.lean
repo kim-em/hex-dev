@@ -34,7 +34,6 @@ elab_rules : tactic
   | `(tactic| prototype_primality $arm:str) => do
     let goal ← Tactic.getMainGoal
     goal.withContext do
-      let start ← IO.monoNanosNow
       let hb ← IO.getNumHeartbeats
       try
         let tgt ← instantiateMVars (← goal.getType)
@@ -57,6 +56,5 @@ elab_rules : tactic
         logInfo m!"ATTEMPTS {success.attempts}"
       finally
         let used ← IO.getNumHeartbeats
-        let stop ← IO.monoNanosNow
-        logInfo m!"TACTIC_NS {stop - start} HEARTBEATS_RAW {used - hb}"
+        logInfo m!"HEARTBEATS_RAW {used - hb}"
 end Hex.FallbackExperiment

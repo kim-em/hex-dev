@@ -99,7 +99,10 @@ constructor and provider in both arms. Fresh modules use the same explicit
 prototype elaboration includes normalization, search, rendering, literal
 elaboration and goal assignment; its complete Lake duration includes imports
 and ordinary proof checking. It does not measure the final registration lookup
-or the `Try this:` UI. Exact production suggestions and a separate production
+or the `Try this:` UI. The retained records also contain observational in-process
+tactic durations; fresh-module comparisons above use the external Lake timer.
+The checked-in construction and option probes retain heartbeat observations
+and use only the external harness for timing. Exact production suggestions and a separate production
 resource probe validate the final plain tactic.
 
 Commit fields identify the baseline; embedded source snapshots identify the

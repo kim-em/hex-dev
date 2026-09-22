@@ -26,13 +26,11 @@ public section
 open Lean Elab Tactic
 elab "measure_primality" : tactic => do
   let hb ← IO.getNumHeartbeats
-  let start ← IO.monoNanosNow
   try
     evalTactic (← `(tactic| primality?))
   finally
-    let stop ← IO.monoNanosNow
     let used ← IO.getNumHeartbeats
-    IO.println s!"PRODUCTION_NS {stop - start} HEARTBEATS_RAW {used - hb}"
+    IO.println s!"HEARTBEATS_RAW {used - hb}"
 '''
 
 def main():
