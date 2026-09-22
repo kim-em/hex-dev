@@ -1573,6 +1573,11 @@ libraries:
           description: Chebyshev heads T_n with query 1 on (-2,2), measuring the normal signed chain and endpoint passes as head degree grows.
         - name: query-degree
           description: Fixed head x²−2 with query x^m+1 on (-2,2), measuring initial reduction and replay as query degree grows.
+  HexSignDet:
+    deps: [HexSturm, HexPoly, HexMatrix, HexRowReduce, HexRank]
+    mathlib: false
+    done_through: 0
+    status: active
   HexSturmMathlib:
     deps: [HexSturm, HexPolyMathlib, HexRealRootsMathlib]
     mathlib: true
