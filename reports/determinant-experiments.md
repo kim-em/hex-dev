@@ -30,6 +30,26 @@ These tasks share mathematics but need not share one algorithm, physical
 representation or execution path. In particular, a fast value routine is not
 automatically a fast tactic.
 
+## Existing implementations to include as controls
+
+| Surface | Current role |
+|---|---|
+| `Hex.Matrix.det` in `HexDeterminant` | Leibniz reference definition and determinant identities |
+| `Hex.Det.det` in `HexDet` | Value dispatcher: small formulas, Bareiss for installed exact-quotient carriers, Berkowitz otherwise |
+| `HexBareiss.Bareiss` | Array-backed fraction-free computation; the baseline is already array-backed |
+| `HexModularMatrix` | Modular images, bounded CRT, Dixon solves and divisor-based integer determinants, with correctness results in the core and companion |
+| `HexCharPoly` | Existing Berkowitz computation; use its determinant consequence as a control |
+| `HexBareissMathlib` / `HexPolyDetMathlib` | Numeric and symbolic certificate tactics, separate from the value dispatcher |
+
+`HexDet/Int.lean` still installs only the Bareiss arm. Its comment saying the
+modular implementation does not yet exist is stale: `HexModularMatrix/Det.lean`
+and its companion are present. Integrating that code is a different question
+from whether it is competitive. Start from the existing implementations before
+writing new modular, storage or characteristic-polynomial prototypes. A new
+storage experiment must identify what it changes relative to the current arrays.
+There is no dedicated dyadic integration module in `HexDet`; test the proposed
+exact scaling independently before deciding its dispatch interface.
+
 ## What the evidence says
 
 The [symbolic replay report](hex-poly-det-kernel-performance.md) retains three
@@ -57,6 +77,16 @@ coefficient growth, compiler specialization and external-call overhead differ.
 The same report shows that the choice of exact-division primitive materially
 affects runtime. Ring-operation counts alone are inadequate.
 
+The [modular-matrix report](hex-modular-matrix-performance.md) is essential
+additional evidence. On its structured dimension-512 fixture, the divisor route
+takes 0.288 s against 1.278 s for Bareiss and 0.144 s for FLINT. On dense 8-bit
+matrices at dimension 256 it instead takes 3.623 s against 2.158 s and 0.0466 s.
+Simply choosing the existing modular method would therefore not solve the
+computational problem. Retained attribution also identifies prime generation,
+bounds, decomposition and reconstruction costs. These data are compiled value
+measurements, not kernel-checking measurements, and must not be mixed with the
+symbolic proof timings.
+
 Mathlib's installed
 [`Bird/Cert.lean`](https://github.com/leanprover-community/mathlib4/blob/1cf325a0cf67aca2b04d76b5380ff6a9e410aefa/Mathlib/Tactic/Determinant/Bird/Cert.lean)
 combines arithmetic normal forms with proofs, caches entries and intermediate
@@ -69,7 +99,7 @@ it does not isolate which replacement would give the largest gain.
 
 | Layer | Candidates to compare | What can disqualify a candidate |
 |---|---|---|
-| Integer computation | Flat-array fraction-free elimination; modular elimination and CRT; certified-divisor acceleration later | Coefficient growth, repeated allocation, conversion cost, insufficient deterministic reconstruction bound |
+| Integer computation | Existing Bareiss, modular CRT and divisor implementations; storage and arithmetic variants | Coefficient growth, repeated allocation, conversion cost, insufficient deterministic reconstruction bound |
 | Rational and dyadic computation | Direct arithmetic; exact row/column scaling into integers; mantissa/exponent representation for dyadics | Repeated gcd normalization, inflated common denominators, enormous materialized shifts |
 | Polynomial computation | Sparse or dense arithmetic with fraction-free elimination; modular evaluation and interpolation | Intermediate support growth, expensive exact division, dense interpolation boxes, output-size explosion |
 | General ring computation | Division-free Bird or Berkowitz schedules; shared arithmetic expressions | Excess arithmetic, normalization of unused results, loss of expression sharing |
@@ -149,8 +179,8 @@ symbolic obstruction.
 ### 3. Establish fixed-ring value performance independently
 
 Start with small dense integer matrices, then vary dimension and coefficient
-bits independently. Compare the current value routine with flat storage and
-modular prototypes, using FLINT as an external reference. Include singular
+bits independently. Compare the existing Bareiss, modular CRT and divisor value routines before
+introducing storage or arithmetic variants, using FLINT as an external reference. Include singular
 inputs and pivot swaps. Add rational and dyadic matrices derived from the same
 integer matrices with exact scaling, recording scaling and normalization cost.
 Test widely separated dyadic exponents as well as modest ones.
@@ -201,8 +231,8 @@ proof backend before being considered for the value API.
 ## SPEC questions before a replacement plan
 
 The experiment results should determine which changes to propose in
-`SPEC/matrix-tactics.md`, the computational determinant/Bareiss/polynomial
-SPECs, and their companions:
+`SPEC/matrix-tactics.md`, the `hex-det` dispatch contract, the computational
+determinant/Bareiss/modular-matrix/polynomial SPECs, and their companions:
 
 - Separate value, symbolic-result and supplied-equality contracts, including
   output representation and where normalization is charged.
