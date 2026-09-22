@@ -1,0 +1,160 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import HexSignDet.Support
+public import HexSturm.Basic
+
+public section
+
+/-! Finite recursive BKR replay with unreduced moments. Every recursion edge
+checks the exact query positions, domain and full caller-supplied context.
+This checker does not produce certificates or assert root-sum semantics. -/
+namespace Hex.SignDet
+
+open scoped Hex
+
+variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
+
+/-- One node's literal system, query replays and retained row basis. Sizes and
+indices are intrinsic; a serialization reader must validate them on decoding. -/
+structure Node (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
+  context : Ctx
+  head : DensePoly E
+  lower : Endpoint E
+  upper : Endpoint E
+  queries : List (DensePoly E)
+  size : Nat
+  system : System size
+  moments : Vector (TarskiCertificate E E Ctx) size
+  basis : Matrix.RankCert Int size system.positive.length
+
+/-- Retained independent rows in the order certified by HexRank. -/
+@[expose] def Node.rows (n : Node E Ctx) : List (List Nat) :=
+  n.basis.rows.toList.map fun i => n.system.rows[i]
+
+/-- A finite tree. There is no constructor for omitted or unproved children. -/
+inductive Replay (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
+  | leaf (node : Node E Ctx)
+  | split (node : Node E Ctx) (left right : Replay E Ctx)
+
+@[expose] def Replay.node : Replay E Ctx → Node E Ctx
+  | .leaf n | .split n _ _ => n
+
+variable [One E] [Add E] [Sub E] [Mul E] [NatCast E]
+
+/-- The unreduced moment product, with empty product and every zeroth power
+one. The checker validates lengths and exponent ranges before using it. -/
+@[expose] def moment (qs : List (DensePoly E)) (e : List Nat) : DensePoly E :=
+  ((qs.zip e).map fun (q, k) => q.natPow k).foldl (· * ·) 1
+
+/-- Check all local facts without query production, gcd search or row search.
+The rank certificate's columns must preserve the retained support order.
+Its full HexRank check is retained unchanged; the additional direct left-inverse
+check avoids assuming an inverse-format or permutation adapter. -/
+@[expose] def Node.check [DecidableEq Ctx] (sign : E → Int)
+    (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
+    (qs : List (DensePoly E)) (n : Node E Ctx) : Bool :=
+  let k := n.system.positive.length
+  decide (n.context = context ∧ n.head = p ∧ n.lower = a ∧ n.upper = b ∧ n.queries = qs) &&
+  n.system.check qs.length &&
+  decide (n.basis.rank = k) &&
+  decide (n.basis.cols.toList.map Fin.val = List.range k) &&
+  (let retained := n.system.retainedMatrix
+   Matrix.checkRank retained n.basis &&
+   decide (n.basis.adj * Matrix.selectedSubmatrix retained n.basis.rows n.basis.cols =
+     Matrix.scale n.basis.denom (Matrix.identity n.basis.rank)) &&
+   (List.finRange n.size).all (fun i =>
+     Sturm.check sign context p (moment qs n.system.rows[i]) a b n.system.values[i] n.moments[i]))
+
+/-- Empty and singleton lists have complete fixed supports. Larger leaves
+are rejected, so this is not an exponential full-table fallback. -/
+@[expose] def leafColumns (arity : Nat) : List (List Int) :=
+  if arity = 0 then [[]] else [[-1], [0], [1]]
+
+@[expose] def leafRows (arity : Nat) : List (List Nat) :=
+  if arity = 0 then [[]] else [[0], [1], [2]]
+
+/-- Literal recursive replay. Leaves include the root-count moment even for
+an empty query list. At internal nodes both children are checked before the
+parent solve, including when their product is empty. Thus a vacuous zero-size
+system never stands alone as evidence of zero roots. -/
+@[expose] def Replay.check [DecidableEq Ctx] (sign : E → Int)
+    (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
+    (qs : List (DensePoly E)) : Replay E Ctx → Bool
+  | .leaf n =>
+    decide (qs.length ≤ 1) &&
+    decide (n.system.columns.toList = leafColumns qs.length) &&
+    decide (n.system.rows.toList = leafRows qs.length) &&
+    n.check sign context p a b qs
+  | .split n l r =>
+    decide (1 < qs.length) &&
+    l.check sign context p a b (qs.take (qs.length / 2)) &&
+    r.check sign context p a b (qs.drop (qs.length / 2)) &&
+    decide (n.system.columns.toList = product l.node.system.support r.node.system.support) &&
+    decide (n.system.rows.toList = product l.node.rows r.node.rows) &&
+    n.check sign context p a b qs
+
+/-- Every accepted tree includes a checked local system at its root. -/
+theorem Replay.check_node [DecidableEq Ctx] {sign : E → Int}
+    {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
+    {qs : List (DensePoly E)} {t : Replay E Ctx}
+    (h : t.check sign context p a b qs = true) :
+    t.node.check sign context p a b qs = true := by
+  cases t <;> simp only [Replay.check, Bool.and_eq_true] at h <;> exact h.2
+
+/-- The complete children and exact Cartesian product are mandatory parts of
+acceptance. Matrix invertibility cannot replace either child check. -/
+theorem Replay.check_children [DecidableEq Ctx] {sign : E → Int}
+    {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
+    {qs : List (DensePoly E)} {n : Node E Ctx} {l r : Replay E Ctx}
+    (h : (Replay.split n l r).check sign context p a b qs = true) :
+    l.check sign context p a b (qs.take (qs.length / 2)) = true ∧
+    r.check sign context p a b (qs.drop (qs.length / 2)) = true ∧
+    n.system.columns.toList = product l.node.system.support r.node.system.support := by
+  simp only [Replay.check, Bool.and_eq_true, decide_eq_true_eq] at h
+  exact ⟨h.1.1.1.1.2, h.1.1.1.2, h.1.1.2⟩
+
+/-- A checked node binds all operands literally and checks its integer system. -/
+theorem Node.check_bindings [DecidableEq Ctx] {sign : E → Int}
+    {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
+    {qs : List (DensePoly E)} {n : Node E Ctx}
+    (h : n.check sign context p a b qs = true) :
+    (n.context = context ∧ n.head = p ∧ n.lower = a ∧ n.upper = b ∧ n.queries = qs) ∧
+    n.system.check qs.length = true := by
+  simp only [Node.check, Bool.and_eq_true, decide_eq_true_eq] at h
+  exact h.1.1.1
+
+/-- Every accepted moment has a shared Tarski replay for the exact product,
+context, head, endpoints and integer right-hand side of that row. -/
+theorem Node.check_moment [DecidableEq Ctx] {sign : E → Int}
+    {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
+    {qs : List (DensePoly E)} {n : Node E Ctx}
+    (h : n.check sign context p a b qs = true) (i : Fin n.size) :
+    Sturm.check sign context p (moment qs n.system.rows[i]) a b
+      n.system.values[i] n.moments[i] = true := by
+  simp only [Node.check, Bool.and_eq_true] at h
+  exact List.all_eq_true.mp h.2.2 i (List.mem_finRange i)
+
+/-- Even an empty root system reaches a checked Tarski query at a leaf.
+Hence empty matrix identities can never bypass the shared domain guards. -/
+theorem Replay.query_evidence [DecidableEq Ctx] {sign : E → Int}
+    {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
+    {qs : List (DensePoly E)} {t : Replay E Ctx}
+    (h : t.check sign context p a b qs = true) :
+    ∃ f value cert, Sturm.check sign context p f a b value cert = true := by
+  induction t generalizing qs with
+  | leaf n =>
+    have hn := Replay.check_node h
+    simp only [Replay.check, Bool.and_eq_true, decide_eq_true_eq] at h
+    have hs := congrArg List.length h.1.1.2
+    have hp : 0 < n.size := by
+      by_cases he : qs.length = 0 <;> simp [leafColumns, he] at hs <;> omega
+    exact ⟨_, _, _, Node.check_moment hn ⟨0, hp⟩⟩
+  | split n l r ihl _ =>
+    exact ihl (Replay.check_children h).1
+
+end Hex.SignDet

@@ -369,7 +369,7 @@ must identify their exact subjects and interpretation. This is certificate
 composition at the query/result boundary, not a global resource protocol or
 a certificate per coefficient operation.
 
-The computational [production and checking bounds](hex-sign-det.md#production-and-checking-bounds)
+The computational [production and checking bounds](../../HexSignDet/SPEC/hex-sign-det.md#production-and-checking-bounds)
 apply: `2s-1` nodes for `s>0`, retained support at most `N=#Z`, combination
 dimension at most `N²`, and leaf dimension three. For candidate dimension `r`,
 inverse checking uses `O(r³)` integer operations and `M*c=t` uses `O(r²)`.

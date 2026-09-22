@@ -264,6 +264,9 @@ lean_lib HexRealRoots where
 lean_lib HexSturm where
 
 @[default_target]
+lean_lib HexSignDet where
+
+@[default_target]
 lean_lib HexSturmMathlib where
 
 lean_lib HexInterval where
@@ -994,6 +997,8 @@ lean_lib HexConformance where
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks, `HexNumberField.ComplexChecks, `HexRealAlgebraic.ReprChecks].map Glob.one
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
+
+    ++ #[`HexSignDet.Conformance].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]
