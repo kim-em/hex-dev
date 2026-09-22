@@ -35,3 +35,4 @@ public import HexSignDet.DagExpand
 public import HexSignDet.Codec
 public import HexSignDet.Codec.EvidenceLaws
 public import HexSignDet.Codec.NodeLaws
+public import HexSignDet.Codec.GraphLaws

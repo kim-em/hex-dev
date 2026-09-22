@@ -34,8 +34,13 @@ preparation records also roundtrip when their factor indices are in bounds.
 `Codec.read_system`, `Codec.read_basis` and `Codec.read_node` preserve all literal
 fields under the parser's row/column arity, rank and factor-index bounds.
 These proofs apply to the actual field encoders and decoders, including false
-arithmetic evidence; no semantic certificate premise is used. Arbitrary user
-codecs need not be lawful, and no JSON byte-parser roundtrip theorem is claimed.
+arithmetic evidence; no semantic certificate premise is used. `Codec.read_graph`
+proves that structured graph encoding followed by decoding preserves the entire
+graph, provided the value codecs are lawful, all nodes satisfy the structural
+bounds, all node/query subjects match the caller, all references point earlier,
+and the root index is in range. The proof follows the actual decoder's left
+fold and includes unreachable entries. Arbitrary user codecs need not be lawful,
+and no JSON byte-parser roundtrip theorem is claimed.
 
 Every structural record is a positional array with exactly the listed fields.
 An optional value is `[]` or `[value]`. Arrays and lists retain their original
@@ -89,6 +94,6 @@ the separate ordinary-kernel graph probes and axiom audits remain in place.
 
 This format encodes same-level BKR graphs and coefficient values. It does not
 yet encode lower-level coefficient-sign proof dependencies or establish
-arbitrary-field root/sign semantics. Remaining structured graph and JSON byte-parser roundtrip proofs,
+arbitrary-field root/sign semantics. JSON byte-parser roundtrip proofs,
 nested evidence transport, serialization cost measurements and the other
 Phase-4 obligations remain open.

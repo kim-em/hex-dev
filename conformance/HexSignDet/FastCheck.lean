@@ -8,6 +8,8 @@ module
 public import HexSignDet.Codec
 public import HexSignDet.Codec.EvidenceLaws
 public import HexSignDet.Codec.NodeLaws
+public import HexSignDet.Codec.GraphLaws
+import all HexSignDet.Codec.Node
 public import HexPoly.InterpretTests
 public meta import HexPoly.InterpretTests
 public import HexSignDet.CrossCheck
@@ -228,6 +230,53 @@ theorem reduction_node_roundtrip :
   all_goals simp [reductionNode, constantStep, derivativeNode, selectedNode,
     Vector.toList, System.positive]
   decide +kernel
+
+@[expose] def literalGraph : Dag Rat Nat :=
+  ⟨#[⟨reductionNode, none⟩, ⟨sharedParent, some (0, 0)⟩, ⟨badDenominator, none⟩], 1⟩
+
+/-- Shared references and an unreachable false witness survive structured
+roundtrip. This establishes literal preservation, not replay acceptance. -/
+theorem graph_roundtrip :
+    Codec.readGraph ValueCodec.rat ValueCodec.nat 7 singletonRaw.head
+      singletonRaw.lower singletonRaw.upper (Codec.graph ValueCodec.rat ValueCodec.nat literalGraph) =
+        .ok literalGraph := by
+  apply Codec.read_graph _ _ ValueCodec.rat_lawful ValueCodec.nat_lawful
+  · decide +kernel
+  · intro e he
+    simp [literalGraph] at he
+    rcases he with rfl | rfl | rfl
+    all_goals constructor <;> simp [reductionNode, constantStep, derivativeNode,
+      sharedParent, fullNode, singletonNode, literalNode, literalSystem, selectedNode,
+      badDenominator, Vector.toList, System.positive]
+    all_goals decide +kernel
+  · intro e he
+    simp [literalGraph] at he
+    rcases he with rfl | rfl | rfl
+    all_goals simp only [Codec.bindings]
+    all_goals decide +kernel
+  · decide +kernel
+
+#guard roundtrip literalGraph && !checked sharedParent.queries (encoded literalGraph)
+
+set_option maxRecDepth 32768 in
+/-- Literal preservation of the unreachable false node does not make its
+arithmetic evidence valid. Every entry is still checked by ordinary replay. -/
+theorem graph_rejected : check literalGraph sharedParent.queries = false := by
+  simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq, literalGraph,
+    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+/-- info: 'Hex.SignDet.Codec.read_graph' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.read_graph
+/-- info: 'Hex.SignDet.FastCheck.graph_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms graph_roundtrip
+/-- info: 'Hex.SignDet.FastCheck.graph_rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms graph_rejected
 
 /-- info: 'Hex.SignDet.Codec.read_node' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

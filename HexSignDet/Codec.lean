@@ -35,6 +35,16 @@ def readChildren (earlier : Nat) (j : Json) : Except String (Option (Nat × Nat)
     let right ← index earlier a[1]
     return (left.val, right.val)) j
 
+/-- Decode one entry against its position and the caller's exact root domain. -/
+def readEntry [DecidableEq Ctx] (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (context : Ctx) (p : DensePoly E) (lo hi : Endpoint E) (earlier : Nat) (j : Json) :
+    Except String (Dag.Entry E Ctx) := do
+  let fields ← tuple 2 j
+  let children ← readChildren earlier fields[1]
+  let n ← readNode value ctx fields[0]
+  if !bindings context p lo hi n then throw "graph context or domain mismatch"
+  return ⟨n, children⟩
+
 /-- Validate all references, including unreachable entries, and bind every
 node and query certificate to the supplied full context and root domain.
 This constructs raw graph data; integer identities and support completeness
@@ -48,11 +58,7 @@ def readGraph [DecidableEq Ctx] (value : ValueCodec E) (ctx : ValueCodec Ctx)
   let raw ← a[2].getArr?
   if root ≥ raw.size then throw "graph root out of range"
   let entries ← raw.foldlM (init := #[]) fun entries j => do
-    let fields ← tuple 2 j
-    let children ← readChildren entries.size fields[1]
-    let n ← readNode value ctx fields[0]
-    if !bindings context p lo hi n then throw "graph context or domain mismatch"
-    return entries.push ⟨n, children⟩
+    return entries.push (← readEntry value ctx context p lo hi entries.size j)
   return ⟨entries, root⟩
 
 /-- Decode versioned UTF-8 graph data after bounded lexical validation. -/
