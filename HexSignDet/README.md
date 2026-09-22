@@ -73,6 +73,11 @@ prefix replay, including returned trees and all rejections. Each node selects
 one domain witness for reuse; other witnesses within that node still incur full
 replay at each occurrence. Domain replay and literal binding costs require
 performance measurements, including heterogeneous witnesses and one-moment nodes.
+The graph creates its initial domain even if only one moment will use it.
+Node selection considers the first witness, so a different shared witness used
+only by later moments can miss. Every moment checks literal cache bindings,
+including the first moment used for selection. These costs belong in that
+measurement; the cache policy is not claimed to minimize witness replays.
 Each moment may supply a positive-scaled reduction chain. Replay checks its
 ordered factor indices, positive scales, degree bounds and zero-difference
 identities, then checks the Tarski certificate on the bound reduced polynomial.

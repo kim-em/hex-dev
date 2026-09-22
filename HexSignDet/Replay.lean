@@ -83,7 +83,8 @@ replay directly instead of constructing a cache for one use. -/
 @[expose] def Node.cache [DecidableEq Ctx] (sign : E → Int)
     (context : Ctx) (p : DensePoly E) (a b : Endpoint E) (n : Node E Ctx)
     (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
-      (EndpointSigns.ofSign sign))) :=
+      (EndpointSigns.ofSign sign))) :
+    Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign (EndpointSigns.ofSign sign)) :=
   n.moments.toArray[0]?.bind fun cert =>
     match shared.filter (fun d => d.data.binds context p a b cert.squarefree) with
     | some d => some d

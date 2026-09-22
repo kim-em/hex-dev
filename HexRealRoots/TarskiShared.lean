@@ -65,7 +65,10 @@ end Domain
 
 variable [One D] [Add D] [Sub D] [Mul D] [NatCast D] [DecidableEq E] [DecidableEq Ctx]
 
-/-- The query-dependent part of replay, including all certificate bindings. -/
+/-- The query-dependent part of replay, including all certificate bindings.
+This does not check the squarefree domain witness. Complete replay must also
+validate that domain, as `checkHit` and `checkCached` do through checked evidence
+or full replay. This component alone does not certify a Tarski result. -/
 @[expose] def checkBody (sign : D → Int) (endpointSigns : EndpointSigns D E)
     (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
     (cert : TarskiCertificate D E Ctx) : Bool :=
