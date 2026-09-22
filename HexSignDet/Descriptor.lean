@@ -99,10 +99,10 @@ error type requires the outstanding general BKR completeness proof. -/
 def Descriptor.build (sign : E → Int) (context : Ctx) (raw : RawDescriptor E Ctx) :
     Except BuildError (Except DescriptorError (Descriptor E Ctx sign context)) :=
   if hctx : raw.context = context then
-    if hw : raw.wellFormed = true then
-      match hd : Sturm.prepare sign raw.head raw.lower raw.upper with
-      | none => .ok (.error .domain)
-      | some domain =>
+    match hd : Sturm.prepare sign raw.head raw.lower raw.upper with
+    | none => .ok (.error .domain)
+    | some domain =>
+      if hw : raw.wellFormed = true then
         match buildPrepared context domain raw.queries with
         | .error err => .error err
         | .ok t =>
@@ -117,7 +117,7 @@ def Descriptor.build (sign : E → Int) (context : Ctx) (raw : RawDescriptor E C
               exact (t.val.table_lookup hc raw.signs).symm.trans hone⟩)
           else if count = 0 then .ok (.error .absent)
           else .ok (.error .ambiguous)
-    else .ok (.error .malformed)
+      else .ok (.error .malformed)
   else .ok (.error .context)
 
 end Hex.SignDet

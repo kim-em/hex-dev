@@ -131,6 +131,14 @@ class ExactSigns(unittest.TestCase):
         with self.assertRaises(OracleMismatch):
             oracle.check_record(record)
 
+    def test_zero_head_is_a_domain_failure(self):
+        record = self.fixture_record("descriptor/zero-head")
+        self.assertEqual(record["value"]["validation"]["reason"], "domain")
+        oracle.check_record(record)
+        record["value"]["validation"]["reason"] = "malformed"
+        with self.assertRaises(OracleMismatch):
+            oracle.check_record(record)
+
     def test_descriptor_literals_are_strict(self):
         for path in (("roots", "roots", 0, "indices", 0),
                      ("validation", "completion", "signs", 1),

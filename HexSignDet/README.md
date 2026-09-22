@@ -142,11 +142,18 @@ agreement for every matching finite observation under `Replay.Interprets`.
 
 `Descriptor.buildRoots` enumerates full derivative encodings, validates each
 count-one row, and inserts them by Thom order. `rootsFrom_perm` proves that
-successful construction preserves all input encoding words. An impossible
+successful construction preserves all input encoding words. Insertion checks
+the common head and canonical full derivative slots before comparing.
+`insert_sorted` and `rootsFrom_sorted` prove finite strict sortedness under
+explicit transitivity and reversal laws for this guarded comparator. Obtaining
+these laws on realized encodings and proving strict real-root order still
+requires the companion's Thom foundation. An impossible
 order, duplicate word or non-unit count remains an internal error pending the
 Thom foundation; no default order or omitted row conceals such a failure.
-These constructors currently repeat replay checks when extracting descriptors.
-Sharing their domain/table verification and measuring that cost remain required.
+For `N` output roots, extraction currently performs `N` complete replay checks
+and `N` derivative-list constructions, adding a multiplicative factor to the
+table's replay cost. Sharing this verification and derivative work, and
+measuring the resulting cost, remain required.
 
 `CommonProduct.build` uses the shared polynomial gcd and division to form a
 common head. Replay checks the exact context/old heads and three polynomial
@@ -166,9 +173,10 @@ proves that each actual endpoint query expresses its strict bound.
 whole line, then applies the guarded full Thom rule. It retains both joint
 replays and the common-product witness. This handles shared roots, different
 old intervals and equivalent noncanonical coefficient expressions without
-comparing unrelated derivative vectors. The current producer repeats some
-full-derivative table and domain work across these operations; sharing and
-cost attribution remain required.
+comparing unrelated derivative vectors. A comparison currently constructs
+four BKR tables and four prepared domains: joint re-encoding evidence and a
+separate target descriptor for each side. Sharing this work and accounting
+for its cost against the required comparison bounds remain required.
 
 The total `determinePrepared` API, producer completeness, full constructor
 correspondence and the domain-exact `validate` API remain required. Completion,

@@ -51,6 +51,30 @@ theorem Completion.bindings {sign : E → Int} {context : Ctx}
   simp only [RawDescriptor.completes, Bool.and_eq_true, decide_eq_true_eq] at h
   exact ⟨h.1.1, h.1.2.1, h.1.2.2.1, h.1.2.2.2.1, h.1.2.2.2.2, h.2⟩
 
+/-- Thom comparison is applicable only to full derivative encodings of the
+same literal head. Equal derivative vectors from different heads are rejected. -/
+@[expose] def Descriptor.fullOrder {sign : E → Int} {context : Ctx}
+    (left right : Descriptor E Ctx sign context) : Option Ordering :=
+  if left.raw.head = right.raw.head ∧
+      left.raw.indices = (List.range left.raw.head.natDegree).map (· + 1) ∧
+      right.raw.indices = (List.range right.raw.head.natDegree).map (· + 1) then
+    Thom.compareSigns left.raw.signs right.raw.signs
+  else none
+
+/-- Acceptance retains the applicability guards and the exact finite rule. -/
+theorem Descriptor.fullOrder_eq {sign : E → Int} {context : Ctx}
+    {left right : Descriptor E Ctx sign context} {order : Ordering}
+    (h : left.fullOrder right = some order) :
+    (left.raw.head = right.raw.head ∧
+      left.raw.indices = (List.range left.raw.head.natDegree).map (· + 1) ∧
+      right.raw.indices = (List.range right.raw.head.natDegree).map (· + 1)) ∧
+    Thom.compareSigns left.raw.signs right.raw.signs = some order := by
+  unfold fullOrder at h
+  split at h
+  · rename_i hg
+    exact ⟨hg, h⟩
+  · contradiction
+
 variable [Neg E] [Inv E]
 
 /-- Complete a descriptor by a full derivative table and checked restriction

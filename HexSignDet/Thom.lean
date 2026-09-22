@@ -40,7 +40,7 @@ theorem derivativesFrom_length (p : DensePoly E) (n : Nat) :
   | zero => rfl
   | succ n ih => simp only [derivativesFrom, List.length_cons, ih]
 
-/-- Shape checks precede root-domain and unique-realization validation.
+/-- Shape checks for derivative indices and their corresponding signs.
 Index zero is not a derivative slot, and the highest derivative is retained. -/
 @[expose] def RawDescriptor.wellFormed (d : RawDescriptor E Ctx) : Bool :=
   decide (0 < d.head.natDegree) && decide (d.indices.length = d.signs.length) &&

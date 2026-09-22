@@ -143,6 +143,21 @@ def descriptorFailure (raw : RawDescriptor Rat Nat) (expected : DescriptorError)
 #guard descriptorFailure (descriptor [1, 1] [-1, -1]) .malformed
 #guard descriptorFailure {descriptor [1] [1] with lower := .finite 1} .domain
 #guard descriptorFailure {descriptor [1] [1] with context := 8} .context
+#guard descriptorFailure {descriptor [] [] with head := 0} .domain
+
+/-- Public insertion rejects unrelated heads and partial derivative slots,
+even when their raw sign words would produce a strict comparison. -/
+def insertionRejected (left right : RawDescriptor Rat Nat) : Bool :=
+  match Descriptor.build sign 7 left, Descriptor.build sign 7 right with
+  | .ok (.ok l), .ok (.ok r) => match Thom.insert l [r] with
+    | .error .system => true
+    | _ => false
+  | _, _ => false
+
+#guard insertionRejected (descriptor [1, 2] [1, 1])
+  {descriptor [1, 2] [-1, 1] with head := (x - 2) * (x - 4)}
+#guard insertionRejected {descriptor [1, 3] [-1, 1] with head := x * x * x - x}
+  {descriptor [2, 3] [1, 1] with head := x * x * x - x}
 
 /- A sign-equivalent query is still not the declared formal derivative;
 changing context also cannot recycle the original query tree. -/
@@ -825,6 +840,32 @@ theorem selected_kernel :
     SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
+/-- Literal certificates for the positive constant derivative and its square.
+Only the initial multiplier changes in the signed remainder chain. -/
+@[expose] def constantQuery (c : Rat) : TarskiCertificate Rat Rat Nat :=
+  {singletonQuery with
+    queryPoly := DensePoly.C c
+    remainders := {Sturm.Fixtures.literalChain with initial := ⟨1, 0, 2 * c⟩}}
+
+@[expose] def derivativeNode : Node Rat Nat :=
+  {selectedNode with
+    queries := [DensePoly.C 2]
+    moments := #v[singletonQuery, constantQuery 2, constantQuery 4]}
+
+@[expose] def derivativeRaw : RawDescriptor Rat Nat :=
+  {singletonRaw with indices := [2], signs := [1]}
+
+set_option maxRecDepth 16384 in
+/-- Kernel replay forces both formal derivative iterations. A copied tree
+for the sign-equivalent constant one is rejected by literal query binding. -/
+theorem derivative_kernel :
+    derivativeRaw.check Sturm.orderSign 7 (.leaf derivativeNode) = true ∧
+    derivativeRaw.check Sturm.orderSign 7 (.leaf selectedNode) = false := by
+  simp only [RawDescriptor.check, Replay.check, Node.check, checkMoment, queryPoly,
+    Sturm.check, TarskiCertificate.check, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
 @[expose] def forgedNode : Node Rat Nat :=
   {literalNode with queries := [Sturm.Fixtures.x], system := forged}
 
@@ -903,6 +944,9 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Conformance.selected_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms selected_kernel
+/-- info: 'Hex.SignDet.Conformance.derivative_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms derivative_kernel
 /-- info: 'Hex.SignDet.Reencoding.count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Reencoding.count
@@ -912,6 +956,9 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Descriptor.rootsFrom_perm' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Descriptor.rootsFrom_perm
+/-- info: 'Hex.SignDet.Descriptor.rootsFrom_sorted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.rootsFrom_sorted
 /-- info: 'Hex.SignDet.SelectedSigns.count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms SelectedSigns.count

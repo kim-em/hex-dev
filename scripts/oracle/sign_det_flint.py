@@ -201,13 +201,13 @@ def check_descriptor(data: dict[str, Any]) -> None:
     selected = []
     if data["context"] != 10377:
         reason = "context"
+    elif words is None:
+        reason = "domain"
     elif (n == 0 or len(indices) != len(signs) or
           any(type(i) is not int or not 1 <= i <= n for i in indices) or
           len(set(indices)) != len(indices) or
           any(type(v) is not int or v not in (-1, 0, 1) for v in signs)):
         reason = "malformed"
-    elif words is None:
-        reason = "domain"
     else:
         selected = [word for word in words if [word[i - 1] for i in indices] == signs]
         if not selected:
