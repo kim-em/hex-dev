@@ -32,3 +32,4 @@ public import HexSignDet.Dag
 public import HexSignDet.DagEncode
 public import HexSignDet.DagReplay
 public import HexSignDet.DagExpand
+public import HexSignDet.Codec

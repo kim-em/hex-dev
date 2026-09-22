@@ -51,9 +51,14 @@ arbitrary accepted graph with its checked tree. Consequently
 `Dag.check_encode_eq` proves equality of the graph and tree checker results
 for every input, preserving rejection as well as acceptance. Ordinary-kernel
 probes exercise a forged inverse witness through these theorems.
-Complete encoder performance accounting remains required. This typed graph also needs a
-byte decoder and lower-level coefficient-sign edges. Shared domain replay needs
-performance measurements.
+Complete encoder performance accounting remains required. The versioned
+[byte codec](Codec/README.md) serializes every literal field and checks dimensions,
+indices, earlier references and full context/domain bindings before replay.
+`Dag.decodeBytes` retains the ordinary tree checker's evidence;
+`Dag.decode_replays` connects it to the actual decoded graph. Supplied coefficient
+and context codecs must preserve their whole values. General codec roundtrip
+proofs, lower-level coefficient-sign edges and performance measurements remain
+required.
 
 Context, head, interval and query-list bindings use literal equality. Tarski
 polynomial identities use the shared zero-difference checks. Context values
