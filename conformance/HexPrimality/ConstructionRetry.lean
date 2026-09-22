@@ -60,7 +60,7 @@ private def rejects (raw : PartialFactors) : Bool :=
   match Construction.retry 1000003 constructionBudget (previous 11)
       (fun _ _ r => ⟨raw, r, 1, [event "invalid"]⟩) with
   | .error f => f.stop == .exhausted && f.attempts == 12 &&
-      f.events == [event "first", event "invalid"]
+      f.events == [event "first", event "invalid"] && f.obligation == some 1000003
   | .ok _ => false
 
 #guard rejects ⟨[(0, 1)], 1⟩

@@ -249,9 +249,11 @@ lean_lib HexConway where
 lean_lib HexGFq where
 
 lean_lib HexPrimality where
+  -- primality? executes certificate construction during elaboration.
   precompileModules := true
 
 lean_lib HexIntFactor where
+  -- The registered construction provider must also execute natively.
   precompileModules := true
 
 lean_lib HexBerlekampZassenhaus where

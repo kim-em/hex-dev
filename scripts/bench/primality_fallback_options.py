@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -67,10 +68,15 @@ def main():
                                      env=dict(os.environ,LEAN_NUM_THREADS='1'))
                     row.update(stdout=p.stdout,stderr=p.stderr,returncode=p.returncode,
                                elapsed_ns=time.monotonic_ns()-start,load_after=os.getloadavg())
+                    observed = re.search(
+                        r'^(?:info: [^\n]+\.lean:\d+:\d+: )?HEARTBEATS_RAW ([0-9]+)$',
+                        p.stdout, re.MULTILINE)
+                    if observed:
+                        row['heartbeats_raw'] = int(observed.group(1))
                     record['samples'].append(row)
                     save()
                     print(name,form,allowance,p.returncode,flush=True)
-                    if 'HEARTBEATS_RAW' not in p.stdout:
+                    if observed is None:
                         raise RuntimeError('resource harness failed before observation; sample retained')
                     if allowance is None and p.returncode and 'maximum number of heartbeats' not in p.stdout:
                         raise RuntimeError('unexpected default-options failure; sample retained')

@@ -100,7 +100,11 @@ it retries with ECM, carrying forward the random state and charging both
 routes to the same allowance. P-521 and Curve25519 finish on the first route.
 You do not need to supply factors, curve parameters, seeds or certificates.
 The expert override `primality? (factor := Hex.Nat.ecmFactorSearch)` selects
-that provider directly and bypasses automatic selection.
+that provider directly and bypasses automatic selection. To retain the core-only
+route, including its faster exhaustion on some unsupported inputs, use
+`primality? (factor := Hex.Nat.Construction.factorSearch)`. Automatic retry can
+add substantial work even when it ultimately fails: the tested 507-bit fixture
+increased from about 0.9 seconds to 20.7 seconds.
 
 If Lean reports a heartbeat limit, include the local option from the setup.
 A message saying that certificate construction exhausted its attempts instead
@@ -150,17 +154,24 @@ also include P-384 and Curve448.
 tag := "tutorial-field-primes-cost"
 %%%
 
-Allow a few minutes to try all three searches in Lean. The tactic runs
-search through Lean's interpreter, so compiled search timings alone do not
-predict the time spent in the editor.
+Allow a few minutes to try all three searches in Lean. Construction and its
+factor provider run natively during elaboration; the complete module build
+also includes imports, certificate rendering and kernel checking.
 
-The recorded shared-host experiments measured compiled construction at
-18–19 seconds for secp256k1, 37–39 seconds for P-384, and 24–25 seconds for
-Curve448. Direct kernel replay of the saved proofs took about 4–15
-milliseconds per proof, excluding imports and elaboration. These are
-host-specific observations, not time limits or guarantees. See the
+The recorded shared-host automatic-construction medians were 26.0 seconds for
+secp256k1, 32.2 seconds for P-384, and 21.6 seconds for Curve448. Direct kernel
+replay medians were about 3.6–11.8 milliseconds per proof, excluding imports
+and elaboration. These are host-specific observations, not time limits or
+guarantees. See the
+[automatic construction report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-fallback.md)
+for separate construction, rendering, kernel and caller-resource measurements,
+and the
 [ECM construction report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-ecm-stage2.md)
-for separate construction, rendering and kernel measurements.
+for the explicit-provider experiments.
+
+The native search is synchronous. Lean can report a heartbeat overrun only
+after that computation returns; the heartbeat allowance is not a wall-clock
+timeout. The finite attempt limit bounds the search schedule.
 
 The search has a fixed, bounded schedule and can still exhaust on other
 primes. The

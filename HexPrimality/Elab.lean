@@ -105,7 +105,8 @@ meta structure ConstructionExtension where
   /-- An ordinary definition at `Hex.Nat.FactorSearch`. -/
   factorName : Name
 
-/-- Fixed discovery order. Changes require a HexPrimality release. -/
+/-- Fixed discovery order. Each retry repeats the complete construction with
+the remaining allowance. Changes require a HexPrimality release. -/
 meta def constructionExtensionNames : List Name :=
   [`HexIntFactor.PrimalityTactic.constructionExtension]
 
@@ -145,8 +146,7 @@ meta def construct (n : Nat) (budget : Hex.Nat.ConstructionBudget) :
     match result with
     | .ok _ => break
     | .error f =>
-      if f.stop != .exhausted || f.attempts ≥ budget.maxAttempts ||
-          n.log2 + 1 > budget.maxBits || n < 2 then break
+      unless Hex.Nat.Construction.retryable n budget f do break
       let some ext ← constructionExtension? name | continue
       let factor ← evalFactorSearchCore ext.factorName
       allocations := allocations ++ [(ext.factorName, budget.maxAttempts - f.attempts)]

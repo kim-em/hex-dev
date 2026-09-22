@@ -184,7 +184,12 @@ The raw record retains both arms and all samples.
 divided by 1000 to express Lean's user heartbeat units. No counter, initial
 baseline, or limit is reset; no work is excluded or moved to a fresh task by the
 tactic. Separate executable processes and fresh modules are measurement arms,
-not a production tactic escape from caller accounting.
+not a production tactic escape from caller accounting. The native search is
+synchronous and does not poll Lean's elaborator heartbeat checks internally:
+a heartbeat overrun can be reported after the search returns, not at the
+instant the limit is crossed. Finite attempts bound its schedule; heartbeats
+are not a wall-clock timeout. An explicit
+`factor := Hex.Nat.Construction.factorSearch` retains core-only construction.
 
 The six successful prototype option probes use only `maxHeartbeats 4000000`:
 three numeral goals and three power-expression goals. All six corresponding
@@ -204,7 +209,9 @@ deltas, rounded to user heartbeat units, are:
 | Curve448 | 287778 | 287839 |
 
 These deltas include the small observation wrapper and are not measured minimum
-limits. The record retains the actual warnings and every complete suggestion.
+limits. The three `Nat.Prime` power proofs also pass with the same finite option
+in `FieldMathlib.lean`; their counter deltas are not separately measured.
+The record retains the actual warnings and every complete suggestion.
 The [two failed harness-compilation observations](bench-results/hex-primality-fallback-options-harness-issue-10373.json)
 are also retained: a missing public import prevented tactic execution, so they
 are not classified as heartbeat failures.

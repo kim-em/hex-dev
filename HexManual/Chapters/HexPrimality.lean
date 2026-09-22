@@ -178,6 +178,11 @@ state. These three fields need an explicit finite Lean heartbeat allowance;
 `set_option maxHeartbeats 4000000` is tested, without a recursion-depth option.
 See the {ref "tutorial-field-primes"}[field-prime tutorial] for complete examples.
 An explicit `factor :=` provider or `using` certificate bypasses automatic selection.
+Use `primality? (factor := Hex.Nat.Construction.factorSearch)` for core-only
+construction. Automatic fallback also costs time on unsupported inputs: the
+507-bit fixture still exhausts, taking about 20.7 seconds instead of 0.9 seconds
+on the measured host. Native search runs synchronously, so a heartbeat overrun
+can be reported after it returns; heartbeats are not a wall-clock timeout.
 
 The Curve25519 result has three non-leaf certificate nodes and eight factor
 entries. Kernel replay reads the already verified sieve bitset for table

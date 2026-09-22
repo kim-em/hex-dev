@@ -12,7 +12,8 @@ public import HexPrimality.Construction
 public section
 
 /-! Bounded ECM factor provider for certificate construction.
-It is not registered in the ordinary factorization or primality portfolio. -/
+Registered only for bounded construction fallback, not for ordinary
+factorization or the ordinary primality search portfolio. -/
 
 namespace Hex.Nat
 

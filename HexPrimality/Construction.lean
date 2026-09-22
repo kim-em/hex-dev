@@ -349,12 +349,16 @@ def run (n : Nat) (r : Hex.Rand) (budget : ConstructionBudget := constructionBud
   | .ok s => .ok s
   | .error f => .error f.toPrimeCertFailure
 
+/-- Whether exhaustion permits another provider under the original shared allowance. -/
+def retryable (n : Nat) (budget : ConstructionBudget) (first : Failure) : Bool :=
+  !(first.stop != .exhausted || first.attempts ≥ budget.maxAttempts ||
+    n.log2 + 1 > budget.maxBits || n < 2)
+
 /-- One complete bounded retry after exhaustion. Repeated work is charged,
 random state advances, and events remain in execution order. -/
 def retry (n : Nat) (budget : ConstructionBudget) (first : Failure)
     (factor : FactorSearch) : Except Failure (Internal.PrimeCertSuccess n) :=
-  if first.stop != .exhausted || first.attempts ≥ budget.maxAttempts ||
-      n.log2 + 1 > budget.maxBits || n < 2 then .error first else
+  if !retryable n budget first then .error first else
     let remaining := { budget with maxAttempts := budget.maxAttempts - first.attempts }
     match runTraced n first.rand remaining factor with
     | .ok s => .ok { s with
