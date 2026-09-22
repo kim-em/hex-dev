@@ -57,31 +57,42 @@ variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 /-- Assemble one node using the same prepared domain for every moment.
 No roots, root counts or guessed sign conditions are supplied by a caller. -/
 @[expose] def buildNode (context : Ctx) (domain : Sturm.PreparedDomain E)
-    (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int)) :
+    (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int))
+    (reduced : Bool := true) :
     Except BuildError (Node E Ctx) := do
   if h : rows.length = columns.length then
+    if !rows.all (fun e => decide (e.length = qs.length) && e.all (· ≤ 2)) then
+      throw .system
+    if !columns.all (fun c => decide (c.length = qs.length) &&
+        c.all (fun x => decide (x = -1 ∨ x = 0 ∨ x = 1))) || !decide columns.Nodup then
+      throw .system
     let es := rows.toArray.toVector
     let cs : Vector (List Int) rows.length := h ▸ columns.toArray.toVector
-    let moments := es.map fun e => Sturm.certifyPrepared context domain (moment qs e)
+    let reductions := es.map fun e =>
+      if reduced && decide (0 < domain.head.natDegree) then
+        some (Reduction.build domain.sign domain.head qs e)
+      else none
+    let moments := Vector.ofFn fun i =>
+      Sturm.certifyPrepared context domain (queryPoly qs es[i] reductions[i])
     match solveSystem qs.length es cs (moments.map (·.value)) with
     | .error err => throw err
     | .ok s => return {
         context, head := domain.head, lower := domain.lower, upper := domain.upper
-        queries := qs, size := rows.length, system := s, moments
+        queries := qs, size := rows.length, system := s, moments, reductions
         basis := Matrix.rankCert s.retainedMatrix }
   else throw .dimensions
 
 /-- Balanced support reduction. Recursion decreases the actual query length;
 there is no fuel limit and no full-ternary fallback at internal nodes. -/
 @[expose] def buildTree (context : Ctx) (domain : Sturm.PreparedDomain E)
-    (qs : List (DensePoly E)) : Except BuildError (Replay E Ctx) := do
+    (qs : List (DensePoly E)) (reduced : Bool := true) : Except BuildError (Replay E Ctx) := do
   if h : qs.length ≤ 1 then
-    return .leaf (← buildNode context domain qs (leafRows qs.length) (leafColumns qs.length))
+    return .leaf (← buildNode context domain qs (leafRows qs.length) (leafColumns qs.length) reduced)
   else
-    let l ← buildTree context domain (qs.take (qs.length / 2))
-    let r ← buildTree context domain (qs.drop (qs.length / 2))
+    let l ← buildTree context domain (qs.take (qs.length / 2)) reduced
+    let r ← buildTree context domain (qs.drop (qs.length / 2)) reduced
     let n ← buildNode context domain qs (product l.node.rows r.node.rows)
-      (product l.node.system.support r.node.system.support)
+      (product l.node.system.support r.node.system.support) reduced
     return .split n l r
 termination_by qs.length
 decreasing_by
@@ -90,10 +101,10 @@ decreasing_by
 /-- A returned construction has passed the independent literal replay.
 This is an executable acceptance guarantee, not root-sum soundness. -/
 @[expose] def buildPrepared [DecidableEq Ctx] (context : Ctx) (domain : Sturm.PreparedDomain E)
-    (qs : List (DensePoly E)) :
+    (qs : List (DensePoly E)) (reduced : Bool := true) :
     Except BuildError {t : Replay E Ctx //
       t.check domain.sign context domain.head domain.lower domain.upper qs = true} := do
-  let t ← buildTree context domain qs
+  let t ← buildTree context domain qs reduced
   if h : t.check domain.sign context domain.head domain.lower domain.upper qs = true then
     return ⟨t, h⟩
   else throw .replay

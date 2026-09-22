@@ -27,8 +27,11 @@ must contain the caller's full immutable context data, including any refinement;
 a hash or reused numeric identifier is insufficient. The current certificate
 tree repeats the head squarefree evidence in each moment and rechecks it there;
 shared domain replay remains an integration and performance obligation.
-The checker reconstructs unreduced moment products and runs no query producer,
-gcd search or row search.
+Each moment may supply a positive-scaled reduction chain. Replay checks its
+ordered factor indices, positive scales, degree bounds and zero-difference
+identities, then checks the Tarski certificate on the bound reduced polynomial.
+This path never expands the full product. Direct moments remain available for
+comparison. Neither path runs a query producer, gcd search or row search.
 `Replay.query_evidence` proves that every accepted tree reaches a checked Tarski
 query, including when its root matrix is empty.
 
@@ -42,6 +45,15 @@ mathematical domain failures and this is not yet the total `determinePrepared`
 API. No supplied roots or guessed counts enter construction. `referencePrepared`
 builds the exponential full-ternary system for small-case comparisons; production
 recursion never calls it.
+
+Construction reduces moments by default after each indexed multiplication,
+using the shared positive pseudo-division and normalization routines. The
+optional `reduced := false` mode constructs full products, as does the reference
+solver. Constant heads use the direct path and their zero-root domain evidence.
+`HexSignDetMathlib` proves that produced reductions pass the checker and that
+arbitrary accepted reductions preserve each full moment's sign at every root.
+These algebraic proofs allow noninjective coefficient interpretations; they do
+not assert a Tarski root-sum theorem.
 
 `count_moments` proves the finite counting identity on an independently complete
 candidate support. `Replay.support_complete` then proves recursive coverage and
@@ -66,7 +78,7 @@ base only; full tower/refinement context fixtures remain required.
 
 The library currently exposes raw replay data and checked construction, not a
 validated `SignTable` or the total `determinePrepared` API. Producer completeness,
-tensor/retained-row-basis existence, reduced-moment evidence, Thom descriptors
+tensor/retained-row-basis existence, Thom descriptors
 and selected-root operations, serialization and
 nested evidence sharing remain required. The finite lemmas above do not prove
 root-count correctness. Those proofs must interpret the actual query replays

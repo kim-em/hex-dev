@@ -1578,6 +1578,11 @@ libraries:
     mathlib: false
     done_through: 0
     status: active
+  HexSignDetMathlib:
+    deps: [HexSignDet, HexSturmMathlib, HexPolyMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
   HexSturmMathlib:
     deps: [HexSturm, HexPolyMathlib, HexRealRootsMathlib]
     mathlib: true

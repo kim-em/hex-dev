@@ -6,11 +6,11 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.Support
-public import HexSturm.Basic
+public import HexSignDet.MomentReplay
 
 public section
 
-/-! Finite recursive BKR replay with unreduced moments. Every recursion edge
+/-! Finite recursive BKR replay with direct or reduced moments. Every recursion edge
 checks the exact query positions, domain and full caller-supplied context.
 This checker does not produce certificates or assert root-sum semantics. -/
 namespace Hex.SignDet
@@ -30,6 +30,7 @@ structure Node (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
   size : Nat
   system : System size
   moments : Vector (TarskiCertificate E E Ctx) size
+  reductions : Vector (Option (Reduction E)) size := Vector.replicate size none
   basis : Matrix.RankCert Int size system.positive.length
 
 /-- Retained independent rows in the order certified by HexRank. -/
@@ -45,11 +46,6 @@ inductive Replay (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
   | .leaf n | .split n _ _ => n
 
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E]
-
-/-- The unreduced moment product, with empty product and every zeroth power
-one. The checker validates lengths and exponent ranges before using it. -/
-@[expose] def moment (qs : List (DensePoly E)) (e : List Nat) : DensePoly E :=
-  ((qs.zip e).map fun (q, k) => q.natPow k).foldl (· * ·) 1
 
 /-- Check all local facts without query production, gcd search or row search.
 The rank certificate's columns must preserve the retained support order.
@@ -68,7 +64,8 @@ check avoids assuming an inverse-format or permutation adapter. -/
    decide (n.basis.adj * Matrix.selectedSubmatrix retained n.basis.rows n.basis.cols =
      Matrix.scale n.basis.denom (Matrix.identity n.basis.rank)) &&
    (List.finRange n.size).all (fun i =>
-     Sturm.check sign context p (moment qs n.system.rows[i]) a b n.system.values[i] n.moments[i]))
+     checkMoment sign context p a b qs n.system.rows[i] n.system.values[i]
+       n.moments[i] n.reductions[i]))
 
 /-- Empty and singleton lists have complete fixed supports. Larger leaves
 are rejected, so this is not an exponential full-table fallback. -/
@@ -128,14 +125,14 @@ theorem Node.check_bindings [DecidableEq Ctx] {sign : E → Int}
   simp only [Node.check, Bool.and_eq_true, decide_eq_true_eq] at h
   exact h.1.1.1
 
-/-- Every accepted moment has a shared Tarski replay for the exact product,
-context, head, endpoints and integer right-hand side of that row. -/
+/-- Every accepted row has moment evidence for its exact exponent positions,
+context, head, endpoints and integer right-hand side. -/
 theorem Node.check_moment [DecidableEq Ctx] {sign : E → Int}
     {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
     {qs : List (DensePoly E)} {n : Node E Ctx}
     (h : n.check sign context p a b qs = true) (i : Fin n.size) :
-    Sturm.check sign context p (moment qs n.system.rows[i]) a b
-      n.system.values[i] n.moments[i] = true := by
+    checkMoment sign context p a b qs n.system.rows[i]
+      n.system.values[i] n.moments[i] n.reductions[i] = true := by
   simp only [Node.check, Bool.and_eq_true] at h
   exact List.all_eq_true.mp h.2.2 i (List.mem_finRange i)
 
@@ -153,7 +150,7 @@ theorem Replay.query_evidence [DecidableEq Ctx] {sign : E → Int}
     have hs := congrArg List.length h.1.1.2
     have hp : 0 < n.size := by
       by_cases he : qs.length = 0 <;> simp [leafColumns, he] at hs <;> omega
-    exact ⟨_, _, _, Node.check_moment hn ⟨0, hp⟩⟩
+    exact ⟨_, _, _, checkMoment_query (Node.check_moment hn ⟨0, hp⟩)⟩
   | split n l r ihl _ =>
     exact ihl (Replay.check_children h).1
 
