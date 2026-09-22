@@ -56,10 +56,6 @@ theorem noncanonical_certificates (context : Nat) (p g : Poly) (a b : Endpoint R
 /-- info: 'HexRealRootsMathlib.Tarski.integer_certify_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms integer_certify_checks
-
-/-- info: 'HexRealRootsMathlib.evalDyadic_eq_fold' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms evalDyadic_eq_fold
 /-- info: 'HexRealRootsMathlib.TarskiTests.noncanonical_chains' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms noncanonical_chains

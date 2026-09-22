@@ -309,6 +309,10 @@ example : ZPoly.evalDyadic (DensePoly.ofCoeffs #[(3 : Int), -2, 1])
   ZPoly.evalDyadic (DensePoly.ofCoeffs cs) (half 1) == Dyadic.ofInt 2 &&
     ZPoly.evalDyadic (DensePoly.ofCoeffs negCs) (half (-1)) == Dyadic.ofInt 2
 
+-- Ordinary kernel reduction of the same cancellation family.
+example : ZPoly.evalDyadic (DensePoly.ofCoeffs ((Array.replicate 16 (1 : Int)).push 2))
+    ((Dyadic.ofInt 1) >>> (1 : Int)) = Dyadic.ofInt 2 := by decide
+
 -- Cancellation also occurs outside (-1,1): (3/2) * 2 - 1 = 2.
 #guard ZPoly.evalDyadic (DensePoly.ofCoeffs ((Array.replicate 256 (-1 : Int)).push 2))
   (half 3) == Dyadic.ofInt 2
