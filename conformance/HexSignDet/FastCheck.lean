@@ -7,6 +7,7 @@ module
 
 public import HexSignDet.Codec
 public import HexSignDet.Codec.EvidenceLaws
+public import HexSignDet.Codec.NodeLaws
 public import HexPoly.InterpretTests
 public meta import HexPoly.InterpretTests
 public import HexSignDet.CrossCheck
@@ -218,6 +219,22 @@ theorem false_evidence_roundtrip :
       (Codec.tarski ValueCodec.rat ValueCodec.nat (corruptCert singletonQuery)) =
       .ok (corruptCert singletonQuery) :=
   Codec.read_tarski _ _ ValueCodec.rat_lawful ValueCodec.nat_lawful _
+
+/-- Structured node parsing preserves complete nonempty reduction evidence. -/
+theorem reduction_node_roundtrip :
+    Codec.readNode ValueCodec.rat ValueCodec.nat
+      (Codec.node ValueCodec.rat ValueCodec.nat reductionNode) = .ok reductionNode := by
+  apply Codec.read_node _ _ ValueCodec.rat_lawful ValueCodec.nat_lawful
+  all_goals simp [reductionNode, constantStep, derivativeNode, selectedNode,
+    Vector.toList, System.positive]
+  decide +kernel
+
+/-- info: 'Hex.SignDet.Codec.read_node' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.read_node
+/-- info: 'Hex.SignDet.FastCheck.reduction_node_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms reduction_node_roundtrip
 
 /-- info: 'Hex.SignDet.ValueCodec.nat_lawful' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

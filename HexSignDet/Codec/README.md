@@ -31,6 +31,8 @@ and rational codecs satisfy it. Structured roundtrip proofs lift this property
 through arrays, lists, vectors, options, integer matrices, polynomials, endpoints,
 remainder steps, chains and complete Tarski certificates. Reduction and query
 preparation records also roundtrip when their factor indices are in bounds.
+`Codec.read_system`, `Codec.read_basis` and `Codec.read_node` preserve all literal
+fields under the parser's row/column arity, rank and factor-index bounds.
 These proofs apply to the actual field encoders and decoders, including false
 arithmetic evidence; no semantic certificate premise is used. Arbitrary user
 codecs need not be lawful, and no JSON byte-parser roundtrip theorem is claimed.
