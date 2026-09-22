@@ -136,6 +136,26 @@ example : entry [0, 0] [0, 0] = 1 := by decide +kernel
 example : momentMatrix #v[[0], [1], [2]] #v[[-1], [0], [1]] =
     Matrix.ofRows #v[#v[1, 1, 1], #v[-1, 0, 1], #v[1, 0, 1]] := by decide +kernel
 
+/-- A parent forgery omitting the realized condition (-1,-1). Three genuine
+moments permit the false counts (1,1,0) on (-1,0), (1,-1), (1,0). Both complete
+children remain intact; recursive replay must reject the parent support. -/
+def internalForgery : Option (Replay Rat Nat) := do
+  let .split _ l r ← fixture p [-1, 1] [x, x - 1] | none
+  let d ← Sturm.prepare sign p .negInf .posInf
+  let n ← makeNode d [x, x - 1] [[0, 0], [0, 1], [1, 0]]
+    [[-1, 0], [1, -1], [1, 0]] []
+  let n := replaceSystem n {n.system with
+    counts := Vector.ofFn fun i => if i.val < 2 then 1 else 0}
+  return .split n l r
+
+#guard match internalForgery with
+  | some (.split n l r) =>
+    n.check sign 7 p .negInf .posInf [x, x - 1] &&
+    l.check sign 7 p .negInf .posInf [x] &&
+    r.check sign 7 p .negInf .posInf [x - 1] &&
+    !accepts [x, x - 1] (.split n l r)
+  | _ => false
+
 /-- The SPEC's forged support satisfies both matrix identities and has the
 correct total count. It still lacks the required full singleton leaf support. -/
 @[expose] def forged : System 1 where
@@ -232,5 +252,12 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.System.mem_support' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms System.mem_support
+
+/-- info: 'Hex.SignDet.Replay.query_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Replay.query_evidence
+/-- info: 'Hex.SignDet.Replay.check_children' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Replay.check_children
 
 end Hex.SignDet.Conformance

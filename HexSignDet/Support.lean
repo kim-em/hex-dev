@@ -49,6 +49,6 @@ theorem System.mem_support {r : Nat} {arity : Nat} {s : System r}
 /-- Zero-column removal keeps the matrix's original row order. -/
 @[expose] def System.retainedMatrix {r : Nat} (s : System r) :
     Matrix Int r s.positive.length :=
-  Matrix.selectCols (momentMatrix s.rows s.columns) s.positive.toArray.toVector
+  Matrix.selectCols (momentMatrix s.rows s.columns) ⟨s.positive.toArray, by simp⟩
 
 end Hex.SignDet

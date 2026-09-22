@@ -53,19 +53,22 @@ one. The checker validates lengths and exponent ranges before using it. -/
 
 /-- Check all local facts without query production, gcd search or row search.
 The rank certificate's columns must preserve the retained support order.
-Its scaled left inverse is checked explicitly as well as its rank identities. -/
+Its full HexRank check is retained unchanged; the additional direct left-inverse
+check avoids assuming an inverse-format or permutation adapter. -/
 @[expose] def Node.check [DecidableEq Ctx] (sign : E → Int)
     (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
     (qs : List (DensePoly E)) (n : Node E Ctx) : Bool :=
+  let k := n.system.positive.length
   decide (n.context = context ∧ n.head = p ∧ n.lower = a ∧ n.upper = b ∧ n.queries = qs) &&
   n.system.check qs.length &&
-  decide (n.basis.rank = n.system.positive.length) &&
-  decide (n.basis.cols.toList.map Fin.val = List.range n.system.positive.length) &&
-  Matrix.checkRank n.system.retainedMatrix n.basis &&
-  decide (n.basis.adj * Matrix.selectedSubmatrix n.system.retainedMatrix n.basis.rows n.basis.cols =
-    Matrix.scale n.basis.denom (Matrix.identity n.basis.rank)) &&
-  (List.finRange n.size).all (fun i =>
-    Sturm.check sign context p (moment qs n.system.rows[i]) a b n.system.values[i] n.moments[i])
+  decide (n.basis.rank = k) &&
+  decide (n.basis.cols.toList.map Fin.val = List.range k) &&
+  (let retained := n.system.retainedMatrix
+   Matrix.checkRank retained n.basis &&
+   decide (n.basis.adj * Matrix.selectedSubmatrix retained n.basis.rows n.basis.cols =
+     Matrix.scale n.basis.denom (Matrix.identity n.basis.rank)) &&
+   (List.finRange n.size).all (fun i =>
+     Sturm.check sign context p (moment qs n.system.rows[i]) a b n.system.values[i] n.moments[i]))
 
 /-- Empty and singleton lists have complete fixed supports. Larger leaves
 are rejected, so this is not an exponential full-table fallback. -/
@@ -123,7 +126,7 @@ theorem Node.check_bindings [DecidableEq Ctx] {sign : E → Int}
     (n.context = context ∧ n.head = p ∧ n.lower = a ∧ n.upper = b ∧ n.queries = qs) ∧
     n.system.check qs.length = true := by
   simp only [Node.check, Bool.and_eq_true, decide_eq_true_eq] at h
-  exact h.1.1.1.1.1
+  exact h.1.1.1
 
 /-- Every accepted moment has a shared Tarski replay for the exact product,
 context, head, endpoints and integer right-hand side of that row. -/
@@ -134,7 +137,7 @@ theorem Node.check_moment [DecidableEq Ctx] {sign : E → Int}
     Sturm.check sign context p (moment qs n.system.rows[i]) a b
       n.system.values[i] n.moments[i] = true := by
   simp only [Node.check, Bool.and_eq_true] at h
-  exact List.all_eq_true.mp h.2 i (List.mem_finRange i)
+  exact List.all_eq_true.mp h.2.2 i (List.mem_finRange i)
 
 /-- Even an empty root system reaches a checked Tarski query at a leaf.
 Hence empty matrix identities can never bypass the shared domain guards. -/
