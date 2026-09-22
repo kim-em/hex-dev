@@ -207,10 +207,11 @@ and conformance oracle; it is not the production fallback for large `s`.
 ## Thom descriptors and selected-root operations
 
 For `n=degree P>0`, a raw `Descriptor` contains the coefficient context, `p`,
-`I`, and an ordered list of distinct derivative indices `J ⊆ {1,…,n}` with
-signs `τ`. `p=0` is implicit at the selected root; it is not a derivative
-slot. A full descriptor uses every index `1,…,n`; a partial descriptor may
-use none. Derivatives mean formal iterated derivatives, without normalization
+`I`, and a list of distinct derivative indices `J ⊆ {1,…,n}` paired positionally
+with signs `τ`. Partial indices may appear in any order. `p=0` is implicit at
+the selected root; it is not a derivative slot. A canonical full descriptor
+uses the index list `[1,…,n]`; a partial descriptor may use none. Derivatives
+mean formal iterated derivatives, without normalization
 or scaling that would change their signs. Keep index `n` even though its sign
 is constant across roots: it supplies the last sign used by Thom order.
 Validity is exactly

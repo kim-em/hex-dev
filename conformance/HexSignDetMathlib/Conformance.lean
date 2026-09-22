@@ -156,6 +156,9 @@ example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := 
 /-- info: 'Hex.SignDet.Node.check_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Node.check_sign
+/-- info: 'Hex.SignDet.derivativesFrom_get' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms derivativesFrom_get
 /-- info: 'Hex.SignDetMathlib.Conformance.noncanonical_queries' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms noncanonical_queries
@@ -171,6 +174,15 @@ example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := 
 /-- info: 'Hex.SignDet.System.basis_inverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms System.basis_inverse
+/-- info: 'Hex.SignDet.CommonProduct.check_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms CommonProduct.check_roots
+/-- info: 'Hex.SignDet.endpoint_lower' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms endpoint_lower
+/-- info: 'Hex.SignDet.endpoint_upper' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms endpoint_upper
 /-- info: 'Hex.SignDet.tensor_inverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms tensor_inverse
@@ -183,6 +195,27 @@ example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := 
 /-- info: 'Hex.SignDet.solveScaled_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms solveScaled_eq
+/-- info: 'Hex.SignDet.solveSystem_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms solveSystem_complete
+/-- info: 'Hex.SignDet.empty_system' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms empty_system
+/-- info: 'Hex.SignDet.singleton_system' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms singleton_system
+/-- info: 'Hex.SignDet.system_counts' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms system_counts
+/-- info: 'Hex.SignDet.Node.product_system' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.product_system
+/-- info: 'HexMatrixMathlib.decode_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexMatrixMathlib.decode_encode
+/-- info: 'HexMatrixMathlib.decodeRows_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexMatrixMathlib.decodeRows_encode
 /-- info: 'Hex.SignDetMathlib.Conformance.twoSigns_solved' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms twoSigns_solved

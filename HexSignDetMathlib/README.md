@@ -22,6 +22,10 @@ this fact with reduced-moment replay, identifying the sign of each actual Tarski
 operand with the original moment. The finite `slice_checks` theorem verifies
 the child-sublist restrictions used by the producer without rerunning division.
 
+`derivativesFrom_get` identifies every emitted descriptor derivative with the
+formal iterated derivative under the shared interpretation, using explicit
+natural casts. It does not require a field instance on coefficient storage.
+
 `System.retained_rank` proves that removing zero-count columns preserves full
 column rank. `basis_checks`, `basis_rank`, `basis_columns` and `basis_inverse`
 verify the actual integer rank producer's retained basis, exact column order
@@ -32,6 +36,30 @@ list products used by `buildTreeFrom`. `solveScaled_eq`
 proves that the integer solver recovers any accepted system's counts without
 rounding or sign clamping. These finite algebra results do not assume roots
 or query semantics and do not yet prove completeness of the full constructor.
+
+`solveSystem_complete` proves that the actual rational solver also succeeds
+on every accepted integer system, preserving its input orders and exact counts.
+It uses the core rank theorem at the executable rational field instance, then
+proves positivity and divisibility of the chosen denominator and its literal
+integer inverse identity. The shared denominator encoder has corresponding
+acceptance and decoding proofs in `HexMatrixMathlib.Rational`.
+`System.check_counts` constructs a checked system from finite observations
+covered by its candidate support. `empty_system` and `singleton_system` provide
+the two complete leaf systems, with their explicit inverses checked by the
+ordinary kernel before any solving or pruning.
+`system_counts` requires only the literal shape guards, a scaled inverse and
+complete support: column distinctness, nonnegative counts and both system
+identities follow from those inputs.
+`Node.product_system` applies this construction to the actual child bases and
+their Cartesian product, deriving all parent-system checks from complete
+child supports without assuming an accepted parent.
+
+`CommonProduct.check_roots` proves the root-union property from arbitrary
+accepted literal multiplication/division identities under noninjective coefficient
+interpretation. It neither assumes a gcd normalization nor supplies squarefreeness;
+the latter remains a separate shared-domain check. `endpoint_eval`, `endpoint_lower`
+and `endpoint_upper` prove the semantics of the actual finite-boundary polynomials
+used by joint re-encoding.
 
 Complete sign-table and Thom semantics, total producer correspondence and
 Phase-4 evidence remain required. The root-sum/replay bridge in #10389 and the

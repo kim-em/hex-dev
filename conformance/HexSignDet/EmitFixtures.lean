@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexSignDet
+import HexSignDet.Compare
 import Hex.Conformance.Emit
 import HexRealAlgebraic.Roots
 import HexPolyZ.IntegerPolynomial
@@ -89,6 +90,82 @@ private def emit (case : String) (p : DensePoly Rat) (qs : List (DensePoly Rat))
         (if qs.length ≤ 4 then [("reference", reference domain qs)] else [])
   Hex.Conformance.Emit.emitResult "HexSignDet" case "table" (Json.mkObj (input ++ fields)).compress
 
+private def descriptorResult (raw : RawDescriptor Rat Nat) (qs : List (DensePoly Rat)) : Json :=
+  match Descriptor.build Sturm.orderSign 10377 raw with
+  | .error err => failure err
+  | .ok (.error reason) => Json.mkObj [("status", toJson "invalid-descriptor"),
+      ("reason", toJson (match reason with
+        | .context => "context" | .malformed => "malformed" | .domain => "domain"
+        | .absent => "absent" | .ambiguous => "ambiguous"))]
+  | .ok (.ok d) =>
+    let completion := match d.buildCompletion with
+      | .error err => failure err
+      | .ok c => Json.mkObj [("status", toJson "ok"), ("indices", toJson c.descriptor.raw.indices),
+          ("signs", toJson c.descriptor.raw.signs),
+          ("replay", toJson (c.descriptor.raw.check Sturm.orderSign 10377 c.descriptor.evidence)),
+          ("bindings", toJson (d.raw.completes c.descriptor.raw))]
+    let selected := match d.buildSigns qs with
+      | .error err => failure err
+      | .ok s => Json.mkObj [("status", toJson "ok"), ("signs", toJson s.values.toList),
+          ("replay", toJson (d.checkSigns qs s.values s.evidence))]
+    Json.mkObj [("status", toJson "ok"), ("replay", toJson (raw.check Sturm.orderSign 10377 d.evidence)),
+      ("completion", completion), ("selected", selected)]
+
+private def rootsResult (raw : RawDescriptor Rat Nat) : Json :=
+  match Descriptor.buildRoots Sturm.orderSign 10377 raw.head raw.lower raw.upper with
+  | .error err => failure err
+  | .ok none => Json.mkObj [("status", toJson "invalid-domain")]
+  | .ok (some roots) => Json.mkObj [("status", toJson "ok"), ("roots", toJson (roots.map fun d =>
+      Json.mkObj [("indices", toJson d.raw.indices), ("signs", toJson d.raw.signs),
+        ("replay", toJson (d.raw.check Sturm.orderSign 10377 d.evidence))]))]
+
+private def emitDescriptor (name : String) (raw : RawDescriptor Rat Nat)
+    (qs : List (DensePoly Rat)) : IO Unit :=
+  Hex.Conformance.Emit.emitResult "HexSignDet" ("descriptor/" ++ name) "descriptor"
+    (Json.mkObj [("schema", toJson (1 : Nat)), ("head", poly raw.head),
+      ("lower", endpoint raw.lower), ("upper", endpoint raw.upper),
+      ("context", toJson raw.context), ("indices", toJson raw.indices), ("signs", toJson raw.signs),
+      ("queries", toJson (qs.map poly)), ("validation", descriptorResult raw qs),
+      ("roots", rootsResult raw)]).compress
+
+private def rawJson (raw : RawDescriptor Rat Nat) : Json :=
+  Json.mkObj [("head", poly raw.head), ("lower", endpoint raw.lower), ("upper", endpoint raw.upper),
+    ("context", toJson raw.context), ("indices", toJson raw.indices), ("signs", toJson raw.signs)]
+
+private def emitComparison (name : String) (left right : RawDescriptor Rat Nat) : IO Unit := do
+  let output := match Descriptor.build Sturm.orderSign 10377 left,
+      Descriptor.build Sturm.orderSign 10377 right with
+    | .ok (.ok l), .ok (.ok r) => match l.buildComparison r with
+      | .error err => failure err
+      | .ok c => Json.mkObj [("status", toJson "ok"), ("commonHead", poly c.common.head),
+          ("order", toJson (match c.order with | .lt => "lt" | .eq => "eq" | .gt => "gt")),
+          ("leftSigns", toJson c.leftEncoding.target.raw.signs),
+          ("rightSigns", toJson c.rightEncoding.target.raw.signs),
+          ("commonReplay", toJson (c.common.check 10377 left.head right.head)),
+          ("leftReplay", toJson (l.checkReencoding c.leftEncoding.target c.common.head
+            .negInf .posInf c.leftEncoding.evidence)),
+          ("rightReplay", toJson (r.checkReencoding c.rightEncoding.target c.common.head
+            .negInf .posInf c.rightEncoding.evidence))]
+    | _, _ => Json.mkObj [("status", toJson "invalid-input")]
+  Hex.Conformance.Emit.emitResult "HexSignDet" ("compare/" ++ name) "compare"
+    (Json.mkObj [("schema", toJson (1 : Nat)), ("left", rawJson left),
+      ("right", rawJson right), ("result", output)]).compress
+
+private def emitReencoding (name : String) (raw : RawDescriptor Rat Nat)
+    (head : DensePoly Rat) (a b : Endpoint Rat) : IO Unit := do
+  let output := match Descriptor.build Sturm.orderSign 10377 raw with
+    | .ok (.ok d) => match d.buildReencoding head a b with
+      | .error err => failure err
+      | .ok none => Json.mkObj [("status", toJson "none")]
+      | .ok (some r) => Json.mkObj [("status", toJson "ok"),
+          ("signs", toJson r.target.raw.signs), ("indices", toJson r.target.raw.indices),
+          ("replay", toJson (d.checkReencoding r.target head a b r.evidence))]
+    | _ => Json.mkObj [("status", toJson "invalid-input")]
+  Hex.Conformance.Emit.emitResult "HexSignDet" ("reencode/" ++ name) "reencode"
+    (Json.mkObj [("schema", toJson (1 : Nat)), ("source", rawJson raw),
+      ("head", poly head), ("lower", endpoint a), ("upper", endpoint b),
+      ("result", output)]).compress
+
 private def x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
 
 def run : IO Unit := do
@@ -129,6 +206,71 @@ def run : IO Unit := do
     let b : Rat := (state % 19 : Nat) - 9
     let head := (x * x - 2) * (x - DensePoly.C ((i + 2 : Nat) : Rat))
     emit s!"seed-10377/{i}" head [x + DensePoly.C a, x * x + DensePoly.C b, head]
+
+  let raw : RawDescriptor Rat Nat := ⟨10377, p, .negInf, .posInf, [1], [-1]⟩
+  let queries := [x, p, x + 1, x - 1, 0, 7]
+  emitDescriptor "negative-root" raw queries
+  emitDescriptor "positive-root" {raw with signs := [1]} queries
+  emitDescriptor "empty-queries" raw []
+  emitDescriptor "permuted-slots" {raw with indices := [2, 1], signs := [1, -1]} queries
+  emitDescriptor "singleton-empty" {raw with indices := [], signs := [], lower := .finite 0} queries
+  emitDescriptor "negative-head" {raw with head := -p, signs := [1]} queries
+  emitDescriptor "irrational" {raw with head := x * x - 2, signs := [1]}
+    [x * x - 2, x * x - 3, x, x - 1]
+  emitDescriptor "cubic-left" {raw with head := x.natPow 3 - x, indices := [2]} queries
+  emitDescriptor "cubic-center" {raw with head := x.natPow 3 - x} queries
+  emitDescriptor "cubic-right" {raw with head := x.natPow 3 - x, indices := [2], signs := [1]} queries
+  emitDescriptor "negative-cubic" {raw with head := x - x.natPow 3, indices := [2], signs := [1]} queries
+  for (name, d) in [
+      ("absent", {raw with signs := [0]}),
+      ("ambiguous", {raw with indices := [2], signs := [1]}),
+      ("empty-ambiguous", {raw with indices := [], signs := []}),
+      ("unrealized-full", {raw with indices := [1, 2], signs := [-1, -1]}),
+      ("duplicate-slot", {raw with indices := [1, 1], signs := [-1, -1]}),
+      ("zero-slot", {raw with indices := [0], signs := [0]}),
+      ("large-slot", {raw with indices := [3], signs := [1]}),
+      ("short-signs", {raw with indices := [1, 2]}),
+      ("bad-sign", {raw with signs := [2]}),
+      ("stale-context", {raw with context := 10378}),
+      ("constant", {raw with head := 1, indices := [], signs := []}),
+      ("root-free", {raw with head := x * x + 1}),
+      ("zero-head", {raw with head := 0}),
+      ("repeated-head", {raw with head := p * p}),
+      ("root-endpoint", {raw with lower := .finite (-1)}),
+      ("reversed-interval", {raw with lower := .finite 2, upper := .finite (-2)})] do
+    emitDescriptor name d queries
+
+  let left : RawDescriptor Rat Nat := ⟨10377, p, .negInf, .posInf, [1], [1]⟩
+  let irrational := {left with head := x * x - 2}
+  let shared := {left with head := (x * x - 2) * (x - 3), signs := [-1]}
+  emitComparison "equal-linear-vectors" {left with head := x - 1} {left with head := x - 2}
+  emitComparison "reverse-linear" {left with head := x - 2} {left with head := x - 1}
+  emitComparison "permuted-slots" left {left with indices := [2, 1], signs := [1, 1]}
+  emitComparison "shared-irrational" irrational shared
+  emitComparison "distinct-irrational" {irrational with signs := [-1]} shared
+  emitComparison "negative-head" left {left with head := -p, signs := [-1]}
+  emitComparison "scaled-head" left {left with head := DensePoly.scale (2 / 3) p}
+  emitComparison "foreign-endpoint" {left with head := x - 1, lower := .finite 0, upper := .finite 2}
+    {left with head := x - 2, lower := .finite 1, upper := .finite 3}
+  emitComparison "disjoint-intervals" {left with
+      indices := []
+      signs := []
+      lower := .finite (-2)
+      upper := .finite 0}
+    {left with indices := [], signs := [], lower := .finite 0, upper := .finite 2}
+  emitComparison "overlapping-equal" {left with lower := .finite 0, upper := .finite 2}
+    {left with head := x - 1, lower := .finite (-2), upper := .finite 2}
+  emitReencoding "shared-irrational" irrational shared.head .negInf .posInf
+  emitReencoding "outside-target" {left with signs := [-1]} p (.finite 0) .posInf
+  emitReencoding "missing-root" left (x - 3) .negInf .posInf
+  emitReencoding "invalid-target" left p (.finite 1) .posInf
+  emitReencoding "foreign-endpoints" {left with
+      head := x - 1
+      indices := []
+      signs := []
+      lower := .finite 0
+      upper := .finite 2}
+    (x * (x - 1) * (x - 2)) .negInf .posInf
 
 end Hex.SignDet.Emit
 

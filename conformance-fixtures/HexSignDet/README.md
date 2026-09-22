@@ -1,7 +1,7 @@
-# Rational sign-table fixtures
+# Rational sign-table and descriptor fixtures
 
-`sign_det.jsonl` contains 59 cases emitted by `hexsigndet_emit_fixtures`.
-Each record includes ascending rational polynomial coefficients as exact
+`sign_det.jsonl` contains 101 cases emitted by `hexsigndet_emit_fixtures`.
+The 59 table records include ascending rational polynomial coefficients as exact
 `[numerator, denominator]` pairs, open finite/infinite endpoints, and the
 complete sparse tables from reduced and unreduced BKR. Lists of at most four
 queries also include the full-ternary reference result. Constructor diagnostics
@@ -18,7 +18,9 @@ exact open interval, and evaluates every query at each selected root. It compare
 complete positive-count tables, so matching totals do not excuse omitted support.
 The existing adapter pins **python-flint 0.9.0 / FLINT 3.6.0** and uses no decimal
 root approximations. Missing capabilities fail the oracle. Its tests include
-identity-preserving total-count forgeries and malformed sparse tables.
+identity-preserving total-count forgeries, malformed sparse tables, wrong
+Thom order, omitted roots, incorrect selected signs, false validity diagnostics,
+and Boolean values substituted for integer sign/index literals.
 
 The 35 fixed cases cover rational and irrational roots, shared factors, zero,
 duplicate and constant queries, empty queries, negative leading coefficients,
@@ -26,6 +28,20 @@ formal derivative lists, high-degree queries, rational scaling, constant/root-fr
 heads, zero/repeated heads and invalid endpoint combinations. Another 24 cases
 use seed `10377` and the emitter's fixed recurrence
 `state = (1664525 * state + 1013904223) mod 2^32` to select query coefficients.
+The 27 descriptor records add partial/full validation, permuted slots, empty
+constraints in singleton intervals, completion, selected-query signs and full
+root lists. They include the cubic example where lexicographic derivative-word
+order is wrong, negative heads, irrational roots, absent/ambiguous/unrealized
+encodings, malformed slots, invalid domains and stale contexts. FLINT evaluates
+formal derivatives and queries at roots sorted by exact numerical comparison;
+it never uses the producer's Thom rule to establish expected root order.
+Ten comparison and five re-encoding records cover equal derivative vectors
+from different linear heads, common irrational roots, negative/scaled heads,
+overlapping/disjoint intervals, foreign root endpoints, invalid targets and
+absent selected roots. The oracle checks the common head's squarefreeness and
+three polynomial divisibilities with FLINT, then compares selected roots by
+their exact numerical positions. It also verifies both common-head encodings.
+It does not assume that the producer's Thom comparison is correct.
 The oracle requires every case name; a truncated nonempty stream does not pass.
 The repository's `lean-toolchain` and `lake-manifest.json` pin Lean-side inputs.
 
@@ -36,6 +52,7 @@ python3 scripts/oracle/sign_det_flint.py --check
 python3 -m unittest scripts.oracle.test_sign_det_flint
 ```
 
-These fixtures validate rational sign tables. They are not proofs of general
-root-sum semantics, descriptor conformance, extension-field conformance, or
-Phase-4 performance evidence; those gates remain in #10377.
+These fixtures validate rational sign tables and the implemented descriptor
+operations, including cross-polynomial comparison and re-encoding.
+Extension-field and nested-context conformance remain required. None of these fixtures proves general
+root-sum/Thom semantics or supplies Phase-4 performance evidence.
