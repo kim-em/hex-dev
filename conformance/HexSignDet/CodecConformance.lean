@@ -55,6 +55,15 @@ private def roundtrip (d : Dag Rat Nat) : Bool :=
 #guard let bad : Dag Rat Nat := ⟨#[⟨badDenominator, none⟩], 0⟩
   (decoded (encoded bad)).isOk && !checked badDenominator.queries (encoded bad)
 
+-- An invertible local system with the correct total count still cannot omit
+-- a realized column. Parsing succeeds; recursive support replay rejects it.
+#guard let graph : Dag Rat Nat := ⟨#[⟨forgedNode, none⟩], 0⟩
+  let bytes := encoded graph
+  (Codec.decodeGraph ValueCodec.rat ValueCodec.nat 7 Sturm.Fixtures.p
+    (.finite (-2)) (.finite 2) bytes).isOk &&
+  (Dag.decodeBytes ValueCodec.rat ValueCodec.nat Sturm.orderSign 7 Sturm.Fixtures.p
+    (.finite (-2)) (.finite 2) forgedNode.queries bytes).toOption.isNone
+
 #guard (decoded (encoded ⟨#[], 0⟩)).toOption.isNone
 #guard (decoded (encoded {full with root := 3})).toOption.isNone
 #guard (decoded (encoded ⟨#[⟨fullNode, some (0, 0)⟩], 0⟩)).toOption.isNone
