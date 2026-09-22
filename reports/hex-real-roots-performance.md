@@ -223,5 +223,65 @@ points and deferred normalization for integer points. The exact equality
 correspondence. The cancellation-family linear model and paired-comparison
 schedule are derived in
 [the bit-cost declaration](sturm-bit-cost-models.md#fractional-evaluation-validation-protocol).
-Measurements for this registration are pending; earlier isolation timings
-above do not validate the new registration.
+The [retained collection](bench-results/dyadic-cancellation/) uses Lean 4.34.0
+and lean-bench 0.1.0 on chungus2 (AMD EPYC 9455), CPU 52, sequentially from
+03:16:41 to 03:17:04 UTC on 2026-09-22. The preregistration is commit
+`96ef6f0a6`; its source and derivation snapshots, build logs, binary hashes,
+commands, and per-command timestamps/load are retained. Both arms use the same
+benchmark source; arm A replaces only `HexRealRoots/Basic.lean` with the merged
+`245323c27` version before building. See `builds.json` for the build recipe.
+
+The scientific run is **consistent with declared linear complexity**, residual
+slope +0.000425, with all 16 rows included and no rerun. Four-trial medians:
+
+| Degree | Median | Relative spread |
+| ---: | ---: | ---: |
+| 32768 | 0.902 ms | 4.41% |
+| 65536 | 1.816 ms | 4.23% |
+| 131072 | 3.605 ms | 3.11% |
+| 262144 | 7.238 ms | 6.60% |
+
+All results hash to `0x1e8484`, the checksum of the exact value 2. Preparation
+is excluded, and all timed inner batches exceed the measured signal floor.
+Peak RSS is 68,060–72,204 KiB. These observations support the family-specific
+model; they are not a worst-case linear bound for arbitrary polynomial inputs.
+
+Four adjacent AB/BA blocks per case compare the merged deferred evaluator
+against endpoint-dependent normalization. All 24 child rows succeed and each
+pair agrees on its result hash:
+
+| Case | Before median | After median | Median paired before/after ratio |
+| --- | ---: | ---: | ---: |
+| Cancellation, degree 32768 | 87.141 ms | 0.935 ms | 93.348× |
+| Cancellation, degree 65536 | 306.282 ms | 1.747 ms | 175.302× |
+| Integer replay, degree 1024 | 800.679 ms | 821.158 ms | 1.001× |
+
+Ratios are medians of adjacent pair ratios, not ratios of the displayed
+medians. Replay pair ratios range from 0.936 to 1.068: this small comparison
+shows comparable performance with host variation, not statistical equivalence
+or a new replay speedup. It preserves the practical improvement measured in
+[the Sturm replay report](hex-sturm-performance.md#deferred-normalization-validation).
+The cancellation comparisons measure the repaired regression against the
+merged deferred evaluator, not a speedup over the original normalized evaluator.
+
+Host load is recorded, never an acceptance filter. One-minute load was 37.23
+at collection start and 33.60 at the end; other work used this shared host.
+The scientific run and comparisons did not overlap one another or our builds.
+Metadata captured a clean checkout before writing the result directory; child
+metadata reports dirty because those untracked evidence files then existed.
+No completed samples were discarded.
+
+The exact-equality theorem and its axiom audit use only `propext`,
+`Classical.choice`, and `Quot.sound`. Conformance covers positive and negative
+fractional cancellation, cancellation at 3/2, sparse monomials with enormous
+signed exponents, constants, zeros, and the existing rational differential
+cases. The underlying trailing-zero primitive is separately tracked by
+[lean4#15264](https://github.com/leanprover/lean4/issues/15264).
+
+Both benchmark executables pass smoke verification (12 real-roots and 13 Sturm
+registrations). Freshly emitted fixtures pass the independent FLINT oracle:
+18 size-axis and 5 coefficient-control cases, byte-identical to the earlier
+retained fixtures. Commands, checker/input hashes and python-flint version
+are recorded in `validation.json`; the build and validation logs are retained
+beside the timing evidence. Smoke checks and oracle agreement are separate
+from the scientific scaling verdict and the formal equality proof.
