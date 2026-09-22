@@ -1,5 +1,6 @@
 """Adversarial checks of the independent sign-table oracle itself."""
 import copy
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -94,6 +95,55 @@ class ExactSigns(unittest.TestCase):
                             {**good, "replay": False}):
             with self.subTest(result=replacement), self.assertRaises(OracleMismatch):
                 oracle.check_output(replacement, [row([-1]), row([1])], 1)
+
+    def descriptor_record(self, name):
+        with oracle.DEFAULT_FIXTURE.open() as stream:
+            return next(record for line in stream if (record := json.loads(line))["case"] ==
+                        "descriptor/" + name)
+
+    def test_descriptor_order_and_selected_signs(self):
+        for name in ("cubic-left", "cubic-center", "negative-cubic", "irrational", "singleton-empty"):
+            with self.subTest(name=name):
+                record = self.descriptor_record(name)
+                oracle.check_record(record)
+                for key in ("completion", "selected"):
+                    bad = copy.deepcopy(record)
+                    signs = bad["value"]["validation"][key]["signs"]
+                    signs[0] = 1 if signs[0] != 1 else -1
+                    with self.assertRaises(OracleMismatch):
+                        oracle.check_record(bad)
+        record = self.descriptor_record("cubic-left")
+        roots = record["value"]["roots"]["roots"]
+        self.assertEqual([r["signs"] for r in roots], [[1, -1, 1], [-1, 0, 1], [1, 1, 1]])
+        record["value"]["roots"]["roots"] = sorted(roots, key=lambda r: r["signs"])
+        with self.assertRaisesRegex(OracleMismatch, "increasing FLINT roots"):
+            oracle.check_record(record)
+
+    def test_descriptor_diagnostics_and_missing_roots(self):
+        for name in ("absent", "ambiguous", "unrealized-full", "root-endpoint", "stale-context"):
+            record = self.descriptor_record(name)
+            oracle.check_record(record)
+            record["value"]["validation"] = {"status": "ok", "replay": True}
+            with self.subTest(name=name), self.assertRaises(OracleMismatch):
+                oracle.check_record(record)
+        record = self.descriptor_record("positive-root")
+        record["value"]["roots"]["roots"].pop(0)
+        with self.assertRaises(OracleMismatch):
+            oracle.check_record(record)
+
+    def test_descriptor_literals_are_strict(self):
+        for path in (("roots", "roots", 0, "indices", 0),
+                     ("validation", "completion", "signs", 1),
+                     ("validation", "selected", "signs", 0),
+                     ("validation", "completion", "replay"),
+                     ("validation", "selected", "replay")):
+            record = self.descriptor_record("positive-root")
+            target = record["value"]
+            for field in path[:-1]:
+                target = target[field]
+            target[path[-1]] = 1 if path[-1] == "replay" else True
+            with self.subTest(path=path), self.assertRaises(OracleMismatch):
+                oracle.check_record(record)
 
     def test_empty_stream_is_failure(self):
         with tempfile.TemporaryDirectory() as directory:

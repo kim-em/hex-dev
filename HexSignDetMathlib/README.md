@@ -22,6 +22,10 @@ this fact with reduced-moment replay, identifying the sign of each actual Tarski
 operand with the original moment. The finite `slice_checks` theorem verifies
 the child-sublist restrictions used by the producer without rerunning division.
 
+`derivativesFrom_get` identifies every emitted descriptor derivative with the
+formal iterated derivative under the shared interpretation, using explicit
+natural casts. It does not require a field instance on coefficient storage.
+
 `System.retained_rank` proves that removing zero-count columns preserves full
 column rank. `basis_checks`, `basis_rank`, `basis_columns` and `basis_inverse`
 verify the actual integer rank producer's retained basis, exact column order

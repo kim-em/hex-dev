@@ -156,6 +156,9 @@ example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := 
 /-- info: 'Hex.SignDet.Node.check_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Node.check_sign
+/-- info: 'Hex.SignDet.derivativesFrom_get' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms derivativesFrom_get
 /-- info: 'Hex.SignDetMathlib.Conformance.noncanonical_queries' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms noncanonical_queries

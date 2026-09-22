@@ -17,3 +17,10 @@ public import HexSignDet.Moment
 public import HexSignDet.MomentReplay
 public import HexSignDet.Tensor
 public import HexSignDet.QueryReduction
+public import HexSignDet.Table
+public import HexSignDet.TableProducer
+public import HexSignDet.Thom
+public import HexSignDet.Descriptor
+public import HexSignDet.Complete
+public import HexSignDet.SelectedSigns
+public import HexSignDet.RootList

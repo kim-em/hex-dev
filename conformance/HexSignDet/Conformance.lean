@@ -19,6 +19,13 @@ public meta import HexSignDet.Reference
 public meta import HexRank.Cert
 public meta import HexSturm.Basic
 public meta import HexSignDet.Reduction
+public meta import HexSignDet.Table
+public meta import HexSignDet.TableProducer
+public meta import HexSignDet.Thom
+public meta import HexSignDet.Descriptor
+public meta import HexSignDet.Complete
+public meta import HexSignDet.SelectedSigns
+public meta import HexSignDet.RootList
 public meta import HexRealRoots.TarskiTests
 
 public section
@@ -66,6 +73,158 @@ def produced (head : DensePoly Rat) (qs : List (DensePoly Rat))
 #guard produced (x * x * x - x) [x] [([0], 1)] (.finite (-1 / 2)) (.finite (1 / 2))
 #guard produced p (List.replicate 12 x)
   [(List.replicate 12 (-1), 1), (List.replicate 12 1, 1)]
+
+/-- Sparse natural lookup is checked at present, omitted and malformed
+conditions; zero-root domains retain no explicit zero rows. -/
+def sparseCounts (head : DensePoly Rat) (qs : List (DensePoly Rat))
+    (expected : List (List Int × Nat)) (absent : List (List Int)) : Bool :=
+  match Sturm.prepare sign head .negInf .posInf with
+  | none => false
+  | some d => match buildTablePrepared 7 d qs with
+    | .error _ => false
+    | .ok t => t.rows.toList == expected &&
+      expected.all (fun (s, n) => t.count s == n) && absent.all (fun s => t.count s == 0)
+
+#guard sparseCounts p [x, x - 1] [([-1, -1], 1), ([1, 0], 1)]
+  [[-1, 0], [0, 0], [1, 1], [], [2, 0]]
+#guard sparseCounts p [] [([], 2)] [[0], [-1]]
+#guard sparseCounts (x * x + 1) [x] [] [[-1], [0], [1], []]
+#guard sparseCounts 1 [] [] [[], [0]]
+
+def descriptor (indices : List Nat) (signs : List Int) : RawDescriptor Rat Nat :=
+  ⟨7, p, .negInf, .posInf, indices, signs⟩
+
+def descriptorAccepts (raw : RawDescriptor Rat Nat) : Bool :=
+  match Sturm.prepare sign raw.head raw.lower raw.upper with
+  | none => false
+  | some d => match buildPrepared raw.context d raw.queries with
+    | .error _ => false
+    | .ok t => raw.check sign raw.context t.val
+
+#guard descriptorAccepts (descriptor [1] [-1])
+#guard descriptorAccepts (descriptor [1] [1])
+#guard descriptorAccepts (descriptor [1, 2] [-1, 1])
+#guard descriptorAccepts (descriptor [2, 1] [1, -1])
+#guard descriptorAccepts {descriptor [1, 2] [1, -1] with head := -p}
+#guard !descriptorAccepts (descriptor [] [])
+#guard descriptorAccepts {descriptor [] [] with lower := .finite 0}
+#guard !descriptorAccepts (descriptor [1] [0])
+#guard !descriptorAccepts (descriptor [2] [1])
+#guard !descriptorAccepts (descriptor [1, 2] [-1, -1])
+#guard !descriptorAccepts (descriptor [1, 1] [-1, -1])
+#guard !descriptorAccepts (descriptor [0] [0])
+#guard !descriptorAccepts (descriptor [3] [0])
+#guard !descriptorAccepts (descriptor [1, 2] [-1])
+#guard !descriptorAccepts (descriptor [1] [2])
+#guard !descriptorAccepts {descriptor [] [] with head := 1}
+
+def descriptorBuilt (raw : RawDescriptor Rat Nat) : Bool :=
+  match Descriptor.build sign 7 raw with
+  | .ok (.ok d) => d.raw.check sign 7 d.evidence && d.raw.indices == raw.indices &&
+    d.raw.signs == raw.signs && d.raw.head == raw.head &&
+    d.raw.lower == raw.lower && d.raw.upper == raw.upper
+  | _ => false
+
+def descriptorFailure (raw : RawDescriptor Rat Nat) (expected : DescriptorError) : Bool :=
+  match Descriptor.build sign 7 raw with
+  | .ok (.error reason) => reason == expected
+  | _ => false
+
+#guard descriptorBuilt (descriptor [1] [-1])
+#guard descriptorBuilt (descriptor [1, 2] [1, 1])
+#guard descriptorBuilt {descriptor [] [] with lower := .finite 0}
+#guard descriptorFailure (descriptor [1] [0]) .absent
+#guard descriptorFailure (descriptor [] []) .ambiguous
+#guard descriptorFailure (descriptor [2] [1]) .ambiguous
+#guard descriptorFailure (descriptor [0] [0]) .malformed
+#guard descriptorFailure (descriptor [1, 1] [-1, -1]) .malformed
+#guard descriptorFailure {descriptor [1] [1] with lower := .finite 1} .domain
+#guard descriptorFailure {descriptor [1] [1] with context := 8} .context
+
+/- A sign-equivalent query is still not the declared formal derivative;
+changing context also cannot recycle the original query tree. -/
+#guard match Sturm.prepare sign p .negInf .posInf with
+  | none => false
+  | some d => match buildPrepared 7 d [x], buildPrepared 7 d (descriptor [1] [-1]).queries with
+    | .ok wrong, .ok right =>
+      !(descriptor [1] [-1]).check sign 7 wrong.val &&
+      !({descriptor [1] [-1] with context := 8}).check sign 8 right.val
+    | _, _ => false
+
+/-- Completion and selected signs run the actual BKR producers. Expected
+values here are independent direct evaluations at the selected roots. -/
+def completed (raw : RawDescriptor Rat Nat) (expected : List Int) : Bool :=
+  match Descriptor.build sign 7 raw with
+  | .ok (.ok d) => match d.buildCompletion with
+    | .ok c => c.descriptor.raw.signs == expected &&
+      d.raw.completes c.descriptor.raw &&
+      c.descriptor.raw.check sign 7 c.descriptor.evidence
+    | _ => false
+  | _ => false
+
+def selected (raw : RawDescriptor Rat Nat) (qs : List (DensePoly Rat))
+    (expected : List Int) : Bool :=
+  match Descriptor.build sign 7 raw with
+  | .ok (.ok d) => match d.buildSigns qs with
+    | .ok s => s.values.toList == expected && d.checkSigns qs s.values s.evidence
+    | _ => false
+  | _ => false
+
+#guard completed (descriptor [1] [-1]) [-1, 1]
+#guard completed (descriptor [2, 1] [1, -1]) [-1, 1]
+#guard completed {descriptor [] [] with lower := .finite 0} [1, 1]
+#guard completed {descriptor [1] [1] with head := -p} [1, -1]
+#guard completed {descriptor [2] [-1] with head := x * x * x - x} [1, -1, 1]
+#guard completed {descriptor [1] [-1] with head := x * x * x - x} [-1, 0, 1]
+#guard completed {descriptor [2] [1] with head := x * x * x - x} [1, 1, 1]
+#guard completed {descriptor [2] [1] with head := -(x * x * x - x)} [-1, 1, -1]
+#guard completed {descriptor [1] [1] with head := x * x - 2} [1, 1]
+
+#guard selected (descriptor [1] [-1]) [x, p, x + 1, x - 1, 0, 7] [-1, 0, 0, -1, 0, 1]
+#guard selected (descriptor [1] [1]) [x, p, x + 1, x - 1, 0, 7] [1, 0, 1, 0, 0, 1]
+#guard selected (descriptor [1] [-1]) [] []
+#guard selected {descriptor [] [] with lower := .finite 0} [x, -x] [1, -1]
+#guard selected {descriptor [1] [1] with head := x * x - 2}
+  [x * x - 2, x * x - 3, x, x - 1] [0, -1, 1, 1]
+
+/- A complete table can be reused for the same bound domain and query list,
+but cannot justify a wrong selected sign or a different query/context. -/
+#guard match Descriptor.build sign 7 (descriptor [1] [-1]) with
+  | .ok (.ok d) => match d.buildSigns [x] with
+    | .ok s => s.value == -1 &&
+      !d.checkSigns [x] #v[1] s.evidence &&
+      !d.checkSigns [2 * x] s.values s.evidence &&
+      (match Descriptor.build sign 8 {descriptor [1] [-1] with context := 8} with
+       | .ok (.ok other) => !other.checkSigns [x] s.values s.evidence
+       | _ => false)
+    | _ => false
+  | _ => false
+
+example : Thom.select [2, 1] [-1, 1] = some [1, -1] ∧
+    Thom.select [0] [0] = none ∧ Thom.select [2] [0] = none := by decide +kernel
+
+example : (descriptor [1] [-1]).completes (descriptor [1, 2] [-1, 1]) = true ∧
+    (descriptor [1] [-1]).completes (descriptor [1, 2] [1, 1]) = false ∧
+    (descriptor [1] [-1]).completes (descriptor [1] [-1]) = false ∧
+    (descriptor [1] [-1]).completes
+      {descriptor [1, 2] [-1, 1] with context := 8} = false ∧
+    (descriptor [1] [-1]).completes
+      {descriptor [1, 2] [-1, 1] with head := x * x - 2} = false := by decide +kernel
+
+/-- For x³-x, ordinary lexicographic sorting puts the middle root first.
+The Thom rule uses the largest differing index and also handles -p. -/
+example : Thom.compareSigns [1, -1, 1] [-1, 0, 1] = some .lt ∧
+    Thom.compareSigns [-1, 0, 1] [1, 1, 1] = some .lt ∧
+    Thom.compareSigns [-1, 1, -1] [1, 0, -1] = some .lt ∧
+    Thom.compareSigns [1, 0, -1] [-1, -1, -1] = some .lt := by decide +kernel
+
+example : Thom.compareSigns [-1, 1] [-1, 1] = some .eq ∧
+    Thom.compareSigns [1, 1] [-1, 1] = some .gt ∧
+    Thom.compareSigns [1] [-1] = none ∧
+    Thom.compareSigns [1, 0, 1] [-1, 0, 1] = none ∧
+    Thom.compareSigns [1] [1, 1] = none ∧
+    Thom.compareSigns [2, 1] [1, 1] = none ∧
+    Thom.compareSigns [] [] = none := by decide +kernel
 
 /-- The exponential reference and reduced producer must agree on small lists.
 Both also have to pass the ordinary checker for their literal moments. -/
@@ -546,8 +705,72 @@ theorem literal_accepts : (Replay.leaf literalNode).check Sturm.orderSign 7
     SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
+/-- Restrict the literal root-count certificate to the positive root. -/
+@[expose] def singletonQuery : TarskiCertificate Rat Rat Nat :=
+  {Sturm.Fixtures.literal with
+    lower := .finite 0
+    lowerSigns := #[-1, 0, 1]
+    lowerVariations := 1
+    value := 1}
+
+@[expose] def singletonNode : Node Rat Nat :=
+  {literalNode with
+    lower := .finite 0
+    system := {literalSystem with counts := #v[1], values := #v[1]}
+    moments := #v[singletonQuery]}
+
+@[expose] def singletonRaw : RawDescriptor Rat Nat :=
+  ⟨7, Sturm.Fixtures.p, .finite 0, .finite 2, [], []⟩
+
+@[expose] def selectedNode : Node Rat Nat where
+  context := 7
+  head := Sturm.Fixtures.p
+  lower := .finite 0
+  upper := .finite 2
+  queries := [1]
+  size := 3
+  system := {
+    rows := #v[[0], [1], [2]]
+    columns := #v[[-1], [0], [1]]
+    counts := #v[0, 0, 1]
+    values := #v[1, 1, 1]
+    denominator := 2
+    inverse := Matrix.ofRows #v[#v[0, -1, 1], #v[2, 0, -2], #v[0, 1, 1]] }
+  moments := #v[singletonQuery, singletonQuery, singletonQuery]
+  basis := {
+    rank := 1
+    rows := #v[0]
+    cols := #v[⟨0, by decide +kernel⟩]
+    denom := 1
+    adj := Matrix.identity 1}
+
+set_option maxRecDepth 16384 in
+/-- Ordinary-kernel count-one descriptor and selected-query replay. The
+literals contain no prepared-domain construction or opaque table extraction. -/
+theorem selected_kernel :
+    singletonRaw.check Sturm.orderSign 7 (.leaf singletonNode) = true ∧
+    singletonRaw.checkSigns Sturm.orderSign 7 [1] #v[1] (.leaf selectedNode) = true ∧
+    singletonRaw.checkSigns Sturm.orderSign 7 [1] #v[0] (.leaf selectedNode) = false ∧
+    singletonRaw.checkSigns Sturm.orderSign 8 [1] #v[1] (.leaf selectedNode) = false := by
+  simp only [RawDescriptor.check, RawDescriptor.checkSigns, Replay.check, Node.check,
+    checkMoment, queryPoly, Sturm.check, TarskiCertificate.check,
+    SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
 @[expose] def forgedNode : Node Rat Nat :=
   {literalNode with queries := [Sturm.Fixtures.x], system := forged}
+
+/-- Finite interpretation plus kernel replay determines every lookup,
+including absent conditions, without trusting compiled table values. -/
+theorem literal_table_count (c : List Int) :
+    ((Replay.leaf literalNode).table literal_accepts).count c =
+      if c = [] then 2 else 0 := by
+  have ho : Observations 0 [[], []] := by simp [Observations]
+  have hm : (Replay.leaf literalNode).Interprets 0 [[], []] := by
+    simp only [Replay.Interprets, literalNode, literalSystem, moments, ← Hex.Vector.ofFn'_eq_ofFn]
+    decide +kernel
+  have he := Replay.table_count (Replay.leaf literalNode) literal_accepts ho hm c
+  by_cases hc : c = [] <;> simp_all
 
 set_option maxRecDepth 8192 in
 /-- Local query/matrix evidence really passes for the omitted-support forgery. -/
@@ -600,6 +823,33 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Replay.query_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Replay.query_evidence
+/-- info: 'Hex.SignDet.Replay.table_count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Replay.table_count
+/-- info: 'Hex.SignDet.Conformance.literal_table_count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms literal_table_count
+/-- info: 'Hex.SignDet.RawDescriptor.check_count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms RawDescriptor.check_count
+/-- info: 'Hex.SignDet.Conformance.selected_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms selected_kernel
+/-- info: 'Hex.SignDet.SelectedSigns.signs_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms SelectedSigns.signs_eq
+/-- info: 'Hex.SignDet.Descriptor.rootsFrom_perm' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.rootsFrom_perm
+/-- info: 'Hex.SignDet.SelectedSigns.count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms SelectedSigns.count
+/-- info: 'Hex.SignDet.SelectedSigns.ternary' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms SelectedSigns.ternary
+/-- info: 'Hex.SignDet.Thom.compareSigns_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Thom.compareSigns_eq
 /-- info: 'Hex.SignDet.Replay.check_children' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Replay.check_children

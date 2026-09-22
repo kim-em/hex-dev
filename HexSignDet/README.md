@@ -100,15 +100,59 @@ on a two-query tree, and compiled replay independently checks that same tree.
 The fixture emitter compares 59 rational cases against independent FLINT
 `qqbar` root/sign evaluation and the existing real-algebraic API, including
 complete sparse counts and invalid-domain cases. The oracle rejects omitted
-conditions even when totals agree. See the [fixture provenance](../conformance-fixtures/HexSignDet/README.md).
+conditions even when totals agree. Another 27 fixtures compare descriptor
+validation, completion, selected-query signs and full encodings in numerical
+root order against FLINT. See the [fixture provenance](../conformance-fixtures/HexSignDet/README.md).
 The numeric context labels exercise literal binding over the fixed rational
 base only; full tower/refinement context fixtures remain required.
 
-The library currently exposes raw replay data and checked construction, not a
-validated `SignTable` or the total `determinePrepared` API. Producer completeness,
-full constructor correspondence, Thom descriptors
-and selected-root operations, serialization and
-nested evidence sharing remain required. The finite lemmas above do not prove
+`SignTable` has a private constructor and stores distinct well-formed sign rows
+with strictly positive natural counts. `SignTable.ofSystem` extracts positive
+coordinates from a checked integer system; `Replay.table` requires the full
+recursive replay. Its total `count` returns zero for omitted conditions.
+`Replay.table_count` proves every lookup equals the finite observation count
+under the same explicit `Replay.Interprets` contract. Structural table validity
+alone does not prove root completeness. `buildTablePrepared` exposes sparse
+construction while retaining the internal diagnostics of `buildPrepared`.
+
+`RawDescriptor` records its full context, root domain, distinct derivative
+indices and sign word. `RawDescriptor.check` reconstructs the formal derivative
+queries, checks the complete table replay and requires count exactly one.
+`Descriptor.ofReplay?` retains accepted evidence with its sign operation and
+context bound in the type. It validates supplied evidence, not mathematical
+nonexistence when a supplied certificate fails. `Descriptor.build` constructs
+the evidence, distinguishing absent and ambiguous conditions, malformed inputs,
+invalid domains and context mismatches. Internal BKR failures retain a separate
+outer diagnostic result until general producer completeness is proved.
+`Thom.compareSigns` implements
+the largest-differing-index rule as a finite operation on sign words; root
+comparison still requires realized full encodings of the same head and the
+companion's Thom foundation. It is not the public descriptor `compare` API.
+
+`Descriptor.buildCompletion` computes a full derivative table and selects the
+count-one word whose indexed signs agree with the old descriptor. Its
+`Completion` result retains a validated descriptor and checked literal domain,
+context and partial-sign agreement. Missing slots fail `Thom.select`; they are
+never filled with zero. `Descriptor.buildSigns` checks a joint table on the
+selected derivatives followed by the exact requested queries. `SelectedSigns`
+retains the full replay, a fixed-length sign vector and the assertion that
+filtering gives exactly its count-one row. `SelectedSigns.signs_eq` proves
+agreement for every matching finite observation under `Replay.Interprets`.
+
+`Descriptor.buildRoots` enumerates full derivative encodings, validates each
+count-one row, and inserts them by Thom order. `rootsFrom_perm` proves that
+successful construction preserves all input encoding words. An impossible
+order, duplicate word or non-unit count remains an internal error pending the
+Thom foundation; no default order or omitted row conceals such a failure.
+These constructors currently repeat replay checks when extracting descriptors.
+Sharing their domain/table verification and measuring that cost remain required.
+
+The total `determinePrepared` API, producer completeness, full constructor
+correspondence and the domain-exact `validate` API remain required. Completion,
+root lists and selected signs still expose internal diagnostics until their
+totality proofs are supplied. Cross-polynomial comparison, re-encoding, the
+sample-point interface, serialization and nested evidence sharing also remain
+required. The finite lemmas above do not prove
 root-count correctness. Those proofs must interpret the actual query replays
 through #10389 and consume the
 specified BKR/Thom foundations in the companion. No semantic theorem or

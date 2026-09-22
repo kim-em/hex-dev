@@ -12,3 +12,4 @@ public import HexSignDetMathlib.Solve
 public import HexSignDetMathlib.Tensor
 public import HexSignDetMathlib.NodeBasis
 public import HexSignDetMathlib.QueryReduction
+public import HexSignDetMathlib.Derivatives
