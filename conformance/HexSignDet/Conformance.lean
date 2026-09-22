@@ -866,6 +866,58 @@ theorem derivative_kernel :
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
+/-- Literal first-derivative query: 4X² = 4(X²-1) + 4. -/
+@[expose] def firstQuery : TarskiCertificate Rat Rat Nat :=
+  {singletonQuery with
+    queryPoly := 2 * Sturm.Fixtures.x
+    remainders := {
+      chain := #[Sturm.Fixtures.p, 1]
+      degrees := #[2, 0]
+      initial := ⟨1, 4, 4⟩
+      steps := #[]
+      terminal := some (1, Sturm.Fixtures.p)}
+    lowerSigns := #[-1, 1]
+    upperSigns := #[1, 1]}
+
+/-- Literal square query: 8X³ = 8X(X²-1) + 8X. -/
+@[expose] def firstSquare : TarskiCertificate Rat Rat Nat :=
+  {singletonQuery with
+    queryPoly := 4 * Sturm.Fixtures.x * Sturm.Fixtures.x
+    remainders := {Sturm.Fixtures.literalChain with initial := ⟨1, 8 * Sturm.Fixtures.x, 8⟩}}
+
+@[expose] def firstNode : Node Rat Nat :=
+  {selectedNode with
+    queries := [2 * Sturm.Fixtures.x]
+    moments := #v[singletonQuery, firstQuery, firstSquare]}
+
+@[expose] def fullNode : Node Rat Nat :=
+  {singletonNode with
+    queries := [2 * Sturm.Fixtures.x, DensePoly.C 2]
+    system := {literalSystem with
+      rows := #v[[0, 0]], columns := #v[[1, 1]], counts := #v[1], values := #v[1]}}
+
+@[expose] def fullReplay : Replay Rat Nat :=
+  .split fullNode (.leaf firstNode) (.leaf derivativeNode)
+
+set_option maxRecDepth 32768 in
+/-- A full two-derivative tree replays in the ordinary kernel, including both
+leaf supports and the exact Cartesian parent. No producer is evaluated. -/
+theorem full_kernel : fullReplay.check Sturm.orderSign 7 singletonRaw.head
+    singletonRaw.lower singletonRaw.upper (singletonRaw.full []).queries = true := by
+  simp only [fullReplay, Replay.check, Node.check, checkMoment, queryPoly,
+    Sturm.check, TarskiCertificate.check, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+/-- Extract the unique full row using the shared literal replay proof. -/
+def sharedDescriptor : Descriptor Rat Nat Sturm.orderSign 7 :=
+  Descriptor.ofFullRow singletonRaw fullReplay (by decide +kernel) rfl full_kernel ([1, 1], 1)
+    (by rw [Replay.table_rows]; decide +kernel) rfl
+
+theorem shared_descriptor :
+    sharedDescriptor.raw.check Sturm.orderSign 7 sharedDescriptor.evidence = true :=
+  sharedDescriptor.accepted
+
 @[expose] def forgedNode : Node Rat Nat :=
   {literalNode with queries := [Sturm.Fixtures.x], system := forged}
 
@@ -947,6 +999,12 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Conformance.derivative_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms derivative_kernel
+/-- info: 'Hex.SignDet.Conformance.full_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms full_kernel
+/-- info: 'Hex.SignDet.Conformance.shared_descriptor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms shared_descriptor
 /-- info: 'Hex.SignDet.Reencoding.count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Reencoding.count
@@ -959,6 +1017,15 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Descriptor.rootsFrom_sorted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Descriptor.rootsFrom_sorted
+/-- info: 'Hex.SignDet.Descriptor.rootsFromTable_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.rootsFromTable_eq
+/-- info: 'Hex.SignDet.Descriptor.rootsFromTable_perm' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.rootsFromTable_perm
+/-- info: 'Hex.SignDet.Descriptor.rootsFromTable_sorted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.rootsFromTable_sorted
 /-- info: 'Hex.SignDet.SelectedSigns.count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms SelectedSigns.count

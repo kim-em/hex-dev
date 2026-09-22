@@ -159,10 +159,16 @@ these laws on realized encodings and proving strict real-root order still
 requires the companion's Thom foundation. An impossible
 order, duplicate word or non-unit count remains an internal error pending the
 Thom foundation; no default order or omitted row conceals such a failure.
-For `N` output roots, extraction currently performs `N` complete replay checks
-and `N` derivative-list constructions, adding a multiplicative factor to the
-table's replay cost. Sharing this verification and derivative work, and
-measuring the resulting cost, remain required.
+For positive-degree heads, `rootsFromTable` extracts every descriptor from the
+same accepted full table. Its proof-backed row constructor reuses the literal
+query/context bindings, derives sign shape from the table, and establishes
+count one from membership. Each row performs its count guard and insertion;
+it does not rerun the complete replay, rebuild derivatives or test full-slot
+distinctness. `rootsFromTable_eq` proves exact agreement with the literal
+per-descriptor checking path, including diagnostics; the row-preservation and
+finite sortedness proofs apply to this actual shared extraction. Constants
+retain the literal empty-table path. Sharing domain checks inside the query
+tree and measuring all required costs remain obligations.
 
 `CommonProduct.build` uses the shared polynomial gcd and division to form a
 common head. Replay checks the exact context/old heads and three polynomial
