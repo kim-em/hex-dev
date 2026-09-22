@@ -301,6 +301,18 @@ example : ZPoly.evalDyadic (DensePoly.ofCoeffs #[(7 : Int)])
 example : ZPoly.evalDyadic (DensePoly.ofCoeffs #[(3 : Int), -2, 1])
     (Dyadic.ofInt 2) = Dyadic.ofInt 3 := by decide
 
+-- Every Horner suffix is 2 at 1/2: intermediate powers of two must cancel.
+-- Substitution X ↦ -X exercises the same family at the negative endpoint.
+#guard #[0, 1, 2, 32, 256].all fun m =>
+  let cs := (Array.replicate m (1 : Int)).push 2
+  let negCs := cs.mapIdx fun i c => if i % 2 = 0 then c else -c
+  ZPoly.evalDyadic (DensePoly.ofCoeffs cs) (half 1) == Dyadic.ofInt 2 &&
+    ZPoly.evalDyadic (DensePoly.ofCoeffs negCs) (half (-1)) == Dyadic.ofInt 2
+
+-- Cancellation also occurs outside (-1,1): (3/2) * 2 - 1 = 2.
+#guard ZPoly.evalDyadic (DensePoly.ofCoeffs ((Array.replicate 256 (-1 : Int)).push 2))
+  (half 3) == Dyadic.ofInt 2
+
 -- Independent rational evaluation across signs, binary precisions and zeros.
 #guard (List.range 7).all fun i => (List.range 9).all fun j =>
   (List.range 9).all fun k =>

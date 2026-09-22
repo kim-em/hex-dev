@@ -73,17 +73,21 @@ materializing powers of two, including at enormous integral endpoints. -/
 /-- Evaluate an integer polynomial at a dyadic point by Horner's rule,
 returning an exact `Dyadic` value.
 
-The array fold carries an integer numerator and binary precision, using
-shifts to align each coefficient. Only the final result is normalized;
-intermediate coefficients and accumulators need no trailing-zero scans.
+At integer points, the array fold carries an integer numerator and binary
+precision, normalizing only the final result. At fractional points, ordinary
+dyadic arithmetic normalizes intermediate values to avoid accumulating
+cancellable powers of two.
 Coefficients are stored in ascending degree order. -/
 @[expose]
 def evalDyadic (p : ZPoly) (x : Dyadic) : Dyadic :=
   let (n, e) := match x with
     | .zero => (0, 0)
     | .ofOdd n e _ => (n, e)
-  let (a, k) := p.toArray.foldr (hornerDyadic n e) (0, 0)
-  Dyadic.ofIntWithPrec a k
+  if 0 < e then
+    p.toArray.foldr (fun c acc => Dyadic.ofInt c + x * acc) 0
+  else
+    let (a, k) := p.toArray.foldr (hornerDyadic n e) (0, 0)
+    Dyadic.ofIntWithPrec a k
 
 end ZPoly
 

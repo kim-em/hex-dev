@@ -16,6 +16,7 @@ sites in `bench/HexRealRoots/Bench.lean`:
 - `Hex.RealRootsBench.runRootBound`: `n`
 - `Hex.RealRootsBench.runSepPrec`: `n`
 - `Hex.RealRootsBench.runRefineTo`: `n`
+- `Hex.RealRootsBench.runCancellation`: `m`
 
 The `ZPoly.isolateRealRoots?` surface is exercised on three structurally different input
 families, never a single happy-path shape:
@@ -212,3 +213,15 @@ None. All eleven parametric registrations are consistent with their declared
 complexity at their registered scientific schedules, the compare group agrees
 on its full common domain, the SPEC time budgets are met, and no
 Attribution-rule concern surfaced in the profiles.
+
+
+## Fractional evaluation
+
+`ZPoly.evalDyadic` uses normalized Horner arithmetic for fractional dyadic
+points and deferred normalization for integer points. The exact equality
+`HexRealRootsMathlib.evalDyadic_eq_fold` preserves all existing evaluation
+correspondence. The cancellation-family linear model and paired-comparison
+schedule are derived in
+[the bit-cost declaration](sturm-bit-cost-models.md#fractional-evaluation-validation-protocol).
+Measurements for this registration are pending; earlier isolation timings
+above do not validate the new registration.

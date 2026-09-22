@@ -428,6 +428,29 @@ setup_benchmark runRefineTo n => n
     signalFloorMultiplier := 1.0
   }
 
+/-- `2X^m + X^(m-1) + ... + 1` has Horner suffix value 2 at 1/2.
+Preparation is excluded from timing. -/
+def cancellationPoly (m : Nat) : ZPoly :=
+  DensePoly.ofCoeffs ((Array.replicate m (1 : Int)).push 2)
+
+/-- Fractional evaluation with cancellation of powers of two at every step. -/
+def runCancellation (p : ZPoly) : Int :=
+  dyadicKey (p.evalDyadic ((Dyadic.ofInt 1) >>> (1 : Int)))
+
+-- Declared cost-model: Θ(m) bit work. All normalized Horner accumulators equal 2, so every
+-- coefficient operation has bounded size. See reports/sturm-bit-cost-models.md.
+setup_benchmark runCancellation m => m
+  with prep := cancellationPoly
+  where {
+    paramSchedule := .custom #[32768, 65536, 131072, 262144]
+    paramFloor := 32768
+    paramCeiling := 262144
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 120
+  }
+
 end Hex.RealRootsBench
 
 def main (args : List String) : IO UInt32 :=

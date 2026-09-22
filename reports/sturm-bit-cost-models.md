@@ -279,12 +279,12 @@ children are retained. Neither profiling rows nor nonadjacent historical
 times enter this comparison. It tests the local optimization independently
 of the complexity verdict.
 
-### Cancellation tradeoff
+### Fractional cancellation
 
-Deferred normalization is not uniformly faster. For
+Deferring normalization at fractional endpoints can increase work. For
 `P_m = 2X^m + X^(m-1) + ... + X + 1` at `1/2`, every nonempty Horner suffix
-has value 2. The former evaluator keeps a one-bit odd numerator throughout,
-using O(m) fixed-size operations. After j lower coefficients the new fold
+has value 2. Normalized evaluation keeps a one-bit odd numerator throughout,
+using O(m) fixed-size operations. After j lower coefficients an unnormalized fold
 instead carries `(2^(j+1), j)`. The shifts/additions accumulate Θ(m²) binary
 work, and its final normalization performs m+1 repeated divisions. The exact
 result is still 2, but this family regresses from linear to quadratic bit
@@ -292,3 +292,39 @@ work. The Chebyshev replay measurements do not establish a speedup for such
 cancellation-heavy fractional evaluations. The guards for constants and
 zero coefficients preserve their compact behavior; the former evaluator was
 also compact on constants and sparse monomials.
+
+
+The evaluator uses normalized dyadic arithmetic whenever the canonical endpoint
+has positive precision (a genuinely fractional dyadic). Integer endpoints keep
+the deferred-normalization fold. Thus the cancellation family above again has
+Θ(m) bit work, while the integer Chebyshev replay path remains the same.
+
+### Fractional-evaluation validation protocol
+
+`Hex.RealRootsBench.runCancellation` in `bench/HexRealRoots/Bench.lean` evaluates
+`P_m = 2X^m + X^(m-1) + ... + 1` at `1/2`. Its declared mode-1 model is `m`:
+every normalized Horner suffix equals 2, represented by odd numerator 1 and
+precision -1. Multiplication by 1/2, addition of 1, and normalization all use
+bounded-size integers. There are m+1 coefficients, so the array traversal and
+arithmetic cost Θ(m). The returned canonical-value checksum has constant size.
+Input construction and hashing of the prepared input are outside the timed body.
+This is a family-specific linear bound; it makes no linear-cost claim for
+arbitrary growing coefficients or arbitrary fractional evaluations.
+
+The scientific schedule is 32768, 65536, 131072, 262144, four fixed trial-major
+trials, warm cache, 100 ms inner target and a 120-second whole-child cap. The
+registration and this derivation precede measurement. Retain all samples and
+allow at most one unchanged rerun if inconclusive; do not fit another model.
+
+Before/after comparisons use four adjacent alternating AB/BA blocks at degrees
+32768 and 65536 for fractional cancellation and at degree 1024 for Chebyshev
+integer-endpoint replay. Arm A uses the merged deferred evaluator; arm B uses
+the endpoint-dependent evaluator. Both compile the same benchmark sources and
+use the same toolchain. Preparation is excluded; child targets are warm, 100 ms,
+with a 120-second cap for cancellation and 1800 seconds for replay. Require
+matching result hashes and retain every completed child. Run the scientific
+schedule and the paired comparisons sequentially on one automatically leased
+CPU, retaining binary/source hashes, source snapshots, commands, timestamps
+and host load. These comparisons establish the correction on the cancellation
+family and check preservation of the replay improvement; they are not a
+universal speedup claim.
