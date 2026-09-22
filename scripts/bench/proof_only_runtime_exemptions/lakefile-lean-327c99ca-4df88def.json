@@ -1,6 +1,6 @@
 {
   "path": "lakefile.lean",
   "baseline_blob": "327c99cacafccb757254a4ec924e9b7f90d3b9e3",
-  "current_blob": "2f8619a16df2a2c42e26dad4e444609b2228a5bd",
+  "current_blob": "4df88def723b155038541e9f4c356fcf966f7671",
   "reason": "The only changed hexbz_factor_service-relevant declaration enables precompileModules on HexBasic. The measured native executable already links compiled HexBasic code; its Lean sources, executable declaration, C/object compilation options and runtime call graph are unchanged. This adds elaborator-loadable dynlibs, not a different native factorization implementation. The HexPrimality/HexIntFactor producer flags and ECM diagnostic registrations do not reach that polynomial-factor service. ECM elaboration and schedule changes have separate new paired measurements; this exemption makes no runtime-neutral claim about those construction paths."
 }
