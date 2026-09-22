@@ -1,0 +1,47 @@
+[
+  {
+    "command": [
+      "python3",
+      "scripts/check_dag.py"
+    ],
+    "exit_status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/check_phase4.py"
+    ],
+    "exit_status": 0,
+    "stdout": "Phase 4 checks passed (headline reports: 68; changed registrations: 0)\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/release/check_released_manifest.py"
+    ],
+    "exit_status": 0,
+    "stdout": "release manifest: 57 split repositories + 1 aggregate; paths, CI, pins, import closure, test targets, and topological constraints valid\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/check_copyright_headers.py"
+    ],
+    "exit_status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/check_file_line_counts.py"
+    ],
+    "exit_status": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+]

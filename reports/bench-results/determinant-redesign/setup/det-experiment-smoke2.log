@@ -1,0 +1,495 @@
+ℹ [1115/1422] Replayed HexBareiss.Bareiss
+info: HexBareiss/Bareiss.lean:240:2: Try these:
+  [apply] [grind
+    .] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @findPivot? _ #8 #7 #6 #5 #4 #3]
+  [apply] [grind →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind
+    <=] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind! →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @Fin.val #8 #1]
+info: HexBareiss/Bareiss.lean:982:2: Try this:
+  [apply] [grind =] for pattern: [@pivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:990:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @pivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1000:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @pivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1017:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #11 #10 #9 #8 #7 #6 #5 (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #11 #10 #3) + 2) #10, @findPivot? _ #10 #9 #6 (@BareissState.matrix _ #10 #3) (@Fin.mk #10 (@BareissState.step _ #10 #3) _) ((@BareissState.step _ #10 #3) + 1), @pivotLoopWith _ #10 _ #8 #7 _ #5 (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1033:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @pivotLoopWith _ #12 _ _ _ _ #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #13 #12 #5) + 2) #12, @findPivot? _ #12 #11 #8 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) ((@BareissState.step _ #12 #5) + 1), @some (Fin _) #2, @pivotLoopWith _ #12 _ #10 #9 _ #7 (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1141:2: Try this:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:1149:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @noPivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1158:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1168:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1185:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector #11 #10) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @getElem (Vector _ _) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3]
+info: HexBareiss/Bareiss.lean:1660:2: Try this:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1665:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1671:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1685:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #5 #3) + 2) #5, @pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1697:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #7 #5) + 2) #7, @some (Fin _) #2, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1729:2: Try this:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1734:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1740:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1747:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1761:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector `[Int] #5) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @getElem (Vector `[Int] _) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3]
+⚠ [2655/2941] Replayed HexMatrixMathlib.Packed
+warning: HexMatrixMathlib/Packed.lean:141:10: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexMatrixMathlib/Packed.lean:149:10: `if_neg` has been deprecated: Use `ite_eq_right` instead
+⚠ [2843/2941] Replayed HexMvPolyMathlib.Equiv
+warning: HexMvPolyMathlib/Equiv.lean:193:4: `MvPolynomial.coeff_add` has been deprecated: Use `AddMonoidAlgebra.coeff_add` instead
+
+Note: The updated constant has a different type:
+  ∀ {R : Type u_1} {M : Type u_4} [inst : Semiring R] (x y : AddMonoidAlgebra R M), (x + y).coeff = x.coeff + y.coeff
+instead of
+  ∀ {R : Type u} {σ : Type u_1} [inst : CommSemiring R] (m : σ →₀ ℕ) (p q : MvPolynomial σ R),
+    (p + q).coeff m = p.coeff m + q.coeff m
+
+Note: The updated constant is in a different namespace. Dot notation may need to be changed (e.g., from `x.coeff_add` to `AddMonoidAlgebra.coeff_add x`).
+⚠ [2845/2941] Replayed HexMvPolyMathlib.Aeval
+warning: HexMvPolyMathlib/Aeval.lean:63:0: automatically included section variable(s) unused in theorem `HexMvPolyMathlib.eval₂_toMvPolynomial`:
+  [BEq R]
+  [LawfulBEq R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [BEq R] [LawfulBEq R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [2859/2941] Replayed HexPolyDetMathlib.Sound
+warning: HexPolyDetMathlib/Sound.lean:22:8: Overlapping instance parameters in `check_of_ok`:
+
+⚠️ `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.
+💡️ Of these, `[Std.TransCmp cmp]` may be removed.
+⚠️ `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.
+💡️ Of these, `[Std.LawfulEqCmp cmp]` may be removed.
+
+Note: This linter can be disabled with `set_option linter.overlappingInstances false`
+warning: HexPolyDetMathlib/Sound.lean:31:8: Overlapping instance parameters in `produce_check`:
+
+⚠️ `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.
+💡️ Of these, `[Std.TransCmp cmp]` may be removed.
+⚠️ `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.
+💡️ Of these, `[Std.LawfulEqCmp cmp]` may be removed.
+
+Note: This linter can be disabled with `set_option linter.overlappingInstances false`
+warning: HexPolyDetMathlib/Sound.lean:250:20: This simp argument is unused:
+  mul_assoc
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [pow_succ]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexPolyDetMathlib/Sound.lean:314:5: Variable name `hd` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _hd
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexPolyDetMathlib/Sound.lean:391:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_row`:
+  [CommRing S]
+  D
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [CommRing S] D in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexPolyDetMathlib/Sound.lean:400:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_replace`:
+  [CommRing S]
+  D
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [CommRing S] D in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexPolyDetMathlib/Sound.lean:454:20: This simp argument is unused:
+  mul_assoc
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [pow_succ, mul_left_comm, mul_comm]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexPolyDetMathlib/Sound.lean:454:31: This simp argument is unused:
+  mul_left_comm
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [pow_succ, mul_assoc, mul_comm]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexPolyDetMathlib/Sound.lean:621:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexPolyDetMathlib/Sound.lean:693:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.transport_det`:
+  [DecidableEq C]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq C] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexPolyDetMathlib/Sound.lean:838:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.identify`:
+  [CommRing F]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [CommRing F] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [2904/2941] Replayed HexPolyDetMathlib.Packed
+warning: HexPolyDetMathlib/Packed.lean:71:37: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: HexPolyDetMathlib/Packed.lean:80:38: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexPolyDetMathlib/Packed.lean:80:38: This simp argument is unused:
+  if_pos rfl
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [entry_replicate] at he
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexPolyDetMathlib/Packed.lean:276:12: This simp argument is unused:
+  MvPolynomial.eval₂Hom_monomial
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [MvPolynomial.monomial_eq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+ℹ [2941/2941] Built Determinant.Smoke (1.5s)
+info: experiments/Determinant/Smoke.lean:6:0: overlappingInstancesLinter took 0.255ms
+tacticAnalysis took 0.265ms
+linting took 7.79ms
+info: experiments/Determinant/Smoke.lean:7:0: attribute application took 0.0057ms
+typeclass inference of OfNat took 0.201ms
+typeclass inference of OfNat took 0.0326ms
+typeclass inference of OfNat took 0.112ms
+typeclass inference of OfNat took 0.0262ms
+typeclass inference of OfNat took 0.0425ms
+typeclass inference of OfNat took 0.0411ms
+typeclass inference of OfNat took 0.0257ms
+typeclass inference of OfNat took 0.0239ms
+typeclass inference of OfNat took 0.0232ms
+typeclass inference of Neg took 0.0264ms
+typeclass inference of OfNat took 0.0467ms
+typeclass inference of OfNat took 0.0249ms
+typeclass inference of OfNat took 0.00348ms
+typeclass inference of OfNat took 0.0239ms
+typeclass inference of OfNat took 0.0231ms
+typeclass inference of OfNat took 0.00319ms
+typeclass inference of OfNat took 0.0368ms
+typeclass inference of OfNat took 0.00267ms
+typeclass inference of OfNat took 0.0361ms
+typeclass inference of OfNat took 0.0331ms
+typeclass inference of OfNat took 0.0252ms
+typeclass inference of OfNat took 0.0243ms
+typeclass inference of OfNat took 0.0238ms
+typeclass inference of OfNat took 0.0248ms
+typeclass inference of OfNat took 0.0238ms
+typeclass inference of Neg took 0.00264ms
+typeclass inference of OfNat took 0.0264ms
+typeclass inference of OfNat took 0.0238ms
+typeclass inference of OfNat took 0.0228ms
+typeclass inference of OfNat took 0.0234ms
+typeclass inference of OfNat took 0.00194ms
+typeclass inference of OfNat took 0.0236ms
+typeclass inference of OfNat took 0.0233ms
+typeclass inference of OfNat took 0.0234ms
+typeclass inference of OfNat took 0.023ms
+typeclass inference of HMul took 0.147ms
+typeclass inference of HAdd took 0.0917ms
+typeclass inference of HAdd took 0.0021ms
+typeclass inference of HMul took 0.00145ms
+typeclass inference of HMul took 0.00168ms
+typeclass inference of HAdd took 0.00158ms
+typeclass inference of HAdd took 0.00124ms
+typeclass inference of HMul took 0.0013ms
+typeclass inference of HMul took 0.00127ms
+typeclass inference of HPow took 0.138ms
+typeclass inference of HMul took 0.0365ms
+typeclass inference of HPow took 0.0809ms
+typeclass inference of HMul took 0.0258ms
+typeclass inference of HAdd took 0.0854ms
+typeclass inference of HAdd took 0.0336ms
+typeclass inference of HMul took 0.024ms
+typeclass inference of HPow took 0.0822ms
+typeclass inference of HMul took 0.0268ms
+typeclass inference of HPow took 0.0781ms
+typeclass inference of HMul took 0.0236ms
+typeclass inference of HAdd took 0.037ms
+typeclass inference of HAdd took 0.0321ms
+typeclass inference of OfNat took 0.0353ms
+typeclass inference of OfNat took 0.0277ms
+typeclass inference of OfNat took 0.0266ms
+typeclass inference of OfNat took 0.0264ms
+typeclass inference of HPow took 0.0752ms
+typeclass inference of HMul took 0.0241ms
+typeclass inference of HPow took 0.0648ms
+typeclass inference of HMul took 0.0222ms
+typeclass inference of HAdd took 0.0337ms
+typeclass inference of HAdd took 0.0301ms
+typeclass inference of HMul took 0.0209ms
+typeclass inference of HPow took 0.0658ms
+typeclass inference of HMul took 0.0216ms
+typeclass inference of HPow took 0.0631ms
+typeclass inference of HMul took 0.0215ms
+typeclass inference of HAdd took 0.0326ms
+typeclass inference of HAdd took 0.0291ms
+typeclass inference of OfNat took 0.0361ms
+typeclass inference of OfNat took 0.0269ms
+typeclass inference of OfNat took 0.0243ms
+typeclass inference of OfNat took 0.0234ms
+typeclass inference of HPow took 0.0816ms
+typeclass inference of HMul took 0.0257ms
+typeclass inference of HPow took 0.0681ms
+typeclass inference of HMul took 0.0241ms
+typeclass inference of HAdd took 0.0329ms
+typeclass inference of HAdd took 0.029ms
+typeclass inference of HMul took 0.022ms
+typeclass inference of HPow took 0.0663ms
+typeclass inference of HMul took 0.0226ms
+typeclass inference of HPow took 0.0641ms
+typeclass inference of HMul took 0.0215ms
+typeclass inference of HAdd took 0.0333ms
+typeclass inference of HAdd took 0.0279ms
+typeclass inference of OfNat took 0.0268ms
+typeclass inference of OfNat took 0.0245ms
+typeclass inference of OfNat took 0.0237ms
+typeclass inference of OfNat took 0.0227ms
+typeclass inference of HPow took 0.0653ms
+typeclass inference of HMul took 0.0223ms
+typeclass inference of HPow took 0.0619ms
+typeclass inference of HMul took 0.023ms
+typeclass inference of HAdd took 0.039ms
+typeclass inference of HAdd took 0.0284ms
+typeclass inference of HMul took 0.0224ms
+typeclass inference of HPow took 0.0654ms
+typeclass inference of HMul took 0.0224ms
+typeclass inference of HPow took 0.0631ms
+typeclass inference of HMul took 0.0231ms
+typeclass inference of HAdd took 0.0325ms
+typeclass inference of HAdd took 0.0284ms
+typeclass inference of Pow took 0.0219ms
+typeclass inference of NPow took 0.115ms
+typeclass inference of OfNat took 0.0279ms
+typeclass inference of OfNat took 0.0313ms
+typeclass inference of OfNat took 0.0252ms
+typeclass inference of OfNat took 0.0247ms
+typeclass inference of HMul took 0.0873ms
+typeclass inference of HPow took 0.0785ms
+typeclass inference of HMul took 0.0262ms
+typeclass inference of HAdd took 0.0267ms
+typeclass inference of HAdd took 0.0296ms
+typeclass inference of HMul took 0.0216ms
+typeclass inference of HPow took 0.0746ms
+typeclass inference of HMul took 0.0232ms
+typeclass inference of HPow took 0.0643ms
+typeclass inference of HMul took 0.0221ms
+typeclass inference of HAdd took 0.0352ms
+typeclass inference of HAdd took 0.0286ms
+typeclass inference of OfNat took 0.0294ms
+typeclass inference of OfNat took 0.0243ms
+typeclass inference of OfNat took 0.0238ms
+typeclass inference of HPow took 0.069ms
+typeclass inference of HMul took 0.0228ms
+typeclass inference of HAdd took 0.0255ms
+typeclass inference of HAdd took 0.029ms
+typeclass inference of HMul took 0.0216ms
+typeclass inference of HPow took 0.063ms
+typeclass inference of HMul took 0.0215ms
+typeclass inference of HPow took 0.0664ms
+typeclass inference of HMul took 0.105ms
+typeclass inference of HAdd took 0.0457ms
+typeclass inference of HAdd took 0.0305ms
+typeclass inference of OfNat took 0.029ms
+typeclass inference of OfNat took 0.0257ms
+typeclass inference of OfNat took 0.0251ms
+typeclass inference of HPow took 0.082ms
+typeclass inference of HMul took 0.0245ms
+typeclass inference of HAdd took 0.0248ms
+typeclass inference of HAdd took 0.0289ms
+typeclass inference of HMul took 0.022ms
+typeclass inference of HPow took 0.0641ms
+typeclass inference of HMul took 0.0215ms
+typeclass inference of HPow took 0.0895ms
+typeclass inference of HMul took 0.0288ms
+typeclass inference of HAdd took 0.0335ms
+typeclass inference of HAdd took 0.0327ms
+typeclass inference of Pow took 0.0246ms
+typeclass inference of NPow took 0.0029ms
+typeclass inference of OfNat took 0.0256ms
+typeclass inference of OfNat took 0.0287ms
+typeclass inference of OfNat took 0.0238ms
+typeclass inference of HMul took 0.0208ms
+typeclass inference of HAdd took 0.0744ms
+typeclass inference of HAdd took 0.0167ms
+typeclass inference of HMul took 0.0161ms
+typeclass inference of HPow took 0.0728ms
+typeclass inference of HMul took 0.0226ms
+typeclass inference of HPow took 0.0635ms
+typeclass inference of HMul took 0.026ms
+typeclass inference of HAdd took 0.0335ms
+typeclass inference of HAdd took 0.0286ms
+typeclass inference of OfNat took 0.027ms
+typeclass inference of OfNat took 0.0235ms
+typeclass inference of HPow took 0.0647ms
+typeclass inference of HMul took 0.022ms
+typeclass inference of HPow took 0.0617ms
+typeclass inference of HMul took 0.021ms
+typeclass inference of HAdd took 0.032ms
+typeclass inference of HAdd took 0.0283ms
+typeclass inference of OfNat took 0.0256ms
+typeclass inference of OfNat took 0.0236ms
+typeclass inference of HPow took 0.0638ms
+typeclass inference of HMul took 0.0219ms
+typeclass inference of HPow took 0.0618ms
+typeclass inference of HMul took 0.0207ms
+typeclass inference of HAdd took 0.0318ms
+typeclass inference of HAdd took 0.0272ms
+typeclass inference of Pow took 0.0218ms
+typeclass inference of NPow took 0.00221ms
+typeclass inference of OfNat took 0.00177ms
+typeclass inference of OfNat took 0.0281ms
+typeclass inference of HMul took 0.0183ms
+typeclass inference of HPow took 0.0679ms
+typeclass inference of HMul took 0.022ms
+typeclass inference of HAdd took 0.0241ms
+typeclass inference of HAdd took 0.0273ms
+typeclass inference of OfNat took 0.0315ms
+typeclass inference of HPow took 0.0642ms
+typeclass inference of HMul took 0.0219ms
+typeclass inference of HAdd took 0.0238ms
+typeclass inference of HAdd took 0.0274ms
+typeclass inference of OfNat took 0.0255ms
+typeclass inference of HPow took 0.0642ms
+typeclass inference of HMul took 0.0214ms
+typeclass inference of HAdd took 0.0235ms
+typeclass inference of HAdd took 0.0268ms
+typeclass inference of Pow took 0.0206ms
+typeclass inference of NPow took 0.00212ms
+typeclass inference of OfNat took 0.00181ms
+typeclass inference of HMul took 0.017ms
+typeclass inference of HAdd took 0.0157ms
+typeclass inference of HAdd took 0.00157ms
+instantiate metavars took 0.0138ms
+instantiate metavars took 0.000241ms
+let-to-have transformation took 0.00988ms
+attribute application took 0.00128ms
+attribute application took 0.00052ms
+elaboration took 3.03ms
+info: experiments/Determinant/Smoke.lean:9:2: CALL_NS 6296231
+info: experiments/Determinant/Smoke.lean:7:0: tactic execution of Determinant.tacticTimed_proof_ took 6.43ms
+tactic execution of Lean.Parser.Tactic.tacticSeq1Indented took 0.0253ms
+tactic execution of Lean.Parser.Tactic.tacticSeq took 0.0233ms
+instantiate metavars took 0.00288ms
+instantiate metavars took 0.000171ms
+instantiate metavars took 0.00015ms
+instantiate metavars took 0.00012ms
+instantiate metavars took 0.00013ms
+share common exprs took 0.417ms
+fix level params took 0.0489ms
+let-to-have transformation took 0.00632ms
+attribute application took 0.003ms
+attribute application took 0.000631ms
+process pre-definitions took 0.315ms
+elaboration took 0.527ms
+info: experiments/Determinant/Smoke.lean:7:8: type checking took 2.5ms
+info: experiments/Determinant/Smoke.lean:7:0: overlappingInstancesLinter took 0.341ms
+tacticAnalysis took 0.727ms
+linting took 2.4ms
+info: experiments/Determinant/Smoke.lean:11:0: 'result' depends on axioms: [propext, Quot.sound]
+info: experiments/Determinant/Smoke.lean:11:0: elaboration took 10.5ms
+info: experiments/Determinant/Smoke.lean:11:0: overlappingInstancesLinter took 0.0128ms
+tacticAnalysis took 0.12ms
+linting took 0.973ms
+info: experiments/Determinant/Smoke.lean:12:0: elaboration took 0.0251ms
+info: experiments/Determinant/Smoke.lean:12:0: overlappingInstancesLinter took 0.0681ms
+tacticAnalysis took 0.273ms
+linting took 2.12ms
+module linting took 0.00172ms
+info: stderr:
+parsing took 0.371ms
+parsing took 0.0377ms
+parsing took 0.00123ms
+.olean serialization took 44ms
+cumulative profiling times:
+	.olean serialization 44ms
+	attribute application 0.0105ms
+	elaboration 14.1ms
+	fix level params 0.0486ms
+	instantiate metavars 0.0163ms
+	let-to-have transformation 0.0155ms
+	linting 19.6ms
+	module linting 0.00147ms
+	overlappingInstancesLinter 0.906ms
+	parsing 0.418ms
+	process pre-definitions 0.315ms
+	share common exprs 0.417ms
+	tactic execution 6.48ms
+	tacticAnalysis 2.52ms
+	type checking 2.5ms
+	typeclass inference 7.37ms
+Build completed successfully (2941 jobs).

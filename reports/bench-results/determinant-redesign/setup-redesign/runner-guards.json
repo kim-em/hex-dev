@@ -1,0 +1,12 @@
+[
+  {
+    "case": "warm log without fixture",
+    "exit_status": 1,
+    "diagnostic": "No FIXTURE record in log; use an archived fixture log or remove .lake/build/lib/lean/Determinant/Fixture.olean and rebuild Determinant.Fixture before running this script."
+  },
+  {
+    "case": "fixed polynomial nondefault bits",
+    "exit_status": 2,
+    "diagnostic": "usage: runtime.py [-h] --ring {int,rat,dyadic,poly,univariate}\n                  --dimension DIMENSION [--bits BITS]\n                  [--shape {dense,swap,singular}] [--word] [--owned] [--flat]\n                  [--modular] [--spread SPREAD]\n                  output\nruntime.py: error: polynomial input is fixed: dimension 4, dense, default bits/spread only"
+  }
+]

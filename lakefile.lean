@@ -1897,3 +1897,12 @@ lean_lib CadSampleCostsExperiment where
 lean_exe cad_sample_costs where
   srcDir := "experiments"
   root := `CadSampleCosts.Runtime
+
+-- Manual determinant redesign experiments, excluded from default builds and CI.
+lean_lib DeterminantExperiment where
+  srcDir := "experiments"
+  globs := #[.submodules `Determinant]
+
+lean_exe determinant_experiment where
+  srcDir := "experiments"
+  root := `Determinant.Runtime

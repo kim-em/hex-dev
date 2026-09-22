@@ -1,0 +1,19 @@
+{
+  "command": [
+    "cc",
+    "-O3",
+    "-std=c11",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-shared",
+    "-fPIC",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/experiments/Determinant/word_loop.c",
+    "-o",
+    "reports/bench-results/determinant-redesign/value-c128/word_loop.so"
+  ],
+  "exit_status": 0,
+  "stdout": "",
+  "stderr": "",
+  "compiler": "clang version 22.1.8\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /nix/store/5d407ccssz6fjh46r3ja5cbs6yp1lgqm-clang-22.1.8/bin\n"
+}

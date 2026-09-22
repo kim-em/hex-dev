@@ -21,6 +21,7 @@ KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck", "HexGraph"}
 BUILD_ONLY_LIBS = {
     "HexOrderedFnTests",
     "CadSampleCostsExperiment",  # Manual experiments; no released library or CI target.
+    "DeterminantExperiment",  # Manual value/proof experiments, outside production dispatch.
     "HexPolyFastKernels",
     "HexGraphIsoProofProbe",
     "HexGraphIsoCfiProbe",

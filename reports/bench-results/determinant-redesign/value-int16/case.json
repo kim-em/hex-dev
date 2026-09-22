@@ -1,0 +1,8 @@
+{
+  "output": "reports/bench-results/determinant-redesign/value-int16",
+  "ring": "int",
+  "dimension": 16,
+  "bits": 8,
+  "shape": "dense",
+  "spread": 1
+}

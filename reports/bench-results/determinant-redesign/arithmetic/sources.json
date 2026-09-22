@@ -1,0 +1,6 @@
+{
+  "experiments/Determinant/arithmetic.py": "b5dbf2585029617a411c4551e23d5d9445b64a493e2ff90e82f50ac26fbd226f",
+  "experiments/Determinant/Arithmetic.lean": "1eae3b47a83d0ebac2aa0fe82e83f2020365d71f4a46e0bfec2c7132eab11d2f",
+  "experiments/Determinant/Fixture.lean": "3e77c33d5b96ffb581f97c6c59d5dd20a6ea4dd4a854c54829fa2d1ac6958c38",
+  "HexMvPoly/Kernel.lean": "c4c4176643f3fbbb78feb29478184df6ef5052bb9704e5f321197b6445b4642d"
+}

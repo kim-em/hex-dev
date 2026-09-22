@@ -1,0 +1,11 @@
+{
+  "output": "reports/bench-results/determinant-redesign/value-owned128",
+  "ring": "int",
+  "dimension": 128,
+  "bits": 8,
+  "shape": "dense",
+  "owned": true,
+  "flat": false,
+  "modular": false,
+  "spread": 1
+}

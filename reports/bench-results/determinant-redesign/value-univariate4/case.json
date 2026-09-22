@@ -1,0 +1,12 @@
+{
+  "output": "reports/bench-results/determinant-redesign/value-univariate4",
+  "ring": "univariate",
+  "dimension": 4,
+  "bits": 8,
+  "shape": "dense",
+  "word": false,
+  "owned": false,
+  "flat": false,
+  "modular": false,
+  "spread": 1
+}

@@ -7,6 +7,14 @@ are all candidates for replacement. Existing implementations are experimental
 controls, not architectural requirements. This document proposes experiments;
 it does not select a replacement architecture or mandate a migration.
 
+[The experimental results](determinant-redesign-results.md) reject the complete
+fixed-witness prototype and identify a more promising shared-expression proof
+backend, exact scaling adapters, and a modular execution bottleneck. The
+[architecture and replacement proposal](determinant-redesign-proposal.md)
+contains concrete SPEC amendments and migration/deletion gates. These questions
+remain useful design context; the proposal does not claim a universally fastest
+backend or authorize an unmeasured production replacement.
+
 Hex determinant entry points must never invoke Mathlib determinant tactics
 implicitly. Mathlib is an explicit comparison arm. A Hex decline is recorded
 as a failure to solve, even if another tactic could finish immediately.

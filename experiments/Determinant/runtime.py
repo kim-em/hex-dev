@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""One explicitly selected computational case; two adjacent AB/BA pairs per comparison."""
+import argparse
+import hashlib
+import itertools
+import json
+import os
+from pathlib import Path
+import signal
+import subprocess
+import sys
+import time
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+from scripts.bench import fresh_module_sweep as sweep
+from scripts.bench.det_symbolic_sweep import cpu_lease
+from scripts.bench.det_bench_limits import supervise
+
+
+def oracle(kind, entries, value, moduli=()):
+    import flint
+    if kind == 'int':
+        matrix = flint.fmpz_mat(entries)
+        observed = flint.fmpz(value)
+    elif kind in ('rat', 'dyadic'):
+        matrix = flint.fmpq_mat([[flint.fmpq(*q) for q in row] for row in entries])
+        observed = flint.fmpq(*json.loads(value))
+    else:
+        # Independent Leibniz reference using FLINT polynomial arithmetic.
+        # Deliberately bounded to the fixed 4x4 fixture; not a FLINT det timing.
+        assert len(entries) == 4
+        ctx = flint.fmpz_mpoly_ctx.get(('x0', 'x1'))
+        def poly(p):
+            return flint.fmpz_poly(p) if kind == 'univariate' else ctx.from_dict({tuple(m): c for m, c in p})
+        def constant(c):
+            return flint.fmpz_poly([c]) if kind == 'univariate' else ctx.constant(c)
+        matrix = [[poly(p) for p in row] for row in entries]
+        result = constant(0)
+        for perm in itertools.permutations(range(4)):
+            term = constant((-1) ** sum(perm[i] > perm[j]
+                for i in range(4) for j in range(i+1, 4)))
+            for i, j in enumerate(perm):
+                term *= matrix[i][j]
+            result += term
+        return dict(valid=poly(json.loads(value)) == result, oracle='FLINT arithmetic / Leibniz',
+                    flint_ms=None, expected=str(result))
+    start = time.perf_counter_ns()
+    result = matrix.det()
+    elapsed = time.perf_counter_ns() - start
+    modular_ns = conversion_ns = 0
+    for modulus in moduli:
+        start = time.perf_counter_ns()
+        reduced = flint.nmod_mat(entries, modulus)
+        conversion_ns += time.perf_counter_ns() - start
+        start = time.perf_counter_ns()
+        image = reduced.det()
+        modular_ns += time.perf_counter_ns() - start
+        assert int(image) == int(result) % modulus
+    return dict(valid=result == observed, oracle='FLINT determinant',
+                flint_ms=elapsed / 1e6, expected=str(result),
+                flint_images_ms=modular_ns / 1e6 if moduli else None,
+                flint_conversion_ms=conversion_ns / 1e6 if moduli else None)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('output', type=Path)
+    parser.add_argument('--ring', choices=['int', 'rat', 'dyadic', 'poly', 'univariate'], required=True)
+    parser.add_argument('--dimension', type=int, required=True)
+    parser.add_argument('--bits', type=int, default=8)
+    parser.add_argument('--shape', choices=['dense', 'swap', 'singular'], default='dense')
+    parser.add_argument('--word', action='store_true')
+    parser.add_argument('--owned', action='store_true')
+    parser.add_argument('--flat', action='store_true')
+    parser.add_argument('--modular', action='store_true')
+    parser.add_argument('--spread', type=int, default=1)
+    args = parser.parse_args()
+    if args.ring in ('poly', 'univariate') and (
+            args.dimension != 4 or args.shape != 'dense' or args.bits != 8 or args.spread != 1):
+        parser.error('polynomial input is fixed: dimension 4, dense, default bits/spread only')
+    output = args.output
+    output.mkdir(parents=True, exist_ok=False)
+    exe = ROOT / '.lake/build/bin/determinant_experiment'
+    files = [Path(__file__), *(ROOT / 'experiments/Determinant').glob('*.lean')]
+    files = [p for p in files if p.name in
+             ['runtime.py', 'Schedules.lean', 'Runtime.lean', 'Fixture.lean', 'Modular.lean', 'Owned.lean', 'Univariate.lean']]
+    (output / 'sources.json').write_text(json.dumps({str(p.relative_to(ROOT)):
+        hashlib.sha256(p.read_bytes()).hexdigest() for p in [*files, exe]}, indent=2))
+    for p in files:
+        (output / (p.name + '.txt')).write_bytes(p.read_bytes())
+    (output / 'case.json').write_text(json.dumps(vars(args), default=str, indent=2))
+
+    def run(deadline):
+        import flint
+        cpu, lease = cpu_lease()
+        os.sched_setaffinity(0, {cpu})
+        os.environ['LEAN_NUM_THREADS'] = '1'
+        samples, entries = [], None
+        data = dict(cpu=cpu, topology=sweep.cpu_topology(cpu), environment=sweep.environment(),
+                    flint_version=flint.__version__, samples=samples)
+        comparisons = [('bareiss', 'bird'), ('bareiss', 'berkowitz')]
+        if args.modular:
+            assert args.ring == 'int'
+            comparisons = [('modular', 'stages'), ('bareiss', 'modular'), ('bareiss', 'divisor')]
+        if args.flat:
+            assert args.ring == 'int'
+            comparisons = [('stages', 'stages-flat')]
+        if args.owned:
+            assert args.ring == 'int'
+            comparisons = [('stages-flat', 'stages-owned')]
+        if args.word:
+            assert args.ring == 'int'
+            comparisons = [('stages-owned', 'stages-word')]
+        if args.ring == 'univariate':
+            comparisons = [('sparse', 'dense'), ('dense', 'interpolate')]
+        if args.ring == 'rat':
+            comparisons = [('bareiss', 'scaled'), ('bareiss', 'bird'), ('bareiss', 'berkowitz')]
+        if args.ring == 'dyadic':
+            comparisons = [('scaled', 'bird'), ('scaled', 'berkowitz')]
+        try:
+            for arms in comparisons:
+                for pair in range(2):
+                    for arm in (arms if pair == 0 else arms[::-1]):
+                        cmd = [str(exe), args.ring, arm, str(args.dimension), str(args.bits),
+                               args.shape, str(args.spread)]
+                        limit = min(60, deadline - time.monotonic() - 2)
+                        if limit <= 0:
+                            raise TimeoutError('batch budget exhausted')
+                        try:
+                            proc, elapsed, metrics = sweep.run_timed(cmd, limit)
+                        except subprocess.TimeoutExpired as exc:
+                            with (output / 'observations.jsonl').open('a') as f:
+                                f.write(json.dumps(dict(command=cmd, state='timeout',
+                                    stdout=str(exc.stdout), stderr=str(exc.stderr))) + '\n')
+                            raise  # stop the entire case, never advance a ladder
+                        raw = dict(command=cmd, exit_status=proc.returncode, stdout=proc.stdout,
+                                   stderr=proc.stderr, wall_ns=elapsed, metrics=metrics)
+                        with (output / 'observations.jsonl').open('a') as f:
+                            f.write(json.dumps(raw) + '\n')
+                        assert proc.returncode == 0, raw
+                        lines = [json.loads(line) for line in proc.stdout.splitlines()]
+                        assert len(lines) == 2, lines
+                        if entries is None:
+                            entries = lines[0]['input']
+                            (output / 'input.json').write_text(json.dumps(entries))
+                        assert lines[0]['input'] == entries
+                        def expired(_sig, _frame):
+                            raise TimeoutError('oracle exceeded 60 seconds')
+                        old = signal.signal(signal.SIGALRM, expired)
+                        signal.alarm(60)
+                        try:
+                            checked = oracle(args.ring, entries, lines[1]['value'], lines[1].get('moduli_used', ()))
+                        finally:
+                            signal.alarm(0)
+                            signal.signal(signal.SIGALRM, old)
+                        record = dict(comparison=arms, pair=pair, **lines[1], **checked,
+                                      wall_ns=elapsed, metrics=metrics)
+                        samples.append(record)
+                        (output / 'results.json').write_text(json.dumps(data, indent=2))
+                        assert checked['valid'], record
+                        print(arms, pair, arm, round(record['elapsed_ns']/1e6, 4), 'ms',
+                              'FLINT', checked['flint_ms'], flush=True)
+        finally:
+            lease.close()
+    return supervise(run, 240, output / 'status.json')
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

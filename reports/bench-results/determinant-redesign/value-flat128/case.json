@@ -1,0 +1,10 @@
+{
+  "output": "reports/bench-results/determinant-redesign/value-flat128",
+  "ring": "int",
+  "dimension": 128,
+  "bits": 8,
+  "shape": "dense",
+  "flat": true,
+  "modular": false,
+  "spread": 1
+}
