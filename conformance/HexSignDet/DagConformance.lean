@@ -8,6 +8,7 @@ module
 public import HexSignDet.Conformance
 public meta import HexSignDet.Dag
 public meta import HexSignDet.DagEncode
+public meta import HexSignDet.DagReplay
 public meta import HexSignDet.Conformance
 
 public section
@@ -162,5 +163,18 @@ theorem descriptor_kernel :
 /-- info: 'Hex.SignDet.DagConformance.descriptor_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms descriptor_kernel
+
+/-- info: 'Hex.SignDet.Dag.Encoder.insert_valid' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Dag.Encoder.insert_valid
+/-- info: 'Hex.SignDet.Dag.encodeFrom_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Dag.encodeFrom_checks
+/-- info: 'Hex.SignDet.Dag.replay_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Dag.replay_encode
+/-- info: 'Hex.SignDet.Dag.check_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Dag.check_encode
 
 end Hex.SignDet.DagConformance

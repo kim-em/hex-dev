@@ -39,9 +39,13 @@ node field and both child indices. Hash collisions, different witnesses and
 stale contexts cannot substitute one literal entry for another. Conformance
 includes deliberately colliding inverse witnesses and repeated internal
 subtrees from the actual producer. Encoding supplies raw evidence; callers use
-`Dag.replay?` to validate it. A general encoder round-trip proof and its
-performance accounting remain required. This typed graph also needs a byte
-decoder, lower-level coefficient-sign edges and shared verification of the
+`Dag.replay?` to validate it. For every accepted input tree, `Dag.replay_encode`
+proves that checked graph replay returns that same literal tree with its original
+caller bindings; `Dag.check_encode` gives Boolean acceptance. The proof follows
+the actual hash-table insertion and recursive encoder, maintaining acceptance
+of every graph entry and exact cache bindings. It uses no root-sum premise.
+Encoder performance accounting remains required. This typed graph also needs a
+byte decoder, lower-level coefficient-sign edges and shared verification of the
 domain inside each Tarski certificate.
 
 Context, head, interval and query-list bindings use literal equality. Tarski

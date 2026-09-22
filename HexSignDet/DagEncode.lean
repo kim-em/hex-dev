@@ -102,7 +102,7 @@ structure Encoder (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E]
   indices : Std.HashMap (Entry E Ctx) Nat := {}
 
 /-- Retain the first exact occurrence and its stable index. -/
-def Encoder.insert (state : Encoder E Ctx) (entry : Entry E Ctx) : Encoder E Ctx × Nat :=
+@[expose] def Encoder.insert (state : Encoder E Ctx) (entry : Entry E Ctx) : Encoder E Ctx × Nat :=
   match state.indices[entry]? with
   | some i => (state, i)
   | none =>
@@ -111,7 +111,7 @@ def Encoder.insert (state : Encoder E Ctx) (entry : Entry E Ctx) : Encoder E Ctx
 
 /-- Left-to-right postorder traversal. The parent is interned only after both
 children, so generated child references point into the preceding prefix. -/
-def encodeFrom (state : Encoder E Ctx) : Replay E Ctx → Encoder E Ctx × Nat
+@[expose] def encodeFrom (state : Encoder E Ctx) : Replay E Ctx → Encoder E Ctx × Nat
   | .leaf n => state.insert ⟨n, none⟩
   | .split n l r =>
     let (state, left) := encodeFrom state l
@@ -123,7 +123,7 @@ nodes with the same child references. This does not validate the input or attach
 an acceptance proof; use `replay?` to check the resulting graph. Hash consing
 visits every input occurrence and retains the first occurrence of each entry.
 It does not serialize coefficient values or lower-level coefficient proofs. -/
-def encode (tree : Replay E Ctx) : Dag E Ctx :=
+@[expose] def encode (tree : Replay E Ctx) : Dag E Ctx :=
   let (state, root) := encodeFrom {} tree
   ⟨state.entries, root⟩
 
