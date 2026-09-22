@@ -32,7 +32,7 @@ inductive BuildError where
 /-- Solve in the rationals and retain integers only after checking exact
 integrality and nonnegativity. The scaled inverse uses a common denominator;
 its integer identity is checked in the original row and column orders. -/
-def solveSystem {r : Nat} (arity : Nat) (rows : Vector (List Nat) r)
+@[expose] def solveSystem {r : Nat} (arity : Nat) (rows : Vector (List Nat) r)
     (columns : Vector (List Int) r) (values : Vector Int r) :
     Except BuildError (System r) := do
   let m : Matrix Rat r r := Matrix.ofFn fun i j => (entry rows[i] columns[j] : Rat)
@@ -56,7 +56,7 @@ variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 
 /-- Assemble one node using the same prepared domain for every moment.
 No roots, root counts or guessed sign conditions are supplied by a caller. -/
-def buildNode (context : Ctx) (domain : Sturm.PreparedDomain E)
+@[expose] def buildNode (context : Ctx) (domain : Sturm.PreparedDomain E)
     (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int)) :
     Except BuildError (Node E Ctx) := do
   if h : rows.length = columns.length then
@@ -73,7 +73,7 @@ def buildNode (context : Ctx) (domain : Sturm.PreparedDomain E)
 
 /-- Balanced support reduction. Recursion decreases the actual query length;
 there is no fuel limit and no full-ternary fallback at internal nodes. -/
-def buildTree (context : Ctx) (domain : Sturm.PreparedDomain E)
+@[expose] def buildTree (context : Ctx) (domain : Sturm.PreparedDomain E)
     (qs : List (DensePoly E)) : Except BuildError (Replay E Ctx) := do
   if h : qs.length ≤ 1 then
     return .leaf (← buildNode context domain qs (leafRows qs.length) (leafColumns qs.length))
@@ -89,7 +89,7 @@ decreasing_by
 
 /-- A returned construction has passed the independent literal replay.
 This is an executable acceptance guarantee, not root-sum soundness. -/
-def buildPrepared [DecidableEq Ctx] (context : Ctx) (domain : Sturm.PreparedDomain E)
+@[expose] def buildPrepared [DecidableEq Ctx] (context : Ctx) (domain : Sturm.PreparedDomain E)
     (qs : List (DensePoly E)) :
     Except BuildError {t : Replay E Ctx //
       t.check domain.sign context domain.head domain.lower domain.upper qs = true} := do

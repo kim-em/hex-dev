@@ -20,6 +20,22 @@ open scoped Hex
 @[expose] def entry (e : List Nat) (s : List Int) : Int :=
   ((e.zip s).map fun (k, v) => v ^ k).foldr (· * ·) 1
 
+/-- Concatenation gives the tensor-product entry when the left coordinates
+have matching lengths. No polynomial or coefficient-ring laws are involved. -/
+theorem entry_append (e₁ e₂ : List Nat) (s₁ s₂ : List Int) (h : e₁.length = s₁.length) :
+    entry (e₁ ++ e₂) (s₁ ++ s₂) = entry e₁ s₁ * entry e₂ s₂ := by
+  induction e₁ generalizing s₁ with
+  | nil =>
+    have hs : s₁ = [] := List.eq_nil_of_length_eq_zero (by simpa using h.symm)
+    simp [entry, hs]
+  | cons e es ih =>
+    cases s₁ with
+    | nil => simp at h
+    | cons s ss =>
+      have hl : es.length = ss.length := by simpa using h
+      change s ^ e * entry (es ++ e₂) (ss ++ s₂) = (s ^ e * entry es ss) * entry e₂ s₂
+      rw [ih ss hl, Int.mul_assoc]
+
 /-- Build the integer moment matrix in the literal orders supplied. -/
 @[expose] def momentMatrix {r c : Nat} (rows : Vector (List Nat) r)
     (cols : Vector (List Int) c) : Matrix Int r c :=

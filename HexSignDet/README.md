@@ -59,16 +59,18 @@ acceptance/rejection probes. In particular, the omitted-support forgery for
 are regressions, not the complete independent-oracle or Phase-4 evidence suite.
 Construction regressions also cover irrational roots, finite intervals, twelve
 repeated queries, exact-conversion rejection and full/reduced small-case agreement.
+A downstream ordinary-kernel probe instantiates the recursive moment contract
+on a two-query tree, and compiled replay independently checks that same tree.
 Their numeric context labels exercise literal binding over the fixed rational
 base only; full tower/refinement context fixtures remain required.
 
 The library currently exposes raw replay data and checked construction, not a
 validated `SignTable` or the total `determinePrepared` API. Producer completeness,
-tensor/retained-row-basis existence, reduced-moment
-evidence, Thom descriptors and selected-root operations, serialization and
+tensor/retained-row-basis existence, reduced-moment evidence, Thom descriptors
+and selected-root operations, serialization and
 nested evidence sharing remain required. The finite lemmas above do not prove
-root-count correctness. Those
-proofs must interpret the actual query replays through #10389 and consume the
+root-count correctness. Those proofs must interpret the actual query replays
+through #10389 and consume the
 specified BKR/Thom foundations in the companion. No semantic theorem or
 performance milestone is claimed here. See the [specification](SPEC/hex-sign-det.md)
 for the complete contract and [#10377](https://github.com/kim-em/hex-dev/issues/10377)

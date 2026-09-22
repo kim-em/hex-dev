@@ -16,11 +16,11 @@ namespace Hex.SignDet
 open scoped Hex
 
 /-- Exact integer multiplicities of the supplied observations. -/
-def counts {r : Nat} (columns : Vector (List Int) r) (xs : List (List Int)) : Vector Int r :=
+@[expose] def counts {r : Nat} (columns : Vector (List Int) r) (xs : List (List Int)) : Vector Int r :=
   Vector.ofFn fun i => (xs.countP fun x => decide (x = columns[i]) : Nat)
 
 /-- The moments of a finite family of sign observations. -/
-def moments {r : Nat} (rows : Vector (List Nat) r) (xs : List (List Int)) : Vector Int r :=
+@[expose] def moments {r : Nat} (rows : Vector (List Nat) r) (xs : List (List Int)) : Vector Int r :=
   Vector.ofFn fun i => (xs.map (entry rows[i])).sum
 
 private theorem counts_cons {r : Nat} (columns : Vector (List Int) r)

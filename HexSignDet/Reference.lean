@@ -14,13 +14,13 @@ Production recursion never calls this module. -/
 namespace Hex.SignDet
 
 /-- Ordered words, with the first coordinate varying slowest. -/
-def words (alphabet : List α) : Nat → List (List α)
+@[expose] def words (alphabet : List α) : Nat → List (List α)
   | 0 => [[]]
   | n + 1 => alphabet.flatMap fun a => (words alphabet n).map (a :: ·)
 
 /-- The full tensor moment system. This deliberately performs `3^s` queries;
 it is a reference for conformance and performance comparisons, not a fallback. -/
-def referencePrepared {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
+@[expose] def referencePrepared {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
     [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E]
     (context : Ctx) (domain : Sturm.PreparedDomain E) (qs : List (DensePoly E)) :
     Except BuildError (Node E Ctx) :=

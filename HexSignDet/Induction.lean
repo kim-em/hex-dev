@@ -17,7 +17,7 @@ the executable checker and is not a replacement for that bridge. -/
 namespace Hex.SignDet
 
 /-- A finite family of length-`arity` ternary observations, with multiplicity. -/
-def Observations (arity : Nat) (xs : List (List Int)) : Prop :=
+@[expose] def Observations (arity : Nat) (xs : List (List Int)) : Prop :=
   ∀ x ∈ xs, x.length = arity ∧ ∀ v ∈ x, v = -1 ∨ v = 0 ∨ v = 1
 
 theorem Observations.take {arity : Nat} {xs : List (List Int)}
@@ -52,7 +52,7 @@ variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 
 /-- Every node's literal moment vector interprets the same observations,
 restricted at each balanced split. No support or count correctness is a premise. -/
-def Replay.Interprets (arity : Nat) (xs : List (List Int)) : Replay E Ctx → Prop
+@[expose] def Replay.Interprets (arity : Nat) (xs : List (List Int)) : Replay E Ctx → Prop
   | .leaf n => n.system.values = moments n.system.rows xs
   | .split n l r =>
     n.system.values = moments n.system.rows xs ∧
