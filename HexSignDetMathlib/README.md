@@ -54,6 +54,29 @@ identities follow from those inputs.
 their Cartesian product, deriving all parent-system checks from complete
 child supports without assuming an accepted parent.
 
+`buildNode_spec` and `buildNode_evidence` connect successful construction to
+its exact context, domain, ordered rows/columns, retained rank certificate,
+indexed reductions and prepared query certificates. `buildNode_checks` proves
+local replay acceptance under the shared generic coefficient interpretation
+laws, using the existing prepared-query and reduction producer theorems.
+`buildTreeFrom_checks` propagates accepted preprocessing slices and child
+evidence through the actual balanced recursion. `buildTree_checks` and
+`buildPrepared_eq` show that successful tree construction passes the final
+replay guard, including noncanonical coefficient representations. These
+theorems do not establish that tree construction always succeeds: excluding
+all finite solving failures and interpreting query values remain separate
+obligations. They do not assert arbitrary-certificate root-sum soundness.
+`buildNode_complete` supplies the finite assembly step for both rational and
+scaled solving: a checked candidate system, a matching supplied inverse when
+present, and equality of its values with the actual prepared queries produce
+a node with exactly its counts. Candidate support and query-value semantics
+must be established independently; neither follows from this assembly lemma.
+`Node.parent_system` transports the finite child-product system to the exact
+list-length dimension used by `buildTreeFrom`, retaining literal row/column
+orders, counts, values and denominator. Its inverse is the shared
+`parentInverse` definition called by the actual parent construction, so the
+dimension transport and inverse witness cannot drift between those sites.
+
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient
 interpretation. It neither assumes a gcd normalization nor supplies squarefreeness;

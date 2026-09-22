@@ -41,6 +41,40 @@ def Descriptor.ofReplay? (sign : E → Int) (context : Ctx)
     Option (Descriptor E Ctx sign context) :=
   if h : raw.check sign context evidence = true then some ⟨raw, evidence, h⟩ else none
 
+/-- Reuse an already checked table with exact input bindings and count one.
+The proof arguments avoid rerunning the same replay during row extraction. -/
+def Descriptor.ofTable {sign : E → Int} {context : Ctx}
+    (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
+    (hw : raw.wellFormed = true) (hctx : raw.context = context)
+    (hc : evidence.check sign context raw.head raw.lower raw.upper raw.queries = true)
+    (hone : (evidence.table hc).count raw.signs = 1) : Descriptor E Ctx sign context :=
+  ⟨raw, evidence, by
+    simp only [RawDescriptor.check, hw, hctx, decide_true, Bool.true_and, hc]
+    apply decide_eq_true
+    exact (evidence.table_lookup hc raw.signs).symm.trans hone⟩
+
+theorem Descriptor.ofTable_raw {sign : E → Int} {context : Ctx}
+    (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
+    (hw : raw.wellFormed = true) (hctx : raw.context = context)
+    (hc : evidence.check sign context raw.head raw.lower raw.upper raw.queries = true)
+    (hone : (evidence.table hc).count raw.signs = 1) :
+    (ofTable raw evidence hw hctx hc hone).raw = raw := by
+  unfold ofTable
+  rfl
+
+/-- Reusing a checked table produces exactly the descriptor obtained by
+checking that same evidence again. -/
+theorem Descriptor.ofReplay_ofTable {sign : E → Int} {context : Ctx}
+    (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
+    (hw : raw.wellFormed = true) (hctx : raw.context = context)
+    (hc : evidence.check sign context raw.head raw.lower raw.upper raw.queries = true)
+    (hone : (evidence.table hc).count raw.signs = 1) :
+    ofReplay? sign context raw evidence = some (ofTable raw evidence hw hctx hc hone) := by
+  have ha : raw.check sign context evidence = true := by
+    simpa only [ofTable] using (ofTable raw evidence hw hctx hc hone).accepted
+  unfold ofReplay? ofTable
+  rw [dite_eq_left ha]
+
 theorem Descriptor.ofReplay_isSome (sign : E → Int) (context : Ctx)
     (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx) :
     (ofReplay? sign context raw evidence).isSome ↔ raw.check sign context evidence = true := by

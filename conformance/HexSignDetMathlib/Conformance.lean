@@ -49,6 +49,24 @@ theorem noncanonical_sign (p : Poly) (qs : List Poly) (es : List Nat) (r : Reduc
   intro a
   simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_eq_one_iff_pos, Rat.num_pos]
 
+/-- The whole producer acceptance theorem applies to ordinary coefficient
+operations on noncanonical representatives, without a field instance on them. -/
+theorem noncanonical_tree (context : Nat) (domain : Sturm.PreparedDomain Rep)
+    (hsign : domain.sign = Hex.TarskiTests.Noncanonical.sign)
+    (qs : List Poly) (reduced : Bool) {t : Replay Rep Nat}
+    (h : buildTree context domain qs reduced = .ok t) :
+    t.check Hex.TarskiTests.Noncanonical.sign context domain.head domain.lower domain.upper qs = true := by
+  apply buildTree_checks value value_eq_zero value_one value_add value_sub value_mul
+    value_neg value_inv Hex.TarskiTests.Noncanonical.sign _ _ _ context domain hsign qs reduced h
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_eq_one_iff_pos, Rat.num_pos]
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_neg_iff, Rat.num_neg]
+  · intro a
+    have h := Int.sign_trichotomy (value a).num
+    rcases h with h | h | h <;>
+      change -1 ≤ (value a).num.sign ∧ (value a).num.sign ≤ 1 <;> omega
+
 @[expose] def head : DensePoly Rat := DensePoly.ofCoeffs #[-1, 0, 1]
 @[expose] def indeterminate : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
 
@@ -241,5 +259,46 @@ example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := 
 /-- info: 'Hex.SignDet.checkMoment_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms checkMoment_sign
+
+/-- info: 'Hex.SignDet.solveSystem_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms solveSystem_spec
+/-- info: 'Hex.SignDet.solveScaled_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms solveScaled_spec
+/-- info: 'Hex.SignDet.buildNode_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildNode_spec
+/-- info: 'Hex.SignDet.buildNode_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildNode_evidence
+/-- info: 'Hex.SignDet.Node.check_of_basis' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.check_of_basis
+/-- info: 'Hex.SignDet.buildNode_preparation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildNode_preparation
+/-- info: 'Hex.SignDet.buildNode_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildNode_checks
+/-- info: 'Hex.SignDet.buildTreeFrom_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildTreeFrom_checks
+/-- info: 'Hex.SignDet.buildTree_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildTree_checks
+/-- info: 'Hex.SignDet.buildPrepared_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildPrepared_eq
+/-- info: 'Hex.SignDet.buildNode_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildNode_complete
+/-- info: 'Hex.SignDetMathlib.Conformance.noncanonical_tree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms noncanonical_tree
+
+/-- info: 'Hex.SignDet.Node.parent_system' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.parent_system
 
 end Hex.SignDetMathlib.Conformance

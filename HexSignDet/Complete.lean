@@ -24,6 +24,42 @@ variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
     RawDescriptor E Ctx :=
   {raw with indices := (List.range raw.head.natDegree).map (· + 1), signs}
 
+omit [One E] [Add E] [Sub E] [DecidableEq Ctx] in
+theorem RawDescriptor.full_queries (raw : RawDescriptor E Ctx) (signs : List Int) :
+    (raw.full signs).queries = (raw.full []).queries := rfl
+
+omit [One E] [Add E] [Sub E] [DecidableEq Ctx] in
+theorem RawDescriptor.full_queries_length (raw : RawDescriptor E Ctx) (signs : List Int) :
+    (raw.full signs).queries.length = raw.head.natDegree := by
+  simp only [queries, full, List.length_map, List.length_range]
+
+omit [One E] [Add E] [Sub E] [DecidableEq Ctx] [Mul E] [NatCast E] in
+/-- Canonical full slots need no repeated distinctness or range search once
+the checked table supplies the sign word's length and ternary entries. -/
+theorem RawDescriptor.full_wellFormed (raw : RawDescriptor E Ctx) (signs : List Int)
+    (hp : 0 < raw.head.natDegree) (hlen : signs.length = raw.head.natDegree)
+    (hs : signs.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1)) = true) :
+    (raw.full signs).wellFormed = true := by
+  change (decide (0 < raw.head.natDegree) &&
+    decide (((List.range raw.head.natDegree).map (· + 1)).length = signs.length) &&
+    decide ((List.range raw.head.natDegree).map (· + 1)).Nodup &&
+    ((List.range raw.head.natDegree).map (· + 1)).all
+      (fun i => decide (1 ≤ i ∧ i ≤ raw.head.natDegree)) &&
+    signs.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1))) = true
+  simp only [Bool.and_eq_true, decide_eq_true_eq]
+  refine ⟨⟨⟨⟨hp, ?_⟩, ?_⟩, ?_⟩, hs⟩
+  · simpa only [List.length_map, List.length_range] using hlen.symm
+  · apply decide_eq_true
+    apply (List.nodup_range (n := raw.head.natDegree)).map (· + 1)
+    intro i j hne he
+    exact hne (Nat.add_right_cancel he)
+  · apply List.all_eq_true.mpr
+    intro i hi
+    obtain ⟨j, hj, rfl⟩ := List.mem_map.mp hi
+    have hj := List.mem_range.mp hj
+    simp only [decide_eq_true_eq]
+    omega
+
 /-- A completion retains the exact domain/context and all the old selected
 derivative signs. Both descriptors must separately have count-one evidence. -/
 @[expose] def RawDescriptor.completes (source target : RawDescriptor E Ctx) : Bool :=

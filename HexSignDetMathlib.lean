@@ -12,6 +12,8 @@ public import HexSignDetMathlib.Solve
 public import HexSignDetMathlib.RationalSolve
 public import HexSignDetMathlib.FiniteSolve
 public import HexSignDetMathlib.ParentSystem
+public import HexSignDetMathlib.TreeChecks
+public import HexSignDetMathlib.NodeSolve
 public import HexSignDetMathlib.Tensor
 public import HexSignDetMathlib.NodeBasis
 public import HexSignDetMathlib.QueryReduction
