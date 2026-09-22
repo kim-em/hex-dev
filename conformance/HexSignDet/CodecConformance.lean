@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.Codec
+public import HexSignDet.Codec.EvidenceLaws
 public import HexPoly.InterpretTests
 public meta import HexPoly.InterpretTests
 public import HexSignDet.DagConformance
@@ -209,5 +210,35 @@ end Noncanonical
 /-- info: 'Hex.SignDet.Dag.decode_replays' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Dag.decode_replays
+
+/-- False arithmetic evidence remains literal after structured encoding. The
+separate graph checker must still reject it. This uses ordinary kernel proofs. -/
+theorem false_evidence_roundtrip :
+    Codec.readTarski ValueCodec.rat ValueCodec.nat
+      (Codec.tarski ValueCodec.rat ValueCodec.nat (corruptCert singletonQuery)) =
+      .ok (corruptCert singletonQuery) :=
+  Codec.read_tarski _ _ ValueCodec.rat_lawful ValueCodec.nat_lawful _
+
+/-- info: 'Hex.SignDet.ValueCodec.nat_lawful' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms ValueCodec.nat_lawful
+/-- info: 'Hex.SignDet.ValueCodec.rat_lawful' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms ValueCodec.rat_lawful
+/-- info: 'Hex.SignDet.Codec.read_vector' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.read_vector
+/-- info: 'Hex.SignDet.Codec.read_matrix' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.read_matrix
+/-- info: 'Hex.SignDet.Codec.read_tarski' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.read_tarski
+/-- info: 'Hex.SignDet.Codec.read_reduction' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.read_reduction
+/-- info: 'Hex.SignDet.CodecConformance.false_evidence_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms false_evidence_roundtrip
 
 end Hex.SignDet.CodecConformance

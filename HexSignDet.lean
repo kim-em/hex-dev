@@ -33,3 +33,4 @@ public import HexSignDet.DagEncode
 public import HexSignDet.DagReplay
 public import HexSignDet.DagExpand
 public import HexSignDet.Codec
+public import HexSignDet.Codec.EvidenceLaws

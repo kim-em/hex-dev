@@ -18,16 +18,22 @@ descriptor field. Wrong derivative slots, signs or contexts are rejected.
 full immutable context. The provided codecs cover canonical `Rat` and `Nat`.
 A composite context must encode all its components, including refinement and
 embedding data. A hash or a reused numeric identifier cannot replace that
-value. The JSON interfaces handle coefficient/context types in `Type`, matching
-Lean's JSON API. The computational sign-determination APIs retain their existing
-universe polymorphism.
+value. This serialization implementation handles coefficient/context types in
+`Type`. The computational sign-determination APIs retain their existing universe
+polymorphism.
 
 Numeric tokens in this format are integers. Rational coefficients use
 `[numerator, denominator]` with a positive coprime denominator; noncanonical
 pairs are rejected. Coefficient codecs for other representations must use
 integer numeric tokens, strings, arrays or objects. A codec intended for
-roundtrips must preserve its entire value. No generic roundtrip theorem for
-arbitrary user codecs or the JSON parser is claimed here.
+roundtrips must preserve its entire value. `ValueCodec.Lawful` states literal value roundtrips, and the included natural
+and rational codecs satisfy it. Structured roundtrip proofs lift this property
+through arrays, lists, vectors, options, integer matrices, polynomials, endpoints,
+remainder steps, chains and complete Tarski certificates. Reduction and query
+preparation records also roundtrip when their factor indices are in bounds.
+These proofs apply to the actual field encoders and decoders, including false
+arithmetic evidence; no semantic certificate premise is used. Arbitrary user
+codecs need not be lawful, and no JSON byte-parser roundtrip theorem is claimed.
 
 Every structural record is a positional array with exactly the listed fields.
 An optional value is `[]` or `[value]`. Arrays and lists retain their original
@@ -81,6 +87,6 @@ the separate ordinary-kernel graph probes and axiom audits remain in place.
 
 This format encodes same-level BKR graphs and coefficient values. It does not
 yet encode lower-level coefficient-sign proof dependencies or establish
-arbitrary-field root/sign semantics. Generic encoder/decoder roundtrip proofs,
+arbitrary-field root/sign semantics. Remaining structured graph and JSON byte-parser roundtrip proofs,
 nested evidence transport, serialization cost measurements and the other
 Phase-4 obligations remain open.
