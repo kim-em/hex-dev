@@ -1,5 +1,5 @@
 {
-  "elapsed_seconds": 340.8252934310585,
+  "elapsed_seconds": 557.8080761681776,
   "batches": [
     {
       "batch": "arithmetic",
@@ -58,11 +58,53 @@
       "limit_seconds": 240
     },
     {
+      "batch": "proof-deferred",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 32.719993593054824,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "proof-shared-controls",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 27.71866976900492,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "proof-shared-factored4",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 38.33685368299484,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "proof-shared-independent4",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 25.415774836903438,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "proof-shared-linear6",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 76.07797054306138,
+      "limit_seconds": 240
+    },
+    {
       "batch": "transport-controls",
       "state": "finished",
       "exit_status": 0,
       "elapsed_seconds": 33.721293054986745,
       "limit_seconds": 240
+    },
+    {
+      "batch": "value-c128",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 0.6010746910469607,
+      "limit_seconds": 60
     },
     {
       "batch": "value-dyadic8",
@@ -107,6 +149,20 @@
       "limit_seconds": 240
     },
     {
+      "batch": "value-owned128",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 7.204910141997971,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "value-owned32",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 0.6009457199834287,
+      "limit_seconds": 240
+    },
+    {
       "batch": "value-poly4",
       "state": "finished",
       "exit_status": 0,
@@ -119,6 +175,20 @@
       "exit_status": 0,
       "elapsed_seconds": 0.7010451559908688,
       "limit_seconds": 240
+    },
+    {
+      "batch": "value-univariate4",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 0.901285937987268,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "value-word128",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 7.40530382108409,
+      "limit_seconds": 240
     }
   ],
   "policy": {
@@ -128,10 +198,34 @@
     "serial": true,
     "memory_cap": null
   },
-  "validation": {
-    "state": "finished",
-    "exit_status": 0,
-    "elapsed_seconds": 1.0010632650228217,
-    "limit_seconds": 240
-  }
+  "validation_batches": [
+    {
+      "batch": "c-verification",
+      "state": "finished",
+      "exit_status": 1,
+      "elapsed_seconds": 0.10072893800679594,
+      "limit_seconds": 60
+    },
+    {
+      "batch": "c-verification-runtime",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 0.10065270494669676,
+      "limit_seconds": 60
+    },
+    {
+      "batch": "value-verification",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 1.0010632650228217,
+      "limit_seconds": 240
+    },
+    {
+      "batch": "value-verification-extended",
+      "state": "finished",
+      "exit_status": 0,
+      "elapsed_seconds": 1.4017763130832464,
+      "limit_seconds": 240
+    }
+  ]
 }

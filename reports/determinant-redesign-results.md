@@ -1,7 +1,8 @@
 # Determinant redesign experiments
 
-These are diagnostic experiments, not a production speedup claim or a
-selected replacement architecture. The broader questions are in
+These diagnostic experiments support the [architecture proposal and staged
+replacement plan](determinant-redesign-proposal.md). They do not establish
+production dispatch thresholds or universal superiority. The broader questions are in
 [the design document](determinant-experiments.md).
 
 ## Fixed witness: arithmetic proofs
@@ -243,9 +244,121 @@ is recorded separately; it is not a native conversion implementation comparison.
 Decision: investigate the modular elimination implementation and its memory/
 arithmetic costs before designing another integer dispatcher. Neither prime
 caching alone nor replacing recursive minors with existing flat elimination
-explains the roughly 90-fold modular-elimination gap. The next discriminating
-prototype should hold one modulus fixed and compare an owned trailing-block
-update loop with the existing word row-update routines.
+explains the roughly 90-fold modular-elimination gap. The owned-loop and C experiments below test that implementation hypothesis
+without changing the determinant algorithm.
+
+## Shared symbolic expressions and supplied targets
+
+`Deferred.lean` adapts Mathlib's demand-driven Bird recurrence and its theorem
+applications. It caches the recurrence's entry, diagonal and iterate expressions,
+but does not normalize every scalar operation while constructing the recurrence.
+It then proves equality of the resulting expression with the **supplied target**:
+
+- **Deferred:** ordinary ring normalization traverses that expression.
+- **Shared:** the expression cache from `Arithmetic.lean` normalizes repeated
+  arithmetic subexpressions once, in the same atom context as the target.
+
+Both construct ordinary kernel-checked proofs. Neither calls a determinant
+tactic, invokes a fallback, assumes a domain, or assumes symbolic pivots nonzero.
+The final proof uses Bird's universal correctness theorem directly. The
+computational experiment remains Mathlib-free; these are companion proof modules.
+The adaptation retains Mathlib's copyright and identifies the source it adapts.
+
+On the quadratic 4×4 statement, deferred traversal takes 726 ms against the
+adjacent Mathlib control's 372 ms. In the separate deferred/shared pair it takes
+701 ms against 303 ms. Merely delaying expansion loses; retaining and using
+sharing during normalization changes that result. This comparison holds the
+recurrence and target fixed. Compared with Mathlib, syntactic-zero detection
+also differs from eager normal-form zero detection, so it is not an isolation
+of cache lookup cost alone.
+
+Direct paired comparisons use the synchronous complete-declaration clock.
+Each table cell is the median of its own two AB/BA samples; candidate samples
+from different comparator pairs are deliberately **not pooled**.
+
+| Input and supplied target | Mathlib, ms | Shared alongside Mathlib, ms | Production Hex, ms | Shared alongside Hex, ms |
+|---|---:|---:|---:|---:|
+| Dense quadratic 4×4, two variables; expanded target | 287.6 | 218.4 | 757.4 | 240.2 |
+| Independent-variable 4×4; expanded target | 158.3 | 88.0 | 347.2 | 87.8 |
+| Dense linear 6×6, two variables; expanded target | 5019.8 | 3312.4 | 5286.9 | 3476.9 |
+| Quadratic 4×4 multiplied entrywise by a third variable; factored target | 453.0 | 579.6 | 1147.5 | 363.9 |
+
+The last input supplies `z^4 * d(x0,x1)`; every algorithm receives the same
+factored target. Its shared/Mathlib pairs disagree: 711.7 versus 423.4 ms in
+one pair, 447.5 versus 482.6 ms in the other. Record this as a median loss with
+substantial observed variation, not a win obtained by pooling the later Hex
+comparison. No sample was discarded and no unchanged rerun was made.
+
+The 6×6 fixture uses deterministic small integer coefficients; its expanded
+target is generated independently with FLINT arithmetic and the Leibniz sum.
+All target generation is outside every arm's clock. All determinant/proof
+construction, literal identification, target equality and kernel checking are
+inside. Source snapshots contain the exact statements, including the target.
+The prototype is not given normalized matrix entries or a determinant witness
+for free. These clocks include statement elaboration; they are not the original
+issue's profiler-only kernel component measurements.
+
+The result selects shared proof-producing arithmetic and a division-free
+recurrence as the symbolic implementation direction. It does **not** establish
+that Bird is the optimal proof schedule or that a circuit should replace every
+value representation. Bareiss/Bird/Berkowitz were controlled under the same
+coefficient representations and external checking in the value experiment;
+there is no claimed common-checker theorem proving a complete proof-speed
+ranking of all three. That remaining ranking is not needed to reject the fixed
+triangular-witness prototype or select this better-supported candidate.
+
+## Modular execution: storage alone is insufficient
+
+An owned Lean flat-array loop keeps `ZMod64` arithmetic and only updates the
+trailing block. At 128×128 its complete staged CRT call takes 1712 ms versus
+1510 ms for the adjacent existing-flat control. Reject that implementation.
+A second version hoists the modulus and uses raw `UInt64` arithmetic with the
+same loop: 1615 ms versus 1691 ms for its adjacent owned-residue control. This
+small saving does not explain the modular gap.
+
+A separate C diagnostic implements that scalar elimination in contiguous
+unboxed words. It uses the same matrix and 41 recorded primes, reduces after
+every scalar multiplication, handles row pivoting and sign, and copies input
+inside each measured call. It does not use blocking or delayed modular reduction.
+Two adjacent C/FLINT AB/BA pairs total **47.76 ms versus 15.30 ms** across those
+41 images. Conversion from integers to each library's input format precedes
+the clocks; Python/ctypes call overhead remains in the C clock. FLINT's internal
+copying is whatever its public determinant operation performs.
+
+This is strong evidence that a faster determinant algorithm is not necessary
+to remove most of Hex's current modular gap. It implicates the bundle of
+allocation, boxing, generated control flow and call overhead in the Lean
+implementation; it does not separately quantify each cause. The C experiment
+is not an implementation of a Lean theorem, an FFI linked into Hex, or evidence
+of faster kernel checking. It cannot be installed as a trusted native proof
+checker. Its role is to justify developing/refining an unboxed execution kernel.
+
+## Univariate representation and interpolation
+
+Use the same 4×4 coefficient triples as the quadratic fixture, interpreting each
+entry as `c + b*x + a*x^2`. Compare sparse `MvPoly 1 Int` Bareiss, dense
+`DensePoly Int` Bareiss, and evaluation at nine integer points followed by
+rational Lagrange interpolation. The last route includes matrix evaluations,
+nine integer determinants, interpolation, integrality checking and final
+normalization. The degree-eight bound is specific to this fixture. This is a
+cold elementary interpolation prototype, not the existing fast multipoint
+plan, modular interpolation, or a general interpolation implementation.
+
+| Adjacent comparison | Arm | Median, ms |
+|---|---|---:|
+| Sparse / dense | Sparse Bareiss | 0.216 |
+| Sparse / dense | Dense Bareiss | 0.031 |
+| Dense / interpolation | Dense Bareiss | 0.028 |
+| Dense / interpolation | Evaluation/interpolation | 0.356 |
+
+All arms return normalized dense integer coefficients; sparse-to-dense output
+conversion is timed. Preparing their different input representations is outside
+the clocks, deliberately isolating arithmetic on an already represented input.
+Every coefficient matches the independent FLINT/Leibniz reference, not just
+some evaluation points. Dense arithmetic wins this small low-degree experiment.
+It does not establish a representation threshold at large degree or support,
+and the interpolation loss does not rule out fast plans at a larger crossover.
+Do not build a general interpolation framework on the strength of this result.
 
 ## Failures, protocol and verification
 
@@ -269,19 +382,29 @@ was imposed, and no background service or CI monitor was installed.
 The fixture producer is Mathlib-free. Proof experiments are build-only Lean
 modules. `Determinant.Audit` builds successfully, checks the complete theorem's
 axioms, counts proof nodes, and tests generic-ring arithmetic and rejection
-of unequal normal forms. Python generators pass syntax compilation. The computational boundary checks
+of unequal normal forms. `DeferredAudit` additionally checks both expression
+strategies and rejection of a wrong determinant target. Python generators pass syntax compilation. The 46 computational boundary checks
 cover empty and one-entry matrices, singular inputs and a forced initial pivot
-swap over integers, rationals and dyadics, with exact external answers.
+swap over integers, rationals and dyadics, with exact external answers. The C diagnostic passes 21 differential checks
+with UBSan. Its first validation attempt failed to load the sanitizer runtime
+before executing numerical checks; the corrected loader and both outcomes
+are retained. Total performance-batch wall time is about **558 seconds**
+(9 minutes 18 seconds), including failed measurement attempts.
 
 [Raw sources, samples, errors, host context and hashes](bench-results/determinant-redesign/)
 and [reproduction commands](../experiments/Determinant/README.md) are retained.
 
-## Open experiments before an architecture recommendation
+## Decision and limits
 
-The fixed witness still loses, and value-only schedule results do not settle
-proof architecture. Outstanding work includes common-checker schedule proofs,
-eager versus shared/on-demand symbolic normalization with supplied-target
-checking, and the owned modular-update experiment suggested above. Polynomial
-representation and interpolation hypotheses also need discriminating evidence.
-The final SPEC proposals and staged consumer migration/deletion plan depend on
-those results. No production replacement or dispatch threshold is selected.
+The [proposal](determinant-redesign-proposal.md) gives concrete SPEC text and
+staged implementation, migration and deletion gates. Retain the reference
+algebra, integer Bareiss control and numeric certificates. Develop shared
+algebraic proofs for symbolic equalities, exact fixed-ring scaling, and a
+refined native modular loop. Reject blanket opaque arithmetic, the losing
+owned-loop versions, and cold small-degree interpolation as default choices.
+
+These experiments cover the four redesign questions with bounded tests; they
+do not promise the fastest algorithm for every ring, characteristic, dimension
+or expression. Full API coverage, proof budgets, shipping-quality six-pair
+measurements and production refinements belong to the proposed implementation
+stages. No production code or dispatch was replaced by this experimental work.

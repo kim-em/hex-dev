@@ -14,6 +14,7 @@ lake build Determinant.Audit
 python3 experiments/Determinant/full_measure.py /tmp/determinant-arithmetic/fixture.json /tmp/determinant-full
 python3 experiments/Determinant/full_measure.py /tmp/determinant-arithmetic/fixture.json /tmp/determinant-transport --mode transport
 python3 experiments/Determinant/full_measure.py /tmp/determinant-arithmetic/fixture.json /tmp/determinant-controls --mode controls
+python3 experiments/Determinant/full_measure.py /tmp/determinant-arithmetic/fixture.json /tmp/determinant-shared --mode shared
 ```
 
 Use new output directories and run serially. Runners refuse to overwrite
@@ -34,6 +35,13 @@ tactic/kernel component diagnostic. Do not compare those metrics directly.
 `--mode arithmetic --clock profile` compares ordinary and opaque-certificate
 arithmetic; `--mode transport` holds the witness fixed while changing transport;
 `--mode controls` compares improved transport against production tactics.
+`--mode deferred` compares delayed ordinary normalization with cached traversal
+of the same shared Bird expression. `--mode shared` compares the latter with
+explicit Mathlib and production Hex. Cases are `quadratic4` (default),
+`independent4`, `common-factor4`, and `linear6`; the last requires python-flint
+to generate an independent target. These are forward literal equality probes,
+not a general production frontend. All candidate construction and checking,
+including the supplied-target comparison, is inside the declaration clock.
 
 For compiled value experiments, use a Python environment with `python-flint`
 (the retained runs use 0.9.0). Build before measuring, then select one case:
@@ -46,7 +54,12 @@ python experiments/Determinant/runtime.py /tmp/determinant-rat --ring rat --dime
 python experiments/Determinant/runtime.py /tmp/determinant-dyadic --ring dyadic --dimension 8 --spread 64
 python experiments/Determinant/runtime.py /tmp/determinant-modular --ring int --dimension 32 --modular
 python experiments/Determinant/runtime.py /tmp/determinant-flat --ring int --dimension 128 --flat
+python experiments/Determinant/runtime.py /tmp/determinant-owned --ring int --dimension 32 --owned
+python experiments/Determinant/runtime.py /tmp/determinant-word --ring int --dimension 128 --word
+python experiments/Determinant/runtime.py /tmp/determinant-univariate --ring univariate --dimension 4
+python experiments/Determinant/word_loop.py /tmp/determinant-flat /tmp/determinant-c
 python experiments/Determinant/verify.py /tmp/determinant-value-verification
+python experiments/Determinant/word_verify.py /tmp/determinant-c-verification
 ```
 
 These are independent commands, not instructions to run a grid. Choose the
@@ -56,6 +69,18 @@ timeout, do not manually advance a comparable dimension/coefficient ladder.
 The polynomial case is the fixed witness fixture; other dimensions are rejected.
 `--modular` compares existing ordinary CRT and divisor routes without fallback
 and attributes ordinary CRT stages. `--flat` changes just its elimination route.
+`--owned` and `--word` compare the experimental owned Lean buffer and hoisted
+raw-word arithmetic. The univariate case compares sparse/dense Bareiss and cold
+nine-point interpolation, returning the same dense coefficient array. It is
+limited to the fixed 4×4 quadratic fixture.
+
+`word_loop.py` requires a C compiler and consumes a retained `--flat`, `--owned`
+or `--word` batch containing the exact matrix and prime list. It compiles a
+value-only C diagnostic, compares all prime images with FLINT in two AB/BA pairs,
+and removes the generated shared object. Its hard batch limit is 60 seconds.
+It is never linked into Lean proofs or production Hex. `word_verify.py` checks
+its small/boundary/singular/pivot cases with the undefined-behavior sanitizer;
+the retained host uses Clang and its standalone UBSan runtime.
 
 Native clocks include input-reference reading, arithmetic and storing the result
 before the stop clock; generated C was inspected to verify that ordering.
@@ -70,6 +95,10 @@ value routines with differential checks, not new universal correctness proofs.
 certificate module. It never calls the Bird determinant evaluator or
 `norm_det`. `Audit.lean` checks axioms, counts proof nodes, and tests generic
 arithmetic and rejection of unequal normal forms.
+`DeferredAudit.lean` checks generic-ring shared/deferred determinant proofs,
+rejection of a wrong supplied target, and their axiom dependencies. The
+`Deferred.lean` recurrence is an attributed experimental adaptation of Mathlib's
+Bird certificate evaluator; the scalar normalizer itself is reused.
 
 The recorded integer microbenchmark's exact support source is in its archive.
 The working support is generalized to arbitrary commutative rings; a rerun

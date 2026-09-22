@@ -1,0 +1,12 @@
+{
+  "output": "reports/bench-results/determinant-redesign/value-word128",
+  "ring": "int",
+  "dimension": 128,
+  "bits": 8,
+  "shape": "dense",
+  "word": true,
+  "owned": false,
+  "flat": false,
+  "modular": false,
+  "spread": 1
+}

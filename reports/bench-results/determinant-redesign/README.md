@@ -31,6 +31,20 @@
   computational import closure. Validation, not performance evidence.
 - `setup-followup`: compressed build logs and generated-C timing barrier
   inspection. These are not performance samples.
+- `proof-deferred`: same Bird expression, independent versus shared final
+  normalization, with an explicit Mathlib control.
+- `proof-shared-controls`, `proof-shared-independent4`, `proof-shared-linear6`,
+  `proof-shared-factored4`: direct paired complete-proof comparisons, including
+  the common-factor median loss. All final target proofs are checked.
+- `value-owned32`, `value-owned128`, `value-word128`: owned Lean buffers and
+  raw-word scalar arithmetic; neither closes the modular gap.
+- `value-c128`: C diagnostic versus FLINT on the same 41 modular images.
+- `value-univariate4`: sparse/dense arithmetic and cold interpolation, with
+  identical normalized coefficient output.
+- `value-verification-extended`: 46 exact checks including the new Lean loops.
+- `c-verification`: failed sanitizer-runtime loading, before numerical checks.
+- `c-verification-runtime`: corrected runtime loading and 21 successful C
+  differential checks with UBSan.
 
 Each batch retains source snapshots, fixture, raw observations, result data,
 host context and a terminal status with elapsed time. Failed attempts are not
