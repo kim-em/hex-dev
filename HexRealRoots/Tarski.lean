@@ -154,12 +154,50 @@ use `SignedRemainderChain.normalizeId`. No root search or isolation is performed
     (p f : DensePoly D) (a b : Endpoint E) : Option Int :=
   (certify sign endpointSigns normalize () p f a b).map TarskiCertificate.value
 
+/-- Bind every literal query input and claimed value before checking evidence. -/
+@[expose] def checkBindings [DecidableEq E] [DecidableEq Ctx]
+    (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
+    (cert : TarskiCertificate D E Ctx) : Bool :=
+  decide (cert.context = context) && decide (cert.head = p) && decide (cert.queryPoly = f) &&
+    decide (cert.lower = a) && decide (cert.upper = b) && decide (cert.value = value)
+
+/-- The domain part of finite replay, independent of the query polynomial.
+This checks supplied witnesses and never invokes a producer or gcd search. -/
+@[expose] def checkDomain (sign : D → Int) (endpointSigns : EndpointSigns D E)
+    (p : DensePoly D) (a b : Endpoint E) (squarefree : SignedRemainderChain D) : Bool :=
+  checkEndpoints endpointSigns p a b && SignedRemainderChain.check sign p 1 squarefree &&
+    SignedRemainderChain.lastIsConstant squarefree
+
+/-- The query-dependent part of finite replay. Domain and literal input
+bindings are checked separately by the complete checker. -/
+@[expose] def checkQuery (sign : D → Int) (endpointSigns : EndpointSigns D E)
+    (p f : DensePoly D) (a b : Endpoint E) (value : Int)
+    (cert : TarskiCertificate D E Ctx) : Bool :=
+  SignedRemainderChain.check sign p f cert.remainders &&
+    decide (cert.lowerSigns = signs sign endpointSigns cert.remainders.chain a) &&
+    decide (cert.upperSigns = signs sign endpointSigns cert.remainders.chain b) &&
+    cert.lowerSigns.all (fun s => -1 ≤ s && s ≤ 1) &&
+    cert.upperSigns.all (fun s => -1 ≤ s && s ≤ 1) &&
+    decide (cert.lowerVariations = signVar cert.lowerSigns.toList) &&
+    decide (cert.upperVariations = signVar cert.upperSigns.toList) &&
+    decide (value = (cert.lowerVariations : Int) - cert.upperVariations)
+
 /-- Check full literal bindings, both chain replays, exact endpoint signs and
-variations. All arithmetic equations are zero-difference checks; all input and
-context bindings remain literal equalities. The checker never calls a producer. -/
+variations. Arithmetic equations use zero differences; input and context
+bindings use literal equality. The checker never calls a producer. -/
 @[expose] def check [DecidableEq E] [DecidableEq Ctx]
     (sign : D → Int) (endpointSigns : EndpointSigns D E) (context : Ctx)
     (p f : DensePoly D) (a b : Endpoint E) (value : Int) (cert : TarskiCertificate D E Ctx) : Bool :=
+  checkBindings context p f a b value cert &&
+    checkDomain sign endpointSigns p a b cert.squarefree &&
+    checkQuery sign endpointSigns p f a b value cert
+
+/-- Expanded finite replay contract. Factoring the domain and query checks
+preserves the Boolean result for every supplied certificate. -/
+theorem check_eq [DecidableEq E] [DecidableEq Ctx]
+    (sign : D → Int) (endpointSigns : EndpointSigns D E) (context : Ctx)
+    (p f : DensePoly D) (a b : Endpoint E) (value : Int) (cert : TarskiCertificate D E Ctx) :
+    check sign endpointSigns context p f a b value cert = (
   decide (cert.context = context) && decide (cert.head = p) && decide (cert.queryPoly = f) &&
     decide (cert.lower = a) && decide (cert.upper = b) && decide (cert.value = value) &&
     checkEndpoints endpointSigns p a b &&
@@ -171,7 +209,8 @@ context bindings remain literal equalities. The checker never calls a producer. 
     cert.upperSigns.all (fun s => -1 ≤ s && s ≤ 1) &&
     decide (cert.lowerVariations = signVar cert.lowerSigns.toList) &&
     decide (cert.upperVariations = signVar cert.upperSigns.toList) &&
-    decide (value = (cert.lowerVariations : Int) - cert.upperVariations)
+    decide (value = (cert.lowerVariations : Int) - cert.upperVariations)) := by
+  simp only [check, checkBindings, checkDomain, checkQuery, Bool.and_assoc]
 
 end TarskiCertificate
 

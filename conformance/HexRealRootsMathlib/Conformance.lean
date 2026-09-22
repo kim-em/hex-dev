@@ -291,7 +291,7 @@ theorem tarski_literal_count : (2 : Int) =
 theorem tarski_literal_total : (2 : Int) = (toPolyℝ Hex.TarskiTests.p).roots.card := by
   apply Tarski.integer_check_total () Hex.TarskiTests.p 2
     { Hex.TarskiTests.literal with lower := .negInf, upper := .posInf }
-  simp only [Hex.TarskiCertificate.check, Hex.SignedRemainderChain.check,
+  simp only [Hex.TarskiCertificate.check_eq, Hex.SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 

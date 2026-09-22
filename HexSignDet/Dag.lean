@@ -51,8 +51,54 @@ structure Checked (sign : E → Int) (context : Ctx) (p : DensePoly E)
 /-- Check one node, reusing accepted children after exact list binding checks.
 The local node checker still validates every supplied query and matrix witness. -/
 @[expose] def step (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
-    (memo : Array (Checked sign context p a b)) (entry : Entry E Ctx) :
+    (memo : Array (Checked sign context p a b)) (entry : Entry E Ctx)
+    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
+      (EndpointSigns.ofSign sign)) := none) :
     Option (Checked sign context p a b) := do
+  let n := entry.node
+  match entry.children with
+  | none =>
+    if h : (decide (n.queries.length ≤ 1) &&
+        decide (n.system.columns.toList = leafColumns n.queries.length) &&
+        decide (n.system.rows.toList = leafRows n.queries.length) &&
+        n.check sign context p a b n.queries shared) = true then
+      return ⟨.leaf n, by
+        change (decide (n.queries.length ≤ 1) &&
+          decide (n.system.columns.toList = leafColumns n.queries.length) &&
+          decide (n.system.rows.toList = leafRows n.queries.length) &&
+          n.check sign context p a b n.queries) = true
+        rw [Node.check_cache] at h
+        exact h⟩
+    else none
+  | some (left, right) =>
+    let l ← memo[left]?
+    let r ← memo[right]?
+    if hl : l.value.node.queries = n.queries.take (n.queries.length / 2) then
+      if hr : r.value.node.queries = n.queries.drop (n.queries.length / 2) then
+        if h : (decide (1 < n.queries.length) &&
+            decide (n.system.columns.toList = product l.value.node.system.support
+              r.value.node.system.support) &&
+            decide (n.system.rows.toList = product l.value.node.rows r.value.node.rows) &&
+            n.check sign context p a b n.queries shared) = true then
+          return ⟨.split n l.value r.value, by
+            have hleft := l.accepted
+            have hright := r.accepted
+            rw [hl] at hleft
+            rw [hr] at hright
+            simp only [Node.check_cache, Bool.and_eq_true] at h
+            simp only [Replay.node, Replay.check, Bool.and_eq_true]
+            exact ⟨⟨⟨⟨⟨h.1.1.1, hleft⟩, hright⟩, h.1.1.2⟩, h.1.2⟩, h.2⟩⟩
+        else none
+      else none
+    else none
+
+/-- Sharing domain evidence preserves the exact checked step, including its
+returned literal tree and every rejection branch. -/
+theorem step_eq (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
+    (memo : Array (Checked sign context p a b)) (entry : Entry E Ctx)
+    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
+      (EndpointSigns.ofSign sign))) :
+    step sign context p a b memo entry shared = (do
   let n := entry.node
   match entry.children with
   | none =>
@@ -79,7 +125,17 @@ The local node checker still validates every supplied query and matrix witness. 
             exact ⟨⟨⟨⟨⟨h.1.1.1, hleft⟩, hright⟩, h.1.1.2⟩, h.1.2⟩, h.2⟩⟩
         else none
       else none
-    else none
+    else none) := by
+  simp only [step, Node.check_cache, Replay.check]
+  rfl
+
+/-- A supplied validated domain does not affect the checked graph step. -/
+theorem step_cache (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
+    (memo : Array (Checked sign context p a b)) (entry : Entry E Ctx)
+    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
+      (EndpointSigns.ofSign sign))) :
+    step sign context p a b memo entry shared = step sign context p a b memo entry := by
+  simp only [step_eq]
 
 /-- Validate all references and nodes once, then bind the selected root's exact
 query list. The returned evidence proves acceptance by the literal tree checker;
@@ -88,13 +144,30 @@ assert root-count semantics, which still require the companion query bridge. -/
 @[expose] def replay? (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
     (qs : List (DensePoly E)) (dag : Dag E Ctx) :
     Option { t : Replay E Ctx // t.check sign context p a b qs = true } := do
+  let shared := dag.entries[0]?.bind fun entry =>
+    entry.node.moments.toArray[0]?.bind fun cert =>
+      TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
+  let memo ← dag.entries.foldlM (init := #[]) fun memo entry => do
+    let next ← step sign context p a b memo entry shared
+    pure (memo.push next)
+  let root ← memo[dag.root]?
+  if h : root.value.node.queries = qs then
+    return ⟨root.value, by simpa only [h] using root.accepted⟩
+  else none
+
+/-- Domain sharing across graph nodes preserves the original prefix replay,
+including the exact returned tree, literal bindings and every rejection. -/
+theorem replay_eq (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
+    (qs : List (DensePoly E)) (dag : Dag E Ctx) :
+    replay? sign context p a b qs dag = (do
   let memo ← dag.entries.foldlM (init := #[]) fun memo entry => do
     let next ← step sign context p a b memo entry
     pure (memo.push next)
   let root ← memo[dag.root]?
   if h : root.value.node.queries = qs then
     return ⟨root.value, by simpa only [h] using root.accepted⟩
-  else none
+  else none) := by
+  simp only [replay?, step_cache]
 
 /-- Boolean acceptance for supplied graph literals. -/
 @[expose] def check (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)

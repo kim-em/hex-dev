@@ -25,11 +25,28 @@ variable [One E] [Add E] [Sub E] [Mul E] [NatCast E]
 positive reduction chain. All query/domain/context bindings remain literal. -/
 @[expose] def checkMoment [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
     (p : DensePoly E) (a b : Endpoint E) (qs : List (DensePoly E)) (es : List Nat)
-    (value : Int) (cert : TarskiCertificate E E Ctx) (reduction : Option (Reduction E)) : Bool :=
+    (value : Int) (cert : TarskiCertificate E E Ctx) (reduction : Option (Reduction E))
+    (cache : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
+      (EndpointSigns.ofSign sign)) := none) : Bool :=
   (match reduction with
    | none => decide (qs.length = es.length) && es.all (· ≤ 2)
    | some r => r.check sign p qs es) &&
-  Sturm.check sign context p (queryPoly qs es reduction) a b value cert
+  Sturm.checkCached sign context p
+    (queryPoly qs es reduction) a b value cache cert
+
+/-- Optional domain reuse preserves every moment result, independently of the
+cache contents and the validity or provenance of the supplied certificate. -/
+theorem checkMoment_eq [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
+    (p : DensePoly E) (a b : Endpoint E) (qs : List (DensePoly E)) (es : List Nat)
+    (value : Int) (cert : TarskiCertificate E E Ctx) (reduction : Option (Reduction E))
+    (cache : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
+      (EndpointSigns.ofSign sign))) :
+    checkMoment sign context p a b qs es value cert reduction cache =
+      ((match reduction with
+        | none => decide (qs.length = es.length) && es.all (· ≤ 2)
+        | some r => r.check sign p qs es) &&
+      Sturm.check sign context p (queryPoly qs es reduction) a b value cert) := by
+  simp only [checkMoment, Sturm.checkCached_eq]
 
 /-- Accepted moment replay always includes checked query evidence, regardless
 of the chosen product representation. -/
@@ -38,7 +55,7 @@ theorem checkMoment_query [DecidableEq Ctx] {sign : E → Int} {context : Ctx}
     {value : Int} {cert : TarskiCertificate E E Ctx} {reduction : Option (Reduction E)}
     (h : checkMoment sign context p a b qs es value cert reduction = true) :
     Sturm.check sign context p (queryPoly qs es reduction) a b value cert = true := by
-  simp only [checkMoment, Bool.and_eq_true] at h
+  simp only [checkMoment_eq, Bool.and_eq_true] at h
   exact h.2
 
 /-- A supplied reduction is checked before its result is used as a query. -/
@@ -47,7 +64,7 @@ theorem checkMoment_reduction [DecidableEq Ctx] {sign : E → Int} {context : Ct
     {value : Int} {cert : TarskiCertificate E E Ctx} {r : Reduction E}
     (h : checkMoment sign context p a b qs es value cert (some r) = true) :
     r.check sign p qs es = true := by
-  simp only [checkMoment, Bool.and_eq_true] at h
+  simp only [checkMoment_eq, Bool.and_eq_true] at h
   exact h.1
 
 end Hex.SignDet

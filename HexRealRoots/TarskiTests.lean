@@ -5,10 +5,11 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealRoots.Tarski
+public import HexRealRoots.TarskiShared
 public import HexPoly.InterpretTests
 public meta import HexPoly.InterpretTests
 public meta import HexRealRoots.Tarski
+public meta import HexRealRoots.TarskiShared
 public meta import HexRealRoots.SignedRemainderChain
 public meta import HexRealRoots.Basic
 public meta import HexPoly.Dense
@@ -103,7 +104,7 @@ open scoped Hex
 
 
 theorem literal_checks : IntTarskiCertificate.check p 1 interval 2 literal = true := by
-  simp only [IntTarskiCertificate.check, TarskiCertificate.check, SignedRemainderChain.check,
+  simp only [IntTarskiCertificate.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
@@ -117,6 +118,120 @@ theorem literal_checks : IntTarskiCertificate.check p 1 interval 2 literal = tru
   { literal with remainders := { literalChain with chain := #[p, x, 1, 1] } }
 #guard !IntTarskiCertificate.check p 1 interval 2
   { literal with remainders := { literalChain with terminal := some (0, 0) } }
+
+@[expose] def sharedDomain : TarskiCertificate.Domain Int Dyadic Nat :=
+  ⟨7, p, .finite interval.lower, .finite interval.upper, literalChain⟩
+
+@[expose] def sharedLiteral : TarskiCertificate Int Dyadic Nat :=
+  { context := 7, head := p, queryPoly := 1,
+    lower := .finite interval.lower, upper := .finite interval.upper,
+    squarefree := literalChain, remainders := literalChain,
+    lowerSigns := #[1, -1, 1], upperSigns := #[1, 1, 1],
+    lowerVariations := 2, upperVariations := 0, value := 2 }
+
+@[expose] def sharedProbe (raw : TarskiCertificate.Domain Int Dyadic Nat)
+    (cert : TarskiCertificate Int Dyadic Nat) : Bool :=
+  match raw.replay? Int.sign EndpointSigns.intDyadic with
+  | none => false
+  | some d => TarskiCertificate.checkHit Int.sign EndpointSigns.intDyadic
+      7 p 1 (.finite interval.lower) (.finite interval.upper) 2 d cert
+
+private theorem sharedProbe_eq (raw : TarskiCertificate.Domain Int Dyadic Nat)
+    (cert : TarskiCertificate Int Dyadic Nat) :
+    sharedProbe raw cert =
+      (TarskiCertificate.checkDomain Int.sign EndpointSigns.intDyadic
+        raw.head raw.lower raw.upper raw.squarefree &&
+       raw.binds 7 p (.finite interval.lower) (.finite interval.upper) cert.squarefree &&
+       TarskiCertificate.checkBindings 7 p 1 (.finite interval.lower) (.finite interval.upper) 2 cert &&
+       TarskiCertificate.checkQuery Int.sign EndpointSigns.intDyadic p 1
+        (.finite interval.lower) (.finite interval.upper) 2 cert) := by
+  have h := TarskiCertificate.checkHit_replay Int.sign EndpointSigns.intDyadic
+    (7 : Nat) p 1 (.finite interval.lower) (.finite interval.upper) 2 raw cert
+  cases hr : raw.replay? Int.sign EndpointSigns.intDyadic with
+  | none => simpa only [sharedProbe, hr, Option.elim_none] using h
+  | some d => simpa only [sharedProbe, hr, Option.elim_some] using h
+
+set_option maxRecDepth 32768 in
+/-- The ordinary kernel checks successful shared replay and rejects a foreign
+context and a changed squarefree witness despite an otherwise valid query. -/
+theorem shared_kernel :
+    sharedProbe sharedDomain sharedLiteral = true ∧
+    sharedProbe {sharedDomain with context := 8} sharedLiteral = false ∧
+    sharedProbe sharedDomain {sharedLiteral with squarefree :=
+      {literalChain with degrees := #[2, 1, 1]}} = false := by
+  simp only [sharedProbe_eq, TarskiCertificate.checkDomain,
+    TarskiCertificate.checkBindings, TarskiCertificate.checkQuery,
+    TarskiCertificate.Domain.binds, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+#guard !sharedProbe sharedDomain {sharedLiteral with context := 8}
+#guard !sharedProbe {sharedDomain with head := -p} sharedLiteral
+#guard !sharedProbe {sharedDomain with lower := .finite interval.upper} sharedLiteral
+#guard !sharedProbe {sharedDomain with squarefree :=
+  {literalChain with terminal := none}} sharedLiteral
+#guard !sharedProbe sharedDomain {sharedLiteral with remainders :=
+  {literalChain with terminal := none}}
+#guard !sharedProbe sharedDomain {sharedLiteral with value := -2}
+#guard !sharedProbe sharedDomain {sharedLiteral with queryPoly := 0}
+
+-- A single validated domain is reused across both an accepted and a rejected
+-- query result, and each result agrees with the complete checker.
+#guard match sharedDomain.replay? Int.sign EndpointSigns.intDyadic with
+  | none => false
+  | some d =>
+    let checkHit := TarskiCertificate.checkHit Int.sign EndpointSigns.intDyadic
+      7 p 1 (.finite interval.lower) (.finite interval.upper) 2 d
+    let checkFull := TarskiCertificate.check Int.sign EndpointSigns.intDyadic
+      7 p 1 (.finite interval.lower) (.finite interval.upper) 2
+    let bad := {sharedLiteral with upperVariations := 1}
+    checkHit sharedLiteral && !checkHit bad &&
+      checkHit sharedLiteral == checkFull sharedLiteral && checkHit bad == checkFull bad
+
+-- A different valid squarefree witness passes full replay, but cannot reuse
+-- a cache bound to the original literal witness.
+#guard let alternate := {sharedLiteral with squarefree :=
+    {literalChain with initial := ⟨2, 0, 4⟩}}
+  TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 p 1
+    (.finite interval.lower) (.finite interval.upper) 2 alternate &&
+  !sharedProbe sharedDomain alternate &&
+  sharedProbe {sharedDomain with squarefree := alternate.squarefree} alternate
+
+-- Cache misses fall back to complete replay, while malformed evidence never
+-- inherits acceptance from another query's valid squarefree witness.
+#guard match sharedDomain.replay? Int.sign EndpointSigns.intDyadic with
+  | none => false
+  | some d =>
+    let check := TarskiCertificate.checkCached Int.sign EndpointSigns.intDyadic
+      7 p 1 (.finite interval.lower) (.finite interval.upper) 2 (some d)
+    let alternate := {sharedLiteral with squarefree :=
+      {literalChain with initial := ⟨2, 0, 4⟩}}
+    check sharedLiteral && check alternate &&
+      !check {alternate with squarefree := {alternate.squarefree with terminal := none}} &&
+      !check {sharedLiteral with context := 8}
+
+/-- info: 'Hex.TarskiCertificate.checkCached_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms TarskiCertificate.checkCached_eq
+
+/-- info: 'Hex.TarskiCertificate.check_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms TarskiCertificate.check_eq
+/-- info: 'Hex.TarskiCertificate.Domain.replay_data' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms TarskiCertificate.Domain.replay_data
+/-- info: 'Hex.TarskiCertificate.checkHit_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms TarskiCertificate.checkHit_eq
+/-- info: 'Hex.TarskiCertificate.checkHit_replay' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms TarskiCertificate.checkHit_replay
+/-- info: 'Hex.TarskiCertificate.checkHit_checks' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms TarskiCertificate.checkHit_checks
+/-- info: 'Hex.TarskiTests.shared_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms shared_kernel
 
 namespace Noncanonical
 open HexPoly.InterpretTests

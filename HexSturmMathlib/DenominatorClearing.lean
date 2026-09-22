@@ -322,7 +322,7 @@ theorem certificate_checks {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
   have hv := (HexRealRootsMathlib.Tarski.check_value Sturm.orderSign
     (EndpointSigns.ofSign Sturm.orderSign) context p g
     (.finite I.lower.toRat) (.finite I.upper.toRat) value cert h).2
-  simp only [Sturm.check, TarskiCertificate.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+  simp only [Sturm.check, TarskiCertificate.check_eq, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
   obtain ⟨hctx, _, _, _, _, _, hg, hsf, hc, hr, _⟩ := h
   have hsf' := chain_checks p 1 (1 : ZPoly) 1 (by decide) (by simp [HexPolyZMathlib.toPolyℚ]) cert.squarefree hsf
   have hr' := chain_checks p g (ZPoly.clearDenominators g).2 (ZPoly.clearDenominators g).1
@@ -332,7 +332,7 @@ theorem certificate_checks {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
   have hv' : value = (TarskiCertificate.clearDenominators p g I cert).value := by
     simpa only [TarskiCertificate.clearDenominators, TarskiCertificate.fromChains, signs_eq p (ZPoly.clearDenominators g).1]
       using hv
-  simp only [TarskiCertificate.clearDenominators, TarskiCertificate.check, TarskiCertificate.fromChains, hctx, hv',
+  simp only [TarskiCertificate.clearDenominators, TarskiCertificate.check_eq, TarskiCertificate.fromChains, hctx, hv',
     guards p I hg, hsf', hr', lastIsConstant_eq, hc, decide_true,
     TarskiCertificate.signs_bounded Int.sign EndpointSigns.intDyadic HexRealRootsMathlib.Tarski.integer_signs,
     Bool.and_true]

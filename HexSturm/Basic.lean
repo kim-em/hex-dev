@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealRoots.Tarski
+public import HexRealRoots.TarskiShared
 
 public section
 
@@ -137,6 +137,22 @@ theorem prepare_isSome [Neg E] [Inv E] (sign : E → Int) (p f : DensePoly E) (a
     (p f : DensePoly E) (a b : Endpoint E) (value : Int) (cert : TarskiCertificate E E Ctx) : Bool :=
   TarskiCertificate.check sign (EndpointSigns.ofSign sign) context p f a b value cert
 
+/-- Reuse checked domain evidence through the same shared finite query checker.
+Cache misses retain full replay, including for different valid witnesses. -/
+@[expose] def checkCached {Ctx : Type v} [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
+    (p f : DensePoly E) (a b : Endpoint E) (value : Int)
+    (cache : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign (EndpointSigns.ofSign sign)))
+    (cert : TarskiCertificate E E Ctx) : Bool :=
+  TarskiCertificate.checkCached sign (EndpointSigns.ofSign sign) context p f a b value cache cert
+
+/-- Optional domain reuse preserves the complete field-query checker result. -/
+theorem checkCached_eq {Ctx : Type v} [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
+    (p f : DensePoly E) (a b : Endpoint E) (value : Int)
+    (cache : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign (EndpointSigns.ofSign sign)))
+    (cert : TarskiCertificate E E Ctx) :
+    checkCached sign context p f a b value cache cert = check sign context p f a b value cert :=
+  TarskiCertificate.checkCached_eq sign (EndpointSigns.ofSign sign) context p f a b value cache cert
+
 /-- Accepted replay retains every literal binding, independently of semantic
 coefficient interpretation or producer provenance. -/
 theorem check_bindings {Ctx : Type v} [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
@@ -144,7 +160,7 @@ theorem check_bindings {Ctx : Type v} [DecidableEq Ctx] (sign : E → Int) (cont
     (h : check sign context p f a b value cert = true) :
     cert.context = context ∧ cert.head = p ∧ cert.queryPoly = f ∧
       cert.lower = a ∧ cert.upper = b ∧ cert.value = value := by
-  simp only [check, TarskiCertificate.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+  simp only [check, TarskiCertificate.check_eq, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
   exact ⟨h.1, h.2.1, h.2.2.1, h.2.2.2.1, h.2.2.2.2.1, h.2.2.2.2.2.1⟩
 
 end Hex.Sturm

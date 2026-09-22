@@ -72,7 +72,7 @@ theorem integer_check_domain (p g : ZPoly) (I : DyadicInterval) (value : Int) (c
     p ≠ 0 ∧ Squarefree (toPolyℝ p) ∧
       (toPolyℝ p).eval (Dyadic.toReal I.lower) ≠ 0 ∧
       (toPolyℝ p).eval (Dyadic.toReal I.upper) ≠ 0 := by
-  simp only [IntTarskiCertificate.check, TarskiCertificate.check, Bool.and_eq_true,
+  simp only [IntTarskiCertificate.check, TarskiCertificate.check_eq, Bool.and_eq_true,
     decide_eq_true_eq, and_assoc] at hc
   obtain ⟨_, _, _, _, _, _, hg, hsf, hconst, _⟩ := hc
   obtain ⟨hp, ha, hb⟩ := (integer_checkEndpoints p I).mp hg

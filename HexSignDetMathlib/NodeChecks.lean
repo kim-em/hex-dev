@@ -82,7 +82,7 @@ theorem buildNode_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
     | some r =>
       simp only [hp] at hprep
       exact (QueryReduction.check_bounds hprep).1
-  simp only [checkMoment, Bool.and_eq_true]
+  simp only [checkMoment_eq, Bool.and_eq_true]
   constructor
   · rw [(he.2 i).1]
     unfold nodeReduction

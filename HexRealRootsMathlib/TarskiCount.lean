@@ -167,7 +167,7 @@ theorem integer_check_count {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
   have hv := (check_value Int.sign EndpointSigns.intDyadic context p 1
     (.finite I.lower) (.finite I.upper) value cert h).2
   have hh := h
-  simp only [TarskiCertificate.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at hh
+  simp only [TarskiCertificate.check_eq, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at hh
   obtain ⟨_, _, _, _, _, _, _, hsf, hlast, hr, _⟩ := hh
   have hsq := (integer_squarefree p cert.squarefree hsf).mp hlast
   have ht := (integer_squarefree p cert.remainders hr).mpr hsq
@@ -194,7 +194,7 @@ theorem integer_check_rootSum {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
     value = rootSum (toPolyℝ p) 1 (.finite (Dyadic.toReal I.lower))
       (.finite (Dyadic.toReal I.upper)) := by
   have hh := h
-  simp only [TarskiCertificate.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at hh
+  simp only [TarskiCertificate.check_eq, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at hh
   obtain ⟨_, _, _, _, _, _, hend, hsf, hlast, _⟩ := hh
   have hs := (integer_squarefree p cert.squarefree hsf).mp hlast
   have hb := ((integer_checkEndpoints p I).mp hend).2.2
@@ -238,7 +238,7 @@ theorem integer_check_total {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
   have hv := (check_value Int.sign EndpointSigns.intDyadic context p 1
     .negInf .posInf value cert h).2
   have hh := h
-  simp only [TarskiCertificate.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at hh
+  simp only [TarskiCertificate.check_eq, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at hh
   obtain ⟨_, _, _, _, _, _, _, hsf, hlast, hr, _⟩ := hh
   have hsq := (integer_squarefree p cert.squarefree hsf).mp hlast
   have ht := (integer_squarefree p cert.remainders hr).mpr hsq
