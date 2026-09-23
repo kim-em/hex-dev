@@ -7,7 +7,10 @@ Authors: Kim Morrison
 module
 
 public meta import HexRCF.RealCoefficients.Reify
+public import HexRCF.RealCoefficients.Coefficients
+public import HexRCF.RealCoefficients.Specialize
 
-/-! Closed-coefficient source preparation for the optional RCF adapter.
+/-! Algebraic coefficient conversion, source preparation and polynomial
+specialization for the optional RCF adapter.
 No coefficient solver is registered; source equivalence does not discharge
 coefficient authentication, divisor guards or decision replay. -/

@@ -1589,7 +1589,7 @@ libraries:
     done_through: 0
     status: active
   HexRCF:
-    deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib, HexRealFormulaMathlib]
+    deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib, HexRealFormulaMathlib, HexRealAlgebraicMathlib]
     mathlib: true
     done_through: 7
     status: active

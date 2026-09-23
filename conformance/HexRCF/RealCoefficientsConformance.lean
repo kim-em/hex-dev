@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRCF.RealCoefficients
+import HexRealAlgebraicMathlib.Complex
 import Lean.Elab.Command
 
 /-! Exact source-schema equivalences and original divisor retention. -/
@@ -13,6 +14,33 @@ open Lean Meta Qq Hex.RealFormula
 open Hex.RCF.RealCoefficients
 
 namespace Hex.RCF.RealCoefficientsConformance
+
+private def cubic : Hex.RealAlgebraicNumber :=
+  (Hex.RealAlgebraicNumber.ofAlgebraic?
+    (Hex.ZPoly.rootNear #p[-1, -1, 0, 1] 1.3)).getD 0
+
+private def fieldCoefficient : Hex.RealAlgebraicNumber :=
+  Coefficients.ofField cubic (cubic.toAlgebraic.toQAdjoin ^ 2 - 1)
+
+-- These checks exercise existing root selection and fixed-field arithmetic.
+#guard cubic ^ 3 = cubic + 1
+#guard fieldCoefficient * cubic = 1
+
+private def coordinate (i : Fin 3) : RealFormula.Poly 3 := MvPoly.X i
+
+private def cancellation : RealFormula.Poly 3 :=
+  (coordinate 0 - coordinate 1) * coordinate 2 ^ 3 + coordinate 2 ^ 2 +
+    coordinate 0 * coordinate 2 + 1
+
+private def specialized := Specialize.polynomial (fun _ : Fin 2 => cubic) cancellation
+
+-- Cancellation happens after interpreting the parameters, not at source syntax.
+#guard cancellation.degreeOf 2 = 3
+#guard specialized.natDegree = 2
+#guard specialized.coeff 0 = 1
+#guard specialized.coeff 1 = cubic
+#guard specialized.coeff 2 = 1
+#guard specialized.eval 1 = cubic + 2
 
 private meta def prepared (source : Expr) (guards : Nat) : MetaM Reify.Source := do
   let result ← match ← Reify.prepare source with
@@ -35,6 +63,16 @@ private meta def unsupported (source : Expr) : MetaM Unit := do
   | .error (.unsupported _ _) => pure ()
   | .error e => throwError "unexpected error: {Hex.RealFormula.Reify.Error.toMessageData e}"
   | .ok _ => throwError "unsupported source accepted"
+
+run_meta do
+  let _ ← prepared q(∀ x : ℝ, x ^ 2 + cubic.toReal * x + 1 > 0) 0
+  let _ ← prepared q(∀ x : ℝ, x / cubic.toReal = fieldCoefficient.toReal * x) 1
+  let _ ← prepared q(∀ x : ℝ, x * (0 / (cubic.toReal - cubic.toReal)) = 0) 1
+  let _ ← prepared q(∀ x : ℝ, x + Hex.AlgebraicNumber.I.re.toReal = x) 0
+  let _ ← prepared q(∀ x : ℝ,
+    x + ((Hex.RealAlgebraicNumber.ofAlgebraic? Hex.AlgebraicNumber.I).getD 0).toReal = x) 0
+  unsupported q(∀ x : ℝ, x + Hex.AlgebraicNumber.I.toComplex.re = x)
+  pure ()
 
 run_meta do
   let _ ← prepared q(∀ x : ℝ, x ^ 2 > Real.pi - 4) 0
@@ -169,6 +207,26 @@ theorem quotientSchema : ∃ (n : ℕ) (f : Prenex n) (ρ : Fin n → ℝ),
 theorem intervalSchema : ∃ (n : ℕ) (f : Prenex n) (ρ : Fin n → ℝ),
     Prenex.toProp f ρ ↔ (∃ x ∈ Set.Ioc (1 : ℝ) 1, x = Real.exp 1) :=
   source_schema% (∃ x ∈ Set.Ioc (1 : ℝ) 1, x = Real.exp 1)
+
+theorem fieldSchema : ∃ (n : ℕ) (f : Prenex n) (ρ : Fin n → ℝ),
+    Prenex.toProp f ρ ↔ (∀ x : ℝ, x / cubic.toReal = fieldCoefficient.toReal * x) :=
+  source_schema% (∀ x : ℝ, x / cubic.toReal = fieldCoefficient.toReal * x)
+
+/-- info: 'Hex.RCF.RealCoefficientsConformance.fieldSchema' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms fieldSchema
+
+/-- info: 'Hex.RCF.RealCoefficients.Specialize.polynomial_eval' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Specialize.polynomial_eval
+
+/-- info: 'Hex.RCF.RealCoefficients.Coefficients.ofField_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Coefficients.ofField_value
+
+/-- info: 'Hex.RCF.RealCoefficients.Coefficients.root_alias' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Coefficients.root_alias
 
 /-- info: 'Hex.RCF.RealCoefficientsConformance.piSchema' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

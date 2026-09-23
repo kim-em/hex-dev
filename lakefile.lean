@@ -536,7 +536,8 @@ lean_lib HexRCFRealFormula where
 @[default_target]
 lean_lib HexRCFRealCoefficients where
   srcDir := "adapters"
-  globs := #[`HexRCF.RealCoefficients, `HexRCF.RealCoefficients.Reify]
+  globs := #[`HexRCF.RealCoefficients, `HexRCF.RealCoefficients.Reify,
+    `HexRCF.RealCoefficients.Specialize, `HexRCF.RealCoefficients.Coefficients]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction

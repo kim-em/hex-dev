@@ -8,6 +8,7 @@ module
 
 public meta import HexRealFormulaMathlib.Reify
 public meta import HexRCF.Reify
+public import HexRealAlgebraicMathlib.Basic
 public import Mathlib.Analysis.SpecialFunctions.Exp
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 
@@ -81,6 +82,7 @@ private partial def castGuards (e : Expr) : ScanM Unit := do
 private partial def scalar (source : Expr) : ScanM Unit := do
   let e := source.consumeMData
   unless isClosed e do reject e "coefficient must be closed"
+  if e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 then return ()
   if e.isConstOf ``Real.pi then return ()
   if e.isAppOfArity ``Real.exp 1 then
     let argument := e.appArg!.consumeMData
@@ -280,7 +282,7 @@ private def prepareCore (original : Expr) (config : Hex.RealFormula.Reify.Config
       set state
       return result
 
-/-- Build a source schema for closed rational/π/e coefficient expressions.
+/-- Build a source schema for closed rational, real algebraic and π/e coefficient expressions.
 Retain all original divisor obligations, including those beneath cancellation
 and zero multiplication. This is frontend preparation only: guard discharge,
 authenticated coefficient interpretation and decision replay are still required.
