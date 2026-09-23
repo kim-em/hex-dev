@@ -6,6 +6,10 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.Isolations
+public import HexRCF.RealCoefficients.IsolationSemantics
+public import HexRCF.RealCoefficients.RootAliases
+public import HexRealAlgebraicMathlib.Laws
+public meta import HexRCF.RealCoefficients.IsolationBuild
 public import HexSturm.Fixtures
 public meta import HexRCF.RealCoefficients.IsolationCheck
 public meta import HexSturm.Fixtures
@@ -240,5 +244,35 @@ theorem left_sample_sign :
 /-- info: 'Hex.RCF.IsoTests.accepted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms accepted
+
+/-- info: 'Hex.RCF.RealCoefficients.IsolationReplay.check_roots' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms RealCoefficients.IsolationReplay.check_roots
+
+/-- info: 'Hex.RCF.RealCoefficients.IsolationReplay.check_sign' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms RealCoefficients.IsolationReplay.check_sign
+
+/-- info: 'Hex.RCF.RealCoefficients.IsolationReplay.open_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms RealCoefficients.IsolationReplay.open_sign
+
+-- The same producer accepts a head with a nonquadratic algebraic coefficient.
+@[expose] def cubic : RealAlgebraicNumber :=
+  RealCoefficients.Coefficients.root 2 3 (by norm_num)
+@[expose] def algebraicHead : DensePoly RealAlgebraicNumber :=
+  DensePoly.ofCoeffs #[-cubic, 0, 1]
+
+#guard (RealCoefficients.isolateAt 7 algebraicHead 8).isSome
+
+/-- info: 'Hex.RCF.RealCoefficients.isolateAt_roots' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms RealCoefficients.isolateAt_roots
 
 end Hex.RCF.IsoTests

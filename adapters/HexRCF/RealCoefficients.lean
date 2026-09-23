@@ -14,6 +14,7 @@ public import HexRCF.RealCoefficients.Specialize
 public import HexRCF.RealCoefficients.Formula
 public import HexRCF.RealCoefficients.IsolationBuild
 public import HexRCF.RealCoefficients.Isolations
+public import HexRCF.RealCoefficients.IsolationSemantics
 
 /-! Algebraic coefficient conversion, source preparation, polynomial
 specialization and checked real-root isolation for the optional RCF adapter.

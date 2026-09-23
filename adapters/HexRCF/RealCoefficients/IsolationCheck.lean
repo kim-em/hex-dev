@@ -15,7 +15,8 @@ namespace Hex.RCF.RealCoefficients
 /-- Existing dyadic cell isolations with shared Sturm–Tarski evidence for
 one root in each interval and for the total number of distinct real roots. -/
 structure IsolationReplay (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
-  /-- The original dyadic intervals, in cell order. -/
+  /-- The dyadic intervals in cell order. The older `IsolationCert` Sturm
+  checkers are not consulted; `IsolationReplay.check` uses open Tarski queries. -/
   isolations : IsolationCert
   /-- Constant-one query on the entire real line. -/
   total : TarskiCertificate E E Ctx
