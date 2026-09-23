@@ -382,4 +382,57 @@ run_meta do
 #guard_msgs in
 #print axioms Coefficients.ofField_toReal
 
+private def xPoly : Hex.DensePoly Rat := Hex.DensePoly.ofCoeffs #[0, 1]
+private def xSquare : Hex.DensePoly Rat := xPoly * xPoly
+
+private def radical : RadicalCert Rat Nat :=
+  { context := 7, core := xPoly, quotient := xPoly,
+    cofactor := 1, exponent := 0 }
+
+/-- Repeated roots are removed by the two exact radical identities. -/
+theorem radical_checked : radical.check 7 xSquare = true := by decide +kernel
+
+example : radical.core ≠ (0 : Hex.DensePoly Rat) :=
+  radical.core_ne_zero 7 xSquare radical_checked
+
+example : radical.exponent ≤ xSquare.natDegree :=
+  radical.check_bound 7 xSquare radical_checked
+
+#guard radical.check 7 xSquare
+#guard !radical.check 8 xSquare
+#guard !radical.check 7 (xSquare + 1)
+#guard !({ radical with cofactor := 0 }).check 7 xSquare
+#guard !({ radical with exponent := 1 }).check 7 xSquare
+#guard !({ radical with exponent := 1000000 }).check 7 xSquare
+
+example (x : ℝ) :
+    (HexPolyMathlib.Interpret.interpret (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) xPoly).IsRoot x ↔
+    (HexPolyMathlib.Interpret.interpret (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) xSquare).IsRoot x := by
+  exact radical.roots (fun q : Rat => (q : ℝ))
+    (fun _ => Rat.cast_eq_zero) (by simp)
+    (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
+    (fun _ _ => Rat.cast_mul _ _) 7 xSquare radical_checked x
+
+private def sourceSquare : RealFormula.Poly 1 := MvPoly.X 0 ^ 2
+private def specializedSquare : Hex.DensePoly Hex.RealAlgebraicNumber :=
+  Specialize.polynomial (fun i : Fin 0 => i.elim0) sourceSquare
+
+example (cert : RadicalCert Hex.RealAlgebraicNumber Nat)
+    (h : cert.check 7 specializedSquare = true) (x : ℝ) :
+    (HexPolyMathlib.Interpret.interpret Hex.RealAlgebraicNumber.toReal
+      RadicalCert.zero_iff cert.core).IsRoot x ↔
+    (HexPolyMathlib.Interpret.interpret Hex.RealAlgebraicNumber.toReal
+      RadicalCert.zero_iff specializedSquare).IsRoot x :=
+  cert.roots_algebraic 7 specializedSquare h x
+
+/-- info: 'Hex.RCF.RealCoefficients.RadicalCert.roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms RadicalCert.roots
+
+/-- info: 'Hex.RCF.RealCoefficients.RadicalCert.roots_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms RadicalCert.roots_algebraic
+
 end Hex.RCF.RealCoefficientsConformance
