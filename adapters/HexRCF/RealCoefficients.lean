@@ -12,6 +12,8 @@ public import HexRCF.RealCoefficients.RootAliases
 public import HexRCF.RealCoefficients.Coefficients
 public import HexRCF.RealCoefficients.Specialize
 public import HexRCF.RealCoefficients.Formula
+public import HexRCF.RealCoefficients.Field
+public import HexRCF.RealCoefficients.LiteralSign
 
 /-! Algebraic coefficient conversion, source preparation and polynomial
 specialization for the optional RCF adapter.
