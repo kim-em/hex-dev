@@ -529,7 +529,10 @@ def main() -> int:
                     if (
                         owner in libraries
                         and owner != "HexManual"
-                        and not may_import(owner, imported_root, libraries, reachable)
+                        and not may_import(
+                            owner, imported_root, libraries, reachable,
+                            adapter=rel_path.parts[0] == "adapters",
+                        )
                     ):
                         errors.append(
                             f"{rel_path}:{line_no} imports {imported_root} without a dependency path from {owner}"

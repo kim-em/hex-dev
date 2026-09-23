@@ -8,6 +8,8 @@ module
 
 public meta import HexRealFormulaMathlib.Reify
 public meta import HexRCF.Reify
+public meta import HexRCF.RealCoefficients.Interpret
+public import HexRealAlgebraicMathlib.Basic
 public import Mathlib.Analysis.SpecialFunctions.Exp
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 
@@ -81,6 +83,7 @@ private partial def castGuards (e : Expr) : ScanM Unit := do
 private partial def scalar (source : Expr) : ScanM Unit := do
   let e := source.consumeMData
   unless isClosed e do reject e "coefficient must be closed"
+  if e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 then return ()
   if e.isConstOf ``Real.pi then return ()
   if e.isAppOfArity ``Real.exp 1 then
     let argument := e.appArg!.consumeMData
@@ -92,6 +95,14 @@ private partial def scalar (source : Expr) : ScanM Unit := do
     return ()
   let args := e.getAppArgs
   let op := e.getAppFn.constName?
+  if e.isAppOfArity ``Real.sqrt 1 then
+    Hex.RealFormula.Reify.charge .exponent 2
+    return ← scalar e.appArg!
+  if e.isAppOfArity ``Real.rpow 2 then
+    scalar args[0]!
+    scalar args[1]!
+    let _ ← Coefficients.rootDegree args[1]!
+    return ()
   if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].any (op == some ·) &&
       args.size == 6 then
     unless (← isReal args[4]!) && (← isReal args[5]!) do
@@ -115,8 +126,17 @@ private partial def scalar (source : Expr) : ScanM Unit := do
     if op == some ``Inv.inv then modify (·.push args[2]!)
     return ()
   if e.isAppOfArity ``HPow.hPow 6 then
+    if (← inferType args[5]!).isConstOf ``Real then
+      unless ← isReal args[4]! do reject e "coefficient base must have type Real"
+      let a : Q(ℝ) := args[4]!
+      let p : Q(ℝ) := args[5]!
+      unless ← isDefEq e q($a ^ $p) do reject e "nonstandard real power instance"
+      scalar args[4]!
+      scalar args[5]!
+      let _ ← Coefficients.rootDegree args[5]!
+      return ()
     unless (← inferType args[5]!).isConstOf ``Nat do
-      reject e "coefficient exponents must be natural literals"
+      reject e "coefficient exponent must be a natural literal or positive reciprocal root degree"
     let some exponent ← getNatValue? args[5]!
       | reject e "coefficient exponents must be natural literals"
     Hex.RealFormula.Reify.charge .exponent exponent
@@ -280,7 +300,7 @@ private def prepareCore (original : Expr) (config : Hex.RealFormula.Reify.Config
       set state
       return result
 
-/-- Build a source schema for closed rational/π/e coefficient expressions.
+/-- Build a source schema for closed rational, real algebraic and π/e coefficient expressions.
 Retain all original divisor obligations, including those beneath cancellation
 and zero multiplication. This is frontend preparation only: guard discharge,
 authenticated coefficient interpretation and decision replay are still required.

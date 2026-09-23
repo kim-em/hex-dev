@@ -158,6 +158,7 @@ VALID_STATUSES = {"active", "planned", "draft"}
 PHASE4_COMPARATOR_CLASSES = {"gating", "informational"}
 LIBRARY_FIELDS = {
     "deps",
+    "adapter_deps",
     "mathlib",
     "correspondence_only",
     "done_through",
@@ -199,6 +200,7 @@ class LibraryInfo:
     proof_probes: tuple[str, ...] = ()
     phase4: Phase4Info | None = None
     external: str | None = None
+    adapter_deps: tuple[str, ...] = ()
 
     @property
     def is_active(self) -> bool:
@@ -240,6 +242,9 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         deps = current_fields["deps"]
         if not isinstance(deps, list) or not all(isinstance(dep, str) for dep in deps):
             raise ValueError(f"{current_name} has malformed deps")
+        adapter_deps = current_fields.get("adapter_deps", [])
+        if not isinstance(adapter_deps, list) or not all(isinstance(dep, str) for dep in adapter_deps):
+            raise ValueError(f"{current_name} has malformed adapter_deps")
         mathlib = current_fields["mathlib"]
         if not isinstance(mathlib, bool):
             raise ValueError(f"{current_name} has malformed mathlib flag")
@@ -308,6 +313,7 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         libs[current_name] = LibraryInfo(
             name=current_name,
             deps=tuple(deps),
+            adapter_deps=tuple(adapter_deps),
             mathlib=mathlib,
             done_through=done_through,
             status=status,
@@ -356,7 +362,7 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         raise ValueError("no libraries found in libraries.yml")
 
     for name, info in libs.items():
-        for dep in info.deps:
+        for dep in (*info.deps, *info.adapter_deps):
             if dep not in libs:
                 raise ValueError(f"{name} depends on unknown library {dep}")
 
@@ -380,7 +386,7 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
     for name, info in libs.items():
         if not info.is_active:
             continue
-        for dep in info.deps:
+        for dep in (*info.deps, *info.adapter_deps):
             if not libs[dep].is_active:
                 raise ValueError(
                     f"{name} (status: active) depends on {dep} "
@@ -689,6 +695,8 @@ def may_import(
     l_b: str,
     libraries: OrderedDict[str, LibraryInfo],
     closure: dict[str, set[str]] | None = None,
+    *,
+    adapter: bool = False,
 ) -> bool:
     """True iff a file in library ``l_a`` may import a module from ``l_b``.
 
@@ -700,7 +708,9 @@ def may_import(
 
     Pass a precomputed ``closure`` (from ``reachable_dependencies``) when
     making many calls to avoid recomputing the topological closure each
-    time; otherwise it is built on demand.
+    time; otherwise it is built on demand. Development adapter sources may
+    additionally use their owner's ``adapter_deps`` and those libraries' normal
+    dependencies. These edges do not enter the published library closure.
     """
     if l_a not in libraries:
         raise ValueError(f"unknown library {l_a!r}")
@@ -710,7 +720,12 @@ def may_import(
         return True
     if closure is None:
         closure = reachable_dependencies(libraries)
-    return l_b in closure[l_a]
+    if l_b in closure[l_a]:
+        return True
+    return adapter and any(
+        l_b == dep or l_b in closure[dep]
+        for dep in libraries[l_a].adapter_deps
+    )
 
 
 def pascal_to_spec_path(name: str) -> str:
