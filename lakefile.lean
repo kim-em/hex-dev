@@ -1014,7 +1014,7 @@ lean_lib HexConformance where
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
-    ++ #[`HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.Infinitesimal, `HexSignDetMathlib.Conformance].map Glob.one
+    ++ #[`HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.FastCheck, `HexSignDet.Infinitesimal, `HexSignDetMathlib.Conformance].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]
