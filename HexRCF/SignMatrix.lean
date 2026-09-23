@@ -9,7 +9,6 @@ module
 public import HexRCF.SignMatrixCheck
 public import HexRCF.Carrier
 public import HexRCF.CommonRoot
-public import Mathlib.Topology.Instances.Sign
 
 public section
 
@@ -49,50 +48,6 @@ theorem ofInt_spec (value : Int) :
     simp [ofInt, toInt]
 
 end Sign
-
-end Hex.RCF
-
-namespace Polynomial
-
-/-- The sign of a continuous polynomial evaluation is constant on a
-preconnected set containing no root of the polynomial. -/
-theorem sign_eq_of_noRoot {p : Polynomial ℝ} {s : Set ℝ}
-    (hs : IsPreconnected s) (hnz : ∀ z ∈ s, ¬p.IsRoot z)
-    {x y : ℝ} (hx : x ∈ s) (hy : y ∈ s) :
-    SignType.sign (p.eval x) = SignType.sign (p.eval y) := by
-  have hcont : ContinuousOn (SignType.sign ∘ fun z => p.eval z) s := by
-    refine (continuousOn_of_forall_continuousAt fun q hq => ?_).comp
-      p.continuousOn (Set.mapsTo_image (fun z => p.eval z) s)
-    obtain ⟨z, hz, rfl⟩ := hq
-    exact continuousAt_sign_of_ne_zero (fun hzero => hnz z hz hzero)
-  exact (hs.image _ hcont).subsingleton
-    (Set.mem_image_of_mem _ hx) (Set.mem_image_of_mem _ hy)
-
-end Polynomial
-
-namespace Hex.RCF
-
-open HexRealRootsMathlib Polynomial
-
-/-- Polynomial signs are constant on each cell when the defining points
-contain every root. The zero polynomial is handled separately, since its
-root set cannot be contained in a finite list. -/
-theorem Cell.Region.sign_eq {n : Nat} (root : Fin n → ℝ) (hmono : StrictMono root)
-    (p : Polynomial ℝ)
-    (hroots : p = 0 ∨ ∀ z, p.IsRoot z → ∃ i, root i = z)
-    (c : Cell n) {x y : ℝ} (hx : Cell.Region root c x) (hy : Cell.Region root c y) :
-    SignType.sign (p.eval x) = SignType.sign (p.eval y) := by
-  rcases hroots with rfl | hroots
-  · simp
-  cases c with
-  | root i =>
-      simp only [Cell.Region] at hx hy
-      rw [hx, hy]
-  | «open» cut =>
-      apply Polynomial.sign_eq_of_noRoot (Cell.Region.isPreconnected_open root cut) _ hx hy
-      intro z hz hp
-      obtain ⟨i, hi⟩ := hroots z hp
-      exact Cell.Region.open_ne root hmono hz i hi.symm
 
 /-- Exact dyadic Horner evaluation computes the sign of the corresponding
 real-polynomial evaluation. -/

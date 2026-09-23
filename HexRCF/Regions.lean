@@ -10,16 +10,37 @@ public import HexRCF.CellsCheck
 public import Mathlib.Data.Fin.Tuple.Basic
 public import Mathlib.Topology.Order.IntermediateValue
 public import Mathlib.Topology.Instances.Real.Lemmas
+public import Mathlib.Topology.Algebra.Polynomial
+public import Mathlib.Topology.Instances.Sign
 
 public section
 
 /-!
 # Cells cut out by finitely many real points
 
-The same indexed cells describe the real line for any strictly increasing list
-of points. Their partition, order and connectedness depend only on these points,
-so both rational and algebraic coefficient solvers can use these proofs.
+The same indexed cells describe the real line for a finite list of points.
+Strict order gives a partition into nonempty cells; coverage and connectedness
+do not require it. These proofs and polynomial sign constancy serve both the
+rational and algebraic coefficient solvers.
 -/
+
+namespace Polynomial
+
+/-- The sign of a continuous polynomial evaluation is constant on a
+preconnected set containing no root of the polynomial. -/
+theorem sign_eq_of_noRoot {p : Polynomial ℝ} {s : Set ℝ}
+    (hs : IsPreconnected s) (hnz : ∀ z ∈ s, ¬p.IsRoot z)
+    {x y : ℝ} (hx : x ∈ s) (hy : y ∈ s) :
+    SignType.sign (p.eval x) = SignType.sign (p.eval y) := by
+  have hcont : ContinuousOn (SignType.sign ∘ fun z => p.eval z) s := by
+    refine (continuousOn_of_forall_continuousAt fun q hq => ?_).comp
+      p.continuousOn (Set.mapsTo_image (fun z => p.eval z) s)
+    obtain ⟨z, hz, rfl⟩ := hq
+    exact continuousAt_sign_of_ne_zero (fun hzero => hnz z hz hzero)
+  exact (hs.image _ hcont).subsingleton
+    (Set.mem_image_of_mem _ hx) (Set.mem_image_of_mem _ hy)
+
+end Polynomial
 
 namespace Hex.RCF.Cell
 
@@ -239,6 +260,26 @@ theorem isPreconnected_open {n : Nat} (root : Fin n → ℝ) (cut : Fin (n + 1))
       simp [Region, hzero, hleft, hright, Set.mem_Ioo]
     rw [heq]
     exact isPreconnected_Ioo
+
+/-- Polynomial signs are constant on each cell when the defining points
+contain every root. The zero polynomial is handled separately, since its
+root set cannot be contained in a finite list. -/
+theorem sign_eq {n : Nat} (root : Fin n → ℝ) (hmono : StrictMono root)
+    (p : Polynomial ℝ)
+    (hroots : p = 0 ∨ ∀ z, p.IsRoot z → ∃ i, root i = z)
+    (c : Cell n) {x y : ℝ} (hx : Cell.Region root c x) (hy : Cell.Region root c y) :
+    SignType.sign (p.eval x) = SignType.sign (p.eval y) := by
+  rcases hroots with rfl | hroots
+  · simp
+  cases c with
+  | root i =>
+      simp only [Cell.Region] at hx hy
+      rw [hx, hy]
+  | «open» cut =>
+      apply Polynomial.sign_eq_of_noRoot (Cell.Region.isPreconnected_open root cut) _ hx hy
+      intro z hz hp
+      obtain ⟨i, hi⟩ := hroots z hp
+      exact Cell.Region.open_ne root hmono hz i hi.symm
 
 end Region
 

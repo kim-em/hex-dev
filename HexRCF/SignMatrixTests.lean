@@ -333,6 +333,25 @@ example (a x y : ℝ) (hx : a < x) (hy : a < y) :
   · simpa [Cell.Region, root] using hx
   · simpa [Cell.Region, root] using hy
 
+/-- With no roots, the sole cell covers the whole real line, including for
+zero and nonzero constant polynomials. -/
+example (x y : ℝ) :
+    SignType.sign ((0 : Polynomial ℝ).eval x) = SignType.sign ((0 : Polynomial ℝ).eval y) := by
+  apply Cell.Region.sign_eq (n := 0) Fin.elim0 (by intro i; exact Fin.elim0 i)
+    0 (Or.inl rfl) (.open ⟨0, by decide⟩)
+  · simp [Cell.Region]
+  · simp [Cell.Region]
+
+example (x y : ℝ) :
+    SignType.sign ((1 : Polynomial ℝ).eval x) = SignType.sign ((1 : Polynomial ℝ).eval y) := by
+  have hroots : ∀ z : ℝ, (1 : Polynomial ℝ).IsRoot z → ∃ i : Fin 0, Fin.elim0 i = z := by
+    intro z hz
+    simp [Polynomial.IsRoot] at hz
+  apply Cell.Region.sign_eq (n := 0) Fin.elim0 (by intro i; exact Fin.elim0 i)
+    1 (Or.inr hroots) (.open ⟨0, by decide⟩)
+  · simp [Cell.Region]
+  · simp [Cell.Region]
+
 /-- info: 'Hex.RCF.Cell.Region.sign_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Cell.Region.sign_eq
