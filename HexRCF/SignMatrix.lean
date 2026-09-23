@@ -74,6 +74,26 @@ namespace Hex.RCF
 
 open HexRealRootsMathlib Polynomial
 
+/-- Polynomial signs are constant on each cell when the defining points
+contain every root. The zero polynomial is handled separately, since its
+root set cannot be contained in a finite list. -/
+theorem Cell.Region.sign_eq {n : Nat} (root : Fin n → ℝ) (hmono : StrictMono root)
+    (p : Polynomial ℝ)
+    (hroots : p = 0 ∨ ∀ z, p.IsRoot z → ∃ i, root i = z)
+    (c : Cell n) {x y : ℝ} (hx : Cell.Region root c x) (hy : Cell.Region root c y) :
+    SignType.sign (p.eval x) = SignType.sign (p.eval y) := by
+  rcases hroots with rfl | hroots
+  · simp
+  cases c with
+  | root i =>
+      simp only [Cell.Region] at hx hy
+      rw [hx, hy]
+  | «open» cut =>
+      apply Polynomial.sign_eq_of_noRoot (Cell.Region.isPreconnected_open root cut) _ hx hy
+      intro z hz hp
+      obtain ⟨i, hi⟩ := hroots z hp
+      exact Cell.Region.open_ne root hmono hz i hi.symm
+
 /-- Exact dyadic Horner evaluation computes the sign of the corresponding
 real-polynomial evaluation. -/
 theorem evalSign_spec (p : ZPoly) (x : Dyadic) :
@@ -105,11 +125,13 @@ theorem sign_eval_eq_open {carrier : ZPoly} {replay : SturmReplay}
       (HexRealRootsMathlib.Dyadic.toReal (isolations.openPoint cut))) =
       SignType.sign ((toPolyℝ atom).eval x) := by
   let model := isolations.rootModel hreplay hstrict
-  apply Polynomial.sign_eq_of_noRoot (Cell.isPreconnected_open model cut)
-  · intro z hz hatom
-    exact Cell.open_not_root model hz (hroot z hatom)
-  · exact Cell.openPoint_mem isolations hreplay hstrict cut
-  · exact hx
+  apply Cell.Region.sign_eq model.root model.strictMono (toPolyℝ atom)
+    (Or.inr (fun z hz => by
+      obtain ⟨i, hi, _⟩ := model.complete z (hroot z hz)
+      exact ⟨i, hi⟩)) (.open cut)
+  · rw [← Cell.sem_eq_region model]
+    exact Cell.openPoint_mem isolations hreplay hstrict cut
+  · rwa [← Cell.sem_eq_region model]
 
 /-- The exact dyadic sign is valid at every point of an open carrier cell. -/
 theorem evalSign_open_spec {carrier : ZPoly} {replay : SturmReplay}

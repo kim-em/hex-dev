@@ -312,4 +312,29 @@ example : linearMatrix.sign? linearSentence singleton (.root ⟨0, by decide⟩)
 example : linearMatrix.sign? linearSentence singleton (.open ⟨1, by decide⟩)
     x = some .pos := by decide
 
+/-- The cell interpretation also applies to a root with an arbitrary real
+coefficient, without an integer-polynomial isolation certificate. -/
+example (a x y : ℝ) (hx : a < x) (hy : a < y) :
+    SignType.sign ((Polynomial.X - Polynomial.C a).eval x) =
+      SignType.sign ((Polynomial.X - Polynomial.C a).eval y) := by
+  let root : Fin 1 → ℝ := fun _ => a
+  have hmono : StrictMono root := by
+    intro i j hij
+    have hi := i.isLt
+    have hj := j.isLt
+    have : i.val < j.val := hij
+    omega
+  have hroots : ∀ z, (Polynomial.X - Polynomial.C a).IsRoot z → ∃ i, root i = z := by
+    intro z hz
+    refine ⟨⟨0, by decide⟩, ?_⟩
+    simpa [Polynomial.IsRoot, sub_eq_zero, eq_comm, root] using hz
+  apply Cell.Region.sign_eq root hmono (Polynomial.X - Polynomial.C a)
+    (Or.inr hroots) (.open ⟨1, by decide⟩)
+  · simpa [Cell.Region, root] using hx
+  · simpa [Cell.Region, root] using hy
+
+/-- info: 'Hex.RCF.Cell.Region.sign_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cell.Region.sign_eq
+
 end Hex.RCF.SignMatrixTests
