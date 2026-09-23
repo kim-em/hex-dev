@@ -1015,6 +1015,37 @@ A polynomial equation alone does not select an embedding. Definitions may
 unfold within the source budget; opaque declarations need the same checked
 registration. No numerical approximation is an algebraic constructor.
 
+Accept real coefficients obtained from closed `Hex.AlgebraicNumber` values
+through `RealAlgebraicNumber.ofAlgebraic` or its checked constructor and
+`toReal`. The reality check and conversion must preserve the selected root.
+An arbitrary complex algebraic number is not a real coefficient, and taking
+its real part silently is not a valid conversion of that number.
+
+Accept coefficients computed in `Hex.QAdjoin a` through a proved conversion
+to their selected real values. Reuse `QAdjoin.toAlgebraicNumber` and its
+value-preservation theorem, followed by checked real interpretation, or an
+equivalent proved interpretation of the fixed field. For a real generator,
+`QAdjoin.value_real` establishes reality of every field element. A nonreal
+generator does not give a real embedding of the whole field, although an
+individual element may pass the checked real conversion. Preserve the embedding
+selected by `a`, reuse the existing field arithmetic, and do not require a
+user to replace a field element by a radical expression or an approximation.
+For coefficients from different fields, use the existing common-field or
+conversion facilities where needed and prove value preservation. Do not assume
+membership in an arbitrarily chosen `QAdjoin` field. The quantified variable
+still ranges over `ℝ`, not over a number field that need not be real closed.
+
+Support higher-degree root aliases written using Mathlib's `Real.rpow`,
+including `(2 : ℝ) ^ (1 / 3 : ℝ)`. For a fixed nonnegative real algebraic
+base `r` and a positive natural degree `n`, identify `r ^ (1 / (n : ℝ))`
+with the selected nonnegative Hex algebraic root by a kernel proof.
+Use the checked-alias mechanism above: the power equation and nonnegativity
+must justify the exact source expression and chosen root. Mathlib's
+`Real.rpow_inv_natCast_pow` supplies the power equation under these hypotheses.
+Do not interpret a real power of a negative base as a signed odd root without
+a separate proof. These aliases are closed coefficients, not an extension
+to real powers of the quantified variable.
+
 Allowed variable expressions are polynomials in `x` with these coefficients,
 including division by a closed coefficient. Division by anything depending
 on `x`, `exp x`, `sin x`, unregistered closed real expressions, irrational powers of the variable and
@@ -1455,6 +1486,21 @@ whose verdict changes when `a` is replaced by `b`. Show a registered
 identities and original-goal equivalence. Print failures separately from
 accepted false results; examples of `#eval` alone are not proof examples.
 
+The manual must also construct a nonquadratic real algebraic coefficient,
+show arithmetic in its `QAdjoin` field, and use the resulting real values in
+tactic proofs. For example, select the real root `α` of `X³-X-1`, compute
+`β=α²-1` in its fixed field, and prove `∀ x : ℝ, x/α=β*x` after the checked
+real conversions. Include a formula combining coefficients from independently
+constructed fields and show that their selected embeddings are preserved.
+Retain the existing number-field and real-algebraic manual examples and link
+them from the tactic documentation.
+
+Include a higher-degree Mathlib root alias as an actual tactic coefficient,
+for example `∀ x : ℝ, x² + (2 : ℝ)^(1 / 3 : ℝ)*x + 1 > 0`.
+Show the checked identification with the positive root of `X³-2` and the alias
+setup alongside the `Real.sqrt` examples. These examples must use the same
+algebraic-coefficient interface as direct Hex values.
+
 Required tests extend the existing
 [conformance discipline](../../SPEC/testing.md):
 
@@ -1462,6 +1508,10 @@ Required tests extend the existing
   transport; optional π/e examples use supplied registrations. Include constant-only and
   zero-polynomial bodies, semantic leading cancellation, all comparisons and
   Boolean forms, and integer/rational fast-path compatibility.
+- Checked real conversion from `AlgebraicNumber` and `QAdjoin`, agreement
+  with their existing value interpretations, and coefficients from different
+  number fields. Reject nonreal inputs presented as real values, wrong selected
+  roots and higher-root aliases lacking the required equality or branch proof.
 - Repeated/common roots, including atoms `(x-a.toReal)^2` and
   `(x-a.toReal)*(x-1)`, reducible selected-root definitions, re-encoding and
   splitting with live dependent roots. Check exact signs/multiplicities and
