@@ -1205,7 +1205,7 @@ solver. The optional adapter will register its own handler.
 
 During incubation the new files are
 `adapters/HexRCF/RealCoefficients.lean` and
-`adapters/HexRCF/RealCoefficients/{Coefficients,RootAliases,Interpret,Specialize,Replay,Soundness,Reify}.lean`,
+`adapters/HexRCF/RealCoefficients/{Coefficients,RootAliases,Interpret,Specialize,Formula,Replay,Soundness,Reify}.lean`,
 with module prefix `HexRCF.RealCoefficients` and namespace
 `Hex.RCF.RealCoefficients`. Use a separate **default build target**
 `HexRCFRealCoefficients` with `srcDir := "adapters"`, plus the matching
