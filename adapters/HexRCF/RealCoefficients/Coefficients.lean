@@ -33,6 +33,21 @@ theorem ofField_value (generator : RealAlgebraicNumber)
   rw [RealAlgebraicNumber.ofReal_toReal]
   exact PolyQuot.toAlgebraicNumber_toComplex value _ _
 
+/-- Fixed-field coordinates evaluate at the generator's selected real value. -/
+theorem ofField_toReal (generator : RealAlgebraicNumber)
+    (value : QAdjoin generator.toAlgebraic) :
+    (ofField generator value).toReal =
+      (HexPolyMathlib.toPolynomial value.coeffs).eval₂ (Rat.castHom ℝ) generator.toReal := by
+  apply Complex.ofReal_injective
+  rw [ofField_value]
+  change _ = Complex.ofRealHom
+    ((HexPolyMathlib.toPolynomial value.coeffs).eval₂ (Rat.castHom ℝ) generator.toReal)
+  rw [Polynomial.hom_eval₂]
+  change _ = (HexPolyMathlib.toPolynomial value.coeffs).eval₂
+    (Complex.ofRealHom.comp (Rat.castHom ℝ)) (generator.toReal : ℂ)
+  rw [RealAlgebraicNumber.ofReal_toReal]
+  rfl
+
 /-- Nonnegativity and the exact power equation authenticate a higher-root alias.
 The degree is positive and the base nonnegative; negative-base `rpow` has
 different semantics and cannot use this theorem. -/

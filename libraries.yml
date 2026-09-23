@@ -1589,6 +1589,7 @@ libraries:
     done_through: 0
     status: active
   HexRCF:
+    # The existing shared-formula dependency and pins are retained for compatibility.
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib, HexRealFormulaMathlib]
     # Extra imports are confined to adapters/HexRCF; published pins stay unchanged.
     adapter_deps: [HexRealAlgebraicMathlib]

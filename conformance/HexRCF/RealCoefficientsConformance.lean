@@ -25,6 +25,7 @@ private def fieldCoefficient : Hex.RealAlgebraicNumber :=
 -- These checks exercise existing root selection and fixed-field arithmetic.
 #guard cubic ^ 3 = cubic + 1
 #guard fieldCoefficient * cubic = 1
+#guard Coefficients.ofField cubic cubic.toAlgebraic.toQAdjoin = cubic
 
 private def coordinate (i : Fin 3) : RealFormula.Poly 3 := MvPoly.X i
 
@@ -41,6 +42,8 @@ private def specialized := Specialize.polynomial (fun _ : Fin 2 => cubic) cancel
 #guard specialized.coeff 1 = cubic
 #guard specialized.coeff 2 = 1
 #guard specialized.eval 1 = cubic + 2
+#guard (Specialize.polynomial (fun _ : Fin 2 => cubic) 0).isZero
+#guard (Specialize.polynomial (fun _ : Fin 2 => cubic) (MvPoly.C 3)).coeff 0 = 3
 
 private meta def prepared (source : Expr) (guards : Nat) : MetaM Reify.Source := do
   let result ← match ← Reify.prepare source with

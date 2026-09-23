@@ -13,13 +13,20 @@ public import HexPolyMathlib.PolynomialEquivalence
 
 public section
 
-/-! Substitute fixed algebraic coefficients into the shared polynomial syntax. -/
+/-! Substitute fixed algebraic coefficients into the shared polynomial syntax.
+This is the canonical-field specialization. General representation carriers
+still require an operation-preserving specialization bridge. Kernel replay uses
+the evaluation theorem and supplied coefficient identities, rather than
+unfolding canonical minimal-polynomial and root-isolation searches. -/
 
 namespace Hex.RCF.RealCoefficients.Specialize
 
 open Hex.RealFormula
 open scoped HexMvPolyMathlib
 
+-- Select the same semiring dictionary as the Mathlib evaluation theorem;
+-- the native dense-polynomial dictionary otherwise takes precedence.
+-- The transport retains the executable operations.
 attribute [local instance 2500] Semiring.toGrindSemiring
 
 local instance : CommRing (DensePoly RealAlgebraicNumber) := HexPolyMathlib.denseCommRing
