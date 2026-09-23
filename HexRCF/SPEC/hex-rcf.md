@@ -246,8 +246,11 @@ proved equivalences.
    interior cut `j` is `(rⱼ₋₁,rⱼ)`. `Cell.all` enumerates these cells
    left-to-right with rank `2*j` for open cuts and `2*i+1` for roots.
    `RootModel` packages the unique root of each checked isolation, their
-   strict monotonicity, and completeness. `Cell.Sem` interprets the indexed
-   representation, and `Cell.existsUnique_mem` states the partition theorem.
+   strict monotonicity, and completeness. `Cell.Region` interprets the indexed
+   cells for any finite list of real points; strict order gives the partition
+   theorem. `Cell.Sem` is the rational root-model interpretation, with
+   `Cell.sem_eq_region` identifying it with `Cell.Region`.
+   `Cell.existsUnique_mem` retains the rational partition interface.
 
    `IsolationCert.openPoint` uses the dyadic midpoint of `upperᵢ` and
    `lowerᵢ₊₁` for an interior cut, `lower₀ - 1` and `upperₖ₋₁ + 1` for
@@ -641,6 +644,8 @@ free to change.
   malformed-input, and endpoint regressions.
 - `HexRCF/CellsCheck.lean`: Mathlib-free size-indexed cells, exact dyadic
   samples, endpoint-comparison checks, and bounded-domain relevance;
+  `HexRCF/Regions.lean`: coefficient-independent cell membership, partition,
+  order, connectedness and polynomial sign constancy;
   `HexRCF/Cells.lean`: checked root models, semantic partition, canonical
   left-root spans, and exact `Ioc` intersection;
   `HexRCF/CellsTests.lean`: enumeration,
@@ -1318,9 +1323,13 @@ complete ordered roots and shared samples. Repeated factors and common roots
 are deduplicated with certified identity and root-union evidence. Certificate
 replay checks polynomial identities and complete root/table evidence; it does
 not rerun isolation, gcd search, BKR production or approximation. The generic
-carrier/root-union bridge and specialization/cell correspondence are new
-HexRCF integration obligations. The integer carrier's exact signatures do not
-supply them over raw tower elements.
+carrier/root-union bridge and specialization/cell correspondence must establish
+complete ordered roots and correct signs for the actual coefficient values.
+`Cell.Region`, `Cell.Region.sign_eq` and the `CellFold.Region` theorems supply
+the coefficient-independent cell interpretation, sign constancy and quantifier
+folds. Their root-coverage and sign hypotheses must be proved from the checked
+evidence; the integer carrier's signatures alone do not supply them over raw
+tower elements.
 
 Required coefficient/replay evidence includes:
 

@@ -18,6 +18,7 @@ public import HexRCF.Isolations
 public import HexRCF.SeparationCheck
 public import HexRCF.Separation
 public import HexRCF.CellsCheck
+public import HexRCF.Regions
 public import HexRCF.Cells
 public import HexRCF.CommonRootCheck
 public import HexRCF.CommonRoot

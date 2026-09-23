@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexRCF.CellsCheck
+public import HexRCF.Regions
 public import HexRCF.Separation
 
 public section
@@ -105,6 +105,12 @@ def Sem {f : ZPoly} {cert : IsolationCert} (M : RootModel f cert) :
         M.root ⟨cut.val - 1, by omega⟩ < x ∧
           x < M.root ⟨cut.val, by omega⟩
 
+/-- The rational root model uses the coefficient-independent cell interpretation. -/
+theorem sem_eq_region {f : ZPoly} {cert : IsolationCert} (M : RootModel f cert) :
+    Sem M = Region M.root := by
+  funext c x
+  cases c <;> rfl
+
 /-- Every checked open-cell sample lies in its advertised semantic cell. -/
 theorem openPoint_mem {f : ZPoly} {replay : SturmReplay}
     (cert : IsolationCert) (hreplay : replay.check f = true)
@@ -200,200 +206,39 @@ theorem openPoint_mem {f : ZPoly} {replay : SturmReplay}
 theorem exists_mem {f : ZPoly} {cert : IsolationCert}
     (M : RootModel f cert) (x : ℝ) :
     ∃ c : Cell cert.intervals.size, Sem M c x := by
-  classical
-  by_cases hzero : cert.intervals.size = 0
-  · refine ⟨.open ⟨0, by omega⟩, ?_⟩
-    simp [Sem, hzero]
-  let first : Fin cert.intervals.size := ⟨0, by omega⟩
-  by_cases hleft : x < M.root first
-  · refine ⟨.open ⟨0, by omega⟩, ?_⟩
-    simpa [Sem, hzero, first] using hleft
-  by_cases hsome : ∃ i : Fin cert.intervals.size, x ≤ M.root i
-  · let i := Fin.find (fun j => x ≤ M.root j) hsome
-    have hxi : x ≤ M.root i := Fin.find_spec hsome
-    by_cases heq : x = M.root i
-    · exact ⟨.root i, by simpa [Sem] using heq⟩
-    · have hi0 : i.val ≠ 0 := by
-        intro hi
-        have hieq : i = first := Fin.ext hi
-        have hrx : M.root first ≤ x := not_lt.mp hleft
-        apply heq
-        rw [hieq] at hxi ⊢
-        exact le_antisymm hxi hrx
-      let prev : Fin cert.intervals.size := ⟨i.val - 1, by omega⟩
-      have hprev : M.root prev < x := by
-        apply lt_of_not_ge
-        apply Fin.find_min hsome
-        show prev.val < i.val
-        simp only [prev]
-        omega
-      have hnext : x < M.root i := lt_of_le_of_ne hxi heq
-      refine ⟨.open ⟨i.val, by omega⟩, ?_⟩
-      simpa [Sem, hzero, hi0, show i.val ≠ cert.intervals.size by omega,
-        prev] using And.intro hprev hnext
-  · let last : Fin cert.intervals.size :=
-      ⟨cert.intervals.size - 1, by omega⟩
-    have hlast : M.root last < x := by
-      exact lt_of_not_ge (fun hx => hsome ⟨last, hx⟩)
-    refine ⟨.open (Fin.last cert.intervals.size), ?_⟩
-    simpa [Sem, hzero, last] using hlast
-
-/-- A point in an open cell lies below the root at the cell's upper boundary. -/
-private theorem open_lt_upper {f : ZPoly} {cert : IsolationCert}
-    (M : RootModel f cert) (cut : Fin (cert.intervals.size + 1)) (x : ℝ)
-    (hcut : cut.val < cert.intervals.size) (hx : Sem M (.open cut) x) :
-    x < M.root ⟨cut.val, hcut⟩ := by
-  have hzero : cert.intervals.size ≠ 0 := by omega
-  by_cases hleft : cut.val = 0
-  · simpa [Sem, hzero, hleft] using hx
-  · have hright : cut.val ≠ cert.intervals.size := by omega
-    simp [Sem, hzero, hleft, hright] at hx
-    exact hx.2
-
-/-- A point in an open cell lies above the root at the cell's lower boundary. -/
-private theorem lower_lt_open {f : ZPoly} {cert : IsolationCert}
-    (M : RootModel f cert) (cut : Fin (cert.intervals.size + 1)) (x : ℝ)
-    (hcut : 0 < cut.val) (hx : Sem M (.open cut) x) :
-    M.root ⟨cut.val - 1, by omega⟩ < x := by
-  have hzero : cert.intervals.size ≠ 0 := by omega
-  have hleft : cut.val ≠ 0 := by omega
-  by_cases hright : cut.val = cert.intervals.size
-  · simpa [Sem, hzero, hleft, hright] using hx
-  · simp [Sem, hzero, hleft, hright] at hx
-    exact hx.1
-
-/-- `rank` is an injective encoding of the alternating cell order. -/
-theorem rank_injective : Function.Injective (@rank n) := by
-  intro c d h
-  cases c with
-  | «open» i =>
-      cases d with
-      | «open» j =>
-          simp only [rank] at h
-          congr
-          apply Fin.ext
-          omega
-      | root j =>
-          simp only [rank] at h
-          omega
-  | root i =>
-      cases d with
-      | «open» j =>
-          simp only [rank] at h
-          omega
-      | root j =>
-          simp only [rank] at h
-          congr
-          apply Fin.ext
-          omega
+  simpa only [sem_eq_region] using Region.exists_mem M.root x
 
 /-- Cells earlier in the alternating enumeration lie strictly to the left. -/
 theorem lt_of_rank_lt {f : ZPoly} {cert : IsolationCert}
     (M : RootModel f cert) {c d : Cell cert.intervals.size} {x y : ℝ}
     (hcd : rank c < rank d) (hx : Sem M c x) (hy : Sem M d y) : x < y := by
-  cases c with
-  | root i =>
-      cases d with
-      | root j =>
-          simp only [rank] at hcd
-          simp only [Sem] at hx hy
-          rw [hx, hy]
-          exact M.strictMono (by omega)
-      | «open» cut =>
-          simp only [rank] at hcd
-          simp only [Sem] at hx
-          rw [hx]
-          have hlower := lower_lt_open M cut y (by omega) hy
-          have hmono : M.root i ≤ M.root ⟨cut.val - 1, by omega⟩ :=
-            M.strictMono.monotone (by show i.val ≤ cut.val - 1; omega)
-          exact lt_of_le_of_lt hmono hlower
-  | «open» cut =>
-      cases d with
-      | root j =>
-          simp only [rank] at hcd
-          simp only [Sem] at hy
-          rw [hy]
-          have hupper := open_lt_upper M cut x (by omega) hx
-          have hmono : M.root ⟨cut.val, by omega⟩ ≤ M.root j :=
-            M.strictMono.monotone (by show cut.val ≤ j.val; omega)
-          exact lt_of_lt_of_le hupper hmono
-      | «open» next =>
-          simp only [rank] at hcd
-          have hupper := open_lt_upper M cut x (by omega) hx
-          have hlower := lower_lt_open M next y (by omega) hy
-          have hmono : M.root ⟨cut.val, by omega⟩ ≤
-              M.root ⟨next.val - 1, by omega⟩ :=
-            M.strictMono.monotone (by show cut.val ≤ next.val - 1; omega)
-          exact lt_trans hupper (lt_of_le_of_lt hmono hlower)
+  rw [sem_eq_region] at hx hy
+  exact Region.lt_of_rank_lt M.root M.strictMono hcd hx hy
 
 /-- Semantic cell membership is unique. -/
 theorem unique_mem {f : ZPoly} {cert : IsolationCert}
     (M : RootModel f cert) (x : ℝ) {c d : Cell cert.intervals.size}
     (hc : Sem M c x) (hd : Sem M d x) : c = d := by
-  by_contra hne
-  have hrank : rank c ≠ rank d := fun h => hne (rank_injective h)
-  rcases lt_or_gt_of_ne hrank with hlt | hgt
-  · exact (lt_irrefl x) (lt_of_rank_lt M hlt hc hd)
-  · exact (lt_irrefl x) (lt_of_rank_lt M hgt hd hc)
+  rw [sem_eq_region] at hc hd
+  exact Region.unique_mem M.root M.strictMono x hc hd
 
 /-- The semantic cells form a genuine partition of the real line. -/
 theorem existsUnique_mem {f : ZPoly} {cert : IsolationCert}
     (M : RootModel f cert) (x : ℝ) :
     ∃! c : Cell cert.intervals.size, Sem M c x := by
-  obtain ⟨c, hc⟩ := exists_mem M x
-  exact ⟨c, hc, fun d hd => unique_mem M x hd hc⟩
+  simpa only [sem_eq_region] using Region.existsUnique_mem M.root M.strictMono x
 
 /-- Every semantic cell contains a real point. -/
 theorem exists_point {f : ZPoly} {cert : IsolationCert}
     (M : RootModel f cert) (c : Cell cert.intervals.size) :
     ∃ x : ℝ, Sem M c x := by
-  cases c with
-  | root i => exact ⟨M.root i, by simp [Sem]⟩
-  | «open» cut =>
-      by_cases hzero : cert.intervals.size = 0
-      · exact ⟨0, by simp [Sem, hzero]⟩
-      by_cases hleft : cut.val = 0
-      · refine ⟨M.root ⟨0, by omega⟩ - 1, ?_⟩
-        simp [Sem, hzero, hleft]
-      by_cases hright : cut.val = cert.intervals.size
-      · refine ⟨M.root ⟨cert.intervals.size - 1, by omega⟩ + 1, ?_⟩
-        simp [Sem, hzero, hright]
-      · have hroots : M.root ⟨cut.val - 1, by omega⟩ <
-            M.root ⟨cut.val, by omega⟩ := by
-          apply M.strictMono
-          show cut.val - 1 < cut.val
-          omega
-        obtain ⟨x, hx⟩ := exists_between hroots
-        exact ⟨x, by simpa [Sem, hzero, hleft, hright] using hx⟩
+  simpa only [sem_eq_region] using Region.exists_point M.root M.strictMono c
 
 /-- Every open semantic cell is an interval, hence preconnected. -/
 theorem isPreconnected_open {f : ZPoly} {cert : IsolationCert}
     (M : RootModel f cert) (cut : Fin (cert.intervals.size + 1)) :
     IsPreconnected {x : ℝ | Sem M (.open cut) x} := by
-  by_cases hzero : cert.intervals.size = 0
-  · simpa [Sem, hzero] using (isPreconnected_univ :
-      IsPreconnected (Set.univ : Set ℝ))
-  by_cases hleft : cut.val = 0
-  · have heq : {x : ℝ | Sem M (.open cut) x} =
-        Set.Iio (M.root ⟨0, by omega⟩) := by
-      ext x
-      simp [Sem, hzero, hleft, Set.mem_Iio]
-    rw [heq]
-    exact isPreconnected_Iio
-  by_cases hright : cut.val = cert.intervals.size
-  · have heq : {x : ℝ | Sem M (.open cut) x} =
-        Set.Ioi (M.root ⟨cert.intervals.size - 1, by omega⟩) := by
-      ext x
-      simp [Sem, hzero, hright, Set.mem_Ioi]
-    rw [heq]
-    exact isPreconnected_Ioi
-  · have heq : {x : ℝ | Sem M (.open cut) x} =
-        Set.Ioo (M.root ⟨cut.val - 1, by omega⟩)
-          (M.root ⟨cut.val, by omega⟩) := by
-      ext x
-      simp [Sem, hzero, hleft, hright, Set.mem_Ioo]
-    rw [heq]
-    exact isPreconnected_Ioo
+  simpa only [sem_eq_region] using Region.isPreconnected_open M.root cut
 
 /-- An open carrier cell contains no carrier root. -/
 theorem open_not_root {f : ZPoly} {cert : IsolationCert}

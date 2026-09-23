@@ -185,25 +185,26 @@ namespace CellFold
 
 open OptionFold
 
+namespace Region
+
 /--
 Universal folding over all cells is equivalent to universal quantification over the real line.
 -/
-theorem forall_spec {carrier : ZPoly} {cert : IsolationCert}
-    (M : RootModel carrier cert) (eval : Cell cert.intervals.size → Option Bool)
+theorem forall_spec {n : Nat} (root : Fin n → ℝ) (hmono : StrictMono root) (eval : Cell n → Option Bool)
     (P : ℝ → Prop)
     (hcell : ∀ c, ∃ value, eval c = some value ∧
-      ∀ x, Cell.Sem M c x → (value = true ↔ P x)) :
-    ∃ value, allArray (Cell.all cert.intervals.size) eval = some value ∧
+      ∀ x, Cell.Region root c x → (value = true ↔ P x)) :
+    ∃ value, allArray (Cell.all n) eval = some value ∧
       (value = true ↔ ∀ x, P x) := by
   obtain ⟨value, hvalue, hfold⟩ := allArray_spec
-    (xs := Cell.all cert.intervals.size) (f := eval) (by
+    (xs := Cell.all n) (f := eval) (by
       intro c _
       obtain ⟨v, hv, _⟩ := hcell c
       exact ⟨v, hv⟩)
   refine ⟨value, hvalue, ?_⟩
   constructor
   · intro hv x
-    obtain ⟨c, hcx⟩ := Cell.exists_mem M x
+    obtain ⟨c, hcx⟩ := Cell.Region.exists_mem root x
     have heval := (hfold.mp hv) c (Cell.mem_all c)
     obtain ⟨v, hev, hsound⟩ := hcell c
     have hvtrue : v = true := by
@@ -214,22 +215,21 @@ theorem forall_spec {carrier : ZPoly} {cert : IsolationCert}
     apply hfold.mpr
     intro c _
     obtain ⟨v, hev, hsound⟩ := hcell c
-    obtain ⟨x, hx⟩ := Cell.exists_point M c
+    obtain ⟨x, hx⟩ := Cell.Region.exists_point root hmono c
     have hvtrue : v = true := (hsound x hx).mpr (hP x)
     simpa [hvtrue] using hev
 
 /--
 Existential folding over all cells is equivalent to existential quantification over the real line.
 -/
-theorem exists_spec {carrier : ZPoly} {cert : IsolationCert}
-    (M : RootModel carrier cert) (eval : Cell cert.intervals.size → Option Bool)
+theorem exists_spec {n : Nat} (root : Fin n → ℝ) (hmono : StrictMono root) (eval : Cell n → Option Bool)
     (P : ℝ → Prop)
     (hcell : ∀ c, ∃ value, eval c = some value ∧
-      ∀ x, Cell.Sem M c x → (value = true ↔ P x)) :
-    ∃ value, anyArray (Cell.all cert.intervals.size) eval = some value ∧
+      ∀ x, Cell.Region root c x → (value = true ↔ P x)) :
+    ∃ value, anyArray (Cell.all n) eval = some value ∧
       (value = true ↔ ∃ x, P x) := by
   obtain ⟨value, hvalue, hfold⟩ := anyArray_spec
-    (xs := Cell.all cert.intervals.size) (f := eval) (by
+    (xs := Cell.all n) (f := eval) (by
       intro c _
       obtain ⟨v, hv, _⟩ := hcell c
       exact ⟨v, hv⟩)
@@ -238,13 +238,13 @@ theorem exists_spec {carrier : ZPoly} {cert : IsolationCert}
   · intro hv
     obtain ⟨c, _, heval⟩ := hfold.mp hv
     obtain ⟨v, hev, hsound⟩ := hcell c
-    obtain ⟨x, hx⟩ := Cell.exists_point M c
+    obtain ⟨x, hx⟩ := Cell.Region.exists_point root hmono c
     have hvtrue : v = true := by
       rw [hev] at heval
       exact Option.some.inj heval
     exact ⟨x, (hsound x hx).mp hvtrue⟩
   · rintro ⟨x, hPx⟩
-    obtain ⟨c, hcx⟩ := Cell.exists_mem M x
+    obtain ⟨c, hcx⟩ := Cell.Region.exists_mem root x
     apply hfold.mpr
     refine ⟨c, Cell.mem_all c, ?_⟩
     obtain ⟨v, hev, hsound⟩ := hcell c
@@ -254,25 +254,24 @@ theorem exists_spec {carrier : ZPoly} {cert : IsolationCert}
 /--
 Universal folding over relevant cells is equivalent to quantification over the specified domain.
 -/
-theorem forallWhere_spec {carrier : ZPoly} {cert : IsolationCert}
-    (M : RootModel carrier cert) (eval : Cell cert.intervals.size → Option Bool)
-    (relevant : Cell cert.intervals.size → Bool) (D P : ℝ → Prop)
+theorem forallWhere_spec {n : Nat} (root : Fin n → ℝ) (eval : Cell n → Option Bool)
+    (relevant : Cell n → Bool) (D P : ℝ → Prop)
     (hcell : ∀ c, ∃ value, eval c = some value ∧
-      ∀ x, Cell.Sem M c x → (value = true ↔ P x))
+      ∀ x, Cell.Region root c x → (value = true ↔ P x))
     (hrelevant : ∀ c, relevant c = true ↔
-      ∃ x, Cell.Sem M c x ∧ D x) :
+      ∃ x, Cell.Region root c x ∧ D x) :
     ∃ value,
-      allWhereArray (Cell.all cert.intervals.size) relevant eval = some value ∧
+      allWhereArray (Cell.all n) relevant eval = some value ∧
       (value = true ↔ ∀ x, D x → P x) := by
   obtain ⟨value, hvalue, hfold⟩ := allWhereArray_spec
-    (xs := Cell.all cert.intervals.size) (f := eval) (relevant := relevant) (by
+    (xs := Cell.all n) (f := eval) (relevant := relevant) (by
       intro c _ _
       obtain ⟨v, hv, _⟩ := hcell c
       exact ⟨v, hv⟩)
   refine ⟨value, hvalue, ?_⟩
   constructor
   · intro hv x hDx
-    obtain ⟨c, hcx⟩ := Cell.exists_mem M x
+    obtain ⟨c, hcx⟩ := Cell.Region.exists_mem root x
     have hrel : relevant c = true := (hrelevant c).mpr ⟨x, hcx, hDx⟩
     have heval := (hfold.mp hv) c (Cell.mem_all c) hrel
     obtain ⟨v, hev, hsound⟩ := hcell c
@@ -291,18 +290,17 @@ theorem forallWhere_spec {carrier : ZPoly} {cert : IsolationCert}
 /--
 Existential folding over relevant cells is equivalent to quantification over the specified domain.
 -/
-theorem existsWhere_spec {carrier : ZPoly} {cert : IsolationCert}
-    (M : RootModel carrier cert) (eval : Cell cert.intervals.size → Option Bool)
-    (relevant : Cell cert.intervals.size → Bool) (D P : ℝ → Prop)
+theorem existsWhere_spec {n : Nat} (root : Fin n → ℝ) (eval : Cell n → Option Bool)
+    (relevant : Cell n → Bool) (D P : ℝ → Prop)
     (hcell : ∀ c, ∃ value, eval c = some value ∧
-      ∀ x, Cell.Sem M c x → (value = true ↔ P x))
+      ∀ x, Cell.Region root c x → (value = true ↔ P x))
     (hrelevant : ∀ c, relevant c = true ↔
-      ∃ x, Cell.Sem M c x ∧ D x) :
+      ∃ x, Cell.Region root c x ∧ D x) :
     ∃ value,
-      anyWhereArray (Cell.all cert.intervals.size) relevant eval = some value ∧
+      anyWhereArray (Cell.all n) relevant eval = some value ∧
       (value = true ↔ ∃ x, D x ∧ P x) := by
   obtain ⟨value, hvalue, hfold⟩ := anyWhereArray_spec
-    (xs := Cell.all cert.intervals.size) (f := eval) (relevant := relevant) (by
+    (xs := Cell.all n) (f := eval) (relevant := relevant) (by
       intro c _ _
       obtain ⟨v, hv, _⟩ := hcell c
       exact ⟨v, hv⟩)
@@ -317,12 +315,72 @@ theorem existsWhere_spec {carrier : ZPoly} {cert : IsolationCert}
       exact Option.some.inj heval
     exact ⟨x, hDx, (hsound x hcx).mp hvtrue⟩
   · rintro ⟨x, hDx, hPx⟩
-    obtain ⟨c, hcx⟩ := Cell.exists_mem M x
+    obtain ⟨c, hcx⟩ := Cell.Region.exists_mem root x
     apply hfold.mpr
     refine ⟨c, Cell.mem_all c, (hrelevant c).mpr ⟨x, hcx, hDx⟩, ?_⟩
     obtain ⟨v, hev, hsound⟩ := hcell c
     have hvtrue : v = true := (hsound x hcx).mpr hPx
     simpa [hvtrue] using hev
+
+end Region
+
+/--
+Universal folding over all cells is equivalent to universal quantification over the real line.
+-/
+theorem forall_spec {carrier : ZPoly} {cert : IsolationCert}
+    (M : RootModel carrier cert) (eval : Cell cert.intervals.size → Option Bool)
+    (P : ℝ → Prop)
+    (hcell : ∀ c, ∃ value, eval c = some value ∧
+      ∀ x, Cell.Sem M c x → (value = true ↔ P x)) :
+    ∃ value, allArray (Cell.all cert.intervals.size) eval = some value ∧
+      (value = true ↔ ∀ x, P x) := by
+  simp only [Cell.sem_eq_region] at hcell
+  exact Region.forall_spec M.root M.strictMono eval P hcell
+
+/--
+Existential folding over all cells is equivalent to existential quantification over the real line.
+-/
+theorem exists_spec {carrier : ZPoly} {cert : IsolationCert}
+    (M : RootModel carrier cert) (eval : Cell cert.intervals.size → Option Bool)
+    (P : ℝ → Prop)
+    (hcell : ∀ c, ∃ value, eval c = some value ∧
+      ∀ x, Cell.Sem M c x → (value = true ↔ P x)) :
+    ∃ value, anyArray (Cell.all cert.intervals.size) eval = some value ∧
+      (value = true ↔ ∃ x, P x) := by
+  simp only [Cell.sem_eq_region] at hcell
+  exact Region.exists_spec M.root M.strictMono eval P hcell
+
+/--
+Universal folding over relevant cells is equivalent to quantification over the specified domain.
+-/
+theorem forallWhere_spec {carrier : ZPoly} {cert : IsolationCert}
+    (M : RootModel carrier cert) (eval : Cell cert.intervals.size → Option Bool)
+    (relevant : Cell cert.intervals.size → Bool) (D P : ℝ → Prop)
+    (hcell : ∀ c, ∃ value, eval c = some value ∧
+      ∀ x, Cell.Sem M c x → (value = true ↔ P x))
+    (hrelevant : ∀ c, relevant c = true ↔
+      ∃ x, Cell.Sem M c x ∧ D x) :
+    ∃ value,
+      allWhereArray (Cell.all cert.intervals.size) relevant eval = some value ∧
+      (value = true ↔ ∀ x, D x → P x) := by
+  simp only [Cell.sem_eq_region] at hcell hrelevant
+  exact Region.forallWhere_spec M.root eval relevant D P hcell hrelevant
+
+/--
+Existential folding over relevant cells is equivalent to quantification over the specified domain.
+-/
+theorem existsWhere_spec {carrier : ZPoly} {cert : IsolationCert}
+    (M : RootModel carrier cert) (eval : Cell cert.intervals.size → Option Bool)
+    (relevant : Cell cert.intervals.size → Bool) (D P : ℝ → Prop)
+    (hcell : ∀ c, ∃ value, eval c = some value ∧
+      ∀ x, Cell.Sem M c x → (value = true ↔ P x))
+    (hrelevant : ∀ c, relevant c = true ↔
+      ∃ x, Cell.Sem M c x ∧ D x) :
+    ∃ value,
+      anyWhereArray (Cell.all cert.intervals.size) relevant eval = some value ∧
+      (value = true ↔ ∃ x, D x ∧ P x) := by
+  simp only [Cell.sem_eq_region] at hcell hrelevant
+  exact Region.existsWhere_spec M.root eval relevant D P hcell hrelevant
 
 /-- Universal folding over cells that meet `(a, b]` computes the bounded universal proposition. -/
 theorem forallIoc_spec {carrier : ZPoly} {replay : SturmReplay}
