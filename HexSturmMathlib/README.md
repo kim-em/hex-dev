@@ -32,5 +32,11 @@ Phase-4 evidence are still required. The shared IVT/Rolle and
 signed-remainder/Cauchy-index foundation is an explicit gate for root-sum
 semantics and their consequences. See [the specification](SPEC/hex-sturm-mathlib.md).
 
+The optional development target `HexQuerySemantics` builds
+`adapters/HexSturmMathlib/Soundness.lean`. It proves the field-query consequences
+of the named `HexRealRootsMathlib.Tarski.check_rootSum` statement, whose proof
+is admitted under #10389. These modules are not published; their dependency
+probes audit the admission rather than establish independent query correctness.
+
 Executable translations live in Mathlib-free `HexSturm.Transport`; see the
 [SPEC](SPEC/hex-sturm-mathlib.md) for their endpoint and binding contracts.

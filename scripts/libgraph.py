@@ -73,6 +73,7 @@ BUILD_ONLY_LIBS = {
     "HexRealFormulaProofProbe",
     "HexRCFRealFormula",
     "HexRCFRealCoefficients",
+    "HexQuerySemantics",
     "HexConformance",
     "HexFactorizationModules",
     "HexMvFactorizationTests",

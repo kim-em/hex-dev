@@ -106,6 +106,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexRealFormulaProofProbe",
     "HexRCFRealFormula",
     "HexRCFRealCoefficients",
+    "HexQuerySemantics",
     "HexConformance",
     "HexFactorizationModules",
     "HexMvFactorizationTests",
@@ -245,6 +246,33 @@ def project_lean_files(root: Path) -> list[Path]:
             continue
         files.append(path.relative_to(root))
     return sorted(files)
+
+
+def check_adapter_imports(root: Path, files: list[Path], libraries) -> list[str]:
+    """Keep development-only modules out of library source and published umbrellas.
+
+    Check full module paths even for imports within the same library prefix.
+    Manuals and conformance may exercise adapters; library code may not depend
+    on sources omitted by release publishing.
+    """
+    modules = {
+        module_name_for(path.relative_to("adapters"))
+        for path in files if path.parts[0] == "adapters"
+    }
+    errors = []
+    for rel_path in files:
+        owner = rel_path.parts[0].removesuffix(".lean")
+        if owner not in libraries or owner == "HexManual":
+            continue
+        for line_no, line in enumerate((root / rel_path).read_text().splitlines(), start=1):
+            match = IMPORT_RE.match(line.split("--", 1)[0])
+            if not match:
+                continue
+            for module in match.group(1).split():
+                if module in modules:
+                    errors.append(f"{rel_path}:{line_no} imports development adapter {module} "
+                                  "from library source")
+    return errors
 
 
 def check_sealed_import_all(root: Path, files: list[Path]) -> list[str]:
@@ -476,6 +504,7 @@ def main() -> int:
 
     lean_files = project_lean_files(root)
     errors.extend(check_sealed_import_all(root, lean_files))
+    errors.extend(check_adapter_imports(root, lean_files, libraries))
 
     for rel_path in lean_files:
         owner = library_owner_for_path(rel_path, libraries)

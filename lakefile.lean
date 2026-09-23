@@ -538,6 +538,12 @@ lean_lib HexRCFRealCoefficients where
   srcDir := "adapters"
   globs := #[`HexRCF.RealCoefficients, `HexRCF.RealCoefficients.Reify]
 
+-- Optional semantic results whose shared foundation is owned by #10389.
+@[default_target]
+lean_lib HexQuerySemantics where
+  srcDir := "adapters"
+  globs := #[`HexRealRootsMathlib.TarskiSoundness, `HexSturmMathlib.Soundness]
+
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
 
