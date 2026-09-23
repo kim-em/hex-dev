@@ -9,6 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from check_dag import (
+    check_adapter_imports,
     check_correspondence_only,
     check_sealed_import_all,
     import_roots,
@@ -26,6 +27,34 @@ class AdapterOwnershipTest(unittest.TestCase):
             library_owner_for_path(Path("adapters/HexRCF/RealFormula.lean"), libraries),
             "HexRCF",
         )
+
+
+class AdapterImportBoundaryTest(unittest.TestCase):
+    def test_library_imports_cannot_reach_adapters(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            sources = {
+                "adapters/HexCore/Optional.lean": "",
+                "HexCore.lean": "public import HexCore.Optional\n",
+                "HexCore/Proof.lean": "public meta import HexCore.Optional\n",
+                "HexCore/Private.lean": "private import all HexCore.Optional -- hidden facet\n",
+                "HexCore/Many.lean": "import HexCore.Safe HexCore.Optional\n",
+                "HexOther/Use.lean": "import HexCore.Optional\n",
+                "adapters/HexOther/Use.lean": "import HexCore.Optional\n",
+                "conformance/HexCore/Use.lean": "import HexCore.Optional\n",
+                "HexManual/Use.lean": "import HexCore.Optional\n",
+                "HexCore/Safe.lean": "import Mathlib.Basic\n",
+            }
+            for name, text in sources.items():
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(text)
+            errors = check_adapter_imports(root, list(map(Path, sources)),
+                                           {"HexCore", "HexOther", "HexManual"})
+            self.assertEqual(len(errors), 5)
+            self.assertTrue(all("development adapter HexCore.Optional" in e for e in errors))
+            self.assertFalse(any(e.startswith(("adapters/", "conformance/", "HexManual/"))
+                                 for e in errors))
 
 
 class MetaImportTest(unittest.TestCase):
