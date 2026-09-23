@@ -71,13 +71,41 @@ private meta unsafe def evalHandlerUnsafe (name : Name) : MetaM Handler :=
 @[implemented_by evalHandlerUnsafe]
 private meta opaque evalHandler (name : Name) : MetaM Handler
 
-/-- Optional solvers must remain within the ordinary mathematical kernel
-axioms, including through helper declarations used by a proposed proof. -/
-private meta def checkAxioms (name : Name) (proof : Expr) : MetaM Unit := do
-  for constant in proof.getUsedConstants do
-    for dependency in ← collectAxioms constant do
-      unless [``propext, ``Classical.choice, ``Quot.sound].contains dependency do
-        throwError "rcf: handler {name} proposed a proof using forbidden axiom {dependency} (through {constant})"
+/-- The single mathematical bridge explicitly owned by #10389. Its statement
+is imported only by the optional adapter, never by the rational solver. -/
+private meta def admittedRootSum : Name :=
+  .str (.str (.str .anonymous "HexRealRootsMathlib") "Tarski") "check_rootSum"
+
+private meta def ordinaryAxiom (name : Name) : Bool :=
+  [``propext, ``Classical.choice, ``Quot.sound].contains name
+
+/-- Audit a proof's dependencies, stopping only at the named #10389 bridge.
+Checking the complete path matters: `collectAxioms` alone reports `sorryAx`
+without identifying which declaration introduced it. -/
+private meta partial def checkAxiomPath (handler constant : Name) :
+    StateRefT NameSet MetaM Unit := do
+  if (← get).contains constant then return
+  modify (·.insert constant)
+  let axioms ← collectAxioms constant
+  if axioms.all ordinaryAxiom then return
+  if constant == admittedRootSum then
+    for dependency in axioms do
+      unless ordinaryAxiom dependency || dependency == ``sorryAx do
+        throwError "rcf: handler {handler} proposed a proof using forbidden axiom {dependency} (through {constant})"
+    return
+  let info ← getConstInfo constant
+  if let .axiomInfo _ := info then
+    throwError "rcf: handler {handler} proposed a proof using forbidden axiom {constant}"
+  let mut used := info.type.getUsedConstants
+  if let some value := info.value? true then
+    used := used ++ value.getUsedConstants
+  for dependency in used do
+    checkAxiomPath handler dependency
+
+/-- Optional solvers may depend on ordinary kernel axioms and the one named
+#10389 theorem, but no other admission, even through a helper declaration. -/
+meta def checkAxioms (name : Name) (proof : Expr) : MetaM Unit := do
+  let _ ← ((proof.getUsedConstants.forM (checkAxiomPath name)).run {})
 
 /-- Try handlers transactionally. Successful handlers retain auxiliary
 proof declarations but cannot export assignments to the target's metavariables.
