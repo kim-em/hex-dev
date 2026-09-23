@@ -1,6 +1,0 @@
-{
-  "path": "lakefile.lean",
-  "baseline_blob": "327c99cacafccb757254a4ec924e9b7f90d3b9e3",
-  "current_blob": "a612ddf9e551e19f15b7c10b7152f006063a26d4",
-  "reason": "Adds the optional HexRCFRealCoefficients.Formula module and its HexRCF.FormulaConformance target. Neither target is imported by hexbz_factor_service or changes a library in the factorization runtime call graph."
-}
