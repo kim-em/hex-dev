@@ -6,8 +6,19 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.Formula
+public meta import HexRCF.RealCoefficients.Formula
+public meta import HexRealFormula.Syntax
 
 public section
+
+/-!
+Oracle: none. Mode: always.
+
+Covered operations: evaluation of shared quantifier-free formulas from supplied signs.
+Covered properties: exact truth at real valuations and propagation of missing signs.
+Covered edge cases: repeated atoms, every comparison and sign, constants, one
+variable, false formulas, and missing signs in either Boolean connective.
+-/
 
 namespace Hex.RCF.RealCoefficients.FormulaTests
 
@@ -19,8 +30,16 @@ open Hex.RealFormula
 
 example : QF.evalSigns (fun _ => some .pos) phi = some true := rfl
 
+#guard [Hex.RealFormula.Cmp.eq, .ne, .lt, .le, .gt, .ge].all fun cmp =>
+  [(-1 : Int), 0, 1].all fun value =>
+    QF.evalSigns (fun _ => some (Hex.RCF.Sign.ofInt value))
+      (.atom ⟨MvPoly.C value, cmp⟩ : QF 0) == some (cmp.evalRat value)
+
 /-- Boolean short circuits must not conceal a missing sign certificate. -/
 example : QF.evalSigns (fun _ => none) (.or .tt phi) = none := rfl
+example : QF.evalSigns (fun _ => none) (.and .ff phi) = none := rfl
+example : QF.evalSigns (fun _ => none) (.atom ⟨MvPoly.C 1, .gt⟩ : QF 0) = none := rfl
+example : QF.evalSigns (fun _ => some .pos) (.not phi) = some false := rfl
 
 /-- The formula result follows from signs checked at the actual real point. -/
 theorem phi_correct : phi.toProp (fun _ => 0) := by
@@ -40,6 +59,25 @@ theorem phi_correct : phi.toProp (fun _ => 0) := by
       norm_num)
   apply hsemantic.mp
   exact Option.some.inj (hvalue.symm.trans (by rfl))
+
+/-- The sign of a nonconstant polynomial is evaluated at the given valuation. -/
+theorem variable_correct :
+    (QF.atom ⟨MvPoly.X 0, .gt⟩ : QF 1).toProp (fun _ => (2 : ℝ)) := by
+  apply (QF.evalSigns_eq_true_iff (signOf := fun _ => some .pos)
+    (ρ := fun _ => (2 : ℝ)) (by
+      intro p hp
+      have he : p = (MvPoly.X 0 : Hex.RealFormula.Poly 1) := by
+        simpa using hp
+      subst p
+      refine ⟨.pos, rfl, ?_⟩
+      simp only [Hex.RCF.Sign.toInt, Hex.RealFormula.Poly.eval,
+        ← HexMvPolyMathlib.eval₂_toMvPolynomial,
+        HexMvPolyMathlib.toMvPolynomial_X, MvPolynomial.eval₂_X]
+      norm_num)).mp rfl
+
+/-- info: 'Hex.RCF.RealCoefficients.FormulaTests.variable_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms variable_correct
 
 /-- info: 'Hex.RCF.RealCoefficients.FormulaTests.phi_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

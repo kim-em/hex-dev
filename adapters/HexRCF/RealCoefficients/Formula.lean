@@ -12,59 +12,16 @@ public section
 
 /-! Evaluate shared real formulas from signs supplied by checked cells. -/
 
-namespace Hex.RCF.RealCoefficients
+namespace Hex.RealFormula.QF
 
-open Hex.RealFormula
-
-namespace QF
-
-private theorem polys_go_append (p : Hex.RealFormula.QF n)
-    (tail : List (Hex.RealFormula.Poly n)) :
-    Hex.RealFormula.QF.polys.go p tail =
-      Hex.RealFormula.QF.polys.go p [] ++ tail := by
-  induction p generalizing tail with
-  | atom a => rfl
-  | tt | ff => rfl
-  | not p ih =>
-      change Hex.RealFormula.QF.polys.go p tail =
-        Hex.RealFormula.QF.polys.go p [] ++ tail
-      exact ih tail
-  | and p q ihp ihq | or p q ihp ihq =>
-      change Hex.RealFormula.QF.polys.go p
-          (Hex.RealFormula.QF.polys.go q tail) =
-        Hex.RealFormula.QF.polys.go p
-          (Hex.RealFormula.QF.polys.go q []) ++ tail
-      calc
-        Hex.RealFormula.QF.polys.go p (Hex.RealFormula.QF.polys.go q tail)
-            = Hex.RealFormula.QF.polys.go p [] ++
-                Hex.RealFormula.QF.polys.go q tail := ihp _
-        _ = Hex.RealFormula.QF.polys.go p [] ++
-              (Hex.RealFormula.QF.polys.go q [] ++ tail) := by rw [ihq]
-        _ = (Hex.RealFormula.QF.polys.go p [] ++
-              Hex.RealFormula.QF.polys.go q []) ++ tail :=
-                (List.append_assoc _ _ _).symm
-        _ = Hex.RealFormula.QF.polys.go p
-              (Hex.RealFormula.QF.polys.go q []) ++ tail :=
-              (congrArg (fun ys => ys ++ tail)
-                (ihp (Hex.RealFormula.QF.polys.go q []))).symm
-
-@[simp] private theorem polys_atom (a : Hex.RealFormula.Atom n) :
-    (Hex.RealFormula.QF.atom a).polys = [a.p] := rfl
-@[simp] private theorem polys_not (p : Hex.RealFormula.QF n) :
-    p.not.polys = p.polys := rfl
-@[simp] private theorem polys_and (p q : Hex.RealFormula.QF n) :
-    (p.and q).polys = p.polys ++ q.polys :=
-  polys_go_append p (Hex.RealFormula.QF.polys.go q [])
-@[simp] private theorem polys_or (p q : Hex.RealFormula.QF n) :
-    (p.or q).polys = p.polys ++ q.polys :=
-  polys_go_append p (Hex.RealFormula.QF.polys.go q [])
+open Hex.RCF
 
 /-- Every Boolean branch is evaluated, including one whose other branch has
 already decided the truth value. Thus a missing sign always fails closed. -/
 @[expose] def evalSigns (signOf : Hex.RealFormula.Poly n → Option Sign) : Hex.RealFormula.QF n → Option Bool
   | .atom a => do
       let sign ← signOf a.p
-      pure ((RealFormula.toCmp a.cmp).evalSign sign)
+      pure ((Hex.RCF.RealFormula.toCmp a.cmp).evalSign sign)
   | .tt => some true
   | .ff => some false
   | .not p => do
@@ -91,10 +48,11 @@ theorem evalSigns_spec {formula : Hex.RealFormula.QF n}
   induction formula with
   | atom a =>
       obtain ⟨sign, hs, hsign⟩ := hlookup a.p (by simp)
-      refine ⟨(RealFormula.toCmp a.cmp).evalSign sign, by simp [evalSigns, hs], ?_⟩
+      refine ⟨(Hex.RCF.RealFormula.toCmp a.cmp).evalSign sign,
+        by simp [evalSigns, hs], ?_⟩
       rw [Hex.RealFormula.QF.toProp, Hex.RealFormula.Atom.toProp]
       exact (Hex.RCF.Cmp.evalSign_iff hsign).trans
-        (RealFormula.toCmp_correct a.cmp (a.p.eval ρ))
+        (Hex.RCF.RealFormula.toCmp_correct a.cmp (a.p.eval ρ))
   | tt => exact ⟨true, rfl, by simp [Hex.RealFormula.QF.toProp]⟩
   | ff => exact ⟨false, rfl, by simp [Hex.RealFormula.QF.toProp]⟩
   | not p ih =>
@@ -122,5 +80,19 @@ theorem evalSigns_spec {formula : Hex.RealFormula.QF n}
       refine ⟨v || w, by simp [evalSigns, hv, hw], ?_⟩
       cases v <;> cases w <;> simp_all [Hex.RealFormula.QF.toProp]
 
-end QF
-end Hex.RCF.RealCoefficients
+/-- A successful true evaluation is equivalent to the original formula. -/
+theorem evalSigns_eq_true_iff {formula : Hex.RealFormula.QF n}
+    {signOf : Hex.RealFormula.Poly n → Option Sign} {ρ : Fin n → ℝ}
+    (hlookup : ∀ p ∈ formula.polys, ∃ sign,
+      signOf p = some sign ∧
+      SignType.sign (((sign.toInt : Int) : ℝ)) = SignType.sign (p.eval ρ)) :
+    formula.evalSigns signOf = some true ↔ formula.toProp ρ := by
+  obtain ⟨value, hvalue, hsemantic⟩ := evalSigns_spec hlookup
+  constructor
+  · intro htrue
+    exact hsemantic.mp (Option.some.inj (hvalue.symm.trans htrue))
+  · intro hprop
+    have htrue : value = true := hsemantic.mpr hprop
+    simpa [htrue] using hvalue
+
+end Hex.RealFormula.QF

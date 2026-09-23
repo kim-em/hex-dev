@@ -75,6 +75,36 @@ def polys (p : QF n) : List (Poly n) := go p [] where
     | .not p, tail => go p tail
     | .and p q, tail | .or p q, tail => go p (go q tail)
 
+/-- The accumulator only appends a suffix to the polynomial list. -/
+theorem polys_go_append (p : QF n) (tail : List (Poly n)) :
+    polys.go p tail = polys.go p [] ++ tail := by
+  induction p generalizing tail with
+  | atom a => rfl
+  | tt | ff => rfl
+  | not p ih =>
+      change polys.go p tail = polys.go p [] ++ tail
+      exact ih tail
+  | and p q ihp ihq | or p q ihp ihq =>
+      change polys.go p (polys.go q tail) =
+        polys.go p (polys.go q []) ++ tail
+      calc
+        polys.go p (polys.go q tail) =
+            polys.go p [] ++ polys.go q tail := ihp _
+        _ = polys.go p [] ++ (polys.go q [] ++ tail) := by rw [ihq]
+        _ = (polys.go p [] ++ polys.go q []) ++ tail :=
+              (List.append_assoc _ _ _).symm
+        _ = polys.go p (polys.go q []) ++ tail :=
+              (congrArg (fun ys => ys ++ tail) (ihp (polys.go q []))).symm
+
+@[simp] theorem polys_atom (a : Atom n) : (QF.atom a).polys = [a.p] := rfl
+@[simp] theorem polys_not (p : QF n) : p.not.polys = p.polys := rfl
+@[simp] theorem polys_and (p q : QF n) :
+    (p.and q).polys = p.polys ++ q.polys :=
+  polys_go_append p (polys.go q [])
+@[simp] theorem polys_or (p q : QF n) :
+    (p.or q).polys = p.polys ++ q.polys :=
+  polys_go_append p (polys.go q [])
+
 /-- Maximum normalized exponent of the selected coordinate. -/
 def degree (i : Fin n) : QF n → Nat
   | .atom a => a.p.degreeOf i
