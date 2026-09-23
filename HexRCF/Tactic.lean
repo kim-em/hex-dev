@@ -79,16 +79,35 @@ private meta def admittedRootSum : Name :=
 private meta def ordinaryAxiom (name : Name) : Bool :=
   [``propext, ``Classical.choice, ``Quot.sound].contains name
 
-/-- Audit a proof's dependencies, stopping only at the named #10389 bridge.
-Checking the complete path matters: `collectAxioms` alone reports `sorryAx`
-without identifying which declaration introduced it. -/
+/-- Exported theorems whose source proofs use the named bridge. Lean imports
+their theorem signatures without bodies, so the expected defining module is
+part of this narrow admission. Add consumers only after auditing their source. -/
+private meta def admittedModule (constant : Name) : Option Name :=
+  if constant == admittedRootSum then
+    some (.str (.str .anonymous "HexRealRootsMathlib") "TarskiSoundness")
+  else if #["check_sound", "queryPrepared_sound", "query_sound"].any
+      (fun s => constant == .str (.str .anonymous "HexSturmMathlib") s) then
+    some (.str (.str .anonymous "HexSturmMathlib") "Soundness")
+  else none
+
+/-- A local theorem with the same name is not the imported audited theorem. -/
+private meta def fromModule (constant moduleName : Name) : MetaM Bool := do
+  let env ← getEnv
+  let some index := env.getModuleIdxFor? constant | return false
+  return env.allImportedModuleNames[index.toNat]? == some moduleName
+
+/-- Audit a proof's dependencies. Imported theorem bodies are not available in
+Lean's public module view, so only the exact audited exports above may carry
+the bridge's `sorryAx`. Every locally visible dependency is traversed. -/
 private meta partial def checkAxiomPath (handler constant : Name) :
     StateRefT NameSet MetaM Unit := do
   if (← get).contains constant then return
   modify (·.insert constant)
   let axioms ← collectAxioms constant
   if axioms.all ordinaryAxiom then return
-  if constant == admittedRootSum then
+  if let some moduleName := admittedModule constant then
+    unless ← fromModule constant moduleName do
+      throwError "rcf: handler {handler} proposed a proof using an unaudited declaration {constant}"
     for dependency in axioms do
       unless ordinaryAxiom dependency || dependency == ``sorryAx do
         throwError "rcf: handler {handler} proposed a proof using forbidden axiom {dependency} (through {constant})"
@@ -99,6 +118,8 @@ private meta partial def checkAxiomPath (handler constant : Name) :
   let mut used := info.type.getUsedConstants
   if let some value := info.value? true then
     used := used ++ value.getUsedConstants
+  if let .inductInfo induction := info then
+    used := used ++ induction.ctors
   for dependency in used do
     checkAxiomPath handler dependency
 

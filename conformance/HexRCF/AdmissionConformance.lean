@@ -7,6 +7,7 @@ module
 
 public import HexRCF.Tactic
 public import HexRealRootsMathlib.TarskiSoundness
+public import HexSturmMathlib.Soundness
 
 public section
 
@@ -22,5 +23,9 @@ run_meta do
   checkAxioms (Name.mkSimple "bridgeProbe") bridge
   let helper ← mkAuxTheorem (← inferType bridge) bridge (cache := false)
   checkAxioms (Name.mkSimple "helperProbe") helper
+  for name in #[``HexSturmMathlib.check_sound,
+      ``HexSturmMathlib.queryPrepared_sound, ``HexSturmMathlib.query_sound] do
+    checkAxioms (Name.mkSimple "importedConsumerProbe")
+      (← mkConstWithFreshMVarLevels name)
 
 end Hex.RCF.AdmissionConformance
