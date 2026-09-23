@@ -44,7 +44,7 @@ Normalization combines equal powers and removes semantic leading cancellation. -
   MvPoly.eval₂ (Int.castRingHom (DensePoly RealAlgebraicNumber)) (coordinate values) p
 
 /-- Interpret the resulting polynomial at any real argument, not only algebraic ones. -/
-noncomputable def evaluate (x : ℝ) : DensePoly RealAlgebraicNumber →+* ℝ :=
+@[expose] noncomputable def evaluate (x : ℝ) : DensePoly RealAlgebraicNumber →+* ℝ :=
   (Polynomial.eval₂RingHom RealAlgebraicNumber.toRealHom x).comp
     HexPolyMathlib.equiv.toRingHom
 
