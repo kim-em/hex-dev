@@ -16,7 +16,8 @@ from check_dag import (
     parse_imports,
 )
 from check_phase4 import check_headline_reports
-from libgraph import LibraryInfo, load_libraries, library_owner_for_path
+from libgraph import (LibraryInfo, load_libraries, library_owner_for_path,
+                      may_import, reachable_dependencies)
 
 
 class AdapterOwnershipTest(unittest.TestCase):
@@ -26,6 +27,26 @@ class AdapterOwnershipTest(unittest.TestCase):
             library_owner_for_path(Path("adapters/HexRCF/RealFormula.lean"), libraries),
             "HexRCF",
         )
+
+    def test_adapter_imports_do_not_expand_base_or_published_closure(self) -> None:
+        libraries = load_libraries()
+        closure = reachable_dependencies(libraries)
+        for dependency in ["HexRealAlgebraicMathlib", "HexNumberFieldMathlib"]:
+            self.assertTrue(may_import("HexRCF", dependency, libraries, closure, adapter=True))
+            self.assertFalse(may_import("HexRCF", dependency, libraries, closure))
+            self.assertNotIn(dependency, closure["HexRCF"])
+        self.assertFalse(may_import("HexPoly", "HexNumberFieldMathlib", libraries, closure,
+                                    adapter=True))
+        self.assertFalse(may_import("HexRCF", "HexGraphIso", libraries, closure, adapter=True))
+
+    def test_adapter_dependencies_must_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "libraries.yml"
+            manifest.write_text("libraries:\n  HexCore:\n    deps: []\n"
+                                "    adapter_deps: [HexMissing]\n    mathlib: false\n"
+                                "    done_through: 0\n    status: active\n")
+            with self.assertRaisesRegex(ValueError, "unknown library HexMissing"):
+                load_libraries(manifest)
 
 
 class MetaImportTest(unittest.TestCase):
