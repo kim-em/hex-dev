@@ -255,22 +255,29 @@ run_meta do
   let _ ← prepared q(∀ x : ℝ, x ^ 2 + Real.sqrt 2 * x + 1 > 0) 0
   let _ ← prepared q(∃ x : ℝ, 0 < x ∧ x < (2 : ℝ) ^ (1 / 3 : ℝ)) 1
   let _ ← prepared q(∀ x : ℝ, x + Real.rpow 2 (1 / 3) > x) 1
+  let _ ← prepared q(∀ x : ℝ, x + (2 : ℝ) ^ (3 : ℝ)⁻¹ > x) 1
+  withLocalDeclD `a q(ℝ) fun a => do
+    let a : Q(ℝ) ← pure a
+    withLocalDeclD `h q($a = Real.sqrt 2) fun _ => do
+      let _ ← prepared q(∀ x : ℝ, x + $a > x) 0
+      pure ()
   let _ ← prepared q(∀ x : ℝ, x * (0 * Real.sqrt (1 / 0)) = 0) 1
   unsupported q(∀ x : ℝ, x + (2 : ℝ) ^ (1 / (3 + 0 / 0) : ℝ) > x)
   unsupported q(∀ x : ℝ, x + Real.sqrt x = 0)
   unsupported q(∀ x : ℝ, x ^ (1 / 3 : ℝ) = 0)
+  unsupported q(∀ x : ℝ, (2 : ℝ) ^ x = 0)
   unsupported q(∀ x : ℝ, x + (2 : ℝ) ^ (2 / 3 : ℝ) = 0)
   unsupported q(∀ x : ℝ, x + (2 : ℝ) ^ (-1 / 3 : ℝ) = 0)
   unsupported q(∀ x : ℝ, x + (2 : ℝ) ^ Real.pi = 0)
   let power := q(@HPow.hPow ℝ ℝ ℝ ⟨fun _ _ => Real.sin 1⟩ 2 (1 / 3))
   unsupported q(∀ x : ℝ, x + $power = x)
 
-private meta def nonnegative (source : Expr) : MetaM Expr := do
+private meta def nonnegative (source : Expr) : MetaM (Option Expr) := do
   let source : Q(ℝ) ← pure source
   let goal ← mkFreshExprMVar q(0 ≤ $source)
   let remaining ← Lean.Elab.runTactic' goal.mvarId! (← `(tactic| norm_num))
-  unless remaining.isEmpty do throwError "test needs a proved nonnegative base"
-  instantiateMVars goal
+  unless remaining.isEmpty do return none
+  return some (← instantiateMVars goal)
 
 private meta def interpreted (source : Expr) : MetaM Coefficients.Prepared := do
   let result ← ((Coefficients.interpret source nonnegative).run
@@ -288,11 +295,12 @@ run_meta do
       q(-cubic.toReal + 3 * fieldCoefficient.toReal), q(cubic.toReal⁻¹),
       q(cubic.toReal / fieldCoefficient.toReal), q(cubic.toReal ^ 3),
       q(Real.sqrt 2), q((2 : ℝ) ^ (1 / 3 : ℝ)), q(Real.rpow 2 (1 / 3)),
+      q((2 : ℝ) ^ (3 : ℝ)⁻¹), q((-2 : ℝ) ^ (1 : ℝ)),
       q((2 : ℝ) ^ (1 / 6 + 1 / 6 : ℝ)), q(Real.sqrt 2 + (2 : ℝ) ^ (1 / 3 : ℝ))] do
     let _ ← interpreted e
   let r ← interpreted q(fieldCoefficient.toReal)
   unless r.value == q(fieldCoefficient) do throwError "selected field value was replaced"
-  let result ← ((Coefficients.interpret q(Real.sqrt 2) (fun _ => mkEqRefl q((2 : ℝ)))).run
+  let result ← ((Coefficients.interpret q(Real.sqrt 2) (fun _ => return some (← mkEqRefl q((2 : ℝ))))).run
     { config := {}, budget := .ofBudget Hex.Reflect.Budget.default }).run
   let .error (.internal _) := result | throwError "wrong nonnegativity proof accepted"
 
@@ -319,5 +327,41 @@ theorem fieldArithmetic : ∃ a : Hex.RealAlgebraicNumber,
 /-- info: 'Hex.RCF.RealCoefficientsConformance.fieldArithmetic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms fieldArithmetic
+
+run_meta do
+  let reference ← interpreted q((2 : ℝ) ^ (1 / 3 : ℝ))
+  for e in #[q(Real.rpow 2 (1 / 3)), q((2 : ℝ) ^ (3 : ℝ)⁻¹),
+      q((2 : ℝ) ^ (1 / 6 + 1 / 6 : ℝ))] do
+    let candidate ← interpreted e
+    unless ← isDefEq reference.value candidate.value do
+      throwError "equivalent root exponents selected different algebraic values"
+  for e in #[q(Real.pi), q(Real.exp 1), q((2 : ℝ) ^ (2 / 3 : ℝ)),
+      q(@HAdd.hAdd ℝ ℝ ℝ ⟨fun _ _ => Real.sin 1⟩ 2 3),
+      q(@Inv.inv ℝ ⟨fun _ => Real.sin 1⟩ 2),
+      q(@HPow.hPow ℝ ℕ ℝ ⟨fun _ _ => Real.sin 1⟩ 2 3),
+      q(@HPow.hPow ℝ ℝ ℝ ⟨fun _ _ => Real.sin 1⟩ 2 (1 / 3))] do
+    let .error (.unsupported _ _) ← ((Coefficients.interpret e nonnegative).run
+      { config := {}, budget := .ofBudget Hex.Reflect.Budget.default }).run
+      | throwError "unsupported coefficient did not decline"
+  withLocalDeclD `a q(ℝ) fun a => do
+    let .error (.unsupported _ _) ← ((Coefficients.interpret a nonnegative).run
+      { config := {}, budget := .ofBudget Hex.Reflect.Budget.default }).run
+      | throwError "open coefficient accepted"
+  let .error (.unsupported _ _) ← ((Coefficients.interpret q(Real.sqrt (-1))
+      (fun _ => pure none)).run
+    { config := {}, budget := .ofBudget Hex.Reflect.Budget.default }).run
+    | throwError "unproved nonnegative base did not decline"
+  for (source, dimension, limit) in #[
+      (q((2 : ℝ) ^ (1 / 3 : ℝ)), Hex.Reflect.BudgetDimension.exponent, 2),
+      (q(Real.sqrt 2), .exponent, 1), (q(Real.sqrt 2), .proofNodes, 0),
+      (q(Real.sqrt 2), .sourceNodes, 0)] do
+    let .error (.budget b) ← ((Coefficients.interpret source nonnegative).run
+      { config := {}, budget := .ofBudget (Hex.Reflect.Budget.default.set dimension limit) }).run
+      | throwError "coefficient interpretation ignored its budget"
+    unless b.dimension == dimension do throwError "wrong coefficient budget dimension"
+
+/-- info: 'Hex.RCF.RealCoefficients.Coefficients.ofField_toReal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Coefficients.ofField_toReal
 
 end Hex.RCF.RealCoefficientsConformance

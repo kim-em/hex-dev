@@ -1259,7 +1259,10 @@ identity are proved by `root_toReal`, `root_nonneg` and `root_pow`.
 of type `RealAlgebraicNumber` and a kernel-checked equality with its real
 interpretation. It preserves direct `toReal` values, including `ofField`
 results, and composes the existing arithmetic interpretation theorems. Root
-aliases require a proof that their base is nonnegative. This translation does
+aliases require a proof that their base is nonnegative; failure to supply one
+is a structured decline. Exponent one uses the real-power identity without a
+sign premise. Reciprocal exponents may use division or inverse notation.
+This translation does
 not authenticate literal certificate data, prove original divisor guards or
 register a solver. These remain separate checks before accepting a decision.
 

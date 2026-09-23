@@ -12,11 +12,11 @@ public section
 
 namespace Hex.RCF.RealCoefficients.Coefficients
 
-private theorem rational_value (n : Int) (d : Nat) :
+theorem rational_value (n : Int) (d : Nat) :
     (RealAlgebraicNumber.ofRat ((n : Rat) / d)).toReal = (n : ℝ) / d := by
   simp
 
-private theorem nonneg_value (a : RealAlgebraicNumber) (source : ℝ)
+theorem nonneg_value (a : RealAlgebraicNumber) (source : ℝ)
     (h : a.toReal = source) (hs : 0 ≤ source) : 0 ≤ a := by
   simpa only [RealAlgebraicNumber.le_iff, RealAlgebraicNumber.zero_toReal, h] using hs
 
@@ -39,7 +39,17 @@ structure Prepared where
 /-- Recognize a positive reciprocal integer exponent using checked rational
 normalization. The caller retains the source exponent's divisor obligations. -/
 def rootDegree (source : Expr) : ReifyM Nat := do
-  let _ ← arithmetic #[] source
+  let (normalized, _) ← Meta.transformWithCache source {} (pre := fun e => do
+    if e.isAppOfArity ``Inv.inv 3 then
+      let args := e.getAppArgs
+      unless ← isDefEq (← inferType args[2]!) q(ℝ) do
+        abort (.unsupported e "root exponents use real rational arithmetic")
+      let a : Q(ℝ) ← pure args[2]!
+      unless ← isDefEq e q($a⁻¹) do
+        abort (.unsupported e "nonstandard inverse instance in root exponent")
+      return .continue (some q(1 / $a))
+    return .continue) (skipInstances := true)
+  let _ ← arithmetic #[] normalized
   let source : Q(ℝ) ← pure source
   let result ← liftM <| observing? do
     let ⟨value, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat source (_inst := q(inferInstance))
@@ -54,11 +64,10 @@ private def checked (source : Expr) (value proof : Expr) : ReifyM Prepared := do
   let target ← mkEq (← mkAppM ``RealAlgebraicNumber.toReal #[value]) source
   unless ← isDefEq (← inferType proof) target do
     abort (.internal "coefficient interpretation has the wrong target")
-  accountProof proof
   return ⟨value, proof⟩
 
 private partial def interpretCore (source : Expr)
-    (nonnegative : Expr → MetaM Expr) : ReifyM Prepared := do
+    (nonnegative : Expr → MetaM (Option Expr)) : ReifyM Prepared := do
   let e := source.consumeMData
   unless !e.hasFVar && !e.hasMVar && !e.hasLooseBVars do
     abort (.unsupported source "coefficient must be closed")
@@ -70,6 +79,16 @@ private partial def interpretCore (source : Expr)
   let op := e.getAppFn.constName?
   if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].any (op == some ·) &&
       args.size == 6 then
+    unless (← isDefEq (← inferType args[4]!) q(ℝ)) &&
+        (← isDefEq (← inferType args[5]!) q(ℝ)) do
+      abort (.unsupported source "coefficient operands must have type Real")
+    let left : Q(ℝ) ← pure args[4]!
+    let right : Q(ℝ) ← pure args[5]!
+    let canonical := if op == some ``HAdd.hAdd then q($left + $right)
+      else if op == some ``HSub.hSub then q($left - $right)
+      else if op == some ``HMul.hMul then q($left * $right) else q($left / $right)
+    unless ← isDefEq e canonical do
+      abort (.unsupported source "nonstandard real arithmetic instance")
     let ra ← interpretCore args[4]! nonnegative
     let rb ← interpretCore args[5]! nonnegative
     let a : Q(RealAlgebraicNumber) ← pure ra.value
@@ -91,6 +110,12 @@ private partial def interpretCore (source : Expr)
           (congrArg₂ (fun x y : ℝ => x / y) $ha $hb)))
     return ← checked source value proof
   if [``Neg.neg, ``Inv.inv].any (op == some ·) && args.size == 3 then
+    unless ← isDefEq (← inferType args[2]!) q(ℝ) do
+      abort (.unsupported source "coefficient operand must have type Real")
+    let operand : Q(ℝ) ← pure args[2]!
+    let canonical := if op == some ``Neg.neg then q(-$operand) else q($operand⁻¹)
+    unless ← isDefEq e canonical do
+      abort (.unsupported source "nonstandard real unary operation")
     let ra ← interpretCore args[2]! nonnegative
     let a : Q(RealAlgebraicNumber) ← pure ra.value
     let x : Q(ℝ) ← pure args[2]!
@@ -103,6 +128,12 @@ private partial def interpretCore (source : Expr)
   let isNatPower ← if e.isAppOfArity ``HPow.hPow 6 then
       pure ((← inferType args[5]!).isConstOf ``Nat) else pure false
   if isNatPower then
+    unless ← isDefEq (← inferType args[4]!) q(ℝ) do
+      abort (.unsupported source "coefficient base must have type Real")
+    let base : Q(ℝ) ← pure args[4]!
+    let exponent : Q(ℕ) ← pure args[5]!
+    unless ← isDefEq e q($base ^ $exponent) do
+      abort (.unsupported source "nonstandard real power instance")
     let some n ← getNatValue? args[5]!
       | abort (.unsupported source "coefficient power requires a natural literal")
     charge .exponent n
@@ -116,6 +147,13 @@ private partial def interpretCore (source : Expr)
         (congrArg (fun x : ℝ => x ^ $n) $ha))
   let isRealPower ← if e.isAppOfArity ``HPow.hPow 6 then
       pure ((← inferType args[5]!).isConstOf ``Real) else pure false
+  if isRealPower then
+    unless ← isDefEq (← inferType args[4]!) q(ℝ) do
+      abort (.unsupported source "coefficient base must have type Real")
+    let base : Q(ℝ) ← pure args[4]!
+    let exponent : Q(ℝ) ← pure args[5]!
+    unless ← isDefEq e q($base ^ $exponent) do
+      abort (.unsupported source "nonstandard real power instance")
   let radical := if e.isAppOfArity ``Real.sqrt 1 then some (e.appArg!, none)
     else if e.isAppOfArity ``Real.rpow 2 then some (args[0]!, some args[1]!)
     else if isRealPower then
@@ -127,7 +165,17 @@ private partial def interpretCore (source : Expr)
     let a : Q(RealAlgebraicNumber) ← pure ra.value
     let x : Q(ℝ) ← pure base
     let ha : Q(($a).toReal = $x) ← pure ra.proof
-    let hx : Q(0 ≤ $x) ← nonnegative base
+    if n == 1 then
+      let some p := exponent | abort (.internal "square-root degree changed")
+      let p : Q(ℝ) ← pure p
+      let ⟨_, _, _, hp⟩ ← Mathlib.Meta.NormNum.deriveRat p (_inst := q(inferInstance))
+      let ⟨_, _, _, ho⟩ ← Mathlib.Meta.NormNum.deriveRat q((1 : ℝ)) (_inst := q(inferInstance))
+      let he : Q((1 : ℝ) = $p) ← mkAppM ``Mathlib.Meta.NormNum.isRat_eq_true #[ho, hp]
+      return ← checked source ra.value q(($ha).trans ((Real.rpow_one $x).symm.trans
+        (congrArg (fun y : ℝ => $x ^ y) $he)))
+    let some hx ← nonnegative base
+      | abort (.unsupported base "radical base is not known to be nonnegative")
+    let hx : Q(0 ≤ $x) ← instantiateMVars hx
     unless ← isDefEq (← inferType hx) q(0 ≤ $x) do
       abort (.internal "nonnegativity provider returned the wrong proposition")
     let h : Q(0 ≤ $a) ← pure q(nonneg_value $a $x $ha $hx)
@@ -152,13 +200,14 @@ private partial def interpretCore (source : Expr)
 
 /-- Translate a closed real coefficient using the existing algebraic arithmetic
 and checked radical aliases. `nonnegative` supplies proofs for radical bases;
-all assembled proofs are checked by the ordinary kernel. Original divisor
+a missing proof returns a structured decline. All assembled proofs are checked by the ordinary kernel. Original divisor
 obligations belong to `Reify.Source` and must still be discharged separately.
 No compiled value or chosen-root certificate is trusted by this translation. -/
-def interpret (source : Expr) (nonnegative : Expr → MetaM Expr) : ReifyM Prepared := do
+def interpret (source : Expr) (nonnegative : Expr → MetaM (Option Expr)) : ReifyM Prepared := do
   let cap := (← get).budget.remaining.sourceNodes
   charge .sourceNodes (Hex.Reflect.sourceNodeCount source (cap + 1))
   let result ← interpretCore source nonnegative
+  accountProof result.proof
   checkWithKernel result.proof
   return result
 

@@ -127,6 +127,7 @@ private partial def scalar (source : Expr) : ScanM Unit := do
     return ()
   if e.isAppOfArity ``HPow.hPow 6 then
     if (← inferType args[5]!).isConstOf ``Real then
+      unless ← isReal args[4]! do reject e "coefficient base must have type Real"
       let a : Q(ℝ) := args[4]!
       let p : Q(ℝ) := args[5]!
       unless ← isDefEq e q($a ^ $p) do reject e "nonstandard real power instance"

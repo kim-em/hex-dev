@@ -7,6 +7,7 @@ module
 
 public import HexRCF.RealCoefficients.RootAliases
 public meta import HexRCF.RealCoefficients.RootAliases
+public meta import HexRCF.RealCoefficients.Interpret
 public meta import HexRealAlgebraicMathlib.Order
 public meta import HexRealAlgebraic.Order
 
@@ -62,5 +63,24 @@ theorem cubic_nonneg : 0 ≤ cubeRoot := root_nonneg two 3 two_nonneg
 /-- info: 'Hex.RCF.RootAliasTests.square_alias' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms square_alias
+
+-- A module importer must be able to store proofs emitted by the interpreter,
+-- including its rational and nonnegativity helper theorems, without import all.
+open Lean Meta Qq in
+local elab "interpreted_root%" : term => do
+  let outcome ← ((RealCoefficients.Coefficients.interpret q(Real.sqrt 2)
+    (fun _ => return some q(show (0 : ℝ) ≤ 2 by norm_num))).run
+      { config := {}, budget := .ofBudget Hex.Reflect.Budget.default }).run
+  let .ok (result, _) := outcome | throwError "root interpretation declined"
+  let a : Q(RealAlgebraicNumber) ← pure result.value
+  let h : Q(($a).toReal = Real.sqrt 2) ← pure result.proof
+  return q((⟨$a, $h⟩ : ∃ a : RealAlgebraicNumber, a.toReal = Real.sqrt 2))
+
+theorem interpreted_root : ∃ a : RealAlgebraicNumber, a.toReal = Real.sqrt 2 :=
+  interpreted_root%
+
+/-- info: 'Hex.RCF.RootAliasTests.interpreted_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms interpreted_root
 
 end Hex.RCF.RootAliasTests
