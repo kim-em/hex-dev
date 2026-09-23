@@ -248,4 +248,76 @@ theorem fieldSchema : ∃ (n : ℕ) (f : Prenex n) (ρ : Fin n → ℝ),
 #guard_msgs in
 #print axioms intervalSchema
 
+
+-- Radical notation is admitted as closed coefficient syntax. Divisors inside
+-- the base and the exponent remain source obligations, even under cancellation.
+run_meta do
+  let _ ← prepared q(∀ x : ℝ, x ^ 2 + Real.sqrt 2 * x + 1 > 0) 0
+  let _ ← prepared q(∃ x : ℝ, 0 < x ∧ x < (2 : ℝ) ^ (1 / 3 : ℝ)) 1
+  let _ ← prepared q(∀ x : ℝ, x + Real.rpow 2 (1 / 3) > x) 1
+  let _ ← prepared q(∀ x : ℝ, x * (0 * Real.sqrt (1 / 0)) = 0) 1
+  unsupported q(∀ x : ℝ, x + (2 : ℝ) ^ (1 / (3 + 0 / 0) : ℝ) > x)
+  unsupported q(∀ x : ℝ, x + Real.sqrt x = 0)
+  unsupported q(∀ x : ℝ, x ^ (1 / 3 : ℝ) = 0)
+  unsupported q(∀ x : ℝ, x + (2 : ℝ) ^ (2 / 3 : ℝ) = 0)
+  unsupported q(∀ x : ℝ, x + (2 : ℝ) ^ (-1 / 3 : ℝ) = 0)
+  unsupported q(∀ x : ℝ, x + (2 : ℝ) ^ Real.pi = 0)
+  let power := q(@HPow.hPow ℝ ℝ ℝ ⟨fun _ _ => Real.sin 1⟩ 2 (1 / 3))
+  unsupported q(∀ x : ℝ, x + $power = x)
+
+private meta def nonnegative (source : Expr) : MetaM Expr := do
+  let source : Q(ℝ) ← pure source
+  let goal ← mkFreshExprMVar q(0 ≤ $source)
+  let remaining ← Lean.Elab.runTactic' goal.mvarId! (← `(tactic| norm_num))
+  unless remaining.isEmpty do throwError "test needs a proved nonnegative base"
+  instantiateMVars goal
+
+private meta def interpreted (source : Expr) : MetaM Coefficients.Prepared := do
+  let result ← ((Coefficients.interpret source nonnegative).run
+    { config := {}, budget := .ofBudget Hex.Reflect.Budget.default }).run
+  match result with
+  | .ok (r, _) =>
+    checkWithKernel r.proof
+    let target ← mkEq (← mkAppM ``Hex.RealAlgebraicNumber.toReal #[r.value]) source
+    unless ← isDefEq (← inferType r.proof) target do throwError "wrong coefficient value"
+    return r
+  | .error e => throwError "{Hex.RealFormula.Reify.Error.toMessageData e}"
+
+run_meta do
+  for e in #[q((2 : ℝ)), q((-3 / 2 : ℝ)), q(cubic.toReal), q(fieldCoefficient.toReal),
+      q(-cubic.toReal + 3 * fieldCoefficient.toReal), q(cubic.toReal⁻¹),
+      q(cubic.toReal / fieldCoefficient.toReal), q(cubic.toReal ^ 3),
+      q(Real.sqrt 2), q((2 : ℝ) ^ (1 / 3 : ℝ)), q(Real.rpow 2 (1 / 3)),
+      q((2 : ℝ) ^ (1 / 6 + 1 / 6 : ℝ)), q(Real.sqrt 2 + (2 : ℝ) ^ (1 / 3 : ℝ))] do
+    let _ ← interpreted e
+  let r ← interpreted q(fieldCoefficient.toReal)
+  unless r.value == q(fieldCoefficient) do throwError "selected field value was replaced"
+  let result ← ((Coefficients.interpret q(Real.sqrt 2) (fun _ => mkEqRefl q((2 : ℝ)))).run
+    { config := {}, budget := .ofBudget Hex.Reflect.Budget.default }).run
+  let .error (.internal _) := result | throwError "wrong nonnegativity proof accepted"
+
+local elab "coefficient_value% " scalar:term : term => do
+  let source : Q(ℝ) ← Lean.Elab.Term.elabTermAndSynthesize scalar (some q(ℝ))
+  let source : Q(ℝ) ← instantiateMVars source
+  let r ← interpreted source
+  let a : Q(Hex.RealAlgebraicNumber) ← pure r.value
+  let h : Q(($a).toReal = $source) ← pure r.proof
+  return q((⟨$a, $h⟩ : ∃ a : Hex.RealAlgebraicNumber, a.toReal = $source))
+
+theorem mixedRadicals : ∃ a : Hex.RealAlgebraicNumber,
+    a.toReal = Real.sqrt 2 + (2 : ℝ) ^ (1 / 3 : ℝ) :=
+  coefficient_value% (Real.sqrt 2 + (2 : ℝ) ^ (1 / 3 : ℝ))
+
+theorem fieldArithmetic : ∃ a : Hex.RealAlgebraicNumber,
+    a.toReal = cubic.toReal / fieldCoefficient.toReal + 1 :=
+  coefficient_value% (cubic.toReal / fieldCoefficient.toReal + 1)
+
+/-- info: 'Hex.RCF.RealCoefficientsConformance.mixedRadicals' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms mixedRadicals
+
+/-- info: 'Hex.RCF.RealCoefficientsConformance.fieldArithmetic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms fieldArithmetic
+
 end Hex.RCF.RealCoefficientsConformance

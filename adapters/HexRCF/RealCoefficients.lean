@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public meta import HexRCF.RealCoefficients.Reify
+public meta import HexRCF.RealCoefficients.Interpret
+public import HexRCF.RealCoefficients.RootAliases
 public import HexRCF.RealCoefficients.Coefficients
 public import HexRCF.RealCoefficients.Specialize
 
