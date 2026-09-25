@@ -507,6 +507,15 @@ example :
       independentInputs[0] := by
   exact Hex.QAdjoin.common_get independentInputs 0 (by decide)
 
+private theorem independentSecond : 1 < independentQuadratics.entries.size := by
+  rw [independentQuadratics, Hex.QAdjoin.common_size]
+  decide
+
+example :
+    (independentQuadratics.entries[1]'independentSecond).toAlgebraicNumber =
+      independentInputs[1] := by
+  exact Hex.QAdjoin.common_get independentInputs 1 (by decide)
+
 end Hex.RCF.RealCoefficientsConformance
 
 namespace Hex.RCF.RealCoefficientsConformance

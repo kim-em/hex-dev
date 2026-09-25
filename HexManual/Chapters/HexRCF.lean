@@ -749,7 +749,8 @@ For two independently selected coefficients, the existing number-field
 constructor finds one coordinate field. Here √2 and √3 start as roots of
 different polynomials. The check confirms that the common generator is real
 and that both converted coordinates retain their original selected algebraic
-values, in the supplied order.
+values, in the supplied order. Converting those coordinates to real algebraic
+numbers then checks the exact order √2 < √3 in their selected embeddings.
 
 ```lean
 private def independentInputs :
@@ -761,7 +762,14 @@ private def independentInputs :
   let common := Hex.QAdjoin.common independentInputs
   common.generator.isReal &&
     common.entries.map (·.toAlgebraicNumber) ==
-      independentInputs
+      independentInputs &&
+    match common.entries[0]?, common.entries[1]? with
+    | some left, some right =>
+      match Hex.RealAlgebraicNumber.ofAlgebraic? left.toAlgebraicNumber,
+          Hex.RealAlgebraicNumber.ofAlgebraic? right.toAlgebraicNumber with
+      | some a, some b => a < b
+      | _, _ => false
+    | _, _ => false
 ```
 
 The sign-table, descriptor and cell examples run the checked producers and
