@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "327c99cacafccb757254a4ec924e9b7f90d3b9e3",
+  "current_blob": "e10be2998c2ef6fa3012f4a59c58c333773489a4",
+  "reason": "Relative to the factorization measurement baseline, this change only registers the optional real-coefficient field proof modules and their conformance driver alongside the existing carrier module. The measured factorization service imports none of these modules; its runtime source, dependencies, compiler flags and link recipe are unchanged."
+}
