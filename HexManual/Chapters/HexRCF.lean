@@ -485,7 +485,9 @@ arithmetic, and uses {name}`Hex.RCF.RealCoefficients.Selected.field` to retain
 the same root when converting back to a real algebraic number. These examples
 set `maxRecDepth` to `2048` and `maxHeartbeats` to `1000000` so Lean can
 elaborate their literal certificates; users may need the same options for
-similar goals.
+similar goals. On the shared host, `lake build HexManual.Chapters.HexRCF`
+with warm imports took 86.06 seconds for this chapter. That is a module
+timing, not a per-call timing.
 
 The same checked construction works for a different cubic, `X³ − X − 1`.
 The square below selects its positive real root. The
@@ -586,6 +588,9 @@ example : ∀ x : ℝ,
     x ^ 2 + computedCoefficient.toReal > 0 := by
   rcf
 
+example : ∃ x : ℝ, x ^ 2 = selectedCubic.toReal := by
+  rcf
+
 example : True := by
   fail_if_success
     have : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 < 0 := by
@@ -600,7 +605,9 @@ example : True := by
 ```
 
 The interval statement has no rational witness supplied by the user. `rcf`
-checks the signs on its root cells and proves existence. The two
+checks the signs on its root cells and proves existence. In the final true
+example, the witness is a square root of a selected cubic algebraic number;
+the solver isolates a root of a polynomial over that coefficient field. The two
 `fail_if_success` examples show that a false algebraic statement produces no
 proof and that nonpolynomial syntax in the quantified variable is rejected.
 The adapter's source reifier preserves explicit coefficient aliases and
