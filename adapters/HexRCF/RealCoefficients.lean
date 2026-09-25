@@ -26,6 +26,7 @@ public import HexRCF.RealCoefficients.FieldDecision
 public import HexRCF.RealCoefficients.FieldRootSigns
 public import HexRCF.RealCoefficients.FieldReplay
 public import HexRCF.RealCoefficients.FieldBuild
+public meta import HexRCF.RealCoefficients.FieldLiteral
 public import HexRCF.RealCoefficients.CellFormula
 
 /-! Algebraic coefficient conversion, source preparation, fixed-field

@@ -138,7 +138,9 @@ def build [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
         let keys :=
           SignInputs.isolation FieldDecision.point radical.core isolation ++
           SignInputs.rootQueries FieldDecision.point radical.core isolation
-            (rootSigns.entries.map fun row i => row.evidence[i])
+            (rootSigns.entries.map fun row i => row.evidence[i]) ++
+          SignInputs.openSamples FieldDecision.point isolation
+            (formula.polys.map (FieldSpecialize.literalPolynomial values))
         match buildTable p s hw hp keys with
         | none => none
         | some signs => some ⟨radical, isolation, rootSigns, signs⟩

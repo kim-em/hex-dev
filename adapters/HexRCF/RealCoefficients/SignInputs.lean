@@ -7,6 +7,7 @@ module
 
 public import HexRCF.RealCoefficients.LiteralSign
 public import HexRCF.RealCoefficients.IsolationCheck
+public import HexRCF.Soundness
 
 public section
 
@@ -72,5 +73,17 @@ query polynomials and certificates must be bound to the same cell indices. -/
       let interval := cert.isolations.intervals[i]
       certificate head (.finite (point interval.lower))
         (.finite (point interval.upper)) (query i)
+
+/-- Open-cell sample values used directly by formula evaluation. They are not
+part of a Tarski certificate, but the finite field sign table must record them
+just as it records signs read while checking certificates. -/
+@[expose] def openSamples [Add D] [Mul D] {Ctx : Type v}
+    (point : Dyadic → D) (cert : IsolationReplay D Ctx)
+    (queries : List (DensePoly D)) : List D :=
+  (Cell.all cert.isolations.intervals.size).toList.flatMap fun cell =>
+    match cell with
+    | .open cut =>
+        queries.map fun q => q.eval (point (cert.isolations.openPoint cut))
+    | .root _ => []
 
 end Hex.RCF.RealCoefficients.SignInputs
