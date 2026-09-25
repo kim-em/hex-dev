@@ -21,6 +21,7 @@ public import HexRCF.RealCoefficients.Carrier
 public import HexRCF.RealCoefficients.IsolationBuild
 public import HexRCF.RealCoefficients.Isolations
 public import HexRCF.RealCoefficients.IsolationSemantics
+public import HexRCF.RealCoefficients.RadicalCheck
 public import HexRCF.RealCoefficients.Radical
 public import HexRCF.RealCoefficients.RadicalBuild
 public import HexRCF.RealCoefficients.FieldDecision
