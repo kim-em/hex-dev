@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public meta import HexRCF.RealCoefficients.FieldBuild
+public meta import HexRealAlgebraicMathlib.Laws
 public meta import Lean
 
 public meta section
@@ -184,5 +185,32 @@ meta def resultExpr {p : ZPoly} {s : DyadicSquare}
   let roots ← rootSignsExpr pExpr rootExpr formulaExpr formula.polys data.rootSigns
   let signs ← signTableExpr pExpr rootExpr data.signs
   mkAppM ``FieldBuild.Result.mk #[radical, isolation, roots, signs]
+
+/-- Construct a checked proof for a fixed-field existential or universal
+sentence. Search runs in meta code; the resulting term contains only literal
+certificate data, the Boolean replay proof, and its soundness theorem. -/
+meta def prove {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
+    [ZPoly.CheckedIrreducible p] {n : Nat}
+    (pExpr rootExpr valuesExpr formulaExpr : Expr)
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1))
+    (quantifier : RealFormula.Quantifier) (precision : Nat := 8) : MetaM Expr := do
+  let some data := FieldBuild.build p s hw hp values formula () precision |
+    throwError "rcf: fixed-field certificate construction failed"
+  let certificate ← resultExpr pExpr rootExpr formulaExpr formula data
+  let verdictName := match quantifier with
+    | .forallReal => ``FieldBuild.Result.checkForall
+    | .existsReal => ``FieldBuild.Result.checkExists
+  let soundName := match quantifier with
+    | .forallReal => ``FieldBuild.Result.checkForall_sound
+    | .existsReal => ``FieldBuild.Result.checkExists_sound
+  let verdict ← mkAppM verdictName
+    #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit]
+  let checked ← mkDecideProof (← mkAppM ``Eq #[verdict, mkConst ``Bool.true])
+  let proof ← mkAppM soundName
+    #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit, checked]
+  check proof
+  return proof
 
 end Hex.RCF.RealCoefficients.FieldLiteral
