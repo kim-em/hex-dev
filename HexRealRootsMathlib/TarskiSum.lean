@@ -33,6 +33,11 @@ omit [Field R] in
 @[simp] theorem inInterval_finite (a b x : R) :
     InInterval (.finite a) (.finite b) x ↔ a < x ∧ x < b := Iff.rfl
 
+omit [Field R] in
+/-- Every point lies between the two infinite endpoints. -/
+@[simp] theorem inInterval_univ (x : R) : InInterval .negInf .posInf x := by
+  constructor <;> trivial
+
 @[simp] theorem mem_rootsIn (p : Polynomial R) (a b : Endpoint R) (x : R) :
     x ∈ rootsIn p a b ↔ x ∈ p.roots ∧ InInterval a b x := by
   classical
