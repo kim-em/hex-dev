@@ -552,6 +552,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.FieldRootSigns, `HexRCF.RealCoefficients.FieldReplay,
     `HexRCF.RealCoefficients.FieldLiteral,
     `HexRCF.RealCoefficients.FieldRuntime,
+    `HexRCF.RealCoefficients.SquareTwo,
     `HexRCF.RealCoefficients.CellFormula]
 
 -- Optional semantic results whose shared foundation is owned by #10389.

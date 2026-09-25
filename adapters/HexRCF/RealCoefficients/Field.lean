@@ -265,6 +265,22 @@ theorem onSquare_value (a : RealAlgebraicNumber)
   unfold value
   rw [hcoeff, hroot]
 
+/-- A checked canonical-number identity binds a literal field coordinate to a
+user-facing real algebraic coefficient without changing the selected root. -/
+theorem value_of_algebraic_eq {p : ZPoly} {s : DyadicSquare}
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    [ZPoly.CheckedIrreducible p] (hreal : s.meetsRealAxis = true)
+    (v : PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (a : RealAlgebraicNumber)
+    (h : v.toAlgebraicNumber (literalRep p s hw hp)
+      (literalRep_mk p s hw hp) = a.toAlgebraic) :
+    value (literalRep p s hw hp) v = a.toReal := by
+  apply Complex.ofReal_injective
+  rw [value_complex (literalRep p s hw hp) (literalRep_mk p s hw hp)
+    (literalRep_real p s hw hp hreal)]
+  rw [← PolyQuot.toAlgebraicNumber_toComplex, h]
+  exact (RealAlgebraicNumber.ofReal_toReal a).symm
+
 variable (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = x)
 variable (hr : rep.root.im = 0)
 include hrep hr
