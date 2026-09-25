@@ -211,4 +211,19 @@ theorem Descriptor.constraints_head {context : Ctx}
       simp [hsg] at hs0 ⊢
   exact sign_eq_zero_iff.mp hs0'
 
+omit [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- Copied derivative constraints retain the source descriptor's joint word. -/
+theorem Descriptor.constraints_queries {context : Ctx}
+    (d : Descriptor E Ctx sign context) (x : K)
+    (h : signsAt f hz d.raw.constraints x = d.raw.constraintSigns) :
+    signsAt f hz d.raw.queries x = d.raw.signs := by
+  have htail := congrArg List.tail h
+  simp [signsAt, RawDescriptor.constraints, RawDescriptor.constraintSigns] at htail
+  have htake := congrArg (List.take d.raw.queries.length) htail
+  have hw := (RawDescriptor.check_eq d.accepted).1
+  simp only [RawDescriptor.wellFormed, Bool.and_eq_true, decide_eq_true_eq] at hw
+  have hlen : d.raw.signs.length = d.raw.queries.length := by
+    simpa [RawDescriptor.queries] using hw.1.1.1.2.symm
+  simpa [signsAt, ← hlen] using htake
+
 end Hex.SignDet
