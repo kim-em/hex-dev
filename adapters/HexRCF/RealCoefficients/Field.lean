@@ -234,6 +234,37 @@ theorem common_value (bs : Array RealAlgebraicNumber)
   rw [QAdjoin.common_get inputs i (by simpa [inputs] using hi)]
   simpa [inputs] using (RealAlgebraicNumber.ofReal_toReal bs[i]).symm
 
+/-- Change an existing field coordinate to the printable square presentation
+of the same selected root. Only the dependent root index changes. -/
+def onSquare (a : AlgebraicNumber)
+    (hw : atomWitness a.p a.rep.1.square)
+    (hp : (mahlerPrec a.p : Int) ≤ a.rep.1.square.prec)
+    (v : QAdjoin a) :
+    PolyQuot a.p (SimpleRoot.ofSquare a.p a.rep.1.square hw hp) :=
+  (HexRootsMathlib.SimpleRoot.ofSquare_mk a.rep hw hp).symm ▸ v
+
+private theorem cast_coeffs {p : ZPoly} {x y : SimpleRoot p}
+    (h : x = y) (v : PolyQuot p y) :
+    (h.symm ▸ v : PolyQuot p x).coeffs = v.coeffs := by
+  cases h
+  rfl
+
+theorem onSquare_value (a : RealAlgebraicNumber)
+    (hw : atomWitness a.toAlgebraic.p a.toAlgebraic.rep.1.square)
+    (hp : (mahlerPrec a.toAlgebraic.p : Int) ≤ a.toAlgebraic.rep.1.square.prec)
+    (v : QAdjoin a.toAlgebraic) :
+    value (literalRep a.toAlgebraic.p a.toAlgebraic.rep.1.square hw hp)
+      (onSquare a.toAlgebraic hw hp v) =
+    value a.toAlgebraic.rep v := by
+  have hroot : (literalRep a.toAlgebraic.p a.toAlgebraic.rep.1.square hw hp).root =
+      a.toAlgebraic.rep.root := by
+    exact congrArg HexRootsMathlib.SimpleRoot.rootOf
+      (HexRootsMathlib.SimpleRoot.ofSquare_mk a.toAlgebraic.rep hw hp)
+  have hcoeff : (onSquare a.toAlgebraic hw hp v).coeffs = v.coeffs := by
+    exact cast_coeffs (HexRootsMathlib.SimpleRoot.ofSquare_mk a.toAlgebraic.rep hw hp) v
+  unfold value
+  rw [hcoeff, hroot]
+
 variable (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = x)
 variable (hr : rep.root.im = 0)
 include hrep hr
