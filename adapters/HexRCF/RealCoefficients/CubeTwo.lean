@@ -7,16 +7,17 @@ module
 
 public import HexRCF.RealCoefficients.Field
 public import HexRealFormulaMathlib.Semantics
+public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
 public section
 
-/-! A checked square-root alias for the small user-facing demonstration. -/
+/-! The selected cubic root denotes Mathlib's real power notation. -/
 
-namespace Hex.RCF.RealCoefficients.SquareTwo
+namespace Hex.RCF.RealCoefficients.CubeTwo
 
 open Hex
 
-abbrev polynomial : ZPoly := DensePoly.ofList [-2, 0, 1]
+abbrev polynomial : ZPoly := DensePoly.ofList [-2, 0, 0, 1]
 
 abbrev coordinate (s : DyadicSquare)
     (hw : atomWitness polynomial s)
@@ -27,10 +28,9 @@ abbrev coordinate (s : DyadicSquare)
 theorem value (s : DyadicSquare)
     (hw : atomWitness polynomial s)
     (hp : (mahlerPrec polynomial : Int) ≤ s.prec)
-    (hreal : s.meetsRealAxis = true)
-    (hpositive : 0 < ((s.re - s.radiusHi).toRat : ℝ)) :
+    (hreal : s.meetsRealAxis = true) :
     Field.value (Field.literalRep polynomial s hw hp) (coordinate s hw hp) =
-      Real.sqrt 2 := by
+      (2 : ℝ) ^ (1 / 3 : ℝ) := by
   let rep := Field.literalRep polynomial s hw hp
   let v := coordinate s hw hp
   have hv : v.coeffs = DensePoly.monomial 1 (1 : Rat) := by
@@ -51,9 +51,9 @@ theorem value (s : DyadicSquare)
         norm_num
     rw [hpoly, Polynomial.eval_X]
   have hroot := Field.literalRep_root polynomial s hw hp hreal
-  have hsq : rep.root.re ^ 2 = 2 := by
+  have hcubed : rep.root.re ^ 3 = 2 := by
     have hpoly : LiteralSign.realPoly (ZPoly.toRatPoly polynomial) =
-        Polynomial.X ^ 2 - Polynomial.C 2 := by
+        Polynomial.X ^ 3 - Polynomial.C 2 := by
       ext i
       simp only [LiteralSign.realPoly, HexPolyMathlib.Interpret.coeff_interpret,
         ZPoly.coeff_toRatPoly, polynomial, DensePoly.coeff_ofList,
@@ -64,35 +64,34 @@ theorem value (s : DyadicSquare)
       · subst i; norm_num
       by_cases h2 : i = 2
       · subst i; norm_num
-      have h3 : 3 ≤ i := by omega
+      by_cases h3 : i = 3
+      · subst i; norm_num
+      have h4 : 4 ≤ i := by omega
       rw [List.getD_eq_getElem?_getD,
-        List.getElem?_eq_none (show [(-2 : Int), 0, 1].length ≤ i by simp; omega)]
-      simp only [Option.getD_none, if_neg h0, if_neg h2]
+        List.getElem?_eq_none (show [(-2 : Int), 0, 0, 1].length ≤ i by simp; omega)]
+      simp only [Option.getD_none, if_neg h0, if_neg h3]
       norm_num
     rw [hpoly] at hroot
     simp only [Polynomial.IsRoot, Polynomial.eval_sub, Polynomial.eval_pow,
       Polynomial.eval_X, Polynomial.eval_C] at hroot
     nlinarith
-  have hpos : 0 ≤ rep.root.re :=
-    le_of_lt (hpositive.trans (Field.literalRep_bounds polynomial s hw hp).1)
+  have hpower : ((2 : ℝ) ^ (1 / 3 : ℝ)) ^ 3 = 2 := by
+    simpa only [one_div, Nat.cast_ofNat] using
+      (Real.rpow_inv_natCast_pow (x := (2 : ℝ)) (n := 3)
+        (by norm_num) (by decide))
   rw [hval]
-  have hsqrt := Real.sq_sqrt (show (0 : ℝ) ≤ 2 by norm_num)
-  have hsqrt_nonneg := Real.sqrt_nonneg 2
-  nlinarith
+  exact (show Odd 3 by decide).pow_injective (hcubed.trans hpower.symm)
 
-/-- A one-coordinate formula sees the literal field root as the user's
-square-root coefficient. -/
 theorem valuation (s : DyadicSquare)
     (hw : atomWitness polynomial s)
     (hp : (mahlerPrec polynomial : Int) ≤ s.prec)
     (hreal : s.meetsRealAxis = true)
-    (hpositive : 0 < ((s.re - s.radiusHi).toRat : ℝ))
     (values : Fin 1 → PolyQuot polynomial (SimpleRoot.ofSquare polynomial s hw hp))
     (hvalue : values 0 = coordinate s hw hp) :
     (fun i => Field.value (Field.literalRep polynomial s hw hp) (values i)) =
-      Hex.RealFormula.append Fin.elim0 (Real.sqrt 2) := by
+      Hex.RealFormula.append Fin.elim0 ((2 : ℝ) ^ (1 / 3 : ℝ)) := by
   funext i
   fin_cases i
-  simpa [hvalue, Hex.RealFormula.append] using value s hw hp hreal hpositive
+  simpa [hvalue, Hex.RealFormula.append] using value s hw hp hreal
 
-end Hex.RCF.RealCoefficients.SquareTwo
+end Hex.RCF.RealCoefficients.CubeTwo

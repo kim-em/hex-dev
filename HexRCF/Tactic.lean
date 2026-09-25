@@ -83,11 +83,19 @@ private meta def ordinaryAxiom (name : Name) : Bool :=
 their theorem signatures without bodies, so the expected defining module is
 part of this narrow admission. Add consumers only after auditing their source. -/
 private meta def admittedModule (constant : Name) : Option Name :=
+  let fieldResult : Name :=
+    .str (.str (.str (.str (.str .anonymous "Hex") "RCF")
+      "RealCoefficients") "FieldBuild") "Result"
+  let fieldBuild : Name :=
+    .str (.str (.str .anonymous "HexRCF") "RealCoefficients") "FieldBuild"
   if constant == admittedRootSum then
     some (.str (.str .anonymous "HexRealRootsMathlib") "TarskiSoundness")
   else if #["check_sound", "queryPrepared_sound", "query_sound"].any
       (fun s => constant == .str (.str .anonymous "HexSturmMathlib") s) then
     some (.str (.str .anonymous "HexSturmMathlib") "Soundness")
+  else if #["checkForall_sound", "checkExists_sound"].any
+      (fun s => constant == .str fieldResult s) then
+    some fieldBuild
   else none
 
 /-- A local theorem with the same name is not the imported audited theorem. -/
@@ -109,7 +117,8 @@ private meta partial def checkAxiomPath (handler constant : Name) :
     unless ← fromModule constant moduleName do
       throwError "rcf: handler {handler} proposed a proof using an unaudited declaration {constant}"
     for dependency in axioms do
-      unless ordinaryAxiom dependency || dependency == ``sorryAx do
+      unless ordinaryAxiom dependency || dependency == ``sorryAx ||
+          dependency == constant do
         throwError "rcf: handler {handler} proposed a proof using forbidden axiom {dependency} (through {constant})"
     return
   let info ← getConstInfo constant

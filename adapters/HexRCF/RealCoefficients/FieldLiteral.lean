@@ -230,7 +230,27 @@ meta def prove {p : ZPoly} {s : DyadicSquare}
     | .existsReal => ``FieldBuild.Result.checkExists_sound
   let verdict ← mkAppM verdictName
     #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit]
-  let checked ← mkDecideProof (← mkAppM ``Eq #[verdict, mkConst ``Bool.true])
+  let proofType ← mkAppM ``Eq #[verdict, mkConst ``Bool.true]
+  let candidate ← mkFreshExprMVar proofType
+  let script ← match quantifier with
+    | .forallReal => `(tactic|
+        (simp only [FieldBuild.Result.checkForall, Field.checkSignTable,
+          LiteralSign.Table.check, RadicalCert.check,
+          FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
+          TarskiCertificate.check_eq, SignedRemainderChain.check,
+          ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
+          repeat' (any_goals (apply And.intro)); all_goals try (decide +kernel)))
+    | .existsReal => `(tactic|
+        (simp only [FieldBuild.Result.checkExists, Field.checkSignTable,
+          LiteralSign.Table.check, RadicalCert.check,
+          FieldRootSigns.Table.check, IsolationReplay.check, Sturm.check,
+          TarskiCertificate.check_eq, SignedRemainderChain.check,
+          ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
+          repeat' (any_goals (apply And.intro)); all_goals try (decide +kernel)))
+  let remaining ← Lean.Elab.runTactic' candidate.mvarId! script
+  unless remaining.isEmpty do
+    throwError "rcf: fixed-field certificate replay did not prove a true verdict"
+  let checked ← instantiateMVars candidate
   let proof ← mkAppM soundName
     #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit, checked]
   check proof

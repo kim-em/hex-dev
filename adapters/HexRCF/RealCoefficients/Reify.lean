@@ -200,9 +200,32 @@ private def normalize (source : Expr) : MetaM Expr :=
       return .continue (some q($a * $b⁻¹))
     return .continue) (skipInstances := true)
 
+private partial def hasNamedSource (e : Expr) : Bool :=
+  e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 ||
+    e.isAppOfArity ``Real.sqrt 1 ||
+    e.isAppOfArity ``Real.rpow 2 ||
+    e.isConstOf ``Real.pi ||
+    e.isAppOfArity ``Real.exp 1 ||
+    e.getAppArgs.any hasNamedSource
+
+private def isNamedCoefficient (e : Expr) : MetaM Bool := do
+  if e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 ||
+      e.isAppOfArity ``Real.sqrt 1 ||
+      e.isAppOfArity ``Real.rpow 2 ||
+      e.isConstOf ``Real.pi ||
+      e.isAppOfArity ``Real.exp 1 then return true
+  if e.isAppOfArity ``Inv.inv 3 || e.isAppOfArity ``HDiv.hDiv 6 then
+    return e.getAppArgs.any hasNamedSource
+  if e.isAppOfArity ``HPow.hPow 6 then
+    return (← inferType e.getAppArgs[5]!).isConstOf ``Real
+  return false
+
+/-- Abstract named algebraic inputs, leaving rational arithmetic to the
+shared polynomial reifier. Thus `2 * sqrt 2` uses the same one-dimensional
+field as `sqrt 2`, rather than creating another unrelated coefficient. -/
 private def collect (source : Expr) : MetaM (Array Expr) := do
   let (_, (values, _)) ← (Meta.transformWithCache (m := StateRefT (Array Expr × ExprSet) MetaM) source {} (pre := fun e => do
-    if isClosed e && (← isReal e) then
+    if isClosed e && (← isReal e) && (← isNamedCoefficient e) then
       let (values, seen) ← get
       unless seen.contains e do set (values.push e, seen.insert e)
       return .done e
