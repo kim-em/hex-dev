@@ -159,3 +159,40 @@ The corresponding `expanded` spelling is a separate selected control.
 final declaration processing. Keep these diagnostics separate from the ordinary
 comparisons. The inventory reparses multiline kernel/profile messages from the
 saved compiler output and verifies that the prototype source hashes never changed.
+
+## Normalized determinant comparison
+
+`Normalized.lean` reuses Mathlib's normalized Bird certificate evaluator and
+normalizes the supplied target in the same atom context. It uses the ordinary
+ring cache, including available field instances for rational coefficients.
+It does not invoke `norm_det` or a determinant fallback. These remain manual
+experiments, excluded from production dispatch.
+
+Three entry points isolate proof assembly: `normalized_bird` composes the two
+normalization proofs explicitly; `composed_bird` uses Lean's equality proof
+constructors, which remove syntactic reflexivity; `direct_bird` additionally
+returns the determinant certificate when its normal form is definitionally
+equal to the supplied target. These are general assembly variants, without
+matrix-family recognition.
+
+```sh
+lake build Determinant.NormalizedAudit
+python experiments/Determinant/adversarial.py /tmp/det-normalized/cancel6 --candidate normalized --family cancel --n 6 --degree 2
+python experiments/Determinant/adversarial.py /tmp/det-direct/rankone10 --candidate direct --family rankone --n 10
+python3 experiments/Determinant/adversarial_report.py /tmp/det-normalized
+python3 experiments/Determinant/adversarial_report.py /tmp/det-direct
+```
+
+Select cases independently; the examples do not prescribe a sweep. Keep a
+separate output root per variant, with all roots under one parent. The runner
+charges these variants against one ten-minute allowance across sibling roots,
+including failures and diagnostics. Switching variants does not reset it.
+The same serial lock and per-invocation ceiling apply. Each archive retains the
+prototype source used at that stage; later assembly changes are not substituted
+into earlier observations. The [normalized comparison report](../../reports/determinant-normalized-comparison.md)
+records the results and remaining counterexamples.
+
+`--invocation-seconds` may lower the default 60-second process ceiling. Admission
+reserves four of the selected ceilings plus coordination overhead; the cumulative
+allowance is unchanged. The selected limit is recorded with the case, including
+any resulting timeout. Shortening it cannot establish a 60-second runtime claim.

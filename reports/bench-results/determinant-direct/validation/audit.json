@@ -1,0 +1,66 @@
+{
+  "build": "lake build Determinant.NormalizedAudit",
+  "theorems": {
+    "generic": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "reordered": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "cancellation": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "rational": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "composite": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "singleton": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "composed": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "composedZero": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "composedRat": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "direct": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "directZero": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "directRat": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "rejection_tests": 4
+}

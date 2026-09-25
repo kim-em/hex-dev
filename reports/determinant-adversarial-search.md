@@ -140,6 +140,11 @@ strategies. Neither proposed improvement has been measured here. The
 [replacement proposal](determinant-redesign-proposal.md) now makes this decision
 an experimental prerequisite to migrating the symbolic backend.
 
+The separate [normalized comparison](determinant-normalized-comparison.md)
+tests the normalized Bird evaluator and general target-proof assembly on selected
+inputs from this archive. It removes the large cancellation losses and identifies
+direct target conversion as a promising candidate for broader coverage.
+
 ## Protocol, validation and limits
 
 The [runner](../experiments/Determinant/adversarial.py) uses fresh `lake build`

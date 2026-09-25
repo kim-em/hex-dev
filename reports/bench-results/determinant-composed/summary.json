@@ -1,0 +1,82 @@
+{
+  "elapsed_seconds": 48.54081799299456,
+  "cases": [
+    {
+      "name": "rankone10",
+      "case": {
+        "family": "rankone",
+        "n": 10,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "composed",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 1.4013012575,
+          "minimum": 1.3982542679999999,
+          "maximum": 1.404348247
+        },
+        "Composed": {
+          "count": 2,
+          "median": 1.416407773,
+          "minimum": 1.414914673,
+          "maximum": 1.417900873
+        }
+      },
+      "paired_losses": 2,
+      "elapsed_seconds": 18.21195947402157
+    },
+    {
+      "name": "rankone10-profile",
+      "case": {
+        "family": "rankone",
+        "n": 10,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "composed",
+        "diagnostic": true,
+        "kernel_profile": true,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 3.5782445405,
+          "minimum": 2.9352274499999997,
+          "maximum": 4.221261631
+        },
+        "Composed": {
+          "count": 2,
+          "median": 1.8726577705,
+          "minimum": 1.517549573,
+          "maximum": 2.2277659680000004
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 30.328858518972993
+    }
+  ],
+  "prototype_hashes": {
+    "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+    "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+    "experiments/Determinant/Normalized.lean": "d149bfd1c88d9dd33214886e2d0cf97850812f48caa02f3f8c5b7cd6b3c6f2cb"
+  }
+}

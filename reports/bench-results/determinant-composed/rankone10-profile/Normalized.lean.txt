@@ -1,0 +1,77 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Arithmetic
+import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Correctness
+
+/-! Experimental supplied-target frontend for Mathlib's normalized Bird
+certificate evaluator. Determinant evaluation and target normalization share
+one atom context. No simplifier cleanup or second ring traversal of the
+determinant's normal form is needed. Literal transport follows Mathlib's
+`Mathlib/Tactic/NormDet.lean` (Copyright 2026 Paul Cadman, Apache 2.0). -/
+
+open Lean Meta Elab Tactic Qq Mathlib.Tactic.Ring
+open Mathlib.Tactic.Determinant
+
+namespace Determinant.Normalized
+
+meta def compareTarget {u : Level} {α : Q(Type u)} {rα : Q(CommRing $α)}
+    (right : Q($α)) (compose : Bool) : CertM rα Expr := do
+  let left ← certBirdDet
+  let target ← certEval right
+  let ctx ← read
+  unless left.val.eq rcℕ ctx.rc target.val do throwError "unequal normal forms"
+  have a : Q($α) := left.norm
+  have b : Q($α) := target.norm
+  have : $a =Q $b := ⟨⟩
+  have subject : Q($α) := left.subject
+  have pa : Q($subject = $a) := left.proof
+  have pb : Q($right = $b) := target.proof
+  if compose then return ← mkEqTrans pa (← mkEqSymm pb)
+  return q(Eq.trans $pa (Eq.symm $pb))
+
+meta def run (compose : Bool) : TacticM Unit := withMainContext do
+  let g ← getMainGoal
+  let some (_, left, right) := (← instantiateMVars (← g.getType)).eq?
+    | throwError "expected an equality"
+  let ⟨_, α, left⟩ ← inferTypeQ' left
+  let ~q(@Matrix.det (Fin $n) _ _ _ $rα $matrix) := left
+    | throwError "expected a determinant over Fin"
+  let some dim ← getNatValue? n | throwError "expected a literal dimension"
+  let ~q(Matrix.of $rows) := matrix | throwError "expected a literal matrix"
+  let (matrixRows, _, _) ← Matrix.matchVecConsPrefix n rows
+  unless matrixRows.length == dim do throwError "row count mismatch"
+  let entries ← matrixRows.flatMapM fun row => do
+    let (es, _, _) ← Matrix.matchVecConsPrefix n row
+    unless es.length == dim do throwError "column count mismatch"
+    pure es
+  let xs ← mkListLit α entries
+  have xs : Q(List $α) := xs
+  have matrix : Q(Matrix (Fin $n) (Fin $n) $α) := matrix
+  let arrayExpr : Q(Array $α) := q(List.toArray $xs)
+  have : (List.ofFn fun k : Fin ($n * $n) ↦ $matrix k.divNat k.modNat) =Q $xs := ⟨⟩
+  let hlist : Q(List.ofFn (fun k : Fin ($n * $n) ↦ $matrix k.divNat k.modNat) = $xs) := q(rfl)
+  let hArray := q($hlist ▸ List.toArray_ofFn)
+  let transport := q($hArray ▸ Matrix.ofArray_ofFn $matrix ▸ BirdDet.det_eq_birdDet
+    (Array.ofFn fun k : Fin ($n * $n) ↦ $matrix k.divNat k.modNat) Array.size_ofFn)
+  let reified ← reifyBirdDet q(BirdDet.birdDet $n $arrayExpr)
+  -- The supplied target may use division. Use the ordinary ring cache's
+  -- available field/characteristic instances on both sides of the comparison.
+  let cα ← Common.mkCache (commSemiringOfCommRing reified.rα)
+  let ctx := { reified.ctx with cα, rc := ringCompute cα }
+  have right : Q($α) := right
+  let proof ← compareTarget (rα := reified.rα) right compose |>.run' {} |>.run ctx |>.run .reducible
+  have proof : Q(BirdDet.birdDet $n $arrayExpr = $right) := proof
+  if compose then
+    g.assign (← mkEqTrans transport proof)
+  else
+    g.assign (mkAppN (mkConst ``Eq.trans [← getLevel α])
+      #[α, left, q(BirdDet.birdDet $n $arrayExpr), right, transport, proof])
+  replaceMainGoal []
+
+elab "normalized_bird" : tactic => run false
+elab "composed_bird" : tactic => run true
+
+end Determinant.Normalized

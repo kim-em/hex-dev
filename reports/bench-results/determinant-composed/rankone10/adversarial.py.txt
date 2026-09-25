@@ -1,0 +1,313 @@
+#!/usr/bin/env python3
+"""One selected adversarial proof comparison; never an automatic grid."""
+import argparse
+import fcntl
+import hashlib
+import itertools
+import json
+import os
+from pathlib import Path
+import random
+import re
+import statistics
+import time
+
+from arithmetic import ROOT
+from adversarial_report import profile_components, theorem_axioms
+from scripts.bench import fresh_module_sweep as sweep
+from scripts.bench.det_symbolic_sweep import cpu_lease
+from scripts.bench.det_bench_limits import supervise
+
+
+def determinant(a, ctx):
+    """Independent subset expansion, not the candidate's Bird recurrence."""
+    n = len(a)
+    values = {0: ctx.constant(1)}
+    for i in range(n):
+        nxt = {}
+        for mask, value in values.items():
+            for j in range(n):
+                if mask & (1 << j):
+                    continue
+                sign = (-1) ** ((mask >> (j + 1)).bit_count())
+                key = mask | (1 << j)
+                nxt[key] = nxt.get(key, ctx.constant(0)) + sign * value * a[i][j]
+        values = nxt
+    return values[(1 << n) - 1]
+
+
+def expression(p):
+    terms = []
+    for powers, c in sorted(p.to_dict().items(), reverse=True):
+        den = int(c.denominator)
+        num = int(c.numerator)
+        factors = [f'({num} : S)' if den == 1 else f'(({num} : S) / ({den} : S))']
+        factors += [f'(x{i} ^ ({d} : Nat))' for i, d in enumerate(powers) if d]
+        terms.append('(' + ' * '.join(factors) + ')')
+    return '(' + (' + '.join(terms) or '(0 : S)') + ')'
+
+
+def make_statement(c):
+    import flint
+    n, k, degree = c['n'], c['atoms'], c['degree']
+    if c['family'] in ('independent', 'rankone', 'vandermonde', 'circulant'):
+        k = n*n if c['family'] == 'independent' else 2*n if c['family'] == 'rankone' else n
+    factory = flint.fmpq_mpoly_ctx if c['rational'] else flint.fmpz_mpoly_ctx
+    ctx = factory.get(tuple(f'x{i}' for i in range(k)))
+    xs = ctx.gens()
+    rng = random.Random(c['seed'])
+    monomials = [m for m in itertools.product(range(degree + 1), repeat=k)
+                 if sum(m) <= degree] if c['family'] not in ('independent', 'rankone', 'vandermonde', 'circulant') else []
+    if monomials and len(monomials) < c['support']:
+        raise ValueError('support exceeds the available monomials')
+    bound = 2 ** c['bits'] - 1
+
+    def entry(i, j):
+        if c['family'] == 'independent':
+            return xs[n*i+j]
+        if c['family'] == 'rankone':
+            return xs[i] * xs[n+j]
+        if c['family'] == 'vandermonde':
+            return xs[i] ** j
+        if c['family'] == 'circulant':
+            return xs[(j-i) % n]
+        ms = rng.sample(monomials, c['support'])
+        return ctx.from_dict({m: rng.choice((-1, 1)) * rng.randint(1, bound) for m in ms})
+
+    a = [[entry(i, j) for j in range(n)] for i in range(n)]
+    if c['rational']:
+        a = [[p * flint.fmpq(1, rng.randint(2, 7)) for p in row] for row in a]
+    spelling = [[expression(p) for p in row] for row in a]
+    target = None
+    family = c['family']
+    if family == 'legacy-factor':
+        from full_measure import source
+        fixture = json.loads((ROOT / 'reports/bench-results/determinant-redesign/arithmetic-typed/fixture.json').read_text())
+        code = source(fixture, 'Shared', 'shared', 'command', 'common-factor4')
+        return code, {'target_terms': 15, 'generator': 'retained quadratic fixture'}
+    if family == 'vandermonde' and c['target'] == 'factored':
+        target = ' * '.join(f'(x{j} - x{i})' for i in range(n) for j in range(i+1,n))
+    if family == 'factor':
+        factor = sum(xs, ctx.constant(1))
+        base_det = determinant(a, ctx)
+        spelling = [[f'({expression(factor)} * {e})' for e in row] for row in spelling]
+        a = [[factor * p for p in row] for row in a]
+        if c['target'] == 'factored':
+            target = f'{expression(factor)} ^ ({n} : Nat) * {expression(base_det)}'
+    elif family in ('cancel', 'triangular', 'sparse-cancel', 'sparse', 'decorated'):
+        # Identically zero, but not syntactically zero: normalization exposes it.
+        z = f'((x0 + x1) ^ (2 : Nat) - (x0 ^ (2 : Nat) + (2 : S) * x0 * x1 + x1 ^ (2 : Nat)))'
+        for i in range(n):
+            for j in range(n):
+                if family == 'decorated':
+                    spelling[i][j] = f'({spelling[i][j]} + {z})'
+                elif (j < i if family in ('cancel', 'triangular') else (i + j) % 3 == 0):
+                    a[i][j] = ctx.constant(0)
+                    spelling[i][j] = z if family in ('cancel', 'sparse-cancel') else '(0 : S)'
+    elif family == 'skew':
+        for i in range(n):
+            a[i][i] = ctx.constant(0)
+            spelling[i][i] = '(0 : S)'
+            for j in range(i):
+                a[i][j] = -a[j][i]
+                spelling[i][j] = f'(-{spelling[j][i]})'
+    elif family == 'singular':
+        a[-1] = [a[0][j] + a[1][j] for j in range(n)]
+        spelling[-1] = [f'({spelling[0][j]} + {spelling[1][j]})' for j in range(n)]
+    elif family == 'shared':
+        # A common polynomial subexpression, retained or expanded at each entry.
+        common = sum(xs, ctx.constant(1)) ** degree
+        for i in range(n):
+            for j in range(n):
+                b = rng.randint(-3, 3)
+                a[i][j] = a[i][j] + b * common
+                spelling[i][j] = (expression(a[i][j]) if c['entry_form'] == 'expanded'
+                                  else f'({spelling[i][j]} + ({b} : S) * '
+                                  f'({expression(sum(xs, ctx.constant(1)))}) ^ ({degree} : Nat))')
+    # The supplied rank-one target is zero for n >= 2; every Lean arm checks it.
+    # Avoid exponential target generation for this known identity.
+    d = ctx.constant(0) if family == 'rankone' else determinant(a, ctx)
+    target = target or expression(d)
+    matrix = '; '.join(', '.join(row) for row in spelling)
+    variables = ' '.join(f'x{i}' for i in range(k))
+    carrier = 'abbrev S := Rat' if c['rational'] else f'abbrev S := ZMod {c["modulus"]}' if c['modulus'] else 'variable {S : Type} [CommRing S]'
+    code = f'''/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Deferred
+import Mathlib.Tactic.NormDet
+import Mathlib.Data.ZMod.Basic
+open Determinant
+set_option maxHeartbeats 0
+set_option maxRecDepth 10000
+set_option Elab.async false
+set_option profiler false
+namespace Determinant.Adversarial
+{carrier}
+#measure_decl theorem result ({variables} : S) :
+    Matrix.det (!![{matrix}] : Matrix (Fin {n}) (Fin {n}) S) = {target} := by
+  shared_bird
+#print axioms result
+end Determinant.Adversarial
+'''
+    return code, {'actual_atoms': k, 'target_terms': len(d.to_dict()), 'entry_terms': sum(len(p.to_dict()) for row in a for p in row)}
+
+
+def dominates(a, b):
+    # No automatic scheduling; this also prevents manually advancing a timed-out ladder.
+    same = ('family', 'target', 'modulus', 'seed', 'rational', 'entry_form')
+    axes = ('n', 'atoms', 'degree', 'support', 'bits')
+    return all(a.get(k, 'factored' if k == 'entry_form' else False) == b.get(k, 'factored' if k == 'entry_form' else False) for k in same) and all(a[k] >= b[k] for k in axes)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('output', type=Path)
+    parser.add_argument('--family', choices=['legacy-factor', 'dense', 'independent', 'factor', 'cancel', 'triangular', 'sparse-cancel', 'sparse', 'decorated', 'singular', 'shared', 'skew', 'rankone', 'vandermonde', 'circulant'], default='dense')
+    for key, default in [('n', 4), ('atoms', 2), ('degree', 1), ('support', 3), ('bits', 2), ('modulus', 0), ('seed', 10320)]:
+        parser.add_argument('--' + key, type=int, default=default)
+    parser.add_argument('--entry-form', choices=['expanded', 'factored'], default='factored')
+    parser.add_argument('--candidate', choices=['shared', 'normalized', 'composed'], default='shared',
+                        help='normalized/composed share a ten-minute ceiling across sibling output roots')
+    parser.add_argument('--diagnostic', action='store_true', help='also clock tactic execution; do not pool with uninstrumented samples')
+    parser.add_argument('--kernel-profile', action='store_true', help='profile final kernel checking in a separate diagnostic')
+    parser.add_argument('--rational', action='store_true')
+    parser.add_argument('--target', choices=['expanded', 'factored'], default='expanded')
+    args = parser.parse_args()
+    args.diagnostic = args.diagnostic or args.kernel_profile
+    c = {k: v for k, v in vars(args).items() if k != 'output'}
+    candidate = args.candidate.capitalize()
+    search_limit = 2400 if args.candidate == 'shared' else 600
+    if args.n < 2 or args.atoms < 2 or min(args.degree, args.support, args.bits) < 1:
+        parser.error('dimensions/atoms must be at least two; degree/support/bits positive')
+    if args.family in ('independent', 'rankone', 'vandermonde', 'circulant') and (args.atoms, args.degree, args.support, args.bits) != (2, 1, 3, 2):
+        parser.error('pattern entries are fixed by dimension; other shape parameters must be default')
+    if args.family in ('rankone', 'vandermonde', 'circulant') and args.rational:
+        parser.error('independent rational entry scaling would destroy this pattern fixture')
+    if args.rational and args.modulus:
+        parser.error('choose rational or modular coefficients, not both')
+    if args.family == 'legacy-factor' and (args.n, args.atoms, args.degree, args.support, args.bits, args.modulus, args.target, args.rational) != (4, 3, 2, 3, 2, 0, 'factored', False):
+        parser.error('legacy factor fixture has fixed parameters')
+    if args.target == 'factored' and args.family not in ('legacy-factor', 'factor', 'vandermonde'):
+        parser.error('factored targets are defined only for legacy-factor, factor and vandermonde')
+    if args.entry_form == 'expanded' and args.family != 'shared':
+        parser.error('entry-form controls the shared-expression family only')
+    if args.modulus < 0:
+        parser.error('modulus must be nonnegative')
+    root, output = args.output.parent, args.output
+    root.mkdir(parents=True, exist_ok=True)
+    # Serial across this worktree; each candidate has a bounded search ledger.
+    with (ROOT / '.lake/determinant-adversarial.lock').open('w') as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise SystemExit('another adversarial measurement is active in this worktree')
+        elapsed = 0
+        for previous in root.glob('*/case.json'):
+            old = json.loads(previous.read_text())
+            if old.get('candidate', 'shared') != args.candidate:
+                raise SystemExit('use separate output roots for different candidates')
+            status = previous.parent / 'status.json'
+            if not status.exists():
+                raise SystemExit(f'unfinished prior case: {previous.parent}')
+            elapsed += json.loads(status.read_text())['elapsed_seconds']
+            failure = previous.parent / 'failure.json'
+            if failure.exists():
+                f = json.loads(failure.read_text())
+                if f['state'] == 'timeout' and dominates(c, old):
+                    raise SystemExit(f'skipped: larger than timeout at {previous.parent}')
+        if args.candidate != 'shared':
+            # Both normalization variants belong to one experiment. Switching
+            # variants must not reset its allowance; keep roots as siblings.
+            for previous in root.parent.glob('*/*/case.json'):
+                if previous.parent.parent.resolve() == root.resolve():
+                    continue
+                old = json.loads(previous.read_text())
+                if old.get('candidate') not in ('normalized', 'composed'):
+                    continue
+                status = previous.parent / 'status.json'
+                if not status.exists():
+                    raise SystemExit(f'unfinished prior normalization case: {previous.parent}')
+                elapsed += json.loads(status.read_text())['elapsed_seconds']
+        batch_limit = min(360, int(search_limit - elapsed))
+        if batch_limit < 245:
+            raise SystemExit(f'stop for a scientific decision: {elapsed:.1f}s used; '
+                             f'insufficient remaining allowance for four invocations within {search_limit // 60} minutes')
+        output.mkdir(exist_ok=False)
+        (output / 'case.json').write_text(json.dumps(c, indent=2) + '\n')
+
+        def run(deadline):
+            code, metadata = make_statement(c)
+            if args.candidate != 'shared':
+                code = code.replace('import Determinant.Deferred\n',
+                                    'import Determinant.Deferred\nimport Determinant.Normalized\n')
+            if c['diagnostic']:
+                code = code.replace('  shared_bird\n', '  timed_proof\n    shared_bird\n')
+            if c['kernel_profile']:
+                helper = '''open Lean Elab Command in
+elab "#profile_decl " cmd:command : command => do
+  let start ← IO.monoNanosNow
+  withScope (fun s => { s with opts := ((Elab.async.set s.opts false).setBool `profiler true).set `profiler.threshold (1 : Nat) }) do
+    elabCommand cmd
+  logInfo m!"DECL_NS {(← IO.monoNanosNow) - start}"
+'''
+                code = code.replace('#measure_decl theorem', helper + '#profile_decl theorem')
+            (output / 'input.json').write_text(json.dumps(metadata, indent=2) + '\n')
+            paths = [Path(__file__), ROOT / 'experiments/Determinant/Deferred.lean', ROOT / 'experiments/Determinant/Arithmetic.lean']
+            paths.append(ROOT / 'experiments/Determinant/adversarial_report.py')
+            if args.candidate != 'shared':
+                paths.append(ROOT / 'experiments/Determinant/Normalized.lean')
+            (output / 'sources.json').write_text(json.dumps({str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}, indent=2))
+            for p in paths:
+                (output / (p.name + '.txt')).write_bytes(p.read_bytes())
+            cpu, lease = cpu_lease()
+            os.sched_setaffinity(0, {cpu})
+            os.environ['LEAN_NUM_THREADS'] = '1'
+            topology = sweep.cpu_topology(cpu)
+            monitored = sweep.parse_cpu_list(topology.get('thread_siblings_list')) or [cpu]
+            data = dict(case=c, metadata=metadata, cpu=cpu, topology=topology,
+                        environment=sweep.environment(), samples=[])
+            def observe(module, result):
+                with (output / 'observations.jsonl').open('a') as f:
+                    f.write(json.dumps(dict(module=module, result=result)) + '\n')
+                if result.get('state') in ('timeout', 'failed'):
+                    (output / 'failure.json').write_text(json.dumps(result, indent=2))
+            try:
+                for pair, arms in enumerate([('Mathlib', candidate), (candidate, 'Mathlib')]):
+                    for arm in arms:
+                        module = 'Determinant.AdversarialSample' + arm
+                        path = ROOT / 'experiments/Determinant' / (module.split('.')[-1] + '.lean')
+                        assert not path.exists()
+                        tactic = 'simp only [norm_det] <;> ring' if arm == 'Mathlib' else args.candidate + '_bird'
+                        text = code.replace('  shared_bird\n', '  ' + tactic + '\n')
+                        (output / (path.name + '.txt')).write_text(text)
+                        path.write_text(text)
+                        try:
+                            result = sweep.build_sample(module, min(60, deadline-time.monotonic()-2), cpu, monitored, observe, True)
+                        finally:
+                            path.unlink(missing_ok=True)
+                        ns = re.findall(r'DECL_NS (\d+)', result['compiler_output'])
+                        assert len(ns) == 1, ns
+                        result['axioms'] = theorem_axioms(result['compiler_output'])
+                        assert set(result['axioms']) <= {'propext', 'Classical.choice', 'Quot.sound'}
+                        ms = int(ns[0]) / 1e6
+                        calls = [int(v)/1e6 for v in re.findall(r'CALL_NS (\d+)', result['compiler_output'])]
+                        kernels = profile_components(result['compiler_output'], path.stem).get('type checking', [])
+                        if c['kernel_profile']:
+                            assert len(kernels) == 1, kernels
+                        if c['diagnostic']:
+                            assert len(calls) == 1, calls
+                        data['samples'].append(dict(arm=arm, pair=pair, declaration_ms=ms, tactic_ms=calls, kernel_ms=kernels, result=result))
+                        (output / 'results.json').write_text(json.dumps(data, indent=2) + '\n')
+                        print(f'{output.name}: pair {pair} {arm} {ms:.2f} ms', flush=True)
+                medians = {arm: statistics.median(s['declaration_ms'] for s in data['samples'] if s['arm'] == arm) for arm in ('Mathlib', candidate)}
+                print(json.dumps(medians), flush=True)
+            finally:
+                lease.close()
+        return supervise(run, batch_limit, output / 'status.json')
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

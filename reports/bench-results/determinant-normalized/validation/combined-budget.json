@@ -1,0 +1,6 @@
+{
+  "check": "switching variants does not reset the ten-minute allowance",
+  "elapsed_seconds": 375,
+  "diagnostic": "stop for a scientific decision: 375.0s used; insufficient remaining allowance for four invocations within 10 minutes",
+  "proof_started": false
+}

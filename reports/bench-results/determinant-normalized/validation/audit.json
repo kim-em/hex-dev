@@ -1,0 +1,39 @@
+{
+  "build": "lake build Determinant.NormalizedAudit",
+  "theorems": {
+    "generic": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "reordered": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "cancellation": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "rational": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "composite": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "singleton": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "rejects": [
+    "false constant target",
+    "fresh uncancelled target atom"
+  ]
+}

@@ -1,0 +1,298 @@
+{
+  "elapsed_seconds": 274.2108928691596,
+  "cases": [
+    {
+      "name": "cancel4",
+      "case": {
+        "family": "cancel",
+        "n": 4,
+        "atoms": 2,
+        "degree": 2,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "normalized",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 0.25872002250000004,
+          "minimum": 0.236371078,
+          "maximum": 0.281068967
+        },
+        "Normalized": {
+          "count": 2,
+          "median": 0.17109608299999998,
+          "minimum": 0.14765843899999997,
+          "maximum": 0.194533727
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 15.110899104038253
+    },
+    {
+      "name": "cancel6",
+      "case": {
+        "family": "cancel",
+        "n": 6,
+        "atoms": 2,
+        "degree": 2,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "normalized",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 0.6722862215000001,
+          "minimum": 0.557183576,
+          "maximum": 0.787388867
+        },
+        "Normalized": {
+          "count": 2,
+          "median": 0.516149159,
+          "minimum": 0.430007986,
+          "maximum": 0.602290332
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 17.013075998052955
+    },
+    {
+      "name": "cancel8",
+      "case": {
+        "family": "cancel",
+        "n": 8,
+        "atoms": 2,
+        "degree": 2,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "normalized",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 1.630065744,
+          "minimum": 1.5611778079999998,
+          "maximum": 1.69895368
+        },
+        "Normalized": {
+          "count": 2,
+          "median": 1.0654811445,
+          "minimum": 1.036129472,
+          "maximum": 1.094832817
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 20.517537391977385
+    },
+    {
+      "name": "dense4-quadratic",
+      "case": {
+        "family": "dense",
+        "n": 4,
+        "atoms": 2,
+        "degree": 2,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "normalized",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 0.7102698765,
+          "minimum": 0.6909444419999999,
+          "maximum": 0.7295953110000001
+        },
+        "Normalized": {
+          "count": 2,
+          "median": 0.5314184055,
+          "minimum": 0.522905942,
+          "maximum": 0.539930869
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 15.810803999193013
+    },
+    {
+      "name": "rankone10",
+      "case": {
+        "family": "rankone",
+        "n": 10,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "normalized",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 1.4247905735000002,
+          "minimum": 1.359928357,
+          "maximum": 1.48965279
+        },
+        "Normalized": {
+          "count": 2,
+          "median": 1.4452033185,
+          "minimum": 1.373752272,
+          "maximum": 1.5166543650000002
+        }
+      },
+      "paired_losses": 2,
+      "elapsed_seconds": 19.414306266931817
+    },
+    {
+      "name": "rankone16",
+      "case": {
+        "family": "rankone",
+        "n": 16,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "normalized",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 14.3322520225,
+          "minimum": 13.898019564,
+          "maximum": 14.766484480999999
+        },
+        "Normalized": {
+          "count": 2,
+          "median": 16.250827203,
+          "minimum": 15.921967269000001,
+          "maximum": 16.579687137
+        }
+      },
+      "paired_losses": 2,
+      "elapsed_seconds": 83.2616252580192
+    },
+    {
+      "name": "sparse-cancel7",
+      "case": {
+        "family": "sparse-cancel",
+        "n": 7,
+        "atoms": 2,
+        "degree": 2,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "normalized",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 14.9408030515,
+          "minimum": 14.668364973,
+          "maximum": 15.21324113
+        },
+        "Normalized": {
+          "count": 2,
+          "median": 14.468644561,
+          "minimum": 14.058993136,
+          "maximum": 14.878295986
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 86.57078329706565
+    },
+    {
+      "name": "vandermonde5",
+      "case": {
+        "family": "vandermonde",
+        "n": 5,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "normalized",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "rational": false,
+        "target": "factored"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 1.384508271,
+          "minimum": 1.3799116100000002,
+          "maximum": 1.389104932
+        },
+        "Normalized": {
+          "count": 2,
+          "median": 0.5333783915000001,
+          "minimum": 0.516950152,
+          "maximum": 0.549806631
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 16.511861553881317
+    }
+  ],
+  "prototype_hashes": {
+    "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+    "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+    "experiments/Determinant/Normalized.lean": "63b1407aae8c1530db134db39a7f10c5290bded56862aa4d95c30a7de3697589"
+  }
+}

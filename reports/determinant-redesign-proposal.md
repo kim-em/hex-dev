@@ -18,12 +18,16 @@ all receive a supplied target and do not measure constructing an expanded
 result. Result-producing consumers require their own evidence before migration.
 
 For symbolic proofs, investigate a general division-free backend with cached
-proof-producing arithmetic. Its normalization policy is unresolved. The
+proof-producing arithmetic. The
 [adversarial search](determinant-adversarial-search.md) finds substantial losses
 for unconditional deferral, including inputs Mathlib proves in under a minute
-while the shared-expression prototype times out. Compare Mathlib’s normalized
-Bird certificate evaluator with target comparison in the same atom context
-against deferred/shared normalization before choosing the backend. This borrows
+while the shared-expression prototype times out. The
+[normalized comparison](determinant-normalized-comparison.md) supports reusing
+Mathlib's normalized Bird evaluator, retaining its atom context for the target,
+and returning its certificate directly when the target is already definitionally
+equal to the normal form. Extend the final variant's adversarial coverage before
+choosing the production backend; its 10×10 rank-one case still loses to Mathlib.
+This borrows
 the mathematics and scalar proof machinery of Mathlib directly. It does not call `norm_det`,
 `eval_det`, or any hidden determinant fallback. Importing Mathlib arithmetic
 lemmas in the companion is compatible with Mathlib-free computational libraries.
@@ -46,6 +50,7 @@ shared algebraic interfaces have demonstrated uses and should survive.
 | Numeric determinant certificates | Retain | Symbolic experiments do not invalidate their measured numeric advantages |
 | Polynomial triangular witness as the mandatory symbolic backend | Replace as a requirement | Fixed-witness proof construction loses after arithmetic and transport improvements |
 | Shared Bird expressions with cached normalization | Retain as an experimental comparator; resolve normalization before migration | Wins on many dense inputs, but loses on hidden zeros and larger rank-one matrices; see the adversarial report |
+| Normalized Bird certificates with direct target conversion | Extend adversarial coverage before migration | General normalization removes large cancellation losses; direct conversion wins at 16×16 rank one but still loses at 10×10 |
 | Blanket opacity for reused arithmetic proofs | Reject | Additional auxiliary checking outweighs the saved outer check |
 | Deferred expression followed by independent `ring` traversal | Reject as default | Loses to cached traversal on the same recurrence and target |
 | Eager Bird value prototype | Do not pursue this implementation | Loses on integer/rational values; list allocation and bounds checks confound any schedule-wide conclusion |
@@ -176,10 +181,10 @@ continues through proved algebraic or reflective evidence, never native evaluati
    not a large timing grid.
 
 2. **Resolve normalization, then build the general symbolic proof backend.**
-   First compare the normalized Bird certificate evaluator with a shared atom
-   context for the supplied target, and general early normalization within the
-   deferred prototype. Include every retained adversarial loss and the dense
-   controls; charge proof-term sharing and all kernel checks. Do not replace
+   Extend the normalized evaluator with direct target conversion across every
+   retained adversarial loss and the dense/factored controls. The initial
+   measurements favor this general construction but cover only selected cases.
+   Charge proof-term sharing and all kernel checks. Do not replace
    these obligations with triangular/rank-one recognition strategies. Only
    after selecting a supported construction, port it into the companion without
    importing the experimental namespace. Reuse the universal Bird correctness

@@ -1,0 +1,71 @@
+[
+  {
+    "variant": "normalized",
+    "case": "cancel4",
+    "identical_input_after_import_and_tactic_substitution": true
+  },
+  {
+    "variant": "normalized",
+    "case": "dense4-quadratic",
+    "identical_input_after_import_and_tactic_substitution": true
+  },
+  {
+    "variant": "normalized",
+    "case": "rankone10",
+    "identical_input_after_import_and_tactic_substitution": true
+  },
+  {
+    "variant": "normalized",
+    "case": "cancel6",
+    "identical_input_after_import_and_tactic_substitution": true
+  },
+  {
+    "variant": "normalized",
+    "case": "rankone16",
+    "identical_input_after_import_and_tactic_substitution": true
+  },
+  {
+    "variant": "normalized",
+    "case": "cancel8",
+    "identical_input_after_import_and_tactic_substitution": true
+  },
+  {
+    "variant": "normalized",
+    "case": "sparse-cancel7",
+    "identical_input_after_import_and_tactic_substitution": true
+  },
+  {
+    "variant": "normalized",
+    "case": "vandermonde5",
+    "identical_input_after_import_and_tactic_substitution": true
+  },
+  {
+    "variant": "composed",
+    "case": "rankone10",
+    "identical_input_after_import_and_tactic_substitution": true
+  },
+  {
+    "variant": "direct",
+    "case": "dense4-quadratic",
+    "identical_input_after_import_and_tactic_substitution": true
+  },
+  {
+    "variant": "direct",
+    "case": "rankone16",
+    "identical_input_after_import_and_tactic_substitution": true
+  },
+  {
+    "variant": "direct",
+    "case": "rankone10",
+    "identical_input_after_import_and_tactic_substitution": true
+  },
+  {
+    "check": "three variants share allowance even with shortened ceilings",
+    "diagnostic": "stop for a scientific decision: 585.0s used; insufficient remaining allowance for four invocations within 10 minutes",
+    "proof_started": false
+  },
+  {
+    "check": "invalid invocation ceilings refused before a proof",
+    "passed": true
+  }
+]
