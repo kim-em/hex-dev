@@ -213,10 +213,12 @@ agreement for every matching finite observation under `Replay.Interprets`.
 count-one row, and inserts them by Thom order. `rootsFrom_perm` proves that
 successful construction preserves all input encoding words. Insertion checks
 the common head and canonical full derivative slots before comparing.
-`insert_sorted` and `rootsFrom_sorted` prove finite strict sortedness under
-explicit transitivity and reversal laws for this guarded comparator. Obtaining
-these laws on realized encodings and proving strict real-root order still
-requires the companion's Thom foundation. An impossible
+`ThomOrder` proves transitivity and reversal directly for `compareFrom`, lifts
+them through sign-shape validation and literal descriptor guards, and supplies
+the laws used by `insert_sorted` and `rootsFrom_sorted`. These finite strict
+sortedness proofs require no caller-supplied comparator laws. Relating the
+comparator to strict real-root order still requires the companion's Thom
+foundation. An impossible
 order, duplicate word or non-unit count remains an internal error pending the
 Thom foundation; no default order or omitted row conceals such a failure.
 For positive-degree heads, `rootsFromTable` extracts every descriptor from the
@@ -228,7 +230,7 @@ distinctness. `rootsFromTable_eq` proves exact agreement with the literal
 per-descriptor checking path, including diagnostics. `buildRoots_spec` connects
 both degree branches of the public entry point to the actual prepared table;
 `buildRoots_perm` and `buildRoots_sorted` give its row preservation and finite
-conditional sortedness. `buildRoots_raw` binds every returned descriptor to
+strict sortedness. `buildRoots_raw` binds every returned descriptor to
 the requested context, head, interval and full derivative slots.
 `buildRoots_constant` proves that any successful constant-head result is empty
 using descriptor shape alone. Constants retain the literal checking path.
