@@ -23,6 +23,12 @@ def InInterval (a b : Endpoint R) (x : R) : Prop :=
   (match a with | .negInf => True | .finite a => a < x | .posInf => False) ∧
   (match b with | .posInf => True | .finite b => x < b | .negInf => False)
 
+omit [Field R] in
+theorem inInterval_iff (a b : Endpoint R) (x : R) :
+    InInterval a b x ↔
+      (match a with | .negInf => True | .finite a => a < x | .posInf => False) ∧
+      (match b with | .posInf => True | .finite b => x < b | .negInf => False) := Iff.rfl
+
 /-- The distinct roots in the open interval. This is a semantic finite set,
 not an executable root enumeration. -/
 noncomputable def rootsIn (p : Polynomial R) (a b : Endpoint R) : Finset R := by

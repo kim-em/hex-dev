@@ -9,6 +9,7 @@ public import HexSignDet.SelectedSigns
 public import HexSignDet.Reencode
 public import HexSignDetMathlib.RootModel
 public import HexSignDetMathlib.Derivatives
+public import HexSignDetMathlib.Reencode
 
 public section
 
@@ -248,5 +249,71 @@ theorem Descriptor.constraints_bounds {context : Ctx}
   simp [signsAt, RawDescriptor.constraints, RawDescriptor.constraintSigns, ← hlen] at hdrop
   simp only [signsAt, List.map_append]
   exact hdrop
+
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+private theorem castSignPos (y : K) :
+    (SignType.sign y : Int) = 1 ↔ 0 < y := by
+  constructor
+  · intro h
+    have hs : SignType.sign y = 1 := by
+      cases heq : SignType.sign y <;> simp [heq] at h ⊢
+    exact sign_eq_one_iff.mp hs
+  · intro h
+    rw [sign_eq_one_iff.mpr h]
+    rfl
+
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+private theorem castSignNeg (y : K) :
+    (SignType.sign y : Int) = -1 ↔ y < 0 := by
+  constructor
+  · intro h
+    have hs : SignType.sign y = -1 := by
+      cases heq : SignType.sign y <;> simp [heq] at h ⊢
+    exact sign_eq_neg_one_iff.mp hs
+  · intro h
+    rw [sign_eq_neg_one_iff.mpr h]
+    rfl
+
+include h1 ha hs hm hnat hsign in
+/-- Copied finite endpoint signs express the source open interval; impossible
+infinite endpoint orientations are excluded by source acceptance. -/
+theorem Descriptor.constraints_interval {context : Ctx}
+    (d : Descriptor E Ctx sign context) (x : K)
+    (h : signsAt f hz d.raw.constraints x = d.raw.constraintSigns) :
+    Tarski.InInterval (d.raw.lower.map f) (d.raw.upper.map f) x := by
+  have hb := d.constraints_bounds f hz x h
+  have hp := ((Tarski.mem_rootsIn _ _ _ _).mp
+    (d.root_spec f hz h1 ha hs hm hnat hsign).1).2
+  cases hl : d.raw.lower <;> cases hu : d.raw.upper <;>
+    simp_all [Tarski.inInterval_iff, Endpoint.map, signsAt,
+      endpoint_eval f hz h1 hs, castSignPos, castSignNeg]
+
+/-- An accepted positive-degree descriptor has a nonzero interpreted head. -/
+theorem Descriptor.head_ne_zero {context : Ctx}
+    (d : Descriptor E Ctx sign context) : interpret f hz d.raw.head ≠ 0 := by
+  have hw := (RawDescriptor.check_eq d.accepted).1
+  simp only [RawDescriptor.wellFormed, Bool.and_eq_true, decide_eq_true_eq] at hw
+  intro hzero
+  have hdegree := congrArg Polynomial.natDegree hzero
+  rw [natDegree_interpret] at hdegree
+  simp at hdegree
+  omega
+
+include h1 ha hs hm hnat hsign in
+/-- Checked re-encoding preserves the exact selected real root across heads. -/
+theorem Reencoding.root_eq_source {context : Ctx}
+    {source : Descriptor E Ctx sign context} {head : DensePoly E}
+    {a b : Endpoint E} (r : Reencoding source head a b) :
+    r.target.root f hz h1 ha hs hm hnat hsign =
+      source.root f hz h1 ha hs hm hnat hsign := by
+  let x := r.target.root f hz h1 ha hs hm hnat hsign
+  have hc := r.target_constraints f hz h1 ha hs hm hnat hsign
+  have hx : x ∈ Tarski.rootsIn (interpret f hz source.raw.head)
+      (source.raw.lower.map f) (source.raw.upper.map f) := by
+    apply (Tarski.mem_rootsIn_iff _ (source.head_ne_zero f hz) _ _ _).mpr
+    exact ⟨source.constraints_head f hz x hc,
+      source.constraints_interval f hz h1 ha hs hm hnat hsign x hc⟩
+  exact source.root_unique f hz h1 ha hs hm hnat hsign x hx
+    (source.constraints_queries f hz x hc)
 
 end Hex.SignDet
