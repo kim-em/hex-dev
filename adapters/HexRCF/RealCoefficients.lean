@@ -20,6 +20,9 @@ public import HexRCF.RealCoefficients.RadicalCheck
 public import HexRCF.RealCoefficients.Radical
 public import HexRCF.RealCoefficients.Field
 public import HexRCF.RealCoefficients.LiteralSign
+public import HexRCF.RealCoefficients.FieldSpecialize
+public import HexRCF.RealCoefficients.SignInputs
+public import HexRCF.RealCoefficients.FieldCarrier
 
 /-! Algebraic coefficient conversion, source preparation, polynomial
 specialization, checked real-root isolation, carrier coverage and fixed-field
