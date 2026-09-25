@@ -765,8 +765,11 @@ private def independentInputs :
       independentInputs &&
     match common.entries[0]?, common.entries[1]? with
     | some left, some right =>
-      match Hex.RealAlgebraicNumber.ofAlgebraic? left.toAlgebraicNumber,
-          Hex.RealAlgebraicNumber.ofAlgebraic? right.toAlgebraicNumber with
+      let a? := Hex.RealAlgebraicNumber.ofAlgebraic?
+        left.toAlgebraicNumber
+      let b? := Hex.RealAlgebraicNumber.ofAlgebraic?
+        right.toAlgebraicNumber
+      match a?, b? with
       | some a, some b => a < b
       | _, _ => false
     | _, _ => false
@@ -779,9 +782,10 @@ roots uses the semantic theorem admitted in
 order proof awaits the specified Tau Ceti foundation theorem. The separate
 common-field conversion preserves the selected algebraic values by the proved
 `QAdjoin.common_get` theorem.
-With warm imports on the shared host, the chapter containing these examples
-built in 126 seconds; this measures the whole chapter, including the earlier
-`rcf` examples.
+With warm imports on the shared host, three completed chapter builds took
+188, 311, and 303 seconds in Lake's module timing; the last used this version.
+One full command took 330 seconds wall time. These measure the whole chapter,
+including the earlier `rcf` examples.
 
 # Cross-references
 %%%
