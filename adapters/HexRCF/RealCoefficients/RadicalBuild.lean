@@ -10,38 +10,83 @@ public import HexPoly.Euclid
 
 public section
 
-/-! Propose a squarefree root carrier using ordinary coefficient division. -/
+/-! Propose a radical certificate using the existing dense-polynomial gcd. -/
+
+namespace Hex.RCF.RealCoefficients.RadicalCert
+
+variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
+variable [One E] [Add E] [Sub E] [Mul E] [Div E] [NatCast E] [DecidableEq Ctx]
+
+private def candidate (context : Ctx) (core quotient : DensePoly E)
+    (exponent : Nat) : RadicalCert E Ctx :=
+  { context, core, quotient, exponent
+    cofactor := (DensePoly.divMod
+      (DensePoly.natPow core (exponent + 1)) quotient).1 }
+
+private def search (context : Ctx) (product core quotient : DensePoly E) :
+    List Nat → Option (RadicalCert E Ctx)
+  | [] => none
+  | exponent :: rest =>
+      let cert := candidate context core quotient exponent
+      if cert.check context product then some cert
+      else search context product core quotient rest
+
+omit [NatCast E] in
+private theorem search_checked (context : Ctx) (product core quotient : DensePoly E)
+    (steps : List Nat) (cert : RadicalCert E Ctx)
+    (h : search context product core quotient steps = some cert) :
+    cert.check context product = true := by
+  induction steps with
+  | nil => simp [search] at h
+  | cons exponent rest ih =>
+      let proposed := candidate context core quotient exponent
+      by_cases hc : proposed.check context product = true
+      · have heq : proposed = cert := by
+          simpa [search, proposed, hc] using h
+        subst cert
+        exact hc
+      · have hf : proposed.check context product = false := by
+          cases hvalue : proposed.check context product <;> simp_all
+        have hrest : search context product core quotient rest = some cert := by
+          simpa [search, proposed, hf] using h
+        exact ih hrest
+
+/-- Quotient by the derivative gcd proposes a reduced core. A bounded search
+then supplies the second radical identity. Only candidates accepted by the
+literal checker are returned; failure makes no claim about the root set. -/
+def build (context : Ctx) (product : DensePoly E) : Option (RadicalCert E Ctx) :=
+  if product.isZero then none
+  else
+    let gcd := DensePoly.gcd product product.derivativeImpl
+    let core := (DensePoly.divMod product gcd).1
+    let quotient := (DensePoly.divMod product core).1
+    search context product core quotient (List.range (product.natDegree + 1))
+
+/-- A successful producer result is accepted by the exact replay checker. -/
+theorem build_checked (context : Ctx) (product : DensePoly E)
+    (cert : RadicalCert E Ctx) (h : build context product = some cert) :
+    cert.check context product = true := by
+  unfold build at h
+  split at h
+  · contradiction
+  · exact search_checked context product _ _ _ cert h
+
+end Hex.RCF.RealCoefficients.RadicalCert
 
 namespace Hex.RCF.RealCoefficients.RadicalBuild
 
-open Hex
-
-/-- Remove repeated factors by a polynomial gcd. The checker verifies both
-root-preserving identities and rejects nonzero remainders; the later prepared
-Sturm domain independently verifies that the proposed core is squarefree. -/
-def build {E : Type u} {Ctx : Type v} [Zero E] [One E] [Add E] [Sub E]
-    [Mul E] [NatCast E] [Div E] [DecidableEq E] [DecidableEq Ctx]
+/-- Compatibility name for the checked radical producer. -/
+abbrev build {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
+    [One E] [Add E] [Sub E] [Mul E] [Div E] [NatCast E] [DecidableEq Ctx]
     (context : Ctx) (product : DensePoly E) : Option (RadicalCert E Ctx) :=
-  let repeated := DensePoly.gcd product product.derivativeImpl
-  let core := product / repeated
-  let quotient := repeated
-  let exponent := product.natDegree
-  let cofactor := DensePoly.natPow core (exponent + 1) / quotient
-  let cert : RadicalCert E Ctx := ⟨context, core, quotient, cofactor, exponent⟩
-  if cert.check context product then some cert else none
+  RadicalCert.build context product
 
-/-- A successful proposal satisfies the actual root-preserving replay check. -/
-theorem build_checked {E : Type u} {Ctx : Type v} [Zero E] [One E] [Add E]
-    [Sub E] [Mul E] [NatCast E] [Div E] [DecidableEq E] [DecidableEq Ctx]
+/-- A successful proposal satisfies the literal replay checker. -/
+theorem build_checked {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
+    [One E] [Add E] [Sub E] [Mul E] [Div E] [NatCast E] [DecidableEq Ctx]
     (context : Ctx) (product : DensePoly E) (cert : RadicalCert E Ctx)
     (h : build context product = some cert) :
-    cert.check context product = true := by
-  unfold build at h
-  dsimp only at h
-  split at h
-  · next hc =>
-      cases Option.some.inj h
-      exact hc
-  · simp at h
+    cert.check context product = true :=
+  RadicalCert.build_checked context product cert h
 
 end Hex.RCF.RealCoefficients.RadicalBuild

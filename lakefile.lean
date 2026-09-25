@@ -556,7 +556,12 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.CubeTwo,
     `HexRCF.RealCoefficients.Selected,
     `HexRCF.RealCoefficients.Tactic,
-    `HexRCF.RealCoefficients.CellFormula]
+    `HexRCF.RealCoefficients.CellFormula,
+    `HexRCF.RealCoefficients.CarrierRadical,
+    `HexRCF.RealCoefficients.IsolationsAlgebraic,
+    `HexRCF.RealCoefficients.CellDecision,
+    `HexRCF.RealCoefficients.CellBuild,
+    `HexRCF.RealCoefficients.OpenFormula].map Glob.one
 
 -- Optional semantic results whose shared foundation is owned by #10389.
 @[default_target]

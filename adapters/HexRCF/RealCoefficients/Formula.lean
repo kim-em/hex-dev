@@ -36,6 +36,22 @@ already decided the truth value. Thus a missing sign always fails closed. -/
       let right ← evalSigns signOf q
       pure (left || right)
 
+/-- Formula evaluation depends only on signs of atoms present in it. -/
+theorem evalSigns_congr (formula : Hex.RealFormula.QF n)
+    (left right : Hex.RealFormula.Poly n → Option Sign)
+    (h : ∀ p ∈ formula.polys, left p = right p) :
+    formula.evalSigns left = formula.evalSigns right := by
+  induction formula with
+  | atom a => simp [evalSigns, h a.p (by simp)]
+  | tt | ff => rfl
+  | not p ih =>
+      simp only [evalSigns]
+      rw [ih (by intro q hq; exact h q (by simpa using hq))]
+  | and p q ihp ihq | or p q ihp ihq =>
+      simp only [evalSigns]
+      rw [ihp (by intro r hr; exact h r (by simp [hr])),
+        ihq (by intro r hr; exact h r (by simp [hr]))]
+
 /-- The executable Boolean result agrees with the original formula whenever
 each referenced polynomial has an exact sign at the given real valuation. -/
 theorem evalSigns_spec {formula : Hex.RealFormula.QF n}
