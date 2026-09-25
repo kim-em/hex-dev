@@ -236,4 +236,19 @@ attribute [local rcf_handler] aDecline
 #guard_msgs in
 @[rcf_handler] meta def polymorphic.{u} : (α : Type u) → Handler := fun _ _ => return .declined
 
+-- A handler cannot register a local declaration with the bridge's name and
+-- use that name to smuggle an unrelated admission through the audit.
+run_meta do
+  let spoof : Name :=
+    .str (.str (.str .anonymous "HexRealRootsMathlib") "Tarski") "check_rootSum"
+  let saved ← saveState
+  let _ ← tryFinally' (do
+    let admitted ← mkSorry (mkConst ``True) false
+    addDecl (.thmDecl { name := spoof, levelParams := [], type := mkConst ``True, value := admitted })
+    let outcome ← observing? (checkAxioms (Name.mkSimple "spoofProbe") (mkConst spoof))
+    unless outcome.isNone do throwError "a local bridge-name spoof passed the axiom audit")
+    (fun _ => saved.restore)
+  if (← getEnv).find? spoof |>.isSome then
+    throwError "the temporary spoof escaped the test"
+
 end Hex.RCF.HandlerTests
