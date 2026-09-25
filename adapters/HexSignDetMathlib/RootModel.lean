@@ -89,6 +89,17 @@ theorem Node.check_values {Ctx : Type w} [DecidableEq Ctx]
   exact moment_entry f hz ha hm h1 qs n.system.rows[j] x
 
 include h1 ha hs hm hnat hsign in
+/-- Even an empty accepted BKR table retains a valid shared root domain. -/
+theorem Replay.check_domain {Ctx : Type w} [DecidableEq Ctx]
+    (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
+    (qs : List (DensePoly E)) (t : Replay E Ctx)
+    (checked : t.check sign context p a b qs = true) :
+    HexSturmMathlib.Domain f hz p a b := by
+  obtain ⟨q, value, cert, hq⟩ := Replay.query_evidence checked
+  exact (HexSturmMathlib.check_sound f hz h1 ha hs hm hnat sign hsign
+    context p q a b value cert hq).1
+
+include h1 ha hs hm hnat hsign in
 /-- Accepted child queries interpret the same roots with the exact query
 slices used by the recursive support proof. -/
 theorem Replay.check_interprets {Ctx : Type w} [DecidableEq Ctx]

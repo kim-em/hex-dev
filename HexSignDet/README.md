@@ -262,16 +262,16 @@ four BKR tables and four prepared domains: joint re-encoding evidence and a
 separate target descriptor for each side. Sharing this work and accounting
 for its cost against the required comparison bounds remain required.
 
-The total `determinePrepared` API, producer completeness, full constructor
-correspondence and the domain-exact `validate` API remain required. Completion,
+The total `determinePrepared` API and domain-exact `validate` API remain required.
+The optional companion proves producer completeness and root-count correspondence
+relative to the named #10389 root-sum bridge; it does not yet provide those
+total executable wrappers. Completion,
 root lists and selected signs still expose internal diagnostics until their
 totality proofs are supplied. Comparison/re-encoding correspondence and
 domain-exact totality, the consumer sample-point interface, serialization and
-nested evidence sharing also remain required. The finite lemmas above do not prove
-root-count correctness. Those proofs must interpret the actual query replays
-through #10389 and consume the
-specified BKR/Thom foundations in the companion. No semantic theorem or
-performance milestone is claimed here. See the [specification](SPEC/hex-sign-det.md)
+nested evidence sharing also remain required. The semantic proofs interpret the
+actual query replays through #10389; the specified BKR/Thom foundations are a
+separate completion gate. No performance milestone is claimed here. See the [specification](SPEC/hex-sign-det.md)
 for the complete contract and [#10377](https://github.com/kim-em/hex-dev/issues/10377)
 for the remaining assignment.
 
