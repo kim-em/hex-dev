@@ -1,0 +1,59 @@
+{
+  "elapsed_seconds": 16.310508996946737,
+  "cases": [
+    {
+      "name": "zero16",
+      "case": {
+        "family": "zero",
+        "n": 16,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "fused",
+        "reference": "mathlib",
+        "diagnostic": true,
+        "kernel_profile": true,
+        "proof_nodes": true,
+        "invocation_seconds": 20,
+        "search_seconds": 3600,
+        "rational": false,
+        "denominator_bits": 3,
+        "row_denominators": false,
+        "integer": false,
+        "polynomial": false,
+        "concrete": false,
+        "reverse_rows": false,
+        "transpose": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 0.24101479399999998,
+          "minimum": 0.23869158,
+          "maximum": 0.243338008
+        },
+        "Fused": {
+          "count": 2,
+          "median": 0.241031424,
+          "minimum": 0.238747755,
+          "maximum": 0.24331509299999998
+        }
+      },
+      "paired_losses": 1,
+      "elapsed_seconds": 16.310508996946737
+    }
+  ],
+  "prototype_hashes": {
+    "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+    "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+    "experiments/Determinant/Normalized.lean": "1750676c7510e76e42c49501f313e396e5e396dec10c4c0daeac823454366c91",
+    "experiments/Determinant/Compact.lean": "84d414679f043ee20dc220ee3b536f6c807b28b1ae7a4a6cecec1801ba4172b6",
+    "experiments/Determinant/Steps.lean": "0ce41311cea2f35697af1586d0a0c2cc7beface161b3b4117d7adf7a06ecb468"
+  }
+}

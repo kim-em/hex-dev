@@ -1,0 +1,30 @@
+import Determinant.Deferred
+import Determinant.Normalized
+import Mathlib.Tactic.NormDet
+import Mathlib.Data.ZMod.Basic
+open Determinant
+set_option maxHeartbeats 0
+set_option maxRecDepth 10000
+set_option Elab.async false
+set_option profiler false
+namespace Determinant.Adversarial
+variable {S : Type} [Field S]
+open Lean Elab Command in
+elab "#profile_decl " cmd:command : command => do
+  let start ← IO.monoNanosNow
+  withScope (fun s => { s with opts := ((Elab.async.set s.opts false).setBool `profiler true).set `profiler.threshold (1 : Nat) }) do
+    elabCommand cmd
+  logInfo m!"DECL_NS {(← IO.monoNanosNow) - start}"
+#profile_decl theorem result (x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 x32 x33 x34 x35 : S) :
+    Matrix.det (!![((x0 + x1) / x2), ((x3 + x4) / x5), ((x6 + x7) / x8), ((x9 + x10) / x11); ((x12 + x13) / x14), ((x15 + x16) / x17), ((x18 + x19) / x20), ((x21 + x22) / x23); ((x24 + x25) / x26), ((x27 + x28) / x29), ((x30 + x31) / x32), ((x33 + x34) / x35); (((x0 + x1) / x2) + ((x12 + x13) / x14)), (((x3 + x4) / x5) + ((x15 + x16) / x17)), (((x6 + x7) / x8) + ((x18 + x19) / x20)), (((x9 + x10) / x11) + ((x21 + x22) / x23))] : Matrix (Fin 4) (Fin 4) S) = 0 := by
+  timed_proof
+    simp only [norm_det] <;> ring
+#print axioms result
+run_cmd do
+  let .thmInfo info ← Lean.Elab.Command.liftCoreM <| Lean.getConstInfo `Determinant.Adversarial.result
+    | throwError "expected theorem"
+  let nodes := Hex.Reflect.proofNodes #[info.value] 2000000
+  unless nodes.size < 2000000 do throwError "proof node cap reached"
+  Lean.logInfo m!"PROOF_NODES {nodes.size}"
+
+end Determinant.Adversarial

@@ -1,0 +1,94 @@
+[
+  {
+    "case": "symbolic-rank5",
+    "arm": "Mathlib",
+    "pair": 0,
+    "declaration_ms": 5728.771112,
+    "tactic_ms": [
+      2629.414913
+    ],
+    "components_ms": {
+      "share common exprs": [
+        964.0
+      ],
+      "fix level params": [
+        12.0
+      ],
+      "type checking": [
+        551.0
+      ],
+      "process pre-definitions": [
+        73.2
+      ]
+    }
+  },
+  {
+    "case": "symbolic-rank5",
+    "arm": "Coeff",
+    "pair": 0,
+    "declaration_ms": 6616.819424,
+    "tactic_ms": [
+      3575.477034
+    ],
+    "components_ms": {
+      "share common exprs": [
+        1010.0
+      ],
+      "fix level params": [
+        10.3
+      ],
+      "type checking": [
+        431.0
+      ],
+      "process pre-definitions": [
+        54.3
+      ]
+    }
+  },
+  {
+    "case": "symbolic-rank5",
+    "arm": "Coeff",
+    "pair": 1,
+    "declaration_ms": 6249.480116,
+    "tactic_ms": [
+      3174.299542
+    ],
+    "components_ms": {
+      "share common exprs": [
+        945.0
+      ],
+      "fix level params": [
+        10.0
+      ],
+      "type checking": [
+        431.0
+      ],
+      "process pre-definitions": [
+        76.0
+      ]
+    }
+  },
+  {
+    "case": "symbolic-rank5",
+    "arm": "Mathlib",
+    "pair": 1,
+    "declaration_ms": 5463.744302,
+    "tactic_ms": [
+      2293.977238
+    ],
+    "components_ms": {
+      "share common exprs": [
+        1080.0
+      ],
+      "fix level params": [
+        10.7
+      ],
+      "type checking": [
+        460.0
+      ],
+      "process pre-definitions": [
+        64.2
+      ]
+    }
+  }
+]

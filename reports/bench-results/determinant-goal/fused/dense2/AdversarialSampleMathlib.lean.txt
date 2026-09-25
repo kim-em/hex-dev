@@ -1,0 +1,21 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Deferred
+import Determinant.Normalized
+import Mathlib.Tactic.NormDet
+import Mathlib.Data.ZMod.Basic
+open Determinant
+set_option maxHeartbeats 0
+set_option maxRecDepth 10000
+set_option Elab.async false
+set_option profiler false
+namespace Determinant.Adversarial
+variable {S : Type} [CommRing S]
+#measure_decl theorem result (x0 x1 : S) :
+    Matrix.det (!![(((1 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (1 : Nat))) + ((2 : S) * (x1 ^ (2 : Nat))) + ((-1 : S) * (x1 ^ (1 : Nat)))), (((1 : S) * (x0 ^ (2 : Nat))) + ((1 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (1 : Nat))) + ((3 : S) * (x1 ^ (1 : Nat)))); (((3 : S) * (x0 ^ (1 : Nat))) + ((-2 : S) * (x1 ^ (1 : Nat))) + ((-3 : S))), (((-2 : S) * (x0 ^ (1 : Nat))) + ((1 : S) * (x1 ^ (1 : Nat))) + ((3 : S)))] : Matrix (Fin 2) (Fin 2) S) = (((-3 : S) * (x0 ^ (3 : Nat))) + ((-3 : S) * (x0 ^ (2 : Nat)) * (x1 ^ (1 : Nat))) + ((3 : S) * (x0 ^ (2 : Nat))) + ((-1 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (2 : Nat))) + ((-1 : S) * (x0 ^ (1 : Nat)) * (x1 ^ (1 : Nat))) + ((2 : S) * (x1 ^ (3 : Nat))) + ((11 : S) * (x1 ^ (2 : Nat))) + ((6 : S) * (x1 ^ (1 : Nat)))) := by
+  simp only [norm_det] <;> ring
+#print axioms result
+end Determinant.Adversarial

@@ -1,0 +1,21 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Deferred
+import Determinant.Normalized
+import Mathlib.Tactic.NormDet
+import Mathlib.Data.ZMod.Basic
+open Determinant
+set_option maxHeartbeats 0
+set_option maxRecDepth 10000
+set_option Elab.async false
+set_option profiler false
+namespace Determinant.Adversarial
+abbrev S := Int
+#measure_decl theorem result  :
+    Matrix.det (!![(((-63811 : S)))] : Matrix (Fin 1) (Fin 1) S) = (((-63811 : S))) := by
+  simp only [norm_det] <;> ring
+#print axioms result
+end Determinant.Adversarial

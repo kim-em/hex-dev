@@ -1,0 +1,7 @@
+{
+  "actual_atoms": 4,
+  "target_terms": 70,
+  "entry_terms": 27,
+  "original_statement_sha256": "0d85bc0293eccd1ebda1006e86b43924e227943e3983772ac897280b616be106",
+  "cleaned_target_sha256": "6e39fe3ebe291061569c236d6ac13f3f05123f76b5f40979198fdd3626f90916"
+}

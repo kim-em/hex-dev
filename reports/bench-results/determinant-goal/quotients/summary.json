@@ -1,0 +1,110 @@
+{
+  "elapsed_seconds": 48.644907587673515,
+  "cases": [
+    {
+      "name": "independent5",
+      "case": {
+        "family": "independent",
+        "n": 5,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "fused",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "proof_nodes": false,
+        "physical_nodes": false,
+        "invocation_seconds": 30,
+        "search_seconds": 3600,
+        "rational": true,
+        "denominator_bits": 6,
+        "quotient_entries": true,
+        "row_denominators": false,
+        "integer": false,
+        "polynomial": false,
+        "concrete": false,
+        "reverse_rows": false,
+        "transpose": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 1.949248903,
+          "minimum": 1.938794615,
+          "maximum": 1.959703191
+        },
+        "Fused": {
+          "count": 2,
+          "median": 1.0861889514999998,
+          "minimum": 1.0707039219999999,
+          "maximum": 1.1016739809999998
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 20.513601353857666
+    },
+    {
+      "name": "variable4",
+      "case": {
+        "family": "variable-quotients",
+        "n": 4,
+        "atoms": 2,
+        "degree": 1,
+        "support": 2,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "fused",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "proof_nodes": false,
+        "physical_nodes": false,
+        "invocation_seconds": 30,
+        "search_seconds": 3600,
+        "rational": false,
+        "denominator_bits": 3,
+        "quotient_entries": false,
+        "row_denominators": false,
+        "integer": false,
+        "polynomial": false,
+        "concrete": false,
+        "reverse_rows": false,
+        "transpose": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 0.231585677,
+          "minimum": 0.212697207,
+          "maximum": 0.250474147
+        },
+        "Fused": {
+          "count": 2,
+          "median": 1.4575648575,
+          "minimum": 1.397148898,
+          "maximum": 1.517980817
+        }
+      },
+      "paired_losses": 2,
+      "elapsed_seconds": 28.13130623381585
+    }
+  ],
+  "prototype_hashes": {
+    "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+    "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+    "experiments/Determinant/Normalized.lean": "ab3876cf4b31e5488145d9022f01bf1b381990764d1aa43cc06d8ec387fac16b",
+    "experiments/Determinant/Compact.lean": "84d414679f043ee20dc220ee3b536f6c807b28b1ae7a4a6cecec1801ba4172b6",
+    "experiments/Determinant/Steps.lean": "0ce41311cea2f35697af1586d0a0c2cc7beface161b3b4117d7adf7a06ecb468"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "cases": 92,
+  "successful_samples": 333,
+  "source_snapshots": 750,
+  "failed_cases": [
+    "bounded/circulant7",
+    "bounded/rankone18",
+    "bounded-final/variable7-single",
+    "coeff-capture/dense4",
+    "coeff-capture/dense4-corrected",
+    "coeff-final/cleaned3",
+    "coeff-final/variable7",
+    "compact-profile/rankone10",
+    "fused-control/rankone10"
+  ],
+  "measurement_seconds": 3514.6832892992534,
+  "audit_dependency_records": 137,
+  "permitted_axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+  ]
+}

@@ -1,0 +1,16 @@
+import Determinant.Deferred
+import Determinant.Normalized
+import Mathlib.Tactic.NormDet
+import Mathlib.Data.ZMod.Basic
+open Determinant
+set_option maxHeartbeats 0
+set_option maxRecDepth 10000
+set_option Elab.async false
+set_option profiler false
+namespace Determinant.Adversarial
+variable {S : Type} [Field S]
+#measure_decl theorem result (x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 x32 x33 x34 x35 x36 x37 x38 x39 x40 x41 x42 x43 x44 x45 x46 x47 : S) :
+    Matrix.det (!![(((x0 + x1 + x2) ^ (8 : Nat)) / x3), (((x4 + x5 + x6) ^ (8 : Nat)) / x7), (((x8 + x9 + x10) ^ (8 : Nat)) / x11), (((x12 + x13 + x14) ^ (8 : Nat)) / x15); (((x16 + x17 + x18) ^ (8 : Nat)) / x19), (((x20 + x21 + x22) ^ (8 : Nat)) / x23), (((x24 + x25 + x26) ^ (8 : Nat)) / x27), (((x28 + x29 + x30) ^ (8 : Nat)) / x31); (((x32 + x33 + x34) ^ (8 : Nat)) / x35), (((x36 + x37 + x38) ^ (8 : Nat)) / x39), (((x40 + x41 + x42) ^ (8 : Nat)) / x43), (((x44 + x45 + x46) ^ (8 : Nat)) / x47); ((((x0 + x1 + x2) ^ (8 : Nat)) / x3) + (((x16 + x17 + x18) ^ (8 : Nat)) / x19)), ((((x4 + x5 + x6) ^ (8 : Nat)) / x7) + (((x20 + x21 + x22) ^ (8 : Nat)) / x23)), ((((x8 + x9 + x10) ^ (8 : Nat)) / x11) + (((x24 + x25 + x26) ^ (8 : Nat)) / x27)), ((((x12 + x13 + x14) ^ (8 : Nat)) / x15) + (((x28 + x29 + x30) ^ (8 : Nat)) / x31))] : Matrix (Fin 4) (Fin 4) S) = 0 := by
+  simp only [norm_det] <;> ring
+#print axioms result
+end Determinant.Adversarial

@@ -1,0 +1,91 @@
+[
+  {
+    "case": "variable4-single",
+    "arm": "Coeff",
+    "pair": 0,
+    "declaration_ms": 233.454571,
+    "tactic_ms": [
+      65.221371
+    ],
+    "components_ms": {
+      "share common exprs": [
+        35.2
+      ],
+      "fix level params": [
+        1.17
+      ],
+      "type checking": [
+        43.0
+      ],
+      "process pre-definitions": [
+        3.7
+      ]
+    }
+  },
+  {
+    "case": "variable4-single",
+    "arm": "Bounded",
+    "pair": 0,
+    "declaration_ms": 323.936241,
+    "tactic_ms": [
+      82.905554
+    ],
+    "components_ms": {
+      "share common exprs": [
+        52.3
+      ],
+      "fix level params": [
+        1.28
+      ],
+      "type checking": [
+        86.6
+      ],
+      "process pre-definitions": [
+        4.93
+      ]
+    }
+  },
+  {
+    "case": "variable4-single",
+    "arm": "Bounded",
+    "pair": 1,
+    "declaration_ms": 395.710148,
+    "tactic_ms": [
+      149.140426
+    ],
+    "components_ms": {
+      "share common exprs": [
+        51.5
+      ],
+      "fix level params": [
+        1.66
+      ],
+      "type checking": [
+        114.0
+      ],
+      "process pre-definitions": [
+        5.69
+      ]
+    }
+  },
+  {
+    "case": "variable4-single",
+    "arm": "Coeff",
+    "pair": 1,
+    "declaration_ms": 253.214427,
+    "tactic_ms": [
+      85.426261
+    ],
+    "components_ms": {
+      "share common exprs": [
+        54.4
+      ],
+      "type checking": [
+        49.9
+      ],
+      "process pre-definitions": [
+        3.48
+      ]
+    }
+  }
+]

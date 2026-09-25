@@ -1,0 +1,87 @@
+The implementation is sound: nothing here can close a false goal, since every proof is kernel-checked. The one real invariant violation is minor. The biggest problem is the tests: the new quotient audits mostly pass through the full-expansion fallback, so they don't exercise bounded speculation at all. The split between safe proof-assembly changes and an unresolved scalar policy is supported by the code. One of your retained losses, though, is partly caused by how this implementation handles symbolic denominators rather than by the policy question. I ran nothing: no benchmarks and no builds, and shell access was denied, so the ledger total below is added up by hand from the `status.json` files.
+
+## What I checked and found correct
+
+- **Speculation stays cheap.** The at-most-one-monomial check (`Bounded.lean:112`) runs on every recursive result. So refusal happens at the first addition or subtraction that produces two monomials, before any power is expanded. `(x+y+z)^8 / w` costs time proportional to its size, not to the expansion.
+- **Atom rollback is complete for the atom table, and indices can't go stale.** `AtomM.State` has only the `atoms` field, and `set saved` restores it. Nothing built during speculation reaches the `CertM` caches. On refusal nothing escapes, and inner rollbacks sit inside the outer saved state. Timeouts are not swallowed: Core's `tryCatch` rethrows runtime and interrupt exceptions, so the speculation's `catch _` can't hide a recursion-depth or heartbeat failure.
+- **The fresh second pass is correctly composed.** Both sides are re-evaluated in the new atom context, and only expressions and proofs cross over. `RingNF.cleanup` calls `r.mkEqTrans`, so `cleanedProof : subject = cleaned` is typed correctly.
+- **`Compact` changes only proof terms.** `certAdd`/`certMul`/`certNeg` call the same `Common.evalAdd/evalMul/evalNeg` on the same values, compute `isZero` identically, and use Mathlib's cache keys and insertion points (`Cert.lean:201-357`). Normal forms and zero pruning are identical to Mathlib's. The cache-hit test (comparing `numObjs` of an `And.intro` pair) is a sound way to detect a rebuilt proof.
+
+## Findings, most severe first
+
+**1. Medium-high: the audits can't detect loss of the bounded behaviour.** `BoundedAudit.lean:83-97`
+- By hand-evaluating the code paths:
+  - `quotientProduct`: the target numerator `a*d-b*c` is refused.
+  - `nestedQuotient`: the target's `(u*v)⁻¹` is a different atom from the left side's `u⁻¹ v⁻¹`.
+  - `zeroNumerator`: `Z/u` is refused, becomes an atom, and so is never pruned as zero.
+- All three produce unequal first-pass forms and close only through the cleanup plus `Common.eval` fallback.
+- `quotientRows` closes on the first pass, but it would also close if every quotient were opaque.
+- An implementation that made every symbolic quotient opaque would therefore pass every audit. The monomial rule is only evidenced by timing.
+- **Fix:**
+  - Add a no-fallback tactic (the same flags with the second stage disabled) and run the quotient theorems under it.
+  - Add a strict positive case only the monomial rule closes, e.g. `!![x0*x3/x6, x0*x4/x6; x1*x3/x7, x1*x4/x7] = 0`.
+  - Add a `run_meta` check that `(a*b)/u` normalizes to one monomial over the atoms `a, b, u, u⁻¹`.
+  - Separately, `#print axioms` is printed but never asserted; wrap it in `#guard_msgs`.
+
+**2. Medium: symbolic denominators and inverse arguments are stored as raw atoms, which loses cancellation `division_bird` had.**
+- `Bounded.lean:107` calls `evalAtom rc rcℕ b`, and the `Inv.inv` branch (`:81-90`) does the same, so `u*v`, `2*u`, `u^2` and `-u` are never broken into factors.
+  - `a/(u*v)` becomes `a·(u*v)⁻¹`, but `(a/u)/v` becomes `a·u⁻¹·v⁻¹`. The two differ.
+  - `u*v` and `v*u` also become different atoms at reducible transparency.
+- `Division.eval` normalized the denominator, so a monomial denominator inverted into a product of inverse atoms.
+- **Concrete counterexample:** rank one scaled on both sides, entries `x_i*y_j/(u_i*v_j)`.
+  - Under `division_bird`, entries become `x_i y_j u_i⁻¹ v_j⁻¹`, and the determinant cancels during the recurrence.
+  - Under `bounded_bird` there are n² independent inverse atoms. The recurrence builds an n!-term polynomial and then the fallback expands it.
+  - The generator's `--symbolic-row-denominators` uses single-variable denominators only, so this case is never exercised.
+- **Fix:** evaluate the denominator and the inverse argument with the same `single := true` bound. On refusal, roll back and use the raw atom. This inspects only the scalar and adds no matrix dispatch.
+
+**3. Medium-low: the `HSMul` branch swallows the refusal exception.** `Bounded.lean:51-57`
+- `try … catch _ => els` wraps `eval rc c a single`.
+- For `((2:ℕ) • (a + b)) / c`, the "not a monomial" exception is caught there. The smul becomes an atom, the speculation "succeeds", and the atoms `a` and `b` leak into the table (partial state, never rolled back).
+- This breaks the invariant ATOM_CHECK asserts. The same smul outside a quotient is expanded, so representations disagree and the fallback is forced.
+- **Fix:** use a distinguished exception id and rethrow it in that catch, or have speculation return `Option` instead of throwing. Add this term, plus `(a/u + b)/v` (inner success, outer refusal), to the ATOM_CHECK block.
+
+**4. Low-medium: timeout records ignore the effective time limit.** `adversarial.py:364, 388-399, 491`
+- The `dominates` skip doesn't compare `timeout_seconds` with `--invocation-seconds`.
+- A Mathlib timeout under a 20s or 30s limit therefore blocks larger 60s runs, with the message "larger than Mathlib timeout".
+- Separately, `min(invocation_seconds, deadline-now-2)` can shorten the last invocation when the batch is near its deadline. That gets recorded as an ordinary `timeout`.
+- **Fix:** require `f['timeout_seconds'] >= args.invocation_seconds` before skipping. Refuse to launch an invocation with less than its full limit, and record a distinct `budget` state instead.
+
+**5. Low-medium: a guard regression would make the tests start a real measurement.** `test_adversarial.py:33,52,72,93`
+- These tests call the real runner. If a guard regresses, the runner takes the lock and CPU lease, writes `AdversarialSample*.lean` into `experiments/Determinant`, and runs `lake`.
+- `subprocess.run(timeout=10)` kills only the parent. The forked `supervise` child is orphaned while holding the lock.
+- A leftover sample file then fails `assert not path.exists()` on every later run.
+- **Fix:** add an admission-only exit flag, or patch `supervise` out, for these tests.
+
+**6. Low: the one-hour ledger is scoped by directory layout, not a fixed ledger.** `adversarial.py:369`
+- Only `root.parent/*/*/case.json` is counted. A different parent directory, or deeper nesting, starts a fresh hour.
+- The report says the hour is shared across all of `determinant-goal`, which holds only if every run follows that layout.
+- My hand sum of `status.json` elapsed times is about 2,900s of 3,600s, leaving about 700s: roughly one full 360s batch plus a second that would be cut short (see finding 4).
+- **Fix:** use a fixed, locked ledger file, like `det_bench_limits.reserve`.
+
+**7. Low: rollback covers only the atom table.** `Bounded.lean:100-105`, `Division.lean:82-95`
+- Metavariable assignments made by `isDefEqSafe` inside `containsThenAdd` during a discarded speculation persist.
+- Lean's backtracking combinators restore the Meta state, so the "ordinary tactic" analogy holds for committed evaluation but not for this backtracking.
+- **Fix:** `saveState`/`restore` around the speculation. Measure it, because restoring also drops the defeq cache entries gained during speculation.
+
+**8. Low: the fallback has no cost limit and runs on false goals too.** `Normalized.lean:33`
+- Any first-pass mismatch triggers full eager expansion of the whole determinant normal form, including when the goal is simply false.
+- It also re-normalizes a target that was already normalized.
+- Acceptable in an experiment. A production version needs a cost limit, or a cheap way to tell a representation mismatch from a genuinely different target.
+
+**9. Low: positional Bool flags allow inconsistent combinations.** `Normalized.lean:59-119`, `Compact.lean:100-101`
+- `bounded := true` without `coeff` silently uses eager `certEntry` entries, a bounded target and no fallback, which gives a spurious "unequal normal forms".
+- **Fix:** a `ScalarPolicy` enum.
+
+## Does the proposed distinction follow?
+
+**Mostly yes, with two corrections.**
+
+- **Proof assembly (compact lemmas, fused steps, fresh second-pass context):** the code confirms these leave values, pruning and caches unchanged. The fused steps' time benefit is still unproven, as the report says.
+- **Caveat on proof assembly:** every Normalized-frontend arm uses a field-normalizing cache (`Normalized.lean:89-90`), not the reifier's. Only compact-versus-direct comparisons isolate proof assembly; compact-versus-Mathlib comparisons mix it with scalar policy.
+- **Caveat on reusing Mathlib's lemmas:** reusing `Common.add_congr` "rather than equivalent statements" (proposal) is not free. It is stated over `CommSemiring`, while `add_eq` is stated over `CommRing`. That moves where the kernel must reconcile the instance paths, so it should be measured.
+- **Scalar policy:**
+  - The two opposing counterexamples have identical per-entry shape: a monomial numerator over a single-variable denominator.
+    - `variable6-single`: 5.53s against Mathlib's 3.77s.
+    - Symbolic rank-one with row denominators: 2.396s down to 0.184s.
+  - No rule that looks at one scalar expression can tell them apart; only global structure differs. That supports both "unresolved" and "no family dispatch" more strongly than the report says, and is worth stating.
+  - However, finding 2 is an artifact of this implementation, not of the policy question. Fix it before the report states which losses bounded speculation fixes, and add product denominators as a separate spelling-sensitivity axis of the counterexamples.

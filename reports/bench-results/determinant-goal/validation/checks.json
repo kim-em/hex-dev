@@ -1,0 +1,97 @@
+[
+  {
+    "command": [
+      "python3",
+      "scripts/check_dag.py"
+    ],
+    "exit_code": 0,
+    "log": "check-0.log"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/check_phase4.py"
+    ],
+    "exit_code": 0,
+    "log": "check-1.log"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/release/check_released_manifest.py"
+    ],
+    "exit_code": 0,
+    "log": "check-2.log"
+  },
+  {
+    "command": [
+      "python3",
+      "-m",
+      "py_compile",
+      "experiments/Determinant/adversarial.py",
+      "experiments/Determinant/adversarial_report.py",
+      "experiments/Determinant/test_adversarial.py"
+    ],
+    "exit_code": 0,
+    "log": "check-3.log"
+  },
+  {
+    "command": [
+      "python3",
+      "experiments/Determinant/adversarial.py",
+      "reports/bench-results/determinant-goal/bounded-final/product-rank7",
+      "--candidate",
+      "bounded",
+      "--family",
+      "rankone",
+      "--n",
+      "7",
+      "--symbolic-row-denominators",
+      "--product-denominators",
+      "--search-seconds",
+      "3600",
+      "--invocation-seconds",
+      "60",
+      "--admission-only"
+    ],
+    "exit_code": 1,
+    "expected": "refused: insufficient remaining allowance",
+    "log": "search-stop.log"
+  },
+  {
+    "command": [
+      "lake",
+      "build"
+    ],
+    "exit_code": 0,
+    "log": "lake-build.log",
+    "raw_log": "lake-build-raw.json",
+    "log_format": "trailing whitespace stripped; original bytes retained in raw_log"
+  },
+  {
+    "command": [
+      "lake",
+      "build",
+      "Determinant.NormalizedAudit",
+      "Determinant.CompactAudit",
+      "Determinant.FusedAudit",
+      "Determinant.InternAudit",
+      "Determinant.StagedAudit",
+      "Determinant.CoeffAudit",
+      "Determinant.FreshAudit",
+      "Determinant.DivisionAudit",
+      "Determinant.BoundedAudit",
+      "Determinant.Inspect"
+    ],
+    "exit_code": 0,
+    "log": "audits.log"
+  },
+  {
+    "command": [
+      "python3",
+      "experiments/Determinant/test_adversarial.py"
+    ],
+    "exit_code": 0,
+    "log": "runner-tests.log"
+  }
+]

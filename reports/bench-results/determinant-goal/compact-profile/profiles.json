@@ -1,0 +1,94 @@
+[
+  {
+    "case": "rankone10-corrected",
+    "arm": "Direct",
+    "pair": 0,
+    "declaration_ms": 1485.985338,
+    "tactic_ms": [
+      245.652445
+    ],
+    "components_ms": {
+      "share common exprs": [
+        216.0
+      ],
+      "fix level params": [
+        12.2
+      ],
+      "type checking": [
+        645.0
+      ],
+      "process pre-definitions": [
+        37.2
+      ]
+    }
+  },
+  {
+    "case": "rankone10-corrected",
+    "arm": "Compact",
+    "pair": 0,
+    "declaration_ms": 1269.414653,
+    "tactic_ms": [
+      240.015237
+    ],
+    "components_ms": {
+      "share common exprs": [
+        166.0
+      ],
+      "fix level params": [
+        7.5
+      ],
+      "type checking": [
+        562.0
+      ],
+      "process pre-definitions": [
+        23.8
+      ]
+    }
+  },
+  {
+    "case": "rankone10-corrected",
+    "arm": "Compact",
+    "pair": 1,
+    "declaration_ms": 1368.429382,
+    "tactic_ms": [
+      288.981369
+    ],
+    "components_ms": {
+      "share common exprs": [
+        180.0
+      ],
+      "fix level params": [
+        8.95
+      ],
+      "type checking": [
+        567.0
+      ],
+      "process pre-definitions": [
+        26.9
+      ]
+    }
+  },
+  {
+    "case": "rankone10-corrected",
+    "arm": "Direct",
+    "pair": 1,
+    "declaration_ms": 1667.517707,
+    "tactic_ms": [
+      445.380279
+    ],
+    "components_ms": {
+      "share common exprs": [
+        190.0
+      ],
+      "fix level params": [
+        12.0
+      ],
+      "type checking": [
+        626.0
+      ],
+      "process pre-definitions": [
+        35.6
+      ]
+    }
+  }
+]

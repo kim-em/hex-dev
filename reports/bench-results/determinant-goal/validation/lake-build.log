@@ -1,0 +1,1252 @@
+⚠ [2575/3036] Replayed HexMvPolyMathlib.Equiv
+warning: HexMvPolyMathlib/Equiv.lean:193:4: `MvPolynomial.coeff_add` has been deprecated: Use `AddMonoidAlgebra.coeff_add` instead
+
+Note: The updated constant has a different type:
+  ∀ {R : Type u_1} {M : Type u_4} [inst : Semiring R] (x y : AddMonoidAlgebra R M), (x + y).coeff = x.coeff + y.coeff
+instead of
+  ∀ {R : Type u} {σ : Type u_1} [inst : CommSemiring R] (m : σ →₀ ℕ) (p q : MvPolynomial σ R),
+    (p + q).coeff m = p.coeff m + q.coeff m
+
+Note: The updated constant is in a different namespace. Dot notation may need to be changed (e.g., from `x.coeff_add` to `AddMonoidAlgebra.coeff_add x`).
+⚠ [2576/3036] Replayed HexMvPolyMathlib.Aeval
+warning: HexMvPolyMathlib/Aeval.lean:63:0: automatically included section variable(s) unused in theorem `HexMvPolyMathlib.eval₂_toMvPolynomial`:
+  [BEq R]
+  [LawfulBEq R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [BEq R] [LawfulBEq R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+ℹ [2725/3036] Replayed HexBareiss.Bareiss
+info: HexBareiss/Bareiss.lean:240:2: Try these:
+  [apply] [grind
+    .] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @findPivot? _ #8 #7 #6 #5 #4 #3]
+  [apply] [grind →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind
+    <=] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind! →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @Fin.val #8 #1]
+info: HexBareiss/Bareiss.lean:982:2: Try this:
+  [apply] [grind =] for pattern: [@pivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:990:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @pivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1000:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @pivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1017:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #11 #10 #9 #8 #7 #6 #5 (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #11 #10 #3) + 2) #10, @findPivot? _ #10 #9 #6 (@BareissState.matrix _ #10 #3) (@Fin.mk #10 (@BareissState.step _ #10 #3) _) ((@BareissState.step _ #10 #3) + 1), @pivotLoopWith _ #10 _ #8 #7 _ #5 (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1033:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @pivotLoopWith _ #12 _ _ _ _ #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #13 #12 #5) + 2) #12, @findPivot? _ #12 #11 #8 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) ((@BareissState.step _ #12 #5) + 1), @some (Fin _) #2, @pivotLoopWith _ #12 _ #10 #9 _ #7 (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1141:2: Try this:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:1149:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @noPivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1158:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1168:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1185:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector #11 #10) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @getElem (Vector _ _) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3]
+info: HexBareiss/Bareiss.lean:1660:2: Try this:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1665:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1671:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1685:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #5 #3) + 2) #5, @pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1697:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #7 #5) + 2) #7, @some (Fin _) #2, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1729:2: Try this:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1734:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1740:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1747:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1761:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector `[Int] #5) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @getElem (Vector `[Int] _) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3]
+⚠ [3249/3409] Replayed HexGenericRankMathlib.Kernel
+warning: HexGenericRankMathlib/Kernel.lean:143:0: automatically included section variable(s) unused in theorem `HexGenericRankMathlib.PolyLists.sum_canonical`:
+  [BEq C]
+  [LawfulBEq C]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [BEq C] [LawfulBEq C] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexGenericRankMathlib/Kernel.lean:180:0: automatically included section variable(s) unused in theorem `HexGenericRankMathlib.PolyLists.canonical_get`:
+  [BEq C]
+  [LawfulBEq C]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [BEq C] [LawfulBEq C] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [3254/3409] Replayed HexReflectMathlib.Correspondence
+warning: HexReflectMathlib/Correspondence.lean:43:0: automatically included section variable(s) unused in theorem `HexReflectMathlib.eval₂_ringHom_ofIntTerms`:
+  [DecidableEq C]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq C] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexReflectMathlib/Correspondence.lean:49:0: automatically included section variable(s) unused in theorem `HexReflectMathlib.eval₂_ringHom_ofIntTermsC`:
+  [DecidableEq C]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq C] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [3263/3409] Replayed HexMatrixMathlib.Packed
+warning: HexMatrixMathlib/Packed.lean:141:10: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexMatrixMathlib/Packed.lean:149:10: `if_neg` has been deprecated: Use `ite_eq_right` instead
+⚠ [3745/4042] Replayed HexBerlekamp.Factor
+warning: HexBerlekamp/Factor.lean:661:12: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [3862/4042] Replayed HexBerlekamp.RabinSoundness.RabinCore
+warning: HexBerlekamp/RabinSoundness/RabinCore.lean:1431:10: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?] at hh_deg
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [3864/4042] Replayed HexBerlekamp.RabinSoundness.KernelWitness
+warning: HexBerlekamp/RabinSoundness/KernelWitness.lean:57:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [3866/4042] Replayed HexBerlekamp.DistinctDegree
+warning: HexBerlekamp/DistinctDegree.lean:344:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [4229/4235] Replayed HexRootsMathlib.Taylor
+warning: HexRootsMathlib/Taylor.lean:73:10: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [4231/4385] Replayed HexRootsMathlib.SoftPellet
+warning: HexRootsMathlib/SoftPellet.lean:504:12: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [4232/4385] Replayed HexRootsMathlib.RootFree
+warning: HexRootsMathlib/RootFree.lean:109:12: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9824/9966] Replayed HexRootsMathlib.NKWitness
+warning: HexRootsMathlib/NKWitness.lean:256:10: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9847/9966] Replayed HexPolyFpMathlib.Basic
+warning: HexPolyFpMathlib/Basic.lean:303:12: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, hsize]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9944/9966] Replayed HexNumberFieldMathlib.IntegerRoots
+warning: HexNumberFieldMathlib/IntegerRoots.lean:404:33: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9975/10009] Replayed HexNumberFieldMathlib.RootSelection
+warning: HexNumberFieldMathlib/RootSelection.lean:172:33: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9982/10009] Replayed HexNumberFieldMathlib.Radical
+warning: HexNumberFieldMathlib/Radical.lean:32:12: This simp argument is unused:
+  hn
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Ne.symm hn, neg_toComplex, Polynomial.coeff_C]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexNumberFieldMathlib/Radical.lean:35:18: This simp argument is unused:
+  Ne.symm hn
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [hn, neg_toComplex, Polynomial.coeff_C]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexNumberFieldMathlib/Radical.lean:35:30: This simp argument is unused:
+  neg_toComplex
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [hn, Ne.symm hn, Polynomial.coeff_C]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexNumberFieldMathlib/Radical.lean:63:48: Try `simp at hrmem` instead of `simpa using hrmem`
+
+Note: This linter can be disabled with `set_option linter.unnecessarySimpa false`
+✔ [10000/10009] Built HexRealRoots.Basic (325ms)
+✔ [10001/10009] Built HexRealRoots.Chain (375ms)
+✔ [10002/10009] Built HexRealRoots.Var (561ms)
+✔ [10003/10009] Built HexRealRoots.Tarski (521ms)
+✔ [10004/10009] Built HexRealRoots.Map (653ms)
+✔ [10005/10009] Built HexSturm.Basic (443ms)
+✔ [10006/10009] Built HexSturm.Transport (319ms)
+✔ [10007/10013] Built HexSturm (247ms)
+✔ [10009/10014] Built HexRealRoots.TarskiProofs (3.0s)
+✔ [10010/10014] Built HexRealRootsMathlib.TarskiInterpret (1.2s)
+✔ [10011/10014] Built HexRealRootsMathlib.TarskiGcd (1.1s)
+✔ [10012/10015] Built HexRealRootsMathlib.TarskiInteger (854ms)
+✔ [10013/10023] Built HexSturmMathlib.Domain (1.3s)
+✔ [10019/10023] Built HexRealRootsMathlib.TarskiCompare (1.1s)
+✔ [10020/10024] Built HexRealRootsMathlib.ChainCorrespond (5.5s)
+✔ [10021/10034] Built HexRealRootsMathlib.TarskiSigns (946ms)
+✔ [10024/10034] Built HexRealRootsMathlib.TarskiDomain (2.1s)
+✔ [10025/10034] Built HexRealRootsMathlib.LiteralChain (2.3s)
+✔ [10026/10034] Built HexRealRootsMathlib.TarskiSum (827ms)
+✔ [10027/10034] Built HexSturmMathlib.Compare (1.2s)
+✔ [10028/10034] Built HexRealRootsMathlib.TarskiCount (2.3s)
+✔ [10029/10035] Built HexSturmMathlib.Rational (2.6s)
+✔ [10030/10036] Built HexSturmMathlib.IntCast (2.2s)
+✔ [10031/10037] Built HexSturmMathlib.DenominatorClearing (2.5s)
+✔ [10033/10371] Built HexSturmMathlib (1.8s)
+⚠ [13404/13476] Replayed HexDeterminantalIdealMathlib.TacticTests
+info: HexDeterminantalIdealMathlib/TacticTests.lean:22:2: rank_locus: using minor 1 at rows [0], columns [1]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:28:30: rank_locus: using minor 1 at rows [], columns []
+info: HexDeterminantalIdealMathlib/TacticTests.lean:52:55: rank_locus: using minor 1 at rows [0], columns [1]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:67:54: rank_locus: using minor x at rows [0], columns [0]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:68:54: rank_locus: using minor x at rows [0], columns [0]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:77:59: rank_locus: using minor y at rows [0], columns [1]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:78:59: rank_locus: using minor y at rows [0], columns [1]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:87:71: rank_locus: using minor x ^ 2 - 1 at rows [0, 1], columns [0, 1]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:88:71: rank_locus: using minor x ^ 2 - 1 at rows [0, 1], columns [0, 1]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:97:69: rank_locus: using minor y - x at rows [0, 1], columns [0, 1]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:98:69: rank_locus: using minor y - x at rows [0, 1], columns [0, 1]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:107:75: rank_locus: using minor x ^ 3 - x at rows [0], columns [0]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:108:75: rank_locus: using minor x ^ 3 - x at rows [0], columns [0]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:120:2: rank_locus: using minor x at rows [0], columns [0]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:125:58: rank_locus: using minor y at rows [0], columns [1]
+info: HexDeterminantalIdealMathlib/TacticTests.lean:147:83: rank_locus: using minor 1 at rows [], columns []
+info: HexDeterminantalIdealMathlib/TacticTests.lean:150:59: rank_locus: using minor x at rows [0], columns [0]
+warning: HexDeterminantalIdealMathlib/TacticTests.lean:152:9: Variable name `x` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _x
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexDeterminantalIdealMathlib/TacticTests.lean:163:9: Variable name `x` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _x
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexDeterminantalIdealMathlib/TacticTests.lean:163:17: Variable name `r` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _r
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+info: HexDeterminantalIdealMathlib/TacticTests.lean:191:42: rank_locus: the matrix entries are constant polynomials; its generators are constants
+info: HexDeterminantalIdealMathlib/TacticTests.lean:191:42: rank_locus: using minor 2 at rows [0], columns [0]
+warning: HexDeterminantalIdealMathlib/TacticTests.lean:193:9: Variable name `x` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _x
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexDeterminantalIdealMathlib/TacticTests.lean:202:9: Variable name `x0` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _x0
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+⚠ [13412/13476] Replayed HexPolyDetMathlib.Sound
+warning: HexPolyDetMathlib/Sound.lean:22:8: Overlapping instance parameters in `check_of_ok`:
+
+⚠️ `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.
+💡️ Of these, `[Std.TransCmp cmp]` may be removed.
+⚠️ `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.
+💡️ Of these, `[Std.LawfulEqCmp cmp]` may be removed.
+
+Note: This linter can be disabled with `set_option linter.overlappingInstances false`
+warning: HexPolyDetMathlib/Sound.lean:31:8: Overlapping instance parameters in `produce_check`:
+
+⚠️ `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.
+💡️ Of these, `[Std.TransCmp cmp]` may be removed.
+⚠️ `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.
+💡️ Of these, `[Std.LawfulEqCmp cmp]` may be removed.
+
+Note: This linter can be disabled with `set_option linter.overlappingInstances false`
+warning: HexPolyDetMathlib/Sound.lean:250:20: This simp argument is unused:
+  mul_assoc
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [pow_succ]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexPolyDetMathlib/Sound.lean:314:5: Variable name `hd` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _hd
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexPolyDetMathlib/Sound.lean:391:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_row`:
+  [CommRing S]
+  D
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [CommRing S] D in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexPolyDetMathlib/Sound.lean:400:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_replace`:
+  [CommRing S]
+  D
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [CommRing S] D in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexPolyDetMathlib/Sound.lean:454:20: This simp argument is unused:
+  mul_assoc
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [pow_succ, mul_left_comm, mul_comm]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexPolyDetMathlib/Sound.lean:454:31: This simp argument is unused:
+  mul_left_comm
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [pow_succ, mul_assoc, mul_comm]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexPolyDetMathlib/Sound.lean:621:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexPolyDetMathlib/Sound.lean:693:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.transport_det`:
+  [DecidableEq C]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq C] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexPolyDetMathlib/Sound.lean:838:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.identify`:
+  [CommRing F]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [CommRing F] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [13415/13476] Replayed HexPolyDetMathlib.Packed
+warning: HexPolyDetMathlib/Packed.lean:71:37: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: HexPolyDetMathlib/Packed.lean:80:38: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexPolyDetMathlib/Packed.lean:80:38: This simp argument is unused:
+  if_pos rfl
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [entry_replicate] at he
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexPolyDetMathlib/Packed.lean:276:12: This simp argument is unused:
+  MvPolynomial.eval₂Hom_monomial
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [MvPolynomial.monomial_eq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✔ [13469/13476] Built HexRealRootsMathlib.LiteralIsolations (2.9s)
+✔ [13470/13476] Built HexRealRootsMathlib.SquareFreeCore (2.2s)
+✔ [13471/13476] Built HexRealRootsMathlib.Isolations (3.2s)
+✔ [13472/13476] Built HexRealRoots.Cert (435ms)
+✔ [13473/13476] Built HexRealRootsMathlib.RealRootCount (1.5s)
+✔ [13474/13477] Built HexRealRootsMathlib.LiteralChainTests (2.1s)
+✔ [13475/13477] Built HexRealRootsMathlib.IsolateRoots (3.4s)
+✔ [13476/13483] Built HexRealRoots.IsolateSturm (288ms)
+✔ [13477/13492] Built HexRealRoots.Mobius (539ms)
+✔ [13478/13492] Built HexRealRoots.Refine (630ms)
+✔ [13479/13492] Built HexRealRoots.IsolateDescartes (288ms)
+✔ [13480/13492] Built HexRealRootsMathlib.MobiusCorrespond (3.2s)
+✔ [13484/13492] Built HexRealRoots.SimpleRealRoot (314ms)
+✔ [13485/13492] Built HexRealRoots.Isolate (261ms)
+✔ [13486/13492] Built HexRealRootsMathlib.SimpleRealRoot (2.2s)
+✔ [13487/13492] Built HexRealRootsMathlib.Drivers (2.9s)
+✔ [13488/13492] Built HexRealRootsMathlib.IsolateRootsElab (3.3s)
+✔ [13489/13492] Built HexRealRootsMathlib.TwoCircle (3.2s)
+✔ [13490/13520] Built HexRealRootsMathlib (1.9s)
+✔ [13492/13520] Built HexRCF.Syntax (418ms)
+✔ [13493/13523] Built HexRCF.SturmCheck (373ms)
+✔ [13494/13523] Built HexRCF.Language (1.9s)
+✔ [13495/13523] Built HexRCF.CarrierCheck (319ms)
+✔ [13496/13523] Built HexRCF.CommonRootCheck (316ms)
+✔ [13497/13523] Built HexRCF.IsolationCheck (360ms)
+✔ [13498/13523] Built HexRCF.SturmBuilder (330ms)
+✔ [13499/13523] Built HexRCF.SturmReplay (2.1s)
+✔ [13500/13523] Built HexRCF.SeparationCheck (404ms)
+✔ [13501/13523] Built HexRCF.Isolations (2.4s)
+✔ [13502/13523] Built HexRCF.Carrier (2.2s)
+✔ [13503/13523] Built HexRCF.CellsCheck (492ms)
+✔ [13504/13523] Built HexRCF.Separation (2.8s)
+✔ [13505/13523] Built HexRCF.SignMatrixCheck (707ms)
+✔ [13506/13523] Built HexRCF.Cells (4.0s)
+✔ [13507/13523] Built HexRCF.Builder (441ms)
+✔ [13508/13523] Built HexRCF.Certificate (361ms)
+✔ [13509/13523] Built HexRCF.CommonRoot (2.3s)
+✔ [13510/13523] Built HexRCF.DecisionCheck (364ms)
+✔ [13511/13523] Built HexRCF.SignMatrix (3.0s)
+✔ [13512/13523] Built HexRCF.Soundness (2.8s)
+✔ [13513/13523] Built HexRCF.Decision (1.0s)
+✔ [13514/13523] Built HexRCF.Reify (3.7s)
+✔ [13515/13523] Built HexRCF.RealFormula (2.8s)
+✔ [13517/13523] Built HexRCF.RealCoefficients.Reify (4.3s)
+✔ [13518/13523] Built HexRCF.Tactic (2.5s)
+✔ [13519/13523] Built HexRCF.RealCoefficients (2.1s)
+✔ [13521/13850] Built HexRCF (1.9s)
+⚠ [13527/13850] Replayed HexIntervalMathlib.Interval
+warning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by
+
+import Mathlib.Basic.Real.Basic
+ℹ [13564/13850] Replayed HexPolyDetMathlib.PackedTests
+info: HexPolyDetMathlib/PackedTests.lean:14:38: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"integer","entries":"tree","products":[{"coefficientBound":2,"degrees":[1,0],"digitBits":3,"digits":2,"innerBits":5,"key":"{ packedBits := 5, leftSupport := 1, rightSize := 1, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":5,"row":0,"strides":[1,2]},{"coefficientBound":4,"degrees":[2,0],"digitBits":4,"digits":3,"innerBits":11,"key":"{ packedBits := 11, leftSupport := 2, rightSize := 4, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":11,"row":1,"strides":[1,3]},{"coefficientBound":4,"degrees":[2,1],"digitBits":4,"digits":6,"innerBits":23,"key":"{ packedBits := 23, leftSupport := 2, rightSize := 9, resultSupport := 2, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":23,"row":2,"strides":[1,3]},{"coefficientBound":8,"degrees":[2,2],"digitBits":5,"digits":9,"innerBits":44,"key":"{ packedBits := 44, leftSupport := 4, rightSize := 16, resultSupport := 4, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":44,"row":3,"strides":[1,3]}],"proof_node_budget":1131,"quotient_support":0,"route":"packed/plain"}
+info: HexPolyDetMathlib/PackedTests.lean:26:2: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 45 (diagnostic only)
+[HexMatrix.certificate] det tree crossover uncovered; using list entry proofs
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"denominator_entries":0,"encoding":"integer","integer_entries":164,"max_denominator_bits":0,"max_minor_degree":8,"max_minor_support":36,"max_numerator_bits":14,"products":[{"coefficientBound":42,"degrees":[2,1],"digitBits":7,"digits":6,"innerBits":41,"key":"{ packedBits := 41, leftSupport := 1, rightSize := 4, resultSupport := 4, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":41,"row":0,"strides":[1,3]},{"coefficientBound":560,"degrees":[3,3],"digitBits":11,"digits":16,"innerBits":175,"key":"{ packedBits := 175, leftSupport := 8, rightSize := 16, resultSupport := 11, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":175,"row":1,"strides":[1,4]},{"coefficientBound":28224,"degrees":[5,5],"digitBits":16,"digits":36,"innerBits":576,"key":"{ packedBits := 576, leftSupport := 33, rightSize := 36, resultSupport := 22, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":576,"row":2,"strides":[1,6]},{"coefficientBound":508032,"degrees":[7,7],"digitBits":20,"digits":64,"innerBits":1280,"key":"{ packedBits := 1280, leftSupport := 86, rightSize := 64, resultSupport := 36, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":1280,"row":3,"strides":[1,8]}],"proof_node_budget":2406,"quotient_support":0,"route":"packed/plain","serialized_bytes":3273,"tactic":"det-symbolic"}
+info: HexPolyDetMathlib/PackedTests.lean:30:38: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"residue","modulus":3,"products":[{"coefficientBound":2,"degrees":[1,0],"digitBits":3,"digits":2,"innerBits":6,"key":"{ packedBits := 6, leftSupport := 1, rightSize := 1, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":6,"row":0,"strides":[1,2]},{"coefficientBound":6,"degrees":[2,0],"digitBits":4,"digits":3,"innerBits":12,"key":"{ packedBits := 12, leftSupport := 2, rightSize := 4, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":12,"row":1,"strides":[1,3]},{"coefficientBound":6,"degrees":[2,1],"digitBits":4,"digits":6,"innerBits":24,"key":"{ packedBits := 24, leftSupport := 2, rightSize := 5, resultSupport := 2, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":24,"row":2,"strides":[1,3]},{"coefficientBound":12,"degrees":[2,2],"digitBits":5,"digits":9,"innerBits":45,"key":"{ packedBits := 45, leftSupport := 4, rightSize := 8, resultSupport := 4, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":45,"row":3,"strides":[1,3]}],"proof_node_budget":1066,"quotient_support":3,"route":"packed/plain"}
+info: HexPolyDetMathlib/PackedTests.lean:34:38: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"residue","modulus":2147483647,"products":[{"coefficientBound":2,"degrees":[1,0],"digitBits":3,"digits":2,"innerBits":6,"key":"{ packedBits := 6, leftSupport := 1, rightSize := 1, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":6,"row":0,"strides":[1,2]},{"coefficientBound":4294967294,"degrees":[2,0],"digitBits":33,"digits":3,"innerBits":99,"key":"{ packedBits := 99, leftSupport := 2, rightSize := 4, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":99,"row":1,"strides":[1,3]},{"coefficientBound":4294967294,"degrees":[2,1],"digitBits":33,"digits":6,"innerBits":198,"key":"{ packedBits := 198, leftSupport := 2, rightSize := 5, resultSupport := 2, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":198,"row":2,"strides":[1,3]},{"coefficientBound":8589934588,"degrees":[2,2],"digitBits":34,"digits":9,"innerBits":306,"key":"{ packedBits := 306, leftSupport := 4, rightSize := 8, resultSupport := 4, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":306,"row":3,"strides":[1,3]}],"proof_node_budget":1112,"quotient_support":3,"route":"packed/plain"}
+info: HexPolyDetMathlib/PackedTests.lean:37:5: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"integer","entries":"tree","products":[{"coefficientBound":2,"degrees":[1,0],"digitBits":3,"digits":2,"innerBits":5,"key":"{ packedBits := 5, leftSupport := 1, rightSize := 1, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":5,"row":0,"strides":[1,2]},{"coefficientBound":4,"degrees":[2,0],"digitBits":4,"digits":3,"innerBits":11,"key":"{ packedBits := 11, leftSupport := 2, rightSize := 4, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":11,"row":1,"strides":[1,3]},{"coefficientBound":4,"degrees":[2,1],"digitBits":4,"digits":6,"innerBits":23,"key":"{ packedBits := 23, leftSupport := 2, rightSize := 9, resultSupport := 2, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":23,"row":2,"strides":[1,3]},{"coefficientBound":8,"degrees":[2,2],"digitBits":5,"digits":9,"innerBits":44,"key":"{ packedBits := 44, leftSupport := 4, rightSize := 16, resultSupport := 4, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":44,"row":3,"strides":[1,3]}],"proof_node_budget":1131,"quotient_support":0,"route":"packed/plain"}
+info: HexPolyDetMathlib/PackedTests.lean:38:3: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"integer","entries":"tree","products":[{"coefficientBound":2,"degrees":[1,0],"digitBits":3,"digits":2,"innerBits":5,"key":"{ packedBits := 5, leftSupport := 1, rightSize := 1, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":5,"row":0,"strides":[1,2]},{"coefficientBound":4,"degrees":[2,0],"digitBits":4,"digits":3,"innerBits":11,"key":"{ packedBits := 11, leftSupport := 2, rightSize := 4, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":11,"row":1,"strides":[1,3]},{"coefficientBound":4,"degrees":[2,1],"digitBits":4,"digits":6,"innerBits":23,"key":"{ packedBits := 23, leftSupport := 2, rightSize := 9, resultSupport := 2, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":23,"row":2,"strides":[1,3]},{"coefficientBound":8,"degrees":[2,2],"digitBits":5,"digits":9,"innerBits":44,"key":"{ packedBits := 44, leftSupport := 4, rightSize := 16, resultSupport := 4, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":44,"row":3,"strides":[1,3]}],"proof_node_budget":1131,"quotient_support":0,"route":"packed/plain"}
+info: HexPolyDetMathlib/PackedTests.lean:42:2: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"integer","entries":"tree","products":[{"coefficientBound":2,"degrees":[1,0],"digitBits":3,"digits":2,"innerBits":5,"key":"{ packedBits := 5, leftSupport := 1, rightSize := 1, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":5,"row":0,"strides":[1,2]},{"coefficientBound":4,"degrees":[2,0],"digitBits":4,"digits":3,"innerBits":11,"key":"{ packedBits := 11, leftSupport := 2, rightSize := 4, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":11,"row":1,"strides":[1,3]},{"coefficientBound":4,"degrees":[2,1],"digitBits":4,"digits":6,"innerBits":23,"key":"{ packedBits := 23, leftSupport := 2, rightSize := 9, resultSupport := 2, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":23,"row":2,"strides":[1,3]},{"coefficientBound":8,"degrees":[2,2],"digitBits":5,"digits":9,"innerBits":44,"key":"{ packedBits := 44, leftSupport := 4, rightSize := 16, resultSupport := 4, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":44,"row":3,"strides":[1,3]}],"proof_node_budget":1131,"quotient_support":0,"route":"packed/plain"}
+info: HexPolyDetMathlib/PackedTests.lean:47:42: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"integer","entries":"tree","products":[{"coefficientBound":2,"degrees":[1,0],"digitBits":3,"digits":2,"innerBits":5,"key":"{ packedBits := 5, leftSupport := 1, rightSize := 3, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":5,"row":0,"strides":[1,2]},{"coefficientBound":6,"degrees":[2,0],"digitBits":4,"digits":3,"innerBits":11,"key":"{ packedBits := 11, leftSupport := 2, rightSize := 8, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":11,"row":1,"strides":[1,3]},{"coefficientBound":6,"degrees":[2,1],"digitBits":4,"digits":6,"innerBits":23,"key":"{ packedBits := 23, leftSupport := 2, rightSize := 15, resultSupport := 2, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":23,"row":2,"strides":[1,3]},{"coefficientBound":12,"degrees":[2,2],"digitBits":5,"digits":9,"innerBits":44,"key":"{ packedBits := 44, leftSupport := 4, rightSize := 24, resultSupport := 4, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":44,"row":3,"strides":[1,3]}],"proof_node_budget":1596,"quotient_support":0,"route":"packed/plain"}
+info: HexPolyDetMathlib/PackedTests.lean:51:36: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"integer","entries":"tree","products":[{"coefficientBound":2,"degrees":[1,0],"digitBits":3,"digits":2,"innerBits":5,"key":"{ packedBits := 20, leftSupport := 1, rightSize := 1, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.result","outerSlotBits":9,"packedBits":20,"row":0,"strides":[1,2]},{"coefficientBound":4,"degrees":[2,0],"digitBits":4,"digits":3,"innerBits":11,"key":"{ packedBits := 90, leftSupport := 2, rightSize := 4, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.result","outerSlotBits":22,"packedBits":90,"row":1,"strides":[1,3]},{"coefficientBound":4,"degrees":[2,1],"digitBits":4,"digits":6,"innerBits":23,"key":"{ packedBits := 278, leftSupport := 2, rightSize := 9, resultSupport := 2, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.result","outerSlotBits":46,"packedBits":278,"row":2,"strides":[1,3]},{"coefficientBound":8,"degrees":[2,2],"digitBits":5,"digits":9,"innerBits":44,"key":"{ packedBits := 714, leftSupport := 4, rightSize := 16, resultSupport := 4, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.result","outerSlotBits":89,"packedBits":714,"row":3,"strides":[1,3]}],"proof_node_budget":1147,"quotient_support":0,"route":"packed/signedPacked"}
+info: HexPolyDetMathlib/PackedTests.lean:55:36: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":"residue quotient payload unavailable","encoding":"residue","modulus":3,"products":[{"coefficientBound":2,"degrees":[1,0],"digitBits":3,"digits":2,"innerBits":5,"key":"{ packedBits := 5, leftSupport := 1, rightSize := 1, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":5,"row":0,"strides":[1,2]},{"coefficientBound":6,"degrees":[2,0],"digitBits":4,"digits":3,"innerBits":11,"key":"{ packedBits := 11, leftSupport := 2, rightSize := 4, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":11,"row":1,"strides":[1,3]},{"coefficientBound":6,"degrees":[2,1],"digitBits":4,"digits":6,"innerBits":23,"key":"{ packedBits := 23, leftSupport := 2, rightSize := 5, resultSupport := 2, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":23,"row":2,"strides":[1,3]},{"coefficientBound":12,"degrees":[2,2],"digitBits":5,"digits":9,"innerBits":44,"key":"{ packedBits := 44, leftSupport := 4, rightSize := 8, resultSupport := 4, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":44,"row":3,"strides":[1,3]}],"proof_node_budget":987,"quotient_support":0,"route":"term-list"}
+info: HexPolyDetMathlib/PackedTests.lean:73:13: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 120 (diagnostic only)
+[HexMatrix.certificate] det tree preflight: det: packed certificate declined: dense box requires at least 65537 digits and 917503 packed bits (limits 65536 digits, 16777216 bits); using term lists; product row 4, per-atom degrees [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], limitingStage Hex.Kronecker.Stage.inner
+[HexMatrix.certificate] {"atoms":17,"decline_reason":"det: packed certificate declined: dense box requires at least 65537 digits and 917503 packed bits (limits 65536 digits, 16777216 bits); using term lists; product row 4, per-atom degrees [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], limitingStage Hex.Kronecker.Stage.inner","denominator_entries":0,"encoding":"integer","integer_entries":81,"max_denominator_bits":0,"max_minor_degree":5,"max_minor_support":24,"max_numerator_bits":1,"products":[{"coefficientBound":2,"degrees":[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"digitBits":3,"digits":2,"innerBits":5,"key":"{ packedBits := 5, leftSupport := 1, rightSize := 1, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":5,"row":0,"strides":[1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]},{"coefficientBound":4,"degrees":[1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0],"digitBits":4,"digits":16,"innerBits":63,"key":"{ packedBits := 63, leftSupport := 2, rightSize := 4, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":63,"row":1,"strides":[1,2,4,4,4,8,16,16,16,16,16,16,16,16,16,16,16]},{"coefficientBound":12,"degrees":[1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,0,0],"digitBits":5,"digits":512,"innerBits":2559,"key":"{ packedBits := 2559, leftSupport := 6, rightSize := 9, resultSupport := 6, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":2559,"row":2,"strides":[1,2,4,8,8,16,32,64,64,128,256,512,512,512,512,512,512]},{"coefficientBound":48,"degrees":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],"digitBits":7,"digits":65536,"innerBits":458751,"key":"{ packedBits := 458751, leftSupport := 24, rightSize := 16, resultSupport := 24, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":458751,"row":3,"strides":[1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768,65536]},{"coefficientBound":48,"degrees":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"digitBits":7,"digits":65537,"innerBits":917503,"key":"{ packedBits := 917503, leftSupport := 24, rightSize := 17, resultSupport := 24, inner := 5 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":917503,"row":4,"strides":[1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768,65536]}],"proof_node_budget":3257,"quotient_support":0,"route":"term-list","serialized_bytes":5180,"tactic":"det-symbolic"}
+info: HexPolyDetMathlib/PackedTests.lean:76:76: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"integer","entries":"tree","products":[{"coefficientBound":6,"degrees":[3,3],"digitBits":4,"digits":16,"innerBits":60,"key":"{ packedBits := 60, leftSupport := 6, rightSize := 16, resultSupport := 0, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":60,"row":0,"strides":[1,4]}],"proof_node_budget":996,"quotient_support":0,"route":"packed/plain"}
+info: HexPolyDetMathlib/PackedTests.lean:79:76: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"residue","modulus":3,"products":[{"coefficientBound":18,"degrees":[3,3],"digitBits":6,"digits":16,"innerBits":89,"key":"{ packedBits := 89, leftSupport := 6, rightSize := 12, resultSupport := 0, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":89,"row":0,"strides":[1,4]}],"proof_node_budget":932,"quotient_support":9,"route":"packed/plain"}
+info: HexPolyDetMathlib/PackedTests.lean:100:38: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"integer","entries":"tree","products":[{"coefficientBound":2,"degrees":[1,0],"digitBits":3,"digits":2,"innerBits":5,"key":"{ packedBits := 5, leftSupport := 1, rightSize := 1, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":5,"row":0,"strides":[1,2]},{"coefficientBound":4,"degrees":[2,0],"digitBits":4,"digits":3,"innerBits":11,"key":"{ packedBits := 11, leftSupport := 2, rightSize := 4, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":11,"row":1,"strides":[1,3]},{"coefficientBound":4,"degrees":[2,1],"digitBits":4,"digits":6,"innerBits":23,"key":"{ packedBits := 23, leftSupport := 2, rightSize := 9, resultSupport := 2, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":23,"row":2,"strides":[1,3]},{"coefficientBound":8,"degrees":[2,2],"digitBits":5,"digits":9,"innerBits":44,"key":"{ packedBits := 44, leftSupport := 4, rightSize := 16, resultSupport := 4, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":44,"row":3,"strides":[1,3]}],"proof_node_budget":1373,"quotient_support":0,"route":"packed/plain"}
+info: HexPolyDetMathlib/PackedTests.lean:107:2: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 24 (diagnostic only)
+[HexMatrix.certificate] det tree target preflight exceeds packing budget; using list entry proofs
+[HexMatrix.certificate] {"atoms":4,"decline_reason":null,"denominator_entries":0,"encoding":"integer","integer_entries":5,"max_denominator_bits":0,"max_minor_degree":4,"max_minor_support":1,"max_numerator_bits":1,"products":[{"coefficientBound":2,"degrees":[1,0,0,0],"digitBits":3,"digits":2,"innerBits":5,"key":"{ packedBits := 5, leftSupport := 1, rightSize := 1, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":5,"row":0,"strides":[1,2,2,2]},{"coefficientBound":2,"degrees":[1,1,0,0],"digitBits":3,"digits":4,"innerBits":11,"key":"{ packedBits := 11, leftSupport := 1, rightSize := 2, resultSupport := 1, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":11,"row":1,"strides":[1,2,4,4]},{"coefficientBound":2,"degrees":[1,1,1,0],"digitBits":3,"digits":8,"innerBits":23,"key":"{ packedBits := 23, leftSupport := 1, rightSize := 3, resultSupport := 1, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":23,"row":2,"strides":[1,2,4,8]},{"coefficientBound":2,"degrees":[1,1,1,1],"digitBits":3,"digits":16,"innerBits":47,"key":"{ packedBits := 47, leftSupport := 1, rightSize := 4, resultSupport := 1, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":47,"row":3,"strides":[1,2,4,8]}],"proof_node_budget":909,"quotient_support":0,"route":"packed/plain","serialized_bytes":178,"tactic":"det-symbolic"}
+info: HexPolyDetMathlib/PackedTests.lean:130:5: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"integer","entries":"tree","products":[{"coefficientBound":2,"degrees":[1,0],"digitBits":3,"digits":2,"innerBits":5,"key":"{ packedBits := 5, leftSupport := 1, rightSize := 3, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":5,"row":0,"strides":[1,2]},{"coefficientBound":6,"degrees":[2,0],"digitBits":4,"digits":3,"innerBits":11,"key":"{ packedBits := 11, leftSupport := 2, rightSize := 8, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":11,"row":1,"strides":[1,3]},{"coefficientBound":6,"degrees":[2,1],"digitBits":4,"digits":6,"innerBits":23,"key":"{ packedBits := 23, leftSupport := 2, rightSize := 15, resultSupport := 2, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":23,"row":2,"strides":[1,3]},{"coefficientBound":12,"degrees":[2,2],"digitBits":5,"digits":9,"innerBits":44,"key":"{ packedBits := 44, leftSupport := 4, rightSize := 24, resultSupport := 4, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":44,"row":3,"strides":[1,3]}],"proof_node_budget":1466,"quotient_support":0,"route":"packed/plain"}
+info: HexPolyDetMathlib/PackedTests.lean:137:7: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"integer","entries":"tree","products":[{"coefficientBound":2,"degrees":[1,0],"digitBits":3,"digits":2,"innerBits":5,"key":"{ packedBits := 5, leftSupport := 1, rightSize := 1, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":5,"row":0,"strides":[1,2]},{"coefficientBound":4,"degrees":[2,0],"digitBits":4,"digits":3,"innerBits":11,"key":"{ packedBits := 11, leftSupport := 2, rightSize := 4, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":11,"row":1,"strides":[1,3]},{"coefficientBound":4,"degrees":[2,1],"digitBits":4,"digits":6,"innerBits":23,"key":"{ packedBits := 23, leftSupport := 2, rightSize := 9, resultSupport := 2, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":23,"row":2,"strides":[1,3]},{"coefficientBound":8,"degrees":[2,2],"digitBits":5,"digits":9,"innerBits":44,"key":"{ packedBits := 44, leftSupport := 4, rightSize := 16, resultSupport := 4, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":44,"row":3,"strides":[1,3]}],"proof_node_budget":1374,"quotient_support":0,"route":"packed/plain"}
+info: HexPolyDetMathlib/PackedTests.lean:138:3: [HexMatrix.certificate] {"route":"certificate-attempt"}
+[HexMatrix.certificate] det producer: a-priori minor support bound 15 (diagnostic only)
+[HexMatrix.certificate] {"atoms":2,"decline_reason":null,"encoding":"integer","entries":"tree","products":[{"coefficientBound":2,"degrees":[1,0],"digitBits":3,"digits":2,"innerBits":5,"key":"{ packedBits := 5, leftSupport := 1, rightSize := 1, resultSupport := 1, inner := 1 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":5,"row":0,"strides":[1,2]},{"coefficientBound":4,"degrees":[2,0],"digitBits":4,"digits":3,"innerBits":11,"key":"{ packedBits := 11, leftSupport := 2, rightSize := 4, resultSupport := 2, inner := 2 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":11,"row":1,"strides":[1,3]},{"coefficientBound":4,"degrees":[2,1],"digitBits":4,"digits":6,"innerBits":23,"key":"{ packedBits := 23, leftSupport := 2, rightSize := 9, resultSupport := 2, inner := 3 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":23,"row":2,"strides":[1,3]},{"coefficientBound":8,"degrees":[2,2],"digitBits":5,"digits":9,"innerBits":44,"key":"{ packedBits := 44, leftSupport := 4, rightSize := 16, resultSupport := 4, inner := 4 }","limitingStage":"Hex.Kronecker.Stage.inner","outerSlotBits":null,"packedBits":44,"row":3,"strides":[1,3]}],"proof_node_budget":1374,"quotient_support":0,"route":"packed/plain"}
+⚠ [13566/13850] Replayed HexPolyDetMathlib.Tests
+warning: HexPolyDetMathlib/Tests.lean:95:2: Unused tactic linter: `run_tac
+  let two ← Lean.Meta.mkNumeral (Lean.mkConst ``Rat) 2
+  let e ← Lean.Meta.mkAppM ``HPow.hPow #[two, Lean.mkNatLit 65]
+  match ← (HexMatrixMathlib.DetPoly.Normalize.scalarBound e).run with
+  | .error _ =>
+    pure ()
+  | .ok _ =>
+    throwError"expected a scalar exponent budget decline"` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+warning: HexPolyDetMathlib/Tests.lean:104:2: Unused tactic linter: `run_tac
+  let two ← Lean.Meta.mkNumeral (Lean.mkConst ``Rat) 2
+  let e ← Lean.Meta.mkAppM ``HPow.hPow #[two, Lean.mkNatLit 64]
+  let e ← Lean.Meta.mkAppM ``HPow.hPow #[e, Lean.mkNatLit 64]
+  match ← (HexMatrixMathlib.DetPoly.Normalize.scalarBound e).run with
+  | .error _ =>
+    pure ()
+  | .ok _ =>
+    throwError"expected a scalar coefficient bit budget decline"` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+warning: HexPolyDetMathlib/Tests.lean:162:9: Variable name `x` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _x
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexPolyDetMathlib/Tests.lean:196:9: Variable name `x` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _x
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexPolyDetMathlib/Tests.lean:196:11: Variable name `y` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _y
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexPolyDetMathlib/Tests.lean:196:13: Variable name `z` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _z
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexPolyDetMathlib/Tests.lean:197:2: Unused tactic linter: `failed to pretty print term (use 'set_option pp.rawOnError true' for raw representation)` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+warning: HexPolyDetMathlib/Tests.lean:252:2: Unused tactic linter: `certificate_declines "entry (0, 0)"` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+info: HexPolyDetMathlib/Tests.lean:295:0: 'Hex.PolyDet.check_of_ok' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: HexPolyDetMathlib/Tests.lean:296:0: 'HexPolyDetTests.rationalTerm4' depends on axioms: [propext, Classical.choice, Quot.sound]
+warning: HexPolyDetMathlib/Tests.lean:302:2: Try this:
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: HexPolyDetMathlib/Tests.lean:308:2: Unused tactic linter: `run_tac
+  Lean.Elab.Tactic.withMainContext do
+      let a ← Lean.Meta.getFVarFromUserName `A
+      let some a := (← a.fvarId!.getDecl).value? |
+        throwError"row-factor instance test lost its local literal"
+        let some lit ← HexMatrixMathlib.Literal.literal? a (allowOpen := true) |
+          throwError"row-factor instance test did not recognize its literal"
+          if (← HexPolyDetMathlib.RowFactor.compute? a lit none).isSome then
+            throwError"row-factor shortcut accepted a non-ring multiplication"` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+warning: HexPolyDetMathlib/Tests.lean:320:2: Try this:
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: HexPolyDetMathlib/Tests.lean:326:2: Unused tactic linter: `run_tac
+  Lean.Elab.Tactic.withMainContext do
+      let a ← Lean.Meta.getFVarFromUserName `A
+      let some a := (← a.fvarId!.getDecl).value? |
+        throwError"missing local literal"
+        let some lit ← HexMatrixMathlib.Literal.literal? a (allowOpen := true) |
+          throwError"mixed-type test did not recognize its literal"
+          if (← HexPolyDetMathlib.RowFactor.compute? a lit none).isSome then
+            throwError"row-factor shortcut accepted mixed-type multiplication"` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+warning: HexPolyDetMathlib/Tests.lean:341:2: Unused tactic linter: `run_tac
+  Lean.Elab.Tactic.withMainContext do
+      let a ← Lean.Meta.getFVarFromUserName `A
+      let some a := (← a.fvarId!.getDecl).value? |
+        throwError"missing local literal"
+        let some lit ← HexMatrixMathlib.Literal.literal? a (allowOpen := true) |
+          throwError"metavariable test did not recognize its literal"
+          let rhs ← Lean.Meta.mkFreshExprMVar (Lean.mkConst ``Int)
+          if (← HexPolyDetMathlib.RowFactor.compute? a lit (some rhs)).isSome then
+            throwError"row-factor shortcut accepted an unresolved target"
+          if ← rhs.mvarId!.isAssigned then
+            throwError"row-factor shortcut assigned the target"` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+warning: HexPolyDetMathlib/Tests.lean:558:2: Unused tactic linter: `run_tac
+  Lean.Elab.Tactic.withMainContext do
+      let a ← getFVarFromUserName `A
+      let some a := (← a.fvarId!.getDecl).value? |
+        throwError"missing matrix"
+        let some lit ← literal? a (allowOpen := true) |
+          throwError"missing literal"
+          let rhs ← mkFreshExprMVar (mkConst ``Rat)
+          if (← HexPolyDetMathlib.RatFactor.compute? a lit (some rhs)).isSome then
+            throwError"rational shortcut accepted a target metavariable"
+          if ← rhs.mvarId!.isAssigned then
+            throwError"rational shortcut assigned target"` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+warning: HexPolyDetMathlib/Tests.lean:569:2: Try this:
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: HexPolyDetMathlib/Tests.lean:571:2: Unused tactic linter: `run_tac
+  Lean.Elab.Tactic.withMainContext do
+      let a ← getFVarFromUserName `A
+      let some a := (← a.fvarId!.getDecl).value? |
+        throwError"missing matrix"
+        let some lit ← literal? a (allowOpen := true) |
+          throwError"missing literal"
+          if (← HexPolyDetMathlib.RatFactor.compute? a lit none).isSome then
+            throwError"rational shortcut accepted non-ring multiplication"` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+warning: HexPolyDetMathlib/Tests.lean:604:2: Try this:
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: HexPolyDetMathlib/Tests.lean:606:2: Unused tactic linter: `run_tac
+  Lean.Elab.Tactic.withMainContext do
+      let a ← getFVarFromUserName `A
+      let some a := (← a.fvarId!.getDecl).value? |
+        throwError"missing matrix"
+        let some lit ← literal? a (allowOpen := true) |
+          throwError"missing literal"
+          if (← HexPolyDetMathlib.Structural.direct? a lit).isSome then
+            throwError"triangular shortcut accepted non-ring multiplication"` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+warning: HexPolyDetMathlib/Tests.lean:616:2: Try this:
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: HexPolyDetMathlib/Tests.lean:618:2: Unused tactic linter: `run_tac
+  Lean.Elab.Tactic.withMainContext do
+      let a ← getFVarFromUserName `A
+      let some a := (← a.fvarId!.getDecl).value? |
+        throwError"missing matrix"
+        let some lit ← literal? a (allowOpen := true) |
+          throwError"missing literal"
+          if (← HexPolyDetMathlib.RatFactor.compute? a lit none).isSome then
+            throwError"accepted a factor of the wrong type"` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+warning: HexPolyDetMathlib/Tests.lean:628:2: Try this:
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: HexPolyDetMathlib/Tests.lean:630:2: Unused tactic linter: `run_tac
+  Lean.Elab.Tactic.withMainContext do
+      let a ← getFVarFromUserName `A
+      let some a := (← a.fvarId!.getDecl).value? |
+        throwError"missing matrix"
+        let some lit ← literal? a (allowOpen := true) |
+          throwError"missing literal"
+          if (← HexPolyDetMathlib.RatFactor.compute? a lit none).isSome then
+            throwError"accepted mixed-type division"` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+warning: HexPolyDetMathlib/Tests.lean:643:2: Unused tactic linter: `run_tac
+  Lean.Elab.Tactic.withMainContext do
+      let config : Hex.Reflect.Config := { budget := { Hex.Reflect.Budget.default with proofNodes := 1 } }
+      for (name, direct) in [(`A, true), (`B, false)] do
+        let matrix ← getFVarFromUserName name
+        let some matrix := (← matrix.fvarId!.getDecl).value? |
+          throwError"missing matrix"
+          let some lit ← literal? matrix (allowOpen := true) |
+            throwError"missing literal"
+            let result ←
+              if direct then
+                HexPolyDetMathlib.Structural.direct? matrix lit config
+              else
+                HexPolyDetMathlib.Structural.sparse? matrix lit config
+            if result.isSome then
+              throwError"ignored structural proof-node budget"` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+warning: HexPolyDetMathlib/Tests.lean:728:2: Unused tactic linter: `run_tac
+  do
+    let saved ← Lean.Elab.Tactic.saveState
+    let failure ←
+      try
+        Lean.Elab.Tactic.evalTactic (← `(tactic| det))
+        pure none
+      catch e =>
+        pure (some e)
+    saved.restore
+    let some failure := failure |
+      throwError"expected the dimension-budget decline"
+      unless
+        (← failure.toMessageData.toString) ==
+          "det: symbolic determinant declined: dimension budget exhausted (limit 16)" do
+        throwError "unexpected failure: {failure.toMessageData}"` does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+ℹ [13826/13850] Replayed HexCharPoly.CharPolyElabTests
+info: HexCharPoly/CharPolyElabTests.lean:24:0: Matrix.CharPolyResult.ofCheck
+  (let d := #v[#v[1, 2], #v[3, 4]];
+  Matrix.ofFn fun i j => d[i][j])
+  [[1, 2], [3, 4]]
+  { bound := 24, width := 12,
+    steps :=
+      [{ column := [1, -1, -6], vectors := [], coefficients := [1, -5, -2], product := [1, -5, -2, 24] },
+        { column := [1, -4], vectors := [], coefficients := [1, -4], product := [1, -4] }] }
+  [1, -5, -2] (DensePoly.ofCoeffs #[-2, -5, 1]) ⋯ _check._proof_1 _check._proof_3 : (let d := #v[#v[1, 2], #v[3, 4]];
+  Matrix.ofFn fun i j => d[i][j]).CharPolyResult
+info: HexCharPoly/CharPolyElabTests.lean:40:15: char_poly declined: unsupported coefficient type
+  Nat
+Only Int matrices are currently supported
+ℹ [13827/13850] Replayed HexCharPolyMathlib.CharPolyElabTests
+info: HexCharPolyMathlib/CharPolyElabTests.lean:24:0: CharPolyResult.ofCheck !![1, 2; 3, 4] [[1, 2], [3, 4]]
+  { bound := 24, width := 12,
+    steps :=
+      [{ column := [1, -1, -6], vectors := [], coefficients := [1, -5, -2], product := [1, -5, -2, 24] },
+        { column := [1, -4], vectors := [], coefficients := [1, -4], product := [1, -4] }] }
+  [1, -5, -2] (Hex.DensePoly.ofCoeffs #[-2, -5, 1]) _check._proof_2 _check._proof_1
+  _check._proof_3 : CharPolyResult !![1, 2; 3, 4]
+info: HexCharPolyMathlib/CharPolyElabTests.lean:25:0: Hex.Matrix.CharPolyResult.ofCheck
+  (let d := #v[#v[1, 2], #v[3, 4]];
+  Hex.Matrix.ofFn fun i j => d[i][j])
+  [[1, 2], [3, 4]]
+  { bound := 24, width := 12,
+    steps :=
+      [{ column := [1, -1, -6], vectors := [], coefficients := [1, -5, -2], product := [1, -5, -2, 24] },
+        { column := [1, -4], vectors := [], coefficients := [1, -4], product := [1, -4] }] }
+  [1, -5, -2] (Hex.DensePoly.ofCoeffs #[-2, -5, 1]) ⋯ _check._proof_3
+  _check._proof_5 : (let d := #v[#v[1, 2], #v[3, 4]];
+  Hex.Matrix.ofFn fun i j => d[i][j]).CharPolyResult
+info: HexCharPolyMathlib/CharPolyElabTests.lean:48:15: unexpected syntax
+  char_poly(fun _ _ => (0 : Int) : Matrix Bool Bool Int)
+info: HexCharPolyMathlib/CharPolyElabTests.lean:49:15: char_poly declined: unsupported Mathlib matrix coefficient type
+  ℕ
+Only Int matrices are currently supported
+ℹ [13838/13856] Replayed HexSmith.QuickstartTests
+info: HexSmith/QuickstartTests.lean:15:0: #v[#v[2, 0], #v[0, 6]]
+info: HexSmith/QuickstartTests.lean:16:0: [2, 6]
+info: HexSmith/QuickstartTests.lean:17:0: { freeRank := 0, torsionFactors := #[2, 6] }
+info: HexSmith/QuickstartTests.lean:18:0: #m[1, 0;
+   0, 1]
+✔ [13842/13856] Built HexRealRoots (254ms)
+ℹ [13852/14195] Replayed HexSmithMathlib.QuickstartTests
+info: HexSmithMathlib/QuickstartTests.lean:13:0: @smithNormalForm : {n m : ℕ} → (A : Hex.Matrix ℤ n m) → Module.Basis.SmithNormalForm (rowSpan A) (Fin m) A.snfRank
+info: HexSmithMathlib/QuickstartTests.lean:14:0: @smithNormalForm_chain : ∀ {n m : ℕ} (A : Hex.Matrix ℤ n m) (i : ℕ) (h : i + 1 < A.snfRank),
+  (smithNormalForm A).a ⟨i, ⋯⟩ ∣ (smithNormalForm A).a ⟨i + 1, h⟩
+info: HexSmithMathlib/QuickstartTests.lean:15:0: @quotientEquiv : {n m : ℕ} →
+  (A : Hex.Matrix ℤ n m) →
+    ((Fin m → ℤ) ⧸ rowSpan A) ≃ₗ[ℤ]
+      (Fin (m - A.snfRank) → ℤ) × DirectSum (Fin A.snfRank) fun i => ℤ ⧸ Ideal.span {A.invariantFactors[i]}
+✔ [13854/14195] Built HexAggregateCheck (2.8s)
+⚠ [14457/14491] Replayed HexManual.Chapters.HexNumberField
+warning: HexManual/Chapters/HexNumberField.lean:392:0: Line 392 is too long (78 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexNumberField.lean:415:0: Line 415 is too long (75 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexNumberField.lean:418:0: Line 418 is too long (70 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexNumberField.lean:436:0: Line 436 is too long (61 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexNumberField.lean:437:0: Line 437 is too long (63 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexNumberField.lean:438:0: Line 438 is too long (77 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexNumberField.lean:439:0: Line 439 is too long (76 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexNumberField.lean:442:0: Line 442 is too long (68 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexNumberField.lean:481:0: Line 481 is too long (78 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexNumberField.lean:484:0: Line 484 is too long (72 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexNumberField.lean:500:0: Line 500 is too long (64 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+⚠ [14459/14491] Replayed HexManual.Chapters.HexRealAlgebraic
+warning: HexManual/Chapters/HexRealAlgebraic.lean:38:0: Line 38 is too long (77 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexRealAlgebraic.lean:40:0: Line 40 is too long (65 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexRealAlgebraic.lean:62:0: Line 62 is too long (67 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexRealAlgebraic.lean:110:0: Line 110 is too long (66 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexRealAlgebraic.lean:113:0: Line 113 is too long (70 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexRealAlgebraic.lean:133:0: Line 133 is too long (64 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+✔ [14462/14491] Built HexManual.Chapters.HexRealFormula (6.7s)
+✔ [14477/14491] Built HexManual.Chapters.HexRCF (9.0s)
+⚠ [14481/14558] Replayed HexManual.Chapters.HexPrimality
+warning: HexManual/Chapters/HexPrimality.lean:135:0: Line 135 is too long (106 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexPrimality.lean:137:0: Line 137 is too long (107 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexPrimality.lean:138:0: Line 138 is too long (89 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexPrimality.lean:139:0: Line 139 is too long (86 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexPrimality.lean:142:0: Line 142 is too long (79 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexPrimality.lean:143:0: Line 143 is too long (92 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexPrimality.lean:144:0: Line 144 is too long (64 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+✔ [14490/14558] Built HexManual.Chapters.HexRealRoots (7.4s)
+⚠ [14509/14558] Replayed HexMvGcd.Gauss
+warning: HexMvGcd/Gauss.lean:1767:0: automatically included section variable(s) unused in theorem `Hex.MvPoly.densePrimPart_descent`:
+  [BEq R]
+  [LawfulBEq R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [BEq R] [LawfulBEq R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Gauss.lean:1788:0: automatically included section variable(s) unused in theorem `Hex.MvPoly.denseGcd_of_fraction`:
+  [BEq R]
+  [LawfulBEq R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [BEq R] [LawfulBEq R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [14513/14558] Replayed HexMvGcd.Prs
+warning: HexMvGcd/Prs.lean:407:30: This simp argument is unused:
+  DensePoly.Fraction.map_add
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [q, DensePoly.Fraction.map_mul, DensePoly.Fraction.map_zero, DensePoly.add_zero_poly]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexMvGcd/Prs.lean:408:46: This simp argument is unused:
+  DensePoly.Fraction.map_zero
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [q, DensePoly.Fraction.map_add, DensePoly.Fraction.map_mul, DensePoly.add_zero_poly]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexMvGcd/Prs.lean:416:51: This simp argument is unused:
+  delta
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [DensePoly.subresultantAuxExt, hCurr, qr, q, p, hpzero, ↓reduceIte]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexMvGcd/Prs.lean:416:58: This simp argument is unused:
+  hCurr
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [DensePoly.subresultantAuxExt, delta, qr, q, p, hpzero, ↓reduceIte]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexMvGcd/Prs.lean:416:69: This simp argument is unused:
+  q
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [DensePoly.subresultantAuxExt, delta, hCurr, qr, p, hpzero, ↓reduceIte]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexMvGcd/Prs.lean:541:53: This simp argument is unused:
+  delta
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [DensePoly.subresultantOrderedExt, h₂, qr, q, p, seed, hpzero, ↓reduceIte]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexMvGcd/Prs.lean:541:60: This simp argument is unused:
+  h₂
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [DensePoly.subresultantOrderedExt, delta, qr, q, p, seed, hpzero, ↓reduceIte]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexMvGcd/Prs.lean:541:68: This simp argument is unused:
+  q
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [DensePoly.subresultantOrderedExt, delta, h₂, qr, p, seed, hpzero, ↓reduceIte]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexMvGcd/Prs.lean:1045:41: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexMvGcd/Prs.lean:1089:24: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexMvGcd/Prs.lean:1095:24: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexMvGcd/Prs.lean:991:16: This simp argument is unused:
+  checkOps
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [baseGcd, beq_self_eq_true, Bool.true_and, ↓reduceIte, checkGcd, checkGcdUsing, baseCheckCoprime,
+    Cert.baseCheck, Bool.and_eq_true, beq_iff_eq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexMvGcd/Prs.lean:1132:25: This simp argument is unused:
+  checkOps
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [checkGcd, checkGcdUsing, baseCheckCoprime, Cert.baseCheck, Bool.and_eq_true, beq_iff_eq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexMvGcd/Prs.lean:1176:27: This simp argument is unused:
+  checkOps
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [checkCoprime, baseCheckCoprime, Cert.baseCheck, baseCoprime, beq_iff_eq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [14519/14558] Replayed HexMvGcd.Squarefree.Basic
+warning: HexMvGcd/Squarefree/Basic.lean:769:37: This simp argument is unused:
+  Lean.Grind.Ring.intCast_one
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Lean.Grind.Ring.intCast_add, Lean.Grind.Ring.intCast_mul, Lean.Grind.Ring.intCast_natCast, hchar,
+    hvalue, Lean.Grind.Semiring.mul_zero, Lean.Grind.AddCommMonoid.add_zero] at hcast
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexMvGcd/Squarefree/Basic.lean:983:45: Variable name `hprime` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _hprime
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexMvGcd/Squarefree/Basic.lean:1074:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.Basic.0.Hex.MvPoly.fractionMap_monomial`:
+  [Dvd R]
+  [BezoutOps R]
+  [LawfulGcdOps R]
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree/Basic.lean:1108:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.Basic.0.Hex.MvPoly.exponent_dvd_of_derivatives_zero`:
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree/Basic.lean:1377:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.Basic.0.Hex.MvPoly.primitive_mul_self`:
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree/Basic.lean:1385:0: automatically included section variable(s) unused in theorem `Hex.MvPoly.primitive_mul`:
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree/Basic.lean:1393:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.Basic.0.Hex.MvPoly.isConst_of_fractionMap_unit`:
+  [Dvd R]
+  [BezoutOps R]
+  [LawfulGcdOps R]
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [14520/14558] Replayed HexMvGcd.Squarefree.Core
+warning: HexMvGcd/Squarefree/Core.lean:220:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.Core.0.Hex.MvPoly.eq_constIn_of_dvd`:
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree/Core.lean:285:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.Core.0.Hex.MvPoly.coeff_dvd_of_constIn_dvd`:
+  [Dvd R]
+  [BezoutOps R]
+  [LawfulGcdOps R]
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree/Core.lean:307:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.Core.0.Hex.MvPoly.common_coefficient`:
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree/Core.lean:357:0: automatically included section variable(s) unused in theorem `Hex.MvPoly.isConst_of_constIn`:
+  [Dvd R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Dvd R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree/Core.lean:376:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.Core.0.Hex.MvPoly.isConst_constIn`:
+  [Dvd R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Dvd R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree/Core.lean:649:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.Core.0.Hex.MvPoly.nonconstant_mul_left`:
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree/Core.lean:708:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.Core.0.Hex.MvPoly.coprimePoly_symm`:
+  [DecidableEq R]
+  [Dvd R]
+  [LawfulGcdOps R]
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq R] [Dvd R] [LawfulGcdOps R] [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree/Core.lean:727:0: automatically included section variable(s) unused in theorem `Hex.MvPoly.properties_nil`:
+  [LawfulGcdOps R]
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [LawfulGcdOps R] [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [14521/14558] Replayed HexMvGcd.Squarefree
+warning: HexMvGcd/Squarefree.lean:334:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.0.Hex.MvPoly.totalDegree_monomial_le`:
+  [DecidableEq R]
+  [BEq R]
+  [LawfulBEq R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq R] [BEq R] [LawfulBEq R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree.lean:370:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.0.Hex.MvPoly.view_size_le_totalDegree_succ`:
+  [Dvd R]
+  [BezoutOps R]
+  [LawfulGcdOps R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Dvd R] [BezoutOps R] [LawfulGcdOps R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree.lean:570:12: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexMvGcd/Squarefree.lean:572:12: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: HexMvGcd/Squarefree.lean:599:14: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexMvGcd/Squarefree.lean:607:14: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: HexMvGcd/Squarefree.lean:644:40: This simp argument is unused:
+  List.reverse_nil
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [List.reverse_cons, List.nil_append, List.append_assoc]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexMvGcd/Squarefree.lean:644:58: This simp argument is unused:
+  List.nil_append
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [List.reverse_cons, List.reverse_nil, List.append_assoc]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexMvGcd/Squarefree.lean:775:21: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexMvGcd/Squarefree.lean:798:23: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: HexMvGcd/Squarefree.lean:802:14: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexMvGcd/Squarefree.lean:817:25: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: HexMvGcd/Squarefree.lean:821:16: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: HexMvGcd/Squarefree.lean:1444:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.0.Hex.MvPoly.split_content_of_zero`:
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree.lean:1454:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.0.Hex.MvPoly.split_content_of_unit`:
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: HexMvGcd/Squarefree.lean:1468:8: automatically included section variable(s) unused in theorem `_private.HexMvGcd.Squarefree.0.Hex.MvPoly.split_content_of_const`:
+  [LawfulBezoutOps R]
+  [GcdProducer R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [LawfulBezoutOps R] [GcdProducer R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [14524/14558] Replayed HexMvHensel.Shift
+warning: HexMvHensel/Shift.lean:165:16: declaration uses `sorry`
+warning: HexMvHensel/Shift.lean:175:8: declaration uses `sorry`
+warning: HexMvHensel/Shift.lean:180:8: declaration uses `sorry`
+warning: HexMvHensel/Shift.lean:185:8: declaration uses `sorry`
+warning: HexMvHensel/Shift.lean:190:8: declaration uses `sorry`
+warning: HexMvHensel/Shift.lean:196:8: declaration uses `sorry`
+⚠ [14526/14558] Replayed HexMvHensel.Uni
+warning: HexMvHensel/Uni.lean:395:8: declaration uses `sorry`
+warning: HexMvHensel/Uni.lean:404:8: declaration uses `sorry`
+warning: HexMvHensel/Uni.lean:420:8: declaration uses `sorry`
+⚠ [14527/14558] Replayed HexMvHensel.Diophantine
+warning: HexMvHensel/Diophantine.lean:189:8: declaration uses `sorry`
+⚠ [14530/14558] Replayed HexMvHensel.Lift
+warning: HexMvHensel/Lift.lean:77:8: declaration uses `sorry`
+warning: HexMvHensel/Lift.lean:170:8: declaration uses `sorry`
+warning: HexMvHensel/Lift.lean:179:8: declaration uses `sorry`
+⚠ [14531/14558] Replayed HexMvHensel.Complete
+warning: HexMvHensel/Complete.lean:44:8: declaration uses `sorry`
+warning: HexMvHensel/Complete.lean:54:8: declaration uses `sorry`
+warning: HexMvHensel/Complete.lean:284:8: declaration uses `sorry`
+warning: HexMvHensel/Complete.lean:326:8: declaration uses `sorry`
+⚠ [14537/14558] Replayed HexMvFactor.Irred
+warning: HexMvFactor/Irred.lean:79:8: declaration uses `sorry`
+✔ [14557/14558] Built HexManual (4.3s)
+Build completed successfully (14558 jobs).

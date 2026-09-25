@@ -1,0 +1,21 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Deferred
+import Determinant.Normalized
+import Mathlib.Tactic.NormDet
+import Mathlib.Data.ZMod.Basic
+open Determinant
+set_option maxHeartbeats 0
+set_option maxRecDepth 10000
+set_option Elab.async false
+set_option profiler false
+namespace Determinant.Adversarial
+variable {S : Type} [CommRing S]
+#measure_decl theorem result (x0 x1 : S) :
+    Matrix.det (!![] : Matrix (Fin 0) (Fin 0) S) = (((1 : S))) := by
+  fused_bird
+#print axioms result
+end Determinant.Adversarial

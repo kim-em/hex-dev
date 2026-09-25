@@ -1,0 +1,174 @@
+[
+  {
+    "case": "variable4-degree8",
+    "arm": "Mathlib",
+    "pair": 0,
+    "declaration_ms": 89.848236,
+    "tactic_ms": [
+      32.001195
+    ],
+    "components_ms": {
+      "share common exprs": [
+        7.69
+      ],
+      "type checking": [
+        23.5
+      ],
+      "process pre-definitions": [
+        2.34
+      ]
+    }
+  },
+  {
+    "case": "variable4-degree8",
+    "arm": "Bounded",
+    "pair": 0,
+    "declaration_ms": 101.83136,
+    "tactic_ms": [
+      46.901405
+    ],
+    "components_ms": {
+      "share common exprs": [
+        7.09
+      ],
+      "type checking": [
+        22.0
+      ],
+      "process pre-definitions": [
+        2.0
+      ]
+    }
+  },
+  {
+    "case": "variable4-degree8",
+    "arm": "Bounded",
+    "pair": 1,
+    "declaration_ms": 101.475622,
+    "tactic_ms": [
+      46.748809
+    ],
+    "components_ms": {
+      "share common exprs": [
+        7.42
+      ],
+      "type checking": [
+        21.9
+      ],
+      "process pre-definitions": [
+        1.99
+      ]
+    }
+  },
+  {
+    "case": "variable4-degree8",
+    "arm": "Mathlib",
+    "pair": 1,
+    "declaration_ms": 89.870578,
+    "tactic_ms": [
+      31.976047
+    ],
+    "components_ms": {
+      "share common exprs": [
+        8.01
+      ],
+      "type checking": [
+        23.5
+      ],
+      "process pre-definitions": [
+        2.36
+      ]
+    }
+  },
+  {
+    "case": "variable6-single",
+    "arm": "Mathlib",
+    "pair": 0,
+    "declaration_ms": 3158.803815,
+    "tactic_ms": [
+      435.550419
+    ],
+    "components_ms": {
+      "share common exprs": [
+        868.0
+      ],
+      "fix level params": [
+        31.0
+      ],
+      "type checking": [
+        927.0
+      ],
+      "process pre-definitions": [
+        146.0
+      ]
+    }
+  },
+  {
+    "case": "variable6-single",
+    "arm": "Bounded",
+    "pair": 0,
+    "declaration_ms": 4582.341339,
+    "tactic_ms": [
+      608.113019
+    ],
+    "components_ms": {
+      "share common exprs": [
+        1440.0
+      ],
+      "fix level params": [
+        37.3
+      ],
+      "type checking": [
+        1210.0
+      ],
+      "process pre-definitions": [
+        195.0
+      ]
+    }
+  },
+  {
+    "case": "variable6-single",
+    "arm": "Bounded",
+    "pair": 1,
+    "declaration_ms": 4580.44467,
+    "tactic_ms": [
+      608.296239
+    ],
+    "components_ms": {
+      "share common exprs": [
+        1440.0
+      ],
+      "fix level params": [
+        37.2
+      ],
+      "type checking": [
+        1210.0
+      ],
+      "process pre-definitions": [
+        195.0
+      ]
+    }
+  },
+  {
+    "case": "variable6-single",
+    "arm": "Mathlib",
+    "pair": 1,
+    "declaration_ms": 3174.216254,
+    "tactic_ms": [
+      430.865178
+    ],
+    "components_ms": {
+      "share common exprs": [
+        861.0
+      ],
+      "fix level params": [
+        31.2
+      ],
+      "type checking": [
+        945.0
+      ],
+      "process pre-definitions": [
+        154.0
+      ]
+    }
+  }
+]

@@ -29,11 +29,37 @@ equal to the normal form at reducible transparency. The
 [wider comparison](determinant-wider-comparison.md) finds that unrestricted
 conversion can unfold concrete ring implementations and overwhelm determinant
 evaluation. Keep this shortcut restricted; normalize the target when it fails.
-Extend the final variant's adversarial coverage before choosing the production
-backend; the small 10×10 rank-one loss is not established as solved, even though
-preserving the original dimension makes its certificate identical to Mathlib's.
-This borrows
-the mathematics and scalar proof machinery of Mathlib directly. It does not call `norm_det`,
+The [general investigation](determinant-goal-investigation.md) does not reproduce
+the earlier 10×10 loss. A controlled change to three scalar congruence proofs
+reduces the proof from 143,397 to 113,982 nodes and lowers both kernel samples.
+Combined recurrence equations make the structure slightly smaller; their
+additional elapsed-time benefit is not established. Retain the compact proof
+constructors when developing a production backend.
+
+Normalization needs a more explicit contract. Mathlib leaves quotient entries
+opaque; eagerly expanding them creates a sixfold loss on a small symbolic-field
+example. Keeping every quotient opaque instead hides rational cancellation.
+The tested experimental alternatives therefore separate constant-coefficient
+inversion from symbolic division and allow a final, stronger scalar comparison.
+Bounded speculation avoids fully expanding a numerator merely to reject that
+expansion, and a fresh atom context avoids retaining obsolete atoms when both
+sides undergo a stronger comparison. These mechanisms act on scalar expressions,
+not matrix families.
+
+The field policy remains unresolved. Expanding monomial quotients exposes
+rank-one cancellation cheaply but makes independent quotient monomials larger:
+a retained 6×6 loss is 5.532s versus Mathlib's 3.769s. Keeping those quotients
+opaque avoids that cost but sacrifices the other cancellation advantage. Do not
+install a matrix-family dispatcher to conceal this tradeoff. The opposing examples
+have the same local scalar shape—a monomial numerator over a variable denominator—
+so a rule inspecting an individual entry cannot distinguish the favorable cases. A promising next
+architecture preserves compact quotient representatives while tracking their
+multiplicative identities, producing normalization proofs only when those
+identities actually help combine or cancel terms. That is an unimplemented
+proposal, not an established improvement.
+
+The tested implementation borrows the mathematics and scalar proof machinery
+of Mathlib directly. It does not call `norm_det`,
 `eval_det`, or any hidden determinant fallback. Importing Mathlib arithmetic
 lemmas in the companion is compatible with Mathlib-free computational libraries.
 
@@ -55,7 +81,8 @@ shared algebraic interfaces have demonstrated uses and should survive.
 | Numeric determinant certificates | Retain | Symbolic experiments do not invalidate their measured numeric advantages |
 | Polynomial triangular witness as the mandatory symbolic backend | Replace as a requirement | Fixed-witness proof construction loses after arithmetic and transport improvements |
 | Shared Bird expressions with cached normalization | Retain as an experimental comparator; resolve normalization before migration | Wins on many dense inputs, but loses on hidden zeros and larger rank-one matrices; see the adversarial report |
-| Normalized Bird certificates with direct target conversion | Extend adversarial coverage before migration | General normalization removes large cancellation losses; direct conversion wins at 16×16 rank one but still loses at 10×10 |
+| Normalized Bird certificates with compact scalar proofs | Preferred basis for the supplied-equality replacement, subject to SPEC and shipping checks | Removes large cancellation losses; controlled node/kernel improvement at 10×10; division policy and residual losses are documented in the general investigation |
+| A universal eager or opaque division policy | Unresolved; keep experiments out of default selection | Explicit counterexamples favor opposite representations; bounded speculation fixes discarded work but not the entire tradeoff |
 | Blanket opacity for reused arithmetic proofs | Reject | Additional auxiliary checking outweighs the saved outer check |
 | Deferred expression followed by independent `ring` traversal | Reject as default | Loses to cached traversal on the same recurrence and target |
 | Eager Bird value prototype | Do not pursue this implementation | Loses on integer/rational values; list allocation and bounds checks confound any schedule-wide conclusion |
@@ -65,6 +92,37 @@ shared algebraic interfaces have demonstrated uses and should survive.
 | Row scaling for rational/dyadic values | Confirm with in-process repetitions, then implement and prove | Promising cold single-call measurements include scaling and normalization |
 | Direct small-degree dense polynomial arithmetic | Retain and expose to selection | Representation comparison favors it over sparse arithmetic and interpolation |
 | General evaluation/interpolation framework | Defer | The small cold interpolation experiment loses; no crossover is established |
+
+## Concrete integration boundary
+
+Develop the supplied-equality replacement around one cached, division-free Bird
+recurrence, parameterized by scalar proof-producing normalization. Reuse
+Mathlib's recurrence and scalar arithmetic wherever possible. Propose small
+upstream changes for compact proof construction and scalar normalization policy.
+The combined arithmetic congruence lemmas already exist in `Ring.Common`; a
+production change should test reusing them rather than adding equivalent statements.
+Their semiring instance parameters differ from the experiment's ring parameters,
+so that substitution requires a measured control. The experiment's copies are
+controls, not a reason to maintain permanent forks.
+Such changes should benefit both clients; a faster shared normalizer is useful
+even when it also improves the Mathlib comparator.
+
+The frontend should parse the existing public goal forms, preserve the existing
+classification and decline contract, normalize the supplied target in the same
+atom context, and return the equality certificate directly. Keep reducible
+conversion as a shortcut and all input-dependent proof checking inside the
+complete declaration clock. No call to `norm_det` belongs in this frontend.
+
+Before replacing production dispatch: agree the SPEC amendments below; cover
+reversed equalities, nested goals and result-producing APIs independently;
+validate the final scalar policy on the retained quotient counterexamples and
+ordinary polynomial controls; then apply the six-pair shipping protocol to a
+small representative corpus. Two-pair exploratory results do not meet that bar.
+Replace the experimental positional Boolean controls with an explicit scalar-policy
+type, and give the stronger scalar comparison its own resource bound; a false
+target must not trigger uncontrolled expansion.
+Retain numeric certificates and fixed-ring computation separately. A tactic
+proof timing is not evidence about native determinant value performance.
 
 ## Proposed SPEC amendments
 

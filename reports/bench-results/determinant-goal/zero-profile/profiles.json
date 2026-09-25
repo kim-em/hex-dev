@@ -1,0 +1,70 @@
+[
+  {
+    "case": "zero16",
+    "arm": "Mathlib",
+    "pair": 0,
+    "declaration_ms": 238.69158,
+    "tactic_ms": [
+      13.426016
+    ],
+    "components_ms": {
+      "share common exprs": [
+        1.08
+      ],
+      "type checking": [
+        188.0
+      ]
+    }
+  },
+  {
+    "case": "zero16",
+    "arm": "Fused",
+    "pair": 0,
+    "declaration_ms": 243.315093,
+    "tactic_ms": [
+      14.552896
+    ],
+    "components_ms": {
+      "share common exprs": [
+        4.95
+      ],
+      "type checking": [
+        183.0
+      ]
+    }
+  },
+  {
+    "case": "zero16",
+    "arm": "Fused",
+    "pair": 1,
+    "declaration_ms": 238.747755,
+    "tactic_ms": [
+      14.374602
+    ],
+    "components_ms": {
+      "share common exprs": [
+        5.46
+      ],
+      "type checking": [
+        183.0
+      ]
+    }
+  },
+  {
+    "case": "zero16",
+    "arm": "Mathlib",
+    "pair": 1,
+    "declaration_ms": 243.338008,
+    "tactic_ms": [
+      13.397124
+    ],
+    "components_ms": {
+      "share common exprs": [
+        1.11
+      ],
+      "type checking": [
+        192.0
+      ]
+    }
+  }
+]

@@ -203,10 +203,11 @@ any resulting timeout. Shortening it cannot establish a 60-second runtime claim.
 
 `--reference direct --candidate literal` compares the dimension representation
 directly in adjacent before/after pairs. Keep different references in separate
-roots. `--search-seconds 360` lowers the cumulative allowance to six minutes for
-a separately authorized round. A recorded lower cap remains in force across
-sibling normalization roots even if a later invocation omits or raises this
-argument. Do not change output parents to evade a round's budget.
+roots. `--search-seconds` sets the cumulative allowance for a separately
+authorized round, with an absolute maximum of 3600 seconds. The default remains
+600 seconds for normalization variants. A recorded lower cap remains in force
+across sibling normalization roots even if a later invocation omits or raises
+this argument. Do not change output parents to evade a round's budget.
 
 `Inspect.lean` and `inspect_proofs.py OUTPUT [direct|literal]` compare the retained
 10×10 rank-one theorem bodies after kernel checking. Build `Determinant.Inspect`
@@ -222,3 +223,124 @@ custom archive to `adversarial_report.py`.
 The [wider comparison](../../reports/determinant-wider-comparison.md) records
 the structural control, rational/skew/factored/positive-characteristic probes,
 and the restricted-conversion fix, with frozen sources for each stage.
+
+## General proof improvements
+
+`compact_bird` substitutes small proved arithmetic congruence lemmas into the
+same Bird recurrence and scalar normalizer. `fused_bird` also combines the
+recurrence unfolding equalities using `Steps.lean`. These are experimental
+controls, not additional production strategies or matrix-shape dispatch.
+`--reference compact --candidate fused` isolates the recurrence-proof change.
+Build `Determinant.CompactAudit` and `Determinant.FusedAudit` before measuring.
+The latter also checks that both recurrence variants populate the same caches.
+
+`--proof-nodes` counts unique theorem-body nodes after kernel checking; it marks
+the batch as a diagnostic. `--kernel-profile --proof-nodes` combines that count
+with declaration-stage attribution. Do not pool diagnostic clocks with ordinary
+comparisons or interpret unique node counts as measuring physical sharing during
+proof construction.
+
+For coefficient stress tests, `--integer` specializes the carrier to `Int`, and
+`--concrete` supplies numeric entries in a dense matrix over an explicit ring.
+Rational entries use `--denominator-bits` (default 3). `--row-denominators` uses
+one denominator per row, permitting rational rank-one inputs without destroying
+their dependency. These parameters describe generated tests; the tactic does
+not branch on them. Ordinary defaults reproduce the earlier statements.
+
+The [goal investigation](../../reports/determinant-goal-investigation.md)
+maintains the search coverage, causal evidence and unresolved directions.
+Its separately authorized one-hour ledger is `reports/bench-results/determinant-goal`,
+shared by every variant and diagnostic in that round.
+
+
+`staged_bird` keeps division opaque during the recurrence, expanding it only if
+comparison with the target needs that identity. `coeff_bird` instead normalizes
+constant denominators early and keeps symbolic quotients opaque; it uses the
+same final comparison when necessary. `Coefficients.lean` is an attributed
+experimental adaptation of the ring scalar evaluator, not a determinant
+algorithm. Build `Determinant.StagedAudit` and `Determinant.CoeffAudit` first.
+The experiments compare these policies rather than dispatching by matrix shape.
+`intern_bird` is an inconclusive input-sharing control, not a recommended change.
+
+Additional selected-input controls include `--polynomial` for a polynomial
+coefficient ring, `--reverse-rows`, `--transpose`, and the fixed `zero` and
+`identity` families. `issue10320` retains the exact original integer quadratic
+fixture. `--quotient-entries` writes whole rational numerators divided by their
+denominators; the default writes fractional coefficients separately. These
+representations can behave very differently. `variable-quotients` makes a
+generic-field matrix whose last row is the sum of the first two; `--support`
+sets the number of fresh numerator variables per entry. These shapes belong to
+the test generator, never to tactic dispatch.
+
+`--physical-nodes` measures allocated proof objects before declaration sharing;
+its overhead makes the complete clocks unsuitable for performance rankings.
+`--capture-target` is also diagnostic: it records Mathlib's cleaned output
+between `CLEANED_TARGET_BEGIN` and `CLEANED_TARGET_END`. A later ordinary control
+can use `--cleaned-target FILE`, a JSON object with `expression` and the captured
+`input.json`'s `original_statement_sha256`. The runner verifies the original
+statement hash and archives that JSON. This tests supplying precisely the
+expression Mathlib produces, rather than an independently expanded target.
+
+Run `python3 experiments/Determinant/test_adversarial.py` when no measurement
+holds the serial lock. These checks exercise the shared allowance, persistence
+of a lower cap, unfinished cases and timeout ordering without running Lean.
+
+
+`fresh_bird` uses the coefficient policy and starts a fresh atom table only for
+its second scalar comparison. Old atom indices are not needed after both sides
+are normalized anew. `--reference coeff --candidate fresh` isolates that cost.
+`--symbolic-row-denominators` adds fresh generic-field denominators to the
+rank-one test generator; unlike numeric denominators, these exercise residual
+symbolic quotient cancellation. They add no dispatch branch to the tactic.
+
+Timeout ordering also applies across sibling roots for Mathlib, and for an
+unchanged candidate whose archived Lean source hashes still match. Diagnostic
+clocks are compared separately from ordinary probes; moving a timeout to a new
+output root does not authorize advancing its unchanged dimension ladder.
+
+
+`division_bird` adds the scalar rule in `Division.lean`: normalize division by
+constant coefficients, or when the normalized numerator is zero or a single
+monomial. Preserve other quotients atomically. Trial normal forms that are
+rejected restore both the atom table and Meta state. This is independent of matrix
+dimension, rank or shape; all branches use the same cached Bird recurrence.
+The stronger final comparison uses a fresh atom context. Build
+`Determinant.DivisionAudit` before measuring; it includes symbolic/numeric
+quotients, nested division, zero numerators and literal zero denominators. It separately records
+inverse-of-inverse and finite-characteristic simplifications that both bare
+normalizers fail to close without additional scalar simplification. `--reference fresh --candidate division` isolates this policy.
+
+
+`bounded_bird` uses `Bounded.lean` to stop speculative numerator normalization
+at a recursive result with more than one monomial. It applies the same bound to
+denominators and inverse arguments, keeping a multi-term argument opaque. It
+still permits the full-field final comparison. This avoids
+expanding a large numerator merely to reject its expansion. Build
+`Determinant.BoundedAudit`; compare with `--reference division --candidate bounded`.
+The variable-quotient generator accepts `--degree` for powers of each numerator
+sum, allowing compact inputs with larger potential expansions.
+
+`bounded_first` is an audit-only entry point that disables the stronger final
+comparison. Positive rank-one, nested quotient, product-denominator and inverse
+checks must close with this entry point, so a successful audit cannot conceal
+loss of bounded normalization behind a second expansion. Atom checks exercise
+scalar-multiplication refusal, nested speculation and successful monomial
+splitting. The ordinary `bounded_bird` entry point still permits the second pass.
+Use `--symbolic-row-denominators --product-denominators` on the rank-one generator
+to test a product of row and column denominators; no nonzero hypotheses are used.
+
+`--admission-only` checks resource and timeout guards without creating a case or
+starting Lean. The runner guard tests always use it. A batch with insufficient
+time for the next full invocation records budget exhaustion rather than silently
+lowering that invocation's timeout. Timeout blocking remains conservative even
+if a later request raises its process ceiling. Budget accounting is per documented
+round directory, under the worktree-wide serial lock; it is not a global accounting
+service across unrelated directories or worktrees.
+
+For the bounded one-hour goal corpus, run
+`python3 experiments/Determinant/verify_goal.py reports/bench-results/determinant-goal`
+after the audit build. This checks every retained source snapshot, completed pair
+order, theorem dependencies and aggregate measurement allowance, then regenerates
+all per-variant inventories. It also checks the recorded audit log and requires
+the final measured Lean sources to match the current implementation. It does not
+launch Lean or perform measurements.

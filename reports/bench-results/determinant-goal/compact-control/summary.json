@@ -1,0 +1,50 @@
+{
+  "elapsed_seconds": 21.015642144018784,
+  "cases": [
+    {
+      "name": "rankone10",
+      "case": {
+        "family": "rankone",
+        "n": 10,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "compact",
+        "reference": "direct",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "invocation_seconds": 20,
+        "search_seconds": 3600,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Direct": {
+          "count": 2,
+          "median": 1.8173375415000002,
+          "minimum": 1.628099821,
+          "maximum": 2.006575262
+        },
+        "Compact": {
+          "count": 2,
+          "median": 1.3869819985,
+          "minimum": 1.359895033,
+          "maximum": 1.4140689640000002
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 21.015642144018784
+    }
+  ],
+  "prototype_hashes": {
+    "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+    "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+    "experiments/Determinant/Normalized.lean": "ae18e6fc787c538ae4c3e60651ee1f8f7a3a4339687a83f0162ca2d3a8ca4aee",
+    "experiments/Determinant/Compact.lean": "579c63e3a31612773d8bb2203136b5502013a79b2c1b9f54d6bf2d6708001f7c"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "fixture": "bench/HexPolyDetMathlib/ProofProbe/N4K2D2S4Hex.lean",
+  "fixture_sha256": "4feff9d481b2ac7ddcb83dc8cea02f4695419d6c7ce480a312b3e63a50f8b3e6",
+  "actual_atoms": 2,
+  "entry_terms": 64
+}

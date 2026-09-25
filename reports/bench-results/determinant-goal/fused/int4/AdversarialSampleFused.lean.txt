@@ -1,0 +1,21 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Deferred
+import Determinant.Normalized
+import Mathlib.Tactic.NormDet
+import Mathlib.Data.ZMod.Basic
+open Determinant
+set_option maxHeartbeats 0
+set_option maxRecDepth 10000
+set_option Elab.async false
+set_option profiler false
+namespace Determinant.Adversarial
+abbrev S := Int
+#measure_decl theorem result  :
+    Matrix.det (!![(((-63811 : S))), (((63753 : S))), (((10466 : S))), (((-55403 : S))); (((-19390 : S))), (((12105 : S))), (((-18788 : S))), (((11113 : S))); (((62538 : S))), (((-29448 : S))), (((-11096 : S))), (((35473 : S))); (((-58841 : S))), (((-18720 : S))), (((-1344 : S))), (((59688 : S)))] : Matrix (Fin 4) (Fin 4) S) = (((-2459711980294062102 : S))) := by
+  fused_bird
+#print axioms result
+end Determinant.Adversarial

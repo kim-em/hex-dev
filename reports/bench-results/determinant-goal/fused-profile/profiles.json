@@ -1,0 +1,88 @@
+[
+  {
+    "case": "rankone6",
+    "arm": "Compact",
+    "pair": 0,
+    "declaration_ms": 181.908959,
+    "tactic_ms": [
+      49.226329
+    ],
+    "components_ms": {
+      "share common exprs": [
+        19.2
+      ],
+      "type checking": [
+        60.9
+      ],
+      "process pre-definitions": [
+        3.27
+      ]
+    }
+  },
+  {
+    "case": "rankone6",
+    "arm": "Fused",
+    "pair": 0,
+    "declaration_ms": 2926.460324,
+    "tactic_ms": [
+      708.993835
+    ],
+    "components_ms": {
+      "share common exprs": [
+        1090.0
+      ],
+      "fix level params": [
+        1.84
+      ],
+      "type checking": [
+        68.9
+      ],
+      "process pre-definitions": [
+        4.03
+      ]
+    }
+  },
+  {
+    "case": "rankone6",
+    "arm": "Fused",
+    "pair": 1,
+    "declaration_ms": 2784.143149,
+    "tactic_ms": [
+      715.318703
+    ],
+    "components_ms": {
+      "share common exprs": [
+        928.0
+      ],
+      "fix level params": [
+        1.91
+      ],
+      "type checking": [
+        70.7
+      ],
+      "process pre-definitions": [
+        4.01
+      ]
+    }
+  },
+  {
+    "case": "rankone6",
+    "arm": "Compact",
+    "pair": 1,
+    "declaration_ms": 181.056405,
+    "tactic_ms": [
+      49.634914
+    ],
+    "components_ms": {
+      "share common exprs": [
+        20.6
+      ],
+      "type checking": [
+        61.0
+      ],
+      "process pre-definitions": [
+        3.26
+      ]
+    }
+  }
+]

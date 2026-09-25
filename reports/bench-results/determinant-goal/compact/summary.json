@@ -1,0 +1,51 @@
+{
+  "elapsed_seconds": 67.8432325727772,
+  "cases": [
+    {
+      "name": "rankone16",
+      "case": {
+        "family": "rankone",
+        "n": 16,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "compact",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "proof_nodes": false,
+        "invocation_seconds": 60,
+        "search_seconds": 3600,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 13.3541804575,
+          "minimum": 12.720691015,
+          "maximum": 13.9876699
+        },
+        "Compact": {
+          "count": 2,
+          "median": 11.236875694,
+          "minimum": 10.359174561,
+          "maximum": 12.114576827
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 67.8432325727772
+    }
+  ],
+  "prototype_hashes": {
+    "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+    "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+    "experiments/Determinant/Normalized.lean": "ae18e6fc787c538ae4c3e60651ee1f8f7a3a4339687a83f0162ca2d3a8ca4aee",
+    "experiments/Determinant/Compact.lean": "579c63e3a31612773d8bb2203136b5502013a79b2c1b9f54d6bf2d6708001f7c"
+  }
+}

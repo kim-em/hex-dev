@@ -1,0 +1,62 @@
+I found no soundness problem. The report's performance conclusions go further than its evidence, though, and two general design differences between the prototype and `norm_det` haven't been tested yet. Those two are where Mathlib is most likely to win.
+
+## Correctness
+
+**Verified**
+- **Compact changes match Mathlib.** `Compact.lean` gives the same certificates as Mathlib's `Bird/Cert.lean`, with only the proof assembly changed. The cache-insertion fix is in place: every branch of `Compact.lean:105-146` now reaches the insert at `:145`.
+- **Every measured theorem is kernel-checked.** The harness also checks that each one uses only the three standard axioms (`adversarial.py:357`). A wrong Qq type annotation (`=Q`) could make a probe fail, but it can't produce a false proof.
+- **Audit gap: the audits only kernel-check 1×1 and 2×2 matrices** (`CompactAudit.lean:11-55`, `FusedAudit.lean:11-55`). At 2×2 only `Steps.iter_step` with `t' = 0` is exercised. The `t' ≥ 1` path has only been kernel-checked inside timed runs. Add a kernel-checked symbolic 3×3 with one zero entry, which exercises `zeroProdCert` in both the diagonal and tail branches, plus a 4×4 integer matrix.
+- **Weak cache audit** (`FusedAudit.lean:66-76`). It only compares cache sizes between two Compact variants.
+  - It never compares against Mathlib's `certBirdDet`, so a cache bug shared by both variants would pass.
+  - It can't catch a lookup that never hits: sizes would match while the work grows exponentially.
+  - It uses Mathlib's reified context, which has no field cache, rather than the one `run` builds.
+  - Counting cache misses per key would directly catch the kind of bug that happened.
+- **Minor:** in `Normalized.lean:27`, a reducible `isDefEq` against a target containing metavariables can assign them to the raw normal form. Check `hasMVar` first.
+
+## Misleading performance conclusions
+
+1. **The normalizer is not the same as `norm_det`'s** (investigation.md:36-38). `Normalized.lean:68-69` builds the cache with `Common.mkCache`, which finds `Semifield` and `CharZero` instances. Mathlib's `reifyBirdDet` sets both to `none` (`Meta.lean:99-103`).
+   - With `none`, a division like `x / 7` or `(a+b)/c` becomes a single opaque atom (`Common.lean:1333-1340`, where division falls to the atom path).
+   - The prototype instead expands it into monomials with inverse atoms or rational coefficients.
+   - This is the largest untested behavioural difference. The generator hides it: `adversarial.py:44` always writes coefficients as a separate numeral quotient `((num : S) / (den : S))`, which both backends treat as a constant.
+2. **Compact and fused evidence comes only from rank-one inputs.** The 21% node and ~10% kernel reduction (`compact-profile/profiles.json`) is measured where entries are single monomials, so the wrapper proofs are a large share of the term.
+   - Compact only changes wrapper proofs; the arithmetic proofs from `Common.evalAdd` and `Common.evalMul` are untouched.
+   - The retained comparisons where the recurrence dominates are at parity: rational6 0.95, skew7 0.95, sparse7 0.96, sparse-cancel7 0.96.
+   - The large wins are where Mathlib's work after the recurrence is big: vandermonde6 0.24, dense4-four-atoms 0.49, cancel8 0.67.
+   - A better summary: the prototype's advantage roughly equals Mathlib's cleanup, `simp` traversal and `ring` re-normalization of the normal form. The recurrence cost is shared.
+3. **"Modest additional gain" from fused is not established** (investigation.md:88-90). The pair margins are 1227 vs 1177 ms and 1175 vs 1189 ms, which is 1.2% in the second pair. The deterministic evidence already retained is better: unique nodes fall only 3.5% at 6×6 (19,980 → 19,290). Describe fused as "structurally slightly smaller; no detectable time difference".
+4. **Large drift between batches.** The same logical Direct arm at 10×10 took 2.31-2.46 s in `baseline`, 1.63-2.01 s in `compact-control` and 1.49-1.67 s in `compact-profile`. Compact took 1.21-1.48 s across three roots. Differences of 5% or less with two pairs should be reported as parity.
+5. **The reference always runs at positions 1 and 4** (`adversarial.py:341`). The design cancels linear drift but not a first-sample penalty. For example, `fused/empty` has Mathlib at 18.2 ms in position 1 and 12.3 ms in position 4. This is a hypothesis; a cheap fix is to lead with the candidate on alternate cases.
+6. **The report lags the retained data.**
+   - The Sharing, Row dependencies and Polynomial complexity rows say "Pending", but shared4, shared4-expanded, skew7, dense4-four-atoms and polynomial4 exist.
+   - Line 12 says dimension scaling is open, yet line 65 reports 16×16. That result used Compact without fused, on older sources (hash `579c…`, current is `84d4…`).
+   - `int12` pair 0 was a fused **loss** (3558 vs 3340 ms) before the allowed rerun. Both batches should be reported.
+7. **The broken-fused profile summary** (lines 79-81) leaves out the largest component: "share common exprs" went from 19 ms to 928-1090 ms. About 1 s more is unattributed.
+
+## General causes of overhead
+
+These are hypotheses; proof-node counts would confirm them cheaply.
+- **Unchanged recurrence steps.** The most numerous steps, `certSumFromStep` (O(n⁴) calls), still use `chainProof` → `Eq.trans` (`Compact.lean:95`). The zero-pruned branch still uses Mathlib's `congrArg`/`Eq.trans` `zeroProdCert` (`Compact.lean:127,198`). A combined `sumFrom`+`add_eq` lemma and a `mul_zero` congruence lemma would carry the compact idea to these steps.
+- **Repeated decide proofs.** `mkDecideProofQ` runs on every `sumFrom` step (`Compact.lean:93`), although only n distinct `lo` values exist. Cache the proof by `lo`.
+- **Identical expressions rebuilt on every call:** `tailSummand` (`Compact.lean:185-188`) and `ctx.iterStepEntry t` (`Cert.lean:97-100`). This inflates share-common and tactic time, which unique-node counts cannot show.
+- **Target always fully normalized.** The shortcut at `Normalized.lean:27` compares the raw normal form (with `rawCast` and `+ 0`) against user syntax, so it essentially only hits on zero targets. Log the hit rate in the audits.
+
+## Where Mathlib might win (under 60 s)
+
+1. **Numeric denominators written after the variable.** Use a ℚ matrix of independent entries written as `x_ij / d_ij`, n=5 (then 6 if fast), with an expanded target.
+   - Mathlib runs the recurrence over n² opaque atoms with small integer coefficients.
+   - The prototype does rational coefficient arithmetic in every step.
+   - Pair it once with a rank-one control written `x_i * y_j / d_i`. There Mathlib's opaque atoms hide the cancellation, so a large prototype win is expected. Together they show which way the trade-off goes.
+2. **Non-constant denominators.** Use a generic `[Field S]` with entries `(p_ij)/(q_ij)`, where each numerator has 2-3 fresh variables, and a singular last row written as the sum of rows 0 and 1, so the target is 0. n=4, then 5.
+   - The prototype expands each entry into several monomials times an inverse atom (`Common.lean:1157-1169`).
+   - Mathlib keeps one atom per entry, and its final `ring` is trivial.
+3. **Target copied from `eval_det` output.** Run `eval_det` once, then paste its output as the target, on vandermonde6 or dense4-four-atoms.
+   - `RingNF.cleanup` (`NormDet.lean:28`) makes both sides syntactically equal, so `simp only`'s `eq_self` can close the goal and `ring` never runs.
+   - The prototype still normalizes the whole target.
+   - This is a realistic workflow, and either outcome tells you something.
+
+I'm not listing more because the recurrence is shared code. Mathlib can only win where the prototype does extra or different work, and these three cover that. If test 1 or 2 loses, the general fix to try is clearing numeric denominators by row scaling, or keeping quotients opaque during the recurrence and normalizing for division only at the final comparison. Neither dispatches on matrix shape.
+
+**Suggested next step:** one `--kernel-profile --proof-nodes` run of Compact against Direct on rational6. It would show whether the rank-one attribution carries over before you spend more on wrapper-proof changes.
+
+`adversarial.py` changed while I was reviewing: an `issue10320` family appeared. My comments on the generator refer to the version I read.
