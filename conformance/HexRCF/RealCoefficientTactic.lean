@@ -7,6 +7,16 @@ module
 
 import HexRCF.RealCoefficients
 
+private abbrev cubicGenerator : Hex.AlgebraicNumber :=
+  Hex.RCF.RealCoefficients.CubeTwo.realAlgebraic.toAlgebraic
+
+private abbrev fieldCoordinate : Hex.QAdjoin cubicGenerator :=
+  1 + cubicGenerator.toQAdjoin
+
+private abbrev fieldCoefficient : Hex.RealAlgebraicNumber :=
+  Hex.RCF.RealCoefficients.Coefficients.ofField
+    Hex.RCF.RealCoefficients.CubeTwo.realAlgebraic fieldCoordinate
+
 set_option maxRecDepth 2048
 set_option maxHeartbeats 1000000
 
@@ -23,6 +33,17 @@ example : ∃ x : ℝ, Real.sqrt 2 < x ∧ x < (3 : ℝ) / 2 := by
   rcf
 
 example : ∀ x : ℝ, x ^ 2 + (2 : ℝ) ^ (1 / 3 : ℝ) > 0 := by
+  rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 + Hex.RCF.RealCoefficients.CubeTwo.realAlgebraic.toReal > 0 := by
+  rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 + Hex.RCF.RealCoefficients.CubeTwo.shifted.toReal > 0 := by
+  rcf
+
+example : ∀ x : ℝ, x ^ 2 + fieldCoefficient.toReal > 0 := by
   rcf
 
 example : True := by

@@ -30,6 +30,7 @@ public meta import HexRCF.RealCoefficients.FieldLiteral
 public meta import HexRCF.RealCoefficients.FieldRuntime
 public import HexRCF.RealCoefficients.SquareTwo
 public import HexRCF.RealCoefficients.CubeTwo
+public import HexRCF.RealCoefficients.Selected
 public meta import HexRCF.RealCoefficients.Tactic
 public import HexRCF.RealCoefficients.CellFormula
 

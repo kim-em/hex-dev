@@ -554,6 +554,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.FieldRuntime,
     `HexRCF.RealCoefficients.SquareTwo,
     `HexRCF.RealCoefficients.CubeTwo,
+    `HexRCF.RealCoefficients.Selected,
     `HexRCF.RealCoefficients.Tactic,
     `HexRCF.RealCoefficients.CellFormula]
 

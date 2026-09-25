@@ -48,13 +48,16 @@ private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
   checkGuards source
   let isSquare ← same source.coefficients[0]! q(Real.sqrt 2)
   let isCube ← same source.coefficients[0]! q((2 : ℝ) ^ (1 / 3 : ℝ))
-  unless isSquare || isCube do
+  let isHexCube ← same source.coefficients[0]! q(CubeTwo.realAlgebraic.toReal)
+  let isFieldCube ← same source.coefficients[0]! q(CubeTwo.shifted.toReal)
+  unless isSquare || isCube || isHexCube || isFieldCube do
     throwError "rcf: this coefficient is not supported by the selected-root adapter"
   let formula ← FieldRuntime.evalFormula 1 source.formula
   let (quantifier, qf) ← match formula with
     | .quant q (.matrix qf) => pure (q, qf)
     | _ => throwError "rcf: expected one real quantifier over a matrix"
-  let (_, _, coefficient) ← FieldRuntime.coefficient source.coefficients[0]!
+  let (_, _, coefficient) ← FieldRuntime.coefficient
+    (if isFieldCube then q(CubeTwo.realAlgebraic.toReal) else source.coefficients[0]!)
   let a := coefficient.toAlgebraic
   let s := a.rep.1.square
   let expected := if isSquare then SquareTwo.polynomial else CubeTwo.polynomial
@@ -62,8 +65,9 @@ private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
     throwError "rcf: coefficient has a different defining polynomial"
   if hw : atomWitness a.p s then
     if hp : (mahlerPrec a.p : Int) ≤ s.prec then
-      let value : PolyQuot a.p (SimpleRoot.ofSquare a.p s hw hp) :=
+      let generator : PolyQuot a.p (SimpleRoot.ofSquare a.p s hw hp) :=
         PolyQuot.ofSquare a.p s (DensePoly.ofList [0, 1]) hw hp
+      let value := if isFieldCube then 1 + generator else generator
       let pExpr : Q(ZPoly) ← FieldLiteral.zpolyExpr a.p
       let sExpr : Q(DyadicSquare) ← FieldLiteral.squareExpr s
       let hwExpr ← mkDecideProof (q(atomWitness $pExpr $sExpr) : Q(Prop))
@@ -87,16 +91,30 @@ private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
         return mkApp (← mkLambdaFVars #[inst] result) irreducible
       let hreal ← mkDecideProof (q(($sExpr).meetsRealAxis = true) : Q(Prop))
       let coordinate ← mkAppM
-        (if isSquare then ``SquareTwo.coordinate else ``CubeTwo.coordinate)
+        (if isSquare then ``SquareTwo.coordinate else if isFieldCube then
+          ``CubeTwo.shiftedCoordinate else ``CubeTwo.coordinate)
         #[sExpr, hwExpr, hpExpr]
       let valueZero := mkApp valuesExpr q((0 : Fin 1))
-      let hvalue ← mkEqRefl valueZero
-      unless ← isDefEq (← inferType hvalue) (← mkAppM ``Eq #[valueZero, coordinate]) do
-        throwError "rcf: literal coefficient differs from its selected-root coordinate"
+      let hvalue ← if isFieldCube then
+          let left ← mkAppM ``PolyQuot.coeffs #[valueZero]
+          let right ← mkAppM ``PolyQuot.coeffs #[coordinate]
+          let coeffs ← mkDecideProof (← mkAppM ``Eq #[left, right])
+          mkAppM ``PolyQuot.ext #[coeffs]
+        else do
+          let coordinateProof ← mkEqRefl valueZero
+          unless ← isDefEq (← inferType coordinateProof) (← mkAppM ``Eq #[valueZero, coordinate]) do
+            throwError "rcf: literal coefficient differs from its selected-root coordinate"
+          pure coordinateProof
       let eqVal ← if isSquare then
           let hpositive ← positiveLowerBound sExpr
           mkAppM ``SquareTwo.valuation
             #[sExpr, hwExpr, hpExpr, hreal, hpositive, valuesExpr, hvalue]
+        else if isFieldCube then
+          mkAppM ``CubeTwo.valuationShifted
+            #[sExpr, hwExpr, hpExpr, hreal, valuesExpr, hvalue]
+        else if isHexCube then
+          mkAppM ``CubeTwo.valuationAlgebraic
+            #[sExpr, hwExpr, hpExpr, hreal, valuesExpr, hvalue]
         else
           mkAppM ``CubeTwo.valuation
             #[sExpr, hwExpr, hpExpr, hreal, valuesExpr, hvalue]
@@ -114,7 +132,9 @@ private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
   if source.coefficients.size != 1 then return .declined
   let isSquare ← same source.coefficients[0]! q(Real.sqrt 2)
   let isCube ← same source.coefficients[0]! q((2 : ℝ) ^ (1 / 3 : ℝ))
-  if !(isSquare || isCube) then return .declined
+  let isHexCube ← same source.coefficients[0]! q(CubeTwo.realAlgebraic.toReal)
+  let isFieldCube ← same source.coefficients[0]! q(CubeTwo.shifted.toReal)
+  if !(isSquare || isCube || isHexCube || isFieldCube) then return .declined
   return .proved (← proveNamedRoot source)
 
 end Hex.RCF.RealCoefficients.Tactic
