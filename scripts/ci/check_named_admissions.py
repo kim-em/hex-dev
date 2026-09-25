@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Keep optional root/sign adapters' sole source admission at #10389's theorem."""
+"""Audit admissions reachable from the optional RCF and present sign adapters."""
 
 from __future__ import annotations
 
@@ -8,19 +8,14 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 BRIDGE = Path("adapters/HexRealRootsMathlib/TarskiSoundness.lean")
-ROOT_MODULES = (
-    "HexRCF.RealCoefficients",
-    "HexSignDetMathlib.RootProducer",
-    "HexSignDetMathlib.SelectedRoot",
-)
 ADMISSION = re.compile(
-    r"\b(?:sorry|admit|mkSorry|admitGoal|sorryAx)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*(?:axiom|constant)\b|^\s*stop\s*$",
+    r"\b[A-Za-z_]*[sS]orry[A-Za-z_]*\b|\b(?:admit|admitGoal|axiom)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*constant\b|(?<!\.)\bstop\b(?!\s*:=)",
     re.MULTILINE,
 )
 DECLARATION = re.compile(
     r"\b(?:theorem|lemma|axiom|def|example|instance|abbrev|opaque|structure)\s+([A-Za-z0-9_]+)"
 )
-IMPORT = re.compile(r"\bimport\s+(?:all\s+)?([A-Z][A-Za-z0-9_.]*)\b")
+IMPORT = re.compile(r"\bimport\s+(?:all\s+)?(\S+)")
 EXTERNAL = {"Batteries", "Mathlib", "Lean", "Init", "Std", "Lake", "Qq", "Verso"}
 
 
@@ -69,6 +64,10 @@ def code_only(source: str) -> str:
             result.extend("  ")
             i += 2
         elif source[i] == "'":
+            if i > 0 and (source[i - 1].isalnum() or source[i - 1] == "_"):
+                result.append(source[i])
+                i += 1
+                continue
             # Lean character literals include escaped quotes such as '\"'.
             end = i + 1
             if end < len(source) and source[end] == "\\":
@@ -80,11 +79,28 @@ def code_only(source: str) -> str:
                 result.append(source[i])
                 i += 1
         elif source[i] == '"':
-            if source[max(0, i - 2):i] == "s!":
-                # An interpolated string may contain elaborated Lean terms.
-                end = source.find('"', i + 1)
-                if ADMISSION.search(source[i + 1:end if end >= 0 else len(source)]):
+            hash_start = i - 1
+            while hash_start >= 0 and source[hash_start] == "#":
+                hash_start -= 1
+            if hash_start < i - 1 and hash_start >= 0 and source[hash_start] == "r" and (
+                hash_start == 0 or not source[hash_start - 1].isalnum()
+            ):
+                delimiter = '"' + source[hash_start + 1:i]
+                end = source.find(delimiter, i + 1)
+                if end < 0:
+                    raise ValueError("unterminated raw string")
+                result.extend("\n" if c == "\n" else " " for c in source[i:end + len(delimiter)])
+                i = end + len(delimiter)
+                continue
+            if i > 0 and source[i - 1] == "!":
+                # Interpolation can elaborate arbitrary terms. Scan the whole
+                # literal, including braces and nested strings, before masking.
+                end = interpolation_end(source, i)
+                if re.search(r"(?i)sorry|admit|\bstop\b|\baxiom\b", source[i + 1:end]):
                     raise ValueError("admission inside an interpolated string")
+                result.extend("\n" if c == "\n" else " " for c in source[i:end + 1])
+                i = end + 1
+                continue
             quoted = True
             raw = i > 0 and source[i - 1] == "r" and (i == 1 or not source[i - 2].isalnum())
             result.append(" ")
@@ -93,6 +109,29 @@ def code_only(source: str) -> str:
             result.append(source[i])
             i += 1
     return "".join(result)
+
+
+def interpolation_end(source: str, quote: int) -> int:
+    """Find the outer quote, respecting escapes and nested interpolation text."""
+    braces = 0
+    inner = False
+    i = quote + 1
+    while i < len(source):
+        c = source[i]
+        if c == "\\":
+            i += 2
+            continue
+        if c == '"':
+            if braces == 0:
+                return i
+            inner = not inner
+        elif not inner:
+            if c == "{":
+                braces += 1
+            elif c == "}" and braces:
+                braces -= 1
+        i += 1
+    raise ValueError("unterminated interpolated string")
 
 
 def module_file(module: str) -> Path | None:
@@ -126,9 +165,11 @@ def import_cone(start: str) -> set[Path]:
 
 
 def check() -> None:
-    roots = [module for module in ROOT_MODULES if module_file(module) is not None]
-    if not roots or roots[0] != "HexRCF.RealCoefficients":
+    if module_file("HexRCF.RealCoefficients") is None:
         raise ValueError("the optional rcf adapter module is missing")
+    roots = ["HexRCF.RealCoefficients"] + [
+        "HexSignDetMathlib." + path.stem
+        for path in sorted((ROOT / "adapters/HexSignDetMathlib").glob("*.lean"))]
     paths = set().union(*(import_cone(module) for module in roots))
     if BRIDGE not in paths:
         raise ValueError(f"the optional adapter no longer imports {BRIDGE}")
@@ -154,7 +195,7 @@ def check() -> None:
             raise ValueError(f"the {BRIDGE} sorry is not in check_rootSum")
         if not re.search(r":=\s*by\s*$", source[declarations[-1].end() : admissions[0].start()]):
             raise ValueError(f"the {BRIDGE} admission is no longer the direct theorem body")
-    print(f"{len(roots)} adapter import cones: {len(paths)} local modules, only check_rootSum is admitted")
+    print(f"{len(roots)} present adapter import cones: {len(paths)} local modules, only check_rootSum is admitted")
 
 
 if __name__ == "__main__":

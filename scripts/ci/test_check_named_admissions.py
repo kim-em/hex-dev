@@ -17,16 +17,28 @@ class AdmissionScannerTests(unittest.TestCase):
 
     def test_raw_string_does_not_hide_next_line(self):
         self.assertIsNotNone(ADMISSION.search(code_only('def s := r"\\"\ntheorem bad : False := by sorry\n')))
+        self.assertIsNotNone(ADMISSION.search(code_only('def s := r#"\\"#\ntheorem bad : False := by sorry\n')))
 
     def test_other_admissions(self):
-        for token in ("mkSorry", "admitGoal", "sorryAx", "axiom bad : False",
-                      "private axiom bad : False", "constant bad : False", "stop"):
+        for token in ("mkSorry", "mkSyntheticSorry", "exceptionToSorry",
+                      "admitGoal", "sorryAx", "axiom bad : False",
+                      "@[simp] axiom bad : False", "private axiom bad : False",
+                      "constant bad : False", "theorem h : True := by stop",
+                      "stop simp"):
             with self.subTest(token=token):
                 self.assertIsNotNone(ADMISSION.search(code_only(token)))
+        self.assertIsNone(ADMISSION.search(code_only("rw [Array.foldl_push_eq_append (stop := n) rfl]")))
 
     def test_interpolated_admission_fails_closed(self):
+        for prefix in ("s!", "m!", "f!"):
+            with self.subTest(prefix=prefix), self.assertRaises(ValueError):
+                code_only(f'def x := {prefix}"{{(by sorry : Nat)}}"')
         with self.assertRaises(ValueError):
-            code_only('def x := s!"{(by sorry : Nat)}"')
+            code_only('def x := m!"{\"quoted\" ++ (by sorry : String)}"')
+
+    def test_prime_before_character_literal(self):
+        source = 'def x := f x\' \'"\'\ntheorem bad : False := by sorry\n'
+        self.assertIsNotNone(ADMISSION.search(code_only(source)))
 
 
 if __name__ == "__main__":
