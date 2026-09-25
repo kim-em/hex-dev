@@ -213,6 +213,27 @@ theorem generator_value (a : RealAlgebraicNumber) :
     ((AlgebraicNumber.isReal_iff a.toAlgebraic).mp a.property),
     AlgebraicNumber.toQAdjoin_toComplex, RealAlgebraicNumber.ofReal_toReal]
 
+/-- Each coordinate in a checked common number field still denotes its
+original real algebraic coefficient. A separate reality check on the chosen
+generator rules out silently using a nonreal embedding. -/
+theorem common_value (bs : Array RealAlgebraicNumber)
+    (hreal : (QAdjoin.common (bs.map RealAlgebraicNumber.toAlgebraic)).generator.isReal = true)
+    (i : Nat) (hi : i < bs.size) :
+    value (QAdjoin.common (bs.map RealAlgebraicNumber.toAlgebraic)).generator.rep
+        ((QAdjoin.common (bs.map RealAlgebraicNumber.toAlgebraic)).entries[i]'(by simp [hi])) =
+      bs[i].toReal := by
+  let inputs := bs.map RealAlgebraicNumber.toAlgebraic
+  let common := QAdjoin.common inputs
+  have hgen : common.generator.rep.root.im = 0 :=
+    (AlgebraicNumber.isReal_iff common.generator).mp hreal
+  apply Complex.ofReal_injective
+  rw [value_complex common.generator.rep common.generator.rep_mk hgen]
+  rw [← PolyQuot.toAlgebraicNumber_toComplex]
+  change ((QAdjoin.common inputs).entries[i]'(by simpa [inputs] using hi)).toAlgebraicNumber.toComplex =
+    (bs[i].toReal : ℂ)
+  rw [QAdjoin.common_get inputs i (by simpa [inputs] using hi)]
+  simpa [inputs] using (RealAlgebraicNumber.ofReal_toReal bs[i]).symm
+
 variable (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = x)
 variable (hr : rep.root.im = 0)
 include hrep hr
