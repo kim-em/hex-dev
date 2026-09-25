@@ -226,4 +226,27 @@ theorem Descriptor.constraints_queries {context : Ctx}
     simpa [RawDescriptor.queries] using hw.1.1.1.2.symm
   simpa [signsAt, ← hlen] using htake
 
+omit [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- The suffix of the copied constraints retains both endpoint signs. -/
+theorem Descriptor.constraints_bounds {context : Ctx}
+    (d : Descriptor E Ctx sign context) (x : K)
+    (h : signsAt f hz d.raw.constraints x = d.raw.constraintSigns) :
+    signsAt f hz
+      ((match d.raw.lower with
+        | .finite a => [DensePoly.ofCoeffs #[0, 1] - DensePoly.C a]
+        | _ => []) ++
+       (match d.raw.upper with
+        | .finite a => [DensePoly.ofCoeffs #[0, 1] - DensePoly.C a]
+        | _ => [])) x =
+      ((match d.raw.lower with | .finite _ => [1] | _ => []) ++
+       (match d.raw.upper with | .finite _ => [-1] | _ => [])) := by
+  have hw := (RawDescriptor.check_eq d.accepted).1
+  simp only [RawDescriptor.wellFormed, Bool.and_eq_true, decide_eq_true_eq] at hw
+  have hlen : d.raw.signs.length = d.raw.queries.length := by
+    simpa [RawDescriptor.queries] using hw.1.1.1.2.symm
+  have hdrop := congrArg (List.drop (d.raw.queries.length + 1)) h
+  simp [signsAt, RawDescriptor.constraints, RawDescriptor.constraintSigns, ← hlen] at hdrop
+  simp only [signsAt, List.map_append]
+  exact hdrop
+
 end Hex.SignDet
