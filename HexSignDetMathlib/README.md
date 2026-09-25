@@ -105,9 +105,9 @@ child query evidence as moments of actual roots, then proves exact support and
 counts for every sign condition, including omitted ones. `RootProducer` derives
 the finite query model for the actual prepared producer and proves its success
 and counts from the named #10389 root-sum statement. `SelectedRoot` proves that
-accepted count-one partial and full descriptors select a unique root. Their
-selected signs are stated for the emitted derivative queries; composing them
-with `derivativesFrom_get` to state formal iterated derivatives directly remains.
+accepted count-one partial and full descriptors select a unique root, and
+`root_derivatives` identifies their signs with formal iterated derivatives
+through `derivativesFrom_get`.
 The executable API still exposes internal errors, and the domain-exact total
 wrapper remains to be implemented.
 

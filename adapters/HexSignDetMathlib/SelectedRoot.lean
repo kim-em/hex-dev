@@ -7,6 +7,7 @@ module
 
 public import HexSignDet.Descriptor
 public import HexSignDetMathlib.RootModel
+public import HexSignDetMathlib.Derivatives
 
 public section
 
@@ -64,6 +65,32 @@ theorem Descriptor.root_spec {context : Ctx} (d : Descriptor E Ctx sign context)
         Tarski.rootsIn (interpret f hz d.raw.head) (d.raw.lower.map f) (d.raw.upper.map f) ∧
       signsAt f hz d.raw.queries (d.root f hz h1 ha hs hm hnat hsign) = d.raw.signs := by
   exact (Classical.choose_spec (d.existsUnique_root f hz h1 ha hs hm hnat hsign)).1
+
+include h1 ha hs hm hnat hsign in
+/-- The selected root realizes the formal derivative signs named by the
+descriptor indices, not merely the stored query polynomials. -/
+theorem Descriptor.root_derivatives {context : Ctx} (d : Descriptor E Ctx sign context) :
+    d.raw.signs = d.raw.indices.map (fun j =>
+      (SignType.sign ((Polynomial.derivative^[j]
+        (interpret f hz d.raw.head)).eval (d.root f hz h1 ha hs hm hnat hsign)) : Int)) := by
+  have hw : d.raw.wellFormed = true := (RawDescriptor.check_eq d.accepted).1
+  simp only [RawDescriptor.wellFormed, Bool.and_eq_true, decide_eq_true_eq] at hw
+  have hb : ∀ j ∈ d.raw.indices, 1 ≤ j ∧ j ≤ d.raw.head.natDegree := by
+    intro j hj
+    exact of_decide_eq_true (List.all_eq_true.mp hw.1.2 j hj)
+  rw [← (d.root_spec f hz h1 ha hs hm hnat hsign).2]
+  simp only [signsAt, RawDescriptor.queries, List.map_map]
+  apply List.map_congr_left
+  intro j hj
+  obtain ⟨hjpos, hjdeg⟩ := hb j hj
+  have hlt : j - 1 < d.raw.head.natDegree := by omega
+  have hindex : j - 1 < (derivativesFrom d.raw.head d.raw.head.natDegree).length := by
+    rw [derivativesFrom_length]
+    exact hlt
+  simp only [Function.comp_apply, derivatives]
+  rw [List.getElem?_eq_getElem hindex, Option.getD_some]
+  rw [derivativesFrom_get f hz hnat hm d.raw.head d.raw.head.natDegree (j - 1) hlt]
+  simpa only [Nat.sub_add_cancel hjpos]
 
 /-- Any root with the checked encoding denotes the same selected value. -/
 theorem Descriptor.root_unique {context : Ctx} (d : Descriptor E Ctx sign context) (x : K)
