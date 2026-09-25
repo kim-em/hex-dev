@@ -80,6 +80,16 @@ coefficient operations. No proof-bearing field instance is evaluated. -/
 
 noncomputable local instance : Field (PolyQuot p root) := Hex.PolyQuot.field p root
 
+/-- Rational sample points retain their ordinary real value. -/
+theorem value_ofRat (rep : RefinedIsolation p)
+    (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0) (q : Rat) :
+    Field.value rep (PolyQuot.ofRat q : PolyQuot p root) = (q : ℝ) := by
+  apply Complex.ofReal_injective
+  rw [Field.value_complex rep hrep hr]
+  change PolyQuot.toComplex (q • (1 : PolyQuot p root)) rep hrep = _
+  rw [PolyQuot.map_smul, PolyQuot.map_one, mul_one]
+  norm_cast
+
 theorem literalPolynomial_eq (values : Fin n → PolyQuot p root)
     (q : RealFormula.Poly (n + 1)) :
     literalPolynomial values q = polynomial values q := by

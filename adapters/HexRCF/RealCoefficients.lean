@@ -20,8 +20,14 @@ public import HexRCF.RealCoefficients.FieldCarrier
 public import HexRCF.RealCoefficients.IsolationBuild
 public import HexRCF.RealCoefficients.Isolations
 public import HexRCF.RealCoefficients.IsolationSemantics
+public import HexRCF.RealCoefficients.Radical
+public import HexRCF.RealCoefficients.RadicalBuild
+public import HexRCF.RealCoefficients.FieldDecision
+public import HexRCF.RealCoefficients.FieldRootSigns
+public import HexRCF.RealCoefficients.FieldReplay
+public import HexRCF.RealCoefficients.FieldBuild
+public import HexRCF.RealCoefficients.CellFormula
 
-/-! Algebraic coefficient conversion, source preparation, polynomial
-specialization and checked real-root isolation for the optional RCF adapter.
-No coefficient solver is registered; source equivalence does not discharge
-coefficient authentication, divisor guards or decision replay. -/
+/-! Algebraic coefficient conversion, source preparation, fixed-field
+specialization, root-isolation search and checked cell decisions for the
+optional RCF adapter. -/

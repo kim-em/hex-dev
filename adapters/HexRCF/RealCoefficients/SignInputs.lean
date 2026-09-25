@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.LiteralSign
+public import HexRCF.RealCoefficients.IsolationCheck
 
 public section
 
@@ -48,5 +49,28 @@ building its finite rational sign table. -/
     (cert : TarskiCertificate D D Ctx) : List D :=
   guards head lower upper ++ chain cert.squarefree ++ chain cert.remainders ++
     cert.remainders.chain.toList.flatMap (fun q => endpoint q lower ++ endpoint q upper)
+
+/-- Sign arguments read when an isolation replay checks its total count and
+each count-one interval. -/
+@[expose] def isolation [One D] [Sub D] [Add D] [Mul D]
+    {Ctx : Type v} (point : Dyadic → D) (head : DensePoly D)
+    (cert : IsolationReplay D Ctx) : List D :=
+  certificate head .negInf .posInf cert.total ++
+    (List.finRange cert.isolations.intervals.size).flatMap fun i =>
+      let interval := cert.isolations.intervals[i]
+      certificate head (.finite (point interval.lower))
+        (.finite (point interval.upper)) cert.counts[i]
+
+/-- Sign arguments read by one query on each isolated root. The supplied
+query polynomials and certificates must be bound to the same cell indices. -/
+@[expose] def rootQueries [Sub D] [Add D] [Mul D]
+    {Ctx : Type v} (point : Dyadic → D) (head : DensePoly D)
+    (cert : IsolationReplay D Ctx) (queries : List (Fin cert.isolations.intervals.size →
+      TarskiCertificate D D Ctx)) : List D :=
+  queries.flatMap fun query =>
+    (List.finRange cert.isolations.intervals.size).flatMap fun i =>
+      let interval := cert.isolations.intervals[i]
+      certificate head (.finite (point interval.lower))
+        (.finite (point interval.upper)) (query i)
 
 end Hex.RCF.RealCoefficients.SignInputs
