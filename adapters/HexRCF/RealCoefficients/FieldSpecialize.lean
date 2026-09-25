@@ -19,6 +19,8 @@ namespace Hex.RCF.RealCoefficients.FieldSpecialize
 open Hex.RealFormula
 open scoped HexMvPolyMathlib
 
+-- Mathlib's ring dictionary is used only for the correspondence proof; the
+-- literal compiler below continues to use the native dense operations.
 attribute [local instance 2500] Semiring.toGrindSemiring
 
 variable {D : Type u} [CommRing D] [DecidableEq D]
