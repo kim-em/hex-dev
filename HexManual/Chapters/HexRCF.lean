@@ -727,6 +727,9 @@ These executable examples demonstrate checked table construction and replay.
 Their interpretation as statements about real roots uses the semantic theorem
 admitted in [#10389](https://github.com/kim-em/hex-dev/issues/10389), and the
 general Thom order proof awaits the specified Tau Ceti foundation theorem.
+With warm imports on the shared host, the chapter containing these examples
+built in 81 seconds; this measures the whole chapter, including the earlier
+`rcf` examples.
 
 # Cross-references
 %%%
