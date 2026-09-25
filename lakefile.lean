@@ -542,7 +542,8 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.Formula,
     `HexRCF.RealCoefficients.IsolationCheck, `HexRCF.RealCoefficients.Isolations,
     `HexRCF.RealCoefficients.IsolationBuild, `HexRCF.RealCoefficients.IsolationSemantics,
-    `HexRCF.RealCoefficients.Carrier]
+    `HexRCF.RealCoefficients.Carrier,
+    `HexRCF.RealCoefficients.RadicalCheck, `HexRCF.RealCoefficients.Radical]
 
 -- Optional semantic results whose shared foundation is owned by #10389.
 @[default_target]
