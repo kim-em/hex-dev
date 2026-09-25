@@ -1,6 +1,0 @@
-{
-  "path": "lakefile.lean",
-  "baseline_blob": "327c99cacafccb757254a4ec924e9b7f90d3b9e3",
-  "current_blob": "89602f6ae5a01fc1461453bb451cbbedff2de5e3",
-  "reason": "Adds only optional HexRCFRealCoefficients radical replay and proof modules. The factorization service does not import this adapter, so its measured executable is unchanged."
-}
