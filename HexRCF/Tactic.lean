@@ -71,13 +71,62 @@ private meta unsafe def evalHandlerUnsafe (name : Name) : MetaM Handler :=
 @[implemented_by evalHandlerUnsafe]
 private meta opaque evalHandler (name : Name) : MetaM Handler
 
-/-- Optional solvers must remain within the ordinary mathematical kernel
-axioms, including through helper declarations used by a proposed proof. -/
-private meta def checkAxioms (name : Name) (proof : Expr) : MetaM Unit := do
-  for constant in proof.getUsedConstants do
-    for dependency in ← collectAxioms constant do
-      unless [``propext, ``Classical.choice, ``Quot.sound].contains dependency do
-        throwError "rcf: handler {name} proposed a proof using forbidden axiom {dependency} (through {constant})"
+/-- The single mathematical bridge explicitly owned by #10389. Its statement
+is imported only by the optional adapter, never by the rational solver. -/
+private meta def admittedRootSum : Name :=
+  .str (.str (.str .anonymous "HexRealRootsMathlib") "Tarski") "check_rootSum"
+
+private meta def ordinaryAxiom (name : Name) : Bool :=
+  [``propext, ``Classical.choice, ``Quot.sound].contains name
+
+/-- Exported theorems whose source proofs use the named bridge. Lean imports
+their theorem signatures without bodies, so the expected defining module is
+part of this narrow admission. Add consumers only after auditing their source. -/
+private meta def admittedModule (constant : Name) : Option Name :=
+  if constant == admittedRootSum then
+    some (.str (.str .anonymous "HexRealRootsMathlib") "TarskiSoundness")
+  else if #["check_sound", "queryPrepared_sound", "query_sound"].any
+      (fun s => constant == .str (.str .anonymous "HexSturmMathlib") s) then
+    some (.str (.str .anonymous "HexSturmMathlib") "Soundness")
+  else none
+
+/-- A local theorem with the same name is not the imported audited theorem. -/
+private meta def fromModule (constant moduleName : Name) : MetaM Bool := do
+  let env ← getEnv
+  let some index := env.getModuleIdxFor? constant | return false
+  return env.allImportedModuleNames[index.toNat]? == some moduleName
+
+/-- Audit a proof's dependencies. Imported theorem bodies are not available in
+Lean's public module view, so only the exact audited exports above may carry
+the bridge's `sorryAx`. Every locally visible dependency is traversed. -/
+private meta partial def checkAxiomPath (handler constant : Name) :
+    StateRefT NameSet MetaM Unit := do
+  if (← get).contains constant then return
+  modify (·.insert constant)
+  let axioms ← collectAxioms constant
+  if axioms.all ordinaryAxiom then return
+  if let some moduleName := admittedModule constant then
+    unless ← fromModule constant moduleName do
+      throwError "rcf: handler {handler} proposed a proof using an unaudited declaration {constant}"
+    for dependency in axioms do
+      unless ordinaryAxiom dependency || dependency == ``sorryAx do
+        throwError "rcf: handler {handler} proposed a proof using forbidden axiom {dependency} (through {constant})"
+    return
+  let info ← getConstInfo constant
+  if let .axiomInfo _ := info then
+    throwError "rcf: handler {handler} proposed a proof using forbidden axiom {constant}"
+  let mut used := info.type.getUsedConstants
+  if let some value := info.value? true then
+    used := used ++ value.getUsedConstants
+  if let .inductInfo induction := info then
+    used := used ++ induction.ctors
+  for dependency in used do
+    checkAxiomPath handler dependency
+
+/-- Optional solvers may depend on ordinary kernel axioms and the one named
+#10389 theorem, but no other admission, even through a helper declaration. -/
+meta def checkAxioms (name : Name) (proof : Expr) : MetaM Unit := do
+  let _ ← ((proof.getUsedConstants.forM (checkAxiomPath name)).run {})
 
 /-- Try handlers transactionally. Successful handlers retain auxiliary
 proof declarations but cannot export assignments to the target's metavariables.

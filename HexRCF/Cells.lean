@@ -111,25 +111,25 @@ theorem sem_eq_region {f : ZPoly} {cert : IsolationCert} (M : RootModel f cert) 
   funext c x
   cases c <;> rfl
 
-/-- Every checked open-cell sample lies in its advertised semantic cell. -/
-theorem openPoint_mem {f : ZPoly} {replay : SturmReplay}
-    (cert : IsolationCert) (hreplay : replay.check f = true)
-    (hstrict : cert.checkStrict replay = true)
+/-- The ordinary dyadic sample lies in its open cell for any roots contained
+in the checked, strictly separated intervals. -/
+theorem openPoint_mem_region (cert : IsolationCert)
+    (root : Fin cert.intervals.size → ℝ) (hgaps : cert.checkGaps = true)
+    (hroots : ∀ i, Literal.InInterval cert.intervals[i] (root i))
     (cut : Fin (cert.intervals.size + 1)) :
-    Sem (cert.rootModel hreplay hstrict) (.open cut)
-      (HexRealRootsMathlib.Dyadic.toReal (cert.openPoint cut)) := by
+    Region root (.open cut) (HexRealRootsMathlib.Dyadic.toReal (cert.openPoint cut)) := by
   classical
   by_cases hzero : cert.intervals.size = 0
-  · simp [Sem, hzero]
+  · simp [Region, hzero]
   by_cases hleft : cut.val = 0
-  · have hmem := (cert.rootModel hreplay hstrict).inInterval
+  · have hmem := hroots
       ⟨0, by omega⟩
     simp only [Literal.InInterval] at hmem
     have hcell : ∀ x : ℝ,
-        Sem (cert.rootModel hreplay hstrict) (.open cut) x ↔
-          x < (cert.rootModel hreplay hstrict).root ⟨0, by omega⟩ := by
+        Region root (.open cut) x ↔
+          x < root ⟨0, by omega⟩ := by
       intro x
-      simp [Sem, hzero, hleft]
+      simp [Region, hzero, hleft]
     rw [hcell]
     have hsamp : cert.openPoint cut =
         (cert.intervals[0]'(by omega)).lower + Dyadic.ofInt (-1) := by
@@ -142,15 +142,15 @@ theorem openPoint_mem {f : ZPoly} {replay : SturmReplay}
       norm_num
     exact lt_trans (toReal_lt_toReal hsampLt) hmem.1
   by_cases hright : cut.val = cert.intervals.size
-  · have hmem := (cert.rootModel hreplay hstrict).inInterval
+  · have hmem := hroots
       ⟨cert.intervals.size - 1, by omega⟩
     simp only [Literal.InInterval] at hmem
     have hcell : ∀ x : ℝ,
-        Sem (cert.rootModel hreplay hstrict) (.open cut) x ↔
-          (cert.rootModel hreplay hstrict).root
+        Region root (.open cut) x ↔
+          root
             ⟨cert.intervals.size - 1, by omega⟩ < x := by
       intro x
-      simp [Sem, hzero, hright]
+      simp [Region, hzero, hright]
     rw [hcell]
     have hsamp : cert.openPoint cut =
         (cert.intervals[cert.intervals.size - 1]'(by omega)).upper +
@@ -167,24 +167,24 @@ theorem openPoint_mem {f : ZPoly} {replay : SturmReplay}
   · have hgap : (cert.intervals[cut.val - 1]'(by omega)).upper <
         (cert.intervals[cut.val]'(by omega)).lower := by
       have hg := IsolationCert.gap_of_check
-        (IsolationCert.gaps_of_checkStrict hstrict) (cut.val - 1) (by omega)
+        hgaps (cut.val - 1) (by omega)
       have heq : cut.val - 1 + 1 = cut.val := by omega
       simpa only [heq] using hg
     let gap : DyadicInterval :=
       ⟨(cert.intervals[cut.val - 1]'(by omega)).upper,
         (cert.intervals[cut.val]'(by omega)).lower,
         hgap⟩
-    have hprev := (cert.rootModel hreplay hstrict).inInterval
+    have hprev := hroots
       ⟨cut.val - 1, by omega⟩
-    have hnext := (cert.rootModel hreplay hstrict).inInterval
+    have hnext := hroots
       ⟨cut.val, by omega⟩
     have hlm := toReal_lt_toReal (lower_lt_midpoint gap)
     have hmu := toReal_lt_toReal (midpoint_lt_upper gap)
     simp only [Literal.InInterval] at hprev hnext
-    have hsem : (cert.rootModel hreplay hstrict).root
+    have hsem : root
           ⟨cut.val - 1, by omega⟩ < HexRealRootsMathlib.Dyadic.toReal gap.midpoint ∧
         HexRealRootsMathlib.Dyadic.toReal gap.midpoint <
-          (cert.rootModel hreplay hstrict).root ⟨cut.val, by omega⟩ :=
+          root ⟨cut.val, by omega⟩ :=
       ⟨lt_of_le_of_lt hprev.2 hlm, lt_trans hmu hnext.1⟩
     have hraw : HexRealRootsMathlib.Dyadic.toReal
           (((cert.intervals[cut.val - 1]'(by omega)).upper +
@@ -200,7 +200,18 @@ theorem openPoint_mem {f : ZPoly} {replay : SturmReplay}
         HexRealRootsMathlib.Dyadic.toReal gap.midpoint := by
       rw [hraw, toReal_midpoint]
     rw [← hmid] at hsem
-    simpa [Sem, IsolationCert.openPoint, hzero, hleft, hright] using hsem
+    simpa [Region, IsolationCert.openPoint, hzero, hleft, hright] using hsem
+
+/-- Every checked open-cell sample lies in its advertised semantic cell. -/
+theorem openPoint_mem {f : ZPoly} {replay : SturmReplay}
+    (cert : IsolationCert) (hreplay : replay.check f = true)
+    (hstrict : cert.checkStrict replay = true)
+    (cut : Fin (cert.intervals.size + 1)) :
+    Sem (cert.rootModel hreplay hstrict) (.open cut)
+      (HexRealRootsMathlib.Dyadic.toReal (cert.openPoint cut)) := by
+  rw [sem_eq_region]
+  exact openPoint_mem_region cert _ (IsolationCert.gaps_of_checkStrict hstrict)
+    (cert.rootModel hreplay hstrict).inInterval cut
 
 /-- Every real point belongs to at least one semantic cell. -/
 theorem exists_mem {f : ZPoly} {cert : IsolationCert}
