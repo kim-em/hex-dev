@@ -723,12 +723,34 @@ private def sharedRoot : RawDescriptor Rat Nat :=
   | _, _ => false
 ```
 
+The same cell replay interface also accepts a selected cubic algebraic
+coefficient. For the equation `x = A`, where `A` is the chosen real root of
+`X³ − 2` constructed above, it checks the root and open-cell signs against
+the original coefficient. Changing the literal context invalidates the
+certificate.
+
+```lean
+private def cubicCellAtom : Hex.RealFormula.QF 2 :=
+  .atom ⟨Hex.MvPoly.X 1 - Hex.MvPoly.X 0, .eq⟩
+
+#guard
+  match CellReplay.build
+      (fun _ : Fin 1 => selectedCubic)
+      cubicCellAtom (9 : Nat) 8 with
+  | none => false
+  | some cert =>
+    cert.check (fun _ : Fin 1 => selectedCubic)
+      cubicCellAtom 9 &&
+    !cert.check (fun _ : Fin 1 => selectedCubic)
+      cubicCellAtom 10
+```
+
 These executable examples demonstrate checked table construction and replay.
 Their interpretation as statements about real roots uses the semantic theorem
 admitted in [#10389](https://github.com/kim-em/hex-dev/issues/10389), and the
 general Thom order proof awaits the specified Tau Ceti foundation theorem.
 With warm imports on the shared host, the chapter containing these examples
-built in 81 seconds; this measures the whole chapter, including the earlier
+built in 112 seconds; this measures the whole chapter, including the earlier
 `rcf` examples.
 
 # Cross-references
