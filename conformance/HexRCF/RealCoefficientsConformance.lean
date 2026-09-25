@@ -488,6 +488,29 @@ end Hex.RCF.RealCoefficientsConformance
 
 namespace Hex.RCF.RealCoefficientsConformance
 
+/-- Two independently selected quadratic roots enter one real coordinate field. -/
+private def independentInputs : Array Hex.AlgebraicNumber := #[
+  Hex.ZPoly.rootNear #p[-2, 0, 1] 1.4,
+  Hex.ZPoly.rootNear #p[-3, 0, 1] 1.7]
+
+private def independentQuadratics := Hex.QAdjoin.common independentInputs
+
+#guard independentQuadratics.generator.isReal &&
+  independentQuadratics.entries.map (·.toAlgebraicNumber) == independentInputs
+
+private theorem independentIndex : 0 < independentQuadratics.entries.size := by
+  rw [independentQuadratics, Hex.QAdjoin.common_size]
+  decide
+
+example :
+    (independentQuadratics.entries[0]'independentIndex).toAlgebraicNumber =
+      independentInputs[0] := by
+  exact Hex.QAdjoin.common_get independentInputs 0 (by decide)
+
+end Hex.RCF.RealCoefficientsConformance
+
+namespace Hex.RCF.RealCoefficientsConformance
+
 /-- The cell producer replays a root equation over a selected cubic coefficient. -/
 private def algebraicAtom : RealFormula.QF 2 :=
   .atom ⟨MvPoly.X 1 - MvPoly.X 0, .eq⟩

@@ -745,12 +745,34 @@ private def cubicCellAtom : Hex.RealFormula.QF 2 :=
       cubicCellAtom 10
 ```
 
-These executable examples demonstrate checked table construction and replay.
-Their interpretation as statements about real roots uses the semantic theorem
-admitted in [#10389](https://github.com/kim-em/hex-dev/issues/10389), and the
-general Thom order proof awaits the specified Tau Ceti foundation theorem.
+For two independently selected coefficients, the existing number-field
+constructor finds one coordinate field. Here √2 and √3 start as roots of
+different polynomials. The check confirms that the common generator is real
+and that both converted coordinates retain their original selected algebraic
+values, in the supplied order.
+
+```lean
+private def independentInputs :
+    Array Hex.AlgebraicNumber := #[
+  Hex.ZPoly.rootNear #p[-2, 0, 1] 1.4,
+  Hex.ZPoly.rootNear #p[-3, 0, 1] 1.7]
+
+#guard
+  let common := Hex.QAdjoin.common independentInputs
+  common.generator.isReal &&
+    common.entries.map (·.toAlgebraicNumber) ==
+      independentInputs
+```
+
+The sign-table, descriptor and cell examples run the checked producers and
+replay their certificates. Their interpretation as statements about real
+roots uses the semantic theorem admitted in
+[#10389](https://github.com/kim-em/hex-dev/issues/10389); the general Thom
+order proof awaits the specified Tau Ceti foundation theorem. The separate
+common-field conversion preserves the selected algebraic values by the proved
+`QAdjoin.common_get` theorem.
 With warm imports on the shared host, the chapter containing these examples
-built in 112 seconds; this measures the whole chapter, including the earlier
+built in 126 seconds; this measures the whole chapter, including the earlier
 `rcf` examples.
 
 # Cross-references
