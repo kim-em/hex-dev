@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.SelectedSigns
+public import HexSignDet.Reencode
 public import HexSignDetMathlib.RootModel
 public import HexSignDetMathlib.Derivatives
 
@@ -147,5 +148,52 @@ theorem SelectedSigns.value_at_root {context : Ctx}
     simp [List.head?_eq_getElem?]
   rw [hfirst] at hhead
   simpa [SelectedSigns.value, signsAt] using Option.some.inj hhead
+
+include h1 ha hs hm hnat hsign in
+/-- Accepted joint re-encoding evidence contains a real root in the target
+domain with both the target derivative word and every old-root constraint. -/
+theorem Reencoding.exists_root {context : Ctx}
+    {source : Descriptor E Ctx sign context} {head : DensePoly E}
+    {a b : Endpoint E} (r : Reencoding source head a b) :
+    ∃ x ∈ Tarski.rootsIn (interpret f hz head) (a.map f) (b.map f),
+      signsAt f hz (r.target.raw.queries ++ source.raw.constraints) x =
+        r.target.raw.signs ++ source.raw.constraintSigns := by
+  obtain ⟨_, hc, hcount⟩ := r.check_eq
+  have hcard := r.evidence.count_roots f hz h1 ha hs hm hnat sign hsign
+    context head a b (r.target.raw.queries ++ source.raw.constraints) hc
+    (r.target.raw.signs ++ source.raw.constraintSigns)
+  rw [r.evidence.table_lookup hc] at hcount
+  rw [hcount] at hcard
+  have hpos : 0 < ((Tarski.rootsIn (interpret f hz head) (a.map f) (b.map f)).filter
+      (fun x => signsAt f hz (r.target.raw.queries ++ source.raw.constraints) x =
+        r.target.raw.signs ++ source.raw.constraintSigns)).card := by omega
+  obtain ⟨x, hx⟩ := Finset.card_pos.mp hpos
+  exact ⟨x, (Finset.mem_filter.mp hx).1, (Finset.mem_filter.mp hx).2⟩
+
+include h1 ha hs hm hnat hsign in
+/-- The target descriptor's selected root satisfies every constraint copied
+from the source descriptor; there is no free choice of another target root. -/
+theorem Reencoding.target_constraints {context : Ctx}
+    {source : Descriptor E Ctx sign context} {head : DensePoly E}
+    {a b : Endpoint E} (r : Reencoding source head a b) :
+    signsAt f hz source.raw.constraints
+      (r.target.root f hz h1 ha hs hm hnat hsign) = source.raw.constraintSigns := by
+  obtain ⟨x, hx, hsx⟩ := r.exists_root f hz h1 ha hs hm hnat hsign
+  obtain ⟨⟨hhead, hlower, hupper⟩, _, _⟩ := r.check_eq
+  have htargetDomain : x ∈ Tarski.rootsIn (interpret f hz r.target.raw.head)
+      (r.target.raw.lower.map f) (r.target.raw.upper.map f) := by
+    simpa only [hhead, hlower, hupper] using hx
+  have hlen : r.target.raw.signs.length = r.target.raw.queries.length := by
+    have hspec := (r.target.root_spec f hz h1 ha hs hm hnat hsign).2
+    simpa [signsAt] using congrArg List.length hspec.symm
+  have htarget : signsAt f hz r.target.raw.queries x = r.target.raw.signs := by
+    have h := congrArg (List.take r.target.raw.queries.length) hsx
+    simpa [signsAt, ← hlen] using h
+  have hsource : signsAt f hz source.raw.constraints x = source.raw.constraintSigns := by
+    have h := congrArg (List.drop r.target.raw.queries.length) hsx
+    simpa [signsAt, ← hlen] using h
+  have heq := r.target.root_unique f hz h1 ha hs hm hnat hsign x
+    htargetDomain htarget
+  simpa only [heq] using hsource
 
 end Hex.SignDet
