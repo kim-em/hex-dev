@@ -1,6 +1,6 @@
 {
   "path": "lakefile.lean",
   "baseline_blob": "327c99cacafccb757254a4ec924e9b7f90d3b9e3",
-  "current_blob": "5e77c46a01a7e1c50ba76a9b093b1121097d92e8",
+  "current_blob": "5b0ca7b1321bb5ba1e123133368b7ac2e2309a05",
   "reason": "Registers the optional HexRCFRealCoefficients.Carrier proof module alongside the already merged formula adapter. The factorization service does not import this adapter, so its measured executable is unchanged."
 }
