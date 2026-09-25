@@ -116,6 +116,12 @@ private meta partial def checkAxiomPath (handler constant : Name) :
   if let some moduleName := admittedModule constant then
     unless ← fromModule constant moduleName do
       throwError "rcf: handler {handler} proposed a proof using an unaudited declaration {constant}"
+    -- Lean exposes an imported theorem as an axiom in this module's public
+    -- environment. Its exported dependency inventory must still contain the
+    -- exact admitted `sorryAx`; a source declaration changed to an axiom has
+    -- only its own name in that inventory and must be rejected.
+    unless axioms.contains ``sorryAx do
+      throwError "rcf: handler {handler} proposed a proof using an unverified admission {constant}"
     for dependency in axioms do
       unless ordinaryAxiom dependency || dependency == ``sorryAx ||
           dependency == constant do

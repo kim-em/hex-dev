@@ -26,10 +26,18 @@ times were 84.385 and 2.581 seconds. The three load averages at completion
 were 5.44, 5.82 and 8.69. These are two retained observations of different
 module contents; they are not a before/after performance comparison.
 
+The final integrated demo, including the guarded axiom-inventory check, has
+source blob `2883ade46418a5b4e0cefd39b8d8c2f193acae04`. A fresh module
+build on the same host took 142.698 seconds wall time on automatically selected
+logical CPU 6. Lake reported 129 seconds for the module; user and system CPU
+times were 126.631 and 12.108 seconds. Host load was high (60.15, 87.22,
+80.91 shortly after completion), and this sample is retained as observed.
+
 To reproduce the end-to-end module timing after the dependencies have been
 built, remove only `.lake/build/lib/lean/HexRCF/RealCoefficientTactic.olean`,
 select a CPU with `python3 scripts/bench/idle_core.py`, and run
-`taskset -c "$cpu" lake build HexRCF.RealCoefficientTactic`. The measured wall
+`TIMEFORMAT='wall=%R user=%U sys=%S'; time taskset -c "$demo_cpu" lake build HexRCF.RealCoefficientTactic`
+with `demo_cpu` set to the selected CPU. The measured wall
 time includes Lake startup, elaboration, certificate search, kernel replay and
 writing the module artifacts. It excludes rebuilding dependencies.
 

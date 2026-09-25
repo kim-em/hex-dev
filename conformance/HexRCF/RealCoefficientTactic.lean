@@ -64,8 +64,15 @@ example : ∀ x : ℝ, x ^ 2 + literalSquare.toReal > 0 := by
 example : ∃ x : ℝ, Real.sqrt 2 < x ∧ x < (3 : ℝ) / 2 := by
   rcf
 
-example : ∀ x : ℝ, x ^ 2 + (2 : ℝ) ^ (1 / 3 : ℝ) > 0 := by
+theorem cubicRootDemo : ∀ x : ℝ, x ^ 2 + (2 : ℝ) ^ (1 / 3 : ℝ) > 0 := by
   rcf
+
+/-- info: '_private.HexRCF.RealCoefficientTactic.0.cubicRootDemo' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms cubicRootDemo
 
 example : ∀ x : ℝ,
     x ^ 2 + Hex.RCF.RealCoefficients.CubeTwo.realAlgebraic.toReal > 0 := by
