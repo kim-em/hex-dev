@@ -682,9 +682,7 @@ private def positiveRoot : RawDescriptor Rat Nat :=
 
 Two roots can be compared even if their defining polynomials differ. The
 comparison constructs a checked common squarefree polynomial and expresses
-both root selections in it. The first comparison finds `1 < 2`; the second
-finds the positive root of `x² − 2` equal to that same root in the product
-`(x² − 2)(x − 3)`.
+both root selections in it. This example finds `1 < 2`.
 
 ```lean
 private def rootTwo : RawDescriptor Rat Nat :=
@@ -697,6 +695,30 @@ private def rootTwo : RawDescriptor Rat Nat :=
     match one.buildComparison two with
     | .ok result => result.order == .lt &&
         result.common.check 7 positiveRoot.head rootTwo.head
+    | _ => false
+  | _, _ => false
+```
+
+The common-root case needs the shared factor removed before constructing the
+squarefree comparison polynomial. The two descriptors below select the same
+positive root of `x² − 2`, despite their different defining polynomials.
+
+```lean
+private def sqrtTwoRoot : RawDescriptor Rat Nat :=
+  ⟨7, bkrX * bkrX - 2, .negInf, .posInf, [1], [1]⟩
+
+private def sharedRoot : RawDescriptor Rat Nat :=
+  ⟨7, (bkrX * bkrX - 2) * (bkrX - 3),
+    .negInf, .posInf, [1], [-1]⟩
+
+#guard
+  match Descriptor.build Sturm.orderSign 7 sqrtTwoRoot,
+      Descriptor.build Sturm.orderSign 7 sharedRoot with
+  | .ok (.ok left), .ok (.ok right) =>
+    match left.buildComparison right with
+    | .ok result => result.order == .eq &&
+        result.common.check 7
+          sqrtTwoRoot.head sharedRoot.head
     | _ => false
   | _, _ => false
 ```
