@@ -5,20 +5,23 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "scripts"))
-from check_dag import IMPORT_ALL_RE, parse_imports  # noqa: E402
-
 BRIDGE = Path("adapters/HexRealRootsMathlib/TarskiSoundness.lean")
 ROOT_MODULES = (
     "HexRCF.RealCoefficients",
     "HexSignDetMathlib.RootProducer",
     "HexSignDetMathlib.SelectedRoot",
 )
-ADMISSION = re.compile(r"\b(?:sorry|admit)\b")
-DECLARATION = re.compile(r"\b(?:theorem|lemma|axiom|def|example)\s+([A-Za-z0-9_]+)")
+ADMISSION = re.compile(
+    r"\b(?:sorry|admit|mkSorry|admitGoal|sorryAx)\b|^\s*(?:axiom\b|stop\s*$)",
+    re.MULTILINE,
+)
+DECLARATION = re.compile(
+    r"\b(?:theorem|lemma|axiom|def|example|instance|abbrev|opaque|structure)\s+([A-Za-z0-9_]+)"
+)
+IMPORT = re.compile(r"\bimport\s+(?:all\s+)?([A-Z][A-Za-z0-9_.]*)\b")
+EXTERNAL = {"Batteries", "Mathlib", "Lean", "Init", "Std", "Lake", "Qq", "Verso"}
 
 
 def code_only(source: str) -> str:
@@ -26,6 +29,7 @@ def code_only(source: str) -> str:
     result: list[str] = []
     depth = 0
     quoted = False
+    raw = False
     i = 0
     while i < len(source):
         pair = source[i : i + 2]
@@ -42,11 +46,12 @@ def code_only(source: str) -> str:
                 result.append("\n" if source[i] == "\n" else " ")
                 i += 1
         elif quoted:
-            if source[i] == "\\" and i + 1 < len(source):
+            if source[i] == "\\" and not raw and i + 1 < len(source):
                 result.extend("  ")
                 i += 2
             elif source[i] == '"':
                 quoted = False
+                raw = False
                 result.append(" ")
                 i += 1
             else:
@@ -63,8 +68,20 @@ def code_only(source: str) -> str:
             depth = 1
             result.extend("  ")
             i += 2
+        elif source[i] == "'":
+            # Lean character literals include escaped quotes such as '\"'.
+            end = i + 1
+            if end < len(source) and source[end] == "\\":
+                end += 1
+            if end + 1 < len(source) and source[end + 1] == "'":
+                result.extend(" " * (end + 2 - i))
+                i = end + 2
+            else:
+                result.append(source[i])
+                i += 1
         elif source[i] == '"':
             quoted = True
+            raw = i > 0 and source[i - 1] == "r" and (i == 1 or not source[i - 2].isalnum())
             result.append(" ")
             i += 1
         else:
@@ -75,7 +92,8 @@ def code_only(source: str) -> str:
 
 def module_file(module: str) -> Path | None:
     relative = Path(*module.split(".")).with_suffix(".lean")
-    for base in (ROOT, ROOT / "adapters", ROOT / "conformance", ROOT / "bench"):
+    for base in (ROOT, ROOT / "adapters", ROOT / "conformance", ROOT / "bench",
+                 ROOT / "experiments", ROOT / "examples"):
         candidate = base / relative
         if candidate.is_file():
             return candidate
@@ -93,20 +111,18 @@ def import_cone(start: str) -> set[Path]:
         seen.add(module)
         path = module_file(module)
         if path is None:
-            if module == "Hex" or module.startswith("Hex.") or module.startswith("HexRCF."):
+            if module.split(".", 1)[0] not in EXTERNAL:
                 raise ValueError(f"missing local import {module}")
             continue
         paths.add(path.relative_to(ROOT))
-        pending.extend(parse_imports(path))
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if match := IMPORT_ALL_RE.match(line.split("--", 1)[0]):
-                pending.append(match.group(1))
+        pending.extend(match.group(1) for match in IMPORT.finditer(
+            code_only(path.read_text(encoding="utf-8"))))
     return paths
 
 
 def check() -> None:
     roots = [module for module in ROOT_MODULES if module_file(module) is not None]
-    if "HexRCF.RealCoefficients" not in roots:
+    if not roots or roots[0] != "HexRCF.RealCoefficients":
         raise ValueError("the optional rcf adapter module is missing")
     paths = set().union(*(import_cone(module) for module in roots))
     if BRIDGE not in paths:
@@ -114,6 +130,13 @@ def check() -> None:
     for relative in sorted(paths):
         source = code_only((ROOT / relative).read_text(encoding="utf-8"))
         admissions = list(ADMISSION.finditer(source))
+        if relative == Path("HexRCF/Tactic.lean"):
+            # Only these two checks may mention the bridge's admitted axiom.
+            approved = {"unless axioms.contains ``sorryAx do",
+                        "unless ordinaryAxiom dependency || dependency == ``sorryAx do"}
+            admissions = [match for match in admissions if not
+                          (match.group().strip() == "sorryAx" and
+                           source.splitlines()[source.count("\n", 0, match.start())].strip() in approved)]
         if relative != BRIDGE:
             if admissions:
                 line = source.count("\n", 0, admissions[0].start()) + 1
