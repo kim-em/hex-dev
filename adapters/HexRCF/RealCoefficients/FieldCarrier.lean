@@ -29,6 +29,11 @@ noncomputable local instance : Field (PolyQuot p root) := Hex.PolyQuot.field p r
 noncomputable local instance : CommRing (DensePoly (PolyQuot p root)) :=
   HexPolyMathlib.denseCommRing
 
+noncomputable local instance : IsDomain (DensePoly (PolyQuot p root)) :=
+  MulEquiv.isDomain (Polynomial (PolyQuot p root))
+    (HexPolyMathlib.equiv (R := PolyQuot p root)).toMulEquiv
+
+omit [ZPoly.CheckedIrreducible p] in
 private theorem product_eq (values : Fin n → PolyQuot p root)
     (formula : QF (n + 1)) :
     product values formula =
@@ -121,50 +126,17 @@ theorem atom_roots (rep : RefinedIsolation p)
     rw [← evaluate_interpret rep hrep hr x] at hx ⊢
     exact hroot x hx
 
-private theorem interpret_product (rep : RefinedIsolation p)
-    (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0)
-    (ps : List (DensePoly (PolyQuot p root))) :
-    interpret (Field.value rep) (Field.value_eq_zero rep hrep hr) ps.prod =
-      (ps.map (interpret (Field.value rep)
-        (Field.value_eq_zero rep hrep hr))).prod := by
-  induction ps with
-  | nil =>
-      simp [interpret_one, Field.value_one rep hrep hr]
-  | cons q qs ih =>
-      rw [List.prod_cons, List.map_cons, List.prod_cons,
-        interpret_mul (Field.value rep) (Field.value_eq_zero rep hrep hr)
-          (Field.value_add rep hrep hr) (Field.value_mul rep hrep hr), ih]
-
 /-- Omitting identically zero atoms leaves a nonzero product, including when
 the formula has no atoms. -/
-theorem product_ne_zero (rep : RefinedIsolation p)
-    (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0)
-    (values : Fin n → PolyQuot p root) (formula : QF (n + 1)) :
+theorem product_ne_zero (values : Fin n → PolyQuot p root)
+    (formula : QF (n + 1)) :
     product values formula ≠ 0 := by
-  let ps := (formula.polys.map (FieldSpecialize.literalPolynomial values)).filter
-    (fun q => !q.isZero)
-  have hfactor : ∀ q ∈ ps,
-      interpret (Field.value rep) (Field.value_eq_zero rep hrep hr) q ≠ 0 := by
-    intro q hq hzero
-    have hnonzero : q.isZero = false := by
-      have h := (List.mem_filter.mp hq).2
-      cases hzeroBool : q.isZero <;> simp_all
-    have hqzero := (interpret_eq_zero (Field.value rep)
-      (Field.value_eq_zero rep hrep hr) q).mp hzero
-    subst q
-    have hz : (0 : DensePoly (PolyQuot p root)).isZero = true := rfl
-    exact Bool.false_ne_true (hnonzero.symm.trans hz)
-  intro hzero
-  have hproduct :
-      (ps.map (interpret (Field.value rep)
-        (Field.value_eq_zero rep hrep hr))).prod ≠ 0 := by
-    apply List.prod_ne_zero
-    intro hmem
-    obtain ⟨q, hq, heq⟩ := List.mem_map.mp hmem
-    exact hfactor q hq heq
-  apply hproduct
-  rw [← interpret_product rep hrep hr]
-  exact (interpret_eq_zero (Field.value rep)
-    (Field.value_eq_zero rep hrep hr) _).mpr (by simpa only [product_eq] using hzero)
+  rw [product_eq]
+  apply List.prod_ne_zero
+  intro hq
+  have htest := (List.mem_filter.mp hq).2
+  simp at htest
+  have hz : (0 : DensePoly (PolyQuot p root)).isZero = true := rfl
+  exact Bool.false_ne_true (htest.symm.trans hz)
 
 end Hex.RCF.RealCoefficients.FieldCarrier
