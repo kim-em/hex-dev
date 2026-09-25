@@ -25,8 +25,13 @@ while the shared-expression prototype times out. The
 [normalized comparison](determinant-normalized-comparison.md) supports reusing
 Mathlib's normalized Bird evaluator, retaining its atom context for the target,
 and returning its certificate directly when the target is already definitionally
-equal to the normal form. Extend the final variant's adversarial coverage before
-choosing the production backend; its 10×10 rank-one case still loses to Mathlib.
+equal to the normal form at reducible transparency. The
+[wider comparison](determinant-wider-comparison.md) finds that unrestricted
+conversion can unfold concrete ring implementations and overwhelm determinant
+evaluation. Keep this shortcut restricted; normalize the target when it fails.
+Extend the final variant's adversarial coverage before choosing the production
+backend; the small 10×10 rank-one loss is not established as solved, even though
+preserving the original dimension makes its certificate identical to Mathlib's.
 This borrows
 the mathematics and scalar proof machinery of Mathlib directly. It does not call `norm_det`,
 `eval_det`, or any hidden determinant fallback. Importing Mathlib arithmetic

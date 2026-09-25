@@ -1,0 +1,19 @@
+{
+  "family": "rankone",
+  "n": 10,
+  "atoms": 2,
+  "degree": 1,
+  "support": 3,
+  "bits": 2,
+  "modulus": 0,
+  "seed": 10320,
+  "entry_form": "factored",
+  "candidate": "direct",
+  "diagnostic": true,
+  "kernel_profile": false,
+  "invocation_seconds": 60,
+  "rational": false,
+  "target": "expanded",
+  "inspection": true,
+  "search_seconds": 360
+}

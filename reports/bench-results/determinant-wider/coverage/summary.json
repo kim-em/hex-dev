@@ -1,0 +1,83 @@
+{
+  "elapsed_seconds": 32.72267530602403,
+  "cases": [
+    {
+      "name": "characteristic2",
+      "case": {
+        "family": "dense",
+        "n": 4,
+        "atoms": 2,
+        "degree": 2,
+        "support": 3,
+        "bits": 2,
+        "modulus": 2,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "direct",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "invocation_seconds": 10,
+        "search_seconds": 360,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "Direct timeout",
+      "stats": {
+        "Mathlib": {
+          "count": 1,
+          "median": 0.570499125,
+          "minimum": 0.570499125,
+          "maximum": 0.570499125
+        },
+        "Direct": null
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 14.009371581021696
+    },
+    {
+      "name": "skew5",
+      "case": {
+        "family": "skew",
+        "n": 5,
+        "atoms": 2,
+        "degree": 2,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "direct",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "invocation_seconds": 10,
+        "search_seconds": 360,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 1.356366483,
+          "minimum": 1.354706068,
+          "maximum": 1.358026898
+        },
+        "Direct": {
+          "count": 2,
+          "median": 1.106908942,
+          "minimum": 1.036315811,
+          "maximum": 1.177502073
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 18.713303725002334
+    }
+  ],
+  "prototype_hashes": {
+    "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+    "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+    "experiments/Determinant/Normalized.lean": "abe3151ca366ca60d11f8667cbe5e8fbad85dea82a3d54b5cfbd7316f3e9456e"
+  }
+}

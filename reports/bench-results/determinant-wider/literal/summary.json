@@ -1,0 +1,86 @@
+{
+  "elapsed_seconds": 123.88137590512633,
+  "cases": [
+    {
+      "name": "rankone10",
+      "case": {
+        "family": "rankone",
+        "n": 10,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "literal",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "invocation_seconds": 15,
+        "search_seconds": 360,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 2.4029992614999998,
+          "minimum": 2.380730164,
+          "maximum": 2.425268359
+        },
+        "Literal": {
+          "count": 2,
+          "median": 2.3687654910000004,
+          "minimum": 2.3587895640000003,
+          "maximum": 2.378741418
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 29.919904991984367
+    },
+    {
+      "name": "rational6",
+      "case": {
+        "family": "dense",
+        "n": 6,
+        "atoms": 2,
+        "degree": 2,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "literal",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "invocation_seconds": 45,
+        "search_seconds": 360,
+        "rational": true,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 14.978996132999999,
+          "minimum": 14.697172228,
+          "maximum": 15.260820038
+        },
+        "Literal": {
+          "count": 2,
+          "median": 14.120696462,
+          "minimum": 13.933855626,
+          "maximum": 14.307537298
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 93.96147091314197
+    }
+  ],
+  "prototype_hashes": {
+    "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+    "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+    "experiments/Determinant/Normalized.lean": "abe3151ca366ca60d11f8667cbe5e8fbad85dea82a3d54b5cfbd7316f3e9456e"
+  }
+}

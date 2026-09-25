@@ -1,0 +1,88 @@
+{
+  "elapsed_seconds": 34.32351718004793,
+  "cases": [
+    {
+      "name": "characteristic2",
+      "case": {
+        "family": "dense",
+        "n": 4,
+        "atoms": 2,
+        "degree": 2,
+        "support": 3,
+        "bits": 2,
+        "modulus": 2,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "direct",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "invocation_seconds": 10,
+        "search_seconds": 360,
+        "rational": false,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 0.7488371125,
+          "minimum": 0.7274687830000001,
+          "maximum": 0.770205442
+        },
+        "Direct": {
+          "count": 2,
+          "median": 0.572844574,
+          "minimum": 0.555338958,
+          "maximum": 0.59035019
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 17.112419217126444
+    },
+    {
+      "name": "vandermonde5",
+      "case": {
+        "family": "vandermonde",
+        "n": 5,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "direct",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "invocation_seconds": 9,
+        "search_seconds": 360,
+        "rational": false,
+        "target": "factored"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 1.4981922015,
+          "minimum": 1.399057571,
+          "maximum": 1.597326832
+        },
+        "Direct": {
+          "count": 2,
+          "median": 0.656179528,
+          "minimum": 0.64135679,
+          "maximum": 0.671002266
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 17.211097962921485
+    }
+  ],
+  "prototype_hashes": {
+    "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+    "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+    "experiments/Determinant/Normalized.lean": "2c60ddba6fd5280800f6ea17e46ab061e0f4edcb19d46ee58ca3572f6071797b"
+  }
+}

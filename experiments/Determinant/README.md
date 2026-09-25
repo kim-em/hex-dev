@@ -172,8 +172,12 @@ Three entry points isolate proof assembly: `normalized_bird` composes the two
 normalization proofs explicitly; `composed_bird` uses Lean's equality proof
 constructors, which remove syntactic reflexivity; `direct_bird` additionally
 returns the determinant certificate when its normal form is definitionally
-equal to the supplied target. These are general assembly variants, without
-matrix-family recognition.
+equal to the supplied target at reducible transparency. Restricting this optional
+conversion prevents expensive unfolding of concrete ring arithmetic; ordinary
+target normalization handles the remaining cases. These are general assembly
+variants, without matrix-family recognition. `literal_bird` additionally keeps
+the goal's dimension expression in the certificate. It is a structural control,
+not a demonstrated speed improvement or the selected default.
 
 ```sh
 lake build Determinant.NormalizedAudit
@@ -196,3 +200,25 @@ records the results and remaining counterexamples.
 reserves four of the selected ceilings plus coordination overhead; the cumulative
 allowance is unchanged. The selected limit is recorded with the case, including
 any resulting timeout. Shortening it cannot establish a 60-second runtime claim.
+
+`--reference direct --candidate literal` compares the dimension representation
+directly in adjacent before/after pairs. Keep different references in separate
+roots. `--search-seconds 360` lowers the cumulative allowance to six minutes for
+a separately authorized round. A recorded lower cap remains in force across
+sibling normalization roots even if a later invocation omits or raises this
+argument. Do not change output parents to evade a round's budget.
+
+`Inspect.lean` and `inspect_proofs.py OUTPUT [direct|literal]` compare the retained
+10×10 rank-one theorem bodies after kernel checking. Build `Determinant.Inspect`
+first. The inspector selects the Bird certificate inside each proof, compares
+exact expressions and unique node sets, and reports the first structural
+mismatch. Head counts include partial applications; they are not arithmetic
+operation counts. Full structural comparison can itself be expensive. The
+inspector has a 60-second process ceiling and 65-second batch allowance, charged
+against a six-minute sibling-root ledger. It measures both arms in one fixed
+order, so its clocks are diagnostics, not performance rankings. Do not pass its
+custom archive to `adversarial_report.py`.
+
+The [wider comparison](../../reports/determinant-wider-comparison.md) records
+the structural control, rational/skew/factored/positive-characteristic probes,
+and the restricted-conversion fix, with frozen sources for each stage.

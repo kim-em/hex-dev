@@ -104,10 +104,13 @@ no demonstrated need as the production default. Direct reuse of Mathlib's core
 evaluator is a viable general candidate; there is no reason to duplicate its
 recurrence merely to avoid calling the `norm_det` tactic.
 
-The 10×10 rank-one input remains a concrete counterexample for the newest
-variant: the prototype is about 4.5% slower, well within a minute. Its small but
-consistent loss needs an unprofiled comparison of emitted proof structure and
-frontend work; the profile diagnostic above cannot establish its cause.
+The 10×10 rank-one input is a concrete counterexample for the direct variant
+measured here: the prototype is about 4.5% slower, well within a minute. The
+[structural investigation and wider tests](determinant-wider-comparison.md)
+find that matching Mathlib's certificate exactly does not establish a speedup.
+They also expose and fix a much larger positive-characteristic loss by limiting
+the optional target-conversion shortcut to reducible transparency. That patched
+frontend has not been retimed on 10×10; its small loss is not established as solved.
 
 The next comparison set should also carry the direct-conversion frontend across the
 remaining retained adversarial inputs, especially scattered zeros, factored

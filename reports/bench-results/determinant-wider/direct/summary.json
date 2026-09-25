@@ -1,0 +1,48 @@
+{
+  "elapsed_seconds": 22.12681775703095,
+  "cases": [
+    {
+      "name": "rational4",
+      "case": {
+        "family": "dense",
+        "n": 4,
+        "atoms": 2,
+        "degree": 2,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "direct",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "invocation_seconds": 15,
+        "search_seconds": 360,
+        "rational": true,
+        "target": "expanded"
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 1.2370625015,
+          "minimum": 0.768636877,
+          "maximum": 1.7054881259999999
+        },
+        "Direct": {
+          "count": 2,
+          "median": 1.180260373,
+          "minimum": 0.912176359,
+          "maximum": 1.4483443870000001
+        }
+      },
+      "paired_losses": 1,
+      "elapsed_seconds": 22.12681775703095
+    }
+  ],
+  "prototype_hashes": {
+    "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+    "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+    "experiments/Determinant/Normalized.lean": "3d427481f3f1497cb7af62ac826f92004afa2dfb0f542bb834043405f31ce98a"
+  }
+}

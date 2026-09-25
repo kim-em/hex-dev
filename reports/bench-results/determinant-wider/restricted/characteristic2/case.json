@@ -1,0 +1,19 @@
+{
+  "family": "dense",
+  "n": 4,
+  "atoms": 2,
+  "degree": 2,
+  "support": 3,
+  "bits": 2,
+  "modulus": 2,
+  "seed": 10320,
+  "entry_form": "factored",
+  "candidate": "direct",
+  "reference": "mathlib",
+  "diagnostic": false,
+  "kernel_profile": false,
+  "invocation_seconds": 10,
+  "search_seconds": 360,
+  "rational": false,
+  "target": "expanded"
+}

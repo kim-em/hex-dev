@@ -1,0 +1,7 @@
+{
+  "experiments/Determinant/adversarial.py": "ef6a7490117f4b7b81403f8d9065bd54c29591ace20600d254e0625d57d05fd6",
+  "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+  "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+  "experiments/Determinant/adversarial_report.py": "5401a712d5cf8af1fcbda0d4177f92eb454722e191513aa82adde7e4ea42ce14",
+  "experiments/Determinant/Normalized.lean": "3d427481f3f1497cb7af62ac826f92004afa2dfb0f542bb834043405f31ce98a"
+}

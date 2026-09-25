@@ -86,4 +86,28 @@ example {R : Type*} [CommRing R] (a b c d : R)
 #print axioms directZero
 #print axioms directRat
 
+theorem literal {R : Type*} [CommRing R] (a b c d : R) :
+    Matrix.det !![a, b; c, d] = a*d - b*c := by literal_bird
+
+theorem literalZero {R : Type*} [CommRing R] (a b c d : R) :
+    Matrix.det !![a*c, a*d; b*c, b*d] = 0 := by literal_bird
+
+theorem literalRat (a b : Rat) :
+    Matrix.det !![a / 2, b / 3; a / 5, b / 7] = a*b / 210 := by literal_bird
+
+example {R : Type*} [CommRing R] (a b c d : R)
+    (h : Matrix.det !![a, b; c, d] = a*d - b*c + 1) :
+    Matrix.det !![a, b; c, d] = a*d - b*c + 1 := by
+  fail_if_success literal_bird
+  exact h
+
+#print axioms literal
+#print axioms literalZero
+#print axioms literalRat
+
+theorem characteristicTwo (a b c d : ZMod 2) :
+    Matrix.det !![a + b, c; d, a - b] = a^2 - b^2 - c*d := by direct_bird
+
+#print axioms characteristicTwo
+
 end Determinant.NormalizedAudit

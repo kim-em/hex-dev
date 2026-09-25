@@ -1,0 +1,65 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Normalized
+
+open Lean Elab Command
+
+namespace Determinant.Inspect
+
+def certificate (nodes : ExprSet) : Option Expr :=
+  nodes.fold (fun found e =>
+    if e.isAppOfArity ``Eq.trans 6 && e.getAppArgs[1]!.isAppOf ``BirdDet.birdDet
+    then some e else found) none
+
+def summary (nodes : ExprSet) : Json := Id.run do
+  let mut counts : Std.HashMap Name Nat := {}
+  for e in nodes do
+    if let .const name _ := e.getAppFn then
+      counts := counts.insert name (counts.getD name 0 + 1)
+  let ordered := counts.toArray.qsort (fun a b => a.2 > b.2)
+  return Json.mkObj [
+    ("nodes", toJson nodes.size),
+    ("heads", toJson (ordered.take 20 |>.map fun (name, n) => (name.toString, n)))]
+
+partial def mismatch (a b : Expr) (path : String := "") : Json :=
+  if a == b then Json.null else
+  match a, b with
+  | .app af aa, .app bf ba =>
+    if af == bf then mismatch aa ba (path ++ ".arg") else mismatch af bf (path ++ ".fn")
+  | .lam _ aty ab _, .lam _ bty bb _ | .forallE _ aty ab _, .forallE _ bty bb _ =>
+    if aty == bty then mismatch ab bb (path ++ ".body") else mismatch aty bty (path ++ ".type")
+  | .const an al, .const bn bl => Json.mkObj [
+    ("path", toJson path), ("first_constant", toJson an.toString),
+    ("second_constant", toJson bn.toString),
+    ("first_levels", toJson (toString al)), ("second_levels", toJson (toString bl))]
+  | .bvar ai, .bvar bi => Json.mkObj [
+    ("path", toJson path), ("first_bvar", toJson ai), ("second_bvar", toJson bi)]
+  | _, _ => Json.mkObj [("path", toJson path),
+    ("first_head", toJson (a.getAppFn.constName?.map Name.toString)),
+    ("second_head", toJson (b.getAppFn.constName?.map Name.toString)),
+    ("first_metadata", toJson a.isMData), ("second_metadata", toJson b.isMData)]
+
+/-- Structural diagnostic after kernel checking; it is outside proof clocks. -/
+elab "#compare_proofs " first:ident second:ident : command => do
+  let .thmInfo a ← liftCoreM <| getConstInfo first.getId | throwError "expected a theorem"
+  let .thmInfo b ← liftCoreM <| getConstInfo second.getId | throwError "expected a theorem"
+  let av := a.value
+  let bv := b.value
+  let an := Hex.Reflect.proofNodes #[av] 2000000
+  let bn := Hex.Reflect.proofNodes #[bv] 2000000
+  unless an.size < 2000000 && bn.size < 2000000 do throwError "inspection node cap reached"
+  let some ac := certificate an | throwError "first Bird certificate not found"
+  let some bc := certificate bn | throwError "second Bird certificate not found"
+  let common := an.fold (fun n e => if bn.contains e then n + 1 else n) 0
+  logInfo m!"PROOF_COMPARISON {(Json.mkObj [
+    ("first", summary an), ("second", summary bn),
+    ("common_nodes", toJson common),
+    ("certificate_equal", toJson (ac == bc)),
+    ("first_mismatch", mismatch ac bc),
+    ("first_certificate", summary (Hex.Reflect.proofNodes #[ac] 2000000)),
+    ("second_certificate", summary (Hex.Reflect.proofNodes #[bc] 2000000))]).compress}"
+
+end Determinant.Inspect

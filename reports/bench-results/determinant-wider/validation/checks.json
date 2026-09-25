@@ -1,0 +1,138 @@
+{
+  "inputs": [
+    {
+      "case": "assembly/rankone10",
+      "identical_arm_statements": true,
+      "prior_input": "reports/bench-results/determinant-adversarial/rankone10/AdversarialSampleShared.lean.txt"
+    },
+    {
+      "case": "coverage/characteristic2",
+      "identical_arm_statements": true,
+      "prior_input": "reports/bench-results/determinant-adversarial/characteristic2/AdversarialSampleShared.lean.txt"
+    },
+    {
+      "case": "coverage/skew5",
+      "identical_arm_statements": true,
+      "prior_input": "reports/bench-results/determinant-adversarial/skew5/AdversarialSampleShared.lean.txt"
+    },
+    {
+      "case": "direct/rational4",
+      "identical_arm_statements": true,
+      "prior_input": "reports/bench-results/determinant-adversarial/rational4/AdversarialSampleShared.lean.txt"
+    },
+    {
+      "case": "literal/rankone10",
+      "identical_arm_statements": true,
+      "prior_input": "reports/bench-results/determinant-adversarial/rankone10/AdversarialSampleShared.lean.txt"
+    },
+    {
+      "case": "literal/rational6",
+      "identical_arm_statements": true,
+      "prior_input": "reports/bench-results/determinant-adversarial/rational6/AdversarialSampleShared.lean.txt"
+    },
+    {
+      "case": "no-conversion/characteristic2",
+      "identical_arm_statements": true,
+      "prior_input": "reports/bench-results/determinant-adversarial/characteristic2/AdversarialSampleShared.lean.txt"
+    },
+    {
+      "case": "restricted/characteristic2",
+      "identical_arm_statements": true,
+      "prior_input": "reports/bench-results/determinant-adversarial/characteristic2/AdversarialSampleShared.lean.txt"
+    },
+    {
+      "case": "restricted/vandermonde5",
+      "identical_arm_statements": true,
+      "prior_input": "reports/bench-results/determinant-adversarial/vandermonde5/AdversarialSampleShared.lean.txt"
+    }
+  ],
+  "final_source_sha256": "2c60ddba6fd5280800f6ea17e46ab061e0f4edcb19d46ee58ca3572f6071797b",
+  "shortcut_control_source_identical": true,
+  "budget_and_argument_guards": [
+    {
+      "flags": [],
+      "exit_status": 1,
+      "message": "stop for a scientific decision: 350.0s used; insufficient remaining allowance for four invocations within 6 minutes",
+      "output_created": false
+    },
+    {
+      "flags": [
+        "--search-seconds",
+        "600"
+      ],
+      "exit_status": 1,
+      "message": "stop for a scientific decision: 350.0s used; insufficient remaining allowance for four invocations within 6 minutes",
+      "output_created": false
+    },
+    {
+      "flags": [
+        "--candidate",
+        "direct",
+        "--reference",
+        "direct"
+      ],
+      "exit_status": 2,
+      "message": "usage: adversarial.py [-h]\n                      [--family {legacy-factor,dense,independent,factor,cancel,triangular,sparse-cancel,sparse,decorated,singular,shared,skew,rankone,vandermonde,circulant}]\n                      [--n N] [--atoms ATOMS] [--degree DEGREE]\n                      [--support SUPPORT] [--bits BITS] [--modulus MODULUS]\n                      [--seed SEED] [--entry-form {expanded,factored}]\n                      [--candidate {shared,normalized,composed,direct,literal}]\n                      [--reference {mathlib,direct}] [--diagnostic]\n                      [--kernel-profile]\n                      [--invocation-seconds INVOCATION_SECONDS]\n                      [--search-seconds SEARCH_SECONDS] [--rational]\n                      [--target {expanded,factored}]\n                      output\nadversarial.py: error: reference and candidate must differ",
+      "output_created": false
+    },
+    {
+      "flags": [
+        "--candidate",
+        "literal",
+        "--search-seconds",
+        "601"
+      ],
+      "exit_status": 2,
+      "message": "usage: adversarial.py [-h]\n                      [--family {legacy-factor,dense,independent,factor,cancel,triangular,sparse-cancel,sparse,decorated,singular,shared,skew,rankone,vandermonde,circulant}]\n                      [--n N] [--atoms ATOMS] [--degree DEGREE]\n                      [--support SUPPORT] [--bits BITS] [--modulus MODULUS]\n                      [--seed SEED] [--entry-form {expanded,factored}]\n                      [--candidate {shared,normalized,composed,direct,literal}]\n                      [--reference {mathlib,direct}] [--diagnostic]\n                      [--kernel-profile]\n                      [--invocation-seconds INVOCATION_SECONDS]\n                      [--search-seconds SEARCH_SECONDS] [--rational]\n                      [--target {expanded,factored}]\n                      output\nadversarial.py: error: search-seconds must be between 1 and 600",
+      "output_created": false
+    }
+  ],
+  "measurement_batches": 14,
+  "measurement_seconds": 332.95041991816834,
+  "lean_build": {
+    "command": "lake build Determinant.NormalizedAudit Determinant.Inspect",
+    "exit_status": 0,
+    "accepted_theorems": 16,
+    "false_target_rejections": 5,
+    "axioms": {
+      "generic": "propext, Classical.choice, Quot.sound",
+      "reordered": "propext, Classical.choice, Quot.sound",
+      "cancellation": "propext, Classical.choice, Quot.sound",
+      "rational": "propext, Classical.choice, Quot.sound",
+      "composite": "propext, Classical.choice, Quot.sound",
+      "singleton": "propext, Classical.choice, Quot.sound",
+      "composed": "propext, Classical.choice, Quot.sound",
+      "composedZero": "propext, Classical.choice, Quot.sound",
+      "composedRat": "propext, Classical.choice, Quot.sound",
+      "direct": "propext, Classical.choice, Quot.sound",
+      "directZero": "propext, Classical.choice, Quot.sound",
+      "directRat": "propext, Classical.choice, Quot.sound",
+      "literal": "propext, Classical.choice, Quot.sound",
+      "literalZero": "propext, Classical.choice, Quot.sound",
+      "literalRat": "propext, Classical.choice, Quot.sound",
+      "characteristicTwo": "propext, Classical.choice, Quot.sound"
+    }
+  },
+  "repository_checks": [
+    {
+      "command": "python3 scripts/check_dag.py",
+      "exit_status": 0
+    },
+    {
+      "command": "python3 scripts/check_phase4.py",
+      "exit_status": 0
+    },
+    {
+      "command": "python3 scripts/release/check_released_manifest.py",
+      "exit_status": 0
+    },
+    {
+      "command": "python3 -m py_compile experiments/Determinant/adversarial.py experiments/Determinant/adversarial_report.py experiments/Determinant/inspect_proofs.py",
+      "exit_status": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_status": 0
+    }
+  ]
+}
