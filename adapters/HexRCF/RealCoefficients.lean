@@ -15,8 +15,9 @@ public import HexRCF.RealCoefficients.Formula
 public import HexRCF.RealCoefficients.IsolationBuild
 public import HexRCF.RealCoefficients.Isolations
 public import HexRCF.RealCoefficients.IsolationSemantics
+public import HexRCF.RealCoefficients.Carrier
 
 /-! Algebraic coefficient conversion, source preparation, polynomial
-specialization and checked real-root isolation for the optional RCF adapter.
+specialization, checked real-root isolation and carrier coverage for the optional RCF adapter.
 No coefficient solver is registered; source equivalence does not discharge
 coefficient authentication, divisor guards or decision replay. -/
