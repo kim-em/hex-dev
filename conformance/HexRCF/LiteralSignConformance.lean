@@ -28,24 +28,36 @@ private def root : CubeField :=
   PolyQuot.ofSquare cubePoly cubeSquare (DensePoly.ofList [0, 1])
     cubeWitness cubePrecision
 
+private def negative : CubeField := root - 2
+private def vanishing : CubeField := root * root * root - 2
+
 private def table? : Option (LiteralSign.Table CubeField) :=
   LiteralSign.Table.build (ZPoly.toRatPoly cubePoly)
     (cubeSquare.re - cubeSquare.radiusHi).toRat
     (cubeSquare.re + cubeSquare.radiusHi).toRat
-    [root, root * root] PolyQuot.coeffs
+    [root, root * root, negative, vanishing] PolyQuot.coeffs
 
 #guard match table? with
   | none => false
   | some table =>
       Field.checkSignTable cubePoly cubeSquare cubeWitness cubePrecision table &&
-      table.entries.map (·.value) == [1, 1] &&
+      table.entries.map (·.value) == [1, 1, -1, 0] &&
       table.lookup? root == some 1 &&
       table.lookup? (root * root) == some 1 &&
-      (table.lookup? (root * root * root)).isNone &&
+      table.lookup? negative == some (-1) &&
+      table.lookup? vanishing == some 0 &&
+      (table.lookup? (root + 1)).isNone &&
       !Field.checkSignTable cubePoly cubeSquare cubeWitness cubePrecision
         { table with head := table.head + 1 } &&
       !Field.checkSignTable cubePoly cubeSquare cubeWitness cubePrecision
         { table with lower := table.lower + 1 } &&
+      !Field.checkSignTable cubePoly cubeSquare cubeWitness cubePrecision
+        { table with upper := table.upper + 1 } &&
+      !Field.checkSignTable cubePoly cubeSquare cubeWitness cubePrecision
+        { table with count := { table.count with value := 2 } } &&
+      !Field.checkSignTable cubePoly cubeSquare cubeWitness cubePrecision
+        { table with entries := table.entries.map fun entry =>
+            { entry with evidence := { entry.evidence with queryPoly := 1 } } } &&
       !Field.checkSignTable cubePoly cubeSquare cubeWitness cubePrecision
         { table with entries := table.entries.map fun entry =>
             { entry with value := entry.value + 1 } }
