@@ -158,16 +158,31 @@ theorem Descriptor.fullOrder_trans {sign : E → Int} {context : Ctx}
   rw [ite_eq_left ⟨hab.1.trans hbc.1, hab.2.1, hbc.2.2⟩]
   exact Thom.compareSigns_trans hsigns hnext
 
+/-- Swapping full descriptors swaps the result of a finite comparison. -/
+theorem Descriptor.fullOrder_swap {sign : E → Int} {context : Ctx}
+    (a b : Descriptor E Ctx sign context) :
+    (a.fullOrder b).map Ordering.swap = b.fullOrder a := by
+  have hs := Thom.compareSigns_swap a.raw.signs b.raw.signs
+  simp only [fullOrder]
+  split
+  · rename_i hguard
+    rw [ite_eq_left ⟨hguard.1.symm, hguard.2.2, hguard.2.1⟩]
+    exact hs
+  · rename_i hguard
+    have hreverse : ¬(b.raw.head = a.raw.head ∧
+        b.raw.indices = (List.range b.raw.head.natDegree).map (· + 1) ∧
+        a.raw.indices = (List.range a.raw.head.natDegree).map (· + 1)) := by
+      intro h
+      exact hguard ⟨h.1.symm, h.2.2, h.2.1⟩
+    rw [ite_eq_right hreverse]
+    rfl
+
 /-- Reversing a successful strict comparison reverses its finite result. -/
 theorem Descriptor.fullOrder_reverse {sign : E → Int} {context : Ctx}
     {a b : Descriptor E Ctx sign context} (h : a.fullOrder b = some .gt) :
     b.fullOrder a = some .lt := by
-  obtain ⟨hab, hsigns⟩ := fullOrder_eq h
-  have hs := Thom.compareSigns_swap a.raw.signs b.raw.signs
-  rw [hsigns] at hs
-  simp only [Option.map_some, Ordering.swap] at hs
-  unfold fullOrder
-  rw [ite_eq_left ⟨hab.1.symm, hab.2.2, hab.2.1⟩]
+  have hs := fullOrder_swap a b
+  rw [h] at hs
   exact hs.symm
 
 end Hex.SignDet

@@ -22,6 +22,7 @@ public import HexSignDet.TableProducer
 public import HexSignDet.Thom
 public import HexSignDet.Descriptor
 public import HexSignDet.Complete
+public import HexSignDet.ThomOrder
 public import HexSignDet.SelectedSigns
 public import HexSignDet.RootList
 public import HexSignDet.CommonProduct
