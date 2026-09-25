@@ -24,6 +24,25 @@ private meta unsafe def evalRealUnsafe (e : Expr) : MetaM RealAlgebraicNumber :=
 @[implemented_by evalRealUnsafe]
 meta opaque evalReal (e : Expr) : MetaM RealAlgebraicNumber
 
+private meta unsafe def evalZPolyUnsafe (e : Expr) : MetaM ZPoly :=
+  evalExpr ZPoly (mkConst ``ZPoly) e
+
+@[implemented_by evalZPolyUnsafe]
+meta opaque evalZPoly (e : Expr) : MetaM ZPoly
+
+private meta unsafe def evalSquareUnsafe (e : Expr) : MetaM DyadicSquare :=
+  evalExpr DyadicSquare (mkConst ``DyadicSquare) e
+
+@[implemented_by evalSquareUnsafe]
+meta opaque evalSquare (e : Expr) : MetaM DyadicSquare
+
+private meta unsafe def evalRatPolyUnsafe (e : Expr) : MetaM (DensePoly Rat) := do
+  let type ← inferType e
+  evalExpr (DensePoly Rat) type e
+
+@[implemented_by evalRatPolyUnsafe]
+meta opaque evalRatPoly (e : Expr) : MetaM (DensePoly Rat)
+
 private meta unsafe def evalFormulaUnsafe (n : Nat) (e : Expr) :
     MetaM (RealFormula.Prenex n) :=
   evalExpr (RealFormula.Prenex n)

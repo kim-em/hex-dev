@@ -17,6 +17,35 @@ private abbrev fieldCoefficient : Hex.RealAlgebraicNumber :=
   Hex.RCF.RealCoefficients.Coefficients.ofField
     Hex.RCF.RealCoefficients.CubeTwo.realAlgebraic fieldCoordinate
 
+private abbrev literalCubic : Hex.RealAlgebraicNumber :=
+  Hex.RCF.RealCoefficients.Selected.real
+    Hex.RCF.RealCoefficients.CubeTwo.polynomial
+    Hex.RCF.RealCoefficients.CubeTwo.square
+    (by decide) (by decide) (by rfl) (by decide) (by decide)
+    Hex.RCF.RealCoefficients.CubeTwo.checked
+    Hex.RCF.RealCoefficients.CubeTwo.squarefree (by decide)
+
+private abbrev literalSquare : Hex.RealAlgebraicNumber :=
+  Hex.RCF.RealCoefficients.Selected.real
+    Hex.RCF.RealCoefficients.SquareTwo.polynomial
+    Hex.RCF.RealCoefficients.SquareTwo.square
+    (by decide) (by decide) (by rfl) (by decide) (by decide)
+    Hex.RCF.RealCoefficients.SquareTwo.checked
+    Hex.RCF.RealCoefficients.SquareTwo.squarefree (by decide)
+
+private abbrev genericGenerator : Hex.AlgebraicNumber := literalCubic.toAlgebraic
+
+private abbrev genericCoordinate : Hex.QAdjoin genericGenerator :=
+  (genericGenerator.toQAdjoin * genericGenerator.toQAdjoin + 1) / 2
+
+private abbrev genericCoefficient : Hex.RealAlgebraicNumber :=
+  Hex.RCF.RealCoefficients.Selected.field
+    Hex.RCF.RealCoefficients.CubeTwo.polynomial
+    Hex.RCF.RealCoefficients.CubeTwo.square
+    (by decide) (by decide) (by rfl) (by decide) (by decide)
+    Hex.RCF.RealCoefficients.CubeTwo.checked
+    Hex.RCF.RealCoefficients.CubeTwo.squarefree (by decide) genericCoordinate
+
 set_option maxRecDepth 2048
 set_option maxHeartbeats 1000000
 
@@ -29,6 +58,9 @@ example : ∀ x : ℝ, x ^ 2 + 1 > 0 := by
 example : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 > 0 := by
   rcf
 
+example : ∀ x : ℝ, x ^ 2 + literalSquare.toReal > 0 := by
+  rcf
+
 example : ∃ x : ℝ, Real.sqrt 2 < x ∧ x < (3 : ℝ) / 2 := by
   rcf
 
@@ -37,6 +69,12 @@ example : ∀ x : ℝ, x ^ 2 + (2 : ℝ) ^ (1 / 3 : ℝ) > 0 := by
 
 example : ∀ x : ℝ,
     x ^ 2 + Hex.RCF.RealCoefficients.CubeTwo.realAlgebraic.toReal > 0 := by
+  rcf
+
+example : ∀ x : ℝ, x ^ 2 + literalCubic.toReal > 0 := by
+  rcf
+
+example : ∀ x : ℝ, x ^ 2 + genericCoefficient.toReal > 0 := by
   rcf
 
 example : ∀ x : ℝ,

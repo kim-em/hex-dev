@@ -106,10 +106,10 @@ canonical real algebraic number. -/
 abbrev square : DyadicSquare :=
   ⟨Dyadic.ofInt 1290 >>> (10 : Int), 0, 12⟩
 
-private theorem checked : polynomial.CheckedIrreducible :=
+theorem checked : polynomial.CheckedIrreducible :=
   Field.checkedIrreducible polynomial (.eisenstein 2 0) (by decide +kernel) (by decide)
 
-private theorem squarefree : HasOnlySimpleRoots polynomial := by
+theorem squarefree : HasOnlySimpleRoots polynomial := by
   have hne : polynomial ≠ 0 := by decide
   letI : polynomial.CheckedIrreducible := checked
   exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable polynomial hne).mpr

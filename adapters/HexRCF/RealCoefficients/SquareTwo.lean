@@ -95,4 +95,16 @@ theorem valuation (s : DyadicSquare)
   fin_cases i
   simpa [hvalue, Hex.RealFormula.append] using value s hw hp hreal hpositive
 
+abbrev square : DyadicSquare :=
+  ⟨Dyadic.ofInt 181 >>> (7 : Int), 0, 8⟩
+
+theorem checked : polynomial.CheckedIrreducible :=
+  Field.checkedIrreducible polynomial (.eisenstein 2 0) (by decide +kernel) (by decide)
+
+theorem squarefree : HasOnlySimpleRoots polynomial := by
+  have hne : polynomial ≠ 0 := by decide
+  letI : polynomial.CheckedIrreducible := checked
+  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable polynomial hne).mpr
+    (ZPoly.CheckedIrreducible.separable polynomial)
+
 end Hex.RCF.RealCoefficients.SquareTwo

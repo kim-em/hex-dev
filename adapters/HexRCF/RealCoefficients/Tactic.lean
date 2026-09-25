@@ -42,6 +42,90 @@ private meta def checkGuards (source : Reify.Source) : MetaM Unit := do
       throwError "rcf: could not prove a closed divisor nonzero"
     check (← instantiateMVars proof)
 
+private meta def selectedArgs? (source : Reify.Source) :
+    MetaM (Option (Array Expr × Option Expr)) := do
+  if source.coefficients.size != 1 then return none
+  let coefficient := source.coefficients[0]!
+  unless coefficient.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return none
+  let selected ← withTransparency .reducible (whnf coefficient.appArg!)
+  if selected.isAppOfArity ``Selected.real 10 then
+    return some (selected.getAppArgs, none)
+  if selected.isAppOfArity ``Selected.field 11 then
+    let args := selected.getAppArgs
+    return some (args.extract 0 10, some args[10]!)
+  return none
+
+private meta def proveSelected (source : Reify.Source) (args : Array Expr)
+    (fieldValue? : Option Expr) : MetaM Expr := do
+  checkGuards source
+  let p ← FieldRuntime.evalZPoly args[0]!
+  let s ← FieldRuntime.evalSquare args[1]!
+  let formula ← FieldRuntime.evalFormula 1 source.formula
+  let (quantifier, qf) ← match formula with
+    | .quant q (.matrix qf) => pure (q, qf)
+    | _ => throwError "rcf: expected one real quantifier over a matrix"
+  let pExpr : Q(ZPoly) ← FieldLiteral.zpolyExpr p
+  let sExpr : Q(DyadicSquare) ← FieldLiteral.squareExpr s
+  let hwExpr ← mkDecideProof (q(atomWitness $pExpr $sExpr) : Q(Prop))
+  let hpExpr ← mkDecideProof
+    (q((mahlerPrec $pExpr : Int) ≤ ($sExpr).prec) : Q(Prop))
+  let rootExpr ← mkAppM ``SimpleRoot.ofSquare #[pExpr, sExpr, hwExpr, hpExpr]
+  if hw : atomWitness p s then
+    if hp : (mahlerPrec p : Int) ≤ s.prec then
+      let f ← match fieldValue? with
+        | some v => FieldRuntime.evalRatPoly (← mkAppM ``PolyQuot.coeffs #[v])
+        | none => pure (DensePoly.ofList [0, 1])
+      let value : PolyQuot p (SimpleRoot.ofSquare p s hw hp) :=
+        PolyQuot.ofSquare p s f hw hp
+      let valuesExpr ← FieldLiteral.valuesExpr pExpr rootExpr (fun _ : Fin 1 => value)
+      let formulaWhnf ← whnf source.formula
+      let matrixExpr ← whnf formulaWhnf.getAppArgs.back!
+      let qfExpr := matrixExpr.getAppArgs.back!
+      let checkedIrred := args[7]!
+      let instType ← mkAppM ``ZPoly.CheckedIrreducible #[pExpr]
+      let proof ← if hi : ZPoly.isIrreducible p = true then
+          if hd : 0 < p.natDegree then
+            letI : p.CheckedIrreducible := ⟨hi, hd⟩
+            withLocalDecl `inst .instImplicit instType fun inst => do
+              let result ← FieldLiteral.prove pExpr rootExpr valuesExpr qfExpr
+                (fun _ : Fin 1 => value) qf quantifier
+              pure (mkApp (← mkLambdaFVars #[inst] result) checkedIrred)
+          else throwError "rcf: selected polynomial has zero degree"
+        else throwError "rcf: selected polynomial is not irreducible"
+      let valueZero := mkApp valuesExpr q((0 : Fin 1))
+      let fExpr ← FieldLiteral.ratPolyExpr f
+      let coordinate ← mkAppM ``PolyQuot.ofSquare
+        #[pExpr, sExpr, fExpr, hwExpr, hpExpr]
+      let hvalue ← mkEqRefl valueZero
+      unless ← isDefEq (← inferType hvalue) (← mkAppM ``Eq #[valueZero, coordinate]) do
+        throwError "rcf: literal generator coordinate differs from its selected root"
+      let hreal ← mkDecideProof (q(($sExpr).meetsRealAxis = true) : Q(Prop))
+      let eqVal ← match fieldValue? with
+        | none => do
+          mkAppM ``Selected.valuation
+            #[pExpr, sExpr, hwExpr, hpExpr, args[4]!, args[5]!, args[6]!,
+              checkedIrred, args[8]!, hreal, valuesExpr, hvalue]
+        | some v => do
+          let coeffs ← mkAppM ``PolyQuot.coeffs #[v]
+          let goal ← mkAppM ``Eq #[coeffs, fExpr]
+          let hcoeffMVar ← mkFreshExprMVar goal
+          let remaining ← Lean.Elab.runTactic' hcoeffMVar.mvarId!
+            (← `(tactic| decide +kernel))
+          unless remaining.isEmpty do
+            throwError "rcf: field coordinate coefficients differ from their literal encoding"
+          let hcoeff ← instantiateMVars hcoeffMVar
+          mkAppM ``Selected.field_valuation
+            #[pExpr, sExpr, hwExpr, hpExpr, args[4]!, args[5]!, args[6]!,
+              checkedIrred, args[8]!, hreal, v, fExpr, hcoeff, valuesExpr, hvalue]
+      let congr ← withLocalDeclD `ρ (← inferType source.valuation) fun ρ => do
+        let body ← mkAppM ``Hex.RealFormula.Prenex.toProp #[source.formula, ρ]
+        mkAppM ``congrArg #[← mkLambdaFVars #[ρ] body, eqVal]
+      let specialized ← mkAppM ``Eq.mp #[congr, proof]
+      let final ← mkAppM ``Iff.mp #[source.proof, specialized]
+      return final
+    else throwError "rcf: selected square has insufficient precision"
+  else throwError "rcf: selected square failed its root witness"
+
 private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
   unless source.coefficients.size == 1 do
     throwError "rcf: this algebraic-coefficient path needs one coefficient"
@@ -129,6 +213,8 @@ private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
 
 @[rcf_handler] meta def handle : Handler := fun target => do
   let .ok source ← Reify.prepare target | return .declined
+  if let some (args, fieldValue?) ← selectedArgs? source then
+    return .proved (← proveSelected source args fieldValue?)
   if source.coefficients.size != 1 then return .declined
   let isSquare ← same source.coefficients[0]! q(Real.sqrt 2)
   let isCube ← same source.coefficients[0]! q((2 : ℝ) ^ (1 / 3 : ℝ))

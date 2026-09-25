@@ -67,6 +67,10 @@ private def fieldExpr {p : ZPoly} {root : SimpleRoot p}
 meta def zpolyExpr (p : ZPoly) : MetaM Expr :=
   denseExpr (fun (z : Int) => pure (mkIntLit z)) p
 
+/-- A rational coordinate polynomial as printable coefficient data. -/
+meta def ratPolyExpr (p : DensePoly Rat) : MetaM Expr :=
+  denseExpr ratExpr p
+
 /-- The selected dyadic square as printable data. -/
 meta def squareExpr (s : DyadicSquare) : MetaM Expr := do
   mkAppM ``DyadicSquare.mk
