@@ -67,6 +67,65 @@ theorem noncanonical_tree (context : Nat) (domain : Sturm.PreparedDomain Rep)
     rcases h with h | h | h <;>
       change -1 ≤ (value a).num.sign ∧ (value a).num.sign ≤ 1 <;> omega
 
+/-- The finite completeness theorem also uses ordinary total operations on
+noncanonical representatives. Query interpretation remains an explicit premise. -/
+theorem noncanonical_complete (context : Nat) (domain : Sturm.PreparedDomain Rep)
+    (hsign : domain.sign = Hex.TarskiTests.Noncanonical.sign)
+    (qs : List Poly) (reduced : Bool) (xs : List (List Int))
+    (ho : Observations qs.length xs)
+    (hv : QueryModel context domain qs reduced (nodePreparation reduced domain qs none) xs) :
+    ∃ t, buildPrepared context domain qs reduced = .ok t ∧
+      t.val.Counted qs.length xs ∧ t.val.Interprets qs.length xs := by
+  apply buildPrepared_complete value value_eq_zero value_one value_add value_sub value_mul
+    value_neg value_inv Hex.TarskiTests.Noncanonical.sign _ _ _ context domain hsign qs reduced xs ho hv
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_eq_one_iff_pos, Rat.num_pos]
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_neg_iff, Rat.num_neg]
+  · intro a
+    have h := Int.sign_trichotomy (value a).num
+    rcases h with h | h | h <;>
+      change -1 ≤ (value a).num.sign ∧ (value a).num.sign ≤ 1 <;> omega
+
+/-- The prepared query on a constant head is zero, verified by ordinary
+kernel reduction after substituting the opaque domain's literal bindings. -/
+theorem constant_query (d : Sturm.PreparedDomain Rat)
+    (hs : d.sign = Sturm.orderSign) (hp : d.head = 1)
+    (hl : d.lower = .negInf) (hu : d.upper = .posInf) :
+    (Sturm.certifyPrepared (10377 : Nat) d
+      (queryPoly (QueryReduction.operands [] (nodePreparation false d [] none)) []
+        (nodeReduction false d (QueryReduction.operands [] (nodePreparation false d [] none)) []))).value = 0 := by
+  simp only [nodePreparation, nodeReduction, useReduction, Bool.false_and, Bool.false_eq_true,
+    ↓reduceIte, QueryReduction.operands, queryPoly, moment]
+  rw [Sturm.certifyPrepared, d.produced, hs, hp, hl, hu]
+  decide +kernel
+
+/-- No observations on a constant head satisfy the actual query premise for
+an empty-query leaf. Prepared objects retain their ordinary private constructor. -/
+theorem empty_model (d : Sturm.PreparedDomain Rat)
+    (hs : d.sign = Sturm.orderSign) (hp : d.head = 1)
+    (hl : d.lower = .negInf) (hu : d.upper = .posInf) :
+    QueryModel (10377 : Nat) d [] false none [] := by
+  rw [QueryModel]
+  refine ⟨?_, trivial⟩
+  intro es hlen _
+  have he : es = [] := List.eq_nil_of_length_eq_zero hlen
+  subst es
+  exact constant_query d hs hp hl hu
+
+/-- A falsely claimed root on the same domain contradicts its actual constant
+moment; the query premise is not implied by shape or invertibility alone. -/
+theorem false_model (d : Sturm.PreparedDomain Rat)
+    (hs : d.sign = Sturm.orderSign) (hp : d.head = 1)
+    (hl : d.lower = .negInf) (hu : d.upper = .posInf) :
+    ¬ QueryModel (10377 : Nat) d [] false none [[]] := by
+  intro h
+  rw [QueryModel] at h
+  have he := h.1 [] rfl rfl
+  have hn := constant_query d hs hp hl hu
+  change _ = (1 : Int) at he
+  omega
+
 @[expose] def head : DensePoly Rat := DensePoly.ofCoeffs #[-1, 0, 1]
 @[expose] def indeterminate : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
 
@@ -300,5 +359,29 @@ example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := 
 /-- info: 'Hex.SignDet.Node.parent_system' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Node.parent_system
+
+/-- info: 'Hex.SignDet.buildNode_counted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildNode_counted
+/-- info: 'Hex.SignDet.buildTreeFrom_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildTreeFrom_complete
+/-- info: 'Hex.SignDet.buildTree_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildTree_complete
+/-- info: 'Hex.SignDet.buildPrepared_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildPrepared_complete
+/-- info: 'Hex.SignDetMathlib.Conformance.noncanonical_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms noncanonical_complete
+
+/-- info: 'Hex.SignDetMathlib.Conformance.empty_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms empty_model
+
+/-- info: 'Hex.SignDetMathlib.Conformance.false_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms false_model
 
 end Hex.SignDetMathlib.Conformance
