@@ -203,6 +203,16 @@ theorem value_complex (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = x)
   rw [he]
   rfl
 
+/-- The generator of an existing real `QAdjoin` field is interpreted at its
+selected real value. This is the one-coefficient bridge used before taking a
+common field for several independent coefficients. -/
+theorem generator_value (a : RealAlgebraicNumber) :
+    value a.toAlgebraic.rep a.toAlgebraic.toQAdjoin = a.toReal := by
+  apply Complex.ofReal_injective
+  rw [value_complex a.toAlgebraic.rep a.toAlgebraic.rep_mk
+    ((AlgebraicNumber.isReal_iff a.toAlgebraic).mp a.property),
+    AlgebraicNumber.toQAdjoin_toComplex, RealAlgebraicNumber.ofReal_toReal]
+
 variable (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = x)
 variable (hr : rep.root.im = 0)
 include hrep hr
