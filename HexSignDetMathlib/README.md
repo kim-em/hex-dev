@@ -107,7 +107,9 @@ the finite query model for the actual prepared producer and proves its success
 and counts from the named #10389 root-sum statement. `SelectedRoot` proves that
 accepted count-one partial and full descriptors select a unique root, and
 `root_derivatives` identifies their signs with formal iterated derivatives
-through `derivativesFrom_get`.
+through `derivativesFrom_get`. `SelectedSigns.values_at_root` and
+`value_at_root` prove that every checked requested sign equals evaluation at
+that same selected root, including the public one-query accessor.
 The executable API still exposes internal errors, and the domain-exact total
 wrapper remains to be implemented.
 

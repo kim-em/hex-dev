@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSignDet.Descriptor
+public import HexSignDet.SelectedSigns
 public import HexSignDetMathlib.RootModel
 public import HexSignDetMathlib.Derivatives
 
@@ -99,5 +99,53 @@ theorem Descriptor.root_unique {context : Ctx} (d : Descriptor E Ctx sign contex
     (hxs : signsAt f hz d.raw.queries x = d.raw.signs) :
     x = d.root f hz h1 ha hs hm hnat hsign := by
   exact (Classical.choose_spec (d.existsUnique_root f hz h1 ha hs hm hnat hsign)).2 x ⟨hx, hxs⟩
+
+include h1 ha hs hm hnat hsign in
+/-- Every sign returned by checked joint determination is the sign of the
+requested polynomial at the root selected by the descriptor. -/
+theorem SelectedSigns.values_at_root {context : Ctx}
+    {d : Descriptor E Ctx sign context} {qs : List (DensePoly E)}
+    (s : SelectedSigns d qs) :
+    s.values.toList = signsAt f hz qs (d.root f hz h1 ha hs hm hnat hsign) := by
+  let x := d.root f hz h1 ha hs hm hnat hsign
+  obtain ⟨hx, hsx⟩ := d.root_spec f hz h1 ha hs hm hnat hsign
+  obtain ⟨hc, _⟩ := s.check_eq
+  have ho := rootObservations_valid f hz d.raw.head (d.raw.queries ++ qs)
+    d.raw.lower d.raw.upper
+  have hm := s.evidence.check_interprets f hz h1 ha hs hm hnat sign hsign
+    context d.raw.head d.raw.lower d.raw.upper (d.raw.queries ++ qs) hc
+  have hobs : signsAt f hz (d.raw.queries ++ qs) x ∈
+      rootObservations f hz d.raw.head (d.raw.queries ++ qs)
+        d.raw.lower d.raw.upper := by
+    simp only [rootObservations, List.mem_map, Finset.mem_toList]
+    exact ⟨x, hx, rfl⟩
+  have hprefix : (signsAt f hz (d.raw.queries ++ qs) x).take d.raw.queries.length =
+      d.raw.signs := by
+    simpa [signsAt, x] using hsx
+  have hrow := s.signs_eq ho hm hobs hprefix
+  have hlength : d.raw.signs.length = d.raw.queries.length := by
+    simpa [signsAt] using congrArg List.length hsx.symm
+  have htail := congrArg (List.drop d.raw.queries.length) hrow
+  have hleft : (d.raw.signs ++ s.values.toList).drop d.raw.queries.length =
+      s.values.toList := by
+    rw [← hlength]
+    simp
+  rw [hleft] at htail
+  simpa [signsAt, x] using htail.symm
+
+include h1 ha hs hm hnat hsign in
+/-- The public one-query accessor has the sign of that polynomial at the
+selected real root. -/
+theorem SelectedSigns.value_at_root {context : Ctx}
+    {d : Descriptor E Ctx sign context} {q : DensePoly E}
+    (s : SelectedSigns d [q]) :
+    s.value = (SignType.sign ((interpret f hz q).eval
+      (d.root f hz h1 ha hs hm hnat hsign)) : Int) := by
+  have h := s.values_at_root f hz h1 ha hs hm hnat hsign
+  have hhead := congrArg List.head? h
+  have hfirst : s.values.toList.head? = some s.values[0] := by
+    simp [List.head?_eq_getElem?]
+  rw [hfirst] at hhead
+  simpa [SelectedSigns.value, signsAt] using Option.some.inj hhead
 
 end Hex.SignDet
