@@ -24,6 +24,7 @@ def InInterval (a b : Endpoint R) (x : R) : Prop :=
   (match b with | .posInf => True | .finite b => x < b | .negInf => False)
 
 omit [Field R] in
+/-- Membership in an open interval reduces to its two endpoint inequalities. -/
 theorem inInterval_iff (a b : Endpoint R) (x : R) :
     InInterval a b x ↔
       (match a with | .negInf => True | .finite a => a < x | .posInf => False) ∧
