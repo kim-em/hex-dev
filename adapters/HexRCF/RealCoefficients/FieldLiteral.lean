@@ -63,6 +63,29 @@ private def fieldExpr {p : ZPoly} {root : SimpleRoot p}
   let coeffs ← denseExpr ratExpr value.coeffs
   mkAppM ``PolyQuot.reduce #[pExpr, rootExpr, coeffs]
 
+/-- The defining integer polynomial as printable coefficient data. -/
+meta def zpolyExpr (p : ZPoly) : MetaM Expr :=
+  denseExpr (fun (z : Int) => pure (mkIntLit z)) p
+
+/-- The selected dyadic square as printable data. -/
+meta def squareExpr (s : DyadicSquare) : MetaM Expr := do
+  mkAppM ``DyadicSquare.mk
+    #[← dyadicExpr s.re, ← dyadicExpr s.im, mkIntLit s.prec]
+
+/-- A literal finite coefficient valuation. The default is never selected by
+a `Fin n` argument; it makes the expression total without a proof-bearing
+array lookup in every formula occurrence. -/
+meta def valuesExpr {p : ZPoly} {root : SimpleRoot p} {n : Nat}
+    (pExpr rootExpr : Expr) (values : Fin n → PolyQuot p root) : MetaM Expr := do
+  let ty ← inferType (← fieldExpr pExpr rootExpr (0 : PolyQuot p root))
+  let entries ← (List.finRange n).mapM fun i => fieldExpr pExpr rootExpr (values i)
+  let literals := listLit ty entries
+  let fallback ← fieldExpr pExpr rootExpr (0 : PolyQuot p root)
+  withLocalDeclD `i (mkApp (mkConst ``Fin) (mkNatLit n)) fun i => do
+    let index ← mkAppM ``Fin.val #[i]
+    let body ← mkAppM ``List.getD #[literals, index, fallback]
+    mkLambdaFVars #[i] body
+
 private def endpointExpr {E : Type} (ty : Expr) (elem : E → MetaM Expr) :
     Endpoint E → MetaM Expr
   | .negInf => return mkApp (mkConst ``Endpoint.negInf [Level.zero]) ty
