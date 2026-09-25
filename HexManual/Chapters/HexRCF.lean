@@ -465,7 +465,10 @@ Hex values `CubeTwo.realAlgebraic` and `CubeTwo.shifted`. For a different
 coordinate in a chosen number field, write a `Selected.field` expression with
 the field element and its checked chosen root, as shown below. In these
 examples, the power in `(2 : ℝ) ^ (1 / 3 : ℝ)` defines a closed coefficient;
-the quantified variable still occurs in an ordinary polynomial.
+the quantified variable still occurs in an ordinary polynomial. Products with
+rational constants are supported, but expressions that divide by one of these
+named algebraic coefficients currently decline; express an inverse as a
+checked field coordinate when it is needed.
 
 These examples use the selected real root of `X³ − 2`. The adapter records an
 isolating square and verifies its root witness. It reconstructs Hex's
@@ -479,7 +482,12 @@ checked value `CubeTwo.shifted`. The definitions `CubeTwo.realAlgebraic` and
 their types and use. The second construction below takes a checked selected
 root directly, computes `(a² + 1) / 2` with ordinary {name}`Hex.QAdjoin`
 arithmetic, and uses {name}`Hex.RCF.RealCoefficients.Selected.field` to retain
-the same root when converting back to a real algebraic number:
+the same root when converting back to a real algebraic number. These examples
+set `maxRecDepth` to `2048` and `maxHeartbeats` to `1000000` so Lean can
+elaborate their literal certificates; users may need the same options for
+similar goals. On the shared host, a fresh build of the complete example
+module took 142.698 seconds under heavy load. That is a module timing, not a
+per-call timing.
 
 ```lean
 open Hex.RCF.RealCoefficients
@@ -556,9 +564,11 @@ checks the signs on its root cells and proves existence. The two
 proof and that nonpolynomial syntax in the quantified variable is rejected.
 The adapter's source reifier preserves explicit coefficient aliases and
 original divisor obligations before normalization. These examples use
-`abbrev` aliases, which Lean unfolds during recognition; arbitrary opaque
-definitions are not recognized as selected coefficients. For supported
-sentences, a divisor must be proved nonzero before certificate construction.
+`abbrev` aliases, which Lean unfolds during recognition. The general
+`Selected.real` and `Selected.field` path does not unfold an opaque `def`
+wrapper, although the four named values may still be recognized through
+definitional equality. For supported sentences, a divisor must be proved
+nonzero before certificate construction.
 
 The algebraic examples use the generic accepted-query soundness theorem
 `HexRealRootsMathlib.Tarski.check_rootSum`. Its proof is currently admitted in

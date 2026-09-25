@@ -122,6 +122,7 @@ jobs:
         run: |
           python3 -m unittest scripts/test_check_dag.py
           python3 scripts/check_dag.py
+          python3 scripts/ci/check_named_admissions.py
       - name: Check the released manifest and Phase-7 admission state
         run: |
           python3 -m unittest scripts/release/test_check_released_manifest.py
