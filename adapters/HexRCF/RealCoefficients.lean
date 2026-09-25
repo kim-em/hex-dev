@@ -17,6 +17,7 @@ public import HexRCF.RealCoefficients.LiteralSign
 public import HexRCF.RealCoefficients.FieldSpecialize
 public import HexRCF.RealCoefficients.SignInputs
 public import HexRCF.RealCoefficients.FieldCarrier
+public import HexRCF.RealCoefficients.Carrier
 public import HexRCF.RealCoefficients.IsolationBuild
 public import HexRCF.RealCoefficients.Isolations
 public import HexRCF.RealCoefficients.IsolationSemantics

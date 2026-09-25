@@ -19,6 +19,8 @@ namespace Hex.RCF.RealCoefficients.FieldSpecialize
 open Hex.RealFormula
 open scoped HexMvPolyMathlib
 
+-- Mathlib's ring dictionary is used only for the correspondence proof; the
+-- literal compiler below continues to use the native dense operations.
 attribute [local instance 2500] Semiring.toGrindSemiring
 
 variable {D : Type u} [CommRing D] [DecidableEq D]
@@ -80,6 +82,7 @@ coefficient operations. No proof-bearing field instance is evaluated. -/
 
 noncomputable local instance : Field (PolyQuot p root) := Hex.PolyQuot.field p root
 
+omit [ZPoly.CheckedIrreducible p] in
 /-- Rational sample points retain their ordinary real value. -/
 theorem value_ofRat (rep : RefinedIsolation p)
     (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0) (q : Rat) :

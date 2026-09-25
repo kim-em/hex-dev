@@ -543,7 +543,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.LiteralSign,
     `HexRCF.RealCoefficients.FieldSpecialize,
     `HexRCF.RealCoefficients.SignInputs,
-    `HexRCF.RealCoefficients.FieldCarrier,
+    `HexRCF.RealCoefficients.FieldCarrier, `HexRCF.RealCoefficients.Carrier,
     `HexRCF.RealCoefficients.IsolationCheck, `HexRCF.RealCoefficients.Isolations,
     `HexRCF.RealCoefficients.IsolationBuild, `HexRCF.RealCoefficients.IsolationSemantics,
     `HexRCF.RealCoefficients.RadicalCheck, `HexRCF.RealCoefficients.Radical,

@@ -45,6 +45,24 @@ private def specialized := Specialize.polynomial (fun _ : Fin 2 => cubic) cancel
 #guard (Specialize.polynomial (fun _ : Fin 2 => cubic) 0).isZero
 #guard (Specialize.polynomial (fun _ : Fin 2 => cubic) (MvPoly.C 3)).coeff 0 = 3
 
+private def zeroAtom : RealFormula.QF 1 :=
+  .or (.atom ⟨0, .eq⟩) (.atom ⟨MvPoly.X 0, .gt⟩)
+
+private def repeatedAtom : RealFormula.QF 1 :=
+  .or (.atom ⟨MvPoly.X 0, .eq⟩) (.atom ⟨MvPoly.X 0, .gt⟩)
+
+-- Zero atoms contribute no factor; repeated atoms still await squarefree preparation.
+#guard (Specialize.product (fun i : Fin 0 => i.elim0) zeroAtom).natDegree == 1
+#guard (Specialize.product (fun i : Fin 0 => i.elim0) repeatedAtom).natDegree == 2
+
+/-- info: 'Hex.RCF.RealCoefficients.Specialize.atom_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Specialize.atom_roots
+
+/-- info: 'Hex.RCF.RealCoefficients.Specialize.product_ne_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Specialize.product_ne_zero
+
 private meta def prepared (source : Expr) (guards : Nat) : MetaM Reify.Source := do
   let result ← match ← Reify.prepare source with
     | .ok result => pure result

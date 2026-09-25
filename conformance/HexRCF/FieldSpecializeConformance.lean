@@ -97,4 +97,31 @@ private def ratDomain? : Option (Sturm.PreparedDomain Rat) :=
       Sturm.check recorded () ratHead ratQuery (.finite 1) (.finite 2)
         cert.value cert
 
+/-- info: 'Hex.RCF.RealCoefficients.SignInputs.certificate_check_congr' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms SignInputs.certificate_check_congr
+
+private def quadratic : DensePoly Rat := DensePoly.ofList [-2, 0, 1]
+private def quadraticDomain? : Option (Sturm.PreparedDomain Rat) :=
+  Sturm.prepare Sturm.orderSign quadratic .negInf .posInf
+
+-- Infinite endpoints use leading coefficients; the zero query and a powered
+-- query exercise both the empty and longer signed-remainder witnesses.
+#guard match quadraticDomain? with
+  | none => false
+  | some domain =>
+      let zeroCert : TarskiCertificate Rat Rat Unit :=
+        Sturm.certifyPrepared () domain 0
+      let powered : DensePoly Rat := DensePoly.ofList [1, 0, 1]
+      let powerCert : TarskiCertificate Rat Rat Unit :=
+        Sturm.certifyPrepared () domain (powered * powered)
+      let zeroKeys := SignInputs.certificate quadratic .negInf .posInf zeroCert
+      let powerKeys := SignInputs.certificate quadratic .negInf .posInf powerCert
+      let recorded (keys : List Rat) : Rat → Int := fun a =>
+        if keys.contains a then Sturm.orderSign a else 2
+      Sturm.check (recorded zeroKeys) () quadratic 0 .negInf .posInf
+        zeroCert.value zeroCert &&
+      Sturm.check (recorded powerKeys) () quadratic (powered * powered) .negInf .posInf
+        powerCert.value powerCert
+
 end Hex.RCF.FieldSpecializeConformance
