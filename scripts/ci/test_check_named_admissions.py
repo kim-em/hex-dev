@@ -19,9 +19,14 @@ class AdmissionScannerTests(unittest.TestCase):
         self.assertIsNotNone(ADMISSION.search(code_only('def s := r"\\"\ntheorem bad : False := by sorry\n')))
 
     def test_other_admissions(self):
-        for token in ("mkSorry", "admitGoal", "sorryAx", "axiom bad : False", "stop"):
+        for token in ("mkSorry", "admitGoal", "sorryAx", "axiom bad : False",
+                      "private axiom bad : False", "constant bad : False", "stop"):
             with self.subTest(token=token):
                 self.assertIsNotNone(ADMISSION.search(code_only(token)))
+
+    def test_interpolated_admission_fails_closed(self):
+        with self.assertRaises(ValueError):
+            code_only('def x := s!"{(by sorry : Nat)}"')
 
 
 if __name__ == "__main__":

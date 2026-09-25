@@ -14,7 +14,7 @@ ROOT_MODULES = (
     "HexSignDetMathlib.SelectedRoot",
 )
 ADMISSION = re.compile(
-    r"\b(?:sorry|admit|mkSorry|admitGoal|sorryAx)\b|^\s*(?:axiom\b|stop\s*$)",
+    r"\b(?:sorry|admit|mkSorry|admitGoal|sorryAx)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*(?:axiom|constant)\b|^\s*stop\s*$",
     re.MULTILINE,
 )
 DECLARATION = re.compile(
@@ -80,6 +80,11 @@ def code_only(source: str) -> str:
                 result.append(source[i])
                 i += 1
         elif source[i] == '"':
+            if source[max(0, i - 2):i] == "s!":
+                # An interpolated string may contain elaborated Lean terms.
+                end = source.find('"', i + 1)
+                if ADMISSION.search(source[i + 1:end if end >= 0 else len(source)]):
+                    raise ValueError("admission inside an interpolated string")
             quoted = True
             raw = i > 0 and source[i - 1] == "r" and (i == 1 or not source[i - 2].isalnum())
             result.append(" ")
