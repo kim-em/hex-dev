@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.MomentReplay
+public import HexSignDet.Matrix
 public import HexPolyMathlib.Interpret
 public import Mathlib.Basic.Sign.Basic
 
@@ -137,6 +138,25 @@ private theorem moment_sign (qs : List (DensePoly E)) (es : List Nat) (a : K) :
   simp only [Polynomial.eval_one, sign_one, one_mul, List.map_map,
     Function.comp_def, interpret_power f hz ha hm h1, Polynomial.eval_pow, sign_pow]
   exact (hf (qs.zip es) 0).symm
+
+include ha hm h1 in
+omit [Sub E] in
+/-- The sign of the polynomial moment is its integer matrix entry at the
+ordered sign vector. Truncated zip behavior agrees before the length guard. -/
+theorem moment_entry (qs : List (DensePoly E)) (es : List Nat) (a : K) :
+    (SignType.sign ((interpret f hz (moment qs es)).eval a) : Int) =
+      entry es (qs.map fun q => (SignType.sign ((interpret f hz q).eval a) : Int)) := by
+  rw [moment, fold_sign f hz ha hm, interpret_one f hz h1]
+  simp only [Polynomial.eval_one, sign_one, one_mul, List.map_map, Function.comp_def,
+    interpret_power f hz ha hm h1, Polynomial.eval_pow, sign_pow]
+  induction qs generalizing es with
+  | nil => cases es <;> simp [entry]
+  | cons q qs ih =>
+    cases es with
+    | nil => simp [entry]
+    | cons e es =>
+      simpa [entry] using congrArg
+        (fun z : Int => (SignType.sign ((interpret f hz q).eval a) : Int) ^ e * z) (ih es)
 
 include ha hm h1 in
 omit [Sub E] in

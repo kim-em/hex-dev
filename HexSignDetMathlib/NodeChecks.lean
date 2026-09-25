@@ -26,6 +26,27 @@ variable (hneg : ∀ a, sign a < 0 ↔ f a < 0)
 
 include hz h1 ha hs hm hn hi hpos hneg in
 omit [DecidableEq Ctx] in
+/-- The selected query preprocessing is valid before matrix solving. -/
+theorem nodePreparation_checks (domain : Sturm.PreparedDomain E)
+    (hsign : domain.sign = sign) (qs : List (DensePoly E)) (reduced : Bool)
+    (preparation : Option (QueryReduction E))
+    (hp : (match preparation with | none => true | some r => r.check sign domain.head qs) = true) :
+    (match nodePreparation reduced domain qs preparation with
+      | none => true | some r => r.check sign domain.head qs) = true := by
+  subst sign
+  unfold nodePreparation
+  by_cases hu : useReduction reduced domain = true
+  · simp only [hu, ↓reduceIte]
+    cases preparation with
+    | some r => exact hp
+    | none =>
+      apply QueryReduction.build_checks f hz h1 ha hs hm domain.sign hpos hn hi hneg
+      simp only [useReduction, Bool.and_eq_true, decide_eq_true_eq] at hu
+      exact hu.2
+  · simp [hu]
+
+include hz h1 ha hs hm hn hi hpos hneg in
+omit [DecidableEq Ctx] in
 /-- Node construction either retains the checked supplied preprocessing or
 builds valid preprocessing itself. The disabled path carries none. -/
 theorem buildNode_preparation (context : Ctx) (domain : Sturm.PreparedDomain E)
