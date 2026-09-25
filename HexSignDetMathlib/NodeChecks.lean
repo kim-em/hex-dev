@@ -57,18 +57,9 @@ theorem buildNode_preparation (context : Ctx) (domain : Sturm.PreparedDomain E)
     (hp : (match preparation with | none => true | some r => r.check sign domain.head qs) = true)
     (h : buildNode context domain qs rows columns reduced inverse preparation = .ok n) :
     (match n.preparation with | none => true | some r => r.check sign domain.head qs) = true := by
-  subst sign
   rw [(buildNode_evidence context domain qs rows columns reduced inverse preparation h).1]
-  unfold nodePreparation
-  by_cases hu : useReduction reduced domain = true
-  · simp only [hu, ↓reduceIte]
-    cases preparation with
-    | some r => exact hp
-    | none =>
-      apply QueryReduction.build_checks f hz h1 ha hs hm domain.sign hpos hn hi hneg
-      simp only [useReduction, Bool.and_eq_true, decide_eq_true_eq] at hu
-      exact hu.2
-  · simp [hu]
+  exact nodePreparation_checks f hz h1 ha hs hm hn hi sign hpos hneg
+    domain hsign qs reduced preparation hp
 
 include hz h1 ha hs hm hn hi hpos hneg in
 /-- Every successful node passes local replay under the generic coefficient

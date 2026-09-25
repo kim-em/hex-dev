@@ -22,12 +22,12 @@ variable (h1 : f 1 = 1) (ha : ∀ a b, f (a + b) = f a + f b)
 variable (hs : ∀ a b, f (a - b) = f a - f b)
 variable (hm : ∀ a b, f (a * b) = f a * f b)
 variable (hnat : ∀ n : Nat, f (n : E) = (n : K))
-variable (sign : E → Int) (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+variable {sign : E → Int} (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
 
 include h1 ha hs hm hnat hsign in
 /-- Count-one replay identifies exactly one root satisfying all selected
 formal-derivative signs jointly, for partial as well as full encodings. -/
-theorem Descriptor.existsUnique_root (context : Ctx) (d : Descriptor E Ctx sign context) :
+theorem Descriptor.existsUnique_root {context : Ctx} (d : Descriptor E Ctx sign context) :
     ∃! x, x ∈ Tarski.rootsIn (interpret f hz d.raw.head)
         (d.raw.lower.map f) (d.raw.upper.map f) ∧
       signsAt f hz d.raw.queries x = d.raw.signs := by
@@ -54,23 +54,23 @@ theorem Descriptor.existsUnique_root (context : Ctx) (d : Descriptor E Ctx sign 
   exact Finset.mem_singleton.mp member
 
 /-- The mathematical root identified by an accepted descriptor. -/
-noncomputable def Descriptor.root (context : Ctx) (d : Descriptor E Ctx sign context) : K :=
-  Classical.choose (d.existsUnique_root f hz h1 ha hs hm hnat sign hsign context)
+noncomputable def Descriptor.root {context : Ctx} (d : Descriptor E Ctx sign context) : K :=
+  Classical.choose (d.existsUnique_root f hz h1 ha hs hm hnat hsign)
 
 /-- The selected root lies in the descriptor's interval and satisfies all
 of its derivative signs at that same point. -/
-theorem Descriptor.root_spec (context : Ctx) (d : Descriptor E Ctx sign context) :
-    d.root f hz h1 ha hs hm hnat sign hsign context ∈
+theorem Descriptor.root_spec {context : Ctx} (d : Descriptor E Ctx sign context) :
+    d.root f hz h1 ha hs hm hnat hsign ∈
         Tarski.rootsIn (interpret f hz d.raw.head) (d.raw.lower.map f) (d.raw.upper.map f) ∧
-      signsAt f hz d.raw.queries (d.root f hz h1 ha hs hm hnat sign hsign context) = d.raw.signs := by
-  exact (Classical.choose_spec (d.existsUnique_root f hz h1 ha hs hm hnat sign hsign context)).1
+      signsAt f hz d.raw.queries (d.root f hz h1 ha hs hm hnat hsign) = d.raw.signs := by
+  exact (Classical.choose_spec (d.existsUnique_root f hz h1 ha hs hm hnat hsign)).1
 
 /-- Any root with the checked encoding denotes the same selected value. -/
-theorem Descriptor.root_unique (context : Ctx) (d : Descriptor E Ctx sign context) (x : K)
+theorem Descriptor.root_unique {context : Ctx} (d : Descriptor E Ctx sign context) (x : K)
     (hx : x ∈ Tarski.rootsIn (interpret f hz d.raw.head)
       (d.raw.lower.map f) (d.raw.upper.map f))
     (hxs : signsAt f hz d.raw.queries x = d.raw.signs) :
-    x = d.root f hz h1 ha hs hm hnat sign hsign context := by
-  exact (Classical.choose_spec (d.existsUnique_root f hz h1 ha hs hm hnat sign hsign context)).2 x ⟨hx, hxs⟩
+    x = d.root f hz h1 ha hs hm hnat hsign := by
+  exact (Classical.choose_spec (d.existsUnique_root f hz h1 ha hs hm hnat hsign)).2 x ⟨hx, hxs⟩
 
 end Hex.SignDet
