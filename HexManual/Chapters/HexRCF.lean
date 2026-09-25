@@ -8,6 +8,7 @@ import VersoManual
 
 import HexRCF
 import HexRCF.RealCoefficients
+import HexSignDet
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -625,6 +626,85 @@ that stated theorem. Thus these examples are kernel-checked relative to that
 one mathematical admission. The rational examples and their axiom inventory
 above do not depend on it. See {ref "hex-number-field"}[HexNumberField] and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
+
+# Signs and selected roots with BKR
+%%%
+tag := "hex-rcf-bkr"
+%%%
+
+The underlying sign-determination library can answer a more detailed question
+than whether a sentence is true: at the roots of `x² − 1`, which sign patterns
+of `x` and `x − 1` occur, and how many times? The checked table below has one
+root with signs `(−,−)` and one with `(+,0)`. Every omitted pattern has count
+zero. The query order is the order of the two supplied polynomials.
+
+```lean
+open Hex Hex.SignDet
+
+private def bkrHead : DensePoly Rat :=
+  DensePoly.ofCoeffs #[-1, 0, 1]
+private def bkrX : DensePoly Rat :=
+  DensePoly.ofCoeffs #[0, 1]
+
+#guard
+  match Sturm.prepare Sturm.orderSign bkrHead
+      .negInf .posInf with
+  | none => false
+  | some domain =>
+    match buildTablePrepared 7 domain [bkrX, bkrX - 1] with
+    | .error _ => false
+    | .ok table =>
+      table.rows.toList == [([-1, -1], 1), ([1, 0], 1)] &&
+        table.count [0, 0] == 0
+```
+
+Derivative signs identify a selected root. Here the positive root of
+`x² − 1` is selected by the sign of the first derivative. A second checked
+table gives the signs of three other polynomials at that root: `x`, `x − 1`,
+and `x² − 2` have signs `+`, `0`, and `−` respectively. The descriptor records
+the defining polynomial, interval and context as well as the derivative sign.
+
+```lean
+private def positiveRoot : RawDescriptor Rat Nat :=
+  ⟨7, bkrHead, .negInf, .posInf, [1], [1]⟩
+
+#guard
+  match Descriptor.build Sturm.orderSign 7 positiveRoot with
+  | .ok (.ok root) =>
+    match root.buildSigns
+        [bkrX, bkrX - 1, bkrX * bkrX - 2] with
+    | .ok signs => signs.values.toList == [1, 0, -1] &&
+        root.checkSigns [bkrX, bkrX - 1, bkrX * bkrX - 2]
+          signs.values signs.evidence
+    | _ => false
+  | _ => false
+```
+
+Two roots can be compared even if their defining polynomials differ. The
+comparison constructs a checked common squarefree polynomial and expresses
+both root selections in it. The first comparison finds `1 < 2`; the second
+finds the positive root of `x² − 2` equal to that same root in the product
+`(x² − 2)(x − 3)`.
+
+```lean
+private def rootTwo : RawDescriptor Rat Nat :=
+  ⟨7, bkrX - 2, .negInf, .posInf, [1], [1]⟩
+
+#guard
+  match Descriptor.build Sturm.orderSign 7 positiveRoot,
+      Descriptor.build Sturm.orderSign 7 rootTwo with
+  | .ok (.ok one), .ok (.ok two) =>
+    match one.buildComparison two with
+    | .ok result => result.order == .lt &&
+        result.common.check 7 positiveRoot.head rootTwo.head
+    | _ => false
+  | _, _ => false
+```
+
+These executable examples demonstrate checked table construction and replay.
+Their interpretation as statements about real roots uses the semantic theorem
+admitted in [#10389](https://github.com/kim-em/hex-dev/issues/10389), and the
+general Thom order proof awaits the specified Tau Ceti foundation theorem.
 
 # Cross-references
 %%%
