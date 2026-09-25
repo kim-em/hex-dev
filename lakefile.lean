@@ -24,7 +24,7 @@ require «lean-bench» from git
 
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @
-    "1cf325a0cf67aca2b04d76b5380ff6a9e410aefa"
+    "d13f23b723b8a846827a245b89c10fc7d3f11612"
 
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"
