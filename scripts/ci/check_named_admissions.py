@@ -17,7 +17,7 @@ ROOT_MODULES = (
     "HexSignDetMathlib.RootProducer",
     "HexSignDetMathlib.SelectedRoot",
 )
-SORRY = re.compile(r"\bsorry\b")
+ADMISSION = re.compile(r"\b(?:sorry|admit)\b")
 DECLARATION = re.compile(r"\b(?:theorem|lemma|axiom|def|example)\s+([A-Za-z0-9_]+)")
 
 
@@ -113,13 +113,13 @@ def check() -> None:
         raise ValueError(f"the optional adapter no longer imports {BRIDGE}")
     for relative in sorted(paths):
         source = code_only((ROOT / relative).read_text(encoding="utf-8"))
-        admissions = list(SORRY.finditer(source))
+        admissions = list(ADMISSION.finditer(source))
         if relative != BRIDGE:
             if admissions:
                 line = source.count("\n", 0, admissions[0].start()) + 1
-                raise ValueError(f"unapproved sorry in {relative}:{line}")
+                raise ValueError(f"unapproved admission in {relative}:{line}")
             continue
-        if len(admissions) != 1:
+        if len(admissions) != 1 or admissions[0].group() != "sorry":
             raise ValueError(f"expected one check_rootSum sorry in {BRIDGE}, got {len(admissions)}")
         declarations = list(DECLARATION.finditer(source, 0, admissions[0].start()))
         if not declarations or declarations[-1].group(1) != "check_rootSum":
