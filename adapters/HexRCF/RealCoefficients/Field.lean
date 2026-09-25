@@ -126,6 +126,15 @@ theorem value_realPoly (rep : RefinedIsolation p) (a : PolyQuot p x) :
   rw [hmap, Polynomial.eval_map]
   rfl
 
+/-- A value converted from an existing fixed number field has exactly the
+selected real embedding used by the fixed-field decision procedure. -/
+theorem ofField_value (generator : RealAlgebraicNumber)
+    (a : QAdjoin generator.toAlgebraic) :
+    (Coefficients.ofField generator a).toReal =
+      value generator.toAlgebraic.rep a := by
+  rw [Coefficients.ofField_toReal]
+  rfl
+
 /-- Bind every rational sign certificate to the defining polynomial and the
 specific literal square whose root names this field. -/
 @[expose] def checkSignTable (p : ZPoly) (s : DyadicSquare)
