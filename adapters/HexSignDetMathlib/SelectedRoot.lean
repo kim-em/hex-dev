@@ -196,4 +196,19 @@ theorem Reencoding.target_constraints {context : Ctx}
     htargetDomain htarget
   simpa only [heq] using hsource
 
+omit [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- The first copied constraint is the old defining equation. -/
+theorem Descriptor.constraints_head {context : Ctx}
+    (d : Descriptor E Ctx sign context) (x : K)
+    (h : signsAt f hz d.raw.constraints x = d.raw.constraintSigns) :
+    (interpret f hz d.raw.head).eval x = 0 := by
+  have hhead := congrArg List.head? h
+  simp only [signsAt, RawDescriptor.constraints, RawDescriptor.constraintSigns] at hhead
+  have hs0 : (SignType.sign ((interpret f hz d.raw.head).eval x) : Int) = 0 :=
+    Option.some.inj hhead
+  have hs0' : SignType.sign ((interpret f hz d.raw.head).eval x) = 0 := by
+    cases hsg : SignType.sign ((interpret f hz d.raw.head).eval x) <;>
+      simp [hsg] at hs0 ⊢
+  exact sign_eq_zero_iff.mp hs0'
+
 end Hex.SignDet
