@@ -53,6 +53,23 @@ structure Node.Counted (n : Node E Ctx) (arity : Nat) (xs : List (List Int)) : P
   cover : ∀ x ∈ xs, x ∈ n.system.support
   counts : SignDet.counts n.system.columns xs = n.system.counts
 
+/-- Exact finite counts and complete support at every retained node, with
+observations restricted along the same balanced slices as the producer. -/
+@[expose] def Replay.Counted (arity : Nat) (xs : List (List Int)) : Replay E Ctx → Prop
+  | .leaf n => n.Counted arity xs
+  | .split n l r =>
+    n.Counted arity xs ∧
+    l.Counted (min (arity / 2) arity) (xs.map (List.take (arity / 2))) ∧
+    r.Counted (arity - arity / 2) (xs.map (List.drop (arity / 2)))
+
+omit [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E] in
+/-- Project the root invariant while retaining the recursive guarantees. -/
+theorem Replay.Counted.node {t : Replay E Ctx} {arity : Nat} {xs : List (List Int)}
+    (h : t.Counted arity xs) : t.node.Counted arity xs := by
+  cases t with
+  | leaf n => exact h
+  | split n l r => exact h.1
+
 /-- Assemble a counted node from a complete candidate system. Query values
 are interpreted before solving; neither the inverse nor the final equation
 is used to infer coverage of omitted columns. -/
@@ -141,7 +158,7 @@ theorem buildTreeFrom_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
     (xs : List (List Int)) (ho : Observations qs.length xs)
     (hv : QueryModel context domain qs reduced preparation xs) :
     ∃ t, buildTreeFrom context domain qs reduced preparation = .ok t ∧
-      t.node.Counted qs.length xs ∧ t.Interprets qs.length xs := by
+      t.Counted qs.length xs ∧ t.Interprets qs.length xs := by
   rw [QueryModel] at hv
   by_cases small : qs.length ≤ 1
   · obtain ⟨s, hrows, hcols, hc, hvalues, cover⟩ := leaf_system qs.length small xs ho
@@ -157,23 +174,23 @@ theorem buildTreeFrom_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
       (xs.map (List.drop (qs.length / 2))) (by simpa only [List.length_drop] using ho.drop _) halves.2
     have mid : qs.length / 2 ≤ qs.length := Nat.div_le_self _ _
     have hlc : l.node.system.check (qs.length / 2) = true := by
-      simpa only [List.length_take, Nat.min_eq_left mid] using lc.checked
+      simpa only [List.length_take, Nat.min_eq_left mid] using lc.node.checked
     have hrc : r.node.system.check (qs.length - qs.length / 2) = true := by
-      simpa only [List.length_drop] using rc.checked
+      simpa only [List.length_drop] using rc.node.checked
     have cl : ∀ x ∈ xs, x.take (qs.length / 2) ∈ l.node.system.support := by
       intro x hx
-      exact lc.cover _ (List.mem_map.mpr ⟨x, hx, rfl⟩)
+      exact lc.node.cover _ (List.mem_map.mpr ⟨x, hx, rfl⟩)
     have cr : ∀ x ∈ xs, x.drop (qs.length / 2) ∈ r.node.system.support := by
       intro x hx
-      exact rc.cover _ (List.mem_map.mpr ⟨x, hx, rfl⟩)
+      exact rc.node.cover _ (List.mem_map.mpr ⟨x, hx, rfl⟩)
     obtain ⟨s, hrows, hcols, hc, hd, hi, _, hvalues⟩ :=
-      l.node.parent_system r.node hlc hrc lc.basis rc.basis xs cl cr
+      l.node.parent_system r.node hlc hrc lc.node.basis rc.node.basis xs cl cr
     have hs : s.check qs.length = true := by
       simpa only [Nat.add_sub_of_le mid] using hc
     have values : s.values = moments s.rows xs := by
       apply Vector.toList_inj.mp
       rw [hvalues, moments_toList, moments_toList, hrows,
-        (l.node.product_inverse r.node hlc hrc lc.basis rc.basis).1]
+        (l.node.product_inverse r.node hlc hrc lc.node.basis rc.node.basis).1]
     have cover : ∀ x ∈ xs, x ∈ product l.node.system.support r.node.system.support := by
       intro x hx
       rw [← List.take_append_drop (qs.length / 2) x]
@@ -184,9 +201,11 @@ theorem buildTreeFrom_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
         intro d a he
         cases he
         exact ⟨hd.symm, hi.symm⟩)
-    refine ⟨.split n l r, ?_, counted, ?_⟩
+    refine ⟨.split n l r, ?_, ⟨counted, ?_, ?_⟩, ?_⟩
     · simp only [buildTreeFrom, small, ↓reduceDIte, hl, hr, hn, bind, Except.bind,
         pure, Except.pure]
+    · simpa only [List.length_take] using lc
+    · simpa only [List.length_drop] using rc
     · exact ⟨counted.values, by simpa only [List.length_take] using li,
         by simpa only [List.length_drop] using ri⟩
 termination_by qs.length
@@ -201,7 +220,7 @@ theorem buildTree_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
     (ho : Observations qs.length xs)
     (hv : QueryModel context domain qs reduced (nodePreparation reduced domain qs none) xs) :
     ∃ t, buildTree context domain qs reduced = .ok t ∧
-      t.node.Counted qs.length xs ∧ t.Interprets qs.length xs := by
+      t.Counted qs.length xs ∧ t.Interprets qs.length xs := by
   exact buildTreeFrom_complete context domain qs reduced _ xs ho hv
 
 variable {K : Type w} [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K]
@@ -221,7 +240,7 @@ theorem buildPrepared_complete (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
     (ho : Observations qs.length xs)
     (hv : QueryModel context domain qs reduced (nodePreparation reduced domain qs none) xs) :
     ∃ t, buildPrepared context domain qs reduced = .ok t ∧
-      t.val.node.Counted qs.length xs ∧ t.val.Interprets qs.length xs := by
+      t.val.Counted qs.length xs ∧ t.val.Interprets qs.length xs := by
   obtain ⟨t, ht, counted, interprets⟩ := buildTree_complete context domain qs reduced xs ho hv
   obtain ⟨hc, hchecked⟩ := buildPrepared_eq f hz h1 ha hs hm hn hi sign hpos hneg hbound
     context domain hsign qs reduced ht

@@ -75,7 +75,7 @@ theorem noncanonical_complete (context : Nat) (domain : Sturm.PreparedDomain Rep
     (ho : Observations qs.length xs)
     (hv : QueryModel context domain qs reduced (nodePreparation reduced domain qs none) xs) :
     ∃ t, buildPrepared context domain qs reduced = .ok t ∧
-      t.val.node.Counted qs.length xs ∧ t.val.Interprets qs.length xs := by
+      t.val.Counted qs.length xs ∧ t.val.Interprets qs.length xs := by
   apply buildPrepared_complete value value_eq_zero value_one value_add value_sub value_mul
     value_neg value_inv Hex.TarskiTests.Noncanonical.sign _ _ _ context domain hsign qs reduced xs ho hv
   · intro a

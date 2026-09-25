@@ -94,6 +94,10 @@ ordinary generic coefficient laws. The universal noncanonical instantiation and
 exact standard-axiom inventories are checked in conformance. An ordinary-kernel
 constant-head probe accepts an empty observation model and rejects a falsely
 claimed root using the actual constant query value.
+The existing `HexSignDet.Conformance` cases run the recursive producer on
+two and twelve queries with independently supplied sign counts, including a
+root-free constant head. The finite theorem applies to those same construction
+paths when its query-value model is established.
 
 The model is a finite proof boundary, not a replacement semantic foundation or
 an executable argument. Deriving it from actual roots still requires the shared
