@@ -268,8 +268,9 @@ The optional companion proves producer completeness and root-count correspondenc
 relative to the named #10389 root-sum bridge; it does not yet provide those
 total executable wrappers. Completion,
 root lists and selected signs still expose internal diagnostics until their
-totality proofs are supplied. Comparison/re-encoding correspondence and
-domain-exact totality, the consumer sample-point interface, serialization and
+totality proofs are supplied. Strict-order comparison correspondence,
+re-encoding success characterization and domain-exact totality, the consumer
+sample-point interface, serialization and
 nested evidence sharing also remain required. The semantic proofs interpret the
 actual query replays through #10389; the specified BKR/Thom foundations are a
 separate completion gate. No performance milestone is claimed here. See the [specification](SPEC/hex-sign-det.md)

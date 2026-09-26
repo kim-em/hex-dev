@@ -97,6 +97,10 @@ theorem literal_support (s : List Int) :
 #guard_msgs in
 #print axioms Hex.SignDet.Reencoding.root_eq_source
 
+/-- info: 'Hex.SignDet.Comparison.eq_iff_root_eq' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Comparison.eq_iff_root_eq
+
 /-- info: 'Hex.SignDet.moment_entry' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.moment_entry
