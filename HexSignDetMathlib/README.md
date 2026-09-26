@@ -110,6 +110,10 @@ accepted count-one partial and full descriptors select a unique root, and
 through `derivativesFrom_get`. `SelectedSigns.values_at_root` and
 `value_at_root` prove that every checked requested sign equals evaluation at
 that same selected root, including the public one-query accessor.
+`Reencoding.root_eq_source` proves that checked re-encoding keeps that real root
+when the defining polynomial and interval change. Its proof uses the copied
+equation, derivative word and strict endpoint signs, plus acceptance of the
+source descriptor to rule out impossible infinite endpoint orientations.
 The executable API still exposes internal errors, and the domain-exact total
 wrapper remains to be implemented.
 
@@ -120,8 +124,9 @@ the latter remains a separate shared-domain check. `endpoint_eval`, `endpoint_lo
 and `endpoint_upper` prove the semantics of the actual finite-boundary polynomials
 used by joint re-encoding.
 
-Semantic Thom equality/order and cross-polynomial re-encoding, the total public
-API and Phase-4 evidence remain required. The root-sum/replay bridge in #10389
+Semantic Thom equality/order, the success characterization and correctness of
+the re-encoding builder, the total public API and Phase-4 evidence remain
+required. The root-sum/replay bridge in #10389
 and the specified Tau Ceti BKR/Thom foundations remain separate proof gates.
 See the
 [specification](SPEC/hex-sign-det-mathlib.md) for the complete assignment.
