@@ -52,24 +52,35 @@ summaries and checks are retained.
 Both arms report **inconclusive** on this narrow schedule. The reduced arm's
 normalized constants range from 54,760 to 98,429, and the full arm's from
 111 to 1,015. The shared harness reported no slope and used its
-multiplicative-range fallback. The 1–5-query reduced data cannot distinguish
-Θ(s log s) from linear growth; the larger sparse-family report supplies its
-scaling evidence. The full arm's normalized constant falls over much of this
-schedule, so its measured growth does not support the declared `27^s` model.
-Neither verdict is a passing upper-bound result.
+multiplicative-range fallback. The sample stream changes speed abruptly by
+about 1.7× during trial 2, between s=4 and s=5; both adjacent arms change
+together. Trials 0–1 and the first four pairs of trial 2 form the early regime;
+the remaining pairs form the late regime. The child also increases its
+auto-tuned repeat counts after the change. This is observed host context, not
+a reason to discard samples. Mixing the regimes raises the reduced arm's
+normalized-constant range above the harness's 1.5 fallback threshold: within
+either regime alone, the range is about 1.4. The reduced **inconclusive**
+verdict therefore reflects this shift; these conditional ranges are not new
+harness verdicts. This short schedule also cannot distinguish Θ(s log s) from
+linear growth; the larger sparse-family report supplies scaling evidence.
+The full arm's normalized constant falls over much of the schedule in either
+regime, so its measured growth does not support the declared `27^s` model.
+Neither recorded verdict is a passing upper-bound result.
 
-| Queries | Reduced median ms | Full median ms | Median paired full/reduced ratio | Pair ratio range |
+| Queries | Reduced early/late median ms | Full early/late median ms | Median paired full/reduced ratio | Pair ratio range |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 0.109 | 0.109 | 0.997 | 0.994–1.002 |
-| 2 | 0.344 | 0.740 | 2.157 | 2.133–2.166 |
-| 3 | 0.591 | 8.279 | 14.053 | 13.851–14.174 |
-| 4 | 0.831 | 124.530 | 148.946 | 145.718–151.995 |
-| 5 | 0.821 | 1,591.029 | 1,953.481 | 1,899.797–1,976.820 |
+| 1 | 0.137 / 0.082 | 0.137 / 0.082 | 0.997 | 0.994–1.002 |
+| 2 | 0.430 / 0.257 | 0.926 / 0.554 | 2.157 | 2.133–2.166 |
+| 3 | 0.738 / 0.440 | 10.419 / 6.161 | 14.053 | 13.851–14.174 |
+| 4 | 1.040 / 0.625 | 157.555 / 91.470 | 148.946 | 145.718–151.995 |
+| 5 | 1.356 / 0.814 | 2,680.730 / 1,578.197 | 1,953.481 | 1,899.797–1,976.820 |
 
-Each ratio is the median of six actual adjacent ratios, not the ratio of arm
-medians. Both arms include their own complete certificate check in the timed
-body. The near-equality at one query is consistent with both solving and
-checking the same three-column leaf system. At five queries the checked full
+Early and late medians use respectively three and three samples at s=1–4,
+and two and four samples at s=5. Each ratio is the median of six actual
+adjacent ratios, not the ratio of arm medians. Both arms include their own
+complete certificate check in the timed body. The near-equality at one query is
+consistent with both solving and checking the same three-column leaf system.
+At five queries the checked full
 reference is much slower than checked support reduction on this fixed two-root
 family. The signal-floor filter was disabled by configuration; the child still
 auto-tuned inner repetitions, whose per-call timings are recorded inside it.
