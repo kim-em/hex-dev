@@ -645,7 +645,7 @@ private def bkrHead : DensePoly Rat :=
 private def bkrX : DensePoly Rat :=
   DensePoly.ofCoeffs #[0, 1]
 
-#guard
+private def bkrTablePasses : Bool :=
   match Sturm.prepare Sturm.orderSign bkrHead
       .negInf .posInf with
   | none => false
@@ -655,6 +655,8 @@ private def bkrX : DensePoly Rat :=
     | .ok table =>
       table.rows.toList == [([-1, -1], 1), ([1, 0], 1)] &&
         table.count [0, 0] == 0
+
+#guard bkrTablePasses
 ```
 
 Derivative signs identify a selected root. Here the positive root of
@@ -667,7 +669,7 @@ the defining polynomial, interval and context as well as the derivative sign.
 private def positiveRoot : RawDescriptor Rat Nat :=
   ⟨7, bkrHead, .negInf, .posInf, [1], [1]⟩
 
-#guard
+private def selectedSignsPass : Bool :=
   match Descriptor.build Sturm.orderSign 7 positiveRoot with
   | .ok (.ok root) =>
     match root.buildSigns
@@ -679,6 +681,8 @@ private def positiveRoot : RawDescriptor Rat Nat :=
           #v[-1, 0, -1] signs.evidence
     | _ => false
   | _ => false
+
+#guard selectedSignsPass
 ```
 
 Two roots can be compared even if their defining polynomials differ. The
@@ -689,7 +693,7 @@ both root selections in it. This example finds `1 < 2`.
 private def rootTwo : RawDescriptor Rat Nat :=
   ⟨7, bkrX - 2, .negInf, .posInf, [1], [1]⟩
 
-#guard
+private def orderedRootsPass : Bool :=
   match Descriptor.build Sturm.orderSign 7 positiveRoot,
       Descriptor.build Sturm.orderSign 7 rootTwo with
   | .ok (.ok one), .ok (.ok two) =>
@@ -698,6 +702,8 @@ private def rootTwo : RawDescriptor Rat Nat :=
         result.common.check 7 positiveRoot.head rootTwo.head
     | _ => false
   | _, _ => false
+
+#guard orderedRootsPass
 ```
 
 The common-root case needs the shared factor removed before constructing the
@@ -712,7 +718,7 @@ private def sharedRoot : RawDescriptor Rat Nat :=
   ⟨7, (bkrX * bkrX - 2) * (bkrX - 3),
     .negInf, .posInf, [1], [-1]⟩
 
-#guard
+private def commonRootPass : Bool :=
   match Descriptor.build Sturm.orderSign 7 sqrtTwoRoot,
       Descriptor.build Sturm.orderSign 7 sharedRoot with
   | .ok (.ok left), .ok (.ok right) =>
@@ -722,6 +728,8 @@ private def sharedRoot : RawDescriptor Rat Nat :=
           sqrtTwoRoot.head sharedRoot.head
     | _ => false
   | _, _ => false
+
+#guard commonRootPass
 ```
 
 For two independently selected coefficients, the existing number-field
@@ -737,7 +745,7 @@ private def independentInputs :
   Hex.ZPoly.rootNear #p[-2, 0, 1] 1.4,
   Hex.ZPoly.rootNear #p[-3, 0, 1] 1.7]
 
-#guard
+private def independentRootsPass : Bool :=
   let common := Hex.QAdjoin.common independentInputs
   common.generator.isReal &&
     common.entries.map (·.toAlgebraicNumber) ==
@@ -752,6 +760,8 @@ private def independentInputs :
       | some a, some b => a < b
       | _, _ => false
     | _, _ => false
+
+#guard independentRootsPass
 ```
 
 The sign-table and descriptor examples run checked producers and finite
