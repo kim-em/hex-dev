@@ -90,7 +90,7 @@ theorem real_toReal (p : ZPoly) (s : DyadicSquare)
   rw [algebraic_toComplex]
   exact Complex.ext rfl (Field.literalRep_real p s hw hp hreal)
 
-/-- The rational centre of a checked real isolating square names the same
+/-- The real projection of a checked isolating square's centre names the same
 canonical algebraic number through the nearest-root interface. -/
 theorem real_rootNear (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
@@ -132,6 +132,7 @@ theorem real_rootNear (p : ZPoly) (s : DyadicSquare)
     apply mul_le_mul_of_nonneg_right _ (by norm_num)
     apply zpow_le_zpow_right₀ (by norm_num : (1 : ℝ) ≤ 2)
     omega
+  -- The nearest-root bound allows twice the separation unit.
   have hgap : ((s.radiusHi.toRat : Rat) : ℝ) <
       2 * ((2 : ℝ) ^ (-(mahlerPrec p : ℤ)) * (1449 / 1024)) := by
     change HexRootsMathlib.Dyadic.toReal s.radiusHi < _

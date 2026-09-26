@@ -485,15 +485,14 @@ arithmetic, and uses {name}`Hex.RCF.RealCoefficients.Selected.field` to retain
 the same root when converting back to a real algebraic number. These examples
 set `maxRecDepth` to `2048` and `maxHeartbeats` to `1000000` so Lean can
 elaborate their literal certificates; users may need the same options for
-similar goals. On the shared host, a fresh build of the complete example
-module took 142.698 seconds under heavy load. That is a module timing, not a
-per-call timing.
+similar goals.
 
 The same checked construction works for a different cubic, `X³ − X − 1`.
 The square below selects its positive real root. The
 {name}`Hex.RCF.RealCoefficients.Selected.real_rootNear` theorem identifies that
-root with the ordinary {name}`Hex.ZPoly.rootNear` value at the square's rational
-centre. The tactic can use the selected root when it is named by a local `def`.
+root with the ordinary {name}`Hex.ZPoly.rootNear` value at the real projection
+of the square's centre. The tactic can use the selected root when it is named
+by a `def` in the same file.
 
 ```lean
 open Hex.RCF.RealCoefficients
@@ -606,8 +605,10 @@ checks the signs on its root cells and proves existence. The two
 proof and that nonpolynomial syntax in the quantified variable is rejected.
 The adapter's source reifier preserves explicit coefficient aliases and
 original divisor obligations before normalization. Closed values built with
-`Selected.real` may be named using `def` or `abbrev`. For supported sentences,
-a divisor must be proved nonzero before certificate construction.
+`Selected.real` may be named using `def` in the same file. Across modules, use
+`abbrev` or `@[expose] def` so the defining expression remains visible. For
+supported sentences, a divisor must be proved nonzero before certificate
+construction.
 
 The algebraic examples use the generic accepted-query soundness theorem
 `HexRealRootsMathlib.Tarski.check_rootSum`. Its proof is currently admitted in
