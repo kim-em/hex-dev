@@ -145,6 +145,15 @@ def descriptorFailure (raw : RawDescriptor Rat Nat) (expected : DescriptorError)
 #guard descriptorFailure {descriptor [1] [1] with context := 8} .context
 #guard descriptorFailure {descriptor [] [] with head := 0} .domain
 
+#guard (Descriptor.validate sign 7 (descriptor [1] [-1])).isSome
+#guard (Descriptor.validate sign 7 (descriptor [1] [0])).isNone
+#guard (Descriptor.validate sign 7 (descriptor [] [])).isNone
+#guard (Descriptor.validate sign 7 (descriptor [0] [0])).isNone
+#guard (Descriptor.validate sign 7
+  {descriptor [1] [1] with lower := .finite 1}).isNone
+#guard (Descriptor.validate sign 7
+  {descriptor [1] [1] with context := 8}).isNone
+
 /-- Public insertion rejects unrelated heads and partial derivative slots,
 even when their raw sign words would produce a strict comparison. -/
 def insertionRejected (left right : RawDescriptor Rat Nat) : Bool :=

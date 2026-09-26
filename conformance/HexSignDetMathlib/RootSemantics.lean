@@ -69,6 +69,10 @@ theorem literal_support (s : List Int) :
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.build_success_iff
 
+/-- info: 'Hex.SignDet.Descriptor.validate_success_iff' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.validate_success_iff
+
 /-- info: 'Hex.SignDet.Descriptor.build_valid_cases' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.build_valid_cases
@@ -76,6 +80,10 @@ theorem literal_support (s : List Int) :
 /-- info: 'Hex.SignDet.Descriptor.build_success_formal' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.build_success_formal
+
+/-- info: 'Hex.SignDet.Descriptor.validate_success_formal' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.validate_success_formal
 
 /-- info: 'Hex.SignDet.Descriptor.existsUnique_root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
