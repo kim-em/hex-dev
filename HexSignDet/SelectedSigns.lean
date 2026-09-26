@@ -40,8 +40,8 @@ structure SelectedSigns {sign : E → Int} {context : Ctx}
   accepted : d.checkSigns qs values evidence = true
 
 /-- A single selected query has a total sign accessor, without a default for
-missing output. Semantic evaluation correspondence is a companion obligation. -/
-def SelectedSigns.value {sign : E → Int} {context : Ctx}
+missing output. The companion proves its value at the selected real root. -/
+@[expose] def SelectedSigns.value {sign : E → Int} {context : Ctx}
     {d : Descriptor E Ctx sign context} {q : DensePoly E} (s : SelectedSigns d [q]) : Int :=
   s.values[0]
 
