@@ -321,7 +321,7 @@ include h1 ha hs hm hnat hsign in
 /-- Equality returned by a checked cross-polynomial comparison identifies the
 same real root, using the common descriptor's count-one evidence. This does
 not require the Thom theorem for strict order. -/
-theorem Comparison.eq_root {context : Ctx}
+private theorem Comparison.eq_root {context : Ctx}
     {left right : Descriptor E Ctx sign context} (c : Comparison left right)
     (heq : c.order = .eq) :
     left.root f hz h1 ha hs hm hnat hsign =
@@ -366,7 +366,7 @@ theorem Comparison.eq_root {context : Ctx}
 include h1 ha hs hm hnat hsign in
 /-- If the two selected real roots coincide, their checked common full
 derivative encodings are identical and the finite comparison returns equality. -/
-theorem Comparison.root_eq {context : Ctx}
+private theorem Comparison.root_eq {context : Ctx}
     {left right : Descriptor E Ctx sign context} (c : Comparison left right)
     (heq : left.root f hz h1 ha hs hm hnat hsign =
       right.root f hz h1 ha hs hm hnat hsign) : c.order = .eq := by
