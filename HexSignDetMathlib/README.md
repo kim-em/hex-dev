@@ -98,6 +98,15 @@ claimed root using the actual constant query value.
 internal failure path; `Descriptor.build_noError` uses actual root-query
 interpretation to rule that path out for lawful coefficient fields. The theorem
 does not yet classify which input diagnostic a rejected descriptor receives.
+`Descriptor.build_of_unique_root` additionally proves that a well-formed raw
+descriptor with exactly one matching real root is produced by the actual
+constructor. The result retains the exact raw input by `Descriptor.build_raw`.
+`Descriptor.build_success_iff` gives the converse and characterizes successful
+construction by exact context, well-formedness, mathematical domain validity
+and a unique matching root.
+The Mathlib-free `build_context`, `build_domain` and `build_malformed` lemmas
+identify the corresponding input diagnostics without appealing to root
+semantics.
 The existing `HexSignDet.Conformance` cases run the recursive producer on
 two and twelve queries with independently supplied sign counts, including a
 root-free constant head. The finite theorem applies to those same construction
