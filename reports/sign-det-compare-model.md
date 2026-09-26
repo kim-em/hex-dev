@@ -18,10 +18,11 @@ inverse-identity replay on the 3^s square moment matrix. This is a finite-input
 wall-time model, not a bit-complexity claim for
 arbitrary s. Rational row reduction may instead dominate; `inspect-full`
 records the actual elimination updates and matrix dimensions to assess that
-possibility. The inventory below demonstrates that the full declaration
-overestimates this structured family's row-add work; a corrected family-specific
-model must be derived before fresh measurements can close this mode-1 gate. A
-model mismatch remains an inconclusive result, not a passing upper bound.
+possibility. The inventory below shows fewer row additions than dense
+Gauss-Jordan, while the two dense inverse checks still execute cubic loops.
+This finite schedule cannot determine which source-level term controls the
+wall time at larger inputs. A model mismatch remains an inconclusive result,
+not a passing upper bound.
 
 `paired-small` uses the shared LeanBench sampler and summary for each arm. Six
 fixed trial-major rounds keep the arms adjacent for every s and alternate
@@ -173,9 +174,14 @@ come from the same clean revision and executable hash as the paired run; their
 records the output hash and verified finite count identities.
 
 The profile and operation inventory explain why the full arm's normalized
-`27^s` timing constant declines on this schedule. They do not establish a
-replacement wall-time model; the inconclusive result and open performance gate
-remain. The [full-reference model concern](https://github.com/kim-em/hex-dev/issues/10377#issuecomment-5778449031)
+`27^s` timing constant declines on this schedule: rational elimination is
+costly despite its lower source-level operation count. The two dense checks
+still contribute `27^s` arithmetic, so the inventory alone does not refute
+that eventual asymptotic term. Neither these five inputs nor the profile
+establish a replacement wall-time model; a justified wider schedule or an
+independently derived family-specific model needs fresh measurement before the
+mode-1 gate can pass. The inconclusive result remains. The
+[full-reference model concern](https://github.com/kim-em/hex-dev/issues/10377#issuecomment-5778449031)
 is still unresolved. The required degree, coefficient-bit, maximal-support,
 nested-field, allocation-byte and proof-checking tracks also remain open.
 
