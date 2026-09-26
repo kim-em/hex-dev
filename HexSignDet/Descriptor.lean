@@ -138,7 +138,7 @@ variable [Neg E] [Inv E]
 construction failures separately from input diagnostics. This diagnostic
 constructor is not the final domain-exact `validate` API: the companion now
 proves producer success from actual roots relative to the named #10389 bridge,
-but the total executable wrapper and exact invalid-domain equivalence remain. -/
+but the total executable wrapper remains. -/
 def Descriptor.build (sign : E → Int) (context : Ctx) (raw : RawDescriptor E Ctx) :
     Except BuildError (Except DescriptorError (Descriptor E Ctx sign context)) :=
   if hctx : raw.context = context then
@@ -264,5 +264,50 @@ theorem Descriptor.build_ofCount (sign : E → Int) (context : Ctx)
     subst domain'
     simp only [ht, hone, ↓reduceDIte]
     exact ⟨_, rfl⟩
+
+/-- Zero matching rows produce the absent diagnostic. -/
+theorem Descriptor.build_absent_ofCount (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (hctx : raw.context = context)
+    (domain : Sturm.PreparedDomain E)
+    (hd : Sturm.prepare sign raw.head raw.lower raw.upper = some domain)
+    (hw : raw.wellFormed = true)
+    (t : {t : Replay E Ctx // t.check domain.sign context domain.head domain.lower domain.upper
+      raw.queries = true})
+    (ht : buildPrepared context domain raw.queries = .ok t)
+    (hzero : t.val.node.system.count raw.signs = 0) :
+    Descriptor.build sign context raw = .ok (.error .absent) := by
+  unfold Descriptor.build
+  simp only [hctx, ↓reduceDIte, hw, Replay.table_lookup]
+  split
+  · rename_i hnone
+    rw [hd] at hnone
+    contradiction
+  · rename_i domain' hd'
+    have heq : domain' = domain := Option.some.inj (hd'.symm.trans hd)
+    subst domain'
+    simp [ht, hzero]
+
+/-- More than one matching row produces the ambiguous diagnostic. -/
+theorem Descriptor.build_ambiguous_ofCount (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (hctx : raw.context = context)
+    (domain : Sturm.PreparedDomain E)
+    (hd : Sturm.prepare sign raw.head raw.lower raw.upper = some domain)
+    (hw : raw.wellFormed = true)
+    (t : {t : Replay E Ctx // t.check domain.sign context domain.head domain.lower domain.upper
+      raw.queries = true})
+    (ht : buildPrepared context domain raw.queries = .ok t)
+    (hone : t.val.node.system.count raw.signs ≠ 1)
+    (hzero : t.val.node.system.count raw.signs ≠ 0) :
+    Descriptor.build sign context raw = .ok (.error .ambiguous) := by
+  unfold Descriptor.build
+  simp only [hctx, ↓reduceDIte, hw, Replay.table_lookup]
+  split
+  · rename_i hnone
+    rw [hd] at hnone
+    contradiction
+  · rename_i domain' hd'
+    have heq : domain' = domain := Option.some.inj (hd'.symm.trans hd)
+    subst domain'
+    simp [ht, hone, hzero]
 
 end Hex.SignDet

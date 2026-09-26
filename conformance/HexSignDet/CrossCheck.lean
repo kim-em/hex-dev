@@ -345,6 +345,14 @@ theorem domain_kernel :
 #guard_msgs in
 #print axioms Descriptor.build_malformed
 
+/-- info: 'Hex.SignDet.Descriptor.build_absent_ofCount' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.build_absent_ofCount
+
+/-- info: 'Hex.SignDet.Descriptor.build_ambiguous_ofCount' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.build_ambiguous_ofCount
+
 /-- info: 'Hex.SignDet.Dag.check_replay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Dag.check_replay

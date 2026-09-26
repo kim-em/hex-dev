@@ -192,7 +192,8 @@ context bound in the type. It validates supplied evidence, not mathematical
 nonexistence when a supplied certificate fails. `Descriptor.build` constructs
 the evidence, distinguishing absent and ambiguous conditions, malformed inputs,
 invalid domains and context mismatches. Internal BKR failures retain a separate
-outer diagnostic result until general producer completeness is proved.
+outer diagnostic result in this Mathlib-free executable; the companion proves
+that branch unreachable under a lawful coefficient interpretation.
 
 `Thom.compareSigns` implements
 the largest-differing-index rule as a finite operation on sign words; root
