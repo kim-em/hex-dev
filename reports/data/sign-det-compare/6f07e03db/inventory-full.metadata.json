@@ -1,0 +1,19 @@
+{
+  "revision": "6f07e03db861a870da0872ea3b0f9fdcd0042616",
+  "executable_sha256": "781449ff716dedc46f8f326c0fb73e71fa9041ae0d6bae990c8a93dd06accafb",
+  "command": [
+    ".lake/build/bin/hexsigndet_bench",
+    "inspect-full"
+  ],
+  "source_archive": {
+    "base_revision": "2e749387cfff74fa36c07f1c79af5a24f5ab7424",
+    "file": "committed-source.patch",
+    "sha256": "8709d12b8449723a6ea109fd6e1f4790059824fc00b0cade75858b8782f7b9cb",
+    "apply_option": "--unidiff-zero",
+    "scope": "all paths in source_sha256",
+    "reconstruction_check": "passed"
+  },
+  "inventory_sha256": "a45e628538de3c622a53a94f93c4d880ae085ef58aefbe62177f9c155b70e647",
+  "rows": 5,
+  "checks": "literal dimensions, per-column elimination totals, row arithmetic identities and inverse equality passed"
+}
