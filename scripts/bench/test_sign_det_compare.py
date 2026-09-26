@@ -37,8 +37,8 @@ class PairedValidation(unittest.TestCase):
                 "env": copy.deepcopy(self.rows[0]["env"]),
                 "config": {"param_floor": 1, "param_ceiling": 5, "outer_trials": TRIALS,
                            "param_schedule": {"kind": "custom", "params": PARAMS},
-                           "target_inner_nanos": 100000000, "max_seconds_per_call": 60,
-                           "signal_floor_multiplier": 1, "cache_mode": "warm"},
+                           "target_inner_nanos": 1000000000, "max_seconds_per_call": 60,
+                           "signal_floor_multiplier": 10, "cache_mode": "warm"},
                 "verdict": "consistent_with_declared_complexity", "complexity_formula": "n",
                 "slope": 0, "c_min": 1, "c_max": 1, "advisories": []}})
 

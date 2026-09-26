@@ -93,8 +93,8 @@ def validate(path, inventory, revision):
             raise ValueError("summary differs from the retained sample stream")
         required = {"param_floor": 1, "param_ceiling": 5, "outer_trials": TRIALS,
                     "param_schedule": {"kind": "custom", "params": PARAMS},
-                    "target_inner_nanos": 100000000, "max_seconds_per_call": 60,
-                    "signal_floor_multiplier": 1, "cache_mode": "warm"}
+                    "target_inner_nanos": 1000000000, "max_seconds_per_call": 60,
+                    "signal_floor_multiplier": 10, "cache_mode": "warm"}
         if any(result["config"][k] != v for k, v in required.items()):
             raise ValueError("comparison changed the registered configuration")
         if result["verdict"] not in ("consistent_with_declared_complexity", "inconclusive"):
