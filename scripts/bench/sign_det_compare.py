@@ -94,7 +94,9 @@ def validate(path, inventory, revision):
         required = {"param_floor": 1, "param_ceiling": 5, "outer_trials": TRIALS,
                     "param_schedule": {"kind": "custom", "params": PARAMS},
                     "target_inner_nanos": 1000000000, "max_seconds_per_call": 60,
-                    "signal_floor_multiplier": 10, "cache_mode": "warm"}
+                    "signal_floor_multiplier": 10, "cache_mode": "warm",
+                    "verdict_warmup_fraction": 0.2, "slope_tolerance": 0.15,
+                    "narrow_range_noise_floor": 1.5}
         if any(result["config"][k] != v for k, v in required.items()):
             raise ValueError("comparison changed the registered configuration")
         if result["verdict"] not in ("consistent_with_declared_complexity", "inconclusive"):

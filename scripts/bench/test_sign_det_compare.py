@@ -38,7 +38,9 @@ class PairedValidation(unittest.TestCase):
                 "config": {"param_floor": 1, "param_ceiling": 5, "outer_trials": TRIALS,
                            "param_schedule": {"kind": "custom", "params": PARAMS},
                            "target_inner_nanos": 1000000000, "max_seconds_per_call": 60,
-                           "signal_floor_multiplier": 10, "cache_mode": "warm"},
+                           "signal_floor_multiplier": 10, "cache_mode": "warm",
+                           "verdict_warmup_fraction": 0.2, "slope_tolerance": 0.15,
+                           "narrow_range_noise_floor": 1.5},
                 "verdict": "consistent_with_declared_complexity", "complexity_formula": "n",
                 "slope": 0, "c_min": 1, "c_max": 1, "advisories": []}})
 
@@ -74,9 +76,12 @@ class PairedValidation(unittest.TestCase):
             self.run_validation(self.rows)
 
     def test_configuration_and_inventory_must_match(self):
-        self.rows[-1]["result"]["config"]["outer_trials"] = 1
-        with self.assertRaises(ValueError):
-            self.run_validation(self.rows)
+        for key, value in (("outer_trials", 1), ("verdict_warmup_fraction", 0),
+                           ("slope_tolerance", 1), ("narrow_range_noise_floor", 2)):
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                rows = copy.deepcopy(self.rows)
+                rows[-1]["result"]["config"][key] = value
+                self.run_validation(rows)
         self.inventory.write_text("[]")
         with self.assertRaises((ValueError, TypeError)):
             self.run_validation(self.rows)

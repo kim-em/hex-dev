@@ -9,7 +9,8 @@ preparation checks both tables against exactly two sign words, all negative
 and all positive, each with count one. `inspect-small` separately verifies
 literal dimensions and counts, not just matching result hashes.
 
-The reduced arm declares Θ(s log s) on this two-root family: every balanced
+Both registrations currently use mode 1, a two-sided parametric claim. The
+reduced arm declares Θ(s log s) on this two-root family: every balanced
 node has a bounded matrix, and its query and sign slots are scanned in Θ(k)
 work for a node containing k input polynomials. The full arm declares Θ(27^s)
 scalar work from cubic worst-case rational Gauss-Jordan and dense
@@ -17,8 +18,10 @@ inverse-identity replay on the 3^s square moment matrix. This is a finite-input
 wall-time model, not a bit-complexity claim for
 arbitrary s. Rational row reduction may instead dominate; `inspect-full`
 records the actual elimination updates and matrix dimensions to assess that
-possibility. A model mismatch remains an inconclusive result, not a passing
-upper bound.
+possibility. The inventory below demonstrates that the full declaration
+overestimates this structured family's row-add work; a corrected family-specific
+model must be derived before fresh measurements can close this mode-1 gate. A
+model mismatch remains an inconclusive result, not a passing upper bound.
 
 `paired-small` uses the shared LeanBench sampler and summary for each arm. Six
 fixed trial-major rounds keep the arms adjacent for every s and alternate
@@ -51,9 +54,16 @@ checks are retained.
 
 The reduced arm reports **consistent with declared complexity** on this
 schedule: its `s * (Nat.log2 s + 1)` normalized constants range from 52,216
-to 73,973. The full arm reports **inconclusive** for `27^s`: its normalized
-constants range from 111 to 767. The shared harness reported no slope and used
-its multiplicative-range fallback for both arms. This short schedule cannot
+to 73,973 among verdict-eligible inputs. The full arm reports **inconclusive**
+for `27^s`: its eligible normalized constants range from 111 to 767. The
+registered harness trims the first 20% of input sizes from the verdict, so
+s=1 is still measured and reported but excluded from both constant ranges.
+Its untrimmed constants are 82,378 for the reduced arm and 3,045 for the full
+arm. Including s=1 would make the reduced constant range 1.58, above the
+harness's 1.5 narrow-range fallback threshold. The reported reduced verdict
+thus depends on that stated warmup trim and noise-floor fallback. The shared
+harness reported no slope and used its multiplicative-range fallback for both
+arms. This short schedule cannot
 distinguish Θ(s log s) from linear growth; the larger sparse-family report
 supplies scaling evidence. The full arm's measured growth does not support the
 declared `27^s` model here. A consistent finite-range verdict is not an
@@ -90,7 +100,10 @@ source files and their library dependency closure are in the recorded source
 hash set. The measured revision is a clean local commit after rebasing onto
 merged #10436. Its metadata archives a patch against
 `81450116cc9bf88089d4b341231019e29ee4f504` and verifies that applying
-it reconstructs every measured source hash.
+it reconstructs every measured source hash. A later validation-only change
+pins the recorded harness verdict settings in the runner's acceptance checks;
+the measured executable and archived data were not changed. The copied data
+pass those stronger checks.
 
 ## Attribution of the full reference
 
@@ -138,7 +151,7 @@ invocation processes all 3^s entries of its destination row. The inventory
 checks the final pivot list and identity echelon and compares the complete
 transform with the actual `Matrix.inverse?` result.
 
-| Queries | Eliminated rows | Rational row-add multiply/add pairs | Rational row-scale products | Integer inverse-check multiply/add pairs |
+| Queries | Eliminated rows | Rational row-add multiply/add pairs | Rational row-scale products | Integer inverse-check multiply/add pairs per `System.check` |
 | ---: | ---: | ---: | ---: | ---: |
 | 1 | 6 | 36 | 18 | 27 |
 | 2 | 54 | 972 | 162 | 729 |
@@ -151,7 +164,9 @@ row-add scalar-pair count equals `4(18^s−9^s)`. This finite inventory does not
 prove either formula for arbitrary s. Counts refer to source-level arithmetic
 operations, not GMP instructions, allocation bytes or peak intermediate bits.
 The inverse-check count follows its dense multiplication's three loop bounds;
-it is separate from the rational row-add path observed at each pivot. The
+it is separate from the rational row-add path observed at each pivot. The timed
+full arm executes `System.check` twice, once during production and once during
+replay, so the table counts one of those executions. The
 [complete per-column counts](data/sign-det-compare/50af81103/inventory-full.jsonl)
 come from the same clean revision and executable hash as the paired run; their
 [metadata](data/sign-det-compare/50af81103/inventory-full.metadata.json)
@@ -169,8 +184,9 @@ nested-field, allocation-byte and proof-checking tracks also remain open.
 The earlier [complete paired run](data/sign-det-compare/6f07e03db/metadata.json)
 and [same-binary profile](data/sign-det-compare/profile-6f07e03db/full-reference.manifest.json)
 remain archived. That run set the spawn-signal multiplier to one and targeted
-only 100 ms per inner batch. Its reduced batches were below the normal tenfold
-spawn floor, so it is calibration evidence, not the headline complexity
+only 100 ms per inner batch. All reduced batches and the full arm's s=1,…,4
+batches were below the normal tenfold spawn floor, so it is calibration
+evidence, not the headline complexity
 result. It also crossed a roughly 1.7× host-speed change during trial 2;
 neither arm received a passing model verdict. All 60 samples and both
 inconclusive verdicts remain intact. The old clean measured revision
