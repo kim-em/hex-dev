@@ -138,7 +138,7 @@ variable [Neg E] [Inv E]
 construction failures separately from input diagnostics. This diagnostic
 constructor is not the final domain-exact `validate` API: the companion now
 proves producer success from actual roots relative to the named #10389 bridge,
-but the total executable wrapper and exact invalid-domain equivalence remain. -/
+but the total executable wrapper remains. -/
 def Descriptor.build (sign : E → Int) (context : Ctx) (raw : RawDescriptor E Ctx) :
     Except BuildError (Except DescriptorError (Descriptor E Ctx sign context)) :=
   if hctx : raw.context = context then
@@ -163,6 +163,64 @@ def Descriptor.build (sign : E → Int) (context : Ctx) (raw : RawDescriptor E C
       else .ok (.error .malformed)
   else .ok (.error .context)
 
+/-- A successful descriptor build retains the exact supplied raw input. -/
+theorem Descriptor.build_raw {sign : E → Int} {context : Ctx}
+    {raw : RawDescriptor E Ctx} {d : Descriptor E Ctx sign context}
+    (h : Descriptor.build sign context raw = .ok (.ok d)) : d.raw = raw := by
+  unfold Descriptor.build at h
+  split at h
+  · split at h
+    · simp at h
+    · split at h
+      · split at h
+        · simp at h
+        · dsimp only at h
+          split at h
+          · cases h
+            rfl
+          · split at h <;> simp at h
+      · simp at h
+  · simp at h
+
+/-- A context mismatch has its own input diagnostic. -/
+theorem Descriptor.build_context {sign : E → Int} {context : Ctx}
+    {raw : RawDescriptor E Ctx} (hctx : raw.context ≠ context) :
+    Descriptor.build sign context raw = .ok (.error .context) := by
+  unfold Descriptor.build
+  simp [hctx]
+
+/-- An invalid root domain has its own input diagnostic. -/
+theorem Descriptor.build_domain {sign : E → Int} {context : Ctx}
+    {raw : RawDescriptor E Ctx} (hctx : raw.context = context)
+    (hd : Sturm.prepare sign raw.head raw.lower raw.upper = none) :
+    Descriptor.build sign context raw = .ok (.error .domain) := by
+  unfold Descriptor.build
+  simp only [hctx, ↓reduceDIte]
+  split
+  · rfl
+  · rename_i domain hsome
+    rw [hd] at hsome
+    contradiction
+
+/-- A malformed derivative word has its own input diagnostic on a prepared
+domain. -/
+theorem Descriptor.build_malformed {sign : E → Int} {context : Ctx}
+    {raw : RawDescriptor E Ctx} (hctx : raw.context = context)
+    {domain : Sturm.PreparedDomain E}
+    (hd : Sturm.prepare sign raw.head raw.lower raw.upper = some domain)
+    (hw : raw.wellFormed ≠ true) :
+    Descriptor.build sign context raw = .ok (.error .malformed) := by
+  unfold Descriptor.build
+  simp only [hctx, ↓reduceDIte]
+  split
+  · rename_i hnone
+    rw [hd] at hnone
+    contradiction
+  · rename_i domain' hsome
+    have heq : domain' = domain := Option.some.inj (hsome.symm.trans hd)
+    subst domain'
+    simp [hw]
+
 /-- Producer success rules out internal errors in descriptor validation. -/
 theorem Descriptor.build_ok_ofPrepared (sign : E → Int) (context : Ctx)
     (raw : RawDescriptor E Ctx)
@@ -182,5 +240,74 @@ theorem Descriptor.build_ok_ofPrepared (sign : E → Int) (context : Ctx)
         · split <;> exact ⟨_, rfl⟩
       · exact ⟨_, rfl⟩
   · exact ⟨_, rfl⟩
+
+/-- A prepared table with exactly one matching row builds an accepted
+descriptor from the supplied raw input. -/
+theorem Descriptor.build_ofCount (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (hctx : raw.context = context)
+    (domain : Sturm.PreparedDomain E)
+    (hd : Sturm.prepare sign raw.head raw.lower raw.upper = some domain)
+    (hw : raw.wellFormed = true)
+    (t : {t : Replay E Ctx // t.check domain.sign context domain.head domain.lower domain.upper
+      raw.queries = true})
+    (ht : buildPrepared context domain raw.queries = .ok t)
+    (hone : t.val.node.system.count raw.signs = 1) :
+    ∃ d, Descriptor.build sign context raw = .ok (.ok d) := by
+  unfold Descriptor.build
+  simp only [hctx, ↓reduceDIte, hw, Replay.table_lookup]
+  split
+  · rename_i hnone
+    rw [hd] at hnone
+    contradiction
+  · rename_i domain' hd'
+    have heq : domain' = domain := Option.some.inj (hd'.symm.trans hd)
+    subst domain'
+    simp only [ht, hone, ↓reduceDIte]
+    exact ⟨_, rfl⟩
+
+/-- Zero matching rows produce the absent diagnostic. -/
+theorem Descriptor.build_absent_ofCount (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (hctx : raw.context = context)
+    (domain : Sturm.PreparedDomain E)
+    (hd : Sturm.prepare sign raw.head raw.lower raw.upper = some domain)
+    (hw : raw.wellFormed = true)
+    (t : {t : Replay E Ctx // t.check domain.sign context domain.head domain.lower domain.upper
+      raw.queries = true})
+    (ht : buildPrepared context domain raw.queries = .ok t)
+    (hzero : t.val.node.system.count raw.signs = 0) :
+    Descriptor.build sign context raw = .ok (.error .absent) := by
+  unfold Descriptor.build
+  simp only [hctx, ↓reduceDIte, hw, Replay.table_lookup]
+  split
+  · rename_i hnone
+    rw [hd] at hnone
+    contradiction
+  · rename_i domain' hd'
+    have heq : domain' = domain := Option.some.inj (hd'.symm.trans hd)
+    subst domain'
+    simp [ht, hzero]
+
+/-- More than one matching row produces the ambiguous diagnostic. -/
+theorem Descriptor.build_ambiguous_ofCount (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (hctx : raw.context = context)
+    (domain : Sturm.PreparedDomain E)
+    (hd : Sturm.prepare sign raw.head raw.lower raw.upper = some domain)
+    (hw : raw.wellFormed = true)
+    (t : {t : Replay E Ctx // t.check domain.sign context domain.head domain.lower domain.upper
+      raw.queries = true})
+    (ht : buildPrepared context domain raw.queries = .ok t)
+    (hone : t.val.node.system.count raw.signs ≠ 1)
+    (hzero : t.val.node.system.count raw.signs ≠ 0) :
+    Descriptor.build sign context raw = .ok (.error .ambiguous) := by
+  unfold Descriptor.build
+  simp only [hctx, ↓reduceDIte, hw, Replay.table_lookup]
+  split
+  · rename_i hnone
+    rw [hd] at hnone
+    contradiction
+  · rename_i domain' hd'
+    have heq : domain' = domain := Option.some.inj (hd'.symm.trans hd)
+    subst domain'
+    simp [ht, hone, hzero]
 
 end Hex.SignDet

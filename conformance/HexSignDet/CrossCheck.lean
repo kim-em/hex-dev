@@ -325,6 +325,34 @@ theorem domain_kernel :
 #guard_msgs in
 #print axioms Descriptor.build_ok_ofPrepared
 
+/-- info: 'Hex.SignDet.Descriptor.build_raw' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.build_raw
+
+/-- info: 'Hex.SignDet.Descriptor.build_ofCount' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.build_ofCount
+
+/-- info: 'Hex.SignDet.Descriptor.build_context' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.build_context
+
+/-- info: 'Hex.SignDet.Descriptor.build_domain' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.build_domain
+
+/-- info: 'Hex.SignDet.Descriptor.build_malformed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.build_malformed
+
+/-- info: 'Hex.SignDet.Descriptor.build_absent_ofCount' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.build_absent_ofCount
+
+/-- info: 'Hex.SignDet.Descriptor.build_ambiguous_ofCount' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.build_ambiguous_ofCount
+
 /-- info: 'Hex.SignDet.Dag.check_replay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Dag.check_replay
