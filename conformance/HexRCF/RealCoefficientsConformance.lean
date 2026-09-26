@@ -468,6 +468,29 @@ private def sourceSquare : RealFormula.Poly 1 := MvPoly.X 0 ^ 2
 private def specializedSquare : Hex.DensePoly Hex.RealAlgebraicNumber :=
   Specialize.polynomial (fun i : Fin 0 => i.elim0) sourceSquare
 
+private def sourceCube : RealFormula.Poly 1 := MvPoly.X 0 ^ 3
+private def specializedCube : Hex.DensePoly Hex.RealAlgebraicNumber :=
+  Specialize.polynomial (fun i : Fin 0 => i.elim0) sourceCube
+
+#guard (RadicalCert.build (7 : Nat)
+  (0 : Hex.DensePoly Hex.RealAlgebraicNumber)).isNone
+
+#guard ((RadicalCert.build (7 : Nat) specializedSquare).map
+  (fun cert => cert.exponent == 0 &&
+    cert.check 7 specializedSquare)).getD false
+
+#guard ((RadicalCert.build (7 : Nat) specializedCube).map
+  (fun cert => cert.exponent == 1 &&
+    cert.check 7 specializedCube)).getD false
+
+private def sourceQuartic : RealFormula.Poly 1 := MvPoly.X 0 ^ 4
+private def specializedQuartic : Hex.DensePoly Hex.RealAlgebraicNumber :=
+  Specialize.polynomial (fun i : Fin 0 => i.elim0) sourceQuartic
+
+#guard ((RadicalCert.build (7 : Nat) specializedQuartic).map
+  (fun cert => cert.exponent == 2 &&
+    cert.check 7 specializedQuartic)).getD false
+
 example (cert : RadicalCert Hex.RealAlgebraicNumber Nat)
     (h : cert.check 7 specializedSquare = true) (x : ℝ) :
     (HexPolyMathlib.Interpret.interpret Hex.RealAlgebraicNumber.toReal
@@ -483,5 +506,37 @@ example (cert : RadicalCert Hex.RealAlgebraicNumber Nat)
 /-- info: 'Hex.RCF.RealCoefficients.RadicalCert.roots_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms RadicalCert.roots_algebraic
+
+end Hex.RCF.RealCoefficientsConformance
+
+namespace Hex.RCF.RealCoefficientsConformance
+
+/-- Two independently selected quadratic roots enter one real coordinate field. -/
+private def independentInputs : Array Hex.AlgebraicNumber := #[
+  Hex.ZPoly.rootNear #p[-2, 0, 1] 1.4,
+  Hex.ZPoly.rootNear #p[-3, 0, 1] 1.7]
+
+private def independentQuadratics := Hex.QAdjoin.common independentInputs
+
+#guard independentQuadratics.generator.isReal &&
+  independentQuadratics.entries.map (·.toAlgebraicNumber) == independentInputs
+
+private theorem independentIndex : 0 < independentQuadratics.entries.size := by
+  rw [independentQuadratics, Hex.QAdjoin.common_size]
+  decide
+
+example :
+    (independentQuadratics.entries[0]'independentIndex).toAlgebraicNumber =
+      independentInputs[0] := by
+  exact Hex.QAdjoin.common_get independentInputs 0 (by decide)
+
+private theorem independentSecond : 1 < independentQuadratics.entries.size := by
+  rw [independentQuadratics, Hex.QAdjoin.common_size]
+  decide
+
+example :
+    (independentQuadratics.entries[1]'independentSecond).toAlgebraicNumber =
+      independentInputs[1] := by
+  exact Hex.QAdjoin.common_get independentInputs 1 (by decide)
 
 end Hex.RCF.RealCoefficientsConformance

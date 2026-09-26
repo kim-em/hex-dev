@@ -81,6 +81,16 @@ example : ∀ x : ℝ,
 example : ∀ x : ℝ, x ^ 2 + literalCubic.toReal > 0 := by
   rcf
 
+theorem algebraicWitnessDemo : ∃ x : ℝ, x ^ 2 = literalCubic.toReal := by
+  rcf
+
+/-- info: '_private.HexRCF.RealCoefficientTactic.0.algebraicWitnessDemo' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms algebraicWitnessDemo
+
 example : ∀ x : ℝ, x ^ 2 + genericCoefficient.toReal > 0 := by
   rcf
 

@@ -124,7 +124,7 @@ def build [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
   let rep := Field.literalRep p s hw hp
   let hrep := Field.literalRep_mk p s hw hp
   let product := FieldCarrier.product values formula
-  match RadicalBuild.build context product with
+  match RadicalCert.build context product with
   | none => none
   | some radical =>
     match isolateAt rep hrep context radical.core precision with

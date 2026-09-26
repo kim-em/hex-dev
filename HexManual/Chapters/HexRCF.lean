@@ -8,6 +8,7 @@ import VersoManual
 
 import HexRCF
 import HexRCF.RealCoefficients
+import HexSignDet
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -586,6 +587,9 @@ example : ∀ x : ℝ,
     x ^ 2 + computedCoefficient.toReal > 0 := by
   rcf
 
+example : ∃ x : ℝ, x ^ 2 = selectedCubic.toReal := by
+  rcf
+
 example : True := by
   fail_if_success
     have : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 < 0 := by
@@ -600,7 +604,10 @@ example : True := by
 ```
 
 The interval statement has no rational witness supplied by the user. `rcf`
-checks the signs on its root cells and proves existence. The two
+checks the signs on its root cells and proves existence. In the final true
+example, the witness is a square root of a selected cubic algebraic number;
+the fixed-field certificate path isolates a root of a polynomial over that
+coefficient field. The two
 `fail_if_success` examples show that a false algebraic statement produces no
 proof and that nonpolynomial syntax in the quantified variable is rejected.
 The adapter's source reifier preserves explicit coefficient aliases and
@@ -618,6 +625,153 @@ that stated theorem. Thus these examples are kernel-checked relative to that
 one mathematical admission. The rational examples and their axiom inventory
 above do not depend on it. See {ref "hex-number-field"}[HexNumberField] and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
+
+# Signs and selected roots with BKR
+%%%
+tag := "hex-rcf-bkr"
+%%%
+
+The underlying sign-determination library can answer a more detailed question
+than whether a sentence is true: at the roots of `x² − 1`, which sign patterns
+of `x` and `x − 1` occur, and how many times? The checked table below has one
+root with signs `(−,−)` and one with `(+,0)`. Every omitted pattern has count
+zero. The query order is the order of the two supplied polynomials.
+
+```lean
+open Hex Hex.SignDet
+
+private def bkrHead : DensePoly Rat :=
+  DensePoly.ofCoeffs #[-1, 0, 1]
+private def bkrX : DensePoly Rat :=
+  DensePoly.ofCoeffs #[0, 1]
+
+private def bkrTablePasses : Bool :=
+  match Sturm.prepare Sturm.orderSign bkrHead
+      .negInf .posInf with
+  | none => false
+  | some domain =>
+    match buildTablePrepared 7 domain [bkrX, bkrX - 1] with
+    | .error _ => false
+    | .ok table =>
+      table.rows.toList == [([-1, -1], 1), ([1, 0], 1)] &&
+        table.count [0, 0] == 0
+
+#guard bkrTablePasses
+```
+
+Derivative signs identify a selected root. Here the positive root of
+`x² − 1` is selected by the sign of the first derivative. A second checked
+table gives the signs of three other polynomials at that root: `x`, `x − 1`,
+and `x² − 2` have signs `+`, `0`, and `−` respectively. The descriptor records
+the defining polynomial, interval and context as well as the derivative sign.
+
+```lean
+private def positiveRoot : RawDescriptor Rat Nat :=
+  ⟨7, bkrHead, .negInf, .posInf, [1], [1]⟩
+
+private def selectedSignsPass : Bool :=
+  match Descriptor.build Sturm.orderSign 7 positiveRoot with
+  | .ok (.ok root) =>
+    match root.buildSigns
+        [bkrX, bkrX - 1, bkrX * bkrX - 2] with
+    | .ok signs => signs.values.toList == [1, 0, -1] &&
+        root.checkSigns [bkrX, bkrX - 1, bkrX * bkrX - 2]
+          signs.values signs.evidence &&
+        !root.checkSigns [bkrX, bkrX - 1, bkrX * bkrX - 2]
+          #v[-1, 0, -1] signs.evidence
+    | _ => false
+  | _ => false
+
+#guard selectedSignsPass
+```
+
+Two roots can be compared even if their defining polynomials differ. The
+comparison constructs a checked common squarefree polynomial and expresses
+both root selections in it. This example finds `1 < 2`.
+
+```lean
+private def rootTwo : RawDescriptor Rat Nat :=
+  ⟨7, bkrX - 2, .negInf, .posInf, [1], [1]⟩
+
+private def orderedRootsPass : Bool :=
+  match Descriptor.build Sturm.orderSign 7 positiveRoot,
+      Descriptor.build Sturm.orderSign 7 rootTwo with
+  | .ok (.ok one), .ok (.ok two) =>
+    match one.buildComparison two with
+    | .ok result => result.order == .lt &&
+        result.common.check 7 positiveRoot.head rootTwo.head
+    | _ => false
+  | _, _ => false
+
+#guard orderedRootsPass
+```
+
+The common-root case needs the shared factor removed before constructing the
+squarefree comparison polynomial. The two descriptors below select the same
+positive root of `x² − 2`, despite their different defining polynomials.
+
+```lean
+private def sqrtTwoRoot : RawDescriptor Rat Nat :=
+  ⟨7, bkrX * bkrX - 2, .negInf, .posInf, [1], [1]⟩
+
+private def sharedRoot : RawDescriptor Rat Nat :=
+  ⟨7, (bkrX * bkrX - 2) * (bkrX - 3),
+    .negInf, .posInf, [1], [-1]⟩
+
+private def commonRootPass : Bool :=
+  match Descriptor.build Sturm.orderSign 7 sqrtTwoRoot,
+      Descriptor.build Sturm.orderSign 7 sharedRoot with
+  | .ok (.ok left), .ok (.ok right) =>
+    match left.buildComparison right with
+    | .ok result => result.order == .eq &&
+        result.common.check 7
+          sqrtTwoRoot.head sharedRoot.head
+    | _ => false
+  | _, _ => false
+
+#guard commonRootPass
+```
+
+For two independently selected coefficients, the existing number-field
+constructor finds one coordinate field. Here √2 and √3 start as roots of
+different polynomials. The check confirms that the common generator is real
+and that both converted coordinates retain their original selected algebraic
+values, in the supplied order. Converting those coordinates to real algebraic
+numbers then checks the exact order √2 < √3 in their selected embeddings.
+
+```lean
+private def independentInputs :
+    Array Hex.AlgebraicNumber := #[
+  Hex.ZPoly.rootNear #p[-2, 0, 1] 1.4,
+  Hex.ZPoly.rootNear #p[-3, 0, 1] 1.7]
+
+private def independentRootsPass : Bool :=
+  let common := Hex.QAdjoin.common independentInputs
+  common.generator.isReal &&
+    common.entries.map (·.toAlgebraicNumber) ==
+      independentInputs &&
+    match common.entries[0]?, common.entries[1]? with
+    | some left, some right =>
+      let a? := Hex.RealAlgebraicNumber.ofAlgebraic?
+        left.toAlgebraicNumber
+      let b? := Hex.RealAlgebraicNumber.ofAlgebraic?
+        right.toAlgebraicNumber
+      match a?, b? with
+      | some a, some b => a < b
+      | _, _ => false
+    | _, _ => false
+
+#guard independentRootsPass
+```
+
+The sign-table and descriptor examples run checked producers and finite
+certificate checks; the changed sign vector above is rejected. Their
+interpretation as exact real-root counts and orders is not yet proved. That
+requires the root-sum bridge tracked by
+[#10389](https://github.com/kim-em/hex-dev/issues/10389), as well as the
+moment, support-reduction and Thom foundations required from Tau Ceti. The
+separate common-field conversion preserves the selected algebraic values by
+the proved `QAdjoin.common_get` theorem.
 
 # Cross-references
 %%%
