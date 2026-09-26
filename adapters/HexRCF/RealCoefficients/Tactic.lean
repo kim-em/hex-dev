@@ -47,7 +47,18 @@ private meta def selectedArgs? (source : Reify.Source) :
   if source.coefficients.size != 1 then return none
   let coefficient := source.coefficients[0]!
   unless coefficient.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return none
-  let selected ← withTransparency .reducible (whnf coefficient.appArg!)
+  let argument := coefficient.appArg!
+  let direct ← match argument with
+    | .const name _ =>
+      match ← getConstInfo name with
+      | .defnInfo info => pure info.value
+      | _ => pure argument
+    | _ => pure argument
+  let selected ←
+    if direct.isAppOfArity ``Selected.real 10 ||
+        direct.isAppOfArity ``Selected.field 11 then
+      pure direct
+    else withTransparency .reducible (whnf argument)
   if selected.isAppOfArity ``Selected.real 10 then
     return some (selected.getAppArgs, none)
   if selected.isAppOfArity ``Selected.field 11 then

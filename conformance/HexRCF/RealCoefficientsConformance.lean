@@ -22,6 +22,55 @@ private def cubic : Hex.RealAlgebraicNumber :=
 private def fieldCoefficient : Hex.RealAlgebraicNumber :=
   Coefficients.ofField cubic (cubic.toAlgebraic.toQAdjoin ^ 2 - 1)
 
+private abbrev plasticPolynomial : Hex.ZPoly :=
+  Hex.DensePoly.ofList [-1, -1, 0, 1]
+
+private abbrev plasticSquare : Hex.DyadicSquare :=
+  ⟨Dyadic.ofInt 5426 >>> (12 : Int), 0, 12⟩
+
+private theorem plasticChecked : plasticPolynomial.CheckedIrreducible :=
+  ⟨by decide +kernel, by decide⟩
+
+private theorem plasticSquarefree : Hex.HasOnlySimpleRoots plasticPolynomial := by
+  have hne : plasticPolynomial ≠ 0 := by decide
+  letI : plasticPolynomial.CheckedIrreducible := plasticChecked
+  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable plasticPolynomial hne).mpr
+    (Hex.ZPoly.CheckedIrreducible.separable plasticPolynomial)
+
+private def plasticSelected : Hex.RealAlgebraicNumber :=
+  Selected.real plasticPolynomial plasticSquare (by decide) (by decide)
+    (by rfl) (by decide) (by decide) plasticChecked plasticSquarefree (by decide)
+
+private theorem plasticNear :
+    plasticPolynomial.rootNear plasticSquare.re.toRat 0 =
+      plasticSelected.toAlgebraic := by
+  exact Selected.real_rootNear plasticPolynomial plasticSquare
+    (by decide) (by decide) (by rfl) (by decide) (by decide)
+    plasticChecked plasticSquarefree (by decide)
+
+/-- info: 'Hex.RCF.RealCoefficients.Selected.real_rootNear' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Selected.real_rootNear
+
+private abbrev plasticAlgebraic : Hex.AlgebraicNumber :=
+  plasticPolynomial.rootNear plasticSquare.re.toRat 0
+
+private theorem plasticReal : plasticAlgebraic.isReal = true := by
+  rw [plasticAlgebraic, plasticNear]
+  exact plasticSelected.property
+
+private abbrev plasticCoefficient : Hex.RealAlgebraicNumber :=
+  Hex.RealAlgebraicNumber.ofAlgebraic plasticAlgebraic plasticReal
+
+private theorem plasticCoefficient_eq_selected :
+    plasticCoefficient = plasticSelected := by
+  apply Hex.RealAlgebraicNumber.ext
+  exact plasticNear
+
+private theorem plasticPositive : ∀ x : ℝ,
+    x + plasticSelected.toReal > x := by
+  rcf
+
 -- These checks exercise existing root selection and fixed-field arithmetic.
 #guard cubic ^ 3 = cubic + 1
 #guard fieldCoefficient * cubic = 1
