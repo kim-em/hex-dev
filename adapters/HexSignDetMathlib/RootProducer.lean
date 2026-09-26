@@ -149,8 +149,8 @@ theorem buildPrepared_roots {Ctx : Type w} [DecidableEq Ctx] (context : Ctx)
   exact ⟨t, ht, counted⟩
 
 include hz h1 ha hs hm hnat hn hi hsign in
-/-- Building a raw descriptor cannot fail with an internal BKR error. Invalid
-contexts, domains and sign words retain their explicit input diagnostics. -/
+/-- Under a lawful coefficient interpretation, building any raw descriptor
+cannot fail with an internal BKR error. -/
 theorem Descriptor.build_noError {Ctx : Type w} [DecidableEq Ctx] (context : Ctx)
     (raw : RawDescriptor E Ctx) :
     ∃ result, Descriptor.build sign context raw = .ok result := by
