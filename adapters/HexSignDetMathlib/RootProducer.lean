@@ -7,6 +7,7 @@ module
 
 public import HexSignDetMathlib.RootModel
 public import HexSignDetMathlib.TreeSolve
+public import HexSignDet.Descriptor
 
 public section
 
@@ -146,5 +147,18 @@ theorem buildPrepared_roots {Ctx : Type w} [DecidableEq Ctx] (context : Ctx)
     (fun x => (hsg x).1) (fun x => (hsg x).2.1) (fun x => (hsg x).2.2.2)
     context domain binding qs reduced _ (rootObservations_valid f hz _ _ _ _) model
   exact ⟨t, ht, counted⟩
+
+include hz h1 ha hs hm hnat hn hi hsign in
+/-- Building a raw descriptor cannot fail with an internal BKR error. Invalid
+contexts, domains and sign words retain their explicit input diagnostics. -/
+theorem Descriptor.build_noError {Ctx : Type w} [DecidableEq Ctx] (context : Ctx)
+    (raw : RawDescriptor E Ctx) :
+    ∃ result, Descriptor.build sign context raw = .ok result := by
+  apply Descriptor.build_ok_ofPrepared sign context raw
+  intro domain hd
+  have binding := (Sturm.prepare_eq_some sign raw.head raw.lower raw.upper domain hd).1
+  obtain ⟨t, ht, _⟩ := buildPrepared_roots f hz h1 ha hs hm hnat hn hi sign hsign
+    context domain binding raw.queries true
+  exact ⟨t, ht⟩
 
 end Hex.SignDet

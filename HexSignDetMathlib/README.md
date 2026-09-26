@@ -94,6 +94,10 @@ ordinary generic coefficient laws. The universal noncanonical instantiation and
 exact standard-axiom inventories are checked in conformance. An ordinary-kernel
 constant-head probe accepts an empty observation model and rejects a falsely
 claimed root using the actual constant query value.
+`Descriptor.build_ok_ofPrepared` isolates the finite constructor's only
+internal failure path; `Descriptor.build_noError` uses actual root-query
+interpretation to rule that path out for lawful coefficient fields. Invalid
+context, domain and sign-word inputs still retain their explicit diagnostics.
 The existing `HexSignDet.Conformance` cases run the recursive producer on
 two and twelve queries with independently supplied sign counts, including a
 root-free constant head. The finite theorem applies to those same construction
