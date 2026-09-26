@@ -18,6 +18,7 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 CASES = {
     'sparse-support': ('runProduce', 2048, 5_000_000_000),
+    'full-reference': ('runSmallFull', 5, 5_000_000_000),
 }
 
 
