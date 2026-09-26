@@ -47,6 +47,14 @@ Index zero is not a derivative slot, and the highest derivative is retained. -/
   decide d.indices.Nodup && d.indices.all (fun i => decide (1 ≤ i ∧ i ≤ d.head.natDegree)) &&
   d.signs.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1))
 
+omit [NatCast E] [Mul E] in
+/-- Every index in a well-formed descriptor names an existing derivative. -/
+theorem RawDescriptor.wellFormed_bounds (d : RawDescriptor E Ctx)
+    (h : d.wellFormed = true) (j : Nat) (hj : j ∈ d.indices) :
+    1 ≤ j ∧ j ≤ d.head.natDegree := by
+  simp only [wellFormed, Bool.and_eq_true, decide_eq_true_eq] at h
+  exact of_decide_eq_true (List.all_eq_true.mp h.1.2 j hj)
+
 /-- Ordered derivative queries. This internal extraction is used only after
 `wellFormed` has excluded zero and out-of-range indices. -/
 @[expose] def RawDescriptor.queries (d : RawDescriptor E Ctx) : List (DensePoly E) :=

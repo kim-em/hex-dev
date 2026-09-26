@@ -71,16 +71,16 @@ theorem Descriptor.root_spec {context : Ctx} (d : Descriptor E Ctx sign context)
 
 omit [IsStrictOrderedRing K] [IsRealClosed K] in
 include hm hnat in
-private theorem Descriptor.derivatives_at {context : Ctx}
+/-- Formal derivative queries agree with interpreted derivatives at any point. -/
+theorem Descriptor.derivatives_at {context : Ctx}
     (d : Descriptor E Ctx sign context) (x : K) :
     signsAt f hz d.raw.queries x = d.raw.indices.map (fun j =>
       (SignType.sign ((Polynomial.derivative^[j]
         (interpret f hz d.raw.head)).eval x) : Int)) := by
   have hw : d.raw.wellFormed = true := (RawDescriptor.check_eq d.accepted).1
-  simp only [RawDescriptor.wellFormed, Bool.and_eq_true, decide_eq_true_eq] at hw
   have hb : ∀ j ∈ d.raw.indices, 1 ≤ j ∧ j ≤ d.raw.head.natDegree := by
     intro j hj
-    exact of_decide_eq_true (List.all_eq_true.mp hw.1.2 j hj)
+    exact d.raw.wellFormed_bounds hw j hj
   simp only [signsAt, RawDescriptor.queries, List.map_map]
   apply List.map_congr_left
   intro j hj
@@ -103,31 +103,6 @@ theorem Descriptor.root_derivatives {context : Ctx} (d : Descriptor E Ctx sign c
         (interpret f hz d.raw.head)).eval (d.root f hz h1 ha hs hm hnat hsign)) : Int)) := by
   rw [← (d.root_spec f hz h1 ha hs hm hnat hsign).2]
   exact d.derivatives_at f hz hm hnat _
-
-private theorem Thom.select_full (n : Nat) (g : Nat → Int) (indices : List Nat)
-    (h : ∀ i ∈ indices, 1 ≤ i ∧ i ≤ n) :
-    Thom.select indices ((List.range n).map fun j => g (j + 1)) =
-      some (indices.map g) := by
-  induction indices with
-  | nil => rfl
-  | cons i rest ih =>
-    have hi := h i (by simp)
-    have hrest : ∀ j ∈ rest, 1 ≤ j ∧ j ≤ n := by
-      intro j hj
-      exact h j (by simp [hj])
-    have hget : ((List.range n).map fun j => g (j + 1))[i - 1]? = some (g i) := by
-      have hlt : i - 1 < n := by omega
-      have hlt' : i - 1 < ((List.range n).map fun j => g (j + 1)).length := by
-        simpa only [List.length_map, List.length_range] using hlt
-      rw [List.getElem?_eq_getElem hlt']
-      simp only [List.getElem_map, List.getElem_range, Nat.sub_add_cancel hi.1]
-    have htail := ih hrest
-    simp only [Thom.select] at htail
-    have hpos : 0 < i := by omega
-    simp only [Thom.select, List.mapM_cons, List.map_cons]
-    simp only [hpos, ↓reduceIte]
-    rw [hget, htail]
-    rfl
 
 /-- Any root with the checked encoding denotes the same selected value. -/
 theorem Descriptor.root_unique {context : Ctx} (d : Descriptor E Ctx sign context) (x : K)
@@ -152,11 +127,10 @@ theorem Completion.root_eq_source {context : Ctx}
     simpa only [hhead, hlower, hupper] using
       (c.descriptor.root_spec f hz h1 ha hs hm hnat hsign).1
   have hw : source.raw.wellFormed = true := (RawDescriptor.check_eq source.accepted).1
-  simp only [RawDescriptor.wellFormed, Bool.and_eq_true, decide_eq_true_eq] at hw
   have hb : ∀ j ∈ source.raw.indices,
       1 ≤ j ∧ j ≤ source.raw.head.natDegree := by
     intro j hj
-    exact of_decide_eq_true (List.all_eq_true.mp hw.1.2 j hj)
+    exact source.raw.wellFormed_bounds hw j hj
   let g : Nat → Int := fun j =>
     (SignType.sign ((Polynomial.derivative^[j]
       (interpret f hz source.raw.head)).eval x) : Int)
