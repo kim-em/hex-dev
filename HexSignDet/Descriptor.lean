@@ -135,10 +135,9 @@ inductive DescriptorError where
 variable [Neg E] [Inv E]
 
 /-- Build count-one descriptor evidence from raw input, preserving internal
-construction failures separately from input diagnostics. This diagnostic
-constructor is not the final domain-exact `validate` API: the companion now
-proves producer success from actual roots relative to the named #10389 bridge,
-but the total executable wrapper remains. -/
+construction failures separately from input diagnostics. The option-valued
+`validate` wrapper follows below; the companion proves its exact success
+criterion for lawful coefficient interpretations. -/
 def Descriptor.build (sign : E → Int) (context : Ctx) (raw : RawDescriptor E Ctx) :
     Except BuildError (Except DescriptorError (Descriptor E Ctx sign context)) :=
   if hctx : raw.context = context then
@@ -163,8 +162,10 @@ def Descriptor.build (sign : E → Int) (context : Ctx) (raw : RawDescriptor E C
       else .ok (.error .malformed)
   else .ok (.error .context)
 
-/-- Validate a raw descriptor when only success or failure matters. The
-diagnostic `build` operation remains available to distinguish invalid inputs. -/
+/-- Validate a raw descriptor when only success or failure matters. Internal
+construction errors also yield `none` for an arbitrary sign function; the
+companion's `Descriptor.build_noError` proves that branch unreachable under a
+lawful coefficient interpretation. Use `build` when diagnostics matter. -/
 def Descriptor.validate (sign : E → Int) (context : Ctx) (raw : RawDescriptor E Ctx) :
     Option (Descriptor E Ctx sign context) :=
   match Descriptor.build sign context raw with

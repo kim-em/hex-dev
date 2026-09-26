@@ -196,7 +196,10 @@ outer diagnostic result in this Mathlib-free executable; the companion proves
 that branch unreachable under a lawful coefficient interpretation.
 `Descriptor.validate` returns `some` exactly when this constructor succeeds and
 provides the public option-valued validation operation. The companion proves
-that success means the raw descriptor selects one real root.
+that success means the raw descriptor selects one real root. For an arbitrary
+unlawful sign function, `validate` also maps an internal construction error to
+`none`; `Descriptor.build_noError` rules that case out under the companion's
+coefficient laws.
 
 `Thom.compareSigns` implements
 the largest-differing-index rule as a finite operation on sign words; root
