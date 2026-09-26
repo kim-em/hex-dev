@@ -118,6 +118,10 @@ that same selected root, including the public one-query accessor.
 when the defining polynomial and interval change. Its proof uses the copied
 equation, derivative word and strict endpoint signs, plus acceptance of the
 source descriptor to rule out impossible infinite endpoint orientations.
+`Comparison.eq_iff_root_eq` proves that a successful common-product comparison
+returns equality exactly when the original selected real roots coincide. It
+uses the common full derivative word and count-one descriptors; strict `<` and
+`>` still require the separate Thom-order foundation.
 The executable API still exposes internal errors, and the domain-exact total
 wrapper remains to be implemented.
 

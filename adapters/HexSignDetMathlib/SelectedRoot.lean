@@ -7,6 +7,7 @@ module
 
 public import HexSignDet.SelectedSigns
 public import HexSignDet.Reencode
+public import HexSignDet.Compare
 public import HexSignDetMathlib.RootModel
 public import HexSignDetMathlib.Derivatives
 public import HexSignDetMathlib.Reencode
@@ -315,5 +316,113 @@ theorem Reencoding.root_eq_source {context : Ctx}
       source.constraints_interval f hz h1 ha hs hm hnat hsign x hc⟩
   exact source.root_unique f hz h1 ha hs hm hnat hsign x hx
     (source.constraints_queries f hz x hc)
+
+include h1 ha hs hm hnat hsign in
+/-- Equality returned by a checked cross-polynomial comparison identifies the
+same real root, using the common descriptor's count-one evidence. This does
+not require the Thom theorem for strict order. -/
+theorem Comparison.eq_root {context : Ctx}
+    {left right : Descriptor E Ctx sign context} (c : Comparison left right)
+    (heq : c.order = .eq) :
+    left.root f hz h1 ha hs hm hnat hsign =
+      right.root f hz h1 ha hs hm hnat hsign := by
+  have horder : c.leftEncoding.target.fullOrder c.rightEncoding.target = some .eq := by
+    simpa only [heq] using c.ordered
+  obtain ⟨hguard, hsigns⟩ := Descriptor.fullOrder_eq horder
+  have hwords : c.leftEncoding.target.raw.signs = c.rightEncoding.target.raw.signs :=
+    Thom.compareSigns_eq hsigns
+  obtain ⟨hleftHead, hleftLower, hleftUpper⟩ := c.leftEncoding.check_eq.1
+  obtain ⟨hrightHead, hrightLower, hrightUpper⟩ := c.rightEncoding.check_eq.1
+  have hhead : c.leftEncoding.target.raw.head = c.rightEncoding.target.raw.head :=
+    hleftHead.trans hrightHead.symm
+  have hlower : c.leftEncoding.target.raw.lower = c.rightEncoding.target.raw.lower :=
+    hleftLower.trans hrightLower.symm
+  have hupper : c.leftEncoding.target.raw.upper = c.rightEncoding.target.raw.upper :=
+    hleftUpper.trans hrightUpper.symm
+  have hindices : c.leftEncoding.target.raw.indices =
+      c.rightEncoding.target.raw.indices := by
+    rw [hguard.2.1, hguard.2.2, ← hhead]
+  have hqueries : c.leftEncoding.target.raw.queries =
+      c.rightEncoding.target.raw.queries := by
+    simp only [RawDescriptor.queries, hhead, hindices]
+  let x := c.leftEncoding.target.root f hz h1 ha hs hm hnat hsign
+  have hmem : x ∈ Tarski.rootsIn (interpret f hz c.rightEncoding.target.raw.head)
+      (c.rightEncoding.target.raw.lower.map f)
+      (c.rightEncoding.target.raw.upper.map f) := by
+    simpa only [← hhead, ← hlower, ← hupper] using
+      (c.leftEncoding.target.root_spec f hz h1 ha hs hm hnat hsign).1
+  have hsignAt : signsAt f hz c.rightEncoding.target.raw.queries x =
+      c.rightEncoding.target.raw.signs := by
+    simpa only [← hqueries, ← hwords] using
+      (c.leftEncoding.target.root_spec f hz h1 ha hs hm hnat hsign).2
+  calc
+    left.root f hz h1 ha hs hm hnat hsign = x :=
+      (c.leftEncoding.root_eq_source f hz h1 ha hs hm hnat hsign).symm
+    _ = c.rightEncoding.target.root f hz h1 ha hs hm hnat hsign :=
+      c.rightEncoding.target.root_unique f hz h1 ha hs hm hnat hsign x hmem hsignAt
+    _ = right.root f hz h1 ha hs hm hnat hsign :=
+      c.rightEncoding.root_eq_source f hz h1 ha hs hm hnat hsign
+
+include h1 ha hs hm hnat hsign in
+/-- If the two selected real roots coincide, their checked common full
+derivative encodings are identical and the finite comparison returns equality. -/
+theorem Comparison.root_eq {context : Ctx}
+    {left right : Descriptor E Ctx sign context} (c : Comparison left right)
+    (heq : left.root f hz h1 ha hs hm hnat hsign =
+      right.root f hz h1 ha hs hm hnat hsign) : c.order = .eq := by
+  obtain ⟨hguard, _⟩ := Descriptor.fullOrder_eq c.ordered
+  obtain ⟨hleftHead, _, _⟩ := c.leftEncoding.check_eq.1
+  obtain ⟨hrightHead, _, _⟩ := c.rightEncoding.check_eq.1
+  have hhead : c.leftEncoding.target.raw.head = c.rightEncoding.target.raw.head :=
+    hleftHead.trans hrightHead.symm
+  have hindices : c.leftEncoding.target.raw.indices =
+      c.rightEncoding.target.raw.indices := by
+    rw [hguard.2.1, hguard.2.2, ← hhead]
+  have hroots : c.leftEncoding.target.root f hz h1 ha hs hm hnat hsign =
+      c.rightEncoding.target.root f hz h1 ha hs hm hnat hsign := by
+    calc
+      _ = left.root f hz h1 ha hs hm hnat hsign :=
+        c.leftEncoding.root_eq_source f hz h1 ha hs hm hnat hsign
+      _ = right.root f hz h1 ha hs hm hnat hsign := heq
+      _ = _ := (c.rightEncoding.root_eq_source f hz h1 ha hs hm hnat hsign).symm
+  have hleft := c.leftEncoding.target.root_derivatives f hz h1 ha hs hm hnat hsign
+  have hright := c.rightEncoding.target.root_derivatives f hz h1 ha hs hm hnat hsign
+  rw [hhead, hindices, hroots] at hleft
+  have hwords : c.leftEncoding.target.raw.signs = c.rightEncoding.target.raw.signs :=
+    hleft.trans hright.symm
+  have hwell := (RawDescriptor.check_eq c.leftEncoding.target.accepted).1
+  simp only [RawDescriptor.wellFormed, Bool.and_eq_true, decide_eq_true_eq] at hwell
+  have hne : c.leftEncoding.target.raw.signs ≠ [] := by
+    intro hnil
+    have hlen := hwell.1.1.1.2
+    rw [hguard.2.1] at hlen
+    simp only [hnil, List.length_nil, List.length_map, List.length_range] at hlen
+    omega
+  have hnotEmpty : c.leftEncoding.target.raw.signs.isEmpty = false := by
+    cases hs : c.leftEncoding.target.raw.signs with
+    | nil => exact False.elim (hne hs)
+    | cons _ _ => rfl
+  have hcmp : Thom.compareSigns c.leftEncoding.target.raw.signs
+      c.leftEncoding.target.raw.signs = some .eq := by
+    simp only [Thom.compareSigns, hnotEmpty, hwell.2, Bool.not_true,
+      Bool.false_or, Thom.compareFrom_self]
+    simp
+  have horder : c.leftEncoding.target.fullOrder c.rightEncoding.target = some .eq := by
+    unfold Descriptor.fullOrder
+    rw [ite_eq_left hguard]
+    rw [← hwords]
+    exact hcmp
+  exact Option.some.inj (c.ordered.symm.trans horder)
+
+include h1 ha hs hm hnat hsign in
+/-- Equality is the exact semantic meaning of the equality branch of the
+checked common-product comparison. Strict order has a separate Thom gate. -/
+theorem Comparison.eq_iff_root_eq {context : Ctx}
+    {left right : Descriptor E Ctx sign context} (c : Comparison left right) :
+    c.order = .eq ↔
+      left.root f hz h1 ha hs hm hnat hsign =
+        right.root f hz h1 ha hs hm hnat hsign := by
+  exact ⟨c.eq_root f hz h1 ha hs hm hnat hsign,
+    c.root_eq f hz h1 ha hs hm hnat hsign⟩
 
 end Hex.SignDet
