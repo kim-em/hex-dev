@@ -31,6 +31,7 @@ BUILD_ONLY_LIBS = {
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
     "HexRankBenchSupport",
+    "HexSignDetBenchSupport",
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
     "HexPrimalityElabProbe",
