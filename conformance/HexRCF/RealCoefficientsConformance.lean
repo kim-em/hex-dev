@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRCF.RealCoefficients
+import HexSturm.Basic
 import HexRealAlgebraicMathlib.Complex
 import Lean.Elab.Command
 
@@ -30,6 +31,8 @@ private abbrev plasticSquare : Hex.DyadicSquare :=
 
 private theorem plasticChecked : plasticPolynomial.CheckedIrreducible :=
   ⟨by decide +kernel, by decide⟩
+
+private instance : plasticPolynomial.CheckedIrreducible := plasticChecked
 
 private theorem plasticSquarefree : Hex.HasOnlySimpleRoots plasticPolynomial := by
   have hne : plasticPolynomial ≠ 0 := by decide
@@ -506,6 +509,44 @@ example (cert : RadicalCert Hex.RealAlgebraicNumber Nat)
 /-- info: 'Hex.RCF.RealCoefficients.RadicalCert.roots_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms RadicalCert.roots_algebraic
+
+private def ratHead : Hex.DensePoly Rat :=
+  Hex.DensePoly.ofCoeffs #[-1, 0, 1]
+
+private def ratPoint (d : Dyadic) : Rat := d.toRat
+
+private def acceptedIntervals (head : Hex.DensePoly Rat) (expected : Nat) : Bool :=
+  match FieldIsolate.propose? Hex.Sturm.orderSign ratPoint head with
+  | none => false
+  | some intervals =>
+      intervals.intervals.size == expected &&
+        (IsolationReplay.build Hex.Sturm.orderSign ratPoint () head intervals).isSome
+
+#guard acceptedIntervals ratHead 2
+#guard acceptedIntervals (Hex.DensePoly.ofCoeffs #[(1 : Rat), 0, 1]) 0
+#guard acceptedIntervals (Hex.DensePoly.ofCoeffs #[(0 : Rat), -1, 0, 1]) 3
+#guard (FieldIsolate.propose? Hex.Sturm.orderSign ratPoint
+  (Hex.DensePoly.ofCoeffs #[(1 : Rat), -2, 1])).isNone
+
+private def plasticGenerator :
+    Hex.PolyQuot plasticPolynomial
+      (Hex.SimpleRoot.ofSquare plasticPolynomial plasticSquare
+        (by decide) (by decide)) :=
+  Hex.PolyQuot.ofSquare plasticPolynomial plasticSquare
+    (Hex.DensePoly.ofList [0, 1]) (by decide) (by decide)
+
+private def plasticHead : Hex.DensePoly (Hex.PolyQuot plasticPolynomial
+    (Hex.SimpleRoot.ofSquare plasticPolynomial plasticSquare
+      (by decide) (by decide))) :=
+  Hex.DensePoly.ofList [-plasticGenerator, 0, 1]
+
+-- Exercise the direct search over actual fixed-field coefficients, so a
+-- regression cannot be hidden by `isolateAt`'s canonical fallback.
+#guard (FieldIsolate.propose?
+  (FieldBuild.proposalSign
+    (Field.literalRep plasticPolynomial plasticSquare (by decide) (by decide))
+    (Field.literalRep_mk plasticPolynomial plasticSquare (by decide) (by decide)))
+  FieldDecision.point plasticHead).isSome
 
 end Hex.RCF.RealCoefficientsConformance
 

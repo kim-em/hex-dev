@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.FieldDecision
+public import HexRCF.RealCoefficients.FieldIsolate
 public import HexRCF.RealCoefficients.IsolationBuild
 public import HexRCF.RealCoefficients.RadicalBuild
 public import HexRCF.RealCoefficients.FieldRootSigns
@@ -14,7 +15,7 @@ public import HexRCF.RealCoefficients.SignInputs
 
 public section
 
-/-! Propose fixed-field root isolations using the existing algebraic root solver. -/
+/-! Propose fixed-field root isolations, then check them over literal coordinates. -/
 
 namespace Hex.RCF.RealCoefficients.FieldBuild
 
@@ -32,7 +33,7 @@ The resulting isolations are checked later over the original coordinates. -/
 
 /-- Search for roots with the existing canonical solver, retaining only its
 dyadic interval proposals. -/
-@[expose] def proposeIsolations [RealAlgebraicNumber.Laws]
+@[expose] def proposeCanonical [RealAlgebraicNumber.Laws]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
     (head : DensePoly (PolyQuot p root)) (precision : Nat) :
     Option IsolationCert := do
@@ -47,16 +48,38 @@ proposal fail its subsequent exact replay checks. -/
     (hrep : SimpleRoot.mk rep = root) (a : PolyQuot p root) : Int :=
   (canonical? rep hrep a).map RealAlgebraicNumber.sign |>.getD 0
 
-/-- Search and certify root cells over the original fixed-field coefficients.
-The result contains the original literal Tarski evidence, not canonical data. -/
+private def buildProposed {Ctx : Type u} [DecidableEq Ctx]
+    (sign : PolyQuot p root → Int) (context : Ctx)
+    (head : DensePoly (PolyQuot p root)) (proposal : Option IsolationCert) :
+    Option (IsolationReplay (PolyQuot p root) Ctx) :=
+  match proposal with
+  | none => none
+  | some intervals =>
+      IsolationReplay.build sign FieldDecision.point context head intervals
+
+private theorem buildProposed_checked {Ctx : Type u} [DecidableEq Ctx]
+    (sign : PolyQuot p root → Int) (context : Ctx)
+    (head : DensePoly (PolyQuot p root)) (proposal : Option IsolationCert)
+    (cert : IsolationReplay (PolyQuot p root) Ctx)
+    (h : buildProposed sign context head proposal = some cert) :
+    cert.check sign FieldDecision.point context head = true := by
+  unfold buildProposed at h
+  split at h
+  · contradiction
+  · exact (IsolationReplay.build_checked _ _ _ _ _ _ h).2
+
+/-- First search with prepared field root counts. If that bounded search or
+its exact replay fails, use the existing canonical root solver for proposals.
+Both paths return only evidence accepted over the original field coordinates. -/
 def isolateAt [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
     (context : Ctx) (head : DensePoly (PolyQuot p root))
     (precision : Nat) : Option (IsolationReplay (PolyQuot p root) Ctx) :=
-  match proposeIsolations rep hrep head precision with
-  | none => none
-  | some isolations =>
-      IsolationReplay.build (proposalSign rep hrep) FieldDecision.point context head isolations
+  let sign := proposalSign rep hrep
+  match buildProposed sign context head
+      (FieldIsolate.propose? sign FieldDecision.point head) with
+  | some direct => some direct
+  | none => buildProposed sign context head (proposeCanonical rep hrep head precision)
 
 /-- Every successful proposal is accepted by the generic isolation checker
 with the same root, field coordinates and sign operation. -/
@@ -67,9 +90,17 @@ theorem isolateAt_checked [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq
     (h : isolateAt rep hrep context head precision = some cert) :
     cert.check (proposalSign rep hrep) FieldDecision.point context head = true := by
   unfold isolateAt at h
-  split at h
-  · contradiction
-  · exact (IsolationReplay.build_checked _ _ _ _ _ _ h).2
+  dsimp only at h
+  cases hdirect : buildProposed (proposalSign rep hrep) context head
+      (FieldIsolate.propose? (proposalSign rep hrep) FieldDecision.point head) with
+  | none =>
+      simpa [hdirect] using
+        (buildProposed_checked (proposalSign rep hrep) context head
+          (proposeCanonical rep hrep head precision) cert (by simpa [hdirect] using h))
+  | some direct =>
+      have heq : direct = cert := by simpa [hdirect] using h
+      subst cert
+      exact buildProposed_checked _ _ _ _ _ hdirect
 
 /-- Prepare the rational defining polynomial once and certify the finite sign
 arguments that replay will read. The selected square fixes the root and both
