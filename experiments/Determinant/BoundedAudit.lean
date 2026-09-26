@@ -208,6 +208,6 @@ run_meta do
     logInfo m!"CACHE_HIT {label}"
   let audit : CertM reified.rα Unit := do
     check "entry" (Determinant.Compact.coeffEntry true true true 1 2)
-    check "iteration" (Determinant.Compact.certIterStepEntry true true true true 3 0 0)
-    check "diagonal" (Determinant.Compact.certDiag true true true true 2 1)
+    check "iteration" (Determinant.Compact.certIterStepEntry true true true true pure 3 0 0)
+    check "diagonal" (Determinant.Compact.certDiag true true true true pure 2 1)
   audit.run' {} |>.run ctx |>.run .reducible

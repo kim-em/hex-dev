@@ -1,0 +1,144 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Compact
+
+/-! Compact monomials with multiplicative signatures. Signatures are optimization
+hints only: they never justify an equality. Only monomials with colliding
+signatures are normalized, using existing kernel-checked scalar proofs. -/
+
+open Lean Meta Qq Mathlib.Tactic.Ring Mathlib.Tactic.Ring.Common
+open Mathlib.Tactic.Determinant
+namespace Determinant.Relations
+
+register_option det.relations.maxWork : Nat := {
+  defValue := 1000000
+  descr := "Maximum scalar term visits in the experimental relation normalizer" }
+
+meta section
+abbrev Signature := Array (Nat × Nat)
+
+structure State where
+  atoms : Std.HashMap (Expr × Bool) Nat := {}
+  factors : Std.HashMap (Expr × Bool) Signature := {}
+  products : Std.HashMap Expr Signature := {}
+  work : Nat := 0
+  rewrites : Nat := 0
+
+def merge (a b : Signature) : Signature := Id.run do
+  let mut result := a
+  for (id, power) in b do
+    if let some i := result.findIdx? (fun x => x.1 == id) then
+      result := result.modify i fun x => (id, x.2 + power)
+    else result := result.push (id, power)
+  return result.qsort (fun a b => a.1 < b.1)
+
+def atom (ref : IO.Ref State) (e : Expr) (inverse : Bool) : MetaM Signature := do
+  let s ← ref.get
+  if let some id := s.atoms[(e, inverse)]? then return #[(id, 1)]
+  let id := s.atoms.size
+  ref.modify fun s => {s with atoms := s.atoms.insert (e, inverse) id}
+  return #[(id, 1)]
+
+/-- Syntactic factorization without proof construction or atom-table mutation.
+No cancellation of a factor against its inverse is used: it could be zero. -/
+def factors (ref : IO.Ref State) (fuel : Nat) (e : Expr) (inverse := false) : MetaM Signature := do
+  if let some value := (← ref.get).factors[(e, inverse)]? then return value
+  let value ← match fuel with
+    | 0 => atom ref e inverse
+    | fuel + 1 => do
+      let args := e.getAppArgs
+      match e.getAppFn.constName? with
+      | some ``HMul.hMul | some ``Mul.mul =>
+        if args.size >= 2 then
+          return merge (← factors ref fuel args[args.size-2]! inverse)
+            (← factors ref fuel args[args.size-1]! inverse)
+        atom ref e inverse
+      | some ``HDiv.hDiv | some ``Div.div =>
+        if !inverse && args.size >= 2 then
+          return merge (← factors ref fuel args[args.size-2]!)
+            (← factors ref fuel args[args.size-1]! true)
+        atom ref e inverse
+      | some ``Inv.inv =>
+        if !inverse && args.size > 0 then
+          return ← factors ref fuel args[args.size-1]! true
+        atom ref e inverse
+      | some ``HPow.hPow | some ``Pow.pow =>
+        if args.size >= 2 then
+          if let some n := args[args.size-1]!.rawNatLit? then
+            if n > 0 then
+              return (← factors ref fuel args[args.size-2]! inverse).map fun (id, k) => (id, k*n)
+        atom ref e inverse
+      | some ``OfNat.ofNat =>
+        if args.size > 1 && args[1]!.rawNatLit? == some 1 then return #[]
+        atom ref e inverse
+      | _ => atom ref e inverse
+  ref.modify fun s => {s with factors := s.factors.insert (e, inverse) value}
+  return value
+
+
+partial def signature {u : Lean.Level} {α : Q(Type u)} {sα : Q(CommSemiring $α)} {e : Q($α)} (ref : IO.Ref State)
+    (v : ExProd (α := α) RatCoeff sα e) : MetaM Signature := do
+  if let some value := (← ref.get).products.get? e then return value
+  let result : Signature ← do
+    match (dependent := true) v with
+    | .const _ => pure #[]
+    | .mul (x := x) _ power tail =>
+      let head : Signature ← do
+        match (dependent := true) power with
+        | .const n =>
+          if n.value.den == 1 then
+            pure <| (← factors ref 64 x).map fun (id, k) => (id, k * n.value.num.toNat)
+          else atom ref e false
+        | _ => atom ref e false
+      return merge head (← signature ref tail)
+  ref.modify fun s => {s with products := s.products.insert e result}
+  return result
+
+/-- Find collisions within a compact, already normalized polynomial. -/
+def collisions {u : Lean.Level} {α : Q(Type u)} {sα : Q(CommSemiring $α)} {e : Q($α)} (ref : IO.Ref State) (v : ExSum (α := α) RatCoeff sα e) :
+    MetaM (Std.HashSet Expr) := do
+  let limit := det.relations.maxWork.get (← getOptions)
+  let rec visit {e : Q($α)} (v : ExSum (α := α) RatCoeff sα e)
+      (seen : Std.HashMap Signature Expr) (selected : Std.HashSet Expr) :
+      MetaM (Std.HashSet Expr) := do
+    match (dependent := true) v with
+    | .zero => return selected
+    | .add (a := a) head tail =>
+      ref.modify fun s => {s with work := s.work + 1}
+      if (← ref.get).work > limit then throwError "relation scalar work budget exhausted ({limit})"
+      let key ← signature ref head
+      if let some prior := seen[key]? then
+        visit tail seen (selected.insert prior |>.insert a)
+      else
+        visit tail (seen.insert key a) selected
+  visit v {} {}
+
+/-- Rewrite selected monomials, retaining every other compact representative. -/
+partial def rewrite {u : Lean.Level} {α : Q(Type u)} {rα : Q(CommRing $α)} {e : Q($α)} (selected : Std.HashSet Expr) (v : CertVal (α := α) rα e) :
+    CertM rα (Cert rα) := do
+  match (dependent := true) v with
+  | .zero => return toCert ⟨e, v, q(rfl)⟩
+  | .add (a := a) head tail =>
+    let ctx ← read
+    let hc ← if selected.contains a then do
+      let clean ← Mathlib.Tactic.RingNF.cleanup {} {expr := a}
+      have cleanExpr : Q($α) := clean.expr
+      have h : Q($a = $cleanExpr) := ← clean.getProof
+      let result ← toCert <$> Bounded.eval rcℕ ctx.rc ctx.cα cleanExpr
+      pure (result.chainProof h)
+    else
+      pure <| toCert ⟨q($a + 0), .add head .zero, q(Eq.symm (add_zero $a))⟩
+    Compact.certAdd hc (← rewrite selected tail)
+
+def normalize {u : Lean.Level} {α : Q(Type u)} {rα : Q(CommRing $α)} (ref : IO.Ref State) (c : Cert rα) : CertM rα (Cert rα) := do
+  unless (← read).cα.dsα.isSome do return c
+  let selected ← collisions ref c.val
+  if selected.isEmpty then return c
+  ref.modify fun s => {s with rewrites := s.rewrites + selected.size}
+  return (← rewrite selected c.val).chainProof c.proof
+
+end
+end Determinant.Relations

@@ -338,9 +338,48 @@ round directory, under the worktree-wide serial lock; it is not a global account
 service across unrelated directories or worktrees.
 
 For the bounded one-hour goal corpus, run
-`python3 experiments/Determinant/verify_goal.py reports/bench-results/determinant-goal`
+`python3 experiments/Determinant/verify_goal.py reports/bench-results/determinant-goal --source-ref 81d4a0e86`
 after the audit build. This checks every retained source snapshot, completed pair
 order, theorem dependencies and aggregate measurement allowance, then regenerates
 all per-variant inventories. It also checks the recorded audit log and requires
-the final measured Lean sources to match the current implementation. It does not
+the final measured Lean sources to match that retained implementation revision.
+Omit `--source-ref` when checking a corpus against the current worktree. It does not
 launch Lean or perform measurements.
+
+
+`relations_bird` implements compact quotient monomials with multiplicative
+signatures. It reuses the compact Bird recurrence and its caches. Entry and sum
+hooks search for like terms hidden by opaque quotients; only selected monomials
+are expanded, directly through their `ExProd` structure. Proofs for expanded
+atoms and products are cached. The same signature index aligns the determinant
+and target after partial cancellation. `relations_first` disables the stronger
+final comparison so audits can check the relation mechanism independently.
+
+Signatures are optimization hints, never proof evidence. They never cancel a
+factor against its inverse, since denominators can be zero. A private-factor test
+skips searching when the factor representation of the current scalar atoms is
+injective on monomials. Atom-table growth invalidates that test. Sum-tail and
+factor caches avoid repeating searches; the audit checks cache insertion/reuse,
+zero expansion for independent quotients, positive expansion for hidden
+cancellation, and ordinary permitted proof dependencies.
+
+`det.relations.maxWork` bounds distinct sum-tail visits; exceeding it declines
+explicitly. `det.relations.maxHeartbeats` bounds the complete relation backend,
+including the stronger scalar comparison, and cannot increase the caller's
+remaining heartbeat allowance. Zero is rejected rather than disabling that bound.
+`det.relations.trace` reports search/expansion counts for diagnostics. These
+experimental controls do not change production dispatch.
+
+`--candidate relations` and `--reference fresh` isolate the relation hook from
+its opaque-quotient control. `--family rankone-diagonal` with symbolic product
+denominators tests partial cancellation using a nonzero supplied target for
+`I + u*vᵀ`. Keep these manual proof probes outside Mathlib-free value benchmarks.
+
+For this follow-up corpus, run
+`python3 experiments/Determinant/verify_relations.py` after the audit build.
+It checks retained measurements against their own source snapshots and the
+correctness-validated source against `validation/sources.json`. The last measured
+source and the final cache/diagnostic fixes are deliberately distinguished; see
+[the relation report](../../reports/determinant-relations.md). No measurements
+are launched by this verifier. The sum-visit budget covers relation indexing;
+the stronger scalar comparison is bounded by heartbeats, not that visit count.

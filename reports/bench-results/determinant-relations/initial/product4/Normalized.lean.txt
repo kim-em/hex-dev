@@ -1,0 +1,129 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Arithmetic
+import Determinant.Relations
+import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Correctness
+
+/-! Experimental supplied-target frontend for Mathlib's normalized Bird
+certificate evaluator. Determinant evaluation and target normalization share
+one atom context. No simplifier cleanup or second ring traversal of the
+determinant's normal form is needed. Literal transport follows Mathlib's
+`Mathlib/Tactic/NormDet.lean` (Copyright 2026 Paul Cadman, Apache 2.0). -/
+
+open Lean Meta Elab Tactic Qq Mathlib.Tactic.Ring
+open Mathlib.Tactic.Determinant
+
+namespace Determinant.Normalized
+
+meta def compareTarget {u : Level} {α : Q(Type u)} {rα : Q(CommRing $α)}
+    (right : Q($α)) (compose direct compact fused staged coeff fresh division bounded secondPass relations : Bool) : CertM rα Expr := do
+  let relationState ← IO.mkRef ({} : Relations.State)
+  let left ← if relations then Compact.certBirdDet true true false false (Relations.normalize relationState)
+    else if compact then Compact.certBirdDet fused coeff division bounded else certBirdDet
+  if direct then
+    -- Conversion is only a shortcut. Do not unfold concrete ring arithmetic
+    -- while trying it; ordinary target normalization supplies the proof below.
+    if ← withReducible <| isDefEq left.norm right then return left.proof
+  let ctx ← read
+  let target ← if bounded then toCert <$> Bounded.eval rcℕ ctx.rc ctx.cα right
+    else if division then toCert <$> Division.eval rcℕ ctx.rc ctx.cα right
+    else if coeff then toCert <$> Coefficients.eval rcℕ ctx.rc ctx.cα right
+    else certEval right
+  let (left, target, equal) ← if secondPass && (staged || coeff) && !left.val.eq rcℕ ctx.rc target.val then do
+    -- Keep quotients opaque in the recurrence. Expand division only if the
+    -- polynomial comparison actually needs it, without rerunning Bird.
+    let cα ← Common.mkCache (commSemiringOfCommRing rα)
+    -- Only expressions and equality proofs cross this boundary. The first
+    -- phase's atom indices are no longer needed when both sides are evaluated
+    -- anew; retaining them makes every later atom lookup scan obsolete atoms.
+    let compare : Mathlib.Tactic.AtomM (Cert rα × Cert rα × Bool) := do
+      let cleaned ← Mathlib.Tactic.RingNF.cleanup {} {expr := left.norm, proof? := some left.proof}
+      have cleanedExpr : Q($α) := cleaned.expr
+      have cleanedProof : Q($left.subject = $cleanedExpr) := ← cleaned.getProof
+      let expanded ← toCert <$> Common.eval rcℕ (ringCompute cα) cα cleanedExpr
+      let target ← toCert <$> Common.eval rcℕ (ringCompute cα) cα right
+      pure (expanded.chainProof cleanedProof, target, expanded.val.eq rcℕ (ringCompute cα) target.val)
+    if fresh then compare.run .reducible else compare
+  else pure (left, target, left.val.eq rcℕ ctx.rc target.val)
+  unless equal do throwError "unequal normal forms"
+  have a : Q($α) := left.norm
+  have b : Q($α) := target.norm
+  have : $a =Q $b := ⟨⟩
+  have subject : Q($α) := left.subject
+  have pa : Q($subject = $a) := left.proof
+  have pb : Q($right = $b) := target.proof
+  if compose then return ← mkEqTrans pa (← mkEqSymm pb)
+  return q(Eq.trans $pa (Eq.symm $pb))
+
+meta def run (compose : Bool) (direct : Bool := false) (literal : Bool := false)
+    (compact : Bool := false) (fused : Bool := false) (intern : Bool := false) (staged : Bool := false) (coeff : Bool := false) (fresh : Bool := false) (division : Bool := false) (bounded : Bool := false) (secondPass : Bool := true) (relations : Bool := false) : TacticM Unit := withMainContext do
+  let g ← getMainGoal
+  let target ← instantiateMVars (← g.getType)
+  let target := if intern then _root_.ShareCommon.shareCommon' target else target
+  let some (_, left, right) := target.eq?
+    | throwError "expected an equality"
+  let ⟨_, α, left⟩ ← inferTypeQ' left
+  let ~q(@Matrix.det (Fin $n) _ _ _ $rα $matrix) := left
+    | throwError "expected a determinant over Fin"
+  let some dim ← getNatValue? n | throwError "expected a literal dimension"
+  let ~q(Matrix.of $rows) := matrix | throwError "expected a literal matrix"
+  let (matrixRows, _, _) ← Matrix.matchVecConsPrefix n rows
+  unless matrixRows.length == dim do throwError "row count mismatch"
+  let entries ← matrixRows.flatMapM fun row => do
+    let (es, _, _) ← Matrix.matchVecConsPrefix n row
+    unless es.length == dim do throwError "column count mismatch"
+    pure es
+  let xs ← mkListLit α entries
+  have xs : Q(List $α) := xs
+  have matrix : Q(Matrix (Fin $n) (Fin $n) $α) := matrix
+  let arrayExpr : Q(Array $α) := q(List.toArray $xs)
+  have : (List.ofFn fun k : Fin ($n * $n) ↦ $matrix k.divNat k.modNat) =Q $xs := ⟨⟩
+  let hlist : Q(List.ofFn (fun k : Fin ($n * $n) ↦ $matrix k.divNat k.modNat) = $xs) := q(rfl)
+  let hArray := q($hlist ▸ List.toArray_ofFn)
+  let transport := q($hArray ▸ Matrix.ofArray_ofFn $matrix ▸ BirdDet.det_eq_birdDet
+    (Array.ofFn fun k : Fin ($n * $n) ↦ $matrix k.divNat k.modNat) Array.size_ofFn)
+  let reified ← reifyBirdDet q(BirdDet.birdDet $n $arrayExpr)
+  -- The supplied target may use division. Use the ordinary ring cache's
+  -- available field/characteristic instances on both sides of the comparison.
+  let cα ← if staged then pure reified.ctx.cα else
+    Common.mkCache (commSemiringOfCommRing reified.rα)
+  let ctx := { reified.ctx with cα, rc := ringCompute cα }
+  let ctx := if literal then { ctx with dimensionLit := n } else ctx
+  have right : Q($α) := right
+  let proof ← compareTarget (rα := reified.rα) right compose direct compact fused staged coeff fresh division bounded secondPass relations |>.run' {} |>.run ctx |>.run .reducible
+  have proof : Q(BirdDet.birdDet $n $arrayExpr = $right) := proof
+  if compose then
+    g.assign (← mkEqTrans transport proof)
+  else
+    g.assign (mkAppN (mkConst ``Eq.trans [← getLevel α])
+      #[α, left, q(BirdDet.birdDet $n $arrayExpr), right, transport, proof])
+  replaceMainGoal []
+
+elab "normalized_bird" : tactic => run false
+elab "composed_bird" : tactic => run true
+elab "direct_bird" : tactic => run true true
+elab "literal_bird" : tactic => run true true true
+elab "compact_bird" : tactic => run true true false true
+elab "fused_bird" : tactic => run true true false true true
+elab "intern_bird" : tactic => run true true false true true true
+
+elab "staged_bird" : tactic => run true true false true true false true
+
+elab "coeff_bird" : tactic => run true true false true true false false true
+
+elab "fresh_bird" : tactic => run true true false true true false false true true
+
+elab "division_bird" : tactic => run true true false true true false false true true true
+
+elab "bounded_bird" : tactic => run true true false true true false false true true true true
+
+-- Audit entry point: refusal must be visible, rather than repaired by expansion.
+elab "bounded_first" : tactic => run true true false true true false false true true true true false
+
+elab "relations_bird" : tactic => run true true false true true false false true true false false true true
+elab "relations_first" : tactic => run true true false true true false false true true false false false true
+
+end Determinant.Normalized

@@ -1,0 +1,11 @@
+{
+  "audit_build_exit": 0,
+  "lake_build_exit": 0,
+  "runner_tests": 8,
+  "dag_exit": 0,
+  "phase4_exit": 0,
+  "released_manifest_exit": 0,
+  "whitespace_check": "git diff --cached --check excluding immutable *.lean.txt source snapshots; their original terminal blank lines are retained for digest verification",
+  "timing_seconds": 512.4015646050684,
+  "measurements_after_final_cache_fixes": 0
+}

@@ -1,0 +1,1130 @@
+{
+  "case": {
+    "family": "rankone",
+    "n": 4,
+    "atoms": 2,
+    "degree": 1,
+    "support": 3,
+    "bits": 2,
+    "modulus": 0,
+    "seed": 10320,
+    "entry_form": "factored",
+    "candidate": "relations",
+    "reference": "mathlib",
+    "diagnostic": false,
+    "kernel_profile": false,
+    "proof_nodes": false,
+    "capture_target": false,
+    "cleaned_target": null,
+    "physical_nodes": false,
+    "invocation_seconds": 20,
+    "search_seconds": null,
+    "rational": false,
+    "denominator_bits": 3,
+    "quotient_entries": false,
+    "symbolic_row_denominators": true,
+    "row_denominators": false,
+    "integer": false,
+    "polynomial": false,
+    "concrete": false,
+    "reverse_rows": false,
+    "transpose": false,
+    "target": "expanded",
+    "product_denominators": true
+  },
+  "metadata": {
+    "actual_atoms": 16,
+    "target_terms": 0,
+    "entry_terms": 16,
+    "original_statement_sha256": "d271521afc96f802392ce3249480e19a547d4aa7258e64ce98875a62f40fc57f"
+  },
+  "cpu": 15,
+  "topology": {
+    "logical_cpu": 15,
+    "core_id": "19",
+    "physical_package_id": "0",
+    "thread_siblings_list": "15,63",
+    "scaling_governor": "schedutil",
+    "scaling_cur_freq_khz": "4081522"
+  },
+  "environment": {
+    "git_commit": "81d4a0e866e488906f993d8126f69006d1a341aa",
+    "git_dirty": true,
+    "repository": {
+      "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320",
+      "head": "81d4a0e866e488906f993d8126f69006d1a341aa",
+      "tree": "348ef80482afcca22cf1c143e653ddcd10656330",
+      "dirty": true,
+      "status": "M experiments/Determinant/BoundedAudit.lean\n M experiments/Determinant/Compact.lean\n M experiments/Determinant/Normalized.lean\n M experiments/Determinant/adversarial.py\n M experiments/Determinant/adversarial_report.py\n?? experiments/Determinant/Relations.lean\n?? experiments/Determinant/RelationsAudit.lean\n?? reports/bench-results/determinant-adversarial/.lock\n?? reports/bench-results/determinant-relations/initial/independent4/AdversarialSampleMathlib.lean.txt\n?? reports/bench-results/determinant-relations/initial/independent4/AdversarialSampleRelations.lean.txt\n?? reports/bench-results/determinant-relations/initial/independent4/Arithmetic.lean.txt\n?? reports/bench-results/determinant-relations/initial/independent4/Bounded.lean.txt\n?? reports/bench-results/determinant-relations/initial/independent4/Coefficients.lean.txt\n?? reports/bench-results/determinant-relations/initial/independent4/Compact.lean.txt\n?? reports/bench-results/determinant-relations/initial/independent4/Deferred.lean.txt\n?? reports/bench-results/determinant-relations/initial/independent4/Division.lean.txt\n?? reports/bench-results/determinant-relations/initial/independent4/Normalized.lean.txt\n?? reports/bench-results/determinant-relations/initial/independent4/Relations.lean.txt\n?? reports/bench-results/determinant-relations/initial/independent4/Steps.lean.txt\n?? reports/bench-results/determinant-relations/initial/independent4/adversarial.py.txt\n?? reports/bench-results/determinant-relations/initial/independent4/adversarial_report.py.txt\n?? reports/bench-results/determinant-relations/initial/independent4/case.json\n?? reports/bench-results/determinant-relations/initial/independent4/input.json\n?? reports/bench-results/determinant-relations/initial/independent4/observations.jsonl\n?? reports/bench-results/determinant-relations/initial/independent4/results.json\n?? reports/bench-results/determinant-relations/initial/independent4/sources.json\n?? reports/bench-results/determinant-relations/initial/independent4/status.json\n?? reports/bench-results/determinant-relations/initial/product4/Arithmetic.lean.txt\n?? reports/bench-results/determinant-relations/initial/product4/Bounded.lean.txt\n?? reports/bench-results/determinant-relations/initial/product4/Coefficients.lean.txt\n?? reports/bench-results/determinant-relations/initial/product4/Compact.lean.txt\n?? reports/bench-results/determinant-relations/initial/product4/Deferred.lean.txt\n?? reports/bench-results/determinant-relations/initial/product4/Division.lean.txt\n?? reports/bench-results/determinant-relations/initial/product4/Normalized.lean.txt\n?? reports/bench-results/determinant-relations/initial/product4/Relations.lean.txt\n?? reports/bench-results/determinant-relations/initial/product4/Steps.lean.txt\n?? reports/bench-results/determinant-relations/initial/product4/adversarial.py.txt\n?? reports/bench-results/determinant-relations/initial/product4/adversarial_report.py.txt\n?? reports/bench-results/determinant-relations/initial/product4/case.json\n?? reports/bench-results/determinant-relations/initial/product4/input.json\n?? reports/bench-results/determinant-relations/initial/product4/sources.json\n?? reports/bench-results/hex-det-tree/counter-prototypes/CounterProtoBaseline.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/CounterProtoBlocks6Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/CounterProtoBlocks6Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/CounterProtoDenseIndependent4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/CounterProtoDenseIndependent4Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/CounterProtoDenseQuadratic4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/CounterProtoDenseQuadratic4Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/CounterPrototypeAudit.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/CounterPrototypeAudit0.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/CounterPrototypeAudit1.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/CounterPrototypeSupport-final.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/CounterPrototypeSupport-meta.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/CounterPrototypeSupport.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/audit-final.py\n?? reports/bench-results/hex-det-tree/counter-prototypes/audit-status.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/audit.log.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/audit.py\n?? reports/bench-results/hex-det-tree/counter-prototypes/budget-status.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/interruption.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/observations.jsonl.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/plan.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/profile-final.py\n?? reports/bench-results/hex-det-tree/counter-prototypes/profile-forced.py\n?? reports/bench-results/hex-det-tree/counter-prototypes/profile-meta.py\n?? reports/bench-results/hex-det-tree/counter-prototypes/profile.py\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-final/CounterFinalAttrBlocks6Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-final/CounterFinalAttrBlocks6Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-final/CounterFinalAttrDenseIndependent4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-final/CounterFinalAttrDenseIndependent4Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-final/CounterFinalAttrDenseQuadratic4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-final/CounterFinalAttrDenseQuadratic4Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-final/observations.jsonl.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-final/results.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-final/status.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-forced/CounterForcedAttrDenseQuadratic4Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-forced/CounterForcedAttrDenseQuadratic4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-forced/observations.jsonl.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-forced/results.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-forced/status.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-meta/CounterMetaAttrDenseIndependent4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-meta/CounterMetaAttrDenseIndependent4Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-meta/CounterMetaAttrDenseQuadratic4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-meta/CounterMetaAttrDenseQuadratic4Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-meta/observations.jsonl.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-meta/results.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles-meta/status.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles/CounterAttrBlocks6Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles/CounterAttrBlocks6Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles/CounterAttrBlocks6Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles/CounterAttrDenseIndependent4Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles/CounterAttrDenseIndependent4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles/CounterAttrDenseIndependent4Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles/CounterAttrDenseQuadratic4Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles/CounterAttrDenseQuadratic4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles/CounterAttrDenseQuadratic4Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles/observations.jsonl.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles/results.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/profiles/status.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/results.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/run.py\n?? reports/bench-results/hex-det-tree/counter-prototypes/started.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/support-flat.log.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/support-meta.log.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/support.log.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/verification-status.json.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/verification.log.gz\n?? reports/bench-results/hex-det-tree/counter-prototypes/verify.py\n?? reports/bench-results/hex-det-tree/counterexamples/CounterAuditBlocks6Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterAuditBlocks6Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterAuditCyclic5Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterAuditCyclic5Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterAuditDenseIndependent4Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterAuditDenseIndependent4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterAuditDenseQuadratic4Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterAuditDenseQuadratic4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterAuditDenseRational4Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterAuditDenseRational4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterBlocks6Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterBlocks6Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterCyclic5Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterCyclic5Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterDenseIndependent4Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterDenseIndependent4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterDenseQuadratic4Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterDenseQuadratic4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterDenseRational4Hex.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterDenseRational4Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/CounterRoutes.lean.txt\n?? reports/bench-results/hex-det-tree/counterexamples/audit-routes.py\n?? reports/bench-results/hex-det-tree/counterexamples/observations.jsonl.gz\n?? reports/bench-results/hex-det-tree/counterexamples/plan.json.gz\n?? reports/bench-results/hex-det-tree/counterexamples/production-sources.json.gz\n?? reports/bench-results/hex-det-tree/counterexamples/results.json.gz\n?? reports/bench-results/hex-det-tree/counterexamples/routes-status.json.gz\n?? reports/bench-results/hex-det-tree/counterexamples/routes.log\n?? reports/bench-results/hex-det-tree/counterexamples/run.py\n?? reports/bench-results/hex-det-tree/counterexamples/status.json.gz\n?? reports/bench-results/hex-det-tree/investigation/InvestigateDiagonal2Direct.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateDiagonal2Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateDiagonal2Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateDiagonal2Quiet.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateDiagonal2Trace.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateIndependent5Direct.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateIndependent5Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateIndependent5Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateIndependent5Quiet.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateIndependent5Trace.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateLemmas.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateRational2Direct.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateRational2Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateRational2Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateRational2Quiet.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateRational2Trace.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateRationalFive3Direct.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateRationalFive3Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateRationalFive3Quiet.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateRationalFive3Trace.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateTriangular3Direct.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateTriangular3Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateTriangular3Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateTriangular3Quiet.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/InvestigateTriangular3Trace.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/README.md\n?? reports/bench-results/hex-det-tree/investigation/components.json.gz\n?? reports/bench-results/hex-det-tree/investigation/components.lean.txt\n?? reports/bench-results/hex-det-tree/investigation/components.log.gz\n?? reports/bench-results/hex-det-tree/investigation/components.py\n?? reports/bench-results/hex-det-tree/investigation/direct-prototypes-status.json.gz\n?? reports/bench-results/hex-det-tree/investigation/direct-prototypes.json.gz\n?? reports/bench-results/hex-det-tree/investigation/direct-prototypes.log.gz\n?? reports/bench-results/hex-det-tree/investigation/direct-prototypes.py\n?? reports/bench-results/hex-det-tree/investigation/lemmas-build-cofactor.log.gz\n?? reports/bench-results/hex-det-tree/investigation/lemmas-build-final.log.gz\n?? reports/bench-results/hex-det-tree/investigation/lemmas-build-fixed.log.gz\n?? reports/bench-results/hex-det-tree/investigation/lemmas-build.log.gz\n?? reports/bench-results/hex-det-tree/investigation/profile-status.json.gz\n?? reports/bench-results/hex-det-tree/investigation/profile.json.gz\n?? reports/bench-results/hex-det-tree/investigation/profile.log.gz\n?? reports/bench-results/hex-det-tree/investigation/profile.py\n?? reports/bench-results/hex-det-tree/investigation/prototypes-status.json.gz\n?? reports/bench-results/hex-det-tree/investigation/prototypes.json.gz\n?? reports/bench-results/hex-det-tree/investigation/prototypes.log.gz\n?? reports/bench-results/hex-det-tree/investigation/prototypes.py\n?? reports/bench-results/hex-det-tree/investigation/summary.json\n?? reports/bench-results/hex-det-tree/prototype-scale/InvestigateLemmas.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/README.md\n?? reports/bench-results/hex-det-tree/prototype-scale/ScaleBaseline.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/ScaleRational3K3S6Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/ScaleRational3K3S6Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/ScaleRational3K3S8Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/ScaleRational3K3S8Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/ScaleSparse5BinomialRows1Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/ScaleSparse5BinomialRows1Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/ScaleSparse5BinomialRows2Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/ScaleSparse5BinomialRows2Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/ScaleSparse5BinomialRows3Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/ScaleSparse5BinomialRows3Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/observations.jsonl.gz\n?? reports/bench-results/hex-det-tree/prototype-scale/plan.json.gz\n?? reports/bench-results/hex-det-tree/prototype-scale/progress.json.gz\n?? reports/bench-results/hex-det-tree/prototype-scale/results.json.gz\n?? reports/bench-results/hex-det-tree/prototype-scale/run.log.gz\n?? reports/bench-results/hex-det-tree/prototype-scale/run.py\n?? reports/bench-results/hex-det-tree/prototype-scale/setup/ScaleBaseline.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/setup/ScaleRational3K3S6Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/setup/ScaleRational3K3S6Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-scale/setup/observations.jsonl.gz\n?? reports/bench-results/hex-det-tree/prototype-scale/setup/plan.json.gz\n?? reports/bench-results/hex-det-tree/prototype-scale/setup/progress.json.gz\n?? reports/bench-results/hex-det-tree/prototype-scale/setup/results.json.gz\n?? reports/bench-results/hex-det-tree/prototype-scale/setup/run.log.gz\n?? reports/bench-results/hex-det-tree/prototype-scale/setup/run.py\n?? reports/bench-results/hex-det-tree/prototype-scale/setup/status.json.gz\n?? reports/bench-results/hex-det-tree/prototype-scale/status.json.gz\n?? reports/bench-results/hex-det-tree/prototype-scale/support-build.log.gz\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/InvestigateLemmas.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/README.md\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/ScaleBaseline.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/ScaleRational3K3D4S12Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/ScaleRational3K3D4S12Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/ScaleSparse5TrinomialRows0Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/ScaleSparse5TrinomialRows0Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/ScaleSparse5TrinomialRows1Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/ScaleSparse5TrinomialRows1Prototype.lean.txt\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/observations.jsonl.gz\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/plan.json.gz\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/progress.json.gz\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/results.json.gz\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/run.log.gz\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/run.py\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/status.json.gz\n?? reports/bench-results/hex-det-tree/prototype-ten-seconds/support-build.log.gz\n?? reports/bench-results/hex-det-tree/scaleup/N4K2D1S1-observations.jsonl.gz\n?? reports/bench-results/hex-det-tree/scaleup/N4K2D1S1-status.json.gz\n?? reports/bench-results/hex-det-tree/scaleup/N4K2D1S1.json.gz\n?? reports/bench-results/hex-det-tree/scaleup/README.md\n?? reports/bench-results/hex-det-tree/scaleup/run-rung.py\n?? reports/bench-results/hex-det-tree/second-range/HexBaseline.lean.txt\n?? reports/bench-results/hex-det-tree/second-range/Independent5-manifest.json.gz\n?? reports/bench-results/hex-det-tree/second-range/Independent5.json.gz\n?? reports/bench-results/hex-det-tree/second-range/MathlibBaseline.lean.txt\n?? reports/bench-results/hex-det-tree/second-range/PackedIndependent5Dispatch.lean.txt\n?? reports/bench-results/hex-det-tree/second-range/PackedIndependent5DispatchBaseline.lean.txt\n?? reports/bench-results/hex-det-tree/second-range/PackedIndependent5Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/second-range/PackedIndependent5MathlibBaseline.lean.txt\n?? reports/bench-results/hex-det-tree/second-range/README.md\n?? reports/bench-results/hex-det-tree/second-range/SecondRangeRational3-manifest.json.gz\n?? reports/bench-results/hex-det-tree/second-range/SecondRangeRational3.json.gz\n?? reports/bench-results/hex-det-tree/second-range/SecondRangeRational3Hex.lean.txt\n?? reports/bench-results/hex-det-tree/second-range/SecondRangeRational3Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/second-range/five-terms/HexBaseline.lean.txt\n?? reports/bench-results/hex-det-tree/second-range/five-terms/MathlibBaseline.lean.txt\n?? reports/bench-results/hex-det-tree/second-range/five-terms/SecondRangeRationalFive3-manifest.json.gz\n?? reports/bench-results/hex-det-tree/second-range/five-terms/SecondRangeRationalFive3.json.gz\n?? reports/bench-results/hex-det-tree/second-range/five-terms/SecondRangeRationalFive3Hex.lean.txt\n?? reports/bench-results/hex-det-tree/second-range/five-terms/SecondRangeRationalFive3Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/second-range/five-terms/observations.jsonl.gz\n?? reports/bench-results/hex-det-tree/second-range/five-terms/plan.json.gz\n?? reports/bench-results/hex-det-tree/second-range/five-terms/run.py\n?? reports/bench-results/hex-det-tree/second-range/five-terms/status.json.gz\n?? reports/bench-results/hex-det-tree/second-range/five-terms/summary.json.gz\n?? reports/bench-results/hex-det-tree/second-range/observations.jsonl.gz\n?? reports/bench-results/hex-det-tree/second-range/plan.json.gz\n?? reports/bench-results/hex-det-tree/second-range/run.py\n?? reports/bench-results/hex-det-tree/second-range/status.json.gz\n?? reports/bench-results/hex-det-tree/second-range/summary.json.gz\n?? reports/bench-results/hex-det-tree/side-by-side/Frontend.instrumentation.patch\n?? reports/bench-results/hex-det-tree/side-by-side/Frontend.instrumented\n?? reports/bench-results/hex-det-tree/side-by-side/Frontend.original\n?? reports/bench-results/hex-det-tree/side-by-side/SideCompareBlocks6Hex0.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/SideCompareBlocks6Hex1.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/SideCompareBlocks6Mathlib0.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/SideCompareBlocks6Mathlib1.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/SideCompareDenseIndependent4Hex0.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/SideCompareDenseIndependent4Hex1.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/SideCompareDenseIndependent4Mathlib0.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/SideCompareDenseIndependent4Mathlib1.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/SideCompareDenseQuadratic4Hex0.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/SideCompareDenseQuadratic4Hex1.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/SideCompareDenseQuadratic4Mathlib0.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/SideCompareDenseQuadratic4Mathlib1.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/SideCompareSupport.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/Tactic.instrumentation.patch\n?? reports/bench-results/hex-det-tree/side-by-side/Tactic.original\n?? reports/bench-results/hex-det-tree/side-by-side/components-setup.log\n?? reports/bench-results/hex-det-tree/side-by-side/components.py\n?? reports/bench-results/hex-det-tree/side-by-side/components/SideCompareBlocks6Hex0.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/components/SideCompareDenseIndependent4Hex0.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/components/SideCompareDenseQuadratic4Hex0.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/components/observations.jsonl\n?? reports/bench-results/hex-det-tree/side-by-side/components/results.json\n?? reports/bench-results/hex-det-tree/side-by-side/components/status.json\n?? reports/bench-results/hex-det-tree/side-by-side/earlier-recursors.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/earlier-recursors.log\n?? reports/bench-results/hex-det-tree/side-by-side/identification-setup.log\n?? reports/bench-results/hex-det-tree/side-by-side/identification-setup2.log\n?? reports/bench-results/hex-det-tree/side-by-side/identification-setup3.log\n?? reports/bench-results/hex-det-tree/side-by-side/identification.py\n?? reports/bench-results/hex-det-tree/side-by-side/identification/SideCompareBlocks6Hex0.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/identification/SideCompareDenseIndependent4Hex0.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/identification/SideCompareDenseQuadratic4Hex0.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/identification/observations.jsonl\n?? reports/bench-results/hex-det-tree/side-by-side/identification/results.json\n?? reports/bench-results/hex-det-tree/side-by-side/identification/status.json\n?? reports/bench-results/hex-det-tree/side-by-side/instrument.py\n?? reports/bench-results/hex-det-tree/side-by-side/observations.jsonl\n?? reports/bench-results/hex-det-tree/side-by-side/restored-build.log\n?? reports/bench-results/hex-det-tree/side-by-side/restored-sha256.txt\n?? reports/bench-results/hex-det-tree/side-by-side/results.json\n?? reports/bench-results/hex-det-tree/side-by-side/run.py\n?? reports/bench-results/hex-det-tree/side-by-side/setup.log\n?? reports/bench-results/hex-det-tree/side-by-side/setup2.log\n?? reports/bench-results/hex-det-tree/side-by-side/setup3.log\n?? reports/bench-results/hex-det-tree/side-by-side/staging-setup.log\n?? reports/bench-results/hex-det-tree/side-by-side/staging.py\n?? reports/bench-results/hex-det-tree/side-by-side/staging/SideCompareDenseQuadratic4Hex0.lean.txt\n?? reports/bench-results/hex-det-tree/side-by-side/staging/observations.jsonl\n?? reports/bench-results/hex-det-tree/side-by-side/staging/results.json\n?? reports/bench-results/hex-det-tree/side-by-side/staging/status.json\n?? reports/bench-results/hex-det-tree/side-by-side/status.json\n?? reports/bench-results/hex-det-tree/variety/README.md\n?? reports/bench-results/hex-det-tree/variety/VarietyDiagonal2-manifest.json.gz\n?? reports/bench-results/hex-det-tree/variety/VarietyDiagonal2.json.gz\n?? reports/bench-results/hex-det-tree/variety/VarietyDiagonal2Hex.lean.txt\n?? reports/bench-results/hex-det-tree/variety/VarietyDiagonal2Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/variety/VarietyRational2-manifest.json.gz\n?? reports/bench-results/hex-det-tree/variety/VarietyRational2.json.gz\n?? reports/bench-results/hex-det-tree/variety/VarietyRational2Hex.lean.txt\n?? reports/bench-results/hex-det-tree/variety/VarietyRational2Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/variety/VarietySingular2-manifest.json.gz\n?? reports/bench-results/hex-det-tree/variety/VarietySingular2.json.gz\n?? reports/bench-results/hex-det-tree/variety/VarietySingular2Hex.lean.txt\n?? reports/bench-results/hex-det-tree/variety/VarietySingular2Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/variety/VarietyTriangular3-manifest.json.gz\n?? reports/bench-results/hex-det-tree/variety/VarietyTriangular3.json.gz\n?? reports/bench-results/hex-det-tree/variety/VarietyTriangular3Hex.lean.txt\n?? reports/bench-results/hex-det-tree/variety/VarietyTriangular3Mathlib.lean.txt\n?? reports/bench-results/hex-det-tree/variety/observations.jsonl.gz\n?? reports/bench-results/hex-det-tree/variety/plan.json.gz\n?? reports/bench-results/hex-det-tree/variety/run.py\n?? reports/bench-results/hex-det-tree/variety/status.json.gz\n?? reports/bench-results/hex-det-tree/variety/summary.json.gz\n?? reports/hex-poly-det-counterexample-prototypes.md\n?? reports/hex-poly-det-counterexamples.md\n?? reports/hex-poly-det-side-by-side.md\n?? reports/hex-poly-det-small-loss-investigation.md",
+      "state_sha256": "911ec71bd4cad231c1849b12afcbcb22d74ebed94dbca90ed9b193626b1447a2"
+    },
+    "dependency_checkouts": {
+      "Cli": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/Cli",
+        "head": "e92c9f15fdfacc8536f31cfb3b7ad26c3c8cd204",
+        "tree": "6357519cce94feba4126121f34ea73cfdefc9b72",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "363428c20b198a12b0cac8cdcadfac33f34c22d6f9c4fcf90ebf3541937680d6"
+      },
+      "LeanSearchClient": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/LeanSearchClient",
+        "head": "ddf04cf3949fa556442341e87d47f9f6e6074707",
+        "tree": "04caafd1f6cc74938c7ad7d67a718c5104d5c95a",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "1427071031dff8d058ecb2362c2ee7d6f7a63a84a6aee792ea5385e40957eee4"
+      },
+      "MD4Lean": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/MD4Lean",
+        "head": "31907cc18f48a95384f99cee5582c00fb39e0f67",
+        "tree": "968ae7de50111d78c47ecf0682e9de2dfd257f67",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "371e7dd0e12c88d3bf727066e87ba96e0b3630c1b381e30f80bb86d2d3d98b01"
+      },
+      "NautyFFI": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/NautyFFI",
+        "head": "ec8597014d0ae82490a616b855d59a35e6bfa21f",
+        "tree": "e53fc2638b2e834a84d2520dd471541d5384b73c",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "bca51e477dfef5b153a0aaf22ac2678f00e7014efec406dcfb0d4764fc1ab146"
+      },
+      "Qq": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/Qq",
+        "head": "6a489d9af5d0c47e5b259e2e8bcdfc1811b5a259",
+        "tree": "c43f2cecf2a68cb6ef836660ec4d276ab5f9dcb4",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "5451975774acd46d5ed2ba8ab012804bc00e32a34a30926ad524ece84af93033"
+      },
+      "aesop": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/aesop",
+        "head": "355695d523e41d0554926416cba2a2b3544fbbc9",
+        "tree": "141698829a678f60c8a7fd0e54f9493ad05b986c",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "17c653e3b3f6977c3d6fdd3681c9b7d3d7a1db503f72a6ca6c6f620db2ec8d50"
+      },
+      "batteries": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/batteries",
+        "head": "f2effa3d803fda822b1f97b806c47cf2adfbcbc2",
+        "tree": "d6c196fbbaafd91f64547af4d95a36bd17d50c38",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "1a7e3e536e0e1292e00ee09ec5f1f379252893f59c4756d94c1725ae92555436"
+      },
+      "illuminate": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/illuminate",
+        "head": "a1a61c9678da010e958ed24cdfa6f635b85f172a",
+        "tree": "4c1b8d2f97f249398925639d8ac4ba2dd4126dbe",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "42b9408ec221312307dccc53efcfbe61b317da353a167cf46434c80d931638e2"
+      },
+      "importGraph": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/importGraph",
+        "head": "e928b72544873815af278d38681b31c0293588e3",
+        "tree": "92d47162cff41653a118b5fe376ab1428bd2e623",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "7352ff17ab15825c275a9faee43a5f0145b078db749bfe9fd77cfc3826a29161"
+      },
+      "lean-bench": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/lean-bench",
+        "head": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+        "tree": "3b7df283ef106f78f4d002262976e7e954275b6f",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "4c44f3c8372259d84ef2174b7aef15ad74fe909203189836813a3696142e4aa3"
+      },
+      "mathlib": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/mathlib",
+        "head": "1cf325a0cf67aca2b04d76b5380ff6a9e410aefa",
+        "tree": "ac4413c8b8d78043b3f286b49f2b03b367244eec",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "671a2d7df7867b998e12c905bfd65c1bff1a150e16c632c4f001762b47111002"
+      },
+      "plausible": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/plausible",
+        "head": "118aa17ee84656b8bd727fef7c458ee8c833385c",
+        "tree": "65aa28b2b3ba59d49736535935e4190f835b6ebc",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "810c2a7d28c075ed630f48d0232bb9361a0e1bca47d74ce885ec0f8b7f35c874"
+      },
+      "proofwidgets": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/proofwidgets",
+        "head": "106ff4fafc74ef4ac99d81dbf3ab399118f497a5",
+        "tree": "1a37533eb21ffa2595b3b782cd3a4909110a872c",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "ea17cd88cdf64787051528e00b40d6b4b4d0293f28edfa03379aa64785834813"
+      },
+      "subverso": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/subverso",
+        "head": "9b90b7f938d6169246325df002351014f49945ef",
+        "tree": "4344159a4a360ababb1cfed3070ffa24247c6dc0",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "3c6e4199460b750f38d7a64e3f92707767b1a043481eb6fc5b171ecb006c14a2"
+      },
+      "verso": {
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10320/.lake/packages/verso",
+        "head": "cad4b633e75ea769b851f12f9ca3b4f0dfcc625f",
+        "tree": "65892ae9f3c8485217f24c6cd62c592c7351531b",
+        "dirty": false,
+        "status": "",
+        "state_sha256": "8737ec82ce1154de4dd2a6de42db0de81b06749a117a2bbb844e43cd4b986c57"
+      }
+    },
+    "toolchain": "leanprover/lean4:v4.34.0",
+    "hostname": "chungus2",
+    "machine_id": "8be29815875342aeaae06e62d60f6b03",
+    "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+    "architecture": "x86_64",
+    "cpu_model": "AMD EPYC 9455 48-Core Processor",
+    "python": "3.14.6",
+    "gnu_time": "/run/current-system/sw/bin/time",
+    "host_before": {
+      "logical_cpus": 96,
+      "available_logical_cpus": 1,
+      "load_average": [
+        149.5087890625,
+        179.61767578125,
+        162.0791015625
+      ],
+      "load_1m_per_cpu": 1.5573832194010417,
+      "load_1m_per_available_cpu": 149.5087890625,
+      "runnable_tasks": "134/8916",
+      "cpu_affinity": [
+        15
+      ],
+      "cpu_pressure": "some avg10=20.20 avg60=26.83 avg300=34.99 total=52190695492\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "cpu_pressure_some_total_us": 52190695492,
+      "affinity_cpu_frequency_khz": "4069697",
+      "concurrent_lake_lean": [
+        {
+          "pid": 2898474,
+          "command": "lake"
+        },
+        {
+          "pid": 2898706,
+          "command": "lake"
+        },
+        {
+          "pid": 3058772,
+          "command": "lake"
+        },
+        {
+          "pid": 3464398,
+          "command": "lake"
+        },
+        {
+          "pid": 3508356,
+          "command": "lake"
+        },
+        {
+          "pid": 3536422,
+          "command": "lean"
+        },
+        {
+          "pid": 3536485,
+          "command": "lean"
+        },
+        {
+          "pid": 3536946,
+          "command": "lean"
+        },
+        {
+          "pid": 3538175,
+          "command": "lake"
+        },
+        {
+          "pid": 3538189,
+          "command": "lean"
+        },
+        {
+          "pid": 3539199,
+          "command": "lean"
+        },
+        {
+          "pid": 3539864,
+          "command": "lake"
+        },
+        {
+          "pid": 3540398,
+          "command": "lean"
+        },
+        {
+          "pid": 3541166,
+          "command": "lake"
+        },
+        {
+          "pid": 3541251,
+          "command": "lake"
+        },
+        {
+          "pid": 3541342,
+          "command": "lean"
+        },
+        {
+          "pid": 3541374,
+          "command": "lake"
+        },
+        {
+          "pid": 3541620,
+          "command": "lean"
+        },
+        {
+          "pid": 3541808,
+          "command": "lake"
+        },
+        {
+          "pid": 3541818,
+          "command": "lake"
+        },
+        {
+          "pid": 3541819,
+          "command": "lake"
+        },
+        {
+          "pid": 3541882,
+          "command": "lake"
+        },
+        {
+          "pid": 3541899,
+          "command": "lake"
+        },
+        {
+          "pid": 3541929,
+          "command": "lake"
+        },
+        {
+          "pid": 3541947,
+          "command": "lake"
+        },
+        {
+          "pid": 3542073,
+          "command": "lean"
+        },
+        {
+          "pid": 3542079,
+          "command": "lean"
+        },
+        {
+          "pid": 3542131,
+          "command": "lake"
+        },
+        {
+          "pid": 3542182,
+          "command": "lean"
+        },
+        {
+          "pid": 3542391,
+          "command": "lake"
+        },
+        {
+          "pid": 3543194,
+          "command": "lake"
+        },
+        {
+          "pid": 3543300,
+          "command": "lake"
+        },
+        {
+          "pid": 3543302,
+          "command": "lean"
+        },
+        {
+          "pid": 3543391,
+          "command": "lean"
+        },
+        {
+          "pid": 3543420,
+          "command": "lean"
+        },
+        {
+          "pid": 3543454,
+          "command": "lean"
+        },
+        {
+          "pid": 3543470,
+          "command": "lean"
+        },
+        {
+          "pid": 3543506,
+          "command": "lean"
+        },
+        {
+          "pid": 3543655,
+          "command": "lake"
+        },
+        {
+          "pid": 3543679,
+          "command": "lean"
+        },
+        {
+          "pid": 3543740,
+          "command": "lean"
+        },
+        {
+          "pid": 3543842,
+          "command": "lean"
+        },
+        {
+          "pid": 3543854,
+          "command": "lake"
+        },
+        {
+          "pid": 3543855,
+          "command": "lake"
+        },
+        {
+          "pid": 3543927,
+          "command": "lake"
+        },
+        {
+          "pid": 3544021,
+          "command": "lake"
+        },
+        {
+          "pid": 3544041,
+          "command": "lake"
+        },
+        {
+          "pid": 3544111,
+          "command": "lean"
+        },
+        {
+          "pid": 3544144,
+          "command": "lean"
+        },
+        {
+          "pid": 3544363,
+          "command": "lean"
+        },
+        {
+          "pid": 3544395,
+          "command": "lean"
+        },
+        {
+          "pid": 3544403,
+          "command": "lake"
+        },
+        {
+          "pid": 3544443,
+          "command": "lean"
+        },
+        {
+          "pid": 3544445,
+          "command": "lean"
+        },
+        {
+          "pid": 3544446,
+          "command": "lake"
+        },
+        {
+          "pid": 3544471,
+          "command": "lake"
+        },
+        {
+          "pid": 3544529,
+          "command": "lean"
+        },
+        {
+          "pid": 3544532,
+          "command": "lean"
+        },
+        {
+          "pid": 3544560,
+          "command": "lean"
+        },
+        {
+          "pid": 3544587,
+          "command": "lean"
+        },
+        {
+          "pid": 3544620,
+          "command": "lean"
+        },
+        {
+          "pid": 3544624,
+          "command": "lean"
+        },
+        {
+          "pid": 3544636,
+          "command": "lean"
+        },
+        {
+          "pid": 3544709,
+          "command": "lean"
+        },
+        {
+          "pid": 3544775,
+          "command": "lake"
+        },
+        {
+          "pid": 3544858,
+          "command": "lake"
+        },
+        {
+          "pid": 3544980,
+          "command": "lake"
+        },
+        {
+          "pid": 3545073,
+          "command": "lean"
+        },
+        {
+          "pid": 3545080,
+          "command": "lake"
+        },
+        {
+          "pid": 3545149,
+          "command": "lake"
+        },
+        {
+          "pid": 3545184,
+          "command": "lean"
+        },
+        {
+          "pid": 3545210,
+          "command": "lean"
+        },
+        {
+          "pid": 3545213,
+          "command": "lean"
+        },
+        {
+          "pid": 3545249,
+          "command": "lean"
+        },
+        {
+          "pid": 3545332,
+          "command": "lean"
+        },
+        {
+          "pid": 3545592,
+          "command": "lean"
+        },
+        {
+          "pid": 3545679,
+          "command": "lean"
+        },
+        {
+          "pid": 3545680,
+          "command": "lake"
+        },
+        {
+          "pid": 3545686,
+          "command": "lean"
+        },
+        {
+          "pid": 3545779,
+          "command": "lake"
+        },
+        {
+          "pid": 3545785,
+          "command": "lean"
+        },
+        {
+          "pid": 3545816,
+          "command": "lean"
+        },
+        {
+          "pid": 3545825,
+          "command": "lean"
+        },
+        {
+          "pid": 3545826,
+          "command": "lake"
+        },
+        {
+          "pid": 3545835,
+          "command": "lake"
+        },
+        {
+          "pid": 3546012,
+          "command": "lake"
+        },
+        {
+          "pid": 3546035,
+          "command": "lean"
+        },
+        {
+          "pid": 3546085,
+          "command": "lean"
+        },
+        {
+          "pid": 3546107,
+          "command": "lean"
+        },
+        {
+          "pid": 3546128,
+          "command": "lean"
+        },
+        {
+          "pid": 3546166,
+          "command": "lean"
+        },
+        {
+          "pid": 3546187,
+          "command": "lake"
+        },
+        {
+          "pid": 3546201,
+          "command": "lean"
+        },
+        {
+          "pid": 3546214,
+          "command": "lean"
+        },
+        {
+          "pid": 3546311,
+          "command": "lean"
+        },
+        {
+          "pid": 3546334,
+          "command": "lake"
+        },
+        {
+          "pid": 3546479,
+          "command": "lean"
+        },
+        {
+          "pid": 3546485,
+          "command": "lean"
+        },
+        {
+          "pid": 3546492,
+          "command": "lean"
+        },
+        {
+          "pid": 3546527,
+          "command": "lake"
+        },
+        {
+          "pid": 3546535,
+          "command": "lake"
+        },
+        {
+          "pid": 3546629,
+          "command": "lake"
+        },
+        {
+          "pid": 3546743,
+          "command": "lean"
+        },
+        {
+          "pid": 3546747,
+          "command": "lean"
+        },
+        {
+          "pid": 3546749,
+          "command": "lean"
+        },
+        {
+          "pid": 3546901,
+          "command": "lean"
+        },
+        {
+          "pid": 3546930,
+          "command": "lake"
+        },
+        {
+          "pid": 3546938,
+          "command": "lean"
+        },
+        {
+          "pid": 3546944,
+          "command": "lean"
+        },
+        {
+          "pid": 3546949,
+          "command": "lake"
+        },
+        {
+          "pid": 3547165,
+          "command": "lake"
+        },
+        {
+          "pid": 3547248,
+          "command": "lake"
+        },
+        {
+          "pid": 3547257,
+          "command": "lake"
+        },
+        {
+          "pid": 3547323,
+          "command": "lake"
+        },
+        {
+          "pid": 3547381,
+          "command": "lake"
+        },
+        {
+          "pid": 3547491,
+          "command": "lean"
+        },
+        {
+          "pid": 3547511,
+          "command": "lake"
+        },
+        {
+          "pid": 3547560,
+          "command": "lean"
+        }
+      ]
+    }
+  },
+  "samples": [
+    {
+      "arm": "Mathlib",
+      "pair": 0,
+      "declaration_ms": 1697.792783,
+      "tactic_ms": [],
+      "kernel_ms": [],
+      "result": {
+        "wall_nanos": 11890766006,
+        "peak_rss_kb": 3530096,
+        "user_seconds": 4.87,
+        "system_seconds": 6.35,
+        "precise_child_user_seconds": 4.879696,
+        "precise_child_system_seconds": 6.358515,
+        "cpu_percent": 94.0,
+        "involuntary_context_switches": 12440,
+        "voluntary_context_switches": 16493,
+        "axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ],
+        "host_before": {
+          "logical_cpus": 96,
+          "available_logical_cpus": 1,
+          "load_average": [
+            149.5087890625,
+            179.61767578125,
+            162.0791015625
+          ],
+          "load_1m_per_cpu": 1.5573832194010417,
+          "load_1m_per_available_cpu": 149.5087890625,
+          "runnable_tasks": "134/8930",
+          "cpu_affinity": [
+            15
+          ],
+          "cpu_pressure": "some avg10=20.20 avg60=26.83 avg300=34.99 total=52190713917\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+          "cpu_pressure_some_total_us": 52190713917,
+          "affinity_cpu_frequency_khz": "4023960",
+          "concurrent_lake_lean_count": 116
+        },
+        "host_after": {
+          "logical_cpus": 96,
+          "available_logical_cpus": 1,
+          "load_average": [
+            145.5478515625,
+            177.7841796875,
+            161.6708984375
+          ],
+          "load_1m_per_cpu": 1.5161234537760417,
+          "load_1m_per_available_cpu": 145.5478515625,
+          "runnable_tasks": "108/11745",
+          "cpu_affinity": [
+            15
+          ],
+          "cpu_pressure": "some avg10=16.81 avg60=24.88 avg300=34.23 total=52192736274\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+          "cpu_pressure_some_total_us": 52192736274,
+          "affinity_cpu_frequency_khz": "3978212",
+          "concurrent_lake_lean_count": 132
+        },
+        "cpu_accounting": {
+          "clock_ticks_per_second": 100,
+          "per_cpu": {
+            "15": {
+              "ticks": {
+                "user": 513,
+                "nice": 0,
+                "system": 653,
+                "idle": 4,
+                "iowait": 10,
+                "irq": 7,
+                "softirq": 1,
+                "steal": 0,
+                "guest": 0,
+                "guest_nice": 0
+              },
+              "busy_seconds": 11.74
+            },
+            "63": {
+              "ticks": {
+                "user": 827,
+                "nice": 0,
+                "system": 305,
+                "idle": 33,
+                "iowait": 12,
+                "irq": 8,
+                "softirq": 1,
+                "steal": 0,
+                "guest": 0,
+                "guest_nice": 0
+              },
+              "busy_seconds": 11.41
+            }
+          },
+          "child_cpu_seconds": 11.238211,
+          "child_cpu_source": "getrusage-reaped-children",
+          "runner_cpu_seconds": 0.0021819999999999895,
+          "measurement_cpu_residual_seconds": 0.49960700000000047,
+          "measurement_cpu_interrupt_seconds": 0.08,
+          "measurement_cpu_noninterrupt_residual_seconds": 0.41960700000000045,
+          "measurement_cpu_foreign_seconds": 0.41960700000000045,
+          "frequency_time_in_state_ticks": {
+            "3150000": 1190,
+            "2300000": 0,
+            "1500000": 0
+          },
+          "mean_frequency_khz": 3150000.0,
+          "pressure_some_delta_us": 2022357
+        },
+        "compiler_output": "\u2139 [1115/1156] Replayed HexBareiss.Bareiss\ninfo: HexBareiss/Bareiss.lean:240:2: Try these:\n  [apply] [grind\n    .] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @findPivot? _ #8 #7 #6 #5 #4 #3]\n  [apply] [grind \u2192] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]\n  [apply] [grind\n    <=] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]\n  [apply] [grind! \u2192] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @Fin.val #8 #1]\ninfo: HexBareiss/Bareiss.lean:982:2: Try this:\n  [apply] [grind =] for pattern: [@pivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]\ninfo: HexBareiss/Bareiss.lean:990:2: Try these:\n  [apply] [grind =] for pattern: [@pivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @pivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1000:2: Try these:\n  [apply] [grind =] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @pivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1017:2: Try these:\n  [apply] [grind =] for pattern: [@pivotLoopWith #11 #10 #9 #8 #7 #6 #5 (#4 + 1) #3]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #11 #10 #3) + 2) #10, @findPivot? _ #10 #9 #6 (@BareissState.matrix _ #10 #3) (@Fin.mk #10 (@BareissState.step _ #10 #3) _) ((@BareissState.step _ #10 #3) + 1), @pivotLoopWith _ #10 _ #8 #7 _ #5 (#4 + 1) #3]\ninfo: HexBareiss/Bareiss.lean:1033:2: Try these:\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]\n  [apply] [grind\n    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @pivotLoopWith _ #12 _ _ _ _ #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #13 #12 #5) + 2) #12, @findPivot? _ #12 #11 #8 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) ((@BareissState.step _ #12 #5) + 1), @some (Fin _) #2, @pivotLoopWith _ #12 _ #10 #9 _ #7 (#6 + 1) #5]\n  [apply] [grind!\n    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2]\ninfo: HexBareiss/Bareiss.lean:1141:2: Try this:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]\ninfo: HexBareiss/Bareiss.lean:1149:2: Try these:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @noPivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1158:2: Try these:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1168:2: Try these:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1185:2: Try these:\n  [apply] [grind\n    =] for pattern: [@getElem (Vector #11 #10) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @getElem (Vector _ _) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]\n  [apply] [grind!\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3]\ninfo: HexBareiss/Bareiss.lean:1660:2: Try this:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]\ninfo: HexBareiss/Bareiss.lean:1665:2: Try these:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1671:2: Try these:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1685:2: Try these:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #5 #3) + 2) #5, @pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]\ninfo: HexBareiss/Bareiss.lean:1697:2: Try these:\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]\n  [apply] [grind\n    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #7 #5) + 2) #7, @some (Fin _) #2, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5]\n  [apply] [grind!\n    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2]\ninfo: HexBareiss/Bareiss.lean:1729:2: Try this:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]\ninfo: HexBareiss/Bareiss.lean:1734:2: Try these:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1740:2: Try these:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1747:2: Try these:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1761:2: Try these:\n  [apply] [grind\n    =] for pattern: [@getElem (Vector `[Int] #5) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @getElem (Vector `[Int] _) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]\n  [apply] [grind!\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3]\n\u26a0 [2654/2733] Replayed HexMatrixMathlib.Packed\nwarning: HexMatrixMathlib/Packed.lean:141:10: `if_pos` has been deprecated: Use `ite_eq_left` instead\nwarning: HexMatrixMathlib/Packed.lean:149:10: `if_neg` has been deprecated: Use `ite_eq_right` instead\n\u26a0 [2842/2911] Replayed HexMvPolyMathlib.Equiv\nwarning: HexMvPolyMathlib/Equiv.lean:193:4: `MvPolynomial.coeff_add` has been deprecated: Use `AddMonoidAlgebra.coeff_add` instead\n\nNote: The updated constant has a different type:\n  \u2200 {R : Type u_1} {M : Type u_4} [inst : Semiring R] (x y : AddMonoidAlgebra R M), (x + y).coeff = x.coeff + y.coeff\ninstead of\n  \u2200 {R : Type u} {\u03c3 : Type u_1} [inst : CommSemiring R] (m : \u03c3 \u2192\u2080 \u2115) (p q : MvPolynomial \u03c3 R),\n    (p + q).coeff m = p.coeff m + q.coeff m\n\nNote: The updated constant is in a different namespace. Dot notation may need to be changed (e.g., from `x.coeff_add` to `AddMonoidAlgebra.coeff_add x`).\n\u26a0 [2844/2911] Replayed HexMvPolyMathlib.Aeval\nwarning: HexMvPolyMathlib/Aeval.lean:63:0: automatically included section variable(s) unused in theorem `HexMvPolyMathlib.eval\u2082_toMvPolynomial`:\n  [BEq R]\n  [LawfulBEq R]\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [BEq R] [LawfulBEq R] in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\n\u26a0 [2858/2911] Replayed HexPolyDetMathlib.Sound\nwarning: HexPolyDetMathlib/Sound.lean:22:8: Overlapping instance parameters in `check_of_ok`:\n\n\u26a0\ufe0f `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.TransCmp cmp]` may be removed.\n\u26a0\ufe0f `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.LawfulEqCmp cmp]` may be removed.\n\nNote: This linter can be disabled with `set_option linter.overlappingInstances false`\nwarning: HexPolyDetMathlib/Sound.lean:31:8: Overlapping instance parameters in `produce_check`:\n\n\u26a0\ufe0f `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.TransCmp cmp]` may be removed.\n\u26a0\ufe0f `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.LawfulEqCmp cmp]` may be removed.\n\nNote: This linter can be disabled with `set_option linter.overlappingInstances false`\nwarning: HexPolyDetMathlib/Sound.lean:250:20: This simp argument is unused:\n  mul_assoc\n\nHint: Omit it from the simp argument list.\n  [apply] simp [pow_succ]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Sound.lean:314:5: Variable name `hd` is not explicitly referenced.\n\nHint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:\n  [apply] _hd\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\nwarning: HexPolyDetMathlib/Sound.lean:391:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_row`:\n  [CommRing S]\n  D\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [CommRing S] D in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\nwarning: HexPolyDetMathlib/Sound.lean:400:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_replace`:\n  [CommRing S]\n  D\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [CommRing S] D in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\nwarning: HexPolyDetMathlib/Sound.lean:454:20: This simp argument is unused:\n  mul_assoc\n\nHint: Omit it from the simp argument list.\n  [apply] simp [pow_succ, mul_left_comm, mul_comm]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Sound.lean:454:31: This simp argument is unused:\n  mul_left_comm\n\nHint: Omit it from the simp argument list.\n  [apply] simp [pow_succ, mul_assoc, mul_comm]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Sound.lean:621:2: `@[expose]` has no effect; this declaration would be exposed by default\nwarning: HexPolyDetMathlib/Sound.lean:693:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.transport_det`:\n  [DecidableEq C]\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [DecidableEq C] in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\nwarning: HexPolyDetMathlib/Sound.lean:838:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.identify`:\n  [CommRing F]\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [CommRing F] in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\n\u26a0 [2903/2911] Replayed HexPolyDetMathlib.Packed\nwarning: HexPolyDetMathlib/Packed.lean:71:37: `if_neg` has been deprecated: Use `ite_eq_right` instead\nwarning: HexPolyDetMathlib/Packed.lean:80:38: `if_pos` has been deprecated: Use `ite_eq_left` instead\nwarning: HexPolyDetMathlib/Packed.lean:80:38: This simp argument is unused:\n  if_pos rfl\n\nHint: Omit it from the simp argument list.\n  [apply] simp only [entry_replicate] at he\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Packed.lean:276:12: This simp argument is unused:\n  MvPolynomial.eval\u2082Hom_monomial\n\nHint: Omit it from the simp argument list.\n  [apply] simp [MvPolynomial.monomial_eq]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\n\u26a0 [2951/2951] Built Determinant.AdversarialSampleMathlib (7.5s)\ninfo: experiments/Determinant/AdversarialSampleMathlib.lean:17:0: DECL_NS 1697792783\nwarning: experiments/Determinant/AdversarialSampleMathlib.lean:19:23: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice\n\nNote: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`\ninfo: experiments/Determinant/AdversarialSampleMathlib.lean:20:0: 'Determinant.Adversarial.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (2951 jobs).\n__HEX_MAX_RSS_KB__=3530096\n__HEX_USER_SECONDS__=4.87\n__HEX_SYSTEM_SECONDS__=6.35\n__HEX_CPU_PERCENT__=94%\n__HEX_INVOLUNTARY_CONTEXT__=12440\n__HEX_VOLUNTARY_CONTEXT__=16493\n"
+      }
+    },
+    {
+      "arm": "Relations",
+      "pair": 0,
+      "declaration_ms": 943.074777,
+      "tactic_ms": [],
+      "kernel_ms": [],
+      "result": {
+        "wall_nanos": 11994202876,
+        "peak_rss_kb": 3515760,
+        "user_seconds": 4.58,
+        "system_seconds": 6.74,
+        "precise_child_user_seconds": 4.583639000000001,
+        "precise_child_system_seconds": 6.747416,
+        "cpu_percent": 94.0,
+        "involuntary_context_switches": 11384,
+        "voluntary_context_switches": 15800,
+        "axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ],
+        "host_before": {
+          "logical_cpus": 96,
+          "available_logical_cpus": 1,
+          "load_average": [
+            145.5478515625,
+            177.7841796875,
+            161.6708984375
+          ],
+          "load_1m_per_cpu": 1.5161234537760417,
+          "load_1m_per_available_cpu": 145.5478515625,
+          "runnable_tasks": "117/11748",
+          "cpu_affinity": [
+            15
+          ],
+          "cpu_pressure": "some avg10=16.81 avg60=24.88 avg300=34.23 total=52192752095\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+          "cpu_pressure_some_total_us": 52192752095,
+          "affinity_cpu_frequency_khz": "3974318",
+          "concurrent_lake_lean_count": 131
+        },
+        "host_after": {
+          "logical_cpus": 96,
+          "available_logical_cpus": 1,
+          "load_average": [
+            140.09521484375,
+            175.55224609375,
+            161.11669921875
+          ],
+          "load_1m_per_cpu": 1.4593251546223958,
+          "load_1m_per_available_cpu": 140.09521484375,
+          "runnable_tasks": "140/11918",
+          "cpu_affinity": [
+            15
+          ],
+          "cpu_pressure": "some avg10=17.34 avg60=23.39 avg300=33.51 total=52194759232\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+          "cpu_pressure_some_total_us": 52194759232,
+          "affinity_cpu_frequency_khz": "3765356",
+          "concurrent_lake_lean_count": 125
+        },
+        "cpu_accounting": {
+          "clock_ticks_per_second": 100,
+          "per_cpu": {
+            "15": {
+              "ticks": {
+                "user": 479,
+                "nice": 0,
+                "system": 692,
+                "idle": 8,
+                "iowait": 9,
+                "irq": 7,
+                "softirq": 1,
+                "steal": 0,
+                "guest": 0,
+                "guest_nice": 0
+              },
+              "busy_seconds": 11.79
+            },
+            "63": {
+              "ticks": {
+                "user": 670,
+                "nice": 0,
+                "system": 441,
+                "idle": 54,
+                "iowait": 19,
+                "irq": 9,
+                "softirq": 1,
+                "steal": 0,
+                "guest": 0,
+                "guest_nice": 0
+              },
+              "busy_seconds": 11.21
+            }
+          },
+          "child_cpu_seconds": 11.331055000000001,
+          "child_cpu_source": "getrusage-reaped-children",
+          "runner_cpu_seconds": 0.0016449999999999798,
+          "measurement_cpu_residual_seconds": 0.45729999999999815,
+          "measurement_cpu_interrupt_seconds": 0.08,
+          "measurement_cpu_noninterrupt_residual_seconds": 0.37729999999999814,
+          "measurement_cpu_foreign_seconds": 0.37729999999999814,
+          "frequency_time_in_state_ticks": {
+            "3150000": 1199,
+            "2300000": 0,
+            "1500000": 0
+          },
+          "mean_frequency_khz": 3150000.0,
+          "pressure_some_delta_us": 2007137
+        },
+        "compiler_output": "\u2139 [1115/1212] Replayed HexBareiss.Bareiss\ninfo: HexBareiss/Bareiss.lean:240:2: Try these:\n  [apply] [grind\n    .] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @findPivot? _ #8 #7 #6 #5 #4 #3]\n  [apply] [grind \u2192] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]\n  [apply] [grind\n    <=] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]\n  [apply] [grind! \u2192] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @Fin.val #8 #1]\ninfo: HexBareiss/Bareiss.lean:982:2: Try this:\n  [apply] [grind =] for pattern: [@pivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]\ninfo: HexBareiss/Bareiss.lean:990:2: Try these:\n  [apply] [grind =] for pattern: [@pivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @pivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1000:2: Try these:\n  [apply] [grind =] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @pivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1017:2: Try these:\n  [apply] [grind =] for pattern: [@pivotLoopWith #11 #10 #9 #8 #7 #6 #5 (#4 + 1) #3]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #11 #10 #3) + 2) #10, @findPivot? _ #10 #9 #6 (@BareissState.matrix _ #10 #3) (@Fin.mk #10 (@BareissState.step _ #10 #3) _) ((@BareissState.step _ #10 #3) + 1), @pivotLoopWith _ #10 _ #8 #7 _ #5 (#4 + 1) #3]\ninfo: HexBareiss/Bareiss.lean:1033:2: Try these:\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]\n  [apply] [grind\n    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @pivotLoopWith _ #12 _ _ _ _ #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #13 #12 #5) + 2) #12, @findPivot? _ #12 #11 #8 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) ((@BareissState.step _ #12 #5) + 1), @some (Fin _) #2, @pivotLoopWith _ #12 _ #10 #9 _ #7 (#6 + 1) #5]\n  [apply] [grind!\n    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2]\ninfo: HexBareiss/Bareiss.lean:1141:2: Try this:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]\ninfo: HexBareiss/Bareiss.lean:1149:2: Try these:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @noPivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1158:2: Try these:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1168:2: Try these:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1185:2: Try these:\n  [apply] [grind\n    =] for pattern: [@getElem (Vector #11 #10) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @getElem (Vector _ _) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]\n  [apply] [grind!\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3]\ninfo: HexBareiss/Bareiss.lean:1660:2: Try this:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]\ninfo: HexBareiss/Bareiss.lean:1665:2: Try these:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1671:2: Try these:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1685:2: Try these:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #5 #3) + 2) #5, @pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]\ninfo: HexBareiss/Bareiss.lean:1697:2: Try these:\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]\n  [apply] [grind\n    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #7 #5) + 2) #7, @some (Fin _) #2, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5]\n  [apply] [grind!\n    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2]\ninfo: HexBareiss/Bareiss.lean:1729:2: Try this:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]\ninfo: HexBareiss/Bareiss.lean:1734:2: Try these:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1740:2: Try these:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1747:2: Try these:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1761:2: Try these:\n  [apply] [grind\n    =] for pattern: [@getElem (Vector `[Int] #5) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @getElem (Vector `[Int] _) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]\n  [apply] [grind!\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3]\n\u26a0 [2654/2775] Replayed HexMatrixMathlib.Packed\nwarning: HexMatrixMathlib/Packed.lean:141:10: `if_pos` has been deprecated: Use `ite_eq_left` instead\nwarning: HexMatrixMathlib/Packed.lean:149:10: `if_neg` has been deprecated: Use `ite_eq_right` instead\n\u26a0 [2843/2951] Replayed HexMvPolyMathlib.Equiv\nwarning: HexMvPolyMathlib/Equiv.lean:193:4: `MvPolynomial.coeff_add` has been deprecated: Use `AddMonoidAlgebra.coeff_add` instead\n\nNote: The updated constant has a different type:\n  \u2200 {R : Type u_1} {M : Type u_4} [inst : Semiring R] (x y : AddMonoidAlgebra R M), (x + y).coeff = x.coeff + y.coeff\ninstead of\n  \u2200 {R : Type u} {\u03c3 : Type u_1} [inst : CommSemiring R] (m : \u03c3 \u2192\u2080 \u2115) (p q : MvPolynomial \u03c3 R),\n    (p + q).coeff m = p.coeff m + q.coeff m\n\nNote: The updated constant is in a different namespace. Dot notation may need to be changed (e.g., from `x.coeff_add` to `AddMonoidAlgebra.coeff_add x`).\n\u26a0 [2845/2951] Replayed HexMvPolyMathlib.Aeval\nwarning: HexMvPolyMathlib/Aeval.lean:63:0: automatically included section variable(s) unused in theorem `HexMvPolyMathlib.eval\u2082_toMvPolynomial`:\n  [BEq R]\n  [LawfulBEq R]\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [BEq R] [LawfulBEq R] in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\n\u26a0 [2859/2951] Replayed HexPolyDetMathlib.Sound\nwarning: HexPolyDetMathlib/Sound.lean:22:8: Overlapping instance parameters in `check_of_ok`:\n\n\u26a0\ufe0f `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.TransCmp cmp]` may be removed.\n\u26a0\ufe0f `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.LawfulEqCmp cmp]` may be removed.\n\nNote: This linter can be disabled with `set_option linter.overlappingInstances false`\nwarning: HexPolyDetMathlib/Sound.lean:31:8: Overlapping instance parameters in `produce_check`:\n\n\u26a0\ufe0f `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.TransCmp cmp]` may be removed.\n\u26a0\ufe0f `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.LawfulEqCmp cmp]` may be removed.\n\nNote: This linter can be disabled with `set_option linter.overlappingInstances false`\nwarning: HexPolyDetMathlib/Sound.lean:250:20: This simp argument is unused:\n  mul_assoc\n\nHint: Omit it from the simp argument list.\n  [apply] simp [pow_succ]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Sound.lean:314:5: Variable name `hd` is not explicitly referenced.\n\nHint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:\n  [apply] _hd\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\nwarning: HexPolyDetMathlib/Sound.lean:391:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_row`:\n  [CommRing S]\n  D\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [CommRing S] D in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\nwarning: HexPolyDetMathlib/Sound.lean:400:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_replace`:\n  [CommRing S]\n  D\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [CommRing S] D in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\nwarning: HexPolyDetMathlib/Sound.lean:454:20: This simp argument is unused:\n  mul_assoc\n\nHint: Omit it from the simp argument list.\n  [apply] simp [pow_succ, mul_left_comm, mul_comm]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Sound.lean:454:31: This simp argument is unused:\n  mul_left_comm\n\nHint: Omit it from the simp argument list.\n  [apply] simp [pow_succ, mul_assoc, mul_comm]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Sound.lean:621:2: `@[expose]` has no effect; this declaration would be exposed by default\nwarning: HexPolyDetMathlib/Sound.lean:693:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.transport_det`:\n  [DecidableEq C]\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [DecidableEq C] in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\nwarning: HexPolyDetMathlib/Sound.lean:838:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.identify`:\n  [CommRing F]\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [CommRing F] in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\n\u26a0 [2904/2951] Replayed HexPolyDetMathlib.Packed\nwarning: HexPolyDetMathlib/Packed.lean:71:37: `if_neg` has been deprecated: Use `ite_eq_right` instead\nwarning: HexPolyDetMathlib/Packed.lean:80:38: `if_pos` has been deprecated: Use `ite_eq_left` instead\nwarning: HexPolyDetMathlib/Packed.lean:80:38: This simp argument is unused:\n  if_pos rfl\n\nHint: Omit it from the simp argument list.\n  [apply] simp only [entry_replicate] at he\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Packed.lean:276:12: This simp argument is unused:\n  MvPolynomial.eval\u2082Hom_monomial\n\nHint: Omit it from the simp argument list.\n  [apply] simp [MvPolynomial.monomial_eq]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\n\u2139 [2951/2951] Built Determinant.AdversarialSampleRelations (6.6s)\ninfo: experiments/Determinant/AdversarialSampleRelations.lean:17:0: DECL_NS 943074777\ninfo: experiments/Determinant/AdversarialSampleRelations.lean:20:0: 'Determinant.Adversarial.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (2951 jobs).\n__HEX_MAX_RSS_KB__=3515760\n__HEX_USER_SECONDS__=4.58\n__HEX_SYSTEM_SECONDS__=6.74\n__HEX_CPU_PERCENT__=94%\n__HEX_INVOLUNTARY_CONTEXT__=11384\n__HEX_VOLUNTARY_CONTEXT__=15800\n"
+      }
+    },
+    {
+      "arm": "Relations",
+      "pair": 1,
+      "declaration_ms": 1099.741257,
+      "tactic_ms": [],
+      "kernel_ms": [],
+      "result": {
+        "wall_nanos": 12180339484,
+        "peak_rss_kb": 3499712,
+        "user_seconds": 4.48,
+        "system_seconds": 6.5,
+        "precise_child_user_seconds": 4.485322,
+        "precise_child_system_seconds": 6.507228000000001,
+        "cpu_percent": 90.0,
+        "involuntary_context_switches": 11634,
+        "voluntary_context_switches": 21216,
+        "axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ],
+        "host_before": {
+          "logical_cpus": 96,
+          "available_logical_cpus": 1,
+          "load_average": [
+            140.09521484375,
+            175.55224609375,
+            161.11669921875
+          ],
+          "load_1m_per_cpu": 1.4593251546223958,
+          "load_1m_per_available_cpu": 140.09521484375,
+          "runnable_tasks": "129/11913",
+          "cpu_affinity": [
+            15
+          ],
+          "cpu_pressure": "some avg10=17.34 avg60=23.39 avg300=33.51 total=52194813562\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+          "cpu_pressure_some_total_us": 52194813562,
+          "affinity_cpu_frequency_khz": "3882657",
+          "concurrent_lake_lean_count": 124
+        },
+        "host_after": {
+          "logical_cpus": 96,
+          "available_logical_cpus": 1,
+          "load_average": [
+            138.07275390625,
+            173.35595703125,
+            160.62841796875
+          ],
+          "load_1m_per_cpu": 1.4382578531901042,
+          "load_1m_per_available_cpu": 138.07275390625,
+          "runnable_tasks": "131/11801",
+          "cpu_affinity": [
+            15
+          ],
+          "cpu_pressure": "some avg10=14.43 avg60=21.64 avg300=32.71 total=52196566547\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+          "cpu_pressure_some_total_us": 52196566547,
+          "affinity_cpu_frequency_khz": "4085575",
+          "concurrent_lake_lean_count": 131
+        },
+        "cpu_accounting": {
+          "clock_ticks_per_second": 100,
+          "per_cpu": {
+            "15": {
+              "ticks": {
+                "user": 491,
+                "nice": 0,
+                "system": 687,
+                "idle": 1,
+                "iowait": 21,
+                "irq": 10,
+                "softirq": 3,
+                "steal": 0,
+                "guest": 0,
+                "guest_nice": 0
+              },
+              "busy_seconds": 11.91
+            },
+            "63": {
+              "ticks": {
+                "user": 576,
+                "nice": 0,
+                "system": 552,
+                "idle": 61,
+                "iowait": 16,
+                "irq": 8,
+                "softirq": 2,
+                "steal": 0,
+                "guest": 0,
+                "guest_nice": 0
+              },
+              "busy_seconds": 11.38
+            }
+          },
+          "child_cpu_seconds": 10.992550000000001,
+          "child_cpu_source": "getrusage-reaped-children",
+          "runner_cpu_seconds": 0.0018029999999999713,
+          "measurement_cpu_residual_seconds": 0.9156469999999988,
+          "measurement_cpu_interrupt_seconds": 0.13,
+          "measurement_cpu_noninterrupt_residual_seconds": 0.7856469999999988,
+          "measurement_cpu_foreign_seconds": 0.7856469999999988,
+          "frequency_time_in_state_ticks": {
+            "3150000": 1218,
+            "2300000": 0,
+            "1500000": 0
+          },
+          "mean_frequency_khz": 3150000.0,
+          "pressure_some_delta_us": 1752985
+        },
+        "compiler_output": "\u2139 [1115/1134] Replayed HexBareiss.Bareiss\ninfo: HexBareiss/Bareiss.lean:240:2: Try these:\n  [apply] [grind\n    .] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @findPivot? _ #8 #7 #6 #5 #4 #3]\n  [apply] [grind \u2192] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]\n  [apply] [grind\n    <=] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]\n  [apply] [grind! \u2192] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @Fin.val #8 #1]\ninfo: HexBareiss/Bareiss.lean:982:2: Try this:\n  [apply] [grind =] for pattern: [@pivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]\ninfo: HexBareiss/Bareiss.lean:990:2: Try these:\n  [apply] [grind =] for pattern: [@pivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @pivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1000:2: Try these:\n  [apply] [grind =] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @pivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1017:2: Try these:\n  [apply] [grind =] for pattern: [@pivotLoopWith #11 #10 #9 #8 #7 #6 #5 (#4 + 1) #3]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #11 #10 #3) + 2) #10, @findPivot? _ #10 #9 #6 (@BareissState.matrix _ #10 #3) (@Fin.mk #10 (@BareissState.step _ #10 #3) _) ((@BareissState.step _ #10 #3) + 1), @pivotLoopWith _ #10 _ #8 #7 _ #5 (#4 + 1) #3]\ninfo: HexBareiss/Bareiss.lean:1033:2: Try these:\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]\n  [apply] [grind\n    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @pivotLoopWith _ #12 _ _ _ _ #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #13 #12 #5) + 2) #12, @findPivot? _ #12 #11 #8 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) ((@BareissState.step _ #12 #5) + 1), @some (Fin _) #2, @pivotLoopWith _ #12 _ #10 #9 _ #7 (#6 + 1) #5]\n  [apply] [grind!\n    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2]\ninfo: HexBareiss/Bareiss.lean:1141:2: Try this:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]\ninfo: HexBareiss/Bareiss.lean:1149:2: Try these:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @noPivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1158:2: Try these:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1168:2: Try these:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1185:2: Try these:\n  [apply] [grind\n    =] for pattern: [@getElem (Vector #11 #10) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @getElem (Vector _ _) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]\n  [apply] [grind!\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3]\ninfo: HexBareiss/Bareiss.lean:1660:2: Try this:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]\ninfo: HexBareiss/Bareiss.lean:1665:2: Try these:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1671:2: Try these:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1685:2: Try these:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #5 #3) + 2) #5, @pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]\ninfo: HexBareiss/Bareiss.lean:1697:2: Try these:\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]\n  [apply] [grind\n    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #7 #5) + 2) #7, @some (Fin _) #2, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5]\n  [apply] [grind!\n    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2]\ninfo: HexBareiss/Bareiss.lean:1729:2: Try this:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]\ninfo: HexBareiss/Bareiss.lean:1734:2: Try these:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1740:2: Try these:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1747:2: Try these:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1761:2: Try these:\n  [apply] [grind\n    =] for pattern: [@getElem (Vector `[Int] #5) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @getElem (Vector `[Int] _) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]\n  [apply] [grind!\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3]\n\u26a0 [2654/2775] Replayed HexMatrixMathlib.Packed\nwarning: HexMatrixMathlib/Packed.lean:141:10: `if_pos` has been deprecated: Use `ite_eq_left` instead\nwarning: HexMatrixMathlib/Packed.lean:149:10: `if_neg` has been deprecated: Use `ite_eq_right` instead\n\u26a0 [2842/2909] Replayed HexMvPolyMathlib.Equiv\nwarning: HexMvPolyMathlib/Equiv.lean:193:4: `MvPolynomial.coeff_add` has been deprecated: Use `AddMonoidAlgebra.coeff_add` instead\n\nNote: The updated constant has a different type:\n  \u2200 {R : Type u_1} {M : Type u_4} [inst : Semiring R] (x y : AddMonoidAlgebra R M), (x + y).coeff = x.coeff + y.coeff\ninstead of\n  \u2200 {R : Type u} {\u03c3 : Type u_1} [inst : CommSemiring R] (m : \u03c3 \u2192\u2080 \u2115) (p q : MvPolynomial \u03c3 R),\n    (p + q).coeff m = p.coeff m + q.coeff m\n\nNote: The updated constant is in a different namespace. Dot notation may need to be changed (e.g., from `x.coeff_add` to `AddMonoidAlgebra.coeff_add x`).\n\u26a0 [2844/2909] Replayed HexMvPolyMathlib.Aeval\nwarning: HexMvPolyMathlib/Aeval.lean:63:0: automatically included section variable(s) unused in theorem `HexMvPolyMathlib.eval\u2082_toMvPolynomial`:\n  [BEq R]\n  [LawfulBEq R]\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [BEq R] [LawfulBEq R] in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\n\u26a0 [2858/2909] Replayed HexPolyDetMathlib.Sound\nwarning: HexPolyDetMathlib/Sound.lean:22:8: Overlapping instance parameters in `check_of_ok`:\n\n\u26a0\ufe0f `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.TransCmp cmp]` may be removed.\n\u26a0\ufe0f `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.LawfulEqCmp cmp]` may be removed.\n\nNote: This linter can be disabled with `set_option linter.overlappingInstances false`\nwarning: HexPolyDetMathlib/Sound.lean:31:8: Overlapping instance parameters in `produce_check`:\n\n\u26a0\ufe0f `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.TransCmp cmp]` may be removed.\n\u26a0\ufe0f `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.LawfulEqCmp cmp]` may be removed.\n\nNote: This linter can be disabled with `set_option linter.overlappingInstances false`\nwarning: HexPolyDetMathlib/Sound.lean:250:20: This simp argument is unused:\n  mul_assoc\n\nHint: Omit it from the simp argument list.\n  [apply] simp [pow_succ]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Sound.lean:314:5: Variable name `hd` is not explicitly referenced.\n\nHint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:\n  [apply] _hd\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\nwarning: HexPolyDetMathlib/Sound.lean:391:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_row`:\n  [CommRing S]\n  D\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [CommRing S] D in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\nwarning: HexPolyDetMathlib/Sound.lean:400:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_replace`:\n  [CommRing S]\n  D\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [CommRing S] D in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\nwarning: HexPolyDetMathlib/Sound.lean:454:20: This simp argument is unused:\n  mul_assoc\n\nHint: Omit it from the simp argument list.\n  [apply] simp [pow_succ, mul_left_comm, mul_comm]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Sound.lean:454:31: This simp argument is unused:\n  mul_left_comm\n\nHint: Omit it from the simp argument list.\n  [apply] simp [pow_succ, mul_assoc, mul_comm]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Sound.lean:621:2: `@[expose]` has no effect; this declaration would be exposed by default\nwarning: HexPolyDetMathlib/Sound.lean:693:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.transport_det`:\n  [DecidableEq C]\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [DecidableEq C] in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\nwarning: HexPolyDetMathlib/Sound.lean:838:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.identify`:\n  [CommRing F]\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [CommRing F] in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\n\u26a0 [2906/2951] Replayed HexPolyDetMathlib.Packed\nwarning: HexPolyDetMathlib/Packed.lean:71:37: `if_neg` has been deprecated: Use `ite_eq_right` instead\nwarning: HexPolyDetMathlib/Packed.lean:80:38: `if_pos` has been deprecated: Use `ite_eq_left` instead\nwarning: HexPolyDetMathlib/Packed.lean:80:38: This simp argument is unused:\n  if_pos rfl\n\nHint: Omit it from the simp argument list.\n  [apply] simp only [entry_replicate] at he\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Packed.lean:276:12: This simp argument is unused:\n  MvPolynomial.eval\u2082Hom_monomial\n\nHint: Omit it from the simp argument list.\n  [apply] simp [MvPolynomial.monomial_eq]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\n\u2139 [2951/2951] Built Determinant.AdversarialSampleRelations (7.7s)\ninfo: experiments/Determinant/AdversarialSampleRelations.lean:17:0: DECL_NS 1099741257\ninfo: experiments/Determinant/AdversarialSampleRelations.lean:20:0: 'Determinant.Adversarial.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (2951 jobs).\n__HEX_MAX_RSS_KB__=3499712\n__HEX_USER_SECONDS__=4.48\n__HEX_SYSTEM_SECONDS__=6.50\n__HEX_CPU_PERCENT__=90%\n__HEX_INVOLUNTARY_CONTEXT__=11634\n__HEX_VOLUNTARY_CONTEXT__=21216\n"
+      }
+    },
+    {
+      "arm": "Mathlib",
+      "pair": 1,
+      "declaration_ms": 1201.492603,
+      "tactic_ms": [],
+      "kernel_ms": [],
+      "result": {
+        "wall_nanos": 11891734322,
+        "peak_rss_kb": 3524604,
+        "user_seconds": 4.67,
+        "system_seconds": 6.55,
+        "precise_child_user_seconds": 4.680522,
+        "precise_child_system_seconds": 6.557120999999999,
+        "cpu_percent": 94.0,
+        "involuntary_context_switches": 14527,
+        "voluntary_context_switches": 19653,
+        "axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ],
+        "host_before": {
+          "logical_cpus": 96,
+          "available_logical_cpus": 1,
+          "load_average": [
+            138.07275390625,
+            173.35595703125,
+            160.62841796875
+          ],
+          "load_1m_per_cpu": 1.4382578531901042,
+          "load_1m_per_available_cpu": 138.07275390625,
+          "runnable_tasks": "120/11840",
+          "cpu_affinity": [
+            15
+          ],
+          "cpu_pressure": "some avg10=14.43 avg60=21.64 avg300=32.71 total=52196609699\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+          "cpu_pressure_some_total_us": 52196609699,
+          "affinity_cpu_frequency_khz": "4009725",
+          "concurrent_lake_lean_count": 128
+        },
+        "host_after": {
+          "logical_cpus": 96,
+          "available_logical_cpus": 1,
+          "load_average": [
+            133.61572265625,
+            171.23681640625,
+            160.0751953125
+          ],
+          "load_1m_per_cpu": 1.3918304443359375,
+          "load_1m_per_available_cpu": 133.61572265625,
+          "runnable_tasks": "125/11735",
+          "cpu_affinity": [
+            15
+          ],
+          "cpu_pressure": "some avg10=15.73 avg60=20.75 avg300=32.07 total=52198546068\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+          "cpu_pressure_some_total_us": 52198546068,
+          "affinity_cpu_frequency_khz": "3910020",
+          "concurrent_lake_lean_count": 116
+        },
+        "cpu_accounting": {
+          "clock_ticks_per_second": 100,
+          "per_cpu": {
+            "15": {
+              "ticks": {
+                "user": 491,
+                "nice": 0,
+                "system": 671,
+                "idle": 5,
+                "iowait": 11,
+                "irq": 7,
+                "softirq": 2,
+                "steal": 0,
+                "guest": 0,
+                "guest_nice": 0
+              },
+              "busy_seconds": 11.71
+            },
+            "63": {
+              "ticks": {
+                "user": 716,
+                "nice": 0,
+                "system": 380,
+                "idle": 65,
+                "iowait": 12,
+                "irq": 8,
+                "softirq": 2,
+                "steal": 0,
+                "guest": 0,
+                "guest_nice": 0
+              },
+              "busy_seconds": 11.06
+            }
+          },
+          "child_cpu_seconds": 11.237642999999998,
+          "child_cpu_source": "getrusage-reaped-children",
+          "runner_cpu_seconds": 0.0021899999999999697,
+          "measurement_cpu_residual_seconds": 0.4701670000000024,
+          "measurement_cpu_interrupt_seconds": 0.09,
+          "measurement_cpu_noninterrupt_residual_seconds": 0.38016700000000236,
+          "measurement_cpu_foreign_seconds": 0.38016700000000236,
+          "frequency_time_in_state_ticks": {
+            "3150000": 1189,
+            "2300000": 0,
+            "1500000": 0
+          },
+          "mean_frequency_khz": 3150000.0,
+          "pressure_some_delta_us": 1936369
+        },
+        "compiler_output": "\u2139 [1115/1134] Replayed HexBareiss.Bareiss\ninfo: HexBareiss/Bareiss.lean:240:2: Try these:\n  [apply] [grind\n    .] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @findPivot? _ #8 #7 #6 #5 #4 #3]\n  [apply] [grind \u2192] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]\n  [apply] [grind\n    <=] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]\n  [apply] [grind! \u2192] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @Fin.val #8 #1]\ninfo: HexBareiss/Bareiss.lean:982:2: Try this:\n  [apply] [grind =] for pattern: [@pivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]\ninfo: HexBareiss/Bareiss.lean:990:2: Try these:\n  [apply] [grind =] for pattern: [@pivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @pivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1000:2: Try these:\n  [apply] [grind =] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @pivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1017:2: Try these:\n  [apply] [grind =] for pattern: [@pivotLoopWith #11 #10 #9 #8 #7 #6 #5 (#4 + 1) #3]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #11 #10 #3) + 2) #10, @findPivot? _ #10 #9 #6 (@BareissState.matrix _ #10 #3) (@Fin.mk #10 (@BareissState.step _ #10 #3) _) ((@BareissState.step _ #10 #3) + 1), @pivotLoopWith _ #10 _ #8 #7 _ #5 (#4 + 1) #3]\ninfo: HexBareiss/Bareiss.lean:1033:2: Try these:\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]\n  [apply] [grind\n    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @pivotLoopWith _ #12 _ _ _ _ #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #13 #12 #5) + 2) #12, @findPivot? _ #12 #11 #8 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) ((@BareissState.step _ #12 #5) + 1), @some (Fin _) #2, @pivotLoopWith _ #12 _ #10 #9 _ #7 (#6 + 1) #5]\n  [apply] [grind!\n    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2]\ninfo: HexBareiss/Bareiss.lean:1141:2: Try this:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]\ninfo: HexBareiss/Bareiss.lean:1149:2: Try these:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @noPivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1158:2: Try these:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1168:2: Try these:\n  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1185:2: Try these:\n  [apply] [grind\n    =] for pattern: [@getElem (Vector #11 #10) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @getElem (Vector _ _) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]\n  [apply] [grind!\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3]\ninfo: HexBareiss/Bareiss.lean:1660:2: Try this:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]\ninfo: HexBareiss/Bareiss.lean:1665:2: Try these:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1671:2: Try these:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1685:2: Try these:\n  [apply] [grind\n    =] for pattern: [@pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #5 #3) + 2) #5, @pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]\ninfo: HexBareiss/Bareiss.lean:1697:2: Try these:\n  [apply] [grind\n    =_] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]\n  [apply] [grind\n    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #7 #5) + 2) #7, @some (Fin _) #2, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5]\n  [apply] [grind!\n    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2]\ninfo: HexBareiss/Bareiss.lean:1729:2: Try this:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]\ninfo: HexBareiss/Bareiss.lean:1734:2: Try these:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]\ninfo: HexBareiss/Bareiss.lean:1740:2: Try these:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1747:2: Try these:\n  [apply] [grind\n    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\n  [apply] [grind\n    =_] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]\ninfo: HexBareiss/Bareiss.lean:1761:2: Try these:\n  [apply] [grind\n    =] for pattern: [@getElem (Vector `[Int] #5) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]\n  [apply] [grind\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @getElem (Vector `[Int] _) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]\n  [apply] [grind!\n    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3]\n\u26a0 [2654/2727] Replayed HexMatrixMathlib.Packed\nwarning: HexMatrixMathlib/Packed.lean:141:10: `if_pos` has been deprecated: Use `ite_eq_left` instead\nwarning: HexMatrixMathlib/Packed.lean:149:10: `if_neg` has been deprecated: Use `ite_eq_right` instead\n\u26a0 [2842/2942] Replayed HexMvPolyMathlib.Equiv\nwarning: HexMvPolyMathlib/Equiv.lean:193:4: `MvPolynomial.coeff_add` has been deprecated: Use `AddMonoidAlgebra.coeff_add` instead\n\nNote: The updated constant has a different type:\n  \u2200 {R : Type u_1} {M : Type u_4} [inst : Semiring R] (x y : AddMonoidAlgebra R M), (x + y).coeff = x.coeff + y.coeff\ninstead of\n  \u2200 {R : Type u} {\u03c3 : Type u_1} [inst : CommSemiring R] (m : \u03c3 \u2192\u2080 \u2115) (p q : MvPolynomial \u03c3 R),\n    (p + q).coeff m = p.coeff m + q.coeff m\n\nNote: The updated constant is in a different namespace. Dot notation may need to be changed (e.g., from `x.coeff_add` to `AddMonoidAlgebra.coeff_add x`).\n\u26a0 [2844/2942] Replayed HexMvPolyMathlib.Aeval\nwarning: HexMvPolyMathlib/Aeval.lean:63:0: automatically included section variable(s) unused in theorem `HexMvPolyMathlib.eval\u2082_toMvPolynomial`:\n  [BEq R]\n  [LawfulBEq R]\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [BEq R] [LawfulBEq R] in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\n\u26a0 [2858/2942] Replayed HexPolyDetMathlib.Sound\nwarning: HexPolyDetMathlib/Sound.lean:22:8: Overlapping instance parameters in `check_of_ok`:\n\n\u26a0\ufe0f `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.TransCmp cmp]` may be removed.\n\u26a0\ufe0f `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.LawfulEqCmp cmp]` may be removed.\n\nNote: This linter can be disabled with `set_option linter.overlappingInstances false`\nwarning: HexPolyDetMathlib/Sound.lean:31:8: Overlapping instance parameters in `produce_check`:\n\n\u26a0\ufe0f `[Std.TransCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.OrientedCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.TransCmp cmp]` may be removed.\n\u26a0\ufe0f `[Std.LawfulEqCmp cmp]` and `[IsMonomialOrder cmp]` each imply `[Std.ReflCmp cmp]`.\n\ud83d\udca1\ufe0f Of these, `[Std.LawfulEqCmp cmp]` may be removed.\n\nNote: This linter can be disabled with `set_option linter.overlappingInstances false`\nwarning: HexPolyDetMathlib/Sound.lean:250:20: This simp argument is unused:\n  mul_assoc\n\nHint: Omit it from the simp argument list.\n  [apply] simp [pow_succ]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Sound.lean:314:5: Variable name `hd` is not explicitly referenced.\n\nHint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:\n  [apply] _hd\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\nwarning: HexPolyDetMathlib/Sound.lean:391:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_row`:\n  [CommRing S]\n  D\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [CommRing S] D in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\nwarning: HexPolyDetMathlib/Sound.lean:400:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Decode.valid_replace`:\n  [CommRing S]\n  D\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [CommRing S] D in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\nwarning: HexPolyDetMathlib/Sound.lean:454:20: This simp argument is unused:\n  mul_assoc\n\nHint: Omit it from the simp argument list.\n  [apply] simp [pow_succ, mul_left_comm, mul_comm]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Sound.lean:454:31: This simp argument is unused:\n  mul_left_comm\n\nHint: Omit it from the simp argument list.\n  [apply] simp [pow_succ, mul_assoc, mul_comm]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Sound.lean:621:2: `@[expose]` has no effect; this declaration would be exposed by default\nwarning: HexPolyDetMathlib/Sound.lean:693:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.transport_det`:\n  [DecidableEq C]\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [DecidableEq C] in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\nwarning: HexPolyDetMathlib/Sound.lean:838:0: automatically included section variable(s) unused in theorem `HexMatrixMathlib.DetPoly.Polynomial.identify`:\n  [CommRing F]\nconsider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:\n  omit [CommRing F] in theorem ...\n\nNote: This linter can be disabled with `set_option linter.unusedSectionVars false`\n\u26a0 [2903/2942] Replayed HexPolyDetMathlib.Packed\nwarning: HexPolyDetMathlib/Packed.lean:71:37: `if_neg` has been deprecated: Use `ite_eq_right` instead\nwarning: HexPolyDetMathlib/Packed.lean:80:38: `if_pos` has been deprecated: Use `ite_eq_left` instead\nwarning: HexPolyDetMathlib/Packed.lean:80:38: This simp argument is unused:\n  if_pos rfl\n\nHint: Omit it from the simp argument list.\n  [apply] simp only [entry_replicate] at he\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\nwarning: HexPolyDetMathlib/Packed.lean:276:12: This simp argument is unused:\n  MvPolynomial.eval\u2082Hom_monomial\n\nHint: Omit it from the simp argument list.\n  [apply] simp [MvPolynomial.monomial_eq]\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\n\u26a0 [2951/2951] Built Determinant.AdversarialSampleMathlib (6.9s)\ninfo: experiments/Determinant/AdversarialSampleMathlib.lean:17:0: DECL_NS 1201492603\nwarning: experiments/Determinant/AdversarialSampleMathlib.lean:19:23: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice\n\nNote: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`\ninfo: experiments/Determinant/AdversarialSampleMathlib.lean:20:0: 'Determinant.Adversarial.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (2951 jobs).\n__HEX_MAX_RSS_KB__=3524604\n__HEX_USER_SECONDS__=4.67\n__HEX_SYSTEM_SECONDS__=6.55\n__HEX_CPU_PERCENT__=94%\n__HEX_INVOLUNTARY_CONTEXT__=14527\n__HEX_VOLUNTARY_CONTEXT__=19653\n"
+      }
+    }
+  ]
+}

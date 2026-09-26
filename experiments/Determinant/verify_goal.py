@@ -4,7 +4,8 @@ import hashlib
 import json
 from pathlib import Path
 import re
-import sys
+import subprocess
+import argparse
 
 from adversarial_report import main as inventory, theorem_axioms
 
@@ -12,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 ALLOWED = {'propext', 'Classical.choice', 'Quot.sound'}
 
 
-def verify(root):
+def verify(root, source_ref=None):
     cases = sorted(root.glob('*/*/case.json'))
     assert cases, 'no retained cases'
     elapsed, samples, snapshots, failures = 0.0, 0, 0, []
@@ -43,7 +44,9 @@ def verify(root):
                 saved = folder / (Path(name).name + '.txt')
                 assert hashlib.sha256(saved.read_bytes()).hexdigest() == digest, saved
                 if folder.parent.name.startswith('bounded-final') and name.endswith('.lean'):
-                    assert hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == digest, name
+                    source = (subprocess.check_output(['git', 'show', f'{source_ref}:{name}'], cwd=ROOT)
+                              if source_ref else (ROOT / name).read_bytes())
+                    assert hashlib.sha256(source).hexdigest() == digest, name
                 snapshots += 1
         else:
             assert status['exit_status'] != 0, folder
@@ -70,4 +73,8 @@ def verify(root):
 
 
 if __name__ == '__main__':
-    verify(Path(sys.argv[1]))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('root', type=Path)
+    parser.add_argument('--source-ref', help='verify final Lean snapshots against this git revision instead of the worktree')
+    args = parser.parse_args()
+    verify(args.root, args.source_ref)

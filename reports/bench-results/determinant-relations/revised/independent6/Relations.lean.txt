@@ -1,0 +1,196 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Compact
+
+/-! Compact monomials with multiplicative signatures. Signatures are optimization
+hints only: they never justify an equality. Only monomials with colliding
+signatures are normalized, using existing kernel-checked scalar proofs. -/
+
+open Lean Meta Qq Mathlib.Tactic.Ring Mathlib.Tactic.Ring.Common
+open Mathlib.Tactic.Determinant
+namespace Determinant.Relations
+
+register_option det.relations.maxWork : Nat := {
+  defValue := 1000000
+  descr := "Maximum scalar term visits in the experimental relation normalizer" }
+
+meta section
+abbrev Signature := Array (Nat × Nat)
+
+structure State where
+  atoms : Std.HashMap (Expr × Bool) Nat := {}
+  factors : Std.HashMap (Expr × Bool × Nat) Signature := {}
+  products : Std.HashMap Expr Signature := {}
+  work : Nat := 0
+  rewrites : Nat := 0
+
+def merge (a b : Signature) : Signature := Id.run do
+  let mut result := a
+  for (id, power) in b do
+    if let some i := result.findIdx? (fun x => x.1 == id) then
+      result := result.modify i fun x => (id, x.2 + power)
+    else result := result.push (id, power)
+  return result.qsort (fun a b => a.1 < b.1)
+
+def atom (ref : IO.Ref State) (e : Expr) (inverse : Bool) : MetaM Signature := do
+  let s ← ref.get
+  if let some id := s.atoms[(e, inverse)]? then return #[(id, 1)]
+  let id := s.atoms.size
+  ref.modify fun s => {s with atoms := s.atoms.insert (e, inverse) id}
+  return #[(id, 1)]
+
+/-- Conservative syntax test for quotients the bounded evaluator can split.
+A refusal is an optimization decision, never an equality claim. -/
+def single (fuel : Nat) (e : Expr) : Bool :=
+  match fuel with
+  | 0 => false
+  | fuel + 1 =>
+    let args := e.getAppArgs
+    match e.getAppFn.constName? with
+    | some ``HAdd.hAdd | some ``Add.add | some ``HSub.hSub | some ``Sub.sub => false
+    | some ``HMul.hMul | some ``Mul.mul =>
+      args.size >= 2 && single fuel args[args.size-2]! && single fuel args[args.size-1]!
+    | some ``Neg.neg => args.size > 0 && single fuel args[args.size-1]!
+    | some ``HPow.hPow | some ``Pow.pow => args.size >= 2 && single fuel args[args.size-2]!
+    | some ``HDiv.hDiv | some ``Div.div => args.size >= 2 && single fuel args[args.size-2]!
+    | _ => true
+
+/-- Syntactic factorization without proof construction or atom-table mutation.
+No cancellation of a factor against its inverse is used: it could be zero. -/
+def factors (ref : IO.Ref State) (fuel : Nat) (e : Expr) (inverse := false) : MetaM Signature := do
+  if let some value := (← ref.get).factors[(e, inverse, fuel)]? then return value
+  let value ← match fuel with
+    | 0 => atom ref e inverse
+    | fuel + 1 => do
+      let args := e.getAppArgs
+      match e.getAppFn.constName? with
+      | some ``HMul.hMul | some ``Mul.mul =>
+        if args.size >= 2 then
+          return merge (← factors ref fuel args[args.size-2]! inverse)
+            (← factors ref fuel args[args.size-1]! inverse)
+        atom ref e inverse
+      | some ``HDiv.hDiv | some ``Div.div =>
+        if !inverse && args.size >= 2 && single fuel args[args.size-2]! then
+          return merge (← factors ref fuel args[args.size-2]!)
+            (← factors ref fuel args[args.size-1]! true)
+        atom ref e inverse
+      | some ``Inv.inv =>
+        if !inverse && args.size > 0 then
+          return ← factors ref fuel args[args.size-1]! true
+        atom ref e inverse
+      | some ``HPow.hPow | some ``Pow.pow =>
+        if args.size >= 2 then
+          if let some n := (← getNatValue? args[args.size-1]!) then
+            if n > 0 then
+              return (← factors ref fuel args[args.size-2]! inverse).map fun (id, k) => (id, k*n)
+        atom ref e inverse
+      | some ``Neg.neg =>
+        if args.size > 0 then return ← factors ref fuel args[args.size-1]! inverse
+        atom ref e inverse
+      | some ``OfNat.ofNat | some ``Nat.rawCast | some ``Int.rawCast | some ``Rat.rawCast =>
+        return #[]
+      | _ => atom ref e inverse
+  ref.modify fun s => {s with factors := s.factors.insert (e, inverse, fuel) value}
+  return value
+
+
+partial def signature {u : Lean.Level} {α : Q(Type u)} {sα : Q(CommSemiring $α)} {e : Q($α)} (ref : IO.Ref State)
+    (v : ExProd (α := α) RatCoeff sα e) : MetaM Signature := do
+  if let some value := (← ref.get).products.get? e then return value
+  let result : Signature ← do
+    match (dependent := true) v with
+    | .const _ => pure #[]
+    | .mul (x := x) (e := exponent) _ power tail =>
+      let head : Signature ← do
+        match (dependent := true) power with
+        | .const n =>
+          if n.value.den == 1 then
+            pure <| (← factors ref 64 x).map fun (id, k) => (id, k * n.value.num.toNat)
+          else atom ref q($x ^ $exponent) false
+        | _ => atom ref q($x ^ $exponent) false
+      return merge head (← signature ref tail)
+  ref.modify fun s => {s with products := s.products.insert e result}
+  return result
+
+/-- Index a compact polynomial, optionally extending another polynomial's index. -/
+def index {u : Lean.Level} {α : Q(Type u)} {sα : Q(CommSemiring $α)} {e : Q($α)}
+    (ref : IO.Ref State) (v : ExSum (α := α) RatCoeff sα e)
+    (seen : Std.HashMap Signature Expr := {}) (selected : Std.HashSet Expr := {}) :
+    MetaM (Std.HashMap Signature Expr × Std.HashSet Expr) := do
+  let limit := det.relations.maxWork.get (← getOptions)
+  let rec visit {e : Q($α)} (v : ExSum (α := α) RatCoeff sα e)
+      (seen : Std.HashMap Signature Expr) (selected : Std.HashSet Expr) :
+      MetaM (Std.HashMap Signature Expr × Std.HashSet Expr) := do
+    match (dependent := true) v with
+    | .zero => return (seen, selected)
+    | .add (a := a) head tail =>
+      ref.modify fun s => {s with work := s.work + 1}
+      if (← ref.get).work > limit then throwError "relation scalar work budget exhausted ({limit})"
+      let key ← signature ref head
+      if let some prior := seen[key]? then
+        if prior == a then visit tail seen selected else
+          visit tail seen (selected.insert prior |>.insert a)
+      else
+        visit tail (seen.insert key a) selected
+  visit v seen selected
+
+/-- Expand a monomial directly, without simplifying inside opaque atoms. -/
+partial def expand {u : Lean.Level} {α : Q(Type u)} {rα : Q(CommRing $α)}
+    {e : Q($α)} (cache : IO.Ref (Std.HashMap Expr (Cert rα)))
+    (v : ExProd (α := α) RatCoeff (commSemiringOfCommRing rα) e) :
+    CertM rα (Cert rα) := do
+  if let some c := (← cache.get).get? e then return c
+  let result : Cert rα ← do
+    match (dependent := true) v with
+    | .const (e := k) value =>
+      return toCert ⟨q($k + 0), .add (.const value) .zero, q(Eq.symm (add_zero $k))⟩
+    | .mul (x := x) (e := exponent) _ power tail =>
+      let ctx ← read
+      let base ← if let some c := (← cache.get).get? x then pure c else do
+        let c ← toCert <$> Bounded.eval rcℕ ctx.rc ctx.cα x
+        cache.modify fun s => s.insert x c
+        pure c
+      let ⟨_, vp, pp⟩ ← evalPow₁ ctx.rc rcℕ base.val power
+      let cp := (toCert ⟨_, vp, pp⟩).chainProof
+        (q(congrArg (fun a : $α => a ^ $exponent) $base.proof))
+      Compact.certMul cp (← expand cache tail)
+  cache.modify fun s => s.insert e result
+  return result
+
+/-- Preserve the original sum tail once all selected monomials have been handled. -/
+partial def rewrite {u : Lean.Level} {α : Q(Type u)} {rα : Q(CommRing $α)}
+    {e : Q($α)} (cache : IO.Ref (Std.HashMap Expr (Cert rα)))
+    (selected : Std.HashSet Expr) (v : CertVal (α := α) rα e) :
+    CertM rα (Cert rα) := do
+  if selected.isEmpty then return toCert ⟨e, v, q(rfl)⟩
+  match (dependent := true) v with
+  | .zero => return toCert ⟨e, v, q(rfl)⟩
+  | .add (a := a) head tail =>
+    let hc ← if selected.contains a then expand cache head else
+      pure <| toCert ⟨q($a + 0), .add head .zero, q(Eq.symm (add_zero $a))⟩
+    Compact.certAdd hc (← rewrite cache (selected.erase a) tail)
+
+def normalize {u : Lean.Level} {α : Q(Type u)} {rα : Q(CommRing $α)} (ref : IO.Ref State) (cache : IO.Ref (Std.HashMap Expr (Cert rα))) (c : Cert rα) : CertM rα (Cert rα) := do
+  unless (← read).cα.dsα.isSome do return c
+  let (_, selected) ← index ref c.val
+  if selected.isEmpty then return c
+  ref.modify fun s => {s with rewrites := s.rewrites + selected.size}
+  return (← rewrite cache selected c.val).chainProof c.proof
+
+/-- Compare the two sides in one representation after partial cancellation. -/
+def align {u : Lean.Level} {α : Q(Type u)} {rα : Q(CommRing $α)}
+    (ref : IO.Ref State) (cache : IO.Ref (Std.HashMap Expr (Cert rα)))
+    (a b : Cert rα) : CertM rα (Cert rα × Cert rα) := do
+  unless (← read).cα.dsα.isSome do return (a, b)
+  let (seen, selected) ← index ref a.val
+  let (_, selected) ← index ref b.val seen selected
+  if selected.isEmpty then return (a, b)
+  return ((← rewrite cache selected a.val).chainProof a.proof,
+    (← rewrite cache selected b.val).chainProof b.proof)
+
+end
+end Determinant.Relations
+

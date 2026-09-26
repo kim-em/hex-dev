@@ -1,0 +1,122 @@
+{
+  "elapsed_seconds": 99.40156460297294,
+  "cases": [
+    {
+      "name": "independent4",
+      "case": {
+        "family": "variable-quotients",
+        "n": 4,
+        "atoms": 2,
+        "degree": 1,
+        "support": 1,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "relations",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "proof_nodes": false,
+        "capture_target": false,
+        "cleaned_target": null,
+        "physical_nodes": false,
+        "invocation_seconds": 15,
+        "search_seconds": null,
+        "rational": false,
+        "denominator_bits": 3,
+        "quotient_entries": false,
+        "symbolic_row_denominators": false,
+        "row_denominators": false,
+        "integer": false,
+        "polynomial": false,
+        "concrete": false,
+        "reverse_rows": false,
+        "transpose": false,
+        "target": "expanded",
+        "product_denominators": false
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 0.49559737750000005,
+          "minimum": 0.474242999,
+          "maximum": 0.5169517560000001
+        },
+        "Relations": {
+          "count": 2,
+          "median": 0.5751922935,
+          "minimum": 0.5448232590000001,
+          "maximum": 0.605561328
+        }
+      },
+      "paired_losses": 2,
+      "elapsed_seconds": 49.608547198819
+    },
+    {
+      "name": "product4",
+      "case": {
+        "family": "rankone",
+        "n": 4,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "relations",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "proof_nodes": false,
+        "capture_target": false,
+        "cleaned_target": null,
+        "physical_nodes": false,
+        "invocation_seconds": 20,
+        "search_seconds": null,
+        "rational": false,
+        "denominator_bits": 3,
+        "quotient_entries": false,
+        "symbolic_row_denominators": true,
+        "row_denominators": false,
+        "integer": false,
+        "polynomial": false,
+        "concrete": false,
+        "reverse_rows": false,
+        "transpose": false,
+        "target": "expanded",
+        "product_denominators": true
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 1.449642693,
+          "minimum": 1.201492603,
+          "maximum": 1.6977927830000001
+        },
+        "Relations": {
+          "count": 2,
+          "median": 1.021408017,
+          "minimum": 0.9430747770000001,
+          "maximum": 1.0997412569999998
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 49.79301740415394
+    }
+  ],
+  "prototype_hashes": {
+    "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+    "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+    "experiments/Determinant/Normalized.lean": "f6e8b2ca36d220926488b48f0412fd3272188d5ba82081cf089a820c1fb66ebb",
+    "experiments/Determinant/Compact.lean": "fb7b211bf71281bc59453eb57753d2ffe6656fc674c28a1a8637415a6b4e5d89",
+    "experiments/Determinant/Steps.lean": "0ce41311cea2f35697af1586d0a0c2cc7beface161b3b4117d7adf7a06ecb468",
+    "experiments/Determinant/Coefficients.lean": "0ec3f4f8aea22392e53e4f6a23ab45f37bbfbe97aaf077bc09ea2c57c2a6c024",
+    "experiments/Determinant/Division.lean": "ff0c485357614c86fc8d553e2e6fc00ae9b9da19ba7363c4539f0fb78c9458fc",
+    "experiments/Determinant/Bounded.lean": "0b3ff69b022532640f05a9d25d18d72c6ca72054aba20b9e746238e64974d903",
+    "experiments/Determinant/Relations.lean": "210d13feab5890b432742bb45cb39acb6ddf6c215304b8bfd4253a1247de2af8"
+  }
+}

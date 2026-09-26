@@ -1,0 +1,20 @@
+1 cases; 92.9 seconds; prototype hashes unchanged
+1 cases; 31.3 seconds; prototype hashes unchanged
+1 cases; 38.3 seconds; prototype hashes unchanged
+6 cases; 171.0 seconds; prototype hashes unchanged
+1 cases; 52.3 seconds; prototype hashes unchanged
+2 cases; 99.4 seconds; prototype hashes unchanged
+1 cases; 27.2 seconds; prototype hashes unchanged
+{
+  "cases": 13,
+  "samples": 52,
+  "source_snapshots": 143,
+  "measurement_seconds": 512.4015646050684,
+  "audit_dependency_records": 152,
+  "validated_source_files": 30,
+  "allowed_axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+  ]
+}

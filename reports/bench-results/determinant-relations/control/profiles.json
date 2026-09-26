@@ -1,0 +1,94 @@
+[
+  {
+    "case": "independent6",
+    "arm": "Fresh",
+    "pair": 0,
+    "declaration_ms": 3107.976796,
+    "tactic_ms": [
+      431.195107
+    ],
+    "components_ms": {
+      "share common exprs": [
+        850.0
+      ],
+      "fix level params": [
+        31.1
+      ],
+      "type checking": [
+        900.0
+      ],
+      "process pre-definitions": [
+        145.0
+      ]
+    }
+  },
+  {
+    "case": "independent6",
+    "arm": "Relations",
+    "pair": 0,
+    "declaration_ms": 4106.165266,
+    "tactic_ms": [
+      1331.601033
+    ],
+    "components_ms": {
+      "share common exprs": [
+        856.0
+      ],
+      "fix level params": [
+        32.1
+      ],
+      "type checking": [
+        969.0
+      ],
+      "process pre-definitions": [
+        162.0
+      ]
+    }
+  },
+  {
+    "case": "independent6",
+    "arm": "Relations",
+    "pair": 1,
+    "declaration_ms": 5080.825756,
+    "tactic_ms": [
+      1379.458147
+    ],
+    "components_ms": {
+      "share common exprs": [
+        1200.0
+      ],
+      "fix level params": [
+        36.7
+      ],
+      "type checking": [
+        1240.0
+      ],
+      "process pre-definitions": [
+        207.0
+      ]
+    }
+  },
+  {
+    "case": "independent6",
+    "arm": "Fresh",
+    "pair": 1,
+    "declaration_ms": 4134.398881,
+    "tactic_ms": [
+      494.62585
+    ],
+    "components_ms": {
+      "share common exprs": [
+        1170.0
+      ],
+      "fix level params": [
+        36.0
+      ],
+      "type checking": [
+        1230.0
+      ],
+      "process pre-definitions": [
+        249.0
+      ]
+    }
+  }
+]

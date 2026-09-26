@@ -1,0 +1,89 @@
+# Review: determinant relation-normalization prototype
+
+The design holds up at the two extremes it was built for, but it has four gaps that matter once cancellation is partial. I didn't run any builds. The reproducers below come from reading the code and haven't been run.
+
+**Soundness looks fine.** Signatures never appear in a proof. Every equality comes from `RingNF.cleanup`, `Bounded.eval` and `evalAdd`, and the `a/a` negative test protects the no-cancellation rule.
+
+**Independent quotients stay compact.** Two monomials collide only when their numerator and denominator factor multisets are equal, which independent atoms never produce. `Bounded.eval` in `single` mode refuses a sum at every node, so each rewritten monomial stays one monomial and the number of terms can't grow.
+
+**Rank-one cancellation is exposed.** In Bird's first step, `-A_kk·A_ij` and `A_ik·A_kj` have equal signatures and cancel exactly, so F₁ = 0. That is why `product4` works.
+
+## Findings, most important first
+
+1. **The target is never relation-normalized** (`Normalized.lean:31-34`).
+   - The left side goes through `Relations.normalize`; the target only goes through `Coefficients.eval`. After a partial merge the left holds `2·a·b·c·d·u⁻¹·v⁻¹` while the target keeps its compact atoms.
+   - Consequence: `relations_first` fails, and `relations_bird` quietly falls back to full expansion.
+   - Reproducer: `!![a*c/u, -(a*d/u); b*c/v, b*d/v] = 2*(a*c/u)*(b*d/v)` under `relations_first`.
+   - Fix: normalize the target with the same `State`, and run one collision check over the monomials of both sides together before comparing.
+
+2. **The signatures don't match what `Bounded.eval` can actually do** (`Relations.lean:47-79`). They are wrong in both directions.
+   - **Too coarse, so real collisions are missed:**
+     - `rawNatLit?` only matches raw literals. Written exponents such as `x^2` are `OfNat` terms, so the `HPow` branch never fires on user input. That includes the generator's own spelling `x0 ^ (1 : Nat)`.
+     - Numerals other than 1 become atoms (`2*a`).
+     - `Neg` isn't looked through.
+     - After a rewrite, `cleanup`'s `pow_one` produces `x0` while the compact monomials still contain `x0^1`. Equal values then carry different signatures and never merge again.
+     - Reproducers under `relations_first`: `!![a^2/u, a*b/u; a*b/v, b^2/v] = 0` and `!![-a*c/u, a*d/u; b*c/v, -b*d/v] = 0`.
+   - **Too fine, so collisions don't pay off:**
+     - `factors` descends into numerators like `(a+b)*c`, which `Bounded.eval` refuses to split.
+     - So `(a+b)/u * c` and `((a+b)*c)/u` collide but stay distinct after rewriting.
+     - Nothing records that failure, so every later `normalize` over those terms or their products runs `cleanup` and `Bounded.eval` again.
+     - Reproducer: `!![(a+b)/u, ((a+b)*c)/u; 1, c] = 0`.
+   - Fix: build `factors` from `Bounded.eval`'s own rules (drop numerals, look through `Neg`, handle `OfNat` exponents, treat a quotient whose numerator isn't a monomial as one atom). Then test two invariants:
+     - equal signatures imply the rewritten forms are like terms;
+     - `sig(Bounded(m)) = sig(m)`.
+
+3. **Using `RingNF.cleanup` to turn a monomial back into an expression changes atoms** (`Relations.lean:127`).
+   - `Simp.main` rewrites inside atom interiors too. For example, `f (x*(y*z))` becomes `f (x*y*z)` and `((a+(b+c))*d)/u` becomes `((a+b+c)*d)/u`.
+   - AtomM then creates a new atom for a value that already has one, and the syntactic signature keys differ as well.
+   - It also costs a new `SimpTheorems`, a simp run and a simp proof for every selected monomial.
+   - Fix: walk the `ExProd` directly (`Bounded.eval` on each atom, then `evalPow`/`evalMul`), and cache the result per atom index. Each quotient atom is then expanded at most once per determinant, and refused atoms stay the same AtomM atom.
+   - I haven't built a minimal reproducer for the atom drift.
+
+4. **A rewrite regenerates proof steps for every monomial in the sum** (`Relations.lean:120-134`).
+   - Each unselected monomial gets `a = a + 0`, an `add_eq` and an `evalAdd` merge, so proof size is O(sum size) rather than O(selected).
+   - Fix: once no selected monomial remains in the tail, return the tail unchanged with `rfl`.
+
+5. **The work budget measures the wrong thing and fails the whole tactic** (`Relations.lean:103-111`).
+   - `work` counts cumulative monomial scans. Scans grow with large compact problems that need no rewrites at all.
+   - Rewrites, `Bounded.eval`, `cleanup` and the O(w²) cost of `merge` are not counted.
+   - When the budget runs out, the `throwError` escapes `compareTarget`, so `relations_bird` fails even though its second pass would have succeeded.
+   - Fix: budget rewritten monomials. On exhaustion, stop normalizing and continue; keep the hard failure only for `relations_first` audits.
+
+6. **Matrix entries are never normalized** (`Compact.lean:104-123`).
+   - An entry that is zero only after relations, such as `a/b*(c/d) - a/d*(c/b)` inside a larger matrix, is never marked `isZero`. So the `zeroProdCert` pruning never fires.
+   - Its collision is also rediscovered and rewritten in every product that uses it.
+   - Fix: run the hook in `coeffEntry` before caching.
+
+7. **Sums are scanned more than once.**
+   - `normalize (certMul …)` is immediately followed by a `certAdd` that normalizes again (in `certTail` and for `diagProd`).
+   - `certSumFromStep` rescans the already-normalized tail on every prepend.
+   - Fix: normalize only at sums and the root, and check only the new operand against a cached signature index of the tail.
+
+8. **The hook's contract isn't enforced** (`Compact.lean:76`).
+   - `Normalize` must preserve `subject`, but `chainProof` uses a bare `=Q` assertion, so a violation would only show up as a kernel type mismatch.
+   - Fix: have the hook return a re-normalization of `c.norm` and do the proof chaining in `Compact`, or at least document the contract.
+
+9. **The tests don't check what the design claims.**
+   - The `rewrites` counter is written but never read.
+   - `quotientRows` passes with no relation work: its cancellation is ordinary polynomial cancellation over compact atoms.
+   - `targetIdentity` passes only through the second pass.
+   - Add:
+     - a way to report rewrite and work counts, with an assertion of 0 rewrites on the independent case;
+     - a compactness test such as `!![a/u, b/v; c/w, d/x] = a/u*(d/x) - b/v*(c/w)` under `relations_first`;
+     - the reproducers from findings 1, 2 and 6;
+     - a `relations_bird` test with a small `maxWork` that should still succeed once finding 5 is fixed.
+
+10. **The two benchmark fixtures only cover the easy extremes.**
+    - `product4` cancels completely at step 1, and `independent4` has no collisions by construction. Neither reaches partial cancellation or mixed representations.
+    - Add a quotient fixture that is rank-one plus diagonal, or rank two, with n ≥ 5.
+    - Use `--reference fresh` as the adjacent control. `relations_bird` is exactly `fresh_bird` plus the hook, so that comparison isolates the hook's cost; the current runs use `mathlib`.
+
+11. **Minor issues:**
+    - `Relations.lean:94-96`: for a non-numeric exponent, the signature uses the whole monomial `e` as an atom and then merges the tail's signature on top, counting the tail twice.
+    - The `factors` cache ignores `fuel`.
+    - `Normalized.lean:24`: the relations path hardcodes its flags and silently ignores `fused`/`coeff`/`division`/`bounded`, inside a 13-position `Bool` argument list. A config structure would be safer.
+    - `experiments/Determinant/AdversarialSampleRelations.lean` is a generated sample with no header. It probably shouldn't be committed.
+
+## What decides whether this scales
+
+The weak spot is the middle ground. After a partial merge, expanded and compact monomials of the same value have to keep finding each other. Findings 1, 2 and 3 currently prevent that, and the two existing fixtures can't show it. I'd fix those three before reading much into the timings.

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import Determinant.Arithmetic
-import Determinant.Compact
+import Determinant.Relations
 import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Correctness
 
 /-! Experimental supplied-target frontend for Mathlib's normalized Bird
@@ -19,45 +19,56 @@ open Mathlib.Tactic.Determinant
 namespace Determinant.Normalized
 
 meta def compareTarget {u : Level} {α : Q(Type u)} {rα : Q(CommRing $α)}
-    (right : Q($α)) (compose direct compact fused staged coeff fresh division bounded secondPass : Bool) : CertM rα Expr := do
-  let left ← if compact then Compact.certBirdDet fused coeff division bounded else certBirdDet
-  if direct then
-    -- Conversion is only a shortcut. Do not unfold concrete ring arithmetic
-    -- while trying it; ordinary target normalization supplies the proof below.
-    if ← withReducible <| isDefEq left.norm right then return left.proof
-  let ctx ← read
-  let target ← if bounded then toCert <$> Bounded.eval rcℕ ctx.rc ctx.cα right
-    else if division then toCert <$> Division.eval rcℕ ctx.rc ctx.cα right
-    else if coeff then toCert <$> Coefficients.eval rcℕ ctx.rc ctx.cα right
-    else certEval right
-  let (left, target, equal) ← if secondPass && (staged || coeff) && !left.val.eq rcℕ ctx.rc target.val then do
-    -- Keep quotients opaque in the recurrence. Expand division only if the
-    -- polynomial comparison actually needs it, without rerunning Bird.
-    let cα ← Common.mkCache (commSemiringOfCommRing rα)
-    -- Only expressions and equality proofs cross this boundary. The first
-    -- phase's atom indices are no longer needed when both sides are evaluated
-    -- anew; retaining them makes every later atom lookup scan obsolete atoms.
-    let compare : Mathlib.Tactic.AtomM (Cert rα × Cert rα × Bool) := do
-      let cleaned ← Mathlib.Tactic.RingNF.cleanup {} {expr := left.norm, proof? := some left.proof}
-      have cleanedExpr : Q($α) := cleaned.expr
-      have cleanedProof : Q($left.subject = $cleanedExpr) := ← cleaned.getProof
-      let expanded ← toCert <$> Common.eval rcℕ (ringCompute cα) cα cleanedExpr
-      let target ← toCert <$> Common.eval rcℕ (ringCompute cα) cα right
-      pure (expanded.chainProof cleanedProof, target, expanded.val.eq rcℕ (ringCompute cα) target.val)
-    if fresh then compare.run .reducible else compare
-  else pure (left, target, left.val.eq rcℕ ctx.rc target.val)
-  unless equal do throwError "unequal normal forms"
-  have a : Q($α) := left.norm
-  have b : Q($α) := target.norm
-  have : $a =Q $b := ⟨⟩
-  have subject : Q($α) := left.subject
-  have pa : Q($subject = $a) := left.proof
-  have pb : Q($right = $b) := target.proof
-  if compose then return ← mkEqTrans pa (← mkEqSymm pb)
-  return q(Eq.trans $pa (Eq.symm $pb))
+    (right : Q($α)) (compose direct compact fused staged coeff fresh division bounded secondPass relations : Bool) : CertM rα Expr := do
+  let relationState ← IO.mkRef ({} : Relations.State)
+  let relationCache ← IO.mkRef ({} : Std.HashMap Expr (Cert rα))
+  try
+    let left ← if relations then Compact.certBirdDet true true false false (Relations.normalize relationState relationCache)
+      else if compact then Compact.certBirdDet fused coeff division bounded else certBirdDet
+    if direct then
+      -- Conversion is only a shortcut. Do not unfold concrete ring arithmetic
+      -- while trying it; ordinary target normalization supplies the proof below.
+      if ← withReducible <| isDefEq left.norm right then return left.proof
+    let ctx ← read
+    let target ← if bounded then toCert <$> Bounded.eval rcℕ ctx.rc ctx.cα right
+      else if division then toCert <$> Division.eval rcℕ ctx.rc ctx.cα right
+      else if coeff then toCert <$> Coefficients.eval rcℕ ctx.rc ctx.cα right
+      else certEval right
+    let (left, target) ← if relations then Relations.align relationState relationCache left target
+      else pure (left, target)
+    let (left, target, equal) ← if secondPass && (staged || coeff) && !left.val.eq rcℕ ctx.rc target.val then do
+      -- Keep quotients opaque in the recurrence. Expand division only if the
+      -- polynomial comparison actually needs it, without rerunning Bird.
+      let cα ← Common.mkCache (commSemiringOfCommRing rα)
+      -- Only expressions and equality proofs cross this boundary. The first
+      -- phase's atom indices are no longer needed when both sides are evaluated
+      -- anew; retaining them makes every later atom lookup scan obsolete atoms.
+      let compare : Mathlib.Tactic.AtomM (Cert rα × Cert rα × Bool) := do
+        let cleaned ← Mathlib.Tactic.RingNF.cleanup {} {expr := left.norm, proof? := some left.proof}
+        have cleanedExpr : Q($α) := cleaned.expr
+        have cleanedProof : Q($left.subject = $cleanedExpr) := ← cleaned.getProof
+        let expanded ← toCert <$> Common.eval rcℕ (ringCompute cα) cα cleanedExpr
+        let target ← toCert <$> Common.eval rcℕ (ringCompute cα) cα right
+        pure (expanded.chainProof cleanedProof, target, expanded.val.eq rcℕ (ringCompute cα) target.val)
+      if fresh then compare.run .reducible else compare
+    else pure (left, target, left.val.eq rcℕ ctx.rc target.val)
+    unless equal do throwError "unequal normal forms"
+    have a : Q($α) := left.norm
+    have b : Q($α) := target.norm
+    have : $a =Q $b := ⟨⟩
+    have subject : Q($α) := left.subject
+    have pa : Q($subject = $a) := left.proof
+    have pb : Q($right = $b) := target.proof
+    if compose then return ← mkEqTrans pa (← mkEqSymm pb)
+    return q(Eq.trans $pa (Eq.symm $pb))
+  finally
+    if relations && Relations.det.relations.trace.get (← getOptions) then
+      let s ← relationState.get
+      logInfo m!"RELATIONS_STATS work={s.work}, rewrites={s.rewrites}, independent={s.independent}, atoms={s.basisSize}"
+
 
 meta def run (compose : Bool) (direct : Bool := false) (literal : Bool := false)
-    (compact : Bool := false) (fused : Bool := false) (intern : Bool := false) (staged : Bool := false) (coeff : Bool := false) (fresh : Bool := false) (division : Bool := false) (bounded : Bool := false) (secondPass : Bool := true) : TacticM Unit := withMainContext do
+    (compact : Bool := false) (fused : Bool := false) (intern : Bool := false) (staged : Bool := false) (coeff : Bool := false) (fresh : Bool := false) (division : Bool := false) (bounded : Bool := false) (secondPass : Bool := true) (relations : Bool := false) : TacticM Unit := withMainContext do
   let g ← getMainGoal
   let target ← instantiateMVars (← g.getType)
   let target := if intern then _root_.ShareCommon.shareCommon' target else target
@@ -91,7 +102,8 @@ meta def run (compose : Bool) (direct : Bool := false) (literal : Bool := false)
   let ctx := { reified.ctx with cα, rc := ringCompute cα }
   let ctx := if literal then { ctx with dimensionLit := n } else ctx
   have right : Q($α) := right
-  let proof ← compareTarget (rα := reified.rα) right compose direct compact fused staged coeff fresh division bounded secondPass |>.run' {} |>.run ctx |>.run .reducible
+  let action := compareTarget (rα := reified.rα) right compose direct compact fused staged coeff fresh division bounded secondPass relations |>.run' {} |>.run ctx |>.run .reducible
+  let proof ← if relations then Relations.withBudget action else action
   have proof : Q(BirdDet.birdDet $n $arrayExpr = $right) := proof
   if compose then
     g.assign (← mkEqTrans transport proof)
@@ -120,5 +132,12 @@ elab "bounded_bird" : tactic => run true true false true true false false true t
 
 -- Audit entry point: refusal must be visible, rather than repaired by expansion.
 elab "bounded_first" : tactic => run true true false true true false false true true true true false
+
+elab "relations_bird" : tactic =>
+  run (compose := true) (direct := true) (compact := true) (fused := true)
+    (coeff := true) (fresh := true) (relations := true)
+elab "relations_first" : tactic =>
+  run (compose := true) (direct := true) (compact := true) (fused := true)
+    (coeff := true) (fresh := true) (secondPass := false) (relations := true)
 
 end Determinant.Normalized

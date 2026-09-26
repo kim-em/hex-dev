@@ -85,6 +85,10 @@ class Limits(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertFalse(destination.exists())
 
+    def test_relations_share_prior_allowance(self):
+        self.refused(dict(candidate='relations', search_seconds=600), 500,
+                     'insufficient remaining allowance')
+
     def test_variants_share_hour(self):
         self.refused(dict(candidate='intern', search_seconds=3600), 3500,
                      'insufficient remaining allowance')

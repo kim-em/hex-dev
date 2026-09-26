@@ -1,0 +1,69 @@
+{
+  "elapsed_seconds": 31.325865074060857,
+  "cases": [
+    {
+      "name": "independent6",
+      "case": {
+        "family": "variable-quotients",
+        "n": 6,
+        "atoms": 2,
+        "degree": 1,
+        "support": 1,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "relations",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "proof_nodes": false,
+        "capture_target": false,
+        "cleaned_target": null,
+        "physical_nodes": false,
+        "invocation_seconds": 30,
+        "search_seconds": null,
+        "rational": false,
+        "denominator_bits": 3,
+        "quotient_entries": false,
+        "symbolic_row_denominators": false,
+        "row_denominators": false,
+        "integer": false,
+        "polynomial": false,
+        "concrete": false,
+        "reverse_rows": false,
+        "transpose": false,
+        "target": "expanded",
+        "product_denominators": false
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 3.729824623,
+          "minimum": 3.399597601,
+          "maximum": 4.060051645
+        },
+        "Relations": {
+          "count": 2,
+          "median": 4.5113784395,
+          "minimum": 4.333591241,
+          "maximum": 4.689165638
+        }
+      },
+      "paired_losses": 2,
+      "elapsed_seconds": 31.325865074060857
+    }
+  ],
+  "prototype_hashes": {
+    "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+    "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+    "experiments/Determinant/Normalized.lean": "e944496d71deafa099fd2b2a64c0d2350e11ee7b502fc10b356016b1afe1dd8d",
+    "experiments/Determinant/Compact.lean": "852dc92caab8f36321d278f3899cce66f9edefc93c093cb1f85d341c6b9dd63f",
+    "experiments/Determinant/Steps.lean": "0ce41311cea2f35697af1586d0a0c2cc7beface161b3b4117d7adf7a06ecb468",
+    "experiments/Determinant/Coefficients.lean": "0ec3f4f8aea22392e53e4f6a23ab45f37bbfbe97aaf077bc09ea2c57c2a6c024",
+    "experiments/Determinant/Division.lean": "ff0c485357614c86fc8d553e2e6fc00ae9b9da19ba7363c4539f0fb78c9458fc",
+    "experiments/Determinant/Bounded.lean": "0b3ff69b022532640f05a9d25d18d72c6ca72054aba20b9e746238e64974d903",
+    "experiments/Determinant/Relations.lean": "51d08b3d0a7852882f16732400de55920a6e8a8bdb1f78e4ca791451fd08d8f8"
+  }
+}

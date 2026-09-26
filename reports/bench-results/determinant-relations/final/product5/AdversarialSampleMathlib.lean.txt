@@ -1,0 +1,21 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Deferred
+import Determinant.Normalized
+import Mathlib.Tactic.NormDet
+import Mathlib.Data.ZMod.Basic
+open Determinant
+set_option maxHeartbeats 0
+set_option maxRecDepth 10000
+set_option Elab.async false
+set_option profiler false
+namespace Determinant.Adversarial
+variable {S : Type} [Field S]
+#measure_decl theorem result (x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 : S) :
+    Matrix.det (!![((((1 : S) * (x0 ^ (1 : Nat)) * (x5 ^ (1 : Nat)))) / (x10 * x15)), ((((1 : S) * (x0 ^ (1 : Nat)) * (x6 ^ (1 : Nat)))) / (x10 * x16)), ((((1 : S) * (x0 ^ (1 : Nat)) * (x7 ^ (1 : Nat)))) / (x10 * x17)), ((((1 : S) * (x0 ^ (1 : Nat)) * (x8 ^ (1 : Nat)))) / (x10 * x18)), ((((1 : S) * (x0 ^ (1 : Nat)) * (x9 ^ (1 : Nat)))) / (x10 * x19)); ((((1 : S) * (x1 ^ (1 : Nat)) * (x5 ^ (1 : Nat)))) / (x11 * x15)), ((((1 : S) * (x1 ^ (1 : Nat)) * (x6 ^ (1 : Nat)))) / (x11 * x16)), ((((1 : S) * (x1 ^ (1 : Nat)) * (x7 ^ (1 : Nat)))) / (x11 * x17)), ((((1 : S) * (x1 ^ (1 : Nat)) * (x8 ^ (1 : Nat)))) / (x11 * x18)), ((((1 : S) * (x1 ^ (1 : Nat)) * (x9 ^ (1 : Nat)))) / (x11 * x19)); ((((1 : S) * (x2 ^ (1 : Nat)) * (x5 ^ (1 : Nat)))) / (x12 * x15)), ((((1 : S) * (x2 ^ (1 : Nat)) * (x6 ^ (1 : Nat)))) / (x12 * x16)), ((((1 : S) * (x2 ^ (1 : Nat)) * (x7 ^ (1 : Nat)))) / (x12 * x17)), ((((1 : S) * (x2 ^ (1 : Nat)) * (x8 ^ (1 : Nat)))) / (x12 * x18)), ((((1 : S) * (x2 ^ (1 : Nat)) * (x9 ^ (1 : Nat)))) / (x12 * x19)); ((((1 : S) * (x3 ^ (1 : Nat)) * (x5 ^ (1 : Nat)))) / (x13 * x15)), ((((1 : S) * (x3 ^ (1 : Nat)) * (x6 ^ (1 : Nat)))) / (x13 * x16)), ((((1 : S) * (x3 ^ (1 : Nat)) * (x7 ^ (1 : Nat)))) / (x13 * x17)), ((((1 : S) * (x3 ^ (1 : Nat)) * (x8 ^ (1 : Nat)))) / (x13 * x18)), ((((1 : S) * (x3 ^ (1 : Nat)) * (x9 ^ (1 : Nat)))) / (x13 * x19)); ((((1 : S) * (x4 ^ (1 : Nat)) * (x5 ^ (1 : Nat)))) / (x14 * x15)), ((((1 : S) * (x4 ^ (1 : Nat)) * (x6 ^ (1 : Nat)))) / (x14 * x16)), ((((1 : S) * (x4 ^ (1 : Nat)) * (x7 ^ (1 : Nat)))) / (x14 * x17)), ((((1 : S) * (x4 ^ (1 : Nat)) * (x8 ^ (1 : Nat)))) / (x14 * x18)), ((((1 : S) * (x4 ^ (1 : Nat)) * (x9 ^ (1 : Nat)))) / (x14 * x19))] : Matrix (Fin 5) (Fin 5) S) = ((0 : S)) := by
+  simp only [norm_det] <;> ring
+#print axioms result
+end Determinant.Adversarial

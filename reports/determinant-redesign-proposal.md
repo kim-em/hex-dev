@@ -52,11 +52,15 @@ a retained 6×6 loss is 5.532s versus Mathlib's 3.769s. Keeping those quotients
 opaque avoids that cost but sacrifices the other cancellation advantage. Do not
 install a matrix-family dispatcher to conceal this tradeoff. The opposing examples
 have the same local scalar shape—a monomial numerator over a variable denominator—
-so a rule inspecting an individual entry cannot distinguish the favorable cases. A promising next
-architecture preserves compact quotient representatives while tracking their
-multiplicative identities, producing normalization proofs only when those
-identities actually help combine or cancel terms. That is an unimplemented
-proposal, not an established improvement.
+so a rule inspecting an individual entry cannot distinguish the favorable cases.
+The [compact quotient experiment](determinant-relations.md) implements a general
+alternative: preserve compact representatives, index their multiplicative
+signatures, and construct scalar proofs for selected collisions. A scalar
+independence test skips searches when each atom has a private factor. Joint
+comparison with the target handles partial cancellation. This mechanism closes
+new first-pass audits and improves the tested mixed-representation case, but is
+still experimental; it does not establish universal superiority or settle all
+field-normalization costs.
 
 The tested implementation borrows the mathematics and scalar proof machinery
 of Mathlib directly. It does not call `norm_det`,

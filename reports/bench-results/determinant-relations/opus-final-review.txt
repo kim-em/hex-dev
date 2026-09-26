@@ -1,0 +1,57 @@
+No soundness blockers: signatures and the private-factor test only decide what to expand, and never go into a proof. There is one blocker before verifying or committing: a leftover generated sample file (finding 1). There are also two missing tests I'd call essential. I didn't build, run or change anything. `RelationsAudit.lean` changed while I was reviewing (it gained the positive-control check and the `maxHeartbeats 0` test), and I reviewed the newer version.
+
+## Soundness and cache stability
+
+- **Private-factor shortcut is only ever a hint.** When `independent` is true, `normalize` and `align` return their inputs unchanged (`Relations.lean:218,229`). Every proof still comes from `Bounded.eval`, `evalPow₁`, `certMul`/`certAdd`, `rfl` or `add_zero`.
+- **The injectivity argument is right.** For constant exponents a monomial's signature is Σ kᵢσᵢ. A factor private to atom i fixes kᵢ, so no two different monomials can share a signature. Non-constant exponents and `.sum` bases fall outside that model, but that can only cost completeness, never soundness.
+- **The stale `independent` result can't be reused wrongly, but only because of an unenforced invariant.** `Bounded.eval` restores AtomM state only to a snapshot taken after `independent` last looked. So the prefix of the atom table it measured never changes, and adding atoms can only flip the result from true to false. The same invariant keeps the atom indices inside `expand`'s cached `Cert`s valid. This holds because no relation hook runs inside a speculative region. Nothing enforces that, so I'd add a comment.
+- **`withBudget` never raises the caller's remaining allowance.** It computes `min remaining requested`, handles an unlimited outer limit, and scales by 1000 correctly. Heartbeat timeouts aren't swallowed by the `try … catch` blocks in `Bounded.eval`.
+- **`align` handles cross-side collisions correctly.** It takes the union of both sides' selected monomials plus cross-key collisions, so a monomial that appears on both sides is expanded on both.
+
+## Findings, most important first
+
+1. **The leftover `experiments/Determinant/AdversarialSampleRelations.lean` breaks three things.**
+   - It fails `verify_relations.py:53`.
+   - The next relations measurement will fail `assert not path.exists()` at `adversarial.py:499`.
+   - `DeterminantExperiment` builds every submodule under `Determinant`, so the sample, a 6×6 run with `maxHeartbeats 0`, would be built with the experiment library.
+   - Every `determinant-relations` case already has a `status.json`, so it looks stale, probably from a killed run whose `finally` never ran. Check that no measurement is running before removing it.
+
+2. **Essential missing test: independence turning false once the target's atoms are added, under `relations_first`.**
+   - README says "Atom-table growth invalidates that test", but nothing exercises it. In `targetIdentity` the target numerator is a sum, so only the second pass rescues it.
+   - Suggested test: `!![a/u, b/v; c/w, d/x] = a*d/(u*x) - b*c/(v*w)` under `relations_first`.
+   - Tracing through the code, the Bird recurrence stays independent, the target atoms break independence, and `align` then has to select both sides. By my reading it would pass today. It is the only test of the `basisSize` invalidation.
+
+3. **Essential missing test: `zeroEntry` doesn't check whether entries are normalized.**
+   - If the hook in `coeffEntry` were removed, the root `normalize` would still cancel `(a/b)(c/d)e` against `(a/d)(c/b)e`, and the test would still pass.
+   - The `isZero` pruning that the hook enables is never checked. Add a `run_meta` check that `entryCache[(0,0)]` has `isZero` set, or a work count.
+
+4. **Indexing a sum tail costs quadratic time and memory** (`Relations.lean:159-178`).
+   - Each tail's `(HashMap, HashSet)` stays in `sums`, so it is always shared. `insert` on a shared `Std.HashMap` copies its bucket array.
+   - A fresh sum of w monomials therefore costs Θ(w²) time, and the retained maps take Θ(w²) memory for the whole run.
+   - This only bites when the private-factor test fails and sums are large, for example shared symbolic denominators without cancellation. Neither `independent6` (skipped by the shortcut) nor `rankone-diagonal` (cancels) reaches it.
+   - Fix: use `Lean.PersistentHashMap`/`PersistentHashSet`, and add a fixture with non-rank-one numerators over shared row denominators, n = 5–6.
+
+5. **The diagnostic counters under-report.** `RELATIONS_STATS` is logged before `align` (`Normalized.lean:27-29`), and `align` never adds to `rewrites`. A diagnostic run can report `rewrites=0` even though the target alignment expanded monomials. Log after the comparison and count `align`'s selections.
+
+6. **Not every relation miss is bounded by the work budget.** Running out of work declines, as you intended. But a false target, or a finished relation pass that doesn't reach equality, falls through to the full second-pass expansion, and only heartbeats bound that. README's "bounded speculation" should say so.
+
+7. **`align`'s tail-preserving early exit never fires** (`Relations.lean:238-239`). The shared `selected` set always still holds the other side's expressions, so both sides are walked in full with an `a+0`/`certAdd` step per monomial. Split `selected` per side.
+
+8. **In some cases the signature doesn't match what `Bounded.eval` produces.** These only lose collisions; they are never unsound.
+   - `x^0` becomes an atom instead of `#[]` (`n > 0` at line 110).
+   - `HSMul` atoms.
+   - Nested quotient denominators like `a/(b/c)`.
+   - Non-literal exponents: user syntax `a^n` never matches the normalized key `q($x ^ $exponent)`.
+
+9. **Negative tests don't pin their errors.** The `maxWork 1` and `maxHeartbeats 0` tests use bare `fail_if_success`, so any failure passes. Use `#guard_msgs` for the exact decline message. There's also no test that a small outer `maxHeartbeats` still binds. The heartbeat-timeout message also points the user at `maxHeartbeats` rather than `det.relations.maxHeartbeats`.
+
+10. **Minor issues:**
+    - Once `independent` is false it stays false, but it still rescans every atom whenever the atom count changes, which is O(m²) overall. It could short-circuit.
+    - `expand` uses one cache for both atom and monomial keys. That's sound, since each entry proves its own key, but deserves a comment.
+    - `reports/bench-results/determinant-adversarial/.lock` shouldn't be committed.
+
+## `rankone-diagonal` generator (`adversarial.py:156-161`)
+
+The identity is correct: det(I + M) = 1 + tr M, where M_ij = (uᵢ/rᵢ)(vⱼ/cⱼ) stays rank one under total division, including zero denominators. The `reverse_rows` sign adjustment and the transpose are fine, and `target_terms` (n+1) matches. It has no `test_adversarial.py` case; a small-n check of the generated statement would be cheap.
+
+The timings aren't reviewed, and nothing here counts them as wins.

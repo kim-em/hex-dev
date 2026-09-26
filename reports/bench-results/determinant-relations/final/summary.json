@@ -1,0 +1,334 @@
+{
+  "elapsed_seconds": 170.98577248305082,
+  "cases": [
+    {
+      "name": "diagonal4",
+      "case": {
+        "family": "rankone-diagonal",
+        "n": 4,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "relations",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "proof_nodes": false,
+        "capture_target": false,
+        "cleaned_target": null,
+        "physical_nodes": false,
+        "invocation_seconds": 25,
+        "search_seconds": null,
+        "rational": false,
+        "denominator_bits": 3,
+        "quotient_entries": false,
+        "symbolic_row_denominators": true,
+        "row_denominators": false,
+        "integer": false,
+        "polynomial": false,
+        "concrete": false,
+        "reverse_rows": false,
+        "transpose": false,
+        "target": "expanded",
+        "product_denominators": true
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 0.772174755,
+          "minimum": 0.65901652,
+          "maximum": 0.88533299
+        },
+        "Relations": {
+          "count": 2,
+          "median": 0.19309444050000002,
+          "minimum": 0.162157949,
+          "maximum": 0.22403093200000002
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 16.01669330499135
+    },
+    {
+      "name": "diagonal5",
+      "case": {
+        "family": "rankone-diagonal",
+        "n": 5,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "relations",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "proof_nodes": false,
+        "capture_target": false,
+        "cleaned_target": null,
+        "physical_nodes": false,
+        "invocation_seconds": 30,
+        "search_seconds": null,
+        "rational": false,
+        "denominator_bits": 3,
+        "quotient_entries": false,
+        "symbolic_row_denominators": true,
+        "row_denominators": false,
+        "integer": false,
+        "polynomial": false,
+        "concrete": false,
+        "reverse_rows": false,
+        "transpose": false,
+        "target": "expanded",
+        "product_denominators": true
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 6.1818998195,
+          "minimum": 6.174347033,
+          "maximum": 6.189452606
+        },
+        "Relations": {
+          "count": 2,
+          "median": 0.305809153,
+          "minimum": 0.303182303,
+          "maximum": 0.308436003
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 25.218689766013995
+    },
+    {
+      "name": "independent6",
+      "case": {
+        "family": "variable-quotients",
+        "n": 6,
+        "atoms": 2,
+        "degree": 1,
+        "support": 1,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "relations",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "proof_nodes": false,
+        "capture_target": false,
+        "cleaned_target": null,
+        "physical_nodes": false,
+        "invocation_seconds": 30,
+        "search_seconds": null,
+        "rational": false,
+        "denominator_bits": 3,
+        "quotient_entries": false,
+        "symbolic_row_denominators": false,
+        "row_denominators": false,
+        "integer": false,
+        "polynomial": false,
+        "concrete": false,
+        "reverse_rows": false,
+        "transpose": false,
+        "target": "expanded",
+        "product_denominators": false
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 4.523606372,
+          "minimum": 4.264066836,
+          "maximum": 4.783145908000001
+        },
+        "Relations": {
+          "count": 2,
+          "median": 4.3548271325,
+          "minimum": 4.272866402,
+          "maximum": 4.436787862999999
+        }
+      },
+      "paired_losses": 1,
+      "elapsed_seconds": 36.54172423714772
+    },
+    {
+      "name": "independent6-repeat",
+      "case": {
+        "family": "variable-quotients",
+        "n": 6,
+        "atoms": 2,
+        "degree": 1,
+        "support": 1,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "relations",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "proof_nodes": false,
+        "capture_target": false,
+        "cleaned_target": null,
+        "physical_nodes": false,
+        "invocation_seconds": 30,
+        "search_seconds": null,
+        "rational": false,
+        "denominator_bits": 3,
+        "quotient_entries": false,
+        "symbolic_row_denominators": false,
+        "row_denominators": false,
+        "integer": false,
+        "polynomial": false,
+        "concrete": false,
+        "reverse_rows": false,
+        "transpose": false,
+        "target": "expanded",
+        "product_denominators": false
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 5.211593942,
+          "minimum": 4.582932973,
+          "maximum": 5.840254911
+        },
+        "Relations": {
+          "count": 2,
+          "median": 4.6196883159999995,
+          "minimum": 4.491635040999999,
+          "maximum": 4.747741591
+        }
+      },
+      "paired_losses": 1,
+      "elapsed_seconds": 40.23465564590879
+    },
+    {
+      "name": "issue10320",
+      "case": {
+        "family": "issue10320",
+        "n": 4,
+        "atoms": 2,
+        "degree": 2,
+        "support": 4,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "relations",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "proof_nodes": false,
+        "capture_target": false,
+        "cleaned_target": null,
+        "physical_nodes": false,
+        "invocation_seconds": 15,
+        "search_seconds": null,
+        "rational": false,
+        "denominator_bits": 3,
+        "quotient_entries": false,
+        "symbolic_row_denominators": false,
+        "row_denominators": false,
+        "integer": true,
+        "polynomial": false,
+        "concrete": false,
+        "reverse_rows": false,
+        "transpose": false,
+        "target": "factored",
+        "product_denominators": false
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 2.2404849875000004,
+          "minimum": 1.0702837440000001,
+          "maximum": 3.410686231
+        },
+        "Relations": {
+          "count": 2,
+          "median": 2.0571152445,
+          "minimum": 0.9504798799999999,
+          "maximum": 3.163750609
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 31.15489285090007
+    },
+    {
+      "name": "product5",
+      "case": {
+        "family": "rankone",
+        "n": 5,
+        "atoms": 2,
+        "degree": 1,
+        "support": 3,
+        "bits": 2,
+        "modulus": 0,
+        "seed": 10320,
+        "entry_form": "factored",
+        "candidate": "relations",
+        "reference": "mathlib",
+        "diagnostic": false,
+        "kernel_profile": false,
+        "proof_nodes": false,
+        "capture_target": false,
+        "cleaned_target": null,
+        "physical_nodes": false,
+        "invocation_seconds": 20,
+        "search_seconds": null,
+        "rational": false,
+        "denominator_bits": 3,
+        "quotient_entries": false,
+        "symbolic_row_denominators": true,
+        "row_denominators": false,
+        "integer": false,
+        "polynomial": false,
+        "concrete": false,
+        "reverse_rows": false,
+        "transpose": false,
+        "target": "expanded",
+        "product_denominators": true
+      },
+      "state": "complete",
+      "stats": {
+        "Mathlib": {
+          "count": 2,
+          "median": 3.0953513800000003,
+          "minimum": 2.390686564,
+          "maximum": 3.800016196
+        },
+        "Relations": {
+          "count": 2,
+          "median": 0.24524687799999997,
+          "minimum": 0.210584096,
+          "maximum": 0.27990965999999995
+        }
+      },
+      "paired_losses": 0,
+      "elapsed_seconds": 21.819116678088903
+    }
+  ],
+  "prototype_hashes": {
+    "experiments/Determinant/Deferred.lean": "750d7eff1e209a698bac79749939598c3954451dbe98e7f071c636921d43ea57",
+    "experiments/Determinant/Arithmetic.lean": "933f4a59a2eeefb4019e48de2e6211d6a09ceffaaf3cb2d21361ca6cba19c25b",
+    "experiments/Determinant/Normalized.lean": "cb0d1c0e99ee31b09f4cc8364c93a4cc8793c8343321755f344350a979e37f97",
+    "experiments/Determinant/Compact.lean": "852dc92caab8f36321d278f3899cce66f9edefc93c093cb1f85d341c6b9dd63f",
+    "experiments/Determinant/Steps.lean": "0ce41311cea2f35697af1586d0a0c2cc7beface161b3b4117d7adf7a06ecb468",
+    "experiments/Determinant/Coefficients.lean": "0ec3f4f8aea22392e53e4f6a23ab45f37bbfbe97aaf077bc09ea2c57c2a6c024",
+    "experiments/Determinant/Division.lean": "ff0c485357614c86fc8d553e2e6fc00ae9b9da19ba7363c4539f0fb78c9458fc",
+    "experiments/Determinant/Bounded.lean": "0b3ff69b022532640f05a9d25d18d72c6ca72054aba20b9e746238e64974d903",
+    "experiments/Determinant/Relations.lean": "1e9a5d0e5a26d54514eb83482213c3b8aed2a0cab6a411db6c0de4afc1665f9c"
+  }
+}
