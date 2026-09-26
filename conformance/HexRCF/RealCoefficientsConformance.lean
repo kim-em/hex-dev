@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRCF.RealCoefficients
+import HexSturm.Basic
 import HexRealAlgebraicMathlib.Complex
 import Lean.Elab.Command
 
@@ -506,6 +507,24 @@ example (cert : RadicalCert Hex.RealAlgebraicNumber Nat)
 /-- info: 'Hex.RCF.RealCoefficients.RadicalCert.roots_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms RadicalCert.roots_algebraic
+
+private def ratHead : Hex.DensePoly Rat :=
+  Hex.DensePoly.ofCoeffs #[-1, 0, 1]
+
+private def ratPoint (d : Dyadic) : Rat := d.toRat
+
+private def acceptedIntervals (head : Hex.DensePoly Rat) (expected : Nat) : Bool :=
+  match FieldIsolate.propose? Hex.Sturm.orderSign ratPoint head with
+  | none => false
+  | some intervals =>
+      intervals.intervals.size == expected &&
+        (IsolationReplay.build Hex.Sturm.orderSign ratPoint () head intervals).isSome
+
+#guard acceptedIntervals ratHead 2
+#guard acceptedIntervals (Hex.DensePoly.ofCoeffs #[(1 : Rat), 0, 1]) 0
+#guard acceptedIntervals (Hex.DensePoly.ofCoeffs #[(0 : Rat), -1, 0, 1]) 3
+#guard (FieldIsolate.propose? Hex.Sturm.orderSign ratPoint
+  (Hex.DensePoly.ofCoeffs #[(1 : Rat), -2, 1])).isNone
 
 end Hex.RCF.RealCoefficientsConformance
 

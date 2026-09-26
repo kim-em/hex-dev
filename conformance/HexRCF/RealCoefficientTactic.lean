@@ -91,6 +91,18 @@ theorem algebraicWitnessDemo : ∃ x : ℝ, x ^ 2 = literalCubic.toReal := by
 #guard_msgs in
 #print axioms algebraicWitnessDemo
 
+theorem cubicIntervalDemo : ∃ x : ℝ,
+    x ^ 2 = literalCubic.toReal ∧
+    1 < x ∧ x < literalCubic.toReal := by
+  rcf
+
+/-- info: '_private.HexRCF.RealCoefficientTactic.0.cubicIntervalDemo' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms cubicIntervalDemo
+
 example : ∀ x : ℝ, x ^ 2 + genericCoefficient.toReal > 0 := by
   rcf
 
