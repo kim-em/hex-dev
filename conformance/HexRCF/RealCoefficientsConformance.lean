@@ -468,6 +468,14 @@ private def sourceSquare : RealFormula.Poly 1 := MvPoly.X 0 ^ 2
 private def specializedSquare : Hex.DensePoly Hex.RealAlgebraicNumber :=
   Specialize.polynomial (fun i : Fin 0 => i.elim0) sourceSquare
 
+private def sourceCube : RealFormula.Poly 1 := MvPoly.X 0 ^ 3
+private def specializedCube : Hex.DensePoly Hex.RealAlgebraicNumber :=
+  Specialize.polynomial (fun i : Fin 0 => i.elim0) sourceCube
+
+#guard ((RadicalCert.build (7 : Nat) specializedCube).map
+  (fun cert => cert.exponent == 1 &&
+    cert.check 7 specializedCube)).getD false
+
 example (cert : RadicalCert Hex.RealAlgebraicNumber Nat)
     (h : cert.check 7 specializedSquare = true) (x : ℝ) :
     (HexPolyMathlib.Interpret.interpret Hex.RealAlgebraicNumber.toReal
@@ -515,43 +523,5 @@ example :
     (independentQuadratics.entries[1]'independentSecond).toAlgebraicNumber =
       independentInputs[1] := by
   exact Hex.QAdjoin.common_get independentInputs 1 (by decide)
-
-end Hex.RCF.RealCoefficientsConformance
-
-namespace Hex.RCF.RealCoefficientsConformance
-
-/-- The cell producer replays a root equation over a selected cubic coefficient. -/
-private def algebraicAtom : RealFormula.QF 2 :=
-  .atom ⟨MvPoly.X 1 - MvPoly.X 0, .eq⟩
-
-private def algebraicCells? :=
-  CellReplay.build (fun _ : Fin 1 => cubic) algebraicAtom (9 : Nat) 8
-
--- Every literal row is bound to the original formula, coefficient and context.
-#guard match algebraicCells? with
-  | none => false
-  | some cert =>
-      cert.check (fun _ : Fin 1 => cubic) algebraicAtom 9 &&
-      !cert.check (fun _ : Fin 1 => cubic) algebraicAtom 10 &&
-      !cert.check (fun _ : Fin 1 => cubic + 1) algebraicAtom 9 &&
-      !({ cert with rootValues := Vector.ofFn fun i => Vector.ofFn fun j =>
-          cert.rootValues[i][j] + 1 }).check
-        (fun _ : Fin 1 => cubic) algebraicAtom 9 &&
-      !({ cert with openValues := Vector.ofFn fun i => Vector.ofFn fun j =>
-          cert.openValues[i][j] + 1 }).check
-        (fun _ : Fin 1 => cubic) algebraicAtom 9 &&
-      !({ cert with rootQueries := Vector.ofFn fun _ => Vector.ofFn fun _ =>
-          cert.isolation.total }).check
-        (fun _ : Fin 1 => cubic) algebraicAtom 9
-
-/-- info: 'Hex.RCF.RealCoefficients.forall_cells' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.RCF.RealCoefficients.forall_cells
-
-private def oneAtom : Hex.RealFormula.QF 1 :=
-  .atom ⟨Hex.MvPoly.X 0, .eq⟩
-
-#guard ((CellReplay.build (fun i : Fin 0 => i.elim0) oneAtom (7 : Nat) 8).map
-  (fun cert => cert.check (fun i : Fin 0 => i.elim0) oneAtom 7)).getD false
 
 end Hex.RCF.RealCoefficientsConformance

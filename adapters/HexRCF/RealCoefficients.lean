@@ -24,12 +24,6 @@ public import HexRCF.RealCoefficients.IsolationSemantics
 public import HexRCF.RealCoefficients.RadicalCheck
 public import HexRCF.RealCoefficients.Radical
 public import HexRCF.RealCoefficients.RadicalBuild
-public import HexRCF.RealCoefficients.CarrierRadical
-public import HexRCF.RealCoefficients.IsolationsAlgebraic
-public import HexRCF.RealCoefficients.CellFormula
-public import HexRCF.RealCoefficients.OpenFormula
-public import HexRCF.RealCoefficients.CellDecision
-public import HexRCF.RealCoefficients.CellBuild
 public import HexRCF.RealCoefficients.FieldDecision
 public import HexRCF.RealCoefficients.FieldRootSigns
 public import HexRCF.RealCoefficients.FieldReplay
@@ -40,6 +34,7 @@ public import HexRCF.RealCoefficients.SquareTwo
 public import HexRCF.RealCoefficients.CubeTwo
 public import HexRCF.RealCoefficients.Selected
 public meta import HexRCF.RealCoefficients.Tactic
+public import HexRCF.RealCoefficients.CellFormula
 
 /-! Algebraic coefficient conversion, source preparation, fixed-field
 specialization, root-isolation search and checked cell decisions for the

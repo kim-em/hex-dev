@@ -486,9 +486,7 @@ arithmetic, and uses {name}`Hex.RCF.RealCoefficients.Selected.field` to retain
 the same root when converting back to a real algebraic number. These examples
 set `maxRecDepth` to `2048` and `maxHeartbeats` to `1000000` so Lean can
 elaborate their literal certificates; users may need the same options for
-similar goals. On the shared host, `lake build HexManual.Chapters.HexRCF`
-with warm imports took 86.06 seconds for this chapter. That is a module
-timing, not a per-call timing.
+similar goals.
 
 The same checked construction works for a different cubic, `X³ − X − 1`.
 The square below selects its positive real root. The
@@ -608,7 +606,8 @@ example : True := by
 The interval statement has no rational witness supplied by the user. `rcf`
 checks the signs on its root cells and proves existence. In the final true
 example, the witness is a square root of a selected cubic algebraic number;
-the solver isolates a root of a polynomial over that coefficient field. The two
+the fixed-field certificate path isolates a root of a polynomial over that
+coefficient field. The two
 `fail_if_success` examples show that a false algebraic statement produces no
 proof and that nonpolynomial syntax in the quantified variable is rejected.
 The adapter's source reifier preserves explicit coefficient aliases and
@@ -723,28 +722,6 @@ private def sharedRoot : RawDescriptor Rat Nat :=
   | _, _ => false
 ```
 
-The same cell replay interface also accepts a selected cubic algebraic
-coefficient. For the equation `x = A`, where `A` is the chosen real root of
-`X³ − 2` constructed above, it checks the root and open-cell signs against
-the original coefficient. Changing the literal context invalidates the
-certificate.
-
-```lean
-private def cubicCellAtom : Hex.RealFormula.QF 2 :=
-  .atom ⟨Hex.MvPoly.X 1 - Hex.MvPoly.X 0, .eq⟩
-
-#guard
-  match CellReplay.build
-      (fun _ : Fin 1 => selectedCubic)
-      cubicCellAtom (9 : Nat) 8 with
-  | none => false
-  | some cert =>
-    cert.check (fun _ : Fin 1 => selectedCubic)
-      cubicCellAtom 9 &&
-    !cert.check (fun _ : Fin 1 => selectedCubic)
-      cubicCellAtom 10
-```
-
 For two independently selected coefficients, the existing number-field
 constructor finds one coordinate field. Here √2 and √3 start as roots of
 different polynomials. The check confirms that the common generator is real
@@ -775,17 +752,13 @@ private def independentInputs :
     | _, _ => false
 ```
 
-The sign-table, descriptor and cell examples run the checked producers and
-replay their certificates. Their interpretation as statements about real
+The sign-table and descriptor examples run the checked producers and replay
+their certificates. Their interpretation as statements about real
 roots uses the semantic theorem admitted in
 [#10389](https://github.com/kim-em/hex-dev/issues/10389); the general Thom
 order proof awaits the specified Tau Ceti foundation theorem. The separate
 common-field conversion preserves the selected algebraic values by the proved
 `QAdjoin.common_get` theorem.
-With warm imports on the shared host, three completed chapter builds took
-188, 311, and 303 seconds in Lake's module timing; the last used this version.
-One full command took 330 seconds wall time. These measure the whole chapter,
-including the earlier `rcf` examples.
 
 # Cross-references
 %%%
