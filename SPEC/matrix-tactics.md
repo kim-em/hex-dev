@@ -2,7 +2,7 @@
 
 Proof-producing tactics on closed matrices (`rank`, `det`, `char_poly`, and
 `min_poly`, `smith`, `hermite`, `inverse`, `solve`) are not a library of their own. Each
-tactic lives with the algorithm library whose certificate it checks, its
+tactic lives with the library owning its correctness construction, its
 Mathlib-input form lives in that library's Mathlib companion, and the only
 shared code is the literal layer of `hex-matrix-mathlib`. This note fixes
 that placement, the certificate discipline that makes a tactic fast in the
@@ -23,7 +23,7 @@ their library structure and their kernel-replay proof strategy do not.
 | `det` | `A.det = d` | `hex-bareiss`: `DetWitness`, `checkDetList`, `checkDetRat`, `detWitness` | `hex-bareiss-mathlib`: `det_eq_of_checkList`, `det_eq_of_checkRat`, `HexBareissMathlib/Tactic.lean` (`det`, `det%`, `Hex.norm_det`, renamed from `hex_norm_det`) | shipped (https://github.com/kim-em/hex-dev/pull/10224); see [The determinant certificate](#the-determinant-certificate) |
 | `char_poly` | `A.charpoly = p` | `hex-char-poly`: the Berkowitz certificate, in kernel form | `hex-char-poly-mathlib` | packed list certificate and both frontends in `HexCharPoly`/`HexCharPolyMathlib`; measurements in `HexCharPolyMathlib/SPEC/hex-char-poly-mathlib.md` |
 | `rank`, symbolic entries | `A.rank = r` (conditional), `A.rank ≤ r`, generic rank of the reified matrix | `hex-generic-rank`: hex-rank's certificate at `MvPoly` | `hex-generic-rank-mathlib`: a second handler on the `rank` syntax kind; `checkRank_sound_at` | implemented: [hex-generic-rank-mathlib](../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md) |
-| `det`, symbolic entries | `A.det = e`, `e = A.det`, `det% A` (unconditional; any commutative ring; closed forms for `n ≤ 3`) | `hex-bareiss`: generic `detWitness`, `checkDetPolyList`; `hex-poly-det`: the `MvPoly` instantiation | `hex-poly-det-mathlib`: `checkDetPolyList_sound`, second handler on the `det` syntax kind, opt-in `Hex.normPolyDet` | specified: [hex-poly-det-mathlib](Libraries/hex-poly-det-mathlib.md); relocated out of the published hex-bareiss-mathlib |
+| `det`, symbolic entries | `A.det = e`, `e = A.det`, `det A with d hd`, `det% A` | native polynomial values remain in `hex-poly-det`; symbolic proof evaluation uses a cached division-free Bird recurrence | `hex-poly-det-mathlib`: compact scalar proofs and selective quotient normalization; opt-in `Hex.normPolyDet` | [symbolic determinant contract](Libraries/hex-poly-det-mathlib.md) |
 | `kronecker` | `a = b` for commutative-ring expressions in any characteristic | `hex-kronecker`: `Expr`, `checkExprEq`; quotient-witness checks are programmatic only | `hex-kronecker-mathlib`: `checkExprEq_sound`, `kronecker`, `kronecker%` | implemented, explicitly opt-in: [hex-kronecker-mathlib](../HexKroneckerMathlib/SPEC/hex-kronecker-mathlib.md) |
 | `rank_locus` | `A.rank < r ↔ ⋀ gᵢ = 0` as a hypothesis; `A.rank < r`, `A.rank ≤ r`, `r ≤ A.rank`, `A.rank = r` | `hex-determinantal-ideal`: `detIdealGens`, and its list form `detIdealGensList` | `hex-determinantal-ideal-mathlib`: `gens_vanish_iff_rank_lt`, `HexDeterminantalIdealMathlib/Tactic.lean`; default `r` from a hex-generic-rank-mathlib handler | specified: [hex-determinantal-ideal-mathlib §The `rank_locus` tactic](../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md#the-rank_locus-tactic) |
 | `min_poly` | `minpoly F A = p` | hex-min-poly: list form of `MinPolyCert` | hex-min-poly-mathlib | implemented in `HexMinPolyMathlib/Tactic.lean`: [companion contract](../HexMinPolyMathlib/SPEC/hex-min-poly-mathlib.md#the-min_poly-tactic) |
@@ -41,9 +41,9 @@ an informational baseline for inverse-product and supplied-solution goals.
 
 Rules that follow from the table:
 
-- No library is named for being a tactic. A tactic is a frontend to one
-  certificate, and it lives where that certificate's soundness theorem
-  lives; a second tactic for the same operation is not added beside the
+- No library is named for being a tactic. A tactic owns one operation and its outcome contract. It may use
+  reflective certificates or direct algebraic proofs, and lives with their
+  correctness theorems; a second tactic for the same operation is not added beside the
   first.
 - The tactic keyword is declared once, by the owning library, as a
   non-reserved atom (`syntax (name := rankTac) &"rank" : tactic`), so
@@ -60,11 +60,12 @@ Rules that follow from the table:
   Mathlib-free soundness theory for the certificate, which `hex-rank` does
   not have today; they are deferred until that exists.
 - Symbolic entries are a separate handler on the owner's syntax kind,
-  living with the `MvPoly` instantiation of the certificate; a numeric
-  handler reports `notApplicable` for them. For `rank` that handler is specified in
+  living in the companion that owns the symbolic correctness construction;
+  a numeric handler reports `notApplicable` for them. For `rank` that handler is specified in
   [hex-generic-rank-mathlib](../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md), with
   the three outputs (generic, conditional, locus) that a symbolic rank may
-  take. Determinant tactics and simprocs invoke only Hex determinant paths.
+  take. Determinant tactics and simprocs use their specified proof constructors,
+  which may reuse Mathlib's Bird evaluator and algebra.
   They must not call Mathlib's `norm_det` or `eval_det` on an unsupported input
   or decline. A user may invoke those tactics explicitly. A decline is a
   capability result, never a successful Hex performance sample.
@@ -76,8 +77,11 @@ operation, or the input is not in the fragment; the next handler may try),
 `declined` (in the fragment, but a capability is missing or a budget is
 exceeded; the message names the missing capability, carrier, entry
 coordinate or budget), `success` (a value and a proof), or `failure` (a
-producer bug or a certificate the kernel rejects). A false target is
-reported with the certified value before any proof is built. No failure
+producer bug or a certificate the kernel rejects). A closed numeric mismatch
+is reported with the computed value. A symbolic
+comparison that does not close reports the computed expression and its limitation;
+unequal normal forms are not a proof of falsity. Direct proof construction may
+have already produced the determinant certificate before comparing the target. No failure
 substitutes a weaker goal. Accepted theorems depend on `propext`,
 `Classical.choice` and `Quot.sound` only, and each tactic's tests audit
 that axiom set.
@@ -112,13 +116,23 @@ decline. Errors raised during simp, including producer failures and rejected
 certificates, propagate unchanged; only a no-progress result is replaced
 with the classification or capability diagnostic.
 
+The numeric-only determinant import retains that simp-based diagnostic. When
+the symbolic companion is imported, its closing contract takes precedence:
+numeric matrices with symbolic targets use a numeric certified value and the
+shared scalar comparison, never a residual simp-only goal. Whole-tactic
+delegation tests the complete equality; selection of determinant computation
+tests the matrix alone.
+
 Regression tests register a stub and then locally re-register the numeric
 handler, assert their dispatch order, and exercise both delegation and
 committed numeric errors. A later stub alone would run first and would not
 test numeric delegation.
 
-The tactics are configured only through the shared structure
-`HexMatrixMathlib.KernelConfig`, taken as an `optConfig` in the style of
+Numeric checker configuration uses `HexMatrixMathlib.KernelConfig`. Determinant
+configuration extends it as `HexMatrixMathlib.Det.Config`, adding the symbolic
+heartbeat and relation-work limits specified by the symbolic companion. Both
+determinant tactic forms accept that structure as an `optConfig`; `rank` keeps
+the base structure. Configuration follows the style of
 `decide +kernel` (`rank -packing`, `det -packing`), never through options:
 `packing` (default on) selects the Kronecker-packed evaluation of the
 certificate's dot products, a second checker proven equal to the plain one
@@ -126,7 +140,7 @@ under bounds it verifies, and off gives the plain checker, so the plain
 certificate stays measurable and is what a comparison with another
 system's certificate refers to.
 
-The proof is added as one auxiliary lemma on the closed target
+For closed reflective certificates, the proof is added as one auxiliary lemma on the closed target
 (`HexMatrixMathlib.Literal.addClosedProof`: `mkAuxLemma` with
 asynchronous checking off and no reuse of an earlier lemma for the same
 statement, the declaration-checking path `decide +kernel` uses), so the
@@ -148,8 +162,26 @@ the number-field bridge. The `closed-algebraic` fixture is the block
 
 ## Kernel discipline
 
-Design principle 11, as `hex-rank` made it concrete: everything on the
-kernel's path is a list of `Nat` or `Int`, read by structural recursion,
+There are two proof constructions. Reflective certificates require a checker
+whose reductions are suitable for the kernel. Direct algebraic construction
+applies proved operations while computing, retains expression sharing and avoids
+redundant proof traversal. The symbolic determinant uses the latter; its Bird
+recurrence is computed by Meta code and certified step by step, not replayed by
+reducing the complete determinant algorithm in the kernel. Reusing Mathlib's
+algebra and scalar evaluator is permitted; calling a Mathlib determinant tactic
+as an implicit fallback is not.
+
+All input-dependent proof checks, including auxiliary declarations, belong to
+the complete-call cost. Do not precheck a large proof merely to check it again
+when its declaration is added. Inline symbolic algebraic proofs are checked with
+their enclosing declaration;
+invalid-proof errors need not be raised synchronously inside the tactic. Runtime
+resource exceptions propagate rather than becoming recoverable declines.
+No native execution is proof evidence. Both
+constructions permit only `propext`, `Classical.choice` and `Quot.sound`.
+
+For the closed reflective matrix checkers, the arithmetic kernel path uses lists
+of `Nat` or `Int`, read by structural recursion,
 with arithmetic through `Nat.mul`, `Nat.add`, `Nat.mod`, `Int.mul`,
 `Int.add` and comparisons through `Nat.beq`, `Nat.blt` and `Int.decEq`.
 Polynomial quotient certificates use coefficient lists and explicit
@@ -209,7 +241,7 @@ Two things a certificate must never ask the kernel to do:
   takes 115 ms on the same data. The reference checker stays the form the
   proofs use; the kernel gets its own.
 
-Producers stay in the executable libraries and are unchanged by this: the
+Reflective-certificate producers stay in the executable libraries: the
 kernel form is a reshaping of the same certificate data, produced from the
 reference certificate (`rankWitness` from `rankCert`).
 
@@ -268,14 +300,23 @@ superior" means both:
   (*opt-in exception*: an arm that does not clear both halves may still
   ship as an explicitly opt-in tactic form and term form, never in a
   default simp chain, with its full family table recorded; it enters a
-  default chain only on families where it wins, and the chain dispatches
-  on that regime. The symbolic `det` arm of
-  [hex-poly-det-mathlib](Libraries/hex-poly-det-mathlib.md) is the first
-  use.)
+  default chain only with separately justified coverage and measurements. The
+  symbolic determinant remains explicitly selected and must not add a
+  matrix-family dispatcher to conceal losses. See
+  [hex-poly-det-mathlib](Libraries/hex-poly-det-mathlib.md) for the
+  result-producing contract and bounded qualification corpus.)
 - **scope**: every input the Mathlib tactic accepts is accepted by Hex, and at least
   one class of input beyond it is accepted: `fun i j => …` and
   `Matrix.ofArray` literals, definitions unfolded within a budget, `ℚ`
   entries, the empty and rectangular shapes, the `%` term forms.
+
+For the symbolic determinant, the public equality tactic, result-introducing
+tactic and certified term are explicitly selected interfaces. They may ship with
+documented measured losses; `Hex.normPolyDet` stays opt-in. Qualification includes
+result production without an answer as well as supplied-equality proofs. A
+universal performance claim or a further schedule comparison is not required to
+release those explicit interfaces. Numeric determinant certificates retain their
+independent measured contract.
 
 Coverage must be reported per declared arm and across the whole advertised
 interface. A numeric-only arm does not establish full Mathlib scope coverage by

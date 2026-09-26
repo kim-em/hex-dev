@@ -1,5 +1,13 @@
 # Determinant architecture and replacement proposal
 
+The symbolic design and implementation requirements in this exploratory proposal
+are superseded by the [symbolic determinant SPEC](../SPEC/Libraries/hex-poly-det-mathlib.md).
+In particular, supplied-equality and result-producing interfaces are both required,
+and another schedule comparison is not a prerequisite for the explicit-interface
+release. The native-value investigations below remain separate proposals, not
+additional work required by the symbolic replacement. Transferable upstream work
+is described in [Mathlib proposals](determinant-mathlib-proposals.md).
+
 This is a proposal for implementation, not an amendment already in force.
 [Measurements and counterexamples](determinant-redesign-results.md) and
 [reproducible prototypes](../experiments/Determinant/README.md) support the

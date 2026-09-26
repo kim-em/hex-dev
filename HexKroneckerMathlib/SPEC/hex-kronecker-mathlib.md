@@ -289,7 +289,9 @@ manifest entry and `scripts/release/check_released_manifest.py` must remain
 clean.  Tactic syntax, implementation, soundness and proof probes all live in
 this companion.
 
-Direct consumers are hex-poly-det-mathlib's small closed forms and the
-Mathlib soundness layers for hex-poly-det's packed certificate arm; generic
-rank is a later consumer.  Each consumer depends downward on this pair.  The
-Kronecker libraries do not import a certificate consumer.
+Expression and mixed-product soundness are reusable APIs independent of the
+symbolic determinant evaluator. That evaluator uses direct algebraic proofs;
+it need not retain small closed forms or determinant-specific packed wrappers
+as consumers. Polynomial rank certificates may reuse this pair under their own
+contract. Each consumer depends downward; the Kronecker libraries do not import
+a certificate consumer.

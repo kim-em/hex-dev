@@ -354,18 +354,18 @@ Atom or degree is never used as a proxy for `N`.
 
 ## Consumers
 
-- [hex-poly-det's packed arm](https://github.com/kim-em/hex-dev/issues/10265)
-  replaces selected `checkDetPolyList` product identities with
-  `Kernel.mulTerms` after this preflight accepts the dense box. Its tree
-  certificate uses `Kernel.mulTree` for list transform rows against retained
-  input trees, and tree-versus-list equality for the target value.
-  The mixed modular API also accepts caller-supplied residue-leaf trees;
-  the determinant frontend initially retains its existing residue-list
-  route rather than changing residue reification.
-- [hex-poly-det-mathlib's closed forms at `n ≤ 3`](https://github.com/kim-em/hex-dev/issues/10264)
-  use the expression checker instead of a final `ring` call.
-- The three identities in hex-generic-rank's `checkRankPolyList` are a later
-  consumer.  They retain term-list checking whenever the dense box is larger.
+Mixed list/tree products remain general APIs: consumers may check transform
+rows against expression-tree columns, and tree/list equality, with the common
+structural bounds and kernel soundness contract. Modular mixed products accept
+caller-supplied residue-leaf trees. Their availability does not require a
+polynomial determinant tactic to use them.
+
+The symbolic determinant uses direct algebraic proofs and does not select packed
+Kronecker checks or small closed-form strategies. Determinant-only wrappers may
+be removed without removing these shared APIs. Polynomial rank certificates may
+use these checks as a separately specified consumer, retaining term-list checking
+when the dense box is too large. Consumer dependencies point downward; this
+library imports no certificate consumer.
 
 For a certificate consumer, the hard eligibility predicate is both default
 budget comparisons.  The measured crossover table then selects `plain` or
