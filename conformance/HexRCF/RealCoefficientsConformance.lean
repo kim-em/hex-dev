@@ -472,9 +472,24 @@ private def sourceCube : RealFormula.Poly 1 := MvPoly.X 0 ^ 3
 private def specializedCube : Hex.DensePoly Hex.RealAlgebraicNumber :=
   Specialize.polynomial (fun i : Fin 0 => i.elim0) sourceCube
 
+#guard (RadicalCert.build (7 : Nat)
+  (0 : Hex.DensePoly Hex.RealAlgebraicNumber)).isNone
+
+#guard ((RadicalCert.build (7 : Nat) specializedSquare).map
+  (fun cert => cert.exponent == 0 &&
+    cert.check 7 specializedSquare)).getD false
+
 #guard ((RadicalCert.build (7 : Nat) specializedCube).map
   (fun cert => cert.exponent == 1 &&
     cert.check 7 specializedCube)).getD false
+
+private def sourceQuartic : RealFormula.Poly 1 := MvPoly.X 0 ^ 4
+private def specializedQuartic : Hex.DensePoly Hex.RealAlgebraicNumber :=
+  Specialize.polynomial (fun i : Fin 0 => i.elim0) sourceQuartic
+
+#guard ((RadicalCert.build (7 : Nat) specializedQuartic).map
+  (fun cert => cert.exponent == 2 &&
+    cert.check 7 specializedQuartic)).getD false
 
 example (cert : RadicalCert Hex.RealAlgebraicNumber Nat)
     (h : cert.check 7 specializedSquare = true) (x : ℝ) :

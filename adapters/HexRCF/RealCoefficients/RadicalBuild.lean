@@ -72,21 +72,3 @@ theorem build_checked (context : Ctx) (product : DensePoly E)
   · exact search_checked context product _ _ _ cert h
 
 end Hex.RCF.RealCoefficients.RadicalCert
-
-namespace Hex.RCF.RealCoefficients.RadicalBuild
-
-/-- Compatibility name for the checked radical producer. -/
-abbrev build {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
-    [One E] [Add E] [Sub E] [Mul E] [Div E] [NatCast E] [DecidableEq Ctx]
-    (context : Ctx) (product : DensePoly E) : Option (RadicalCert E Ctx) :=
-  RadicalCert.build context product
-
-/-- A successful proposal satisfies the literal replay checker. -/
-theorem build_checked {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
-    [One E] [Add E] [Sub E] [Mul E] [Div E] [NatCast E] [DecidableEq Ctx]
-    (context : Ctx) (product : DensePoly E) (cert : RadicalCert E Ctx)
-    (h : build context product = some cert) :
-    cert.check context product = true :=
-  RadicalCert.build_checked context product cert h
-
-end Hex.RCF.RealCoefficients.RadicalBuild

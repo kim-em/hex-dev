@@ -674,7 +674,9 @@ private def positiveRoot : RawDescriptor Rat Nat :=
         [bkrX, bkrX - 1, bkrX * bkrX - 2] with
     | .ok signs => signs.values.toList == [1, 0, -1] &&
         root.checkSigns [bkrX, bkrX - 1, bkrX * bkrX - 2]
-          signs.values signs.evidence
+          signs.values signs.evidence &&
+        !root.checkSigns [bkrX, bkrX - 1, bkrX * bkrX - 2]
+          #v[-1, 0, -1] signs.evidence
     | _ => false
   | _ => false
 ```
@@ -752,13 +754,14 @@ private def independentInputs :
     | _, _ => false
 ```
 
-The sign-table and descriptor examples run the checked producers and replay
-their certificates. Their interpretation as statements about real
-roots uses the semantic theorem admitted in
-[#10389](https://github.com/kim-em/hex-dev/issues/10389); the general Thom
-order proof awaits the specified Tau Ceti foundation theorem. The separate
-common-field conversion preserves the selected algebraic values by the proved
-`QAdjoin.common_get` theorem.
+The sign-table and descriptor examples run checked producers and finite
+certificate checks; the changed sign vector above is rejected. Their
+interpretation as exact real-root counts and orders is not yet proved. That
+requires the root-sum bridge tracked by
+[#10389](https://github.com/kim-em/hex-dev/issues/10389), as well as the
+moment, support-reduction and Thom foundations required from Tau Ceti. The
+separate common-field conversion preserves the selected algebraic values by
+the proved `QAdjoin.common_get` theorem.
 
 # Cross-references
 %%%
