@@ -153,6 +153,7 @@ jobs:
           python3 -m unittest scripts/bench/test_det_packed_table.py scripts/bench/test_det_bench_limits.py
           python3 -m unittest scripts/bench/test_rationalfn_flint.py
           python3 -m unittest scripts/bench/test_sign_det_sparse.py
+          python3 -m unittest scripts/bench/test_sign_det_compare.py
           python3 -m unittest scripts/bench/test_real_roots_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_bz_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_berlekamp_mathlib_sweep.py
