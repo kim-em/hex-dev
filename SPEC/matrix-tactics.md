@@ -64,7 +64,8 @@ Rules that follow from the table:
   a numeric handler reports `notApplicable` for them. For `rank` that handler is specified in
   [hex-generic-rank-mathlib](../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md), with
   the three outputs (generic, conditional, locus) that a symbolic rank may
-  take. Determinant tactics and simprocs invoke only Hex determinant paths.
+  take. Determinant tactics and simprocs use their specified proof constructors,
+  which may reuse Mathlib's Bird evaluator and algebra.
   They must not call Mathlib's `norm_det` or `eval_det` on an unsupported input
   or decline. A user may invoke those tactics explicitly. A decline is a
   capability result, never a successful Hex performance sample.
@@ -114,6 +115,13 @@ using only the Hex numeric certificate. The numeric
 decline. Errors raised during simp, including producer failures and rejected
 certificates, propagate unchanged; only a no-progress result is replaced
 with the classification or capability diagnostic.
+
+The numeric-only determinant import retains that simp-based diagnostic. When
+the symbolic companion is imported, its closing contract takes precedence:
+numeric matrices with symbolic targets use a numeric certified value and the
+shared scalar comparison, never a residual simp-only goal. Whole-tactic
+delegation tests the complete equality; selection of determinant computation
+tests the matrix alone.
 
 Regression tests register a stub and then locally re-register the numeric
 handler, assert their dispatch order, and exercise both delegation and
@@ -165,7 +173,11 @@ as an implicit fallback is not.
 
 All input-dependent proof checks, including auxiliary declarations, belong to
 the complete-call cost. Do not precheck a large proof merely to check it again
-when its declaration is added. No native execution is proof evidence. Both
+when its declaration is added. Inline symbolic algebraic proofs are checked with
+their enclosing declaration;
+invalid-proof errors need not be raised synchronously inside the tactic. Runtime
+resource exceptions propagate rather than becoming recoverable declines.
+No native execution is proof evidence. Both
 constructions permit only `propext`, `Classical.choice` and `Quot.sound`.
 
 For the closed reflective matrix checkers, the arithmetic kernel path uses lists

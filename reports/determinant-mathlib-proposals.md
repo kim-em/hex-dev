@@ -5,7 +5,10 @@ its correctness theorem and its proof-producing ring arithmetic. The useful
 upstream contributions are small improvements to that machinery, not a competing
 copy of `norm_det` or the Hex numeric certificate implementation.
 
-The reference Mathlib revision is `d13f23b723b8a846827a245b89c10fc7d3f11612`.
+The measured prototype used Mathlib `1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`.
+The repository revision used to inspect the proposed upstream API changes is
+`d13f23b723b8a846827a245b89c10fc7d3f11612`. Reproduce on the upstream PR's pin
+before attributing these gains to an upstream implementation.
 The retained Hex experiment is
 [`dccd276f7`](https://github.com/kim-em/hex-dev/tree/dccd276f7/experiments/Determinant),
 with [controlled evidence](https://github.com/kim-em/hex-dev/blob/dccd276f7/reports/determinant-goal-investigation.md)
@@ -33,7 +36,11 @@ lemma. `Ring.Common` already has closely related lemmas. Check the ring/semiring
 instance parameters before choosing direct reuse or a small adapter; the
 experiment's duplicate statements are not a recommendation to add duplicates.
 
-The controlled 10×10 rank-one comparison changes only these proof constructors:
+The controlled 10×10 rank-one comparison changes only these proof constructors
+within the experimental frontend. Its baseline is not stock `eval_det`: it
+already enables field normalization and compares the supplied target in the same
+atom context. Re-measure the constructor change inside stock Mathlib before
+claiming its full-call gain upstream. In the experimental control,
 complete declaration medians fall from 1.817s to 1.387s. A separate diagnostic
 reduces unique full-proof nodes from 143,397 to 113,982 and kernel samples from
 645/626ms to 562/567ms. Kernel savings explain part, not all, of the complete-call
@@ -87,6 +94,12 @@ numerator expansion improves the degree-eight quotient 4×4 comparison from
 0.433s to 0.103s. Eager factor expansion also loses on independent quotients,
 so neither observation justifies changing the global default to always expand.
 
+Known-characteristic coefficient reduction is a separate scalar concern. Stock
+ring normalization does not generally reduce coefficients modulo the
+characteristic. The Hex replacement requires proved reduction using
+`ReduceModChar` or its lemmas to retain the old residue tactic's capabilities;
+this is an integration obligation, not a measured gain of the relation prototype.
+
 ## Selective quotient relations
 
 Keep compact quotient atoms and index their multiplicative signatures. When
@@ -111,7 +124,8 @@ This is a later PR, separate from the compact congruence improvement.
 ## Combined recurrence equations and non-candidates
 
 Combining the zero/successor unfolding equations slightly reduces proof structure.
-A controlled ordinary comparison gives 1.208s versus 1.176s at 10×10; the small
+A controlled ordinary comparison changes from 1.208s without the combined
+equations to 1.176s with them at 10×10; the small
 margin does not establish a robust extra speedup. Ensure every new branch reaches
 the shared cache insertion: an experimental early return bypassed it and caused
 a large construction-time regression. A smaller shared proof is insufficient

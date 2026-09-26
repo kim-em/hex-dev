@@ -360,8 +360,13 @@ must also use `@[no_fallback]` for their own errors and
 the target and, for determinant equations, tries `simp only [Hex.norm_det]`
 before reporting `det: not applicable: …` with the reason. This can normalize
 a closed numeric determinant with an open target value using a Hex certificate,
-leaving a residual value equality. Symbolic inputs and unsupported carriers
-require a Hex extension or an explicit user invocation of another tactic.
+leaving a residual value equality. This simp-only diagnostic behavior is for the
+numeric-only import. With the
+symbolic companion imported, equality goals with numeric matrices and symbolic
+right-hand sides obtain the numeric certificate and use the companion's scalar
+comparison, closing or reporting a decline instead of leaving a residual goal.
+Symbolic matrices and unsupported carriers require a Hex extension or an explicit
+user invocation of another tactic.
 
 An entry or closed value that cannot be evaluated is still declined with
 the reason; the numeric handler retains the same Hex certificate normalization for these
@@ -476,9 +481,26 @@ The public record remains `Certified Matrix.det A` with `value` and `proof`.
 An expected determinant answer is never required for the result forms. Preserve
 integer defaulting for unannotated numeric literals, and respect explicit
 carrier annotations and expected record types. An imported symbolic extension
-must classify closed numeric inputs first and delegate them before symbolic
-work. Neither input-dependent matrix shape nor a failed symbolic comparison
-selects the numeric backend.
+classifies the matrix first: closed numeric
+matrices always use numeric certificate computation. Whole equality-tactic
+delegation also requires that the numeric closing handler accept the supplied
+target; otherwise the companion compares the numeric certified value against
+the symbolic target. Result forms delegate before symbolic work. Neither matrix
+shape nor a failed scalar comparison selects another determinant algorithm.
+
+Use Lean's public heartbeat units for `maxHeartbeats` (1,000 internal heartbeats
+per unit). The symbolic ceiling cannot enlarge the ambient remaining allowance;
+zero configuration limits reject explicitly. The fields have no effect on
+numeric certificates, including when non-default, and do not produce a warning.
+See the companion contract for the distinction between recoverable work-budget
+declines and propagated runtime resource exceptions.
+
+The numeric owner exposes `compute (cfg : Config) (A : Expr) : MetaM (Outcome Result)`
+and a `certified` adapter, with `Result.value` and `Result.proof`. Provide one
+symbolic extension hook; keep the default numeric implementation available alone.
+The argument-taking tactic uses `colGt term:max` before `with`, and has its own
+named syntax kind and final diagnostic handler. Use `HexMatrix.certificate` for
+route and budget traces.
 
 ## Tests
 

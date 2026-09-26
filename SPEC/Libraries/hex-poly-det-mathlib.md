@@ -53,8 +53,33 @@ explicit annotations and expected record types must not be overridden.
 Bare `det` is a closing tactic. If comparison declines, restore the original
 goal and metavariable state. It does not leave an unexplained residual equality.
 The result-introducing form does not solve or otherwise change the ambient goal.
-A simproc returns no rewrite on a capability/budget decline, with a trace reason;
-malformed proofs and internal errors are failures and propagate.
+A simproc returns no rewrite on a recoverable capability/work-budget decline,
+with a trace reason; malformed proofs and internal errors are failures and
+propagate.
+
+## Programmatic interface and syntax ownership
+
+In `HexMatrixMathlib.Det`, expose `compute (cfg : Config) (A : Expr) :
+MetaM (Outcome Result)`, where the new `Result` contains `value : Expr` and
+`proof : Expr` proving `Matrix.det A = value`. Expose
+`certified (A : Expr) (cfg : Config := {}) : MetaM (Outcome Expr)`
+as the record adapter, preserving existing calls with just `A`. The numeric
+internal `Proof`, whose additional fields include the checker and row list,
+remains separate; the common `Result` has only `value` and `proof`. Keep internal
+atom-indexed certificates private to the evaluation session. These expression-level APIs are Meta APIs,
+not new trusted operations. The numeric owner provides the dispatcher and numeric
+implementation; the companion registers the symbolic implementation through one
+extension hook. There is one programmatic operation, not two competing functions
+selected by import order.
+
+Declare the argument-taking tactic as `&"det" optConfig colGt term:max
+" with " ident ident : tactic`, on its own named syntax kind in the existing
+syntax owner. This preserves the bare tactic and avoids consuming the next
+indented tactic as a matrix argument. Register a final diagnostic for this kind
+as for the equality form. Trace routes, limits and declines through the existing
+`HexMatrix.certificate` class. Document every `Config` field's units and route;
+non-default symbolic limits are accepted without a warning on numeric input and
+have no effect there, while `packing` has no effect on symbolic input.
 
 ## Inputs and mathematical scope
 
@@ -62,8 +87,12 @@ Accept square `Matrix (Fin n) (Fin n) R` literals with a known dimension and a
 `CommRing R` instance. Reuse the shared literal recognizer for `!![...]`,
 `Matrix.of ![...]`, `fun i j => ...`, and `Matrix.ofArray xs h`, including
 its bounded unfolding through definitions. Support local variables and
-parameters, empty and singleton matrices, and the recognizer's existing
-identification proofs. Unresolved matrix/type metavariables are not guessed.
+parameters, empty and singleton matrices. Symbolic identification must not use
+`decide (entriesEq ...)` or require `DecidableEq R`: identify the literal with
+its row-major entries using the `List.ofFn` definitional transport used by
+Mathlib's determinant normalizer, or finite extensionality composed with proved
+entry equalities when unfolding/simplification requires it. This applies to all
+four input syntaxes. Unresolved matrix/type metavariables are not guessed.
 
 Scalar arithmetic uses the supported Mathlib ring normalization operations:
 constants, addition, subtraction, negation, multiplication and natural powers.
@@ -73,9 +102,22 @@ from the matrix. Preserve the ring normalizer's supported natural-exponent
 identities rather than imposing the old fixed-exponent reflection grammar.
 Unrecognized operation instances are not replaced by familiar ones syntactically.
 
-Generic commutative rings, rational coefficients and positive characteristic
-are supported through proved scalar operations. Field-specific transformations
-require the corresponding instances. Symbolic division is total, including zero
+Generic commutative rings and rational coefficients use proved scalar operations.
+Characteristic-specific coefficient identities must also be preserved. When a
+positive literal characteristic is recognized for the carrier (including `ZMod`
+and polynomial carriers) or supplied by a local `CharP R p` instance with `p`
+reducing to a positive numeral, use proved coefficient reduction modulo that
+characteristic. Reuse Mathlib's
+`ReduceModChar` machinery or its lemmas as a scalar operation, without restoring
+a residue determinant strategy. Reduce coefficients when finalizing a public
+value and on both sides of equality comparison, then combine like terms with
+the scalar normalizer. A known characteristic zero performs no modular pass;
+an unknown characteristic retains characteristic-independent normalization.
+For example, retain `a*b = a*b + 3*a*b` over `ZMod 3` and a determinant whose
+integer normal form is `-2*x^3` but whose value is zero over `ZMod 2`. Test
+composite characteristic and an explicit generic `CharP R p` instance too.
+Do not claim completeness for arbitrary finite-ring identities. Field-specific
+transformations require the corresponding instances. Symbolic division is total, including zero
 denominators: never cancel a factor with its inverse without a proof. No domain,
 characteristic-zero or nonzero-pivot assumption is imposed on generic matrices.
 
@@ -99,6 +141,13 @@ existing Mathlib lemmas when their instances fit; keep any necessary adapters
 small and test their elaboration and kernel costs. Combined recurrence equations
 may reduce repeated unfolding without changing the algorithm or bypassing cache
 insertion. Do not copy an entire arithmetic library to change these constructors.
+The pinned scalar evaluator has no division-policy hook. A narrowly scoped,
+licensed adaptation of its traversal is permitted for coefficient/quotient
+policy while reusing Mathlib's arithmetic and proof operations. Preserve author
+headers, record the upstream revision, and maintain one policy-driven adapter,
+not separate historical evaluator copies. On every Mathlib pin change, run the
+scalar, characteristic, rollback and determinant regression tests. An upstream
+hook is desirable but not a prerequisite for the Hex implementation.
 
 The determinant computation is independent of any supplied target. Its internal
 certificate and scalar context can then be consumed in either of two ways:
@@ -114,8 +163,12 @@ implementations. Do not rerun the determinant during target comparison. Apply
 matrix identification and the universal correctness theorem by bounded proof
 assembly; avoid Meta unification that repeatedly unfolds large literal matrices.
 All input-dependent checking, including auxiliary declarations, belongs to the
-complete-call cost. Direct algebraic proofs need not be forced through a separate
-closed certificate checker or redundantly prechecked in Meta.
+complete-call cost. Inline the direct algebraic proof into its surrounding
+declaration; do not seal every intermediate result in an auxiliary theorem or redundantly precheck
+it in Meta. The kernel validates the complete declaration. Consequently an
+invalid generated proof can be reported at declaration checking rather than
+inside the tactic invocation; there is no promise of synchronous tactic-time
+kernel rejection for this path. Such rejection remains a hard failure.
 
 A public value is the evaluator's normal form, not necessarily a factorization,
 a common-denominator rational function, or a fully expanded polynomial. Numeric
@@ -166,21 +219,41 @@ traces make that distinction visible. Add `maxHeartbeats := 2000000` and
 `maxRelationWork := 1000000`. Relation work counts distinct indexed sum tails;
 it does not claim to bound all scalar arithmetic. The heartbeat ceiling covers
 the symbolic evaluation session, including result cleanup or target comparison.
-Never increase the caller's remaining heartbeat allowance. Zero limits are
-explicit rejection, not a way to disable bounds. Use normal trace classes rather
-than global options for diagnostics; term/simproc calls use the same defaults.
+Use Lean's public heartbeat units (one unit is 1,000 internal heartbeats).
+This is an additional ceiling, never an increase to the caller's remaining
+allowance: with Lean's smaller ambient default, the ambient limit binds first.
+Zero configuration limits are rejected intentionally; unlike the ambient Lean
+option, zero does not disable these local safeguards.
 
-Recognize and delegate closed numeric inputs before symbolic work. Preserve
+Recoverable work-budget exhaustion is a structured decline. Runtime heartbeat
+or recursion-depth exceptions, whether ambient or from the local ceiling,
+propagate unchanged; neither the simproc nor speculative normalization swallows
+them as algebraic refusal or turns them into no-progress success. Trace the
+selected ceiling before entering the session so a runtime message has context.
+Goal restoration applies to ordinary comparison/capability declines; resource
+exceptions retain Lean's normal transactional behavior. Use normal trace classes
+rather than global options for diagnostics; term/simproc calls use the same defaults.
+
+Select numeric determinant computation whenever the matrix is a recognized
+closed integer/rational input. For result forms, delegate to that evaluator
+before symbolic work. For equality goals, whole-tactic delegation is allowed
+only when the numeric closing handler accepts the complete goal. Otherwise the
+companion obtains the numeric certified value and uses the shared scalar target
+comparison; it does not compute that numeric determinant with Bird or leave a
+simp-only residual goal. In particular, `(!![1,2;3,4] : Matrix _ _ Int).det =
+x - x - 2` must close with the companion imported. Preserve
 `notApplicable`, `declined`, `success` and internal failure distinctions:
 
 - An unrecognized matrix, operation, unresolved input or missing commutative-ring
   structure is not applicable and may delegate to another Hex handler.
-- An accepted input whose normalization or budget cannot finish is a decline.
+- An accepted input whose scalar comparison cannot close or whose recoverable
+  work budget is exhausted is a decline.
   Name the stage, exhausted budget and count/limit when available; do not try a
   different determinant algorithm afterward.
 - Success returns a value and an equality proof, or closes the supplied equality.
-- An invalid emitted proof or invariant violation is a failure, never a decline
-  hidden by another handler. Preserve `no_fallback` behavior for tactic handlers.
+- An invariant violation detected in Meta, or an emitted proof rejected when
+  its declaration is checked, is a failure, never a decline hidden by another
+  handler. Preserve `no_fallback` behavior for tactic handlers.
 
 Trace the selected numeric-certificate or symbolic-Bird route and any decline.
 Diagnostic relation counters include target alignment and are emitted after
@@ -206,16 +279,44 @@ implementation. Transfer mathematical regression cases to the general evaluator.
 
 Retain native `polyDet`, polynomial witness/check APIs and their required
 soundness theory, the numeric certificate backend, and shared Kronecker product
-checks. Remove determinant-specific packed/tree/residue wrappers with no
-independent consumers; do not delete reusable algebra or a shared checker just
-because one tactic stops using it. Separate retained computational soundness
-imports from the symbolic tactic's imports. Update umbrellas, library dependency
-registrations, probes and documentation to match the resulting source.
+checks. Remove determinant-specific packed/tree wrappers and residue frontend
+transport with no independent consumers; preserve the plain `opsMod` checker
+soundness theorem in `Residue.lean` separately from that transport; do not delete
+reusable algebra or a shared checker just because one tactic stops using it.
+Separate retained computational soundness imports from the symbolic tactic's
+imports. The full companion retains `HexReflect`/`HexReflectMathlib` while its
+plain integer/residue soundness imports require them; that is not a symbolic
+frontend dependency. Required registry dependencies after cleanup are
+`HexPolyDet: [HexBareiss, HexMvGcd, HexDeterminant, HexMatrix, HexBasic]` and
+`HexPolyDetMathlib: [HexPolyDet, HexBareissMathlib, HexReflect,
+HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib]`, with their transitive
+closure. Drop both determinant libraries' direct Kronecker dependencies.
+The symbolic tactic module imports the numeric owner, literal layer and Mathlib
+proof machinery, not the retained native soundness module. Update umbrellas,
+library dependency registrations, probes and documentation to match the resulting source.
 
 Production must not import `experiments/Determinant`. Retire superseded
 experimental proof backends from active builds once their tests are migrated.
 Preserve recorded source snapshots and revision-based reproduction of historical
 measurements. Native-value experiments are outside this symbolic replacement.
+
+### Cleanup inventory
+
+| Surface | Disposition |
+|---|---|
+| `HexPolyDetMathlib/Tactic.lean`, `Frontend.lean` | Replace with the shared evaluation/session interface and public handlers; remove legacy dispatch and witness assembly. |
+| `Small.lean`, `Structural.lean`, `RowFactor.lean`, `RatFactor.lean`, `Certificate.lean`, legacy `Normalize.lean` | Remove their determinant strategies; migrate mathematical regression cases. |
+| `Packed.lean`, `Tree.lean`, legacy `Scaling.lean` | Remove determinant-only encodings and transport; preserve independently used lemmas in their owning modules if any. |
+| `Sound.lean`, `Residue.lean` | Retain native producer/plain-check soundness, including `opsMod` soundness; remove frontend identification, target reconstruction and unused reflection transport separately. |
+| `HexPolyDet/Basic.lean` | Retain native values, witnesses, budgets, canonical conversion and plain checker operations. |
+| `HexPolyDet/Packed.lean`, `Select.lean`, `PackedTests.lean`; `bench/HexPolyDet/PackedBench.lean` | Remove obsolete determinant packed APIs/tests/driver and the `hex_poly_det_packed` Lake target. |
+| `scripts/bench/det_packed_*`, `det_residue_sweep.py`, `det_structural_sweep.py` | Retire route-specific runners, generated manifests and selection tests; keep historical reports and raw data. |
+| `det_symbolic_*`, `det_ring_solver_*`, `test_det_declines.py`, `det_bench_limits.py` and its tests | Consolidate into the general symbolic proof/result runner and diagnostics; preserve serial admission and timeout guards. |
+| `det_tactic_*` runners | Retain independent numeric certificate measurements and scope controls. |
+| `bench/HexPolyDetMathlib/ProofProbe`, including `RingSolver*` | Replace retired route-specific probes with the focused general evaluator corpus; preserve source snapshots of measured old probes in reports/revisions. |
+| `.github/workflows/ci.yml`, Lake targets and `libraries.yml` | Update the existing job's detector tests/probe invocations, library entries, umbrella imports and retired executable targets; add no jobs/workflows. |
+| `scripts/bench/proof_only_runtime_exemptions/issue-10236-*` | Retain provenance for the preserved generic Bareiss checker; update descriptions/references only where consumers changed, rather than deleting generic-certificate evidence. |
+| `DeterminantExperiment` and historical proof tactic variants | Remove superseded active proof targets/imports after tests migrate; keep native-value experiments and revision-based evidence reproduction. |
 
 ## Native polynomial witness soundness
 
