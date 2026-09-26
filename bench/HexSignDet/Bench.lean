@@ -69,7 +69,9 @@ setup_benchmark runSmallReduced s => s * (Nat.log2 s + 1)
     maxSecondsPerCall := 60
   }
 
--- Declared cost-model: Θ(27^s), dense cubic inverse-identity checking on the full 3^s square system.
+-- Declared cost-model: Θ(27^s) from cubic work on a full 3^s square system:
+-- dense Gauss-Jordan worst-case and inverse-identity replay. Actual zero
+-- eliminations can lower the measured cost; retain any model mismatch.
 setup_benchmark runSmallFull s => 27^s
   with prep := smallInput
   where {

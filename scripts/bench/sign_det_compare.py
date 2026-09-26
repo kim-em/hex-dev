@@ -122,12 +122,16 @@ def main():
     if status:
         raise RuntimeError("commit the measured sources before running the comparison")
     out = args.output.resolve()
+    if out.is_relative_to(ROOT):
+        raise ValueError("write measurement output outside the source worktree")
     out.mkdir(parents=True, exist_ok=False)
     exe = ROOT / ".lake/build/bin/hexsigndet_bench"
     cpu, lease = acquire_cpu()
     os.sched_setaffinity(0, {cpu})
     sources = source_hashes()
-    for name in ("scripts/bench/sign_det_compare.py", "scripts/bench/test_sign_det_compare.py"):
+    # The report is the measurement result; the profile runner is source.
+    for name in ("scripts/bench/sign_det_compare.py", "scripts/bench/test_sign_det_compare.py",
+                 "scripts/profile/sign_det.py"):
         sources[name] = hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
     metadata = {"revision": subprocess.check_output(["git", "rev-parse", "HEAD"],
                     cwd=ROOT, text=True).strip(), "status": status, "source_sha256": sources,
@@ -137,13 +141,13 @@ def main():
                 "harness_revision": subprocess.check_output(["git", "rev-parse", "HEAD"],
                     cwd=ROOT / ".lake/packages/lean-bench", text=True).strip(),
                 "runs": [], "state": "running"}
-    archive_sources(out, metadata)
-
     def save():
         (out / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
 
     save()
     try:
+        archive_sources(out, metadata)
+        save()
         for label, command in (
                 ("inventory", [str(exe), "inspect-small"]),
                 ("paired", [str(exe), "paired-small", str(out / "samples.jsonl")])):
@@ -168,9 +172,10 @@ def main():
                 metadata["revision_after"] != metadata["revision"]):
             raise ValueError("measured source or executable changed during the comparison")
         metadata["state"] = "complete"
-        return any(r["exit_code"] for r in metadata["runs"]) or any(
-            r["verdict"] == "inconclusive" for r in summary["observations"].values())
-    except (OSError, ValueError, KeyError, TypeError, IndexError) as error:
+        return int(any(r["exit_code"] for r in metadata["runs"]) or any(
+            r["verdict"] == "inconclusive" for r in summary["observations"].values()))
+    except (OSError, ValueError, KeyError, TypeError, IndexError,
+            subprocess.CalledProcessError) as error:
         metadata.update(state="failed", error=str(error))
         return 1
     finally:

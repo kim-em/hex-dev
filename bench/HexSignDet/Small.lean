@@ -29,17 +29,24 @@ def smallInput (s : Nat) : Input :=
       else ⟨p, qs, none, none, none⟩
     | _, _ => ⟨p, qs, none, none, none⟩
 
+/-- Construct and replay a reduced-support table. The `false` flag disables
+query-polynomial reduction, not BKR support reduction. -/
 @[noinline] def runSmallReduced (i : Input) : Option UInt64 := do
   let domain ← i.domain
   match buildPrepared (10377 : Nat) domain i.queries false with
   | .error _ => none
   | .ok tree => some (hash (entries tree.val.node.system))
 
+/-- Construct and replay the complete ternary table over the same prepared
+domain, with query-polynomial reduction likewise disabled. -/
 @[noinline] def runSmallFull (i : Input) : Option UInt64 := do
   let domain ← i.domain
   match referencePrepared (10377 : Nat) domain i.queries with
   | .error _ => none
-  | .ok node => some (hash (entries node.system))
+  | .ok node =>
+    if node.check Sturm.orderSign 10377 i.head .negInf .posInf i.queries then
+      some (hash (entries node.system))
+    else none
 
 private def bits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
 
