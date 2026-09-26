@@ -85,6 +85,14 @@ theorem literal_support (s : List Int) :
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.root_derivatives
 
+/-- info: 'Hex.SignDet.Completion.root_eq_source' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Completion.root_eq_source
+
+/-- info: 'Hex.SignDet.Completion.signs_at_source' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Completion.signs_at_source
+
 /-- info: 'Hex.SignDet.SelectedSigns.value_at_root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.SelectedSigns.value_at_root
