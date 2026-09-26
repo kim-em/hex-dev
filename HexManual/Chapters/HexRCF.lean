@@ -590,6 +590,11 @@ example : ∀ x : ℝ,
 example : ∃ x : ℝ, x ^ 2 = selectedCubic.toReal := by
   rcf
 
+example : ∃ x : ℝ,
+    x ^ 2 = selectedCubic.toReal ∧
+    1 < x ∧ x < selectedCubic.toReal := by
+  rcf
+
 example : True := by
   fail_if_success
     have : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 < 0 := by
@@ -603,11 +608,10 @@ example : True := by
   trivial
 ```
 
-The interval statement has no rational witness supplied by the user. `rcf`
-checks the signs on its root cells and proves existence. In the final true
-example, the witness is a square root of a selected cubic algebraic number;
-the fixed-field certificate path isolates a root of a polynomial over that
-coefficient field. The two
+The existential statements have no witness supplied by the user. For the
+selected cubic coefficient, `rcf` isolates a root of `x² − selectedCubic`
+over its fixed real number field and checks both inequalities at that same
+root in the interval example. The two
 `fail_if_success` examples show that a false algebraic statement produces no
 proof and that nonpolynomial syntax in the quantified variable is rejected.
 The adapter's source reifier preserves explicit coefficient aliases and
