@@ -1,0 +1,51 @@
+Hex.SignDetBench.runSolvers    expected complexity: s * (Nat.log2 s + 1)    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=95ef4e4-dirty, 2026-09-22T13:17:31Z, host=chungus2
+  param  per-call   repeats  C
+     64   1.644 ms  ×2^6     C=3670.717 [trial 1/6] †
+    128   3.415 ms  ×2^5     C=3366.382 [trial 1/6]
+    256   7.130 ms  ×2^3     C=3107.140 [trial 1/6]
+    512  14.933 ms  ×2^2     C=2922.246 [trial 1/6]
+  1_024  32.384 ms  ×2^1     C=2906.524 [trial 1/6]
+  2_048  65.924 ms  ×2^0     C=2643.705 [trial 1/6]
+     64   1.632 ms  ×2^6     C=3670.717 [trial 2/6] †
+    128   3.443 ms  ×2^4     C=3366.382 [trial 2/6]
+    256   7.175 ms  ×2^3     C=3107.140 [trial 2/6]
+    512  14.985 ms  ×2^2     C=2922.246 [trial 2/6]
+  1_024  33.050 ms  ×2^1     C=2906.524 [trial 2/6]
+  2_048  65.306 ms  ×2^0     C=2643.705 [trial 2/6]
+     64   1.634 ms  ×2^6     C=3670.717 [trial 3/6] †
+    128   3.452 ms  ×2^4     C=3366.382 [trial 3/6]
+    256   7.164 ms  ×2^3     C=3107.140 [trial 3/6]
+    512  14.974 ms  ×2^2     C=2922.246 [trial 3/6]
+  1_024  33.031 ms  ×2^1     C=2906.524 [trial 3/6]
+  2_048  64.474 ms  ×2^0     C=2643.705 [trial 3/6]
+     64   1.647 ms  ×2^6     C=3670.717 [trial 4/6] †
+    128   3.452 ms  ×2^4     C=3366.382 [trial 4/6]
+    256   7.145 ms  ×2^3     C=3107.140 [trial 4/6]
+    512  14.928 ms  ×2^2     C=2922.246 [trial 4/6]
+  1_024  32.447 ms  ×2^1     C=2906.524 [trial 4/6]
+  2_048  64.500 ms  ×2^0     C=2643.705 [trial 4/6]
+     64   1.645 ms  ×2^6     C=3670.717 [trial 5/6] †
+    128   3.454 ms  ×2^4     C=3366.382 [trial 5/6]
+    256   7.154 ms  ×2^3     C=3107.140 [trial 5/6]
+    512  14.950 ms  ×2^2     C=2922.246 [trial 5/6]
+  1_024  33.883 ms  ×2^1     C=2906.524 [trial 5/6]
+  2_048  65.129 ms  ×2^0     C=2643.705 [trial 5/6]
+     64   1.649 ms  ×2^6     C=3670.717 [trial 6/6] †
+    128   3.388 ms  ×2^5     C=3366.382 [trial 6/6]
+    256   7.176 ms  ×2^3     C=3107.140 [trial 6/6]
+    512  15.045 ms  ×2^2     C=2922.246 [trial 6/6]
+  1_024  32.278 ms  ×2^1     C=2906.524 [trial 6/6]
+  2_048  64.814 ms  ×2^0     C=2643.705 [trial 6/6]
+  verdict: consistent with declared complexity (cMin=2643.705, cMax=3366.382, β=-0.079)
+  per-spawn floor (harness self-measurement): 21.609 ms
+  peak RSS: 70_244 kB..119_576 kB (across 36 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median     min        max        spread
+       64  6/6      1.644 ms   1.632 ms   1.649 ms  1.026%
+      128  6/6      3.447 ms   3.388 ms   3.454 ms  1.941%
+      256  6/6      7.159 ms   7.130 ms   7.176 ms  0.648%
+      512  6/6     14.962 ms  14.928 ms  15.045 ms  0.780%
+    1_024  6/6     32.739 ms  32.278 ms  33.883 ms  4.903%
+    2_048  6/6     64.972 ms  64.474 ms  65.924 ms  2.231%
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10377/reports/data/sign-det-phases/95ef4e489/runSolvers.json

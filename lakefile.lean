@@ -1633,6 +1633,14 @@ lean_exe hexgramschmidt_bench where
   srcDir := "bench"
   root := `HexGramSchmidt.Bench
 
+lean_exe hexsigndet_bench where
+  srcDir := "bench"
+  root := `HexSignDet.Bench
+
+lean_lib HexSignDetBenchSupport where
+  srcDir := "bench"
+  globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases]
+
 lean_exe hexsturm_bench where
   srcDir := "bench"
   root := `HexSturm.Bench
