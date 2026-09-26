@@ -57,6 +57,10 @@ theorem literal_support (s : List Int) :
 #guard_msgs in
 #print axioms Hex.SignDet.buildPrepared_roots
 
+/-- info: 'Hex.SignDet.Descriptor.build_noError' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.build_noError
+
 /-- info: 'Hex.SignDet.Descriptor.existsUnique_root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.existsUnique_root

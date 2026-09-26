@@ -163,4 +163,24 @@ def Descriptor.build (sign : E → Int) (context : Ctx) (raw : RawDescriptor E C
       else .ok (.error .malformed)
   else .ok (.error .context)
 
+/-- Producer success rules out internal errors in descriptor validation. -/
+theorem Descriptor.build_ok_ofPrepared (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx)
+    (hprepared : ∀ domain, Sturm.prepare sign raw.head raw.lower raw.upper = some domain →
+      ∃ t, buildPrepared context domain raw.queries = .ok t) :
+    ∃ result, Descriptor.build sign context raw = .ok result := by
+  unfold Descriptor.build
+  split
+  · split
+    · exact ⟨_, rfl⟩
+    · rename_i domain hd
+      split
+      · obtain ⟨t, ht⟩ := hprepared domain hd
+        simp only [ht]
+        split
+        · exact ⟨_, rfl⟩
+        · split <;> exact ⟨_, rfl⟩
+      · exact ⟨_, rfl⟩
+  · exact ⟨_, rfl⟩
+
 end Hex.SignDet

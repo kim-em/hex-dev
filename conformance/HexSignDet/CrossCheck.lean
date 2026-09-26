@@ -321,6 +321,10 @@ theorem domain_kernel :
 #guard_msgs in
 #print axioms Descriptor.ofReplay_none
 
+/-- info: 'Hex.SignDet.Descriptor.build_ok_ofPrepared' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.build_ok_ofPrepared
+
 /-- info: 'Hex.SignDet.Dag.check_replay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Dag.check_replay
