@@ -47,7 +47,20 @@ private meta def selectedArgs? (source : Reify.Source) :
   if source.coefficients.size != 1 then return none
   let coefficient := source.coefficients[0]!
   unless coefficient.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return none
-  let selected ← withTransparency .reducible (whnf coefficient.appArg!)
+  let argument := coefficient.appArg!
+  -- Unfold one visible definition, preserving the selected constructor at
+  -- the head. Imported opaque definitions have no accessible body here.
+  let direct ←
+    if argument.isAppOfArity ``Selected.real 10 ||
+        argument.isAppOfArity ``Selected.field 11 then
+      pure argument
+    else
+      pure ((← withTransparency .default (unfoldDefinition? argument)).getD argument)
+  let selected ←
+    if direct.isAppOfArity ``Selected.real 10 ||
+        direct.isAppOfArity ``Selected.field 11 then
+      pure direct
+    else withTransparency .reducible (whnf argument)
   if selected.isAppOfArity ``Selected.real 10 then
     return some (selected.getAppArgs, none)
   if selected.isAppOfArity ``Selected.field 11 then
@@ -215,6 +228,7 @@ private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
   let .ok source ← Reify.prepare target | return .declined
   if let some (args, fieldValue?) ← selectedArgs? source then
     return .proved (← proveSelected source args fieldValue?)
+  -- Named cases also cover definitions whose bodies are hidden by an import.
   if source.coefficients.size != 1 then return .declined
   let isSquare ← same source.coefficients[0]! q(Real.sqrt 2)
   let isCube ← same source.coefficients[0]! q((2 : ℝ) ^ (1 / 3 : ℝ))

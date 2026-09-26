@@ -485,9 +485,14 @@ arithmetic, and uses {name}`Hex.RCF.RealCoefficients.Selected.field` to retain
 the same root when converting back to a real algebraic number. These examples
 set `maxRecDepth` to `2048` and `maxHeartbeats` to `1000000` so Lean can
 elaborate their literal certificates; users may need the same options for
-similar goals. On the shared host, a fresh build of the complete example
-module took 142.698 seconds under heavy load. That is a module timing, not a
-per-call timing.
+similar goals.
+
+The same checked construction works for a different cubic, `X³ − X − 1`.
+The square below selects its positive real root. The
+{name}`Hex.RCF.RealCoefficients.Selected.real_rootNear` theorem identifies that
+root with the ordinary {name}`Hex.ZPoly.rootNear` value at the real projection
+of the square's centre. The tactic can use the selected root when it is named
+by a `def` in the same file.
 
 ```lean
 open Hex.RCF.RealCoefficients
@@ -524,6 +529,42 @@ private abbrev computedCoefficient :
     (by decide) (by decide) (by rfl) (by decide) (by decide)
     CubeTwo.checked CubeTwo.squarefree (by decide)
     computedCoordinate
+
+private abbrev plasticPolynomial : Hex.ZPoly :=
+  Hex.DensePoly.ofList [-1, -1, 0, 1]
+
+private abbrev plasticSquare : Hex.DyadicSquare :=
+  ⟨Dyadic.ofInt 5426 >>> (12 : Int), 0, 12⟩
+
+private theorem plasticChecked :
+    plasticPolynomial.CheckedIrreducible :=
+  ⟨by decide +kernel, by decide⟩
+
+private theorem plasticSquarefree :
+    Hex.HasOnlySimpleRoots plasticPolynomial := by
+  have hne : plasticPolynomial ≠ 0 := by decide
+  letI : plasticPolynomial.CheckedIrreducible :=
+    plasticChecked
+  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable
+    plasticPolynomial hne).mpr
+    (Hex.ZPoly.CheckedIrreducible.separable
+      plasticPolynomial)
+
+private def plasticRoot : Hex.RealAlgebraicNumber :=
+  Selected.real plasticPolynomial plasticSquare
+    (by decide) (by decide) (by rfl) (by decide)
+    (by decide) plasticChecked plasticSquarefree (by decide)
+
+example :
+    plasticPolynomial.rootNear plasticSquare.re.toRat 0 =
+    plasticRoot.toAlgebraic := by
+  exact Selected.real_rootNear
+    plasticPolynomial plasticSquare
+    (by decide) (by decide) (by rfl) (by decide) (by decide)
+    plasticChecked plasticSquarefree (by decide)
+
+example : ∀ x : ℝ, x + plasticRoot.toReal > x := by
+  rcf
 
 example : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 > 0 := by
   rcf
@@ -563,12 +604,11 @@ checks the signs on its root cells and proves existence. The two
 `fail_if_success` examples show that a false algebraic statement produces no
 proof and that nonpolynomial syntax in the quantified variable is rejected.
 The adapter's source reifier preserves explicit coefficient aliases and
-original divisor obligations before normalization. These examples use
-`abbrev` aliases, which Lean unfolds during recognition. The general
-`Selected.real` and `Selected.field` path does not unfold an opaque `def`
-wrapper, although the four named values may still be recognized through
-definitional equality. For supported sentences, a divisor must be proved
-nonzero before certificate construction.
+original divisor obligations before normalization. Closed values built with
+`Selected.real` may be named using `def` in the same file. Across modules, use
+`abbrev` or `@[expose] def` so the defining expression remains visible. For
+supported sentences, a divisor must be proved nonzero before certificate
+construction.
 
 The algebraic examples use the generic accepted-query soundness theorem
 `HexRealRootsMathlib.Tarski.check_rootSum`. Its proof is currently admitted in
