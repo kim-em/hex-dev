@@ -112,7 +112,7 @@ theorem SelectedSigns.values_at_root {context : Ctx}
   obtain ⟨hc, _⟩ := s.check_eq
   have ho := rootObservations_valid f hz d.raw.head (d.raw.queries ++ qs)
     d.raw.lower d.raw.upper
-  have hm := s.evidence.check_interprets f hz h1 ha hs hm hnat sign hsign
+  have hinterprets := s.evidence.check_interprets f hz h1 ha hs hm hnat sign hsign
     context d.raw.head d.raw.lower d.raw.upper (d.raw.queries ++ qs) hc
   have hobs : signsAt f hz (d.raw.queries ++ qs) x ∈
       rootObservations f hz d.raw.head (d.raw.queries ++ qs)
@@ -122,7 +122,7 @@ theorem SelectedSigns.values_at_root {context : Ctx}
   have hprefix : (signsAt f hz (d.raw.queries ++ qs) x).take d.raw.queries.length =
       d.raw.signs := by
     simpa [signsAt, x] using hsx
-  have hrow := s.signs_eq ho hm hobs hprefix
+  have hrow := s.signs_eq ho hinterprets hobs hprefix
   have hlength : d.raw.signs.length = d.raw.queries.length := by
     simpa [signsAt] using congrArg List.length hsx.symm
   have htail := congrArg (List.drop d.raw.queries.length) hrow
