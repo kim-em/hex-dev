@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexSignDet.Phases
+import HexSignDet.Small
+import HexSignDet.Paired
 import LeanBench
 import Lean.Data.Json
 
@@ -53,6 +55,33 @@ open Hex.SignDet
   match i.graph with
   | none => false
   | some d => d.check Sturm.orderSign 10377 i.head .negInf .posInf i.queries
+
+-- Declared cost-model: Θ(s log s), direct moments and bounded-size systems on the two-root family.
+setup_benchmark runSmallReduced s => s * (Nat.log2 s + 1)
+  with prep := smallInput
+  where {
+    paramSchedule := .custom #[1, 2, 3, 4, 5]
+    paramFloor := 1
+    paramCeiling := 5
+    outerTrials := 6
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 60
+  }
+
+-- Declared cost-model: Θ(27^s), dense cubic inverse-identity checking on the full 3^s square system.
+setup_benchmark runSmallFull s => 27^s
+  with prep := smallInput
+  where {
+    paramSchedule := .custom #[1, 2, 3, 4, 5]
+    paramFloor := 1
+    paramCeiling := 5
+    outerTrials := 6
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 60
+  }
+
 
 -- Declared cost-model: Θ(s log s), bounded-size systems and Θ(k) slot work at every balanced node.
 setup_benchmark runProduce s => s * (Nat.log2 s + 1)
@@ -159,4 +188,8 @@ end Hex.SignDetBench
 def main (args : List String) : IO UInt32 :=
   if args == ["inspect"] then Hex.SignDetBench.inspect
   else if args == ["inspect-phases"] then Hex.SignDetBench.inspectPhases
+  else if args == ["inspect-small"] then Hex.SignDetBench.inspectSmall
+  else if args == ["inspect-full"] then Hex.SignDetBench.inspectFull
+  else if let ["paired-small", path] := args then
+    Hex.SignDetBench.paired ``Hex.SignDetBench.runSmallReduced ``Hex.SignDetBench.runSmallFull path
   else LeanBench.Cli.dispatch args
