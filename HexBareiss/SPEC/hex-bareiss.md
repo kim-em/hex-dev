@@ -425,14 +425,12 @@ this layer states no equation between the certificate and a determinant.
 
 ## Polynomial determinant certificate
 
-The symbolic `det` arm specified in
-[hex-poly-det-mathlib](../../SPEC/Libraries/hex-poly-det-mathlib.md)
-uses the same certificate as [§The kernel certificate](#the-kernel-certificate),
-generalised over a coefficient type and instantiated by
-[hex-poly-det](../../SPEC/Libraries/hex-poly-det.md) at
-`MvPoly k C Hex.Mono.grevlex`. This is a specified extension; `HexBareiss/Kernel.lean` currently provides the integer
-`DetWitness`, `detWitness` and list checkers. Canonical polynomial list
-arithmetic in hex-mv-poly is a prerequisite for the polynomial kernel route.
+The native polynomial witness API generalises
+[§The kernel certificate](#the-kernel-certificate) over coefficient operations.
+[hex-poly-det](../../SPEC/Libraries/hex-poly-det.md) instantiates it at
+`MvPoly k C Hex.Mono.grevlex` using canonical polynomial lists and exact quotient
+operations. This is separate from the symbolic determinant tactic, which uses
+proved Bird evaluation and does not require a polynomial witness.
 
 **Placement.** Keep the dependency boundary of
 [§Placement in the dependency graph](#placement-in-the-dependency-graph).
@@ -531,15 +529,13 @@ recursive on lists of `Nat`/`Int`, per
 [matrix-tactics §Kernel discipline](../../SPEC/matrix-tactics.md#kernel-discipline).
 In particular converting reference polynomials to lists is producer work;
 the kernel receives quoted lists and does not traverse `MvPoly` trees or
-monomial vectors. The companion identifies the quoted polynomial matrix
-with the denoted row list definitionally. Rationals use the companion's proved
-coefficient denominator-clearing pass to supply integer polynomial rows and
-positive scales; the kernel checks the resulting integer lists, including
-cross-multiplied target equality. No rational polynomial list arithmetic is
-assumed. As specified in the companion, positive characteristic
-requires the residue provider and its canonical list operations.
+monomial vectors. A kernel-facing consumer must prove interpretation of its
+quoted rows and coefficient operations. Integer and natural-residue encodings
+use the canonical list operations supplied by hex-mv-poly. Any rational scaling
+consumer must prove its scaling factors and equality separately; it is not a
+required symbolic tactic route.
 
-The proposed `checkDetPolyList_sound`, concluding `Hex.Matrix.det P = d`
+The theorem `checkDetPolyList_sound`, concluding `Hex.Matrix.det P = d`
 through denotation, triangular determinant lemmas and cancellation over the
 polynomial domain, lives exclusively in hex-poly-det-mathlib
 ([SPEC](../../SPEC/Libraries/hex-poly-det-mathlib.md)). The reference
