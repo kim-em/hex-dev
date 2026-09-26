@@ -32,6 +32,8 @@ private abbrev plasticSquare : Hex.DyadicSquare :=
 private theorem plasticChecked : plasticPolynomial.CheckedIrreducible :=
   ⟨by decide +kernel, by decide⟩
 
+private instance : plasticPolynomial.CheckedIrreducible := plasticChecked
+
 private theorem plasticSquarefree : Hex.HasOnlySimpleRoots plasticPolynomial := by
   have hne : plasticPolynomial ≠ 0 := by decide
   letI : plasticPolynomial.CheckedIrreducible := plasticChecked
@@ -525,6 +527,26 @@ private def acceptedIntervals (head : Hex.DensePoly Rat) (expected : Nat) : Bool
 #guard acceptedIntervals (Hex.DensePoly.ofCoeffs #[(0 : Rat), -1, 0, 1]) 3
 #guard (FieldIsolate.propose? Hex.Sturm.orderSign ratPoint
   (Hex.DensePoly.ofCoeffs #[(1 : Rat), -2, 1])).isNone
+
+private def plasticGenerator :
+    Hex.PolyQuot plasticPolynomial
+      (Hex.SimpleRoot.ofSquare plasticPolynomial plasticSquare
+        (by decide) (by decide)) :=
+  Hex.PolyQuot.ofSquare plasticPolynomial plasticSquare
+    (Hex.DensePoly.ofList [0, 1]) (by decide) (by decide)
+
+private def plasticHead : Hex.DensePoly (Hex.PolyQuot plasticPolynomial
+    (Hex.SimpleRoot.ofSquare plasticPolynomial plasticSquare
+      (by decide) (by decide))) :=
+  Hex.DensePoly.ofList [-plasticGenerator, 0, 1]
+
+-- Exercise the direct search over actual fixed-field coefficients, so a
+-- regression cannot be hidden by `isolateAt`'s canonical fallback.
+#guard (FieldIsolate.propose?
+  (FieldBuild.proposalSign
+    (Field.literalRep plasticPolynomial plasticSquare (by decide) (by decide))
+    (Field.literalRep_mk plasticPolynomial plasticSquare (by decide) (by decide)))
+  FieldDecision.point plasticHead).isSome
 
 end Hex.RCF.RealCoefficientsConformance
 
