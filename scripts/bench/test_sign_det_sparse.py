@@ -20,9 +20,12 @@ class ExportValidation(unittest.TestCase):
         self.result = {
             "function": "Hex.SignDetBench.runProduce", "kind": "parametric",
             "hashable": True, "budget_truncated": False,
+            "env": {"git_commit": "deadbeef", "git_dirty": False},
             "config": {"param_floor": 64, "param_ceiling": 2048, "outer_trials": 6,
                        "target_inner_nanos": 100000000, "max_seconds_per_call": 10,
                        "signal_floor_multiplier": 1, "cache_mode": "warm",
+                       "verdict_warmup_fraction": 0.2, "slope_tolerance": 0.15,
+                       "narrow_range_noise_floor": 1.5,
                        "param_schedule": {"kind": "custom", "params": self.params}},
             "points": [{"trial_index": t, "param": p, "status": "ok",
                         "part_of_verdict": True, "result_hash": "0x7b",
@@ -34,7 +37,7 @@ class ExportValidation(unittest.TestCase):
 
     def validate(self, result, name="runProduce"):
         self.path.write_text(json.dumps({"export_schema_version": 1, "results": [result]}))
-        return validate_export(self.path, name, self.expected)
+        return validate_export(self.path, name, self.expected, "deadbeef")
 
     def test_complete_and_inconclusive_are_retained(self):
         self.validate(self.result)
@@ -77,6 +80,19 @@ class ExportValidation(unittest.TestCase):
             self.validate(result)
         with self.assertRaises(ValueError):
             self.validate(dict(self.result, budget_truncated=True))
+        result = copy.deepcopy(self.result)
+        result["config"]["slope_tolerance"] = 0.30
+        with self.assertRaises(ValueError):
+            self.validate(result)
+
+    def test_binary_source_binding(self):
+        for changed in ({"git_commit": "other", "git_dirty": False},
+                        {"git_commit": "deadbeef", "git_dirty": True}):
+            with self.subTest(env=changed):
+                result = copy.deepcopy(self.result)
+                result["env"] = changed
+                with self.assertRaises(ValueError):
+                    self.validate(result)
 
     def test_component_hashes_are_separate(self):
         for name in ("runQueries", "runProducts", "runMatrices", "runSolvers", "runSigns"):

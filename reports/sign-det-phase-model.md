@@ -29,6 +29,9 @@ construction, and prepared queries include coefficient-sign work. Their
 times must not be summed as a decomposition of production. In particular,
 `runSolvers` is not advertised as pure matrix inversion time, and this
 rational sign family does not measure extension-level sign search.
+It constructs inverses on leaves only; parent `parentInverse` tensors are
+retained from fixture preparation and are not timed by a phase registration.
+The full production registration includes that work.
 
 The same runner retains all raw samples, validates the exact schedule and
 expected hashes, records the harness verdict without changing its model,
@@ -42,8 +45,12 @@ remain separate required coverage.
 ## Retained measurements
 
 [Raw samples and provenance](data/sign-det-phases/95ef4e489/metadata.json)
-record clean source `95ef4e489`, the same pinned LeanBench revision as the
+record source `95ef4e489`, the same pinned LeanBench revision as the
 end-to-end schedules, and the automatic CPU lease on shared host `chungus2`.
+As with the older whole-table exports, the output directory became untracked
+inside the source tree during measurement, so LeanBench recorded
+`git_dirty: true` despite the runner's initial empty status and diff. The
+per-file SHA-256 map binds this local measurement revision.
 All 180 timed samples completed with the expected hashes and exact schedule.
 Every mode-1 verdict is **consistent with declared complexity**; no sample
 was discarded and no rerun was used.
@@ -55,6 +62,10 @@ was discarded and no rerun was used.
 | `runMatrices` | 0.453 ms | 27.190 ms | 0.033356 |
 | `runSolvers` | 1.644 ms | 64.972 ms | -0.079357 |
 | `runSigns` | 0.031 ms | 1.293 ms | 0.082709 |
+
+The `s=64` medians are descriptive. LeanBench drops that leading rung from
+each fitted verdict (`verdict_dropped_leading = 1`), so the slopes use
+`s=128,…,2048` with the pinned tolerance `|β| ≤ 0.15`.
 
 The fixture inventory contains 444–14,332 prepared-query calls and
 2,284–73,708 stored coefficient-sign operands across this range. Query work

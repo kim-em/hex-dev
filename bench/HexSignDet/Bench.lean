@@ -109,6 +109,10 @@ setup_benchmark runGraph s => s
 private def intBits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
 private def ratBits (q : Rat) : Nat := max (intBits q.num) (q.den.log2 + 1)
 
+private def treeEdges : Replay Rat Nat → Nat
+  | .leaf _ => 0
+  | .split _ left right => 2 + treeEdges left + treeEdges right
+
 /-- Untimed inventory validates the structural hypotheses used by the declared
 family model. It reports actual stored dimensions, exponents and slot counts. -/
 def inspect : IO UInt32 := do
@@ -122,22 +126,26 @@ def inspect : IO UInt32 := do
     let maxSupport := ns.foldl (fun k n => max k n.system.support.length) 0
     let maxExponentSum := ns.foldl (fun k n =>
       n.system.rows.toList.foldl (fun k es => max k es.sum) k) 0
+    let actualTreeEdges := treeEdges tree
+    let actualGraphEdges := graph.entries.foldl (fun k e =>
+      k + if e.children.isSome then 2 else 0) 0
     let storedCoefficientBits := ns.foldl (fun k n => n.moments.toList.foldl (fun k c =>
       c.remainders.chain.foldl (fun k p => p.toArray.foldl (fun k q => max k (ratBits q)) k) k) k) 0
     unless ns.length == 2 * s - 1 && queries == 7 * s - 4 && maxColumns == 4 &&
         maxSupport == 2 && maxExponentSum == 2 && storedCoefficientBits ≤ 4 &&
-        graph.entries.size == s.log2 + 1 && runTree i && runGraph i &&
+        graph.entries.size == s.log2 + 1 && actualTreeEdges == 2 * (s - 1) &&
+        actualGraphEdges == 2 * s.log2 && runTree i && runGraph i &&
         runProduce i == runDirect i do
       throw (IO.userError s!"sparse model invariant failed at {s}")
     IO.println <| (Lean.Json.mkObj [
       ("family", Lean.toJson "repeated-query-sparse-support"), ("queries", Lean.toJson s),
       ("headDegree", Lean.toJson i.head.natDegree), ("queryDegree", Lean.toJson (1 : Nat)),
-      ("treeNodes", Lean.toJson ns.length), ("treeEdges", Lean.toJson (ns.length - 1)),
+      ("treeNodes", Lean.toJson ns.length), ("treeEdges", Lean.toJson actualTreeEdges),
       ("querySlots", Lean.toJson queries), ("maxColumns", Lean.toJson maxColumns),
       ("maxSupport", Lean.toJson maxSupport), ("maxExponentSum", Lean.toJson maxExponentSum),
       ("remainderCoefficientBits", Lean.toJson storedCoefficientBits),
       ("graphNodes", Lean.toJson graph.entries.size),
-      ("graphEdges", Lean.toJson (2 * (graph.entries.size - 1))),
+      ("graphEdges", Lean.toJson actualGraphEdges),
       ("treeArityVolume", Lean.toJson (ns.foldl (fun k n => k + n.queries.length) 0)),
       ("graphArityVolume", Lean.toJson (graph.entries.foldl (fun k e => k + e.node.queries.length) 0)),
       ("inputHash", Lean.toJson (hash i).toNat),

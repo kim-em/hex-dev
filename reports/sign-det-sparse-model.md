@@ -65,12 +65,17 @@ measurement permits at most one unchanged rerun, retaining both runs.
 ## Retained measurements
 
 The [raw exports and provenance](data/sign-det-sparse/2327cca21/metadata.json)
-record source `2327cca216bf94d8b54d7f2ad561ab04d361366f`, a clean worktree,
+record source `2327cca216bf94d8b54d7f2ad561ab04d361366f`,
 LeanBench `8a37daf1074c3bdbd0da479b55538bad4a0022db`, and shared host
 `chungus2`, CPU 50. All 144 timed samples completed, matched the known
 output hashes, and passed the exact schedule check. No samples were removed
 and no rerun was used. The four mode-1 verdicts are **consistent with
 declared complexity**.
+The old exports report `git_dirty: true` because the output directory became
+untracked inside the source tree after the runner captured its initial empty
+`git status` and `source.patch`. The per-file SHA-256 map in `metadata.json`
+binds the source; the abbreviated source commit was a local measurement
+revision and is not an ancestor of this PR.
 
 | Registration | Declared model | Median at s=64 | Median at s=2048 | Normalized slope |
 | --- | --- | ---: | ---: | ---: |
@@ -78,6 +83,10 @@ declared complexity**.
 | `runDirect` | `s * (Nat.log2 s + 1)` | 14.290 ms | 547.933 ms | -0.092278 |
 | `runTree` | `s * (Nat.log2 s + 1)` | 7.580 ms | 291.376 ms | -0.093734 |
 | `runGraph` | `s` | 0.812 ms | 20.035 ms | -0.023883 |
+
+The medians at `s=64` describe that rung; LeanBench drops this leading rung
+from the fitted verdict (`verdict_dropped_leading = 1`). The slopes above are
+fitted over `s=128,…,2048` with the pinned tolerance `|β| ≤ 0.15`.
 
 The slight negative normalized slopes for tree operations are consistent
 with the independently identified linear query-kernel term remaining
@@ -105,6 +114,10 @@ changing the measured binary. The case is `runProduce`, `s=2048`, on shared
 host `chungus2`, automatically leased CPU 72, at 999 Hz with a five-second
 target. Only the benchmark thread's timed regions are included; fixture
 preparation and process startup are excluded. Raw profiles remain local.
+The filtering script came from
+[`lean-bench-samply`](https://github.com/kim-em/lean-bench-samply) at commit
+`9356baa2f5757ee40320a897bd284914d5bb9f5e`; the committed manifest hashes
+the locally retained raw files, which are not part of this repository.
 
 Leaf self-time is 37.36% allocation/free, 21.34% GMP, 28.02% Lean runtime,
 5.81% Lean own code, and 7.47% other. The classifier accounts for 92.53%;

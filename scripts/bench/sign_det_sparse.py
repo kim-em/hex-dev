@@ -44,7 +44,7 @@ def inventory_hashes(path, components=False):
     return expected
 
 
-def validate_export(path, name, expected):
+def validate_export(path, name, expected, revision=None):
     """Validate outputs and scheduling, while retaining the harness verdict.
 
     An inconclusive model is a valid observation needing investigation, not
@@ -54,6 +54,11 @@ def validate_export(path, name, expected):
     if data["export_schema_version"] != 1 or len(data["results"]) != 1:
         raise ValueError("unexpected export schema or result count")
     result = data["results"][0]
+    if revision is not None:
+        environment = result.get("env", {})
+        if (environment.get("git_commit") != revision or
+                environment.get("git_dirty") is not False):
+            raise ValueError("benchmark binary is not bound to a clean source revision")
     if (result["function"] != "Hex.SignDetBench." + name or
             result["kind"] != "parametric" or result["hashable"] is not True or
             result["budget_truncated"] is not False):
@@ -62,7 +67,8 @@ def validate_export(path, name, expected):
     required = {"param_floor": PARAMS[0], "param_ceiling": PARAMS[-1],
                 "outer_trials": TRIALS, "target_inner_nanos": 100000000,
                 "max_seconds_per_call": 10, "signal_floor_multiplier": 1,
-                "cache_mode": "warm",
+                "cache_mode": "warm", "verdict_warmup_fraction": 0.2,
+                "slope_tolerance": 0.15, "narrow_range_noise_floor": 1.5,
                 "param_schedule": {"kind": "custom", "params": PARAMS}}
     if any(config[key] != value for key, value in required.items()):
         raise ValueError("measurement configuration differs from the declared schedule")
@@ -155,7 +161,8 @@ def main():
                     if name == "inventory":
                         expected = inventory_hashes(out / "inventory.log", args.components)
                     else:
-                        observations[name] = validate_export(out / (name + ".json"), name, expected)
+                        observations[name] = validate_export(out / (name + ".json"), name,
+                                                             expected, metadata["revision"])
                         record["observation"] = observations[name]
                 except (OSError, ValueError, KeyError, TypeError) as error:
                     record["validation_error"] = str(error)

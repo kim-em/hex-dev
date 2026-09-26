@@ -62,6 +62,8 @@ def main():
         record['commit'] = run(['git', 'rev-parse', 'HEAD']).strip()
         record['dirty'] = bool(run(['git', 'status', '--porcelain']))
         record['profiler_commit'] = run(['git', '-C', args.profiler_root, 'rev-parse', 'HEAD']).strip()
+        record['profiler_remote'] = run(['git', '-C', args.profiler_root,
+                                         'config', '--get', 'remote.origin.url']).strip()
         record['samply_version'] = run(['samply', '--version']).strip()
         record['perf_version'] = run(['perf', '--version']).strip()
         anchor = args.raw / 'spawn-anchor.json'

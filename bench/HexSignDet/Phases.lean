@@ -47,8 +47,9 @@ def phaseInput (s : Nat) : PhaseInput :=
   let _ ← i.base.domain
   return hash (i.members.map fun n => matrixHash (momentMatrix n.system.rows n.system.columns))
 
-/-- Actual leaf/parent solvers, including their complete system checks.
-The matrix construction inside those checks remains part of this operation. -/
+/-- Actual leaf solves and scaled parent solves using retained inverses,
+including their complete system checks. Constructing `parentInverse` is outside
+this phase; matrix construction inside `System.check` remains included. -/
 @[noinline] def runSolvers (i : PhaseInput) : Option UInt64 := do
   let _ ← i.base.domain
   let result : Except BuildError (List UInt64) := i.members.mapM fun n => do
@@ -141,6 +142,12 @@ def inspectPhases : IO UInt32 := do
     let i := phaseInput s
     unless i.base.domain.isSome && i.base.tree.isSome && !i.members.isEmpty do
       throw (IO.userError s!"missing checked phase input at {s}")
+    unless i.members.all (fun n =>
+        let m := momentMatrix n.system.rows n.system.columns
+        decide (n.system.inverse * m =
+          Matrix.scale n.system.denominator (Matrix.identity n.size)) &&
+        decide (m * n.system.counts = n.system.values)) do
+      throw (IO.userError s!"matrix identity mismatch at {s}")
     let expected : List (String × Option UInt64 × Option UInt64) := [
       ("runQueries", runQueries i, some (hash (i.moments.map (·.value)))),
       ("runProducts", runProducts i, some (hash (i.members.map fun n =>
