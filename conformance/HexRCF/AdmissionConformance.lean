@@ -8,6 +8,7 @@ module
 public import HexRCF.Tactic
 public import HexRealRootsMathlib.TarskiSoundness
 public import HexSturmMathlib.Soundness
+public import HexRCF.RealCoefficients.FieldBuild
 
 public section
 
@@ -24,8 +25,13 @@ run_meta do
   let helper ← mkAuxTheorem (← inferType bridge) bridge (cache := false)
   checkAxioms (Name.mkSimple "helperProbe") helper
   for name in #[``HexSturmMathlib.check_sound,
-      ``HexSturmMathlib.queryPrepared_sound, ``HexSturmMathlib.query_sound] do
+      ``HexSturmMathlib.queryPrepared_sound, ``HexSturmMathlib.query_sound,
+      ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound,
+      ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound] do
     checkAxioms (Name.mkSimple "importedConsumerProbe")
       (← mkConstWithFreshMVarLevels name)
+  let unrelated ← mkSorry (mkConst ``True) false
+  unless (← observing? (checkAxioms (Name.mkSimple "unrelatedAdmissionProbe") unrelated)).isNone do
+    throwError "an unrelated sorry passed the optional-handler axiom audit"
 
 end Hex.RCF.AdmissionConformance

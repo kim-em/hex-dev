@@ -126,6 +126,15 @@ theorem value_realPoly (rep : RefinedIsolation p) (a : PolyQuot p x) :
   rw [hmap, Polynomial.eval_map]
   rfl
 
+/-- A value converted from an existing fixed number field has exactly the
+selected real embedding used by the fixed-field decision procedure. -/
+theorem ofField_value (generator : RealAlgebraicNumber)
+    (a : QAdjoin generator.toAlgebraic) :
+    (Coefficients.ofField generator a).toReal =
+      value generator.toAlgebraic.rep a := by
+  rw [Coefficients.ofField_toReal]
+  rfl
+
 /-- Bind every rational sign certificate to the defining polynomial and the
 specific literal square whose root names this field. -/
 @[expose] def checkSignTable (p : ZPoly) (s : DyadicSquare)
@@ -193,6 +202,84 @@ theorem value_complex (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = x)
   have he : (rep.root.re : ℂ) = rep.root := Complex.ext rfl hr.symm
   rw [he]
   rfl
+
+/-- The generator of an existing real `QAdjoin` field is interpreted at its
+selected real value. This is the one-coefficient bridge used before taking a
+common field for several independent coefficients. -/
+theorem generator_value (a : RealAlgebraicNumber) :
+    value a.toAlgebraic.rep a.toAlgebraic.toQAdjoin = a.toReal := by
+  apply Complex.ofReal_injective
+  rw [value_complex a.toAlgebraic.rep a.toAlgebraic.rep_mk
+    ((AlgebraicNumber.isReal_iff a.toAlgebraic).mp a.property),
+    AlgebraicNumber.toQAdjoin_toComplex, RealAlgebraicNumber.ofReal_toReal]
+
+/-- Each coordinate in a checked common number field still denotes its
+original real algebraic coefficient. A separate reality check on the chosen
+generator rules out silently using a nonreal embedding. -/
+theorem common_value (bs : Array RealAlgebraicNumber)
+    (hreal : (QAdjoin.common (bs.map RealAlgebraicNumber.toAlgebraic)).generator.isReal = true)
+    (i : Nat) (hi : i < bs.size) :
+    value (QAdjoin.common (bs.map RealAlgebraicNumber.toAlgebraic)).generator.rep
+        ((QAdjoin.common (bs.map RealAlgebraicNumber.toAlgebraic)).entries[i]'(by simp [hi])) =
+      bs[i].toReal := by
+  let inputs := bs.map RealAlgebraicNumber.toAlgebraic
+  let common := QAdjoin.common inputs
+  have hgen : common.generator.rep.root.im = 0 :=
+    (AlgebraicNumber.isReal_iff common.generator).mp hreal
+  apply Complex.ofReal_injective
+  rw [value_complex common.generator.rep common.generator.rep_mk hgen]
+  rw [← PolyQuot.toAlgebraicNumber_toComplex]
+  change ((QAdjoin.common inputs).entries[i]'(by simpa [inputs] using hi)).toAlgebraicNumber.toComplex =
+    (bs[i].toReal : ℂ)
+  rw [QAdjoin.common_get inputs i (by simpa [inputs] using hi)]
+  simpa [inputs] using (RealAlgebraicNumber.ofReal_toReal bs[i]).symm
+
+/-- Change an existing field coordinate to the printable square presentation
+of the same selected root. Only the dependent root index changes. -/
+def onSquare (a : AlgebraicNumber)
+    (hw : atomWitness a.p a.rep.1.square)
+    (hp : (mahlerPrec a.p : Int) ≤ a.rep.1.square.prec)
+    (v : QAdjoin a) :
+    PolyQuot a.p (SimpleRoot.ofSquare a.p a.rep.1.square hw hp) :=
+  (HexRootsMathlib.SimpleRoot.ofSquare_mk a.rep hw hp).symm ▸ v
+
+private theorem cast_coeffs {p : ZPoly} {x y : SimpleRoot p}
+    (h : x = y) (v : PolyQuot p y) :
+    (h.symm ▸ v : PolyQuot p x).coeffs = v.coeffs := by
+  cases h
+  rfl
+
+theorem onSquare_value (a : RealAlgebraicNumber)
+    (hw : atomWitness a.toAlgebraic.p a.toAlgebraic.rep.1.square)
+    (hp : (mahlerPrec a.toAlgebraic.p : Int) ≤ a.toAlgebraic.rep.1.square.prec)
+    (v : QAdjoin a.toAlgebraic) :
+    value (literalRep a.toAlgebraic.p a.toAlgebraic.rep.1.square hw hp)
+      (onSquare a.toAlgebraic hw hp v) =
+    value a.toAlgebraic.rep v := by
+  have hroot : (literalRep a.toAlgebraic.p a.toAlgebraic.rep.1.square hw hp).root =
+      a.toAlgebraic.rep.root := by
+    exact congrArg HexRootsMathlib.SimpleRoot.rootOf
+      (HexRootsMathlib.SimpleRoot.ofSquare_mk a.toAlgebraic.rep hw hp)
+  have hcoeff : (onSquare a.toAlgebraic hw hp v).coeffs = v.coeffs := by
+    exact cast_coeffs (HexRootsMathlib.SimpleRoot.ofSquare_mk a.toAlgebraic.rep hw hp) v
+  unfold value
+  rw [hcoeff, hroot]
+
+/-- A checked canonical-number identity binds a literal field coordinate to a
+user-facing real algebraic coefficient without changing the selected root. -/
+theorem value_of_algebraic_eq {p : ZPoly} {s : DyadicSquare}
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    [ZPoly.CheckedIrreducible p] (hreal : s.meetsRealAxis = true)
+    (v : PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (a : RealAlgebraicNumber)
+    (h : v.toAlgebraicNumber (literalRep p s hw hp)
+      (literalRep_mk p s hw hp) = a.toAlgebraic) :
+    value (literalRep p s hw hp) v = a.toReal := by
+  apply Complex.ofReal_injective
+  rw [value_complex (literalRep p s hw hp) (literalRep_mk p s hw hp)
+    (literalRep_real p s hw hp hreal)]
+  rw [← PolyQuot.toAlgebraicNumber_toComplex, h]
+  exact (RealAlgebraicNumber.ofReal_toReal a).symm
 
 /-- A recorded sign is the sign at the selected complex embedding, which is
 real for this checked square. The finite table must contain the queried key. -/

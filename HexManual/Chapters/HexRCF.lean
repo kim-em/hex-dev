@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexRCF
+import HexRCF.RealCoefficients
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -38,9 +39,10 @@ statement about every real number, or about some real number, becomes a
 finite check. The tactic performs that check with exact integer arithmetic:
 it isolates the roots with certified Sturm counts, records the sign of each
 polynomial on each piece, and hands the kernel a certificate containing those
-signs and counts. The kernel replays the certificate by evaluation, never
-repeats the search, and the resulting proof uses no axiom beyond the three
-that Mathlib always uses.
+signs and counts. The kernel replays the certificate by evaluation and never
+repeats the search. Proofs in the rational fragment use no axiom beyond the
+three that Mathlib always uses. The optional algebraic-coefficient extension
+has a separately stated proof dependency below.
 
 The tactics Mathlib already provides do something different. `nlinarith` and
 `positivity` are heuristics: they succeed on many true inequalities of this
@@ -447,24 +449,135 @@ theorem rcf_square_nonnegative : ∀ x : ℝ, x ^ 2 ≥ 0 := by
 'rcf_square_nonnegative' depends on axioms: [propext, Classical.choice, Quot.sound]
 ```
 
-# Optional coefficient source schemas
+# Algebraic coefficients
 %%%
 tag := "hex-rcf-coefficient-schemas"
 %%%
 
-In the development monorepo, the separate import `HexRCF.RealCoefficients`
-provides `Hex.RCF.RealCoefficients.Reify.prepare` for adapter authors. It
-abstracts closed rational/π/e expressions into a shared formula and proves that
-the formula at the fixed source valuation is equivalent to the original goal.
-Explicit local equality aliases are transported by checked proofs. Original
-divisor obligations are retained before normalization, including those hidden
-under zero multiplication. Half-open Ioc domains remain formula guard atoms.
+Import `HexRCF.RealCoefficients` to extend the same `rcf` command. The original
+`HexRCF` import and all its rational examples keep their existing behavior.
+The adapter is currently available in the development monorepo; it is not in
+the released `hex-rcf` package.
+The optional adapter currently accepts one selected algebraic coefficient in
+an otherwise rational polynomial sentence. Its direct notation support covers
+`Real.sqrt 2` and Mathlib's `(2 : ℝ) ^ (1 / 3 : ℝ)`. It also accepts the checked
+Hex values `CubeTwo.realAlgebraic` and `CubeTwo.shifted`. For a different
+coordinate in a chosen number field, write a `Selected.field` expression with
+the field element and its checked chosen root, as shown below. In these
+examples, the power in `(2 : ℝ) ^ (1 / 3 : ℝ)` defines a closed coefficient;
+the quantified variable still occurs in an ordinary polynomial. Products with
+rational constants are supported, but expressions that divide by one of these
+named algebraic coefficients currently decline; express an inverse as a
+checked field coordinate when it is needed.
 
-This entry point returns pending source data. It does not authenticate named
-coefficients, prove divisor nonzeroness, or run a real-coefficient decision
-procedure. The ordinary `rcf` import retains its rational behavior. The optional
-source module is checked by the default Lake target `HexRCFRealCoefficients`;
-it is not part of the published base umbrella.
+These examples use the selected real root of `X³ − 2`. The adapter records an
+isolating square and verifies its root witness. It reconstructs Hex's
+{name}`Hex.AlgebraicNumber` and {name}`Hex.RealAlgebraicNumber` through the
+existing canonical constructor. The second coefficient is computed as `1 + a`
+inside {name}`Hex.QAdjoin`, then converted through
+{name}`Hex.RCF.RealCoefficients.Coefficients.ofField`; its selected real value
+is proved to be `1 + a.toReal`. This `ofField` tactic example uses the specific
+checked value `CubeTwo.shifted`. The definitions `CubeTwo.realAlgebraic` and
+`CubeTwo.shifted` contain these constructions, and the following aliases show
+their types and use. The second construction below takes a checked selected
+root directly, computes `(a² + 1) / 2` with ordinary {name}`Hex.QAdjoin`
+arithmetic, and uses {name}`Hex.RCF.RealCoefficients.Selected.field` to retain
+the same root when converting back to a real algebraic number. These examples
+set `maxRecDepth` to `2048` and `maxHeartbeats` to `1000000` so Lean can
+elaborate their literal certificates; users may need the same options for
+similar goals. On the shared host, a fresh build of the complete example
+module took 142.698 seconds under heavy load. That is a module timing, not a
+per-call timing.
+
+```lean
+open Hex.RCF.RealCoefficients
+
+set_option maxRecDepth 2048
+set_option maxHeartbeats 1000000
+
+private abbrev cubicGenerator : Hex.AlgebraicNumber :=
+  CubeTwo.realAlgebraic.toAlgebraic
+
+private abbrev fieldCoordinate :
+    Hex.QAdjoin cubicGenerator :=
+  1 + cubicGenerator.toQAdjoin
+
+private abbrev fieldCoefficient : Hex.RealAlgebraicNumber :=
+  Coefficients.ofField CubeTwo.realAlgebraic fieldCoordinate
+
+private abbrev selectedCubic : Hex.RealAlgebraicNumber :=
+  Selected.real CubeTwo.polynomial CubeTwo.square
+    (by decide) (by decide) (by rfl) (by decide) (by decide)
+    CubeTwo.checked CubeTwo.squarefree (by decide)
+
+private abbrev selectedGenerator : Hex.AlgebraicNumber :=
+  selectedCubic.toAlgebraic
+
+private abbrev computedCoordinate :
+    Hex.QAdjoin selectedGenerator :=
+  (selectedGenerator.toQAdjoin *
+    selectedGenerator.toQAdjoin + 1) / 2
+
+private abbrev computedCoefficient :
+    Hex.RealAlgebraicNumber :=
+  Selected.field CubeTwo.polynomial CubeTwo.square
+    (by decide) (by decide) (by rfl) (by decide) (by decide)
+    CubeTwo.checked CubeTwo.squarefree (by decide)
+    computedCoordinate
+
+example : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 > 0 := by
+  rcf
+
+example : ∃ x : ℝ, Real.sqrt 2 < x ∧ x < (3 : ℝ) / 2 := by
+  rcf
+
+example : ∀ x : ℝ, x ^ 2 + (2 : ℝ) ^ (1 / 3 : ℝ) > 0 := by
+  rcf
+
+example : ∀ x : ℝ, x ^ 2 +
+    CubeTwo.realAlgebraic.toReal > 0 := by
+  rcf
+
+example : ∀ x : ℝ, x ^ 2 + fieldCoefficient.toReal > 0 := by
+  rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 + computedCoefficient.toReal > 0 := by
+  rcf
+
+example : True := by
+  fail_if_success
+    have : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 < 0 := by
+      rcf
+  trivial
+
+example : True := by
+  fail_if_success
+    have : ∀ x : ℝ, Real.sin x = 0 := by
+      rcf
+  trivial
+```
+
+The interval statement has no rational witness supplied by the user. `rcf`
+checks the signs on its root cells and proves existence. The two
+`fail_if_success` examples show that a false algebraic statement produces no
+proof and that nonpolynomial syntax in the quantified variable is rejected.
+The adapter's source reifier preserves explicit coefficient aliases and
+original divisor obligations before normalization. These examples use
+`abbrev` aliases, which Lean unfolds during recognition. The general
+`Selected.real` and `Selected.field` path does not unfold an opaque `def`
+wrapper, although the four named values may still be recognized through
+definitional equality. For supported sentences, a divisor must be proved
+nonzero before certificate construction.
+
+The algebraic examples use the generic accepted-query soundness theorem
+`HexRealRootsMathlib.Tarski.check_rootSum`. Its proof is currently admitted in
+[#10389](https://github.com/kim-em/hex-dev/issues/10389); the fixed-field
+certificate checks and the chosen-root identifications above are proved from
+that stated theorem. Thus these examples are kernel-checked relative to that
+one mathematical admission. The rational examples and their axiom inventory
+above do not depend on it. See {ref "hex-number-field"}[HexNumberField] and
+{ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
 
 # Cross-references
 %%%
