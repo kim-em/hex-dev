@@ -128,6 +128,10 @@ accepted count-one partial and full descriptors select a unique root, and
 through `derivativesFrom_get`. `SelectedSigns.values_at_root` and
 `value_at_root` prove that every checked requested sign equals evaluation at
 that same selected root, including the public one-query accessor.
+`Completion.root_eq_source` proves that accepted full-derivative completion
+preserves the selected real root; `Completion.signs_at_source` identifies every
+returned derivative sign at that original root. These results use checked
+count-one tables and derivative identities without assuming Thom order.
 `Reencoding.root_eq_source` proves that checked re-encoding keeps that real root
 when the defining polynomial and interval change. Its proof uses the copied
 equation, derivative word and strict endpoint signs, plus acceptance of the

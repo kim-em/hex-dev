@@ -69,6 +69,31 @@ theorem Descriptor.root_spec {context : Ctx} (d : Descriptor E Ctx sign context)
       signsAt f hz d.raw.queries (d.root f hz h1 ha hs hm hnat hsign) = d.raw.signs := by
   exact (Classical.choose_spec (d.existsUnique_root f hz h1 ha hs hm hnat hsign)).1
 
+omit [IsStrictOrderedRing K] [IsRealClosed K] in
+include hm hnat in
+/-- Formal derivative queries agree with interpreted derivatives at any point. -/
+theorem Descriptor.derivatives_at {context : Ctx}
+    (d : Descriptor E Ctx sign context) (x : K) :
+    signsAt f hz d.raw.queries x = d.raw.indices.map (fun j =>
+      (SignType.sign ((Polynomial.derivative^[j]
+        (interpret f hz d.raw.head)).eval x) : Int)) := by
+  have hw : d.raw.wellFormed = true := (RawDescriptor.check_eq d.accepted).1
+  have hb : ∀ j ∈ d.raw.indices, 1 ≤ j ∧ j ≤ d.raw.head.natDegree := by
+    intro j hj
+    exact d.raw.wellFormed_bounds hw j hj
+  simp only [signsAt, RawDescriptor.queries, List.map_map]
+  apply List.map_congr_left
+  intro j hj
+  obtain ⟨hjpos, hjdeg⟩ := hb j hj
+  have hlt : j - 1 < d.raw.head.natDegree := by omega
+  have hindex : j - 1 < (derivativesFrom d.raw.head d.raw.head.natDegree).length := by
+    rw [derivativesFrom_length]
+    exact hlt
+  simp only [Function.comp_apply, derivatives]
+  rw [List.getElem?_eq_getElem hindex, Option.getD_some]
+  rw [derivativesFrom_get f hz hnat hm d.raw.head d.raw.head.natDegree (j - 1) hlt]
+  simp only [Nat.sub_add_cancel hjpos]
+
 include h1 ha hs hm hnat hsign in
 /-- The selected root realizes the formal derivative signs named by the
 descriptor indices, not merely the stored query polynomials. -/
@@ -76,11 +101,8 @@ theorem Descriptor.root_derivatives {context : Ctx} (d : Descriptor E Ctx sign c
     d.raw.signs = d.raw.indices.map (fun j =>
       (SignType.sign ((Polynomial.derivative^[j]
         (interpret f hz d.raw.head)).eval (d.root f hz h1 ha hs hm hnat hsign)) : Int)) := by
-  have hw : d.raw.wellFormed = true := (RawDescriptor.check_eq d.accepted).1
-  have hquery := d.raw.querySigns f hz hnat hm hw
-    (d.root f hz h1 ha hs hm hnat hsign)
-  exact (d.root_spec f hz h1 ha hs hm hnat hsign).2.symm.trans
-    (by simpa only [signsAt] using hquery)
+  rw [← (d.root_spec f hz h1 ha hs hm hnat hsign).2]
+  exact d.derivatives_at f hz hm hnat _
 
 /-- Any root with the checked encoding denotes the same selected value. -/
 theorem Descriptor.root_unique {context : Ctx} (d : Descriptor E Ctx sign context) (x : K)
@@ -89,6 +111,53 @@ theorem Descriptor.root_unique {context : Ctx} (d : Descriptor E Ctx sign contex
     (hxs : signsAt f hz d.raw.queries x = d.raw.signs) :
     x = d.root f hz h1 ha hs hm hnat hsign := by
   exact (Classical.choose_spec (d.existsUnique_root f hz h1 ha hs hm hnat hsign)).2 x ⟨hx, hxs⟩
+
+include h1 ha hs hm hnat hsign in
+/-- Completing a partial encoding preserves the real root it selected. The
+argument uses only checked count-one evidence and derivative identities; it
+does not assume a Thom ordering theorem. -/
+theorem Completion.root_eq_source {context : Ctx}
+    {source : Descriptor E Ctx sign context} (c : Completion source) :
+    c.descriptor.root f hz h1 ha hs hm hnat hsign =
+      source.root f hz h1 ha hs hm hnat hsign := by
+  let x := c.descriptor.root f hz h1 ha hs hm hnat hsign
+  obtain ⟨_, hhead, hlower, hupper, hindices, hselect⟩ := c.bindings
+  have hdomain : x ∈ Tarski.rootsIn (interpret f hz source.raw.head)
+      (source.raw.lower.map f) (source.raw.upper.map f) := by
+    simpa only [hhead, hlower, hupper] using
+      (c.descriptor.root_spec f hz h1 ha hs hm hnat hsign).1
+  have hw : source.raw.wellFormed = true := (RawDescriptor.check_eq source.accepted).1
+  have hb : ∀ j ∈ source.raw.indices,
+      1 ≤ j ∧ j ≤ source.raw.head.natDegree := by
+    intro j hj
+    exact source.raw.wellFormed_bounds hw j hj
+  let g : Nat → Int := fun j =>
+    (SignType.sign ((Polynomial.derivative^[j]
+      (interpret f hz source.raw.head)).eval x) : Int)
+  have hfull := c.descriptor.root_derivatives f hz h1 ha hs hm hnat hsign
+  rw [hindices, hhead] at hfull
+  have hword : c.descriptor.raw.signs =
+      (List.range source.raw.head.natDegree).map (fun j => g (j + 1)) := by
+    simpa only [List.map_map, Function.comp_def, g, x] using hfull
+  rw [hword, Thom.select_full source.raw.head.natDegree g source.raw.indices hb] at hselect
+  have hselected : source.raw.indices.map g = source.raw.signs := Option.some.inj hselect
+  apply source.root_unique f hz h1 ha hs hm hnat hsign x hdomain
+  rw [source.derivatives_at f hz hm hnat x]
+  exact hselected
+
+include h1 ha hs hm hnat hsign in
+/-- The completed word gives every formal derivative sign at the original
+selected root, even when the original descriptor named only a few derivatives. -/
+theorem Completion.signs_at_source {context : Ctx}
+    {source : Descriptor E Ctx sign context} (c : Completion source) :
+    c.descriptor.raw.signs = (List.range source.raw.head.natDegree).map (fun j =>
+      (SignType.sign ((Polynomial.derivative^[j + 1]
+        (interpret f hz source.raw.head)).eval
+          (source.root f hz h1 ha hs hm hnat hsign)) : Int)) := by
+  obtain ⟨_, hhead, _, _, hindices, _⟩ := c.bindings
+  have hfull := c.descriptor.root_derivatives f hz h1 ha hs hm hnat hsign
+  rw [hhead, hindices, c.root_eq_source f hz h1 ha hs hm hnat hsign] at hfull
+  simpa only [List.map_map, Function.comp_def] using hfull
 
 include h1 ha hs hm hnat hsign in
 /-- Every sign returned by checked joint determination is the sign of the
@@ -276,6 +345,7 @@ theorem Descriptor.constraints_interval {context : Ctx}
     simp_all [Tarski.inInterval_iff, Endpoint.map, signsAt,
       endpoint_eval f hz h1 hs, castSignPos, castSignNeg]
 
+omit [LinearOrder K] [IsStrictOrderedRing K] [IsRealClosed K] in
 /-- An accepted positive-degree descriptor has a nonzero interpreted head. -/
 theorem Descriptor.head_ne_zero {context : Ctx}
     (d : Descriptor E Ctx sign context) : interpret f hz d.raw.head ≠ 0 := by
