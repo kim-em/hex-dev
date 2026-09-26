@@ -68,8 +68,9 @@ The [current raw exports and provenance](data/sign-det-sparse/f7d5f1a66/metadata
 bind the executable to source `f7d5f1a6648e676bbfadc6f17d0d8b7b67fed51d`
 with a per-file SHA-256 map and binary SHA-256. The output directory was outside
 the source tree; both the runner and LeanBench recorded a clean worktree.
-The later commit adds only the retained exports and report text; the measured
-executable source is unchanged. After a squash merge, the per-file map remains
+The later commits add retained exports, report text and a CI registration-count
+assertion; the measured executable and runner sources are unchanged. After a
+squash merge, the per-file map remains
 the binding to the merged source even though the source commit hash changes.
 On shared host `chungus2`, automatically leased CPU 63, all 144 timed samples
 completed, matched the checked inventory hashes and passed the fixed schedule.
