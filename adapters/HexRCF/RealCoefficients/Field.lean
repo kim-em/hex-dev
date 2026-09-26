@@ -281,6 +281,26 @@ theorem value_of_algebraic_eq {p : ZPoly} {s : DyadicSquare}
   rw [← PolyQuot.toAlgebraicNumber_toComplex, h]
   exact (RealAlgebraicNumber.ofReal_toReal a).symm
 
+/-- A recorded sign is the sign at the selected complex embedding, which is
+real for this checked square. The finite table must contain the queried key. -/
+theorem checkSignTable_lookup_complex (p : ZPoly) (s : DyadicSquare)
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (hreal : s.meetsRealAxis = true)
+    (table : LiteralSign.Table
+      (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (checked : checkSignTable p s hw hp table = true)
+    (a : PolyQuot p (SimpleRoot.ofSquare p s hw hp)) (observed : Int)
+    (hit : table.lookup? a = some observed) :
+    observed = (SignType.sign
+      (PolyQuot.toComplex a (literalRep p s hw hp)
+        (literalRep_mk p s hw hp)).re : Int) := by
+  have hv := congrArg Complex.re
+    (value_complex (literalRep p s hw hp) (literalRep_mk p s hw hp)
+      (literalRep_real p s hw hp hreal) a)
+  simp only [Complex.ofReal_re] at hv
+  rw [← hv]
+  exact checkSignTable_lookup p s hw hp table checked a observed hit
+
 variable (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = x)
 variable (hr : rep.root.im = 0)
 include hrep hr

@@ -35,7 +35,8 @@ the tensor witness identity and identifies both vector orders with the exact
 list products used by `buildTreeFrom`. `solveScaled_eq`
 proves that the integer solver recovers any accepted system's counts without
 rounding or sign clamping. These finite algebra results do not assume roots
-or query semantics and do not yet prove completeness of the full constructor.
+or query semantics; their composition with finite query interpretation is
+described below.
 
 `solveSystem_complete` proves that the actual rational solver also succeeds
 on every accepted integer system, preserving its input orders and exact counts.
@@ -63,9 +64,8 @@ laws, using the existing prepared-query and reduction producer theorems.
 evidence through the actual balanced recursion. `buildTree_checks` and
 `buildPrepared_eq` show that successful tree construction passes the final
 replay guard, including noncanonical coefficient representations. These
-theorems do not establish that tree construction always succeeds: excluding
-all finite solving failures and interpreting query values remain separate
-obligations. They do not assert arbitrary-certificate root-sum soundness.
+theorems concern successful tree construction. They do not assert
+arbitrary-certificate root-sum soundness.
 `buildNode_complete` supplies the finite assembly step for both rational and
 scaled solving: a checked candidate system, a matching supplied inverse when
 present, and equality of its values with the actual prepared queries produce
@@ -76,6 +76,34 @@ list-length dimension used by `buildTreeFrom`, retaining literal row/column
 orders, counts, values and denominator. Its inverse is the shared
 `parentInverse` definition called by the actual parent construction, so the
 dimension transport and inverse witness cannot drift between those sites.
+
+`buildTreeFrom_complete` connects these steps through the actual balanced
+recursion. `QueryValues` states the finite interpretation of the actual prepared
+query on every valid exponent row, using the actual preprocessing and reduction.
+`QueryModel` requires this interpretation along the same query/preparation
+slices as the constructor, restricting finite observations with multiplicity.
+It mentions no output tree, support completeness, inverse, count correctness,
+solver success or accepted replay. Given that model and well-shaped observations,
+the theorem constructs a successful tree with exact counts, complete retained
+support and interpreted moment values at every node. Leaf systems and complete
+child supports provide the candidate systems before each solve, including empty
+observations and zero-dimensional parent products.
+`buildTree_complete` handles shared root preprocessing; `buildPrepared_complete`
+composes the induction with independent algebraic replay acceptance under the
+ordinary generic coefficient laws. The universal noncanonical instantiation and
+exact standard-axiom inventories are checked in conformance. An ordinary-kernel
+constant-head probe accepts an empty observation model and rejects a falsely
+claimed root using the actual constant query value.
+The existing `HexSignDet.Conformance` cases run the recursive producer on
+two and twelve queries with independently supplied sign counts, including a
+root-free constant head. The finite theorem applies to those same construction
+paths when its query-value model is established.
+
+The model is a finite proof boundary, not a replacement semantic foundation or
+an executable argument. Deriving it from actual roots still requires the shared
+root-sum bridge, reduced-query sign correspondence and the required BKR foundation.
+These conditional completeness theorems do not discharge the public domain-exact
+producer API or the headline root/sign theorems.
 
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient
