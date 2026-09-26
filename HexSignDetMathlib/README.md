@@ -124,8 +124,9 @@ the latter remains a separate shared-domain check. `endpoint_eval`, `endpoint_lo
 and `endpoint_upper` prove the semantics of the actual finite-boundary polynomials
 used by joint re-encoding.
 
-Semantic Thom equality/order, the total public
-API and Phase-4 evidence remain required. The root-sum/replay bridge in #10389
+Semantic Thom equality/order, the success characterization and correctness of
+the re-encoding builder, the total public API and Phase-4 evidence remain
+required. The root-sum/replay bridge in #10389
 and the specified Tau Ceti BKR/Thom foundations remain separate proof gates.
 See the
 [specification](SPEC/hex-sign-det-mathlib.md) for the complete assignment.
