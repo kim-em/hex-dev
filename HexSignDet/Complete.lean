@@ -16,6 +16,33 @@ slot. Index zero and every out-of-range index fail. -/
 @[expose] def Thom.select (indices : List Nat) (signs : List Int) : Option (List Int) :=
   indices.mapM fun i => if 0 < i then signs[i - 1]? else none
 
+/-- Restricting a complete derivative word to valid indices returns exactly
+the values at those indices, including the empty list. -/
+theorem Thom.select_full (n : Nat) (g : Nat → Int) (indices : List Nat)
+    (h : ∀ i ∈ indices, 1 ≤ i ∧ i ≤ n) :
+    Thom.select indices ((List.range n).map fun j => g (j + 1)) =
+      some (indices.map g) := by
+  induction indices with
+  | nil => rfl
+  | cons i rest ih =>
+    have hi := h i (by simp)
+    have hrest : ∀ j ∈ rest, 1 ≤ j ∧ j ≤ n := by
+      intro j hj
+      exact h j (by simp [hj])
+    have hget : ((List.range n).map fun j => g (j + 1))[i - 1]? = some (g i) := by
+      have hlt : i - 1 < n := by omega
+      have hlt' : i - 1 < ((List.range n).map fun j => g (j + 1)).length := by
+        simpa only [List.length_map, List.length_range] using hlt
+      rw [List.getElem?_eq_getElem hlt']
+      simp only [List.getElem_map, List.getElem_range, Nat.sub_add_cancel hi.1]
+    have htail := ih hrest
+    simp only [Thom.select] at htail
+    have hpos : 0 < i := by omega
+    simp only [Thom.select, List.mapM_cons, List.map_cons]
+    simp only [hpos, ↓reduceIte]
+    rw [hget, htail]
+    rfl
+
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
 
