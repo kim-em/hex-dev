@@ -26,18 +26,14 @@ variable (hneg : ∀ a, sign a < 0 ↔ f a < 0)
 
 include hz h1 ha hs hm hn hi hpos hneg in
 omit [DecidableEq Ctx] in
-/-- Node construction either retains the checked supplied preprocessing or
-builds valid preprocessing itself. The disabled path carries none. -/
-theorem buildNode_preparation (context : Ctx) (domain : Sturm.PreparedDomain E)
-    (hsign : domain.sign = sign)
-    (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int))
-    (reduced : Bool) (inverse : Option (Int × Matrix Int rows.length rows.length))
-    (preparation : Option (QueryReduction E)) {n : Node E Ctx}
-    (hp : (match preparation with | none => true | some r => r.check sign domain.head qs) = true)
-    (h : buildNode context domain qs rows columns reduced inverse preparation = .ok n) :
-    (match n.preparation with | none => true | some r => r.check sign domain.head qs) = true := by
+/-- The selected query preprocessing is valid before matrix solving. -/
+theorem nodePreparation_checks (domain : Sturm.PreparedDomain E)
+    (hsign : domain.sign = sign) (qs : List (DensePoly E)) (reduced : Bool)
+    (preparation : Option (QueryReduction E))
+    (hp : (match preparation with | none => true | some r => r.check sign domain.head qs) = true) :
+    (match nodePreparation reduced domain qs preparation with
+      | none => true | some r => r.check sign domain.head qs) = true := by
   subst sign
-  rw [(buildNode_evidence context domain qs rows columns reduced inverse preparation h).1]
   unfold nodePreparation
   by_cases hu : useReduction reduced domain = true
   · simp only [hu, ↓reduceIte]
@@ -48,6 +44,22 @@ theorem buildNode_preparation (context : Ctx) (domain : Sturm.PreparedDomain E)
       simp only [useReduction, Bool.and_eq_true, decide_eq_true_eq] at hu
       exact hu.2
   · simp [hu]
+
+include hz h1 ha hs hm hn hi hpos hneg in
+omit [DecidableEq Ctx] in
+/-- Node construction either retains the checked supplied preprocessing or
+builds valid preprocessing itself. The disabled path carries none. -/
+theorem buildNode_preparation (context : Ctx) (domain : Sturm.PreparedDomain E)
+    (hsign : domain.sign = sign)
+    (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int))
+    (reduced : Bool) (inverse : Option (Int × Matrix Int rows.length rows.length))
+    (preparation : Option (QueryReduction E)) {n : Node E Ctx}
+    (hp : (match preparation with | none => true | some r => r.check sign domain.head qs) = true)
+    (h : buildNode context domain qs rows columns reduced inverse preparation = .ok n) :
+    (match n.preparation with | none => true | some r => r.check sign domain.head qs) = true := by
+  rw [(buildNode_evidence context domain qs rows columns reduced inverse preparation h).1]
+  exact nodePreparation_checks f hz h1 ha hs hm hn hi sign hpos hneg
+    domain hsign qs reduced preparation hp
 
 include hz h1 ha hs hm hn hi hpos hneg in
 /-- Every successful node passes local replay under the generic coefficient

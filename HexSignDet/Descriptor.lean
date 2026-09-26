@@ -136,8 +136,9 @@ variable [Neg E] [Inv E]
 
 /-- Build count-one descriptor evidence from raw input, preserving internal
 construction failures separately from input diagnostics. This diagnostic
-constructor is not the final domain-exact `validate` API: removing its outer
-error type requires the outstanding general BKR completeness proof. -/
+constructor is not the final domain-exact `validate` API: the companion now
+proves producer success from actual roots relative to the named #10389 bridge,
+but the total executable wrapper and exact invalid-domain equivalence remain. -/
 def Descriptor.build (sign : E → Int) (context : Ctx) (raw : RawDescriptor E Ctx) :
     Except BuildError (Except DescriptorError (Descriptor E Ctx sign context)) :=
   if hctx : raw.context = context then

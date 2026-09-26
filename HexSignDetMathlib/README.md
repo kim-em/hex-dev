@@ -99,11 +99,17 @@ two and twelve queries with independently supplied sign counts, including a
 root-free constant head. The finite theorem applies to those same construction
 paths when its query-value model is established.
 
-The model is a finite proof boundary, not a replacement semantic foundation or
-an executable argument. Deriving it from actual roots still requires the shared
-root-sum bridge, reduced-query sign correspondence and the required BKR foundation.
-These conditional completeness theorems do not discharge the public domain-exact
-producer API or the headline root/sign theorems.
+The model is a finite proof boundary, not an executable argument. In the optional
+`HexQuerySemantics` target, `RootModel` interprets arbitrary accepted node and
+child query evidence as moments of actual roots, then proves exact support and
+counts for every sign condition, including omitted ones. `RootProducer` derives
+the finite query model for the actual prepared producer and proves its success
+and counts from the named #10389 root-sum statement. `SelectedRoot` proves that
+accepted count-one partial and full descriptors select a unique root, and
+`root_derivatives` identifies their signs with formal iterated derivatives
+through `derivativesFrom_get`.
+The executable API still exposes internal errors, and the domain-exact total
+wrapper remains to be implemented.
 
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient
@@ -112,10 +118,10 @@ the latter remains a separate shared-domain check. `endpoint_eval`, `endpoint_lo
 and `endpoint_upper` prove the semantics of the actual finite-boundary polynomials
 used by joint re-encoding.
 
-Complete sign-table and Thom semantics, total producer correspondence and
-Phase-4 evidence remain required. The root-sum/replay bridge in #10389 and the
-specified Tau Ceti BKR/Thom foundations remain separate proof gates; the
-polynomial identities above do not discharge them. See the
+Semantic Thom equality/order and cross-polynomial re-encoding, the total public
+API and Phase-4 evidence remain required. The root-sum/replay bridge in #10389
+and the specified Tau Ceti BKR/Thom foundations remain separate proof gates.
+See the
 [specification](SPEC/hex-sign-det-mathlib.md) for the complete assignment.
 
 ```sh

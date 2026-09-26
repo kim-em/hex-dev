@@ -60,6 +60,11 @@ requires the separately owned signed-remainder theorem. -/
 noncomputable def rootSum (p f : Polynomial R) (a b : Endpoint R) : Int :=
   ∑ x ∈ rootsIn p a b, (SignType.sign (f.eval x) : Int)
 
+/-- Expand a query into its finite sum of signs over distinct roots. -/
+theorem rootSum_eq_sum (p f : Polynomial R) (a b : Endpoint R) :
+    rootSum p f a b = ∑ x ∈ rootsIn p a b, (SignType.sign (f.eval x) : Int) := by
+  simp only [rootSum]
+
 @[simp] theorem rootSum_zero (p : Polynomial R) (a b : Endpoint R) :
     rootSum p 0 a b = 0 := by simp [rootSum]
 
