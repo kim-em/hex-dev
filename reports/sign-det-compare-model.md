@@ -96,6 +96,13 @@ measured source file; the profile runner, both comparison scripts, all benchmark
 source files and their library dependency closure are in the recorded source
 hash set.
 
+After this measurement, #10434 added descriptor proofs and diagnostic lemmas
+to `HexSignDet/Descriptor.lean`; the rebased PR therefore has one source-hash
+difference from the archived measured revision. That change did not alter the
+descriptor constructor or either benchmark arm. The timing claims apply to
+the clean measured revision above, which the archived patch reconstructs,
+and are not presented as a measurement of the rebased executable.
+
 ## Attribution of the full reference
 
 A [timed-region profile](data/sign-det-compare/profile-6f07e03db/full-reference.summary.json)
