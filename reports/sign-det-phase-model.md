@@ -6,6 +6,8 @@ use the same checked `P=X²−1`, repeated-`X` input family and six fixed trials
 at `s=64,128,256,512,1024,2048`. The [family derivation](sign-det-sparse-model.md)
 establishes `2s−1` nodes, `7s−4` query slots, bounded matrix dimensions and
 scalar sizes, and balanced-tree arity volume `s(log₂s+1)`.
+The representative attribution for the current binary is the
+[current-source profile](sign-det-sparse-model.md#current-source-profile).
 
 Fixture preparation retains actual nodes, prepared query representatives
 and remainder coefficients outside the timed bodies. Every operation returns
@@ -62,6 +64,13 @@ shared host `chungus2`, automatically leased CPU 10. Every mode-1 verdict is
 
 The `s=64` medians are descriptive; the fitted verdict drops this leading
 rung and uses `s=128,…,2048` with the pinned `|β| ≤ 0.15` tolerance.
+That fitted range cannot distinguish `s` from `s(log₂s+1)` for `runQueries`,
+`runProducts`, `runSolvers` or `runSigns`: the models' normalized slopes differ
+by about `0.146`. Only `runMatrices` puts the linear alternative outside the
+current tolerance. The operation-count derivations, rather than these short
+timing slopes, justify the log factors; a wider sweep would test them more
+sharply. `Matrix.rankCert` construction is included in whole-table production
+but, like `parentInverse`, has no separate phase registration here.
 The [first clean-source phase run](data/sign-det-phases/13dc09b53/metadata.json),
 before the matrix-identity inventory check, is also retained in full. The
 current inventory checks both exact matrix identities for every actual node.
