@@ -1,0 +1,51 @@
+Hex.SignDetBench.runQueries    expected complexity: s    [warm cache]
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=f7d5f1a, 2026-09-26T17:03:16Z, host=chungus2
+  param  per-call    repeats  C
+     64    3.632 ms  ×2^4     C=36467.399 [trial 1/6] †
+    128    7.210 ms  ×2^3     C=36834.562 [trial 1/6]
+    256   14.754 ms  ×2^2     C=36739.900 [trial 1/6]
+    512   30.701 ms  ×2^1     C=37402.907 [trial 1/6]
+  1_024   65.497 ms  ×2^0     C=39201.551 [trial 1/6]
+  2_048  118.760 ms  ×2^0     C=37632.056 [trial 1/6]
+     64    4.633 ms  ×2^4     C=36467.399 [trial 2/6] †
+    128    8.181 ms  ×2^3     C=36834.562 [trial 2/6]
+    256    9.968 ms  ×2^3     C=36739.900 [trial 2/6]
+    512   20.232 ms  ×2^2     C=37402.907 [trial 2/6]
+  1_024   42.454 ms  ×2^1     C=39201.551 [trial 2/6]
+  2_048   76.192 ms  ×2^0     C=37632.056 [trial 2/6]
+     64    2.325 ms  ×2^5     C=36467.399 [trial 3/6] †
+    128    4.705 ms  ×2^4     C=36834.562 [trial 3/6]
+    256    9.410 ms  ×2^3     C=36739.900 [trial 3/6]
+    512   19.186 ms  ×2^2     C=37402.907 [trial 3/6]
+  1_024   40.961 ms  ×2^1     C=39201.551 [trial 3/6]
+  2_048   76.929 ms  ×2^0     C=37632.056 [trial 3/6]
+     64    2.343 ms  ×2^5     C=36467.399 [trial 4/6] †
+    128    4.657 ms  ×2^4     C=36834.562 [trial 4/6]
+    256    9.327 ms  ×2^3     C=36739.900 [trial 4/6]
+    512   19.114 ms  ×2^2     C=37402.907 [trial 4/6]
+  1_024   39.323 ms  ×2^1     C=39201.551 [trial 4/6]
+  2_048   77.155 ms  ×2^0     C=37632.056 [trial 4/6]
+     64    2.316 ms  ×2^5     C=36467.399 [trial 5/6] †
+    128    4.724 ms  ×2^4     C=36834.562 [trial 5/6]
+    256    9.354 ms  ×2^3     C=36739.900 [trial 5/6]
+    512   18.928 ms  ×2^2     C=37402.907 [trial 5/6]
+  1_024   39.225 ms  ×2^1     C=39201.551 [trial 5/6]
+  2_048   76.986 ms  ×2^0     C=37632.056 [trial 5/6]
+     64    2.298 ms  ×2^5     C=36467.399 [trial 6/6] †
+    128    4.702 ms  ×2^4     C=36834.562 [trial 6/6]
+    256    9.401 ms  ×2^3     C=36739.900 [trial 6/6]
+    512   18.934 ms  ×2^2     C=37402.907 [trial 6/6]
+  1_024   39.197 ms  ×2^1     C=39201.551 [trial 6/6]
+  2_048   77.649 ms  ×2^0     C=37632.056 [trial 6/6]
+  verdict: consistent with declared complexity (cMin=36739.900, cMax=39201.551, β=+0.016)
+  per-spawn floor (harness self-measurement): 28.075 ms
+  peak RSS: 67_948 kB..119_616 kB (across 36 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median     min        max         spread  
+       64  6/6      2.334 ms   2.298 ms    4.633 ms  100.051%
+      128  6/6      4.715 ms   4.657 ms    8.181 ms  74.741% 
+      256  6/6      9.405 ms   9.327 ms   14.754 ms  57.702% 
+      512  6/6     19.150 ms  18.928 ms   30.701 ms  61.477% 
+    1_024  6/6     40.142 ms  39.197 ms   65.497 ms  65.515% 
+    2_048  6/6     77.070 ms  76.192 ms  118.760 ms  55.233% 
+exported to /tmp/issue-10377-phases-final-f7d5/runQueries.json

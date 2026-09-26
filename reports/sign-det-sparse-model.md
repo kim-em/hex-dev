@@ -62,7 +62,36 @@ selects a CPU by an automatic nonblocking lease; it performs no quiet-core
 preflight and does not reject samples based on host activity. An inconclusive
 measurement permits at most one unchanged rerun, retaining both runs.
 
-## Retained measurements
+## Current-source measurements
+
+The [current raw exports and provenance](data/sign-det-sparse/f7d5f1a66/metadata.json)
+bind the executable to source `f7d5f1a6648e676bbfadc6f17d0d8b7b67fed51d`
+with a per-file SHA-256 map and binary SHA-256. The output directory was outside
+the source tree; both the runner and LeanBench recorded a clean worktree.
+The later commit adds only the retained exports and report text; the measured
+executable source is unchanged. After a squash merge, the per-file map remains
+the binding to the merged source even though the source commit hash changes.
+On shared host `chungus2`, automatically leased CPU 63, all 144 timed samples
+completed, matched the checked inventory hashes and passed the fixed schedule.
+All four mode-1 verdicts are **consistent with declared complexity**.
+The matching [phase run](data/sign-det-phases/f7d5f1a66/metadata.json) used the
+same binary and source, on a separately leased CPU.
+
+| Registration | Declared model | Median at s=64 | Median at s=2048 | Normalized slope |
+| --- | --- | ---: | ---: | ---: |
+| `runProduce` | `s * (Nat.log2 s + 1)` | 12.039 ms | 490.606 ms | -0.069035 |
+| `runDirect` | `s * (Nat.log2 s + 1)` | 20.236 ms | 756.031 ms | -0.094660 |
+| `runTree` | `s * (Nat.log2 s + 1)` | 9.945 ms | 394.123 ms | -0.088139 |
+| `runGraph` | `s` | 1.094 ms | 28.993 ms | -0.012685 |
+
+The `s=64` medians are descriptive; the fitted verdict drops this first rung
+and uses `s=128,…,2048` with the pinned `|β| ≤ 0.15` tolerance. These are
+separate complexity schedules, not adjacent paired comparisons. The
+[first clean-source run](data/sign-det-sparse/13dc09b53/metadata.json), taken
+before the stronger matrix-inventory check was added, is retained in full.
+Its outputs passed the same schedule; no completed run was discarded.
+
+## Earlier measurements
 
 The [raw exports and provenance](data/sign-det-sparse/2327cca21/metadata.json)
 record source `2327cca216bf94d8b54d7f2ad561ab04d361366f`,
@@ -118,6 +147,9 @@ The filtering script came from
 [`lean-bench-samply`](https://github.com/kim-em/lean-bench-samply) at commit
 `9356baa2f5757ee40320a897bd284914d5bb9f5e`; the committed manifest hashes
 the locally retained raw files, which are not part of this repository.
+A copy at `/home/kim/.local/share/hex-bench/sign-det-sparse-profile-b8166e5f1`
+was checked against all 33 manifest hashes. The raw profile is local evidence,
+not a portable part of this PR.
 
 Leaf self-time is 37.36% allocation/free, 21.34% GMP, 28.02% Lean runtime,
 5.81% Lean own code, and 7.47% other. The classifier accounts for 92.53%;

@@ -42,7 +42,31 @@ Maximal support, degree/bit/witness growth, nested evidence, comparisons,
 descriptor operations, allocation/serialization sizes and proof checking
 remain separate required coverage.
 
-## Retained measurements
+## Current-source measurements
+
+The [current phase exports and provenance](data/sign-det-phases/f7d5f1a66/metadata.json)
+use source `f7d5f1a6648e676bbfadc6f17d0d8b7b67fed51d` and the same binary as
+the current whole-table schedule. The output directory was outside the source
+tree, and both the runner and LeanBench recorded a clean worktree. All 180
+samples completed with the expected hashes and exact six-trial schedule on
+shared host `chungus2`, automatically leased CPU 10. Every mode-1 verdict is
+**consistent with declared complexity**.
+
+| Registration | Median at s=64 | Median at s=2048 | Normalized slope |
+| --- | ---: | ---: | ---: |
+| `runQueries` | 2.334 ms | 77.070 ms | 0.015537 |
+| `runProducts` | 0.714 ms | 28.267 ms | -0.079495 |
+| `runMatrices` | 0.461 ms | 27.924 ms | 0.036256 |
+| `runSolvers` | 1.654 ms | 66.333 ms | -0.074965 |
+| `runSigns` | 0.031 ms | 1.289 ms | 0.090481 |
+
+The `s=64` medians are descriptive; the fitted verdict drops this leading
+rung and uses `s=128,…,2048` with the pinned `|β| ≤ 0.15` tolerance.
+The [first clean-source phase run](data/sign-det-phases/13dc09b53/metadata.json),
+before the matrix-identity inventory check, is also retained in full. The
+current inventory checks both exact matrix identities for every actual node.
+
+## Earlier measurements
 
 [Raw samples and provenance](data/sign-det-phases/95ef4e489/metadata.json)
 record source `95ef4e489`, the same pinned LeanBench revision as the
