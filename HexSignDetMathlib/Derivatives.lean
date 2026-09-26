@@ -36,7 +36,6 @@ theorem derivativesFrom_get (p : DensePoly E) (n i : Nat) (hi : i < n) :
         ih p.derivative i (by omega), interpret_derivative f hz hn hm]
       exact (Function.iterate_succ_apply Polynomial.derivative (i + 1) (interpret f hz p)).symm
 
-variable [One E] [Add E] [Sub E]
 variable [LinearOrder K]
 
 include hn hm in
@@ -63,6 +62,6 @@ theorem RawDescriptor.querySigns {Ctx : Type w} (raw : RawDescriptor E Ctx)
   simp only [Function.comp_apply, derivatives]
   rw [List.getElem?_eq_getElem hindex, Option.getD_some]
   rw [derivativesFrom_get f hz hn hm raw.head raw.head.natDegree (j - 1) hlt]
-  simpa only [Nat.sub_add_cancel hjpos]
+  simp only [Nat.sub_add_cancel hjpos]
 
 end Hex.SignDet
