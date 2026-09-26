@@ -304,6 +304,9 @@ theorem domain_kernel :
       d.raw.check Sturm.orderSign 7 d.evidence
 #guard (full.descriptor? Sturm.orderSign 8 (singletonRaw.full [1, 1])).isNone
 #guard (full.descriptor? Sturm.orderSign 7 (singletonRaw.full [-1, 1])).isNone
+#guard (Descriptor.validate Sturm.orderSign 7 (singletonRaw.full [1, 1])).isSome
+#guard (Descriptor.validate Sturm.orderSign 8 (singletonRaw.full [1, 1])).isNone
+#guard (Descriptor.validate Sturm.orderSign 7 (singletonRaw.full [-1, 1])).isNone
 #guard (full.descriptor? Sturm.orderSign 7
   {singletonRaw.full [1, 1] with indices := [2, 2]}).isNone
 
@@ -328,6 +331,10 @@ theorem domain_kernel :
 /-- info: 'Hex.SignDet.Descriptor.build_raw' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Descriptor.build_raw
+
+/-- info: 'Hex.SignDet.Descriptor.validate_eq_some' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.validate_eq_some
 
 /-- info: 'Hex.SignDet.Descriptor.build_ofCount' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
