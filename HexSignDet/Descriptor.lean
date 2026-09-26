@@ -163,6 +163,27 @@ def Descriptor.build (sign : E → Int) (context : Ctx) (raw : RawDescriptor E C
       else .ok (.error .malformed)
   else .ok (.error .context)
 
+/-- Validate a raw descriptor when only success or failure matters. The
+diagnostic `build` operation remains available to distinguish invalid inputs. -/
+def Descriptor.validate (sign : E → Int) (context : Ctx) (raw : RawDescriptor E Ctx) :
+    Option (Descriptor E Ctx sign context) :=
+  match Descriptor.build sign context raw with
+  | .ok (.ok d) => some d
+  | _ => none
+
+/-- The public option succeeds exactly when the diagnostic constructor succeeds. -/
+theorem Descriptor.validate_eq_some {sign : E → Int} {context : Ctx}
+    {raw : RawDescriptor E Ctx} {d : Descriptor E Ctx sign context} :
+    Descriptor.validate sign context raw = some d ↔
+      Descriptor.build sign context raw = .ok (.ok d) := by
+  unfold Descriptor.validate
+  cases h : Descriptor.build sign context raw with
+  | error err => simp
+  | ok result =>
+    cases result with
+    | error err => simp
+    | ok d' => simp
+
 /-- A successful descriptor build retains the exact supplied raw input. -/
 theorem Descriptor.build_raw {sign : E → Int} {context : Ctx}
     {raw : RawDescriptor E Ctx} {d : Descriptor E Ctx sign context}

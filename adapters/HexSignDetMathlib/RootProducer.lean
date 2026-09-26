@@ -223,6 +223,20 @@ theorem Descriptor.build_success_iff {Ctx : Type w} [DecidableEq Ctx]
         context raw hctx hw domain hd hone
 
 include hz h1 ha hs hm hnat hn hi hsign in
+/-- The public validator succeeds exactly for a well-formed raw descriptor
+that selects one real root in a valid domain. -/
+theorem Descriptor.validate_success_iff {Ctx : Type w} [DecidableEq Ctx]
+    (context : Ctx) (raw : RawDescriptor E Ctx) :
+    (∃ d, Descriptor.validate sign context raw = some d) ↔
+      raw.context = context ∧ raw.wellFormed = true ∧
+      HexSturmMathlib.Domain f hz raw.head raw.lower raw.upper ∧
+      ((Tarski.rootsIn (interpret f hz raw.head)
+        (raw.lower.map f) (raw.upper.map f)).filter
+        (fun x => signsAt f hz raw.queries x = raw.signs)).card = 1 := by
+  simpa only [Descriptor.validate_eq_some] using
+    (Descriptor.build_success_iff f hz h1 ha hs hm hnat hn hi sign hsign context raw)
+
+include hz h1 ha hs hm hnat hn hi hsign in
 /-- On a valid raw input, the constructor reports no matching root, one
 accepted root, or multiple matching roots according to the exact cardinality. -/
 theorem Descriptor.build_valid_cases {Ctx : Type w} [DecidableEq Ctx]

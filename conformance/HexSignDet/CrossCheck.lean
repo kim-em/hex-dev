@@ -304,6 +304,9 @@ theorem domain_kernel :
       d.raw.check Sturm.orderSign 7 d.evidence
 #guard (full.descriptor? Sturm.orderSign 8 (singletonRaw.full [1, 1])).isNone
 #guard (full.descriptor? Sturm.orderSign 7 (singletonRaw.full [-1, 1])).isNone
+#guard (Descriptor.validate Sturm.orderSign 7 (singletonRaw.full [1, 1])).isSome
+#guard (Descriptor.validate Sturm.orderSign 8 (singletonRaw.full [1, 1])).isNone
+#guard (Descriptor.validate Sturm.orderSign 7 (singletonRaw.full [-1, 1])).isNone
 #guard (full.descriptor? Sturm.orderSign 7
   {singletonRaw.full [1, 1] with indices := [2, 2]}).isNone
 

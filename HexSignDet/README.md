@@ -194,6 +194,9 @@ the evidence, distinguishing absent and ambiguous conditions, malformed inputs,
 invalid domains and context mismatches. Internal BKR failures retain a separate
 outer diagnostic result in this Mathlib-free executable; the companion proves
 that branch unreachable under a lawful coefficient interpretation.
+`Descriptor.validate` returns `some` exactly when this constructor succeeds and
+provides the public option-valued validation operation. The companion proves
+that success means the raw descriptor selects one real root.
 
 `Thom.compareSigns` implements
 the largest-differing-index rule as a finite operation on sign words; root
@@ -263,7 +266,7 @@ four BKR tables and four prepared domains: joint re-encoding evidence and a
 separate target descriptor for each side. Sharing this work and accounting
 for its cost against the required comparison bounds remain required.
 
-The total `determinePrepared` API and domain-exact `validate` API remain required.
+The total `determinePrepared` API remains required.
 The optional companion proves producer completeness and root-count correspondence
 relative to the named #10389 root-sum bridge; it does not yet provide those
 total executable wrappers. Completion,

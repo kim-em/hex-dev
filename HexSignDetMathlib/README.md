@@ -104,6 +104,8 @@ constructor. The result retains the exact raw input by `Descriptor.build_raw`.
 `Descriptor.build_success_iff` gives the converse and characterizes successful
 construction by exact context, well-formedness, mathematical domain validity
 and a unique matching root.
+`Descriptor.validate_success_iff` transfers this exact criterion to the public
+option-valued validator; the diagnostic constructor remains available to callers.
 `RawDescriptor.querySigns` identifies the executable query word with signs of
 formal iterated derivatives at every point. `Descriptor.build_success_formal`
 states the same success criterion using those formal derivatives.
