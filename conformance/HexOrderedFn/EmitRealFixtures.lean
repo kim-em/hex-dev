@@ -99,10 +99,16 @@ def run : IO Unit := do
       ("zero", 2, .sub .x .x),
       ("non-dyadic", 1/3, linear (1/4)),
       ("degree", 3/2, .sub (.sub (.pow .x 4) (.pow .x 2)) (.rat 1)),
+      ("degree-height", 1/2, .sub (.pow .x 12) (.rat (2^128 + 1))),
       ("quotient", 3/2, .div (.sub (.pow .x 2) (.rat 2)) (.sub (.pow .x 2) (.rat 3)))] do
     for joint in [false, true] do
       for n in [0, 1, 2, 4, 8, 12] do
         emit s!"{name}/{joint}" q joint f n
+  -- A 129-bit value amplifies denominator uncertainty during joint refinement.
+  -- This precision also exercises successful total approximation in that case.
+  for joint in [false, true] do
+    emit s!"degree-height/{joint}" (1/2) joint
+      (.sub (.pow .x 12) (.rat (2^128 + 1))) 144
 
 end Hex.OrderedFn.EmitReal
 

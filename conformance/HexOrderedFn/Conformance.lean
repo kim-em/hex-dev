@@ -23,12 +23,14 @@ addition, multiplication, intersection, division and strict/exact signs; Horner
 enclosure, finite signs, total sign and approximation, and first-success search;
 lowest-index/coefficient scans, infinitesimal sign, comparison and successive levels.
 Covered properties: finite signs agree with rational evaluation; bounds contain
-endpoint and midpoint results; erased success witnesses do not bypass refinement.
+endpoint and midpoint results; erased success witnesses do not bypass refinement;
+double negation, addition commutativity/zero identity, widths of sums and negations,
+and intersection idempotence, commutativity and membership.
 Covered edge cases: zero, negative and zero-crossing bounds, nonpositive width
 requests, earlier failed trials and nonmonotone success.
 
 The imported core tests supply small ordinary-kernel checks alongside these
-compiled checks. Checks reach degree 12, coefficient heights reach 129 bits,
+compiled checks. Horner and scan checks reach degree 12, coefficient heights reach 129 bits,
 and infinitesimal depth reaches 3. Rational real subjects exercise finite queries
 without asserting transcendence; semantic sqrt(2) cases live in the companion.
 
@@ -39,6 +41,8 @@ ordinary field arithmetic, sign, approximation, comparisons, provider transport
 and derived coefficient approximation are checked on the same core definitions.
 This test remains separate from Mathlib-free conformance. Outstanding evidence
 and downstream integration are tracked under #10376.
+Serialized source/context/version validation belongs to the consuming tactic;
+this API binds registrations by type and the oracle rejects malformed fixtures.
 
 Infinitesimal Z3/exact fixtures are emitted by `HexOrderedFn.EmitFixtures`.
 Real refinement fixtures from `HexOrderedFn.EmitRealFixtures` check Horner bounds,
@@ -101,6 +105,7 @@ private def boundsAgree : Bool := Id.run do
       let low : Rat := (bi : Int) - 3
       let a : Bounds := ⟨lo, lo + 2, by grind⟩
       let b : Bounds := ⟨low, low + 2, by grind⟩
+      if a.width != 2 || a.neg.width != 2 || (a.add b).width != 4 then return false
       if a.neg.neg != a || a.add b != b.add a || a.add (.singleton 0) != a then
         return false
       if a.inter a != some a || a.inter b != b.inter a then return false
