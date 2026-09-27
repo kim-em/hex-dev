@@ -479,6 +479,17 @@ private def yunRejectPower : Bool :=
 
 #guard yunRejectPower
 
+/-- Product and degree can match while overlapping factors invalidate replay. -/
+private def yunRejectOverlap : Bool :=
+  let p : DensePoly Rat := x - DensePoly.C 1
+  let f := p ^ 3
+  let entries := #[(p, 1), (p, 2)]
+  Yun.reconstruct 1 entries == f &&
+    Yun.degreeSum entries == f.natDegree &&
+    !(Yun.check f (.factors 1 entries))
+
+#guard yunRejectOverlap
+
 /-- Zero and nonzero constants have distinct Yun outputs. -/
 private def yunZero : Bool :=
   match Yun.decompose (0 : DensePoly Rat) with
@@ -551,7 +562,10 @@ private def yunNested : Option (Nat × Nat × Bool) := do
       let factor := entries[0]?.map Prod.fst
       return (entries.size, entries[0]?.map Prod.snd |>.getD 0,
         u.value == 1 &&
-          (factor.map fun p => (p.eval alpha).value == 0).getD false)
+          (factor.map fun p =>
+            p.natDegree == 1 && (p.eval alpha).value == 0 &&
+              (DensePoly.C u * (p * p)).toArray.map (fun c => c.value) ==
+                f.toArray.map (fun c => c.value)).getD false)
 
 #eval yunNested
 #guard yunNested == some (1, 2, true)

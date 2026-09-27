@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Yun
-public import HexRealClosureMathlib.Polynomial
 public import HexPolyMathlib.Euclid
 public import Mathlib.FieldTheory.Separable
 
@@ -16,9 +15,9 @@ public section
 /-!
 # Mathematical interpretation of Yun replay
 
-The executable replay's gcd checks imply separability of each emitted factor
-over the coefficient field. This does not assert that every result produced by
-the Yun recurrence passes replay.
+The executable replay's gcd checks imply separability of each emitted rational
+factor. This does not assert that every result produced by the Yun recurrence
+passes replay.
 -/
 
 namespace Hex.RealClosure.Yun
@@ -52,8 +51,7 @@ private theorem gcd_isUnit (p q : DensePoly Rat)
     Polynomial.degree_eq_natDegree hGzero]
   exact_mod_cast hdegreeG
 
-/-- A factor accepted by replay is separable over its lawful coefficient
-field, hence squarefree in characteristic zero. -/
+/-- A rational factor accepted by replay is separable. -/
 theorem check_factor_separable (f : DensePoly Rat) (unit : Rat)
     (entries : Array (DensePoly Rat × Nat))
     (entry : DensePoly Rat × Nat) (hmem : entry ∈ entries)
