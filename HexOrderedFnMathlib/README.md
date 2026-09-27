@@ -80,8 +80,9 @@ second registration compiles under its relative-transcendence hypotheses, while
 a finite outer query executes successive coefficient approximation without
 postulating a second independent named constant.
 
-The APIs and proofs are implemented (phase 1). Independent API review and
-the remaining Phase-4 evidence are outstanding under
+The [computational performance report](../reports/hex-ordered-fn-performance.md)
+records the runtime evidence. Downstream tower integration and clean/eager
+selected-root normalization measurements remain outstanding under
 [#10376](https://github.com/kim-em/hex-dev/issues/10376).
 
 The ordinary-kernel tests check the model and order laws and audit their axiom
