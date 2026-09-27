@@ -22,10 +22,25 @@ abbrev Element {context : Nat} (d : Root context) :=
 
 namespace Element
 
-/-- Pack a polynomial after the executable selected-root zero check. -/
+/-- A rational polynomial has integral coefficients exactly when all its
+denominators are one. -/
+@[expose] def clean (p : DensePoly Rat) : Bool :=
+  p.toArray.all (fun c => c.den == 1)
+
+/-- Retain the remainder for a literally monic, clean defining polynomial.
+Other definitions keep the original representative. -/
+@[expose] def packedPoly {context : Nat} (d : Root context)
+    (p : DensePoly Rat) : DensePoly Rat :=
+  if d.raw.head.leadingCoeff == 1 && clean d.raw.head then
+    p % d.raw.head
+  else
+    p
+
+/-- Retain the permitted remainder, then apply the selected-root zero check. -/
 @[expose] def ofPoly {context : Nat} {d : Root context} (p : DensePoly Rat) :
     Element d :=
-  if h : isZero d p = false then some ⟨p, h⟩ else none
+  let stored := packedPoly d p
+  if h : isZero d stored = false then some ⟨stored, h⟩ else none
 
 /-- Recover the stored polynomial, using the zero polynomial for the unique
 zero representation. -/

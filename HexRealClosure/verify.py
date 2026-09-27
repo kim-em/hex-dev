@@ -163,6 +163,8 @@ ext_bezout = ext_poly_add(ext_poly_mul(ext_left, ext_dividend),
 ext_derivative = [mul((Q(i), Q(0)), c)
                   for i, c in enumerate(ext_dividend)][1:]
 ext_derivative_at_alpha = add(ext_derivative[0], mul(ext_derivative[1], alpha))
+high = [Q(0), Q(0), Q(0), Q(1)]
+high_remainder = rem(high, head)
 candidate_roots = [neg(alpha), alpha, (Q(3), Q(0))]
 derivative = [i * c for i, c in enumerate(head)][1:]
 
@@ -237,6 +239,9 @@ expected = [
     f"{str(not ext_remainder).lower()}, {str(ext_quotient[0] == alpha).lower()})",
     f"some ({len(ext_gcd) - 1}, {str(ext_bezout).lower()}, "
     f"{str(ext_derivative_at_alpha == mul((Q(2), Q(0)), alpha)).lower()})",
+    f"some ({len(high_remainder) - 1}, true, {len(high) - 1}, "
+    f"{len(high_remainder) - 1}, "
+    f"{str(eval_poly(high_remainder, alpha) == eval_poly(high, alpha)).lower()})",
 ]
 
 run = subprocess.run(
@@ -245,4 +250,4 @@ run = subprocess.run(
 )
 actual = re.findall(r"info: HexRealClosure/Tests\.lean:\d+:0: (.+)", run.stdout + run.stderr)
 assert actual == expected, f"Lean outputs {actual!r}; exact oracle expects {expected!r}"
-print("exact oracle passed for twenty-one runnable cases")
+print("exact oracle passed for twenty-two runnable cases")
