@@ -687,6 +687,320 @@ thing to build first because [hex-int-factor](../../SPEC/Libraries/hex-int-facto
 it too, for its primitive-root API. It belongs here, in
 `HexPrimality/Order.lean`, and hex-int-factor consumes it.
 
+### Bounded SQUFOF splitting
+
+#### Scope and placement
+
+SQUFOF (Shanks’ square forms factorization) supplies an additional bounded,
+deterministic proper-factor search for inputs below `2^64`. It is useful to
+investigate for balanced machine-sized semiprimes; neither an improvement over
+Brent rho nor a complete factorization guarantee follows from its algorithm name.
+
+The executable and its validation theorem live in
+`HexPrimality/Squfof.lean`, exported by `HexPrimality.lean`. HexIntFactor uses
+this shared primitive directly. This follows the existing upstream placement
+of the reusable rho and Pollard `p − 1` primitives and introduces no import of
+HexIntFactor into HexPrimality. Computation and the proper-divisor theorem are
+Mathlib-free. Existing factorization checkers remain the certification boundary;
+there is no new certificate format or Mathlib correspondence theorem to prove.
+
+The initial implementation comprises the explicit route, its tests, and native
+performance evidence. Production dispatch remains unchanged. Promoting the
+route requires the evidence and explicit budget propagation described below;
+it is not an implicit consequence of adding an exported splitter.
+
+Out of scope: SQUFOF2, class-group APIs, completeness or success-probability
+proofs, parallel multiplier races, new externs, inputs at or above `2^64`, and
+word-arithmetic implementations whose intermediates can wrap.
+
+#### Public contract
+
+Names below are in `Hex.Nat.Squfof`:
+
+```lean
+structure Limits where
+  multipliers : Nat := 16
+  steps : Nat := 65536
+  queueCapacity : Nat := 128
+deriving Repr, DecidableEq
+
+inductive Outcome where
+  | factor (divisor : Nat)
+  | noFactor
+  | exhausted
+  | unsupported
+deriving Repr, DecidableEq
+
+structure Result where
+  outcome : Outcome
+  attempts : Nat
+  steps : Nat
+  peakQueue : Nat
+deriving Repr, DecidableEq
+
+def factor (n : Nat) (limits : Limits := {}) : Result
+
+theorem factor_spec {n : Nat} {limits : Limits} {d : Nat}
+    (h : (factor n limits).outcome = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n
+
+theorem factor_attempts (n : Nat) (limits : Limits) :
+    (factor n limits).attempts ≤ min limits.multipliers 16
+
+theorem factor_steps (n : Nat) (limits : Limits) :
+    (factor n limits).steps ≤ (factor n limits).attempts * limits.steps
+
+theorem factor_queue (n : Nat) (limits : Limits) :
+    (factor n limits).peakQueue ≤ limits.queueCapacity
+```
+
+`steps` in Limits is a **per-multiplier combined forward-and-reverse budget**.
+`steps` in Result is the sum actually consumed. One step is one quotient
+computation `(S + P) / Q`, including the terminal reverse symmetry test and a
+forward step stopped by queue exhaustion. Initialization, integer roots, gcds,
+and final divisor validation are not recurrence steps. `attempts` counts each
+multiplier whose initialization starts, including initialization-only exits;
+prechecks consume zero multiplier attempts. A multiplier returning a gcd
+factor or skipped because `gcd(k,n)=n` still counts as one attempt. `peakQueue` is the maximum number
+of live queue entries at any time, not total insertions.
+
+Input handling has a fixed order:
+
+1. `n < 4` returns `noFactor` with zero counters.
+2. `2^64 ≤ n` returns `unsupported` with zero counters.
+3. Even `n` returns the validated factor 2; square `n` returns its validated
+   integer square root. These prechecks have zero counters, including with
+   zero multiplier or step budget.
+4. Zero multiplier or step budget otherwise returns `exhausted` with zero
+   counters.
+5. Otherwise traverse the allowed multiplier prefix below.
+
+The primitive has no `Rand` parameter and consumes no random words. A caller
+must retain its exact incoming generator state through this route. Outcomes
+other than `factor` assert nothing about primality or the existence of a factor.
+All success paths, including prechecks and multiplier gcds, pass through a
+single gate checking `1 < d`, `d < n`, and `n % d = 0`. Prove `factor_spec`
+from that gate, without a quadratic-form correctness theorem. Do not require
+returned divisors to be prime.
+
+#### Multiplier schedule and arithmetic
+
+Try this fixed order, truncated to `min limits.multipliers 16`:
+
+```
+1, 3, 5, 7, 11, 15, 21, 33, 35, 55, 77, 105, 165, 231, 385, 1155
+```
+
+This ascending schedule tries small radicands first and is the reference
+policy for the explicit API, not an asserted optimum. The fixed 65536-step
+slice intentionally permits a bounded failure followed by another multiplier;
+it does not claim to cover the average forward-plus-reverse work at 64 bits.
+Native evidence must compare this policy with 131072- and 262144-step slices
+and with the reversed schedule before recommending production defaults.
+Benchmark-only policy drivers must call the same per-multiplier kernel,
+not a second implementation of the recurrence.
+The paper's queue-completeness argument assumes squarefree inputs and bounds
+on multiplier size. These hypotheses are not required by this API: outside
+them, searches can miss useful forms or reach trivial reverse candidates;
+the final gate still establishes every reported proper divisor.
+
+For each `k`, first compute `gcd(k,n)`: return a proper divisor through the
+gate, and skip this multiplier if the gcd equals `n`. Otherwise the gcd is 1.
+Set `M = k*n`, `D = 2*M` when `M % 4 = 1`, and `D = M` otherwise. Here `D`
+is the continued-fraction radicand; the forms in this version have discriminant
+`4*D`. If `D` is square, validate `gcd(sqrt(D), n)` and otherwise skip the
+multiplier. These square/zero-denominator checks are defensive: for the
+admitted odd `n,k`, `D` is 2 or 3 modulo 4 and cannot be a square. Never divide
+by an initial zero denominator.
+
+Use exact Lean `Nat`/`Int` arithmetic throughout. The input bound does **not**
+put `k*n`, `2*k*n`, or every intermediate product inside UInt64. In particular,
+compute signed differences before converting back to Nat; truncated Nat
+subtraction is not an implementation of the recurrence. A checked branchwise
+Nat implementation is acceptable only when it implements the same signed
+expression exactly. Any unexpected negative result, nonpositive denominator,
+or inexact division abandons this multiplier without a factor. Such cases must
+be exposed by internal test diagnostics, rather than disguised as a valid trace.
+
+#### Forward and reverse recurrences
+
+Use the continued-fraction variant of SQUFOF. Let `S = floor(sqrt(D))` and
+initialize `(Qprev, P, Q) = (1, S, D-S*S)`. This is **form F1**. Set the
+queue threshold to `L = floor((4*D)^(1/4))`, computed exactly as
+`Nat.sqrt (Nat.sqrt (4*D))`. The queue starts empty.
+
+Every forward transition does the following in this order:
+
+1. Consume one step. Compute `b = floor((S+P)/Q)` and `Pnext = b*Q-P`.
+2. From the **old** `Q,P`, set `g = Q / gcd(Q,2*k)`. If `g ≤ L`, enqueue
+   `(g, P % g)`. If the queue is already at capacity, terminate this
+   multiplier as exhausted before inserting; do not silently drop an entry.
+3. Compute `Qnext = Qprev + b*(P-Pnext)` using signed arithmetic, and replace
+   `(Qprev,P,Q)` by `(Q,Pnext,Qnext)` simultaneously.
+4. Test the new `Q` for being square only after forward transitions
+   **1, 3, 5, ...**, which reach **F2, F4, F6, ...**. A transition count
+   beginning at 1 must not test after transitions 2, 4, 6, ... .
+5. If `Q=r*r`, search the queue from its front for the first pair `(r,t)`
+   with `P % r = t`. With a match and `r>1`, remove entries through that
+   match and continue. A match with `r=1` ends this multiplier without a
+   factor (the principal cycle has repeated). With no match, enter reverse
+   search. Nonsquares continue forward.
+
+An array plus a head index or a bounded ring buffer may represent the FIFO;
+retired entries must not accumulate without bound. Queue capacity refers to
+live entries. Search order and removal of the complete prefix are observable
+algorithm behavior, not optional optimizations. Residues avoid interpreting
+`P-t` as truncated natural subtraction.
+
+For a selected square form, save the forward state, queue, and forward
+transition index, then initialize reverse search with
+
+```
+Qprev := r
+P := P + r * floor((S-P)/r)
+Q := (D-P*P)/Qprev
+```
+
+The floor is signed floor division; validate positive denominators and exact
+last division. Then repeatedly consume one step and compute
+`b = floor((S+P)/Q)` and `Pnext = b*Q-P`. If `Pnext=P`, extract
+`d = gcd(Q,n)` from the **current Q**, pass it through the proper-factor gate,
+and return on success. If the gate rejects it, restore the saved forward
+state, queue, and forward index, then continue at the next forward transition,
+retaining all spent reverse steps in the shared budget. If `Pnext ≠ P`,
+perform the same simultaneous recurrence update and continue reversing. The reverse phase draws from the
+same remaining budget; entering it does not reset or duplicate fuel.
+
+On exhaustion, advance to the next admitted multiplier with its fresh
+per-multiplier budget. On a repeated cycle, do likewise.
+Return the first validated factor. If none succeeds, return `exhausted` if any
+multiplier exhausted its step or queue budget, or if the requested prefix
+omitted remaining scheduled multipliers; return `noFactor` otherwise. Internal
+arithmetic-guard failures abandon only the current multiplier and remain
+visible in diagnostic tests; the final outcome follows the same aggregate
+rule. This finite search makes no completeness promise.
+
+The recurrence has diagnostic invariants `D = P*P + Qprev*Q`, `0 ≤ P ≤ S`,
+and `0 < Qprev,Q`. In particular, reverse initialization has `S-P ≥ 0`;
+signed arithmetic still makes the operation explicit and guards malformed
+internal states. These are
+test assertions for both directions, not extra proof preconditions at the
+public boundary. The result theorem must hold for every Nat input and Limits,
+including primes, powers, zero limits, and unsupported inputs.
+
+#### Validation
+
+Use the existing HexPrimality conformance and benchmark subprojects and
+extend their existing CI commands if needed. Do not add CI jobs or workflows.
+
+Required coverage:
+
+- Zero, one, two, three; even inputs; odd squares and higher prime powers;
+  prime inputs; composites with repeated and distinct factors.
+- Zero step/multiplier limits, queue capacity zero, partial multiplier prefixes,
+  forward exhaustion, reverse exhaustion, and queue exhaustion. Assert exact
+  attempts/steps, the upper bounds, and deterministic replay.
+- Numbers sharing a proper factor with a multiplier; multiplier-only ambiguous
+  factors that must not escape the final gcd and proper-divisor gate.
+- Inputs immediately below, equal to, and above `2^64`; large `k*n` crossing
+  UInt64. Unsupported inputs must not be silently reduced modulo `2^64`.
+- Independent oracle validation of every emitted divisor by integer division;
+  failures are permitted. For primes the only forbidden result is `factor`.
+  Use a committed diverse semiprime corpus for required completion, so a
+  consistently failing implementation cannot pass merely by returning no factor.
+- A transition-level regression for `n=22117019`, `k=1`: the initial state is
+  `(1,4702,8215)`; after 17 forward transitions it is `(6314,1737,3025)`;
+  reverse initialization is `(55,4652,8653)`; the eighth reverse quotient
+  computation detects symmetry at `P=4451,Q=4451`, and the factor is `4451`.
+  The total is 25 steps. This anchors indexing and extraction independently
+  of the implementation’s own generated fixtures.
+- Internal per-multiplier queue regressions: for `n=247,k=385`, transition 3
+  reaches `(230,305,9)` with queue `[(3,2),(23,17)]` and removes the first
+  entry. Transition 9 reaches `(451,242,81)` with queue `[(23,17),(9,8)]`
+  and removes both entries through the matching `(9,8)`. Success follows
+  after 13 forward and eight reverse steps, yielding factor 13.
+- Internal reverse-rejection regression: `n=5,k=7` reaches reverse symmetry
+  at `Q=10`, whose gcd with n is the whole input. Reject it and resume
+  forward; this multiplier terminates on the repeated cycle after four
+  total steps, without returning a factor.
+- An unsuccessful `k=1` followed by useful multiplier progress:
+  `n=633003781` has initial state `(1,35581,1)` for `k=1`, inserts `(1,0)`,
+  and repeats after one transition. With `k=3`, it returns 8821 in 277 steps
+  (181 forward, 96 reverse), including a queue hit at forward transition 125.
+  Test the chosen schedule rather than require every multiplier to succeed.
+
+The external checker should verify divisor arithmetic independently and not
+copy the continued-fraction recurrence. Trace checks supplement it for the
+algorithm and accounting details that a proper-divisor oracle cannot detect.
+Prove the four public theorems without `sorry`, `axiom`, or `native_decide`.
+
+#### Native evidence and production promotion
+
+Measure compiled Lean, not a Python translation. Separate raw splitting from
+prime certification, certificate replay, complete factorization, and primality
+certificate search. Use Mathlib-free bench imports and the shared-host policy
+in `SPEC/benchmarking.md`: fixed schedules, recorded host context, adjacent
+AB/BA comparison arms, retention of every completed run, and at most one
+unchanged rerun of an inconclusive result.
+
+The input corpus must include balanced 32-, 40-, 48-, 56-, and 64-bit
+semiprimes with varied factor gaps, plus unbalanced composites, primes,
+squares/powers, smooth `p-1` cases, and production table-complete controls.
+Avoid a ladder made solely of nearly equal factors: it can make SQUFOF’s
+first square form atypically easy. The raw splitter corpus and public portfolio
+corpus are separate because structural reductions can finish an input before
+a splitting route runs. Include the existing retained balanced-factor corpus
+for continuity with `reports/hex-int-factor-performance.md`.
+
+Record input, limits, multiplier attempts, recurrence steps, queue peak,
+completion/failure outcome, exact divisor, and runtime. Report failed capped
+runs as failed capped runs, never omit them or compare only successful inputs.
+Compare against the existing Brent-rho primitive on the same inputs with a
+fixed seed list and fully stated budgets; SQUFOF itself has no seed variability.
+A comparison against PARI full factorization must be labelled as unequal
+work, not as an isolated SQUFOF speed ratio.
+
+With fixed queue capacity and bounded operand sizes, a forced-work ladder has
+linear cost in recurrence transitions plus initialization per multiplier.
+For variable queue capacity, searches cost up to that capacity per tested
+square form; report queue work rather than claiming unconditional constant
+cost. The familiar heuristic `N^(1/4)` describes average search work under
+assumptions about forms, not a worst-case bound or a termination proof. Apply
+the ordered evidence modes of `SPEC/benchmarking.md` honestly to irregular
+completion data; a fuel cap is not an empirical complexity model. Include one
+representative profile attributing the dominant raw-splitter cost. A combined
+cap can expire immediately before or during reverse search; the per-phase
+trace must show this rather than count an uncompleted reverse as success.
+Use reduced fixtures/limits for CI `Bench verify` so the existing per-library
+30-second soft budget and repository hard cap remain respected.
+
+Before any default integration, preregister the proposed position, cutoff,
+limits, and an acceptance rule in the comparison protocol, then measure the
+entire changed portfolio against the current one. Retain defaults if the
+rule is not met. A proposed integration must explicitly address all of:
+
+- The complete-factor dispatcher and every recursively popped cofactor.
+- HexPrimality’s `partialFactor` and certificate-search path, or an explicit
+  decision that only the downstream factorizer enables the route.
+- `PrimeCertBudget`, `FactorSearchBudget`, registered factor hooks, tactic
+  profiles, and callers that deliberately disable work. SQUFOF needs its own
+  allocation; zero rho steps must not authorize an unbudgeted new route.
+- Exact attempts accounting, preserved Rand state, retained partial snapshots,
+  and continued reachability of rho, p−1, and ECM after bounded failure.
+
+The explicit primitive can ship with useful evidence while this promotion
+remains disabled. The implementation directive does not grant authority to
+change default search policy without the measured comparison and a SPEC
+update pinning the selected dispatch and resource contract.
+
+#### Algorithm reference
+
+The continued-fraction recurrence, queue test, and multiplier treatment are
+specified by Gower and Wagstaff, [Square Form Factorization](https://homes.cerias.purdue.edu/~ssw/squfof.pdf),
+§§3.3 and 5.2; the numerical trace is in §3.4. The explicit transition
+indices, bounded reverse phase, proper-divisor validation, resource accounting,
+and implementation domain above are this library’s executable contract.
+
 ### Pollard p-minus-one stage 2
 
 This is the implementation contract for the continuation in
@@ -1730,6 +2044,7 @@ For stage 2, `i₀ = floor(Q.head/210)` and `ell` is binary bit length
 | `primeCert?` | dominated by `partialFactor` | bounded by recursive fuel, one base-2/bound-64 p−1 call per nontrivial partial search, per-node worklist fuel, and `defaultPrimeCertBudget` rho restarts/cycle steps |
 | `primeCertWith? factor` | dominated by `factor` plus the same certificate assembly | one producer invocation per non-table certificate node with explicit recursive, worklist, and rho allocations; the producer must honor the allocation and supplies its remaining cost model |
 | Pollard p−1 stage 2 | at most `210 + 2*ell(i₀) + G + 2*L` modular multiplications; `2 + ceil(L/32) + 32` gcds | `L` interval primes, `G` giant advances; residue, sieve, index, and trace storage are specified in the stage-2 contract; enumeration is additional |
+| `Squfof.factor` (specified) | at most `A*F` recurrence steps and `O(A*F*C)` queue comparisons, plus bounded-size arithmetic and per-attempt initialization | `A ≤ 16` multiplier attempts, `F` per-multiplier steps, `C` queue capacity; operands bounded by the `<2^64` input domain and fixed multiplier list; no worst-case `N^(1/4)` claim |
 | sieve to `N` | `O(√N · max(32, log N))` loop/doubling rounds | each marking round is a bit operation on an `N/3`-bit `Nat` |
 
 These are operation counts, not bit complexity; subject comparisons,
