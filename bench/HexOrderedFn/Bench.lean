@@ -20,7 +20,7 @@ abbrev Third := RationalFn Second
 
 def config : LeanBench.BenchmarkConfig :=
   { paramSchedule := .custom #[128, 256, 512, 1024, 2048, 4096, 8192, 16384],
-    targetInnerNanos := 100000000, maxSecondsPerCall := 10, outerTrials := 3 }
+    targetInnerNanos := 1000000000, maxSecondsPerCall := 10, outerTrials := 3 }
 
 def prepScan (n : Nat) : First := RationalFn.ofPoly (DensePoly.monomial n (-1))
 def scan (f : First) : Int := Infinitesimal.sign orderSign f
