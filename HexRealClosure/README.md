@@ -40,7 +40,7 @@ Run `lake build HexRealClosure.Tests HexQuerySemantics` and
 `python3 HexRealClosure/verify.py` from the repository root. The test uses
 `(X²−2)(X−3)` with the root in `(1,2)`, plus a non-monic definition and a
 checked factor split. The Python oracle computes exact arithmetic in ℚ(√2)
-independently of Lean for twenty-two cases and is run manually; CI builds the Lean
+independently of Lean for twenty-three cases and is run manually; CI builds the Lean
 `#guard` tests.
 The companion proofs inherit the named #10389 admission in
 `HexRealRootsMathlib.Tarski.check_rootSum`; no new admission is used here.
@@ -81,8 +81,7 @@ the selected-root zero check; the companion proves that this preserves the
 selected value and integrality of clean inputs. Nonmonic definitions keep
 their original representatives, as do monic definitions with fractional
 coefficients. The retained remainder has degree below the defining polynomial.
-The zero check
-currently enumerates canonical roots on each nonzero packing call. The
+The zero check currently enumerates canonical roots on each nonzero packing call. The
 general tower's cost targets remain to be implemented.
 
 The companion's `polyValue` maps `DensePoly (Element d)` into polynomials over
@@ -93,6 +92,14 @@ noninjective polynomial interpretation rather than assuming raw coefficient
 field laws. The runnable nested-coefficient example divides `Y²−2` by
 `Y−α`; its remainder `α²−2` is semantically zero but not the zero rational
 polynomial. It also checks extended gcd and differentiation.
+
+`Element.transportPoly`, `rebindPoly` and `refinePoly` move every packed
+coefficient through a checked root or context change. The companion proves
+zero reflection, degree preservation and coefficientwise value preservation.
+`polyDenote` gives all three transported polynomials the same polynomial over
+the shared canonical real-algebraic field, even when their stored coefficient
+representations differ. A runnable factor-split example checks the three
+paths, including an interior zero coefficient.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and

@@ -330,4 +330,28 @@ private def packedStorage : Option
 #eval packedStorage
 #guard packedStorage == some (2, true, 3, 2, 3, true, true, true)
 
+/-- A polynomial of packed coefficients survives re-encoding, rebinding and
+the composite factor split, including a canonical zero interior coefficient. -/
+private def packedPolyTransport : Option
+    (Nat × Nat × Nat × Bool × Bool × Bool × Bool) := do
+  let d ← Root.validate 7 raw
+  let below : Expression d := ⟨x - DensePoly.C 3⟩
+  let r? ← (below.split? 8 (.finite 1) (.finite 2)).toOption
+  let r ← r?
+  let alpha : Element d := Element.ofPoly x
+  let zero : Element d := Element.ofPoly (x * x - DensePoly.C 2)
+  let low : Element d := Element.ofPoly (x - DensePoly.C 3)
+  let p : DensePoly (Element d) := DensePoly.ofCoeffs #[alpha, zero, low, alpha]
+  let encoded := Element.transportPoly r.encoding p
+  let rebound := Element.rebindPoly r.binding encoded
+  let refined := Element.refinePoly r p
+  let same (q : DensePoly (Element r.binding.target)) : Bool :=
+    (List.range 4).all (fun i => (q.coeff i).value == (p.coeff i).value)
+  return (encoded.natDegree, rebound.natDegree, refined.natDegree,
+    (encoded.coeff 1) == 0, same rebound, same refined,
+    (refined.coeff 3).sign == 1)
+
+#eval packedPolyTransport
+#guard packedPolyTransport == some (3, 3, 3, true, true, true, true)
+
 end Hex.RealClosure.Tests

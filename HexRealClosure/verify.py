@@ -167,6 +167,8 @@ high = [Q(0), Q(0), Q(0), Q(1)]
 high_remainder = rem(high, head)
 fractional_head = poly_mul([Q(-2), Q(0), Q(1)], [Q(-1, 2), Q(1)])
 assert fractional_head[-1] == 1 and any(c.denominator != 1 for c in fractional_head)
+transport_coeffs = [alpha, (Q(0), Q(0)), below, alpha]
+transport_root_preserved = eval_poly(split, alpha) == (Q(0), Q(0))
 candidate_roots = [neg(alpha), alpha, (Q(3), Q(0))]
 derivative = [i * c for i, c in enumerate(head)][1:]
 
@@ -247,6 +249,11 @@ expected = [
     f"{str(not rem(head, head)).lower()}, "
     f"{str(eval_poly(head, alpha) == (Q(0), Q(0))).lower()}, "
     f"{str(eval_poly(high_remainder, alpha) == eval_poly(high, alpha)).lower()})",
+    f"some ({len(transport_coeffs) - 1}, {len(transport_coeffs) - 1}, "
+    f"{len(transport_coeffs) - 1}, "
+    f"{str(transport_coeffs[1] == (Q(0), Q(0))).lower()}, "
+    f"{str(transport_root_preserved).lower()}, "
+    f"{str(transport_root_preserved).lower()}, {str(sign(alpha) == 1).lower()})",
 ]
 
 run = subprocess.run(
@@ -255,4 +262,4 @@ run = subprocess.run(
 )
 actual = re.findall(r"info: HexRealClosure/Tests\.lean:\d+:0: (.+)", run.stdout + run.stderr)
 assert actual == expected, f"Lean outputs {actual!r}; exact oracle expects {expected!r}"
-print("exact oracle passed for twenty-two runnable cases")
+print("exact oracle passed for twenty-three runnable cases")

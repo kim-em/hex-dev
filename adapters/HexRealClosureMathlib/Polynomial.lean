@@ -24,6 +24,18 @@ theorem polyValue_coeff {context : Nat} {d : Root context}
     (polyValue p).coeff i = (p.coeff i).toValue := by
   simp [polyValue]
 
+/-- Interpret every coefficient in the shared canonical real-algebraic field,
+so polynomials from different checked contexts have a common target. -/
+noncomputable def polyDenote {context : Nat} {d : Root context}
+    (p : DensePoly (Element d)) : Polynomial Hex.RealAlgebraicNumber :=
+  HexPolyMathlib.Interpret.interpret Element.value
+    (fun a => (Element.eq_zero_iff a).symm) p
+
+theorem polyDenote_coeff {context : Nat} {d : Root context}
+    (p : DensePoly (Element d)) (i : Nat) :
+    (polyDenote p).coeff i = (p.coeff i).value := by
+  simp [polyDenote]
+
 theorem polyValue_C {context : Nat} {d : Root context} (a : Element d) :
     polyValue (DensePoly.C a) = Polynomial.C a.toValue := by
   exact HexPolyMathlib.Interpret.interpret_C
@@ -171,6 +183,102 @@ theorem polyValue_bezout {context : Nat} {d : Root context}
     (fun a b => Element.toValue_div a b)
     (fun a b => Element.toValue_add a b)
     (Element.toValue_one (d := d)) p q
+
+private theorem polyMap_eq {E F : Type*} [Zero E] [DecidableEq E]
+    [Zero F] [DecidableEq F] (f : E → F)
+    (hz : ∀ a, f a = 0 ↔ a = 0) (p : DensePoly E) :
+    DensePoly.ofCoeffs (p.toArray.map f) =
+      DensePoly.Interpret.map f hz p := by
+  rw [← DensePoly.Interpret.map_ofCoeffs f hz p.toArray,
+    DensePoly.ofCoeffs_toArray]
+
+theorem Element.transportPoly_eq_map {context : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : SignDet.Reencoding d head lower upper)
+    (p : DensePoly (Element d)) :
+    transportPoly r p = DensePoly.Interpret.map (transport r)
+      (transport_zero_iff r) p :=
+  polyMap_eq (transport r) (transport_zero_iff r) p
+
+theorem Element.rebindPoly_eq_map {context version : Nat} {d : Root context}
+    (r : Rebinding d version) (p : DensePoly (Element d)) :
+    rebindPoly r p = DensePoly.Interpret.map (rebind r)
+      (rebind_zero_iff r) p :=
+  polyMap_eq (rebind r) (rebind_zero_iff r) p
+
+theorem Element.refinePoly_eq_map {context version : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : Refinement d head lower upper version)
+    (p : DensePoly (Element d)) :
+    refinePoly r p = DensePoly.Interpret.map (refine r)
+      (refine_zero_iff r) p :=
+  polyMap_eq (refine r) (refine_zero_iff r) p
+
+theorem Element.transportPoly_degree {context : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : SignDet.Reencoding d head lower upper)
+    (p : DensePoly (Element d)) :
+    (transportPoly r p).natDegree = p.natDegree := by
+  rw [transportPoly_eq_map]
+  exact DensePoly.Interpret.map_degree (transport r) (transport_zero_iff r) p
+
+theorem Element.rebindPoly_degree {context version : Nat} {d : Root context}
+    (r : Rebinding d version) (p : DensePoly (Element d)) :
+    (rebindPoly r p).natDegree = p.natDegree := by
+  rw [rebindPoly_eq_map]
+  exact DensePoly.Interpret.map_degree (rebind r) (rebind_zero_iff r) p
+
+theorem Element.refinePoly_degree {context version : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : Refinement d head lower upper version)
+    (p : DensePoly (Element d)) :
+    (refinePoly r p).natDegree = p.natDegree := by
+  rw [refinePoly_eq_map]
+  exact DensePoly.Interpret.map_degree (refine r) (refine_zero_iff r) p
+
+theorem Element.transportPoly_coeff {context : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : SignDet.Reencoding d head lower upper)
+    (p : DensePoly (Element d)) (i : Nat) :
+    ((transportPoly r p).coeff i).value = (p.coeff i).value := by
+  rw [transportPoly_eq_map, DensePoly.Interpret.map_coeff]
+  exact value_transport r (p.coeff i)
+
+theorem Element.rebindPoly_coeff {context version : Nat} {d : Root context}
+    (r : Rebinding d version) (p : DensePoly (Element d)) (i : Nat) :
+    ((rebindPoly r p).coeff i).value = (p.coeff i).value := by
+  rw [rebindPoly_eq_map, DensePoly.Interpret.map_coeff]
+  exact value_rebind r (p.coeff i)
+
+theorem Element.refinePoly_coeff {context version : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : Refinement d head lower upper version)
+    (p : DensePoly (Element d)) (i : Nat) :
+    ((refinePoly r p).coeff i).value = (p.coeff i).value := by
+  rw [refinePoly_eq_map, DensePoly.Interpret.map_coeff]
+  exact value_refine r (p.coeff i)
+
+theorem polyDenote_transport {context : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : SignDet.Reencoding d head lower upper)
+    (p : DensePoly (Element d)) :
+    polyDenote (Element.transportPoly r p) = polyDenote p := by
+  ext i
+  rw [polyDenote_coeff, polyDenote_coeff, Element.transportPoly_coeff]
+
+theorem polyDenote_rebind {context version : Nat} {d : Root context}
+    (r : Rebinding d version) (p : DensePoly (Element d)) :
+    polyDenote (Element.rebindPoly r p) = polyDenote p := by
+  ext i
+  rw [polyDenote_coeff, polyDenote_coeff, Element.rebindPoly_coeff]
+
+theorem polyDenote_refine {context version : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : Refinement d head lower upper version)
+    (p : DensePoly (Element d)) :
+    polyDenote (Element.refinePoly r p) = polyDenote p := by
+  ext i
+  rw [polyDenote_coeff, polyDenote_coeff, Element.refinePoly_coeff]
 
 end Hex.RealClosure
 

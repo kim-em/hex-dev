@@ -385,6 +385,23 @@ theorem value_refine {context version : Nat} {d : Root context}
       Expression.transport, toExpression, polynomial] using
       Expression.toCanonical_refine r (⟨v.1⟩ : Expression d)
 
+theorem transport_zero_iff {context : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : SignDet.Reencoding d head lower upper) (a : Element d) :
+    transport r a = 0 ↔ a = 0 := by
+  rw [eq_zero_iff (transport r a), eq_zero_iff a, value_transport]
+
+theorem rebind_zero_iff {context version : Nat} {d : Root context}
+    (r : Rebinding d version) (a : Element d) :
+    rebind r a = 0 ↔ a = 0 := by
+  rw [eq_zero_iff (rebind r a), eq_zero_iff a, value_rebind]
+
+theorem refine_zero_iff {context version : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : Refinement d head lower upper version) (a : Element d) :
+    refine r a = 0 ↔ a = 0 := by
+  rw [eq_zero_iff (refine r a), eq_zero_iff a, value_refine]
+
 end Element
 
 /-- The values of packed rational selected-root expressions form a subfield
