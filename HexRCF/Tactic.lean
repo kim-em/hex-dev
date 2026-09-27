@@ -101,7 +101,10 @@ private meta def admittedModule (constant : Name) : Option Name :=
   else if #["checkForall_sound", "checkExists_sound"].any
       (fun s => constant == .str fieldResult s) then
     some fieldBuild
-  else if constant == .str checkedPresentation "checkPresentation_sound_of_selected" then
+  else if #[
+      "checkPresentation_sound_of_selected",
+      "checkPolynomials_sound"].any
+      (fun s => constant == .str checkedPresentation s) then
     some commonPresentation
   else none
 

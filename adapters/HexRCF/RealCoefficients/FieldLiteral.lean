@@ -119,7 +119,7 @@ meta def proveFinCases (goal : Expr) (proofs : Array Expr) : MetaM Expr := do
     let proof := proofs[index]!
     caseGoal.withContext do
       unless ← isDefEq (← inferType proof) (← caseGoal.getType) do
-        throwError "rcf: source proof at index {index} does not match its literal entry"
+        throwError "rcf: source proof at index {index} does not match its literal entry\nactual: {← ppExpr (← inferType proof)}\nexpected: {← ppExpr (← caseGoal.getType)}"
       caseGoal.assign proof
   return ← instantiateMVars candidate
 

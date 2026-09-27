@@ -92,6 +92,15 @@ theorem horner_realPoly (f : DensePoly Rat) (x : ℝ) :
   | cons c cs ih =>
       simp [DensePoly.evalCoeffList, ih, mul_comm, add_comm]
 
+/-- The literal generator coordinate is the identity polynomial. -/
+theorem generator_eval (x : ℝ) :
+    (LiteralSign.realPoly (DensePoly.ofList [0, 1])).eval x = x := by
+  rw [← horner_realPoly]
+  have hlist : (DensePoly.ofList ([0, 1] : List Rat)).toArray.toList = [0, 1] := by
+    decide
+  rw [hlist]
+  norm_num [DensePoly.evalCoeffList]
+
 theorem evalAt_realPoly {p : ZPoly} {s : DyadicSquare}
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     (hreal : s.meetsRealAxis = true) (f : DensePoly Rat)
@@ -100,6 +109,31 @@ theorem evalAt_realPoly {p : ZPoly} {s : DyadicSquare}
       (LiteralSign.realPoly f).eval
         (Field.value (Field.literalRep p s hw hp) v) := by
   rw [evalAt_value hw hp hreal, horner_realPoly]
+
+/-- A checked generator coordinate also authenticates any rational polynomial
+in that generator. This is the value-preservation step for `QAdjoin` sources. -/
+theorem evalAt_selected {p : ZPoly} {s : DyadicSquare}
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (hreal : s.meetsRealAxis = true) (f : DensePoly Rat)
+    (v : PolyQuot p (SimpleRoot.ofSquare p s hw hp)) (source : ℝ)
+    (hsource : Field.value (Field.literalRep p s hw hp) v = source) :
+    Field.value (Field.literalRep p s hw hp) (evalAt f v) =
+      (LiteralSign.realPoly f).eval source := by
+  rw [evalAt_realPoly hw hp hreal, hsource]
+
+/-- Ordinary `QAdjoin` arithmetic denotes polynomial evaluation at the
+selected real generator, with literal coefficient data. -/
+theorem ofField_eval (generator : RealAlgebraicNumber)
+    (value : QAdjoin generator.toAlgebraic) (f : DensePoly Rat)
+    (hcoeff : value.coeffs = f) :
+    (Coefficients.ofField generator value).toReal =
+      (LiteralSign.realPoly f).eval generator.toReal := by
+  rw [Coefficients.ofField_toReal, hcoeff]
+  have hpoly : LiteralSign.realPoly f =
+      (HexPolyMathlib.toPolynomial f).map (Rat.castHom ℝ) := by
+    ext i
+    simp [LiteralSign.realPoly]
+  rw [hpoly, Polynomial.eval_map]
 
 private theorem realPoly_root_complex (q : ZPoly) (x : ℝ)
     (hroot : (LiteralSign.realPoly (ZPoly.toRatPoly q)).IsRoot x) :
@@ -419,5 +453,45 @@ theorem checkPresentation_sound_of_selected {p : ZPoly} {s : DyadicSquare}
   exact checkEntry_sound_of_selected hw hp table (sourcePolynomials i)
     (sourceSquares i) (sourceP i) (hwSource i) (hpSource i)
     (hpolynomial i) (sourceValues i) (hselected i) (coordinates i) hentry
+
+/-- Once the ordered generators have been checked, field-element sources
+are authenticated by literal rational polynomials in those generators. -/
+theorem checkPolynomials_sound {p : ZPoly} {s : DyadicSquare}
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (table : LiteralSign.Table
+      (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    {n : Nat} (sourcePolynomials : Fin n → DensePoly Rat)
+    (sourceSquares : Fin n → DyadicSquare)
+    (anchors : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (sourceP : Fin n → ZPoly)
+    (hwSource : ∀ i, atomWitness (sourceP i) (sourceSquares i))
+    (hpSource : ∀ i, (mahlerPrec (sourceP i) : Int) ≤ (sourceSquares i).prec)
+    (hpolynomial : ∀ i, ZPoly.toRatPoly (sourceP i) = sourcePolynomials i)
+    (anchorValues : Fin n → ℝ)
+    (hselected : ∀ i,
+      (Field.literalRep (sourceP i) (sourceSquares i)
+        (hwSource i) (hpSource i)).root.re = anchorValues i)
+    (fields : Fin n → DensePoly Rat) (sourceValues : Fin n → ℝ)
+    (hvalue : ∀ i, (LiteralSign.realPoly (fields i)).eval (anchorValues i) =
+      sourceValues i)
+    (accepted : checkPresentation hw hp table sourcePolynomials sourceSquares anchors = true) :
+    (fun i => Field.value (Field.literalRep p s hw hp)
+      (evalAt (fields i) (anchors i))) = sourceValues := by
+  have hanchors := checkPresentation_sound_of_selected hw hp table
+    sourcePolynomials sourceSquares anchors sourceP hwSource hpSource
+    hpolynomial anchorValues hselected accepted
+  funext i
+  exact (evalAt_selected hw hp
+    (by
+      have hparts : Field.checkSignTable p s hw hp table = true ∧
+          (List.finRange n).all (fun j =>
+            checkEquation (sourcePolynomials j) (anchors j) &&
+              table.lookup? (discSlack (sourceSquares j) (anchors j)) == some 1) = true := by
+        simpa only [checkPresentation, Bool.and_eq_true] using accepted
+      have hcheck := hparts.1
+      simp only [Field.checkSignTable, Bool.and_eq_true] at hcheck
+      exact hcheck.1.2)
+    (fields i) (anchors i) (anchorValues i) (congrFun hanchors i)).trans
+      (hvalue i)
 
 end Hex.RCF.RealCoefficients.CommonPresentation
