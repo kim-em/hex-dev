@@ -525,6 +525,19 @@ private def yunGap : Option (Nat × Array Rat) :=
 #eval yunGap
 #guard yunGap == some (5, #[-1, 1])
 
+/-- A repeated irreducible quadratic does not need rational linear roots. -/
+private def yunQuadratic : Bool :=
+  let p : DensePoly Rat := x * x + 1
+  let f := p * p * p
+  match Yun.decompose f with
+  | .zero => false
+  | .factors u entries =>
+      u == 1 && entries.size == 1 &&
+        ((entries[0]?.map (fun entry => entry.1 == p && entry.2 == 3)).getD false) &&
+        Yun.check f (.factors u entries)
+
+#guard yunQuadratic
+
 /-- The same executable recurrence accepts packed selected-root coefficients. -/
 private def yunNested : Option (Nat × Nat × Bool) := do
   let d ← Root.validate 7 raw
