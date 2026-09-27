@@ -73,8 +73,12 @@ theorem singleton_correct :
 
 example : Real.sign? singletonSource (linear 2) 1 = some 0 := by decide +kernel
 
-example : (0 : Int) = sgn (Real.eval (Rat.castHom ℝ) 2 (linear 2)) :=
-  (Real.sign?_sound singleton_correct _ 1 (by decide +kernel)).1
+example : Real.eval (Rat.castHom ℝ) 2 (linear 2) = 0 := by
+  have h : (0 : Int) = sgn (Real.eval (Rat.castHom ℝ) 2 (linear 2)) :=
+    (Real.sign?_sound singleton_correct _ 1 (by decide +kernel)).1
+  apply sign_eq_zero_iff.mp
+  cases hs : SignType.sign (Real.eval (Rat.castHom ℝ) 2 (linear 2)) <;>
+    simp_all [sgn]
 
 -- Ordinary theorem application checks a sign whose progress theorem is opaque.
 theorem totalSign_correct : totalSign = 1 :=

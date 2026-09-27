@@ -296,8 +296,9 @@ alignment diagnostics, but cannot substitute for raw data when re-filtering.
 ## Remaining evidence
 
 The four single-level search families have passing conservative upper-bound
-evidence. Successive approximation requires a separate model and measurement
-within one arithmetic regime; its earlier quartic comparison does not qualify. Clean versus eager normalization
+evidence. Successive approximation has one inconclusive operation-count run and one
+consistent unchanged repeat on small operands; its earlier quartic comparison
+does not qualify. Larger-precision and depth-varying real-search evidence remains open. Clean versus eager normalization
 comparisons and downstream tower integration also remain part of the full issue.
 The existing [RationalFn arithmetic report](hex-rational-fn-performance.md#internal-alternatives)
 provides cancellation versus multiply-then-normalize comparisons on identical
@@ -410,9 +411,38 @@ All older measurements remain committed, including Horner’s unresolved shorter
 batches. The two runs use different CPUs and are not a paired speed comparison.
 
 The current successive registration uses parameters 4, 6, 8, 10, 12, 14, 16
-and 18, keeping integer arithmetic in the scalar representation. Its model is
+and 18, covering small integer operands. This is not a GMP-free path:
+Lean’s [runtime gcd](https://github.com/leanprover/lean4/blob/v4.34.1/src/runtime/object.cpp#L1526)
+converts even scalar arguments to GMP integers. Its model is
 the exact number of bound operations, `(n+2)(7n+55)/2`: seven for each of the
 `(n+2)(n+3)/2` negative-X inner trials, five for each of the `2(n+2)`
 constant-coefficient trials, and seven for each of the `n+2` outer trials.
 This mode-1 model is declared from the search equations, before measurement.
-A representative profile and measurements are needed before claiming a pass.
+The [first run](data/hex-ordered-fn/successive-scalar/runtime.json) is
+inconclusive, with normalized slope +0.185. The one permitted
+[unchanged repeat](data/hex-ordered-fn/successive-scalar-repeat/runtime.json)
+is consistent with the model, slope +0.040. All 48 completed samples remain
+recorded; neither run is discarded. Both use three trial-major repetitions
+and four-second batches. The harness excludes the first rung from both
+verdict fits, retaining it in the raw results. Repeat medians range from
+136.513 µs at n=4 to 1.024 ms at n=18. These runs support the operation-count
+model on this small-operand family; they do not establish a tight bound for
+large-precision nested searches.
+
+The [representative profile](data/hex-ordered-fn/successive-profile-summary.json)
+at n=18 attributes 36.81% of leaf samples to GMP, 34.40% to allocation,
+18.69% to the Lean runtime, 2.90% to Hex code, and 7.20% to other code.
+Inclusive stacks put 90.26% inside the coefficient callback and 72.18%
+inside runtime gcd, consistent with repeated inner-search arithmetic and
+small-integer conversion/allocation costs. This differs from the large-integer
+profile at n=8192 and does not justify reusing its quadratic limb-cost model.
+
+Filtering retains 5762 samples over 4111 operation regions (5.775 s), with
+1.201 ms alignment residual and a passing ±5 ms sensitivity check. All raw
+perf/imported/filtered data, sidecars, and symbol tables are retained at
+`/home/kim/bench-results/issue-10376-scalar-profile`; the committed context and
+summary identify the commands and source. Both measurements and the profile
+use source `6b751bcaad0c7a4cc88c5cd5196e8f86827eb3af`. Each context records
+matching executable hashes before and after execution. Host load is retained
+without removing samples; the first run began with a one-minute load of
+119.13 and ended at 92.72. The repeat is not a paired speed comparison.

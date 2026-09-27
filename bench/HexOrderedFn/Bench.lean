@@ -321,7 +321,8 @@ def successiveApproximation (q : Successive.Query) : Rat × Rat := Successive.ru
 -- Mode 1: count exact bound operations, including both search levels. There
 -- are (n+2)(n+3)/2 negative-X trials (7 operations each), two constant-1
 -- trials per outer trial (5 each), and 7 operations in each outer trial.
--- This ladder keeps all arithmetic in Lean's scalar integer representation.
+-- This ladder measures small operands; runtime gcd still calls GMP even
+-- on scalar inputs. It does not model large-integer multiplication costs.
 initialize do
   registerSearch ``successiveApproximation "(n + 2) * (7 * n + 55) / 2"
     (fun n => (n + 2) * (7 * n + 55) / 2)
