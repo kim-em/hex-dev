@@ -247,112 +247,119 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
       let formulaWhnf ← whnf source.formula
       let matrixExpr ← whnf formulaWhnf.getAppArgs.back!
       let qfExpr := matrixExpr.getAppArgs.back!
-      let some cert := QuadraticNormCertificate.certify? p |
-        throwError "rcf: this common field of degree {p.natDegree} is not supported by the current checked irreducibility route"
-      let certExpr : Q(QuadraticNormCertificate) ← FieldLiteral.quadraticCertExpr cert
-      let hcert ← mkDecideProof
-        (q(($certExpr).check $pExpr = true) : Q(Prop))
       let hdegree ← mkDecideProof (q(0 < ($pExpr).natDegree) : Q(Prop))
-      let irred ← mkAppM ``Field.checkedIrreducibleQuadraticNorm
-        #[pExpr, certExpr, hcert, hdegree]
+      let irred ← match QuadraticNormCertificate.certify? p with
+        | some cert => do
+            let certExpr : Q(QuadraticNormCertificate) ←
+              FieldLiteral.quadraticCertExpr cert
+            let hcert ← mkDecideProof
+              (q(($certExpr).check $pExpr = true) : Q(Prop))
+            mkAppM ``Field.checkedIrreducibleQuadraticNorm
+              #[pExpr, certExpr, hcert, hdegree]
+        | none => do
+            let some witness := HexBerlekampZassenhaus.FactorTactic.searchWitness p |
+              throwError "rcf: no checked irreducibility witness for this common field"
+            let witnessExpr : Q(ZPoly.IrredWitness) :=
+              HexBerlekampZassenhaus.FactorTactic.reifyWitness witness
+            let hwitness ← mkDecideProof
+              (q(ZPoly.checkIrredWitness $pExpr $witnessExpr = true) : Q(Prop))
+            mkAppM ``Field.checkedIrreducible
+              #[pExpr, witnessExpr, hwitness, hdegree]
       let instType ← mkAppM ``ZPoly.CheckedIrreducible #[pExpr]
-      if hc : cert.check p = true then
-        if hd : 0 < p.natDegree then
-          letI : ZPoly.CheckedIrreducible p :=
-            Field.checkedIrreducibleQuadraticNorm p cert hc hd
-          withLocalDecl `inst .instImplicit instType fun inst => do
-            let sourcePolyRuntime : Fin n → DensePoly Rat := fun i =>
-              (sourcePolys[i.val]?).getD (DensePoly.ofList [])
-            let sourceSquareRuntime : Fin n → DyadicSquare := fun i =>
-              (sourceSquares[i.val]?).getD s
-            let validate (data : FieldBuild.Result p s hw hp Unit (n + 1)) : MetaM Unit := do
-              unless CommonPresentation.checkPresentation hw hp data.signs
-                  sourcePolyRuntime sourceSquareRuntime anchorCoordinates do
-                let equations := (List.finRange n).map fun i =>
-                  CommonPresentation.checkEquation (sourcePolyRuntime i)
-                    (anchorCoordinates i)
-                let margins := (List.finRange n).map fun i =>
-                  data.signs.lookup? (CommonPresentation.discSlack
-                    (sourceSquareRuntime i) (anchorCoordinates i))
-                throwError "rcf: common-field proposal rejected: equations {repr equations}, margins {repr margins}"
-            let (fixedProof, certificate, data, verdictProof) ←
-              FieldLiteral.proveWithCertificate
-              pExpr rootExpr valuesExpr qfExpr values qf quantifier 8 extras validate
-            let signTable ← mkAppM ``FieldBuild.Result.signs #[certificate]
-            let signProofName := match quantifier with
-              | .forallReal => ``FieldBuild.Result.checkForall_signTable
-              | .existsReal => ``FieldBuild.Result.checkExists_signTable
-            let signProof ← mkAppM signProofName
-              #[certificate, valuesExpr, qfExpr, mkConst ``Unit.unit, verdictProof]
-            let checked ← mkAppM ``CommonPresentation.checkPresentation
-              #[hwExpr, hpExpr, signTable, sourcePolyFn, sourceSquareFn, anchorExpr]
-            let checkedGoal ← mkAppM ``Eq #[checked, mkConst ``Bool.true]
-            let checkedProof ← withLocalDeclD `htable (← inferType signProof) fun htable => do
-              let checkedMVar ← mkFreshExprMVar checkedGoal
-              let remaining ← Lean.Elab.runTactic' checkedMVar.mvarId!
-                (← `(tactic|
-                  (simp only [CommonPresentation.checkPresentation, Bool.and_eq_true];
-                   constructor <;> first | assumption | decide +kernel)))
-              unless remaining.isEmpty do
-                throwError "rcf: common-field coordinate replay left {remaining.length} goals"
-              let abstract ← mkLambdaFVars #[htable] (← instantiateMVars checkedMVar)
-              return mkApp abstract signProof
-            let sourceValues := source.valuation
-            let finType := mkApp (mkConst ``Fin) (mkNatLit n)
-            let anchorReals := plans.map (·.anchorReal)
-            let anchorValues ← FieldLiteral.finiteExpr (mkConst ``Real)
-              anchorReals anchorReals[0]!
-            let hwGoal ← withLocalDeclD `i finType fun i => do
-              let pAt := mkApp sourcePFn i
-              let sAt := mkApp sourceSquareFn i
-              mkForallFVars #[i] (← mkAppM ``atomWitness #[pAt, sAt])
-            let hpGoal ← withLocalDeclD `i finType fun i => do
-              let pAt : Q(ZPoly) := mkApp sourcePFn i
-              let sAt : Q(DyadicSquare) := mkApp sourceSquareFn i
-              let body : Q(Prop) := q((mahlerPrec $pAt : Int) ≤ ($sAt).prec)
-              mkForallFVars #[i] body
-            let hwProof ← FieldLiteral.proveFinCases hwGoal sourceWitnesses
-            let hpProof ← FieldLiteral.proveFinCases hpGoal sourcePrecisions
-            let hpolyProof ← withLocalDeclD `i finType fun i => do
-              let pAt := mkApp sourcePFn i
-              let body ← mkAppM ``ZPoly.toRatPoly #[pAt]
-              let eq ← mkEqRefl body
-              mkLambdaFVars #[i] eq
-            let hselectedGoal ← withLocalDeclD `i finType fun i => do
-              let pAt := mkApp sourcePFn i
-              let sAt := mkApp sourceSquareFn i
-              let hwAt := mkApp hwProof i
-              let hpAt := mkApp hpProof i
-              let rep ← mkAppM ``Field.literalRep #[pAt, sAt, hwAt, hpAt]
-              let root ← mkAppM ``HexRootsMathlib.RefinedIsolation.root #[rep]
-              let realPart ← mkAppM ``Complex.re #[root]
-              let valueAt := mkApp anchorValues i
-              let body ← mkAppM ``Eq #[realPart, valueAt]
-              mkForallFVars #[i] body
-            let hselectedProof ← FieldLiteral.proveFinCases hselectedGoal selectedProofs
-            let hvalueGoal ← withLocalDeclD `i finType fun i => do
-              let fieldAt := mkApp fieldFn i
-              let anchorAt := mkApp anchorValues i
-              let polynomial ← mkAppM ``LiteralSign.realPoly #[fieldAt]
-              let evaluated ← mkAppM ``Polynomial.eval #[anchorAt, polynomial]
-              let body ← mkAppM ``Eq #[evaluated, mkApp sourceValues i]
-              mkForallFVars #[i] body
-            let hvalueProof ← FieldLiteral.proveFinCases hvalueGoal
-              (plans.map (·.sourceProof))
-            let eqVal ← mkAppM ``CommonPresentation.checkPolynomials_sound
-              #[hwExpr, hpExpr, signTable, sourcePolyFn, sourceSquareFn, anchorExpr,
-                sourcePFn, hwProof, hpProof, hpolyProof, anchorValues,
-                hselectedProof, fieldFn, sourceValues, hvalueProof, checkedProof]
-            let congr ← withLocalDeclD `ρ (← inferType source.valuation) fun ρ => do
-              let body ← mkAppM ``Hex.RealFormula.Prenex.toProp #[source.formula, ρ]
-              mkAppM ``congrArg #[← mkLambdaFVars #[ρ] body, eqVal]
-            let specialized ← mkAppM ``Eq.mp #[congr, fixedProof]
-            let final ← mkAppM ``Iff.mp #[source.proof, specialized]
-            let abstract ← mkLambdaFVars #[inst] final
-            let applied := mkApp abstract irred
-            return applied
-        else throwError "rcf: common polynomial has zero degree"
-      else throwError "rcf: quadratic-norm certificate failed"
+      -- Runtime field operations use the canonical generator's instance;
+      -- the emitted proof checks a literal irreducibility witness.
+      letI : ZPoly.CheckedIrreducible p := common.generator.checked
+      withLocalDecl `inst .instImplicit instType fun inst => do
+        let sourcePolyRuntime : Fin n → DensePoly Rat := fun i =>
+          (sourcePolys[i.val]?).getD (DensePoly.ofList [])
+        let sourceSquareRuntime : Fin n → DyadicSquare := fun i =>
+          (sourceSquares[i.val]?).getD s
+        let validate (data : FieldBuild.Result p s hw hp Unit (n + 1)) : MetaM Unit := do
+          unless CommonPresentation.checkPresentation hw hp data.signs
+              sourcePolyRuntime sourceSquareRuntime anchorCoordinates do
+            let equations := (List.finRange n).map fun i =>
+              CommonPresentation.checkEquation (sourcePolyRuntime i)
+                (anchorCoordinates i)
+            let margins := (List.finRange n).map fun i =>
+              data.signs.lookup? (CommonPresentation.discSlack
+                (sourceSquareRuntime i) (anchorCoordinates i))
+            throwError "rcf: common-field proposal rejected: equations {repr equations}, margins {repr margins}"
+        let (fixedProof, certificate, data, verdictProof) ←
+          FieldLiteral.proveWithCertificate
+          pExpr rootExpr valuesExpr qfExpr values qf quantifier 8 extras validate
+        let signTable ← mkAppM ``FieldBuild.Result.signs #[certificate]
+        let signProofName := match quantifier with
+          | .forallReal => ``FieldBuild.Result.checkForall_signTable
+          | .existsReal => ``FieldBuild.Result.checkExists_signTable
+        let signProof ← mkAppM signProofName
+          #[certificate, valuesExpr, qfExpr, mkConst ``Unit.unit, verdictProof]
+        let checked ← mkAppM ``CommonPresentation.checkPresentation
+          #[hwExpr, hpExpr, signTable, sourcePolyFn, sourceSquareFn, anchorExpr]
+        let checkedGoal ← mkAppM ``Eq #[checked, mkConst ``Bool.true]
+        let checkedProof ← withLocalDeclD `htable (← inferType signProof) fun htable => do
+          let checkedMVar ← mkFreshExprMVar checkedGoal
+          let remaining ← Lean.Elab.runTactic' checkedMVar.mvarId!
+            (← `(tactic|
+              (simp only [CommonPresentation.checkPresentation, Bool.and_eq_true];
+               constructor <;> first | assumption | decide +kernel)))
+          unless remaining.isEmpty do
+            throwError "rcf: common-field coordinate replay left {remaining.length} goals"
+          let abstract ← mkLambdaFVars #[htable] (← instantiateMVars checkedMVar)
+          return mkApp abstract signProof
+        let sourceValues := source.valuation
+        let finType := mkApp (mkConst ``Fin) (mkNatLit n)
+        let anchorReals := plans.map (·.anchorReal)
+        let anchorValues ← FieldLiteral.finiteExpr (mkConst ``Real)
+          anchorReals anchorReals[0]!
+        let hwGoal ← withLocalDeclD `i finType fun i => do
+          let pAt := mkApp sourcePFn i
+          let sAt := mkApp sourceSquareFn i
+          mkForallFVars #[i] (← mkAppM ``atomWitness #[pAt, sAt])
+        let hpGoal ← withLocalDeclD `i finType fun i => do
+          let pAt : Q(ZPoly) := mkApp sourcePFn i
+          let sAt : Q(DyadicSquare) := mkApp sourceSquareFn i
+          let body : Q(Prop) := q((mahlerPrec $pAt : Int) ≤ ($sAt).prec)
+          mkForallFVars #[i] body
+        let hwProof ← FieldLiteral.proveFinCases hwGoal sourceWitnesses
+        let hpProof ← FieldLiteral.proveFinCases hpGoal sourcePrecisions
+        let hpolyProof ← withLocalDeclD `i finType fun i => do
+          let pAt := mkApp sourcePFn i
+          let body ← mkAppM ``ZPoly.toRatPoly #[pAt]
+          let eq ← mkEqRefl body
+          mkLambdaFVars #[i] eq
+        let hselectedGoal ← withLocalDeclD `i finType fun i => do
+          let pAt := mkApp sourcePFn i
+          let sAt := mkApp sourceSquareFn i
+          let hwAt := mkApp hwProof i
+          let hpAt := mkApp hpProof i
+          let rep ← mkAppM ``Field.literalRep #[pAt, sAt, hwAt, hpAt]
+          let root ← mkAppM ``HexRootsMathlib.RefinedIsolation.root #[rep]
+          let realPart ← mkAppM ``Complex.re #[root]
+          let valueAt := mkApp anchorValues i
+          let body ← mkAppM ``Eq #[realPart, valueAt]
+          mkForallFVars #[i] body
+        let hselectedProof ← FieldLiteral.proveFinCases hselectedGoal selectedProofs
+        let hvalueGoal ← withLocalDeclD `i finType fun i => do
+          let fieldAt := mkApp fieldFn i
+          let anchorAt := mkApp anchorValues i
+          let polynomial ← mkAppM ``LiteralSign.realPoly #[fieldAt]
+          let evaluated ← mkAppM ``Polynomial.eval #[anchorAt, polynomial]
+          let body ← mkAppM ``Eq #[evaluated, mkApp sourceValues i]
+          mkForallFVars #[i] body
+        let hvalueProof ← FieldLiteral.proveFinCases hvalueGoal
+          (plans.map (·.sourceProof))
+        let eqVal ← mkAppM ``CommonPresentation.checkPolynomials_sound
+          #[hwExpr, hpExpr, signTable, sourcePolyFn, sourceSquareFn, anchorExpr,
+            sourcePFn, hwProof, hpProof, hpolyProof, anchorValues,
+            hselectedProof, fieldFn, sourceValues, hvalueProof, checkedProof]
+        let congr ← withLocalDeclD `ρ (← inferType source.valuation) fun ρ => do
+          let body ← mkAppM ``Hex.RealFormula.Prenex.toProp #[source.formula, ρ]
+          mkAppM ``congrArg #[← mkLambdaFVars #[ρ] body, eqVal]
+        let specialized ← mkAppM ``Eq.mp #[congr, fixedProof]
+        let final ← mkAppM ``Iff.mp #[source.proof, specialized]
+        let abstract ← mkLambdaFVars #[inst] final
+        let applied := mkApp abstract irred
+        return applied
     else throwError "rcf: common square has insufficient precision"
   else throwError "rcf: common square failed its root witness"
 
