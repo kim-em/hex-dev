@@ -10,13 +10,6 @@ owns the `Nat.Prime` correspondence, transports, tactic registration, and
 opt-in `norm_num` policy. This SPEC remains the sole normative owner of the
 Mathlib-free search, certificate, checker, and core elaboration algorithms.
 
-This SPEC expands the "Better primality" entry in
-[future-work](../../SPEC/future-work.md). That entry's diagnosis is right -- the
-mechanism is in place and what it lacks is scale -- and two of its
-recommendations do not survive contact with the repositories they name.
-Both are corrected below, with the evidence, under "What PrimeCert
-actually is".
-
 ## What the tree has today
 
 `Hex.Nat.Prime` (`HexArith/Nat/Prime.lean:86`) is the Mathlib-free
@@ -46,27 +39,22 @@ search infrastructure rather than a checker primitive: `HexArith.extGcd`
 `HexArith.Int.extGcd` (`:396`) reaches GMP's `mpz_gcdext` through an
 `@[extern]`. The namespace is `HexArith`, not `Hex`.
 
-`hex-berlekamp-zassenhaus` carries 94 candidate primes in
+`primeTable` contains every prime below its exclusive bound `100000`, in
+ascending order, with soundness and completeness theorems. The `primality`
+tactic constructs and checks Pocklington certificates for literals beyond
+that table. `hex-berlekamp-zassenhaus` carries 94 candidate primes in
 `hotPathCandidates`, as two proof-carrying windows of `primeTable`, covering
 every prime in `[3, 500]` in ascending order. It proves both directions:
 `mem_hotPathCandidates_prime` (every entry is prime and in range) and
 `exists_mem_hotPathCandidates_of_prime` (every prime in range is an
 entry), directly from the corresponding `primeTable` membership theorems.
 
-So the shape of what is wanted already exists in miniature: a stored
-segment, verified complete over its range, consulted by a caller that
-needs "some prime with property `P`". What is missing is a segment
-larger than 500 and a way to prove a single prime larger than trial
-division reaches.
-
 ## What PrimeCert actually is
 
-[future-work](../../SPEC/future-work.md) says PrimeCert is "kernel-only (no
-`native_decide`, so compatible with the project proof policy)" and
-that "depending on it beats reimplementing Pocklington". The first is
-true. The second is not available in the form stated, and a third claim
-in that entry -- that initial-segment sieves "remain open" -- is
-overtaken by what the repository contains.
+PrimeCert is relevant prior art because it constructs kernel-checkable
+Pocklington certificates and includes a kernel-reducible sieve. Its public
+package cannot supply the Mathlib-free dependency needed here, while its
+executable design and checker results provide useful comparison points.
 
 Checked against a clone of https://github.com/b-mehta/PrimeCert
 (Bhavik Mehta and Kenny Lau) at commit `924f63d9`. Every claim below is
@@ -121,13 +109,12 @@ on.
    is Mathlib-free and the boundary is not negotiable. The good news is
    that the proof is elementary and the tree already has its
    ingredients; the lemma list is under "The Pocklington certificate".
-2. **The sieve question is not open.** A kernel-reducible sieve in the
-   shape PrimeCert uses is known to work at `10^8`. The future-work
-   entry's suggestion -- bootstrap the primes below `10^4` from the
-   primes below `10^2` by kernel-reducible trial division -- is a
-   strictly weaker technique aimed at the same target, and it should
-   not be built. What should be built is the bitset sieve, with its
-   correctness proved against `Hex.Nat.Prime`.
+2. **Use the bitset sieve rather than bootstrapped trial division.** A
+   kernel-reducible sieve in the shape PrimeCert uses is known to work at
+   `10^8`. Bootstrapping the primes below `10^4` from the primes below `10^2`
+   by kernel-reducible trial division is a strictly weaker technique aimed at
+   the same target. The bitset sieve should instead be proved correct against
+   `Hex.Nat.Prime`.
 3. **Collaboration beats both duplication and dependency.** The
    Mathlib-free executable sieve is 116 lines of `Nat` bit arithmetic
    and its design is the contribution; reimplementing it here from the
@@ -520,9 +507,8 @@ and none is claimed:
 - *search completeness*: `primeCert?` finds one. False, and the
   `PrimeCertStop.exhausted` result in its type says so.
 - *the certificate carries no second witness obligation*. This one does
-  hold, and it is what makes this item cheap relative to most of
-  [future-work](../../SPEC/future-work.md): primality is the whole conclusion,
-  with no minimality, maximality, or completeness clause left over.
+  hold: primality is the whole conclusion, with no minimality, maximality, or
+  completeness clause left over.
 
 The certificate is also small -- `O(k)` numbers of at most `log n` bits
 per level, recursively -- and the search that finds it, which needs a
@@ -1108,15 +1094,13 @@ persistent subprocess protocol, and record
 protocol overhead under the repository comparator rules. A default-bound
 `factor` subprocess is not a stage-2 comparison. These registrations extend
 the existing bench/conformance targets and single CI job, never a new job
-or matrix. The fixtures above are SPEC evidence; benchmarks and default
-enablement are implementation acceptance gates, not completed measurements.
-The new families become required Phase-4 evidence when primality milestone 6
-or int-factor milestone 8 exposes the corresponding implementation. At that
-point add their `phase4.input_families` entries in `libraries.yml` and
-revalidate the affected performance surface before claiming it complete.
-The existing `done_through` attestations concern the implemented stage-1
-surface; this SPEC-only extension does not attest stage 2 or invalidate
-those measurements.
+or matrix. The implementation evidence is retained in
+[the stage-2 report](../../reports/hex-primality-stage2.md), and the required
+`p-minus-one-stage2` and `p-minus-one-stage2-policy` Phase-4 families are
+registered in `libraries.yml`. The ordinary factorization policy did not meet
+its usefulness threshold and remains opt-in. Construction passed its native
+128-bit opportunity gate but produced no additional checked certificates over
+the disabled policy, so its default also remains off.
 
 #### Certificate-search allocation
 
@@ -1352,9 +1336,8 @@ order and tie-breaking policy. The dependency is recorded explicitly in both
 **Statements of the form "every prime in `[1, x]` satisfies `P`"** are
 what the sieve unlocks and what the table alone does not: the table
 gives a list, and the completeness direction plus a `decide +kernel`
-fold over it gives the universally quantified statement. That is the
-case [future-work](../../SPEC/future-work.md) calls open, and it is open only
-in the sense that nobody has run it.
+fold over it gives the universally quantified statement. No production caller
+currently performs such a fold.
 
 ## The API
 
@@ -2455,9 +2438,8 @@ boundary because the core consumers live below the companion.
 6. **Shared Pollard p−1 continuation.** The saved-residue boundary, complete
    interval enumeration, 210-step layout, whole-batch recovery, proper-divisor
    and conditional success theorems, counted trace, and capped APIs above.
-   Land the fixed conformance cases before adapter uptake. Default enablement
-   additionally requires the arithmetic and per-consumer benchmark gates;
-   this milestone is not established by existing stage-1 benchmarks.
+   The fixed conformance cases and per-consumer evidence are retained in the
+   stage-2 report. Default enablement remains independently benchmark-gated.
 
 7. **Automatic construction fallback.** The version-1 construction registration,
    deterministic retries under one shared attempt allocation, honest caller
@@ -2485,32 +2467,19 @@ HexPrimality.lean
 The companion's source, conformance, probe, and SPEC layout is owned by its
 [file-organization section](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md#file-organization).
 
-`libraries.yml` gains:
-
-```yaml
-  HexPrimality:
-    deps: [HexArith, HexBasic]
-    mathlib: false
-    done_through: 0
-    status: active
-  HexPrimalityMathlib:
-    deps: [HexPrimality]
-    mathlib: true
-    done_through: 0
-    status: active
-```
-
-`HexBasic` is required for `Hex.Rand`; array and bit-manipulation shims
-may add further uses, but the dependency does not depend on them.
+The authoritative dependency and phase registrations are in
+[`libraries.yml`](../../libraries.yml). `HexBasic` is required for `Hex.Rand`;
+array and bit-manipulation shims may add further uses, but the dependency does
+not depend on them.
 
 ## Open questions
 
 - **Whether ECPP belongs on the roadmap at all.** It is the next order
   of magnitude and it is a large project with an elliptic-curve
-  prerequisite this tree does not have.
-  [future-work](../../SPEC/future-work.md) notes that Bhavik Mehta has elliptic
-  curve computations in flight, which is the strongest argument for
-  waiting rather than starting.
+  prerequisite this tree does not have. The planned
+  [finite-field elliptic-curve stack](../../SPEC/future-work.md#elliptic-curves-over-finite-fields)
+  includes curve arithmetic, point counting, and the Hasse-bound bridge that
+  an unconditional ECPP soundness proof would need.
 - **Whether `rhoFactor?` should eventually move to hex-arith.** It is
   here because its only two consumers are this library's certificate
   search and [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md), and moving it down
