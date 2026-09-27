@@ -39,7 +39,7 @@ Run `lake build HexRealClosure.Tests HexQuerySemantics` and
 `python3 HexRealClosure/verify.py` from the repository root. The test uses
 `(X²−2)(X−3)` with the root in `(1,2)`, plus a non-monic definition and a
 checked factor split. The Python oracle computes exact arithmetic in ℚ(√2)
-independently of Lean for eleven cases and is run manually; CI builds the Lean
+independently of Lean for fourteen cases and is run manually; CI builds the Lean
 `#guard` tests.
 The companion proofs inherit the named #10389 admission in
 `HexRealRootsMathlib.Tarski.check_rootSum`; no new admission is used here.
@@ -51,8 +51,16 @@ is reducible. `Expression.canonicalValue` evaluates the stored polynomial
 using canonical real-algebraic arithmetic; its real value agrees with
 `Expression.denote`; expression equality, addition, subtraction, negation,
 multiplication, successful inversion, returned signs and checked refinement
-agree. A checked zero inverse also has canonical value zero. The matching
-canonical root is chosen noncomputably; executable conversion remains open.
+agree. A checked zero inverse also has canonical value zero.
+
+`Root.canonical?` clears denominators, enumerates the existing canonical real
+roots and selects the entry matching the descriptor's interval and derivative
+signs. `Root.toCanonical` returns that entry, and `Expression.toCanonical`
+evaluates a stored polynomial using canonical arithmetic. The companion proves
+the search always succeeds for a validated descriptor and that these
+executable conversions equal the selected real value and the semantic
+`canonicalValue`. The root-list search can be more expensive than local sign
+queries; it does not replace the general tower representation.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and

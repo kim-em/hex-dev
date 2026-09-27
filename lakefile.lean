@@ -1517,6 +1517,10 @@ lean_exe hexnumberfield_bench where
   srcDir := "bench"
   root := `HexNumberField.Bench
 
+lean_exe hexrealclosure_bench where
+  srcDir := "bench"
+  root := `HexRealClosure.Bench
+
 lean_exe hexnumberfieldtower_bench where
   srcDir := "bench"
   root := `HexNumberFieldTower.Bench
