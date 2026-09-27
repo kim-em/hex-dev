@@ -549,6 +549,19 @@ private def yunQuadratic : Bool :=
 
 #guard yunQuadratic
 
+/-- Zero and nonzero roots retain their multiplicities and fractional unit. -/
+private def yunMixed : Bool :=
+  let x0 : DensePoly Rat := DensePoly.ofCoeffs #[0, 1, 0]
+  let q : DensePoly Rat := x - DensePoly.C 1
+  let f := DensePoly.C (-3 / 2 : Rat) * x0 ^ 2 * q ^ 4
+  match Yun.decompose f with
+  | .zero => false
+  | .factors u entries =>
+      u == -3 / 2 && entries == #[(x, 2), (q, 4)] &&
+        Yun.check f (.factors u entries)
+
+#guard yunMixed
+
 /-- The same executable recurrence accepts packed selected-root coefficients. -/
 private def yunNested : Option (Nat × Nat × Bool) := do
   let d ← Root.validate 7 raw
