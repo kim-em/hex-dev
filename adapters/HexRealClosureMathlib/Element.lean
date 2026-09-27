@@ -23,15 +23,137 @@ theorem evalCanonical_zero (x : Hex.RealAlgebraicNumber) :
   rw [evalCanonical_real]
   simp [realPoly]
 
+theorem evalCanonical_mod {context : Nat} (d : Root context) (p : DensePoly Rat) :
+    evalCanonical (p % d.raw.head) d.toCanonical =
+      evalCanonical p d.toCanonical := by
+  apply Hex.RealAlgebraicNumber.toReal_injective
+  rw [evalCanonical_real, evalCanonical_real, d.toCanonical_real]
+  have hspec := DensePoly.divMod_spec p d.raw.head
+  have hroot : (realPoly d.raw.head).eval d.real = 0 := by
+    simpa using Expression.denote_head (d := d)
+  have heval := congrArg (fun f : DensePoly Rat => (realPoly f).eval d.real) hspec
+  rw [realPoly_add, Polynomial.eval_add, realPoly_mul,
+    Polynomial.eval_mul, hroot, mul_zero, zero_add] at heval
+  rw [DensePoly.mod_eq_divMod]
+  exact heval
+
+theorem Element.packedPoly_value {context : Nat} (d : Root context)
+    (p : DensePoly Rat) :
+    evalCanonical (packedPoly d p) d.toCanonical =
+      evalCanonical p d.toCanonical := by
+  unfold packedPoly
+  split
+  · exact evalCanonical_mod d p
+  · rfl
+
+theorem Element.clean_iff_coeff (p : DensePoly Rat) :
+    clean p = true ↔ ∀ i, (p.coeff i).den = 1 := by
+  constructor
+  · intro h i
+    by_cases hi : i < p.toArray.size
+    · have hc := (Array.all_eq_true.mp h) i hi
+      have hcoeff : p.toArray[i] = p.coeff i := by
+        rw [← DensePoly.toArray_getD p i]
+        have hip : i < p.size := by simpa using hi
+        simp [Array.getD, hip]
+      simpa [clean, hcoeff] using hc
+    · have hc : p.coeff i = 0 := by
+        apply DensePoly.coeff_eq_zero_of_size_le
+        simpa [DensePoly.toArray_size] using Nat.le_of_not_gt hi
+      simp [hc]
+  · intro h
+    apply Array.all_eq_true.mpr
+    intro i hi
+    have hc := h i
+    have hcoeff : p.toArray[i] = p.coeff i := by
+      rw [← DensePoly.toArray_getD p i]
+      have hip : i < p.size := by simpa using hi
+      simp [Array.getD, hip]
+    simpa [clean, hcoeff] using hc
+
+private noncomputable def integerPoly (p : DensePoly Rat) : Polynomial Int :=
+  HexPolyMathlib.toPolynomial (DensePoly.ofCoeffs (p.toArray.map Rat.num))
+
+private theorem integerPoly_map (p : DensePoly Rat) (hp : Element.clean p = true) :
+    (integerPoly p).map (Int.castRingHom Rat) = HexPolyMathlib.toPolynomial p := by
+  ext i
+  simp only [Polynomial.coeff_map, integerPoly, HexPolyMathlib.coeff_toPolynomial,
+    DensePoly.coeff_ofCoeffs]
+  by_cases hi : i < p.toArray.size
+  · have hcoeff : p.toArray[i] = p.coeff i := by
+      rw [← DensePoly.toArray_getD p i]
+      have hip : i < p.size := by simpa using hi
+      simp [Array.getD, hip]
+    have hden := (Element.clean_iff_coeff p).mp hp i
+    have hip : i < p.size := by simpa using hi
+    simp [Array.getD, hip, hcoeff, Rat.coe_int_num_of_den_eq_one hden]
+  · have hzero : p.coeff i = 0 := by
+      apply DensePoly.coeff_eq_zero_of_size_le
+      simpa using Nat.le_of_not_gt hi
+    have hip : ¬ i < p.size := by simpa using hi
+    simp [Array.getD, hip, hzero]
+    rfl
+
+private theorem integerPoly_monic (p : DensePoly Rat)
+    (hp : Element.clean p = true) (hm : p.leadingCoeff = 1) :
+    (integerPoly p).Monic := by
+  apply Polynomial.monic_of_injective
+    (f := Int.castRingHom Rat) (by
+      intro a b h
+      have hc : (a : Rat) = (b : Rat) := h
+      exact Int.cast_injective hc)
+  rw [integerPoly_map p hp]
+  change (HexPolyMathlib.toPolynomial p).leadingCoeff = 1
+  simpa using hm
+
+theorem Element.clean_mod_monic (p q : DensePoly Rat)
+    (hp : clean p = true) (hq : clean q = true)
+    (hm : q.leadingCoeff = 1) : clean (p % q) = true := by
+  let P := integerPoly p
+  let Q := integerPoly q
+  let f := Int.castRingHom Rat
+  have hmonic : Q.Monic := integerPoly_monic q hq hm
+  have hmap : HexPolyMathlib.toPolynomial (p % q) = (P %ₘ Q).map f := by
+    calc
+      HexPolyMathlib.toPolynomial (p % q) =
+          HexPolyMathlib.toPolynomial p % HexPolyMathlib.toPolynomial q :=
+        HexPolyMathlib.toPolynomial_mod p q
+      _ = P.map f % Q.map f := by rw [integerPoly_map p hp, integerPoly_map q hq]
+      _ = P.map f %ₘ Q.map f := by
+        rw [Polynomial.modByMonic_eq_mod (P.map f) (hmonic.map f)]
+      _ = (P %ₘ Q).map f := (Polynomial.map_modByMonic f hmonic).symm
+  apply (clean_iff_coeff (p % q)).2
+  intro i
+  have hc := congrArg (fun s : Polynomial Rat => s.coeff i) hmap
+  have hcoeff : (p % q).coeff i = (((P %ₘ Q).coeff i : Int) : Rat) := by
+    simpa [HexPolyMathlib.coeff_toPolynomial] using hc
+  rw [hcoeff]
+  simp
+
+theorem Element.packedPoly_clean {context : Nat} (d : Root context)
+    (p : DensePoly Rat) (hp : clean p = true) :
+    clean (packedPoly d p) = true := by
+  unfold packedPoly
+  split
+  · rename_i h
+    simp only [Bool.and_eq_true, beq_iff_eq] at h
+    exact clean_mod_monic p d.raw.head hp h.2 h.1
+  · exact hp
+
 namespace Element
 
 theorem ofPoly_value {context : Nat} {d : Root context} (p : DensePoly Rat) :
     (ofPoly p : Element d).value = evalCanonical p d.toCanonical := by
-  by_cases h : isZero d p = false
-  · simp [ofPoly, h, value]
-  · have ht : isZero d p = true := Bool.eq_true_of_ne_false h
-    have hz := (isZero_iff d p).mp ht
-    simp [ofPoly, h, value, hz]
+  let stored := packedPoly d p
+  have hp := packedPoly_value d p
+  by_cases h : isZero d stored = false
+  · simp [ofPoly, stored, h, value, hp]
+  · have ht : isZero d stored = true := Bool.eq_true_of_ne_false h
+    have hz := (isZero_iff d stored).mp ht
+    have hzero : evalCanonical p d.toCanonical = 0 := by
+      rw [← hp]
+      exact hz
+    simp [ofPoly, stored, h, value, hzero]
 
 theorem value_eq_eval {context : Nat} {d : Root context} (a : Element d) :
     a.value = evalCanonical a.polynomial d.toCanonical := by

@@ -40,7 +40,7 @@ Run `lake build HexRealClosure.Tests HexQuerySemantics` and
 `python3 HexRealClosure/verify.py` from the repository root. The test uses
 `(X²−2)(X−3)` with the root in `(1,2)`, plus a non-monic definition and a
 checked factor split. The Python oracle computes exact arithmetic in ℚ(√2)
-independently of Lean for twenty-one cases and is run manually; CI builds the Lean
+independently of Lean for twenty-two cases and is run manually; CI builds the Lean
 `#guard` tests.
 The companion proofs inherit the named #10389 admission in
 `HexRealRootsMathlib.Tarski.check_rootSum`; no new admission is used here.
@@ -75,9 +75,13 @@ zero reflection, preservation of the arithmetic and sign, and value
 preservation when an element is repacked through checked re-encoding, rebinding
 or a factor split. The semantic `Value d` is the image subfield of the
 canonical real algebraic numbers, and `Element.toValue` carries each total
-operation to that lawful ordered field. The zero check currently enumerates
-canonical roots on each nonzero packing call. The monic clean remainder
-retention policy and the general tower's cost targets remain to be implemented.
+operation to that lawful ordered field. For a literally monic, integral
+defining polynomial, packing retains the remainder before
+the selected-root zero check; the companion proves that this preserves the
+selected value and integrality of clean inputs. Nonmonic definitions keep
+their original representatives. The zero check
+currently enumerates canonical roots on each nonzero packing call. The
+general tower's cost targets remain to be implemented.
 
 The companion's `polyValue` maps `DensePoly (Element d)` into polynomials over
 the lawful `Value d` field. It reflects zero and preserves degree, coefficients,

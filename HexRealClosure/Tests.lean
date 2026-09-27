@@ -306,4 +306,21 @@ private def packedEuclid : Option (Nat × Bool × Bool) := do
 #eval packedEuclid
 #guard packedEuclid == some (1, true, true)
 
+/-- Monic integral definitions retain the division remainder for integral and
+fractional inputs; a nonmonic head retains the original representative. -/
+private def packedStorage : Option (Nat × Bool × Nat × Nat × Bool) := do
+  let d ← Root.validate 7 raw
+  let scaled ← Root.validate 9
+    { raw with context := 9, head := DensePoly.scale 2 head }
+  let high := x * x * x
+  let fractional := DensePoly.scale (1 / 2 : Rat) high
+  let packed : Element d := Element.ofPoly high
+  return (packed.polynomial.natDegree, Element.clean packed.polynomial,
+    (Element.packedPoly scaled high).natDegree,
+    (Element.packedPoly d fractional).natDegree,
+    packed.value == evalCanonical high d.toCanonical)
+
+#eval packedStorage
+#guard packedStorage == some (2, true, 3, 2, true)
+
 end Hex.RealClosure.Tests
