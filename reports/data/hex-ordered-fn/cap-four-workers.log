@@ -1,0 +1,8 @@
+run: 1 benchmark(s) produced zero verdict-eligible rows: Hex.OrderedFnBench.approximation
+Hex.OrderedFnBench.approximation    expected complexity: n * n    [warm cache]
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=4229c31-dirty, 2026-09-27T06:07:40Z, host=chungus2
+  param  per-call  repeats  C
+  8_192  —         —        C=— [killed at cap]
+  verdict: inconclusive (cMin=—, cMax=—, β=—)
+  per-spawn floor (harness self-measurement): 129.077 ms
+  ‼ every measurement hit the wallclock cap (`maxSecondsPerCall = 0.250s`); no `ok` row landed. The benchmark is too slow at the configured params. Bump `--max-seconds-per-call`, lower `--param-ceiling`, or use `where { paramSchedule := .custom #[...] }` to pin a tractable rung set.

@@ -8,8 +8,8 @@ Phase 4 makes algorithmic complexity a first-class deliverable. By
 the end of Phase 4 every advertised compiled operation in the library's API
 has the strongest applicable benchmark mode from
 [`SPEC/benchmarking.md` §Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim)
-and a passing result in that mode; every advertised proof/tactic operation has
-the fresh-module evidence defined below. An *inconclusive* compiled verdict is not
+and a passing result in that mode; every advertised tactic or proof generator
+has the fresh-module evidence defined below. An *inconclusive* compiled verdict is not
 a Phase 4 exit unless it is the current harness wording for a documented,
 passing one-sided upper-bound result. A failing result triggers a rollback per
 [Conventions.md §Rollback is a normal action](Conventions.md#rollback-is-a-normal-action)
@@ -25,6 +25,12 @@ opening Phase 4 issues.
 Phase 4 classifies each advertised operation by what is actually being
 measured. A library may have one track or both; its SPEC must assign every
 advertised operation to exactly one row.
+
+Ordinary theorem applications and instance-law proofs use correctness tests,
+not dedicated timing probes. The proof track below measures tactic execution,
+proof generation, certificate checking and the kernel computations they perform.
+Compilation profiling of other proofs is appropriate when investigating an
+observed build-cost problem.
 
 | Surface | Required evidence | Generic requirements replaced |
 | --- | --- | --- |

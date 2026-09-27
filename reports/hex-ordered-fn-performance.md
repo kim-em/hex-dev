@@ -135,9 +135,18 @@ extended to larger operands to distinguish limb work from fixed overhead. The
 quadratic bit-work models for refinement and Horner are not established by the
 initial measurements. The current search configuration uses eight larger
 parameters (8192, 12288, 16384, 24576, 32768, 49152, 65536, 98304), with a
-60-second operational per-call cap. It keeps the same quadratic model; the
-initial data remain evidence for their recorded smaller schedule. Their results remain unresolved evidence, without a
-Phase-4 completion claim.
+60-second configured per-call cap. The driver used one Lean worker, starving
+the parent timeout task behind pipe reads; completed calls therefore exceed
+that setting. Those samples are retained. The driver now uses four workers,
+all pinned to the same selected CPU. A regression check with a 0.25-second cap
+kills the n=8192 approximation child with four workers; the same check with
+one worker instead completes a 1.854-second operation. The
+[cap-check logs](data/hex-ordered-fn/cap-four-workers.log) and
+[single-worker reproduction](data/hex-ordered-fn/cap-one-worker.log) are functional
+checks of the watchdog, not performance evidence. The configuration
+keeps the same quadratic model; the
+initial data remain evidence for their recorded smaller schedule. Both schedules
+remain unresolved evidence, without a Phase-4 completion claim.
 
 ## Corrected comparison and height measurements
 
@@ -155,6 +164,37 @@ These are separate scaling runs, not paired before/after speedup measurements.
 | `compareHeight` | n | 8.571 µs | 953.451 µs | +0.071 |
 | `realHeight` | n | 19.123 µs | 2137.468 µs | -0.005 |
 | `provider` | n | 23.551 µs | 3434.430 µs | +0.040 |
+
+## Larger search measurements
+
+The [larger search run](data/hex-ordered-fn/search-large/runtime.json) retains
+all 96 completed samples: eight parameters from 8192 through 98304, three
+trial-major repetitions, and four targets. Every row completed successfully;
+all four complexity verdicts are inconclusive in the slower-than-declared
+direction. The table reports the first and last median and the fitted slope
+of time divided by n². The configured leading warmup trim excludes the first
+rung from the fit; its samples and displayed median are still retained.
+
+| Target | Median at 8192 | Median at 98304 | Normalized slope |
+| --- | ---: | ---: | ---: |
+| `refinement` | 324.199 ms | 113.927 s | +0.371 |
+| `jointRefinement` | 830.633 ms | 321.040 s | +0.393 |
+| `horner` | 97.860 ms | 25.596 s | +0.253 |
+| `approximation` | 1632.345 ms | 628.837 s | +0.389 |
+
+The [context](data/hex-ordered-fn/search-large/context.json) records automatically
+selected CPU 36, host load, command and binary hash. The executable was built
+from clean source commit `71590d87470f3770fdf52e4cb757d07499a502b3` and was
+unchanged throughout collection. The checkout advanced during the run; the
+approximation family's per-child metadata therefore records the later checkout
+commit `538e9c511b64db7aef401594ceeef5b975a7d47e`, not a different executable.
+The run used one Lean worker, including the timeout limitation described above.
+No completed samples were discarded or replaced because of host activity.
+
+These results reject the provisional quadratic scaling claim over this range.
+They establish neither a replacement two-sided model nor a passing upper-bound
+claim. Together with the profile below, they identify the omitted cost of
+large-rational arithmetic for further characterization.
 
 ## Search work counts
 
@@ -193,6 +233,40 @@ numerator/denominator components. `realHeight` produces n+2-bit endpoint
 components. The final approximation width has a denominator with 3n+10 bits.
 These describe reduced rational values, not GMP scratch storage or unreduced
 internal multiplication temporaries. The timings include all of that arithmetic.
+
+## Search arithmetic profile
+
+The larger search ladder exceeds the provisional quadratic model. A profile of
+`approximation` at n=8192 identifies large-integer arithmetic as the dominant
+cost: GMP accounts for 90.69% of leaf samples, allocation/free 8.24%, Lean
+runtime 0.61%, Hex code 0.02%, and other code 0.43%. Multiplication routines
+feature prominently: `__gmpn_addmul_1_x86_64` alone accounts for 39.85% of leaf
+samples. Thus the earlier linear-bit-cost assumption for each rational operation
+is inadequate. The exact operation counts remain valid; they do not imply a
+quadratic runtime bound when rational multiplication and division are included.
+This profile does not establish a replacement asymptotic model.
+The GMP manual describes the operand-size-dependent costs of
+[Karatsuba multiplication](https://gmplib.org/manual/Karatsuba-Multiplication)
+and [subquadratic GCD](https://gmplib.org/manual/Subquadratic-GCD); counting
+rational operations alone does not account for those costs.
+
+The [context](data/hex-ordered-fn/search-profile-context.json) records the
+capture command, automatically selected CPU and executable hash; the
+[summary](data/hex-ordered-fn/search-profile-summary.json) retains symbolized
+rankings and filtering diagnostics. The executable is exactly the one used by
+the larger search run, built from `71590d87470f3770fdf52e4cb757d07499a502b3`.
+The checkout had since advanced to `4229c31ac56f2c782545ff1dd47481fdfd4554fe`;
+that later hash in the profile's child metadata is not the executable's source.
+
+User-cycle sampling at 999 Hz with DWARF call stacks retained 4888 samples in
+three operation regions totaling 4893.9 ms, including calibration calls but
+excluding preparation and hashing. Clock normalization matches every raw perf
+timestamp exactly. The wall/monotonic anchor was captured after the run;
+region alignment residual is 0.492 ms and the ±5 ms sensitivity check passes.
+Leaf attribution is the basis for the percentages above. Deep GMP stacks do
+not consistently unwind to the caller, so incomplete inclusive caller shares
+are not used to divide costs between Horner evaluation and quotient enclosure.
+Raw captures remain at `/tmp/issue-10376-search-profile`.
 
 ## Remaining evidence
 
