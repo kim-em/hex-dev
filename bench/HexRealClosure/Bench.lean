@@ -59,6 +59,29 @@ setup_fixed_benchmark runPacked where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 
+/-- Functional timing anchor for polynomial division over packed coefficients.
+The input is `(Y - √2)(Y + √2)` divided by `Y - √2`, with the selected root
+from the test polynomial. The ten-second cap is an operational safeguard. -/
+def runPoly : Unit → IO UInt64 := fun _ => do
+  let some input ← rawRef.get
+    | throw (IO.userError "polynomial benchmark: missing input")
+  let some d := Root.validate 7 input
+    | throw (IO.userError "polynomial benchmark: descriptor rejected")
+  let alpha : Element d := Element.ofPoly x
+  let y : DensePoly (Element d) := DensePoly.ofCoeffs #[0, 1]
+  let divisor := y - DensePoly.C alpha
+  let dividend := divisor * (y + DensePoly.C alpha)
+  let (quotient, remainder) := DensePoly.divMod dividend divisor
+  if remainder.isZero && quotient.natDegree == 1 &&
+      Element.equal (quotient.eval (0 : Element d)) alpha then
+    return 1
+  else
+    throw (IO.userError "polynomial benchmark: wrong quotient or remainder")
+
+setup_fixed_benchmark runPoly where {
+  repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
+}
+
 end Hex.RealClosure.Bench
 
 def main (args : List String) : IO UInt32 :=

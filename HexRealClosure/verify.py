@@ -79,6 +79,33 @@ def gcd(p, q):
     return [c / p[-1] for c in p]
 
 
+def ext_trim(p):
+    while p and p[-1] == (Q(0), Q(0)):
+        p.pop()
+    return p
+
+
+def ext_poly_mul(p, q):
+    result = [(Q(0), Q(0))] * (len(p) + len(q) - 1)
+    for i, a in enumerate(p):
+        for j, b in enumerate(q):
+            result[i + j] = add(result[i + j], mul(a, b))
+    return ext_trim(result)
+
+
+def ext_divmod(p, q):
+    p, q = ext_trim(p[:]), ext_trim(q[:])
+    quotient = [(Q(0), Q(0))] * max(0, len(p) - len(q) + 1)
+    while len(p) >= len(q):
+        c = mul(p[-1], inv(q[-1]))
+        k = len(p) - len(q)
+        quotient[k] = c
+        for i, x in enumerate(q):
+            p[i + k] = add(p[i + k], neg(mul(c, x)))
+        ext_trim(p)
+    return ext_trim(quotient), p
+
+
 def inverse_or_none(x):
     return None if x == (Q(0), Q(0)) else inv(x)
 
@@ -102,6 +129,10 @@ alpha_cubed = mul(mul(alpha, alpha), alpha)
 assert alpha_cubed == (Q(0), Q(2))
 higher_poly = [Q(0), Q(0), Q(0), Q(1, 2)]
 higher = eval_poly(higher_poly, alpha)
+ext_one = (Q(1), Q(0))
+ext_divisor = [neg(alpha), ext_one]
+ext_dividend = ext_poly_mul(ext_divisor, [alpha, ext_one])
+ext_quotient, ext_remainder = ext_divmod(ext_dividend, ext_divisor)
 candidate_roots = [neg(alpha), alpha, (Q(3), Q(0))]
 derivative = [i * c for i, c in enumerate(head)][1:]
 
@@ -172,6 +203,8 @@ expected = [
     f"some ({str(eval_poly([Q(-2), Q(0), Q(1)], scaled_root) == (Q(0), Q(0))).lower()}, "
     f"{str(mul(scaled_root, scaled_root) == (Q(2), Q(0))).lower()}, "
     f"{sign(scaled_root)})",
+    f"some ({len(ext_dividend) - 1}, {len(ext_quotient) - 1}, "
+    f"{str(not ext_remainder).lower()}, {str(ext_quotient[0] == alpha).lower()})",
 ]
 
 run = subprocess.run(
@@ -180,4 +213,4 @@ run = subprocess.run(
 )
 actual = re.findall(r"info: HexRealClosure/Tests\.lean:\d+:0: (.+)", run.stdout + run.stderr)
 assert actual == expected, f"Lean outputs {actual!r}; exact oracle expects {expected!r}"
-print("exact oracle passed for nineteen runnable cases")
+print("exact oracle passed for twenty runnable cases")

@@ -275,4 +275,19 @@ private def packedNonmonic : Option (Bool × Bool × Int) := do
 #eval packedNonmonic
 #guard packedNonmonic == some (true, true, 1)
 
+/-- The shared polynomial division kernel works with packed selected-root
+coefficients and removes a semantically zero remainder. -/
+private def packedPolynomial : Option (Nat × Nat × Bool × Bool) := do
+  let d ← Root.validate 7 raw
+  let alpha : Element d := Element.ofPoly x
+  let y : DensePoly (Element d) := DensePoly.ofCoeffs #[0, 1]
+  let divisor := y - DensePoly.C alpha
+  let dividend := divisor * (y + DensePoly.C alpha)
+  let (quotient, remainder) := DensePoly.divMod dividend divisor
+  return (dividend.natDegree, quotient.natDegree, remainder.isZero,
+    Element.equal (quotient.eval (0 : Element d)) alpha)
+
+#eval packedPolynomial
+#guard packedPolynomial == some (2, 1, true, true)
+
 end Hex.RealClosure.Tests

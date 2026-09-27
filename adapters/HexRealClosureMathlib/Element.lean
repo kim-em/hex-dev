@@ -276,8 +276,10 @@ def valueField {context : Nat} (d : Root context) :
 abbrev Value {context : Nat} (d : Root context) := valueField d
 
 /-- Forget the stored polynomial while retaining its exact selected value. -/
-def Element.toValue {context : Nat} {d : Root context} (a : Element d) : Value d :=
-  ⟨a.value, ⟨a, rfl⟩⟩
+@[expose] def Element.toValue {context : Nat} {d : Root context} (a : Element d) : Value d :=
+  ⟨a.value, by
+    change ∃ b : Element d, b.value = a.value
+    exact ⟨a, rfl⟩⟩
 
 theorem Element.toValue_eq_iff {context : Nat} {d : Root context}
     (a b : Element d) : a.toValue = b.toValue ↔ Element.equal a b = true := by
