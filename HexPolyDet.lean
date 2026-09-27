@@ -7,5 +7,3 @@ Authors: Kim Morrison
 module
 
 public import HexPolyDet.Basic
-public import HexPolyDet.Packed
-public import HexPolyDet.Select

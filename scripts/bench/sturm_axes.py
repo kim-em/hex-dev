@@ -17,7 +17,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scripts.bench.det_symbolic_sweep import cpu_lease  # noqa: E402
+from scripts.bench.cpu_lease import cpu_lease  # noqa: E402
 
 
 def main() -> None:

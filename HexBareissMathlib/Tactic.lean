@@ -49,6 +49,16 @@ namespace HexMatrixMathlib.Det
 
 open Lean Meta Elab Hex.Matrix HexMatrixMathlib.Literal
 
+/-- Limits for determinant proof production. The symbolic heartbeat limit is in
+Lean's public units (one unit is 1,000 internal heartbeats); relation work counts
+distinct indexed sum tails. Neither symbolic limit affects numeric certificates.
+Packing applies only to the numeric certificate backend. -/
+structure Config extends HexMatrixMathlib.KernelConfig where
+  maxHeartbeats : Nat := 2000000
+  maxRelationWork : Nat := 1000000
+
+declare_config_elab elabConfig Config
+
 deriving instance ToExpr for Hex.Matrix.DetWitness
 
 /-- The outcome of an attempt, per the matrix-tactic protocol; a failure
@@ -60,6 +70,11 @@ inductive Outcome (α : Type) where
   | declined (msg : MessageData)
   /-- A value and a proof. -/
   | success (a : α)
+
+/-- The common result of computing a determinant independently of a target. -/
+structure Result where
+  value : Expr
+  proof : Expr
 
 /-- Recognize a determinant target: the matrix, the other side, and whether
 the determinant is on the right. -/
@@ -268,18 +283,40 @@ def proveGoal (cfg : HexMatrixMathlib.KernelConfig) (target : Expr) : MetaM (Out
   return .success (← checked A c p target proof)
 
 /-- The proof of `Matrix.det A = v` for the certified value `v`, checked. -/
-def certifiedProof (A : Expr) (c : Cert) : MetaM Proof := do
-  let p ← build {} A c
+def certifiedProof (A : Expr) (c : Cert) (cfg : Config := {}) : MetaM Proof := do
+  let p ← build cfg.toKernelConfig A c
   let target ← mkEq (← mkAppM ``Matrix.det #[A]) p.value
   return { p with proof := ← checked A c p target p.proof }
 
+/-- The single extension point for symbolic determinant computation and
+supplied-target comparison. Its functions share the same public configuration;
+the companion installs one handler when imported. -/
+structure SymbolicHandler where
+  compute : Config → Expr → MetaM (Outcome Result)
+  prove : Config → Expr → MetaM (Outcome Expr)
+
+initialize symbolicHandler : IO.Ref (Option SymbolicHandler) ← IO.mkRef none
+
+/-- Compute a determinant independently of a proposed answer. Closed numeric
+matrices use their certificate backend; the companion handles other literals. -/
+def compute (cfg : Config) (A : Expr) : MetaM (Outcome Result) := do
+  match ← certify A with
+  | .success c =>
+    trace[HexMatrix.certificate] "route: numeric-certificate"
+    let p ← certifiedProof A c cfg
+    return .success ⟨p.value, p.proof⟩
+  | .declined msg => return .declined msg
+  | .notApplicable msg =>
+    match ← symbolicHandler.get with
+    | some h => h.compute cfg A
+    | none => return .notApplicable msg
+
 /-- The `det% A` record: `Certified Matrix.det A`. -/
-def certified (A : Expr) : MetaM (Outcome Expr) := do
-  let c ← match ← certify A with
-    | .success c => pure c
+def certified (A : Expr) (cfg : Config := {}) : MetaM (Outcome Expr) := do
+  let p ← match ← compute cfg A with
+    | .success p => pure p
     | .notApplicable msg => return .notApplicable msg
     | .declined msg => return .declined msg
-  let p ← certifiedProof A c
   let some (_, lhs, _) := (← inferType p.proof).eq? |
     throwError "det: internal error: the proof is not an equality"
   return .success (← mkAppOptM ``HexMatrixMathlib.Certified.mk
@@ -291,11 +328,35 @@ with its value and proof.  The `!![…]` notations are given an integer entry
 expectation. -/
 syntax (name := detTerm) "det%" term:max : term
 
+/-- Elaborate a matrix with integer defaulting, then let surrounding annotations
+or local entries determine its carrier when the default does not fit. -/
+def elabMatrixArgument (t : Syntax) (carrier? : Option Expr := none) : Term.TermElabM Expr := do
+  let saved ← saveState
+  try
+    return ← Term.withoutErrToSorry (elabArgument t (carrier?.getD (mkConst ``Int)))
+  catch _ =>
+    saved.restore
+    let A ← Term.elabTerm t none
+    Term.synthesizeSyntheticMVarsNoPostponing
+    return ← instantiateMVars A
+
 @[term_elab detTerm]
 def elabDetTerm : Term.TermElab := fun stx expectedType? => do
   match stx with
   | `(det% $t) =>
-      let A ← elabArgument t
+      let carrier? ← match expectedType? with
+        | none => pure none
+        | some expected => do
+          let expected ← whnfR expected
+          if !expected.getAppFn.isConstOf ``HexMatrixMathlib.Certified then
+            pure none
+          else
+            let args := expected.getAppArgs
+            if args.isEmpty then pure none
+            else
+              let some (_, _, carrier) ← shape? (← inferType args.back!) | pure none
+              pure (some carrier)
+      let A ← elabMatrixArgument t carrier?
       match ← certified A with
       | .success r => Term.ensureHasType expectedType? r
       | .notApplicable msg => throwError "det: not applicable: {msg}"
@@ -326,16 +387,36 @@ simproc_decl Hex.norm_det (Matrix.det _) := fun e => do
 
 namespace HexMatrixMathlib.Det
 
-open Lean Elab
+open Lean Meta Elab
 
-/-- `det` closes `A.det = d` and `d = A.det` for a closed integer or rational
-matrix literal `A`, with the kernel checking a determinant certificate; an
-equation outside that fragment delegates to other Hex handlers. A final
-Hex-only normalization may leave a residual value equality. Extensions
-must use `@[no_fallback]` to preserve their errors and `throwUnsupportedSyntax`
-to delegate outside their fragment. The keyword is non-reserved, so `det`
-stays usable as an identifier. -/
+/-- `det` closes supported determinant equalities using a numeric certificate
+or the registered symbolic handler. The numeric-only import retains its
+certificate normalization diagnostic. Extensions use `@[no_fallback]` so a
+committed error is preserved. The keyword remains usable as an identifier. -/
 syntax (name := detTac) &"det" optConfig : tactic
+
+/-- Introduce a computed determinant and its equality proof into the current
+goal. Both local names are required. -/
+syntax (name := detResultTac) &"det" optConfig colGt term:max " with " ident ident : tactic
+
+@[tactic detResultTac, no_fallback]
+def evalDetResultTac : Tactic.Tactic := fun stx => Tactic.withMainContext do
+  let cfg ← elabConfig stx[1]
+  let A ← elabMatrixArgument stx[2]
+  let p ← match ← compute cfg A with
+    | .success p => pure p
+    | .notApplicable msg => throwError "det: not applicable: {msg}"
+    | .declined msg => throwError "det: declined: {msg}"
+  let valueType ← inferType p.value
+  let dName := stx[4].getId
+  let hdName := stx[5].getId
+  Tactic.liftMetaTactic fun goal => do
+    let (d, goal) ← (← goal.define dName valueType p.value).intro1P
+    goal.withContext do
+      let lhs ← mkAppM ``Matrix.det #[A]
+      let proofType ← mkEq lhs (mkFVar d)
+      let (_, goal) ← (← goal.assert hdName proofType p.proof).intro1P
+      return [goal]
 
 /-- Normalize using only the Hex certificate, reporting the original reason
 when it makes no progress. Errors from the simproc propagate unchanged. -/
@@ -362,8 +443,8 @@ def detDiagnostic : Tactic.Tactic := fun _ => Tactic.withMainContext do
 -- Ordinary errors commit; unsupported syntax still tries the next handler.
 @[tactic detTac, no_fallback]
 def evalDetTac : Tactic.Tactic := fun stx => Tactic.withMainContext do
-  let cfg ← HexMatrixMathlib.Literal.elabKernelConfig stx[1]
-  match ← proveGoal cfg (← Tactic.getMainTarget) with
+  let cfg ← elabConfig stx[1]
+  match ← proveGoal cfg.toKernelConfig (← Tactic.getMainTarget) with
   | .success proof => Tactic.closeMainGoal `det proof
   | .notApplicable _ => throwUnsupportedSyntax
   | .declined msg =>

@@ -1228,12 +1228,12 @@ libraries:
     done_through: 4
     status: active
   HexPolyDet:
-    deps: [HexBareiss, HexMvGcd, HexDeterminant, HexMatrix, HexBasic, HexKronecker]
+    deps: [HexBareiss, HexMvGcd, HexDeterminant, HexMatrix, HexBasic]
     mathlib: false
     done_through: 3
     status: active
   HexPolyDetMathlib:
-    deps: [HexPolyDet, HexBareissMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib, HexKroneckerMathlib]
+    deps: [HexPolyDet, HexBareissMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib]
     mathlib: true
     proof_probes: [bench/HexPolyDetMathlib/ProofProbe]
     done_through: 3

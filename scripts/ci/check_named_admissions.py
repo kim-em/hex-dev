@@ -176,6 +176,14 @@ def check() -> None:
     for relative in sorted(paths):
         source = code_only((ROOT / relative).read_text(encoding="utf-8"))
         admissions = list(ADMISSION.finditer(source))
+        if relative == Path("HexBareissMathlib/Tactic.lean"):
+            # This Lean elaborator API prevents failed elaboration from inserting
+            # an admitted term; it is the opposite of an admission.
+            admissions = [match for match in admissions if not (
+                match.group() == "withoutErrToSorry" and
+                "Term.withoutErrToSorry (elabArgument" in
+                source.splitlines()[source.count("\n", 0, match.start())]
+            )]
         if relative == Path("HexRCF/Tactic.lean"):
             # Only these two checks may mention the bridge's admitted axiom.
             approved = {"unless axioms.contains ``sorryAx do",

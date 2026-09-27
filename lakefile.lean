@@ -1207,7 +1207,7 @@ lean_lib HexReleaseTests where
 -- Build-only regression roots for the structural matrix frontends.
 @[default_target]
 lean_lib HexStructuralTacticTests where
-  globs := #[`HexPolyDet.PackedTests, `HexPolyDetMathlib.PackedTests, `HexPolyDetMathlib.Tests, `HexMinPolyMathlib.Tests, `HexSmithMathlib.Tests, `HexHermiteMathlib.Tests, `HexRowReduceMathlib.Tests]
+  globs := #[`HexPolyDetMathlib.Tests, `HexMinPolyMathlib.Tests, `HexSmithMathlib.Tests, `HexHermiteMathlib.Tests, `HexRowReduceMathlib.Tests]
 
 lean_lib HexStructuralTacticProofProbe where
   srcDir := "bench"
@@ -1949,11 +1949,6 @@ lean_lib HexCharPolyMathlibProofProbe where
   srcDir := "bench"
   globs := #[.submodules `HexCharPolyMathlib.ProofProbe]
 
-/-- Manual packed determinant classification and adjacent compiled comparisons. -/
-lean_exe hex_poly_det_packed where
-  srcDir := "bench"
-  root := `HexPolyDet.PackedBench
-
 -- Manual issue-10301 experiments; neither target belongs to the default build or CI.
 lean_lib CadSampleCostsExperiment where
   srcDir := "experiments"
@@ -1962,12 +1957,3 @@ lean_lib CadSampleCostsExperiment where
 lean_exe cad_sample_costs where
   srcDir := "experiments"
   root := `CadSampleCosts.Runtime
-
--- Manual determinant redesign experiments, excluded from default builds and CI.
-lean_lib DeterminantExperiment where
-  srcDir := "experiments"
-  globs := #[.submodules `Determinant]
-
-lean_exe determinant_experiment where
-  srcDir := "experiments"
-  root := `Determinant.Runtime
