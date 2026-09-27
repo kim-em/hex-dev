@@ -77,24 +77,34 @@ private def splitDegree : Nat :=
 #eval splitDegree
 #guard splitDegree == 1
 
+private def constantGcd : Option (Nat × Int × Int) := do
+  let d ← Root.validate 7 raw
+  let a : Expression d := ⟨x⟩
+  let inv? ← a.inverse?.toOption
+  let inv ← inv?
+  let si ← inv.sign?.toOption
+  let expected : Expression d := ⟨DensePoly.scale (1 / 2 : Rat) x⟩
+  let diff ← (Expression.sub inv expected).sign?.toOption
+  return (a.inverseFactor.1.natDegree, si, diff)
+
+#eval constantGcd
+#guard constantGcd == some (0, 1, 0)
+
 private def splitTransport : Option (Int × Int × Int × Int × Nat × Nat) := do
   let d ← Root.validate 7 raw
   let q := x - DensePoly.C 3
-  let g := DensePoly.monicize (DensePoly.gcd head q)
-  let h := (DensePoly.divMod head g).1
-  let r? ← (d.buildReencoding h (.finite 1) (.finite 2)).toOption
-  let r ← r?
-  let rebound ← Root.rebind? r.target 8
-  let a : Expression d := ⟨x⟩
   let below : Expression d := ⟨q⟩
+  let r? ← (below.split? 8 (.finite 1) (.finite 2)).toOption
+  let r ← r?
+  let a : Expression d := ⟨x⟩
   let inv? ← below.inverse?.toOption
   let inv ← inv?
   let oldSign ← a.sign?.toOption
-  let newSign ← (Expression.transport r a).sign?.toOption
-  let reboundSign ← (Expression.rebind rebound (Expression.transport r a)).sign?.toOption
-  let inverseSign ← (Expression.transport r inv).sign?.toOption
+  let newSign ← (Expression.transport r.encoding a).sign?.toOption
+  let reboundSign ← (Expression.refine r a).sign?.toOption
+  let inverseSign ← (Expression.refine r inv).sign?.toOption
   return (oldSign, newSign, reboundSign, inverseSign,
-    rebound.target.raw.head.natDegree, rebound.target.raw.context)
+    r.binding.target.raw.head.natDegree, r.binding.target.raw.context)
 
 #eval splitTransport
 #guard splitTransport == some (1, 1, 1, -1, 2, 8)

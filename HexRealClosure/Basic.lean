@@ -75,28 +75,40 @@ replace a missing total-success theorem by an arbitrary default sign. -/
   let signs ← d.buildSigns [a.polynomial]
   return signs.value
 
-/-- Compute a Bézout candidate against the cofactor left after the gcd split.
-The result stays in the original context; the split is local to this operation. -/
+/-- Return the discarded gcd and the cofactor containing the selected root.
+The split is local to inversion and leaves the descriptor unchanged. -/
+@[expose] def inverseFactor {context : Nat} {d : Root context}
+    (a : Expression d) : DensePoly Rat × DensePoly Rat :=
+  let g := DensePoly.monicize (DensePoly.gcd d.raw.head a.polynomial)
+  (g, (DensePoly.divMod d.raw.head g).1)
+
+/-- Scale the one-sided Bézout coefficient by its computed constant gcd. -/
 @[expose] def inverseCandidate {context : Nat} {d : Root context}
     (a : Expression d) : Expression d :=
-  let g := DensePoly.monicize (DensePoly.gcd d.raw.head a.polynomial)
-  let h := (DensePoly.divMod d.raw.head g).1
+  let h := a.inverseFactor.2
   let eg := DensePoly.xgcdLeft a.polynomial h
   ⟨DensePoly.scale eg.gcd.leadingCoeff⁻¹ eg.left⟩
 
 /-- Check the Bézout candidate at the selected root. A failed producer remains
-an error; a zero operand or failed product check returns `none`. -/
+an error, distinct from a failed product check. -/
+inductive InverseError where
+  | build (error : SignDet.BuildError)
+  | candidate
+  deriving DecidableEq, Repr
+
+/-- Return `none` only for a checked zero operand; report failure of either
+sign construction or candidate verification explicitly. -/
 @[expose] def inverse? {context : Nat} {d : Root context} (a : Expression d) :
-    Except SignDet.BuildError (Option (Expression d)) :=
+    Except InverseError (Option (Expression d)) :=
   match a.sign? with
-  | .error err => .error err
+  | .error err => .error (.build err)
   | .ok sa =>
     if sa = 0 then .ok none
     else
       let candidate := a.inverseCandidate
       match (sub (mul a candidate) one).sign? with
-      | .error err => .error err
-      | .ok sc => if sc = 0 then .ok (some candidate) else .ok none
+      | .error err => .error (.build err)
+      | .ok sc => if sc = 0 then .ok (some candidate) else .error .candidate
 
 /-- The checked zero branch returns no inverse. -/
 theorem inverse?_zero {context : Nat} {d : Root context} (a : Expression d)
@@ -115,4 +127,32 @@ theorem inverse?_zero {context : Nat} {d : Root context} (a : Expression d)
   ⟨a.polynomial⟩
 
 end Expression
+
+/-- A checked head change followed by checked context rebinding. -/
+structure Refinement {context : Nat} (source : Root context)
+    (head : DensePoly Rat) (lower upper : Endpoint Rat) (version : Nat) where
+  encoding : SignDet.Reencoding source head lower upper
+  binding : Rebinding encoding.target version
+
+/-- Select the cofactor containing the root and move it to a new context
+version in one checked conversion. -/
+@[expose] def Expression.split? {context : Nat} {d : Root context}
+    (a : Expression d) (version : Nat) (lower upper : Endpoint Rat) :
+    Except SignDet.BuildError
+      (Option (Refinement d a.inverseFactor.2 lower upper version)) :=
+  match d.buildReencoding a.inverseFactor.2 lower upper with
+  | .error err => .error err
+  | .ok none => .ok none
+  | .ok (some encoding) =>
+    match Root.rebind? encoding.target version with
+    | none => .ok none
+    | some binding => .ok (some ⟨encoding, binding⟩)
+
+/-- Transport a value through both checks of a rational refinement. -/
+@[expose] def Expression.refine {context version : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : Refinement d head lower upper version) (a : Expression d) :
+    Expression r.binding.target :=
+  rebind r.binding (transport r.encoding a)
+
 end Hex.RealClosure

@@ -16,21 +16,23 @@ let sign ← a.sign?.toOption
 let inverse ← a.inverse?.toOption
 ```
 
-Both sign and inverse expose producer errors. `inverse?` returns `none` for a
-checked zero and also when its product check does not accept the candidate.
+Both sign and inverse expose producer errors. `inverse?` returns `none` only
+for a checked zero; a failed product check returns `InverseError.candidate`.
 `Expression.transport` accepts checked `SignDet.Reencoding` evidence; its real
 value is preserved. `Root.rebind?` revalidates the same root under a new context
 version, and `Expression.rebind` transports a polynomial through that checked
-conversion. `Root.validate_context` rejects raw evidence from another context
-version. The context is a rational-base version number, not a dependency DAG;
-transport of nested tower levels remains separate. These interfaces do not yet
-supply canonical-zero storage or total field operations.
+conversion. `Expression.split?` combines cofactor re-encoding and rebinding;
+`Expression.refine` transports stored values through both checks.
+`Root.validate_context` rejects raw evidence from another context version.
+The context is a rational-base version number, not a dependency DAG;
+transport of nested tower levels remains separate. These interfaces do not
+yet supply canonical-zero storage or total field operations.
 
 Run `lake build HexRealClosure.Tests HexQuerySemantics` and
 `python3 HexRealClosure/verify.py` from the repository root. The test uses
 `(X²−2)(X−3)` with the root in `(1,2)`, plus a non-monic definition and a
 checked factor split. The Python oracle computes exact arithmetic in ℚ(√2)
-independently of Lean.
+independently of Lean and is run manually; CI builds the Lean `#guard` tests.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and
