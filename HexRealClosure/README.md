@@ -9,6 +9,11 @@ determination. `Expression.inverse?` computes a gcd/cofactor split and a scaled
 Bézout candidate, then checks its product at the selected root. A successful
 inverse has a proof of its real value in
 `adapters/HexRealClosureMathlib/SelectedRoot.lean`.
+The companion also proves that the selected root lies in the computed cofactor
+for a nonzero value, that squarefreeness makes this cofactor coprime to the
+operand, and that the scaled Bézout candidate has product one. Once both sign queries
+return, `inverse?` cannot fail its candidate check. Total sign-query producer
+success remains an upstream requirement.
 
 ```lean
 let d ← Root.validate 7 raw
@@ -34,7 +39,8 @@ Run `lake build HexRealClosure.Tests HexQuerySemantics` and
 `python3 HexRealClosure/verify.py` from the repository root. The test uses
 `(X²−2)(X−3)` with the root in `(1,2)`, plus a non-monic definition and a
 checked factor split. The Python oracle computes exact arithmetic in ℚ(√2)
-independently of Lean and is run manually; CI builds the Lean `#guard` tests.
+independently of Lean for ten cases and is run manually; CI builds the Lean
+`#guard` tests.
 The companion proofs inherit the named #10389 admission in
 `HexRealRootsMathlib.Tarski.check_rootSum`; no new admission is used here.
 
