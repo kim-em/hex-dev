@@ -9,6 +9,7 @@ module
 public import HexRealClosure.Yun
 public import HexPolyMathlib.Euclid
 public import Mathlib.FieldTheory.Separable
+public import Mathlib.Basic.Real.Basic
 
 public section
 
@@ -89,8 +90,24 @@ theorem check_product_prod (f : DensePoly Rat) (unit : Rat)
         ring
   exact hfold entries.toList (Polynomial.C unit)
 
-/-- Powers of a nonzero rational polynomial remain nonzero. -/
-private theorem polynomial_pow_ne_zero (p : Polynomial Rat)
+/-- Accepted rational replay has the same factorization after mapping to ℝ. -/
+theorem check_product_real (f : DensePoly Rat) (unit : Rat)
+    (entries : Array (DensePoly Rat × Nat))
+    (h : check f (.factors unit entries) = true) :
+    (HexPolyMathlib.toPolynomial f).map (Rat.castHom ℝ) =
+      Polynomial.C (unit : ℝ) *
+        (entries.toList.map fun entry =>
+          ((HexPolyMathlib.toPolynomial entry.1).map (Rat.castHom ℝ)) ^
+            entry.2).prod := by
+  have hbase := congrArg (Polynomial.map (Rat.castHom ℝ))
+    (check_product_prod f unit entries h)
+  simpa only [Polynomial.map_mul, Polynomial.map_C,
+    Polynomial.map_list_prod, Polynomial.map_pow,
+    List.map_map, Function.comp_def, Rat.coe_castHom] using hbase
+
+/-- Powers of a nonzero polynomial over a field remain nonzero. -/
+private theorem polynomial_pow_ne_zero {K : Type*} [Field K]
+    (p : Polynomial K)
     (n : Nat) (hp : p ≠ 0) : p ^ n ≠ 0 := by
   induction n with
   | zero => simp
@@ -98,9 +115,10 @@ private theorem polynomial_pow_ne_zero (p : Polynomial Rat)
       rw [pow_succ]
       exact mul_ne_zero ih hp
 
-/-- Root multiplicity of a power of a nonzero rational polynomial. -/
-private theorem rootMultiplicity_pow (p : Polynomial Rat) (n : Nat)
-    (x : Rat) (hp : p ≠ 0) :
+/-- Root multiplicity of a power of a nonzero polynomial over a field. -/
+private theorem rootMultiplicity_pow {K : Type*} [Field K]
+    (p : Polynomial K) (n : Nat)
+    (x : K) (hp : p ≠ 0) :
     Polynomial.rootMultiplicity x (p ^ n) =
       n * Polynomial.rootMultiplicity x p := by
   induction n with
@@ -111,7 +129,8 @@ private theorem rootMultiplicity_pow (p : Polynomial Rat) (n : Nat)
           (mul_ne_zero (polynomial_pow_ne_zero p n hp) hp), ih]
       simp [Nat.succ_mul]
 
-private theorem product_ne_zero (l : List (Polynomial Rat × Nat))
+private theorem product_ne_zero {K : Type*} [Field K]
+    (l : List (Polynomial K × Nat))
     (h : ∀ entry ∈ l, entry.1 ≠ 0) :
     (l.map fun entry => entry.1 ^ entry.2).prod ≠ 0 := by
   induction l with
@@ -126,8 +145,8 @@ private theorem product_ne_zero (l : List (Polynomial Rat × Nat))
           (ih hrest)
 
 /-- Root multiplicity distributes over the nonzero factor product. -/
-private theorem rootMultiplicity_product (l : List (Polynomial Rat × Nat))
-    (x : Rat) :
+private theorem rootMultiplicity_product {K : Type*} [Field K]
+    (l : List (Polynomial K × Nat)) (x : K) :
     (∀ entry ∈ l, entry.1 ≠ 0) →
     Polynomial.rootMultiplicity x
       (l.map fun entry => entry.1 ^ entry.2).prod =
@@ -188,26 +207,29 @@ theorem check_rootMultiplicity_sum (f : DensePoly Rat) (unit : Rat)
     List.map_map, Function.comp_def] using
     rootMultiplicity_product mapped x hmapped
 
-/-- Coprime rational polynomials have no common rational root. -/
-private theorem coprime_no_common_root (p q : Polynomial Rat)
-    (hcoprime : IsCoprime p q) (x : Rat)
+/-- Coprime polynomials over a field have no common root in that field. -/
+private theorem coprime_no_common_root {K : Type*} [Field K]
+    (p q : Polynomial K)
+    (hcoprime : IsCoprime p q) (x : K)
     (hp : Polynomial.IsRoot p x) : ¬Polynomial.IsRoot q x := by
   intro hq
   have h := hcoprime.map (Polynomial.evalRingHom x)
-  have hzero : IsCoprime (0 : Rat) 0 := by
+  have hzero : IsCoprime (0 : K) 0 := by
     simpa only [Polynomial.coe_evalRingHom, hp.eq_zero, hq.eq_zero] using h
   exact not_isCoprime_zero_zero hzero
 
-/-- A root of a separable rational polynomial has multiplicity one. -/
-private theorem separable_rootMultiplicity_one (p : Polynomial Rat)
-    (x : Rat) (hsep : p.Separable) (hroot : Polynomial.IsRoot p x) :
+/-- A root of a separable polynomial has multiplicity one. -/
+private theorem separable_rootMultiplicity_one {K : Type*} [Field K]
+    (p : Polynomial K)
+    (x : K) (hsep : p.Separable) (hroot : Polynomial.IsRoot p x) :
     Polynomial.rootMultiplicity x p = 1 :=
   Nat.le_antisymm
     (Polynomial.rootMultiplicity_le_one_of_separable hsep x)
     ((Polynomial.rootMultiplicity_pos hsep.ne_zero).mpr hroot)
 
-private theorem rootMultiplicity_label (l : List (Polynomial Rat × Nat))
-    (selected : Polynomial Rat × Nat) (x : Rat) :
+private theorem rootMultiplicity_label {K : Type*} [Field K]
+    (l : List (Polynomial K × Nat))
+    (selected : Polynomial K × Nat) (x : K) :
     l.Pairwise (fun a b => IsCoprime a.1 b.1) →
     (∀ entry ∈ l, entry.1.Separable) →
     selected ∈ l → Polynomial.IsRoot selected.1 x →
@@ -345,6 +367,57 @@ theorem check_rootMultiplicity (f : DensePoly Rat) (unit : Rat)
       (HexPolyMathlib.toPolynomial entry.1, entry.2) x
       hpair hsep hmapped hroot
 
+/-- A real root of an accepted rational factor has its labelled multiplicity
+in the original polynomial after embedding into ℝ. -/
+theorem check_real_rootMultiplicity (f : DensePoly Rat) (unit : Rat)
+    (entries : Array (DensePoly Rat × Nat))
+    (entry : DensePoly Rat × Nat) (hmem : entry ∈ entries)
+    (h : check f (.factors unit entries) = true) (x : ℝ)
+    (hroot : Polynomial.IsRoot
+      ((HexPolyMathlib.toPolynomial entry.1).map (Rat.castHom ℝ)) x) :
+    Polynomial.rootMultiplicity x
+      ((HexPolyMathlib.toPolynomial f).map (Rat.castHom ℝ)) =
+      entry.2 := by
+  let mapped := entries.toList.map fun item =>
+    ((HexPolyMathlib.toPolynomial item.1).map (Rat.castHom ℝ), item.2)
+  have hpair : mapped.Pairwise (fun a b => IsCoprime a.1 b.1) := by
+    apply (check_pairwise_coprime f unit entries h).map
+      (fun item =>
+        ((HexPolyMathlib.toPolynomial item.1).map (Rat.castHom ℝ), item.2))
+    intro a b hab
+    exact hab.map (Polynomial.mapRingHom (Rat.castHom ℝ))
+  have hsep : ∀ item ∈ mapped, item.1.Separable := by
+    intro item hitem
+    obtain ⟨source, hsource, rfl⟩ := List.mem_map.mp hitem
+    exact (check_factor_separable f unit entries source
+      (Array.mem_toList_iff.mp hsource) h).map
+  have hmapped :
+      ((HexPolyMathlib.toPolynomial entry.1).map (Rat.castHom ℝ), entry.2) ∈
+        mapped := by
+    apply List.mem_map.mpr
+    exact ⟨entry, Array.mem_toList_iff.mpr hmem, rfl⟩
+  have hnonzero : ∀ item ∈ mapped, item.1 ≠ 0 := by
+    intro item hitem
+    exact (hsep item hitem).ne_zero
+  have hmap : (mapped.map fun item => item.1 ^ item.2).prod =
+      (entries.toList.map fun item =>
+        ((HexPolyMathlib.toPolynomial item.1).map (Rat.castHom ℝ)) ^
+          item.2).prod := by
+    simp only [mapped, List.map_map, Function.comp_def]
+  rw [check_product_real f unit entries h, ← hmap]
+  have hmul : Polynomial.C (unit : ℝ) *
+      (mapped.map fun item => item.1 ^ item.2).prod ≠ 0 := by
+    apply mul_ne_zero
+    · exact Polynomial.C_ne_zero.mpr (by
+        exact_mod_cast check_unit f unit entries h)
+    · exact product_ne_zero mapped hnonzero
+  rw [Polynomial.rootMultiplicity_mul hmul,
+    Polynomial.rootMultiplicity_C, zero_add,
+    rootMultiplicity_product mapped x hnonzero]
+  exact rootMultiplicity_label mapped
+    ((HexPolyMathlib.toPolynomial entry.1).map (Rat.castHom ℝ), entry.2)
+    x hpair hsep hmapped hroot
+
 end Hex.RealClosure.Yun
 
 /-- info: 'Hex.RealClosure.Yun.check_product_polynomial' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -359,3 +432,6 @@ end Hex.RealClosure.Yun
 /-- info: 'Hex.RealClosure.Yun.check_rootMultiplicity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Yun.check_rootMultiplicity
+/-- info: 'Hex.RealClosure.Yun.check_real_rootMultiplicity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.check_real_rootMultiplicity
