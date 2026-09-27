@@ -250,4 +250,29 @@ private def packedRefinement : Option (Bool × Bool × Int) := do
 #eval packedRefinement
 #guard packedRefinement == some (true, true, 1)
 
+/-- Numeric literals, division, and both outcomes of semantic comparison. -/
+private def packedInterfaces : Option (Bool × Bool × Int × Bool) := do
+  let d ← Root.validate 7 raw
+  let alpha : Element d := Element.ofPoly x
+  let below : Element d := Element.ofPoly (x - DensePoly.C 3)
+  return (Element.equal alpha below,
+    Element.equal (alpha / alpha) (1 : Element d),
+    (3 : Element d).sign,
+    Element.equal (below * below⁻¹) (1 : Element d))
+
+#eval packedInterfaces
+#guard packedInterfaces == some (false, true, 1, true)
+
+/-- A scaled nonmonic head has the same packed selected-root arithmetic. -/
+private def packedNonmonic : Option (Bool × Bool × Int) := do
+  let d ← Root.validate 9 { raw with context := 9, head := DensePoly.scale 2 head }
+  let alpha : Element d := Element.ofPoly x
+  let selectedZero : Element d := Element.ofPoly (x * x - DensePoly.C 2)
+  return (selectedZero == 0,
+    (alpha * alpha).value == Hex.RealAlgebraicNumber.ofRat 2,
+    alpha.sign)
+
+#eval packedNonmonic
+#guard packedNonmonic == some (true, true, 1)
+
 end Hex.RealClosure.Tests

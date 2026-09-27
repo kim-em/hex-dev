@@ -51,48 +51,60 @@ zero representation. -/
     Element d := ofPoly (a.polynomial + b.polynomial)
 
 @[expose] def neg {context : Nat} {d : Root context} (a : Element d) :
-    Element d := ofPoly (-a.polynomial)
+    Element d :=
+  match a with
+  | none => none
+  | some v => ofPoly (-v.1)
 
 @[expose] def sub {context : Nat} {d : Root context} (a b : Element d) :
     Element d := ofPoly (a.polynomial - b.polynomial)
 
-/-- Compare represented values by signing their difference. -/
+/-- Compare represented values by packing their difference. -/
 @[expose] def equal {context : Nat} {d : Root context} (a b : Element d) : Bool :=
-  (sub a b).sign == 0
+  (sub a b).isNone
 
 @[expose] def mul {context : Nat} {d : Root context} (a b : Element d) :
     Element d := ofPoly (a.polynomial * b.polynomial)
 
 /-- Gcd splitting supplies the inverse candidate for a nonzero stored value.
 The companion proves that this candidate is an inverse at the selected root. -/
-@[expose] def inverse? {context : Nat} {d : Root context} (a : Element d) :
-    Option (Element d) :=
-  match a with
-  | none => none
-  | some _ => some (ofPoly a.toExpression.inverseCandidate.polynomial)
-
 @[expose] def inv {context : Nat} {d : Root context} (a : Element d) :
     Element d :=
   match a with
   | none => none
   | some v => ofPoly (Expression.inverseCandidate (⟨v.1⟩ : Expression d)).polynomial
 
+@[expose] def inverse? {context : Nat} {d : Root context} (a : Element d) :
+    Option (Element d) :=
+  match a with
+  | none => none
+  | some _ => some (inv a)
+
 /-- Repack a value under a checked change of the defining polynomial. -/
 @[expose] def transport {context : Nat} {d : Root context}
     {head : DensePoly Rat} {lower upper : Endpoint Rat}
     (r : SignDet.Reencoding d head lower upper) (a : Element d) :
-    Element r.target := ofPoly a.polynomial
+    Element r.target :=
+  match a with
+  | none => none
+  | some v => ofPoly v.1
 
 /-- Repack a value under a checked context version change. -/
 @[expose] def rebind {context version : Nat} {d : Root context}
     (r : Rebinding d version) (a : Element d) :
-    Element r.target := ofPoly a.polynomial
+    Element r.target :=
+  match a with
+  | none => none
+  | some v => ofPoly v.1
 
 /-- Repack a value after a checked factor split and context version change. -/
 @[expose] def refine {context version : Nat} {d : Root context}
     {head : DensePoly Rat} {lower upper : Endpoint Rat}
     (r : Refinement d head lower upper version) (a : Element d) :
-    Element r.binding.target := ofPoly a.polynomial
+    Element r.binding.target :=
+  match a with
+  | none => none
+  | some v => ofPoly v.1
 
 instance {context : Nat} {d : Root context} : DecidableEq (Element d) :=
   inferInstance
@@ -108,6 +120,9 @@ instance {context : Nat} {d : Root context} : Div (Element d) :=
   ⟨fun a b => a * b⁻¹⟩
 instance {context : Nat} {d : Root context} : NatCast (Element d) :=
   ⟨fun n => ofPoly (DensePoly.C n)⟩
+instance (priority := 90) {context : Nat} {d : Root context} (n : Nat) :
+    OfNat (Element d) (n + 2) :=
+  ⟨ofPoly (DensePoly.C (n + 2))⟩
 
 end Element
 

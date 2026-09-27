@@ -40,7 +40,7 @@ Run `lake build HexRealClosure.Tests HexQuerySemantics` and
 `python3 HexRealClosure/verify.py` from the repository root. The test uses
 `(X²−2)(X−3)` with the root in `(1,2)`, plus a non-monic definition and a
 checked factor split. The Python oracle computes exact arithmetic in ℚ(√2)
-independently of Lean for seventeen cases and is run manually; CI builds the Lean
+independently of Lean for nineteen cases and is run manually; CI builds the Lean
 `#guard` tests.
 The companion proofs inherit the named #10389 admission in
 `HexRealRootsMathlib.Tarski.check_rootSum`; no new admission is used here.
@@ -69,15 +69,15 @@ endpoint. This conversion does not replace the general tower representation.
 polynomial that vanishes at the selected root is stored as `none`, and every
 stored nonzero polynomial carries the result of that executable check. Ordinary
 addition, negation, subtraction, multiplication, inversion and sign are total.
-`Element.equal` signs the difference, so distinct stored polynomials can compare
+`Element.equal` packs the difference, so distinct stored polynomials can compare
 equal; structural `==` only compares their stored forms. The companion proves
 zero reflection, preservation of the arithmetic and sign, and value
 preservation when an element is repacked through checked re-encoding, rebinding
 or a factor split. The semantic `Value d` is the image subfield of the
 canonical real algebraic numbers, and `Element.toValue` carries each total
 operation to that lawful ordered field. The zero check currently enumerates
-canonical roots on each call, so this rational-base path does not yet supply
-the general tower's cost or storage policy.
+canonical roots on each nonzero packing call. The monic clean remainder
+retention policy and the general tower's cost targets remain to be implemented.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and
