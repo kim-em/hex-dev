@@ -82,6 +82,9 @@ def prepare (n : Nat) : IO Query := do
           (c == p.1.subject && width == p.1.width) ||
           (c == p.2.subject && width == p.2.width)) do
         throw (IO.userError "successive request lacks an inner search witness")
+  unless (Real.approxAttempt a f (Real.requestWidth δ) n).isNone &&
+      (Real.approxAttempt a f (Real.requestWidth δ) (n + 1)).isSome do
+    throw (IO.userError "unexpected successive separation precision")
   match h : Real.approxAttempt a f (Real.requestWidth δ) (n + 3) with
   | none => throw (IO.userError "successive outer witness failed")
   | some b =>
@@ -89,7 +92,7 @@ def prepare (n : Nat) : IO Query := do
       throw (IO.userError "successive outer enclosure failed")
     let q : Query := ⟨a, f, δ, acc_of_success _ (n + 3) b h 0 (by omega)⟩
     let (lo, hi) := run q
-    unless lo ≤ δ && δ ≤ hi && hi - lo ≤ δ do
+    unless lo == δ / 2 && hi == 3 * δ / 2 do
       throw (IO.userError "successive total approximation failed")
     return q
 
