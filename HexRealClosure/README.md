@@ -133,13 +133,12 @@ ordered multiplicities and nonconstant monic factors, and checks squarefree and
 pairwise gcd conditions. Core lemmas extract those accepted conditions; the
 Mathlib companion transports the product to mathematical polynomials and
 proves that accepted rational factors are squarefree and pairwise coprime.
-For real roots of accepted rational factors, including irrational roots, it
-also proves that the label equals the root multiplicity in the input
-polynomial mapped to ℝ. Arbitrary ordered coefficient towers still need the
-corresponding interpretation theorem.
-The general proof that `decompose` passes replay and that
-accepted factors have the claimed mathematical root multiplicities is not yet
-available, so unchecked outputs are not certified decompositions.
+For every field embedding of ℚ, accepted factors cover exactly the roots of
+the input, and each factor label is the multiplicity of its roots in the
+input. This includes irrational real roots after mapping to ℝ. Arbitrary
+ordered coefficient towers still need an interpretation theorem. The proof
+that `decompose` always passes replay is also outstanding, so unchecked
+outputs are not certified decompositions.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and
