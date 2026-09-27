@@ -24,7 +24,9 @@ Covered edge cases: zero, negative and zero-crossing bounds, nonpositive width
 requests, earlier failed trials and nonmonotone success.
 
 Infinitesimal Z3/exact fixtures are emitted by `HexOrderedFn.EmitFixtures`.
-Real-extension Z3/exact conformance remains a separate phase obligation.
+Real refinement fixtures from `HexOrderedFn.EmitRealFixtures` check Horner bounds,
+simultaneous refinement, total signs and first-success approximations with Z3
+and independent exact Fraction arithmetic.
 -/
 
 open Hex Hex.OrderedFn Hex.OrderedFn.Oracle Hex.OrderedFn.Tests

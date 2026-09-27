@@ -1,7 +1,7 @@
 # Ordered rational-function computations
 
 `HexOrderedFn` supplies infinitesimal orders, exact rational bounds, Horner
-enclosure and per-query total refinement over the existing canonical `Hex.RationalFn` arithmetic. It
+enclosure and total refinement over the existing canonical `Hex.RationalFn` arithmetic. It
 imports neither Mathlib nor an interval library. The full contract is in
 [hex-ordered-fn](../SPEC/Libraries/hex-ordered-fn.md).
 
@@ -11,8 +11,9 @@ the sign of subtraction. `open scoped Hex.OrderedFn.Infinitesimal` enables
 `<` and `≤` on `RationalFn K`, using the predecessor order. No global order
 is imposed on the rational-function carrier. The same construction works
 successively on `RationalFn (RationalFn Rat)` and further levels. The real
-registration API, still outstanding, will use a distinct provider-indexed wrapper
-so an infinitesimal scope does not also order its real predecessor infinitesimally.
+registration uses the distinct `Real.Extension r` carrier, indexed by its fixed
+provider and universal termination proofs. Opening the infinitesimal scope
+preserves the real predecessor order.
 
 ```lean
 import HexOrderedFn
@@ -51,6 +52,13 @@ bound. `Real.sign?` is a separate finite consumer that checks denominator
 regularity and can recognize an exact-zero numerator. It is never registered
 as a field operation.
 
+`Real.Extension` reuses the canonical arithmetic and supplies total `sign`,
+`compare` and `approx`. `Extension.approximation` uses the derived coefficient
+bounds at the next real level. Its width theorem is separate from containment.
+`Extension.transport` copies a canonical fraction between providers over the
+same coefficient field; the companion proves order preservation when both
+providers refer to the same embedding and constant.
+
 The generic `firstSome` search supports any result type. Its proofs include
 the first-success characterization, equations for success and refinement,
 eventual-success accessibility, and `acc_of_success` for one checked finite
@@ -69,14 +77,18 @@ zero-touching bounds, joint refinement, finite exhaustion, and compiled total
 sign and bound searches with earlier failed trials. Kernel proofs check the finite witnesses. Infinitesimal fixtures cover negative
 valuations, negative denominators, cancellation and three successive levels;
 `scripts/oracle/ordered_fn_z3.py` checks them with pinned Z3 RCF and exact
-rational specialization. `hexorderedfn_bench` measures sign scans, comparisons,
+rational specialization. `ordered_fn_real.py` checks 108 real refinement fixtures
+with FLINT normalization of source expressions, exact Fraction values and Z3
+polynomial/quotient enclosure queries. The cancelled-pole fixture checks the consumer obligation to retain original divisor guards through cancellation.
+`hexorderedfn_bench` measures sign scans, comparisons,
 degree, coefficient height and tower depth without importing Mathlib. Run it
 with `scripts/bench/ordered_fn_measure.py --output DIR`. The companion's
 mathematical proofs are checked by its ordinary-kernel tests.
 
-The library remains at phase 0: the complete Phase-1 API is not present.
-Universal progress from shrinking bounds and relative transcendence,
-real ordered-field registration, provider/context certificate boundaries,
-Liouville integration and complete real-extension conformance/performance evidence remain
-outstanding under [#10376](https://github.com/kim-em/hex-dev/issues/10376).
-Per-query finite witnesses do not register a transcendental field.
+The APIs and proofs are implemented (phase 1). Independent API review and
+complete performance evidence remain outstanding under
+[#10376](https://github.com/kim-em/hex-dev/issues/10376). The companion proves
+universal sign and approximation progress from containment, shrinking widths
+and relative transcendence over the whole predecessor field, and tests a
+caller-supplied Liouville oracle. Per-query finite witnesses do not register
+a transcendental field.

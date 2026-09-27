@@ -7,6 +7,10 @@ module
 
 public import HexOrderedFn.Infinitesimal
 
+/-!
+Concrete rational functions at successive infinitesimal levels for compiled tests.
+-/
+
 @[expose] public section
 
 namespace Hex.OrderedFn.InfinitesimalTests

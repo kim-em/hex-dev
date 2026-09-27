@@ -11,6 +11,10 @@ public import Mathlib.Basic.Real.Basic
 public import Mathlib.Basic.Sign.Basic
 public import Mathlib.Tactic.NormNum
 
+/-!
+Real containment proofs for the minimal exact rational bound operations.
+-/
+
 @[expose] public section
 
 namespace Hex.OrderedFn.Oracle

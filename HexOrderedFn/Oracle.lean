@@ -9,6 +9,11 @@ module
 public import Init.Data.Rat.Lemmas
 public import Init.Data.Dyadic.Basic
 
+/-!
+Minimal exact rational bounds and caller approximation functions. Requested-width
+proofs are separate from the computational providers and semantic containment.
+-/
+
 @[expose] public section
 
 namespace Hex.OrderedFn.Oracle

@@ -10,6 +10,11 @@ public import HexOrderedFn.Search
 public import HexOrderedFn.Oracle
 public import HexRationalFn
 
+/-!
+Horner bounds, finite trials and total refinement searches on canonical fractions.
+Formal zero is algebraic; nonzero signs require separated numerator and denominator bounds.
+-/
+
 @[expose] public section
 
 namespace Hex.OrderedFn.Real

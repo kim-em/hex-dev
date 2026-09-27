@@ -10,6 +10,10 @@ public import HexOrderedFn.InfinitesimalTests
 
 public section
 
+/-!
+Kernel proofs of infinitesimal identities and inequalities on the core test carriers.
+-/
+
 namespace Hex.OrderedFn.InfinitesimalProofs
 
 attribute [local instance 2000] Field.toGrindField
@@ -18,6 +22,19 @@ open Infinitesimal
 
 abbrev First := RationalFn Rat
 abbrev Second := RationalFn First
+
+
+-- Expressions through the companion's Field and LinearOrder remain computable.
+def orderedFraction (f : First) : First := if f < 0 then -(f ^ (2 : Nat)) else f + 1
+def orderedSecond (f : Second) : Second := if f < 0 then -(f ^ (2 : Nat)) else f + 1
+def scale (c : Rat) (f : First) : First := c • f
+
+example : Field.toGrindField (K := First) = RationalFn.instField := rfl
+example : Field.toGrindField (K := Second) = RationalFn.instField := rfl
+example : (inferInstance : LinearOrder First).toLE =
+    (⟨fun f g => Infinitesimal.sign orderSign (f - g) ≤ 0⟩ : LE First) := rfl
+example : (inferInstance : LinearOrder First).toLT =
+    (⟨fun f g => Infinitesimal.sign orderSign (f - g) < 0⟩ : LT First) := rfl
 
 
 example : InfinitesimalTests.First = First := by
@@ -32,12 +49,12 @@ theorem core_delta_lt_power (n : ℕ) : InfinitesimalTests.delta <
     InfinitesimalTests.lift (InfinitesimalTests.epsilon ^ n) := by
   unfold InfinitesimalTests.delta InfinitesimalTests.lift InfinitesimalTests.epsilon
     InfinitesimalTests.Second InfinitesimalTests.First
-  rw [← HexRationalFnMathlib.ratField_eq, ← HexRationalFnMathlib.coreField_eq]
+  rw [← HexRationalFnMathlib.ratField_eq]
   exact X_lt_pow n
 
 theorem core_delta_pos : (0 : InfinitesimalTests.Second) < InfinitesimalTests.delta := by
   unfold InfinitesimalTests.delta InfinitesimalTests.Second InfinitesimalTests.First
-  rw [← HexRationalFnMathlib.ratField_eq, ← HexRationalFnMathlib.coreField_eq]
+  rw [← HexRationalFnMathlib.ratField_eq]
   exact X_pos
 
 theorem core_reciprocal_gt_int (n : ℤ) :

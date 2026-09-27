@@ -10,3 +10,4 @@ public import HexOrderedFn.Search
 public import HexOrderedFn.Oracle
 public import HexOrderedFn.Real
 public import HexOrderedFn.Infinitesimal
+public import HexOrderedFn.Extension

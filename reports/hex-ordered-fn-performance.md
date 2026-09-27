@@ -1,9 +1,9 @@
-# Infinitesimal rational-function performance
+# Ordered rational-function performance
 
-The six Mathlib-free targets exercise the production sign and comparison
-functions on canonical rational functions. These measurements cover the
-infinitesimal implementation only. The libraries remain at phase 0 until the
-full real-extension API and its other phase requirements are complete.
+The Mathlib-free targets exercise production signs, comparisons, Horner bounds
+and real refinement on canonical rational functions. The initial six targets
+cover infinitesimals; the later sections cover real searches and general comparisons. The APIs are implemented (phase 1); independent review and the remaining
+conformance/performance gates are tracked separately.
 
 ## Runtime measurements
 
@@ -92,13 +92,115 @@ Filtering diagnostics: 257 operation regions, 3671.1 ms total timed duration,
 3665 retained samples, 0.998 ms calibration residual, and a passed ±5 ms
 sensitivity check. Profile confidence passes.
 
+## Real refinement and general comparisons
+
+The Mathlib-free executable also measures the actual `Real.sign` and `Real.approx`
+searches. Preparation checks a finite successful trial and constructs the erased
+accessibility proof. The timed operation starts at precision zero, so earlier
+failed attempts remain included. These rational test subjects do not assert a
+universal transcendental registration; the companion Liouville fixture supplies
+that separate semantic integration test.
+
+The [initial measurements](data/hex-ordered-fn/real-initial/runtime.json) use three
+trial-major repetitions and one-second batches on automatically selected CPU 44.
+[Context](data/hex-ordered-fn/real-initial/context.json) records the command, binary
+hash and source commit `1c06686b749266a21ea01600b431871e7a93e210`. Module documentation
+and phase metadata were edited during collection; the measured executable was
+unchanged. Per-child repository metadata is preserved in the raw export.
+All completed rows are retained. All eight provisional complexity verdicts
+were inconclusive in the faster-than-declared direction, rather than passes.
+
+| Target | Parameters | Initial model | First median | Last median | Normalized slope |
+| --- | --- | --- | ---: | ---: | ---: |
+| `denominators` | 16–2048 | n * n | 202.695 µs | 226815.890 µs | -0.521 |
+| `compareHeight` | 1024–131072 | n | 5.648 µs | 14.521 µs | -0.787 |
+| `refinement` | 16–2048 | n * n | 60.742 µs | 24232.628 µs | -0.815 |
+| `jointRefinement` | 16–2048 | n * n | 96.580 µs | 46499.510 µs | -0.773 |
+| `horner` | 16–2048 | n * n | 21.555 µs | 9035.260 µs | -0.770 |
+| `realHeight` | 1024–131072 | n | 5.476 µs | 36.114 µs | -0.562 |
+| `approximation` | 16–2048 | n * n | 188.906 µs | 85064.051 µs | -0.769 |
+| `provider` | 16–2048 | n | 0.444 µs | 2.109 µs | -0.837 |
+
+`refinement` uses X−(2−2⁻ⁿ) at subject 2. `jointRefinement` also narrows every
+coefficient. `approximation` requests width 2⁻ⁿ for X−1 with both coefficient
+and argument refinement. Their witness checks are outside the timer; execution
+still includes all failed trials. `horner` signs 1+X+⋯+Xⁿ using argument bounds
+[−1/2,1/2]. `realHeight` varies the height of a linear polynomial's coefficient.
+`provider` isolates the caller's construction of rational bounds. No analytic
+constant generator is measured.
+
+The original quadratic denominator model overlooked the default Karatsuba plan;
+the corrected recurrence is T(n)=3T(n/2)+Θ(n). The height/provider ladders are
+extended to larger operands to distinguish limb work from fixed overhead. The
+quadratic bit-work models for refinement and Horner are not established by the
+initial measurements. The current search configuration uses eight larger
+parameters (8192, 12288, 16384, 24576, 32768, 49152, 65536, 98304), with a
+60-second operational per-call cap. It keeps the same quadratic model; the
+initial data remain evidence for their recorded smaller schedule. Their results remain unresolved evidence, without a
+Phase-4 completion claim.
+
+## Corrected comparison and height measurements
+
+The [second configuration](data/hex-ordered-fn/height/runtime.json) corrects the
+denominator recurrence and extends the three height ladders to 65,536–8,388,608
+bits. These changes were made before collection; no completed samples were
+replaced. All four two-sided verdicts now pass. The same fixed trial-major
+schedule uses three trials and one-second batches. The [context](data/hex-ordered-fn/height/context.json)
+records the automatically selected CPU, source commit and executable hash.
+These are separate scaling runs, not paired before/after speedup measurements.
+
+| Target | Model | First median | Last median | Normalized slope |
+| --- | --- | ---: | ---: | ---: |
+| `denominators` | 3 ^ Nat.log2 (max n 1) | 129.255 µs | 141733.434 µs | -0.105 |
+| `compareHeight` | n | 8.571 µs | 953.451 µs | +0.071 |
+| `realHeight` | n | 19.123 µs | 2137.468 µs | -0.005 |
+| `provider` | n | 23.551 µs | 3434.430 µs | +0.040 |
+
+## Search work counts
+
+These exact counts follow the executed loops for the benchmark families. A
+coefficient visit is one coefficient-provider call. Each Horner coefficient
+performs one bound multiplication and one bound addition. A bound multiplication
+uses four rational products and min/max selection; a bound addition uses two
+rational additions. Constant-provider calls occur once per polynomial enclosure.
+Failed numerator separation skips the denominator enclosure in `Real.attempt`.
+Approximation trials enclose both polynomials and try four-corner bound division.
+
+| Family | Last trial index | Coefficient visits | Constant-provider calls | Bound operations |
+| --- | ---: | ---: | ---: | ---: |
+| `refinement` | n | 2n+3 | n+2 | 4n+6 |
+| `jointRefinement` | n+1 | 2n+5 | n+3 | 4n+10 |
+| `horner` | 0 | n+2 | 2 | 2n+4 |
+| `realHeight` (n≥1) | 0 | 3 | 2 | 6 |
+| `approximation` | n+3 | 3n+12 | 2n+8 | 7n+28 |
+
+The approximation count includes one bound division per trial; each trial also
+computes the quotient width and compares it with the requested width. Formal
+zero performs no provider calls. These counts exclude preparation and the
+preparation-time witness check.
+
+For exact-coefficient refinement, the numerator enclosure at trial k is
+[2⁻ⁿ−2⁻ᵏ⁻¹, 2⁻ⁿ+2⁻ᵏ⁻¹], so the first success is k=n. With joint refinement,
+its lower endpoint is 2⁻ⁿ−2δ+δ²/4, with δ=2⁻ᵏ, so the first success is k=n+1.
+For approximation, the eventual quotient width is
+(5δ+δ³/4)/(1−δ²/4); it first meets 2⁻ⁿ at k=n+3. Exact Fraction evaluation
+independently checks these endpoint formulas at n=0,1,4,16,64.
+
+Stored endpoint bit sizes also explain the coupled parameters in the unresolved
+runs. Joint refinement's final lower numerator bound is 2⁻²ⁿ⁻⁴, whose denominator
+has 2n+5 bits. The Horner numerator bounds are [2⁻ⁿ, 2−2⁻ⁿ], with n+1-bit
+numerator/denominator components. `realHeight` produces n+2-bit endpoint
+components. The final approximation width has a denominator with 3n+10 bits.
+These describe reduced rational values, not GMP scratch storage or unreduced
+internal multiplication temporaries. The timings include all of that arithmetic.
+
 ## Remaining evidence
 
-The caller-supplied real-extension searches still need their own conformance,
-separation-precision and successive-approximation measurements. Clean versus
-eager normalization comparisons and downstream tower integration remain part
-of the full issue, as do comparison families with nonconstant denominators
-and varying coefficient height. This report does not claim completion of
-those obligations.
+Complete search cost characterization and successive approximation measurements
+remain outstanding. Clean versus eager normalization
+comparisons and downstream tower integration also remain part of the full issue.
+The existing [RationalFn arithmetic report](hex-rational-fn-performance.md#internal-alternatives)
+provides cancellation versus multiply-then-normalize comparisons on identical
+canonical operands, but does not replace the ordered-extension measurements.
 The companion's mathematical theorems have ordinary-kernel regression tests
 and axiom audits; applying them is not a performance benchmark.

@@ -167,7 +167,10 @@ theorem pow_succ (f : RationalFn K) (n : Nat) : f ^ (n + 1) = f ^ n * f := by
 attribute [local instance] Lean.Grind.Semiring.natCast Lean.Grind.Ring.intCast
 
 instance : NatCast (RationalFn K) := ⟨fun n => ofPoly (Nat.cast n)⟩
-instance (n : Nat) : OfNat (RationalFn K) n := ⟨ofPoly (OfNat.ofNat n)⟩
+instance : (n : Nat) → OfNat (RationalFn K) n
+  | 0 => ⟨ofPoly 0⟩
+  | 1 => ⟨ofPoly 1⟩
+  | n + 2 => ⟨ofPoly (Nat.cast (n + 2))⟩
 instance : IntCast (RationalFn K) := ⟨fun n => ofPoly (Int.cast n)⟩
 instance : SMul Nat (RationalFn K) := ⟨fun n f => (Nat.cast n : RationalFn K) * f⟩
 instance : SMul Int (RationalFn K) := ⟨fun n f => (Int.cast n : RationalFn K) * f⟩
@@ -188,11 +191,22 @@ instance instCommRing : Lean.Grind.CommRing (RationalFn K) where
   pow_zero := pow_zero
   pow_succ := pow_succ
   ofNat_succ n := by
-    change ofPoly (OfNat.ofNat (n + 1)) = ofPoly (OfNat.ofNat n) + ofPoly 1
-    rw [← ofPoly_add, Lean.Grind.Semiring.ofNat_succ]
+    cases n with
+    | zero => rfl
+    | succ n => cases n with
+      | zero =>
+        change ofPoly (Nat.cast 2) = ofPoly 1 + ofPoly 1
+        rw [← ofPoly_add, ← Lean.Grind.Semiring.ofNat_eq_natCast,
+          Lean.Grind.Semiring.ofNat_succ]
+      | succ n =>
+        change ofPoly (Nat.cast (n + 3)) = ofPoly (Nat.cast (n + 2)) + ofPoly 1
+        rw [← ofPoly_add, Lean.Grind.Semiring.natCast_succ]
   ofNat_eq_natCast n := by
-    change ofPoly (OfNat.ofNat n) = ofPoly (Nat.cast n)
-    rw [Lean.Grind.Semiring.ofNat_eq_natCast]
+    cases n with
+    | zero => rfl
+    | succ n => cases n with
+      | zero => rfl
+      | succ n => rfl
   neg_add_cancel := neg_add_cancel
   sub_eq_add_neg _ _ := rfl
   neg_zsmul i f := by
@@ -207,8 +221,11 @@ instance instCommRing : Lean.Grind.CommRing (RationalFn K) where
     change ofPoly (Int.cast (n : Int)) * f = ofPoly (Nat.cast n) * f
     rw [Lean.Grind.Ring.intCast_natCast]
   intCast_ofNat n := by
-    change ofPoly (Int.cast (n : Int)) = ofPoly (OfNat.ofNat n)
-    rw [Lean.Grind.Ring.intCast_natCast, Lean.Grind.Semiring.ofNat_eq_natCast]
+    cases n with
+    | zero => rfl
+    | succ n => cases n with
+      | zero => rfl
+      | succ n => exact congrArg ofPoly (Lean.Grind.Ring.intCast_natCast (n + 2))
   intCast_neg i := by
     change ofPoly (Int.cast (-i)) = -(ofPoly (Int.cast i))
     rw [Lean.Grind.Ring.intCast_neg, ofPoly_neg]

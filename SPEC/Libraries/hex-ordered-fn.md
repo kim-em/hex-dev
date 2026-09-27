@@ -25,7 +25,7 @@ The namespace is `Hex.OrderedFn`. Modules are:
 
 | Module | Responsibility |
 | --- | --- |
-| `Basic` | Opt-in carriers around `RationalFn`, embeddings and ordinary arithmetic reuse. |
+| `Extension` | Provider-indexed real carriers around `RationalFn`, total field arithmetic, sign and approximation. |
 | `Oracle` | Finite exact bounds and the interface to user-supplied approximation procedures. |
 | `Infinitesimal` | Lowest-coefficient signs and successive infinitesimal extensions. |
 | `Real` | Polynomial bound evaluation, sign refinement and proof-founded total comparison. |

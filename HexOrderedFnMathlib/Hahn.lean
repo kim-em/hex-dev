@@ -8,6 +8,11 @@ module
 public import Mathlib.RingTheory.HahnSeries.Lex
 public import Mathlib.RingTheory.HahnSeries.Summable
 
+/-!
+Coefficient embeddings of ordered Hahn fields preserve support, leading
+coefficients, order and constant embeddings.
+-/
+
 @[expose] public section
 
 noncomputable section
