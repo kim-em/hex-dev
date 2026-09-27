@@ -68,7 +68,9 @@ hashing. Samply imports the capture; the shared normalization and filtering
 scripts retain only those regions on the benchmark thread. Tool versions,
 commands and source hashes are in [the context](data/hex-ordered-fn/profile-context.json);
 the [summary](data/hex-ordered-fn/profile-summary.json) retains diagnostics and
-symbolized rankings. Raw profiles remain at `/tmp/issue-10376-profile`.
+symbolized rankings. The raw capture was collected at `/tmp/issue-10376-profile`
+and is no longer available; the committed context and summary support the
+reported attribution but do not permit re-filtering that capture.
 
 | Leaf category | Sample share |
 | --- | ---: |
@@ -266,7 +268,9 @@ region alignment residual is 0.492 ms and the ±5 ms sensitivity check passes.
 Leaf attribution is the basis for the percentages above. Deep GMP stacks do
 not consistently unwind to the caller, so incomplete inclusive caller shares
 are not used to divide costs between Horner evaluation and quotient enclosure.
-Raw captures remain at `/tmp/issue-10376-search-profile`.
+The raw capture was collected at `/tmp/issue-10376-search-profile` and is
+no longer available. The committed summary and context retain attribution and
+alignment diagnostics, but cannot substitute for raw data when re-filtering.
 
 ## Remaining evidence
 
