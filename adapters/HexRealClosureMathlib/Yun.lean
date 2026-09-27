@@ -22,6 +22,52 @@ passes replay.
 
 namespace Hex.RealClosure.Yun
 
+/-- Convert powers without assuming a Mathlib monoid instance on `DensePoly`. -/
+private theorem toPolynomial_pow (p : DensePoly Rat) (n : Nat) :
+    HexPolyMathlib.toPolynomial (p ^ n) =
+      (HexPolyMathlib.toPolynomial p) ^ n := by
+  induction n with
+  | zero => simp only [Lean.Grind.Semiring.pow_zero,
+      HexPolyMathlib.toPolynomial_one]
+  | succ n ih =>
+      rw [Lean.Grind.Semiring.pow_succ, HexPolyMathlib.toPolynomial_mul,
+        ih, pow_succ]
+
+/-- Executable reconstruction agrees with multiplication of rational
+polynomials. -/
+theorem toPolynomial_reconstruct (unit : Rat)
+    (entries : Array (DensePoly Rat × Nat)) :
+    HexPolyMathlib.toPolynomial (reconstruct unit entries) =
+      entries.toList.foldl (fun product entry =>
+        product * (HexPolyMathlib.toPolynomial entry.1) ^ entry.2)
+        (Polynomial.C unit) := by
+  have hfold (l : List (DensePoly Rat × Nat)) (acc : DensePoly Rat) :
+      HexPolyMathlib.toPolynomial
+        (l.foldl (fun product entry => product * entry.1 ^ entry.2) acc) =
+      l.foldl (fun product entry =>
+        product * (HexPolyMathlib.toPolynomial entry.1) ^ entry.2)
+        (HexPolyMathlib.toPolynomial acc) := by
+    induction l generalizing acc with
+    | nil => rfl
+    | cons entry rest ih =>
+        simpa only [List.foldl_cons, HexPolyMathlib.toPolynomial_mul,
+          toPolynomial_pow] using
+          ih (acc * entry.1 ^ entry.2)
+  simpa only [reconstruct, ← Array.foldl_toList,
+    HexPolyMathlib.toPolynomial_C] using
+    hfold entries.toList (DensePoly.C unit)
+
+/-- A replay-accepted result has the same product in Mathlib polynomials. -/
+theorem check_product_polynomial (f : DensePoly Rat) (unit : Rat)
+    (entries : Array (DensePoly Rat × Nat))
+    (h : check f (.factors unit entries) = true) :
+    HexPolyMathlib.toPolynomial f =
+      entries.toList.foldl (fun product entry =>
+        product * (HexPolyMathlib.toPolynomial entry.1) ^ entry.2)
+        (Polynomial.C unit) := by
+  rw [← toPolynomial_reconstruct,
+    (check_reconstruct f unit entries h).1]
+
 /-- A constant executable gcd maps to a unit gcd over `Rat`. -/
 private theorem gcd_isUnit (p q : DensePoly Rat)
     (hp : p ≠ 0) (hdegree : (DensePoly.gcd p q).natDegree = 0) :
