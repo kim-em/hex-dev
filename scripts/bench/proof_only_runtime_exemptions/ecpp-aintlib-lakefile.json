@@ -1,6 +1,6 @@
 {
   "path": "lakefile.lean",
   "baseline_blob": "ffee9bc46edf5856435dd50093a3daa0f91b55db",
-  "current_blob": "3c2395f13c996fa9c4f79f04ea4f7c3d41a97f40",
-  "reason": "Comparing the Lake declaration blocks relevant to hexbz_factor_service shows that their only change is the new AINTLIB requirement. Its Hasse theorem is imported by HexECPPMathlib, which is outside the factorization service import graph. The Mathlib requirement, factorization libraries, service executable, native build definitions, and their options are identical. Registering the independent ECPP targets and proof probes does not change the measured factorization binary."
+  "current_blob": "3d20b94512e29fd0a067d3d8b6e6d37453ec3d19",
+  "reason": "The Lake declaration blocks relevant to hexbz_factor_service and their options are unchanged. The new AINTLIB requirement supplies Hasse to HexECPPMathlib outside the factorization service import graph. Other intervening Lake additions register independent real-closure and SQUFOF targets; none alters the measured factorization binary."
 }
