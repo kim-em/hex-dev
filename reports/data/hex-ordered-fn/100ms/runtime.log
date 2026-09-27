@@ -1,0 +1,199 @@
+Hex.OrderedFnBench.second    expected complexity: n    [warm cache]
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=5418c8b, 2026-09-27T03:14:23Z, host=chungus2
+   param  per-call    repeats  C
+     128   12.316 µs  ×2^13    C=— [<floor] [trial 1/3]
+     256   24.044 µs  ×2^12    C=— [<floor] [trial 1/3]
+     512   48.774 µs  ×2^11    C=— [<floor] [trial 1/3]
+   1_024   94.601 µs  ×2^10    C=— [<floor] [trial 1/3]
+   2_048  192.088 µs  ×2^9     C=— [<floor] [trial 1/3]
+   4_096  374.935 µs  ×2^8     C=— [<floor] [trial 1/3]
+   8_192  785.399 µs  ×2^7     C=— [<floor] [trial 1/3]
+  16_384    1.613 ms  ×2^5     C=— [<floor] [trial 1/3]
+     128   12.903 µs  ×2^13    C=— [<floor] [trial 2/3]
+     256   24.239 µs  ×2^12    C=— [<floor] [trial 2/3]
+     512   48.478 µs  ×2^11    C=— [<floor] [trial 2/3]
+   1_024   95.605 µs  ×2^10    C=— [<floor] [trial 2/3]
+   2_048  190.208 µs  ×2^8     C=— [<floor] [trial 2/3]
+   4_096  382.728 µs  ×2^8     C=— [<floor] [trial 2/3]
+   8_192  760.046 µs  ×2^7     C=— [<floor] [trial 2/3]
+  16_384    1.529 ms  ×2^6     C=— [<floor] [trial 2/3]
+     128   12.263 µs  ×2^13    C=— [<floor] [trial 3/3]
+     256   24.456 µs  ×2^12    C=— [<floor] [trial 3/3]
+     512   48.073 µs  ×2^11    C=— [<floor] [trial 3/3]
+   1_024   94.530 µs  ×2^10    C=— [<floor] [trial 3/3]
+   2_048  196.130 µs  ×2^9     C=— [<floor] [trial 3/3]
+   4_096  382.794 µs  ×2^8     C=— [<floor] [trial 3/3]
+   8_192  758.241 µs  ×2^7     C=— [<floor] [trial 3/3]
+  16_384    1.505 ms  ×2^6     C=— [<floor] [trial 3/3]
+  verdict: inconclusive (cMin=—, cMax=—, β=—)
+  per-spawn floor (harness self-measurement): 22.320 ms
+  peak RSS: 67_640 kB..70_728 kB (across 24 ok row(s))
+  ‼ every measurement was below 10.000× the per-spawn floor (per-spawn floor ≈ 22.320 ms); the function is too fast for child-process measurement at the configured params. Try the following: extend the declared `paramSchedule := .custom #[...]` array with larger params, wrap the function in a hot inner loop, or use `setup_fixed_benchmark` for a single-shot reading.
+  ‼ only 0 verdict-eligible row(s) survived warmup-trim + signal-floor filter; the verdict is below resolution. Lower `--warmup-fraction`, extend the declared `paramSchedule := .custom #[...]` array with larger params.
+
+Hex.OrderedFnBench.third    expected complexity: n    [warm cache]
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=5418c8b, 2026-09-27T03:14:26Z, host=chungus2
+   param  per-call    repeats  C
+     128   41.074 µs  ×2^11    C=— [<floor] [trial 1/3]
+     256   82.169 µs  ×2^10    C=— [<floor] [trial 1/3]
+     512  164.771 µs  ×2^9     C=— [<floor] [trial 1/3]
+   1_024  329.018 µs  ×2^8     C=— [<floor] [trial 1/3]
+   2_048  643.139 µs  ×2^7     C=— [<floor] [trial 1/3]
+   4_096    1.286 ms  ×2^6     C=— [<floor] [trial 1/3]
+   8_192    2.584 ms  ×2^5     C=— [<floor] [trial 1/3]
+  16_384    5.143 ms  ×2^4     C=— [<floor] [trial 1/3]
+     128   40.847 µs  ×2^11    C=— [<floor] [trial 2/3]
+     256   81.944 µs  ×2^10    C=— [<floor] [trial 2/3]
+     512  165.672 µs  ×2^9     C=— [<floor] [trial 2/3]
+   1_024  326.414 µs  ×2^8     C=— [<floor] [trial 2/3]
+   2_048  646.959 µs  ×2^7     C=— [<floor] [trial 2/3]
+   4_096    1.299 ms  ×2^6     C=— [<floor] [trial 2/3]
+   8_192    2.565 ms  ×2^5     C=— [<floor] [trial 2/3]
+  16_384    5.152 ms  ×2^4     C=— [<floor] [trial 2/3]
+     128   41.552 µs  ×2^11    C=— [<floor] [trial 3/3]
+     256   82.029 µs  ×2^10    C=— [<floor] [trial 3/3]
+     512  163.652 µs  ×2^9     C=— [<floor] [trial 3/3]
+   1_024  319.960 µs  ×2^8     C=— [<floor] [trial 3/3]
+   2_048  639.202 µs  ×2^7     C=— [<floor] [trial 3/3]
+   4_096    1.283 ms  ×2^6     C=— [<floor] [trial 3/3]
+   8_192    2.580 ms  ×2^5     C=— [<floor] [trial 3/3]
+  16_384    5.186 ms  ×2^4     C=— [<floor] [trial 3/3]
+  verdict: inconclusive (cMin=—, cMax=—, β=—)
+  per-spawn floor (harness self-measurement): 22.324 ms
+  peak RSS: 67_644 kB..70_512 kB (across 24 ok row(s))
+  ‼ every measurement was below 10.000× the per-spawn floor (per-spawn floor ≈ 22.324 ms); the function is too fast for child-process measurement at the configured params. Try the following: extend the declared `paramSchedule := .custom #[...]` array with larger params, wrap the function in a hot inner loop, or use `setup_fixed_benchmark` for a single-shot reading.
+  ‼ only 0 verdict-eligible row(s) survived warmup-trim + signal-floor filter; the verdict is below resolution. Lower `--warmup-fraction`, extend the declared `paramSchedule := .custom #[...]` array with larger params.
+
+Hex.OrderedFnBench.comparison    expected complexity: n    [warm cache]
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=5418c8b, 2026-09-27T03:14:28Z, host=chungus2
+   param  per-call    repeats  C
+     128  112.965 µs  ×2^9     C=— [<floor] [trial 1/3]
+     256  437.169 µs  ×2^7     C=— [<floor] [trial 1/3]
+     512  437.806 µs  ×2^7     C=— [<floor] [trial 1/3]
+   1_024  868.764 µs  ×2^6     C=— [<floor] [trial 1/3]
+   2_048    1.737 ms  ×2^5     C=— [<floor] [trial 1/3]
+   4_096    3.485 ms  ×2^4     C=— [<floor] [trial 1/3]
+   8_192    6.966 ms  ×2^3     C=— [<floor] [trial 1/3]
+  16_384   13.978 ms  ×2^2     C=— [<floor] [trial 1/3]
+     128  112.734 µs  ×2^9     C=— [<floor] [trial 2/3]
+     256  220.906 µs  ×2^8     C=— [<floor] [trial 2/3]
+     512  437.268 µs  ×2^7     C=— [<floor] [trial 2/3]
+   1_024  867.025 µs  ×2^6     C=— [<floor] [trial 2/3]
+   2_048    1.736 ms  ×2^5     C=— [<floor] [trial 2/3]
+   4_096    3.496 ms  ×2^4     C=— [<floor] [trial 2/3]
+   8_192    7.039 ms  ×2^3     C=— [<floor] [trial 2/3]
+  16_384   14.208 ms  ×2^2     C=— [<floor] [trial 2/3]
+     128  113.401 µs  ×2^9     C=— [<floor] [trial 3/3]
+     256  220.052 µs  ×2^8     C=— [<floor] [trial 3/3]
+     512  439.884 µs  ×2^7     C=— [<floor] [trial 3/3]
+   1_024  881.176 µs  ×2^6     C=— [<floor] [trial 3/3]
+   2_048    1.733 ms  ×2^5     C=— [<floor] [trial 3/3]
+   4_096    3.492 ms  ×2^4     C=— [<floor] [trial 3/3]
+   8_192    6.941 ms  ×2^3     C=— [<floor] [trial 3/3]
+  16_384   13.958 ms  ×2^2     C=— [<floor] [trial 3/3]
+  verdict: inconclusive (cMin=—, cMax=—, β=—)
+  per-spawn floor (harness self-measurement): 21.882 ms
+  peak RSS: 67_652 kB..74_488 kB (across 24 ok row(s))
+  ‼ every measurement was below 10.000× the per-spawn floor (per-spawn floor ≈ 21.882 ms); the function is too fast for child-process measurement at the configured params. Try the following: extend the declared `paramSchedule := .custom #[...]` array with larger params, wrap the function in a hot inner loop, or use `setup_fixed_benchmark` for a single-shot reading.
+  ‼ only 0 verdict-eligible row(s) survived warmup-trim + signal-floor filter; the verdict is below resolution. Lower `--warmup-fraction`, extend the declared `paramSchedule := .custom #[...]` array with larger params.
+
+Hex.OrderedFnBench.degree    expected complexity: 1    [warm cache]
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=5418c8b, 2026-09-27T03:14:30Z, host=chungus2
+   param  per-call   repeats  C
+     128  43.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+     256  44.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+     512  44.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+   1_024  43.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+   2_048  43.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+   4_096  43.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+   8_192  43.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+  16_384  43.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+     128  43.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+     256  43.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+     512  43.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+   1_024  44.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+   2_048  43.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+   4_096  43.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+   8_192  43.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+  16_384  44.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+     128  43.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+     256  43.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+     512  43.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+   1_024  44.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+   2_048  43.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+   4_096  44.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+   8_192  43.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+  16_384  44.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+  verdict: inconclusive (cMin=—, cMax=—, β=—)
+  per-spawn floor (harness self-measurement): 21.921 ms
+  peak RSS: 67_640 kB..68_812 kB (across 24 ok row(s))
+  ‼ every measurement was below 10.000× the per-spawn floor (per-spawn floor ≈ 21.921 ms); the function is too fast for child-process measurement at the configured params. Try the following: extend the declared `paramSchedule := .custom #[...]` array with larger params, wrap the function in a hot inner loop, or use `setup_fixed_benchmark` for a single-shot reading.
+  ‼ only 0 verdict-eligible row(s) survived warmup-trim + signal-floor filter; the verdict is below resolution. Lower `--warmup-fraction`, extend the declared `paramSchedule := .custom #[...]` array with larger params.
+
+Hex.OrderedFnBench.scan    expected complexity: n    [warm cache]
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=5418c8b, 2026-09-27T03:14:33Z, host=chungus2
+   param  per-call    repeats  C
+     128  300.000 ns  ×2^18    C=— [<floor] [trial 1/3]
+     256  533.000 ns  ×2^17    C=— [<floor] [trial 1/3]
+     512  886.000 ns  ×2^16    C=— [<floor] [trial 1/3]
+   1_024    1.922 µs  ×2^15    C=— [<floor] [trial 1/3]
+   2_048    3.770 µs  ×2^15    C=— [<floor] [trial 1/3]
+   4_096    7.478 µs  ×2^14    C=— [<floor] [trial 1/3]
+   8_192   14.913 µs  ×2^12    C=— [<floor] [trial 1/3]
+  16_384   29.740 µs  ×2^11    C=— [<floor] [trial 1/3]
+     128  300.000 ns  ×2^18    C=— [<floor] [trial 2/3]
+     256  531.000 ns  ×2^17    C=— [<floor] [trial 2/3]
+     512  996.000 ns  ×2^16    C=— [<floor] [trial 2/3]
+   1_024    1.695 µs  ×2^15    C=— [<floor] [trial 2/3]
+   2_048    3.780 µs  ×2^14    C=— [<floor] [trial 2/3]
+   4_096    7.478 µs  ×2^13    C=— [<floor] [trial 2/3]
+   8_192   14.914 µs  ×2^12    C=— [<floor] [trial 2/3]
+  16_384   29.744 µs  ×2^11    C=— [<floor] [trial 2/3]
+     128  301.000 ns  ×2^18    C=— [<floor] [trial 3/3]
+     256  533.000 ns  ×2^17    C=— [<floor] [trial 3/3]
+     512  990.000 ns  ×2^16    C=— [<floor] [trial 3/3]
+   1_024    1.923 µs  ×2^15    C=— [<floor] [trial 3/3]
+   2_048    3.550 µs  ×2^15    C=— [<floor] [trial 3/3]
+   4_096    7.541 µs  ×2^14    C=— [<floor] [trial 3/3]
+   8_192   14.967 µs  ×2^12    C=— [<floor] [trial 3/3]
+  16_384   29.933 µs  ×2^11    C=— [<floor] [trial 3/3]
+  verdict: inconclusive (cMin=—, cMax=—, β=—)
+  per-spawn floor (harness self-measurement): 21.785 ms
+  peak RSS: 67_644 kB..72_908 kB (across 24 ok row(s))
+  ‼ every measurement was below 10.000× the per-spawn floor (per-spawn floor ≈ 21.785 ms); the function is too fast for child-process measurement at the configured params. Try the following: extend the declared `paramSchedule := .custom #[...]` array with larger params, wrap the function in a hot inner loop, or use `setup_fixed_benchmark` for a single-shot reading.
+  ‼ only 0 verdict-eligible row(s) survived warmup-trim + signal-floor filter; the verdict is below resolution. Lower `--warmup-fraction`, extend the declared `paramSchedule := .custom #[...]` array with larger params.
+
+Hex.OrderedFnBench.height    expected complexity: 1    [warm cache]
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=5418c8b, 2026-09-27T03:14:36Z, host=chungus2
+   param  per-call   repeats  C
+     128  49.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+     256  50.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+     512  49.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+   1_024  49.000 ns  ×2^run: 6 benchmark(s) produced zero verdict-eligible rows: Hex.OrderedFnBench.second, Hex.OrderedFnBench.third, Hex.OrderedFnBench.comparison, Hex.OrderedFnBench.degree, Hex.OrderedFnBench.scan, Hex.OrderedFnBench.height
+21    C=— [<floor] [trial 1/3]
+   2_048  49.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+   4_096  49.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+   8_192  49.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+  16_384  49.000 ns  ×2^21    C=— [<floor] [trial 1/3]
+     128  49.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+     256  49.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+     512  49.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+   1_024  49.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+   2_048  49.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+   4_096  49.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+   8_192  49.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+  16_384  49.000 ns  ×2^21    C=— [<floor] [trial 2/3]
+     128  48.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+     256  49.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+     512  50.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+   1_024  50.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+   2_048  49.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+   4_096  49.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+   8_192  49.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+  16_384  50.000 ns  ×2^21    C=— [<floor] [trial 3/3]
+  verdict: inconclusive (cMin=—, cMax=—, β=—)
+  per-spawn floor (harness self-measurement): 22.698 ms
+  peak RSS: 67_680 kB..68_812 kB (across 24 ok row(s))
+  ‼ every measurement was below 10.000× the per-spawn floor (per-spawn floor ≈ 22.698 ms); the function is too fast for child-process measurement at the configured params. Try the following: extend the declared `paramSchedule := .custom #[...]` array with larger params, wrap the function in a hot inner loop, or use `setup_fixed_benchmark` for a single-shot reading.
+  ‼ only 0 verdict-eligible row(s) survived warmup-trim + signal-floor filter; the verdict is below resolution. Lower `--warmup-fraction`, extend the declared `paramSchedule := .custom #[...]` array with larger params.
+exported to /tmp/issue-10376-infinitesimal-runtime-selected/runtime.json

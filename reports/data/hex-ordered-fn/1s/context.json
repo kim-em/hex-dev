@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10376/.lake/build/bin/hexorderedfn_bench",
+    "run",
+    "--filter",
+    "Hex.OrderedFnBench",
+    "--export-file",
+    "/tmp/issue-10376-infinitesimal-runtime-1s/runtime.json"
+  ],
+  "cpu": 56,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "load_before": [
+    5.44873046875,
+    16.32666015625,
+    38.65478515625
+  ],
+  "commit": "65a4556b7792bd69c597dadc18805f255cf919c6",
+  "executable_sha256": "78e527abcd9b07c5d623039aba9cb4eb47054a803362ffcdfd856b8b945edcce",
+  "returncode": 0,
+  "load_after": [
+    5.513671875,
+    12.68994140625,
+    34.50390625
+  ]
+}
