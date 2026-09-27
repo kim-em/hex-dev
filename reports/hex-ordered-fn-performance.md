@@ -2,8 +2,8 @@
 
 The six Mathlib-free targets exercise the production sign and comparison
 functions on canonical rational functions. These measurements cover the
-infinitesimal implementation only. The libraries remain at phase 0 until the
-full real-extension API and its other phase requirements are complete.
+infinitesimal implementation only. The APIs are implemented (phase 1); independent review and the remaining
+conformance/performance gates are tracked separately.
 
 ## Runtime measurements
 
@@ -92,13 +92,57 @@ Filtering diagnostics: 257 operation regions, 3671.1 ms total timed duration,
 3665 retained samples, 0.998 ms calibration residual, and a passed ±5 ms
 sensitivity check. Profile confidence passes.
 
+## Real refinement and general comparisons
+
+The Mathlib-free executable also measures the actual `Real.sign` and `Real.approx`
+searches. Preparation checks a finite successful trial and constructs the erased
+accessibility proof. The timed operation starts at precision zero, so earlier
+failed attempts remain included. These rational test subjects do not assert a
+universal transcendental registration; the companion Liouville fixture supplies
+that separate semantic integration test.
+
+The [initial measurements](data/hex-ordered-fn/real-initial/runtime.json) use three
+trial-major repetitions and one-second batches on automatically selected CPU 44.
+[Context](data/hex-ordered-fn/real-initial/context.json) records the command, binary
+hash and source commit `1c06686b749266a21ea01600b431871e7a93e210`. Module documentation
+and phase metadata were edited during collection; the measured executable was
+unchanged. Per-child repository metadata is preserved in the raw export.
+All completed rows are retained. All eight provisional complexity verdicts
+were inconclusive in the faster-than-declared direction, rather than passes.
+
+| Target | Parameters | Initial model | First median | Last median | Normalized slope |
+| --- | --- | --- | ---: | ---: | ---: |
+| `denominators` | 16–2048 | n * n | 202.695 µs | 226815.890 µs | -0.521 |
+| `compareHeight` | 1024–131072 | n | 5.648 µs | 14.521 µs | -0.787 |
+| `refinement` | 16–2048 | n * n | 60.742 µs | 24232.628 µs | -0.815 |
+| `jointRefinement` | 16–2048 | n * n | 96.580 µs | 46499.510 µs | -0.773 |
+| `horner` | 16–2048 | n * n | 21.555 µs | 9035.260 µs | -0.770 |
+| `realHeight` | 1024–131072 | n | 5.476 µs | 36.114 µs | -0.562 |
+| `approximation` | 16–2048 | n * n | 188.906 µs | 85064.051 µs | -0.769 |
+| `provider` | 16–2048 | n | 0.444 µs | 2.109 µs | -0.837 |
+
+`refinement` uses X−(2−2⁻ⁿ) at subject 2. `jointRefinement` also narrows every
+coefficient. `approximation` requests width 2⁻ⁿ for X−1 with both coefficient
+and argument refinement. Their witness checks are outside the timer; execution
+still includes all failed trials. `horner` signs 1+X+⋯+Xⁿ using argument bounds
+[−1/2,1/2]. `realHeight` varies the height of a linear polynomial's coefficient.
+`provider` isolates the caller's construction of rational bounds. No analytic
+constant generator is measured.
+
+The original quadratic denominator model overlooked the default Karatsuba plan;
+the corrected recurrence is T(n)=3T(n/2)+Θ(n). The height/provider ladders are
+extended to larger operands to distinguish limb work from fixed overhead. The
+quadratic bit-work models for refinement and Horner are not established by the
+initial measurements. Their results remain unresolved evidence, without a
+Phase-4 completion claim.
+
 ## Remaining evidence
 
-The caller-supplied real-extension searches still need their own conformance,
-separation-precision and successive-approximation measurements. Clean versus
-eager normalization comparisons and downstream tower integration remain part
-of the full issue, as do comparison families with nonconstant denominators
-and varying coefficient height. This report does not claim completion of
-those obligations.
+Complete search cost characterization, operation/bit-size counts and successive
+approximation measurements remain outstanding. Clean versus eager normalization
+comparisons and downstream tower integration also remain part of the full issue.
+The existing [RationalFn arithmetic report](hex-rational-fn-performance.md#internal-alternatives)
+provides cancellation versus multiply-then-normalize comparisons on identical
+canonical operands, but does not replace the ordered-extension measurements.
 The companion's mathematical theorems have ordinary-kernel regression tests
 and axiom audits; applying them is not a performance benchmark.

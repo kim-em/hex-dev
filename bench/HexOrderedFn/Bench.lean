@@ -82,13 +82,14 @@ def prepDenominators (n : Nat) : First × First :=
 
 def denominators (pair : First × First) : Int := comparison pair
 
--- Cost model: Θ(n²) coefficient operations: dense denominator products and Euclidean
--- reduction of two degree-n denominators whose difference is one. Integer growth is
--- reported separately; this is a coefficient-operation model, not a bit-cost claim.
-setup_benchmark denominators n => n * n with prep := prepDenominators where compareConfig
+-- Cost model: Θ(n^log₂3): the dense product uses the default Karatsuba plan,
+-- T(n)=3T(n/2)+Θ(n). The consecutive denominators have constant gcd; the
+-- resulting constant numerator makes final normalization linear. Coefficient
+-- heights are O(log n) and remain machine-sized on this degree ladder.
+setup_benchmark denominators n => 3 ^ Nat.log2 (max n 1) with prep := prepDenominators where compareConfig
 
 def heightConfig : LeanBench.BenchmarkConfig :=
-  { config with paramSchedule := .custom #[1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072] }
+  { config with paramSchedule := .custom #[65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608] }
 
 def prepCompareHeight (n : Nat) : First × First :=
   (RationalFn.C ((2^n + 1 : Nat) : Rat), RationalFn.C ((2^n + 2 : Nat) : Rat))
@@ -112,7 +113,7 @@ def provider (δ : Rat) : Rat × Rat :=
 
 -- Cost model: Θ(n): adding a fixed integer to a dyadic endpoint with n bits.
 -- This isolates the test caller's interval construction from Horner and search.
-setup_benchmark provider n => n with prep := prepProvider where compareConfig
+setup_benchmark provider n => n with prep := prepProvider where heightConfig
 
 /-- A finite checked witness authorizes this query, not a whole ordered field. -/
 structure SignQuery where
