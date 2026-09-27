@@ -359,7 +359,8 @@ private def packedPolyTransport : Option
 /-- One selected-root search serves repeated packing, arithmetic, and all
 coefficient transports in a checked factor split. -/
 private def cachedHandle : Option
-    (Int × Bool × Bool × Bool × Bool × Bool × Bool) := do
+    (Int × Bool × Bool × Bool × List Rat × List Rat ×
+      List (List Rat) × List (List Rat) × List (List Rat)) := do
   let d ← Root.validate 7 raw
   let h := d.handle
   let alpha := h.pack x
@@ -376,17 +377,34 @@ private def cachedHandle : Option
   let encoded := Element.transportPolyWith split.encoding encodedHandle p
   let rebound := Element.rebindPolyWith split.binding targetHandle encoded
   let refined := Element.refinePolyWith split targetHandle p
+  let stored (a : Element d) : List Rat := a.polynomial.toArray.toList
+  let encodedCoeffs := (List.range 4).map
+    (fun i => (encoded.coeff i).polynomial.toArray.toList)
+  let reboundCoeffs := (List.range 4).map
+    (fun i => (rebound.coeff i).polynomial.toArray.toList)
+  let refinedCoeffs := (List.range 4).map
+    (fun i => (refined.coeff i).polynomial.toArray.toList)
   return (h.sign inverse,
     zero == 0,
-    h.add alpha below == alpha + below,
-    h.mul alpha below == alpha * below,
-    h.inv below == below⁻¹,
-    encoded == Element.transportPoly split.encoding p,
-    rebound == Element.rebindPoly split.binding encoded &&
-      refined == Element.refinePoly split p)
+    (h.inverse? zero).isNone,
+    h.sub (h.mul below inverse) (h.pack 1) == 0,
+    stored (h.mul alpha below), stored inverse,
+    encodedCoeffs, reboundCoeffs, refinedCoeffs)
 
 #eval cachedHandle
-#guard cachedHandle == some (-1, true, true, true, true, true, true)
+
+/-- The non-monic fallback retains raw storage while the cached root still
+decides semantic zero and sign. -/
+private def cachedNonmonic : Option (Nat × Bool × Int) := do
+  let d ← Root.validate 9 { raw with context := 9, head := DensePoly.scale 2 head }
+  let h := d.handle
+  let high := h.pack (x * x * x)
+  let zero := h.pack (x * x - DensePoly.C 2)
+  let below := h.pack (x - DensePoly.C 3)
+  return (high.polynomial.natDegree, zero == 0, h.sign below)
+
+#eval cachedNonmonic
+#guard cachedNonmonic == some (3, true, -1)
 
 /-- Ordinary polynomial division uses the same handle for every coefficient
 operation, including the semantic zero tests on leading coefficients. -/

@@ -508,6 +508,17 @@ example {context : Nat} (d : Root context) : IsStrictOrderedRing (Value d) := in
 
 namespace Root.Handle.Value
 
+/-- The lawful selected-root value of a cached packed coefficient. This map
+need not be injective on nonzero stored representatives. -/
+noncomputable def toValue {context : Nat} {d : Root context}
+    {h : Root.Handle d} (a : Root.Handle.Value h) : Hex.RealClosure.Value d :=
+  a.stored.toValue
+
+theorem toValue_val {context : Nat} {d : Root context}
+    {h : Root.Handle d} (a : Root.Handle.Value h) :
+    a.toValue.val = a.value := by
+  rw [toValue, Element.toValue_val, Root.Handle.Value.value_eq]
+
 theorem eq_zero_iff {context : Nat} {d : Root context}
     {h : Root.Handle d} (a : Root.Handle.Value h) :
     a = 0 ↔ a.value = 0 := by
@@ -533,6 +544,18 @@ theorem value_add {context : Nat} {d : Root context}
   simpa only [Root.Handle.Value.value_eq, Root.Handle.Value.stored_add] using
     hv
 
+theorem value_zero {context : Nat} {d : Root context}
+    {h : Root.Handle d} :
+    (0 : Root.Handle.Value h).value = 0 := by
+  rw [Root.Handle.Value.value_eq, Root.Handle.Value.stored_zero]
+  exact Element.value_zero
+
+theorem value_one {context : Nat} {d : Root context}
+    {h : Root.Handle d} :
+    (1 : Root.Handle.Value h).value = 1 := by
+  rw [Root.Handle.Value.value_eq, Root.Handle.Value.stored_one]
+  exact Element.value_one
+
 theorem value_neg {context : Nat} {d : Root context}
     {h : Root.Handle d} (a : Root.Handle.Value h) :
     (-a).value = -a.value := by
@@ -549,6 +572,14 @@ theorem value_mul {context : Nat} {d : Root context}
   simpa only [Root.Handle.Value.value_eq, Root.Handle.Value.stored_mul] using
     hv
 
+theorem value_sub {context : Nat} {d : Root context}
+    {h : Root.Handle d} (a b : Root.Handle.Value h) :
+    (a - b).value = a.value - b.value := by
+  have hv := Element.value_sub a.stored b.stored
+  change (a.stored - b.stored).value = _ at hv
+  simpa only [Root.Handle.Value.value_eq, Root.Handle.Value.stored_sub] using
+    hv
+
 theorem value_inv {context : Nat} {d : Root context}
     {h : Root.Handle d} (a : Root.Handle.Value h) :
     (a⁻¹).value = a.value⁻¹ := by
@@ -556,6 +587,35 @@ theorem value_inv {context : Nat} {d : Root context}
   change (a.stored⁻¹).value = _ at hv
   simpa only [Root.Handle.Value.value_eq, Root.Handle.Value.stored_inv] using
     hv
+
+theorem value_div {context : Nat} {d : Root context}
+    {h : Root.Handle d} (a b : Root.Handle.Value h) :
+    (a / b).value = a.value / b.value := by
+  have hv := Element.value_div a.stored b.stored
+  simpa only [Root.Handle.Value.value_eq, Root.Handle.Value.stored_div] using
+    hv
+
+theorem value_natCast {context : Nat} {d : Root context}
+    {h : Root.Handle d} (n : Nat) :
+    (n : Root.Handle.Value h).value = (n : Hex.RealAlgebraicNumber) := by
+  rw [Root.Handle.Value.value_eq, Root.Handle.Value.stored_natCast]
+  exact Element.value_natCast n
+
+theorem toValue_add {context : Nat} {d : Root context}
+    {h : Root.Handle d} (a b : Root.Handle.Value h) :
+    (a + b).toValue = a.toValue + b.toValue := by
+  change (a + b).stored.toValue =
+    a.stored.toValue + b.stored.toValue
+  rw [Root.Handle.Value.stored_add]
+  exact Element.toValue_add a.stored b.stored
+
+theorem toValue_mul {context : Nat} {d : Root context}
+    {h : Root.Handle d} (a b : Root.Handle.Value h) :
+    (a * b).toValue = a.toValue * b.toValue := by
+  change (a * b).stored.toValue =
+    a.stored.toValue * b.stored.toValue
+  rw [Root.Handle.Value.stored_mul]
+  exact Element.toValue_mul a.stored b.stored
 
 theorem sign_sound {context : Nat} {d : Root context}
     {h : Root.Handle d} (a : Root.Handle.Value h) :

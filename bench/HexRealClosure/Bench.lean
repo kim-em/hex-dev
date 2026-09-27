@@ -94,7 +94,7 @@ def runPoly : Unit → IO UInt64 := fun _ => do
   let dividend := y * y - DensePoly.C 2
   let (quotient, remainder) := DensePoly.divMod dividend divisor
   if remainder.isZero && quotient.natDegree == 1 &&
-      Element.equal (quotient.eval (0 : Element d)) alpha then
+      (quotient.eval (0 : Element d)).value == alpha.value then
     return 1
   else
     throw (IO.userError "polynomial benchmark: wrong quotient or remainder")

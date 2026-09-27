@@ -663,10 +663,12 @@ use the selected root, not a quotient by the whole reducible polynomial.
 The split creates context version `8` and explicitly refines `a` into it;
 the original `a` remains in context version `7`. The checked `d.handle`
 caches the selected canonical root. Its `pack` method stores a representative
-with a unique zero, and its `value` agrees with the independent
-`RealAlgebraicNumber` obtained from `Expression.toCanonical`.
+with a unique zero. The resulting canonical value is positive and squares
+to `2`. A polynomial over `Root.Handle.Value h` uses that same cached root
+for every coefficient operation, including division.
 
 ```lean
+section
 open Hex Hex.RealClosure
 
 private def x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
@@ -678,8 +680,9 @@ private def raw : SignDet.RawDescriptor Rat Nat :=
     upper := .finite 2,
     indices := [], signs := [] }
 
-private def selectedArithmetic :
-    Option (Int × Int × Int × Nat × Bool) := do
+private def selectedArithmetic : Option
+    (Int × Int × Int × Nat × Nat × Nat × Bool ×
+      Bool × Bool) := do
   let d ← Root.validate 7 raw
   let a : Expression d := ⟨x⟩
   let below : Expression d := ⟨x - DensePoly.C 3⟩
@@ -693,19 +696,32 @@ private def selectedArithmetic :
   let inverseSign ← inverse.sign?.toOption
   let h := d.handle
   let packed : Element d := h.pack x
+  let selectedZero := h.pack (x * x - DensePoly.C 2)
+  let v := h.value packed
+  let coeff : Root.Handle.Value h :=
+    Root.Handle.Value.ofPoly h x
+  let y : DensePoly (Root.Handle.Value h) :=
+    DensePoly.ofCoeffs #[0, 1]
+  let (_, remainder) := DensePoly.divMod
+    (y * y - DensePoly.C 2) (y - DensePoly.C coeff)
   return (oldSign, newSign, inverseSign,
+    d.raw.context, split.binding.target.raw.context,
     split.binding.target.raw.head.natDegree,
-    h.value packed == a.toCanonical)
+    selectedZero == 0,
+    v * v == Hex.RealAlgebraicNumber.ofRat 2 &&
+      v.sign == 1,
+    remainder.isZero)
 
-#guard selectedArithmetic == some (1, 1, -1, 2, true)
+#guard selectedArithmetic ==
+  some (1, 1, -1, 7, 8, 2, true, true, true)
+end
 ```
 
 The companion proves that checked signs, inversion, refinement and canonical
 conversion preserve the selected real value. Those proofs inherit the named
 accepted-query admission in [#10389](https://github.com/kim-em/hex-dev/issues/10389).
-For repeated coefficient arithmetic, `Root.Handle.Value h` carries the same
-packed representation and gives generic `DensePoly` algorithms operations
-that share this cached root.
+`Root.Handle.Value h` carries the same packed representation and gives
+generic `DensePoly` algorithms operations that share this cached root.
 See {ref "hex-number-field"}[HexNumberField] for fixed-field arithmetic and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the canonical value API.
 

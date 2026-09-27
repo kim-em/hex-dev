@@ -111,7 +111,9 @@ share one selected-root search across all transported coefficients. The
 computational equalities to the original `Element` operations and the
 companion's value theorems preserve their proved meaning. The handle is
 indexed by its checked descriptor, so it cannot be used for a different
-context version without a checked conversion.
+context version without a checked conversion. Bind it once as
+`let h := d.handle` and pass `h` to cached values; writing `d.handle` afresh
+at each call repeats the search.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and

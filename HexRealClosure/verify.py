@@ -173,6 +173,21 @@ transport_preserves = all(eval_poly(c, alpha) == eval_poly(r, alpha)
                           for c, r in zip(transport_coeffs, transport_remainders))
 transport_changes_storage = (transport_coeffs[2] == [Q(0), Q(0), Q(1)]
                              and transport_remainders[2] == [Q(2)])
+product_storage = rem([Q(0), Q(-3), Q(1)], head)
+inverse_storage = [Q(-3, 7), Q(-1, 7)]
+assert eval_poly(inverse_storage, alpha) == inv(below)
+
+
+def lean_rats(coeffs):
+    def show(q):
+        return str(q.numerator) if q.denominator == 1 else f"{q.numerator} / {q.denominator}"
+    return "[" + ", ".join(show(c) for c in coeffs) + "]"
+
+
+def lean_polys(polys):
+    return "[" + ", ".join(lean_rats(p) for p in polys) + "]"
+
+
 candidate_roots = [neg(alpha), alpha, (Q(3), Q(0))]
 derivative = [i * c for i, c in enumerate(head)][1:]
 
@@ -260,11 +275,15 @@ expected = [
     f"{str(transport_preserves).lower()}, "
     f"{str(transport_changes_storage).lower()}, {str(sign(alpha) == 1).lower()})",
     f"some ({sign(inv(below))}, "
-    f"{str(add(mul(alpha, alpha), (Q(-2), Q(0))) == (Q(0), Q(0))).lower()}, "
-    f"{str(add(alpha, below) == eval_poly([Q(-3), Q(2)], alpha)).lower()}, "
-    f"{str(mul(alpha, below) == eval_poly([Q(0), Q(-3), Q(1)], alpha)).lower()}, "
+    f"{str(eval_poly([Q(-2), Q(0), Q(1)], alpha) == (Q(0), Q(0))).lower()}, "
+    f"{str(inverse_or_none((Q(0), Q(0))) is None).lower()}, "
     f"{str(mul(below, inv(below)) == (Q(1), Q(0))).lower()}, "
-    f"{str(transport_preserves).lower()}, {str(transport_preserves).lower()})",
+    f"{lean_rats(product_storage)}, {lean_rats(inverse_storage)}, "
+    f"{lean_polys(transport_remainders)}, {lean_polys(transport_remainders)}, "
+    f"{lean_polys(transport_remainders)})",
+    f"some ({len(high) - 1}, "
+    f"{str(eval_poly([Q(-2), Q(0), Q(1)], alpha) == (Q(0), Q(0))).lower()}, "
+    f"{sign(below)})",
     f"some ({str(not ext_remainder).lower()}, {len(ext_quotient) - 1}, "
     f"{str(ext_quotient[0] == alpha).lower()})",
 ]
@@ -273,6 +292,18 @@ run = subprocess.run(
     ["lake", "build", "HexRealClosure.Tests"],
     capture_output=True, text=True, check=True,
 )
-actual = re.findall(r"info: HexRealClosure/Tests\.lean:\d+:0: (.+)", run.stdout + run.stderr)
+actual = []
+continuation = False
+for line in (run.stdout + run.stderr).splitlines():
+    match = re.match(r"info: HexRealClosure/Tests\.lean:\d+:0: (.*)", line)
+    if match:
+        actual.append(match.group(1))
+        continuation = True
+    elif continuation and line.startswith("  "):
+        actual[-1] += " " + line.strip()
+    else:
+        continuation = False
+actual = [" ".join(x.split()) for x in actual]
+expected = [" ".join(x.split()) for x in expected]
 assert actual == expected, f"Lean outputs {actual!r}; exact oracle expects {expected!r}"
 print(f"exact oracle passed for {len(expected)} runnable cases")

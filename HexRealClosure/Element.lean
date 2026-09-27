@@ -475,6 +475,12 @@ theorem stored_eq_zero {context : Nat} {d : Root context}
   change (a * b⁻¹).stored = a.stored * b.stored⁻¹
   rw [stored_mul, stored_inv]
 
+@[simp] theorem stored_natCast {context : Nat} {d : Root context}
+    {h : Root.Handle d} (n : Nat) :
+    (n : Value h).stored = (n : Element d) := by
+  change h.pack (DensePoly.C n) = Element.ofPoly (DensePoly.C n)
+  exact h.pack_eq _
+
 theorem value_eq {context : Nat} {d : Root context}
     {h : Root.Handle d} (a : Value h) :
     a.value = a.stored.value := h.value_eq a.stored
