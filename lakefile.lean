@@ -144,7 +144,8 @@ lean_lib HexOrderedFnMathlib where
 
 @[default_target]
 lean_lib HexOrderedFnTests where
-  globs := #[.one `HexOrderedFn.Tests, .one `HexOrderedFnMathlib.Tests]
+  globs := #[.one `HexOrderedFn.Tests, .one `HexOrderedFnMathlib.Tests,
+    .one `HexOrderedFn.InfinitesimalTests, .one `HexOrderedFnMathlib.InfinitesimalTests]
 
 lean_lib HexMvPoly where
 
@@ -1736,6 +1737,14 @@ lean_exe hexpolyfast_bench where
 lean_exe hexrationalfn_bench where
   srcDir := "bench"
   root := `HexRationalFn.Bench
+
+lean_exe hexorderedfn_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexOrderedFn.EmitFixtures
+
+lean_exe hexorderedfn_bench where
+  srcDir := "bench"
+  root := `HexOrderedFn.Bench
 
 lean_lib HexRationalFnBenchSupport where
   srcDir := "bench"

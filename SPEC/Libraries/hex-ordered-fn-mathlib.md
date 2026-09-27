@@ -356,13 +356,13 @@ reject `sorryAx`, invented axioms and `native_decide`. Independent review
 checks that actual executable sign/equality supplies the ordinary field/order
 instances and that the termination proof applies to that same function.
 
-Phase 4 adds [fresh-module proof evidence](../benchmarking.md#fresh-module-proof-evidence)
-for representative model/order laws and optional real-sign boundary
-certificates. Separate runtime approximation, finite proof generation,
-elaboration and kernel checking. Prove and reuse arithmetic/Horner lemmas;
-do not introduce per-operation coefficient certificate benchmarks or rerun
-unbounded sign refinement in the kernel. Named-constant generation/analytic
-provider performance is outside this contract.
+Model/order laws and real-sign correspondence require ordinary-kernel proof
+tests, not performance measurements of theorem applications. Prove and reuse
+arithmetic/Horner lemmas; do not introduce per-operation coefficient certificate
+benchmarks or rerun unbounded sign refinement in the kernel. Performance of
+tactics and proof generators belongs to their consuming libraries, with
+elaboration and kernel checking measured separately from compiled runtime.
+Named-constant generation/analytic provider performance is outside this contract.
 
 The owner varies degree, coefficient height, lowest index, separation
 precision and tower depth, with caller approximation cost attributed
@@ -370,5 +370,5 @@ separately. Use fixed trial-major shared-host schedules, automatic CPU
 selection where supported, adjacent alternating comparisons, all completed
 samples and at most one unchanged inconclusive rerun. Family tower8 and
 other root workloads supply integration evidence; this companion contributes
-coefficient model/sign correctness and boundary proof costs. No CI fan-out or
+coefficient model/sign correctness. No CI fan-out or
 historical-paper timing threshold is introduced.

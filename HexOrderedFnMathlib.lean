@@ -8,3 +8,4 @@ module
 
 public import HexOrderedFnMathlib.Oracle
 public import HexOrderedFnMathlib.Real
+public import HexOrderedFnMathlib.Infinitesimal

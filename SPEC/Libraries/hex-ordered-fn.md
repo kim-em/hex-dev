@@ -405,6 +405,7 @@ root isolation remains the downstream owner's responsibility.
 Use the shared-host fixed trial-major schedule, automatic CPU selection when
 supported, adjacent alternating `AB`/`BA` comparisons, retained completed
 samples and at most one unchanged inconclusive rerun. Provide one attribution
-profile. Kernel/tactic boundary proof evidence belongs to the companion and
-is measured separately; ordinary runtime arithmetic needs no per-operation
-certificate benchmark. Historical paper timings are not acceptance thresholds.
+profile. The companion supplies ordinary-kernel correctness proofs. Tactic and
+proof-generator performance belongs to the consuming libraries; ordinary runtime
+arithmetic needs no per-operation certificate benchmark. Historical paper
+timings are not acceptance thresholds.

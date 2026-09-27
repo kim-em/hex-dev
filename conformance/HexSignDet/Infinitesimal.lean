@@ -7,28 +7,18 @@ module
 
 public import HexSignDet
 public import HexRationalFn
+public import HexOrderedFn.Infinitesimal
 public meta import HexRationalFn
+public meta import HexOrderedFn.Infinitesimal
 
 public section
 
-/-! Test coefficient providers for exact infinitesimal conformance. The outer
-indeterminate is positive and smaller than every positive base-field element.
-These use the existing rational-function field operations, with an explicit
-sign callback. They do not register ordered-function or real-closure providers. -/
+/-! Exact infinitesimal conformance using the ordered-function library.
+The outer indeterminate is positive and smaller than every positive base-field element. -/
 namespace Hex.SignDet.Infinitesimal
 
-/-- The first nonzero coefficient determines a polynomial's sign at a positive
-infinitesimal. The base callback is itself exact, including at nested levels. -/
-def lowestSign {K : Type} [Zero K] [DecidableEq K]
-    (sign : K → Int) (p : DensePoly K) : Int :=
-  match p.toArray.toList.find? (fun c => c != 0) with
-  | none => 0
-  | some c => sign c
-
 /-- A fraction's sign is the product of its numerator and denominator signs. -/
-def sign {K : Type} [Lean.Grind.Field K] [DecidableEq K]
-    (baseSign : K → Int) (f : RationalFn K) : Int :=
-  lowestSign baseSign f.num * lowestSign baseSign f.den
+abbrev sign := @OrderedFn.Infinitesimal.sign
 
 abbrev First := RationalFn Rat
 abbrev Second := RationalFn First

@@ -80,7 +80,7 @@ noncomputable instance field : Field (RationalFn K) :=
 noncomputable section
 
 /-- Embed a dense polynomial into Mathlib's rational-function field. -/
-def embed (p : DensePoly K) : RatFunc K :=
+@[expose] def embed (p : DensePoly K) : RatFunc K :=
   algebraMap (Polynomial K) (RatFunc K) (HexPolyMathlib.toPolynomial p)
 
 @[simp] theorem embed_zero : embed (0 : DensePoly K) = 0 := by simp [embed]
@@ -225,7 +225,7 @@ theorem toRatFunc_X : toRatFunc (RationalFn.X : RationalFn K) = RatFunc.X := by
     RatFunc.algebraMap_X]
 
 /-- The executable constant embedding as a ring homomorphism. -/
-def constantHom : K →+* RationalFn K where
+@[expose] def constantHom : K →+* RationalFn K where
   toFun := RationalFn.C
   map_zero' := by
     apply RationalFn.ext

@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexOrderedFn.Tests
+public import HexOrderedFn.InfinitesimalTests
+public meta import HexOrderedFn.InfinitesimalTests
 public meta import HexOrderedFn.Tests
 public meta import HexOrderedFn
 
@@ -21,8 +23,8 @@ endpoint and midpoint results; erased success witnesses do not bypass refinement
 Covered edge cases: zero, negative and zero-crossing bounds, nonpositive width
 requests, earlier failed trials and nonmonotone success.
 
-Full Z3 and external exact conformance for ordered extensions remains a separate
-phase obligation.
+Infinitesimal Z3/exact fixtures are emitted by `HexOrderedFn.EmitFixtures`.
+Real-extension Z3/exact conformance remains a separate phase obligation.
 -/
 
 open Hex Hex.OrderedFn Hex.OrderedFn.Oracle Hex.OrderedFn.Tests
@@ -71,3 +73,24 @@ private def productsAgree : Bool := Id.run do
   return true
 
 #guard productsAgree
+
+namespace InfinitesimalChecks
+open Hex.OrderedFn.InfinitesimalTests
+open scoped Hex.OrderedFn.Infinitesimal
+
+#guard Infinitesimal.sign orderSign (1 / (epsilon - 1)) = -1
+#guard Infinitesimal.sign orderSign ((epsilon ^ 2 - 1) / (epsilon - 1)) = 1
+#guard Infinitesimal.sign orderSign (-epsilon / (epsilon - 1)) = 1
+#guard Infinitesimal.sign orderSign (epsilon - epsilon) = 0
+#guard Infinitesimal.compare orderSign (epsilon - 1) 0 = .lt
+#guard Infinitesimal.compare orderSign epsilon epsilon = .eq
+#guard Infinitesimal.compare orderSign epsilon 0 = .gt
+#guard (0 : First) < epsilon
+#guard epsilon < (1 / 1000 : First)
+#guard (1000 : First) < epsilon⁻¹
+#guard delta < lift epsilon
+#guard delta < lift (epsilon ^ 3)
+#guard Infinitesimal.sign (Infinitesimal.sign orderSign) (delta - lift epsilon) = -1
+
+
+end InfinitesimalChecks

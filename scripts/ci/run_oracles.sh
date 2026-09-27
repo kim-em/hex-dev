@@ -61,6 +61,7 @@ ORACLES=(
   "HexRealAlgebraic|hexrealalgebraic_emit_fixtures|scripts/oracle/real_algebraic_flint.py|conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl"
   # Pinned Z3 RCF, exact nested-infinitesimal roots
   "HexSignDet|hexsigndet_emit_infinitesimal|scripts/oracle/sign_det_z3.py|conformance-fixtures/HexSignDet/infinitesimal.jsonl"
+  "HexOrderedFn|hexorderedfn_emit_fixtures|scripts/oracle/ordered_fn_z3.py|conformance-fixtures/HexOrderedFn/infinitesimal.jsonl"
   # SymPy backed
   "HexKronecker|hexkronecker_emit_fixtures|scripts/oracle/kronecker_sympy.py|conformance-fixtures/HexKronecker/identities.jsonl"
   "HexPolyDet|hexpolydet_emit_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexPolyDet/det.jsonl"
@@ -217,6 +218,13 @@ run_tuple() {
   if [ "$oracle" = "scripts/oracle/sign_det_z3.py" ]; then
     if ! python3 -m unittest scripts.oracle.test_sign_det_z3; then
       echo "FAIL: $lib :: infinitesimal oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/ordered_fn_z3.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_ordered_fn_z3; then
+      echo "FAIL: $lib :: ordered-function oracle rejection checks failed"
       return 1
     fi
   fi
