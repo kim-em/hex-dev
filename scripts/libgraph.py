@@ -20,6 +20,7 @@ KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck", "HexGraph"}
 # entry, no repo-root file); exempt them from the Lake-config alignment check only.
 BUILD_ONLY_LIBS = {
     "HexOrderedFnTests",
+    "HexRealClosureTests",
     "CadSampleCostsExperiment",  # Manual experiments; no released library or CI target.
     "HexPolyFastKernels",
     "HexGraphIsoProofProbe",
@@ -37,6 +38,7 @@ BUILD_ONLY_LIBS = {
     "HexPrimalityElabProbeScientific",
     "HexPrimalityConstructionProbe",
     "HexPrimalityMathlibProofProbe",
+    "HexECPPMathlibProofProbe",
     "HexIntFactorKernelProbe",
     "HexIntFactorFieldConformance",
     "HexMvGcdKernelProbe",

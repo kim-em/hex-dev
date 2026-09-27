@@ -9,6 +9,7 @@ public import HexNumberFieldMathlib.AdjoinRoot
 public import HexRCF.RealCoefficients.Coefficients
 public import HexRCF.RealCoefficients.LiteralSign
 public import HexBerlekampZassenhausMathlib.FactorSoundness
+public import HexBerlekampZassenhausMathlib.QuadraticNormIrreducible
 public import HexRootsMathlib.Conjugate
 
 public section
@@ -24,11 +25,24 @@ theorem checkedIrreducible (p : ZPoly) (w : ZPoly.IrredWitness)
   ⟨(ZPoly.isIrreducible_iff p).mpr
     (ZPoly.irreducible_of_checkIrredWitness p w h), hd⟩
 
+/-- A checked iterated quadratic norm certifies the irreducibility of
+multiquadratic common-field polynomials such as the one for `√3 + √2`. -/
+theorem checkedIrreducibleQuadraticNorm (p : ZPoly)
+    (cert : QuadraticNormCertificate) (h : cert.check p = true)
+    (hd : 0 < p.natDegree) : ZPoly.CheckedIrreducible p :=
+  ⟨(ZPoly.isIrreducible_iff p).mpr
+    ((ZPoly.Irreducible_iff_polynomialIrreducible p).mpr
+      (HexBerlekampZassenhausMathlib.irreducible_of_check h)), hd⟩
+
 /-- Rebuild a selected root directly from printable square data. -/
-def literalRep (p : ZPoly) (s : DyadicSquare)
+@[expose] def literalRep (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec) :
     RefinedIsolation p :=
   ⟨⟨s, .ofWitness hw⟩, hp⟩
+
+@[simp] theorem literalRep_square (p : ZPoly) (s : DyadicSquare)
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec) :
+    (literalRep p s hw hp).1.square = s := rfl
 
 /-- The literal representative names the same root used by the coordinate field. -/
 theorem literalRep_mk (p : ZPoly) (s : DyadicSquare)

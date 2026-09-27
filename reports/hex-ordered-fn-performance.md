@@ -2,8 +2,8 @@
 
 The Mathlib-free targets exercise production signs, comparisons, Horner bounds
 and real refinement on canonical rational functions. The initial six targets
-cover infinitesimals; the later sections cover real searches and general comparisons. The APIs are implemented (phase 1); independent review and the remaining
-conformance/performance gates are tracked separately.
+cover infinitesimals; the later sections cover real searches and general comparisons.
+API review and conformance are recorded separately from these runtime results.
 
 ## Runtime measurements
 
@@ -295,11 +295,280 @@ alignment diagnostics, but cannot substitute for raw data when re-filtering.
 
 ## Remaining evidence
 
-Complete search cost characterization and successive approximation measurements
-remain outstanding. Clean versus eager normalization
+The four single-level search families have passing conservative upper-bound
+evidence. Successive approximation has one inconclusive operation-count run and one
+consistent unchanged repeat on small operands; its earlier quartic comparison
+does not qualify. The three-level workload also has consistent operation-count
+evidence. Large precision is measured at the first level and depth is varied
+on the small-operand families; no uniform multivariate bound is claimed.
+Clean versus eager normalization
 comparisons and downstream tower integration also remain part of the full issue.
 The existing [RationalFn arithmetic report](hex-rational-fn-performance.md#internal-alternatives)
 provides cancellation versus multiply-then-normalize comparisons on identical
 canonical operands, but does not replace the ordered-extension measurements.
 The companion's mathematical theorems have ordinary-kernel regression tests
 and axiom audits; applying them is not a performance benchmark.
+
+## Search upper-bound model
+
+The four search registrations use mode 2, a one-sided O(n³) upper bound. The
+old n² registrations and both measured schedules remain recorded above; their
+verdicts are not reinterpreted as passes. The new schedule is 8192, 10240, 12288,
+14336, 16384, 20480, 24576 and 28672, with the same three trial-major repetitions
+and one-second target. This ladder keeps calls below the existing 60-second
+cap: the previous 98304 approximation call took 628 seconds when the parent
+timeout was starved. The older large-run data are retained and their observed
+exponents of 2.25–2.39 are consistent with the cubic upper bound. Horner uses four-second batches after its retained one-second run fell below
+the signal floor; the other three targets retain one-second batches.
+
+A tight family-specific wall-time model is not available: the operands include
+powers of two, nearby odd integers, and quotient numerators of different sizes;
+GMP selects multiplication and gcd algorithms by operand size. The small and
+large schedules cross these regimes, and the exact operation counts do not
+identify one fixed algorithm for every rational operation. No exponent is
+chosen from a timing fit.
+
+The source-derived counts above give O(n) rational operations on O(n)-bit
+operands. Reduced endpoint sizes grow linearly, and a product, sum, difference,
+or quotient of two such rationals has O(n)-bit unreduced components. Width
+comparison also multiplies only a bounded number of those components. GMP’s
+published [basecase multiplication](https://gmplib.org/manual/Basecase-Multiplication),
+[basecase division](https://gmplib.org/manual/Basecase-Division), and
+[Lehmer gcd](https://gmplib.org/manual/Lehmer_0027s-Algorithm) bounds are quadratic
+in operand size; larger-input algorithms improve those bounds. Rational
+normalization uses a bounded number of these operations. Precision generation
+by repeated squaring has geometrically increasing operand sizes and is also
+bounded by O(n²). Hence the complete measured search is O(n³). This bound
+covers the large-integer arithmetic identified by the profile, rather than
+counting only the outer search loop.
+
+This is an upper bound on these four specified families, including their
+synthetic caller providers. It is not a precision bound in polynomial degree,
+a uniform bound for arbitrary caller approximations, or a two-sided complexity
+claim. The retained one-second results pass that check for three targets; the longer
+Horner batches below resolve the remaining signal-floor limitation.
+
+The [upper-bound run](data/hex-ordered-fn/search-upper/runtime.json) retains all
+96 successful rows. `refinement`, `jointRefinement`, and `approximation` have
+normalized slopes −0.629, −0.624 and −0.627 against n³. Their harness wording is
+`inconclusive` in the faster direction; under the documented mode-2 rule their
+result is **within declared upper bound (observed faster)**, not a two-sided
+pass. Horner has only one signal-eligible rung: the harness measured a 157 ms
+process floor on this host, making one-second batches insufficient. This is
+a host observation, not a property of Horner. The five-minute load average
+was 19.12 at completion, compared with 2.00 at startup;
+these are context, not grounds for dropping samples or attributing a cause.
+
+The [context](data/hex-ordered-fn/search-upper/context.json) records source
+`7b003d90b400dc6eaa9cdea28e9bba460193c3de`, four workers, one automatically selected
+CPU, and the executable hash. Commit `7b003d90b` remains on branch
+`issue-10376-performance`; rebased commit `66c37f8b0` has identical measured
+`bench/`, `HexOrderedFn/` and `HexOrderedFnMathlib/` trees. The checkout changed during collection to prepare the
+successive fixture; the measured executable remained the original binary.
+These data are scaling evidence, not a paired speed comparison with older runs.
+
+## Successive approximation workload
+
+`successiveApproximation` evaluates X₂−X₁ at X₁=2 and X₂=2+2⁻ⁿ, requesting
+width 2⁻ⁿ. Each outer coefficient callback executes the actual inner
+`Real.approx` search from zero. Preparation stores finite checked termination
+witnesses for each coefficient/request pair, never the returned bounds. It
+checks that every request through the outer witness uses such an entry.
+The test-only fallback gives direct rational evaluation for other requests;
+it is outside the measured search and makes no universal registration claim.
+The rational subjects are not asserted transcendental or algebraically independent.
+
+The exact returned interval is [2⁻ⁿ/2, 3·2⁻ⁿ/2]. The outer trial at n fails its
+width check and trial n+1 succeeds; preparation checks both and the total
+result independently. The negative-X coefficient needs k+1 inner trials at
+outer trial k, while each of the two constant coefficients succeeds immediately.
+Consequently there are n+2 outer trials and (n+2)(n+7)/2 inner trials in total.
+Each inner trial operates on O(n)-bit rationals. The same quadratic integer
+operation bounds give an O(n⁴) upper bound for the complete nested search.
+However, the measured 16..192 schedule has only scalar to four-limb operands.
+It does not exercise the large-integer phase supporting the single-level
+upper-bound evidence, so its n⁴ comparison does not qualify as a mode-2 pass.
+
+Parameters are 16, 24, 32, 48, 64, 96, 128 and 192, with three trial-major
+repetitions and four-second batches. Preparation, including successful-witness
+checks, is excluded; every inner and outer refinement is included. The results below retain that exploratory registration. This benchmark is distinct from
+the companion’s Liouville registration test and does not replace its hypotheses.
+
+The [four-second run](data/hex-ordered-fn/successive/runtime.json) retains all
+48 successful, signal-eligible samples. Horner’s normalized slope against n³
+is −0.765; successive approximation’s slope against n⁴ is −1.791. Both harness
+verdicts read `inconclusive` in the faster direction. Horner qualifies as
+**within declared upper bound (observed faster)** under mode 2. The successive
+result is retained as exploratory data and supplies no phase-completion verdict.
+
+| Target | First parameter / median | Last parameter / median | Model |
+| --- | ---: | ---: | --- |
+| `horner` | 8192 / 98.349 ms | 28672 / 1577.874 ms | O(n³) |
+| `successiveApproximation` | 16 / 0.829 ms | 192 / 159.045 ms | O(n⁴) |
+
+The [context](data/hex-ordered-fn/successive/context.json) records clean source
+`b0966f0116d51047ebb549f029e4b98e47644653`, four Lean workers pinned to automatically
+selected CPU 2, host load and executable hash. The source and binary stayed
+unchanged during collection; the retained context contains the initial binary hash.
+All older measurements remain committed, including Horner’s unresolved shorter
+batches. The two runs use different CPUs and are not a paired speed comparison.
+
+The current successive registration uses parameters 4, 6, 8, 10, 12, 14, 16
+and 18, covering small integer operands. This is not a GMP-free path:
+Lean’s [runtime gcd](https://github.com/leanprover/lean4/blob/v4.34.1/src/runtime/object.cpp#L1526)
+converts even scalar arguments to GMP integers. Its model is
+the exact number of bound operations, `(n+2)(7n+55)/2`: seven for each of the
+`(n+2)(n+3)/2` negative-X inner trials, five for each of the `2(n+2)`
+constant-coefficient trials, and seven for each of the `n+2` outer trials.
+This mode-1 model is declared from the search equations, before measurement.
+It assigns equal weight to bound operations, although multiplication, addition
+and division have different costs; provider construction, precision generation
+and coefficient lookup are additional work per trial. Thus it models expected
+scaling, not an exact instruction count. From n=14, comparison cross-products
+exceed Lean's 32-bit small-`Int` range and allocate one-limb GMP integers.
+The schedule therefore includes that small-operand transition, whose cost is
+part of the retained measurements; it is not a uniformly native-arithmetic run.
+The [first run](data/hex-ordered-fn/successive-scalar/runtime.json) is
+inconclusive, with normalized slope +0.185. The one permitted
+[unchanged repeat](data/hex-ordered-fn/successive-scalar-repeat/runtime.json)
+is consistent with the model, slope +0.040. All 48 completed samples remain
+recorded; neither run is discarded. Both use three trial-major repetitions
+and four-second batches. The harness excludes the first rung from both
+verdict fits, retaining it in the raw results. Repeat medians range from
+136.513 µs at n=4 to 1.024 ms at n=18. These runs support the operation-count
+model on this small-operand family; they do not establish a tight bound for
+large-precision nested searches.
+
+The [representative profile](data/hex-ordered-fn/successive-profile-summary.json)
+at n=18 attributes 36.81% of leaf samples to GMP, 34.40% to allocation,
+18.69% to the Lean runtime, 2.90% to Hex code, and 7.20% to other code.
+Inclusive stacks put 90.26% inside the coefficient callback and 72.18%
+inside runtime gcd, consistent with repeated inner-search arithmetic and
+small-integer conversion/allocation costs. This differs from the large-integer
+profile at n=8192 and does not justify reusing its quadratic limb-cost model.
+
+Filtering retains 5762 samples over 4111 operation regions (5.775 s), with
+1.201 ms alignment residual and a passing ±5 ms sensitivity check. All raw
+perf/imported/filtered data, sidecars, and symbol tables are retained at
+`/home/kim/bench-results/issue-10376-scalar-profile`; the committed context and
+summary identify the commands and source. Both measurements and the profile
+use source `6b751bcaad0c7a4cc88c5cd5196e8f86827eb3af`. Each context records
+matching executable hashes before and after execution. Host load is retained
+without removing samples; the first run began with a one-minute load of
+119.13 and ended at 92.72. The repeat is not a paired speed comparison.
+
+## Three successive real levels
+
+`thirdApproximation` evaluates X₃+(X₂−X₁) at X₁=2, X₂=33/16 and
+X₃=2⁻ⁿ−1/16, requesting width 2⁻ⁿ. Its returned interval is again
+[2⁻ⁿ/2, 3·2⁻ⁿ/2]. The third-level coefficient provider runs second-level
+`Real.approx` searches, which themselves execute first-level searches.
+Only finite termination witnesses are retained. All witnesses at the changed
+second-level subject are checked afresh; none is transported from another
+provider. Every timed request lies within the prepared witness arrays.
+The exact rational fallback is outside those requests, and these rational
+subjects assert no universal transcendental registration.
+
+For outer trial k, approximating X₂−X₁ costs B₂(k)=(k+2)(7k+55)/2
+bound operations. Each of the two constant-coefficient requests costs 15
+operations across its two levels; the outer trial adds seven. Summing B₂(k)+37
+for k=0,…,n+1 gives `(n+2)(7n²+121n+666)/6`. This mode-1 count is declared
+before measurement, with the same unit-weight assumption as the second-level
+model. GMP conversion and allocation remain part of the cost; transitions
+from native to GMP comparison products depend on the operands at each depth.
+The schedule is 4, 6, 8, 10, 12, 14, 16 and 18,
+three trial-major repetitions and four-second batches. It varies real tower
+depth without introducing algebraic roots or changing the public library.
+
+The [24 retained samples](data/hex-ordered-fn/third/runtime.json) are consistent
+with this model, with normalized slope +0.009. Medians range from 698.140 µs
+at n=4 to 9.403 ms at n=18. The process measurement floor is 23.958 ms; every
+batch clears it. The first rung is retained but excluded from the fit, as for
+the second-level run. No repeat was needed. The [context](data/hex-ordered-fn/third/context.json)
+records source `2c7c3f3024dccff9284303e1c3e17d344556e131`, CPU 90, four
+Lean workers and equal executable hashes before and after collection. These
+depth cases and the first-level large-precision cases vary separate axes;
+they do not establish a uniform bound in both precision and depth.
+
+### Search counts and rational sizes
+
+The executable's `sizes` command inspects provider bounds, every Horner
+accumulator and product, and quotient bounds for all trial precisions reached
+by these two workloads. It records maximum bit lengths of stored reduced
+rational endpoints and widths, excluding GMP scratch buffers. The
+[16 rows](data/hex-ordered-fn/successive-sizes.jsonl) and
+[source context](data/hex-ordered-fn/successive-sizes-context.json) are retained.
+Numerator/denominator maxima are n+4/n+3 at depth two and n+5/n+4 at depth
+three. At n=18 these are 22/21 and 23/22 bits respectively. Comparison
+cross-products can be larger, including the small-`Int` transition described
+above.
+
+The count fields in those rows are derived from the executed search equations,
+not instrumented runtime counters. The diagnostic checks the first successful
+trial for every coefficient and requested precision reached at each level,
+including all earlier failures. The fields count search invocations (including
+the outer search), coefficient-provider calls and argument-provider calls:
+
+| Depth | Searches | Coefficient calls | Argument calls | Bound operations |
+| --- | --- | --- | --- | --- |
+| 2 | 1+3(n+2) | (n+2)(3n+23)/2 | (n+2)(n+9) | (n+2)(7n+55)/2 |
+| 3 | 1+(n+2)(3n+29)/2 | (n+2)(n²+17n+92)/2 | (n+2)(n²+19n+114)/3 | (n+2)(7n²+121n+666)/6 |
+
+Every visited coefficient invokes its provider once and performs a bound
+multiplication and addition. Each trial evaluates a numerator and denominator,
+requesting the argument twice, then performs one bound division. Consequently
+the bound-operation count is twice the coefficient-call count plus half the
+argument-call count. At n=18 the depth-two workload makes 61 searches and
+1810 bound operations; the depth-three workload makes 831 searches and
+17040 bound operations. Preparation and its witness checks are excluded.
+
+## Canonical arithmetic comparison
+
+`subtraction` and `comparison` use identical prepared operands Xⁿ and −Xⁿ.
+Both execute the existing canonical `RationalFn` subtraction. The baseline
+consumes the resulting numerator's stored coefficient-array size; comparison
+instead scans for the sign and returns the ordering. Both results have a
+constant-size checksum. These different outputs isolate the cost of ordering
+on top of arithmetic; their hashes are not an equivalence check.
+
+The [64 samples](data/hex-ordered-fn/arithmetic/paired.jsonl) use four
+trial-major repetitions, adjacent arms and alternating AB/BA order at each
+parameter, with one-second tuning targets. All batches completed, lasting
+0.866–0.949 s. Preparation is outside the operation timer. All samples are
+retained; no repeat or host-load exclusion was used. The
+[schedule](data/hex-ordered-fn/arithmetic/schedule.json) and
+[context](data/hex-ordered-fn/arithmetic/context.json) identify CPU 83, source
+`da4ce7c5b3882394b580d032533fa52f29bb90a1`, and matching executable hashes
+before and after collection. The measured sources for this run, the third-level
+run and its original size diagnostic remain reachable on the
+`issue-10376-depth` branch. Each dataset records its own source revision;
+reproduction uses that revision, including its measurement driver.
+
+| Degree | Subtraction median | Comparison median | Median paired comparison/subtraction ratio |
+| ---: | ---: | ---: | ---: |
+| 128 | 113.384 µs | 113.431 µs | 1.000 |
+| 256 | 221.612 µs | 221.777 µs | 1.002 |
+| 512 | 440.110 µs | 441.868 µs | 1.003 |
+| 1024 | 877.715 µs | 869.448 µs | 0.999 |
+| 2048 | 1744.419 µs | 1766.579 µs | 1.009 |
+| 4096 | 3497.815 µs | 3534.306 µs | 1.008 |
+| 8192 | 6996.975 µs | 7052.168 µs | 1.008 |
+| 16384 | 14024.421 µs | 14094.413 µs | 1.005 |
+
+The observed total costs are close on this family. The separate scan workload
+costs about 30 µs at n=16384, only about 0.2% of subtraction's 14 ms; this
+comparison is not expected to distinguish so small a difference. Individual paired ratios
+range from 0.962 to 1.061; this run does not resolve the small incremental
+scan cost reliably or establish a speedup. It is a direct comparison with
+existing arithmetic, consistent with the profile's attribution to canonical
+normalization. It is not the downstream clean/eager selected-root ablation.
+The subtraction medians grow 123.7-fold over a 128-fold degree range,
+descriptively consistent with its linear model; this paired run does not
+produce a separate lean-bench complexity verdict.
+
+Reproduce with:
+
+```sh
+python3 scripts/bench/ordered_fn_measure.py --output /tmp/ordered-fn-arithmetic --paired-arithmetic
+.lake/build/bin/hexorderedfn_bench sizes
+```

@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexPrimality
 import HexPrimality.ConstructionConformance
+import HexPrimality.SqufofConformance
 
 /-!
 Core conformance checks for the `hex-primality` decision, certificate, and

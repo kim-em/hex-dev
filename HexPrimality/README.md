@@ -69,6 +69,14 @@ return closed certificate data; the kernel still checks the resulting literal.
   primality.
 - `rhoFactor?` and `pMinusOneStage1` expose the bounded factor primitives used
   during certificate search. Every returned factor is validated by a theorem.
+- `Squfof.factor n limits` is an explicit deterministic proper-factor search
+  for `n < 2^64`. Its defaults allow 16 fixed multipliers, 65536 combined
+  forward/reverse recurrence steps per multiplier, and 128 live queue entries.
+  The `Result` distinguishes `factor d`, `noFactor`, `exhausted`, and
+  `unsupported`, with exact attempts, steps, and peak queue usage. A returned
+  divisor satisfies `Squfof.factor_spec`; the three accounting bounds also
+  have public theorems. This route is not enabled in default certificate
+  search. See the [native evidence](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-squfof.md).
 - `PMinusOne.start` saves the stage-1 residue; `PMinusOne.stage2` continues it
   over an exact prime interval. `PMinusOne.search` runs both stages, while
   the counted forms retain attempts, unchanged random state, and batch diagnostics.

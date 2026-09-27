@@ -88,6 +88,11 @@ private meta def admittedModule (constant : Name) : Option Name :=
       "RealCoefficients") "FieldBuild") "Result"
   let fieldBuild : Name :=
     .str (.str (.str .anonymous "HexRCF") "RealCoefficients") "FieldBuild"
+  let commonPresentation : Name :=
+    .str (.str (.str .anonymous "HexRCF") "RealCoefficients") "CommonPresentation"
+  let checkedPresentation : Name :=
+    .str (.str (.str (.str .anonymous "Hex") "RCF") "RealCoefficients")
+      "CommonPresentation"
   if constant == admittedRootSum then
     some (.str (.str .anonymous "HexRealRootsMathlib") "TarskiSoundness")
   else if #["check_sound", "queryPrepared_sound", "query_sound"].any
@@ -96,6 +101,8 @@ private meta def admittedModule (constant : Name) : Option Name :=
   else if #["checkForall_sound", "checkExists_sound"].any
       (fun s => constant == .str fieldResult s) then
     some fieldBuild
+  else if constant == .str checkedPresentation "checkPolynomials_sound" then
+    some commonPresentation
   else none
 
 /-- A local theorem with the same name is not the imported audited theorem. -/

@@ -23,6 +23,19 @@ open Infinitesimal
 abbrev First := RationalFn Rat
 abbrev Second := RationalFn First
 
+/-- Factorization of the polynomial in de Moura–Passmore, Example 3, in the actual
+polynomial ring over the infinitesimal field. -/
+theorem product_identity (e x : DensePoly First) :
+    (e * x^2 - 1) * (e * x^3 - 1) = e^2 * x^5 - e * x^3 - e * x^2 + 1 := by
+  grind
+
+-- Specialize to the same infinitesimal and polynomial as computational conformance.
+example :
+    let e : DensePoly First := DensePoly.C RationalFn.X
+    let x : DensePoly First := DensePoly.monomial 1 1
+    (e * x^2 - 1) * (e * x^3 - 1) = e^2 * x^5 - e * x^3 - e * x^2 + 1 := by
+  exact product_identity _ _
+
 
 -- Expressions through the companion's Field and LinearOrder remain computable.
 def orderedFraction (f : First) : First := if f < 0 then -(f ^ (2 : Nat)) else f + 1

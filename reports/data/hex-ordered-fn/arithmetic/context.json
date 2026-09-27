@@ -1,0 +1,27 @@
+{
+  "command": [
+    "/run/current-system/sw/bin/python3",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10376/scripts/bench/ordered_fn_measure.py",
+    "--output",
+    "/tmp/issue-10376-arithmetic",
+    "--paired-arithmetic"
+  ],
+  "cpu": 83,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "load_before": [
+    2.16259765625,
+    3.0126953125,
+    5.177734375
+  ],
+  "lean_num_threads": "4",
+  "commit": "da4ce7c5b3882394b580d032533fa52f29bb90a1",
+  "executable_sha256": "80c386309ea2c703284a1a5ef1a88f6d3eb4677e0f9964c302ed2da8758d1f78",
+  "returncode": 0,
+  "load_after": [
+    4.6953125,
+    3.62109375,
+    5.24267578125
+  ],
+  "executable_sha256_after": "80c386309ea2c703284a1a5ef1a88f6d3eb4677e0f9964c302ed2da8758d1f78"
+}

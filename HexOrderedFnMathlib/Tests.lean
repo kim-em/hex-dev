@@ -63,6 +63,23 @@ theorem source_width (q : Rat) : ApproximationWidth (source q) :=
     simp only [window, dite_eq_left hδ, Bounds.width]
     linarith)
 
+/-- Exact containment can certify a zero at an algebraic subject without
+registering that subject as a transcendental field extension. -/
+def singletonSource : Approximation Rat := .ofConstant (fun _ => .singleton 2)
+
+theorem singleton_correct :
+    ApproximationCorrect (Rat.castHom ℝ) 2 singletonSource :=
+  .ofConstant _ _ (fun _ _ => Contains.singleton 2)
+
+example : Real.sign? singletonSource (linear 2) 1 = some 0 := by decide +kernel
+
+example : Real.eval (Rat.castHom ℝ) 2 (linear 2) = 0 := by
+  have h : (0 : Int) = sgn (Real.eval (Rat.castHom ℝ) 2 (linear 2)) :=
+    (Real.sign?_sound singleton_correct _ 1 (by decide +kernel)).1
+  apply sign_eq_zero_iff.mp
+  cases hs : SignType.sign (Real.eval (Rat.castHom ℝ) 2 (linear 2)) <;>
+    simp_all [sgn]
+
 -- Ordinary theorem application checks a sign whose progress theorem is opaque.
 theorem totalSign_correct : totalSign = 1 :=
   Real.sign_of_attempt (source_correct 2) _ _ separated

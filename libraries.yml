@@ -184,12 +184,12 @@ libraries:
   HexOrderedFn:
     deps: [HexRationalFn, HexPoly, HexPolyFast]
     mathlib: false
-    done_through: 1
+    done_through: 3
     status: active
   HexOrderedFnMathlib:
     deps: [HexOrderedFn, HexRationalFnMathlib, HexPolyMathlib]
     mathlib: true
-    done_through: 1
+    done_through: 3
     status: active
   HexRealFormula:
     deps: [HexMvPoly]
@@ -1046,6 +1046,13 @@ libraries:
           description: Prime enumeration over [0, n) for n from 10^3 to 3.2 * 10^4 through the trial-division-backed primesIn.
         - name: p-minus-one-stage2
           description: Exact extra-prime base-order fixtures at 64, 128, 256, and 512 bits, separating setup, stage-1 exponentiation, prepared continuation, continuation with enumeration, and total search; endpoint and doubled-bound successes, full-scan misses, whole/recovery controls, and enabled/disabled construction comparisons.
+        - name: squfof-raw-splitting
+          description: Explicit bounded SQUFOF on varied-gap 32- to 64-bit semiprimes, retained balanced inputs and prime/power controls, with fixed multiplier and cap policies, raw Brent-rho comparison, and a forced-work recurrence-fuel ladder.
+  HexECPP:
+    deps: [HexPrimality, HexArith]
+    mathlib: false
+    done_through: 0
+    status: active
   HexIntFactor:
     deps: [HexPrimality, HexArith, HexBasic]
     mathlib: false
@@ -1310,6 +1317,12 @@ libraries:
           description: Factor-found composites from 25 through 512 bits, including a strong pseudoprime, parity and odd-factor ceiling inputs, and balanced 512-bit bounded exhaustion.
         - name: failure-policy
           description: Fresh modules for certificate exhaustion and immediate 513-bit rejection, with unsupported and non-numeral goal shapes pinned by ordinary conformance.
+  HexECPPMathlib:
+    deps: [HexECPP, HexPrimalityMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
+    proof_probes: [bench/HexECPPMathlib/ProofProbe]
   HexIntFactorMathlib:
     deps: [HexIntFactor, HexPrimalityMathlib]
     mathlib: true
@@ -1550,6 +1563,16 @@ libraries:
     status: active
   HexSignDetMathlib:
     deps: [HexSignDet, HexSturmMathlib, HexPolyMathlib, HexMatrixMathlib, HexRankMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
+  HexRealClosure:
+    deps: [HexSignDet, HexSturm, HexPoly, HexRealAlgebraic]
+    mathlib: false
+    done_through: 0
+    status: active
+  HexRealClosureMathlib:
+    deps: [HexRealClosure, HexSignDetMathlib, HexSturmMathlib, HexRealRootsMathlib, HexPolyMathlib, HexRealAlgebraicMathlib]
     mathlib: true
     done_through: 0
     status: active

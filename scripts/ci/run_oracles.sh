@@ -4,9 +4,9 @@
 # Replaces the per-oracle matrix that previously fanned out into 11
 # ubuntu jobs. All oracle dependencies (FLINT, PARI, SymPy, Conway
 # tables) are installed once at the top of the workflow; this script
-# loops over every (lib, emit, oracle, fixture) tuple, cross-checks
-# the committed fixture against fresh emission, and pipes the
-# emission into the oracle for verification.
+# loops over every (lib, emit, oracle, fixture) tuple. Fixture emitters
+# are compared with their committed output before the oracle runs;
+# the compiled-input SQUFOF oracle checks its committed corpus directly.
 #
 # Single source of truth for "which library needs which oracle"
 # lives below. Adding a new oracle-backed library means appending
@@ -86,6 +86,8 @@ ORACLES=(
   # PARI backed
   "HexHensel|hexhensel_emit_fixtures|scripts/oracle/hensel_pari.py|conformance-fixtures/HexHensel/hensel.jsonl"
   "HexPrimality|hexprimality_emit_fixtures|scripts/oracle/primality_pari.py|conformance-fixtures/HexPrimality/primality.jsonl"
+  "HexPrimality|hexprimality_squfof_measure|scripts/oracle/primality_squfof.py|conformance-fixtures/HexPrimality/squfof-corpus.jsonl"
+  "HexECPP|hexecpp_emit_fixtures|scripts/oracle/ecpp_pari.py|conformance-fixtures/HexECPP/ecpp.jsonl"
   "HexIntFactor|hexintfactor_emit_fixtures|scripts/oracle/intfactor_pari.py|conformance-fixtures/HexIntFactor/intfactor.jsonl"
   "HexNumberField|hexnumberfield_emit_fixtures|scripts/oracle/number_field_flint_pari.py|conformance-fixtures/HexNumberField/number_field.jsonl"
   "HexNumberFieldTower|hexnumberfieldtower_emit_fixtures|scripts/oracle/number_field_tower_pari.py|conformance-fixtures/HexNumberFieldTower/number_field_tower.jsonl"
@@ -178,6 +180,17 @@ run_tuple() {
   echo "=========================================================="
   echo ">>> $lib :: emit=$emit oracle=$oracle"
   echo "=========================================================="
+
+  # This compiled-input oracle runs the committed corpus through the measured
+  # native executable; its input fixture is checked by independent division.
+  if [ "$oracle" = "scripts/oracle/primality_squfof.py" ]; then
+    if ! python3 "$oracle" --exe ".lake/build/bin/$emit" --corpus "$fixture"; then
+      echo "FAIL: $lib :: SQUFOF divisor oracle reported a divergence"
+      return 1
+    fi
+    echo "OK: $lib"
+    return 0
+  fi
 
   if ! ".lake/build/bin/$emit" >"$fresh"; then
     echo "FAIL: $lib :: $emit exited non-zero"

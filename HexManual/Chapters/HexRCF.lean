@@ -8,6 +8,7 @@ import VersoManual
 
 import HexRCF
 import HexRCF.RealCoefficients
+import HexRealClosure
 import HexSignDet
 
 open Verso.Genre Manual
@@ -459,7 +460,7 @@ Import `HexRCF.RealCoefficients` to extend the same `rcf` command. The original
 `HexRCF` import and all its rational examples keep their existing behavior.
 The adapter is currently available in the development monorepo; it is not in
 the released `hex-rcf` package.
-The optional adapter currently accepts one selected algebraic coefficient in
+The optional adapter accepts a selected algebraic coefficient in
 an otherwise rational polynomial sentence. Its direct notation support covers
 `Real.sqrt 2` and Mathlib's `(2 : ℝ) ^ (1 / 3 : ℝ)`. It also accepts the checked
 Hex values `CubeTwo.realAlgebraic` and `CubeTwo.shifted`. For a different
@@ -494,6 +495,20 @@ The square below selects its positive real root. The
 root with the ordinary {name}`Hex.ZPoly.rootNear` value at the real projection
 of the square's centre. The tactic can use the selected root when it is named
 by a `def` in the same file.
+
+The two-square-root examples below combine `Real.sqrt 2` and `Real.sqrt 3`
+in one common field and check that each field coordinate names the intended
+positive root. This path accepts natural literal radicands when at least two
+distinct square roots occur in the goal. A lone `Real.sqrt 2` uses the earlier
+single-coefficient path; other lone square roots are not yet supported. The
+two-root examples use a larger heartbeat limit for the quartic common field.
+The next examples mix Mathlib's `Real.sqrt 2` with a Hex root selected from
+`X² − 3`. They also use the ordinary `QAdjoin` element `1 + √3`, converted
+back to a real algebraic number. `rcf` checks each proposed common-field
+coordinate against the original selected root before proving the sentence.
+For multiple sources, this path currently needs a checked quadratic-norm
+certificate for the computed common field. Other field combinations decline
+with a diagnostic.
 
 ```lean
 open Hex.RCF.RealCoefficients
@@ -570,6 +585,72 @@ example : ∀ x : ℝ, x + plasticRoot.toReal > x := by
 example : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 > 0 := by
   rcf
 
+/- The tactic checks both roots in one common field. -/
+set_option maxHeartbeats 5000000 in
+example : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt 3 - Real.sqrt 2 > 0 := by
+  rcf
+
+set_option maxHeartbeats 5000000 in
+example : ∃ x : ℝ, Real.sqrt 2 < x ∧ x < Real.sqrt 3 := by
+  rcf
+
+private abbrev squareThreePolynomial : Hex.ZPoly :=
+  Hex.DensePoly.ofList [-3, 0, 1]
+
+private abbrev squareThreeSelection : Hex.DyadicSquare :=
+  ⟨Dyadic.ofInt 7094 >>> (12 : Int), 0, 10⟩
+
+private theorem squareThreeChecked :
+    squareThreePolynomial.CheckedIrreducible :=
+  Field.checkedIrreducible squareThreePolynomial
+    (.eisenstein 3 0) (by decide +kernel) (by decide)
+
+private theorem squareThreeSquarefree :
+    Hex.HasOnlySimpleRoots squareThreePolynomial := by
+  have hne : squareThreePolynomial ≠ 0 := by decide
+  letI : squareThreePolynomial.CheckedIrreducible :=
+    squareThreeChecked
+  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable
+    squareThreePolynomial hne).mpr
+    (Hex.ZPoly.CheckedIrreducible.separable
+      squareThreePolynomial)
+
+private def selectedThree : Hex.RealAlgebraicNumber :=
+  Selected.real squareThreePolynomial squareThreeSelection
+    (by decide +kernel) (by decide +kernel) (by rfl)
+    (by decide) (by decide)
+    squareThreeChecked squareThreeSquarefree
+    (by decide +kernel)
+
+private abbrev squareThreeGenerator : Hex.AlgebraicNumber :=
+  selectedThree.toAlgebraic
+
+private abbrev squareThreeCoordinate :
+    Hex.QAdjoin squareThreeGenerator :=
+  1 + squareThreeGenerator.toQAdjoin
+
+private abbrev shiftedThree : Hex.RealAlgebraicNumber :=
+  Coefficients.ofField selectedThree squareThreeCoordinate
+
+set_option maxHeartbeats 5000000 in
+example : ∀ x : ℝ,
+    x ^ 2 + selectedThree.toReal - Real.sqrt 2 > 0 := by
+  rcf
+
+set_option maxHeartbeats 5000000 in
+example : ∀ x : ℝ,
+    x ^ 2 + shiftedThree.toReal - Real.sqrt 2 > 0 := by
+  rcf
+
+/-- error: rcf: the universal sentence is false on the
+prepared cells -/
+#guard_msgs (whitespace := lax) in
+set_option maxHeartbeats 5000000 in
+example : ∀ x : ℝ,
+    x ^ 2 + selectedThree.toReal - Real.sqrt 2 < 0 := by
+  rcf
+
 example : ∃ x : ℝ, Real.sqrt 2 < x ∧ x < (3 : ℝ) / 2 := by
   rcf
 
@@ -629,6 +710,83 @@ that stated theorem. Thus these examples are kernel-checked relative to that
 one mathematical admission. The rational examples and their axiom inventory
 above do not depend on it. See {ref "hex-number-field"}[HexNumberField] and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
+
+# Arithmetic at a selected algebraic root
+%%%
+tag := "hex-rcf-selected-root"
+%%%
+
+`HexRealClosure` provides a computational interface for a selected real root
+of a rational polynomial, including a reducible one. The checked descriptor
+below selects `√2` from `(X² − 2)(X − 3)` using the open interval `(1, 2)`.
+The value `a − 3` is nonzero at that root, even though it has a nonconstant
+gcd with the defining polynomial. Its checked inverse and the cofactor split
+use the selected root, not a quotient by the whole reducible polynomial.
+
+The split creates context version `8` and explicitly refines `a` into it;
+the original `a` remains in context version `7`. The checked `d.handle`
+caches the selected canonical root. Its `pack` method stores a representative
+with a unique zero. The resulting canonical value is positive and squares
+to `2`. A polynomial over `Root.Handle.Value h` uses that same cached root
+for every coefficient operation, including division.
+
+```lean
+section
+open Hex Hex.RealClosure
+
+private def x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
+private def head : DensePoly Rat :=
+  (DensePoly.ofCoeffs #[-2, 0, 1]) *
+    (x - DensePoly.C 3)
+private def raw : SignDet.RawDescriptor Rat Nat :=
+  { context := 7, head, lower := .finite 1,
+    upper := .finite 2,
+    indices := [], signs := [] }
+
+private def selectedArithmetic : Option
+    (Int × Int × Int × Nat × Nat × Nat × Bool ×
+      Bool × Bool) := do
+  let d ← Root.validate 7 raw
+  let a : Expression d := ⟨x⟩
+  let below : Expression d := ⟨x - DensePoly.C 3⟩
+  let inverse? ← below.inverse?.toOption
+  let inverse ← inverse?
+  let split? ←
+    (below.split? 8 (.finite 1) (.finite 2)).toOption
+  let split ← split?
+  let oldSign ← a.sign?.toOption
+  let newSign ← (Expression.refine split a).sign?.toOption
+  let inverseSign ← inverse.sign?.toOption
+  let h := d.handle
+  let packed : Element d := h.pack x
+  let selectedZero := h.pack (x * x - DensePoly.C 2)
+  let v := h.value packed
+  let coeff : Root.Handle.Value h :=
+    Root.Handle.Value.ofPoly h x
+  let y : DensePoly (Root.Handle.Value h) :=
+    DensePoly.ofCoeffs #[0, 1]
+  let (_, remainder) := DensePoly.divMod
+    (y * y - DensePoly.C 2) (y - DensePoly.C coeff)
+  return (oldSign, newSign, inverseSign,
+    d.raw.context, split.binding.target.raw.context,
+    split.binding.target.raw.head.natDegree,
+    selectedZero == 0,
+    v * v == Hex.RealAlgebraicNumber.ofRat 2 &&
+      v.sign == 1,
+    remainder.isZero)
+
+#guard selectedArithmetic ==
+  some (1, 1, -1, 7, 8, 2, true, true, true)
+end
+```
+
+The companion proves that checked signs, inversion, refinement and canonical
+conversion preserve the selected real value. Those proofs inherit the named
+accepted-query admission in [#10389](https://github.com/kim-em/hex-dev/issues/10389).
+`Root.Handle.Value h` carries the same packed representation and gives
+generic `DensePoly` algorithms operations that share this cached root.
+See {ref "hex-number-field"}[HexNumberField] for fixed-field arithmetic and
+{ref "hex-real-algebraic"}[HexRealAlgebraic] for the canonical value API.
 
 # Signs and selected roots with BKR
 %%%

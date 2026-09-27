@@ -133,6 +133,18 @@ def runRho (input : RhoInput) : Nat :=
   | .ok success => success.factor + success.attempts
   | .error failure => failure.attempts
 
+/-- One prime-input SQUFOF attempt forced to consume its complete combined
+forward/reverse cap. The queue stays below capacity on this fixed input. -/
+def runSqufofFuel (fuel : Nat) : Nat :=
+  let a := Squfof.runMultiplier 2305843009213693951 1
+    { multipliers := 1, steps := fuel, queueCapacity := 128 }
+  a.steps + a.peakQueue
+
+#guard ([512, 1024, 2048, 4096, 8192] : List Nat).all fun fuel =>
+  let a := Squfof.runMultiplier 2305843009213693951 1
+    { multipliers := 1, steps := fuel, queueCapacity := 128 }
+  a.stop == .exhausted && a.steps == fuel && a.peakQueue < 128
+
 #guard (#[100003, 300007, 1000003, 3000017, 10000019, 30000001] : Array Nat).all fun p =>
   let input := prepRho p
   match Internal.rhoFactorCounted? input.n (Hex.Rand.ofSeed input.seed) 8 with
@@ -340,6 +352,20 @@ setup_benchmark runRho n => Nat.sqrt n
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.8
+  }
+
+/- On this fixed 61-bit prime, every attempt exhausts exactly `n` recurrence
+transitions and the observed queue remains small. Operand size and multiplier
+initialization are fixed; the intended operation count is linear in fuel. -/
+setup_benchmark runSqufofFuel n => n
+  where {
+    paramFloor := 512
+    paramCeiling := 8192
+    paramSchedule := .custom #[512, 1024, 2048, 4096, 8192]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.45
   }
 
 /- `primesIn` applies trial division to every candidate below `n`; one trial

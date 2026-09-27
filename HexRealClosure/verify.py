@@ -1,0 +1,309 @@
+#!/usr/bin/env python3
+"""Exact independent oracle for the rational selected-root smoke tests."""
+
+from fractions import Fraction as Q
+import re
+import subprocess
+
+
+def add(x, y):
+    return (x[0] + y[0], x[1] + y[1])
+
+
+def mul(x, y):
+    return (x[0] * y[0] + 2 * x[1] * y[1], x[0] * y[1] + x[1] * y[0])
+
+
+def neg(x):
+    return (-x[0], -x[1])
+
+
+def inv(x):
+    denominator = x[0] * x[0] - 2 * x[1] * x[1]
+    assert denominator
+    return (x[0] / denominator, -x[1] / denominator)
+
+
+def sign(x):
+    a, b = x
+    if not b:
+        return (a > 0) - (a < 0)
+    if not a:
+        return (b > 0) - (b < 0)
+    if (a > 0) == (b > 0):
+        return (a > 0) - (a < 0)
+    return ((a > 0) - (a < 0)) if a * a > 2 * b * b else ((b > 0) - (b < 0))
+
+
+def eval_poly(coeffs, x):
+    result = (Q(0), Q(0))
+    for coeff in reversed(coeffs):
+        result = add(mul(result, x), (Q(coeff), Q(0)))
+    return result
+
+
+def poly_mul(p, q):
+    result = [Q(0)] * (len(p) + len(q) - 1)
+    for i, a in enumerate(p):
+        for j, b in enumerate(q):
+            result[i + j] += a * b
+    return result
+
+
+def trim(p):
+    while p and p[-1] == 0:
+        p.pop()
+    return p
+
+
+def rem(p, q):
+    return divmod_poly(p, q)[1]
+
+
+def divmod_poly(p, q):
+    p, q = trim(p[:]), trim(q[:])
+    quotient = [Q(0)] * max(0, len(p) - len(q) + 1)
+    while len(p) >= len(q):
+        c = p[-1] / q[-1]
+        k = len(p) - len(q)
+        quotient[k] = c
+        for i, x in enumerate(q):
+            p[i + k] -= c * x
+        trim(p)
+    return trim(quotient), p
+
+
+def gcd(p, q):
+    while q:
+        p, q = q, rem(p, q)
+    return [c / p[-1] for c in p]
+
+
+def ext_trim(p):
+    while p and p[-1] == (Q(0), Q(0)):
+        p.pop()
+    return p
+
+
+def ext_poly_mul(p, q):
+    result = [(Q(0), Q(0))] * (len(p) + len(q) - 1)
+    for i, a in enumerate(p):
+        for j, b in enumerate(q):
+            result[i + j] = add(result[i + j], mul(a, b))
+    return ext_trim(result)
+
+
+def ext_poly_add(p, q):
+    result = [(Q(0), Q(0))] * max(len(p), len(q))
+    for i, a in enumerate(p):
+        result[i] = add(result[i], a)
+    for i, b in enumerate(q):
+        result[i] = add(result[i], b)
+    return ext_trim(result)
+
+
+def ext_poly_sub(p, q):
+    return ext_poly_add(p, [neg(c) for c in q])
+
+
+def ext_divmod(p, q):
+    p, q = ext_trim(p[:]), ext_trim(q[:])
+    quotient = [(Q(0), Q(0))] * max(0, len(p) - len(q) + 1)
+    while len(p) >= len(q):
+        c = mul(p[-1], inv(q[-1]))
+        k = len(p) - len(q)
+        quotient[k] = c
+        for i, x in enumerate(q):
+            p[i + k] = add(p[i + k], neg(mul(c, x)))
+        ext_trim(p)
+    return ext_trim(quotient), p
+
+
+def ext_xgcd(p, q):
+    left0, left1 = [ext_one], []
+    right0, right1 = [], [ext_one]
+    while q:
+        quotient, remainder = ext_divmod(p, q)
+        p, q = q, remainder
+        left0, left1 = left1, ext_poly_sub(left0, ext_poly_mul(quotient, left1))
+        right0, right1 = right1, ext_poly_sub(right0, ext_poly_mul(quotient, right1))
+    return p, left0, right0
+
+
+def inverse_or_none(x):
+    return None if x == (Q(0), Q(0)) else inv(x)
+
+
+def total_inv(x):
+    return (Q(0), Q(0)) if x == (Q(0), Q(0)) else inv(x)
+
+
+alpha = (Q(0), Q(1))
+below = add(alpha, (Q(-3), Q(0)))
+head = poly_mul([Q(-2), Q(0), Q(1)], [Q(-3), Q(1)])
+assert eval_poly(head, alpha) == (0, 0)
+assert mul(below, inv(below)) == (1, 0)
+expected_inverse = (Q(-3, 7), Q(-1, 7))
+constant_inverse = inv(alpha)
+linear_gcd = gcd(head, [Q(-3), Q(1)])
+split, remainder = divmod_poly(head, linear_gcd)
+assert not remainder
+assert eval_poly(split, alpha) == (Q(0), Q(0))
+alpha_cubed = mul(mul(alpha, alpha), alpha)
+assert alpha_cubed == (Q(0), Q(2))
+higher_poly = [Q(0), Q(0), Q(0), Q(1, 2)]
+higher = eval_poly(higher_poly, alpha)
+ext_one = (Q(1), Q(0))
+ext_divisor = [neg(alpha), ext_one]
+ext_dividend = [(Q(-2), Q(0)), (Q(0), Q(0)), ext_one]
+ext_quotient, ext_remainder = ext_divmod(ext_dividend, ext_divisor)
+ext_gcd, ext_left, ext_right = ext_xgcd(ext_dividend, ext_divisor)
+ext_bezout = ext_poly_add(ext_poly_mul(ext_left, ext_dividend),
+                          ext_poly_mul(ext_right, ext_divisor)) == ext_gcd
+ext_derivative = [mul((Q(i), Q(0)), c)
+                  for i, c in enumerate(ext_dividend)][1:]
+ext_derivative_at_alpha = add(ext_derivative[0], mul(ext_derivative[1], alpha))
+high = [Q(0), Q(0), Q(0), Q(1)]
+high_remainder = rem(high, head)
+fractional_head = poly_mul([Q(-2), Q(0), Q(1)], [Q(-1, 2), Q(1)])
+assert fractional_head[-1] == 1 and any(c.denominator != 1 for c in fractional_head)
+transport_coeffs = [[Q(0), Q(1)], [], [Q(0), Q(0), Q(1)], [Q(0), Q(1)]]
+transport_remainders = [rem(c, split) for c in transport_coeffs]
+transport_preserves = all(eval_poly(c, alpha) == eval_poly(r, alpha)
+                          for c, r in zip(transport_coeffs, transport_remainders))
+transport_changes_storage = (transport_coeffs[2] == [Q(0), Q(0), Q(1)]
+                             and transport_remainders[2] == [Q(2)])
+product_storage = rem([Q(0), Q(-3), Q(1)], head)
+inverse_storage = [Q(-3, 7), Q(-1, 7)]
+assert eval_poly(inverse_storage, alpha) == inv(below)
+
+
+def lean_rats(coeffs):
+    def show(q):
+        return str(q.numerator) if q.denominator == 1 else f"{q.numerator} / {q.denominator}"
+    return "[" + ", ".join(show(c) for c in coeffs) + "]"
+
+
+def lean_polys(polys):
+    return "[" + ", ".join(lean_rats(p) for p in polys) + "]"
+
+
+candidate_roots = [neg(alpha), alpha, (Q(3), Q(0))]
+derivative = [i * c for i, c in enumerate(head)][1:]
+
+
+def between(x, lower, upper):
+    return sign(add(x, neg(lower))) > 0 and sign(add(upper, neg(x))) > 0
+
+
+wide_selection = [r for r in candidate_roots
+                  if between(r, (Q(0), Q(0)), (Q(4), Q(0)))
+                  and sign(eval_poly(derivative, r)) == -1]
+scaled_head = [2 * c for c in head]
+scaled_selection = [r for r in candidate_roots
+                    if between(r, (Q(1), Q(0)), (Q(2), Q(0)))
+                    and eval_poly(scaled_head, r) == (0, 0)]
+negative_selection = [r for r in candidate_roots if sign(r) < 0]
+assert len(wide_selection) == len(scaled_selection) == len(negative_selection) == 1
+wide_root, scaled_root, negative_root = (
+    wide_selection[0], scaled_selection[0], negative_selection[0]
+)
+old_version, new_version = 7, 8
+expected = [
+    f"some ({sign(alpha)}, {sign(below)}, {sign(eval_poly(head, alpha))}, "
+    f"{sign(inv(below))}, {sign(add(mul(alpha, alpha), (Q(-2), Q(0))))}, "
+    f"{sign(add(inv(below), neg(expected_inverse)))})",
+    str(old_version != new_version).lower(),
+    f"some ({sign(alpha)}, {sign(add(alpha, neg(alpha)))}, {sign((Q(6), Q(0)))}, "
+    f"{sign(inv(below))})",
+    f"some ({str(inverse_or_none((Q(0), Q(0))) is None).lower()}, "
+    f"{str(inverse_or_none(add(mul(alpha, alpha), (Q(-2), Q(0)))) is None).lower()})",
+    str(len(linear_gcd) - 1),
+    f"some ({len(gcd(head, [Q(0), Q(1)])) - 1}, {sign(constant_inverse)}, "
+    f"{sign(add(constant_inverse, neg((Q(0), Q(1, 2)))))})",
+    f"some ({sign(alpha)}, {sign(alpha)}, {sign(alpha)}, {sign(inv(below))}, "
+    f"{len(split) - 1}, {new_version})",
+    f"some {str(eval_poly([Q(-2), Q(0), Q(1)], alpha) == (0, 0)).lower()}",
+    f"some ({2 * head[-1] / linear_gcd[-1]}, {len(split) - 1}, {sign(alpha)})",
+    # The unnormalized Euclidean sequence ends with split mod (x - 3),
+    # whose constant remainder is split(3).
+    f"some ({len(gcd([Q(-3), Q(1)], split)) - 1}, "
+    f"{eval_poly(split, (Q(3), Q(0)))[0]})",
+    f"some (3, {sign(inv(alpha_cubed))}, "
+    f"{sign(add(inv(alpha_cubed), neg(mul((Q(1, 4), Q(0)), alpha))))})",
+    f"some ({sign(alpha)}, {str(mul(alpha, alpha) == (Q(2), Q(0))).lower()}, "
+    f"{str(mul(below, inv(below)) == (Q(1), Q(0))).lower()})",
+    f"some ({str(wide_root == alpha).lower()}, {sign(wide_root)}, "
+    f"{str(mul(wide_root, wide_root) == (Q(2), Q(0))).lower()}, "
+    f"{sign(add(wide_root, (Q(-3), Q(0))))})",
+    f"some ({str(scaled_root == alpha).lower()}, {sign(scaled_root)}, "
+    f"{str(mul(scaled_root, scaled_root) == (Q(2), Q(0))).lower()})",
+    f"some ({sign(negative_root)}, "
+    f"{str(mul(negative_root, negative_root) == (Q(2), Q(0))).lower()}, "
+    f"{sign(add(negative_root, (Q(1), Q(0))))})",
+    f"some ({str(eval_poly([Q(-2), Q(0), Q(1)], alpha) == (Q(0), Q(0))).lower()}, "
+    f"{str(add(alpha, neg(alpha)) == (Q(0), Q(0))).lower()}, "
+    f"{str(mul(below, inv(below)) == (Q(1), Q(0))).lower()}, "
+    f"{sign(alpha)}, {sign(below)}, {str(alpha == higher).lower()}, "
+    f"{str([Q(0), Q(1)] == higher_poly).lower()}, "
+    f"{str(total_inv(eval_poly([Q(-2), Q(0), Q(1)], alpha)) == (Q(0), Q(0))).lower()}, "
+    f"{str(inverse_or_none(eval_poly([Q(-2), Q(0), Q(1)], alpha)) is None).lower()})",
+    f"some ({str(eval_poly([Q(0), Q(1)], alpha) == alpha).lower()}, "
+    f"{str(eval_poly([Q(-2), Q(0), Q(1)], alpha) == (Q(0), Q(0))).lower()}, "
+    f"{sign(alpha)})",
+    f"some ({str(alpha == below).lower()}, "
+    f"{str(mul(alpha, inv(alpha)) == (Q(1), Q(0))).lower()}, "
+    f"{sign((Q(3), Q(0)))}, "
+    f"{str(mul(below, inv(below)) == (Q(1), Q(0))).lower()})",
+    f"some ({str(eval_poly([Q(-2), Q(0), Q(1)], scaled_root) == (Q(0), Q(0))).lower()}, "
+    f"{str(mul(scaled_root, scaled_root) == (Q(2), Q(0))).lower()}, "
+    f"{sign(scaled_root)})",
+    f"some ({len(ext_dividend) - 1}, {len(ext_quotient) - 1}, "
+    f"{str(not ext_remainder).lower()}, {str(ext_quotient[0] == alpha).lower()})",
+    f"some ({len(ext_gcd) - 1}, {str(ext_bezout).lower()}, "
+    f"{str(ext_derivative_at_alpha == mul((Q(2), Q(0)), alpha)).lower()})",
+    f"some ({len(high_remainder) - 1}, "
+    f"{str(all(c.denominator == 1 for c in high_remainder)).lower()}, "
+    f"{len(high) - 1}, {len(high_remainder) - 1}, {len(high) - 1}, "
+    f"{str(not rem(head, head)).lower()}, "
+    f"{str(eval_poly(head, alpha) == (Q(0), Q(0))).lower()}, "
+    f"{str(eval_poly(high_remainder, alpha) == eval_poly(high, alpha)).lower()})",
+    f"some ({len(transport_coeffs) - 1}, {len(transport_coeffs) - 1}, "
+    f"{len(transport_coeffs) - 1}, "
+    f"{str(not transport_remainders[1]).lower()}, "
+    f"{str(transport_preserves).lower()}, "
+    f"{str(transport_preserves).lower()}, "
+    f"{str(transport_changes_storage).lower()}, {str(sign(alpha) == 1).lower()})",
+    f"some ({sign(inv(below))}, "
+    f"{str(eval_poly([Q(-2), Q(0), Q(1)], alpha) == (Q(0), Q(0))).lower()}, "
+    f"{str(inverse_or_none((Q(0), Q(0))) is None).lower()}, "
+    f"{str(mul(below, inv(below)) == (Q(1), Q(0))).lower()}, "
+    f"{lean_rats(product_storage)}, {lean_rats(inverse_storage)}, "
+    f"{lean_polys(transport_remainders)}, {lean_polys(transport_remainders)}, "
+    f"{lean_polys(transport_remainders)})",
+    f"some ({len(high) - 1}, "
+    f"{str(eval_poly([Q(-2), Q(0), Q(1)], alpha) == (Q(0), Q(0))).lower()}, "
+    f"{sign(below)})",
+    f"some ({str(not ext_remainder).lower()}, {len(ext_quotient) - 1}, "
+    f"{str(ext_quotient[0] == alpha).lower()})",
+]
+
+run = subprocess.run(
+    ["lake", "build", "HexRealClosure.Tests"],
+    capture_output=True, text=True, check=True,
+)
+actual = []
+continuation = False
+for line in (run.stdout + run.stderr).splitlines():
+    match = re.match(r"info: HexRealClosure/Tests\.lean:\d+:0: (.*)", line)
+    if match:
+        actual.append(match.group(1))
+        continuation = True
+    elif continuation and line.startswith("  "):
+        actual[-1] += " " + line.strip()
+    else:
+        continuation = False
+actual = [" ".join(x.split()) for x in actual]
+expected = [" ".join(x.split()) for x in expected]
+assert actual == expected, f"Lean outputs {actual!r}; exact oracle expects {expected!r}"
+print(f"exact oracle passed for {len(expected)} runnable cases")

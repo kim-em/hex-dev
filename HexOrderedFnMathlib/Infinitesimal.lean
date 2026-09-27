@@ -199,7 +199,12 @@ private theorem sign_poly (p : Polynomial K) :
 theorem sign_eq (baseSign : K → Int)
     (hs : ∀ a, baseSign a = (SignType.sign a : Int)) (f : RationalFn K) :
     sign baseSign f = (SignType.sign (embed f) : Int) := by
-  rw [sign, hs, hs, lowestCoeff_eq, lowestCoeff_eq, embed_eq, div_eq_mul_inv, sign_mul]
+  by_cases hz : f = 0
+  · subst f
+    simp
+  have hn : f.num ≠ 0 := fun h => hz ((RationalFn.num_eq_zero f).mp h)
+  rw [sign, ite_eq_right hn, hs, hs, lowestCoeff_eq, lowestCoeff_eq, embed_eq,
+    div_eq_mul_inv, sign_mul]
   have hi (x : Lex K⸨X⸩) : SignType.sign x⁻¹ = SignType.sign x := by
     simp only [sign_apply, inv_pos, inv_lt_zero]
   rw [hi, sign_poly, sign_poly, SignType.coe_mul]

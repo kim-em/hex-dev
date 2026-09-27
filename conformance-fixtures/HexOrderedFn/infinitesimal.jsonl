@@ -1,3 +1,5 @@
+{"case":"paper/reciprocal","depth":1,"difference":{"den":[[0,1],[1,1]],"num":[[1,1],[-1000000000000000000000000000,1]]},"kind":"ordered-fn","left":{"den":[[0,1],[1,1]],"num":[[1,1]]},"lib":"HexOrderedFn","operation":"compare","right":{"den":[[1,1]],"num":[[1000000000000000000000000000,1]]},"value":1}
+{"case":"paper/comparison-rational","depth":1,"difference":{"den":[[1,1]],"num":[[0,1],[-8,1],[1,1]]},"kind":"ordered-fn","left":{"den":[[1,1]],"num":[[17,1],[-8,1],[1,1]]},"lib":"HexOrderedFn","operation":"compare","right":{"den":[[1,1]],"num":[[17,1]]},"value":-1}
 {"case":"level1/sign/0","depth":1,"input":{"den":[[1,1]],"num":[]},"kind":"ordered-fn","lib":"HexOrderedFn","operation":"sign","value":0}
 {"case":"level1/compare/0","depth":1,"difference":{"den":[[1,1]],"num":[[0,1],[-1,1]]},"kind":"ordered-fn","left":{"den":[[1,1]],"num":[]},"lib":"HexOrderedFn","operation":"compare","right":{"den":[[1,1]],"num":[[0,1],[1,1]]},"value":-1}
 {"case":"level1/sign/1","depth":1,"input":{"den":[[1,1]],"num":[[0,1],[1,1]]},"kind":"ordered-fn","lib":"HexOrderedFn","operation":"sign","value":1}

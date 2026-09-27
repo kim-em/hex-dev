@@ -16,6 +16,7 @@ public import HexPrimality.PMinusOne
 public import HexPrimality.Search
 public import HexPrimality.Sieve
 public import HexPrimality.SieveElab
+public import HexPrimality.Squfof
 public import HexPrimality.Table
 
 public section

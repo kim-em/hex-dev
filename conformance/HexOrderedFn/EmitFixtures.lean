@@ -40,6 +40,16 @@ private def values {K : Type} [Lean.Grind.Field K] [DecidableEq K]
 
 def run : IO Unit := do
   let e : RationalFn Rat := RationalFn.X
+  -- de Moura–Passmore §4; see provenance.md alongside the generated fixtures.
+  for (name, left, right) in #[
+      ("paper/reciprocal", 1/e, (10^27 : RationalFn Rat)),
+      ("paper/comparison-rational", 2 + 2*3 + 3^2 - 2*e - 2*3*e + e^2,
+        (2 + 2*3 + 3^2 : RationalFn Rat))] do
+    let result := match Infinitesimal.compare orderSign left right with
+      | .lt => -1 | .eq => 0 | .gt => (1 : Int)
+    emit 1 name "compare"
+      [("left", fraction rational left), ("right", fraction rational right),
+        ("difference", fraction rational (left - right)), ("value", toJson result)]
   values 1 rational orderSign #[0, e, -e, 1/e, 1/(e-1), (e^2-1)/(e-1),
     (1-e)/(e-1), e-e, e^8, e^8/(e^2-1), 2^128 * e^2 - e^3, e^2 / (e^3-e)]
   for i in [0, 1, 3, 8] do
