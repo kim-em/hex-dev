@@ -237,11 +237,8 @@ The tactic contracts below are design requirements. Their kernel-certificate
 subsections specify additions owned by the Mathlib-free algorithm library;
 they do not move that code into this companion. When implementing those
 additions, cross-link the algorithm's kernel-certificate SPEC to this contract.
-Keep existing phase evidence as evidence for the existing correspondence only.
-Before activating the frontend, add `proof_probes: [bench/HexRowReduceMathlib/ProofProbe]`, and reopen the
-library's conformance/performance obligations: cap `done_through` at `2` until
-the new build-only proof tests pass, then at `3` until complete proof evidence
-passes. Do not add an empty reservation while retaining a completed Phase 4.
+`libraries.yml` registers `bench/HexRowReduceMathlib/ProofProbe`; CI builds
+those probes, which is the frontend's Phase-4 requirement.
 
 Representative example files under `bench/HexRowReduceMathlib/ProofProbe`
 exercise inverse results, product equalities, singularity, unique/affine

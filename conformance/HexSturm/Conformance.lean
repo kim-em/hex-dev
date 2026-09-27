@@ -35,8 +35,7 @@ Covered edge cases:
 - Constants, zero/repeated heads and common query roots.
 - Invalid/equal/reversed bounds and all finite/infinite endpoint pairs.
 - Noncanonical coefficients, corrupted identities, stale endpoints and foreign contexts.
-Computational conformance owner: `HexSturm`. Differential checks are not an
-independent semantic oracle.
+Differential checks are not an independent semantic oracle.
 -/
 namespace Hex.Sturm.Conformance
 
