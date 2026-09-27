@@ -250,6 +250,22 @@ theorem field_toReal (p : ZPoly) (s : DyadicSquare)
       rw [hmap, Polynomial.eval_map]
     _ = _ := (value_ofSquare p s hw hp hreal f).symm
 
+/-- The selected field constructor preserves evaluation of its rational
+coordinates at the selected generator. -/
+theorem field_eval (p : ZPoly) (s : DyadicSquare)
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
+    (pos_degree : 0 < p.natDegree) (checked : ZPoly.CheckedIrreducible p)
+    (squarefree : HasOnlySimpleRoots p) (hreal : s.meetsRealAxis = true)
+    (value : QAdjoin
+      (real p s hw hp prim pos_lc pos_degree checked squarefree hreal).toAlgebraic)
+    (f : DensePoly Rat) (hcoeff : value.coeffs = f) :
+    (LiteralSign.realPoly f).eval
+        (real p s hw hp prim pos_lc pos_degree checked squarefree hreal).toReal =
+      (field p s hw hp prim pos_lc pos_degree checked squarefree hreal value).toReal := by
+  rw [real_toReal, field_toReal p s hw hp prim pos_lc pos_degree checked
+    squarefree hreal value f hcoeff, value_ofSquare p s hw hp hreal f]
+
 theorem valuation (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)

@@ -501,6 +501,13 @@ positive root. This path accepts natural literal radicands when at least two
 distinct square roots occur in the goal. A lone `Real.sqrt 2` uses the earlier
 single-coefficient path; other lone square roots are not yet supported. The
 two-root examples use a larger heartbeat limit for the quartic common field.
+The next examples mix Mathlib's `Real.sqrt 2` with a Hex root selected from
+`X² − 3`. They also use the ordinary `QAdjoin` element `1 + √3`, converted
+back to a real algebraic number. `rcf` checks each proposed common-field
+coordinate against the original selected root before proving the sentence.
+For multiple sources, this path currently needs a checked quadratic-norm
+certificate for the computed common field. Other field combinations decline
+with a diagnostic.
 
 ```lean
 open Hex.RCF.RealCoefficients
@@ -585,6 +592,62 @@ example : ∀ x : ℝ,
 
 set_option maxHeartbeats 5000000 in
 example : ∃ x : ℝ, Real.sqrt 2 < x ∧ x < Real.sqrt 3 := by
+  rcf
+
+private abbrev squareThreePolynomial : Hex.ZPoly :=
+  Hex.DensePoly.ofList [-3, 0, 1]
+
+private abbrev squareThreeSelection : Hex.DyadicSquare :=
+  ⟨Dyadic.ofInt 7094 >>> (12 : Int), 0, 10⟩
+
+private theorem squareThreeChecked :
+    squareThreePolynomial.CheckedIrreducible :=
+  Field.checkedIrreducible squareThreePolynomial
+    (.eisenstein 3 0) (by decide +kernel) (by decide)
+
+private theorem squareThreeSquarefree :
+    Hex.HasOnlySimpleRoots squareThreePolynomial := by
+  have hne : squareThreePolynomial ≠ 0 := by decide
+  letI : squareThreePolynomial.CheckedIrreducible :=
+    squareThreeChecked
+  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable
+    squareThreePolynomial hne).mpr
+    (Hex.ZPoly.CheckedIrreducible.separable
+      squareThreePolynomial)
+
+private def selectedThree : Hex.RealAlgebraicNumber :=
+  Selected.real squareThreePolynomial squareThreeSelection
+    (by decide +kernel) (by decide +kernel) (by rfl)
+    (by decide) (by decide)
+    squareThreeChecked squareThreeSquarefree
+    (by decide +kernel)
+
+private abbrev squareThreeGenerator : Hex.AlgebraicNumber :=
+  selectedThree.toAlgebraic
+
+private abbrev squareThreeCoordinate :
+    Hex.QAdjoin squareThreeGenerator :=
+  1 + squareThreeGenerator.toQAdjoin
+
+private abbrev shiftedThree : Hex.RealAlgebraicNumber :=
+  Coefficients.ofField selectedThree squareThreeCoordinate
+
+set_option maxHeartbeats 5000000 in
+example : ∀ x : ℝ,
+    x ^ 2 + selectedThree.toReal - Real.sqrt 2 > 0 := by
+  rcf
+
+set_option maxHeartbeats 5000000 in
+example : ∀ x : ℝ,
+    x ^ 2 + shiftedThree.toReal - Real.sqrt 2 > 0 := by
+  rcf
+
+/-- error: rcf: the universal sentence is false on the
+prepared cells -/
+#guard_msgs (whitespace := lax) in
+set_option maxHeartbeats 5000000 in
+example : ∀ x : ℝ,
+    x ^ 2 + selectedThree.toReal - Real.sqrt 2 < 0 := by
   rcf
 
 example : ∃ x : ℝ, Real.sqrt 2 < x ∧ x < (3 : ℝ) / 2 := by
