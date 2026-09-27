@@ -24,6 +24,29 @@ abbrev coordinate (s : DyadicSquare)
     PolyQuot polynomial (SimpleRoot.ofSquare polynomial s hw hp) :=
   PolyQuot.ofSquare polynomial s (DensePoly.ofList [0, 1]) hw hp
 
+theorem coordinate_root (s : DyadicSquare)
+    (hw : atomWitness polynomial s)
+    (hp : (mahlerPrec polynomial : Int) ≤ s.prec) :
+    Field.value (Field.literalRep polynomial s hw hp) (coordinate s hw hp) =
+      (Field.literalRep polynomial s hw hp).root.re := by
+  let v := coordinate s hw hp
+  have hv : v.coeffs = DensePoly.monomial 1 (1 : Rat) := by
+    dsimp [v, coordinate, PolyQuot.ofSquare, PolyQuot.reduce, PolyQuot.reduceCoeffs]
+    rw [DensePoly.mod_eq_self_of_degree_lt _ _ (by decide)]
+    rfl
+  rw [Field.value_realPoly (Field.literalRep polynomial s hw hp) v, hv]
+  have hpoly : LiteralSign.realPoly (DensePoly.monomial 1 (1 : Rat)) =
+      Polynomial.X := by
+    ext i
+    simp only [LiteralSign.realPoly, HexPolyMathlib.Interpret.coeff_interpret,
+      DensePoly.coeff_monomial, Polynomial.coeff_X]
+    by_cases hi : i = 1
+    · subst i; norm_num
+    · have hi' : 1 ≠ i := Ne.symm hi
+      simp only [if_neg hi, if_neg hi']
+      norm_num
+  rw [hpoly, Polynomial.eval_X]
+
 theorem value (s : DyadicSquare)
     (hw : atomWitness polynomial s)
     (hp : (mahlerPrec polynomial : Int) ≤ s.prec)
@@ -97,6 +120,19 @@ theorem valuation (s : DyadicSquare)
 
 abbrev square : DyadicSquare :=
   ⟨Dyadic.ofInt 181 >>> (7 : Int), 0, 8⟩
+
+theorem square_selected_root :
+    (Field.literalRep polynomial square (by decide +kernel) (by decide +kernel)).root.re =
+      Real.sqrt 2 := by
+  have hr : square.meetsRealAxis = true := by decide +kernel
+  have hp : 0 < ((square.re - square.radiusHi).toRat : ℝ) := by
+    have hd : square.radiusHi < square.re := by decide +kernel
+    have hq : (square.radiusHi.toRat : Rat) < square.re.toRat :=
+      Dyadic.toRat_lt_toRat_iff.mpr hd
+    rw [Dyadic.toRat_sub]
+    exact_mod_cast sub_pos.mpr hq
+  exact (coordinate_root square (by decide +kernel) (by decide +kernel)).symm.trans
+    (value square (by decide +kernel) (by decide +kernel) hr hp)
 
 theorem checked : polynomial.CheckedIrreducible :=
   Field.checkedIrreducible polynomial (.eisenstein 2 0) (by decide +kernel) (by decide)

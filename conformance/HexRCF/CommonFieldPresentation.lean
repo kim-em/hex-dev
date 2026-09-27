@@ -5,8 +5,12 @@ Authors: Kim Morrison
 -/
 module
 
+public meta import HexRCF.RealCoefficients.CommonPresentation
+public meta import HexBerlekampZassenhaus.QuadraticNormRecover
 public import HexRCF.RealCoefficients.Field
 public import HexRCF.RealCoefficients.RootAliases
+public import HexRCF.RealCoefficients.CommonPresentation
+public import HexRCF.RealCoefficients.SquareTwo
 
 public section
 
@@ -303,6 +307,229 @@ theorem flipped_values :
   rw [coord3_value, coord2_value]
   have hpos : 0 < Real.sqrt 2 := by positivity
   exact ⟨h3, h2, by rw [h2]; linarith⟩
+
+def sqrt3Polynomial : DensePoly Rat := DensePoly.ofList [-3, 0, 1]
+def sqrt2Polynomial : DensePoly Rat := DensePoly.ofList [-2, 0, 1]
+
+/-- The literal common coordinates pass the finite source equations. These
+checks alone cannot choose between the positive and negative conjugates. -/
+theorem literal_equations :
+    CommonPresentation.checkEquation sqrt3Polynomial
+      (coord3 square squareWitness squarePrecision) = true ∧
+    CommonPresentation.checkEquation sqrt2Polynomial
+      (coord2 square squareWitness squarePrecision) = true := by
+  constructor <;> decide_cbv
+
+/-- Reordering the source polynomials without reordering their coordinates
+is rejected before any root-neighborhood evidence is considered. -/
+theorem swapped_equation_rejected :
+    CommonPresentation.checkEquation sqrt2Polynomial
+      (coord3 square squareWitness squarePrecision) = false := by
+  decide_cbv
+
+def sqrt3Square : DyadicSquare := ⟨(Dyadic.ofInt 7094) >>> (12 : Int), 0, 10⟩
+def sqrt2Square : DyadicSquare := ⟨(Dyadic.ofInt 5793) >>> (12 : Int), 0, 10⟩
+
+theorem sqrt3SquareWitness : atomWitness (DensePoly.ofList [-3, 0, 1]) sqrt3Square := by
+  decide +kernel
+
+theorem sqrt2SquareWitness : atomWitness (DensePoly.ofList [-2, 0, 1]) sqrt2Square := by
+  decide +kernel
+
+def sqrt2TiltSquare : DyadicSquare :=
+  ⟨sqrt2Square.re, (Dyadic.ofInt 1) >>> (12 : Int), sqrt2Square.prec⟩
+
+theorem sqrt2TiltSquareWitness :
+    atomWitness (DensePoly.ofList [-2, 0, 1]) sqrt2TiltSquare := by
+  decide +kernel
+
+def sqrt3Z : ZPoly := DensePoly.ofList [-3, 0, 1]
+def sqrt2Z : ZPoly := DensePoly.ofList [-2, 0, 1]
+
+theorem sqrt3_selected :
+    (Field.literalRep sqrt3Z sqrt3Square
+      (by decide +kernel) (by decide +kernel)).root.re = Real.sqrt 3 := by
+  let rep := Field.literalRep sqrt3Z sqrt3Square
+    (by decide +kernel) (by decide +kernel)
+  have hreal : sqrt3Square.meetsRealAxis = true := by decide +kernel
+  have hroot := Field.literalRep_root sqrt3Z sqrt3Square
+    (by decide +kernel) (by decide +kernel) hreal
+  have hpoly : LiteralSign.realPoly (ZPoly.toRatPoly sqrt3Z) =
+      (Polynomial.X : Polynomial ℝ) ^ 2 - Polynomial.C 3 := by
+    ext i
+    simp [LiteralSign.realPoly, sqrt3Z, Polynomial.coeff_sub,
+      Polynomial.coeff_X_pow, Polynomial.coeff_C]
+    by_cases hi : i < 3
+    · interval_cases i <;> norm_num at *
+    · have hne0 : i ≠ 0 := by omega
+      have hne2 : i ≠ 2 := by omega
+      simp [hi, hne0, hne2]
+      rfl
+  rw [hpoly] at hroot
+  have hsquare : rep.root.re ^ 2 = 3 := by
+    simp only [Polynomial.IsRoot, Polynomial.eval_sub, Polynomial.eval_pow,
+      Polynomial.eval_X, Polynomial.eval_C] at hroot
+    linarith
+  have hpositive : 0 < rep.root.re := by
+    have hb := (Field.literalRep_bounds sqrt3Z sqrt3Square
+      (by decide +kernel) (by decide +kernel)).1
+    have hd : sqrt3Square.radiusHi < sqrt3Square.re := by decide +kernel
+    have hq : (0 : Rat) < (sqrt3Square.re - sqrt3Square.radiusHi).toRat := by
+      rw [Dyadic.toRat_sub]
+      exact sub_pos.mpr (Dyadic.toRat_lt_toRat_iff.mpr hd)
+    have hqReal : (0 : ℝ) < ((sqrt3Square.re - sqrt3Square.radiusHi).toRat : ℝ) := by
+      exact_mod_cast hq
+    exact hqReal.trans hb
+  have hsqrt : (Real.sqrt 3) ^ 2 = 3 := by norm_num
+  have hsqrt_nonneg : 0 ≤ Real.sqrt 3 := Real.sqrt_nonneg _
+  nlinarith
+
+theorem sqrt2_tilt_selected :
+    (Field.literalRep sqrt2Z sqrt2TiltSquare
+      (by decide +kernel) (by decide +kernel)).root.re = Real.sqrt 2 := by
+  have hr : sqrt2TiltSquare.meetsRealAxis = true := by decide +kernel
+  have hp : 0 < ((sqrt2TiltSquare.re - sqrt2TiltSquare.radiusHi).toRat : ℝ) := by
+    have hd : sqrt2TiltSquare.radiusHi < sqrt2TiltSquare.re := by decide +kernel
+    have hq : (0 : Rat) < (sqrt2TiltSquare.re - sqrt2TiltSquare.radiusHi).toRat := by
+      rw [Dyadic.toRat_sub]
+      exact sub_pos.mpr (Dyadic.toRat_lt_toRat_iff.mpr hd)
+    exact_mod_cast hq
+  exact (SquareTwo.coordinate_root sqrt2TiltSquare
+    (by decide +kernel) (by decide +kernel)).symm.trans
+      (SquareTwo.value sqrt2TiltSquare (by decide +kernel) (by decide +kernel) hr hp)
+
+def pairedPolynomials : Fin 2 → DensePoly Rat :=
+  fun i => if i = 0 then sqrt3Polynomial else sqrt2Polynomial
+
+def pairedSquares : Fin 2 → DyadicSquare :=
+  fun i => if i = 0 then sqrt3Square else sqrt2TiltSquare
+
+def pairedCoordinates : Fin 2 →
+    PolyQuot quartic (SimpleRoot.ofSquare quartic square squareWitness squarePrecision) :=
+  fun i => if i = 0 then coord3 square squareWitness squarePrecision
+    else coord2 square squareWitness squarePrecision
+
+def pairedSourcePolynomials : Fin 2 → ZPoly :=
+  fun i => if i = 0 then sqrt3Z else sqrt2Z
+
+noncomputable def pairedValues : Fin 2 → ℝ :=
+  fun i => if i = 0 then hexSqrt3.toReal else hexSqrt2.toReal
+
+private def presentationTable? := LiteralSign.Table.build (ZPoly.toRatPoly quartic)
+  (square.re - square.radiusHi).toRat (square.re + square.radiusHi).toRat
+  [CommonPresentation.discSlack sqrt3Square (coord3 square squareWitness squarePrecision),
+    CommonPresentation.discSlack sqrt2TiltSquare
+      (coord2 square squareWitness squarePrecision)] PolyQuot.coeffs
+
+/- Both coordinates are checked together against different source squares;
+the second square has a nonzero imaginary center component. -/
+#guard match presentationTable? with
+  | none => false
+  | some table =>
+      CommonPresentation.checkPresentation squareWitness squarePrecision table
+        pairedPolynomials pairedSquares pairedCoordinates
+
+/-- Passing paired replay identifies both coordinates with the original Hex
+radicals. The root-selection proofs are mathematical, so this theorem never
+reduces either radical constructor's primitive-element search. -/
+theorem paired_checked
+    (table : LiteralSign.Table
+      (PolyQuot quartic (SimpleRoot.ofSquare quartic square
+        squareWitness squarePrecision)))
+    (accepted : CommonPresentation.checkPresentation squareWitness squarePrecision
+      table pairedPolynomials pairedSquares pairedCoordinates = true) :
+    (fun i => Field.value (Field.literalRep quartic square
+      squareWitness squarePrecision) (pairedCoordinates i)) = pairedValues := by
+  have hwSource : ∀ i, atomWitness (pairedSourcePolynomials i) (pairedSquares i) := by
+    intro i
+    fin_cases i
+    · simpa [pairedSourcePolynomials, pairedSquares, sqrt3Z] using sqrt3SquareWitness
+    · simpa [pairedSourcePolynomials, pairedSquares, sqrt2Z] using sqrt2TiltSquareWitness
+  have hpSource : ∀ i, (mahlerPrec (pairedSourcePolynomials i) : Int) ≤
+      (pairedSquares i).prec := by
+    intro i
+    fin_cases i <;> decide +kernel
+  have hpolynomial : ∀ i, ZPoly.toRatPoly (pairedSourcePolynomials i) =
+      pairedPolynomials i := by
+    intro i
+    fin_cases i <;> decide_cbv
+  have hselected : ∀ i,
+      (Field.literalRep (pairedSourcePolynomials i) (pairedSquares i)
+        (hwSource i) (hpSource i)).root.re = pairedValues i := by
+    intro i
+    fin_cases i
+    · simpa [pairedSourcePolynomials, pairedSquares, pairedValues,
+        hexSqrt3_value] using sqrt3_selected
+    · simpa [pairedSourcePolynomials, pairedSquares, pairedValues,
+        hexSqrt2_value] using sqrt2_tilt_selected
+  exact CommonPresentation.checkPresentation_sound_of_selected
+    squareWitness squarePrecision table pairedPolynomials pairedSquares
+    pairedCoordinates pairedSourcePolynomials hwSource hpSource hpolynomial
+    pairedValues hselected accepted
+
+/-- info: 'Hex.RCF.CommonFieldPresentation.paired_checked' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms paired_checked
+
+private def flippedPresentationTable? := LiteralSign.Table.build (ZPoly.toRatPoly quartic)
+  (smallSquare.re - smallSquare.radiusHi).toRat
+  (smallSquare.re + smallSquare.radiusHi).toRat
+  [CommonPresentation.discSlack sqrt3Square
+      (coord3 smallSquare smallWitness smallPrecision),
+    CommonPresentation.discSlack sqrt2TiltSquare
+      (coord2 smallSquare smallWitness smallPrecision)] PolyQuot.coeffs
+
+/- At the other quartic root the second coordinate is `-√2`, so the
+polynomial equation still holds but the selected-square sign fails. -/
+#guard match flippedPresentationTable? with
+  | none => false
+  | some table =>
+      CommonPresentation.checkEquation sqrt2Polynomial
+        (coord2 smallSquare smallWitness smallPrecision) &&
+      CommonPresentation.checkEntry smallWitness smallPrecision table
+        sqrt3Polynomial sqrt3Square
+        (coord3 smallSquare smallWitness smallPrecision) &&
+      !CommonPresentation.checkEntry smallWitness smallPrecision table
+        sqrt2Polynomial sqrt2TiltSquare
+        (coord2 smallSquare smallWitness smallPrecision) &&
+      !CommonPresentation.checkPresentation smallWitness smallPrecision table
+        (fun i : Fin 2 => if i = 0 then sqrt3Polynomial else sqrt2Polynomial)
+        (fun i => if i = 0 then sqrt3Square else sqrt2TiltSquare)
+        (fun i => if i = 0 then coord3 smallSquare smallWitness smallPrecision
+          else coord2 smallSquare smallWitness smallPrecision)
+
+/- The quartic uses the existing quadratic-norm irreducibility certificate.
+This is the checked route for the fixed-field solver's zero reflection. -/
+#guard match QuadraticNormCertificate.certify? quartic with
+  | none => false
+  | some cert => cert.check quartic
+
+theorem quarticChecked : quartic.CheckedIrreducible :=
+  Field.checkedIrreducibleQuadraticNorm quartic ⟨0, #[3, 2]⟩
+    (by decide +kernel) (by decide)
+
+/-- A swapped source is rejected independently of the sign-table contents. -/
+theorem swapped_entry_rejected
+    (table : LiteralSign.Table
+      (PolyQuot quartic (SimpleRoot.ofSquare quartic square
+        squareWitness squarePrecision))) :
+    CommonPresentation.checkEntry squareWitness squarePrecision table
+      sqrt2Polynomial sqrt2Square (coord3 square squareWitness squarePrecision) = false := by
+  simp [CommonPresentation.checkEntry, swapped_equation_rejected]
+
+/-- The empty presentation has no source-to-coordinate obligations. -/
+theorem empty_presentation
+    (table : LiteralSign.Table
+      (PolyQuot quartic (SimpleRoot.ofSquare quartic square
+        squareWitness squarePrecision)))
+    (sourcePolynomials : Fin 0 → DensePoly Rat)
+    (sourceSquares : Fin 0 → DyadicSquare)
+    (coordinates : Fin 0 → PolyQuot quartic
+      (SimpleRoot.ofSquare quartic square squareWitness squarePrecision)) :
+    CommonPresentation.checkPresentation squareWitness squarePrecision table
+      sourcePolynomials sourceSquares coordinates =
+        Field.checkSignTable quartic square squareWitness squarePrecision table := by
+  simp [CommonPresentation.checkPresentation]
 
 /-- info: 'Hex.RCF.CommonFieldPresentation.square_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
