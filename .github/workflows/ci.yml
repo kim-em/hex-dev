@@ -149,8 +149,7 @@ jobs:
           python3 -m unittest scripts/bench/test_pminusone_reports.py
           python3 -m unittest scripts/bench/test_structural_tactic_probes.py
           python3 -m unittest scripts/bench/test_row_reduce_tactic_probes.py
-          python3 -m unittest scripts/bench/test_det_ring_solver_probes.py
-          python3 -m unittest scripts/bench/test_det_packed_table.py scripts/bench/test_det_bench_limits.py
+          python3 -m unittest scripts/bench/test_det_general.py
           python3 -m unittest scripts/bench/test_rationalfn_flint.py
           python3 -m unittest scripts/bench/test_sign_det_sparse.py
           python3 -m unittest scripts/bench/test_sign_det_compare.py
@@ -366,8 +365,7 @@ jobs:
         if: steps.classify.outputs.docs_only != 'true'
         run: |
           lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests \
-            HexPolyDetMathlib.ProofProbe.RingSolverAlgebraic \
-            HexPolyDetMathlib.ProofProbe.RingSolverVariableExponent \
+            HexPolyDetMathlib.ProofProbe.GeneralSupport \
             HexPrimality.ProofProbe.PMinusOne.Support
           python3 scripts/ci/check_rank_compiler.py
       - name: Verify Conway generation and compiled certificates

@@ -8,6 +8,4 @@ module
 
 public import HexPolyDetMathlib.Sound
 public import HexPolyDetMathlib.Tactic
-public import HexPolyDetMathlib.Packed
-public import HexPolyDetMathlib.Tree
-public meta import HexPolyDetMathlib.Certificate
+public import HexPolyDetMathlib.Residue
