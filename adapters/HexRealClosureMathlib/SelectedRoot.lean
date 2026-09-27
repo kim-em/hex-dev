@@ -26,6 +26,8 @@ theorem ratSub (a b : Rat) : ratCast (a - b) = ratCast a - ratCast b := by
   simp [ratCast]
 theorem ratMul (a b : Rat) : ratCast (a * b) = ratCast a * ratCast b := by
   simp [ratCast]
+theorem ratDiv (a b : Rat) : ratCast (a / b) = ratCast a / ratCast b := by
+  simp [ratCast]
 theorem ratNat (n : Nat) : ratCast (n : Rat) = (n : ℝ) := by
   simp [ratCast]
 
@@ -165,6 +167,71 @@ theorem inverse?_sound {context : Nat} {d : Root context} (a b : Expression d)
           exact sub_eq_zero.mp hprod
         · simp [inverse?, hs, hz, hc, hsc] at h
 
+/-- The scaled Bézout candidate is an inverse whenever the computed cofactor
+vanishes at the selected root and extended gcd has a nonzero constant result. -/
+theorem candidate_mul_eq_one {context : Nat} {d : Root context}
+    (a : Expression d) (c : Rat)
+    (hroot : (realPoly a.inverseFactor.2).eval d.real = 0)
+    (hgcd : (DensePoly.xgcdLeft a.polynomial a.inverseFactor.2).gcd =
+      DensePoly.C c) (hc : c ≠ 0) :
+    a.denote * a.inverseCandidate.denote = 1 := by
+  let h := a.inverseFactor.2
+  let eg := DensePoly.xgcdLeft a.polynomial h
+  have hbezout := interpret_bezout ratCast ratZero ratSub ratMul ratDiv
+    ratAdd ratOne a.polynomial h
+  have hleft := DensePoly.xgcdLeft_left_eq_xgcd a.polynomial h
+  have hg := DensePoly.xgcdLeft_gcd_eq_xgcd a.polynomial h
+  have hp : (realPoly eg.left).eval d.real * a.denote = (c : ℝ) := by
+    have he := congrArg (fun p : Polynomial ℝ => p.eval d.real) hbezout
+    simp only [Polynomial.eval_add, Polynomial.eval_mul] at he
+    rw [← hleft, ← hg] at he
+    change (realPoly eg.left).eval d.real * a.denote +
+      (realPoly (DensePoly.xgcd a.polynomial h).right).eval d.real *
+        (realPoly h).eval d.real = (realPoly eg.gcd).eval d.real at he
+    have hroot' : (realPoly h).eval d.real = 0 := hroot
+    rw [hroot', mul_zero, add_zero] at he
+    have hgcd' : eg.gcd = DensePoly.C c := hgcd
+    rw [hgcd'] at he
+    simpa [realPoly, interpret_C, ratCast] using he
+  have hc' : (c : ℝ) ≠ 0 := by exact_mod_cast hc
+  have hcandidate : a.inverseCandidate.denote =
+      (c : ℝ)⁻¹ * (realPoly eg.left).eval d.real := by
+    change (interpret ratCast ratZero
+      (DensePoly.scale eg.gcd.leadingCoeff⁻¹ eg.left)).eval d.real = _
+    rw [interpret_scale ratCast ratZero ratMul]
+    simp [realPoly, eg, h, hgcd, DensePoly.leadingCoeff_C, ratCast]
+  rw [hcandidate]
+  calc
+    a.denote * ((c : ℝ)⁻¹ * (realPoly eg.left).eval d.real) =
+        (c : ℝ)⁻¹ * ((realPoly eg.left).eval d.real * a.denote) := by ring
+    _ = 1 := by rw [hp]; field_simp
+
+/-- A checked split places the original selected root in its cofactor. -/
+theorem cofactor_root {context version : Nat} {d : Root context}
+    (a : Expression d) {lower upper : Endpoint Rat}
+    (r : Refinement d a.inverseFactor.2 lower upper version) :
+    (realPoly a.inverseFactor.2).eval d.real = 0 := by
+  have hhead := r.encoding.check_eq.1.1
+  have hspec := (Root.real_spec r.encoding.target).1
+  have hne : realPoly r.encoding.target.raw.head ≠ 0 :=
+    r.encoding.target.head_ne_zero ratCast ratZero
+  have hzero := (HexRealRootsMathlib.Tarski.mem_rootsIn_iff _ hne _ _ _).mp hspec |>.1
+  rw [hhead] at hzero
+  have hroot : Root.real r.encoding.target = d.real :=
+    r.encoding.root_eq_source ratCast ratZero ratOne ratAdd ratSub ratMul ratNat ratSign
+  rw [hroot] at hzero
+  exact hzero
+
+/-- With a checked cofactor split and constant extended gcd, the candidate
+is an inverse at the original selected root. -/
+theorem candidate_mul_eq_one_of_split {context version : Nat} {d : Root context}
+    (a : Expression d) {lower upper : Endpoint Rat}
+    (r : Refinement d a.inverseFactor.2 lower upper version) (c : Rat)
+    (hgcd : (DensePoly.xgcdLeft a.polynomial a.inverseFactor.2).gcd =
+      DensePoly.C c) (hc : c ≠ 0) :
+    a.denote * a.inverseCandidate.denote = 1 :=
+  candidate_mul_eq_one a c (cofactor_root a r) hgcd hc
+
 /-- A successful `none` result means the operand is zero at the selected root. -/
 theorem inverse?_none_denote {context : Nat} {d : Root context} (a : Expression d)
     (h : a.inverse? = .ok none) : a.denote = 0 := by
@@ -218,3 +285,9 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.Expression.denote_rebind' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Expression.denote_rebind
+/-- info: 'Hex.RealClosure.Expression.candidate_mul_eq_one_of_split' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Expression.candidate_mul_eq_one_of_split
