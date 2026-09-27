@@ -993,6 +993,10 @@ remains disabled. The implementation directive does not grant authority to
 change default search policy without the measured comparison and a SPEC
 update pinning the selected dispatch and resource contract.
 
+The current explicit-route corpus, compiled raw comparisons, forced-work
+benchmark, and representative cost profile are recorded in
+[`reports/hex-primality-squfof.md`](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-squfof.md).
+
 #### Algorithm reference
 
 The continued-fraction recurrence, queue test, and multiplier treatment are
@@ -2044,7 +2048,7 @@ For stage 2, `i₀ = floor(Q.head/210)` and `ell` is binary bit length
 | `primeCert?` | dominated by `partialFactor` | bounded by recursive fuel, one base-2/bound-64 p−1 call per nontrivial partial search, per-node worklist fuel, and `defaultPrimeCertBudget` rho restarts/cycle steps |
 | `primeCertWith? factor` | dominated by `factor` plus the same certificate assembly | one producer invocation per non-table certificate node with explicit recursive, worklist, and rho allocations; the producer must honor the allocation and supplies its remaining cost model |
 | Pollard p−1 stage 2 | at most `210 + 2*ell(i₀) + G + 2*L` modular multiplications; `2 + ceil(L/32) + 32` gcds | `L` interval primes, `G` giant advances; residue, sieve, index, and trace storage are specified in the stage-2 contract; enumeration is additional |
-| `Squfof.factor` (specified) | at most `A*F` recurrence steps and `O(A*F*C)` queue comparisons, plus bounded-size arithmetic and per-attempt initialization | `A ≤ 16` multiplier attempts, `F` per-multiplier steps, `C` queue capacity; operands bounded by the `<2^64` input domain and fixed multiplier list; no worst-case `N^(1/4)` claim |
+| `Squfof.factor` | at most `A*F` recurrence steps and `O(A*F*C)` queue comparisons, plus bounded-size arithmetic and per-attempt initialization | `A ≤ 16` multiplier attempts, `F` per-multiplier steps, `C` queue capacity; operands bounded by the `<2^64` input domain and fixed multiplier list; no worst-case `N^(1/4)` claim |
 | sieve to `N` | `O(√N · max(32, log N))` loop/doubling rounds | each marking round is a bit operation on an `N/3`-bit `Nat` |
 
 These are operation counts, not bit complexity; subject comparisons,

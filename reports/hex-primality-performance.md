@@ -8,7 +8,8 @@ The comparator measurements below use an earlier PrimeCert revision.
 
 The compiled suite owns each executable surface once.  The first six rows use
 the published schoolbook upper bound; the next seven use two-sided controlled
-families; the remaining rows are canonical fixed boundaries.
+families. The SQUFOF fuel row has its own current record; the remaining rows
+are canonical fixed boundaries.
 
 | target | declared complexity or fixed purpose |
 |---|---|
@@ -25,6 +26,7 @@ families; the remaining rows are canonical fixed boundaries.
 | `Hex.PrimalityBench.runRho` | `Nat.sqrt n` |
 | `Hex.PrimalityBench.runSegment` | `n * Nat.sqrt n` |
 | `Hex.PrimalityBench.runNextPrime` | `n` |
+| `Hex.PrimalityBench.runSqufofFuel` | `n` on a fixed-size prime with forced recurrence fuel |
 | `Hex.PrimalityBench.runDecision512` | fixed 512-bit rho-backed decision boundary |
 | `Hex.PrimalityBench.runCertSearch512` | fixed 512-bit rho-backed search boundary |
 | `Hex.PrimalityBench.runChecker512` | fixed twin of the 512-bit kernel replay |
@@ -48,7 +50,10 @@ controls before the substantive pairs in its rotated order.
 This assignment is normative in
 `HexPrimality/SPEC/hex-primality.md`.  The `table-smooth-certificates` family
 contains committed exact production-search witnesses, while
-`segment-enumeration` exercises the complete initial-segment route.
+`segment-enumeration` exercises the complete initial-segment route. The
+`squfof-raw-splitting` family covers the explicit splitter and its forced-work
+fuel ladder; its raw evidence is in the
+[SQUFOF report](hex-primality-squfof.md).
 
 ## Verdicts
 
@@ -303,7 +308,7 @@ python3 scripts/bench/primality_primecert_compare.py \
 
 ## Profile
 
-Both declared families have inclusive profiles.  Certificate search was
+The certificate-search and segment families have inclusive profiles. Certificate search was
 profiled from pristine commit `ca6f6f9ca`; segment enumeration was refreshed
 from pristine commit `4655d0530`.  The filtered summaries are committed; raw
 profiler JSON remains developer-local.
@@ -326,6 +331,14 @@ passed, with no samples on other threads inside timed windows.
   `reports/bench-results/hex-primality-profile-segment-4655d0530-chungus2.json`
   (SHA-256
   `47484734a01844d77bc482c6006dedbe9b5f27842c178cd0647f03e9be02dfdc`).
+
+The `squfof-raw-splitting` profile in the
+[explicit-route report](hex-primality-squfof.md) attributes a 4,194,304-step
+compiled raw search on a 61-bit prime. Of 2,033 main-thread samples, 99.4%
+include `Squfof.search`; leaf cost is approximately 51.5% allocation, 29.5%
+GMP, 14.5% Lean runtime, 4.0% own code, and 0.5% other. This direct-process
+profile includes startup samples and is a forward-heavy forced-work control;
+the raw completion samples are reported separately.
 
 The exact commands were:
 
@@ -353,6 +366,26 @@ The `p-minus-one-stage2` family is covered by the
 extra-prime fixtures, full misses, route accounting, and checked outcomes.
 Continuation remains opt-in; the report separates native and interpreted
 construction evidence and ordinary factorization's allocation.
+
+## Bounded SQUFOF
+
+The `squfof-raw-splitting` family uses the explicit shared primitive without
+changing default dispatch. Its [native report](hex-primality-squfof.md) retains
+the varied-gap 32–64-bit completion corpus, 261 raw fixed-schedule samples,
+32 additional cap samples, all SQUFOF limits and Brent-rho seed/budget
+choices, and independent division checks. All 21 semiprimes complete under
+ascending 65,536-, 131,072-, and 262,144-step slices and under the reversed
+262,144-step policy. The 61-bit prime exhausts every cap. In the adjacent
+AB/BA comparison, SQUFOF has the lower paired median on 19 of 21 semiprimes,
+while Brent rho is lower on two. This is an unequal-work raw splitter
+comparison, not a public portfolio improvement claim.
+
+The Mathlib-free `runSqufofFuel` registration uses mode 1: fixed-size operands,
+one multiplier, and a non-full queue yield an independently derived linear
+operation count in recurrence fuel. The [retained export](bench-results/hex-primality-squfof-fuel.json)
+is consistent with `n` over 512–8192 steps (`β = -0.013`), with every rung
+exhausting exactly its requested fuel. No default search policy changes follow
+from this explicit-route result.
 
 ## Concerns
 

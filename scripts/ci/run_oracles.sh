@@ -319,5 +319,15 @@ if library_selected HexGraphIso && ! .lake/packages/NautyFFI/.lake/build/bin/nau
   exit 1
 fi
 
+# The compiled SQUFOF corpus is checked by integer division in Python, with
+# completion required on every committed semiprime and trace input.
+if library_selected HexPrimality; then
+  lake build hexprimality_squfof_measure
+  if ! python3 scripts/oracle/squfof_divisors.py; then
+    echo "Conformance: SQUFOF divisor oracle failed." >&2
+    exit 1
+  fi
+fi
+
 echo
 echo "Conformance: all oracles passed."
