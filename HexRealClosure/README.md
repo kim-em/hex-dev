@@ -79,7 +79,9 @@ operation to that lawful ordered field. For a literally monic, integral
 defining polynomial, packing retains the remainder before
 the selected-root zero check; the companion proves that this preserves the
 selected value and integrality of clean inputs. Nonmonic definitions keep
-their original representatives. The zero check
+their original representatives, as do monic definitions with fractional
+coefficients. The retained remainder has degree below the defining polynomial.
+The zero check
 currently enumerates canonical roots on each nonzero packing call. The
 general tower's cost targets remain to be implemented.
 
