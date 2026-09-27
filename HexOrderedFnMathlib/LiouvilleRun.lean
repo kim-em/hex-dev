@@ -37,8 +37,17 @@ def main : IO Unit := do
     ("comparison less", Extension.compare negative positive == .lt),
     ("comparison greater", Extension.compare positive negative == .gt),
     ("comparison equal", Extension.compare positive positive == .eq),
+    ("strict order", decide (negative < (0 : E)) && decide ((0 : E) < positive) &&
+      !decide (positive < positive)),
+    ("nonstrict order", decide (negative ≤ (0 : E)) && decide (positive ≤ positive) &&
+      !decide (positive ≤ (0 : E))),
     ("approximation width", decide ((Extension.approx positive (1 / 8)).width ≤ 1 / 8)),
+    ("negative approximation", decide ((Extension.approx negative (1 / 8)).width ≤ 1 / 8)),
+    ("quotient approximation", decide ((Extension.approx quotient (1 / 8)).width ≤ 1 / 8)),
+    ("zero approximation", Extension.approx (ExtensionTests.zero registered) (1 / 8) == .singleton 0),
     ("provider transport", Extension.sign (Extension.transport refined positive) == 1),
+    ("negative transport", Extension.sign (Extension.transport refined negative) == -1),
+    ("zero transport", Extension.sign (Extension.transport refined (ExtensionTests.zero registered)) == 0),
     ("infinitesimal", ExtensionTests.epsilonSign registered == 1),
     ("ordered arithmetic", Extension.sign (orderedArithmetic negative) == -1),
     ("core rational dictionary", LiouvilleCoreTests.signResult == 1),
