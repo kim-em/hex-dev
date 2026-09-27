@@ -47,6 +47,15 @@ def check_divisor(sample: dict) -> None:
         assert sample["attempts"] <= min(sample["multipliers"], 16), sample
         assert sample["steps"] <= sample["attempts"] * sample["stepCap"], sample
         assert sample["peakQueue"] <= sample["queueCapacity"], sample
+        if "attemptsDetail" in sample:
+            details = sample["attemptsDetail"]
+            assert len(details) == sample["attempts"], sample
+            assert sum(a["steps"] for a in details) == sample["steps"], sample
+            assert max((a["peakQueue"] for a in details), default=0) == sample["peakQueue"], sample
+            assert all(a["steps"] == a["forwardSteps"] + a["reverseSteps"] for a in details), sample
+            assert all(a["steps"] + a["remaining"] == sample["stepCap"]
+                       for a in details if a["steps"] > 0), sample
+            assert all(not a["stop"].endswith("arithmetic") for a in details), sample
 
 
 def read_jsonl(path: Path) -> list[dict]:
@@ -61,6 +70,7 @@ def main() -> None:
     args = parser.parse_args()
     corpus = read_jsonl(args.corpus)
     checked = 0
+    default_completed = 0
     for row in corpus:
         n = row["n"]
         if "p" in row:
@@ -74,13 +84,31 @@ def main() -> None:
             assert sample["status"] == "factor", (row, sample)
         if row["kind"] == "prime":
             assert sample["status"] != "factor", (row, sample)
+            assert prime64(n), row
+        default = json.loads(subprocess.check_output(
+            [str(args.exe), str(n), "squfof", "65536", "16", "128", "1", "8", "262144"],
+            text=True))
+        check_divisor(default)
+        if row["kind"] == "semiprime":
+            default_completed += default["status"] == "factor"
+        diagnosis = json.loads(subprocess.check_output(
+            [str(args.exe), str(n), "diagnose", "65536", "16", "128", "1", "8", "262144"],
+            text=True))
+        assert len(diagnosis["attemptsDetail"]) == 16, (row, diagnosis)
+        assert all(not a["stop"].endswith("arithmetic") for a in diagnosis["attemptsDetail"]), (row, diagnosis)
+        assert all(a["steps"] == a["forwardSteps"] + a["reverseSteps"]
+                   and a["steps"] <= 65536 and a["peakQueue"] <= 128
+                   for a in diagnosis["attemptsDetail"]), (row, diagnosis)
         checked += 1
     for path in args.samples:
         for sample in read_jsonl(path):
             if sample.get("type") == "sample":
                 check_divisor(sample)
                 checked += 1
-    print(f"checked {checked} corpus and native-sample divisor records")
+    semiprimes = sum(row["kind"] == "semiprime" for row in corpus)
+    print(f"checked {checked} corpus and native-sample divisor records; "
+          f"default-cap completion {default_completed}/{semiprimes} semiprimes; "
+          f"all {len(corpus) * 16} multiplier diagnostics without arithmetic stops")
 
 
 if __name__ == "__main__":

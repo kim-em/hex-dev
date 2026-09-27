@@ -40,7 +40,29 @@ private def outcome (r : Result) : String × Nat :=
   | .exhausted => ("exhausted", 0)
   | .unsupported => ("unsupported", 0)
 
+private def attemptJson (n k : Nat) (limits : Limits) : Lean.Json := Id.run do
+  let a := runMultiplier n k limits
+  return Lean.Json.mkObj [
+    ("k", Lean.toJson k), ("stop", Lean.toJson (reprStr a.stop)),
+    ("divisor", Lean.toJson (a.divisor.map Subtype.val |>.getD 0)),
+    ("forwardSteps", Lean.toJson a.forwardSteps),
+    ("reverseSteps", Lean.toJson a.reverseSteps),
+    ("steps", Lean.toJson a.steps), ("remaining", Lean.toJson a.remaining),
+    ("peakQueue", Lean.toJson a.peakQueue)]
+
+private def attemptTrace (n : Nat) (limits : Limits) (arm : String) (count : Nat) : Lean.Json :=
+  let order := if arm == "reverse" then multipliers.reverse else multipliers
+  Lean.toJson ((order.take count).map (attemptJson n · limits))
+
 private def measureCase (n : Nat) (arm : String) (limits : Limits) (seed restarts inner : Nat) : IO Unit := do
+  if arm == "diagnose" then
+    IO.println (Lean.Json.mkObj [
+      ("arm", Lean.toJson arm), ("n", Lean.toJson n),
+      ("multipliers", Lean.toJson limits.multipliers),
+      ("stepCap", Lean.toJson limits.steps),
+      ("queueCapacity", Lean.toJson limits.queueCapacity),
+      ("attemptsDetail", attemptTrace n limits "squfof" (min limits.multipliers 16))]).compress
+    return
   let start ← IO.monoNanosNow
   if arm == "rho" then
     let ref ← IO.mkRef (Internal.rhoFactorCountedWith? n (Hex.Rand.ofSeed seed) restarts inner)
@@ -70,6 +92,7 @@ private def measureCase (n : Nat) (arm : String) (limits : Limits) (seed restart
       ("attempts", Lean.toJson result.attempts),
       ("steps", Lean.toJson result.steps),
       ("peakQueue", Lean.toJson result.peakQueue),
+      ("attemptsDetail", attemptTrace n limits arm result.attempts),
       ("nanos", Lean.toJson (stop - start))]).compress
 
 def main (args : List String) : IO UInt32 := do

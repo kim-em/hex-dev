@@ -103,6 +103,19 @@ def afterMatch (queue : List Pair) (r p : Nat) : Option (List Pair) :=
   | (g, t) :: rest =>
     if g = r ∧ t = p % r then some rest else afterMatch rest r p
 
+private theorem afterMatch_length {queue rest : List Pair} {r p : Nat}
+    (h : afterMatch queue r p = some rest) : rest.length ≤ queue.length := by
+  induction queue generalizing rest with
+  | nil => simp [afterMatch] at h
+  | cons entry tail ih =>
+    simp only [afterMatch] at h
+    split at h
+    · cases h
+      simp
+    · have hh := ih h
+      simp only [List.length_cons]
+      omega
+
 private structure Saved where
   form : Form
   queue : List Pair
@@ -161,6 +174,25 @@ private def search (n k D S L capacity : Nat) :
           return search n k D S L capacity fuel next queue (index + 1)
             none fwd rev peak
 
+private theorem search_queue (n k D S L capacity fuel : Nat) (form : Form)
+    (queue : List Pair) (index : Nat) (saved : Option Saved)
+    (fwd rev peak : Nat) (hq : queue.length ≤ capacity)
+    (hs : ∀ old, saved = some old → old.queue.length ≤ capacity)
+    (hp : peak ≤ capacity) :
+    (search n k D S L capacity fuel form queue index saved fwd rev peak).peakQueue ≤ capacity := by
+  induction fuel generalizing form queue index saved fwd rev peak with
+  | zero => simpa [search, stopped] using hp
+  | succ fuel ih =>
+    simp only [search, Id.run, pure]
+    repeat' split
+    all_goals simp_all [stopped, terminal, List.length_append]
+    all_goals try apply ih
+    all_goals try simp_all [List.length_append]
+    all_goals try omega
+    all_goals first
+      | (split <;> simpa using hp)
+      | (have hlen := afterMatch_length (by assumption); simp_all [List.length_append]; omega)
+
 /-- Run one multiplier with the same kernel used by the public schedule. -/
 def runMultiplier (n k : Nat) (limits : Limits) : Attempt n :=
   let g := Nat.gcd k n
@@ -180,7 +212,7 @@ def runMultiplier (n k : Nat) (limits : Limits) : Attempt n :=
       else
         let a := search n k D S (Nat.sqrt (Nat.sqrt (4 * D)))
           limits.queueCapacity limits.steps ⟨1, S, Q⟩ [] 0 none 0 0 0
-        { a with steps := limits.steps - a.remaining, peakQueue := min a.peakQueue limits.queueCapacity }
+        { a with steps := limits.steps - a.remaining }
 
 private theorem terminal_steps (n d fwd rev peak : Nat) :
     (terminal n d fwd rev peak).steps = fwd + rev := by
@@ -206,6 +238,7 @@ private theorem runMultiplier_queue (n k : Nat) (limits : Limits) :
   dsimp only
   repeat' split
   all_goals simp only [terminal_queue, stopped]
+  all_goals try (apply search_queue <;> simp)
   all_goals omega
 
 private inductive CheckedOutcome (n : Nat) where

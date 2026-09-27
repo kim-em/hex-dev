@@ -11,14 +11,18 @@ dispatchers do not call this route.
 ## Corpus and protocol
 
 The committed [corpus](../conformance-fixtures/HexPrimality/squfof-corpus.jsonl)
-contains three varied-gap balanced semiprimes at each of 32, 40, 48, 56, and
-64 bits; six retained balanced inputs from the existing Brent-rho evidence;
-and unbalanced, prime, square, power, smooth-`p-1`, table, and named-trace
-controls. Its semiprime factors are independently checked by deterministic
-64-bit Miller–Rabin, and the [oracle](../scripts/oracle/squfof_divisors.py)
-checks each emitted factor using Python integer division. It requires
-completion for every committed semiprime and trace case at the 262144-step
-cap. The corpus is a regression set, not a completeness claim.
+contains six varied-gap balanced semiprimes at each of 32, 40, 48, 56, and
+64 bits. Three per size use independently drawn prime pairs with ratios from
+about 1.26 to 1.55; the other three reuse one prime and include near-equal
+pairs. Six more pairs retain earlier Brent-rho inputs. Four primes and
+unbalanced, square, power, smooth-`p-1`, table, and named-trace controls fill
+out the 47 cases. The historical `retained-57` label was corrected to
+`retained-50` because its input is 50 bits; older raw files retain the old
+label. Semiprime factors are independently checked by deterministic 64-bit
+Miller–Rabin, and the [oracle](../scripts/oracle/primality_squfof.py) checks
+each emitted factor by Python integer division. It requires completion for
+all 36 semiprimes and the two trace cases at 262144 steps. The corpus is a
+regression set, not a completeness claim.
 
 The [compiled driver](../bench/HexPrimality/SqufofMeasure.lean) measures raw
 SQUFOF and `Internal.rhoFactorCountedWith?`, excluding process startup from its
@@ -32,50 +36,37 @@ input-scaled `rhoRestartFuel`, and fixed seeds `1, 27, 10452`; the adjacent
 comparison uses seed 1. These are raw splitters with different resource units.
 The fixed caps and failure outcomes remain visible in every sample.
 
-The [261 native samples](bench-results/hex-primality-squfof-native.jsonl) retain
-the input, outcome, divisor, counters, caps, elapsed nanoseconds, trial, arm,
-and host/CPU context. The [32 additional completed cap samples](bench-results/hex-primality-squfof-pilot.jsonl)
-are retained separately. Every reported factor in both files passes independent
-division; the oracle checked 322 corpus and sample records in total. The
-measurement host was `chungus2` (AMD EPYC 9455, Lean 4.34.1); the selected
-CPU, load, executable hash, corpus hash, and exact schedule are in the raw
-context records. Host activity was recorded and no completed sample was
-discarded.
+The [426 current native samples](bench-results/hex-primality-squfof-native-phase.jsonl)
+retain each input, outcome, divisor, cap, attempt total, phase counters and
+stop reason per multiplier, peak queue length, elapsed nanoseconds, trial,
+arm, and host/CPU context. They include three one-multiplier trace boundaries:
+17 forward steps exhaust, 17 forward plus seven reverse steps exhaust at 24,
+and 17 plus eight succeed at 25. The earlier [261 native samples](bench-results/hex-primality-squfof-native.jsonl),
+[32 pilot samples](bench-results/hex-primality-squfof-pilot.jsonl), and
+[15 irregular-candidate samples](bench-results/hex-primality-squfof-candidates.jsonl)
+remain as completed observations. The oracle checked all **781** corpus and
+sample divisor records, all phase sums in the current samples, and all 752
+corpus multiplier diagnostics without an arithmetic stop. The host was
+`chungus2` (AMD EPYC 9455, Lean 4.34.1). The context records contain selected
+CPU, load, source and executable hashes where recorded, and the exact schedule.
+The latest source snapshot was dirty when measured; its source and binary
+hashes identify it exactly. No completed sample was discarded.
 
 ## Observations
 
-All 21 semiprimes completed at each ascending cap, and all 21 completed under
-the reversed 262144-step policy. The 61-bit prime exhausted all 16 slices:
+All 36 semiprimes completed at each ascending cap and under the reversed
+262144-step policy. The 61-bit prime exhausted all 16 slices:
 1,048,576 recurrence steps at 65536, 2,097,152 at 131072, and 4,194,304 at
 262144, with no factor. Brent rho also exhausted its eight restarts on that
-prime for all three seeds. These capped failures are part of the raw results.
+prime for all three seeds. The 32-bit prime filled the 128-entry queue in
+some multiplier attempts. These capped failures are part of the raw results.
 
-The table gives the first ascending 65536-step run's counters and the median
-of each arm's two adjacent raw timings in milliseconds. All divisors shown
-were independently checked by division.
-
-| Balanced input | `n` | SQUFOF attempts / steps / peak | Divisor | SQUFOF ms | rho ms |
-|---|---:|---:|---:|---:|---:|
-| 32 near | 3785075929 | 1 / 97 / 0 | 61463 | 0.020 | 0.063 |
-| 32 mid | 3896078107 | 1 / 1412 / 5 | 61463 | 0.132 | 0.020 |
-| 32 wide | 4249736209 | 1 / 7 / 0 | 61463 | 0.011 | 0.050 |
-| 40 near | 966520998899 | 1 / 2 / 0 | 983063 | 0.009 | 0.686 |
-| 40 mid | 996620421833 | 1 / 4064 / 2 | 983063 | 0.314 | 0.834 |
-| 40 wide | 1087211643409 | 1 / 7 / 0 | 983063 | 0.011 | 0.190 |
-| 48 near | 247393482185653 | 1 / 2024 / 1 | 15728681 | 0.166 | 1.044 |
-| 48 mid | 255122461656967 | 1 / 4588 / 1 | 15728681 | 0.361 | 1.363 |
-| 48 wide | 278315534256499 | 1 / 4427 / 0 | 15728681 | 0.349 | 0.823 |
-| 56 near | 63331911535168729 | 1 / 18376 / 2 | 251658263 | 1.419 | 7.267 |
-| 56 mid | 65311005970269011 | 1 / 28933 / 0 | 251658263 | 2.220 | 10.268 |
-| 56 wide | 71248365779681809 | 1 / 7 / 0 | 251658263 | 0.012 | 10.032 |
-| 64 near | 16212959431627901207 | 1 / 2 / 0 | 4026531853 | 0.016 | 21.084 |
-| 64 mid | 16719613763203891499 | 2 / 121182 / 1 | 4026531853 | 53.426 | 19.296 |
-| 64 wide | 18239578964471317819 | 1 / 57066 / 1 | 4026531853 | 22.076 | 26.041 |
-
-Across the 21 semiprimes, SQUFOF has the lower paired median on 19; rho has
-the lower paired median on the 32-bit mid-gap and 64-bit mid-gap inputs. The
-retained nearly equal factors often produce an immediate square form, so these
-counts do not establish a portfolio benefit. On the 64-bit mid-gap input,
+For the two adjacent raw timings at 65536 steps, SQUFOF has the lower paired
+median on 28 of 36 semiprimes and rho on eight. On the 15 independently drawn
+pairs, the split is nine to six. The reused-prime and near-equal cases favor
+SQUFOF, sometimes finding an immediate square form; the current counts do
+not establish a portfolio benefit. The raw file gives every per-input time,
+failure, divisor, and phase counter. On the 64-bit mid-gap input,
 raising the per-multiplier cap to 262144 changed the path from two attempts and
 121182 total steps to one attempt and 185192 steps. Reversing the multiplier
 order changes the work again; all per-input reversed counters are retained in

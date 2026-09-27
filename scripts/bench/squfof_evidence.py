@@ -21,8 +21,8 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def run(exe: Path, row: dict, arm: str, step_cap: int, seed: int) -> dict:
-    command = [str(exe), str(row["n"]), arm, str(step_cap), "16", "128", str(seed), "8", "262144"]
+def run(exe: Path, row: dict, arm: str, step_cap: int, seed: int, multipliers: int = 16) -> dict:
+    command = [str(exe), str(row["n"]), arm, str(step_cap), str(multipliers), "128", str(seed), "8", "262144"]
     sample = json.loads(subprocess.check_output(command, text=True, timeout=300))
     sample.update(name=row["name"], kind=row["kind"], bits=row["bits"], type="sample")
     return sample
@@ -42,8 +42,11 @@ def main() -> None:
         processor=platform.processor(), cpu=cpu, affinity=sorted(os.sched_getaffinity(0)),
         load_start=os.getloadavg(), started=datetime.now(timezone.utc).isoformat(),
         git=subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+        source_dirty=bool(subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()),
+        squfof_source_sha256=digest(Path("HexPrimality/Squfof.lean")),
+        measure_source_sha256=digest(Path("bench/HexPrimality/SqufofMeasure.lean")),
         executable_sha256=digest(args.exe), corpus_sha256=digest(args.corpus),
-        schedule="two trial-major adjacent AB/BA blocks, then fixed policy arms",
+        schedule="two trial-major adjacent AB/BA blocks, fixed policy arms, then 17/24/25-step trace boundaries",
         multiplier_caps=[16], step_caps=[65536, 131072, 262144], queue_capacity=128,
         rho_seeds=[1, 27, 10452], rho_restarts=8, rho_inner_requested=262144,
     )
@@ -70,6 +73,12 @@ def main() -> None:
                 sample.update(phase="policy")
                 write(sample)
                 print(row["name"], "policy", arm, cap, seed, sample["status"], flush=True)
+        trace = next(row for row in rows if row["name"] == "trace-22117019")
+        for cap in (17, 24, 25):
+            sample = run(args.exe, trace, "squfof", cap, 1, multipliers=1)
+            sample.update(phase="boundary")
+            write(sample)
+            print(trace["name"], "boundary", cap, sample["status"], flush=True)
         write(dict(type="end", finished=datetime.now(timezone.utc).isoformat(),
                    load_end=os.getloadavg()))
     lease.close()

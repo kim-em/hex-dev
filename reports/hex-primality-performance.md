@@ -371,13 +371,14 @@ construction evidence and ordinary factorization's allocation.
 
 The `squfof-raw-splitting` family uses the explicit shared primitive without
 changing default dispatch. Its [native report](hex-primality-squfof.md) retains
-the varied-gap 32–64-bit completion corpus, 261 raw fixed-schedule samples,
-32 additional cap samples, all SQUFOF limits and Brent-rho seed/budget
-choices, and independent division checks. All 21 semiprimes complete under
+the varied-gap 32–64-bit completion corpus, 426 current fixed-schedule samples,
+308 retained earlier samples, all SQUFOF limits and Brent-rho seed/budget
+choices, phase counters, and independent division checks. All 36 semiprimes complete under
 ascending 65,536-, 131,072-, and 262,144-step slices and under the reversed
 262,144-step policy. The 61-bit prime exhausts every cap. In the adjacent
-AB/BA comparison, SQUFOF has the lower paired median on 19 of 21 semiprimes,
-while Brent rho is lower on two. This is an unequal-work raw splitter
+AB/BA comparison, SQUFOF has the lower paired median on 28 of 36 semiprimes,
+including nine of 15 independently drawn pairs; Brent rho is lower on eight
+overall and six independently drawn pairs. This is an unequal-work raw splitter
 comparison, not a public portfolio improvement claim.
 
 The Mathlib-free `runSqufofFuel` registration uses mode 1: fixed-size operands,
