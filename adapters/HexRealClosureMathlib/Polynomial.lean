@@ -12,17 +12,6 @@ public section
 
 namespace Hex.RealClosure
 
-theorem Element.toValue_eq_zero_iff {context : Nat} {d : Root context}
-    (a : Element d) : a.toValue = 0 ↔ a = 0 := by
-  constructor
-  · intro h
-    apply (Element.eq_zero_iff a).mpr
-    have hv := congrArg Subtype.val h
-    simpa [Element.toValue] using hv
-  · intro h
-    subst a
-    exact Element.toValue_zero (d := d)
-
 /-- Coefficientwise interpretation into the lawful selected-root value field.
 It preserves degree even though the raw coefficient map is not injective. -/
 noncomputable def polyValue {context : Nat} {d : Root context}
@@ -34,6 +23,17 @@ theorem polyValue_coeff {context : Nat} {d : Root context}
     (p : DensePoly (Element d)) (i : Nat) :
     (polyValue p).coeff i = (p.coeff i).toValue := by
   simp [polyValue]
+
+theorem polyValue_C {context : Nat} {d : Root context} (a : Element d) :
+    polyValue (DensePoly.C a) = Polynomial.C a.toValue := by
+  exact HexPolyMathlib.Interpret.interpret_C
+    Element.toValue (fun x => Element.toValue_eq_zero_iff x) a
+
+theorem polyValue_one {context : Nat} {d : Root context} :
+    polyValue (1 : DensePoly (Element d)) = 1 := by
+  exact HexPolyMathlib.Interpret.interpret_one
+    Element.toValue (fun x => Element.toValue_eq_zero_iff x)
+    (Element.toValue_one (d := d))
 
 theorem polyValue_eq_zero {context : Nat} {d : Root context}
     (p : DensePoly (Element d)) : polyValue p = 0 ↔ p = 0 := by
@@ -111,14 +111,6 @@ theorem polyValue_eval {context : Nat} {d : Root context}
     (fun a b => Element.toValue_add a b)
     (fun a b => Element.toValue_mul a b) p x
 
-theorem Element.toValue_div {context : Nat} {d : Root context}
-    (a b : Element d) : (a / b).toValue = a.toValue / b.toValue :=
-  Subtype.ext (Element.value_div a b)
-
-theorem Element.toValue_natCast {context : Nat} {d : Root context} (n : Nat) :
-    (n : Element d).toValue = (n : Value d) :=
-  Subtype.ext (Element.value_natCast (d := d) n)
-
 theorem polyValue_derivative {context : Nat} {d : Root context}
     (p : DensePoly (Element d)) :
     polyValue p.derivative = (polyValue p).derivative := by
@@ -138,6 +130,18 @@ theorem polyValue_divMod {context : Nat} {d : Root context}
     (fun a b => Element.toValue_mul a b)
     (fun a b => Element.toValue_div a b) p q
 
+theorem polyValue_div {context : Nat} {d : Root context}
+    (p q : DensePoly (Element d)) :
+    polyValue (p / q) = polyValue p / polyValue q := by
+  have h := congrArg Prod.fst (polyValue_divMod p q)
+  exact h
+
+theorem polyValue_mod {context : Nat} {d : Root context}
+    (p q : DensePoly (Element d)) :
+    polyValue (p % q) = polyValue p % polyValue q := by
+  have h := congrArg Prod.snd (polyValue_divMod p q)
+  exact h
+
 theorem polyValue_gcd {context : Nat} {d : Root context}
     (p q : DensePoly (Element d)) :
     Associated (polyValue (DensePoly.gcd p q))
@@ -147,6 +151,13 @@ theorem polyValue_gcd {context : Nat} {d : Root context}
     (fun a b => Element.toValue_sub a b)
     (fun a b => Element.toValue_mul a b)
     (fun a b => Element.toValue_div a b) p q
+
+theorem polyValue_xgcd {context : Nat} {d : Root context}
+    (p q : DensePoly (Element d)) :
+    Associated (polyValue (DensePoly.xgcd p q).gcd)
+      (EuclideanDomain.gcd (polyValue p) (polyValue q)) := by
+  rw [DensePoly.xgcd_gcd_eq_gcd]
+  exact polyValue_gcd p q
 
 theorem polyValue_bezout {context : Nat} {d : Root context}
     (p q : DensePoly (Element d)) :
@@ -163,6 +174,8 @@ theorem polyValue_bezout {context : Nat} {d : Root context}
 
 end Hex.RealClosure
 
+/- The inherited `sorryAx` in these guards is the named #10389
+`Tarski.check_rootSum` dependency. -/
 /-- info: 'Hex.RealClosure.polyValue_divMod' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.polyValue_divMod

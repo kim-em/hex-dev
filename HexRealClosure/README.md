@@ -40,7 +40,7 @@ Run `lake build HexRealClosure.Tests HexQuerySemantics` and
 `python3 HexRealClosure/verify.py` from the repository root. The test uses
 `(X²−2)(X−3)` with the root in `(1,2)`, plus a non-monic definition and a
 checked factor split. The Python oracle computes exact arithmetic in ℚ(√2)
-independently of Lean for twenty cases and is run manually; CI builds the Lean
+independently of Lean for twenty-one cases and is run manually; CI builds the Lean
 `#guard` tests.
 The companion proofs inherit the named #10389 admission in
 `HexRealRootsMathlib.Tarski.check_rootSum`; no new admission is used here.
@@ -84,8 +84,9 @@ the lawful `Value d` field. It reflects zero and preserves degree, coefficients,
 arithmetic, derivative, evaluation, division and remainder, and supplies the
 gcd association and extended-gcd Bézout identity. This uses the shared
 noninjective polynomial interpretation rather than assuming raw coefficient
-field laws. The runnable nested-coefficient example divides
-`(Y−α)(Y+α)` by `Y−α` and checks the zero remainder.
+field laws. The runnable nested-coefficient example divides `Y²−2` by
+`Y−α`; its remainder `α²−2` is semantically zero but not the zero rational
+polynomial. It also checks extended gcd and differentiation.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and

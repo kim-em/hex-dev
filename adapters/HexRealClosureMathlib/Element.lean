@@ -276,7 +276,7 @@ def valueField {context : Nat} (d : Root context) :
 abbrev Value {context : Nat} (d : Root context) := valueField d
 
 /-- Forget the stored polynomial while retaining its exact selected value. -/
-@[expose] def Element.toValue {context : Nat} {d : Root context} (a : Element d) : Value d :=
+def Element.toValue {context : Nat} {d : Root context} (a : Element d) : Value d :=
   ⟨a.value, by
     change ∃ b : Element d, b.value = a.value
     exact ⟨a, rfl⟩⟩
@@ -300,6 +300,17 @@ theorem Element.toValue_surjective {context : Nat} {d : Root context} :
 theorem Element.toValue_zero {context : Nat} {d : Root context} :
     (0 : Element d).toValue = 0 :=
   Subtype.ext (Element.value_zero (d := d))
+
+theorem Element.toValue_eq_zero_iff {context : Nat} {d : Root context}
+    (a : Element d) : a.toValue = 0 ↔ a = 0 := by
+  constructor
+  · intro h
+    apply (Element.eq_zero_iff a).mpr
+    have hv := congrArg Subtype.val h
+    simpa [Element.toValue] using hv
+  · intro h
+    subst a
+    exact Element.toValue_zero (d := d)
 
 theorem Element.toValue_one {context : Nat} {d : Root context} :
     (1 : Element d).toValue = 1 := by
@@ -326,6 +337,14 @@ theorem Element.toValue_mul {context : Nat} {d : Root context}
 theorem Element.toValue_inv {context : Nat} {d : Root context}
     (a : Element d) : a⁻¹.toValue = a.toValue⁻¹ :=
   Subtype.ext (Element.value_inv a)
+
+theorem Element.toValue_div {context : Nat} {d : Root context}
+    (a b : Element d) : (a / b).toValue = a.toValue / b.toValue :=
+  Subtype.ext (Element.value_div a b)
+
+theorem Element.toValue_natCast {context : Nat} {d : Root context} (n : Nat) :
+    (n : Element d).toValue = (n : Value d) :=
+  Subtype.ext (Element.value_natCast (d := d) n)
 
 example {context : Nat} (d : Root context) : Field (Value d) := inferInstance
 example {context : Nat} (d : Root context) : LinearOrder (Value d) := inferInstance

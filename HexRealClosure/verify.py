@@ -93,6 +93,19 @@ def ext_poly_mul(p, q):
     return ext_trim(result)
 
 
+def ext_poly_add(p, q):
+    result = [(Q(0), Q(0))] * max(len(p), len(q))
+    for i, a in enumerate(p):
+        result[i] = add(result[i], a)
+    for i, b in enumerate(q):
+        result[i] = add(result[i], b)
+    return ext_trim(result)
+
+
+def ext_poly_sub(p, q):
+    return ext_poly_add(p, [neg(c) for c in q])
+
+
 def ext_divmod(p, q):
     p, q = ext_trim(p[:]), ext_trim(q[:])
     quotient = [(Q(0), Q(0))] * max(0, len(p) - len(q) + 1)
@@ -104,6 +117,17 @@ def ext_divmod(p, q):
             p[i + k] = add(p[i + k], neg(mul(c, x)))
         ext_trim(p)
     return ext_trim(quotient), p
+
+
+def ext_xgcd(p, q):
+    left0, left1 = [ext_one], []
+    right0, right1 = [], [ext_one]
+    while q:
+        quotient, remainder = ext_divmod(p, q)
+        p, q = q, remainder
+        left0, left1 = left1, ext_poly_sub(left0, ext_poly_mul(quotient, left1))
+        right0, right1 = right1, ext_poly_sub(right0, ext_poly_mul(quotient, right1))
+    return p, left0, right0
 
 
 def inverse_or_none(x):
@@ -131,8 +155,14 @@ higher_poly = [Q(0), Q(0), Q(0), Q(1, 2)]
 higher = eval_poly(higher_poly, alpha)
 ext_one = (Q(1), Q(0))
 ext_divisor = [neg(alpha), ext_one]
-ext_dividend = ext_poly_mul(ext_divisor, [alpha, ext_one])
+ext_dividend = [(Q(-2), Q(0)), (Q(0), Q(0)), ext_one]
 ext_quotient, ext_remainder = ext_divmod(ext_dividend, ext_divisor)
+ext_gcd, ext_left, ext_right = ext_xgcd(ext_dividend, ext_divisor)
+ext_bezout = ext_poly_add(ext_poly_mul(ext_left, ext_dividend),
+                          ext_poly_mul(ext_right, ext_divisor)) == ext_gcd
+ext_derivative = [mul((Q(i), Q(0)), c)
+                  for i, c in enumerate(ext_dividend)][1:]
+ext_derivative_at_alpha = add(ext_derivative[0], mul(ext_derivative[1], alpha))
 candidate_roots = [neg(alpha), alpha, (Q(3), Q(0))]
 derivative = [i * c for i, c in enumerate(head)][1:]
 
@@ -205,6 +235,8 @@ expected = [
     f"{sign(scaled_root)})",
     f"some ({len(ext_dividend) - 1}, {len(ext_quotient) - 1}, "
     f"{str(not ext_remainder).lower()}, {str(ext_quotient[0] == alpha).lower()})",
+    f"some ({len(ext_gcd) - 1}, {str(ext_bezout).lower()}, "
+    f"{str(ext_derivative_at_alpha == mul((Q(2), Q(0)), alpha)).lower()})",
 ]
 
 run = subprocess.run(
@@ -213,4 +245,4 @@ run = subprocess.run(
 )
 actual = re.findall(r"info: HexRealClosure/Tests\.lean:\d+:0: (.+)", run.stdout + run.stderr)
 assert actual == expected, f"Lean outputs {actual!r}; exact oracle expects {expected!r}"
-print("exact oracle passed for twenty runnable cases")
+print("exact oracle passed for twenty-one runnable cases")
