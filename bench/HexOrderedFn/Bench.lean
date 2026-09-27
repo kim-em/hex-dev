@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexOrderedFn.Infinitesimal
 import HexOrderedFn.Real
+import HexOrderedFn.Successive
 import LeanBench
 
 namespace Hex.OrderedFnBench
@@ -220,6 +221,19 @@ def approximation (q : ApproxQuery) : Rat × Rat :=
 initialize do
   registerSearch ``approximation "n * n * n" (fun n => n * n * n) searchConfig
     prepApproximation approximation
+
+/-- The outer search executes one inner approximation search per nonconstant
+coefficient request; prepared witnesses never replace those searches. -/
+def successiveApproximation (q : Successive.Query) : Rat × Rat := Successive.run q
+
+-- Mode 2 upper bound O(n⁴): O(n) outer trials each request an inner search
+-- of at most O(n) trials, with O(n)-bit rational operands. The same published
+-- quadratic integer-operation bounds used above cover each innermost trial.
+initialize do
+  registerSearch ``successiveApproximation "n * n * n * n" (fun n => n * n * n * n)
+    { config with paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192],
+      maxSecondsPerCall := 60 }
+    Successive.prepare successiveApproximation
 
 end Hex.OrderedFnBench
 
