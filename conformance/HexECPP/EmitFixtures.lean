@@ -25,9 +25,9 @@ private def resultJson : Option (Point × List Nat) → Json
 
 private def emit (j : Json) : IO Unit := IO.println j.compress
 
-private def emitOperation (n a : Nat) (P Q : Point) (ws : List Nat) : IO Unit :=
+private def emitOperation (n a b : Nat) (P Q : Point) (ws : List Nat) : IO Unit :=
   emit <| Json.mkObj [
-    ("kind", toJson "add"), ("n", toJson n), ("a", toJson a),
+    ("kind", toJson "add"), ("n", toJson n), ("a", toJson a), ("b", toJson b),
     ("p", pointJson P), ("q", pointJson Q), ("witnesses", toJson ws),
     ("result", resultJson (add? n a P Q ws))]
 
@@ -48,39 +48,41 @@ private def emitScalar (n a b q : Nat) (Q : Point)
 small nonsingular curves. The Python oracle uses separate field arithmetic. -/
 private def emitSmallCurves : IO Unit := do
   for n in [5, 7, 11] do
-    let points : List Point := .infinity ::
-      ((List.range n).flatMap fun x =>
-        (List.range n).filterMap fun y =>
-          if onCurve n 0 3 x y then some (.affine x y) else none)
-    for P in points do
+    for params in [(0, 3), (1, 0)] do
+      let (a, b) := params
+      let points : List Point := .infinity ::
+        ((List.range n).flatMap fun x =>
+          (List.range n).filterMap fun y =>
+            if onCurve n a b x y then some (.affine x y) else none)
+      for P in points do
+        for Q in points do
+          match proposeAdd n a P Q with
+          | .ok (_, some u) => emitOperation n a b P Q [u]
+          | .ok (_, none) => emitOperation n a b P Q []
+          | .error _ => pure ()
       for Q in points do
-        match proposeAdd n 0 P Q with
-        | .ok (_, some u) => emitOperation n 0 P Q [u]
-        | .ok (_, none) => emitOperation n 0 P Q []
-        | .error _ => pure ()
-    for Q in points do
-      for q in List.range (2 * n + 1) do
-        match proposeScalar defaultImportBudget n 0 q Q with
-        | .ok (_, ws) => emitScalar n 0 3 q Q ws
-        | .error _ => pure ()
+        for q in List.range (2 * n + 1) do
+          match proposeScalar defaultImportBudget n a q Q with
+          | .ok (_, ws) => emitScalar n a b q Q ws
+          | .error _ => pure ()
 
 def main (_ : List String) : IO UInt32 := do
   emitSmallCurves
   let P : Point := .affine 1 2
-  emitOperation 7 0 .infinity P []
-  emitOperation 7 0 P .infinity []
-  emitOperation 7 0 P (.affine 1 5) []
-  emitOperation 7 0 P P []
-  emitOperation 7 0 P P [2]
-  emitOperation 7 0 P P [3]
-  emitOperation 7 0 P P [2, 4]
-  emitOperation 7 0 P (.affine 6 3) [3]
-  emitOperation 7 0 P (.affine 1 3) []
+  emitOperation 7 0 3 .infinity P []
+  emitOperation 7 0 3 P .infinity []
+  emitOperation 7 0 3 P (.affine 1 5) []
+  emitOperation 7 0 3 P P []
+  emitOperation 7 0 3 P P [2]
+  emitOperation 7 0 3 P P [3]
+  emitOperation 7 0 3 P P [2, 4]
+  emitOperation 7 0 3 P (.affine 6 3) [3]
+  emitOperation 7 0 3 P (.affine 1 3) []
   match Fixture65.cert with
   | .step n a b x y d ws child =>
     emit <| Json.mkObj [
-      ("kind", toJson "step"), ("n", toJson n), ("a", toJson a),
-      ("b", toJson b), ("x", toJson x), ("y", toJson y),
+      ("kind", toJson "step"), ("n", toJson n), ("a", toJson a), ("b", toJson b),
+      ("x", toJson x), ("y", toJson y),
       ("d", toJson d), ("q", toJson child.subject),
       ("witnesses", toJson ws), ("accepted", toJson (check Fixture65.cert))]
   | _ => pure ()

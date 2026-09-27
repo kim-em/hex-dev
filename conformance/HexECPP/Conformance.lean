@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexECPP
 import HexECPP.Fixture65
+import HexECPP.Fixture17
 import HexECPP.Fixture256
 import HexECPP.Fixture512
 import HexECPP.ImportConformance
@@ -13,9 +14,10 @@ import HexECPP.PariFixtures
 
 /-!
 Core ECPP conformance. Oracle: PARI for the frozen subjects and an independent
-Python affine replay in `scripts/oracle/ecpp_pari.py`; mode: required. The
-emitted oracle cases exhaust point pairs and scalar schedules up to twice the
-field size on the curves `y² = x³ + 3` over `F₅`, `F₇`, and `F₁₁`.
+Python affine replay and PARI `elladd`/`ellmul` in
+`scripts/oracle/ecpp_pari.py`; mode: required. The emitted oracle cases
+exhaust point pairs and scalar schedules up to twice the field size on
+`y² = x³ + 3` and `y² = x³ + x` over `F₅`, `F₇`, and `F₁₁`.
 Covered operations: addition, scalar replay, recursive checking, and bounded
 PARI conversion. The guards pin all exceptional addition branches, witness
 consumption, strict size equality, subject binding, corrupt data, nonunit
@@ -37,6 +39,10 @@ private def N : Point := .affine 1 5
 #guard add? 7 0 P P [3] == none
 #guard add? 7 0 P (.affine 1 3) [] == none
 #guard add? 7 0 P P [2, 4] == some (.affine 6 3, [4])
+#guard add? 35 0 (.affine 1 0) (.affine 1 0) [] ==
+  some (.infinity, [])
+#guard add? 35 0 (.affine 1 5) (.affine 6 5) [7] == none
+#guard add? 35 0 (.affine 1 5) (.affine 6 5) [35] == none
 #guard (modSub 7 1 6) == 2
 #guard (Point.affine 6 3).canonical 7
 #guard !(Point.affine 7 3).canonical 7
@@ -53,7 +59,12 @@ private def N : Point := .affine 1 5
 #guard !(replayDone 7 0 3 0 P [1])
 
 #guard checkAt 18446744073709551629 Fixture65.cert
+#guard checkAt 17 Fixture17.cert
+#guard !checkAt 19 Fixture17.cert
 #guard !checkAt 18446744073709551631 Fixture65.cert
+#guard !checkStep 3 0 0 0 0 0 [] 2
+#guard !checkStep 21 0 0 0 0 0 [] 2
+#guard !checkStep 35 0 3 1 2 17 [] 35
 #guard match Fixture65.cert with
   | .step n a b x y d (_ :: tail) child =>
       !check (.step n a b x y d (0 :: tail) child)
@@ -63,6 +74,20 @@ private def N : Point := .affine 1 5
   | _ => false
 #guard match Fixture65.cert with
   | .step n a b x y d ws  _ => !check (.step n a b x y d ws (.base (.small 2)))
+  | _ => false
+#guard match Fixture65.cert with
+  | .step n a b x y d ws child =>
+      !check (.step n a b x (y + 1) d ws child) &&
+      !check (.step n a b x y 0 ws child) &&
+      !check (.step n n b x y d ws child) &&
+      !check (.step n a n x y d ws child) &&
+      !check (.step n a b n y d ws child) &&
+      !check (.step n a b x n d ws child) &&
+      !check (.step n a b x y n ws child)
+  | _ => false
+#guard match Fixture65.cert with
+  | .step n a b x y d (_ :: tail) child =>
+      !check (.step n a b x y d (n :: tail) child)
   | _ => false
 
 #guard match normalizeProjective 35 ⟨15, 16, 15⟩ with
@@ -117,5 +142,5 @@ private def N : Point := .affine 1 5
   | .ok (cert, _) => checkAt 13 cert
   | _ => false
 
-#guard check Fixture256.cert
-#guard check Fixture512.cert
+#guard checkAt Fixture256.cert.subject Fixture256.cert
+#guard checkAt Fixture512.cert.subject Fixture512.cert

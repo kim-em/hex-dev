@@ -32,9 +32,9 @@ meta def convertSupplied (source : String) : MetaM (Except ImportError Cert) := 
   let endpoint := parsed.endpoint
   unless Hex.PrimalityTactic.withinPrimalityBudget endpoint do
     return .error ⟨parsed.rows.length, .exhausted⟩
-  let fuel := Hex.PrimalityTactic.primalityFuel endpoint
-  let budget := { defaultImportBudget with maxEndpointFuel := fuel }
-  return (convertCounted budget Hex.PrimalityTactic.primalitySearchBudget
+  let fuel := min (Hex.PrimalityTactic.primalityFuel endpoint)
+    defaultImportBudget.maxEndpointFuel
+  return (convertCounted defaultImportBudget Hex.PrimalityTactic.primalitySearchBudget
     (Hex.Rand.ofSeed endpoint) fuel parsed).map Prod.fst
 
 private meta def certType : Expr := mkConst ``Hex.ECPP.Cert

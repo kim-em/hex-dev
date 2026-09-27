@@ -240,7 +240,7 @@ jobs:
           test -d "$lean_prefix/lib/lean"
           echo "LD_LIBRARY_PATH=$lean_prefix/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
-      - name: Restore .lake/build (project modules)
+      - name: Restore .lake/build (project and AINTLIB modules)
         if: steps.classify.outputs.docs_only != 'true'
         id: hex-build-cache
         uses: actions/cache/restore@v4
@@ -248,6 +248,8 @@ jobs:
           path: |
             .lake/build/lib/lean
             .lake/build/ir
+            .lake/packages/AINTLIB/.lake/build/lib/lean
+            .lake/packages/AINTLIB/.lake/build/ir
           key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
             lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
@@ -559,13 +561,15 @@ jobs:
       # Save only a fully verified main snapshot. Pull-request caches are scoped
       # to their merge ref and cannot help another PR, so saving one per PR would
       # churn the repository's cache quota without providing shared reuse.
-      - name: Save .lake/build (project modules; main only)
+      - name: Save .lake/build (project and AINTLIB modules; main only)
         if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.hex-build-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
         with:
           path: |
             .lake/build/lib/lean
             .lake/build/ir
+            .lake/packages/AINTLIB/.lake/build/lib/lean
+            .lake/packages/AINTLIB/.lake/build/ir
           key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
       # Publish only after every verification gate passes. R2 remains a
       # cross-runner fallback for a GitHub cache miss and for external consumers.

@@ -6,5 +6,10 @@ Authors: Kim Morrison
 
 import HexECPPMathlib.Soundness
 
+/-- info: 'Hex.ECPP.natPrime_of_check' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Hex.ECPP.natPrime_of_check
+
+/-- info: 'Hex.ECPP.natPrime_of_checkAt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Hex.ECPP.natPrime_of_checkAt

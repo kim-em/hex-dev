@@ -30,9 +30,13 @@ def add(n: int, a: int, p, q, witnesses: list[int]):
     if not witnesses:
         return None
     u = witnesses[0]
-    if not (0 <= u < n and d * u % n == 1):
+    try:
+        inverse = pow(d, -1, n)
+    except ValueError:
         return None
-    slope = v * u % n
+    if not (0 <= u < n and u == inverse):
+        return None
+    slope = v * inverse % n
     x3 = (slope * slope - x1 - x2) % n
     y3 = (slope * (x1 - x3) - y1) % n
     return {"point": [x3, y3], "rest": witnesses[1:]}
@@ -103,6 +107,53 @@ def pari_isprime(n: int) -> bool:
         return result.stdout.strip().splitlines()[-1] == "1"
 
 
+def _gp_point(point) -> str:
+    return "[0]" if point is None else f"[{point[0]},{point[1]}]"
+
+
+def pari_group_check(rows: list[dict]) -> None:
+    """Cross-check every accepted small-field operation with PARI's group law."""
+    gp = shutil.which("gp") or os.environ.get("HEX_PARI_GP")
+    if not gp:
+        raise RuntimeError("PARI gp is required for elliptic-curve oracle checks")
+    commands = []
+    expected = []
+    curve = None
+    for row in rows:
+        kind = row["kind"]
+        if kind not in ("add", "scalar", "step") or row.get("result") is None and kind != "step":
+            continue
+        key = (row["n"], row["a"], row["b"])
+        if key != curve:
+            n, a, b = key
+            commands.append(f"E=ellinit([0,0,0,{a},{b}],{n});")
+            curve = key
+        if kind == "add":
+            commands.append(
+                f"print(lift(elladd(E,{_gp_point(row['p'])},{_gp_point(row['q'])})));"
+            )
+            expected.append(row["result"]["point"])
+        elif kind == "scalar":
+            commands.append(
+                f"print(lift(ellmul(E,{_gp_point(row['point'])},{row['q']})));"
+            )
+            expected.append(row["result"]["point"])
+        elif row["accepted"]:
+            commands.append(
+                f"print(lift(ellmul(E,[{row['x']},{row['y']}],{row['q']})));"
+            )
+            expected.append(None)
+    source = "\n".join(commands) + "\n\\q\n"
+    result = subprocess.run(
+        [gp, "-q"], input=source, text=True, capture_output=True, check=True
+    )
+    actual = [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
+    assert len(actual) == len(expected), (len(actual), len(expected), result.stderr)
+    for i, (got, want) in enumerate(zip(actual, expected, strict=True)):
+        normalized = None if got == [0] else got
+        assert normalized == want, (i, normalized, want)
+
+
 def main() -> int:
     rows = [json.loads(line) for line in sys.stdin if line.strip()]
     for row in rows:
@@ -120,6 +171,7 @@ def main() -> int:
             assert pari_isprime(row["n"]) == row["accepted"], row
         else:
             raise AssertionError(f"unsupported fixture kind: {kind}")
+    pari_group_check(rows)
     print(f"HexECPP: {len(rows)} independent cases passed")
     return 0
 
