@@ -150,7 +150,9 @@ private def registerSearch {α β : Type} [Hashable β] (name : Lean.Name)
     LeanBench.kernelLoop (fun () => pure (run q)) hash true)
 
 def searchConfig : LeanBench.BenchmarkConfig :=
-  { config with paramSchedule := .custom #[16, 32, 64, 128, 256, 512, 1024, 2048] }
+  { config with
+    paramSchedule := .custom #[8192, 12288, 16384, 24576, 32768, 49152, 65536, 98304],
+    maxSecondsPerCall := 60 }
 
 private def prepRefinement (joint : Bool) (n : Nat) : IO SignQuery :=
   let a : Approximation Rat :=
