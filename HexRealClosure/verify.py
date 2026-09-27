@@ -110,8 +110,11 @@ scaled_head = [2 * c for c in head]
 scaled_selection = [r for r in candidate_roots
                     if between(r, (Q(1), Q(0)), (Q(2), Q(0)))
                     and eval_poly(scaled_head, r) == (0, 0)]
-assert wide_selection == [alpha]
-assert scaled_selection == [alpha]
+negative_selection = [r for r in candidate_roots if sign(r) < 0]
+assert len(wide_selection) == len(scaled_selection) == len(negative_selection) == 1
+wide_root, scaled_root, negative_root = (
+    wide_selection[0], scaled_selection[0], negative_selection[0]
+)
 old_version, new_version = 7, 8
 expected = [
     f"some ({sign(alpha)}, {sign(below)}, {sign(eval_poly(head, alpha))}, "
@@ -137,8 +140,14 @@ expected = [
     f"{sign(add(inv(alpha_cubed), neg(mul((Q(1, 4), Q(0)), alpha))))})",
     f"some ({sign(alpha)}, {str(mul(alpha, alpha) == (Q(2), Q(0))).lower()}, "
     f"{str(mul(below, inv(below)) == (Q(1), Q(0))).lower()})",
-    f"some {str(wide_selection == [alpha]).lower()}",
-    f"some {str(scaled_selection == [alpha]).lower()}",
+    f"some ({str(wide_root == alpha).lower()}, {sign(wide_root)}, "
+    f"{str(mul(wide_root, wide_root) == (Q(2), Q(0))).lower()}, "
+    f"{sign(add(wide_root, (Q(-3), Q(0))))})",
+    f"some ({str(scaled_root == alpha).lower()}, {sign(scaled_root)}, "
+    f"{str(mul(scaled_root, scaled_root) == (Q(2), Q(0))).lower()})",
+    f"some ({sign(negative_root)}, "
+    f"{str(mul(negative_root, negative_root) == (Q(2), Q(0))).lower()}, "
+    f"{sign(add(negative_root, (Q(1), Q(0))))})",
 ]
 
 run = subprocess.run(
@@ -147,4 +156,4 @@ run = subprocess.run(
 )
 actual = re.findall(r"info: HexRealClosure/Tests\.lean:\d+:0: (.+)", run.stdout + run.stderr)
 assert actual == expected, f"Lean outputs {actual!r}; exact oracle expects {expected!r}"
-print("exact oracle passed for fourteen runnable cases")
+print("exact oracle passed for fifteen runnable cases")

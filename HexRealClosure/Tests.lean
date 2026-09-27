@@ -179,22 +179,42 @@ private def rawWide : SignDet.RawDescriptor Rat Nat :=
   { context := 11, head, lower := .finite 0, upper := .finite 4,
     indices := [1], signs := [-1] }
 
-private def canonicalThom : Option Bool := do
+private def canonicalThom : Option (Bool × Int × Bool × Int) := do
   let narrow ← Root.validate 7 raw
   let wide ← Root.validate 11 rawWide
-  return wide.toCanonical == narrow.toCanonical
+  let selected := wide.toCanonical
+  return (selected == narrow.toCanonical, selected.sign,
+    selected * selected == Hex.RealAlgebraicNumber.ofRat 2,
+    (selected - Hex.RealAlgebraicNumber.ofRat 3).sign)
 
 #eval canonicalThom
-#guard canonicalThom == some true
+#guard canonicalThom == some (true, 1, true, -1)
 
 /-- Scaling the reducible defining polynomial does not change the selected
 canonical number. -/
-private def canonicalNonmonic : Option Bool := do
+private def canonicalNonmonic : Option (Bool × Int × Bool) := do
   let monic ← Root.validate 7 raw
   let scaled ← Root.validate 9 { raw with context := 9, head := DensePoly.scale 2 head }
-  return scaled.toCanonical == monic.toCanonical
+  let selected := scaled.toCanonical
+  return (selected == monic.toCanonical, selected.sign,
+    selected * selected == Hex.RealAlgebraicNumber.ofRat 2)
 
 #eval canonicalNonmonic
-#guard canonicalNonmonic == some true
+#guard canonicalNonmonic == some (true, 1, true)
+
+/-- The unbounded lower endpoint selects the negative root. -/
+private def rawNegative : SignDet.RawDescriptor Rat Nat :=
+  { context := 12, head, lower := .negInf, upper := .finite 0,
+    indices := [], signs := [] }
+
+private def canonicalNegative : Option (Int × Bool × Int) := do
+  let negative ← Root.validate 12 rawNegative
+  let selected := negative.toCanonical
+  return (selected.sign,
+    selected * selected == Hex.RealAlgebraicNumber.ofRat 2,
+    (selected + Hex.RealAlgebraicNumber.ofRat 1).sign)
+
+#eval canonicalNegative
+#guard canonicalNegative == some (-1, true, -1)
 
 end Hex.RealClosure.Tests
