@@ -18,6 +18,13 @@ namespace Hex.ECPP.Fixture17
 @[expose] def cert : Hex.ECPP.Cert :=
   .step 17 2 3 3 6 6 [10, 13, 3, 13] (.base (.small 11))
 
+private def alternate : Hex.ECPP.Cert := .base (.small 2)
+
+/-- A definition whose compiled behavior differs from its exposed body.
+The explicit elaborator must reject it before evaluation. -/
+@[implemented_by alternate, expose]
+def disguised : Hex.ECPP.Cert := cert
+
 end Hex.ECPP.Fixture17
 
 #guard Hex.ECPP.checkAt 17 Hex.ECPP.Fixture17.cert

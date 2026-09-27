@@ -83,6 +83,8 @@ private meta partial def checkData (e : Expr) (fuel : Nat) : MetaM Nat := do
   | .const name _ =>
       if dataConstant name then return fuel
       let env ← getEnv
+      if (Compiler.getImplementedBy? env name).isSome then
+        throwError "ecpp: `{name}` has a compiled implementation; use constructor data"
       unless env.hasExposedBody name do
         throwError "ecpp: `{name}` is not an exposed data definition"
       let some (.defnInfo info) := env.find? name

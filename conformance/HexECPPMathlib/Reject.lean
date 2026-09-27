@@ -6,8 +6,14 @@ Authors: Kim Morrison
 
 import HexECPPMathlib.Elab
 import HexECPP.Fixture65
+import HexECPP.Fixture17
 
 /-! The explicit bridge rejects computations, substitution, and bad data. -/
+
+/-- error: ecpp: `Hex.ECPP.Fixture17.disguised` has a compiled implementation; use constructor data -/
+#guard_msgs in
+example : Nat.Prime 17 := by
+  ecpp using Hex.ECPP.Fixture17.disguised
 
 example : True := by
   fail_if_success
