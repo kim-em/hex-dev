@@ -32,7 +32,8 @@ def main():
             raise RuntimeError("commit source changes before recording runtime evidence")
         args.output.mkdir(parents=True, exist_ok=False)
         exe = ROOT / ".lake/build/bin/hexorderedfn_bench"
-        command = [str(exe), "run", "--export-file", str(args.output / "runtime.json")]
+        command = [str(exe), "run", "--filter", "Hex.OrderedFnBench",
+                   "--export-file", str(args.output / "runtime.json")]
         context = {"command": command, "cpu": cpu, "host": platform.node(),
                    "platform": platform.platform(), "load_before": os.getloadavg(),
                    "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
