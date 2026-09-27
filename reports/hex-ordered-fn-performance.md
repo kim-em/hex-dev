@@ -136,10 +136,65 @@ quadratic bit-work models for refinement and Horner are not established by the
 initial measurements. Their results remain unresolved evidence, without a
 Phase-4 completion claim.
 
+## Corrected comparison and height measurements
+
+The [second configuration](data/hex-ordered-fn/height/runtime.json) corrects the
+denominator recurrence and extends the three height ladders to 65,536–8,388,608
+bits. These changes were made before collection; no completed samples were
+replaced. All four two-sided verdicts now pass. The same fixed trial-major
+schedule uses three trials and one-second batches. The [context](data/hex-ordered-fn/height/context.json)
+records the automatically selected CPU, source commit and executable hash.
+These are separate scaling runs, not paired before/after speedup measurements.
+
+| Target | Model | First median | Last median | Normalized slope |
+| --- | --- | ---: | ---: | ---: |
+| `denominators` | 3 ^ Nat.log2 (max n 1) | 129.255 µs | 141733.434 µs | -0.105 |
+| `compareHeight` | n | 8.571 µs | 953.451 µs | +0.071 |
+| `realHeight` | n | 19.123 µs | 2137.468 µs | -0.005 |
+| `provider` | n | 23.551 µs | 3434.430 µs | +0.040 |
+
+## Search work counts
+
+These exact counts follow the executed loops for the benchmark families. A
+coefficient visit is one coefficient-provider call. Each Horner coefficient
+performs one bound multiplication and one bound addition. A bound multiplication
+uses four rational products and min/max selection; a bound addition uses two
+rational additions. Constant-provider calls occur once per polynomial enclosure.
+Failed numerator separation skips the denominator enclosure in `Real.attempt`.
+Approximation trials enclose both polynomials and try four-corner bound division.
+
+| Family | Last trial index | Coefficient visits | Constant-provider calls | Bound operations |
+| --- | ---: | ---: | ---: | ---: |
+| `refinement` | n | 2n+3 | n+2 | 4n+6 |
+| `jointRefinement` | n+1 | 2n+5 | n+3 | 4n+10 |
+| `horner` | 0 | n+2 | 2 | 2n+4 |
+| `realHeight` (n≥1) | 0 | 3 | 2 | 6 |
+| `approximation` | n+3 | 3n+12 | 2n+8 | 7n+28 |
+
+The approximation count includes one bound division per trial; each trial also
+computes the quotient width and compares it with the requested width. Formal
+zero performs no provider calls. These counts exclude preparation and the
+preparation-time witness check.
+
+For exact-coefficient refinement, the numerator enclosure at trial k is
+[2⁻ⁿ−2⁻ᵏ⁻¹, 2⁻ⁿ+2⁻ᵏ⁻¹], so the first success is k=n. With joint refinement,
+its lower endpoint is 2⁻ⁿ−2δ+δ²/4, with δ=2⁻ᵏ, so the first success is k=n+1.
+For approximation, the eventual quotient width is
+(5δ+δ³/4)/(1−δ²/4); it first meets 2⁻ⁿ at k=n+3. Exact Fraction evaluation
+independently checks these endpoint formulas at n=0,1,4,16,64.
+
+Stored endpoint bit sizes also explain the coupled parameters in the unresolved
+runs. Joint refinement's final lower numerator bound is 2⁻²ⁿ⁻⁴, whose denominator
+has 2n+5 bits. The Horner numerator bounds are [2⁻ⁿ, 2−2⁻ⁿ], with n+1-bit
+numerator/denominator components. `realHeight` produces n+2-bit endpoint
+components. The final approximation width has a denominator with 3n+11 bits.
+These describe reduced rational values, not GMP scratch storage or unreduced
+internal multiplication temporaries. The timings include all of that arithmetic.
+
 ## Remaining evidence
 
-Complete search cost characterization, operation/bit-size counts and successive
-approximation measurements remain outstanding. Clean versus eager normalization
+Complete search cost characterization and successive approximation measurements
+remain outstanding. Clean versus eager normalization
 comparisons and downstream tower integration also remain part of the full issue.
 The existing [RationalFn arithmetic report](hex-rational-fn-performance.md#internal-alternatives)
 provides cancellation versus multiply-then-normalize comparisons on identical
