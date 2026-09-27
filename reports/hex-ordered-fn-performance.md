@@ -187,7 +187,7 @@ Stored endpoint bit sizes also explain the coupled parameters in the unresolved
 runs. Joint refinement's final lower numerator bound is 2⁻²ⁿ⁻⁴, whose denominator
 has 2n+5 bits. The Horner numerator bounds are [2⁻ⁿ, 2−2⁻ⁿ], with n+1-bit
 numerator/denominator components. `realHeight` produces n+2-bit endpoint
-components. The final approximation width has a denominator with 3n+11 bits.
+components. The final approximation width has a denominator with 3n+10 bits.
 These describe reduced rational values, not GMP scratch storage or unreduced
 internal multiplication temporaries. The timings include all of that arithmetic.
 
