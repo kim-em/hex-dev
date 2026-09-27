@@ -135,18 +135,23 @@ The original quadratic denominator model overlooked the default Karatsuba plan;
 the corrected recurrence is T(n)=3T(n/2)+Θ(n). The height/provider ladders are
 extended to larger operands to distinguish limb work from fixed overhead. The
 quadratic bit-work models for refinement and Horner are not established by the
-initial measurements. The current search configuration uses eight larger
+initial measurements. The historical search configuration used eight larger
 parameters (8192, 12288, 16384, 24576, 32768, 49152, 65536, 98304), with a
-60-second configured per-call cap. The driver used one Lean worker, starving
+60-second configured per-call cap. This ladder is not reproducible under the
+repaired timeout: refinement at 98304, joint refinement at 65536 and 98304, and
+approximation at 49152, 65536 and 98304 each exceed 60 seconds for one operation.
+Calibration may exhaust the batch cap at smaller rungs too. These long rows
+completed only because the watchdog was ineffective. The driver used one Lean worker, starving
 the parent timeout task behind pipe reads; completed calls therefore exceed
 that setting. Those samples are retained. The driver now uses four workers,
 all pinned to the same selected CPU. A regression check with a 0.25-second cap
 kills the n=8192 approximation child with four workers; the same check with
 one worker instead completes a 1.854-second operation. The
-[cap-check logs](data/hex-ordered-fn/cap-four-workers.log) and
-[single-worker reproduction](data/hex-ordered-fn/cap-one-worker.log) are functional
-checks of the watchdog, not performance evidence. The configuration
-keeps the same quadratic model; the
+[four-worker cap check](data/hex-ordered-fn/cap-four-workers.log) and
+[one-worker cap check](data/hex-ordered-fn/cap-one-worker.log) are functional
+checks of the watchdog, not performance evidence; the commands and limitations
+are recorded in [their context](data/hex-ordered-fn/cap-context.json). The historical configuration
+kept the same quadratic model; the
 initial data remain evidence for their recorded smaller schedule. Both schedules
 remain unresolved evidence, without a Phase-4 completion claim.
 
@@ -187,13 +192,22 @@ rung from the fit; its samples and displayed median are still retained.
 The [context](data/hex-ordered-fn/search-large/context.json) records automatically
 selected CPU 36, host load, command and binary hash. The executable was built
 from clean source commit `71590d87470f3770fdf52e4cb757d07499a502b3` and was
-unchanged throughout collection. The checkout advanced during the run; the
+unchanged throughout collection according to the execution record; the later
+profile hash matches the run-start hash. The driver did not continuously hash
+the binary. Horner recorded uncommitted documentation/metadata edits at the
+same source commit. The checkout advanced during the run; the
 approximation family's per-child metadata therefore records the later checkout
 commit `538e9c511b64db7aef401594ceeef5b975a7d47e`, not a different executable.
 The run used one Lean worker, including the timeout limitation described above.
 No completed samples were discarded or replaced because of host activity.
+Approximation shows 45–57% trial spreads on the first six rungs, with trial 3
+slower while recorded host load increased. The data do not identify the cause
+of that slowdown. The fit uses per-rung medians; the other two trials broadly
+agree on those rungs. These are shared-host observations, not isolated timings.
 
-These results reject the provisional quadratic scaling claim over this range.
+The fitted normalized slopes (+0.25 to +0.39) exceed the 0.15 tolerance, so
+the data do not support the provisional quadratic declaration over this range.
+The cost declaration must be re-derived.
 They establish neither a replacement two-sided model nor a passing upper-bound
 claim. Together with the profile below, they identify the omitted cost of
 large-rational arithmetic for further characterization.
@@ -243,14 +257,14 @@ The larger search ladder exceeds the provisional quadratic model. A profile of
 cost: GMP accounts for 90.69% of leaf samples, allocation/free 8.24%, Lean
 runtime 0.61%, Hex code 0.02%, and other code 0.43%. Multiplication routines
 feature prominently: `__gmpn_addmul_1_x86_64` alone accounts for 39.85% of leaf
-samples. Thus the earlier linear-bit-cost assumption for each rational operation
-is inadequate. The exact operation counts remain valid; they do not imply a
+samples. The ladder, rather than this single-size profile, shows that the
+earlier linear-bit-cost assumption is inadequate for the measured family. The exact operation counts remain valid; they do not imply a
 quadratic runtime bound when rational multiplication and division are included.
 This profile does not establish a replacement asymptotic model.
 The GMP manual describes the operand-size-dependent costs of
-[Karatsuba multiplication](https://gmplib.org/manual/Karatsuba-Multiplication)
-and [subquadratic GCD](https://gmplib.org/manual/Subquadratic-GCD); counting
-rational operations alone does not account for those costs.
+[Karatsuba multiplication](https://gmplib.org/manual/Karatsuba-Multiplication);
+counting rational operations alone does not account for those costs. GCD routines
+are not prominent among the reported leaf samples at this size.
 
 The [context](data/hex-ordered-fn/search-profile-context.json) records the
 capture command, automatically selected CPU and executable hash; the
@@ -259,11 +273,18 @@ rankings and filtering diagnostics. The executable is exactly the one used by
 the larger search run, built from `71590d87470f3770fdf52e4cb757d07499a502b3`.
 The checkout had since advanced to `4229c31ac56f2c782545ff1dd47481fdfd4554fe`;
 that later hash in the profile's child metadata is not the executable's source.
+The profile source attribution is inferred from its matching binary hash and
+the run-start clean-source context. These pre-squash commits belong to
+[#10447](https://github.com/kim-em/hex-dev/pull/10447), merged as
+`54fb61e8a`; the recorded measurement source
+[71590d874](https://github.com/kim-em/hex-dev/commit/71590d87470f3770fdf52e4cb757d07499a502b3)
+remains accessible on GitHub.
 
 User-cycle sampling at 999 Hz with DWARF call stacks retained 4888 samples in
 three operation regions totaling 4893.9 ms, including calibration calls but
-excluding preparation and hashing. Clock normalization matches every raw perf
-timestamp exactly. The wall/monotonic anchor was captured after the run;
+excluding preparation and hashing. Exact agreement of raw and imported
+timestamps was observed during normalization, but those raw diagnostics were
+not retained. The wall/monotonic anchor was captured after the run;
 region alignment residual is 0.492 ms and the ±5 ms sensitivity check passes.
 Leaf attribution is the basis for the percentages above. Deep GMP stacks do
 not consistently unwind to the caller, so incomplete inclusive caller shares

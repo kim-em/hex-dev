@@ -24,18 +24,18 @@ opening Phase 4 issues.
 
 Phase 4 classifies each advertised operation by what is actually being
 measured. A library may have one track or both; its SPEC must assign every
-advertised operation to exactly one row.
+advertised compiled operation, tactic or proof generator to exactly one row.
 
 Ordinary theorem applications and instance-law proofs use correctness tests,
 not dedicated timing probes. The proof track below measures tactic execution,
 proof generation, certificate checking and the kernel computations they perform.
-Compilation profiling of other proofs is appropriate when investigating an
+Profiling the elaboration or kernel checking of other proofs is appropriate when investigating an
 observed build-cost problem.
 
 | Surface | Required evidence | Generic requirements replaced |
 | --- | --- | --- |
 | Mathlib-free compiled computation | An ordinary LeanBench executable, registrations with controlled one-parameter ladders and adjacent independent cost derivations, `list`/`verify`, scientific verdicts, comparator coverage, and timed-region sampling profiles. | None. |
-| Elaboration, proof-search tactics, emitted proof terms, or kernel checking | Externally timed fresh-module builds below an explicit `libraries.yml` `proof_probes` root, with matched import baselines, rotated raw samples, compiler/proof artefacts, and the trust/provenance record in `SPEC/benchmarking.md`. | No LeanBench registration or executable, no `list`/`verify` entry for that surface, no complexity verdict, and no timed-region sampling profile. |
+| Tactic execution, proof generation, and their certificate and kernel checking | Externally timed fresh-module builds below an explicit `libraries.yml` `proof_probes` root, with matched import baselines, rotated raw samples, compiler/proof artefacts, and the trust/provenance record in `SPEC/benchmarking.md`. | No LeanBench registration or executable, no `list`/`verify` entry for that surface, no complexity verdict, and no timed-region sampling profile. |
 
 A `mathlib: true` library with a separable compiled core is a **mixed**
 library, not a proof-only exception. Its compiled core obeys every ordinary
@@ -157,8 +157,8 @@ required.
 
 For library `hex-foo`, Phase 4 is done when:
 
-- every operation listed in the library's SPEC API surface is assigned to a
-  track, every compiled-track operation has a `setup_benchmark` or
+- every compiled operation, tactic or proof generator listed in the library's
+  SPEC API surface is assigned to a track, every compiled-track operation has a `setup_benchmark` or
   `setup_fixed_benchmark` registration in the `HexFoo.Bench` exe, and every
   proof-track operation has the specified externally timed fresh-module probe;
 - the headline report names the strongest applicable mode from
