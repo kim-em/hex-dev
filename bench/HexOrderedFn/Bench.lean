@@ -151,7 +151,7 @@ private def registerSearch {α β : Type} [Hashable β] (name : Lean.Name)
 
 def searchConfig : LeanBench.BenchmarkConfig :=
   { config with
-    paramSchedule := .custom #[8192, 12288, 16384, 24576, 32768, 49152, 65536, 98304],
+    paramSchedule := .custom #[8192, 10240, 12288, 14336, 16384, 20480, 24576, 28672],
     maxSecondsPerCall := 60 }
 
 private def prepRefinement (joint : Bool) (n : Nat) : IO SignQuery :=
@@ -160,17 +160,19 @@ private def prepRefinement (joint : Bool) (n : Nat) : IO SignQuery :=
   let f := RationalFn.ofPoly (DensePoly.ofList [-(2 - Real.precision n), 1])
   signQuery a f (n + 3)
 
--- Cost model: Θ(n²) limb work: Θ(n) failed refinements on a linear polynomial,
--- with up to Θ(n) bits per rational. Dyadic denominators keep gcds simple.
+-- Mode 2 upper bound O(n³): O(n) trials use O(n)-bit rational operands.
+-- Multiplication, division and gcd each have the published quadratic upper
+-- bounds cited in the performance report. This is not a tight scaling claim;
+-- GMP changes algorithms with operand size and exploits special operands.
 initialize do
-  registerSearch ``refinement "n * n" (fun n => n * n) searchConfig
+  registerSearch ``refinement "n * n * n" (fun n => n * n * n) searchConfig
     (prepRefinement false) refinement
 
 def jointRefinement (q : SignQuery) : Int := refinement q
 
--- Cost model: Θ(n²), now both coefficients and the argument refine on every trial.
+-- Mode 2 upper bound O(n³), including refinement of coefficients and argument.
 initialize do
-  registerSearch ``jointRefinement "n * n" (fun n => n * n) searchConfig
+  registerSearch ``jointRefinement "n * n * n" (fun n => n * n * n) searchConfig
     (prepRefinement true) jointRefinement
 
 private def prepHorner (n : Nat) : IO SignQuery :=
@@ -178,10 +180,10 @@ private def prepHorner (n : Nat) : IO SignQuery :=
 
 def horner (q : SignQuery) : Int := refinement q
 
--- Cost model: Θ(n²) bit work: n Horner steps at argument [-1/2,1/2] create
--- dyadic endpoints of increasing bit length. There is one successful trial.
+-- Mode 2 upper bound O(n³): n Horner steps at argument [-1/2,1/2] create
+-- O(n)-bit endpoints; each rational operation costs at most O(n²).
 initialize do
-  registerSearch ``horner "n * n" (fun n => n * n) searchConfig prepHorner horner
+  registerSearch ``horner "n * n * n" (fun n => n * n * n) searchConfig prepHorner horner
 
 private def prepRealHeight (n : Nat) : IO SignQuery :=
   let c : Rat := ((2^n + 1 : Nat) : Rat) / ((2^n + 3 : Nat) : Rat)
@@ -213,10 +215,10 @@ def approximation (q : ApproxQuery) : Rat × Rat :=
   let b := Real.approx q.source q.subject q.width q.progress
   (b.lower, b.upper)
 
--- Cost model: Θ(n²) bit work for Θ(n) joint refinement trials with Θ(n)-bit
--- dyadic inputs. Exact quotient endpoints also enter the final bound.
+-- Mode 2 upper bound O(n³): O(n) joint refinement trials operate on O(n)-bit
+-- endpoints, including exact quotient formation, reduction and width checks.
 initialize do
-  registerSearch ``approximation "n * n" (fun n => n * n) searchConfig
+  registerSearch ``approximation "n * n * n" (fun n => n * n * n) searchConfig
     prepApproximation approximation
 
 end Hex.OrderedFnBench
