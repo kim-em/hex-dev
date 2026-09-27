@@ -49,10 +49,10 @@ root-list completeness theorem to show that every checked rational selected
 root has a matching `RealAlgebraicNumber`, even when its defining polynomial
 is reducible. `Expression.canonicalValue` evaluates the stored polynomial
 using canonical real-algebraic arithmetic; its real value agrees with
-`Expression.denote`; expression equality, addition, multiplication,
-successful inversion and returned signs agree. The choice of the matching
-canonical root is semantic and
-noncomputable. An executable conversion remains to be implemented.
+`Expression.denote`; expression equality, addition, subtraction, negation,
+multiplication, successful inversion, returned signs and checked refinement
+agree. A checked zero inverse also has canonical value zero. The matching
+canonical root is chosen noncomputably; executable conversion remains open.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and

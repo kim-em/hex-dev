@@ -9,7 +9,6 @@ public import HexRealClosureMathlib.SelectedRoot
 public import HexRealAlgebraicMathlib.IntegerRoots
 public import HexRealAlgebraicMathlib.Field
 public import HexSturmMathlib.Rational
-public import HexRealRootsMathlib.Drivers
 
 public section
 
@@ -41,21 +40,30 @@ theorem Root.exists_canonical {context : Nat} (d : Root context) :
     simp [hz]
   have hroot : (HexRealRootsMathlib.toPolyℝ p).IsRoot d.real := by
     rw [Polynomial.IsRoot.def, hscale, Polynomial.eval_mul, hvalue, mul_zero]
-  have hcomplex : (HexRootsMathlib.toPolyℂ p).IsRoot (d.real : ℂ) :=
-    HexRealRootsMathlib.isRoot_toPolyℂ (p := p) hroot
-  obtain ⟨a, hmem, ha⟩ :=
+  have hcomp : (algebraMap ℝ ℂ).comp (Int.castRingHom ℝ) = Int.castRingHom ℂ :=
+    RingHom.ext_int _ _
+  have hmap : HexRootsMathlib.toPolyℂ p =
+      (HexRealRootsMathlib.toPolyℝ p).map (algebraMap ℝ ℂ) := by
+    show (HexPolyZMathlib.toPolynomial p).map (Int.castRingHom ℂ) =
+      ((HexPolyZMathlib.toPolynomial p).map (Int.castRingHom ℝ)).map (algebraMap ℝ ℂ)
+    rw [Polynomial.map_map, hcomp]
+  have hcomplex : (HexRootsMathlib.toPolyℂ p).IsRoot (d.real : ℂ) := by
+    rw [hmap]
+    simpa using hroot.map (f := algebraMap ℝ ℂ)
+  obtain ⟨a, _, ha⟩ :=
     (Hex.ZPoly.mem_algebraicRoots_iff p hp (d.real : ℂ)).mpr hcomplex
   have hreal : a.isReal = true := by
     rw [Hex.AlgebraicNumber.isReal_iff, ha]
     simp
   let b := Hex.RealAlgebraicNumber.ofAlgebraic a hreal
-  refine ⟨b, ?_, ?_⟩
-  · apply (Hex.ZPoly.mem_realAlgebraicRoots p b).mpr
-    change a ∈ p.algebraicRoots
-    exact Array.mem_toList_iff.mp hmem
-  · change a.toComplex.re = d.real
+  have hb : b.toReal = d.real := by
+    change a.toComplex.re = d.real
     rw [ha]
     simp
+  refine ⟨b, ?_, hb⟩
+  apply (Hex.ZPoly.mem_realAlgebraicRoots_iff p hp b).mpr
+  rw [hb]
+  exact hcomplex
 
 /-- A semantic canonical witness for the selected root. The executable
 conversion still has to select the matching entry of the finite root list. -/
@@ -68,6 +76,19 @@ theorem Root.canonical_real {context : Nat} (d : Root context) :
 theorem Root.canonical_mem {context : Nat} (d : Root context) :
     d.canonical ∈ (Hex.ZPoly.clearDenominators d.raw.head).2.realAlgebraicRoots :=
   d.exists_canonical.choose_spec.1
+
+/-- The matching canonical algebraic value is independent of the semantic
+choice used to witness it. -/
+theorem Root.canonical_unique {context : Nat} (d : Root context)
+    (a : Hex.RealAlgebraicNumber) (h : a.toReal = d.real) :
+    a = d.canonical :=
+  Hex.RealAlgebraicNumber.toReal_injective (h.trans d.canonical_real.symm)
+
+theorem Rebinding.canonical_eq_source {context version : Nat} {source : Root context}
+    (r : Rebinding source version) :
+    r.target.canonical = source.canonical := by
+  apply source.canonical_unique
+  rw [r.target.canonical_real, r.real_eq_source]
 
 namespace Expression
 
@@ -131,12 +152,39 @@ theorem canonicalValue_mul {context : Nat} {d : Root context}
   apply Hex.RealAlgebraicNumber.toReal_injective
   simp only [canonicalValue_real, denote_mul, Hex.RealAlgebraicNumber.mul_toReal]
 
+theorem canonicalValue_neg {context : Nat} {d : Root context}
+    (a : Expression d) :
+    (neg a).canonicalValue = -a.canonicalValue := by
+  apply Hex.RealAlgebraicNumber.toReal_injective
+  simp only [canonicalValue_real, denote_neg, Hex.RealAlgebraicNumber.neg_toReal]
+
+theorem canonicalValue_sub {context : Nat} {d : Root context}
+    (a b : Expression d) :
+    (sub a b).canonicalValue = a.canonicalValue - b.canonicalValue := by
+  apply Hex.RealAlgebraicNumber.toReal_injective
+  simp only [canonicalValue_real, denote_sub, Hex.RealAlgebraicNumber.sub_toReal]
+
 theorem canonicalValue_inverse? {context : Nat} {d : Root context}
     (a b : Expression d) (h : a.inverse? = .ok (some b)) :
     b.canonicalValue = a.canonicalValue⁻¹ := by
   apply Hex.RealAlgebraicNumber.toReal_injective
   rw [canonicalValue_real, Hex.RealAlgebraicNumber.inv_toReal, canonicalValue_real]
   exact eq_inv_of_mul_eq_one_right (inverse?_sound a b h)
+
+theorem canonicalValue_inverse?_none {context : Nat} {d : Root context}
+    (a : Expression d) (h : a.inverse? = .ok none) :
+    a.canonicalValue = 0 := by
+  apply Hex.RealAlgebraicNumber.toReal_injective
+  simpa [canonicalValue_real] using inverse?_none_denote a h
+
+/-- Checked cofactor splitting and context rebinding retain the same
+canonical algebraic value for every transported expression. -/
+theorem canonicalValue_refine {context version : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : Refinement d head lower upper version) (a : Expression d) :
+    (refine r a).canonicalValue = a.canonicalValue := by
+  apply Hex.RealAlgebraicNumber.toReal_injective
+  rw [canonicalValue_real, canonicalValue_real, denote_refine]
 
 /-- A returned selected-root sign agrees with exact canonical algebraic
 comparison at the matching root. -/
