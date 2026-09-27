@@ -36,6 +36,14 @@ theorem polyDenote_coeff {context : Nat} {d : Root context}
     (polyDenote p).coeff i = (p.coeff i).value := by
   simp [polyDenote]
 
+theorem polyDenote_eq_map {context : Nat} {d : Root context}
+    (p : DensePoly (Element d)) :
+    polyDenote p = (polyValue p).map (valueField d).subtype := by
+  ext i
+  rw [polyDenote_coeff, Polynomial.coeff_map, polyValue_coeff]
+  exact congrArg Hex.RealAlgebraicNumber.toAlgebraic
+    (Element.toValue_val (p.coeff i)).symm
+
 theorem polyValue_C {context : Nat} {d : Root context} (a : Element d) :
     polyValue (DensePoly.C a) = Polynomial.C a.toValue := by
   exact HexPolyMathlib.Interpret.interpret_C
@@ -214,6 +222,28 @@ theorem Element.refinePoly_eq_map {context version : Nat} {d : Root context}
       (refine_zero_iff r) p :=
   polyMap_eq (refine r) (refine_zero_iff r) p
 
+theorem Element.transportPoly_eq_zero {context : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : SignDet.Reencoding d head lower upper)
+    (p : DensePoly (Element d)) :
+    transportPoly r p = 0 ↔ p = 0 := by
+  rw [transportPoly_eq_map]
+  exact DensePoly.Interpret.map_eq_zero (transport r) (transport_zero_iff r) p
+
+theorem Element.rebindPoly_eq_zero {context version : Nat} {d : Root context}
+    (r : Rebinding d version) (p : DensePoly (Element d)) :
+    rebindPoly r p = 0 ↔ p = 0 := by
+  rw [rebindPoly_eq_map]
+  exact DensePoly.Interpret.map_eq_zero (rebind r) (rebind_zero_iff r) p
+
+theorem Element.refinePoly_eq_zero {context version : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : Refinement d head lower upper version)
+    (p : DensePoly (Element d)) :
+    refinePoly r p = 0 ↔ p = 0 := by
+  rw [refinePoly_eq_map]
+  exact DensePoly.Interpret.map_eq_zero (refine r) (refine_zero_iff r) p
+
 theorem Element.transportPoly_degree {context : Nat} {d : Root context}
     {head : DensePoly Rat} {lower upper : Endpoint Rat}
     (r : SignDet.Reencoding d head lower upper)
@@ -293,3 +323,7 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.polyValue_derivative' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.polyValue_derivative
+/- The same named admission is inherited by polynomial transport semantics. -/
+/-- info: 'Hex.RealClosure.polyDenote_refine' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.polyDenote_refine
