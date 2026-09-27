@@ -591,7 +591,9 @@ lean_lib HexQuerySemantics where
   srcDir := "adapters"
   globs := #[`HexRealRootsMathlib.TarskiSoundness, `HexSturmMathlib.Soundness,
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
-    `HexSignDetMathlib.SelectedRoot, `HexRealClosureMathlib.SelectedRoot]
+    `HexSignDetMathlib.SelectedRoot, `HexRealClosureMathlib.SelectedRoot,
+    `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
+    `HexRealClosureMathlib.Polynomial]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
@@ -1538,6 +1540,10 @@ lean_exe hexresultant_bench where
 lean_exe hexnumberfield_bench where
   srcDir := "bench"
   root := `HexNumberField.Bench
+
+lean_exe hexrealclosure_bench where
+  srcDir := "bench"
+  root := `HexRealClosure.Bench
 
 lean_exe hexnumberfieldtower_bench where
   srcDir := "bench"

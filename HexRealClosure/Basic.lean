@@ -26,6 +26,14 @@ abbrev Root (context : Nat) :=
     Option (Root context) :=
   SignDet.Descriptor.validate Sturm.orderSign context raw
 
+/-- A validated selected-root descriptor has a positive-degree head. -/
+theorem Root.head_degree_pos {context : Nat} (d : Root context) :
+    0 < d.raw.head.natDegree := by
+  have hw := (SignDet.RawDescriptor.check_eq d.accepted).1
+  simp only [SignDet.RawDescriptor.wellFormed, Bool.and_eq_true,
+    decide_eq_true_eq] at hw
+  exact hw.1.1.1.1
+
 /-- An old descriptor cannot be validated in a different context version. -/
 theorem Root.validate_context {context : Nat} (raw : SignDet.RawDescriptor Rat Nat)
     (h : raw.context ≠ context) : Root.validate context raw = none := by

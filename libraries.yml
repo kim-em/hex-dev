@@ -1597,12 +1597,12 @@ libraries:
     done_through: 0
     status: active
   HexRealClosure:
-    deps: [HexSignDet, HexSturm, HexPoly]
+    deps: [HexSignDet, HexSturm, HexPoly, HexRealAlgebraic]
     mathlib: false
     done_through: 0
     status: active
   HexRealClosureMathlib:
-    deps: [HexRealClosure, HexSignDetMathlib, HexSturmMathlib, HexRealRootsMathlib, HexPolyMathlib]
+    deps: [HexRealClosure, HexSignDetMathlib, HexSturmMathlib, HexRealRootsMathlib, HexPolyMathlib, HexRealAlgebraicMathlib]
     mathlib: true
     done_through: 0
     status: active
