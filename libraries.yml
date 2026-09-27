@@ -1602,7 +1602,7 @@ libraries:
     done_through: 0
     status: active
   HexRealClosureMathlib:
-    deps: [HexRealClosure, HexSignDetMathlib, HexSturmMathlib, HexRealRootsMathlib, HexPolyMathlib]
+    deps: [HexRealClosure, HexSignDetMathlib, HexSturmMathlib, HexRealRootsMathlib, HexPolyMathlib, HexRealAlgebraicMathlib]
     mathlib: true
     done_through: 0
     status: active

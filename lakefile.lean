@@ -591,7 +591,8 @@ lean_lib HexQuerySemantics where
   srcDir := "adapters"
   globs := #[`HexRealRootsMathlib.TarskiSoundness, `HexSturmMathlib.Soundness,
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
-    `HexSignDetMathlib.SelectedRoot, `HexRealClosureMathlib.SelectedRoot]
+    `HexSignDetMathlib.SelectedRoot, `HexRealClosureMathlib.SelectedRoot,
+    `HexRealClosureMathlib.Canonical]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
