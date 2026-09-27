@@ -453,3 +453,24 @@ use source `6b751bcaad0c7a4cc88c5cd5196e8f86827eb3af`. Each context records
 matching executable hashes before and after execution. Host load is retained
 without removing samples; the first run began with a one-minute load of
 119.13 and ended at 92.72. The repeat is not a paired speed comparison.
+
+## Three successive real levels
+
+`thirdApproximation` evaluates X₃+(X₂−X₁) at X₁=2, X₂=33/16 and
+X₃=2⁻ⁿ−1/16, requesting width 2⁻ⁿ. Its returned interval is again
+[2⁻ⁿ/2, 3·2⁻ⁿ/2]. The third-level coefficient provider runs second-level
+`Real.approx` searches, which themselves execute first-level searches.
+Only finite termination witnesses are retained. All witnesses at the changed
+second-level subject are checked afresh; none is transported from another
+provider. Every timed request lies within the prepared witness arrays.
+The exact rational fallback is outside those requests, and these rational
+subjects assert no universal transcendental registration.
+
+For outer trial k, approximating X₂−X₁ costs B₂(k)=(k+2)(7k+55)/2
+bound operations. Each of the two constant-coefficient requests costs 15
+operations across its two levels; the outer trial adds seven. Summing B₂(k)+37
+for k=0,…,n+1 gives `(n+2)(7n²+121n+666)/6`. This mode-1 count is declared
+before measurement, with the same unit-weight and small-operand limitations
+as the second-level model. The schedule is 4, 6, 8, 10, 12, 14, 16 and 18,
+three trial-major repetitions and four-second batches. It varies real tower
+depth without introducing algebraic roots or changing the public library.
