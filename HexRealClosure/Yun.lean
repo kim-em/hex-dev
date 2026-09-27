@@ -233,3 +233,10 @@ theorem check_decompose_constant {K : Type u} [Lean.Grind.Field K]
   simp [check, hfalse, hunit, hrecon, hsum]
 
 end Hex.RealClosure.Yun
+
+/-- info: 'Hex.RealClosure.Yun.check_decompose_zero' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.check_decompose_zero
+/-- info: 'Hex.RealClosure.Yun.check_decompose_constant' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.check_decompose_constant
