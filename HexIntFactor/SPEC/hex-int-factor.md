@@ -94,6 +94,12 @@ Its construction provider supports explicit selection and the separate
 `ConstructionExtension` registration. Ordinary factorization and the
 `SearchExtension` primality adapter do not enable it.
 
+[Bounded SQUFOF splitting](../../HexPrimality/SPEC/hex-primality.md#bounded-squfof-splitting) is specified as
+an additional explicit shared primitive for inputs below `2^64`. HexIntFactor
+uses the upstream primitive directly. Native splitter and portfolio evidence
+must establish any proposed default placement and budget; this addition does
+not change the existing dispatcher.
+
 ECM stage 1 without stage 2 may not earn its maintenance cost. Milestone
 6 is therefore benchmark-gated: if the specified stage-1 route does not
 win on an unbalanced-semiprime family, it is removed from the initial
@@ -1568,9 +1574,9 @@ Families:
 
 **Comparators.** PARI `factor` via cypari2 is **informational**:
 PARI dispatches among trial division, SQUFOF, Pollard-Brent rho,
-`p - 1`, and MPQS with tuned crossovers, and this library specifies
-neither SQUFOF nor MPQS, so a required ratio would check an algorithm
-that does not exist here. PARI does not expose a benchmark mode that restricts
+`p - 1`, and MPQS with tuned crossovers. Hex specifies an explicit bounded
+SQUFOF route but has no implemented SQUFOF or MPQS production route; a
+required ratio would therefore compare different portfolios. PARI does not expose a benchmark mode that restricts
 `factor` to Hex's trial-division-plus-rho portfolio, so its selected route must
 not be inferred from the input size or from a timing ratio. PARI `factor`
 covers the table, balanced, and power-form families. A widening PARI ratio is
@@ -1593,9 +1599,10 @@ PARI `factor` endpoint nor GMP-ECM exposes those operations. Their evidence is
 therefore the native/kernel registration and profile rather than an external
 ratio.
 
-Whether SQUFOF is worth adding remains a product question, not an inference
-from PARI's selected route. Deciding it requires a within-Lean SQUFOF
-prototype compared with rho on the balanced ladder. Until such an
+Whether SQUFOF belongs in the default portfolio remains a product question,
+not an inference from PARI's selected route. The explicit SQUFOF contract
+requires native comparisons with rho on a varied-gap balanced ladder and
+measured portfolio evidence before promotion. Until such an
 implementation exists, Phase 4 reports the current rho route honestly but
 does not manufacture a SQUFOF verdict from an external portfolio ratio.
 An external small-constant parity goal against PARI would be a new
@@ -1768,11 +1775,10 @@ only for factorization-derived witnesses.
 
 ## Deferred question
 
-- **Whether SQUFOF is worth adding.** It beats rho on 64-bit semiprimes
-  by a useful constant and is a small algorithm, but it needs a
-  continued-fraction development and its failure modes are subtler than
-  rho's. A decision requires a within-Lean prototype on the balanced ladder;
-  the PARI portfolio ratio cannot answer it.
+- **Whether to enable SQUFOF by default.** The explicit primitive and its
+  native evidence are specified upstream. A default placement, size cutoff,
+  and budget require the prescribed within-Lean portfolio comparison; no
+  speedup follows from the algorithm name or the PARI portfolio ratio.
 - **Whether Aurifeuillian factorizations belong in `cyclotomicSplit?`.**
   They are a finite family of identities rather than an algorithm, so
   adding them is a table. Worth doing once the `b^n ± 1` benchmark
