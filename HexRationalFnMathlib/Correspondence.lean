@@ -81,6 +81,21 @@ noncomputable instance field : Field (RationalFn K) :=
     qsmul := fun q f => ((Int.cast q.num : RationalFn K) / Nat.cast q.den) * f
     qsmul_def := fun _ _ => rfl }
 
+/-- The Mathlib rational field induces the core rational field dictionary. -/
+theorem ratField_eq : Field.toGrindField (K := Rat) = Lean.Grind.instFieldRat := by
+  unfold Field.toGrindField Lean.Grind.instFieldRat
+    CommRing.toGrindCommRing Ring.toGrindRing Semiring.toGrindSemiring
+  dsimp only
+  congr
+  all_goals first
+    | exact proof_irrel_heq _ _
+    | (funext n; cases n with
+      | zero => rfl
+      | succ n => cases n with
+        | zero => rfl
+        | succ n => rfl)
+
+
 /-- The Mathlib field induces the original core field dictionary. This equality
 allows transport of successive extensions formed through either instance path. -/
 theorem coreField_eq :

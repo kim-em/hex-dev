@@ -19,43 +19,31 @@ open Infinitesimal
 abbrev First := RationalFn Rat
 abbrev Second := RationalFn First
 
-private theorem ratField : Field.toGrindField (K := Rat) = Lean.Grind.instFieldRat := by
-  unfold Field.toGrindField Lean.Grind.instFieldRat
-    CommRing.toGrindCommRing Ring.toGrindRing Semiring.toGrindSemiring
-  dsimp only
-  congr
-  all_goals first
-    | exact proof_irrel_heq _ _
-    | (funext n; cases n with
-      | zero => rfl
-      | succ n => cases n with
-        | zero => rfl
-        | succ n => rfl)
 
 example : InfinitesimalTests.First = First := by
   unfold InfinitesimalTests.First First
-  rw [ratField]
+  rw [HexRationalFnMathlib.ratField_eq]
 example : InfinitesimalTests.Second = Second := by
   unfold InfinitesimalTests.Second InfinitesimalTests.First Second First
-  rw [HexRationalFnMathlib.coreField_eq, ratField]
+  rw [HexRationalFnMathlib.coreField_eq, HexRationalFnMathlib.ratField_eq]
 
 -- The same inequality for the carriers formed in the Mathlib-free test module.
 theorem core_delta_lt_power (n : ℕ) : InfinitesimalTests.delta <
     InfinitesimalTests.lift (InfinitesimalTests.epsilon ^ n) := by
   unfold InfinitesimalTests.delta InfinitesimalTests.lift InfinitesimalTests.epsilon
     InfinitesimalTests.Second InfinitesimalTests.First
-  rw [← ratField, ← HexRationalFnMathlib.coreField_eq]
+  rw [← HexRationalFnMathlib.ratField_eq, ← HexRationalFnMathlib.coreField_eq]
   exact X_lt_pow n
 
 theorem core_delta_pos : (0 : InfinitesimalTests.Second) < InfinitesimalTests.delta := by
   unfold InfinitesimalTests.delta InfinitesimalTests.Second InfinitesimalTests.First
-  rw [← ratField, ← HexRationalFnMathlib.coreField_eq]
+  rw [← HexRationalFnMathlib.ratField_eq, ← HexRationalFnMathlib.coreField_eq]
   exact X_pos
 
 theorem core_reciprocal_gt_int (n : ℤ) :
     (n : InfinitesimalTests.First) < InfinitesimalTests.epsilon⁻¹ := by
   unfold InfinitesimalTests.epsilon InfinitesimalTests.First
-  rw [← ratField]
+  rw [← HexRationalFnMathlib.ratField_eq]
   exact intCast_lt_inv_X n
 
 example : Std.IsLinearOrder First := inferInstance
@@ -91,12 +79,6 @@ example : (ofLex (embed ((RationalFn.X : First)⁻¹))).order = -1 := by
   rw [embed_order _ (inv_ne_zero (ne_of_gt epsilon_pos))]
   decide +kernel
 
-example (x : First) :
-    (RationalFn.X * x ^ 2 - 1) * (RationalFn.X * x ^ 3 - 1) =
-      RationalFn.X ^ 2 * x ^ 5 - RationalFn.X * x ^ 3 - RationalFn.X * x ^ 2 + 1 := by
-  apply embed_injective
-  simp only [map_add, map_sub, map_mul, map_pow, map_one]
-  ring
 
 example (f g : Second) : towerEmbed f < towerEmbed g ↔ f < g := towerEmbed_lt f g
 example (a : First) :

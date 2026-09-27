@@ -24,14 +24,14 @@ def main():
     args = parser.parse_args()
     args.output = args.output.resolve()
     os.chdir(ROOT)
+    require_clean = subprocess.check_output(["git", "status", "--porcelain"], text=True)
+    if require_clean:
+        raise RuntimeError("commit source changes before recording runtime evidence")
+    subprocess.run(["lake", "build", "hexorderedfn_bench"], check=True)
     cpu, lease = acquire_cpu()
     try:
         os.sched_setaffinity(0, {cpu})
         os.environ["LEAN_NUM_THREADS"] = "1"
-        require_clean = subprocess.check_output(["git", "status", "--porcelain"], text=True)
-        if require_clean:
-            raise RuntimeError("commit source changes before recording runtime evidence")
-        subprocess.run(["lake", "build", "hexorderedfn_bench"], check=True)
         args.output.mkdir(parents=True, exist_ok=False)
         exe = ROOT / ".lake/build/bin/hexorderedfn_bench"
         command = [str(exe), "run", "--filter", "Hex.OrderedFnBench",

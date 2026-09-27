@@ -63,7 +63,8 @@ Use a provider-indexed wrapper around `RationalFn K` for a real-constant
 registration, and scoped instances on `RationalFn K` for infinitesimal orders.
 An infinitesimal extension over a real registration then has the wrapper as its
 coefficient field; opening the infinitesimal scope cannot change the real
-predecessor order. Do not install conflicting global orders on `RationalFn K`. Normal forms, field arithmetic
+predecessor order. Do not install conflicting global orders on `RationalFn K`.
+Normal forms, field arithmetic
 and their laws are proved once; individual additions, multiplications or gcd
 steps do not return certificates or consume a common resource budget.
 Polynomial algorithms use the ordinary total computational operations/sign,
