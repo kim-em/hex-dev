@@ -1,0 +1,41 @@
+Hex.OrderedFnBench.thirdApproximation    expected complexity: (n + 2) * (7 * n * n + 121 * n + 666) / 6    [warm cache]
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=2c7c3f3, 2026-09-27T09:44:16Z, host=chungus2
+  param  per-call    repeats  C
+      4  707.502 µs  ×2^12    C=553.202 [trial 1/3] †
+      6    1.199 ms  ×2^11    C=546.961 [trial 1/3]
+      8    1.884 ms  ×2^11    C=552.533 [trial 1/3]
+     10    2.818 ms  ×2^10    C=547.432 [trial 1/3]
+     12    4.038 ms  ×2^10    C=553.673 [trial 1/3]
+     14    5.514 ms  ×2^9     C=554.021 [trial 1/3]
+     16    7.198 ms  ×2^9     C=554.290 [trial 1/3]
+     18    9.348 ms  ×2^8     C=551.844 [trial 1/3]
+      4  698.140 µs  ×2^12    C=553.202 [trial 2/3] †
+      6    1.214 ms  ×2^11    C=546.961 [trial 2/3]
+      8    1.957 ms  ×2^11    C=552.533 [trial 2/3]
+     10    2.821 ms  ×2^10    C=547.432 [trial 2/3]
+     12    4.026 ms  ×2^10    C=553.673 [trial 2/3]
+     14    5.518 ms  ×2^9     C=554.021 [trial 2/3]
+     16    7.307 ms  ×2^9     C=554.290 [trial 2/3]
+     18    9.403 ms  ×2^8     C=551.844 [trial 2/3]
+      4  696.111 µs  ×2^12    C=553.202 [trial 3/3] †
+      6    1.198 ms  ×2^11    C=546.961 [trial 3/3]
+      8    1.917 ms  ×2^11    C=552.533 [trial 3/3]
+     10    2.820 ms  ×2^10    C=547.432 [trial 3/3]
+     12    4.061 ms  ×2^10    C=553.673 [trial 3/3]
+     14    5.419 ms  ×2^9     C=554.021 [trial 3/3]
+     16    7.400 ms  ×2^9     C=554.290 [trial 3/3]
+     18    9.523 ms  ×2^8     C=551.844 [trial 3/3]
+  verdict: consistent with declared complexity (cMin=546.961, cMax=554.290, β=+0.009)
+  per-spawn floor (harness self-measurement): 23.958 ms
+  peak RSS: 67_796 kB..68_800 kB (across 24 ok row(s))
+  trial summaries (3 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+        4  3/3     698.140 µs  696.111 µs  707.502 µs  1.632%
+        6  3/3       1.199 ms    1.198 ms    1.214 ms  1.327%
+        8  3/3       1.917 ms    1.884 ms    1.957 ms  3.843%
+       10  3/3       2.820 ms    2.818 ms    2.821 ms  0.081%
+       12  3/3       4.038 ms    4.026 ms    4.061 ms  0.867%
+       14  3/3       5.514 ms    5.419 ms    5.518 ms  1.784%
+       16  3/3       7.307 ms    7.198 ms    7.400 ms  2.761%
+       18  3/3       9.403 ms    9.348 ms    9.523 ms  1.860%
+exported to /tmp/issue-10376-third-measure/runtime.json

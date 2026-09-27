@@ -2,8 +2,8 @@
 
 The Mathlib-free targets exercise production signs, comparisons, Horner bounds
 and real refinement on canonical rational functions. The initial six targets
-cover infinitesimals; the later sections cover real searches and general comparisons. The APIs are implemented (phase 1); independent review and the remaining
-conformance/performance gates are tracked separately.
+cover infinitesimals; the later sections cover real searches and general comparisons.
+API review and conformance are recorded separately from these runtime results.
 
 ## Runtime measurements
 
@@ -298,7 +298,10 @@ alignment diagnostics, but cannot substitute for raw data when re-filtering.
 The four single-level search families have passing conservative upper-bound
 evidence. Successive approximation has one inconclusive operation-count run and one
 consistent unchanged repeat on small operands; its earlier quartic comparison
-does not qualify. Larger-precision and depth-varying real-search evidence remains open. Clean versus eager normalization
+does not qualify. The three-level workload also has consistent operation-count
+evidence. Large precision is measured at the first level and depth is varied
+on the small-operand families; no uniform multivariate bound is claimed.
+Clean versus eager normalization
 comparisons and downstream tower integration also remain part of the full issue.
 The existing [RationalFn arithmetic report](hex-rational-fn-performance.md#internal-alternatives)
 provides cancellation versus multiply-then-normalize comparisons on identical
@@ -474,3 +477,54 @@ before measurement, with the same unit-weight and small-operand limitations
 as the second-level model. The schedule is 4, 6, 8, 10, 12, 14, 16 and 18,
 three trial-major repetitions and four-second batches. It varies real tower
 depth without introducing algebraic roots or changing the public library.
+
+The [24 retained samples](data/hex-ordered-fn/third/runtime.json) are consistent
+with this model, with normalized slope +0.009. Medians range from 698.140 µs
+at n=4 to 9.403 ms at n=18. The process measurement floor is 23.958 ms; every
+batch clears it. The first rung is retained but excluded from the fit, as for
+the second-level run. No repeat was needed. The [context](data/hex-ordered-fn/third/context.json)
+records source `2c7c3f3024dccff9284303e1c3e17d344556e131`, CPU 90, four
+Lean workers and equal executable hashes before and after collection. These
+depth cases and the first-level large-precision cases vary separate axes;
+they do not establish a uniform bound in both precision and depth.
+
+The [profile at n=18](data/hex-ordered-fn/third-profile-summary.json) attributes
+36.38% of leaf samples to allocation, 36.14% to GMP, 18.72% to the Lean
+runtime, 2.51% to Hex code and 6.25% to other code. Inclusive stacks put
+98.65% in the third-level coefficient callback and 86.54% in its first-level
+search callback; these overlapping shares show where nested refinement
+executes. Filtering retains 4829 samples across 515 operation regions
+(4.839 s), with 0.999 ms alignment residual and a passing ±5 ms sensitivity
+check. The [context](data/hex-ordered-fn/third-profile-context.json) records
+the tools and commands. Raw data and symbol tables remain at
+`/home/kim/bench-results/issue-10376-third-profile`.
+
+### Search counts and rational sizes
+
+The executable's `sizes` command inspects provider bounds, every Horner
+accumulator and product, and quotient bounds for all trial precisions reached
+by these two workloads. It records maximum bit lengths of stored reduced
+rational endpoints and widths, excluding GMP scratch buffers. The
+[16 rows](data/hex-ordered-fn/successive-sizes.jsonl) and
+[source context](data/hex-ordered-fn/successive-sizes-context.json) are retained.
+Numerator/denominator maxima are n+4/n+3 at depth two and n+5/n+4 at depth
+three. At n=18 these are 22/21 and 23/22 bits respectively. Comparison
+cross-products can be larger, including the small-`Int` transition described
+above.
+
+The count fields in those rows are derived from the executed search equations,
+not instrumented runtime counters. They count search invocations (including
+the outer search), coefficient-provider calls and argument-provider calls:
+
+| Depth | Searches | Coefficient calls | Argument calls | Bound operations |
+| --- | --- | --- | --- | --- |
+| 2 | 1+3(n+2) | (n+2)(3n+23)/2 | (n+2)(n+9) | (n+2)(7n+55)/2 |
+| 3 | 1+(n+2)(3n+29)/2 | (n+2)(n²+17n+92)/2 | (n+2)(n²+19n+114)/3 | (n+2)(7n²+121n+666)/6 |
+
+Every visited coefficient invokes its provider once and performs a bound
+multiplication and addition. Each trial evaluates a numerator and denominator,
+requesting the argument twice, then performs one bound division. Consequently
+the bound-operation count is twice the coefficient-call count plus half the
+argument-call count. At n=18 the depth-two workload makes 61 searches and
+1810 bound operations; the depth-three workload makes 831 searches and
+17040 bound operations. Preparation and its witness checks are excluded.

@@ -1,0 +1,16 @@
+{"bound_operations":249,"coefficient_calls":105,"constant_calls":78,"depth":2,"max_denominator_bits":7,"max_numerator_bits":8,"precision":4,"searches":19}
+{"bound_operations":1262,"coefficient_calls":528,"constant_calls":412,"depth":3,"max_denominator_bits":8,"max_numerator_bits":9,"precision":4,"searches":124}
+{"bound_operations":388,"coefficient_calls":164,"constant_calls":120,"depth":2,"max_denominator_bits":9,"max_numerator_bits":10,"precision":6,"searches":25}
+{"bound_operations":2192,"coefficient_calls":920,"constant_calls":704,"depth":3,"max_denominator_bits":10,"max_numerator_bits":11,"precision":6,"searches":189}
+{"bound_operations":555,"coefficient_calls":235,"constant_calls":170,"depth":2,"max_denominator_bits":11,"max_numerator_bits":12,"precision":8,"searches":31}
+{"bound_operations":3470,"coefficient_calls":1460,"constant_calls":1100,"depth":3,"max_denominator_bits":12,"max_numerator_bits":13,"precision":8,"searches":266}
+{"bound_operations":750,"coefficient_calls":318,"constant_calls":228,"depth":2,"max_denominator_bits":13,"max_numerator_bits":14,"precision":10,"searches":37}
+{"bound_operations":5152,"coefficient_calls":2172,"constant_calls":1616,"depth":3,"max_denominator_bits":14,"max_numerator_bits":15,"precision":10,"searches":355}
+{"bound_operations":973,"coefficient_calls":413,"constant_calls":294,"depth":2,"max_denominator_bits":15,"max_numerator_bits":16,"precision":12,"searches":43}
+{"bound_operations":7294,"coefficient_calls":3080,"constant_calls":2268,"depth":3,"max_denominator_bits":16,"max_numerator_bits":17,"precision":12,"searches":456}
+{"bound_operations":1224,"coefficient_calls":520,"constant_calls":368,"depth":2,"max_denominator_bits":17,"max_numerator_bits":18,"precision":14,"searches":49}
+{"bound_operations":9952,"coefficient_calls":4208,"constant_calls":3072,"depth":3,"max_denominator_bits":18,"max_numerator_bits":19,"precision":14,"searches":569}
+{"bound_operations":1503,"coefficient_calls":639,"constant_calls":450,"depth":2,"max_denominator_bits":19,"max_numerator_bits":20,"precision":16,"searches":55}
+{"bound_operations":13182,"coefficient_calls":5580,"constant_calls":4044,"depth":3,"max_denominator_bits":20,"max_numerator_bits":21,"precision":16,"searches":694}
+{"bound_operations":1810,"coefficient_calls":770,"constant_calls":540,"depth":2,"max_denominator_bits":21,"max_numerator_bits":22,"precision":18,"searches":61}
+{"bound_operations":17040,"coefficient_calls":7220,"constant_calls":5200,"depth":3,"max_denominator_bits":22,"max_numerator_bits":23,"precision":18,"searches":831}
