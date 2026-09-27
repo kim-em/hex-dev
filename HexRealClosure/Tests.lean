@@ -132,4 +132,29 @@ private def nonmonicSplit : Option (Rat × Nat × Int) := do
 #eval nonmonicSplit
 #guard nonmonicSplit == some (2, 2, 1)
 
+/-- The selected-root cofactor yields a nonzero constant Bézout result. -/
+private def splitBezout : Option (Nat × Rat) := do
+  let d ← Root.validate 7 raw
+  let below : Expression d := ⟨x - DensePoly.C 3⟩
+  let eg := DensePoly.xgcdLeft below.polynomial below.inverseFactor.2
+  return (eg.gcd.natDegree, eg.gcd.leadingCoeff)
+
+#eval splitBezout
+#guard splitBezout == some (0, 7)
+
+/-- Inverting a representative above the defining degree exercises the first
+Euclidean reduction before the constant gcd is found. -/
+private def highDegreeInverse : Option (Nat × Int × Int) := do
+  let d ← Root.validate 7 raw
+  let a : Expression d := ⟨x * x * x⟩
+  let inv? ← a.inverse?.toOption
+  let inv ← inv?
+  let si ← inv.sign?.toOption
+  let expected : Expression d := ⟨DensePoly.scale (1 / 4 : Rat) x⟩
+  let diff ← (Expression.sub inv expected).sign?.toOption
+  return (a.polynomial.natDegree, si, diff)
+
+#eval highDegreeInverse
+#guard highDegreeInverse == some (3, 1, 0)
+
 end Hex.RealClosure.Tests
