@@ -75,8 +75,8 @@ replace a missing total-success theorem by an arbitrary default sign. -/
   let signs ← d.buildSigns [a.polynomial]
   return signs.value
 
-/-- Return the discarded gcd and the cofactor containing the selected root.
-The split is local to inversion and leaves the descriptor unchanged. -/
+/-- Return the monic gcd and its cofactor. For a value nonzero at the selected
+root, that root lies in the cofactor. The descriptor remains unchanged. -/
 @[expose] def inverseFactor {context : Nat} {d : Root context}
     (a : Expression d) : DensePoly Rat × DensePoly Rat :=
   let g := DensePoly.monicize (DensePoly.gcd d.raw.head a.polynomial)
@@ -134,8 +134,8 @@ structure Refinement {context : Nat} (source : Root context)
   encoding : SignDet.Reencoding source head lower upper
   binding : Rebinding encoding.target version
 
-/-- Select the cofactor containing the root and move it to a new context
-version in one checked conversion. -/
+/-- Check whether the cofactor contains the selected root, then move it to a
+new context version in one checked conversion. -/
 @[expose] def Expression.split? {context : Nat} {d : Root context}
     (a : Expression d) (version : Nat) (lower upper : Endpoint Rat) :
     Except SignDet.BuildError
