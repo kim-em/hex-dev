@@ -295,8 +295,8 @@ alignment diagnostics, but cannot substitute for raw data when re-filtering.
 
 ## Remaining evidence
 
-Complete search cost characterization and successive approximation measurements
-remain outstanding. Clean versus eager normalization
+The recorded search families now have passing conservative upper-bound evidence,
+including successive approximation; no tight scaling claim is made. Clean versus eager normalization
 comparisons and downstream tower integration also remain part of the full issue.
 The existing [RationalFn arithmetic report](hex-rational-fn-performance.md#internal-alternatives)
 provides cancellation versus multiply-then-normalize comparisons on identical
@@ -337,8 +337,8 @@ counting only the outer search loop.
 This is an upper bound on these four specified families, including their
 synthetic caller providers. It is not a precision bound in polynomial degree,
 a uniform bound for arbitrary caller approximations, or a two-sided complexity
-claim. The one-second results below pass that check for three targets; Horner still
-requires a resolved run.
+claim. The retained one-second results pass that check for three targets; the longer
+Horner batches below resolve the remaining signal-floor limitation.
 
 The [upper-bound run](data/hex-ordered-fn/search-upper/runtime.json) retains all
 96 successful rows. `refinement`, `jointRefinement`, and `approximation` have
@@ -378,6 +378,23 @@ tight wall-time model from these counts alone; this is a mode-2 claim.
 
 Parameters are 16, 24, 32, 48, 64, 96, 128 and 192, with three trial-major
 repetitions and four-second batches. Preparation, including successful-witness
-checks, is excluded; every inner and outer refinement is included. Measurements
-for this registration remain to be recorded. This benchmark is distinct from
+checks, is excluded; every inner and outer refinement is included. The results below cover this registration. This benchmark is distinct from
 the companion’s Liouville registration test and does not replace its hypotheses.
+
+The [four-second run](data/hex-ordered-fn/successive/runtime.json) retains all
+48 successful, signal-eligible samples. Horner’s normalized slope against n³
+is −0.765; successive approximation’s slope against n⁴ is −1.791. Both harness
+verdicts read `inconclusive` in the faster direction, which mode 2 reports as
+**within declared upper bound (observed faster)**. Neither is a two-sided pass.
+
+| Target | First parameter / median | Last parameter / median | Model |
+| --- | ---: | ---: | --- |
+| `horner` | 8192 / 98.349 ms | 28672 / 1577.874 ms | O(n³) |
+| `successiveApproximation` | 16 / 0.829 ms | 192 / 159.045 ms | O(n⁴) |
+
+The [context](data/hex-ordered-fn/successive/context.json) records clean source
+`b0966f0116d51047ebb549f029e4b98e47644653`, four Lean workers pinned to automatically
+selected CPU 2, host load and executable hash. The source and binary stayed
+unchanged during collection; the binary hash was checked again on completion.
+All older measurements remain committed, including Horner’s unresolved shorter
+batches. The two runs use different CPUs and are not a paired speed comparison.
