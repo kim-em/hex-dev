@@ -49,8 +49,9 @@ root-list completeness theorem to show that every checked rational selected
 root has a matching `RealAlgebraicNumber`, even when its defining polynomial
 is reducible. `Expression.canonicalValue` evaluates the stored polynomial
 using canonical real-algebraic arithmetic; its real value agrees with
-`Expression.denote`, and addition, multiplication and successful inversion
-agree. The choice of the matching canonical root is semantic and
+`Expression.denote`; expression equality, addition, multiplication,
+successful inversion and returned signs agree. The choice of the matching
+canonical root is semantic and
 noncomputable. An executable conversion remains to be implemented.
 
 For existing canonical number-field arithmetic and conversions, see the

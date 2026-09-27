@@ -97,6 +97,28 @@ theorem canonicalValue_real {context : Nat} {d : Root context}
   rw [show Hex.RealAlgebraicNumber.toRealHom d.canonical = d.real from d.canonical_real]
   simp [denote, hpoly, Polynomial.eval_map]
 
+/-- Equality of canonical values is precisely equality of selected real
+values; raw rational polynomials need not be structurally equal. -/
+theorem canonicalValue_eq_iff {context : Nat} {d : Root context}
+    (a b : Expression d) :
+    a.canonicalValue = b.canonicalValue ↔ a.denote = b.denote := by
+  constructor
+  · intro h
+    simpa [canonicalValue_real] using congrArg Hex.RealAlgebraicNumber.toReal h
+  · intro h
+    apply Hex.RealAlgebraicNumber.toReal_injective
+    simpa [canonicalValue_real] using h
+
+theorem canonicalValue_zero {context : Nat} {d : Root context} :
+    (zero (d := d)).canonicalValue = 0 := by
+  apply Hex.RealAlgebraicNumber.toReal_injective
+  simp [canonicalValue_real]
+
+theorem canonicalValue_one {context : Nat} {d : Root context} :
+    (one (d := d)).canonicalValue = 1 := by
+  apply Hex.RealAlgebraicNumber.toReal_injective
+  simp [canonicalValue_real]
+
 theorem canonicalValue_add {context : Nat} {d : Root context}
     (a b : Expression d) :
     (add a b).canonicalValue = a.canonicalValue + b.canonicalValue := by
@@ -115,6 +137,19 @@ theorem canonicalValue_inverse? {context : Nat} {d : Root context}
   apply Hex.RealAlgebraicNumber.toReal_injective
   rw [canonicalValue_real, Hex.RealAlgebraicNumber.inv_toReal, canonicalValue_real]
   exact eq_inv_of_mul_eq_one_right (inverse?_sound a b h)
+
+/-- A returned selected-root sign agrees with exact canonical algebraic
+comparison at the matching root. -/
+theorem canonicalValue_sign? {context : Nat} {d : Root context}
+    (a : Expression d) (value : Int) (h : a.sign? = .ok value) :
+    value = a.canonicalValue.sign := by
+  rw [a.sign?_sound value h, Hex.RealAlgebraicNumber.sign_eq, canonicalValue_real]
+  by_cases hn : a.denote < 0
+  · simp [hn, sign_eq_neg_one_iff.mpr hn]
+  · by_cases hz : a.denote = 0
+    · simp [hz]
+    · have hp : 0 < a.denote := lt_of_le_of_ne (le_of_not_gt hn) (Ne.symm hz)
+      simp [hn, hz, sign_eq_one_iff.mpr hp]
 
 end Expression
 
