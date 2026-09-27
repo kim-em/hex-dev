@@ -592,7 +592,8 @@ lean_lib HexQuerySemantics where
   globs := #[`HexRealRootsMathlib.TarskiSoundness, `HexSturmMathlib.Soundness,
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
     `HexSignDetMathlib.SelectedRoot, `HexRealClosureMathlib.SelectedRoot,
-    `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element]
+    `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
+    `HexRealClosureMathlib.Polynomial]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
