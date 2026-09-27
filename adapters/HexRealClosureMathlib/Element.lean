@@ -76,11 +76,14 @@ theorem value_mul {context : Nat} {d : Root context} (a b : Element d) :
 
 theorem value_neg {context : Nat} {d : Root context} (a : Element d) :
     (neg a).value = -a.value := by
-  rw [neg, ofPoly_value]
-  apply Hex.RealAlgebraicNumber.toReal_injective
-  rw [evalCanonical_real, d.toCanonical_real,
-    Hex.RealAlgebraicNumber.neg_toReal, value_eq_denote]
-  exact Expression.denote_neg a.toExpression
+  cases a with
+  | none => simp [neg, value]
+  | some v =>
+    rw [neg, ofPoly_value]
+    apply Hex.RealAlgebraicNumber.toReal_injective
+    rw [evalCanonical_real, d.toCanonical_real,
+      Hex.RealAlgebraicNumber.neg_toReal, value_eq_denote]
+    exact Expression.denote_neg (⟨v.1⟩ : Expression d)
 
 theorem value_sub {context : Nat} {d : Root context} (a b : Element d) :
     (sub a b).value = a.value - b.value := by
@@ -207,34 +210,45 @@ theorem sign_zero_iff {context : Nat} {d : Root context} (a : Element d) :
 
 theorem equal_iff {context : Nat} {d : Root context} (a b : Element d) :
     equal a b = true ↔ a.value = b.value := by
-  rw [equal, beq_iff_eq, sign_zero_iff, eq_zero_iff, value_sub]
+  rw [equal, Option.isNone_iff_eq_none]
+  change sub a b = (0 : Element d) ↔ a.value = b.value
+  rw [eq_zero_iff, value_sub]
   exact sub_eq_zero
 
 theorem value_transport {context : Nat} {d : Root context}
     {head : DensePoly Rat} {lower upper : Endpoint Rat}
     (r : SignDet.Reencoding d head lower upper) (a : Element d) :
     (transport r a).value = a.value := by
-  rw [transport, ofPoly_value]
-  apply Hex.RealAlgebraicNumber.toReal_injective
-  rw [evalCanonical_real, Root.toCanonical_real r.target, value_eq_denote]
-  exact Expression.denote_transport r a.toExpression
+  cases a with
+  | none => rfl
+  | some v =>
+    rw [transport, ofPoly_value]
+    apply Hex.RealAlgebraicNumber.toReal_injective
+    rw [evalCanonical_real, Root.toCanonical_real r.target, value_eq_denote]
+    exact Expression.denote_transport r (⟨v.1⟩ : Expression d)
 
 theorem value_rebind {context version : Nat} {d : Root context}
     (r : Rebinding d version) (a : Element d) :
     (rebind r a).value = a.value := by
-  rw [rebind, ofPoly_value]
-  apply Hex.RealAlgebraicNumber.toReal_injective
-  rw [evalCanonical_real, Root.toCanonical_real r.target, value_eq_denote]
-  exact Expression.denote_rebind r a.toExpression
+  cases a with
+  | none => rfl
+  | some v =>
+    rw [rebind, ofPoly_value]
+    apply Hex.RealAlgebraicNumber.toReal_injective
+    rw [evalCanonical_real, Root.toCanonical_real r.target, value_eq_denote]
+    exact Expression.denote_rebind r (⟨v.1⟩ : Expression d)
 
 theorem value_refine {context version : Nat} {d : Root context}
     {head : DensePoly Rat} {lower upper : Endpoint Rat}
     (r : Refinement d head lower upper version) (a : Element d) :
     (refine r a).value = a.value := by
-  rw [refine, ofPoly_value, value_eq_eval a]
-  simpa [Expression.toCanonical, Expression.refine, Expression.rebind,
-    Expression.transport, toExpression] using
-    Expression.toCanonical_refine r a.toExpression
+  cases a with
+  | none => rfl
+  | some v =>
+    rw [refine, ofPoly_value, value_eq_eval (some v : Element d)]
+    simpa [Expression.toCanonical, Expression.refine, Expression.rebind,
+      Expression.transport, toExpression, polynomial] using
+      Expression.toCanonical_refine r (⟨v.1⟩ : Expression d)
 
 end Element
 
@@ -274,14 +288,22 @@ theorem Element.toValue_eq_iff {context : Nat} {d : Root context}
   · intro h
     exact Subtype.ext h
 
+theorem Element.toValue_surjective {context : Nat} {d : Root context} :
+    Function.Surjective (Element.toValue (d := d)) := by
+  intro x
+  obtain ⟨a, ha⟩ := x.property
+  refine ⟨a, ?_⟩
+  exact Subtype.ext ha
+
 theorem Element.toValue_zero {context : Nat} {d : Root context} :
     (0 : Element d).toValue = 0 :=
   Subtype.ext (Element.value_zero (d := d))
 
-set_option maxHeartbeats 1000000 in
 theorem Element.toValue_one {context : Nat} {d : Root context} :
-    (1 : Element d).toValue = 1 :=
-  Subtype.ext (Element.value_one (d := d))
+    (1 : Element d).toValue = 1 := by
+  apply Subtype.ext
+  simpa only [Element.toValue, OneMemClass.coe_one] using
+    Element.value_one (d := d)
 
 theorem Element.toValue_add {context : Nat} {d : Root context}
     (a b : Element d) : (a + b).toValue = a.toValue + b.toValue :=
