@@ -24,7 +24,7 @@ private meta def same (left right : Expr) : MetaM Bool := do
   saved.restore
   return result
 
-private meta def positiveLowerBound (s : Q(DyadicSquare)) : MetaM Expr := do
+meta def positiveLowerBound (s : Q(DyadicSquare)) : MetaM Expr := do
   let goal : Q(Prop) := q(0 < ((($s).re - ($s).radiusHi).toRat : ℝ))
   let proof ← mkFreshExprMVar goal
   let remaining ← Lean.Elab.runTactic' proof.mvarId! (← `(tactic| norm_num; decide))
@@ -32,7 +32,7 @@ private meta def positiveLowerBound (s : Q(DyadicSquare)) : MetaM Expr := do
     throwError "rcf: selected square has no checked positive lower bound"
   return ← instantiateMVars proof
 
-private meta def checkGuards (source : Reify.Source) : MetaM Unit := do
+meta def checkGuards (source : Reify.Source) : MetaM Unit := do
   for divisor in source.divisors do
     let divisor : Q(ℝ) := divisor
     let goal : Q(Prop) := q($divisor ≠ 0)

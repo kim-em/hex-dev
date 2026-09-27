@@ -459,7 +459,7 @@ Import `HexRCF.RealCoefficients` to extend the same `rcf` command. The original
 `HexRCF` import and all its rational examples keep their existing behavior.
 The adapter is currently available in the development monorepo; it is not in
 the released `hex-rcf` package.
-The optional adapter currently accepts one selected algebraic coefficient in
+The optional adapter accepts a selected algebraic coefficient in
 an otherwise rational polynomial sentence. Its direct notation support covers
 `Real.sqrt 2` and Mathlib's `(2 : ℝ) ^ (1 / 3 : ℝ)`. It also accepts the checked
 Hex values `CubeTwo.realAlgebraic` and `CubeTwo.shifted`. For a different
@@ -494,6 +494,13 @@ The square below selects its positive real root. The
 root with the ordinary {name}`Hex.ZPoly.rootNear` value at the real projection
 of the square's centre. The tactic can use the selected root when it is named
 by a `def` in the same file.
+
+The two-square-root examples below combine `Real.sqrt 2` and `Real.sqrt 3`
+in one common field and check that each field coordinate names the intended
+positive root. This path accepts natural literal radicands when at least two
+distinct square roots occur in the goal. A lone `Real.sqrt 2` uses the earlier
+single-coefficient path; other lone square roots are not yet supported. The
+two-root examples use a larger heartbeat limit for the quartic common field.
 
 ```lean
 open Hex.RCF.RealCoefficients
@@ -568,6 +575,16 @@ example : ∀ x : ℝ, x + plasticRoot.toReal > x := by
   rcf
 
 example : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 > 0 := by
+  rcf
+
+/- The tactic checks both roots in one common field. -/
+set_option maxHeartbeats 5000000 in
+example : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt 3 - Real.sqrt 2 > 0 := by
+  rcf
+
+set_option maxHeartbeats 5000000 in
+example : ∃ x : ℝ, Real.sqrt 2 < x ∧ x < Real.sqrt 3 := by
   rcf
 
 example : ∃ x : ℝ, Real.sqrt 2 < x ∧ x < (3 : ℝ) / 2 := by

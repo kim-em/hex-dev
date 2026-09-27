@@ -32,9 +32,11 @@ public import HexRCF.RealCoefficients.FieldBuild
 public meta import HexRCF.RealCoefficients.FieldLiteral
 public meta import HexRCF.RealCoefficients.FieldRuntime
 public import HexRCF.RealCoefficients.SquareTwo
+public import HexRCF.RealCoefficients.SquareRoot
 public import HexRCF.RealCoefficients.CubeTwo
 public import HexRCF.RealCoefficients.Selected
 public meta import HexRCF.RealCoefficients.Tactic
+public meta import HexRCF.RealCoefficients.CommonTactic
 public import HexRCF.RealCoefficients.CellFormula
 
 /-! Algebraic coefficient conversion, source preparation, fixed-field
