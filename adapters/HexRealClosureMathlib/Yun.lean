@@ -16,9 +16,9 @@ public section
 /-!
 # Mathematical interpretation of Yun replay
 
-The executable replay's gcd checks imply separability of each emitted rational
-factor. This does not assert that every result produced by the Yun recurrence
-passes replay.
+Accepted replay gives the rational polynomial product, separable and pairwise
+coprime factors, and complete root and multiplicity labels after any rational
+field map. This does not assert that every Yun recurrence result passes replay.
 -/
 
 namespace Hex.RealClosure.Yun
@@ -181,46 +181,6 @@ private theorem rootMultiplicity_product {K : Type*} [Field K]
         rootMultiplicity_pow entry.1 entry.2 x he,
         ih hrest]
 
-/-- Accepted rational replay computes root multiplicity as the sum of the
-labelled factor multiplicities at that rational root. -/
-theorem check_rootMultiplicity_sum (f : DensePoly Rat) (unit : Rat)
-    (entries : Array (DensePoly Rat × Nat))
-    (h : check f (.factors unit entries) = true) (x : Rat) :
-    Polynomial.rootMultiplicity x (HexPolyMathlib.toPolynomial f) =
-      (entries.toList.map fun entry => entry.2 *
-        Polynomial.rootMultiplicity x
-          (HexPolyMathlib.toPolynomial entry.1)).sum := by
-  let mapped := entries.toList.map fun entry =>
-    (HexPolyMathlib.toPolynomial entry.1, entry.2)
-  have hnonzero : ∀ entry ∈ entries.toList,
-      HexPolyMathlib.toPolynomial entry.1 ≠ 0 := by
-    intro entry hmem hzero
-    have hsource : entry.1 = 0 := by
-      have heq := congrArg HexPolyMathlib.ofPolynomial hzero
-      simpa using heq
-    have hdegree := (check_factor f unit entries entry
-      (Array.mem_toList_iff.mp hmem) h).2.1
-    rw [hsource] at hdegree
-    simp at hdegree
-  have hmapped : ∀ entry ∈ mapped, entry.1 ≠ 0 := by
-    intro entry hmem
-    obtain ⟨source, hsource, rfl⟩ := List.mem_map.mp hmem
-    exact hnonzero source hsource
-  have hproduct := check_product_prod f unit entries h
-  rw [hproduct]
-  have hmul : Polynomial.C unit *
-      (mapped.map fun entry => entry.1 ^ entry.2).prod ≠ 0 :=
-    mul_ne_zero (Polynomial.C_ne_zero.mpr (check_unit f unit entries h))
-      (product_ne_zero mapped hmapped)
-  have hmap : (mapped.map fun entry => entry.1 ^ entry.2).prod =
-      (entries.toList.map fun entry =>
-        (HexPolyMathlib.toPolynomial entry.1) ^ entry.2).prod := by
-    simp only [mapped, List.map_map, Function.comp_def]
-  rw [← hmap, Polynomial.rootMultiplicity_mul hmul]
-  simpa only [Polynomial.rootMultiplicity_C, zero_add, mapped,
-    List.map_map, Function.comp_def] using
-    rootMultiplicity_product mapped x hmapped
-
 /-- Coprime polynomials over a field have no common root in that field. -/
 private theorem coprime_no_common_root {K : Type*} [Field K]
     (p q : Polynomial K)
@@ -350,37 +310,6 @@ theorem check_pairwise_coprime (f : DensePoly Rat) (unit : Rat)
   exact EuclideanDomain.gcd_isUnit_iff.mp
     (gcd_isUnit a.1 b.1 hnonzero hab)
 
-/-- A rational root of an accepted factor has its labelled multiplicity in
-the original rational polynomial. -/
-theorem check_rootMultiplicity (f : DensePoly Rat) (unit : Rat)
-    (entries : Array (DensePoly Rat × Nat))
-    (entry : DensePoly Rat × Nat) (hmem : entry ∈ entries)
-    (h : check f (.factors unit entries) = true) (x : Rat)
-    (hroot : Polynomial.IsRoot
-      (HexPolyMathlib.toPolynomial entry.1) x) :
-    Polynomial.rootMultiplicity x (HexPolyMathlib.toPolynomial f) =
-      entry.2 := by
-  let mapped := entries.toList.map fun item =>
-    (HexPolyMathlib.toPolynomial item.1, item.2)
-  have hpair : mapped.Pairwise (fun a b => IsCoprime a.1 b.1) := by
-    apply (check_pairwise_coprime f unit entries h).map
-      (fun item => (HexPolyMathlib.toPolynomial item.1, item.2))
-    intro a b hab
-    exact hab
-  have hsep : ∀ item ∈ mapped, item.1.Separable := by
-    intro item hitem
-    obtain ⟨source, hsource, rfl⟩ := List.mem_map.mp hitem
-    exact check_factor_separable f unit entries source
-      (Array.mem_toList_iff.mp hsource) h
-  have hmapped : (HexPolyMathlib.toPolynomial entry.1, entry.2) ∈ mapped := by
-    apply List.mem_map.mpr
-    exact ⟨entry, Array.mem_toList_iff.mpr hmem, rfl⟩
-  rw [check_rootMultiplicity_sum f unit entries h x]
-  simpa only [mapped, List.map_map, Function.comp_def] using
-    rootMultiplicity_label mapped
-      (HexPolyMathlib.toPolynomial entry.1, entry.2) x
-      hpair hsep hmapped hroot
-
 /-- A root of an accepted rational factor has its labelled multiplicity after
 mapping into any field containing the rationals. -/
 theorem check_map_rootMultiplicity {K : Type*} [Field K]
@@ -435,7 +364,7 @@ theorem check_map_rootMultiplicity {K : Type*} [Field K]
     ((HexPolyMathlib.toPolynomial entry.1).map φ, entry.2)
     x hpair hsep hmapped hroot
 
-/-- Replay includes every root after mapping into a field. -/
+/-- Replay identifies exactly the roots after mapping into a field. -/
 theorem check_map_roots_iff {K : Type*} [Field K]
     (φ : Rat →+* K) (f : DensePoly Rat) (unit : Rat)
     (entries : Array (DensePoly Rat × Nat))
@@ -535,9 +464,6 @@ end Hex.RealClosure.Yun
 /-- info: 'Hex.RealClosure.Yun.check_pairwise_coprime' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Yun.check_pairwise_coprime
-/-- info: 'Hex.RealClosure.Yun.check_rootMultiplicity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.RealClosure.Yun.check_rootMultiplicity
 /-- info: 'Hex.RealClosure.Yun.check_real_rootMultiplicity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Yun.check_real_rootMultiplicity
