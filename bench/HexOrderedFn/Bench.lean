@@ -323,6 +323,8 @@ def successiveApproximation (q : Successive.Query) : Rat × Rat := Successive.ru
 -- trials per outer trial (5 each), and 7 operations in each outer trial.
 -- This ladder measures small operands; runtime gcd still calls GMP even
 -- on scalar inputs. It does not model large-integer multiplication costs.
+-- At n >= 14 comparison products exceed the 32-bit small-Int range and
+-- allocate one-limb GMP integers. Each bound operation has unit model weight.
 initialize do
   registerSearch ``successiveApproximation "(n + 2) * (7 * n + 55) / 2"
     (fun n => (n + 2) * (7 * n + 55) / 2)

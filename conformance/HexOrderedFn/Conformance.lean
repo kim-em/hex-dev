@@ -15,13 +15,30 @@ public meta import HexOrderedFn
 public section
 
 /-!
-Oracle: direct exact rational evaluation and literal expected bounds.
-Mode: always; deterministic regression checks for the bounds/search foundation.
-Covered operations: bound multiplication/division, finite signs and total refinement.
+Oracle: direct exact rational evaluation, literal expected bounds, Z3 RCF,
+and python-flint canonical fractions (the emitted fixtures use pinned versions).
+Mode: always; deterministic bounds, search and infinitesimal regression checks.
+Covered operations: bounds construction, dyadic conversion, width, negation,
+addition, multiplication, intersection, division and strict/exact signs; Horner
+enclosure, finite signs, total sign and approximation, and first-success search;
+lowest-index/coefficient scans, infinitesimal sign, comparison and successive levels.
 Covered properties: finite signs agree with rational evaluation; bounds contain
 endpoint and midpoint results; erased success witnesses do not bypass refinement.
 Covered edge cases: zero, negative and zero-crossing bounds, nonpositive width
 requests, earlier failed trials and nonmonotone success.
+
+The imported core tests supply small ordinary-kernel checks alongside these
+compiled checks. Fixture degrees reach 9, coefficient heights reach 129 bits,
+and infinitesimal depth reaches 3. Rational real subjects exercise finite queries
+without asserting transcendence; semantic sqrt(2) cases live in the companion.
+
+The provider-indexed `Extension` operations need a genuine universal progress
+proof for executable coverage. The SPEC-required companion integration test
+`HexOrderedFnMathlib.LiouvilleTests` / `hexorderedfn_liouville_test` supplies it:
+ordinary field arithmetic, sign, approximation, comparisons, provider transport
+and derived coefficient approximation are checked on the same core definitions.
+This test remains separate from Mathlib-free conformance. Outstanding evidence
+and downstream integration are tracked under #10376.
 
 Infinitesimal Z3/exact fixtures are emitted by `HexOrderedFn.EmitFixtures`.
 Real refinement fixtures from `HexOrderedFn.EmitRealFixtures` check Horner bounds,

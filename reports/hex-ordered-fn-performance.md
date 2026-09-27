@@ -353,7 +353,7 @@ result is **within declared upper bound (observed faster)**, not a two-sided
 pass. Horner has only one signal-eligible rung: the harness measured a 157 ms
 process floor on this host, making one-second batches insufficient. This is
 a host observation, not a property of Horner. The five-minute load average
-was 19.1 at completion, compared with a one-minute average of 3.76 at startup;
+was 19.12 at completion, compared with 2.00 at startup;
 these are context, not grounds for dropping samples or attributing a cause.
 
 The [context](data/hex-ordered-fn/search-upper/context.json) records source
@@ -418,6 +418,13 @@ the exact number of bound operations, `(n+2)(7n+55)/2`: seven for each of the
 `(n+2)(n+3)/2` negative-X inner trials, five for each of the `2(n+2)`
 constant-coefficient trials, and seven for each of the `n+2` outer trials.
 This mode-1 model is declared from the search equations, before measurement.
+It assigns equal weight to bound operations, although multiplication, addition
+and division have different costs; provider construction, precision generation
+and coefficient lookup are additional work per trial. Thus it models expected
+scaling, not an exact instruction count. From n=14, comparison cross-products
+exceed Lean's 32-bit small-`Int` range and allocate one-limb GMP integers.
+The schedule therefore includes that small-operand transition, whose cost is
+part of the retained measurements; it is not a uniformly native-arithmetic run.
 The [first run](data/hex-ordered-fn/successive-scalar/runtime.json) is
 inconclusive, with normalized slope +0.185. The one permitted
 [unchanged repeat](data/hex-ordered-fn/successive-scalar-repeat/runtime.json)

@@ -20,6 +20,13 @@ def orderSign {K : Type u} [Zero K] [LT K] [DecidableLT K] [DecidableEq K]
     (a : K) : Int :=
   if a < 0 then -1 else if a = 0 then 0 else 1
 
+theorem orderSign_range {K : Type u} [Zero K] [LT K] [DecidableLT K]
+    [DecidableEq K] (a : K) :
+    orderSign a = -1 ∨ orderSign a = 0 ∨ orderSign a = 1 := by
+  unfold orderSign
+  split <;> simp_all
+  split <;> simp_all
+
 namespace Infinitesimal
 
 variable {K : Type u}

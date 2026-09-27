@@ -189,13 +189,13 @@ libraries:
   HexOrderedFn:
     deps: [HexRationalFn, HexPoly, HexPolyFast]
     mathlib: false
-    done_through: 1
+    done_through: 2
     status: active
   HexOrderedFnMathlib:
     deps: [HexOrderedFn, HexRationalFnMathlib, HexPolyMathlib]
     mathlib: true
     correspondence_only: true
-    done_through: 1
+    done_through: 2
     status: active
   HexRealFormula:
     deps: [HexMvPoly]
