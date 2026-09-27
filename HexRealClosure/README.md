@@ -124,7 +124,8 @@ at each call repeats the search.
 `Yun.decompose` runs the specified finite recurrence over an executable
 ordered field. `Yun.decomposeRaw` runs the same recurrence on packed tower
 coefficients, where stored equality need not be value equality. The zero and
-nonzero-constant cases have direct proofs, and runnable checks cover a
+nonzero-constant cases, including acceptance by replay, have direct proofs.
+Runnable checks cover a
 non-monic input, gaps in multiplicities, mixed zero and nonzero roots with a
 fractional unit, a repeated irreducible quadratic, and coefficients in
 `ℚ(√2)`.

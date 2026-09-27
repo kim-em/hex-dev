@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Element
-public import HexPoly.Lcm
+public import HexPoly.Monic
 
 public section
 
@@ -195,5 +195,41 @@ theorem check_factor {K : Type u} [Lean.Grind.Field K]
     beq_iff_eq] at he
   rcases he with ⟨⟨⟨hm, hd⟩, hlc⟩, hg⟩
   exact ⟨hm, hd, hlc, hg⟩
+
+/-- Yun's zero result passes exact replay. -/
+@[simp] theorem check_decompose_zero {K : Type u} [Lean.Grind.Field K]
+    [LE K] [LT K] [Std.IsPreorder K]
+    [Lean.Grind.OrderedRing K] [DecidableEq K] :
+    check (0 : DensePoly K) (decompose 0) = true := by
+  change check (0 : DensePoly K) (decomposeRaw 0) = true
+  rw [decomposeRaw_zero]
+  rfl
+
+/-- Yun's nonzero constant result passes exact replay. -/
+theorem check_decompose_constant {K : Type u} [Lean.Grind.Field K]
+    [LE K] [LT K] [Std.IsPreorder K]
+    [Lean.Grind.OrderedRing K] [DecidableEq K]
+    (f : DensePoly K) (hzero : f ≠ 0)
+    (hdegree : f.natDegree = 0) :
+    check f (decompose f) = true := by
+  have hsize : f.size = 1 := by
+    have hs : f.size ≠ 0 := by
+      intro h
+      exact hzero ((DensePoly.size_eq_zero_iff f).mp h)
+    have hd := hdegree
+    rw [DensePoly.natDegree_eq_size_sub_one] at hd
+    omega
+  have hfalse : f.isZero = false :=
+    (DensePoly.isZero_eq_false_iff f).2 (by omega)
+  have hconstant := DensePoly.eq_C_leadingCoeff_of_size_one hsize
+  have hunit : f.leadingCoeff ≠ 0 :=
+    DensePoly.leadingCoeff_ne_zero_of_pos_size f (by omega)
+  rw [decompose, decomposeRaw_constant f hfalse hdegree]
+  have hrecon : reconstruct f.leadingCoeff #[] = f := by
+    simp only [reconstruct, Array.foldl_empty]
+    exact hconstant.symm
+  have hsum : degreeSum (#[] : Array (DensePoly K × Nat)) = f.natDegree := by
+    simp [degreeSum, hdegree]
+  simp [check, hfalse, hunit, hrecon, hsum]
 
 end Hex.RealClosure.Yun
