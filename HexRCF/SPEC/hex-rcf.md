@@ -1048,6 +1048,20 @@ conversion facilities where needed and prove value preservation. Do not assume
 membership in an arbitrarily chosen `QAdjoin` field. The quantified variable
 still ranges over `ℝ`, not over a number field that need not be real closed.
 
+A common-field search may propose a defining polynomial, a selected real root
+and rational-coordinate polynomials for the ordered input coefficients. A
+checked presentation proves that the generator is the selected real root of
+its defining polynomial, with a valid isolating square, and that evaluating
+each coordinate polynomial there gives the *selected value* of its source
+coefficient. For a source defined by another polynomial, its equation alone
+does not distinguish conjugates: the proof also establishes its source
+selection, for example by an isolating enclosure, distinguishing signs or
+equality to the already selected canonical value. The coordinate order and
+source expressions remain bound to these proofs; irreducibility is checked
+when quotient-field arithmetic requires it. The checked presentation need not
+be literally equal to the output of a particular common-field search, and
+checking it need not evaluate that search during kernel reduction.
+
 Support higher-degree root aliases written using Mathlib's `Real.rpow`,
 including `(2 : ℝ) ^ (1 / 3 : ℝ)`. For a fixed nonnegative real algebraic
 base `r` and a positive natural degree `n`, identify `r ^ (1 / (n : ℝ))`
@@ -1363,6 +1377,11 @@ Required coefficient/replay evidence includes:
   inversions and positive scales. Semantic degree supplies either all-zero
   coefficients or a nonzero leading coefficient and zero coefficients above
   it. Array length and syntactic inequality are insufficient.
+- For a common algebraic number field, each ordered coordinate polynomial
+  evaluated at the selected real generator equals its original source
+  coefficient, including that coefficient's chosen real embedding. Replay
+  checks these claims for the supplied presentation and rejects changed data
+  without the checked transports below.
 - Authenticated constant enclosures from the caller-supplied approximation rules,
   including exact subject, source theorem, finite rational endpoints,
   requested/actual precision and any predecessor enclosures. A callback,
@@ -1543,8 +1562,9 @@ tactic proofs. For example, select the real root `α` of `X³-X-1`, compute
 `β=α²-1` in its fixed field, and prove `∀ x : ℝ, x/α=β*x` after the checked
 real conversions. Include a formula combining coefficients from independently
 constructed fields and prove that any common-field coordinates represent
-the original real values, using `QAdjoin.common_get` or the corresponding
-conversion theorem.
+the original selected real values. A proved conversion from
+`QAdjoin.common` may use `QAdjoin.common_get`; a literal presentation
+may instead be checked directly against the source coefficients.
 Retain the existing number-field and real-algebraic manual examples and link
 them from the tactic documentation.
 
@@ -1564,9 +1584,10 @@ Required tests extend the existing
 - Checked real conversion from `AlgebraicNumber` and `QAdjoin`, agreement
   with their existing value interpretations, and coefficients from different
   number fields. Reject a claimed real interpretation of a nonreal value,
-  wrong selected roots and higher-root aliases lacking the required equality
-  or branch proof. Test explicit real-part projections and checked-constructor
-  fallbacks against their actual values.
+  wrong selected roots, conjugate-flipped common-field coordinates and
+  higher-root aliases lacking the required equality or branch proof. Test
+  explicit real-part projections and checked-constructor fallbacks against
+  their actual values.
 - Repeated/common roots, including atoms `(x-a.toReal)^2` and
   `(x-a.toReal)*(x-1)`, reducible selected-root definitions, re-encoding and
   splitting with live dependent roots. Check exact signs/multiplicities and
@@ -1631,7 +1652,7 @@ missing algorithm or theorem obligations.
 | HexRealRoots / HexRealRootsMathlib | Shared signed-remainder kernel and its positive-scaling/representation bridges, general Cauchy-index/Tarski replay correspondence, and shared `IsRealClosed ℝ`; the existing derivative-seeded integer theorem is insufficient. |
 | [Sturm](../../SPEC/Libraries/hex-sturm.md) and [companion](../../SPEC/Libraries/hex-sturm-mathlib.md) | Domain-checked ordered-field Tarski queries, endpoint adapters, complete root counts and nested coefficient replay/transport soundness. |
 | [Sign-det](../../SPEC/Libraries/hex-sign-det.md) and [companion](../../SPEC/Libraries/hex-sign-det-mathlib.md) | Complete BKR support/counts, Thom existence/uniqueness/order, sign-at-root, common-root re-encoding and their literal correspondence, using the existing matrix/rank companions. |
-| HexNumberField / HexNumberFieldMathlib | Existing `QAdjoin` arithmetic, coordinate interpretation, `toAlgebraicNumber` value preservation, `value_real`, common-field conversions with `common_get`, and `AlgebraicNumber.nthRoot` correspondence. The adapter must prove their selected real interpretations and root-alias equalities. |
+| HexNumberField / HexNumberFieldMathlib | Existing `QAdjoin` arithmetic, coordinate interpretation, `toAlgebraicNumber` value preservation, `value_real`, `common_get` for the computed presentation, and `AlgebraicNumber.nthRoot` correspondence. The adapter must prove selected real interpretations, check any literal common-field presentation against its source values, and prove root-alias equalities. |
 | HexRealAlgebraic / HexRealAlgebraicMathlib | Existing `toReal`, exact comparison, `RealAlgebraicPoly.roots` with multiplicities/`all`, and Repr correspondence; new tower conversions and trivial-base agreement must be proved. |
 | [Real-closure](../../SPEC/Libraries/hex-real-closure.md) and [companion](../../SPEC/Libraries/hex-real-closure-mathlib.md) | Implemented contexts and total coefficient representations, selected-root interpretation, splitting/all-live transport, Yun and complete ordered roots, shared samples and real `Sample.realizeReplay` including joint nested constraints. SPEC #10318 is merged; these APIs/proofs are planned. Quotient and interpretation laws are proof prerequisites; core algebraic execution is independent of them. Transcendental search retains its caller progress premise. |
 | Tau Ceti through the owning companions | Univariate IVT/Rolle, signed-remainder/Cauchy-index, Thom and BKR foundations from the existing #10300 roadmap work. Ordered algebraic real-closure existence is additionally needed for symbolic infinitesimal ambient models; direct finite replay into ℝ does not need that existence theorem. Continue the existing roadmap PR, never a duplicate. |
