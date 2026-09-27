@@ -1058,6 +1058,8 @@ libraries:
           description: Prime enumeration over [0, n) for n from 10^3 to 3.2 * 10^4 through the trial-division-backed primesIn.
         - name: p-minus-one-stage2
           description: Exact extra-prime base-order fixtures at 64, 128, 256, and 512 bits, separating setup, stage-1 exponentiation, prepared continuation, continuation with enumeration, and total search; endpoint and doubled-bound successes, full-scan misses, whole/recovery controls, and enabled/disabled construction comparisons.
+        - name: squfof-raw-splitting
+          description: Explicit bounded SQUFOF on varied-gap 32- to 64-bit semiprimes, retained balanced inputs and prime/power controls, with fixed multiplier and cap policies, raw Brent-rho comparison, and a forced-work recurrence-fuel ladder.
   HexIntFactor:
     deps: [HexPrimality, HexArith, HexBasic]
     mathlib: false
