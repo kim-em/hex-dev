@@ -91,7 +91,7 @@ and baseline modules contain no clocks, timing loops, or benchmark main.
 
 ## Concerns
 
-The evidence covers four fixed integration cases. It does not establish a
+The evidence covers two fixed reification cases. It does not establish a
 complexity law for arbitrary source expressions, expanded biconditionals, or
 prenex normalization. Those remain output-sensitive and budgeted. Independent
 review and dependency gates remain separate from the measurements; the new

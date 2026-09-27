@@ -52,6 +52,16 @@ def run : IO Unit := do
           [("num", .arr (p.coeffs.map rational)), ("den", .arr (q.coeffs.map rational)),
             ("value", fraction rational f), ("sign", toJson (Infinitesimal.sign orderSign f))]
       else throw (IO.userError "fixture denominator vanished")
+  let x : DensePoly Rat := DensePoly.monomial 1 1
+  for (name, p, q) in #[
+      ("normalize/nonmonic", x + 2, 1 - 2*x),
+      ("normalize/negative-factor", (x-1)*(x+2), (x-1)*(x+3))] do
+    if hq : q ≠ 0 then
+      let f := RationalFn.normalize p q hq
+      emit 1 name "normalize"
+        [("num", .arr (p.coeffs.map rational)), ("den", .arr (q.coeffs.map rational)),
+          ("value", fraction rational f), ("sign", toJson (Infinitesimal.sign orderSign f))]
+    else throw (IO.userError "fixture denominator vanished")
   let d : RationalFn (RationalFn Rat) := RationalFn.X
   let c := RationalFn.C (K := RationalFn Rat)
   values 2 (fraction rational) (Infinitesimal.sign orderSign)

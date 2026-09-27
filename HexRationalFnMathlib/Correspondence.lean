@@ -30,6 +30,10 @@ noncomputable instance field : Field (RationalFn K) :=
       (fun f => (RationalFn.mul_comm 1 f).trans (RationalFn.mul_one f))
       (fun _ h => RationalFn.mul_inv_cancel h) RationalFn.inv_zero
       RationalFn.left_distrib ⟨0, 1, RationalFn.zero_ne_one⟩ with
+    sub := (· - ·)
+    sub_eq_add_neg := fun _ _ => rfl
+    div := (· / ·)
+    div_eq_mul_inv := fun _ _ => rfl
     nsmul := fun n f => (Nat.cast n : RationalFn K) * f
     nsmul_zero := fun f => by
       change (0 : RationalFn K) * f = 0
@@ -76,6 +80,24 @@ noncomputable instance field : Field (RationalFn K) :=
     nnqsmul_def := fun _ _ => rfl
     qsmul := fun q f => ((Int.cast q.num : RationalFn K) / Nat.cast q.den) * f
     qsmul_def := fun _ _ => rfl }
+
+/-- The Mathlib field induces the original core field dictionary. This equality
+allows transport of successive extensions formed through either instance path. -/
+theorem coreField_eq :
+    Field.toGrindField (K := RationalFn K) = RationalFn.instField := by
+  unfold Field.toGrindField RationalFn.instField
+  dsimp only
+  congr 1
+  unfold CommRing.toGrindCommRing Ring.toGrindRing Semiring.toGrindSemiring RationalFn.instCommRing
+  dsimp only
+  congr
+  all_goals first
+    | exact proof_irrel_heq _ _
+    | (funext n; cases n with
+      | zero => rfl
+      | succ n => cases n with
+        | zero => rfl
+        | succ n => rfl)
 
 noncomputable section
 

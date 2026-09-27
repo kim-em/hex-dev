@@ -22,6 +22,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    args.output = args.output.resolve()
     os.chdir(ROOT)
     cpu, lease = acquire_cpu()
     try:
@@ -30,6 +31,7 @@ def main():
         require_clean = subprocess.check_output(["git", "status", "--porcelain"], text=True)
         if require_clean:
             raise RuntimeError("commit source changes before recording runtime evidence")
+        subprocess.run(["lake", "build", "hexorderedfn_bench"], check=True)
         args.output.mkdir(parents=True, exist_ok=False)
         exe = ROOT / ".lake/build/bin/hexorderedfn_bench"
         command = [str(exe), "run", "--filter", "Hex.OrderedFnBench",

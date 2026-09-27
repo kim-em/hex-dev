@@ -17,7 +17,7 @@ a separate enclosure library without becoming a prerequisite here.
 
 Use namespace `Hex.OrderedFn`, with `Real` and `Infinitesimal` namespaces
 matching the computational API. Modules are `Correspondence`, `Real`,
-`Infinitesimal` and build-only `Tests`. The companion owns semantic proofs;
+`Infinitesimal`, `Hahn` and build-only `Tests`. The companion owns semantic proofs;
 it supplies no approximation generator or analytic provider proof for named
 constants such as π or e.
 
@@ -362,7 +362,10 @@ arithmetic/Horner lemmas; do not introduce per-operation coefficient certificate
 benchmarks or rerun unbounded sign refinement in the kernel. Performance of
 tactics and proof generators belongs to their consuming libraries, with
 elaboration and kernel checking measured separately from compiled runtime.
-Named-constant generation/analytic provider performance is outside this contract.
+If a finite real-sign certificate checker is added to this companion, its
+checker performance requires measurements and an update to the evidence
+classification. Theorem applications alone do not. Named-constant
+generation/analytic provider performance is outside this contract.
 
 The owner varies degree, coefficient height, lowest index, separation
 precision and tower depth, with caller approximation cost attributed

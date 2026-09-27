@@ -147,6 +147,11 @@ def classify_paths(
 
         return Classification((), True, f"unclassified path changed: {path}")
 
+    # The sign-determination infinitesimal fixture imports the production provider.
+    if "HexOrderedFn" in selected:
+        selected.add("HexSignDet")
+        reasons.append("HexOrderedFn -> HexSignDet infinitesimal conformance")
+
     if not selected:
         return Classification((), True, "no changed path mapped to a library")
 

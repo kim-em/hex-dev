@@ -221,12 +221,10 @@ theorem sign_normalize (plan : DensePoly.MulPlan K) (p q : DensePoly K) (hq : q 
       orderSign (lowestCoeff p) * orderSign (lowestCoeff q) :=
   sign_fraction _ orderSign_eq (RationalFn.normalizeWith_spec plan p q hq) hq
 
-set_option backward.isDefEq.respectTransparency false in
 /-- The infinitesimal sign changes sign under negation. -/
 theorem sign_neg (f : RationalFn K) : sign orderSign (-f) = -sign orderSign f := by
   rw [sign_orderSign, sign_orderSign, map_neg, Left.sign_neg, SignType.coe_neg]
 
-set_option backward.isDefEq.respectTransparency false in
 /-- The infinitesimal sign is multiplicative. -/
 theorem sign_mul (f g : RationalFn K) :
     sign orderSign (f * g) = sign orderSign f * sign orderSign g := by
@@ -234,7 +232,7 @@ theorem sign_mul (f g : RationalFn K) :
     SignType.coe_mul]
 
 /-- The sign vanishes exactly at the zero rational function. -/
-theorem sign_zero (f : RationalFn K) : sign orderSign f = 0 ↔ f = 0 := by
+theorem sign_eq_zero_iff (f : RationalFn K) : sign orderSign f = 0 ↔ f = 0 := by
   rw [sign_orderSign]
   have hz : (SignType.sign (embed f) : Int) = 0 ↔ embed f = 0 := by
     rcases lt_trichotomy (embed f) 0 with h | h | h
@@ -243,7 +241,6 @@ theorem sign_zero (f : RationalFn K) : sign orderSign f = 0 ↔ f = 0 := by
     · simp [h, h.ne']
   rw [hz, ← map_zero embed, embed_injective.eq_iff]
 
-set_option backward.isDefEq.respectTransparency false in
 /-- Comparison agrees with the order in the Hahn field. -/
 theorem compare_eq (f g : RationalFn K) :
     compare orderSign f g = compareOfLessAndEq (embed f) (embed g) := by
@@ -270,13 +267,11 @@ private theorem cast_sign_nonpos {L : Type*} [Zero L] [LinearOrder L] (a : L) :
   · simp
   · simp [ha, ha.not_ge]
 
-set_option backward.isDefEq.respectTransparency false in
 /-- Strict comparison is the pullback of the ordered Hahn model. -/
 theorem embed_lt (f g : RationalFn K) : f < g ↔ embed f < embed g := by
   change sign orderSign (f - g) < 0 ↔ _
   rw [sign_orderSign, cast_sign_neg, map_sub embed f g, sub_neg]
 
-set_option backward.isDefEq.respectTransparency false in
 /-- Nonstrict comparison is the pullback of the ordered Hahn model. -/
 theorem embed_le (f g : RationalFn K) : f ≤ g ↔ embed f ≤ embed g := by
   change sign orderSign (f - g) ≤ 0 ↔ _
@@ -302,7 +297,6 @@ scoped instance strictOrderedRing : IsStrictOrderedRing (RationalFn K) :=
     (map_add _) (map_mul _) (fun {_ _} => (embed_le _ _).symm)
     (fun {_ _} => (embed_lt _ _).symm)
 
-set_option backward.isDefEq.respectTransparency false in
 /-- Ordered-ring laws for the core rational-function field structure. -/
 scoped instance orderedRing : Lean.Grind.OrderedRing (RationalFn K) where
   add_le_left_iff := fun c => (add_le_add_iff_right c).symm

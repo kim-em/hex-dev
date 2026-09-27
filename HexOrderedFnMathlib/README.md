@@ -20,10 +20,11 @@ support, lowest exponent, leading coefficient and order, and commutes with
 constant embeddings; `Infinitesimal.towerEmbed` gives the two-level model.
 
 Fix the Mathlib field's `Field.toGrindField` dictionary before forming a
-`RationalFn K`; the field dictionary indexes its carrier. The tests
-deliberately form their fractions under that dictionary, sharing the
-polynomial inputs with the computational fixtures. Computational tests
-separately exercise Lean core's rational field.
+`RationalFn K`; the field dictionary indexes its carrier. `HexRationalFnMathlib.coreField_eq`
+proves equality with the original core dictionary, allowing transport between
+successive carriers. The tests use this equality, together with the rational
+base case, to prove `δ < ε^n` for the carriers in the Mathlib-free test module.
+Other semantic tests form their fractions under the Mathlib-derived dictionary.
 
 `Real.eval` evaluates a stored canonical fraction by total real division. It
 is not an injective field homomorphism at an arbitrary subject.

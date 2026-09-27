@@ -97,6 +97,8 @@ sensitivity check. Profile confidence passes.
 The caller-supplied real-extension searches still need their own conformance,
 separation-precision and successive-approximation measurements. Clean versus
 eager normalization comparisons and downstream tower integration remain part
-of the full issue. This report does not claim completion of those obligations.
+of the full issue, as do comparison families with nonconstant denominators
+and varying coefficient height. This report does not claim completion of
+those obligations.
 The companion's mathematical theorems have ordinary-kernel regression tests
 and axiom audits; applying them is not a performance benchmark.

@@ -6,10 +6,9 @@ Authors: Kim Morrison
 module
 
 public import HexOrderedFnMathlib.Infinitesimal
+public import HexOrderedFn.InfinitesimalTests
 
 public section
-
-set_option backward.isDefEq.respectTransparency false
 
 namespace Hex.OrderedFn.InfinitesimalProofs
 
@@ -19,6 +18,45 @@ open Infinitesimal
 
 abbrev First := RationalFn Rat
 abbrev Second := RationalFn First
+
+private theorem ratField : Field.toGrindField (K := Rat) = Lean.Grind.instFieldRat := by
+  unfold Field.toGrindField Lean.Grind.instFieldRat
+    CommRing.toGrindCommRing Ring.toGrindRing Semiring.toGrindSemiring
+  dsimp only
+  congr
+  all_goals first
+    | exact proof_irrel_heq _ _
+    | (funext n; cases n with
+      | zero => rfl
+      | succ n => cases n with
+        | zero => rfl
+        | succ n => rfl)
+
+example : InfinitesimalTests.First = First := by
+  unfold InfinitesimalTests.First First
+  rw [ratField]
+example : InfinitesimalTests.Second = Second := by
+  unfold InfinitesimalTests.Second InfinitesimalTests.First Second First
+  rw [HexRationalFnMathlib.coreField_eq, ratField]
+
+-- The same inequality for the carriers formed in the Mathlib-free test module.
+theorem core_delta_lt_power (n : ℕ) : InfinitesimalTests.delta <
+    InfinitesimalTests.lift (InfinitesimalTests.epsilon ^ n) := by
+  unfold InfinitesimalTests.delta InfinitesimalTests.lift InfinitesimalTests.epsilon
+    InfinitesimalTests.Second InfinitesimalTests.First
+  rw [← ratField, ← HexRationalFnMathlib.coreField_eq]
+  exact X_lt_pow n
+
+theorem core_delta_pos : (0 : InfinitesimalTests.Second) < InfinitesimalTests.delta := by
+  unfold InfinitesimalTests.delta InfinitesimalTests.Second InfinitesimalTests.First
+  rw [← ratField, ← HexRationalFnMathlib.coreField_eq]
+  exact X_pos
+
+theorem core_reciprocal_gt_int (n : ℤ) :
+    (n : InfinitesimalTests.First) < InfinitesimalTests.epsilon⁻¹ := by
+  unfold InfinitesimalTests.epsilon InfinitesimalTests.First
+  rw [← ratField]
+  exact intCast_lt_inv_X n
 
 example : Std.IsLinearOrder First := inferInstance
 example : Std.LawfulOrderLT First := inferInstance
@@ -78,3 +116,7 @@ example (a : First) :
 #print axioms delta_lt_power
 
 end Hex.OrderedFn.InfinitesimalProofs
+
+/-- info: 'Hex.OrderedFn.InfinitesimalProofs.core_delta_lt_power' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.OrderedFn.InfinitesimalProofs.core_delta_lt_power

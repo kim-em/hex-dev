@@ -92,5 +92,10 @@ open scoped Hex.OrderedFn.Infinitesimal
 #guard delta < lift (epsilon ^ 3)
 #guard Infinitesimal.sign (Infinitesimal.sign orderSign) (delta - lift epsilon) = -1
 
+-- Coefficient arithmetic in the polynomial ring over the infinitesimal field.
+private def x : DensePoly First := DensePoly.monomial 1 1
+private def e : DensePoly First := DensePoly.C epsilon
+#guard (e*x^2 - 1)*(e*x^3 - 1) = e^2*x^5 - e*x^3 - e*x^2 + 1
+
 
 end InfinitesimalChecks

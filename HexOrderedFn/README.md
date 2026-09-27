@@ -10,7 +10,9 @@ numerator and denominator coefficients. `Infinitesimal.compare` compares by
 the sign of subtraction. `open scoped Hex.OrderedFn.Infinitesimal` enables
 `<` and `≤` on `RationalFn K`, using the predecessor order. No global order
 is imposed on the rational-function carrier. The same construction works
-successively on `RationalFn (RationalFn Rat)` and further levels.
+successively on `RationalFn (RationalFn Rat)` and further levels. The real
+registration API, still outstanding, uses a distinct provider-indexed wrapper
+so an infinitesimal scope does not also order its real predecessor infinitesimally.
 
 ```lean
 import HexOrderedFn
