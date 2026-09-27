@@ -1750,10 +1750,6 @@ lean_exe hexorderedfn_emit_fixtures where
   srcDir := "conformance"
   root := `HexOrderedFn.EmitFixtures
 
-lean_lib HexOrderedFnBenchSupport where
-  srcDir := "bench"
-  roots := #[`HexOrderedFn.Successive]
-
 lean_exe hexorderedfn_bench where
   srcDir := "bench"
   root := `HexOrderedFn.Bench

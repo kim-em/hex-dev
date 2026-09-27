@@ -310,7 +310,8 @@ The four search registrations use mode 2, a one-sided O(n³) upper bound. The
 old n² registrations and both measured schedules remain recorded above; their
 verdicts are not reinterpreted as passes. The new schedule is 8192, 10240, 12288,
 14336, 16384, 20480, 24576 and 28672, with the same three trial-major repetitions
-and one-second target. New measurements are required for this registration.
+and one-second target. Horner uses four-second batches after its retained one-second run fell below
+the signal floor; the other three targets retain one-second batches.
 
 A tight family-specific wall-time model is not available: the operands include
 powers of two, nearby odd integers, and quotient numerators of different sizes;
@@ -336,5 +337,47 @@ counting only the outer search loop.
 This is an upper bound on these four specified families, including their
 synthetic caller providers. It is not a precision bound in polynomial degree,
 a uniform bound for arbitrary caller approximations, or a two-sided complexity
-claim. Until new measurements pass the one-sided check, search performance
-remains incomplete.
+claim. The one-second results below pass that check for three targets; Horner still
+requires a resolved run.
+
+The [upper-bound run](data/hex-ordered-fn/search-upper/runtime.json) retains all
+96 successful rows. `refinement`, `jointRefinement`, and `approximation` have
+normalized slopes −0.629, −0.624 and −0.627 against n³. Their harness wording is
+`inconclusive` in the faster direction; under the documented mode-2 rule their
+result is **within declared upper bound (observed faster)**, not a two-sided
+pass. Horner has only one signal-eligible rung: its 157 ms process floor makes
+one-second batches insufficient, so that result remains inconclusive.
+
+The [context](data/hex-ordered-fn/search-upper/context.json) records source
+`7b003d90b400dc6eaa9cdea28e9bba460193c3de`, four workers, one automatically selected
+CPU, and the executable hash. That hash was checked again after completion,
+before rebuilding. The checkout changed during collection to prepare the
+successive fixture; the measured executable remained the original binary.
+These data are scaling evidence, not a paired speed comparison with older runs.
+
+## Successive approximation workload
+
+`successiveApproximation` evaluates X₂−X₁ at X₁=2 and X₂=2+2⁻ⁿ, requesting
+width 2⁻ⁿ. Each outer coefficient callback executes the actual inner
+`Real.approx` search from zero. Preparation stores finite checked termination
+witnesses for each coefficient/request pair, never the returned bounds. It
+checks that every request through the outer witness uses such an entry.
+The test-only fallback gives direct rational evaluation for other requests;
+it is outside the measured search and makes no universal registration claim.
+The rational subjects are not asserted transcendental or algebraically independent.
+
+The exact returned interval is [2⁻ⁿ/2, 3·2⁻ⁿ/2]. The outer trial at n fails its
+width check and trial n+1 succeeds; preparation checks both and the total
+result independently. The negative-X coefficient needs k+1 inner trials at
+outer trial k, while each of the two constant coefficients succeeds immediately.
+Consequently there are n+2 outer trials and (n+2)(n+7)/2 inner trials in total.
+Each inner trial operates on O(n)-bit rationals. The same quadratic integer
+operation bounds give an O(n⁴) upper bound for the complete nested search.
+As for the single-level families, GMP’s changing arithmetic paths prevent a
+tight wall-time model from these counts alone; this is a mode-2 claim.
+
+Parameters are 16, 24, 32, 48, 64, 96, 128 and 192, with three trial-major
+repetitions and four-second batches. Preparation, including successful-witness
+checks, is excluded; every inner and outer refinement is included. Measurements
+for this registration remain to be recorded. This benchmark is distinct from
+the companion’s Liouville registration test and does not replace its hypotheses.
