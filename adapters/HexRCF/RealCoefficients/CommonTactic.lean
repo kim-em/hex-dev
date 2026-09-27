@@ -52,7 +52,6 @@ private inductive SourceKind where
   deriving Inhabited
 
 private structure SourcePlan where
-  anchorExpr : Expr
   anchorReal : Expr
   anchorValue : RealAlgebraicNumber
   sourcePolynomial : ZPoly
@@ -64,7 +63,7 @@ private structure SourcePlan where
   kind : SourceKind
 
 private instance : Inhabited SourcePlan where
-  default := ⟨default, default, RealAlgebraicNumber.ofRat 0,
+  default := ⟨default, RealAlgebraicNumber.ofRat 0,
     DensePoly.ofList [], ⟨0, 0, 0⟩,
     DensePoly.ofList [], default, default, .radical 1⟩
 
@@ -104,10 +103,10 @@ private meta def coefficientProof (value expression : Expr) : MetaM Expr := do
 private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
   let identity : DensePoly Rat := DensePoly.ofList [0, 1]
   if let some degree ← naturalSquareRoot? source then
-    let (anchorExpr, _, anchorValue) ← FieldRuntime.coefficient source
+    let (_, _, anchorValue) ← FieldRuntime.coefficient source
     let fieldExpr ← FieldLiteral.ratPolyExpr identity
     let sourceProof ← mkAppM ``CommonPresentation.generator_eval #[source]
-    return some ⟨anchorExpr, source, anchorValue,
+    return some ⟨source, anchorValue,
       anchorValue.toAlgebraic.p, anchorValue.toAlgebraic.rep.1.square,
       identity, fieldExpr, sourceProof,
       .radical degree⟩
@@ -120,7 +119,7 @@ private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
     let sourceProof ← mkAppM ``CommonPresentation.generator_eval #[anchorReal]
     let sourceP ← FieldRuntime.evalZPoly args[0]!
     let sourceSquare ← FieldRuntime.evalSquare args[1]!
-    return some ⟨argument, anchorReal, anchorValue, sourceP, sourceSquare,
+    return some ⟨anchorReal, anchorValue, sourceP, sourceSquare,
       identity, fieldExpr, sourceProof,
       .selected args⟩
   let some (isSelectedField, anchorExpr, fieldValue) ← fieldArgs? argument | return none
@@ -130,6 +129,8 @@ private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
   let coeffs ← mkAppM ``PolyQuot.coeffs #[fieldValue]
   let field ← FieldRuntime.evalRatPoly coeffs
   let fieldExpr ← FieldLiteral.ratPolyExpr field
+  -- `ofNormalized_p` exposes the generator polynomial as constructor data,
+  -- so this reduces field arithmetic without replaying root isolation.
   let hcoeff ← coefficientProof coeffs fieldExpr
   let sourceProof ← if isSelectedField then
     mkAppM ``Selected.field_eval
@@ -142,7 +143,7 @@ private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
     mkAppM ``Eq.symm #[sourceValue]
   let sourceP ← FieldRuntime.evalZPoly args[0]!
   let sourceSquare ← FieldRuntime.evalSquare args[1]!
-  return some ⟨anchorExpr, anchorReal, anchorValue, sourceP, sourceSquare,
+  return some ⟨anchorReal, anchorValue, sourceP, sourceSquare,
     field, fieldExpr, sourceProof,
     .selected args⟩
 
@@ -247,7 +248,7 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
       let matrixExpr ← whnf formulaWhnf.getAppArgs.back!
       let qfExpr := matrixExpr.getAppArgs.back!
       let some cert := QuadraticNormCertificate.certify? p |
-        throwError "rcf: common polynomial has no checked quadratic-norm certificate"
+        throwError "rcf: this common field of degree {p.natDegree} is not supported by the current checked irreducibility route"
       let certExpr : Q(QuadraticNormCertificate) ← FieldLiteral.quadraticCertExpr cert
       let hcert ← mkDecideProof
         (q(($certExpr).check $pExpr = true) : Q(Prop))
