@@ -151,7 +151,7 @@ private def registerSearch {α β : Type} [Hashable β] (name : Lean.Name)
 
 def searchConfig : LeanBench.BenchmarkConfig :=
   { config with
-    paramSchedule := .custom #[8192, 12288, 16384, 24576, 32768, 49152, 65536, 98304],
+    paramSchedule := .custom #[8192, 10240, 12288, 14336, 16384, 20480, 24576, 28672],
     maxSecondsPerCall := 60 }
 
 private def prepRefinement (joint : Bool) (n : Nat) : IO SignQuery :=
@@ -160,17 +160,19 @@ private def prepRefinement (joint : Bool) (n : Nat) : IO SignQuery :=
   let f := RationalFn.ofPoly (DensePoly.ofList [-(2 - Real.precision n), 1])
   signQuery a f (n + 3)
 
--- Cost model: Θ(n²) limb work: Θ(n) failed refinements on a linear polynomial,
--- with up to Θ(n) bits per rational. Dyadic denominators keep gcds simple.
+-- Mode 2 upper bound O(n³): O(n) trials use O(n)-bit rational operands.
+-- Multiplication, division and gcd each have the published quadratic upper
+-- bounds cited in the performance report. This is not a tight scaling claim;
+-- GMP changes algorithms with operand size and exploits special operands.
 initialize do
-  registerSearch ``refinement "n * n" (fun n => n * n) searchConfig
+  registerSearch ``refinement "n * n * n" (fun n => n * n * n) searchConfig
     (prepRefinement false) refinement
 
 def jointRefinement (q : SignQuery) : Int := refinement q
 
--- Cost model: Θ(n²), now both coefficients and the argument refine on every trial.
+-- Mode 2 upper bound O(n³), including refinement of coefficients and argument.
 initialize do
-  registerSearch ``jointRefinement "n * n" (fun n => n * n) searchConfig
+  registerSearch ``jointRefinement "n * n * n" (fun n => n * n * n) searchConfig
     (prepRefinement true) jointRefinement
 
 private def prepHorner (n : Nat) : IO SignQuery :=
@@ -178,10 +180,11 @@ private def prepHorner (n : Nat) : IO SignQuery :=
 
 def horner (q : SignQuery) : Int := refinement q
 
--- Cost model: Θ(n²) bit work: n Horner steps at argument [-1/2,1/2] create
--- dyadic endpoints of increasing bit length. There is one successful trial.
+-- Mode 2 upper bound O(n³): n Horner steps at argument [-1/2,1/2] create
+-- O(n)-bit endpoints; each rational operation costs at most O(n²).
 initialize do
-  registerSearch ``horner "n * n" (fun n => n * n) searchConfig prepHorner horner
+  registerSearch ``horner "n * n * n" (fun n => n * n * n)
+    { searchConfig with targetInnerNanos := 4000000000 } prepHorner horner
 
 private def prepRealHeight (n : Nat) : IO SignQuery :=
   let c : Rat := ((2^n + 1 : Nat) : Rat) / ((2^n + 3 : Nat) : Rat)
@@ -213,11 +216,122 @@ def approximation (q : ApproxQuery) : Rat × Rat :=
   let b := Real.approx q.source q.subject q.width q.progress
   (b.lower, b.upper)
 
--- Cost model: Θ(n²) bit work for Θ(n) joint refinement trials with Θ(n)-bit
--- dyadic inputs. Exact quotient endpoints also enter the final bound.
+-- Mode 2 upper bound O(n³): O(n) joint refinement trials operate on O(n)-bit
+-- endpoints, including exact quotient formation, reduction and width checks.
 initialize do
-  registerSearch ``approximation "n * n" (fun n => n * n) searchConfig
+  registerSearch ``approximation "n * n * n" (fun n => n * n * n) searchConfig
     prepApproximation approximation
+
+namespace Successive
+
+open Hex.OrderedFn Hex.OrderedFn.Oracle
+
+abbrev First := RationalFn Rat
+abbrev Second := RationalFn First
+
+private def window (q δ : Rat) : Bounds :=
+  if h : 0 < δ then ⟨q - δ / 2, q + δ / 2, by grind⟩ else .singleton q
+
+private def inner : Approximation Rat := .ofConstant (window 2)
+
+structure Entry where
+  subject : First
+  width : Rat
+  progress : Acc (Next (Real.approxAttempt inner subject (Real.requestWidth width))) 0
+
+private def entry (f : First) (k : Nat) : IO Entry := do
+  let δ := Real.precision k
+  match h : Real.approxAttempt inner f (Real.requestWidth δ) (k + 2) with
+  | none => throw (IO.userError "successive coefficient witness failed")
+  | some b =>
+    let value := f.num.eval 2 / f.den.eval 2
+    unless b.lower ≤ value && value ≤ b.upper && b.width ≤ δ do
+      throw (IO.userError "successive coefficient enclosure failed")
+    return ⟨f, δ, acc_of_success _ (k + 2) b h 0 (by omega)⟩
+
+private def execute (q : Entry) : Bounds :=
+  Real.approx inner q.subject q.width q.progress
+
+/-- The fixture covers every coefficient and request made before its outer
+success witness. The exact fallback defines other requests at the same rational
+subject; no global field embedding or width contract is asserted. -/
+private def coefficient (entries : Array (Entry × Entry)) (c : First) (δ : Rat) : Bounds :=
+  match entries[δ.den.log2]? with
+  | some pair =>
+    if c = pair.1.subject && δ = pair.1.width then execute pair.1
+    else if c = pair.2.subject && δ = pair.2.width then execute pair.2
+    else .singleton (c.num.eval 2 / c.den.eval 2)
+  | none => .singleton (c.num.eval 2 / c.den.eval 2)
+
+structure Query where
+  source : Approximation First
+  subject : Second
+  width : Rat
+  progress : Acc (Next (Real.approxAttempt source subject (Real.requestWidth width))) 0
+
+def run (q : Query) : Rat × Rat :=
+  let b := Real.approx q.source q.subject q.width q.progress
+  (b.lower, b.upper)
+
+/-- X₂ - X₁ at X₁=2, X₂=2+2⁻ⁿ; approximate it to width 2⁻ⁿ. -/
+def prepare (n : Nat) : IO Query := do
+  let δ := Real.precision n
+  let f : Second := RationalFn.X - RationalFn.C RationalFn.X
+  let negativeX : First := -RationalFn.X
+  let mut entries := #[]
+  for k in [:n + 4] do
+    entries := entries.push (← entry negativeX k, ← entry 1 k)
+  -- These are all coefficients actually requested by both Horner evaluations.
+  unless f.num.coeffs == #[negativeX, 1] && f.den.coeffs == #[1] do
+    throw (IO.userError "unexpected successive polynomial coefficients")
+  let a : Approximation First := ⟨coefficient entries, window (2 + δ)⟩
+  for k in [:n + 4] do
+    let width := Real.precision k
+    for c in f.num.coeffs ++ f.den.coeffs do
+      unless entries[width.den.log2]?.any (fun p =>
+          (c == p.1.subject && width == p.1.width) ||
+          (c == p.2.subject && width == p.2.width)) do
+        throw (IO.userError "successive request lacks an inner search witness")
+  unless (Real.approxAttempt a f (Real.requestWidth δ) n).isNone &&
+      (Real.approxAttempt a f (Real.requestWidth δ) (n + 1)).isSome do
+    throw (IO.userError "unexpected successive separation precision")
+  match h : Real.approxAttempt a f (Real.requestWidth δ) (n + 3) with
+  | none => throw (IO.userError "successive outer witness failed")
+  | some b =>
+    unless b.lower ≤ δ && δ ≤ b.upper && b.width ≤ δ do
+      throw (IO.userError "successive outer enclosure failed")
+    let q : Query := ⟨a, f, δ, acc_of_success _ (n + 3) b h 0 (by omega)⟩
+    let (lo, hi) := run q
+    unless lo == δ / 2 && hi == 3 * δ / 2 do
+      throw (IO.userError "successive total approximation failed")
+    return q
+
+end Successive
+
+-- Preparation checks exact containment and width, and verifies that all requests
+-- up to the outer witness have cached termination witnesses, avoiding the fallback.
+#eval do
+  for n in [0, 1, 4, 8, 16] do
+    discard <| Hex.OrderedFnBench.Successive.prepare n
+
+/-- The outer search executes one inner approximation search per
+coefficient request; prepared witnesses never replace those searches. -/
+def successiveApproximation (q : Successive.Query) : Rat × Rat := Successive.run q
+
+-- Mode 1: count exact bound operations, including both search levels. There
+-- are (n+2)(n+3)/2 negative-X trials (7 operations each), two constant-1
+-- trials per outer trial (5 each), and 7 operations in each outer trial.
+-- This ladder measures small operands; runtime gcd still calls GMP even
+-- on scalar inputs. It does not model large-integer multiplication costs.
+-- At n >= 14 comparison products exceed the 32-bit small-Int range and
+-- allocate one-limb GMP integers. Each bound operation has unit model weight.
+initialize do
+  registerSearch ``successiveApproximation "(n + 2) * (7 * n + 55) / 2"
+    (fun n => (n + 2) * (7 * n + 55) / 2)
+    { config with
+      paramSchedule := .custom #[4, 6, 8, 10, 12, 14, 16, 18],
+      targetInnerNanos := 4000000000, maxSecondsPerCall := 60 }
+    Successive.prepare successiveApproximation
 
 end Hex.OrderedFnBench
 

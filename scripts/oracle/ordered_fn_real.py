@@ -26,8 +26,9 @@ VERSION = "z3-solver 4.15.4.0; python-flint 0.9.0"
 DEFAULT = ROOT / "conformance-fixtures/HexOrderedFn/real.jsonl"
 REQUIRED = {f"{name}/{joint}/{n}" for name in (
     "positive", "negative-denominator", "pole", "near-zero", "zero",
-    "non-dyadic", "degree", "quotient", "cancelled-pole") for joint in ("false", "true")
-    for n in (0, 1, 2, 4, 8, 12)}
+    "non-dyadic", "degree", "degree-height", "quotient", "cancelled-pole")
+    for joint in ("false", "true") for n in (0, 1, 2, 4, 8, 12)} | {
+        f"degree-height/{joint}/144" for joint in ("false", "true")}
 
 
 def rational(value):

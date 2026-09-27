@@ -1,0 +1,21 @@
+Independent Phase-2 review of HexOrderedFn against HexOrderedFn/SPEC/hex-ordered-fn.md,
+SPEC/Libraries/hex-ordered-fn.md, SPEC/real-closure-execution.md and PLAN/Phase2.md.
+Reviewed commit: 6b751bcaad0c7a4cc88c5cd5196e8f86827eb3af (library sources identical
+at c8450dca0). Reviewer: Claude Opus (fresh second-opinion session), acting as independent
+reviewer, not an author of this code.
+Verdict: authorized for Phase 2.
+
+The reviewer read Search, Oracle, Real, Infinitesimal and Extension. Exact bounds,
+Horner enclosure, finite attempts, the accessibility-founded first-success search,
+total sign and approximation, finite sign?, lowest-coefficient infinitesimal signs
+with an explicit formal-zero branch, and the provider-indexed Extension match the
+SPEC's algorithmic shape. No placeholder data, partial/unsafe search, extern,
+native_decide, sorry, axiom or Mathlib import is present. Builds and oracle runs
+were reported by the author; the reviewer did not run them.
+
+Outstanding under #10376 (none blocks Phase 2): Phase-3 docstring coverage
+declaration, including citation of the companion Liouville test for Extension
+operations; an orderSign range lemma; Phase-4 larger-precision and tower-depth
+real-search evidence, clean versus eager normalization and bit-size counts;
+recording that successive rungs n >= 14 exceed Lean's small-Int range. Stage-order
+enforcement, tower8 and MetiTarski belong to the absent HexRealClosure.

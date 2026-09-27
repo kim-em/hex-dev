@@ -48,7 +48,8 @@ def main():
         (args.output / "context.json").write_text(json.dumps(context, indent=2) + "\n")
         with (args.output / "runtime.log").open("w") as log:
             result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
-        context.update(returncode=result.returncode, load_after=os.getloadavg())
+        context.update(returncode=result.returncode, load_after=os.getloadavg(),
+                       executable_sha256_after=hashlib.sha256(exe.read_bytes()).hexdigest())
         (args.output / "context.json").write_text(json.dumps(context, indent=2) + "\n")
         return result.returncode
     finally:

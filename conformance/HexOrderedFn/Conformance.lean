@@ -15,13 +15,34 @@ public meta import HexOrderedFn
 public section
 
 /-!
-Oracle: direct exact rational evaluation and literal expected bounds.
-Mode: always; deterministic regression checks for the bounds/search foundation.
-Covered operations: bound multiplication/division, finite signs and total refinement.
+Oracle: direct exact rational evaluation, literal expected bounds, Z3 RCF,
+and python-flint canonical fractions (the emitted fixtures use pinned versions).
+Mode: always; deterministic bounds, search and infinitesimal regression checks.
+Covered operations: bounds construction, dyadic conversion, width, negation,
+addition, multiplication, intersection, division and strict/exact signs; Horner
+enclosure, finite signs, total sign and approximation, and first-success search;
+lowest-index/coefficient scans, infinitesimal sign, comparison and successive levels.
 Covered properties: finite signs agree with rational evaluation; bounds contain
-endpoint and midpoint results; erased success witnesses do not bypass refinement.
+endpoint and midpoint results; erased success witnesses do not bypass refinement;
+double negation, addition commutativity/zero identity, widths of sums and negations,
+and intersection idempotence, commutativity and membership.
 Covered edge cases: zero, negative and zero-crossing bounds, nonpositive width
 requests, earlier failed trials and nonmonotone success.
+
+The imported core tests supply small ordinary-kernel checks alongside these
+compiled checks. Horner and scan checks reach degree 12, coefficient heights reach 129 bits,
+and infinitesimal depth reaches 3. Rational real subjects exercise finite queries
+without asserting transcendence; semantic sqrt(2) cases live in the companion.
+
+The provider-indexed `Extension` operations need a genuine universal progress
+proof for executable coverage. The SPEC-required companion integration test
+`HexOrderedFnMathlib.LiouvilleTests` / `hexorderedfn_liouville_test` supplies it:
+ordinary field arithmetic, sign, approximation, comparisons, provider transport
+and derived coefficient approximation are checked on the same core definitions.
+This test remains separate from Mathlib-free conformance. Outstanding evidence
+and downstream integration are tracked under #10376.
+Serialized source/context/version validation belongs to the consuming tactic;
+this API binds registrations by type and the oracle rejects malformed fixtures.
 
 Infinitesimal Z3/exact fixtures are emitted by `HexOrderedFn.EmitFixtures`.
 Real refinement fixtures from `HexOrderedFn.EmitRealFixtures` check Horner bounds,
@@ -76,9 +97,55 @@ private def productsAgree : Bool := Id.run do
 
 #guard productsAgree
 
+-- Algebraic laws on negative, positive, touching and disjoint closed bounds.
+private def boundsAgree : Bool := Id.run do
+  for ai in List.range 7 do
+    for bi in List.range 7 do
+      let lo : Rat := (ai : Int) - 3
+      let low : Rat := (bi : Int) - 3
+      let a : Bounds := ⟨lo, lo + 2, by grind⟩
+      let b : Bounds := ⟨low, low + 2, by grind⟩
+      if a.width != 2 || a.neg.width != 2 || (a.add b).width != 4 then return false
+      if a.neg.neg != a || a.add b != b.add a || a.add (.singleton 0) != a then
+        return false
+      if a.inter a != some a || a.inter b != b.inter a then return false
+      for zi in List.range 17 do
+        let z : Rat := ((zi : Int) - 6) / 2
+        let inside := lo ≤ z && z ≤ lo + 2 && low ≤ z && z ≤ low + 2
+        let result := (a.inter b).any (fun c => c.lower ≤ z && z ≤ c.upper)
+        if inside != result then return false
+  return true
+
+#guard boundsAgree
+
+#guard Bounds.ofDyadic (.ofIntWithPrec 0 9) = .singleton 0
+#guard Bounds.ofDyadic (.ofIntWithPrec 3 5) = .singleton (3/32)
+#guard Bounds.ofDyadic (.ofIntWithPrec (2^128 + 1) 127) = .singleton (2 + 1/2^127)
+
+#guard Real.requestWidth (1/7) = 1/7
+#guard Real.requestWidth 0 = 1
+#guard Real.requestWidth (-7/3) = 1
+
+-- The start precision matters independently of the later success witness.
+#guard firstSome trial 1 (acc_of_success trial 5 1 later 1 (by decide)) = -1
+#guard firstSome trial 3 (acc_of_success trial 5 1 later 3 (by decide)) = 1
+#guard firstSome trial 5 (acc_of_success trial 5 1 later 5 (by decide)) = 1
+
 namespace InfinitesimalChecks
 open Hex.OrderedFn.InfinitesimalTests
 open scoped Hex.OrderedFn.Infinitesimal
+
+private def scansAgree : Bool := Id.run do
+  for n in [0, 1, 8, 12] do
+    for a in [(-3 : Rat), -1, 1, 3] do
+      let p := DensePoly.monomial n a
+      if Infinitesimal.lowestIndex p != n || Infinitesimal.lowestCoeff p != a then
+        return false
+  return true
+
+#guard scansAgree
+#guard Infinitesimal.lowestIndex (0 : DensePoly Rat) = 0
+#guard Infinitesimal.lowestCoeff (0 : DensePoly Rat) = 0
 
 #guard Infinitesimal.sign orderSign (1 / (epsilon - 1)) = -1
 #guard Infinitesimal.sign orderSign ((epsilon ^ 2 - 1) / (epsilon - 1)) = 1

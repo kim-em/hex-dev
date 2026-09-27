@@ -32,4 +32,13 @@ example : Infinitesimal.sign orderSign (0 : First) = 0 := by decide +kernel
 example : Infinitesimal.sign orderSign (epsilon - epsilon) = 0 := by decide +kernel
 example : (0 : First) < epsilon := by decide +kernel
 
+example (f : Second) :
+    let s := Infinitesimal.sign (Infinitesimal.sign orderSign) f
+    s = -1 ∨ s = 0 ∨ s = 1 :=
+  Infinitesimal.sign_range _ (Infinitesimal.sign_range _ orderSign_range) f
+
 end Hex.OrderedFn.InfinitesimalTests
+
+-- A formal zero must not consult even an incorrectly supplied predecessor sign.
+example : Hex.OrderedFn.Infinitesimal.sign (fun (_ : Rat) => 7)
+    (0 : Hex.RationalFn Rat) = 0 := by decide +kernel
