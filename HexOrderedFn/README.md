@@ -82,7 +82,7 @@ degree, coefficient height and tower depth without importing Mathlib. Run it
 with `scripts/bench/ordered_fn_measure.py --output DIR`. The companion's
 mathematical proofs are checked by its ordinary-kernel tests.
 
-The recorded phase gate remains 0. Real-extension external conformance and
+The APIs and proofs are implemented (phase 1). Independent API review and
 complete performance evidence remain outstanding under
 [#10376](https://github.com/kim-em/hex-dev/issues/10376). The companion proves
 universal sign and approximation progress from containment, shrinking widths

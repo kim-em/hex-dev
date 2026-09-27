@@ -70,7 +70,7 @@ compiled checks execute the total searches and derived approximation. The
 fixture also checks provider transport, rejects wrong-subject evidence, and
 adjoins a positive infinitesimal above the real field.
 
-The recorded phase gate remains 0. Real-extension external conformance and
+The APIs and proofs are implemented (phase 1). Independent API review and
 the remaining Phase-4 evidence are outstanding under
 [#10376](https://github.com/kim-em/hex-dev/issues/10376).
 

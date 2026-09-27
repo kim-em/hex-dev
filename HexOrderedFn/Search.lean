@@ -8,6 +8,11 @@ module
 
 public import Init
 
+/-!
+Accessibility-founded search for the first successful trial, with success and
+refinement equations and finite-witness termination proofs.
+-/
+
 @[expose] public section
 
 namespace Hex.OrderedFn

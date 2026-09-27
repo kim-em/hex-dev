@@ -8,6 +8,11 @@ module
 
 public import HexOrderedFn.Real
 
+/-!
+Canonical rational-function fields indexed by a fixed real approximation provider,
+with proof-founded total sign, comparison and derived coefficient bounds.
+-/
+
 @[expose] public section
 
 namespace Hex.OrderedFn.Real

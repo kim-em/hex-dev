@@ -15,6 +15,11 @@ public meta import HexOrderedFn.Extension
 public import Mathlib.NumberTheory.Transcendental.Liouville.LiouvilleNumber
 public import Mathlib.RingTheory.Localization.Integral
 
+/-!
+A test-local Liouville approximation provider with proved containment, width and
+transcendence, exercising registered real extensions and their total searches.
+-/
+
 @[expose] public section
 
 namespace Hex.OrderedFn.LiouvilleTests

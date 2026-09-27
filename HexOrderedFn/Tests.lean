@@ -8,6 +8,10 @@ module
 
 public import HexOrderedFn
 
+/-!
+Kernel checks of exact bounds, finite signs, joint refinement and first-success search.
+-/
+
 @[expose] public section
 
 namespace Hex.OrderedFn.Tests

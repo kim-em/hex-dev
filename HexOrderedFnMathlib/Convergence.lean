@@ -13,6 +13,11 @@ public import Mathlib.Tactic.GCongr
 
 public section
 
+/-!
+Endpoint estimates and shrinking-width proofs for the actual exact-bound Horner
+recurrence and quotient enclosures away from zero.
+-/
+
 namespace Hex.OrderedFn.Oracle
 
 open Filter Topology

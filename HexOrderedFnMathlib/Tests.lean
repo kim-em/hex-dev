@@ -16,6 +16,11 @@ open Hex.OrderedFn.Tests (source window)
 
 public section
 
+/-!
+Kernel tests of bound soundness, finite evaluation at sqrt(2), provider binding
+and the distinction between formal cancellation and original divisor conditions.
+-/
+
 namespace Hex.OrderedFn.SemanticTests
 
 attribute [local instance 2000] Field.toGrindField

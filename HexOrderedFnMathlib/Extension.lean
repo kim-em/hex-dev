@@ -10,6 +10,11 @@ public import HexOrderedFn.Extension
 public import HexOrderedFnMathlib.Progress
 public import Mathlib.Algebra.Field.TransferInstance
 
+/-!
+Real evaluation, order laws and provider transport for registered rational-function
+extensions, together with correctness of their derived approximation providers.
+-/
+
 @[expose] public section
 
 namespace Hex.OrderedFn.Real

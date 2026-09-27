@@ -10,6 +10,10 @@ public import HexOrderedFn.InfinitesimalTests
 
 public section
 
+/-!
+Kernel proofs of infinitesimal identities and inequalities on the core test carriers.
+-/
+
 namespace Hex.OrderedFn.InfinitesimalProofs
 
 attribute [local instance 2000] Field.toGrindField

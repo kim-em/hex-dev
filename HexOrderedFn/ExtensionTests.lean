@@ -9,6 +9,10 @@ module
 public import HexOrderedFn.Extension
 public import HexOrderedFn.Infinitesimal
 
+/-!
+Core arithmetic queries shared by semantic proofs and compiled real-extension tests.
+-/
+
 @[expose] public section
 
 namespace Hex.OrderedFn.Real.ExtensionTests

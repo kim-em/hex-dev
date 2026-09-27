@@ -11,6 +11,11 @@ public import HexOrderedFnMathlib.Evaluation
 
 public section
 
+/-!
+Universal progress of sign and approximation searches from containment, shrinking
+widths and relative transcendence, yielding erased accessibility proofs.
+-/
+
 namespace Hex.OrderedFn.Real
 
 open Oracle HexPolyMathlib Filter Topology

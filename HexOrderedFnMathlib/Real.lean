@@ -10,6 +10,10 @@ public import HexOrderedFn.Real
 public import HexOrderedFnMathlib.Oracle
 public import HexPolyMathlib.PolynomialEquivalence
 
+/-!
+Horner containment and soundness of finite and terminating total real searches.
+-/
+
 @[expose] public section
 
 namespace Hex.OrderedFn.Real

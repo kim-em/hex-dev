@@ -16,6 +16,11 @@ public import Mathlib.Algebra.Order.Ring.InjSurj
 
 public section
 
+/-!
+The lowest-coefficient sign agrees with the ordered Laurent-series interpretation.
+This gives the field order, positive infinitesimals and successive-level embeddings.
+-/
+
 namespace Hex.OrderedFn.Infinitesimal
 
 attribute [local instance 2000] Field.toGrindField

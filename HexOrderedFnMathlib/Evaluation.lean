@@ -9,6 +9,11 @@ module
 public import HexOrderedFnMathlib.Real
 public import HexRationalFnMathlib.Correspondence
 
+/-!
+Injective real evaluation of canonical rational functions under transcendence
+over the entire coefficient field.
+-/
+
 @[expose] public section
 
 namespace Hex.OrderedFn.Real
