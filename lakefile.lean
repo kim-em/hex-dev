@@ -273,6 +273,16 @@ lean_lib HexSignDet where
 @[default_target]
 lean_lib HexSignDetMathlib where
 
+lean_lib HexRealClosure where
+  precompileModules := true
+
+@[default_target]
+lean_lib HexRealClosureTests where
+  globs := #[.one `HexRealClosure.Tests]
+
+@[default_target]
+lean_lib HexRealClosureMathlib where
+
 @[default_target]
 lean_lib HexSturmMathlib where
 
