@@ -39,10 +39,19 @@ Run `lake build HexRealClosure.Tests HexQuerySemantics` and
 `python3 HexRealClosure/verify.py` from the repository root. The test uses
 `(X²−2)(X−3)` with the root in `(1,2)`, plus a non-monic definition and a
 checked factor split. The Python oracle computes exact arithmetic in ℚ(√2)
-independently of Lean for ten cases and is run manually; CI builds the Lean
+independently of Lean for eleven cases and is run manually; CI builds the Lean
 `#guard` tests.
 The companion proofs inherit the named #10389 admission in
 `HexRealRootsMathlib.Tarski.check_rootSum`; no new admission is used here.
+
+`adapters/HexRealClosureMathlib/Canonical.lean` uses the existing integer
+root-list completeness theorem to show that every checked rational selected
+root has a matching `RealAlgebraicNumber`, even when its defining polynomial
+is reducible. `Expression.canonicalValue` evaluates the stored polynomial
+using canonical real-algebraic arithmetic; its real value agrees with
+`Expression.denote`, and addition, multiplication and successful inversion
+agree. The choice of the matching canonical root is semantic and
+noncomputable. An executable conversion remains to be implemented.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and
