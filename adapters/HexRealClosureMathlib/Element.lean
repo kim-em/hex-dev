@@ -155,6 +155,19 @@ theorem ofPoly_value {context : Nat} {d : Root context} (p : DensePoly Rat) :
       exact hz
     simp [ofPoly, stored, h, value, hzero]
 
+theorem ofPoly_clean {context : Nat} {d : Root context}
+    (p : DensePoly Rat) (hp : clean p = true) :
+    clean (ofPoly p : Element d).polynomial = true := by
+  let stored := packedPoly d p
+  have hclean := packedPoly_clean d p hp
+  by_cases h : isZero d stored = false
+  · simpa [ofPoly, polynomial, stored, h] using hclean
+  · have hzero : clean (0 : DensePoly Rat) = true := by
+      apply (clean_iff_coeff 0).2
+      intro i
+      simp
+    simpa [ofPoly, polynomial, stored, h] using hzero
+
 theorem value_eq_eval {context : Nat} {d : Root context} (a : Element d) :
     a.value = evalCanonical a.polynomial d.toCanonical := by
   cases a with
