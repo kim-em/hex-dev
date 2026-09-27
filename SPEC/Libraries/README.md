@@ -3,6 +3,7 @@
 - **hex-basic**: small Mathlib-free standard-library shims, including kernel-reducible array and vector operations
 - **hex-arith**: extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
 - **hex-primality**: Miller-Rabin compositeness witnesses, Pocklington certificates, a kernel-reducible sieve and stored initial segment, the `primality` tactic
+- **[hex-ecpp](hex-ecpp.md)** (planned): elliptic-curve primality certificate checking with affine inverse witnesses and supplied-certificate conversion
 - **hex-int-factor**: integer factorization with complete prime-exponent certificates, the divisor-function API, multiplicative order and primitive roots
 - **hex-poly**: dense `Array`-backed polynomial representation
 - **hex-rational-fn**: canonical univariate rational functions, field arithmetic, partial evaluation, formal differentiation and normalization certificates
@@ -83,6 +84,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-poly-z-gcd-mathlib**: gcd divisibility and maximality in `Polynomial ℤ`, and `Decidable (a ∣ b)`
 - **hex-cyclotomic-mathlib**: agreement with `Polynomial.cyclotomic n ℤ`, the degree `Nat.totient n`, irreducibility over `ℤ` and `ℚ`, and the divisor product
 - **hex-primality-mathlib**: `Hex.Nat.Prime ↔ Nat.Prime`, the explicit opt-in `norm_num` policy, and segment statements over `Finset.filter Nat.Prime`
+- **[hex-ecpp-mathlib](hex-ecpp.md)** (planned): prime-field replay, Hasse-bound infrastructure, unconditional ECPP soundness, and explicit certificate elaboration
 - **hex-int-factor-mathlib**: agreement with `Nat.factorization`, `Decidable (Squarefree n)`, and `orderOf` in `(ZMod n)ˣ`
 - **hex-finite-field-mathlib**: `Fintype K` and `Fintype.card K = card K` for any `LawfulFiniteField`, and `frob = frobenius`
 - **hex-poly-mathlib**: `DensePoly R ≃+* Polynomial R`
@@ -144,6 +146,7 @@ Each library with its immediate dependencies:
 - **hex-basic**: (none)
 - **hex-arith**: (none)
 - **hex-primality**: hex-arith, hex-basic
+- **hex-ecpp** (planned): hex-primality, hex-arith
 - **hex-int-factor**: hex-primality, hex-arith, hex-basic
 - **hex-poly**: (none)
 - **hex-rational-fn**: hex-poly, hex-poly-fast
@@ -223,6 +226,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-padics-mathlib**: hex-padics, hex-primality-mathlib
 - **hex-modular-matrix-mathlib**: hex-modular-matrix, hex-matrix-mathlib, hex-determinant-mathlib, hex-row-reduce-mathlib, hex-modular-mathlib
 - **hex-primality-mathlib**: hex-primality
+- **hex-ecpp-mathlib** (planned): hex-ecpp, hex-primality-mathlib, Mathlib
 - **hex-int-factor-mathlib**: hex-int-factor, hex-primality-mathlib
 - **hex-finite-field-mathlib**: hex-finite-field, hex-mod-arith-mathlib, hex-poly-mathlib
 - **hex-poly-mathlib**: hex-poly
@@ -645,6 +649,12 @@ exponentiation its checkers replay. The predicate stays there rather
 than moving up, because `hex-mod-arith` builds `ZMod64.PrimeModulus`
 on it and depends only on `hex-arith`.
 
+The planned [hex-ecpp](hex-ecpp.md) verifier also depends on
+`hex-primality` and `hex-arith`. Its separate Mathlib companion depends on
+`hex-primality-mathlib` and owns the required Hasse-bound infrastructure and
+unconditional primality theorem. Existing primality does not depend on ECPP;
+its certificates provide ECPP's terminal proofs.
+
 `hex-int-factor` sits on `hex-primality` in turn, and that direction is
 forced: a factorization certificate has to prove each listed factor
 prime, while a certificate search needs no proof at all, so the
@@ -731,6 +741,7 @@ for developments whose source-local move has not happened yet.
 - [hex-arith](../../HexArith/SPEC/hex-arith.md): extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
 - [hex-primality.md](../../HexPrimality/SPEC/hex-primality.md): Miller-Rabin compositeness witnesses, Pocklington certificates, a kernel-reducible sieve and stored initial segment, and the Mathlib-free `primality` tactic
 - [hex-primality-mathlib.md](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md): `Nat.Prime` correspondence and segment transports, bare-tactic registration, and the opt-in `norm_num` proof policy
+- [hex-ecpp.md](hex-ecpp.md) (planned): Mathlib-free ECPP certificate checking and its Mathlib primality companion
 - [hex-int-factor.md](../../HexIntFactor/SPEC/hex-int-factor.md): integer factorization with complete prime-exponent certificates, the divisor-function API, multiplicative order and primitive roots (the Mathlib companion is specified in the same file)
 - [hex-matrix](https://github.com/leanprover/hex-matrix/blob/main/SPEC/hex-matrix.md) (released): dense matrices, arithmetic, elementary row/column operations, submatrix slicing, the Gram matrix
 - [hex-row-reduce](https://github.com/leanprover/hex-row-reduce/blob/main/SPEC/hex-row-reduce.md) (released): row reduction, rank, span, nullspace

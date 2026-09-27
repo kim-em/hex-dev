@@ -135,12 +135,12 @@ cube-root variant; a stored initial segment and the sieve that
 generates and verifies it; a `primality` tactic; and the
 `hex-primality-mathlib` correspondence with `Nat.Prime`.
 
-Not in scope: elliptic curve primality proving (ECPP), which is where
-the next order of magnitude lives and is a separate project with a
-separate certificate; deterministic Miller-Rabin as a *proof* (see
-below); primality of numbers of special form (Lucas-Lehmer, Proth,
+Not in scope: elliptic curve primality proving (ECPP), whose separate
+certificate verifier and Mathlib soundness obligations are specified in
+[hex-ecpp](../../SPEC/Libraries/hex-ecpp.md); deterministic Miller-Rabin as a
+*proof* (see below); primality of numbers of special form (Lucas-Lehmer, Proth,
 Pepin), which are cheap to add later and have no consumer here; and
-integer factorization, which is [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md) and
+integer factorization, which is [hex-int-factor](../../HexIntFactor/SPEC/hex-int-factor.md) and
 depends on this library.
 
 **Deterministic Miller-Rabin is out of scope as a proof technique, and
@@ -683,7 +683,7 @@ assembly, and their dispatch. The routes by which its advances flow
 back into this library's search are fixed below.
 
 **The multiplicative order is the new development**, and it is the
-thing to build first because [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md) needs
+thing to build first because [hex-int-factor](../../HexIntFactor/SPEC/hex-int-factor.md) needs
 it too, for its primitive-root API. It belongs here, in
 `HexPrimality/Order.lean`, and hex-int-factor consumes it.
 
@@ -2731,7 +2731,7 @@ boundary because the core consumers live below the companion.
    `millerRabin` with its full branch list;
    `not_prime_of_millerRabin_false`; `isProbablePrime`. The order
    development is the prerequisite for milestone 3 and for
-   [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md).
+   [hex-int-factor](../../HexIntFactor/SPEC/hex-int-factor.md).
 
 3. **Pocklington.** `PrimeCert` as one inductive, `checkPrime`,
    `prime_of_checkPrime` with `prime_pow_dvd_orderOf` and
@@ -2789,15 +2789,9 @@ not depend on them.
 
 ## Open questions
 
-- **Whether ECPP belongs on the roadmap at all.** It is the next order
-  of magnitude and it is a large project with an elliptic-curve
-  prerequisite this tree does not have. The planned
-  [finite-field elliptic-curve stack](../../SPEC/future-work.md#elliptic-curves-over-finite-fields)
-  includes curve arithmetic, point counting, and the Hasse-bound bridge that
-  an unconditional ECPP soundness proof would need.
 - **Whether `rhoFactor?` should eventually move to hex-arith.** It is
   here because its only two consumers are this library's certificate
-  search and [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md), and moving it down
+  search and [hex-int-factor](../../HexIntFactor/SPEC/hex-int-factor.md), and moving it down
   would put Pollard rho in the arithmetic root for no present gain.
   Pollard `p − 1` stage 1 has joined it here for the same two consumers
   (see "Taking up downstream factoring advances"), which sharpens the
