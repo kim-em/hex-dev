@@ -8,9 +8,10 @@ result comparator built a sigma value by simplifying the determinant with
 Both arms' declaration checks and output cleanup were inside the timed build.
 The raw samples, build output, host observations, source hashes and import
 baselines are in the linked JSON files below.
-An archive retains the exact measured probe sources. The active import-only
-baseline files subsequently had trailing blank lines removed for repository
-formatting; their Lean content is otherwise identical.
+An archive retains the exact measured probe sources. The active probe files
+subsequently received required copyright headers, and their import-only
+baselines had trailing blank lines removed. Their executable Lean content is
+otherwise identical.
 
 | Case | Mathlib net median (ms) | Hex net median (ms) | Observed direction |
 | --- | ---: | ---: | --- |
