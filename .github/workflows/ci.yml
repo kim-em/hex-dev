@@ -365,6 +365,7 @@ jobs:
         if: steps.classify.outputs.docs_only != 'true'
         run: |
           lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests \
+            HexPolyDetMathlib.Tests \
             HexPolyDetMathlib.ProofProbe.GeneralSupport \
             HexPrimality.ProofProbe.PMinusOne.Support
           python3 scripts/ci/check_rank_compiler.py

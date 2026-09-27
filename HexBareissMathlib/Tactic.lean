@@ -302,6 +302,7 @@ matrices use their certificate backend; the companion handles other literals. -/
 def compute (cfg : Config) (A : Expr) : MetaM (Outcome Result) := do
   match ← certify A with
   | .success c =>
+    trace[HexMatrix.certificate] "route: numeric-certificate"
     let p ← certifiedProof A c cfg
     return .success ⟨p.value, p.proof⟩
   | .declined msg => return .declined msg
@@ -388,13 +389,10 @@ namespace HexMatrixMathlib.Det
 
 open Lean Meta Elab
 
-/-- `det` closes `A.det = d` and `d = A.det` for a closed integer or rational
-matrix literal `A`, with the kernel checking a determinant certificate; an
-equation outside that fragment delegates to other Hex handlers. A final
-Hex-only normalization may leave a residual value equality. Extensions
-must use `@[no_fallback]` to preserve their errors and `throwUnsupportedSyntax`
-to delegate outside their fragment. The keyword is non-reserved, so `det`
-stays usable as an identifier. -/
+/-- `det` closes supported determinant equalities using a numeric certificate
+or the registered symbolic handler. The numeric-only import retains its
+certificate normalization diagnostic. Extensions use `@[no_fallback]` so a
+committed error is preserved. The keyword remains usable as an identifier. -/
 syntax (name := detTac) &"det" optConfig : tactic
 
 /-- Introduce a computed determinant and its equality proof into the current
@@ -445,8 +443,8 @@ def detDiagnostic : Tactic.Tactic := fun _ => Tactic.withMainContext do
 -- Ordinary errors commit; unsupported syntax still tries the next handler.
 @[tactic detTac, no_fallback]
 def evalDetTac : Tactic.Tactic := fun stx => Tactic.withMainContext do
-  let cfg ← HexMatrixMathlib.Literal.elabKernelConfig stx[1]
-  match ← proveGoal cfg (← Tactic.getMainTarget) with
+  let cfg ← elabConfig stx[1]
+  match ← proveGoal cfg.toKernelConfig (← Tactic.getMainTarget) with
   | .success proof => Tactic.closeMainGoal `det proof
   | .notApplicable _ => throwUnsupportedSyntax
   | .declined msg =>

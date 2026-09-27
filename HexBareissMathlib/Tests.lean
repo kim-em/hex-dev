@@ -296,6 +296,10 @@ example : Matrix.det (R := ℤ) !![1, 2, 3; 4, 5, 6; 7, 8, 10] = -3 := by det +p
 example : Matrix.det (R := ℤ) !![1, 2; 2, 4] = 0 := by det -packing
 example : Matrix.det (R := ℚ) !![1/2, 1; 1, 1] = -1/2 := by det -packing
 example : Matrix.det (R := ℚ) !![1/2, 1; 1, 1] = -1/2 := by det (config := { packing := true })
+example : Matrix.det (R := ℤ) !![1, 2; 3, 4] = -2 := by
+  det (maxHeartbeats := 1)
+example : Matrix.det (R := ℤ) !![1, 2; 3, 4] = -2 := by
+  det (maxRelationWork := 1)
 
 /-- error: det: the target is false: the determinant is -3 -/
 #guard_msgs in

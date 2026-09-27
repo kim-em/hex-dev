@@ -180,7 +180,7 @@ partial def expand {u : Lean.Level} {α : Q(Type u)} {rα : Q(CommRing $α)}
     | .mul (x := x) (e := exponent) _ power tail =>
       let ctx ← read
       let base ← if let some c := (← cache.get).get? x then pure c else do
-        let c ← toCert <$> Scalar.eval rcℕ ctx.rc ctx.cα x
+        let c ← toCert <$> Common.eval rcℕ ctx.rc ctx.cα x
         cache.modify fun s => s.insert x c
         pure c
       let ⟨_, vp, pp⟩ ← evalPow₁ ctx.rc rcℕ base.val power

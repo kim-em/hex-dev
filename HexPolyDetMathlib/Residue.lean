@@ -46,7 +46,7 @@ variable (p : Nat) [Hex.ZMod64.Bounds p]
   | .triangular _ _ d => d
   | .singular _ => []
 
-/-- The residue list route also exposes its polynomial determinant before transport. -/
+/-- Soundness of the plain modular polynomial list check. -/
 theorem checkDetPolyList_sound [Hex.ZMod64.PrimeModulus p] (k n : Nat)
     (rows : List (List (PolyList Nat))) (w : DetWitness (PolyList Nat))
     (h : checkDetPolyList (Hex.PolyDet.opsMod p k) n rows w = true) :

@@ -48,7 +48,16 @@ example {R : Type} [CommRing R] (x : R) : Matrix.det !![x, 1; 1, x] = x * x - 1 
 example (x : Int) : Matrix.det (!![1, 2; 3, 4] : Matrix (Fin 2) (Fin 2) Int) = x - x - 2 := by
   det
 
+example (x y z : Rat) :
+    (x+y)/z - x/z - y/z - 2 =
+      Matrix.det (!![1, 2; 3, 4] : Matrix (Fin 2) (Fin 2) Rat) := by
+  det
+
 example (a b : ZMod 3) : Matrix.det !![a, 0; 0, b] = a*b + 3*a*b := by
+  det
+
+example (a b : ZMod 3) :
+    Matrix.det !![a, 0; 0, b] = a*b + a*b + a*b + a*b := by
   det
 
 example (x : ZMod 2) : Matrix.det !![-2*x, 0, 0; 0, x, 0; 0, 0, x] = 0 := by
@@ -156,6 +165,12 @@ example {R : Type} [Field R] (a b c d u v w x : R) :
 example {R : Type} [Field R] (a b c d u v : R) :
     Matrix.det !![a*c/u, a*d/u; b*c/v, b*d/v] = 0 := by
   det
+
+example {R : Type} [Field R] (a b c d u v : R)
+    (h : Matrix.det !![a*c/u, a*d/u; b*c/v, b*d/v] = 0) :
+    Matrix.det !![a*c/u, a*d/u; b*c/v, b*d/v] = 0 := by
+  fail_if_success det (maxRelationWork := 1)
+  exact h
 
 example {R : Type} [Field R] (a b c d : R) :
     Matrix.det !![a/b*(c/d)-a/d*(c/b), 0; a, b] = 0 := by

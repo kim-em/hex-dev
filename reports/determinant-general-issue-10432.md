@@ -1,6 +1,6 @@
-# General determinant proof evaluator qualification
+# General determinant proof evaluator evidence
 
-The integrated Bird evaluator and the pinned Mathlib `norm_det`/`ring`
+The archived measured Bird evaluator and the pinned Mathlib `norm_det`/`ring`
 comparator were built as fresh Lean modules on one automatically leased CPU per
 serial batch. Each arm had an adjacent import-only baseline. The no-answer
 result comparator built a sigma value by simplifying the determinant with
@@ -13,7 +13,13 @@ subsequently received required copyright headers, and their import-only
 baselines had trailing blank lines removed. Their executable Lean content is
 otherwise identical.
 
-| Case | Mathlib net median (ms) | Hex net median (ms) | Observed direction |
+The integrated evaluator now retains symbolic quotients as compact atoms and
+expands only indexed relation collisions. That policy has kernel and direct
+cache tests, but **no timed samples from this 30-minute allowance**. The table
+therefore describes the archived measured snapshot, not current-source speed.
+Current-source gains, ties, losses and declines are all unmeasured.
+
+| Archived snapshot case | Mathlib net median (ms) | Hex net median (ms) | Observed direction |
 | --- | ---: | ---: | --- |
 | Numeric 2×2 equality | 15.3 | 11.5 | tie |
 | Symbolic 2×2 equality | 81.2 | −12.2 | Hex gain |
@@ -42,9 +48,9 @@ the prescribed unmodified Mathlib comparator could not prove the value modulo
 budget declines in the completed probes. No profile was collected within this
 measurement allowance.
 
-The initial seven-case batch completed six pairs before the numeric routing fix
-and is retained as diagnostic evidence, not used in the table. The final-source
-broad batch used 768.1 seconds and the focused six-pair batch used 480.2
+The initial seven-case batch completed six pairs with a different numeric
+routing path and is retained as diagnostic evidence, not used in the table. The
+broad snapshot batch used 768.1 seconds and the focused six-pair batch used 480.2
 seconds. Together with 473.2 seconds from the initial batch and about 49
 seconds of diagnostic builds, the aggregate was about 1,770 seconds, below
 the 1,800-second cap. Every build was limited to 60 seconds; no timed process
@@ -53,9 +59,12 @@ hit that limit. The focused batch ran on CPU 3 and the broad batch on CPU 48.
 The prototype at revision `dccd276f7` established relation cancellation and
 reported two-pair wins and losses on different generated fixtures. Its final
 cache and diagnostic fixes had correctness validation but no new timings.
-Those prototype numbers are **not** a direct speed baseline for this integrated
-source. This report compares the shipped policy with Mathlib on fixed modules,
-retains the incomplete larger cases, and makes no per-family dispatch claim.
+Those prototype numbers are **not** a direct speed baseline for the integrated
+source. The current source has no valid final-source speed comparison with
+Mathlib or the prototype under the exhausted allowance. The snapshot results
+show three apparent gains, two ties and two losses on small cases, no Hex
+declines, and incomplete larger-case coverage. They do not justify a matrix
+family dispatcher or a default simp registration.
 
 - [Focused six-pair raw results](bench-results/det-general-focused-issue-10432.json)
 - [Broad partial raw results](bench-results/det-general-final-issue-10432.json)

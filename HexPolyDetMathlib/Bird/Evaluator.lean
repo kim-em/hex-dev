@@ -42,12 +42,29 @@ private def strongCompare (left right : Expr) : MetaM (Option Expr) := do
   (do
     let a ← Common.eval rcℕ rc cα left
     let b ← Common.eval rcℕ rc cα right
-    unless a.val.eq rcℕ rc b.val do return none
-    have x : Q($α) := a.expr
-    have y : Q($α) := b.expr
+    if a.val.eq rcℕ rc b.val then
+      have x : Q($α) := a.expr
+      have y : Q($α) := b.expr
+      have : $x =Q $y := ⟨⟩
+      have pa : Q($left = $x) := a.proof
+      have pb : Q($right = $y) := b.proof
+      return some q(Eq.trans $pa (Eq.symm $pb))
+    let cleanedA ← Mathlib.Tactic.RingNF.cleanup {}
+      {expr := a.expr, proof? := some a.proof}
+    let cleanedB ← Mathlib.Tactic.RingNF.cleanup {}
+      {expr := b.expr, proof? := some b.proof}
+    let reducedA ← reduceCoefficients cleanedA.expr
+    let reducedB ← reduceCoefficients cleanedB.expr
+    let a' ← Common.eval rcℕ rc cα reducedA.expr
+    let b' ← Common.eval rcℕ rc cα reducedB.expr
+    unless a'.val.eq rcℕ rc b'.val do return none
+    have x : Q($α) := a'.expr
+    have y : Q($α) := b'.expr
     have : $x =Q $y := ⟨⟩
-    have pa : Q($left = $x) := a.proof
-    have pb : Q($right = $y) := b.proof
+    let pa : Q($left = $x) ← mkEqTrans
+      (← mkEqTrans (← cleanedA.getProof) (← reducedA.getProof)) a'.proof
+    let pb : Q($right = $y) ← mkEqTrans
+      (← mkEqTrans (← cleanedB.getProof) (← reducedB.getProof)) b'.proof
     return some q(Eq.trans $pa (Eq.symm $pb))).run .reducible
 
 private def finalCompare {u : Level} {α : Q(Type u)} {rα : Q(CommRing $α)}
@@ -69,7 +86,7 @@ private def compare {u : Level} {α : Q(Type u)} {rα : Q(CommRing $α)}
     (cache : IO.Ref (Std.HashMap Expr (Cert rα)))
     (left : Cert rα) (right : Q($α)) : CertM rα (Option Expr) := do
   if ← withReducible <| isDefEq left.norm right then
-    return some left.proof
+    return some (← mkExpectedTypeHint left.proof (← mkEq left.subject right))
   let ctx ← read
   let target ← toCert <$> Scalar.eval rcℕ ctx.rc ctx.cα right
   let (left, target) ← Relations.align limit state cache left target
@@ -113,19 +130,26 @@ private def entries? (A : Expr) : MetaM (HexMatrixMathlib.Det.Outcome (Array (Ex
   let ctx ← Simp.mkContext (config := { decide := true })
     (simpTheorems := #[← getSimpTheorems])
   let entries ← lit.entries.flatten.mapM fun entry => do
-    let result := (← Simp.main entry ctx).1
     let result ← if entry.getAppFn.isConstOf ``ite then do
-      let reduced ← withTransparency .all <| whnf entry
       let args := entry.getAppArgs
-      if args.size < 2 then pure result else
+      if args.size < 4 then pure (← Simp.main entry ctx).1 else
+        let condition := args[args.size - 4]!
+        let conditionInstance := args[args.size - 3]!
         let yes := args[args.size - 2]!
         let no := args[args.size - 1]!
-        if ← withTransparency .all <| isDefEq reduced yes then
-          pure ({expr := yes} : Simp.Result)
-        else if ← withTransparency .all <| isDefEq reduced no then
-          pure ({expr := no} : Simp.Result)
-        else pure result
-    else pure result
+        -- Only the closed Fin-index condition is reduced with full transparency;
+        -- neither branch nor the scalar carrier is unfolded for this decision.
+        let decided ← withTransparency .all <| whnf (← mkDecide condition)
+        if decided.isConstOf ``Bool.true then
+          let proof ← mkAppOptM ``if_pos #[some condition, some conditionInstance,
+            some (← decideProof condition), some (← inferType yes), some yes, some no]
+          pure ({expr := yes, proof? := some proof} : Simp.Result)
+        else if decided.isConstOf ``Bool.false then
+          let proof ← mkAppOptM ``if_neg #[some condition, some conditionInstance,
+            some (← decideProof (mkNot condition)), some (← inferType yes), some yes, some no]
+          pure ({expr := no, proof? := some proof} : Simp.Result)
+        else pure (← Simp.main entry ctx).1
+    else pure (← Simp.main entry ctx).1
     return (entry, result)
   trace[HexMatrix.certificate] "symbolic entries: {entries.map (·.2.expr)}"
   return .success entries
@@ -134,8 +158,11 @@ private def entries? (A : Expr) : MetaM (HexMatrixMathlib.Det.Outcome (Array (Ex
 def withBudget {β : Type} (limit : Nat) (action : MetaM β) : MetaM β := do
   let requested := limit * 1000
   let ctx ← readThe Core.Context
+  checkSystem "det"
   let now ← IO.getNumHeartbeats
   let remaining := ctx.maxHeartbeats - (now - ctx.initHeartbeats)
+  if ctx.maxHeartbeats != 0 && remaining == 0 then
+    Core.throwMaxHeartbeat `det `maxHeartbeats ctx.maxHeartbeats
   let effective := if ctx.maxHeartbeats == 0 then requested else min remaining requested
   trace[HexMatrix.certificate] "symbolic heartbeat ceiling: {effective / 1000} public units"
   withTheReader Core.Context (fun ctx => {ctx with initHeartbeats := now, maxHeartbeats := effective}) do
@@ -147,15 +174,23 @@ def withBudget {β : Type} (limit : Nat) (action : MetaM β) : MetaM β := do
 in the same scalar session. -/
 def evaluate (cfg : HexMatrixMathlib.Det.Config) (A : Expr) (rhs? : Option Expr := none) :
     MetaM (HexMatrixMathlib.Det.Outcome HexMatrixMathlib.Det.Result) := do
-  let entries ← match ← entries? A with
-    | .success entries => pure entries
-    | .notApplicable msg => return .notApplicable msg
-    | .declined msg => return .declined msg
   if cfg.maxHeartbeats == 0 then
     return .declined m!"symbolic heartbeat budget exhausted (0/0) before evaluation"
   if cfg.maxRelationWork == 0 then
     return .declined m!"relation work budget exhausted (0/0) before evaluation"
   withBudget cfg.maxHeartbeats do
+    let some (_, _, carrier) ← shape? (← inferType A) |
+      return .notApplicable m!"expected a matrix over Fin indices"
+    try
+      let _ ← synthInstance (← mkAppM ``CommRing #[carrier])
+    catch ex =>
+      if ex.isInterrupt || ex.isMaxHeartbeat || ex.isMaxRecDepth then throw ex
+      if let .internal _ _ := ex then throw ex
+      return .notApplicable m!"expected a commutative ring"
+    let entries ← match ← entries? A with
+      | .success entries => pure entries
+      | .notApplicable msg => return .notApplicable msg
+      | .declined msg => return .declined msg
     let e ← mkAppM ``Matrix.det #[A]
     let ⟨_, α, e⟩ ← inferTypeQ' e
     let args := e.getAppArgs
@@ -200,6 +235,9 @@ def evaluate (cfg : HexMatrixMathlib.Det.Config) (A : Expr) (rhs? : Option Expr 
           let count := (← relationState.get).work
           return .declined m!"relation work budget exhausted during Bird evaluation/comparison ({count}/{cfg.maxRelationWork})"
       throw ex
+    let stats ← relationState.get
+    trace[HexMatrix.certificate]
+      "route: symbolic-Bird; relation work: {stats.work}/{cfg.maxRelationWork}; rewrites: {stats.rewrites}"
     if let some rhs := rhs? then
       let comparison? ← match comparison? with
         | some proof => pure (some proof)
@@ -226,7 +264,7 @@ private def compareNumeric (value right : Expr) : MetaM (Option Expr) := do
   let rα ← synthInstanceQ q(CommRing $α)
   let cα ← Common.mkCache (commSemiringOfCommRing rα)
   let rc := ringCompute cα
-  (do
+  let compact ← (do
     let left ← Scalar.eval rcℕ rc cα value
     let target ← Scalar.eval rcℕ rc cα right
     unless left.val.eq rcℕ rc target.val do return none
@@ -236,6 +274,8 @@ private def compareNumeric (value right : Expr) : MetaM (Option Expr) := do
     have pa : Q($value = $a) := left.proof
     have pb : Q($right = $b) := target.proof
     return some q(Eq.trans $pa (Eq.symm $pb))).run .reducible
+  if compact.isSome then return compact
+  strongCompare value right
 
 /-- Close a supplied determinant equality using exactly one determinant
 computation. Numeric targets use the certificate closing handler when it accepts
@@ -257,7 +297,15 @@ def prove (cfg : HexMatrixMathlib.Det.Config) (target : Expr) :
         if ex.isInterrupt || ex.isMaxHeartbeat || ex.isMaxRecDepth then throw ex
         pure false
     if closesNumerically then
-      return ← HexMatrixMathlib.Det.proveGoal cfg.toKernelConfig target
+      trace[HexMatrix.certificate] "route: numeric-certificate"
+      match ← HexMatrixMathlib.Det.proveGoal cfg.toKernelConfig target with
+      | .success proof => return .success proof
+      | .declined msg =>
+        saved.restore
+        return .declined msg
+      | .notApplicable msg =>
+        saved.restore
+        return .notApplicable msg
     let p ← match ← HexMatrixMathlib.Det.compute cfg A with
       | .success p => pure p
       | .declined msg =>

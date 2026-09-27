@@ -136,27 +136,7 @@ partial def eval  {u : Lean.Level}
           let ⟨_, va, pa⟩ ← eval rc c a mode
           let ⟨c, vc, p⟩ ← evalDiv rc rcℕ dsα c.czα va vb
           pure ⟨c, vc, q(div_congr $pa $pb $p)⟩
-        | none =>
-          let saved ← getThe Mathlib.Tactic.AtomM.State
-          let metaSaved ← Meta.saveState
-          let numerator ← recover? (eval rc c a .monomial)
-          match numerator with
-          | none =>
-            metaSaved.restore
-            set saved
-            els
-          | some ⟨_, va, pa⟩ =>
-            let saved ← getThe Mathlib.Tactic.AtomM.State
-            let metaSaved ← Meta.saveState
-            let denominator ← recover? (eval rc c b .monomial)
-            let ⟨_, vb, pb⟩ ← match denominator with
-              | some value => pure value
-              | none => do
-                metaSaved.restore
-                set saved
-                evalAtom rc rcℕ b
-            let ⟨c, vc, p⟩ ← evalDiv rc rcℕ dsα c.czα va vb
-            pure ⟨c, vc, q(div_congr $pa $pb $p)⟩
+        | none => els
       | _ => els
     | _, _, _ => els
   unless mode == .general || atMostOne result.val do
