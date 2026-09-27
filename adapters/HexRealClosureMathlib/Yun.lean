@@ -59,15 +59,14 @@ private theorem divide_product {K : Type*} [Field K] [DecidableEq K]
     (fun a ha => mul_ne_zero ha hlc) hproduct
   exact congrArg Prod.fst hpair
 
-/-- On a monic squarefree input, Yun emits the polynomial once with
-multiplicity one. The gcd hypothesis is the executable squarefreeness test. -/
+/-- On a squarefree input, Yun emits its monic associate once with
+multiplicity one and retains its leading coefficient as the unit. -/
 theorem decompose_squarefree {K : Type*} [Field K] [LinearOrder K]
     [IsStrictOrderedRing K] [DecidableEq K]
     (f : DensePoly K) (hdegree : 0 < f.natDegree)
-    (hmonic : f.leadingCoeff = 1)
     (hgcd : DensePoly.monicize
       (DensePoly.gcd f (DensePoly.derivativeImpl f)) = 1) :
-    decompose f = .factors 1 #[(f, 1)] := by
+    decompose f = .factors f.leadingCoeff #[(DensePoly.monicize f, 1)] := by
   have hf : f ≠ 0 := by
     intro h
     rw [h] at hdegree
@@ -78,64 +77,102 @@ theorem decompose_squarefree {K : Type*} [Field K] [LinearOrder K]
     exact hf ((DensePoly.size_eq_zero_iff f).mp h)
   have hfalse : f.isZero = false :=
     (DensePoly.isZero_eq_false_iff f).mpr hsize
+  have hlc := DensePoly.leadingCoeff_ne_zero_of_pos_size f hsize
   have hone : (1 : DensePoly K) ≠ 0 := by
     intro h
     have hp := congrArg HexPolyMathlib.toPolynomial h
     simp at hp
-  have hnormalize : DensePoly.monicize f = f := by
-    rw [DensePoly.monicize_eq_scale, hmonic, inv_one, DensePoly.scale_one]
+  have hnormalized : DensePoly.monicize f ≠ 0 :=
+    DensePoly.monicize_ne_zero hf
+  have hproduct : DensePoly.C f.leadingCoeff * DensePoly.monicize f = f := by
+    rw [← DensePoly.scale_eq_C_mul, DensePoly.monicize_eq_scale,
+      DensePoly.scale_scale, mul_inv_cancel₀ hlc, DensePoly.scale_one]
   have hdivone (p : DensePoly K) : p / 1 = p :=
     divide_product p 1 p hone (DensePoly.mul_one_right_poly p)
-  have hdivself : f / f = 1 :=
-    divide_product f f 1 hf (by
-      rw [DensePoly.mul_comm_poly, DensePoly.mul_one_right_poly])
-  have hdivzero : (0 : DensePoly K) / f = 0 :=
-    divide_product 0 f 0 hf (DensePoly.zero_mul f)
+  have hdivnormalized : f / DensePoly.monicize f = DensePoly.C f.leadingCoeff :=
+    divide_product f (DensePoly.monicize f) (DensePoly.C f.leadingCoeff)
+      hnormalized hproduct
+  have hdivzero : (0 : DensePoly K) / DensePoly.monicize f = 0 :=
+    divide_product 0 (DensePoly.monicize f) 0 hnormalized
+      (DensePoly.zero_mul _)
   have hsubtract : DensePoly.derivativeImpl f - DensePoly.derivativeImpl f = 0 := by
     apply HexPolyMathlib.equiv.injective
     simp [HexPolyMathlib.toPolynomial_sub]
   have hgcdzero : DensePoly.gcd f 0 = f := by
     have hz : (0 : DensePoly K).isZero = true := by rfl
     simp only [DensePoly.gcd, DensePoly.gcdAux, hz, ↓reduceDIte]
-  have honeDegree : (1 : DensePoly K).natDegree = 0 := by
-    rw [DensePoly.natDegree_eq_size_sub_one, DensePoly.size_one one_ne_zero]
+  have hnormalizedDegree : (DensePoly.monicize f).natDegree = f.natDegree := by
+    rw [DensePoly.natDegree_eq_size_sub_one, DensePoly.size_monicize,
+      DensePoly.natDegree_eq_size_sub_one]
   have hstop (fuel : Nat) :
-      loop (1 : DensePoly K) 0 2 fuel #[(f, 1)] = #[(f, 1)] := by
-    cases fuel <;> simp only [loop, honeDegree, ↓reduceIte]
+      loop (DensePoly.C f.leadingCoeff) 0 2 fuel
+        #[(DensePoly.monicize f, 1)] = #[(DensePoly.monicize f, 1)] := by
+    cases fuel <;> simp only [loop, DensePoly.natDegree_C, ↓reduceIte]
   simp only [decompose, decomposeRaw, hfalse, Bool.false_eq_true,
-    Nat.ne_of_gt hdegree, ↓reduceIte, hgcd, hdivone, hmonic]
+    Nat.ne_of_gt hdegree, ↓reduceIte, hgcd, hdivone]
   rw [loop]
   simp only [Nat.ne_of_gt hdegree, ↓reduceIte, hsubtract, hgcdzero,
-    hnormalize, hdegree, hdivself, hdivzero]
-  exact congrArg (Decomposition.factors (1 : K)) (hstop f.natDegree)
+    hnormalizedDegree, hdegree, hdivnormalized, hdivzero]
+  exact congrArg (Decomposition.factors f.leadingCoeff) (hstop f.natDegree)
 
-/-- Yun's result on a monic squarefree input passes the exact replay checker. -/
+/-- Yun's result on a squarefree input passes the exact replay checker. -/
 theorem check_decompose_squarefree {K : Type*} [Field K] [LinearOrder K]
     [IsStrictOrderedRing K] [DecidableEq K]
     (f : DensePoly K) (hdegree : 0 < f.natDegree)
-    (hmonic : f.leadingCoeff = 1)
     (hgcd : DensePoly.monicize
       (DensePoly.gcd f (DensePoly.derivativeImpl f)) = 1) :
     check f (decompose f) = true := by
-  rw [decompose_squarefree f hdegree hmonic hgcd]
+  rw [decompose_squarefree f hdegree hgcd]
   have hsize : 0 < f.size := by
     rw [DensePoly.natDegree_eq_size_sub_one] at hdegree
     omega
   have hfalse : f.isZero = false :=
     (DensePoly.isZero_eq_false_iff f).mpr hsize
-  have hgcdDegree : (DensePoly.gcd f (DensePoly.derivativeImpl f)).natDegree = 0 := by
-    have h := congrArg DensePoly.natDegree hgcd
+  have hf : f ≠ 0 := by
+    intro h
+    rw [h, DensePoly.size_zero] at hsize
+    omega
+  have hlc := DensePoly.leadingCoeff_ne_zero_of_pos_size f hsize
+  have hinv : f.leadingCoeff⁻¹ ≠ 0 := inv_ne_zero hlc
+  have hderivative : DensePoly.derivativeImpl (DensePoly.monicize f) =
+      DensePoly.scale f.leadingCoeff⁻¹ (DensePoly.derivativeImpl f) := by
+    simp only [← DensePoly.derivative_eq_derivativeImpl,
+      DensePoly.monicize_eq_scale]
+    apply DensePoly.ext_coeff
+    intro n
+    simp only [DensePoly.coeff_derivative_semiring,
+      DensePoly.coeff_scale_semiring]
+    ring
+  have hcoprime := (DensePoly.coprime_iff f (DensePoly.derivativeImpl f)).mpr hgcd
+  have hscaled := ((hcoprime.scale_left hinv).symm.scale_left hinv).symm
+  have hnormalizedCoprime : DensePoly.Coprime (DensePoly.monicize f)
+      (DensePoly.derivativeImpl (DensePoly.monicize f)) := by
+    rw [hderivative, DensePoly.monicize_eq_scale]
+    exact hscaled
+  have hnormalizedGcd := (DensePoly.coprime_iff (DensePoly.monicize f)
+    (DensePoly.derivativeImpl (DensePoly.monicize f))).mp hnormalizedCoprime
+  have hgcdDegree : (DensePoly.gcd (DensePoly.monicize f)
+      (DensePoly.derivativeImpl (DensePoly.monicize f))).natDegree = 0 := by
+    have h := congrArg DensePoly.natDegree hnormalizedGcd
     have honeDegree : (1 : DensePoly K).natDegree = 0 := by
       rw [DensePoly.natDegree_eq_size_sub_one, DensePoly.size_one one_ne_zero]
     rw [DensePoly.natDegree_eq_size_sub_one, DensePoly.size_monicize,
       ← DensePoly.natDegree_eq_size_sub_one, honeDegree] at h
     exact h
-  have hrecon : reconstruct (1 : K) #[(f, 1)] = f := by
+  have hnormalizedDegree : (DensePoly.monicize f).natDegree = f.natDegree := by
+    rw [DensePoly.natDegree_eq_size_sub_one, DensePoly.size_monicize,
+      DensePoly.natDegree_eq_size_sub_one]
+  have hmonic : (DensePoly.monicize f).leadingCoeff = 1 :=
+    DensePoly.monicize_monic hf
+  have hrecon : reconstruct f.leadingCoeff #[(DensePoly.monicize f, 1)] = f := by
     simp only [reconstruct, ← Array.foldl_toList]
-    change (1 : DensePoly K) * f ^ 1 = f
-    rw [Lean.Grind.Semiring.pow_one, DensePoly.mul_comm_poly,
-      DensePoly.mul_one_right_poly]
-  simp [check, hfalse, hdegree, hmonic, hgcdDegree, hrecon, degreeSum]
+    change DensePoly.C f.leadingCoeff * (DensePoly.monicize f) ^ 1 = f
+    rw [Lean.Grind.Semiring.pow_one, ← DensePoly.scale_eq_C_mul,
+      DensePoly.monicize_eq_scale, DensePoly.scale_scale,
+      mul_inv_cancel₀ hlc, DensePoly.scale_one]
+  simp [check, hfalse, hnormalizedDegree, hdegree, hmonic,
+    hgcdDegree, hrecon, degreeSum]
+  exact hlc
 
 /-- Convert powers without assuming a Mathlib monoid instance on `DensePoly`. -/
 private theorem toPolynomial_pow (p : DensePoly Rat) (n : Nat) :
