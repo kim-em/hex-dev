@@ -1,0 +1,20 @@
+{
+  "parameters": [
+    128,
+    256,
+    512,
+    1024,
+    2048,
+    4096,
+    8192,
+    16384
+  ],
+  "trials": 4,
+  "target_nanos": 1000000000,
+  "timeout_seconds": 60,
+  "names": [
+    "Hex.OrderedFnBench.subtraction",
+    "Hex.OrderedFnBench.comparison"
+  ],
+  "order": "trial-major; AB on even trials, BA on odd trials"
+}

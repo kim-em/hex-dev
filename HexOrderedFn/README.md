@@ -77,7 +77,7 @@ zero-touching bounds, joint refinement, finite exhaustion, and compiled total
 sign and bound searches with earlier failed trials. Kernel proofs check the finite witnesses. Infinitesimal fixtures cover negative
 valuations, negative denominators, cancellation and three successive levels;
 `scripts/oracle/ordered_fn_z3.py` checks them with pinned Z3 RCF and exact
-rational specialization. `ordered_fn_real.py` checks 108 real refinement fixtures
+rational specialization. `ordered_fn_real.py` checks the real refinement fixtures
 with FLINT normalization of source expressions, exact Fraction values and Z3
 polynomial/quotient enclosure queries. The cancelled-pole fixture checks the consumer obligation to retain original divisor guards through cancellation.
 `hexorderedfn_bench` measures sign scans, comparisons,
@@ -85,8 +85,10 @@ degree, coefficient height and tower depth without importing Mathlib. Run it
 with `scripts/bench/ordered_fn_measure.py --output DIR`. The companion's
 mathematical proofs are checked by its ordinary-kernel tests.
 
-The APIs and proofs are implemented (phase 1). Independent API review and
-complete performance evidence remain outstanding under
+The [performance report](../reports/hex-ordered-fn-performance.md) covers
+infinitesimal operations, total real searches through three levels, and canonical
+arithmetic comparisons. Downstream tower integration and clean/eager selected-root
+normalization measurements remain outstanding under
 [#10376](https://github.com/kim-em/hex-dev/issues/10376). The companion proves
 universal sign and approximation progress from containment, shrinking widths
 and relative transcendence over the whole predecessor field, and tests a
