@@ -167,8 +167,12 @@ high = [Q(0), Q(0), Q(0), Q(1)]
 high_remainder = rem(high, head)
 fractional_head = poly_mul([Q(-2), Q(0), Q(1)], [Q(-1, 2), Q(1)])
 assert fractional_head[-1] == 1 and any(c.denominator != 1 for c in fractional_head)
-transport_coeffs = [alpha, (Q(0), Q(0)), below, alpha]
-transport_root_preserved = eval_poly(split, alpha) == (Q(0), Q(0))
+transport_coeffs = [[Q(0), Q(1)], [], [Q(0), Q(0), Q(1)], [Q(0), Q(1)]]
+transport_remainders = [rem(c, split) for c in transport_coeffs]
+transport_preserves = all(eval_poly(c, alpha) == eval_poly(r, alpha)
+                          for c, r in zip(transport_coeffs, transport_remainders))
+transport_changes_storage = (transport_coeffs[2] == [Q(0), Q(0), Q(1)]
+                             and transport_remainders[2] == [Q(2)])
 candidate_roots = [neg(alpha), alpha, (Q(3), Q(0))]
 derivative = [i * c for i, c in enumerate(head)][1:]
 
@@ -251,9 +255,10 @@ expected = [
     f"{str(eval_poly(high_remainder, alpha) == eval_poly(high, alpha)).lower()})",
     f"some ({len(transport_coeffs) - 1}, {len(transport_coeffs) - 1}, "
     f"{len(transport_coeffs) - 1}, "
-    f"{str(transport_coeffs[1] == (Q(0), Q(0))).lower()}, "
-    f"{str(transport_root_preserved).lower()}, "
-    f"{str(transport_root_preserved).lower()}, {str(sign(alpha) == 1).lower()})",
+    f"{str(not transport_remainders[1]).lower()}, "
+    f"{str(transport_preserves).lower()}, "
+    f"{str(transport_preserves).lower()}, "
+    f"{str(transport_changes_storage).lower()}, {str(sign(alpha) == 1).lower()})",
 ]
 
 run = subprocess.run(

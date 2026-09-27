@@ -433,6 +433,10 @@ def Element.toValue {context : Nat} {d : Root context} (a : Element d) : Value d
     change ∃ b : Element d, b.value = a.value
     exact ⟨a, rfl⟩⟩
 
+theorem Element.toValue_val {context : Nat} {d : Root context}
+    (a : Element d) : a.toValue.val = a.value := by
+  simp [Element.toValue]
+
 theorem Element.toValue_eq_iff {context : Nat} {d : Root context}
     (a b : Element d) : a.toValue = b.toValue ↔ Element.equal a b = true := by
   rw [Element.equal_iff]

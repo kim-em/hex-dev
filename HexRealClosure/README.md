@@ -96,10 +96,11 @@ polynomial. It also checks extended gcd and differentiation.
 `Element.transportPoly`, `rebindPoly` and `refinePoly` move every packed
 coefficient through a checked root or context change. The companion proves
 zero reflection, degree preservation and coefficientwise value preservation.
-`polyDenote` gives all three transported polynomials the same polynomial over
-the shared canonical real-algebraic field, even when their stored coefficient
-representations differ. A runnable factor-split example checks the three
-paths, including an interior zero coefficient.
+`polyDenote` maps `polyValue` into the shared canonical real-algebraic field.
+All three transported polynomials have the same image there, even when their
+stored coefficient representations differ. A runnable factor-split example
+checks the three paths, including an interior zero coefficient and a square
+coefficient that becomes constant after the split.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and

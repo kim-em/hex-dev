@@ -82,8 +82,9 @@ setup_fixed_benchmark runPoly where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 
-/-- Functional timing anchor for transporting a degree-three polynomial of
-packed coefficients through a checked cofactor split and context rebind. -/
+/-- Functional timing anchor for the full descriptor validation, cofactor
+split, context rebind and polynomial transport path, including selected-root
+enumeration inside coefficient packing. -/
 def runTransport : Unit → IO UInt64 := fun _ => do
   let some input ← rawRef.get
     | throw (IO.userError "transport benchmark: missing input")
@@ -94,18 +95,18 @@ def runTransport : Unit → IO UInt64 := fun _ => do
     | throw (IO.userError "transport benchmark: split rejected")
   let alpha : Element d := Element.ofPoly x
   let zero : Element d := Element.ofPoly (x * x - DensePoly.C 2)
-  let low : Element d := Element.ofPoly (x - DensePoly.C 3)
-  let p : DensePoly (Element d) := DensePoly.ofCoeffs #[alpha, zero, low, alpha]
+  let square : Element d := Element.ofPoly (x * x)
+  let p : DensePoly (Element d) := DensePoly.ofCoeffs #[alpha, zero, square, alpha]
   let encoded := Element.transportPoly r.encoding p
   let rebound := Element.rebindPoly r.binding encoded
   let refined := Element.refinePoly r p
   if encoded.natDegree == 3 && rebound.natDegree == 3 &&
       refined.natDegree == 3 && (refined.coeff 1) == 0 &&
-      (rebound.coeff 0).value == alpha.value &&
-      (refined.coeff 3).value == alpha.value then
+      (p.coeff 2).polynomial.natDegree == 2 &&
+      (refined.coeff 2).polynomial.natDegree == 0 then
     return 1
   else
-    throw (IO.userError "transport benchmark: value mismatch")
+    throw (IO.userError "transport benchmark: unexpected polynomial shape")
 
 setup_fixed_benchmark runTransport where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
