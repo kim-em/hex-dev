@@ -308,6 +308,95 @@ def prepare (n : Nat) : IO Query := do
 
 end Successive
 
+namespace ThirdLevel
+
+open Successive
+abbrev Third := RationalFn Second
+
+private def evalFirst (f : First) : Rat := f.num.eval 2 / f.den.eval 2
+
+private def evalSecond (f : Second) : Rat :=
+  let polynomial (p : DensePoly First) :=
+    p.coeffs.foldr (fun c acc => evalFirst c + (33/16 : Rat) * acc) 0
+  polynomial f.num / polynomial f.den
+
+structure Entry (source : Approximation First) where
+  subject : Second
+  width : Rat
+  progress : Acc (Next (Real.approxAttempt source subject (Real.requestWidth width))) 0
+
+private def entry (source : Approximation First) (f : Second) (k : Nat) : IO (Entry source) := do
+  let δ := Real.precision k
+  match h : Real.approxAttempt source f (Real.requestWidth δ) (k + 3) with
+  | none => throw (IO.userError "third-level coefficient witness failed")
+  | some b =>
+    let value := evalSecond f
+    unless b.lower ≤ value && value ≤ b.upper && b.width ≤ δ do
+      throw (IO.userError "third-level coefficient enclosure failed")
+    return ⟨f, δ, acc_of_success _ (k + 3) b h 0 (by omega)⟩
+
+private def coefficient (source : Approximation First)
+    (entries : Array (Entry source × Entry source)) (c : Second) (δ : Rat) : Bounds :=
+  match entries[δ.den.log2]? with
+  | some pair =>
+    if c = pair.1.subject && δ = pair.1.width then
+      Real.approx source pair.1.subject pair.1.width pair.1.progress
+    else if c = pair.2.subject && δ = pair.2.width then
+      Real.approx source pair.2.subject pair.2.width pair.2.progress
+    else .singleton (evalSecond c)
+  | none => .singleton (evalSecond c)
+
+structure Query where
+  source : Approximation Second
+  subject : Third
+  width : Rat
+  progress : Acc (Next (Real.approxAttempt source subject (Real.requestWidth width))) 0
+
+def run (q : Query) : Rat × Rat :=
+  let b := Real.approx q.source q.subject q.width q.progress
+  (b.lower, b.upper)
+
+/-- X₃ + (X₂-X₁), at X₁=2, X₂=33/16, X₃=2⁻ⁿ-1/16.
+Every coefficient request executes its lower-level approximation searches. -/
+def prepare (n : Nat) : IO Query := do
+  let δ := Real.precision n
+  -- Retain the first-level entries through n+11. The new second-level
+  -- constant is fixed; all second-level witnesses below are checked anew.
+  let base ← Successive.prepare (n + 8)
+  let source : Approximation First := { base.source with constant := window (33/16) }
+  let f := base.subject
+  unless evalSecond f == 1/16 do
+    throw (IO.userError "third-level coefficient reference value failed")
+  let mut entries := #[]
+  for k in [:n + 4] do
+    entries := entries.push (← entry source f k, ← entry source 1 k)
+  let subject : Third := RationalFn.X + RationalFn.C f
+  unless subject.num.coeffs == #[f, 1] && subject.den.coeffs == #[1] do
+    throw (IO.userError "unexpected third-level polynomial coefficients")
+  let a : Approximation Second := ⟨coefficient source entries, window (δ - 1/16)⟩
+  for k in [:n + 4] do
+    let width := Real.precision k
+    for c in subject.num.coeffs ++ subject.den.coeffs do
+      unless entries[width.den.log2]?.any (fun p =>
+          (c == p.1.subject && width == p.1.width) ||
+          (c == p.2.subject && width == p.2.width)) do
+        throw (IO.userError "third-level request lacks a search witness")
+  unless (Real.approxAttempt a subject (Real.requestWidth δ) n).isNone &&
+      (Real.approxAttempt a subject (Real.requestWidth δ) (n + 1)).isSome do
+    throw (IO.userError "unexpected third-level separation precision")
+  match h : Real.approxAttempt a subject (Real.requestWidth δ) (n + 3) with
+  | none => throw (IO.userError "third-level outer witness failed")
+  | some b =>
+    unless b.lower ≤ δ && δ ≤ b.upper && b.width ≤ δ do
+      throw (IO.userError "third-level outer enclosure failed")
+    let q : Query := ⟨a, subject, δ, acc_of_success _ (n + 3) b h 0 (by omega)⟩
+    let (lo, hi) := run q
+    unless lo == δ / 2 && hi == 3 * δ / 2 do
+      throw (IO.userError "third-level total approximation failed")
+    return q
+
+end ThirdLevel
+
 -- Preparation checks exact containment and width, and verifies that all requests
 -- up to the outer witness have cached termination witnesses, avoiding the fallback.
 #eval do
@@ -332,6 +421,21 @@ initialize do
       paramSchedule := .custom #[4, 6, 8, 10, 12, 14, 16, 18],
       targetInnerNanos := 4000000000, maxSecondsPerCall := 60 }
     Successive.prepare successiveApproximation
+
+def thirdApproximation (q : ThirdLevel.Query) : Rat × Rat := ThirdLevel.run q
+
+-- Mode 1: outer trial k costs B₂(k)+37 bound operations, where
+-- B₂(k)=(k+2)(7k+55)/2 is the second-level search. Each constant coefficient
+-- costs 15 operations across two levels, and the outer trial adds 7.
+-- Summing through k=n+1 gives (n+2)(7n²+121n+666)/6. Unit operation weights
+-- model small-operand scaling, including one-limb GMP arithmetic.
+initialize do
+  registerSearch ``thirdApproximation "(n + 2) * (7 * n * n + 121 * n + 666) / 6"
+    (fun n => (n + 2) * (7 * n * n + 121 * n + 666) / 6)
+    { config with
+      paramSchedule := .custom #[4, 6, 8, 10, 12, 14, 16, 18],
+      targetInnerNanos := 4000000000, maxSecondsPerCall := 60 }
+    ThirdLevel.prepare thirdApproximation
 
 end Hex.OrderedFnBench
 
