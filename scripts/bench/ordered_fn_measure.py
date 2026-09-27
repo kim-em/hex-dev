@@ -75,10 +75,10 @@ def main():
                    "lean_num_threads": os.environ["LEAN_NUM_THREADS"],
                    "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
                    "executable_sha256": hashlib.sha256(exe.read_bytes()).hexdigest()}
-        (args.output / "context.json").write_text(json.dumps(context, indent=2) + "\n")
         if args.paired_arithmetic:
             context["command"] = [sys.executable, __file__, "--output", str(args.output),
                                   "--paired-arithmetic"]
+        (args.output / "context.json").write_text(json.dumps(context, indent=2) + "\n")
         returncode = None
         try:
             if args.paired_arithmetic:

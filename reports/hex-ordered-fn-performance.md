@@ -528,3 +528,47 @@ the bound-operation count is twice the coefficient-call count plus half the
 argument-call count. At n=18 the depth-two workload makes 61 searches and
 1810 bound operations; the depth-three workload makes 831 searches and
 17040 bound operations. Preparation and its witness checks are excluded.
+
+## Canonical arithmetic comparison
+
+`subtraction` and `comparison` use identical prepared operands Xⁿ and −Xⁿ.
+Both execute the existing canonical `RationalFn` subtraction. The baseline
+consumes the resulting numerator's stored coefficient-array size; comparison
+instead scans for the sign and returns the ordering. Both results have a
+constant-size checksum. These different outputs isolate the cost of ordering
+on top of arithmetic; their hashes are not an equivalence check.
+
+The [64 samples](data/hex-ordered-fn/arithmetic/paired.jsonl) use four
+trial-major repetitions, adjacent arms and alternating AB/BA order at each
+parameter, with one-second tuning targets. All batches completed, lasting
+0.866–0.949 s. Preparation is outside the operation timer. All samples are
+retained; no repeat or host-load exclusion was used. The
+[schedule](data/hex-ordered-fn/arithmetic/schedule.json) and
+[context](data/hex-ordered-fn/arithmetic/context.json) identify CPU 83, source
+`da4ce7c5b3882394b580d032533fa52f29bb90a1`, and matching executable hashes
+before and after collection. That measured source remains on the
+`issue-10376-depth` branch; its commit-message amendment changed no files.
+
+| Degree | Subtraction median | Comparison median | Median paired comparison/subtraction ratio |
+| ---: | ---: | ---: | ---: |
+| 128 | 113.384 µs | 113.431 µs | 1.000 |
+| 256 | 221.612 µs | 221.777 µs | 1.002 |
+| 512 | 440.110 µs | 441.868 µs | 1.003 |
+| 1024 | 877.715 µs | 869.448 µs | 0.999 |
+| 2048 | 1744.419 µs | 1766.579 µs | 1.009 |
+| 4096 | 3497.815 µs | 3534.306 µs | 1.008 |
+| 8192 | 6996.975 µs | 7052.168 µs | 1.008 |
+| 16384 | 14024.421 µs | 14094.413 µs | 1.005 |
+
+The observed total costs are close on this family. Individual paired ratios
+range from 0.962 to 1.061; this run does not resolve the small incremental
+scan cost reliably or establish a speedup. It is a direct comparison with
+existing arithmetic, consistent with the profile's attribution to canonical
+normalization. It is not the downstream clean/eager selected-root ablation.
+
+Reproduce with:
+
+```sh
+python3 scripts/bench/ordered_fn_measure.py --output /tmp/ordered-fn-arithmetic --paired-arithmetic
+.lake/build/bin/hexorderedfn_bench sizes
+```
