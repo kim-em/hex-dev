@@ -9,6 +9,7 @@ public import HexNumberFieldMathlib.AdjoinRoot
 public import HexRCF.RealCoefficients.Coefficients
 public import HexRCF.RealCoefficients.LiteralSign
 public import HexBerlekampZassenhausMathlib.FactorSoundness
+public import HexBerlekampZassenhausMathlib.FactorTransport
 public import HexRootsMathlib.Conjugate
 
 public section
@@ -23,6 +24,21 @@ theorem checkedIrreducible (p : ZPoly) (w : ZPoly.IrredWitness)
     ZPoly.CheckedIrreducible p :=
   ⟨(ZPoly.isIrreducible_iff p).mpr
     (ZPoly.irreducible_of_checkIrredWitness p w h), hd⟩
+
+/-- Balanced primitive polynomials may have no irreducible reduction modulo
+any single prime. Their finite multi-prime degree-obstruction certificate
+supplies the same checked field instance without replaying factorization. -/
+theorem checkedIrreducibleMultiPrime (p : ZPoly)
+    (cert : ZPolyIrreducibilityCertificate)
+    (h : HexBerlekampZassenhausMathlib.checkMultiPrimeCert p cert = true) :
+    ZPoly.CheckedIrreducible p := by
+  have hirred := HexBerlekampZassenhausMathlib.zpolyIrreducible_of_checkMultiPrimeCert
+    p cert h
+  have hdegree : 0 < p.natDegree := by
+    simp only [HexBerlekampZassenhausMathlib.checkMultiPrimeCert, Bool.and_eq_true,
+      decide_eq_true_eq] at h
+    exact h.1.2
+  exact ⟨(ZPoly.isIrreducible_iff p).mpr hirred, hdegree⟩
 
 /-- Rebuild a selected root directly from printable square data. -/
 def literalRep (p : ZPoly) (s : DyadicSquare)

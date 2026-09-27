@@ -150,7 +150,8 @@ def build [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     [ZPoly.CheckedIrreducible p] {Ctx : Type u} [DecidableEq Ctx]
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
-    (formula : RealFormula.QF (n + 1)) (context : Ctx) (precision : Nat) :
+    (formula : RealFormula.QF (n + 1)) (context : Ctx) (precision : Nat)
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) :
     Option (Result p s hw hp Ctx (n + 1)) :=
   let rep := Field.literalRep p s hw hp
   let hrep := Field.literalRep_mk p s hw hp
@@ -171,7 +172,8 @@ def build [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
           SignInputs.rootQueries FieldDecision.point radical.core isolation
             (rootSigns.entries.map fun row i => row.evidence[i]) ++
           SignInputs.openSamples FieldDecision.point isolation
-            (formula.polys.map (FieldSpecialize.literalPolynomial values))
+            (formula.polys.map (FieldSpecialize.literalPolynomial values)) ++
+          extraSignKeys
         match buildTable p s hw hp keys with
         | none => none
         | some signs => some ⟨radical, isolation, rootSigns, signs⟩

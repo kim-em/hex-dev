@@ -543,6 +543,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.RootAliases, `HexRCF.RealCoefficients.Interpret,
     `HexRCF.RealCoefficients.Formula, `HexRCF.RealCoefficients.Field,
     `HexRCF.RealCoefficients.LiteralSign,
+    `HexRCF.RealCoefficients.CommonPresentation,
     `HexRCF.RealCoefficients.FieldSpecialize,
     `HexRCF.RealCoefficients.SignInputs,
     `HexRCF.RealCoefficients.FieldCarrier, `HexRCF.RealCoefficients.Carrier,
@@ -559,7 +560,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.CubeTwo,
     `HexRCF.RealCoefficients.Selected,
     `HexRCF.RealCoefficients.Tactic,
-    `HexRCF.RealCoefficients.CellFormula]
+    `HexRCF.RealCoefficients.CellFormula].map Glob.one
 
 -- Optional semantic results whose shared foundation is owned by #10389.
 @[default_target]

@@ -7,6 +7,7 @@ module
 
 public import HexRCF.RealCoefficients.Field
 public import HexRCF.RealCoefficients.RootAliases
+public import HexRCF.RealCoefficients.CommonPresentation
 
 public section
 
@@ -303,6 +304,57 @@ theorem flipped_values :
   rw [coord3_value, coord2_value]
   have hpos : 0 < Real.sqrt 2 := by positivity
   exact ⟨h3, h2, by rw [h2]; linarith⟩
+
+def sqrt3Polynomial : DensePoly Rat := DensePoly.ofList [-3, 0, 1]
+def sqrt2Polynomial : DensePoly Rat := DensePoly.ofList [-2, 0, 1]
+
+/-- The literal common coordinates pass the finite source equations. These
+checks alone cannot choose between the positive and negative conjugates. -/
+theorem literal_equations :
+    CommonPresentation.checkEquation sqrt3Polynomial
+      (coord3 square squareWitness squarePrecision) = true ∧
+    CommonPresentation.checkEquation sqrt2Polynomial
+      (coord2 square squareWitness squarePrecision) = true := by
+  constructor <;> decide_cbv
+
+/-- Reordering the source polynomials without reordering their coordinates
+is rejected before any root-neighborhood evidence is considered. -/
+theorem swapped_equation_rejected :
+    CommonPresentation.checkEquation sqrt2Polynomial
+      (coord3 square squareWitness squarePrecision) = false := by
+  decide_cbv
+
+def sqrt3Square : DyadicSquare := ⟨(Dyadic.ofInt 7094) >>> (12 : Int), 0, 10⟩
+def sqrt2Square : DyadicSquare := ⟨(Dyadic.ofInt 5793) >>> (12 : Int), 0, 10⟩
+
+theorem sqrt3SquareWitness : atomWitness (DensePoly.ofList [-3, 0, 1]) sqrt3Square := by
+  decide +kernel
+
+theorem sqrt2SquareWitness : atomWitness (DensePoly.ofList [-2, 0, 1]) sqrt2Square := by
+  decide +kernel
+
+/-- A swapped source is rejected independently of the sign-table contents. -/
+theorem swapped_entry_rejected
+    (table : LiteralSign.Table
+      (PolyQuot quartic (SimpleRoot.ofSquare quartic square
+        squareWitness squarePrecision))) :
+    CommonPresentation.checkEntry squareWitness squarePrecision table
+      sqrt2Polynomial sqrt2Square (coord3 square squareWitness squarePrecision) = false := by
+  simp [CommonPresentation.checkEntry, swapped_equation_rejected]
+
+/-- The empty presentation has no source-to-coordinate obligations. -/
+theorem empty_presentation
+    (table : LiteralSign.Table
+      (PolyQuot quartic (SimpleRoot.ofSquare quartic square
+        squareWitness squarePrecision)))
+    (sourcePolynomials : Fin 0 → DensePoly Rat)
+    (sourceSquares : Fin 0 → DyadicSquare)
+    (coordinates : Fin 0 → PolyQuot quartic
+      (SimpleRoot.ofSquare quartic square squareWitness squarePrecision)) :
+    CommonPresentation.checkPresentation squareWitness squarePrecision table
+      sourcePolynomials sourceSquares coordinates =
+        Field.checkSignTable quartic square squareWitness squarePrecision table := by
+  simp [CommonPresentation.checkPresentation]
 
 /-- info: 'Hex.RCF.CommonFieldPresentation.square_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

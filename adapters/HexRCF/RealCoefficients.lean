@@ -13,6 +13,7 @@ public import HexRCF.RealCoefficients.Coefficients
 public import HexRCF.RealCoefficients.Specialize
 public import HexRCF.RealCoefficients.Formula
 public import HexRCF.RealCoefficients.Field
+public import HexRCF.RealCoefficients.CommonPresentation
 public import HexRCF.RealCoefficients.LiteralSign
 public import HexRCF.RealCoefficients.FieldSpecialize
 public import HexRCF.RealCoefficients.SignInputs
