@@ -1739,6 +1739,10 @@ lean_exe hexrationalfn_bench where
   srcDir := "bench"
   root := `HexRationalFn.Bench
 
+lean_exe hexorderedfn_emit_real_fixtures where
+  srcDir := "conformance"
+  root := `HexOrderedFn.EmitRealFixtures
+
 lean_exe hexorderedfn_emit_fixtures where
   srcDir := "conformance"
   root := `HexOrderedFn.EmitFixtures

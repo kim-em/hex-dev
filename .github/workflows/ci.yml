@@ -397,7 +397,7 @@ jobs:
             HexConformance HexMvFactorizationTests NautyFFI/nautyffi_tests hextruncatedseries_emit_fixtures \
             hexmvpoly_emit_fixtures hexrealformula_emit_fixtures hexsparsepoly_emit_fixtures \
             hexmodular_emit_fixtures hexpolyzgcd_emit_fixtures \
-            hexpolysmith_emit_fixtures hexrationalfn_emit_fixtures hexorderedfn_emit_fixtures \
+            hexpolysmith_emit_fixtures hexrationalfn_emit_fixtures hexorderedfn_emit_fixtures hexorderedfn_emit_real_fixtures \
             hexdeterminantalideal_emit_fixtures \
             hexpoly_emit_fixtures hexpolyfp_emit_fixtures \
             hexberlekamp_emit_fixtures \
