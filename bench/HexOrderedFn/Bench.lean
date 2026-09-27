@@ -437,6 +437,78 @@ initialize do
       targetInnerNanos := 4000000000, maxSecondsPerCall := 60 }
     ThirdLevel.prepare thirdApproximation
 
+namespace Sizes
+
+structure Maximum where
+  numerator : Nat := 0
+  denominator : Nat := 0
+
+private def bits (n : Nat) : Nat := if n = 0 then 0 else n.log2 + 1
+
+private def rational (s : Maximum) (q : Rat) : Maximum :=
+  ⟨max s.numerator (bits q.num.natAbs), max s.denominator (bits q.den)⟩
+
+private def bound (s : Maximum) (b : Bounds) : Maximum :=
+  rational (rational (rational s b.lower) b.upper) b.width
+
+/-- Inspect actual provider bounds, every Horner accumulator and product, and
+quotient bounds. Evaluating polynomial suffixes exposes the existing Horner
+intermediates without introducing a second enclosure implementation. Sizes are
+for stored reduced rational endpoints and widths, not GMP scratch buffers. -/
+private def inspect {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    (s : Maximum) (a : Approximation K) (f : RationalFn K) (last : Nat) : Maximum := Id.run do
+  let mut s := s
+  for k in [:last + 1] do
+    let δ := Real.precision k
+    let x := a.constant δ
+    s := bound s x
+    for p in #[f.num, f.den] do
+      for c in p.coeffs do
+        s := bound s (a.coeff c δ)
+      for i in [:p.coeffs.size + 1] do
+        let suffix := DensePoly.ofCoeffs (p.coeffs.extract i p.coeffs.size)
+        let acc := Real.enclose a suffix δ
+        s := bound s acc
+        if i > 0 then s := bound s (x.mul acc)
+    if let some b := (Real.enclose a f.num δ).div? (Real.enclose a f.den δ) then
+      s := bound s b
+  return s
+
+private def emit (depth n searches coefficients constants operations : Nat)
+    (s : Maximum) : IO Unit :=
+  IO.println (Lean.Json.mkObj [
+    ("depth", Lean.toJson depth), ("precision", Lean.toJson n),
+    ("searches", Lean.toJson searches), ("coefficient_calls", Lean.toJson coefficients),
+    ("constant_calls", Lean.toJson constants), ("bound_operations", Lean.toJson operations),
+    ("max_numerator_bits", Lean.toJson s.numerator),
+    ("max_denominator_bits", Lean.toJson s.denominator)]).compress
+
+def run : IO UInt32 := do
+  for n in [4, 6, 8, 10, 12, 14, 16, 18] do
+    let q₂ ← Successive.prepare n
+    let first : First := -RationalFn.X
+    let s₂ := inspect {} Successive.inner first (n + 1)
+    let s₂ := inspect s₂ Successive.inner 1 0
+    let s₂ := inspect s₂ q₂.source q₂.subject (n + 1)
+    emit 2 n (1 + 3 * (n + 2)) ((n + 2) * (3 * n + 23) / 2)
+      ((n + 2) * (n + 9)) ((n + 2) * (7 * n + 55) / 2) s₂
+    let q₃ ← ThirdLevel.prepare n
+    let base ← Successive.prepare (n + 8)
+    let lower : Approximation First := { base.source with constant := window (33/16) }
+    let s₃ := inspect {} Successive.inner first (n + 2)
+    let s₃ := inspect s₃ Successive.inner 1 0
+    let s₃ := inspect s₃ lower base.subject (n + 2)
+    let s₃ := inspect s₃ lower 1 0
+    let s₃ := inspect s₃ q₃.source q₃.subject (n + 1)
+    emit 3 n (1 + (n + 2) * (3 * n + 29) / 2)
+      ((n + 2) * (n * n + 17 * n + 92) / 2)
+      ((n + 2) * (n * n + 19 * n + 114) / 3)
+      ((n + 2) * (7 * n * n + 121 * n + 666) / 6) s₃
+  return 0
+
+end Sizes
+
 end Hex.OrderedFnBench
 
-def main (args : List String) : IO UInt32 := LeanBench.Cli.dispatch args
+def main (args : List String) : IO UInt32 :=
+  if args == ["sizes"] then Hex.OrderedFnBench.Sizes.run else LeanBench.Cli.dispatch args
