@@ -14,8 +14,8 @@ public meta import HexSignDet.Conformance
 
 public section
 
-/-! Literal graph replay and rejection tests. Computational conformance owner:
-`HexSignDet`. The successful probes run through the ordinary kernel. -/
+/-! Literal graph replay and rejection tests. The successful probes run through
+the ordinary kernel. -/
 namespace Hex.SignDet.CrossCheck
 open Hex.SignDet.Conformance
 

@@ -18,7 +18,6 @@ public section
 
 /-! Field frontend conformance: infinities, invalid domains, prepared reuse,
 literal context bindings and positive rational/integer scaling agreement.
-Computational conformance owner: `HexSturm`.
 The rational/integer comparisons are runtime validation, not a backend theorem. -/
 namespace Hex.Sturm.Conformance
 

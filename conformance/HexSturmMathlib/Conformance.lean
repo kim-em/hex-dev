@@ -11,7 +11,6 @@ public import HexRealRootsMathlib.TarskiTests
 public section
 
 /-! Universal instantiations of field frontend domain and replay correspondence.
-Computational conformance owner: `HexSturm`.
 No runtime comparison is used to prove a semantic query value. -/
 namespace HexSturmMathlib.Conformance
 
