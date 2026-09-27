@@ -493,6 +493,14 @@ private def yunConstant : Bool :=
 #guard yunZero
 #guard yunConstant
 
+private def yunReplayEdges : Bool :=
+  Yun.check (0 : DensePoly Rat) (Yun.decompose 0) &&
+    Yun.check (DensePoly.C (7 / 3 : Rat))
+      (Yun.decompose (DensePoly.C (7 / 3 : Rat))) &&
+    !(Yun.check (0 : DensePoly Rat) (.factors 1 #[]))
+
+#guard yunReplayEdges
+
 /-- Squarefree factors are grouped at multiplicity one. -/
 private def yunSquarefree : Option (Rat × Array (Array Rat × Nat)) :=
   let f : DensePoly Rat := DensePoly.C 2 * (x - DensePoly.C 1) *

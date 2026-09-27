@@ -126,9 +126,12 @@ ordered field. `Yun.decomposeRaw` runs the same recurrence on packed tower
 coefficients, where stored equality need not be value equality. The zero and
 nonzero-constant cases have direct proofs, and runnable checks cover a
 non-monic input, gaps in multiplicities and coefficients in `ℚ(√2)`.
-The general squarefreeness, coprimality, reconstruction and multiplicity
-correspondence theorems are not yet available, so these outputs are not
-certified decompositions.
+The optional `Yun.check` recomputes the product and degree, checks positive
+ordered multiplicities and nonconstant monic factors, and checks squarefree and
+pairwise gcd conditions. Core lemmas extract those accepted conditions. The
+general proof that `decompose` passes replay and that accepted factors have
+the claimed mathematical root multiplicities is not yet available, so
+unchecked outputs are not certified decompositions.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and

@@ -148,7 +148,7 @@ theorem check_reconstruct {K : Type u} [Lean.Grind.Field K]
   simp only [check, Bool.and_eq_true, decide_eq_true_eq] at h
   grind
 
-/-- Replay requires strictly increasing positive multiplicity labels. -/
+/-- Replay requires strictly increasing multiplicity labels. -/
 theorem check_multiplicities {K : Type u} [Lean.Grind.Field K]
     [LE K] [LT K] [Std.IsPreorder K]
     [Lean.Grind.OrderedRing K] [DecidableEq K]
