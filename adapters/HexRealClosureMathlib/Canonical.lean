@@ -19,7 +19,9 @@ namespace Hex.RealClosure
 algebraic number. Denominator clearing and the existing integer root list
 handle reducible rational defining polynomials. -/
 theorem Root.exists_canonical {context : Nat} (d : Root context) :
-    ∃ a : Hex.RealAlgebraicNumber, a.toReal = d.real := by
+    ∃ a : Hex.RealAlgebraicNumber,
+      a ∈ (Hex.ZPoly.clearDenominators d.raw.head).2.realAlgebraicRoots ∧
+      a.toReal = d.real := by
   let p := (Hex.ZPoly.clearDenominators d.raw.head).2
   have hvalue : (realPoly d.raw.head).eval d.real = 0 := by
     simpa using Expression.denote_head (d := d)
@@ -41,14 +43,19 @@ theorem Root.exists_canonical {context : Nat} (d : Root context) :
     rw [Polynomial.IsRoot.def, hscale, Polynomial.eval_mul, hvalue, mul_zero]
   have hcomplex : (HexRootsMathlib.toPolyℂ p).IsRoot (d.real : ℂ) :=
     HexRealRootsMathlib.isRoot_toPolyℂ (p := p) hroot
-  obtain ⟨a, _, ha⟩ := (Hex.ZPoly.mem_algebraicRoots_iff p hp (d.real : ℂ)).mpr hcomplex
+  obtain ⟨a, hmem, ha⟩ :=
+    (Hex.ZPoly.mem_algebraicRoots_iff p hp (d.real : ℂ)).mpr hcomplex
   have hreal : a.isReal = true := by
     rw [Hex.AlgebraicNumber.isReal_iff, ha]
     simp
-  refine ⟨Hex.RealAlgebraicNumber.ofAlgebraic a hreal, ?_⟩
-  change a.toComplex.re = d.real
-  rw [ha]
-  simp
+  let b := Hex.RealAlgebraicNumber.ofAlgebraic a hreal
+  refine ⟨b, ?_, ?_⟩
+  · apply (Hex.ZPoly.mem_realAlgebraicRoots p b).mpr
+    change a ∈ p.algebraicRoots
+    exact Array.mem_toList_iff.mp hmem
+  · change a.toComplex.re = d.real
+    rw [ha]
+    simp
 
 /-- A semantic canonical witness for the selected root. The executable
 conversion still has to select the matching entry of the finite root list. -/
@@ -56,7 +63,11 @@ noncomputable def Root.canonical {context : Nat} (d : Root context) :
     Hex.RealAlgebraicNumber := d.exists_canonical.choose
 
 theorem Root.canonical_real {context : Nat} (d : Root context) :
-    d.canonical.toReal = d.real := d.exists_canonical.choose_spec
+    d.canonical.toReal = d.real := d.exists_canonical.choose_spec.2
+
+theorem Root.canonical_mem {context : Nat} (d : Root context) :
+    d.canonical ∈ (Hex.ZPoly.clearDenominators d.raw.head).2.realAlgebraicRoots :=
+  d.exists_canonical.choose_spec.1
 
 namespace Expression
 
