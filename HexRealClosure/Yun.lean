@@ -19,7 +19,9 @@ public section
 The executable recurrence uses the ordinary dense-polynomial operations. The
 raw version supports tower coefficients whose stored equality is not value
 equality. The public version requires an ordered field, hence characteristic
-zero. Their correctness theorems belong in the Mathlib companion.
+zero. The zero, constant and squarefree producer proofs are Mathlib-free;
+the companion interprets accepted replay as mathematical factorization and
+root multiplicities. The repeated-factor producer invariant remains open.
 -/
 
 namespace Hex.RealClosure.Yun
