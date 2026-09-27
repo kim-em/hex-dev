@@ -27,6 +27,8 @@ ownership within that closure. The check also compares the Lake declarations
 that build the cactus executable, allowing edits confined to unrelated build
 helpers, plus a literal HexBasic precompile flag when HexGraphIso already
 forces that dependency to load natively through Lake shared-library dependencies.
+An AINTLIB requirement is independent when it is newly added at a fixed git
+revision and the graph driver's import closure contains no AINTLIB module.
 Prose under the library tree is edited often enough, and cannot move
 a curve, that making every docstring cost a sweep would either stop the prose
 being written or make regeneration routine enough to stop meaning anything.
@@ -96,6 +98,18 @@ def lakefile_texts_differ(before: str, after: str) -> bool:
     """Whether a lakefile edit changes the cactus executable's build."""
     old_blocks = graphiso_blocks(before)
     new_blocks = graphiso_blocks(after)
+    # AINTLIB supplies Hasse's theorem to the separate ECPP bridge. It has no
+    # runtime path to the cactus executable when that import closure excludes it.
+    hasse = new_blocks.get("require AINTLIB", "")
+    if ("require AINTLIB" not in old_blocks
+            and re.fullmatch(
+                r'require AINTLIB from git\s*'
+                r'"https://github\.com/CBirkbeck/AINTLIB\.git"\s*@\s*'
+                r'"[0-9a-f]{40}"',
+                freshness.strip_lean_comments(hasse).strip())
+            and (prefixes := graph_import_prefixes()) is not None
+            and "AINTLIB" not in prefixes and "HasseWeil" not in prefixes):
+        del new_blocks["require AINTLIB"]
     if set(old_blocks) != set(new_blocks):
         return True
     return any(new_blocks[name] != body for name, body in old_blocks.items())
