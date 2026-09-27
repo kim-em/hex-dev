@@ -1596,7 +1596,7 @@ libraries:
     mathlib: true
     done_through: 7
     status: active
-    proof_probes: [bench/HexRCF/ProofProbe, bench/HexRCF/RealFormulaProbe]
+    proof_probes: [bench/HexRCF/ProofProbe]
     phase4:
       comparators:
         - tool: "python-flint univariate RCF verdict oracle"

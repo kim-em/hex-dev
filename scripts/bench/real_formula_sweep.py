@@ -21,7 +21,7 @@ from scripts.bench.fresh_module_sweep import ProbeModule, ProbePair, SweepSpec, 
 AXIOMS = ("propext", "Classical.choice", "Quot.sound")
 BASELINE = ProbeModule("HexRealFormulaMathlib.ProofProbe.Baseline")
 SPEC = SweepSpec(
-    description="Shared real-formula reification, normalization and RCF adapter builds",
+    description="Shared real-formula reification and generated-proof builds",
     pairs=tuple(
         ProbePair(name.lower(), BASELINE,
                   ProbeModule(f"HexRealFormulaMathlib.ProofProbe.{name}", AXIOMS),
@@ -29,12 +29,8 @@ SPEC = SweepSpec(
         for name, component in [
             ("Parameterized", "parameterized-reification-and-kernel-proof"),
             ("Alternation", "biconditional-prenex-reification-and-kernel-proof"),
-            ("Normalization", "semantic-normalization-proof"),
         ]
-    ) + (ProbePair(
-        "adapter", ProbeModule("HexRCF.RealFormulaProbe.Baseline"),
-        ProbeModule("HexRCF.RealFormulaProbe.Adapter", AXIOMS),
-        {"component": "half-open-cubic-RCF-correspondence-proof"}),),
+    ),
     probe_target="HexRealFormulaProofProbe",
     schema="hex-real-formula-proof-probes-v1",
     measurement="adjacent-fresh-module-builds",

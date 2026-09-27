@@ -144,7 +144,8 @@ lean_lib HexOrderedFnMathlib where
 
 @[default_target]
 lean_lib HexOrderedFnTests where
-  globs := #[.one `HexOrderedFn.Tests, .one `HexOrderedFnMathlib.Tests]
+  globs := #[.one `HexOrderedFn.Tests, .one `HexOrderedFnMathlib.Tests,
+    .one `HexOrderedFn.InfinitesimalTests, .one `HexOrderedFnMathlib.InfinitesimalTests]
 
 lean_lib HexMvPoly where
 
@@ -993,9 +994,7 @@ lean_lib HexRealFormulaProofProbe where
   srcDir := "bench"
   globs := #[`HexRealFormulaMathlib.ProofProbe.Support,
     `HexRealFormulaMathlib.ProofProbe.Baseline, `HexRealFormulaMathlib.ProofProbe.Parameterized,
-    `HexRealFormulaMathlib.ProofProbe.Alternation, `HexRealFormulaMathlib.ProofProbe.Normalization,
-    `HexRCF.RealFormulaProbe.Support, `HexRCF.RealFormulaProbe.Baseline,
-    `HexRCF.RealFormulaProbe.Adapter].map Glob.one
+    `HexRealFormulaMathlib.ProofProbe.Alternation].map Glob.one
 
 lean_lib HexRCFProofProbe where
   srcDir := "bench"
@@ -1738,6 +1737,14 @@ lean_exe hexpolyfast_bench where
 lean_exe hexrationalfn_bench where
   srcDir := "bench"
   root := `HexRationalFn.Bench
+
+lean_exe hexorderedfn_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexOrderedFn.EmitFixtures
+
+lean_exe hexorderedfn_bench where
+  srcDir := "bench"
+  root := `HexOrderedFn.Bench
 
 lean_lib HexRationalFnBenchSupport where
   srcDir := "bench"

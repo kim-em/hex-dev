@@ -50,4 +50,12 @@ example : ¬(Prenex.quant .existsReal (.quant .forallReal (.matrix equal))).toPr
 example (ρ : Fin 1 → ℝ) : nested.toPrenex.toProp ρ ↔ nested.toProp ρ :=
   nested.toPrenex_correct ρ
 
+private def biconditional : Scoped 1 := .not (.iff
+  (.quant .existsReal (.matrix (.atom ⟨MvPoly.X 0 * MvPoly.X 1, .lt⟩)))
+  (.quant .forallReal (.matrix (.atom ⟨MvPoly.X 1 ^ 2 - MvPoly.X 0, .ge⟩))))
+
+example (ρ : Fin 1 → ℝ) :
+    biconditional.toPrenex.toProp ρ ↔ biconditional.toProp ρ :=
+  biconditional.toPrenex_correct ρ
+
 end Hex.RealFormula.MathlibConformance

@@ -7,11 +7,24 @@ containment, with integer signs explicitly related to Mathlib's
 `SignType.sign`. The full contract is in
 [hex-ordered-fn-mathlib](../SPEC/Libraries/hex-ordered-fn-mathlib.md).
 
+`Infinitesimal.embed` identifies rational functions with their Laurent series
+in the lexicographically ordered Hahn field. The coefficient scan equals the
+polynomial trailing coefficient; signs, normalization and comparisons agree
+with this embedding. Scoped `LinearOrder`, `IsStrictOrderedRing` and core
+ordered-ring instances make the rational-function field an ordered field.
+
+The indeterminate is positive and below every positive coefficient. Its
+reciprocal exceeds every integer. At the next level, the new indeterminate
+is below every natural power of the preceding one. `Hahn.mapHom` preserves
+support, lowest exponent, leading coefficient and order, and commutes with
+constant embeddings; `Infinitesimal.towerEmbed` gives the two-level model.
+
 Fix the Mathlib field's `Field.toGrindField` dictionary before forming a
-`RationalFn K`; the field dictionary indexes its carrier. The tests
-deliberately form their fractions under that dictionary, sharing the
-polynomial inputs with the computational fixtures. Computational tests
-separately exercise Lean core's rational field.
+`RationalFn K`; the field dictionary indexes its carrier. `HexRationalFnMathlib.coreField_eq`
+proves equality with the original core dictionary, allowing transport between
+successive carriers. The tests use this equality, together with the rational
+base case, to prove `δ < ε^n` for the carriers in the Mathlib-free test module.
+Other semantic tests form their fractions under the Mathlib-derived dictionary.
 
 `Real.eval` evaluates a stored canonical fraction by total real division. It
 is not an injective field homomorphism at an arbitrary subject.
@@ -39,7 +52,10 @@ here prove results for total searches with finite termination evidence.
 proof erasure on the separate core-field fixtures.
 
 Phase 1 remains incomplete. The generic Horner/quotient convergence proofs,
-universal progress, injective real evaluation and ordered-field instances,
-Laurent/Hahn interpretation, Liouville integration fixture, checked source
-transport, and separate Phase-4 proof evidence remain outstanding under
+universal progress, injective real evaluation and its ordered-field instances,
+Liouville integration fixture, checked source transport, and the remaining
+real-extension Phase-4 evidence remain outstanding under
 [#10376](https://github.com/kim-em/hex-dev/issues/10376).
+
+The ordinary-kernel tests check the model and order laws and audit their axiom
+dependencies. These theorem applications have no performance benchmark.

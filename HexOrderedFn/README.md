@@ -1,9 +1,29 @@
 # Ordered rational-function computations
 
-`HexOrderedFn` supplies exact rational bounds, Horner enclosure and per-query
-total refinement over the existing canonical `Hex.RationalFn` arithmetic. It
+`HexOrderedFn` supplies infinitesimal orders, exact rational bounds, Horner
+enclosure and per-query total refinement over the existing canonical `Hex.RationalFn` arithmetic. It
 imports neither Mathlib nor an interval library. The full contract is in
 [hex-ordered-fn](../SPEC/Libraries/hex-ordered-fn.md).
+
+`Infinitesimal.sign` takes a predecessor sign and scans the first nonzero
+numerator and denominator coefficients. `Infinitesimal.compare` compares by
+the sign of subtraction. `open scoped Hex.OrderedFn.Infinitesimal` enables
+`<` and `≤` on `RationalFn K`, using the predecessor order. No global order
+is imposed on the rational-function carrier. The same construction works
+successively on `RationalFn (RationalFn Rat)` and further levels. The real
+registration API, still outstanding, will use a distinct provider-indexed wrapper
+so an infinitesimal scope does not also order its real predecessor infinitesimally.
+
+```lean
+import HexOrderedFn
+open Hex Hex.OrderedFn
+open scoped Hex.OrderedFn.Infinitesimal
+
+def epsilon : RationalFn Rat := RationalFn.X
+def delta : RationalFn (RationalFn Rat) := RationalFn.X
+#eval decide (delta < RationalFn.C (epsilon ^ 3)) -- true
+#eval Infinitesimal.sign orderSign (1 / (epsilon - 1)) -- -1
+```
 
 `Oracle.Approximation` contains only computational coefficient and constant
 providers. `Approximation.ofConstant` starts over rational coefficients with
@@ -46,12 +66,17 @@ lake build HexOrderedFn HexOrderedFnTests +HexOrderedFn.Conformance
 
 Tests include negative denominator bounds, poles, non-dyadic rationals,
 zero-touching bounds, joint refinement, finite exhaustion, and compiled total
-sign and bound searches with earlier failed trials. Kernel proofs check the
-finite witnesses. These are regression tests, not Phase-4 measurements.
+sign and bound searches with earlier failed trials. Kernel proofs check the finite witnesses. Infinitesimal fixtures cover negative
+valuations, negative denominators, cancellation and three successive levels;
+`scripts/oracle/ordered_fn_z3.py` checks them with pinned Z3 RCF and exact
+rational specialization. `hexorderedfn_bench` measures sign scans, comparisons,
+degree, coefficient height and tower depth without importing Mathlib. Run it
+with `scripts/bench/ordered_fn_measure.py --output DIR`. The companion's
+mathematical proofs are checked by its ordinary-kernel tests.
 
 The library remains at phase 0: the complete Phase-1 API is not present.
 Universal progress from shrinking bounds and relative transcendence,
-ordered-field registration, infinitesimal extensions, provider/context
-certificate boundaries, Z3/exact conformance and performance evidence remain
+real ordered-field registration, provider/context certificate boundaries,
+Liouville integration and complete real-extension conformance/performance evidence remain
 outstanding under [#10376](https://github.com/kim-em/hex-dev/issues/10376).
 Per-query finite witnesses do not register a transcendental field.
