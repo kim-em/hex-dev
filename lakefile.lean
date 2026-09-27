@@ -585,7 +585,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.Tactic,
     `HexRCF.RealCoefficients.CellFormula].map Glob.one
 
--- Optional semantic results whose shared foundation is owned by #10389.
+-- Optional semantic results; selected-root proofs inherit the #10389 admission.
 @[default_target]
 lean_lib HexQuerySemantics where
   srcDir := "adapters"

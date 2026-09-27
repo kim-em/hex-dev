@@ -143,3 +143,13 @@ theorem check_pairwise_coprime (f : DensePoly Rat) (unit : Rat)
     (gcd_isUnit a.1 b.1 hnonzero hab)
 
 end Hex.RealClosure.Yun
+
+/-- info: 'Hex.RealClosure.Yun.check_product_polynomial' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.check_product_polynomial
+/-- info: 'Hex.RealClosure.Yun.check_factor_separable' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.check_factor_separable
+/-- info: 'Hex.RealClosure.Yun.check_pairwise_coprime' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.check_pairwise_coprime

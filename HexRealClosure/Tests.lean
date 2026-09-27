@@ -490,6 +490,18 @@ private def yunRejectOverlap : Bool :=
 
 #guard yunRejectOverlap
 
+/-- A rescaled factor can reconstruct correctly but is not monic. -/
+private def yunRejectNonmonic : Bool :=
+  let p : DensePoly Rat := x - DensePoly.C 1
+  let q : DensePoly Rat := x - DensePoly.C 2
+  let f := DensePoly.C 2 * p ^ 2 * q ^ 3
+  let entries := #[(DensePoly.C 2 * p, 2), (q, 3)]
+  Yun.reconstruct (1 / 2) entries == f &&
+    Yun.degreeSum entries == f.natDegree &&
+    !(Yun.check f (.factors (1 / 2) entries))
+
+#guard yunRejectNonmonic
+
 /-- Zero and nonzero constants have distinct Yun outputs. -/
 private def yunZero : Bool :=
   match Yun.decompose (0 : DensePoly Rat) with
