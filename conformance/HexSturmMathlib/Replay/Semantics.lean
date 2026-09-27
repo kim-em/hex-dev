@@ -13,7 +13,6 @@ public import HexPoly.InterpretTests
 public section
 
 /-! Semantic replay dependencies, separate from the fully proved acceptance probe.
-Computational conformance owner: `HexSturm`.
 These probes audit the exact #10389 admission dependencies and type-check the
 canonical and noninjective instantiations; they do not establish mathematical
 query correctness independently. The explicit `sorryAx` expectations must be

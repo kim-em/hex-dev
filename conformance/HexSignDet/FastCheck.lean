@@ -18,9 +18,9 @@ public meta import HexSignDet.Codec
 
 public section
 
-/-! Computational conformance owner: `HexSignDet`. Byte parsing is tested by
-compiled execution. Ordinary-kernel graph replay and axiom probes remain in
-CrossCheck; successful byte decoding retains that finite checker evidence. -/
+/-! Byte parsing is tested by compiled execution. Ordinary-kernel graph replay
+and axiom probes remain in CrossCheck; successful byte decoding retains that
+finite checker evidence. -/
 namespace Hex.SignDet.FastCheck
 open Lean
 open Hex.SignDet.Conformance

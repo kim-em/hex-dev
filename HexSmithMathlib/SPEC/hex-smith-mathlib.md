@@ -65,20 +65,17 @@ executable algorithm. Its computable projections, such as
 declarations are correspondence proofs checked by the kernel in the ordinary
 `HexSmithMathlib` build.
 
-For the correspondence API, `HexSmith` is the computational performance
-owner. The tactic has its own build-only proof probes and report; there is
-no Mathlib-importing benchmark executable.
+The tactic has its own build-only proof probes; there is no
+Mathlib-importing benchmark executable.
 
 ## Frontend implementation and validation
 
 The frontend is implemented in `HexSmithMathlib/Tactic.lean`, with list
 certificates owned by `HexSmith/Kernel.lean`. The soundness theorems accept
 arbitrary checked witnesses. Existing correspondence evidence applies only
-to that API; frontend conformance and performance have separate obligations.
-`libraries.yml` registers `bench/HexSmithMathlib/ProofProbe` and caps
-`done_through` at `3` until complete proof evidence passes (an already lower
-phase remains lower). The ordinary build includes the frontend tests through
-`HexStructuralTacticTests`.
+to that API. `libraries.yml` registers `bench/HexSmithMathlib/ProofProbe`;
+CI builds those probes, which is the frontend's Phase-4 requirement. The
+ordinary build includes the frontend tests through `HexStructuralTacticTests`.
 
 `scripts/bench/structural_tactic_probes.py` generates the complete named ladders
 with seed 10238, plus one 16×16 `Matrix.ofArray` fixture exercising the
