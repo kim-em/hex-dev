@@ -993,9 +993,7 @@ lean_lib HexRealFormulaProofProbe where
   srcDir := "bench"
   globs := #[`HexRealFormulaMathlib.ProofProbe.Support,
     `HexRealFormulaMathlib.ProofProbe.Baseline, `HexRealFormulaMathlib.ProofProbe.Parameterized,
-    `HexRealFormulaMathlib.ProofProbe.Alternation, `HexRealFormulaMathlib.ProofProbe.Normalization,
-    `HexRCF.RealFormulaProbe.Support, `HexRCF.RealFormulaProbe.Baseline,
-    `HexRCF.RealFormulaProbe.Adapter].map Glob.one
+    `HexRealFormulaMathlib.ProofProbe.Alternation].map Glob.one
 
 lean_lib HexRCFProofProbe where
   srcDir := "bench"

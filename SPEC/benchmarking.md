@@ -352,6 +352,12 @@ measure.
 
 ## Fresh-module proof evidence
 
+This evidence measures tactics, proof generators, their certificate checking,
+and the kernel computations they use.
+Ordinary mathematical theorem applications and instance-law proofs require
+correctness tests, not dedicated performance probes. Profile their compilation
+only when investigating an observed build-cost problem.
+
 Elaboration, tactic execution, emitted proof terms, and ordinary kernel
 checking are measured only by an external runner building fresh Lean modules.
 The module sources live recursively below a directory listed in the owning

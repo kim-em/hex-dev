@@ -25,6 +25,13 @@ namespace Hex.RCF.RealFormulaConformance
 open Hex.RealFormula Hex.RCF.RealFormula Qq
 
 private def cubic : ZPoly := DensePoly.ofCoeffs #[(-1 : Int), -1, 0, 1]
+
+example :
+    (ofSentence (.existsIoc (Dyadic.ofInt 1) (Dyadic.ofInt 2)
+      (.atom ⟨cubic, .eq⟩))).toProp Fin.elim0 ↔
+    (Sentence.existsIoc (Dyadic.ofInt 1) (Dyadic.ofInt 2)
+      (.atom ⟨cubic, .eq⟩)).toProp := ofSentence_correct _ _
+
 private def sparse : Poly 1 := MvPoly.X 0 ^ 7 - MvPoly.C 3 * MvPoly.X 0 + MvPoly.C 2
 
 #guard toPoly (ofPoly cubic) == cubic

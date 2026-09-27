@@ -213,9 +213,10 @@ merge terms and requires normalization; rational arithmetic costs are not
 unit cost. NNF is linear in the tree input, while frontend biconditional
 expansion and prenex conversion are output-sensitive and may duplicate
 subformulas. Report expanded tree size separately from shared DAG size.
-The companion's reification and semantic proofs, and the adapter in RCF, use
-fresh module `lake build` probes in their respective libraries with matched
-import baselines per [Phase 4](../../PLAN/Phase4.md), not Mathlib-importing LeanBench executables.
+The companion's reifier and generated proofs use fresh module `lake build`
+probes with matched import baselines per [Phase 4](../../PLAN/Phase4.md), not
+Mathlib-importing LeanBench executables. Applications of the normalization and
+RCF correspondence theorems belong to ordinary correctness tests, not timing probes.
 
 The manual introduces a parameterized polynomial inequality, shows its
 coordinate map and rational denominator clearing, then uses the same formula
