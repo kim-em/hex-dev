@@ -60,7 +60,7 @@ setup_fixed_benchmark runPacked where {
 }
 
 /-- Functional timing anchor for polynomial division over packed coefficients.
-The input is `(Y - √2)(Y + √2)` divided by `Y - √2`, with the selected root
+The input is `Y² - 2` divided by `Y - √2`, with the selected root
 from the test polynomial. The ten-second cap is an operational safeguard. -/
 def runPoly : Unit → IO UInt64 := fun _ => do
   let some input ← rawRef.get
@@ -70,7 +70,7 @@ def runPoly : Unit → IO UInt64 := fun _ => do
   let alpha : Element d := Element.ofPoly x
   let y : DensePoly (Element d) := DensePoly.ofCoeffs #[0, 1]
   let divisor := y - DensePoly.C alpha
-  let dividend := divisor * (y + DensePoly.C alpha)
+  let dividend := y * y - DensePoly.C 2
   let (quotient, remainder) := DensePoly.divMod dividend divisor
   if remainder.isZero && quotient.natDegree == 1 &&
       Element.equal (quotient.eval (0 : Element d)) alpha then

@@ -282,12 +282,28 @@ private def packedPolynomial : Option (Nat × Nat × Bool × Bool) := do
   let alpha : Element d := Element.ofPoly x
   let y : DensePoly (Element d) := DensePoly.ofCoeffs #[0, 1]
   let divisor := y - DensePoly.C alpha
-  let dividend := divisor * (y + DensePoly.C alpha)
+  let dividend := y * y - DensePoly.C 2
   let (quotient, remainder) := DensePoly.divMod dividend divisor
   return (dividend.natDegree, quotient.natDegree, remainder.isZero,
     Element.equal (quotient.eval (0 : Element d)) alpha)
 
 #eval packedPolynomial
 #guard packedPolynomial == some (2, 1, true, true)
+
+/-- Extended gcd and differentiation over packed coefficients use selected-root
+zero equality, including the coefficient `α² - 2`. -/
+private def packedEuclid : Option (Nat × Bool × Bool) := do
+  let d ← Root.validate 7 raw
+  let alpha : Element d := Element.ofPoly x
+  let y : DensePoly (Element d) := DensePoly.ofCoeffs #[0, 1]
+  let p := y * y - DensePoly.C 2
+  let q := y - DensePoly.C alpha
+  let eg := DensePoly.xgcd p q
+  return (eg.gcd.natDegree,
+    (eg.left * p + eg.right * q - eg.gcd).isZero,
+    Element.equal (p.derivative.eval alpha) (2 * alpha))
+
+#eval packedEuclid
+#guard packedEuclid == some (1, true, true)
 
 end Hex.RealClosure.Tests
