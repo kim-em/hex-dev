@@ -26,7 +26,8 @@ DEFAULT = ROOT / "conformance-fixtures/HexOrderedFn/infinitesimal.jsonl"
 REQUIRED = {f"level{d}/{op}/{i}" for d, count in ((1, 12), (2, 12), (3, 6))
             for op in ("sign", "compare") for i in range(count)} | {
     f"normalize/{i}/{a}" for i in (0, 1, 3, 8) for a in (-3, -1, 1, 3)} | {
-    "normalize/nonmonic", "normalize/negative-factor"}
+    "normalize/nonmonic", "normalize/negative-factor",
+    "paper/reciprocal", "paper/comparison-rational"}
 
 
 def require(condition, message):

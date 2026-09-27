@@ -309,22 +309,24 @@ def prepare (n : Nat) : IO Query := do
 end Successive
 
 -- Preparation checks exact containment and width, and verifies that all requests
--- up to the outer witness execute cached inner searches rather than the fallback.
+-- up to the outer witness have cached termination witnesses, avoiding the fallback.
 #eval do
   for n in [0, 1, 4, 8, 16] do
     discard <| Hex.OrderedFnBench.Successive.prepare n
 
-/-- The outer search executes one inner approximation search per nonconstant
+/-- The outer search executes one inner approximation search per
 coefficient request; prepared witnesses never replace those searches. -/
 def successiveApproximation (q : Successive.Query) : Rat × Rat := Successive.run q
 
--- Mode 2 upper bound O(n⁴): O(n) outer trials each request an inner search
--- of at most O(n) trials, with O(n)-bit rational operands. The same published
--- quadratic integer-operation bounds used above cover each innermost trial.
+-- Mode 1: count exact bound operations, including both search levels. There
+-- are (n+2)(n+3)/2 negative-X trials (7 operations each), two constant-1
+-- trials per outer trial (5 each), and 7 operations in each outer trial.
+-- This ladder keeps all arithmetic in Lean's scalar integer representation.
 initialize do
-  registerSearch ``successiveApproximation "n * n * n * n" (fun n => n * n * n * n)
+  registerSearch ``successiveApproximation "(n + 2) * (7 * n + 55) / 2"
+    (fun n => (n + 2) * (7 * n + 55) / 2)
     { config with
-      paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192],
+      paramSchedule := .custom #[4, 6, 8, 10, 12, 14, 16, 18],
       targetInnerNanos := 4000000000, maxSecondsPerCall := 60 }
     Successive.prepare successiveApproximation
 

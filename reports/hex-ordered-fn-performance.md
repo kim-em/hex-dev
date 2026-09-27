@@ -295,8 +295,9 @@ alignment diagnostics, but cannot substitute for raw data when re-filtering.
 
 ## Remaining evidence
 
-The recorded search families now have passing conservative upper-bound evidence,
-including successive approximation; no tight scaling claim is made. Clean versus eager normalization
+The four single-level search families have passing conservative upper-bound
+evidence. Successive approximation requires a separate model and measurement
+within one arithmetic regime; its earlier quartic comparison does not qualify. Clean versus eager normalization
 comparisons and downstream tower integration also remain part of the full issue.
 The existing [RationalFn arithmetic report](hex-rational-fn-performance.md#internal-alternatives)
 provides cancellation versus multiply-then-normalize comparisons on identical
@@ -310,7 +311,10 @@ The four search registrations use mode 2, a one-sided O(n³) upper bound. The
 old n² registrations and both measured schedules remain recorded above; their
 verdicts are not reinterpreted as passes. The new schedule is 8192, 10240, 12288,
 14336, 16384, 20480, 24576 and 28672, with the same three trial-major repetitions
-and one-second target. Horner uses four-second batches after its retained one-second run fell below
+and one-second target. This ladder keeps calls below the existing 60-second
+cap: the previous 98304 approximation call took 628 seconds when the parent
+timeout was starved. The older large-run data are retained and their observed
+exponents of 2.25–2.39 are consistent with the cubic upper bound. Horner uses four-second batches after its retained one-second run fell below
 the signal floor; the other three targets retain one-second batches.
 
 A tight family-specific wall-time model is not available: the operands include
@@ -345,13 +349,17 @@ The [upper-bound run](data/hex-ordered-fn/search-upper/runtime.json) retains all
 normalized slopes −0.629, −0.624 and −0.627 against n³. Their harness wording is
 `inconclusive` in the faster direction; under the documented mode-2 rule their
 result is **within declared upper bound (observed faster)**, not a two-sided
-pass. Horner has only one signal-eligible rung: its 157 ms process floor makes
-one-second batches insufficient, so that result remains inconclusive.
+pass. Horner has only one signal-eligible rung: the harness measured a 157 ms
+process floor on this host, making one-second batches insufficient. This is
+a host observation, not a property of Horner. The five-minute load average
+was 19.1 at completion, compared with a one-minute average of 3.76 at startup;
+these are context, not grounds for dropping samples or attributing a cause.
 
 The [context](data/hex-ordered-fn/search-upper/context.json) records source
 `7b003d90b400dc6eaa9cdea28e9bba460193c3de`, four workers, one automatically selected
-CPU, and the executable hash. That hash was checked again after completion,
-before rebuilding. The checkout changed during collection to prepare the
+CPU, and the executable hash. Commit `7b003d90b` remains on branch
+`issue-10376-performance`; rebased commit `66c37f8b0` has identical measured
+`bench/`, `HexOrderedFn/` and `HexOrderedFnMathlib/` trees. The checkout changed during collection to prepare the
 successive fixture; the measured executable remained the original binary.
 These data are scaling evidence, not a paired speed comparison with older runs.
 
@@ -373,19 +381,21 @@ outer trial k, while each of the two constant coefficients succeeds immediately.
 Consequently there are n+2 outer trials and (n+2)(n+7)/2 inner trials in total.
 Each inner trial operates on O(n)-bit rationals. The same quadratic integer
 operation bounds give an O(n⁴) upper bound for the complete nested search.
-As for the single-level families, GMP’s changing arithmetic paths prevent a
-tight wall-time model from these counts alone; this is a mode-2 claim.
+However, the measured 16..192 schedule has only scalar to four-limb operands.
+It does not exercise the large-integer phase supporting the single-level
+upper-bound evidence, so its n⁴ comparison does not qualify as a mode-2 pass.
 
 Parameters are 16, 24, 32, 48, 64, 96, 128 and 192, with three trial-major
 repetitions and four-second batches. Preparation, including successful-witness
-checks, is excluded; every inner and outer refinement is included. The results below cover this registration. This benchmark is distinct from
+checks, is excluded; every inner and outer refinement is included. The results below retain that exploratory registration. This benchmark is distinct from
 the companion’s Liouville registration test and does not replace its hypotheses.
 
 The [four-second run](data/hex-ordered-fn/successive/runtime.json) retains all
 48 successful, signal-eligible samples. Horner’s normalized slope against n³
 is −0.765; successive approximation’s slope against n⁴ is −1.791. Both harness
-verdicts read `inconclusive` in the faster direction, which mode 2 reports as
-**within declared upper bound (observed faster)**. Neither is a two-sided pass.
+verdicts read `inconclusive` in the faster direction. Horner qualifies as
+**within declared upper bound (observed faster)** under mode 2. The successive
+result is retained as exploratory data and supplies no phase-completion verdict.
 
 | Target | First parameter / median | Last parameter / median | Model |
 | --- | ---: | ---: | --- |
@@ -395,6 +405,14 @@ verdicts read `inconclusive` in the faster direction, which mode 2 reports as
 The [context](data/hex-ordered-fn/successive/context.json) records clean source
 `b0966f0116d51047ebb549f029e4b98e47644653`, four Lean workers pinned to automatically
 selected CPU 2, host load and executable hash. The source and binary stayed
-unchanged during collection; the binary hash was checked again on completion.
+unchanged during collection; the retained context contains the initial binary hash.
 All older measurements remain committed, including Horner’s unresolved shorter
 batches. The two runs use different CPUs and are not a paired speed comparison.
+
+The current successive registration uses parameters 4, 6, 8, 10, 12, 14, 16
+and 18, keeping integer arithmetic in the scalar representation. Its model is
+the exact number of bound operations, `(n+2)(7n+55)/2`: seven for each of the
+`(n+2)(n+3)/2` negative-X inner trials, five for each of the `2(n+2)`
+constant-coefficient trials, and seven for each of the `n+2` outer trials.
+This mode-1 model is declared from the search equations, before measurement.
+A representative profile and measurements are needed before claiming a pass.

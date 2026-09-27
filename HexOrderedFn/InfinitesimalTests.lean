@@ -33,3 +33,7 @@ example : Infinitesimal.sign orderSign (epsilon - epsilon) = 0 := by decide +ker
 example : (0 : First) < epsilon := by decide +kernel
 
 end Hex.OrderedFn.InfinitesimalTests
+
+-- A formal zero must not consult even an incorrectly supplied predecessor sign.
+example : Hex.OrderedFn.Infinitesimal.sign (fun (_ : Rat) => 7)
+    (0 : Hex.RationalFn Rat) = 0 := by decide +kernel

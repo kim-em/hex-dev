@@ -36,7 +36,24 @@ def lowestCoeff [Zero K] [DecidableEq K] (p : DensePoly K) : K :=
 Both coefficients matter: a monic denominator can have a negative lowest coefficient. -/
 def sign [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int)
     (f : RationalFn K) : Int :=
-  baseSign (lowestCoeff f.num) * baseSign (lowestCoeff f.den)
+  if f.num = 0 then 0 else
+    baseSign (lowestCoeff f.num) * baseSign (lowestCoeff f.den)
+
+/-- Formal zero is detected without calling the predecessor sign. -/
+@[simp] theorem sign_zero [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int) :
+    sign baseSign (0 : RationalFn K) = 0 := by
+  simp [sign, RationalFn.num_eq_zero]
+
+/-- A predecessor sign with the usual three values gives the same range here. -/
+theorem sign_range [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int)
+    (hs : ∀ a, baseSign a = -1 ∨ baseSign a = 0 ∨ baseSign a = 1)
+    (f : RationalFn K) :
+    sign baseSign f = -1 ∨ sign baseSign f = 0 ∨ sign baseSign f = 1 := by
+  unfold sign
+  split
+  · simp
+  · rcases hs (lowestCoeff f.num) with hn | hn | hn <;>
+      rcases hs (lowestCoeff f.den) with hd | hd | hd <;> simp [hn, hd]
 
 /-- Compare canonical fractions by the sign of their difference. -/
 def compare [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int)
