@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "ffee9bc46edf5856435dd50093a3daa0f91b55db",
+  "current_blob": "f1a52c9895031f90586091dcd9c906dfd21f821f",
+  "reason": "This transition includes the audited runtime-neutral Lake changes recorded for ffee9bc4 to efdc8eaf. Relative to efdc8eaf, it only changes a comment and adds HexRealClosureMathlib.Yun to the independent HexQuerySemantics proof target. Neither change affects the hexbz_factor_service executable, its compiler options, its runtime import graph, or the pinned Mathlib revision used by the retained factorization sweep."
+}
