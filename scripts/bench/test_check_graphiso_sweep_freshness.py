@@ -44,6 +44,21 @@ class NativeDependencyTests(unittest.TestCase):
             "lean_lib HexBasic where\n  precompileModules := (true && true)")
         self.assertTrue(check.lakefile_texts_differ(self.BASE, after))
 
+    def test_independent_hasse_requirement(self):
+        requirement = ('\nrequire AINTLIB from git\n'
+                       '  "https://github.com/CBirkbeck/AINTLIB.git" @\n'
+                       '    "' + 'a' * 40 + '"\n')
+        with patch.object(check, "graph_import_prefixes",
+                          return_value={"HexGraphIso", "HexBasic"}):
+            self.assertFalse(check.lakefile_texts_differ(self.BASE,
+                self.BASE + requirement))
+            self.assertTrue(check.lakefile_texts_differ(self.BASE,
+                self.BASE + requirement.replace("CBirkbeck", "other")))
+        with patch.object(check, "graph_import_prefixes",
+                          return_value={"HexGraphIso", "HasseWeil"}):
+            self.assertTrue(check.lakefile_texts_differ(self.BASE,
+                self.BASE + requirement))
+
 
 class IndependentTargetTests(unittest.TestCase):
     def allowed(self, before, after):
