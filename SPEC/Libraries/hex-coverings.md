@@ -267,10 +267,12 @@ nonzero family member, with no duplicates or extras in the merged stack.
 All finite roots have dyadic isolating intervals; a sector sample can be
 rational after refinement.
 
-Implement this as a selected-root coefficient instance of the planned
-`CoeffOps` interface described in [hex-sturm](hex-sturm.md#coefficients-and-evidence),
-whose record is owned by `HexPoly` and whose shared recurrence/replay is
-owned by `HexRealRoots`. HexCoverings owns the literal parameter-context
+Implement this as a selected-root representation specialization of
+[hex-sturm](../../HexSturm/SPEC/hex-sturm.md#coefficients-and-evidence):
+ordinary total arithmetic, structural `DecidableEq`, a canonical zero and an
+executable sign, calling the shared `DensePoly` signed-remainder and query
+kernel owned by `HexPoly` and `HexRealRoots`. There is no fallible
+coefficient record and no budget threaded through polynomial arithmetic. HexCoverings owns the literal parameter-context
 adapter and its evidence callbacks; its companion proves their interpretation
 in `ℚ(θ)`. Since `m` need not be irreducible, do not assume that `ℚ[t]/(m)`
 is a field. Use raw rational expressions with checked denominators at the
