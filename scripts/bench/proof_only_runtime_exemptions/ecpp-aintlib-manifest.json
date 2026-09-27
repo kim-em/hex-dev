@@ -1,0 +1,6 @@
+{
+  "path": "lake-manifest.json",
+  "baseline_blob": "eaa6b9266369b7d6f7ad4d1824f8c298ecc7fa29",
+  "current_blob": "a45bb85a5cf53fd035f1c65d96eb844b385de489",
+  "reason": "The manifest adds only AINTLIB for the independent ECPP Mathlib bridge. The existing Mathlib and other dependency entries retain their revisions. AINTLIB does not enter the hexbz_factor_service imports or native link inputs, so this dependency addition cannot change the measured factorization implementation."
+}

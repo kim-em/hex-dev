@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexECPP.Import
+import HexECPP.Fixture17
 import HexECPP.Fixture65
 import HexECPP.Fixture256
 import HexECPP.Fixture512
@@ -44,6 +45,16 @@ private def emitScalar (n a b q : Nat) (Q : Point)
     ("point", pointJson Q), ("witnesses", toJson ws),
     ("result", resultJson (replay n a b q Q ws))]
 
+private def emitStep (cert : Cert) : IO Unit :=
+  match cert with
+  | .step n a b x y d ws child =>
+      emit <| Json.mkObj [
+        ("kind", toJson "step"), ("n", toJson n), ("a", toJson a), ("b", toJson b),
+        ("x", toJson x), ("y", toJson y),
+        ("d", toJson d), ("q", toJson child.subject),
+        ("witnesses", toJson ws), ("accepted", toJson (check cert))]
+  | _ => pure ()
+
 /-- Exhaust every point pair and scalar up to twice the field size on three
 small nonsingular curves. The Python oracle uses separate field arithmetic. -/
 private def emitSmallCurves : IO Unit := do
@@ -78,14 +89,9 @@ def main (_ : List String) : IO UInt32 := do
   emitOperation 7 0 3 P P [2, 4]
   emitOperation 7 0 3 P (.affine 6 3) [3]
   emitOperation 7 0 3 P (.affine 1 3) []
-  match Fixture65.cert with
-  | .step n a b x y d ws child =>
-    emit <| Json.mkObj [
-      ("kind", toJson "step"), ("n", toJson n), ("a", toJson a), ("b", toJson b),
-      ("x", toJson x), ("y", toJson y),
-      ("d", toJson d), ("q", toJson child.subject),
-      ("witnesses", toJson ws), ("accepted", toJson (check Fixture65.cert))]
-  | _ => pure ()
+  emitStep Fixture17.cert
+  emitStep Fixture65.cert
+  emitSubject Fixture17.cert.subject (check Fixture17.cert)
   emitSubject Fixture65.cert.subject (check Fixture65.cert)
   emitSubject Fixture256.cert.subject (check Fixture256.cert)
   emitSubject Fixture512.cert.subject (check Fixture512.cert)

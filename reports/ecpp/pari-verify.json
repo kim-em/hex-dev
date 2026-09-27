@@ -1,0 +1,97 @@
+{
+  "host": "chungus2",
+  "cpu": 13,
+  "version": "PARI/GP 2.17.3",
+  "rows": [
+    {
+      "trial": 0,
+      "case": "pari65",
+      "repetitions": 100,
+      "elapsed_ms": 5
+    },
+    {
+      "trial": 0,
+      "case": "pari256",
+      "repetitions": 100,
+      "elapsed_ms": 240
+    },
+    {
+      "trial": 0,
+      "case": "pari512",
+      "repetitions": 20,
+      "elapsed_ms": 197
+    },
+    {
+      "trial": 1,
+      "case": "pari65",
+      "repetitions": 100,
+      "elapsed_ms": 5
+    },
+    {
+      "trial": 1,
+      "case": "pari256",
+      "repetitions": 100,
+      "elapsed_ms": 233
+    },
+    {
+      "trial": 1,
+      "case": "pari512",
+      "repetitions": 20,
+      "elapsed_ms": 199
+    },
+    {
+      "trial": 2,
+      "case": "pari65",
+      "repetitions": 100,
+      "elapsed_ms": 5
+    },
+    {
+      "trial": 2,
+      "case": "pari256",
+      "repetitions": 100,
+      "elapsed_ms": 241
+    },
+    {
+      "trial": 2,
+      "case": "pari512",
+      "repetitions": 20,
+      "elapsed_ms": 200
+    },
+    {
+      "trial": 3,
+      "case": "pari65",
+      "repetitions": 100,
+      "elapsed_ms": 5
+    },
+    {
+      "trial": 3,
+      "case": "pari256",
+      "repetitions": 100,
+      "elapsed_ms": 239
+    },
+    {
+      "trial": 3,
+      "case": "pari512",
+      "repetitions": 20,
+      "elapsed_ms": 201
+    },
+    {
+      "trial": 4,
+      "case": "pari65",
+      "repetitions": 100,
+      "elapsed_ms": 5
+    },
+    {
+      "trial": 4,
+      "case": "pari256",
+      "repetitions": 100,
+      "elapsed_ms": 232
+    },
+    {
+      "trial": 4,
+      "case": "pari512",
+      "repetitions": 20,
+      "elapsed_ms": 197
+    }
+  ]
+}

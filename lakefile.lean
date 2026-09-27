@@ -678,6 +678,9 @@ lean_lib HexPrimalityMathlibProofProbe where
 lean_lib HexECPPMathlibProofProbe where
   srcDir := "bench"
   globs := #[`HexECPPMathlib.ProofProbe.Support,
+    `HexECPPMathlib.ProofProbe.Support17,
+    `HexECPPMathlib.ProofProbe.Ecpp17,
+    `HexECPPMathlib.ProofProbe.Pock17,
     `HexECPPMathlib.ProofProbe.Baseline65,
     `HexECPPMathlib.ProofProbe.Reify65,
     `HexECPPMathlib.ProofProbe.Direct65,
