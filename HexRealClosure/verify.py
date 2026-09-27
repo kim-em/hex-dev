@@ -165,6 +165,8 @@ ext_derivative = [mul((Q(i), Q(0)), c)
 ext_derivative_at_alpha = add(ext_derivative[0], mul(ext_derivative[1], alpha))
 high = [Q(0), Q(0), Q(0), Q(1)]
 high_remainder = rem(high, head)
+fractional_head = poly_mul([Q(-2), Q(0), Q(1)], [Q(-1, 2), Q(1)])
+assert fractional_head[-1] == 1 and any(c.denominator != 1 for c in fractional_head)
 candidate_roots = [neg(alpha), alpha, (Q(3), Q(0))]
 derivative = [i * c for i, c in enumerate(head)][1:]
 
@@ -239,8 +241,11 @@ expected = [
     f"{str(not ext_remainder).lower()}, {str(ext_quotient[0] == alpha).lower()})",
     f"some ({len(ext_gcd) - 1}, {str(ext_bezout).lower()}, "
     f"{str(ext_derivative_at_alpha == mul((Q(2), Q(0)), alpha)).lower()})",
-    f"some ({len(high_remainder) - 1}, true, {len(high) - 1}, "
-    f"{len(high_remainder) - 1}, "
+    f"some ({len(high_remainder) - 1}, "
+    f"{str(all(c.denominator == 1 for c in high_remainder)).lower()}, "
+    f"{len(high) - 1}, {len(high_remainder) - 1}, {len(high) - 1}, "
+    f"{str(not rem(head, head)).lower()}, "
+    f"{str(eval_poly(head, alpha) == (Q(0), Q(0))).lower()}, "
     f"{str(eval_poly(high_remainder, alpha) == eval_poly(high, alpha)).lower()})",
 ]
 

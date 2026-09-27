@@ -36,6 +36,16 @@ Other definitions keep the original representative. -/
   else
     p
 
+/-- The retained remainder has degree below the defining polynomial. -/
+theorem packedPoly_degree {context : Nat} (d : Root context)
+    (p : DensePoly Rat)
+    (h : (d.raw.head.leadingCoeff == 1 && clean d.raw.head) = true) :
+    (packedPoly d p).natDegree < d.raw.head.natDegree := by
+  simp only [packedPoly, h, ↓reduceIte]
+  rw [DensePoly.mod_eq_divMod]
+  exact DensePoly.divMod_remainder_degree_lt_of_pos_degree
+    p d.raw.head d.head_degree_pos
+
 /-- Retain the permitted remainder, then apply the selected-root zero check. -/
 @[expose] def ofPoly {context : Nat} {d : Root context} (p : DensePoly Rat) :
     Element d :=
