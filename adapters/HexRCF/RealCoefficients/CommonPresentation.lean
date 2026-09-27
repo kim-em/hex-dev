@@ -311,7 +311,7 @@ theorem checkEntry_sound_of_selected {p : ZPoly} {s : DyadicSquare}
     (sourceP : ZPoly)
     (hwSource : atomWitness sourceP sourceSquare)
     (hpSource : (mahlerPrec sourceP : Int) ≤ sourceSquare.prec)
-    (hpolynomial : sourcePolynomial = ZPoly.toRatPoly sourceP)
+    (hpolynomial : ZPoly.toRatPoly sourceP = sourcePolynomial)
     (sourceValue : ℝ)
     (hselected : (Field.literalRep sourceP sourceSquare hwSource hpSource).root.re =
       sourceValue)
@@ -328,7 +328,7 @@ theorem checkEntry_sound_of_selected {p : ZPoly} {s : DyadicSquare}
   have hroot : (HexRootsMathlib.toPolyℂ sourceP).IsRoot
       ((Field.value (Field.literalRep p s hw hp) v : ℝ) : ℂ) := by
     apply realPoly_root_complex sourceP
-    rw [← hpolynomial]
+    rw [hpolynomial]
     exact checkEquation_sound hw hp hreal sourcePolynomial v hparts.1
   have hdisc : ((Field.value (Field.literalRep p s hw hp) v : ℝ) : ℂ) ∈
       HexRootsMathlib.DyadicSquare.closedDisc
@@ -383,5 +383,41 @@ theorem checkPresentation_sound {p : ZPoly} {s : DyadicSquare}
     exact ⟨hrow.1, hparts.1, hrow.2⟩
   exact checkEntry_sound hw hp table (sources i) (sourcePolynomials i)
     (sourceSquares i) (hpolynomial i) (hsource i) (coordinates i) hentry
+
+/-- Identify every coordinate with an ordered family of real source values
+whose selected roots are known mathematically. This route avoids reducing
+source constructors or comparing their stored isolating squares. -/
+theorem checkPresentation_sound_of_selected {p : ZPoly} {s : DyadicSquare}
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (table : LiteralSign.Table
+      (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    {n : Nat} (sourcePolynomials : Fin n → DensePoly Rat)
+    (sourceSquares : Fin n → DyadicSquare)
+    (coordinates : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (sourceP : Fin n → ZPoly)
+    (hwSource : ∀ i, atomWitness (sourceP i) (sourceSquares i))
+    (hpSource : ∀ i, (mahlerPrec (sourceP i) : Int) ≤ (sourceSquares i).prec)
+    (hpolynomial : ∀ i, ZPoly.toRatPoly (sourceP i) = sourcePolynomials i)
+    (sourceValues : Fin n → ℝ)
+    (hselected : ∀ i,
+      (Field.literalRep (sourceP i) (sourceSquares i)
+        (hwSource i) (hpSource i)).root.re = sourceValues i)
+    (accepted : checkPresentation hw hp table sourcePolynomials sourceSquares coordinates = true) :
+    (fun i => Field.value (Field.literalRep p s hw hp) (coordinates i)) =
+      sourceValues := by
+  funext i
+  have hparts : Field.checkSignTable p s hw hp table = true ∧
+      (List.finRange n).all (fun j =>
+        checkEquation (sourcePolynomials j) (coordinates j) &&
+          table.lookup? (discSlack (sourceSquares j) (coordinates j)) == some 1) = true := by
+    simpa only [checkPresentation, Bool.and_eq_true] using accepted
+  have hrow := List.all_eq_true.mp hparts.2 i (List.mem_finRange i)
+  have hentry : checkEntry hw hp table (sourcePolynomials i)
+      (sourceSquares i) (coordinates i) = true := by
+    simp only [checkEntry, checkDisc, Bool.and_eq_true, beq_iff_eq] at hrow ⊢
+    exact ⟨hrow.1, hparts.1, hrow.2⟩
+  exact checkEntry_sound_of_selected hw hp table (sourcePolynomials i)
+    (sourceSquares i) (sourceP i) (hwSource i) (hpSource i)
+    (hpolynomial i) (sourceValues i) (hselected i) (coordinates i) hentry
 
 end Hex.RCF.RealCoefficients.CommonPresentation
