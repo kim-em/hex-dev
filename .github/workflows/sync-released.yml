@@ -87,7 +87,13 @@ jobs:
     # builds support it; make it required by deleting this line.
     continue-on-error: ${{ matrix.os == 'windows-latest' }}
     steps:
+      # Sparse: some history file names (e.g. under progress/) contain `:`,
+      # which Windows cannot check out, and the check needs only these paths.
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            scripts/release
+            Examples
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
