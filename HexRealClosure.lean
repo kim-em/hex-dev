@@ -4,4 +4,4 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 module
-public import HexRealClosure.Canonical
+public import HexRealClosure.Element

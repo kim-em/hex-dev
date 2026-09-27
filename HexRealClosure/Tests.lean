@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.Canonical
+public import HexRealClosure.Element
 
 public section
 
@@ -216,5 +216,38 @@ private def canonicalNegative : Option (Int × Bool × Int) := do
 
 #eval canonicalNegative
 #guard canonicalNegative == some (-1, true, -1)
+
+/-- Canonical-zero packing detects a nonliteral zero, cancellation, and the
+gcd inverse at the selected root. -/
+private def packedArithmetic :
+    Option (Bool × Bool × Bool × Int × Int × Bool × Bool × Bool × Bool) := do
+  let d ← Root.validate 7 raw
+  let alpha : Element d := Element.ofPoly x
+  let selectedZero : Element d := Element.ofPoly (x * x - DensePoly.C 2)
+  let below : Element d := Element.ofPoly (x - DensePoly.C 3)
+  let higher : Element d := Element.ofPoly (DensePoly.scale (1 / 2 : Rat) (x * x * x))
+  return (selectedZero == 0, alpha + -alpha == 0,
+    (below * below⁻¹).value == Hex.RealAlgebraicNumber.ofRat 1,
+    alpha.sign, below.sign, Element.equal alpha higher, alpha == higher,
+    selectedZero⁻¹ == 0, selectedZero.inverse?.isNone)
+
+#eval packedArithmetic
+#guard packedArithmetic == some (true, true, true, 1, -1, true, false, true, true)
+
+/-- Repacking after a checked split preserves a nonzero value and the unique
+zero representation under the new context version. -/
+private def packedRefinement : Option (Bool × Bool × Int) := do
+  let d ← Root.validate 7 raw
+  let below : Expression d := ⟨x - DensePoly.C 3⟩
+  let r? ← (below.split? 8 (.finite 1) (.finite 2)).toOption
+  let r ← r?
+  let alpha : Element d := Element.ofPoly x
+  let selectedZero : Element d := Element.ofPoly (x * x - DensePoly.C 2)
+  let newAlpha := Element.refine r alpha
+  let newZero := Element.refine r selectedZero
+  return (newAlpha.value == alpha.value, newZero == 0, newAlpha.sign)
+
+#eval packedRefinement
+#guard packedRefinement == some (true, true, 1)
 
 end Hex.RealClosure.Tests
