@@ -1,7 +1,8 @@
 # Rational selected-root expressions
 
 `Root.validate` checks a `Hex.SignDet.RawDescriptor Rat Nat` against its exact
-context version. An `Expression d` stores a rational polynomial evaluated at the
+version tag. The tag is a `Nat` and does not yet own a defining polynomial or
+dependency graph. An `Expression d` stores a rational polynomial evaluated at the
 real root selected by `d`. Its arithmetic is polynomial arithmetic; distinct
 expressions can have the same value. `Expression.sign?` uses checked joint sign
 determination. `Expression.inverse?` computes a gcd/cofactor split and a scaled
@@ -24,8 +25,9 @@ version, and `Expression.rebind` transports a polynomial through that checked
 conversion. `Expression.split?` combines cofactor re-encoding and rebinding;
 `Expression.refine` transports stored values through both checks.
 `Root.validate_context` rejects raw evidence from another context version.
-The context is a rational-base version number, not a dependency DAG;
-transport of nested tower levels remains separate. These interfaces do not
+The checked rebind preserves the selected value, but a version change alone
+does not enforce context ownership or transport dependent objects. Full
+context changes and nested transport remain separate. These interfaces do not
 yet supply canonical-zero storage or total field operations.
 
 Run `lake build HexRealClosure.Tests HexQuerySemantics` and
@@ -33,6 +35,8 @@ Run `lake build HexRealClosure.Tests HexQuerySemantics` and
 `(X²−2)(X−3)` with the root in `(1,2)`, plus a non-monic definition and a
 checked factor split. The Python oracle computes exact arithmetic in ℚ(√2)
 independently of Lean and is run manually; CI builds the Lean `#guard` tests.
+The companion proofs inherit the named #10389 admission in
+`HexRealRootsMathlib.Tarski.check_rootSum`; no new admission is used here.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and

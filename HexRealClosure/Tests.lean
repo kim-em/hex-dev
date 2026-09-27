@@ -109,4 +109,27 @@ private def splitTransport : Option (Int × Int × Int × Int × Nat × Nat) := 
 #eval splitTransport
 #guard splitTransport == some (1, 1, 1, -1, 2, 8)
 
+/-- A cofactor with no selected root cannot produce a refinement. -/
+private def rejectedSplit : Option Bool := do
+  let d ← Root.validate 7 raw
+  let selectedZero : Expression d := ⟨x * x - DensePoly.C 2⟩
+  let result ← (selectedZero.split? 8 (.finite 1) (.finite 2)).toOption
+  return result.isNone
+
+#eval rejectedSplit
+#guard rejectedSplit == some true
+
+/-- Splitting a non-monic definition retains its leading scalar. -/
+private def nonmonicSplit : Option (Rat × Nat × Int) := do
+  let d ← Root.validate 9 { raw with context := 9, head := DensePoly.scale 2 head }
+  let below : Expression d := ⟨x - DensePoly.C 3⟩
+  let r? ← (below.split? 10 (.finite 1) (.finite 2)).toOption
+  let r ← r?
+  let sa ← (Expression.refine r (Expression.ofPoly x)).sign?.toOption
+  return (r.binding.target.raw.head.leadingCoeff,
+    r.binding.target.raw.head.natDegree, sa)
+
+#eval nonmonicSplit
+#guard nonmonicSplit == some (2, 2, 1)
+
 end Hex.RealClosure.Tests

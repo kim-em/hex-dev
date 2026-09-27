@@ -16,7 +16,8 @@ sign determination is exposed separately because the producer currently returns
 `Except BuildError`. Canonical-zero storage requires its total-success bridge. -/
 namespace Hex.RealClosure
 
-/-- A checked descriptor bound to an immutable rational-base context version. -/
+/-- A checked descriptor tagged with a rational-base context version. The tag
+does not yet own a dependency graph or enforce a defining polynomial. -/
 abbrev Root (context : Nat) :=
   SignDet.Descriptor Rat Nat Sturm.orderSign context
 
@@ -36,8 +37,9 @@ theorem Root.validate_context {context : Nat} (raw : SignDet.RawDescriptor Rat N
     rw [SignDet.Descriptor.build_context h] at hb
     cases hb
 
-/-- A checked conversion to a new rational-base context version. Validation
-is rerun with the new literal binding; the old descriptor remains unchanged. -/
+/-- A checked conversion to a new rational-base version tag. Validation is
+rerun with the new literal binding; the old descriptor remains unchanged.
+Ownership of a full context and dependent objects is not supplied here. -/
 structure Rebinding {context : Nat} (source : Root context) (version : Nat) where
   target : Root version
   checked : Root.validate version { source.raw with context := version } = some target
@@ -75,8 +77,8 @@ replace a missing total-success theorem by an arbitrary default sign. -/
   let signs ← d.buildSigns [a.polynomial]
   return signs.value
 
-/-- Return the monic gcd and its cofactor. For a value nonzero at the selected
-root, that root lies in the cofactor. The descriptor remains unchanged. -/
+/-- Return the monic gcd and its cofactor for checked re-encoding. This
+computation does not by itself prove that the selected root lies in the cofactor. -/
 @[expose] def inverseFactor {context : Nat} {d : Root context}
     (a : Expression d) : DensePoly Rat × DensePoly Rat :=
   let g := DensePoly.monicize (DensePoly.gcd d.raw.head a.polynomial)
@@ -134,8 +136,8 @@ structure Refinement {context : Nat} (source : Root context)
   encoding : SignDet.Reencoding source head lower upper
   binding : Rebinding encoding.target version
 
-/-- Check whether the cofactor contains the selected root, then move it to a
-new context version in one checked conversion. -/
+/-- Check whether the cofactor selects the same root, then rebind its version.
+`none` also covers an invalid target domain; producer failures are errors. -/
 @[expose] def Expression.split? {context : Nat} {d : Root context}
     (a : Expression d) (version : Nat) (lower upper : Endpoint Rat) :
     Except SignDet.BuildError
