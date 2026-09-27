@@ -303,3 +303,38 @@ provides cancellation versus multiply-then-normalize comparisons on identical
 canonical operands, but does not replace the ordered-extension measurements.
 The companion's mathematical theorems have ordinary-kernel regression tests
 and axiom audits; applying them is not a performance benchmark.
+
+## Search upper-bound model
+
+The four search registrations use mode 2, a one-sided O(n³) upper bound. The
+old n² registrations and both measured schedules remain recorded above; their
+verdicts are not reinterpreted as passes. The new schedule is 8192, 10240, 12288,
+14336, 16384, 20480, 24576 and 28672, with the same three trial-major repetitions
+and one-second target. New measurements are required for this registration.
+
+A tight family-specific wall-time model is not available: the operands include
+powers of two, nearby odd integers, and quotient numerators of different sizes;
+GMP selects multiplication and gcd algorithms by operand size. The small and
+large schedules cross these regimes, and the exact operation counts do not
+identify one fixed algorithm for every rational operation. No exponent is
+chosen from a timing fit.
+
+The source-derived counts above give O(n) rational operations on O(n)-bit
+operands. Reduced endpoint sizes grow linearly, and a product, sum, difference,
+or quotient of two such rationals has O(n)-bit unreduced components. Width
+comparison also multiplies only a bounded number of those components. GMP’s
+published [basecase multiplication](https://gmplib.org/manual/Basecase-Multiplication),
+[basecase division](https://gmplib.org/manual/Basecase-Division), and
+[Lehmer gcd](https://gmplib.org/manual/Lehmer_0027s-Algorithm) bounds are quadratic
+in operand size; larger-input algorithms improve those bounds. Rational
+normalization uses a bounded number of these operations. Precision generation
+by repeated squaring has geometrically increasing operand sizes and is also
+bounded by O(n²). Hence the complete measured search is O(n³). This bound
+covers the large-integer arithmetic identified by the profile, rather than
+counting only the outer search loop.
+
+This is an upper bound on these four specified families, including their
+synthetic caller providers. It is not a precision bound in polynomial degree,
+a uniform bound for arbitrary caller approximations, or a two-sided complexity
+claim. Until new measurements pass the one-sided check, search performance
+remains incomplete.
