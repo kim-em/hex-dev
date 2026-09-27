@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealClosure.Canonical
+import HexRealClosure.Element
 import LeanBench
 
 namespace Hex.RealClosure.Bench
@@ -35,6 +35,27 @@ def runCanonical : Unit → IO UInt64 := fun _ => do
     throw (IO.userError "canonical benchmark: wrong selected root")
 
 setup_fixed_benchmark runCanonical where {
+  repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
+}
+
+/-- Functional timing anchor for packed arithmetic at the same selected root.
+It includes nonliteral-zero packing, addition cancellation and gcd inversion.
+The ten-second per-call cap is an operational safeguard. -/
+def runPacked : Unit → IO UInt64 := fun _ => do
+  let some input ← rawRef.get
+    | throw (IO.userError "packed benchmark: missing input")
+  let some d := Root.validate 7 input
+    | throw (IO.userError "packed benchmark: descriptor rejected")
+  let alpha : Element d := Element.ofPoly x
+  let selectedZero : Element d := Element.ofPoly (x * x - DensePoly.C 2)
+  let below : Element d := Element.ofPoly (x - DensePoly.C 3)
+  if selectedZero == 0 && alpha + -alpha == 0 &&
+      (below * below⁻¹).value == Hex.RealAlgebraicNumber.ofRat 1 then
+    return 1
+  else
+    throw (IO.userError "packed benchmark: arithmetic mismatch")
+
+setup_fixed_benchmark runPacked where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 

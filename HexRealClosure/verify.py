@@ -83,6 +83,10 @@ def inverse_or_none(x):
     return None if x == (Q(0), Q(0)) else inv(x)
 
 
+def total_inv(x):
+    return (Q(0), Q(0)) if x == (Q(0), Q(0)) else inv(x)
+
+
 alpha = (Q(0), Q(1))
 below = add(alpha, (Q(-3), Q(0)))
 head = poly_mul([Q(-2), Q(0), Q(1)], [Q(-3), Q(1)])
@@ -93,8 +97,11 @@ constant_inverse = inv(alpha)
 linear_gcd = gcd(head, [Q(-3), Q(1)])
 split, remainder = divmod_poly(head, linear_gcd)
 assert not remainder
+assert eval_poly(split, alpha) == (Q(0), Q(0))
 alpha_cubed = mul(mul(alpha, alpha), alpha)
 assert alpha_cubed == (Q(0), Q(2))
+higher_poly = [Q(0), Q(0), Q(0), Q(1, 2)]
+higher = eval_poly(higher_poly, alpha)
 candidate_roots = [neg(alpha), alpha, (Q(3), Q(0))]
 derivative = [i * c for i, c in enumerate(head)][1:]
 
@@ -148,6 +155,16 @@ expected = [
     f"some ({sign(negative_root)}, "
     f"{str(mul(negative_root, negative_root) == (Q(2), Q(0))).lower()}, "
     f"{sign(add(negative_root, (Q(1), Q(0))))})",
+    f"some ({str(eval_poly([Q(-2), Q(0), Q(1)], alpha) == (Q(0), Q(0))).lower()}, "
+    f"{str(add(alpha, neg(alpha)) == (Q(0), Q(0))).lower()}, "
+    f"{str(mul(below, inv(below)) == (Q(1), Q(0))).lower()}, "
+    f"{sign(alpha)}, {sign(below)}, {str(alpha == higher).lower()}, "
+    f"{str([Q(0), Q(1)] == higher_poly).lower()}, "
+    f"{str(total_inv(eval_poly([Q(-2), Q(0), Q(1)], alpha)) == (Q(0), Q(0))).lower()}, "
+    f"{str(inverse_or_none(eval_poly([Q(-2), Q(0), Q(1)], alpha)) is None).lower()})",
+    f"some ({str(eval_poly([Q(0), Q(1)], alpha) == alpha).lower()}, "
+    f"{str(eval_poly([Q(-2), Q(0), Q(1)], alpha) == (Q(0), Q(0))).lower()}, "
+    f"{sign(alpha)})",
 ]
 
 run = subprocess.run(
@@ -156,4 +173,4 @@ run = subprocess.run(
 )
 actual = re.findall(r"info: HexRealClosure/Tests\.lean:\d+:0: (.+)", run.stdout + run.stderr)
 assert actual == expected, f"Lean outputs {actual!r}; exact oracle expects {expected!r}"
-print("exact oracle passed for fifteen runnable cases")
+print("exact oracle passed for seventeen runnable cases")
