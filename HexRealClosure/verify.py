@@ -95,6 +95,23 @@ split, remainder = divmod_poly(head, linear_gcd)
 assert not remainder
 alpha_cubed = mul(mul(alpha, alpha), alpha)
 assert alpha_cubed == (Q(0), Q(2))
+candidate_roots = [neg(alpha), alpha, (Q(3), Q(0))]
+derivative = [i * c for i, c in enumerate(head)][1:]
+
+
+def between(x, lower, upper):
+    return sign(add(x, neg(lower))) > 0 and sign(add(upper, neg(x))) > 0
+
+
+wide_selection = [r for r in candidate_roots
+                  if between(r, (Q(0), Q(0)), (Q(4), Q(0)))
+                  and sign(eval_poly(derivative, r)) == -1]
+scaled_head = [2 * c for c in head]
+scaled_selection = [r for r in candidate_roots
+                    if between(r, (Q(1), Q(0)), (Q(2), Q(0)))
+                    and eval_poly(scaled_head, r) == (0, 0)]
+assert wide_selection == [alpha]
+assert scaled_selection == [alpha]
 old_version, new_version = 7, 8
 expected = [
     f"some ({sign(alpha)}, {sign(below)}, {sign(eval_poly(head, alpha))}, "
@@ -118,6 +135,10 @@ expected = [
     f"{eval_poly(split, (Q(3), Q(0)))[0]})",
     f"some (3, {sign(inv(alpha_cubed))}, "
     f"{sign(add(inv(alpha_cubed), neg(mul((Q(1, 4), Q(0)), alpha))))})",
+    f"some ({sign(alpha)}, {str(mul(alpha, alpha) == (Q(2), Q(0))).lower()}, "
+    f"{str(mul(below, inv(below)) == (Q(1), Q(0))).lower()})",
+    f"some {str(wide_selection == [alpha]).lower()}",
+    f"some {str(scaled_selection == [alpha]).lower()}",
 ]
 
 run = subprocess.run(
@@ -126,4 +147,4 @@ run = subprocess.run(
 )
 actual = re.findall(r"info: HexRealClosure/Tests\.lean:\d+:0: (.+)", run.stdout + run.stderr)
 assert actual == expected, f"Lean outputs {actual!r}; exact oracle expects {expected!r}"
-print("exact oracle passed for eleven runnable cases")
+print("exact oracle passed for fourteen runnable cases")

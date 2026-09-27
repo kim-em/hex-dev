@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.Basic
+public import HexRealClosure.Canonical
 
 public section
 
@@ -156,5 +156,45 @@ private def highDegreeInverse : Option (Nat × Int × Int) := do
 
 #eval highDegreeInverse
 #guard highDegreeInverse == some (3, 1, 0)
+
+/-- The independent canonical root list selects the same root and agrees
+with the checked expression inverse at that root. -/
+private def canonicalSelection : Option (Int × Bool × Bool) := do
+  let d ← Root.validate 7 raw
+  let a : Expression d := ⟨x⟩
+  let below : Expression d := ⟨x - DensePoly.C 3⟩
+  let inv? ← below.inverse?.toOption
+  let inv ← inv?
+  let alpha := a.toCanonical
+  return (d.toCanonical.sign,
+    alpha * alpha == Hex.RealAlgebraicNumber.ofRat 2,
+    below.toCanonical * inv.toCanonical == Hex.RealAlgebraicNumber.ofRat 1)
+
+#eval canonicalSelection
+#guard canonicalSelection == some (1, true, true)
+
+/-- A wide interval contains both √2 and 3; the first derivative sign
+selects √2 and agrees with the narrow-interval canonical root. -/
+private def rawWide : SignDet.RawDescriptor Rat Nat :=
+  { context := 11, head, lower := .finite 0, upper := .finite 4,
+    indices := [1], signs := [-1] }
+
+private def canonicalThom : Option Bool := do
+  let narrow ← Root.validate 7 raw
+  let wide ← Root.validate 11 rawWide
+  return wide.toCanonical == narrow.toCanonical
+
+#eval canonicalThom
+#guard canonicalThom == some true
+
+/-- Scaling the reducible defining polynomial does not change the selected
+canonical number. -/
+private def canonicalNonmonic : Option Bool := do
+  let monic ← Root.validate 7 raw
+  let scaled ← Root.validate 9 { raw with context := 9, head := DensePoly.scale 2 head }
+  return scaled.toCanonical == monic.toCanonical
+
+#eval canonicalNonmonic
+#guard canonicalNonmonic == some true
 
 end Hex.RealClosure.Tests
