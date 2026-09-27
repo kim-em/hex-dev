@@ -48,7 +48,8 @@ the checked descriptor. -/
 companion proves that the root-list search always succeeds. -/
 @[expose] def Root.toCanonical {context : Nat} (d : Root context) :
     Hex.RealAlgebraicNumber :=
-  d.canonical?.getD 0
+  d.canonical?.getD
+    (Hex.panicWith 0 "RealClosure.Root.toCanonical: selected root not found")
 
 /-- Evaluate a stored rational expression by canonical real-algebraic
 arithmetic at its selected root. -/

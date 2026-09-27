@@ -22,7 +22,7 @@ initialize rawRef : IO.Ref (Option (SignDet.RawDescriptor Rat Nat)) ← IO.mkRef
 /-- Functional timing anchor using the test polynomial `(X² - 2)(X - 3)`.
 The interval `(0, 4)` contains two positive roots, and the derivative sign
 selects `√2`. The call checks the selected value. The ten-second per-call cap
-is a smoke safeguard, not a performance claim. -/
+is an operational safeguard, not a performance claim. -/
 def runCanonical : Unit → IO UInt64 := fun _ => do
   let some input ← rawRef.get
     | throw (IO.userError "canonical benchmark: missing input")
