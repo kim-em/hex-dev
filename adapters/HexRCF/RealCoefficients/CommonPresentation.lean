@@ -301,6 +301,45 @@ theorem checkEntry_sound {p : ZPoly} {s : DyadicSquare}
       rw [hpolynomial]
       exact checkEquation_sound hw hp hreal sourcePolynomial v hparts.1)) hdisc
 
+/-- A source whose selected real value has already been proved mathematically
+can use the same finite replay without reducing its canonical construction. -/
+theorem checkEntry_sound_of_selected {p : ZPoly} {s : DyadicSquare}
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (table : LiteralSign.Table
+      (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (sourcePolynomial : DensePoly Rat) (sourceSquare : DyadicSquare)
+    (sourceP : ZPoly)
+    (hwSource : atomWitness sourceP sourceSquare)
+    (hpSource : (mahlerPrec sourceP : Int) ≤ sourceSquare.prec)
+    (hpolynomial : sourcePolynomial = ZPoly.toRatPoly sourceP)
+    (sourceValue : ℝ)
+    (hselected : (Field.literalRep sourceP sourceSquare hwSource hpSource).root.re =
+      sourceValue)
+    (v : PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (accepted : checkEntry hw hp table sourcePolynomial sourceSquare v = true) :
+    Field.value (Field.literalRep p s hw hp) v = sourceValue := by
+  have hparts : checkEquation sourcePolynomial v = true ∧
+      checkDisc hw hp table sourceSquare v = true := by
+    simpa only [checkEntry, Bool.and_eq_true] using accepted
+  have hreal : s.meetsRealAxis = true := by
+    have h := hparts.2
+    simp only [checkDisc, Bool.and_eq_true, Field.checkSignTable] at h
+    exact h.1.1.2
+  have hroot : (HexRootsMathlib.toPolyℂ sourceP).IsRoot
+      ((Field.value (Field.literalRep p s hw hp) v : ℝ) : ℂ) := by
+    apply realPoly_root_complex sourceP
+    rw [← hpolynomial]
+    exact checkEquation_sound hw hp hreal sourcePolynomial v hparts.1
+  have hdisc : ((Field.value (Field.literalRep p s hw hp) v : ℝ) : ℂ) ∈
+      HexRootsMathlib.DyadicSquare.closedDisc
+        (Field.literalRep sourceP sourceSquare hwSource hpSource).1.square := by
+    simpa only [Field.literalRep_square] using
+      (checkDisc_sound hw hp table sourceSquare v hparts.2)
+  have hsame := HexRootsMathlib.RefinedIsolation.eq_root_of_mem_closedDisc
+    (Field.literalRep sourceP sourceSquare hwSource hpSource) hroot hdisc
+  have hre := congrArg Complex.re hsame
+  simpa only [Complex.ofReal_re, hselected] using hre
+
 /-- Check each source against its corresponding coordinate in the original
 order, including duplicates. The common root and its selected square are
 shared by all entries. -/

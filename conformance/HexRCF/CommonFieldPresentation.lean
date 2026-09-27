@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
+public meta import HexRCF.RealCoefficients.CommonPresentation
+public meta import HexBerlekampZassenhaus.QuadraticNormRecover
 public import HexRCF.RealCoefficients.Field
 public import HexRCF.RealCoefficients.RootAliases
 public import HexRCF.RealCoefficients.CommonPresentation
@@ -332,6 +334,57 @@ theorem sqrt3SquareWitness : atomWitness (DensePoly.ofList [-3, 0, 1]) sqrt3Squa
 
 theorem sqrt2SquareWitness : atomWitness (DensePoly.ofList [-2, 0, 1]) sqrt2Square := by
   decide +kernel
+
+def sqrt2TiltSquare : DyadicSquare :=
+  ⟨sqrt2Square.re, (Dyadic.ofInt 1) >>> (12 : Int), sqrt2Square.prec⟩
+
+theorem sqrt2TiltSquareWitness :
+    atomWitness (DensePoly.ofList [-2, 0, 1]) sqrt2TiltSquare := by
+  decide +kernel
+
+private def presentationTable? := LiteralSign.Table.build (ZPoly.toRatPoly quartic)
+  (square.re - square.radiusHi).toRat (square.re + square.radiusHi).toRat
+  [CommonPresentation.discSlack sqrt3Square (coord3 square squareWitness squarePrecision),
+    CommonPresentation.discSlack sqrt2TiltSquare
+      (coord2 square squareWitness squarePrecision)] PolyQuot.coeffs
+
+/- Both coordinates are checked together against different source squares;
+the second square has a nonzero imaginary center component. -/
+#guard match presentationTable? with
+  | none => false
+  | some table =>
+      CommonPresentation.checkPresentation squareWitness squarePrecision table
+        (fun i : Fin 2 => if i = 0 then sqrt3Polynomial else sqrt2Polynomial)
+        (fun i => if i = 0 then sqrt3Square else sqrt2TiltSquare)
+        (fun i => if i = 0 then coord3 square squareWitness squarePrecision
+          else coord2 square squareWitness squarePrecision)
+
+private def flippedPresentationTable? := LiteralSign.Table.build (ZPoly.toRatPoly quartic)
+  (smallSquare.re - smallSquare.radiusHi).toRat
+  (smallSquare.re + smallSquare.radiusHi).toRat
+  [CommonPresentation.discSlack sqrt3Square
+      (coord3 smallSquare smallWitness smallPrecision),
+    CommonPresentation.discSlack sqrt2TiltSquare
+      (coord2 smallSquare smallWitness smallPrecision)] PolyQuot.coeffs
+
+/- At the other quartic root the second coordinate is `-√2`, so the
+polynomial equation still holds but the selected-square sign fails. -/
+#guard match flippedPresentationTable? with
+  | none => false
+  | some table =>
+      CommonPresentation.checkEquation sqrt2Polynomial
+        (coord2 smallSquare smallWitness smallPrecision) &&
+      !CommonPresentation.checkPresentation smallWitness smallPrecision table
+        (fun i : Fin 2 => if i = 0 then sqrt3Polynomial else sqrt2Polynomial)
+        (fun i => if i = 0 then sqrt3Square else sqrt2TiltSquare)
+        (fun i => if i = 0 then coord3 smallSquare smallWitness smallPrecision
+          else coord2 smallSquare smallWitness smallPrecision)
+
+/- The quartic uses the existing quadratic-norm irreducibility certificate.
+This is the checked route for the fixed-field solver's zero reflection. -/
+#guard match QuadraticNormCertificate.certify? quartic with
+  | none => false
+  | some cert => cert.check quartic
 
 /-- A swapped source is rejected independently of the sign-table contents. -/
 theorem swapped_entry_rejected

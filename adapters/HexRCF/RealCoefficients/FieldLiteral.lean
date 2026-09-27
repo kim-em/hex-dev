@@ -216,16 +216,14 @@ meta def resultExpr {p : ZPoly} {s : DyadicSquare}
 /-- Construct a checked proof for a fixed-field existential or universal
 sentence. Search runs in meta code; the resulting term contains only literal
 certificate data, the Boolean replay proof, and its soundness theorem. -/
-meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
+meta def prove {p : ZPoly} {s : DyadicSquare}
     {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
     [ZPoly.CheckedIrreducible p] {n : Nat}
     (pExpr rootExpr valuesExpr formulaExpr : Expr)
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
     (formula : RealFormula.QF (n + 1))
-    (quantifier : RealFormula.Quantifier) (precision : Nat := 8)
-    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) :
-    MetaM (Expr × Expr) := do
-  let some data := FieldBuild.build p s hw hp values formula () precision extraSignKeys |
+    (quantifier : RealFormula.Quantifier) (precision : Nat := 8) : MetaM Expr := do
+  let some data := FieldBuild.build p s hw hp values formula () precision |
     throwError "rcf: fixed-field certificate construction failed"
   let certificate ← resultExpr pExpr rootExpr formulaExpr formula data
   let verdictName := match quantifier with
@@ -260,18 +258,6 @@ meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
   let proof ← mkAppM soundName
     #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit, checked]
   check proof
-  return (proof, certificate)
-
-/-- Construct the checked fixed-field proof when no additional sign queries
-are needed by an enclosing coefficient-presentation checker. -/
-meta def prove {p : ZPoly} {s : DyadicSquare}
-    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
-    [ZPoly.CheckedIrreducible p] {n : Nat}
-    (pExpr rootExpr valuesExpr formulaExpr : Expr)
-    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
-    (formula : RealFormula.QF (n + 1))
-    (quantifier : RealFormula.Quantifier) (precision : Nat := 8) : MetaM Expr := do
-  return (← proveWithCertificate pExpr rootExpr valuesExpr formulaExpr values formula
-    quantifier precision).1
+  return proof
 
 end Hex.RCF.RealCoefficients.FieldLiteral
