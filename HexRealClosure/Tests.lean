@@ -132,4 +132,14 @@ private def nonmonicSplit : Option (Rat × Nat × Int) := do
 #eval nonmonicSplit
 #guard nonmonicSplit == some (2, 2, 1)
 
+/-- The selected-root cofactor yields a nonzero constant Bézout result. -/
+private def splitBezout : Option (Nat × Rat) := do
+  let d ← Root.validate 7 raw
+  let below : Expression d := ⟨x - DensePoly.C 3⟩
+  let eg := DensePoly.xgcdLeft below.polynomial below.inverseFactor.2
+  return (eg.gcd.natDegree, eg.gcd.leadingCoeff)
+
+#eval splitBezout
+#guard splitBezout == some (0, 7)
+
 end Hex.RealClosure.Tests

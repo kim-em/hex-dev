@@ -110,6 +110,7 @@ expected = [
     f"{len(split) - 1}, {new_version})",
     f"some {str(eval_poly([Q(-2), Q(0), Q(1)], alpha) == (0, 0)).lower()}",
     f"some ({2 * head[-1] / linear_gcd[-1]}, {len(split) - 1}, {sign(alpha)})",
+    f"some (0, {eval_poly([Q(-2), Q(0), Q(1)], (Q(3), Q(0)))[0]})",
 ]
 
 run = subprocess.run(
@@ -118,4 +119,4 @@ run = subprocess.run(
 )
 actual = re.findall(r"info: HexRealClosure/Tests\.lean:\d+:0: (.+)", run.stdout + run.stderr)
 assert actual == expected, f"Lean outputs {actual!r}; exact oracle expects {expected!r}"
-print("exact oracle passed for nine runnable cases")
+print("exact oracle passed for ten runnable cases")
