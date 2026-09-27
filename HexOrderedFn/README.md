@@ -77,8 +77,9 @@ zero-touching bounds, joint refinement, finite exhaustion, and compiled total
 sign and bound searches with earlier failed trials. Kernel proofs check the finite witnesses. Infinitesimal fixtures cover negative
 valuations, negative denominators, cancellation and three successive levels;
 `scripts/oracle/ordered_fn_z3.py` checks them with pinned Z3 RCF and exact
-rational specialization. `ordered_fn_real.py` checks 96 real refinement fixtures
-with exact Fraction arithmetic and Z3 polynomial enclosure queries.
+rational specialization. `ordered_fn_real.py` checks 108 real refinement fixtures
+with FLINT normalization of source expressions, exact Fraction values and Z3
+polynomial/quotient enclosure queries. Original divisor guards survive cancellation.
 `hexorderedfn_bench` measures sign scans, comparisons,
 degree, coefficient height and tower depth without importing Mathlib. Run it
 with `scripts/bench/ordered_fn_measure.py --output DIR`. The companion's

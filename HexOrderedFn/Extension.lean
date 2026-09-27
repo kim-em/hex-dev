@@ -54,7 +54,10 @@ instance : Lean.Grind.Field (Extension r) where
   div f g := ⟨f.val / g.val⟩
   natCast := ⟨fun n => ⟨Nat.cast n⟩⟩
   intCast := ⟨fun n => ⟨Int.cast n⟩⟩
-  ofNat n := ⟨⟨OfNat.ofNat n⟩⟩
+  ofNat
+    | 0 => ⟨⟨0⟩⟩
+    | 1 => ⟨⟨1⟩⟩
+    | n + 2 => ⟨⟨Nat.cast (n + 2)⟩⟩
   nsmul := ⟨fun n f => ⟨n • f.val⟩⟩
   zsmul := ⟨fun n f => ⟨n • f.val⟩⟩
   npow := ⟨fun f n => ⟨f.val ^ n⟩⟩
@@ -71,14 +74,30 @@ instance : Lean.Grind.Field (Extension r) where
   mul_zero f := ext (Lean.Grind.Semiring.mul_zero f.val)
   pow_zero f := ext (Lean.Grind.Semiring.pow_zero f.val)
   pow_succ f n := ext (Lean.Grind.Semiring.pow_succ f.val n)
-  ofNat_succ n := ext (Lean.Grind.Semiring.ofNat_succ (α := RationalFn K) n)
-  ofNat_eq_natCast n := ext (Lean.Grind.Semiring.ofNat_eq_natCast (α := RationalFn K) n)
+  ofNat_succ n := by
+    cases n with
+    | zero => exact ext (Lean.Grind.Semiring.ofNat_succ 0)
+    | succ n => cases n with
+      | zero => exact ext ((Lean.Grind.Semiring.ofNat_eq_natCast 2).symm.trans
+          (Lean.Grind.Semiring.ofNat_succ 1))
+      | succ n => exact ext (Lean.Grind.Semiring.natCast_succ (n + 2))
+  ofNat_eq_natCast n := by
+    cases n with
+    | zero => exact ext (Lean.Grind.Semiring.ofNat_eq_natCast 0)
+    | succ n => cases n with
+      | zero => exact ext (Lean.Grind.Semiring.ofNat_eq_natCast 1)
+      | succ n => rfl
   nsmul_eq_natCast_mul n f := ext (Lean.Grind.Semiring.nsmul_eq_natCast_mul n f.val)
   neg_add_cancel f := ext (Lean.Grind.Ring.neg_add_cancel f.val)
   sub_eq_add_neg f g := ext (Lean.Grind.Ring.sub_eq_add_neg f.val g.val)
   neg_zsmul n f := ext (Lean.Grind.Ring.neg_zsmul n f.val)
   zsmul_natCast_eq_nsmul n f := ext (Lean.Grind.Ring.zsmul_natCast_eq_nsmul n f.val)
-  intCast_ofNat n := ext (Lean.Grind.Ring.intCast_ofNat (α := RationalFn K) n)
+  intCast_ofNat n := by
+    cases n with
+    | zero => exact ext (Lean.Grind.Ring.intCast_ofNat 0)
+    | succ n => cases n with
+      | zero => exact ext (Lean.Grind.Ring.intCast_ofNat 1)
+      | succ n => exact ext (Lean.Grind.Ring.intCast_natCast (n + 2))
   intCast_neg n := ext (Lean.Grind.Ring.intCast_neg (α := RationalFn K) n)
   mul_comm f g := ext (Lean.Grind.CommSemiring.mul_comm f.val g.val)
   div_eq_mul_inv f g := ext (Lean.Grind.Field.div_eq_mul_inv f.val g.val)

@@ -22,7 +22,7 @@ variable {K : Type u} [Field K] [DecidableEq K]
 open Hex
 
 /-- Mathlib field laws on the executable operations, powers, and casts. -/
-noncomputable instance field : Field (RationalFn K) :=
+instance field : Field (RationalFn K) :=
   { Field.ofMinimalAxioms (RationalFn K)
       RationalFn.add_assoc
       (fun f => (RationalFn.add_comm 0 f).trans (RationalFn.add_zero f))

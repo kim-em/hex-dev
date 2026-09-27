@@ -24,12 +24,20 @@ universe u
 variable {K : Type u} [Field K] [DecidableEq K]
 variable {ι : K →+* ℝ} {τ : ℝ} {a : Approximation K}
 
-/-- Register the fixed caller provider using its semantic progress proofs. -/
-@[macro_inline] def registration (ha : ApproximationCorrect ι τ a) (hw : ApproximationWidth a)
-    (ht : RelativeTranscendence ι τ) : Registration K where
+/-- Semantic validity of this exact provider. The witnesses occur only in `Prop`. -/
+def Valid (a : Approximation K) : Prop :=
+  ∃ (ι : K →+* ℝ) (τ : ℝ),
+    ApproximationCorrect ι τ a ∧ ApproximationWidth a ∧ RelativeTranscendence ι τ
+
+/-- Register a provider with structurally erased semantic evidence. -/
+def registration (h : Valid a) : Registration K where
   source := a
-  signProgress f := sign_acc ha hw ht f 0
-  approxProgress f δ := approx_acc ha hw ht f δ 0
+  signProgress f := by
+    obtain ⟨ι, τ, ha, hw, ht⟩ := h
+    exact sign_acc ha hw ht f 0
+  approxProgress f δ := by
+    obtain ⟨ι, τ, ha, hw, ht⟩ := h
+    exact approx_acc ha hw ht f δ 0
 
 namespace Extension
 
@@ -42,28 +50,75 @@ def equiv : Extension r ≃ RationalFn K where
   left_inv _ := rfl
   right_inv _ := rfl
 
-noncomputable instance field : Field (Extension r) :=
+/-- Field laws transported through the canonical-fraction equivalence. -/
+@[reducible] noncomputable def fieldModel : Field (Extension r) :=
   { equiv.field with
     sub f g := ⟨f.val - g.val⟩
     sub_eq_add_neg _ _ := rfl
     div f g := ⟨f.val / g.val⟩
     div_eq_mul_inv _ _ := rfl }
 
+attribute [local instance] Lean.Grind.Semiring.natCast Lean.Grind.Ring.intCast
+
+/-- Mathlib field structure using only the core arithmetic in its data fields. -/
+instance field : Field (Extension r) where
+  add := (· + ·)
+  add_assoc := fieldModel.add_assoc
+  zero := 0
+  zero_add := fieldModel.zero_add
+  add_zero := fieldModel.add_zero
+  nsmul := fun n a => n • a
+  nsmul_zero := fieldModel.nsmul_zero
+  nsmul_succ := fieldModel.nsmul_succ
+  add_comm := fieldModel.add_comm
+  mul := (· * ·)
+  mul_assoc := fieldModel.mul_assoc
+  one := 1
+  one_mul := fieldModel.one_mul
+  mul_one := fieldModel.mul_one
+  npow := fun n a => a ^ n
+  npow_zero := fieldModel.npow_zero
+  npow_succ := fieldModel.npow_succ
+  zero_mul := fieldModel.zero_mul
+  mul_zero := fieldModel.mul_zero
+  left_distrib := fieldModel.left_distrib
+  right_distrib := fieldModel.right_distrib
+  natCast := Nat.cast
+  natCast_zero := fieldModel.natCast_zero
+  natCast_succ := fieldModel.natCast_succ
+  neg := (- ·)
+  sub := (· - ·)
+  zsmul := fun n a => n • a
+  sub_eq_add_neg := fieldModel.sub_eq_add_neg
+  zsmul_zero' := fieldModel.zsmul_zero'
+  zsmul_succ' := fieldModel.zsmul_succ'
+  zsmul_neg' := fieldModel.zsmul_neg'
+  neg_add_cancel := fieldModel.neg_add_cancel
+  intCast := Int.cast
+  intCast_ofNat := fieldModel.intCast_ofNat
+  intCast_negSucc := fieldModel.intCast_negSucc
+  mul_comm := fieldModel.mul_comm
+  inv := (·⁻¹)
+  div := (· / ·)
+  zpow := fun n a => a ^ n
+  div_eq_mul_inv := fieldModel.div_eq_mul_inv
+  zpow_zero' := fieldModel.zpow_zero'
+  zpow_succ' := fieldModel.zpow_succ'
+  zpow_neg' := fieldModel.zpow_neg'
+  exists_pair_ne := fieldModel.exists_pair_ne
+  nnratCast := fun q => (Nat.cast q.num : Extension r) / Nat.cast q.den
+  ratCast := fun q => (Int.cast q.num : Extension r) / Nat.cast q.den
+  mul_inv_cancel := fieldModel.mul_inv_cancel
+  inv_zero := fieldModel.inv_zero
+  nnratCast_def := fieldModel.nnratCast_def
+  nnqsmul := fun q a => ((Nat.cast q.num : Extension r) / Nat.cast q.den) * a
+  nnqsmul_def := fieldModel.nnqsmul_def
+  ratCast_def := fieldModel.ratCast_def
+  qsmul := fun q a => ((Int.cast q.num : Extension r) / Nat.cast q.den) * a
+  qsmul_def := fieldModel.qsmul_def
+
 /-- The companion field induces precisely the core field operations and laws. -/
-theorem coreField_eq : Field.toGrindField (K := Extension r) = instField := by
-  unfold Field.toGrindField instField
-  dsimp only
-  congr 1
-  unfold CommRing.toGrindCommRing Ring.toGrindRing Semiring.toGrindSemiring
-  dsimp only
-  congr
-  all_goals first
-    | exact proof_irrel_heq _ _
-    | (funext n; cases n with
-      | zero => rfl
-      | succ n => cases n with
-        | zero => rfl
-        | succ n => rfl)
+theorem coreField_eq : Field.toGrindField (K := Extension r) = instField := rfl
 
 /-- The wrapper's field operations are those of its canonical fraction. -/
 noncomputable def valHom : Extension r →+* RationalFn K where
@@ -105,14 +160,8 @@ theorem sign_mul (ha : ApproximationCorrect ι τ r.source)
 
 /-- Formal zero is exactly zero under the total sign. -/
 theorem sign_eq_zero_iff (ha : ApproximationCorrect ι τ r.source)
-    (ht : RelativeTranscendence ι τ) (f : Extension r) : sign f = 0 ↔ f = 0 := by
-  rw [sign_eq ha ht]
-  have hz : sgn (evalHom ht f) = 0 ↔ evalHom ht f = 0 := by
-    rcases lt_trichotomy (evalHom ht f) 0 with h | h | h
-    · simp [sgn, h, h.ne]
-    · simp [sgn, h]
-    · simp [sgn, h, h.ne']
-  rw [hz, ← map_zero (evalHom ht), (evalHom ht).injective.eq_iff]
+    (ht : RelativeTranscendence ι τ) (f : Extension r) : sign f = 0 ↔ f = 0 :=
+  (Real.sign_eq_zero_iff ha ht f.val _).trans ⟨ext, congrArg val⟩
 
 /-- A finite successful attempt proves the total sign without reducing its
 accessibility argument. Containment is still required for this exact source. -/
@@ -182,28 +231,50 @@ theorem C_lt [LinearOrder K] (ha : ApproximationCorrect ι τ r.source)
     C (r := r) c < C d ↔ c < d := by
   rw [eval_lt ha ht, evalHom_C, evalHom_C, hι.lt_iff_lt]
 
-/-- The order of a registered real extension is linear. -/
-@[macro_inline, instance_reducible] def linearOrder (ha : ApproximationCorrect ι τ r.source)
-    (ht : RelativeTranscendence ι τ) : LinearOrder (Extension r) where
-  le_refl f := (eval_le ha ht f f).mpr le_rfl
-  le_trans f g h hfg hgh := (eval_le ha ht f h).mpr
-    (((eval_le ha ht f g).mp hfg).trans ((eval_le ha ht g h).mp hgh))
-  le_antisymm f g hfg hgf := (evalHom ht).injective
-    (le_antisymm ((eval_le ha ht f g).mp hfg) ((eval_le ha ht g f).mp hgf))
-  le_total f g := (le_total (evalHom ht f) (evalHom ht g)).imp
-    (eval_le ha ht f g).mpr (eval_le ha ht g f).mpr
+/-- Semantic validity needed for the registered order. -/
+def OrderValid (r : Registration K) : Prop :=
+  ∃ (ι : K →+* ℝ) (τ : ℝ), ApproximationCorrect ι τ r.source ∧ RelativeTranscendence ι τ
+
+/-- The order of a registered real extension is linear. Its data uses only the
+core decisions; semantic witnesses occur solely inside the erased proof fields. -/
+@[instance_reducible] def linearOrder (h : OrderValid r) : LinearOrder (Extension r) where
+  le_refl f := by
+    obtain ⟨ι, τ, ha, ht⟩ := h
+    exact (eval_le ha ht f f).mpr le_rfl
+  le_trans f g k hfg hgk := by
+    obtain ⟨ι, τ, ha, ht⟩ := h
+    exact (eval_le ha ht f k).mpr
+      (((eval_le ha ht f g).mp hfg).trans ((eval_le ha ht g k).mp hgk))
+  le_antisymm f g hfg hgf := by
+    obtain ⟨ι, τ, ha, ht⟩ := h
+    exact (evalHom ht).injective
+      (le_antisymm ((eval_le ha ht f g).mp hfg) ((eval_le ha ht g f).mp hgf))
+  le_total f g := by
+    obtain ⟨ι, τ, ha, ht⟩ := h
+    exact (le_total (evalHom ht f) (evalHom ht g)).imp
+      (eval_le ha ht f g).mpr (eval_le ha ht g f).mpr
   lt_iff_le_not_ge f g := by
+    obtain ⟨ι, τ, ha, ht⟩ := h
     rw [eval_lt ha ht, eval_le ha ht, eval_le ha ht, lt_iff_le_not_ge]
   toDecidableLE := inferInstance
   toDecidableLT := inferInstance
   toDecidableEq := inferInstance
 
+/-- Real evaluation preserves the registered linear order. -/
+theorem eval_strictMono (ha : ApproximationCorrect ι τ r.source)
+    (ht : RelativeTranscendence ι τ) :
+    let := linearOrder ⟨ι, τ, ha, ht⟩
+    StrictMono (evalHom (r := r) ht) := by
+  dsimp only
+  intro f g hfg
+  exact (eval_lt ha ht f g).mp hfg
+
 /-- Field arithmetic preserves the registered real order. -/
 theorem strictOrderedRing (ha : ApproximationCorrect ι τ r.source)
     (ht : RelativeTranscendence ι τ) :
-    let := linearOrder ha ht
+    let := linearOrder ⟨ι, τ, ha, ht⟩
     IsStrictOrderedRing (Extension r) := by
-  let := linearOrder ha ht
+  let := linearOrder ⟨ι, τ, ha, ht⟩
   exact Function.Injective.isStrictOrderedRing (evalHom ht) (map_zero _) (map_one _)
     (map_add _) (map_mul _) (fun {_ _} => (eval_le ha ht _ _).symm)
     (fun {_ _} => (eval_lt ha ht _ _).symm)
@@ -211,9 +282,9 @@ theorem strictOrderedRing (ha : ApproximationCorrect ι τ r.source)
 /-- Ordered-ring laws for consumers of the core field dictionary. -/
 theorem orderedRing (ha : ApproximationCorrect ι τ r.source)
     (ht : RelativeTranscendence ι τ) :
-    let := linearOrder ha ht
+    let := linearOrder ⟨ι, τ, ha, ht⟩
     Lean.Grind.OrderedRing (Extension r) := by
-  let := linearOrder ha ht
+  let := linearOrder ⟨ι, τ, ha, ht⟩
   exact {
     add_le_left_iff := fun c => by
       rw [eval_le ha ht, eval_le ha ht, map_add, map_add, add_le_add_iff_right]

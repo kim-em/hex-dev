@@ -100,4 +100,15 @@ theorem sign_eq (ha : ApproximationCorrect ι τ a) (ht : RelativeTranscendence 
   rw [evalHom_apply]
   exact sign_sound ha f h
 
+/-- Relative transcendence makes formal zero exactly the zero total sign. -/
+theorem sign_eq_zero_iff (ha : ApproximationCorrect ι τ a) (ht : RelativeTranscendence ι τ)
+    (f : RationalFn K) (h : Acc (Next (attempt a f)) 0) : sign a f h = 0 ↔ f = 0 := by
+  rw [sign_eq ha ht]
+  have hz : sgn (evalHom ht f) = 0 ↔ evalHom ht f = 0 := by
+    rcases lt_trichotomy (evalHom ht f) 0 with h | h | h
+    · simp [sgn, h, h.ne]
+    · simp [sgn, h]
+    · simp [sgn, h, h.ne']
+  rw [hz, ← map_zero (evalHom ht), (evalHom ht).injective.eq_iff]
+
 end Hex.OrderedFn.Real

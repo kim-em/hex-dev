@@ -397,7 +397,7 @@ jobs:
             HexConformance HexMvFactorizationTests NautyFFI/nautyffi_tests hextruncatedseries_emit_fixtures \
             hexmvpoly_emit_fixtures hexrealformula_emit_fixtures hexsparsepoly_emit_fixtures \
             hexmodular_emit_fixtures hexpolyzgcd_emit_fixtures \
-            hexpolysmith_emit_fixtures hexrationalfn_emit_fixtures hexorderedfn_emit_fixtures hexorderedfn_emit_real_fixtures \
+            hexpolysmith_emit_fixtures hexrationalfn_emit_fixtures hexorderedfn_emit_fixtures hexorderedfn_emit_real_fixtures hexorderedfn_liouville_test \
             hexdeterminantalideal_emit_fixtures \
             hexpoly_emit_fixtures hexpolyfp_emit_fixtures \
             hexberlekamp_emit_fixtures \
@@ -422,6 +422,7 @@ jobs:
           if [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" HexIntFactor "* ]]; then
             lake build HexIntFactorFieldConformance
           fi
+          .lake/build/bin/hexorderedfn_liouville_test
       - name: Check real-closure architecture experiments
         if: steps.classify.outputs.docs_only != 'true'
         env:

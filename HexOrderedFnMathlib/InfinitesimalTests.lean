@@ -24,6 +24,11 @@ abbrev First := RationalFn Rat
 abbrev Second := RationalFn First
 
 
+-- Expressions through the companion's Field and LinearOrder remain computable.
+def orderedFraction (f : First) : First := if f < 0 then -(f ^ (2 : Nat)) else f + 1
+def orderedSecond (f : Second) : Second := if f < 0 then -(f ^ (2 : Nat)) else f + 1
+
+
 example : InfinitesimalTests.First = First := by
   unfold InfinitesimalTests.First First
   rw [HexRationalFnMathlib.ratField_eq]

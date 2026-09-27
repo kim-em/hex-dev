@@ -1049,7 +1049,7 @@ lean_lib HexConformance where
 
     ++ #[`HexPolyFast.Conformance].map Glob.one
 
-    ++ #[`HexRationalFn.Conformance, `HexRationalFn.Domains, `HexOrderedFn.Conformance, `HexOrderedFn.Liouville].map Glob.one
+    ++ #[`HexRationalFn.Conformance, `HexRationalFn.Domains, `HexOrderedFn.Conformance].map Glob.one
 
     ++ #[`HexLatticeEnum.Conformance].map Glob.one
 
@@ -1738,6 +1738,9 @@ lean_exe hexpolyfast_bench where
 lean_exe hexrationalfn_bench where
   srcDir := "bench"
   root := `HexRationalFn.Bench
+
+lean_exe hexorderedfn_liouville_test where
+  root := `HexOrderedFnMathlib.LiouvilleRun
 
 lean_exe hexorderedfn_emit_real_fixtures where
   srcDir := "conformance"

@@ -29,12 +29,16 @@ Other semantic tests form their fractions under the Mathlib-derived dictionary.
 `Real.eval` evaluates a stored canonical fraction by total real division.
 Under relative transcendence, `Real.evalHom` is an injective field homomorphism
 and agrees with Mathlib's rational-function evaluation. `Real.registration`
-constructs a total provider registration from the stated hypotheses.
+constructs a total provider registration from `Real.Valid`, a proposition
+containing the semantic hypotheses. Embedding and subject witnesses erase
+structurally from computation.
 `Real.Extension` supplies the corresponding real order: install
-`Extension.linearOrder` and `Extension.strictOrderedRing` with the same
-containment and transcendence proofs. `Extension.orderedRing` supplies the
+`Extension.linearOrder` using `Extension.OrderValid`, and obtain
+`Extension.strictOrderedRing` from containment and transcendence. `Extension.orderedRing` supplies the
 core ordered-ring laws, and `Extension.coreField_eq` connects the core and
-Mathlib field dictionaries. Providers can be transported with checked
+Mathlib field dictionaries by `rfl`. The Mathlib field instance is computable,
+so ordinary expressions and successive real registrations compile in companion
+contexts. Providers can be transported with checked
 agreement of their embedding and subject.
 `Real.finiteAttempt_sound` and `Real.sign?_sound` establish denominator
 nonvanishing as well as the sign. Expression consumers must still retain all
@@ -52,15 +56,17 @@ nonpositive requests, which run the width-one search. It is separate from the
 computational `Real.approx_width` theorem for positive requests.
 
 ```sh
-lake build HexOrderedFnMathlib HexOrderedFnTests
+lake build HexOrderedFnMathlib HexOrderedFnTests hexorderedfn_liouville_test
+.lake/build/bin/hexorderedfn_liouville_test
 ```
 
 The build includes ordinary-kernel proof tests, public axiom-dependency
 checks, and finite comparisons at sqrt(2) with proved rational source bounds.
 The sqrt(2) fixture supplies no transcendence assumption. Rational fixtures
 here prove results for total searches with finite termination evidence.
-`conformance/HexOrderedFn/Conformance.lean` executes those algorithms after
-proof erasure on the separate core-field fixtures.
+The Mathlib-free `conformance/HexOrderedFn/Conformance.lean` executes the core
+fixtures. The separate `hexorderedfn_liouville_test` executable checks the
+semantic integration after proof erasure.
 
 The Liouville integration fixture proves containment and width for executable
 rational partial sums of `liouvilleNumber 2`, transfers its transcendence from
@@ -68,7 +74,11 @@ integers to rationals, and exercises the registered total searches. Finite
 attempt proofs establish the signs of `X-5/4`, `X-2` and their quotient;
 compiled checks execute the total searches and derived approximation. The
 fixture also checks provider transport, rejects wrong-subject evidence, and
-adjoins a positive infinitesimal above the real field.
+adjoins a positive infinitesimal above the real field. A checked transport via
+`ratField_eq` also runs the fixture on the core rational dictionary. A generic
+second registration compiles under its relative-transcendence hypotheses, while
+a finite outer query executes successive coefficient approximation without
+postulating a second independent named constant.
 
 The APIs and proofs are implemented (phase 1). Independent API review and
 the remaining Phase-4 evidence are outstanding under

@@ -1,8 +1,8 @@
 # Infinitesimal rational-function performance
 
-The six Mathlib-free targets exercise the production sign and comparison
-functions on canonical rational functions. These measurements cover the
-infinitesimal implementation only. The APIs are implemented (phase 1); independent review and the remaining
+The Mathlib-free targets exercise production signs, comparisons, Horner bounds
+and real refinement on canonical rational functions. The initial six targets
+cover infinitesimals; the later sections cover real searches and general comparisons. The APIs are implemented (phase 1); independent review and the remaining
 conformance/performance gates are tracked separately.
 
 ## Runtime measurements
@@ -133,7 +133,10 @@ The original quadratic denominator model overlooked the default Karatsuba plan;
 the corrected recurrence is T(n)=3T(n/2)+Θ(n). The height/provider ladders are
 extended to larger operands to distinguish limb work from fixed overhead. The
 quadratic bit-work models for refinement and Horner are not established by the
-initial measurements. Their results remain unresolved evidence, without a
+initial measurements. The current search configuration uses eight larger
+parameters (8192, 12288, 16384, 24576, 32768, 49152, 65536, 98304), with a
+60-second operational per-call cap. It keeps the same quadratic model; the
+initial data remain evidence for their recorded smaller schedule. Their results remain unresolved evidence, without a
 Phase-4 completion claim.
 
 ## Corrected comparison and height measurements

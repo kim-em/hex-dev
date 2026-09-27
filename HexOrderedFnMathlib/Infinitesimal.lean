@@ -56,10 +56,10 @@ theorem lowestCoeff_eq (p : DensePoly K) :
     lowestCoeff p = (toPolynomial p).trailingCoeff := by
   rw [lowestCoeff, lowestIndex_eq, Polynomial.trailingCoeff, coeff_toPolynomial]
 
-noncomputable section
+section
 
 /-- Interpret canonical fractions as lexicographically ordered Laurent series. -/
-@[expose] def embed : RationalFn K →+* Lex (HahnSeries ℤ K) :=
+@[expose] noncomputable def embed : RationalFn K →+* Lex (HahnSeries ℤ K) :=
   let wrap : HahnSeries ℤ K →+* Lex (HahnSeries ℤ K) :=
     { toFun := toLex, map_one' := rfl, map_zero' := rfl,
       map_add' := fun _ _ => rfl, map_mul' := fun _ _ => rfl }
@@ -368,7 +368,7 @@ theorem X_lt_pow (n : ℕ) :
 theorem embed_strictMono : StrictMono (embed (K := K)) := fun _ _ h => (embed_lt _ _).mp h
 
 /-- Interpret two successive infinitesimals in the iterated Hahn field. -/
-def towerEmbed : RationalFn (RationalFn K) →+* Lex (HahnSeries ℤ (Lex (HahnSeries ℤ K))) :=
+noncomputable def towerEmbed : RationalFn (RationalFn K) →+* Lex (HahnSeries ℤ (Lex (HahnSeries ℤ K))) :=
   (Hahn.mapHom (embed (K := K))).comp (embed (K := RationalFn K))
 
 /-- The two-level interpretation preserves and reflects order. -/

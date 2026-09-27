@@ -188,11 +188,11 @@ embedding, containment, convergence and relative-transcendence assumptions:
 | Statement | Conclusion |
 | --- | --- |
 | `Real.sign_eq` | `Real.sign f = sgn (evalHom f)`. |
-| `Real.sign_zero` | `Real.sign f = 0 ↔ f = 0`. |
-| `Real.compare_eq` | Comparing f and g agrees with comparing their images in ℝ. |
-| `Real.eval_lt`, `eval_le` | The executable order is the pullback of real order. |
-| `Real.C_lt` | `C a < C b ↔ a < b`. |
-| `Real.approx_correct` | `Real.approx f δ` contains `evalHom f` and has width at most positive `δ`; these are separate theorems about the computational function. |
+| `Real.sign_eq_zero_iff` | `Real.sign f = 0 ↔ f = 0`. |
+| `Real.Extension.compare_eq` | Comparing f and g agrees with comparing their images in ℝ. |
+| `Real.Extension.eval_lt`, `eval_le` | The executable order is the pullback of real order. |
+| `Real.Extension.C_lt` | `C a < C b ↔ a < b`. |
+| `Real.approx_contains`, `Real.approx_width` | `Real.approx f δ` contains `evalHom f` and has width at most positive `δ`; these are separate theorems about the computational function. |
 
 Use sign under negation/multiplication and positivity of sums to supply the
 core ordered-ring/linear-order laws. Provide compatible Mathlib `Field`,
@@ -347,7 +347,8 @@ Check finite successful attempts computationally, prove their agreement
 with the total sign by the supplied-proof route, and include compiled
 evaluation of the total sign so a replacement by an unrelated finite
 checker cannot satisfy the test. The fixture belongs to the companion's
-integration tests; it introduces no Mathlib import into the computational
+integration tests. `hexorderedfn_liouville_test` compiles and runs those semantic
+integration cases separately from the Mathlib-free computational conformance; it introduces no Mathlib import into the computational
 library and no HexInterval dependency. The sqrt(2) and synthetic-search
 tests do not substitute for this genuine transcendental instance.
 

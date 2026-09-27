@@ -6,8 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexOrderedFn.Liouville
-
 public import HexOrderedFn.Tests
 public import HexOrderedFn.InfinitesimalTests
 public meta import HexOrderedFn.InfinitesimalTests

@@ -24,6 +24,28 @@ class RealOracleTests(unittest.TestCase):
         with self.assertRaises(OracleMismatch):
             check_record(record)
 
+    def test_changed_source_expression(self):
+        record = self.sample("positive/false/8")
+        record["expression"] = ["rat", [1, 1]]
+        self.reject(record)
+
+    def test_wrong_canonical_fraction(self):
+        record = self.sample("degree/false/8")
+        record["num"][0] = [1, 1]
+        self.reject(record)
+
+    def test_cancelled_divisor_guard(self):
+        record = self.sample("cancelled-pole/false/8")
+        self.assertEqual(record["total_sign"], 1)
+        self.assertIsNone(record["guarded_sign"])
+        record["guarded_sign"] = 1
+        self.reject(record)
+
+    def test_forged_source_regularity(self):
+        record = self.sample("cancelled-pole/true/8")
+        record["source_regular"] = True
+        self.reject(record)
+
     def test_wrong_subject(self):
         record = self.sample("positive/false/8")
         record["subject"] = [3, 1]
