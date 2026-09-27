@@ -8,17 +8,10 @@ correspondence with `Nat.factorization` and `Nat.primeFactorsList`,
 supplies factorization-derived witnesses for squarefree decomposition,
 and relates the order API to `orderOf` in `(ZMod n)ˣ`.
 
-This SPEC expands the "Integer factorization" entry in
-[future-work](../../SPEC/future-work.md) and depends on
+This library depends on
 [hex-primality](../../HexPrimality/SPEC/hex-primality.md), which owns the primality
-certificates each factor carries and the multiplicative order this
-library's order API is stated with.
-
-One thing the future-work entry says needs sharpening rather than
-correcting. It observes that "the multiplicative order of an element
-mod `p` … comes from the factorization of `p − 1`, and the pattern
-recurs for group orders throughout". True, and the consumer that
-actually exists in this tree is
+certificates each factor carries and the multiplicative order this library's
+order API is stated with. A motivating consumer is
 [hex-conway](../../HexConway/SPEC/hex-conway.md) Tier 2, whose group
 order is `p^n − 1` rather than `p − 1`. That is a materially harder
 family of integers, and it has structure worth exploiting. See "The
@@ -73,11 +66,11 @@ factoring advances". `HexIntFactor.Primality` supplies the hook without
 reversing the dependency: it projects this library's checked complete result
 or checked partial snapshot into hex-primality's untrusted factor-search data.
 
-**The maximal order needs it.** [future-work](../../SPEC/future-work.md)'s
-"Ring of integers" entry names the squarefree part of the polynomial
-discriminant as its dependency, "where such computations turn
-conditional in practice". That is a consumer whose design is shaped by
-what this library can and cannot deliver, and the answer it needs is
+**The maximal order needs it.** The planned
+[ring-of-integers library](../../SPEC/future-work.md#ring-of-integers) names the
+squarefree part of the polynomial discriminant as its dependency, "where such
+computations turn conditional in practice". That consumer's design is shaped
+by what this library can and cannot deliver, and the answer it needs is
 "here is the factorization, or here is exactly what was left
 unfactored".
 
@@ -115,9 +108,8 @@ maintain. If a consumer appears that needs 60-digit factorizations, the
 route is an untrusted external oracle checked by this library's
 `checkFactorization`, which design principle 4 explicitly permits.
 
-Also not in scope: discrete logarithms. The future-work entry scopes
-them correctly and the reasoning is worth keeping -- the consumers this
-project has want factorization and exponentiation, not logarithms.
+Also not in scope: discrete logarithms. The consumers this project has want
+factorization and exponentiation, not logarithms.
 Checking that `g` is a primitive root mod `p` is checking
 `g^{(p−1)/q} ≠ 1` for each prime `q ∣ p − 1`, which is this library's
 order API and not a logarithm. A general discrete logarithm
@@ -211,12 +203,10 @@ theorem checkFactorization_multiplicity {F} (h : checkFactorization F = true)
     e.prime ^ k ∣ F.subject ↔ k ≤ e.exponent
 ```
 
-**This certificate pins the prime support, and it is worth being
-precise about why**, because [future-work](../../SPEC/future-work.md)'s own
-preamble warns that a positive certificate usually does not establish
-completeness.
-Here it does, and the argument is the one the entry gives: any further
-prime factor `q` would divide `∏ pᵢ^{eᵢ}`, so by Euclid's lemma
+**This certificate pins the prime support, and it is worth being precise
+about why.** A positive certificate usually does not establish completeness.
+Here it does: any further prime factor `q` would divide `∏ pᵢ^{eᵢ}`, so by
+Euclid's lemma
 (`Hex.Nat.Prime.dvd_mul`, already in hex-arith) it divides some `pᵢ`,
 and since `pᵢ` is prime and `q ≠ 1` that forces `q = pᵢ`. The
 completeness comes from the *conjunction* of the product identity and
@@ -292,8 +282,7 @@ default is generous" as a classification. The default fuel is a
 constant and starting point, and because
 [hex-finite-field](../../SPEC/Libraries/hex-finite-field.md)'s randomness discipline
 requires the draw to be an explicit argument and the advanced state to
-come back. `Hex.Rand` does not exist in the tree yet; it is a
-prerequisite, specified there and sited in hex-basic.
+come back. `Hex.Rand` is provided by hex-basic.
 
 ### 0. Structural reductions, always applied
 
@@ -955,11 +944,10 @@ forcing callers that require completeness to unpack an object they
 cannot use.
 
 That is the honest object for the consumers that need one: hex-primality's
-Pocklington search wants "enough of `n − 1` to pass `√n`" and does not
-care about the rest, and the "Ring of integers" entry's requirement
-that "the design records what was assumed when factorization ran out of
-budget, so a possibly-non-maximal order announces itself as one" is
-exactly a `residual ≠ 1`.
+Pocklington search wants "enough of `n − 1` to pass `√n`" and does not care
+about the rest, while the planned ring-of-integers library must retain the
+unresolved factors behind a conditional maximality result. That unresolved
+state is exactly a `residual ≠ 1`.
 
 ## The `p^n − 1` problem
 
@@ -1166,10 +1154,8 @@ rejected.
 proves only that the order divides `m`; a proper divisor of `m` could
 be the true order. Ruling that out means ruling out `order/q` for every
 prime `q ∣ order`, and that quantifier ranges over a set the
-factorization certificate is what pins down. This is the "second
-witness" pattern [future-work](../../SPEC/future-work.md)'s preamble describes,
-and here the second witness is the completeness of a factorization
-rather than a separate object.
+factorization certificate is what pins down. Here the second witness is the
+completeness of a factorization rather than a separate object.
 
 ```lean
 def isPrimitiveRoot {p : Nat} (pc : CheckedPrimeCert p)
@@ -1222,9 +1208,8 @@ Mathlib-free semantics consumers need; the companion later identifies
 the value with Mathlib's Carmichael function if and when that bridge is
 useful.
 
-Those theorems are not free consequences of hex-arith's current Fermat
-lemma. Their Mathlib-free proof prerequisites are explicit milestone
-obligations:
+Those theorems are not free consequences of hex-arith's Fermat lemma. Their
+Mathlib-free proofs use these prerequisites:
 
 - Euler's congruence modulo an odd prime power, proved by lifting
   Fermat through the binomial theorem;
@@ -1234,9 +1219,8 @@ obligations:
 - combination of congruences across the pairwise-coprime prime powers
   in a checked factorization.
 
-Hex-arith currently supplies Fermat modulo a prime, but not these
-prime-power or CRT steps. They belong in `Order.lean` beneath
-`pow_carmichael`; the milestone is not complete until they are proved.
+Hex-arith supplies Fermat modulo a prime. `Order.lean` supplies these
+prime-power and CRT steps beneath `pow_carmichael`.
 
 **The generic form for hex-conway.** Primitivity of a field element is
 `checkOrder` with `modulus` replaced by a finite field, and the
@@ -1549,10 +1533,11 @@ Families:
   stage-1 or ECM measurements do not discharge this gate.
   The ordinary-dispatch arm uses the larger-factor table and recorded route
   participation, because rho normally splits the smaller table first.
-  This family becomes required at milestone 8: add its
-  `phase4.input_families` entry and revalidate the new performance surface
-  with that implementation. Existing attestations cover the implemented
-  stage-1 surface, not this specified extension.
+  The `p-minus-one-stage2-policy` Phase-4 family and its implementation
+  evidence are retained in `libraries.yml` and
+  [the stage-2 report](../../reports/hex-primality-stage2.md). The measured
+  policy preserved baseline successes but did not meet the usefulness gate,
+  so ordinary default enablement remains off.
 - **Smooth `p − 1` semiprimes** at the same sizes. Route 2; the base is
   fixed so the benchmark measures the specified stage-1 success case.
 - **`b^n ± 1`**, with and without the cyclotomic split, on identical
@@ -1742,9 +1727,9 @@ by `coprime_of_checkOrder`, so the caller passes nothing extra.
 8. **Pollard p−1 stage-2 integration.** Consume hex-primality milestone 6,
    add the continuation/standalone adapters, exact bounded dispatch and trace,
    and version-3 search registration. Preserve checked-factorization and
-   certificate boundaries. The shared conformance family and native
-   usefulness gate determine default enablement independently of the
-   upstream construction gate.
+   certificate boundaries. The shared conformance family and native evidence
+   are retained in the stage-2 report. The ordinary default remains opt-in
+   under its independent usefulness gate.
 
 ## File organisation
 
@@ -1771,20 +1756,8 @@ HexIntFactorMathlib/
 HexIntFactorMathlib.lean
 ```
 
-`libraries.yml` gains:
-
-```yaml
-  HexIntFactor:
-    deps: [HexPrimality, HexArith, HexBasic]
-    mathlib: false
-    done_through: 0
-    status: draft
-  HexIntFactorMathlib:
-    deps: [HexIntFactor, HexPrimalityMathlib]
-    mathlib: true
-    done_through: 0
-    status: draft
-```
+The authoritative dependency and phase registrations are in
+[`libraries.yml`](../../libraries.yml).
 
 `HexConway` need only gain a dependency on `HexIntFactor` if its table
 growth is refactored to consume these shared certificates; Tier 2 has
@@ -1793,15 +1766,8 @@ Mathlib already decides squarefreeness on `Nat`; hex-mv-gcd's SPEC has
 already been corrected to use that instance and to cite this library
 only for factorization-derived witnesses.
 
-Neither `HexPrimality` nor `HexIntFactor` is in `libraries.yml` yet, so
-the dependency claims above are draft prose rather than repository
-state until those entries land.
-
 ## Deferred question
 
-- **The default fuel schedule.** Stated above as a function of bit
-  length and not fixed. It should be set so that the 80-bit balanced
-  semiprime family finishes with margin, measured rather than guessed.
 - **Whether SQUFOF is worth adding.** It beats rho on 64-bit semiprimes
   by a useful constant and is a small algorithm, but it needs a
   continued-fraction development and its failure modes are subtler than
@@ -1815,11 +1781,11 @@ state until those entries land.
 - **How much of the Cunningham tables to commit.** A committed table of
   known factorizations of `b^n ± 1` would make hex-conway Tier 2 cheap
   at any table size, at the cost of a large data file whose entries are
-  each individually checkable by `checkFactorization`. This is exactly
-  the case [future-work](../../SPEC/future-work.md)'s "Certificate serialization
-  and caching" entry describes -- an expensive search run once and
-  replayed -- and it should wait for that item rather than inventing a
-  format here.
+  each individually checkable by `checkFactorization`. This is exactly the
+  case the planned
+  [certificate serialization and caching](../../SPEC/future-work.md#certificate-serialization-and-caching)
+  layer describes -- an expensive search run once and replayed -- and it
+  should wait for that item rather than inventing a format here.
 
 ## Runtime smooth prime coverage
 
