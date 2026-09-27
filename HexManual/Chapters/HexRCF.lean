@@ -471,9 +471,9 @@ rational constants are supported, but expressions that divide by one of these
 named algebraic coefficients currently decline; express an inverse as a
 checked field coordinate when it is needed.
 
-The adapter also accepts two independently selected natural-number square
-roots in one sentence. For example, `Real.sqrt 3` and `Real.sqrt 2` begin in
-different number fields. The tactic uses `Hex.QAdjoin.common` to put them in
+The next example combines the distinct positive roots `Real.sqrt 3` and
+`Real.sqrt 2`, which begin in different number fields. The tactic uses
+`Hex.QAdjoin.common` to put them in
 one field, then checks that each rational coordinate still names the intended
 positive root before deciding the sentence. The example below uses a larger
 heartbeat limit for this quartic common field.

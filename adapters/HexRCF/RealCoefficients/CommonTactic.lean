@@ -32,23 +32,16 @@ private meta def naturalSquareRoot? (source : Expr) : MetaM (Option Nat) := do
   unless ← isDefEq base q(($nExpr : ℝ)) do return none
   return some n
 
-private meta def checkGuards (source : Reify.Source) : MetaM Unit := do
-  for divisor in source.divisors do
-    let divisor : Q(ℝ) := divisor
-    let goal : Q(Prop) := q($divisor ≠ 0)
-    let proof ← mkFreshExprMVar goal
-    let remaining ← Lean.Elab.runTactic' proof.mvarId! (← `(tactic| norm_num))
-    unless remaining.isEmpty do
-      throwError "rcf: could not prove a closed divisor nonzero"
-    check (← instantiateMVars proof)
-
-private meta def positiveLowerBound (s : Q(DyadicSquare)) : MetaM Expr := do
-  let goal : Q(Prop) := q(0 < ((($s).re - ($s).radiusHi).toRat : ℝ))
-  let proof ← mkFreshExprMVar goal
-  let remaining ← Lean.Elab.runTactic' proof.mvarId! (← `(tactic| norm_num; decide))
-  unless remaining.isEmpty do
-    throwError "rcf: source square has no checked positive lower bound"
-  return ← instantiateMVars proof
+private partial def squareRoots (e : Expr) (seen : Array Expr) : Array Expr :=
+  let seen := if e.isAppOfArity ``Real.sqrt 1 && !seen.contains e then seen.push e else seen
+  match e with
+  | .app fn arg => squareRoots arg (squareRoots fn seen)
+  | .forallE _ type body _ | .lam _ type body _ =>
+      squareRoots body (squareRoots type seen)
+  | .letE _ type value body _ =>
+      squareRoots body (squareRoots value (squareRoots type seen))
+  | .mdata _ body | .proj _ _ body => squareRoots body seen
+  | _ => seen
 
 private def oneQuantifier {n : Nat} (formula : RealFormula.Prenex n) :
     Option (RealFormula.Quantifier × RealFormula.QF (n + 1)) :=
@@ -56,19 +49,15 @@ private def oneQuantifier {n : Nat} (formula : RealFormula.Prenex n) :
   | .quant q (.matrix qf) => some (q, qf)
   | _ => none
 
-private meta def prove (source : Reify.Source) : MetaM Expr := do
-  checkGuards source
-  let mut degrees : Array Nat := #[]
-  for coefficient in source.coefficients do
-    let some n ← naturalSquareRoot? coefficient | throwError "unsupported coefficient"
-    degrees := degrees.push n
+private meta def prove (source : Reify.Source) (degrees : Array Nat) : MetaM Expr := do
+  Tactic.checkGuards source
   let mut algebraicValues : Array RealAlgebraicNumber := #[]
   for coefficient in source.coefficients do
     let (_, _, value) ← FieldRuntime.coefficient coefficient
     algebraicValues := algebraicValues.push value
   let common := QAdjoin.common (algebraicValues.map RealAlgebraicNumber.toAlgebraic)
   unless common.entries.size == algebraicValues.size do
-    throwError "rcf: common-field proposal changed coefficient order"
+    throwError "rcf: common-field presentation failed"
   unless common.generator.isReal do
     throwError "rcf: common-field generator is not real"
   let p := common.generator.p
@@ -110,7 +99,7 @@ private meta def prove (source : Reify.Source) : MetaM Expr := do
           (q((mahlerPrec $sourcePExpr : Int) ≤ ($sourceSquareExpr).prec) : Q(Prop))
         let hreal ← mkDecideProof
           (q(($sourceSquareExpr).meetsRealAxis = true) : Q(Prop))
-        let hpositive ← positiveLowerBound sourceSquareExpr
+        let hpositive ← Tactic.positiveLowerBound sourceSquareExpr
         let selected ← mkAppM ``SquareRoot.selected
           #[nExpr, sourceSquareExpr, sourceWitness, sourcePrecision, hreal, hpositive]
         sourcePExprs := sourcePExprs.push sourcePExpr
@@ -232,9 +221,14 @@ private meta def prove (source : Reify.Source) : MetaM Expr := do
   else throwError "rcf: common square failed its root witness"
 
 @[rcf_handler] meta def handle : Handler := fun target => do
+  if (squareRoots target #[]).size < 2 then return .declined
   let .ok source ← Reify.prepare target | return .declined
   if source.coefficients.size < 2 then return .declined
-  let proof ← prove source
+  let mut degrees : Array Nat := #[]
+  for coefficient in source.coefficients do
+    let some n ← naturalSquareRoot? coefficient | return .declined
+    degrees := degrees.push n
+  let proof ← prove source degrees
   return .proved proof
 
 end Hex.RCF.RealCoefficients.CommonTactic

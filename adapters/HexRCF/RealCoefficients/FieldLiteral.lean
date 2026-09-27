@@ -117,9 +117,10 @@ meta def proveFinCases (goal : Expr) (proofs : Array Expr) : MetaM Expr := do
   for index in [:cases.length] do
     let caseGoal := cases[index]!
     let proof := proofs[index]!
-    unless ← isDefEq (← inferType proof) (← caseGoal.getType) do
-      throwError "rcf: source proof at index {index} does not match its literal entry"
-    caseGoal.assign proof
+    caseGoal.withContext do
+      unless ← isDefEq (← inferType proof) (← caseGoal.getType) do
+        throwError "rcf: source proof at index {index} does not match its literal entry"
+      caseGoal.assign proof
   return ← instantiateMVars candidate
 
 private def endpointExpr {E : Type} (ty : Expr) (elem : E → MetaM Expr) :
@@ -261,6 +262,25 @@ meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
     MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
   let some data := FieldBuild.build p s hw hp values formula () precision extraSignKeys |
     throwError "rcf: fixed-field certificate construction failed"
+  let sampleKeys := SignInputs.openSamples FieldDecision.point data.isolation
+    (formula.polys.map (FieldSpecialize.literalPolynomial values))
+  unless sampleKeys.all (fun key => (data.signs.lookup? key).isSome) do
+    throwError "rcf: fixed-field sign table omitted a cell sample"
+  let sign := fun key => (data.signs.lookup? key).getD 0
+  let cells := Cell.all data.isolation.isolations.intervals.size
+  let cellValue := fun cell => formula.evalSigns
+    (FieldDecision.cellSign sign values data.isolation
+      (data.rootSigns.value data.isolation.total) cell)
+  let preview := match quantifier with
+    | .forallReal => OptionFold.allArray cells cellValue
+    | .existsReal => OptionFold.anyArray cells cellValue
+  match quantifier, preview with
+  | .forallReal, some false =>
+      throwError "rcf: the universal sentence is false on the prepared cells"
+  | .existsReal, some false =>
+      throwError "rcf: the existential sentence is false on the prepared cells"
+  | _, none => throwError "rcf: finite sign table did not decide the sentence"
+  | _, some true => pure ()
   let certificate ← resultExpr pExpr rootExpr formulaExpr formula data
   let verdictName := match quantifier with
     | .forallReal => ``FieldBuild.Result.checkForall

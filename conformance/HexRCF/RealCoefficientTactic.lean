@@ -128,10 +128,18 @@ theorem rcf_two_square_roots :
     ∀ x : ℝ, x ^ 2 + Real.sqrt 3 - Real.sqrt 2 > 0 := by
   rcf
 
+/-- info: '_private.HexRCF.RealCoefficientTactic.0.rcf_two_square_roots' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
 #print axioms rcf_two_square_roots
 
+/-- info: 'Hex.RCF.RealCoefficients.SquareRoot.selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RCF.RealCoefficients.SquareRoot.selected
+
+/-- error: rcf: the universal sentence is false on the prepared cells -/
+#guard_msgs in
 set_option maxHeartbeats 5000000 in
-example : True := by
-  fail_if_success
-    have : ∀ x : ℝ, x ^ 2 + Real.sqrt 3 - Real.sqrt 2 < 0 := by rcf
-  trivial
+example : ∀ x : ℝ, x ^ 2 + Real.sqrt 3 - Real.sqrt 2 < 0 := by rcf
