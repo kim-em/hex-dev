@@ -222,18 +222,18 @@ theorem candidate_mul_eq_one {context : Nat} {d : Root context}
     _ = 1 := by rw [hp]; field_simp
 
 /-- A checked split places the original selected root in its cofactor. -/
-theorem cofactor_root {context version : Nat} {d : Root context}
+theorem cofactor_root {context : Nat} {d : Root context}
     (a : Expression d) {lower upper : Endpoint Rat}
-    (r : Refinement d a.inverseFactor.2 lower upper version) :
+    (r : SignDet.Reencoding d a.inverseFactor.2 lower upper) :
     (realPoly a.inverseFactor.2).eval d.real = 0 := by
-  have hhead := r.encoding.check_eq.1.1
-  have hspec := (Root.real_spec r.encoding.target).1
-  have hne : realPoly r.encoding.target.raw.head ≠ 0 :=
-    r.encoding.target.head_ne_zero ratCast ratZero
+  have hhead := r.check_eq.1.1
+  have hspec := (Root.real_spec r.target).1
+  have hne : realPoly r.target.raw.head ≠ 0 :=
+    r.target.head_ne_zero ratCast ratZero
   have hzero := (HexRealRootsMathlib.Tarski.mem_rootsIn_iff _ hne _ _ _).mp hspec |>.1
   rw [hhead] at hzero
-  have hroot : Root.real r.encoding.target = d.real :=
-    r.encoding.root_eq_source ratCast ratZero ratOne ratAdd ratSub ratMul ratNat ratSign
+  have hroot : Root.real r.target = d.real :=
+    r.root_eq_source ratCast ratZero ratOne ratAdd ratSub ratMul ratNat ratSign
   rw [hroot] at hzero
   exact hzero
 
@@ -366,9 +366,9 @@ theorem cofactor_xgcd_constant {context : Nat} {d : Root context}
 
 /-- With a checked cofactor split and constant extended gcd, the candidate
 is an inverse at the original selected root. -/
-theorem candidate_mul_eq_one_of_split {context version : Nat} {d : Root context}
+theorem candidate_mul_eq_one_of_split {context : Nat} {d : Root context}
     (a : Expression d) {lower upper : Endpoint Rat}
-    (r : Refinement d a.inverseFactor.2 lower upper version) (c : Rat)
+    (r : SignDet.Reencoding d a.inverseFactor.2 lower upper) (c : Rat)
     (hgcd : (DensePoly.xgcdLeft a.polynomial a.inverseFactor.2).gcd =
       DensePoly.C c) (hc : c ≠ 0) :
     a.denote * a.inverseCandidate.denote = 1 :=
@@ -460,8 +460,8 @@ theorem inverse_refine {context version : Nat} {d : Root context}
 /-- The computed inverse candidate remains an inverse after a checked
 cofactor split and context change. -/
 theorem candidate_refine {context version : Nat} {d : Root context}
-    (a : Expression d) {lower upper : Endpoint Rat}
-    (r : Refinement d a.inverseFactor.2 lower upper version)
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : Refinement d head lower upper version) (a : Expression d)
     (ha : a.denote ≠ 0) :
     (refine r a).denote * (refine r a.inverseCandidate).denote = 1 := by
   rw [denote_refine, denote_refine]

@@ -91,8 +91,10 @@ computation does not by itself prove that the selected root lies in the cofactor
   let eg := DensePoly.xgcdLeft a.polynomial h
   ⟨DensePoly.scale eg.gcd.leadingCoeff⁻¹ eg.left⟩
 
-/-- Check the Bézout candidate at the selected root. A failed producer remains
-an error, distinct from a failed product check. -/
+/-- Check the Bézout candidate at the selected root. The product query is a
+runtime cross-check: the companion proves its sign is zero whenever both
+producer calls succeed on a nonzero value. A producer failure remains an
+error, distinct from a failed product check. -/
 inductive InverseError where
   | build (error : SignDet.BuildError)
   | candidate

@@ -93,6 +93,8 @@ constant_inverse = inv(alpha)
 linear_gcd = gcd(head, [Q(-3), Q(1)])
 split, remainder = divmod_poly(head, linear_gcd)
 assert not remainder
+alpha_cubed = mul(mul(alpha, alpha), alpha)
+assert alpha_cubed == (Q(0), Q(2))
 old_version, new_version = 7, 8
 expected = [
     f"some ({sign(alpha)}, {sign(below)}, {sign(eval_poly(head, alpha))}, "
@@ -110,7 +112,12 @@ expected = [
     f"{len(split) - 1}, {new_version})",
     f"some {str(eval_poly([Q(-2), Q(0), Q(1)], alpha) == (0, 0)).lower()}",
     f"some ({2 * head[-1] / linear_gcd[-1]}, {len(split) - 1}, {sign(alpha)})",
-    f"some (0, {eval_poly([Q(-2), Q(0), Q(1)], (Q(3), Q(0)))[0]})",
+    # The unnormalized Euclidean sequence ends with split mod (x - 3),
+    # whose constant remainder is split(3).
+    f"some ({len(gcd([Q(-3), Q(1)], split)) - 1}, "
+    f"{eval_poly(split, (Q(3), Q(0)))[0]})",
+    f"some (3, {sign(inv(alpha_cubed))}, "
+    f"{sign(add(inv(alpha_cubed), neg(mul((Q(1, 4), Q(0)), alpha))))})",
 ]
 
 run = subprocess.run(
@@ -119,4 +126,4 @@ run = subprocess.run(
 )
 actual = re.findall(r"info: HexRealClosure/Tests\.lean:\d+:0: (.+)", run.stdout + run.stderr)
 assert actual == expected, f"Lean outputs {actual!r}; exact oracle expects {expected!r}"
-print("exact oracle passed for ten runnable cases")
+print("exact oracle passed for eleven runnable cases")
