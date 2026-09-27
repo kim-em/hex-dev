@@ -53,10 +53,11 @@ def check_headline_reports(root: Path) -> tuple[int, str | None]:
         # own released repo, not locally; skip the local-report check.
         if info.is_external:
             continue
+        # Mathlib libraries have no compiled track and so no headline report.
+        if info.mathlib:
+            continue
         checked += 1
         report = root / "reports" / f"{report_slug(root, name)}-performance.md"
-        if info.correspondence_only:
-            continue
         if not report.exists():
             return checked, f"{name}: missing Phase-4 headline report {report.relative_to(root)}"
 

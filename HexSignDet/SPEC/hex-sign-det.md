@@ -531,7 +531,7 @@ Z3 and python-flint end-to-end comparisons are informational where an exact
 matching operation is available; root isolation time must not be labelled
 matrix-solving time. No external oracle supplies a comparable Lean proof
 checker. Kernel replay uses the companion's
-[fresh-module proof evidence](../../SPEC/benchmarking.md#fresh-module-proof-evidence)
+[fresh-module proof evidence](../../SPEC/benchmarking.md#proof-probe-example-files)
 track, with ordinary kernel checking and axiom inspection, separately from
 Mathlib-free executable benches. Include valid and rejected nested proof
 probes and one representative profile attributing arithmetic, matrices and

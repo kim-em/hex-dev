@@ -1,13 +1,8 @@
 # hex-det-mathlib
 
 Correctness of [hex-det](../../HexDet/SPEC/hex-det.md)'s dispatch and correspondence with
-Mathlib's determinant. This is a `correspondence-only-layer`, registered
-with `correspondence_only: true`. It owns no runtime determinant, conformance
-driver, benchmark process, or tactic.
-
-Computational conformance owner: `HexDet`.
-
-Computational performance owner: `HexDet`.
+Mathlib's determinant. It owns no runtime determinant, conformance driver,
+benchmark process, or tactic.
 
 ## Dependencies
 

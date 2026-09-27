@@ -348,16 +348,10 @@ of the complete shortest-vector list. Include both signs. No packing-radius
 formula is asserted for the zero lattice. Successive minima and covering
 radius remain outside this SPEC.
 
-The companion is to be classified `correspondence_only: true` when activated.
-Its comparator absence class is **correspondence-only-layer**. Runtime
-conformance and performance belong to the computational owner below.
+Runtime conformance and performance belong to this library.
 Build-only examples under `HexLatticeEnumMathlib/Tests.lean` exercise the
 preparation theorem, unconditional search contracts, kernel certificate replay,
 transport and geometric consequences, with no runtime benchmark declarations.
-
-Computational conformance owner: `HexLatticeEnum`.
-
-Computational performance owner: `HexLatticeEnum`.
 
 ## Conformance and benchmarks
 

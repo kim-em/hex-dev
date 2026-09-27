@@ -8,12 +8,6 @@ It contains no symbolic algorithm.
 
 The implementation lives in `HexReflectMathlib`.
 
-This is a correspondence-only-layer.
-
-Computational conformance owner: `HexReflect`.
-
-Computational performance owner: `HexReflect`.
-
 ## Dependencies
 
 The companion depends on `hex-reflect`, `hex-mv-poly-mathlib`,

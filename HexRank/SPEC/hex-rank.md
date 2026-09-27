@@ -1375,7 +1375,6 @@ bench/HexRank/Bench.lean
   HexRankMathlib:
     deps: [HexRank, HexBareissMathlib, HexDeterminantMathlib, HexMatrixMathlib]
     mathlib: true
-    correspondence_only: true
     done_through: 0
     status: planned
 ```

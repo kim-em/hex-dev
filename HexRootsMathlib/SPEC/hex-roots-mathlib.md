@@ -1,12 +1,5 @@
 # hex-roots-mathlib (depends on hex-roots + hex-poly-z-mathlib + Mathlib)
 
-## Correspondence-only classification
-
-This library is a `correspondence-only-layer`.
-
-Computational conformance owner: `HexRoots`
-Computational performance owner: `HexRoots`
-
 Mathlib companion for [hex-roots](../../HexRoots/SPEC/hex-roots.md). Proves **soundness**
 of the certified root isolation: every `DyadicRootIsolation` witness
 implies a unique simple complex root in its certified region (the
@@ -604,17 +597,6 @@ identity is `isolateAll_count`. Those are independently justified
 public API, and the correspondence and completeness theorems above are
 load-bearing clauses of the headline proof, per the intermediate-lemma
 rule in PLAN/Conventions.md §Headline correctness theorem.
-
-## External comparators
-
-No external comparator is required.
-
-**Justification:** `correspondence-only-layer` per
-`SPEC/benchmarking.md §"Comparator naming"`. The library introduces no
-root-isolation algorithm; it verifies the executable isolator
-implemented elsewhere. The computational performance owner is
-hex-roots, where the isolator's bench targets and the python-flint
-comparator are measured.
 
 ## References
 

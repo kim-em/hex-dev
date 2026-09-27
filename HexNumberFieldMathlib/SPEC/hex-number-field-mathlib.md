@@ -1,13 +1,6 @@
 # hex-number-field-mathlib (depends on hex-number-field + hex-resultant-mathlib + hex-berlekamp-zassenhaus-mathlib + hex-roots-mathlib + hex-poly-z-mathlib)
 
-## Correspondence-only classification
-
-This library is a `correspondence-only-layer`.
-
-Computational conformance owners: `HexNumberField`, `HexRoots`, `HexResultant`, `HexBerlekampZassenhaus`, `HexPolyZ`, `HexPoly`, `HexRowReduce`, `HexMatrix`
-Computational performance owners: `HexNumberField`, `HexRoots`, `HexResultant`, `HexBerlekampZassenhaus`, `HexPolyZ`, `HexPoly`, `HexRowReduce`, `HexMatrix`
-
-The complete public surface is correspondence-only. The library declares no
+The public surface consists of correspondence results. The library declares no
 `meta`, `partial`, `unsafe`, `IO`, syntax, macro, elaborator, tactic, reifier,
 or certificate-checker entry point. Its semantic maps, polynomial views, ring
 maps, equivalences, and field dictionaries are noncomputable. The
@@ -427,18 +420,6 @@ libraries consume.
 
 The library is verified by building it. Executable conformance belongs to
 `hex-number-field`.
-
-## External comparators
-
-No external comparator is required.
-
-**Justification:** `correspondence-only-layer` per
-`SPEC/benchmarking.md §"Comparator naming"`. The library introduces no
-number-field arithmetic algorithm; it verifies operations implemented by the
-computational performance owners enumerated in the correspondence-only table
-above. Their own Phase-4 targets and reports carry the measurements and
-comparator decisions. In particular, `hex-number-field` measures the
-high-level arithmetic and root ladders and its PARI/GP comparator.
 
 ## References
 

@@ -7,8 +7,8 @@ tactic for every commutative ring.  It is unpublished because
 the frontend depends on `HexReflect` and `HexReflectMathlib`.
 
 Dependencies are `HexKronecker`, `HexMvPolyMathlib`, `HexReflect`,
-`HexReflectMathlib`, and `HexMatrixMathlib`, plus Mathlib.  The library is not
-`correspondence_only`: it owns a tactic and fresh-module proof probes.  The
+`HexReflectMathlib`, and `HexMatrixMathlib`, plus Mathlib.  The library owns a
+tactic and fresh-module proof probes.  The
 tactic and its soundness theorem live together here, as required by
 [matrix-tactics §Placement](../../SPEC/matrix-tactics.md#placement).
 

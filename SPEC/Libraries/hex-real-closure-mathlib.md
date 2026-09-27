@@ -554,8 +554,8 @@ fallible arithmetic interface.
 
 Follow [testing](../testing.md) and [benchmarking](../benchmarking.md).
 `HexRealClosure` owns executable constructors, readers, algorithms, closed
-tower conformance and Mathlib-free benchmarks. This companion is
-`correspondence_only: true`: it proves their interpretation, semantic quotient
+tower conformance and Mathlib-free benchmarks. This companion proves their
+interpretation, semantic quotient
 laws and validity/completeness. Build-only proof examples and optional
 `CrossCheck` modules audit those statements; they do not supply erased law
 arguments merely to run the algebraic algorithms.

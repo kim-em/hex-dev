@@ -68,7 +68,7 @@ in `HexMinPolyMathlib/Kernel.lean`. No library name changes.
 
 For the named families below, shipping requires complete clean-tree evidence
 under the `absolute_only` mode of
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
 Preregister six rounds and a per-candidate absolute build budget of 60 seconds
 on the measurement host for every stated rung. Every candidate sample must
 meet it; report the median and kernel-only time as well. A timeout, incomplete
@@ -253,7 +253,7 @@ matrices), `repeated-block` (identical blocks, minimal degree below dimension),
 `nilpotent` (Jordan blocks), and `rational-dense`; dimensions `2, 4, 8, 16`
 and input heights `8, 32` bits, plus `0 × 0` as a correctness probe.
 Mathlib has no corresponding tactic, so no comparator ratio or superiority
-claim is required. Per [fresh-module evidence](../../SPEC/benchmarking.md#fresh-module-proof-evidence),
+claim is required. Per [fresh-module evidence](../../SPEC/benchmarking.md#proof-probe-example-files),
 record six complete samples paired with import-only baselines, adjacent and
 alternating orientation, raw absolute build times and their median, baseline
 deltas, one kernel-only profile per family, certificate entry counts and

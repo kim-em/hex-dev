@@ -1,12 +1,7 @@
 # hex-lll-mathlib (depends on hex-lll + Mathlib)
 
-## Correspondence-only classification
-
-This library is a `correspondence-only-layer`; the executable reducedness and
-certificate checkers whose soundness is proved here are owned by `HexLLL`.
-
-Computational conformance owners: `HexLLL`, `HexGramSchmidt`
-Computational performance owners: `HexLLL`, `HexGramSchmidt`
+The executable reducedness and certificate checkers whose soundness is proved
+here are owned by `HexLLL`.
 
 Connects hex-lll to Mathlib's linear algebra:
 - Lattice corresponds to a `Submodule ℤ`

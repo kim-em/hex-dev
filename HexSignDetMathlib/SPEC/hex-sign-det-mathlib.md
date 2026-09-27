@@ -439,7 +439,7 @@ Use multiple infinitesimal levels and nested evidence without importing
 towers here. Decimal approximations and a mere `0<ε<1` hypothesis do not
 establish these infinitesimal claims.
 
-Phase 4 uses [fresh-module proof evidence](../../SPEC/benchmarking.md#fresh-module-proof-evidence):
+Phase 4 uses [fresh-module proof evidence](../../SPEC/benchmarking.md#proof-probe-example-files):
 measure fresh proof modules with warm imports and ordinary kernel checking;
 record source/toolchain hashes, axiom sets, proof artifact/certificate sizes,
 wall time and host activity. Sweep degree, query count, realized support,

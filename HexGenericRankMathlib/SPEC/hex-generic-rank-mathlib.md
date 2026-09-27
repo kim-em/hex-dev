@@ -20,8 +20,7 @@ a visible goal.
 Dependencies: `HexGenericRank`, `HexRankMathlib`, `HexReflect`,
 `HexReflectMathlib`, `HexMvPolyMathlib`, `HexDeterminantalIdealMathlib`,
 `HexMatrixMathlib`, plus Mathlib. `libraries.yml` records the active
-entry; the library is not `correspondence_only`, since it implements a
-tactic handler and owns proof probes.
+entry; the library implements a tactic handler and owns proof probes.
 
 ## Prerequisite changes in other libraries
 

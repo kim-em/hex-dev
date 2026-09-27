@@ -3567,7 +3567,7 @@ the fixed soundness and trust contracts.
   source-shaped theorem adapters, exact coordinate/endpoint mutations, false
   bounds, and guarded axiom reports.
 
-Unlike a correspondence-only companion, `hex-interval-mathlib` contains an
+`hex-interval-mathlib` contains an
 executable reifier, rule registry, and tactic. Its own conformance target tests
 that runtime-facing API while keeping the released Mathlib-free conformance
 target free of Mathlib imports. Small explanatory examples remain in

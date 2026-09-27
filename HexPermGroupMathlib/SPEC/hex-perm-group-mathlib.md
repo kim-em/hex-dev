@@ -18,14 +18,9 @@ graph-independent `Perm.toEquiv` and `Perm.ofEquiv` conversions from
 `HexGraphIsoMathlib` when migrating that consumer. This library must not
 depend on graph isomorphism or a classification database.
 
-At activation set `correspondence_only: true`. The comparator absence class
-is **correspondence-only-layer**. Build-only examples in
+Build-only examples in
 `HexPermGroupMathlib/Tests.lean` exercise membership, exact order, stabilizers,
 nonnormal-subgroup cosets, a nonfaithful induced action, minimal blocks,
 normal and derived subgroups, rank/unrank and product embeddings.
 Runtime conformance and benchmarking belong
-to the computational owner below.
-
-Computational conformance owner: `HexPermGroup`.
-
-Computational performance owner: `HexPermGroup`.
+to `HexPermGroup`.

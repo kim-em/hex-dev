@@ -1,12 +1,5 @@
 # hex-determinant-mathlib (depends on hex-determinant + hex-bareiss + hex-matrix-mathlib + Mathlib)
 
-## Correspondence-only classification
-
-This library is a `correspondence-only-layer`.
-
-Computational conformance owners: `HexDeterminant`, `HexBareiss`
-Computational performance owners: `HexDeterminant`, `HexBareiss`
-
 Mathlib layer for `hex-determinant`: proves that our executable Leibniz
 determinant corresponds to Mathlib's `Matrix.det`, assembles the Desnanot-Jacobi
 identity in the bordered-minor form the Bareiss correctness proof consumes, and
@@ -28,7 +21,7 @@ Mathlib `Field` from `HexRationalFnMathlib`, so those carrier specializations
 need no new determinant lemma. There is currently no global Mathlib `CommRing`
 instance for executable `DensePoly`; the computational carrier coverage does
 not wait for that separate bridge. Carrier conformance adds no specialized
-`det_eq` lemmas here and keeps this library a correspondence-only layer.
+`det_eq` lemmas here.
 
 ## Closing a `Matrix.det` goal in the kernel
 

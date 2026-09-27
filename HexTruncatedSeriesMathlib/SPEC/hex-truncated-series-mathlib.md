@@ -1,13 +1,6 @@
 # hex-truncated-series-mathlib (Mathlib correspondence for truncated series)
 
-## Correspondence-only classification
-
-This library is a `correspondence-only-layer`.
-
-Computational conformance owner: `HexTruncatedSeries`
-Computational performance owner: `HexTruncatedSeries`
-
-`hex-truncated-series-mathlib` is the correspondence-only companion to
+`hex-truncated-series-mathlib` is the Mathlib companion to
 [hex-truncated-series](../../HexTruncatedSeries/SPEC/hex-truncated-series.md).
 The core library owns the fixed-length coefficient representation and every
 executable operation. This layer equips that representation with Mathlib's
@@ -201,14 +194,6 @@ no `sorry`, no axiom, and no runtime appeal to an external oracle.
 There is deliberately no conformance module for this library. Each transported
 operation is exercised by `conformance/HexTruncatedSeries/Conformance.lean`
 and its SymPy fixture oracle under the computational owner.
-
-## External comparators
-
-`correspondence-only-layer`: this library has zero benchmark targets and no
-independent executable or proof-search surface to compare. The computational
-performance owner is `hex-truncated-series`; its multiplication, inverse,
-square-root, exponential, logarithm, composition, and reversion registrations
-carry the evidence for every operation transported here.
 
 ## File organization
 

@@ -19,12 +19,7 @@ the existing finite-field correspondence and packed/generic equivalence;
 record the chosen field embedding when comparing representations. Theorems
 must cover bases generating proper subgroups as well as primitive bases.
 
-This library is `correspondence_only: true`, with comparator absence class
-**correspondence-only-layer**. Build-only examples in
+Build-only examples in
 `HexDiscreteLogMathlib/Tests.lean` cover exact order, canonical exponents,
 a proper-subgroup nonmember, PH reconstruction and rho exhaustion. It owns
 no runtime search, conformance driver or benchmark process.
-
-Computational conformance owner: `HexDiscreteLog`.
-
-Computational performance owner: `HexDiscreteLog`.

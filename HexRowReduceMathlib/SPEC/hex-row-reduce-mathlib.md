@@ -6,9 +6,6 @@ The companion owns correspondence proofs, the inverse and solve frontends,
 their conformance, and fresh-module proof evidence. Compiled algorithms and
 list certificate checkers remain in HexRowReduce.
 
-Computational conformance owner: `HexRowReduce`
-Computational performance owner: `HexRowReduce`
-
 Mathlib correspondence for `hex-row-reduce`: connects our computable RREF / rank / span /
 nullspace machinery to Mathlib's noncomputable linear-algebra definitions, via
 the base `matrixEquiv` from `hex-matrix-mathlib`.
@@ -236,8 +233,7 @@ subsections specify additions owned by the Mathlib-free algorithm library;
 they do not move that code into this companion. When implementing those
 additions, cross-link the algorithm's kernel-certificate SPEC to this contract.
 Keep existing phase evidence as evidence for the existing correspondence only.
-Before activating the frontend, remove `correspondence_only: true` if present,
-add `proof_probes: [bench/HexRowReduceMathlib/ProofProbe]`, and reopen the
+Before activating the frontend, add `proof_probes: [bench/HexRowReduceMathlib/ProofProbe]`, and reopen the
 library's conformance/performance obligations: cap `done_through` at `2` until
 the new build-only proof tests pass, then at `3` until complete proof evidence
 passes. Do not add an empty reservation while retaining a completed Phase 4.
@@ -257,7 +253,7 @@ in `HexRowReduceMathlib/Kernel.lean`. No library name changes.
 
 For the named families below, shipping requires complete clean-tree evidence
 under the `absolute_only` mode of
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
 Preregister six rounds and a per-candidate absolute build budget of 60 seconds
 on the measurement host for every stated rung. Every candidate sample must
 meet it; report the median and kernel-only time as well. A timeout, incomplete
@@ -414,7 +410,7 @@ whether it closes each rung rather than presuming a complete competitor.
 Record six complete fresh-module samples paired with
 import-only baselines, adjacent and alternating orientation, absolute
 wall times/medians, baseline deltas and one kernel-only profile per family
-per [SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+per [SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
 Include certificate entry counts/serialized bytes, largest numerator and
 denominator heights, emitted artifact sizes, axiom sets and full
 source/toolchain/host provenance. Retain completed samples and timeouts;
@@ -589,7 +585,7 @@ include an informational matched entrywise `simp [Matrix.mulVec]`/`norm_num`
 proof on small rungs where it closes the same goal. This normalization
 baseline does not compute a solution or certify the complete affine space;
 record absolute numbers for all surfaces.
-Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence),
+Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files),
 use six adjacent import-baseline/probe pairs, alternating orientation, retain
 all raw build times/medians and deltas, and record one kernel-only profile
 per family. Record certificate entry counts/serialized bytes, scalar heights,

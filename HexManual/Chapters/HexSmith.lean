@@ -27,7 +27,7 @@ matrices. The Mathlib-free executable layer provides a form-only path, a
 transform-producing path with explicit inverses, an independent certificate
 checker, invariant factors, system criteria, and abelian-presentation data.
 
-The companion `HexSmithMathlib` is correspondence-only: it builds Mathlib's
+The companion `HexSmithMathlib` builds Mathlib's
 Smith-basis and quotient-decomposition structures from the executable output
 without running a second Smith computation.
 

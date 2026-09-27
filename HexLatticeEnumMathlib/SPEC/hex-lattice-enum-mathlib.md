@@ -30,14 +30,8 @@ and kissing-number consequences build on these correctness results. See
 and [placement and implementation order](../../HexLatticeEnum/SPEC/hex-lattice-enum.md#placement-and-implementation-order)
 for the division of files and proof obligations.
 
-At activation set `correspondence_only: true`. The comparator absence class
-is **correspondence-only-layer**. This library has no runtime conformance or
-benchmark targets. Build-only examples in `HexLatticeEnumMathlib/Tests.lean`
+This library has no runtime conformance or benchmark targets. Build-only examples in `HexLatticeEnumMathlib/Tests.lean`
 exercise preparation validity, the unconditional search contracts, kernel
 certificate replay, integer-span transport and geometric consequences without
 runtime commands. Elementary computational lemmas may remain in the Mathlib-free
 library; its execution and termination must not depend on this companion.
-
-Computational conformance owner: `HexLatticeEnum`.
-
-Computational performance owner: `HexLatticeEnum`.

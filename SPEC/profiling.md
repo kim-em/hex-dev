@@ -11,7 +11,7 @@ Fresh-module elaboration, tactic, emitted-proof, and kernel-checking probes have
 no LeanBench timed region and therefore no sampling-profile obligation. Their
 replacement is the raw rotated build evidence, compiler/proof artefacts, and
 provenance record in
-[benchmarking.md §Fresh-module proof evidence](benchmarking.md#fresh-module-proof-evidence).
+[benchmarking.md §Fresh-module proof evidence](benchmarking.md#proof-probe-example-files).
 A mixed library profiles its compiled track and reports its proof track
 separately; it never samples the whole compiler process and labels that a
 timed-region profile.

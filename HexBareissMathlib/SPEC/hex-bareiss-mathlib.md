@@ -17,11 +17,6 @@ fresh-module probes under `bench/HexBareissMathlib/ProofProbe` against the
 unmodified pinned `eval_det`. Build-only examples live in
 `HexBareissMathlib/Tests.lean`.
 
-Computational conformance owner: `HexBareiss`.
-
-Computational performance owner: `HexBareiss` for the producer; this library
-for the tactic.
-
 ## Coefficient contract
 
 The Bareiss correspondence theorems take `[CommRing R] [DecidableEq R]` (Mathlib's `CommRing`,
