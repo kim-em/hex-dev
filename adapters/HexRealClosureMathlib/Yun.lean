@@ -37,7 +37,6 @@ theorem map_packed {context : Nat} {d : Root context}
         (DensePoly.Interpret.map
           (fun a : Root.Handle.Value h => a.value)
           (fun a => (Root.Handle.Value.eq_zero_iff a).symm) f) := by
-  classical
   exact map_decomposeRaw
     (fun a : Root.Handle.Value h => a.value)
     (fun a => (Root.Handle.Value.eq_zero_iff a).symm)
@@ -495,6 +494,7 @@ end Hex.RealClosure.Yun
 #guard_msgs in
 #print axioms Hex.RealClosure.Yun.check_map_roots_label
 
+-- The inherited `sorryAx` is `Tarski.check_rootSum` (#10389).
 /-- info: 'Hex.RealClosure.Yun.map_packed' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Yun.map_packed
