@@ -448,6 +448,36 @@ theorem denote_refine {context version : Nat} {d : Root context}
   exact (denote_rebind r.binding (transport r.encoding a)).trans
     (denote_transport r.encoding a)
 
+/-- Checked splitting and rebinding preserve a selected inverse result. -/
+theorem inverse_refine {context version : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : Refinement d head lower upper version) (a b : Expression d)
+    (h : a.inverse? = .ok (some b)) :
+    (refine r a).denote * (refine r b).denote = 1 := by
+  rw [denote_refine, denote_refine]
+  exact inverse?_sound a b h
+
+/-- The computed inverse candidate remains an inverse after a checked
+cofactor split and context change. -/
+theorem candidate_refine {context version : Nat} {d : Root context}
+    (a : Expression d) {lower upper : Endpoint Rat}
+    (r : Refinement d a.inverseFactor.2 lower upper version)
+    (ha : a.denote ≠ 0) :
+    (refine r a).denote * (refine r a.inverseCandidate).denote = 1 := by
+  rw [denote_refine, denote_refine]
+  exact candidate_mul_eq_one_of_nonzero a ha
+
+/-- Successful sign queries agree before and after checked refinement. -/
+theorem sign_refine {context version : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : Refinement d head lower upper version) (a : Expression d)
+    (oldSign newSign : Int)
+    (hOld : a.sign? = .ok oldSign)
+    (hNew : (refine r a).sign? = .ok newSign) :
+    oldSign = newSign := by
+  rw [a.sign?_sound oldSign hOld,
+    (refine r a).sign?_sound newSign hNew, denote_refine]
+
 end Expression
 end Hex.RealClosure
 
