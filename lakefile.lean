@@ -274,6 +274,7 @@ lean_lib HexSignDet where
 lean_lib HexSignDetMathlib where
 
 lean_lib HexRealClosure where
+  -- The runnable selected-root tests use `#eval` across the library boundary.
   precompileModules := true
 
 @[default_target]
@@ -577,7 +578,7 @@ lean_lib HexQuerySemantics where
   srcDir := "adapters"
   globs := #[`HexRealRootsMathlib.TarskiSoundness, `HexSturmMathlib.Soundness,
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
-    `HexSignDetMathlib.SelectedRoot]
+    `HexSignDetMathlib.SelectedRoot, `HexRealClosureMathlib.SelectedRoot]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction

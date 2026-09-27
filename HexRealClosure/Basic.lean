@@ -36,6 +36,19 @@ theorem Root.validate_context {context : Nat} (raw : SignDet.RawDescriptor Rat N
     rw [SignDet.Descriptor.build_context h] at hb
     cases hb
 
+/-- A checked conversion to a new rational-base context version. Validation
+is rerun with the new literal binding; the old descriptor remains unchanged. -/
+structure Rebinding {context : Nat} (source : Root context) (version : Nat) where
+  target : Root version
+  checked : Root.validate version { source.raw with context := version } = some target
+
+/-- Revalidate root selection under a new context version. -/
+@[expose] def Root.rebind? {context : Nat} (source : Root context) (version : Nat) :
+    Option (Rebinding source version) :=
+  match h : Root.validate version { source.raw with context := version } with
+  | none => none
+  | some target => some ⟨target, h⟩
+
 /-- A polynomial expression at the selected root. Distinct expressions may
 denote the same value; this type carries no field instance. -/
 structure Expression {context : Nat} (d : Root context) where
@@ -68,7 +81,7 @@ The result stays in the original context; the split is local to this operation. 
     (a : Expression d) : Expression d :=
   let g := DensePoly.monicize (DensePoly.gcd d.raw.head a.polynomial)
   let h := (DensePoly.divMod d.raw.head g).1
-  let eg := DensePoly.xgcd a.polynomial h
+  let eg := DensePoly.xgcdLeft a.polynomial h
   ⟨DensePoly.scale eg.gcd.leadingCoeff⁻¹ eg.left⟩
 
 /-- Check the Bézout candidate at the selected root. A failed producer remains
@@ -95,6 +108,11 @@ theorem inverse?_zero {context : Nat} {d : Root context} (a : Expression d)
     {lower upper : Endpoint Rat}
     (r : SignDet.Reencoding d head lower upper) (a : Expression d) :
     Expression r.target := ⟨a.polynomial⟩
+
+/-- Copy a stored rational polynomial through checked context rebinding. -/
+@[expose] def rebind {context version : Nat} {d : Root context}
+    (r : Rebinding d version) (a : Expression d) : Expression r.target :=
+  ⟨a.polynomial⟩
 
 end Expression
 end Hex.RealClosure

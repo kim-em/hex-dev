@@ -1583,6 +1583,16 @@ libraries:
     mathlib: true
     done_through: 0
     status: active
+  HexRealClosure:
+    deps: [HexSignDet, HexSturm, HexPoly]
+    mathlib: false
+    done_through: 0
+    status: active
+  HexRealClosureMathlib:
+    deps: [HexRealClosure, HexSignDetMathlib, HexSturmMathlib, HexRealRootsMathlib, HexPolyMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
   HexSturmMathlib:
     deps: [HexSturm, HexPolyMathlib, HexRealRootsMathlib]
     mathlib: true

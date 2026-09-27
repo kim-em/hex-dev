@@ -79,16 +79,20 @@ below = add(alpha, (Q(-3), Q(0)))
 head = poly_mul([Q(-2), Q(0), Q(1)], [Q(-3), Q(1)])
 assert eval_poly(head, alpha) == (0, 0)
 assert mul(below, inv(below)) == (1, 0)
+expected_inverse = (Q(-3, 7), Q(-1, 7))
 expected = [
     f"some ({sign(alpha)}, {sign(below)}, {sign(eval_poly(head, alpha))}, "
-    f"{sign(inv(below))}, {sign(add(mul(alpha, alpha), (Q(-2), Q(0))))})",
+    f"{sign(inv(below))}, {sign(add(mul(alpha, alpha), (Q(-2), Q(0))))}, "
+    f"{sign(add(inv(below), neg(expected_inverse)))})",
     "true",  # an old descriptor is rejected by the changed context binding
-    f"some ({sign(alpha)}, {sign(add(alpha, neg(alpha)))})",
-    str((0, 0) == (Q(0), Q(0))).lower(),
+    f"some ({sign(alpha)}, {sign(add(alpha, neg(alpha)))}, {sign((Q(6), Q(0)))}, "
+    f"{sign(inv(below))})",
+    f"some ({str(sign((Q(0), Q(0))) == 0).lower()}, "
+    f"{str(sign(add(mul(alpha, alpha), (Q(-2), Q(0)))) == 0).lower()})",
     str(len(gcd(head, [Q(-3), Q(1)])) - 1),
-    f"some ({sign(alpha)}, {sign(alpha)}, {len([Q(-2), Q(0), Q(1)]) - 1})",
+    f"some ({sign(alpha)}, {sign(alpha)}, {sign(alpha)}, {sign(inv(below))}, "
+    f"{len([Q(-2), Q(0), Q(1)]) - 1}, 8)",
 ]
-expected[3] = f"some {expected[3]}"
 
 start = time.perf_counter()
 run = subprocess.run(

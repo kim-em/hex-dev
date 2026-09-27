@@ -46,6 +46,24 @@ private theorem ratSign (q : Rat) :
 noncomputable def Root.real {context : Nat} (d : Root context) : ℝ :=
   d.root ratCast ratZero ratOne ratAdd ratSub ratMul ratNat ratSign
 
+/-- Revalidation in a new context version retains the selected real root. -/
+theorem Rebinding.real_eq_source {context version : Nat} {source : Root context}
+    (r : Rebinding source version) : r.target.real = source.real := by
+  have hchecked : SignDet.Descriptor.validate Sturm.orderSign version
+      { source.raw with context := version } = some r.target := r.checked
+  have hraw : r.target.raw = { source.raw with context := version } :=
+    SignDet.Descriptor.build_raw (SignDet.Descriptor.validate_eq_some.mp hchecked)
+  let x := r.target.real
+  have hs := r.target.root_spec ratCast ratZero ratOne ratAdd ratSub ratMul ratNat ratSign
+  have hs' : x ∈ HexRealRootsMathlib.Tarski.rootsIn
+      (interpret ratCast ratZero source.raw.head)
+      (source.raw.lower.map ratCast) (source.raw.upper.map ratCast) ∧
+      SignDet.signsAt ratCast ratZero source.raw.queries x = source.raw.signs := by
+    simpa [x, Root.real, hraw, SignDet.RawDescriptor.queries] using hs
+  have heq := source.root_unique ratCast ratZero ratOne ratAdd ratSub ratMul ratNat ratSign
+    x hs'.1 hs'.2
+  simpa [x, Root.real] using heq
+
 namespace Expression
 
 /-- Evaluate the stored polynomial at the descriptor's selected real root. -/
@@ -128,6 +146,14 @@ theorem denote_transport {context : Nat} {d : Root context} {head : DensePoly Ra
   simpa [denote, transport, Root.real] using
     congrArg (fun x : ℝ => (interpret ratCast ratZero a.polynomial).eval x) hroot
 
+/-- Checked rebinding preserves every rational polynomial expression's value. -/
+theorem denote_rebind {context version : Nat} {d : Root context}
+    (r : Rebinding d version) (a : Expression d) :
+    (rebind r a).denote = a.denote := by
+  simpa [denote, rebind] using
+    congrArg (fun x : ℝ => (interpret ratCast ratZero a.polynomial).eval x)
+      r.real_eq_source
+
 end Expression
 end Hex.RealClosure
 
@@ -138,3 +164,6 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.Expression.denote_transport' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Expression.denote_transport
+/-- info: 'Hex.RealClosure.Expression.denote_rebind' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Expression.denote_rebind
