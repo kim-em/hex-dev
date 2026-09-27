@@ -9,6 +9,7 @@ module
 public import HexNumberFieldTowerMathlib.Split
 public import HexRowReduceMathlib
 import HexNumberFieldMathlib.Coordinates
+import HexNumberFieldMathlib.CommonField
 import Mathlib.LinearAlgebra.Basis.Basic
 
 public section
@@ -735,39 +736,6 @@ private theorem tracePair?_sound (theta alpha gamma : AlgebraicNumber)
     AlgebraicPoly.Common.coordinates?_sound gamma alpha powers
       halphaCoordinate⟩
 
-private theorem checkCoordinate?_sound (target gamma : AlgebraicNumber)
-    (coordinate out : PolyQuot gamma.p gamma.x)
-    (h : checkCoordinate? target gamma coordinate = some out) :
-    PolyQuot.toComplex out gamma.rep gamma.rep_mk = target.toComplex := by
-  let : ZPoly.CheckedIrreducible gamma.p := gamma.checked
-  unfold checkCoordinate? at h
-  obtain ⟨recovered, hrecovered, h⟩ := Option.bind_eq_some_iff.mp h
-  by_cases heq : recovered == target
-  · simp only [heq, ↓reduceIte, Option.some.injEq] at h
-    subst out
-    have hrecoveredEq : recovered = target := beq_iff_eq.mp heq
-    rw [← hrecoveredEq]
-    exact (PolyQuot.toAlgebraicNumber?_sound coordinate gamma.rep
-      gamma.rep_mk hrecovered).symm
-  · have hfalse : (recovered == target) = false := by
-      cases hvalue : recovered == target <;> simp_all
-    simp [hfalse] at h
-
-private theorem checkPair?_sound (theta alpha gamma : AlgebraicNumber)
-    (coordinates out : PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x)
-    (h : checkPair? theta alpha gamma coordinates = some out) :
-    PolyQuot.toComplex out.1 gamma.rep gamma.rep_mk = theta.toComplex ∧
-      PolyQuot.toComplex out.2 gamma.rep gamma.rep_mk = alpha.toComplex := by
-  unfold checkPair? at h
-  obtain ⟨thetaCoordinate, htheta, h⟩ := Option.bind_eq_some_iff.mp h
-  obtain ⟨alphaCoordinate, halpha, h⟩ := Option.bind_eq_some_iff.mp h
-  have heq := Option.some.inj h
-  subst out
-  exact ⟨checkCoordinate?_sound theta gamma coordinates.1
-      thetaCoordinate htheta,
-    checkCoordinate?_sound alpha gamma coordinates.2
-      alphaCoordinate halpha⟩
-
 private theorem recoverPairFast?_sound (theta alpha gamma : AlgebraicNumber)
     (shift : Int)
     {coordinates : PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x}
@@ -776,31 +744,19 @@ private theorem recoverPairFast?_sound (theta alpha gamma : AlgebraicNumber)
         theta.toComplex ∧
       PolyQuot.toComplex coordinates.2 gamma.rep gamma.rep_mk =
         alpha.toComplex := by
-  unfold recoverPairFast? at h
-  by_cases hshift : shift = 0
-  · simp [hshift] at h
-  · simp only [hshift, ↓reduceIte] at h
-    let : ZPoly.CheckedIrreducible gamma.p := gamma.checked
-    let gammaCoordinate := gamma.toQAdjoin
-    let affine : DensePoly (PolyQuot gamma.p gamma.x) :=
-      DensePoly.ofList
-        [gammaCoordinate, (-(shift : Rat)) • (1 : PolyQuot gamma.p gamma.x)]
-    let thetaRelation := DensePoly.composeImpl (liftZPoly theta.p) affine
-    let alphaRelation : DensePoly (PolyQuot gamma.p gamma.x) :=
-      liftZPoly alpha.p
-    let common := DensePoly.gcd thetaRelation alphaRelation
-    by_cases hlinear :
-        (common.natDegree = 1 && common.leadingCoeff != 0) = true
-    · dsimp [common, thetaRelation, alphaRelation, affine,
-        gammaCoordinate] at hlinear
-      simp only [hlinear, ↓reduceIte] at h
-      exact checkPair?_sound theta alpha gamma _ coordinates h
-    · have hfalse :
-          (common.natDegree = 1 && common.leadingCoeff != 0) = false :=
-        Bool.eq_false_of_not_eq_true hlinear
-      dsimp [common, thetaRelation, alphaRelation, affine,
-        gammaCoordinate] at hfalse
-      simp [hfalse] at h
+  have hvalue := QAdjoin.recoverShift?_sound theta alpha gamma shift
+    (by simpa only [recoverPairFast?] using h)
+  constructor
+  · calc
+      PolyQuot.toComplex coordinates.1 gamma.rep gamma.rep_mk =
+          (QAdjoin.toAlgebraicNumber coordinates.1).toComplex :=
+        (PolyQuot.toAlgebraicNumber_toComplex _ gamma.rep gamma.rep_mk).symm
+      _ = theta.toComplex := congrArg AlgebraicNumber.toComplex hvalue.1
+  · calc
+      PolyQuot.toComplex coordinates.2 gamma.rep gamma.rep_mk =
+          (QAdjoin.toAlgebraicNumber coordinates.2).toComplex :=
+        (PolyQuot.toAlgebraicNumber_toComplex _ gamma.rep gamma.rep_mk).symm
+      _ = alpha.toComplex := congrArg AlgebraicNumber.toComplex hvalue.2
 
 private theorem recoverPair?_isSome (theta alpha gamma : AlgebraicNumber)
     (shift : Int)

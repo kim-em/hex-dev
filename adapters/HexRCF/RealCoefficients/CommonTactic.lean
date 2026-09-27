@@ -261,6 +261,8 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
               throwError "rcf: no checked irreducibility witness for this common field"
             let witnessExpr : Q(ZPoly.IrredWitness) :=
               HexBerlekampZassenhaus.FactorTactic.reifyWitness witness
+            unless ZPoly.checkIrredWitness p witness do
+              throwError "rcf: computed irreducibility witness failed its check"
             let hwitness ← mkDecideProof
               (q(ZPoly.checkIrredWitness $pExpr $witnessExpr = true) : Q(Prop))
             mkAppM ``Field.checkedIrreducible

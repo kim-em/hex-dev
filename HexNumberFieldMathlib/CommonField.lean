@@ -132,7 +132,8 @@ private theorem checkPair?_sound (theta alpha gamma : AlgebraicNumber)
       Bool.eq_false_of_not_eq_true heq
     simp [hfalse] at h
 
-private theorem recoverShift?_sound (theta alpha gamma : AlgebraicNumber)
+/-- A successful shift conversion preserves both selected algebraic values. -/
+theorem recoverShift?_sound (theta alpha gamma : AlgebraicNumber)
     (shift : Int) {coordinates : QAdjoin gamma × QAdjoin gamma}
     (h : recoverShift? theta alpha gamma shift = some coordinates) :
     coordinates.1.toAlgebraicNumber = theta ∧
@@ -183,9 +184,11 @@ private theorem fastPair?_sound (theta alpha : AlgebraicNumber)
       (∀ hzero : 0 < p.entries.size, (p.entries[0]'hzero).toAlgebraicNumber = theta) ∧
       (∀ hone : 1 < p.entries.size, (p.entries[1]'hone).toAlgebraicNumber = alpha) := by
   unfold fastPair? at h
-  obtain ⟨candidate, _, hp⟩ := Option.bind_eq_some_iff.mp h
-  rcases candidate with ⟨shift, gamma⟩
-  exact presentShift?_sound theta alpha gamma shift hp
+  obtain ⟨gamma, _, hp⟩ := Option.bind_eq_some_iff.mp h
+  by_cases hdegree : gamma.p.natDegree = theta.p.natDegree * alpha.p.natDegree
+  · simp only [hdegree, ↓reduceIte] at hp
+    exact presentShift?_sound theta alpha gamma 1 hp
+  · simp [hdegree] at hp
 
 private theorem presentation_exists (bs : Array AlgebraicNumber)
     (h : bs.all (fun b => b.isZero) ≠ true) :

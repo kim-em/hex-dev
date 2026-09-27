@@ -38,7 +38,7 @@ structure Presentation where
   generator : AlgebraicNumber
   entries : Array (QAdjoin generator)
 
-/-- Check proposed coordinates against both selected canonical values. -/
+/-- Internal check of proposed coordinates against both selected canonical values. -/
 @[expose] def checkPair? (theta alpha gamma : AlgebraicNumber)
     (coordinates : QAdjoin gamma × QAdjoin gamma) :
     Option (QAdjoin gamma × QAdjoin gamma) := do
@@ -73,34 +73,21 @@ algebraic equality checks the chosen embeddings. -/
     checkPair? theta alpha gamma (thetaCoordinate, alphaCoordinate)
   else none
 
-/-- Package a checked pair of coordinates at one proposed generator. -/
+/-- Internal packaging of a checked pair at one proposed generator. -/
 @[expose] def presentShift? (theta alpha gamma : AlgebraicNumber) (shift : Int) :
     Option Presentation := do
   let coordinates ← recoverShift? theta alpha gamma shift
   some ⟨gamma, #[coordinates.1, coordinates.2]⟩
 
-/-- Try the first nonzero shift before the existing bounded primitive search. -/
-@[expose] def fastCandidate? (theta alpha : AlgebraicNumber) :
-    Option (Int × AlgebraicNumber) :=
-  let target := theta.p.natDegree * alpha.p.natDegree
-  let first := do
-    let gamma ← AlgebraicPoly.Common.shift? theta alpha 1
-    if gamma.p.natDegree != target then none else
-      some (1, gamma)
-  match first with
-  | some candidate => some candidate
-  | none =>
-      match AlgebraicPoly.Common.extendShift? theta alpha with
-      | some shifted => some (shifted.shift, shifted.value)
-      | none => none
-
-/-- Convert a pair through a primitive-element candidate and an exact gcd,
-checking that both coordinates recover the selected algebraic values. -/
+/-- When shift one has the full product degree, recover and check both input
+coordinates through its primitive generator. -/
 @[expose] def fastPair? (theta alpha : AlgebraicNumber) : Option Presentation := do
-  let (shift, gamma) ← fastCandidate? theta alpha
-  presentShift? theta alpha gamma shift
+  let gamma ← AlgebraicPoly.Common.shift? theta alpha 1
+  if gamma.p.natDegree = theta.p.natDegree * alpha.p.natDegree then
+    presentShift? theta alpha gamma 1
+  else none
 
-/-- General trace-pairing presentation when the fast pair conversion does not apply. -/
+/-- Internal trace-pairing fallback when the fast pair conversion does not apply. -/
 @[expose] def commonFallback (bs : Array AlgebraicNumber) : Presentation :=
   match AlgebraicPoly.Common.presentation? bs with
   | some p => ⟨p.generator, p.coefficients⟩

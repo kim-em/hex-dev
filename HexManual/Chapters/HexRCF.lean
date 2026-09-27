@@ -509,6 +509,9 @@ For multiple sources, the tactic checks a defining polynomial and selected
 real root for the common field, then verifies that every original coefficient
 has the proposed value there. The higher-degree example below combines the
 selected real root of `X³ − 2` with `Real.sqrt 2`.
+Some larger combinations still decline with an irreducibility-witness
+diagnostic: the current certificate search does not cover every polynomial
+that can define a common field.
 
 ```lean
 open Hex.RCF.RealCoefficients

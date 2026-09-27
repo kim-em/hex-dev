@@ -100,6 +100,11 @@ theorem field_and_sqrt :
   rcf
 
 set_option maxHeartbeats 5000000 in
+theorem same_field_pair :
+    ∀ x : ℝ, x ^ 2 + selectedThree.toReal + shiftedThree.toReal > 0 := by
+  rcf
+
+set_option maxHeartbeats 5000000 in
 theorem selected_field_and_sqrt :
     ∀ x : ℝ, x ^ 2 + selectedShiftedThree.toReal - Real.sqrt 2 > 0 := by
   rcf
