@@ -460,6 +460,25 @@ private def yunRatReconstruct : Bool :=
 
 #guard yunRatReconstruct
 
+/-- Replay rejects a missing multiplicity and an out-of-order factor list. -/
+private def yunReplay : Bool :=
+  let p := x - DensePoly.C 1
+  let q := x - DensePoly.C 2
+  let f : DensePoly Rat := DensePoly.C 2 * (p * p) * (q * q * q)
+  Yun.check f (Yun.decompose f) &&
+    !(Yun.check f (.factors 2 #[(p, 1), (q, 3)])) &&
+    !(Yun.check f (.factors 2 #[(q, 3), (p, 2)]))
+
+#guard yunReplay
+
+/-- A powered factor reconstructs but fails the squarefreeness replay. -/
+private def yunRejectPower : Bool :=
+  let p := x - DensePoly.C 1
+  let f : DensePoly Rat := p * p
+  !(Yun.check f (.factors 1 #[(f, 1)]))
+
+#guard yunRejectPower
+
 /-- Zero and nonzero constants have distinct Yun outputs. -/
 private def yunZero : Bool :=
   match Yun.decompose (0 : DensePoly Rat) with
