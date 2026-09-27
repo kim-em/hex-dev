@@ -47,6 +47,10 @@ theorem ratSign (q : Rat) :
 @[expose] noncomputable def realPoly (p : DensePoly Rat) : Polynomial ℝ :=
   interpret ratCast ratZero p
 
+theorem realPoly_mul (p q : DensePoly Rat) :
+    realPoly (p * q) = realPoly p * realPoly q :=
+  interpret_mul ratCast ratZero ratAdd ratMul p q
+
 /-- The real root denoted by a checked rational descriptor. -/
 @[expose] noncomputable def Root.real {context : Nat} (d : Root context) : ℝ :=
   d.root ratCast ratZero ratOne ratAdd ratSub ratMul ratNat ratSign
@@ -222,6 +226,44 @@ theorem cofactor_root {context version : Nat} {d : Root context}
   rw [hroot] at hzero
   exact hzero
 
+/-- A nonzero selected value forces the selected root into the computed
+cofactor, independently of whether re-encoding has run. -/
+theorem cofactor_root_of_nonzero {context : Nat} {d : Root context}
+    (a : Expression d) (ha : a.denote ≠ 0) :
+    (realPoly a.inverseFactor.2).eval d.real = 0 := by
+  let p := d.raw.head
+  let q := a.polynomial
+  let g := DensePoly.monicize (DensePoly.gcd p q)
+  have hq : q ≠ 0 := by
+    intro h
+    apply ha
+    simp [denote, q, h, realPoly]
+  have hgraw : DensePoly.gcd p q ≠ 0 := DensePoly.gcd_ne_zero_right p q hq
+  have hgdvdq : g ∣ q :=
+    DensePoly.monicize_dvd_of_dvd hgraw (DensePoly.gcd_dvd_right p q)
+  have hgdvdp : g ∣ p :=
+    DensePoly.monicize_dvd_of_dvd hgraw (DensePoly.gcd_dvd_left p q)
+  obtain ⟨r, hr⟩ := hgdvdq
+  have hgval : (realPoly g).eval d.real ≠ 0 := by
+    intro hgzero
+    apply ha
+    have hqeval := congrArg (fun t : DensePoly Rat => (realPoly t).eval d.real) hr
+    rw [realPoly_mul, Polynomial.eval_mul, hgzero, zero_mul] at hqeval
+    exact hqeval
+  have hrem : (DensePoly.divMod p g).2 = 0 :=
+    DensePoly.mod_eq_zero_of_dvd p g hgdvdp
+  have hrec := DensePoly.divMod_spec p g
+  have hpeq : (DensePoly.divMod p g).1 * g = p := by
+    simpa [hrem] using hrec
+  have hpeval := congrArg (fun t : DensePoly Rat => (realPoly t).eval d.real) hpeq
+  rw [realPoly_mul, Polynomial.eval_mul] at hpeval
+  have hpzero : (realPoly p).eval d.real = 0 := by
+    simpa [p] using denote_head (d := d)
+  rw [hpzero] at hpeval
+  have hh : (realPoly (DensePoly.divMod p g).1).eval d.real = 0 :=
+    (mul_eq_zero.mp hpeval).resolve_right hgval
+  simpa [inverseFactor, p, q, g] using hh
+
 /-- With a checked cofactor split and constant extended gcd, the candidate
 is an inverse at the original selected root. -/
 theorem candidate_mul_eq_one_of_split {context version : Nat} {d : Root context}
@@ -231,6 +273,15 @@ theorem candidate_mul_eq_one_of_split {context version : Nat} {d : Root context}
       DensePoly.C c) (hc : c ≠ 0) :
     a.denote * a.inverseCandidate.denote = 1 :=
   candidate_mul_eq_one a c (cofactor_root a r) hgcd hc
+
+/-- The only remaining algebraic premise for a nonzero value is that the
+computed cofactor and operand have a nonzero constant extended gcd. -/
+theorem candidate_mul_eq_one_of_nonzero {context : Nat} {d : Root context}
+    (a : Expression d) (ha : a.denote ≠ 0) (c : Rat)
+    (hgcd : (DensePoly.xgcdLeft a.polynomial a.inverseFactor.2).gcd =
+      DensePoly.C c) (hc : c ≠ 0) :
+    a.denote * a.inverseCandidate.denote = 1 :=
+  candidate_mul_eq_one a c (cofactor_root_of_nonzero a ha) hgcd hc
 
 /-- A successful `none` result means the operand is zero at the selected root. -/
 theorem inverse?_none_denote {context : Nat} {d : Root context} (a : Expression d)
@@ -291,3 +342,9 @@ end Hex.RealClosure
  Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Expression.candidate_mul_eq_one_of_split
+/-- info: 'Hex.RealClosure.Expression.candidate_mul_eq_one_of_nonzero' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Expression.candidate_mul_eq_one_of_nonzero
