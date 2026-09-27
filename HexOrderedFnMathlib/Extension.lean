@@ -58,6 +58,8 @@ def equiv : Extension r ≃ RationalFn K where
     div f g := ⟨f.val / g.val⟩
     div_eq_mul_inv _ _ := rfl }
 
+section
+
 attribute [local instance] Lean.Grind.Semiring.natCast Lean.Grind.Ring.intCast
 
 /-- Mathlib field structure using only the core arithmetic in its data fields. -/
@@ -117,11 +119,13 @@ instance field : Field (Extension r) where
   qsmul := fun q a => ((Int.cast q.num : Extension r) / Nat.cast q.den) * a
   qsmul_def := fieldModel.qsmul_def
 
+end
+
 /-- The companion field induces precisely the core field operations and laws. -/
 theorem coreField_eq : Field.toGrindField (K := Extension r) = instField := rfl
 
 /-- The wrapper's field operations are those of its canonical fraction. -/
-noncomputable def valHom : Extension r →+* RationalFn K where
+def valHom : Extension r →+* RationalFn K where
   toFun := val
   map_zero' := rfl
   map_one' := rfl

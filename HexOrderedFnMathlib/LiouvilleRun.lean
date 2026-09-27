@@ -20,7 +20,7 @@ local instance (priority := 2000) : Lean.Grind.Field Rat := Field.toGrindField
 The rational outer subject supplies no universal transcendence registration. -/
 private def secondFinite : Bool :=
   let a := Extension.approximation (r := registered) (fun _ => .singleton 3)
-  let f : RationalFn E := RationalFn.C positive
+  let f : RationalFn E := RationalFn.X - RationalFn.C positive
   match h : attempt a f 6 with
   | none => false
   | some s => s == 1 && Real.sign a f (acc_of_success _ 6 s h 0 (by decide +kernel)) == 1

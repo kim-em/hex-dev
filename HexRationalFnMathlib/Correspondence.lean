@@ -99,20 +99,7 @@ theorem ratField_eq : Field.toGrindField (K := Rat) = Lean.Grind.instFieldRat :=
 /-- The Mathlib field induces the original core field dictionary. This equality
 allows transport of successive extensions formed through either instance path. -/
 theorem coreField_eq :
-    Field.toGrindField (K := RationalFn K) = RationalFn.instField := by
-  unfold Field.toGrindField RationalFn.instField
-  dsimp only
-  congr 1
-  unfold CommRing.toGrindCommRing Ring.toGrindRing Semiring.toGrindSemiring RationalFn.instCommRing
-  dsimp only
-  congr
-  all_goals first
-    | exact proof_irrel_heq _ _
-    | (funext n; cases n with
-      | zero => rfl
-      | succ n => cases n with
-        | zero => rfl
-        | succ n => rfl)
+    Field.toGrindField (K := RationalFn K) = RationalFn.instField := rfl
 
 noncomputable section
 
@@ -277,7 +264,7 @@ theorem toRatFunc_X : toRatFunc (RationalFn.X : RationalFn K) = RatFunc.X := by
   map_mul' a b := by apply toRatFunc_injective; simp
 
 /-- Coefficients act through the executable constant embedding. -/
-noncomputable instance algebra : Algebra K (RationalFn K) := constantHom.toAlgebra
+instance algebra : Algebra K (RationalFn K) := constantHom.toAlgebra
 
 /-- The same canonical correspondence as a coefficient-algebra equivalence. -/
 def algEquiv : RationalFn K ≃ₐ[K] RatFunc K :=

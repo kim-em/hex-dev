@@ -173,6 +173,16 @@ example (f g : E) : (inferInstance : LinearOrder E).toDecidableLT f g =
 
 def orderedArithmetic (f : E) : E := if f < 0 then -(f ^ (2 : Nat)) else f + 1
 
+example : Extension.sign (positive - positive) = 0 :=
+  (Extension.sign_eq_zero_iff source_correct transcendence _).mpr (sub_self positive)
+
+example : positive ≠ 0 := by
+  intro h
+  have hz := (Extension.sign_eq_zero_iff source_correct transcendence positive).mpr h
+  rw [positive_sign] at hz
+  contradiction
+
+
 theorem zero_sign : Extension.sign (ExtensionTests.zero registered) = 0 := by
   change Extension.sign (Extension.X - Extension.X : E) = 0
   rw [sub_self]

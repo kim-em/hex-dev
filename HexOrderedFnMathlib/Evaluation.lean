@@ -70,7 +70,8 @@ theorem eval_den_ne_zero (h : RelativeTranscendence ι τ) (f : RationalFn K) :
   apply f.den_ne_zero
   exact equiv.injective (he.trans (toPolynomial_zero).symm)
 
-/-- Agreement with Mathlib's universe-zero evaluator; `evalHom` itself is universe-polymorphic. -/
+/-- Agreement with Mathlib's evaluator, whose same-universe requirement restricts
+the coefficient field to `Type` when evaluating in ℝ. `evalHom` is universe-polymorphic. -/
 theorem evalHom_eq_ratFunc {K : Type} [Field K] [DecidableEq K]
     {ι : K →+* ℝ} {τ : ℝ} (h : RelativeTranscendence ι τ) (f : RationalFn K) :
     evalHom h f = RatFunc.eval ι τ (HexRationalFnMathlib.toRatFunc f) := by

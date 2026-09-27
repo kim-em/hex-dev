@@ -79,7 +79,7 @@ valuations, negative denominators, cancellation and three successive levels;
 `scripts/oracle/ordered_fn_z3.py` checks them with pinned Z3 RCF and exact
 rational specialization. `ordered_fn_real.py` checks 108 real refinement fixtures
 with FLINT normalization of source expressions, exact Fraction values and Z3
-polynomial/quotient enclosure queries. Original divisor guards survive cancellation.
+polynomial/quotient enclosure queries. The cancelled-pole fixture checks the consumer obligation to retain original divisor guards through cancellation.
 `hexorderedfn_bench` measures sign scans, comparisons,
 degree, coefficient height and tower depth without importing Mathlib. Run it
 with `scripts/bench/ordered_fn_measure.py --output DIR`. The companion's

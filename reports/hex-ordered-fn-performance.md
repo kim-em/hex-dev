@@ -1,4 +1,4 @@
-# Infinitesimal rational-function performance
+# Ordered rational-function performance
 
 The Mathlib-free targets exercise production signs, comparisons, Horner bounds
 and real refinement on canonical rational functions. The initial six targets
