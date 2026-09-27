@@ -26,7 +26,7 @@ private meta def naturalSquareRoot? (source : Expr) : MetaM (Option Nat) := do
       (_inst := q(inferInstance))
     pure value
   let some value := result | return none
-  unless value.den == 1 && 0 ≤ value.num do return none
+  unless value.den == 1 && 0 < value.num do return none
   let n := value.num.toNat
   let nExpr : Q(ℕ) := mkNatLit n
   unless ← isDefEq base q(($nExpr : ℝ)) do return none
@@ -139,21 +139,22 @@ private meta def prove (source : Reify.Source) (degrees : Array Nat) : MetaM Exp
           letI : ZPoly.CheckedIrreducible p :=
             Field.checkedIrreducibleQuadraticNorm p cert hc hd
           withLocalDecl `inst .instImplicit instType fun inst => do
-            let (fixedProof, certificate, data, verdictProof) ←
-              FieldLiteral.proveWithCertificate
-              pExpr rootExpr valuesExpr qfExpr values qf quantifier 8 extras
             let sourcePolyRuntime : Fin n → DensePoly Rat := fun i =>
               (sourcePolys[i.val]?).getD (DensePoly.ofList [])
             let sourceSquareRuntime : Fin n → DyadicSquare := fun i =>
               (sourceSquares[i.val]?).getD s
-            unless CommonPresentation.checkPresentation hw hp data.signs
-                sourcePolyRuntime sourceSquareRuntime values do
-              let equations := (List.finRange n).map fun i =>
-                CommonPresentation.checkEquation (sourcePolyRuntime i) (values i)
-              let margins := (List.finRange n).map fun i =>
-                data.signs.lookup? (CommonPresentation.discSlack
-                  (sourceSquareRuntime i) (values i))
-              throwError "rcf: common-field proposal rejected: equations {repr equations}, margins {repr margins}"
+            let validate (data : FieldBuild.Result p s hw hp Unit (n + 1)) : MetaM Unit := do
+              unless CommonPresentation.checkPresentation hw hp data.signs
+                  sourcePolyRuntime sourceSquareRuntime values do
+                let equations := (List.finRange n).map fun i =>
+                  CommonPresentation.checkEquation (sourcePolyRuntime i) (values i)
+                let margins := (List.finRange n).map fun i =>
+                  data.signs.lookup? (CommonPresentation.discSlack
+                    (sourceSquareRuntime i) (values i))
+                throwError "rcf: common-field proposal rejected: equations {repr equations}, margins {repr margins}"
+            let (fixedProof, certificate, data, verdictProof) ←
+              FieldLiteral.proveWithCertificate
+              pExpr rootExpr valuesExpr qfExpr values qf quantifier 8 extras validate
             let signTable ← mkAppM ``FieldBuild.Result.signs #[certificate]
             let signProofName := match quantifier with
               | .forallReal => ``FieldBuild.Result.checkForall_signTable
@@ -221,7 +222,10 @@ private meta def prove (source : Reify.Source) (degrees : Array Nat) : MetaM Exp
   else throwError "rcf: common square failed its root witness"
 
 @[rcf_handler] meta def handle : Handler := fun target => do
-  if (squareRoots target #[]).size < 2 then return .declined
+  let roots := squareRoots target #[]
+  if roots.size < 2 then return .declined
+  for root in roots do
+    unless (← naturalSquareRoot? root).isSome do return .declined
   let .ok source ← Reify.prepare target | return .declined
   if source.coefficients.size < 2 then return .declined
   let mut degrees : Array Nat := #[]

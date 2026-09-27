@@ -258,10 +258,12 @@ meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
     (formula : RealFormula.QF (n + 1))
     (quantifier : RealFormula.Quantifier) (precision : Nat := 8)
-    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) :
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
+    (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ()) :
     MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
   let some data := FieldBuild.build p s hw hp values formula () precision extraSignKeys |
     throwError "rcf: fixed-field certificate construction failed"
+  validate data
   let sampleKeys := SignInputs.openSamples FieldDecision.point data.isolation
     (formula.polys.map (FieldSpecialize.literalPolynomial values))
   unless sampleKeys.all (fun key => (data.signs.lookup? key).isSome) do

@@ -139,7 +139,24 @@ theorem rcf_two_square_roots :
 #guard_msgs in
 #print axioms Hex.RCF.RealCoefficients.SquareRoot.selected
 
+set_option maxHeartbeats 5000000 in
+theorem rcf_between_square_roots :
+    ∃ x : ℝ, Real.sqrt 2 < x ∧ x < Real.sqrt 3 := by
+  rcf
+
+/-- info: '_private.HexRCF.RealCoefficientTactic.0.rcf_between_square_roots' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms rcf_between_square_roots
+
 /-- error: rcf: the universal sentence is false on the prepared cells -/
 #guard_msgs in
 set_option maxHeartbeats 5000000 in
 example : ∀ x : ℝ, x ^ 2 + Real.sqrt 3 - Real.sqrt 2 < 0 := by rcf
+
+/-- error: rcf: the existential sentence is false on the prepared cells -/
+#guard_msgs in
+set_option maxHeartbeats 5000000 in
+example : ∃ x : ℝ, x ^ 2 + Real.sqrt 3 - Real.sqrt 2 < 0 := by rcf
