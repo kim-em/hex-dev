@@ -1583,8 +1583,13 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
               synced: dict[str, str], baseline: dict[str, str], force: bool,
               dep_owner: dict[str, str],
               pins: dict[str, dict[str, str]], version: str,
-              resuming: bool) -> bool:
-    """Sync and tag one repo; return whether it belongs to this release."""
+              resuming: bool, stage: Path | None = None) -> bool:
+    """Sync and tag one repo; return whether it belongs to this release.
+
+    With `stage`, the rewritten tree (without `.git`) is also copied to
+    `stage/<short name>`, so `consumer_check.py` can build exactly what this
+    run would publish.
+    """
     repo = entry["repo"]
     short = repo.split("/")[-1]
     print(f"\n=== {repo} ===")
@@ -1635,6 +1640,9 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
             print(line)
         for line in rewrite_manifest(entry, clone, synced, dep_owner, pins, version):
             print(line)
+        if stage is not None:
+            shutil.copytree(clone, stage / short,
+                            ignore=shutil.ignore_patterns(".git"))
         status = run(["git", "status", "--porcelain"], cwd=clone, capture=True)
         if not status:
             print("  (no changes)")
@@ -1718,7 +1726,16 @@ def main() -> int:
     ap.add_argument("--baseline", default=str(BASELINE), type=Path,
                     help="path to the per-repo baseline JSON to read and advance "
                          "(the workflow points this at the release-sync-baseline branch's copy)")
+    ap.add_argument("--stage", type=Path,
+                    help="with --dry-run, copy every rewritten repository to "
+                         "STAGE/<name> for scripts/release/consumer_check.py")
     args = ap.parse_args()
+    if args.stage is not None and not args.dry_run:
+        ap.error("--stage requires --dry-run")
+    if args.stage is not None:
+        args.stage.mkdir(parents=True, exist_ok=True)
+        if any(args.stage.iterdir()):
+            ap.error(f"--stage directory {args.stage} is not empty")
 
     # An empty token would probe anonymously, win the routing for every public
     # repository, and only fail at push time — after earlier repositories were
@@ -1825,7 +1842,7 @@ def main() -> int:
             token = None if args.dry_run else repo_token[entry["repo"]]
             released = sync_repo(entry, source_sha, token, args.dry_run,
                                  synced, baseline, args.force, dep_owner, pins,
-                                 version, resuming)
+                                 version, resuming, args.stage)
             if not args.dry_run:
                 if released:
                     completed.add(entry["repo"].split("/")[-1])
