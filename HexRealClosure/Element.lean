@@ -149,6 +149,26 @@ instance (priority := 90) {context : Nat} {d : Root context} (n : Nat) :
     OfNat (Element d) (n + 2) :=
   ⟨ofPoly (DensePoly.C (n + 2))⟩
 
+/-- Transport every coefficient through a checked re-encoding. -/
+@[expose] def transportPoly {context : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : SignDet.Reencoding d head lower upper)
+    (p : DensePoly (Element d)) : DensePoly (Element r.target) :=
+  DensePoly.ofCoeffs (p.toArray.map (transport r))
+
+/-- Rebind every coefficient to the new context version. -/
+@[expose] def rebindPoly {context version : Nat} {d : Root context}
+    (r : Rebinding d version)
+    (p : DensePoly (Element d)) : DensePoly (Element r.target) :=
+  DensePoly.ofCoeffs (p.toArray.map (rebind r))
+
+/-- Refine every coefficient after a checked factor split. -/
+@[expose] def refinePoly {context version : Nat} {d : Root context}
+    {head : DensePoly Rat} {lower upper : Endpoint Rat}
+    (r : Refinement d head lower upper version)
+    (p : DensePoly (Element d)) : DensePoly (Element r.binding.target) :=
+  DensePoly.ofCoeffs (p.toArray.map (refine r))
+
 end Element
 
 end Hex.RealClosure

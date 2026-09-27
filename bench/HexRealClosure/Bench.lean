@@ -82,6 +82,35 @@ setup_fixed_benchmark runPoly where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 
+/-- Functional timing anchor for transporting a degree-three polynomial of
+packed coefficients through a checked cofactor split and context rebind. -/
+def runTransport : Unit → IO UInt64 := fun _ => do
+  let some input ← rawRef.get
+    | throw (IO.userError "transport benchmark: missing input")
+  let some d := Root.validate 7 input
+    | throw (IO.userError "transport benchmark: descriptor rejected")
+  let below : Expression d := ⟨x - DensePoly.C 3⟩
+  let some (some r) := (below.split? 8 (.finite 1) (.finite 2)).toOption
+    | throw (IO.userError "transport benchmark: split rejected")
+  let alpha : Element d := Element.ofPoly x
+  let zero : Element d := Element.ofPoly (x * x - DensePoly.C 2)
+  let low : Element d := Element.ofPoly (x - DensePoly.C 3)
+  let p : DensePoly (Element d) := DensePoly.ofCoeffs #[alpha, zero, low, alpha]
+  let encoded := Element.transportPoly r.encoding p
+  let rebound := Element.rebindPoly r.binding encoded
+  let refined := Element.refinePoly r p
+  if encoded.natDegree == 3 && rebound.natDegree == 3 &&
+      refined.natDegree == 3 && (refined.coeff 1) == 0 &&
+      (rebound.coeff 0).value == alpha.value &&
+      (refined.coeff 3).value == alpha.value then
+    return 1
+  else
+    throw (IO.userError "transport benchmark: value mismatch")
+
+setup_fixed_benchmark runTransport where {
+  repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
+}
+
 end Hex.RealClosure.Bench
 
 def main (args : List String) : IO UInt32 :=
