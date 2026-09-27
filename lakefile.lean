@@ -145,7 +145,8 @@ lean_lib HexOrderedFnMathlib where
 @[default_target]
 lean_lib HexOrderedFnTests where
   globs := #[.one `HexOrderedFn.Tests, .one `HexOrderedFnMathlib.Tests,
-    .one `HexOrderedFn.InfinitesimalTests, .one `HexOrderedFnMathlib.InfinitesimalTests]
+    .one `HexOrderedFn.InfinitesimalTests, .one `HexOrderedFnMathlib.InfinitesimalTests,
+    .one `HexOrderedFn.ExtensionTests, .one `HexOrderedFnMathlib.LiouvilleTests]
 
 lean_lib HexMvPoly where
 
@@ -1048,7 +1049,7 @@ lean_lib HexConformance where
 
     ++ #[`HexPolyFast.Conformance].map Glob.one
 
-    ++ #[`HexRationalFn.Conformance, `HexRationalFn.Domains, `HexOrderedFn.Conformance].map Glob.one
+    ++ #[`HexRationalFn.Conformance, `HexRationalFn.Domains, `HexOrderedFn.Conformance, `HexOrderedFn.Liouville].map Glob.one
 
     ++ #[`HexLatticeEnum.Conformance].map Glob.one
 

@@ -16,8 +16,9 @@ no existing input acquires a family dependency. `HexInterval` and
 a separate enclosure library without becoming a prerequisite here.
 
 Use namespace `Hex.OrderedFn`, with `Real` and `Infinitesimal` namespaces
-matching the computational API. Modules are `Correspondence`, `Real`,
-`Infinitesimal`, `Hahn` and build-only `Tests`. The companion owns semantic proofs;
+matching the computational API. Modules are `Oracle`, `Real`, `Convergence`,
+`Evaluation`, `Progress`, `Extension`, `Infinitesimal`, `Hahn` and build-only
+semantic/integration tests. The companion owns semantic proofs;
 it supplies no approximation generator or analytic provider proof for named
 constants such as π or e.
 
