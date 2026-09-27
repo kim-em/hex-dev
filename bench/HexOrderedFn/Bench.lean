@@ -72,6 +72,13 @@ def comparison (pair : First × First) : Int :=
 -- coefficients and constant denominators. No nonconstant gcd is encountered.
 setup_benchmark comparison n => n with prep := prepCompare where config
 
+def subtraction (pair : First × First) : Nat :=
+  (pair.1 - pair.2).num.coeffs.size
+
+-- Cost model: Θ(n): the same canonical subtraction as comparison, consuming
+-- only its stored numerator size instead of scanning for its sign.
+setup_benchmark subtraction n => n with prep := prepCompare where config
+
 
 def compareConfig : LeanBench.BenchmarkConfig :=
   { config with paramSchedule := .custom #[16, 32, 64, 128, 256, 512, 1024, 2048] }

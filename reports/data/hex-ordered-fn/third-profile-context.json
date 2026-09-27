@@ -1,0 +1,68 @@
+{
+  "cpu": 77,
+  "host": "chungus2",
+  "load_before": [
+    3.41015625,
+    4.02490234375,
+    9.3466796875
+  ],
+  "command": [
+    "perf",
+    "record",
+    "--clockid",
+    "mono",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "--call-graph",
+    "dwarf",
+    "-o",
+    "/home/kim/bench-results/issue-10376-third-profile/perf.data",
+    "--",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10376/.lake/build/bin/hexorderedfn_bench",
+    "profile",
+    "Hex.OrderedFnBench.thirdApproximation",
+    "--param",
+    "18",
+    "--target-inner-nanos",
+    "5000000000",
+    "--profiler",
+    "env"
+  ],
+  "commit": "2c7c3f3024dccff9284303e1c3e17d344556e131",
+  "executable_sha256": "8de241748e09bce27b362fc25d08587d19c6020e0aa31ac1fd1177c6e687c9f7",
+  "returncode": 0,
+  "load_after": [
+    3.93798828125,
+    4.12451171875,
+    9.3505859375
+  ],
+  "executable_sha256_after": "8de241748e09bce27b362fc25d08587d19c6020e0aa31ac1fd1177c6e687c9f7",
+  "filter_repository": "https://github.com/kim-em/lean-bench-samply",
+  "filter_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.1.5",
+  "source_sha256": {
+    "scripts/profile/normalize_perf.py": "fbe80a6081d4c952ccbf0e0c7d34096b7aab8b4ca3baa1850c3015cf2e6ca8c2",
+    "scripts/profile/elf_symbols.py": "5b1293b476d7e3df82ad8f93212000a5efc11603d49d50d43821c5013d111207",
+    "scripts/profile/summarize_profile.py": "ba36b14948d7986bb8c349f2655323b24d33cc05ad0349d492e9929e00ab24fe"
+  },
+  "raw_directory": "/home/kim/bench-results/issue-10376-third-profile",
+  "normalization": {
+    "sample_count": 4905,
+    "origin_ns": 4877579455246,
+    "residual_ns": 0,
+    "original_start_time_ms": 1790502273524.3298,
+    "corrected_start_time_ms": 1790502268384.0256,
+    "method": "all raw perf timestamps equal imported timestamps plus one offset; correct the common wall-clock origin"
+  },
+  "processing_commands": [
+    "samply import perf.data --save-only -o samply.json.gz",
+    "perf script --ns -i perf.data -F pid,time > perf-samples.txt",
+    "python3 scripts/profile/normalize_perf.py --profile samply.json.gz --perf-script perf-samples.txt --output normalized.json.gz --spawn-anchor spawn-anchor.json",
+    "python3 filter_samply.py --samply-json normalized.json.gz --sidecar timed-2315532.jsonl --spawn-anchor spawn-anchor.json --out filtered.json.gz --diagnostics diagnostics.json --label-filter kernel",
+    "python3 scripts/profile/elf_symbols.py filtered.json.gz --output symbols.json",
+    "python3 scripts/profile/summarize_profile.py filtered.json.gz --symbols symbols.json --diagnostics diagnostics.json --thread hexorderedfn_be --output summary.json"
+  ]
+}
