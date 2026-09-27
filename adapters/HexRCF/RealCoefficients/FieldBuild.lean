@@ -150,7 +150,8 @@ def build [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     [ZPoly.CheckedIrreducible p] {Ctx : Type u} [DecidableEq Ctx]
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
-    (formula : RealFormula.QF (n + 1)) (context : Ctx) (precision : Nat) :
+    (formula : RealFormula.QF (n + 1)) (context : Ctx) (precision : Nat)
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) :
     Option (Result p s hw hp Ctx (n + 1)) :=
   let rep := Field.literalRep p s hw hp
   let hrep := Field.literalRep_mk p s hw hp
@@ -171,7 +172,8 @@ def build [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
           SignInputs.rootQueries FieldDecision.point radical.core isolation
             (rootSigns.entries.map fun row i => row.evidence[i]) ++
           SignInputs.openSamples FieldDecision.point isolation
-            (formula.polys.map (FieldSpecialize.literalPolynomial values))
+            (formula.polys.map (FieldSpecialize.literalPolynomial values)) ++
+          extraSignKeys
         match buildTable p s hw hp keys with
         | none => none
         | some signs => some ⟨radical, isolation, rootSigns, signs⟩
@@ -201,6 +203,17 @@ finite key set. -/
       (fun cell => formula.evalSigns
         (FieldDecision.cellSign data.sign values data.isolation
           (data.rootSigns.value data.isolation.total) cell)) == some true
+
+omit [ZPoly.CheckedIrreducible p] in
+/-- The universal verdict already checked the sign table used by presentation
+replay. -/
+theorem checkForall_signTable (data : Result p s hw hp Ctx (n + 1))
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (context : Ctx)
+    (h : data.checkForall values formula context = true) :
+    Field.checkSignTable p s hw hp data.signs = true := by
+  simp only [checkForall, Bool.and_eq_true] at h
+  exact h.1.1.1.1
 
 /-- A true checked universal verdict proves the original fixed-field formula
 at every real argument. The producer's canonical search is absent from the
@@ -236,6 +249,16 @@ theorem checkForall_sound (data : Result p s hw hp Ctx (n + 1))
       (fun cell => formula.evalSigns
         (FieldDecision.cellSign data.sign values data.isolation
           (data.rootSigns.value data.isolation.total) cell)) == some true
+
+omit [ZPoly.CheckedIrreducible p] in
+/-- The existential verdict uses the same checked sign table. -/
+theorem checkExists_signTable (data : Result p s hw hp Ctx (n + 1))
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (context : Ctx)
+    (h : data.checkExists values formula context = true) :
+    Field.checkSignTable p s hw hp data.signs = true := by
+  simp only [checkExists, Bool.and_eq_true] at h
+  exact h.1.1.1.1
 
 /-- A true checked existential verdict proves the original fixed-field
 formula has a real witness. -/

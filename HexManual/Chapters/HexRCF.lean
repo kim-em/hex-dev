@@ -459,7 +459,7 @@ Import `HexRCF.RealCoefficients` to extend the same `rcf` command. The original
 `HexRCF` import and all its rational examples keep their existing behavior.
 The adapter is currently available in the development monorepo; it is not in
 the released `hex-rcf` package.
-The optional adapter currently accepts one selected algebraic coefficient in
+The optional adapter accepts a selected algebraic coefficient in
 an otherwise rational polynomial sentence. Its direct notation support covers
 `Real.sqrt 2` and Mathlib's `(2 : ℝ) ^ (1 / 3 : ℝ)`. It also accepts the checked
 Hex values `CubeTwo.realAlgebraic` and `CubeTwo.shifted`. For a different
@@ -470,6 +470,13 @@ the quantified variable still occurs in an ordinary polynomial. Products with
 rational constants are supported, but expressions that divide by one of these
 named algebraic coefficients currently decline; express an inverse as a
 checked field coordinate when it is needed.
+
+The adapter also accepts two independently selected natural-number square
+roots in one sentence. For example, `Real.sqrt 3` and `Real.sqrt 2` begin in
+different number fields. The tactic uses `Hex.QAdjoin.common` to put them in
+one field, then checks that each rational coordinate still names the intended
+positive root before deciding the sentence. The example below uses a larger
+heartbeat limit for this quartic common field.
 
 These examples use the selected real root of `X³ − 2`. The adapter records an
 isolating square and verifies its root witness. It reconstructs Hex's
@@ -568,6 +575,10 @@ example : ∀ x : ℝ, x + plasticRoot.toReal > x := by
   rcf
 
 example : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 > 0 := by
+  rcf
+
+set_option maxHeartbeats 5000000 in
+example : ∀ x : ℝ, x ^ 2 + Real.sqrt 3 - Real.sqrt 2 > 0 := by
   rcf
 
 example : ∃ x : ℝ, Real.sqrt 2 < x ∧ x < (3 : ℝ) / 2 := by

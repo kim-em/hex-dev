@@ -90,6 +90,38 @@ meta def valuesExpr {p : ZPoly} {root : SimpleRoot p} {n : Nat}
     let body ← mkAppM ``List.getD #[literals, index, fallback]
     mkLambdaFVars #[i] body
 
+/-- Reify an ordered finite family as printable entries. The fallback cannot
+be selected by a `Fin n` index. -/
+meta def finiteExpr (ty : Expr) (entries : Array Expr) (fallback : Expr) : MetaM Expr := do
+  let literals := listLit ty entries.toList
+  withLocalDeclD `i (mkApp (mkConst ``Fin) (mkNatLit entries.size)) fun i => do
+    let index ← mkAppM ``Fin.val #[i]
+    let body ← mkAppM ``List.getD #[literals, index, fallback]
+    mkLambdaFVars #[i] body
+
+/-- A finite iterated-quadratic-norm irreducibility certificate as constructor
+data, independent of the certificate search. -/
+meta def quadraticCertExpr (cert : QuadraticNormCertificate) : MetaM Expr :=
+  mkAppM ``QuadraticNormCertificate.mk
+    #[mkIntLit cert.translation,
+      arrayLit (mkConst ``Int) (cert.radicands.toList.map mkIntLit)]
+
+/-- Assemble index-specific ordinary proofs into an ordered `Fin n` family.
+Each branch is typechecked against the original indexed proposition. -/
+meta def proveFinCases (goal : Expr) (proofs : Array Expr) : MetaM Expr := do
+  let candidate ← mkFreshExprMVar goal
+  let cases ← Lean.Elab.runTactic' candidate.mvarId!
+    (← `(tactic| intro i; fin_cases i))
+  unless cases.length == proofs.size do
+    throwError "rcf: finite proof count differs from the source coefficients"
+  for index in [:cases.length] do
+    let caseGoal := cases[index]!
+    let proof := proofs[index]!
+    unless ← isDefEq (← inferType proof) (← caseGoal.getType) do
+      throwError "rcf: source proof at index {index} does not match its literal entry"
+    caseGoal.assign proof
+  return ← instantiateMVars candidate
+
 private def endpointExpr {E : Type} (ty : Expr) (elem : E → MetaM Expr) :
     Endpoint E → MetaM Expr
   | .negInf => return mkApp (mkConst ``Endpoint.negInf [Level.zero]) ty
@@ -215,15 +247,19 @@ meta def resultExpr {p : ZPoly} {s : DyadicSquare}
 
 /-- Construct a checked proof for a fixed-field existential or universal
 sentence. Search runs in meta code; the resulting term contains only literal
-certificate data, the Boolean replay proof, and its soundness theorem. -/
-meta def prove {p : ZPoly} {s : DyadicSquare}
+certificate data, the Boolean replay proof, and its soundness theorem. Return
+the producer result and checked verdict as well so another checker can use the
+same finite sign table without running search or replay a second time. -/
+meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
     {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
     [ZPoly.CheckedIrreducible p] {n : Nat}
     (pExpr rootExpr valuesExpr formulaExpr : Expr)
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
     (formula : RealFormula.QF (n + 1))
-    (quantifier : RealFormula.Quantifier) (precision : Nat := 8) : MetaM Expr := do
-  let some data := FieldBuild.build p s hw hp values formula () precision |
+    (quantifier : RealFormula.Quantifier) (precision : Nat := 8)
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) :
+    MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
+  let some data := FieldBuild.build p s hw hp values formula () precision extraSignKeys |
     throwError "rcf: fixed-field certificate construction failed"
   let certificate ← resultExpr pExpr rootExpr formulaExpr formula data
   let verdictName := match quantifier with
@@ -258,6 +294,18 @@ meta def prove {p : ZPoly} {s : DyadicSquare}
   let proof ← mkAppM soundName
     #[certificate, valuesExpr, formulaExpr, mkConst ``Unit.unit, checked]
   check proof
-  return proof
+  return (proof, certificate, data, checked)
+
+/-- Construct the checked fixed-field proof when no additional sign queries
+are needed by an enclosing coefficient-presentation checker. -/
+meta def prove {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
+    [ZPoly.CheckedIrreducible p] {n : Nat}
+    (pExpr rootExpr valuesExpr formulaExpr : Expr)
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1))
+    (quantifier : RealFormula.Quantifier) (precision : Nat := 8) : MetaM Expr := do
+  return (← proveWithCertificate pExpr rootExpr valuesExpr formulaExpr values formula
+    quantifier precision).1
 
 end Hex.RCF.RealCoefficients.FieldLiteral

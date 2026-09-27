@@ -122,3 +122,16 @@ example : True := by
   fail_if_success
     have : ∀ x : ℝ, Real.sin x = 0 := by rcf
   trivial
+
+set_option maxHeartbeats 5000000 in
+theorem rcf_two_square_roots :
+    ∀ x : ℝ, x ^ 2 + Real.sqrt 3 - Real.sqrt 2 > 0 := by
+  rcf
+
+#print axioms rcf_two_square_roots
+
+set_option maxHeartbeats 5000000 in
+example : True := by
+  fail_if_success
+    have : ∀ x : ℝ, x ^ 2 + Real.sqrt 3 - Real.sqrt 2 < 0 := by rcf
+  trivial
