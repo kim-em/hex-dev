@@ -40,7 +40,7 @@ Run `lake build HexRealClosure.Tests HexQuerySemantics` and
 `python3 HexRealClosure/verify.py` from the repository root. The test uses
 `(X²−2)(X−3)` with the root in `(1,2)`, plus a non-monic definition and a
 checked factor split. The Python oracle computes exact arithmetic in ℚ(√2)
-independently of Lean for 26 cases and is run manually; CI builds the Lean
+independently of Lean for 29 cases and is run manually; CI builds the Lean
 `#guard` tests.
 The companion proofs inherit the named #10389 admission in
 `HexRealRootsMathlib.Tarski.check_rootSum`; no new admission is used here.
@@ -120,6 +120,15 @@ indexed by its checked descriptor, so it cannot be used for a different
 context version without a checked conversion. Bind it once as
 `let h := d.handle` and pass `h` to cached values; writing `d.handle` afresh
 at each call repeats the search.
+
+`Yun.decompose` runs the specified finite recurrence over an executable
+ordered field. `Yun.decomposeRaw` runs the same recurrence on packed tower
+coefficients, where stored equality need not be value equality. The zero and
+nonzero-constant cases have direct proofs, and runnable checks cover a
+non-monic input, gaps in multiplicities and coefficients in `ℚ(√2)`.
+The general squarefreeness, coprimality, reconstruction and multiplicity
+correspondence theorems are not yet available, so these outputs are not
+certified decompositions.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and

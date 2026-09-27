@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.Element
+public import HexRealClosure.Yun
 
 public section
 
@@ -434,5 +434,86 @@ private def cachedPolynomial : Option (Bool × Nat × Bool) := do
 
 #eval cachedPolynomial
 #guard cachedPolynomial == some (true, 1, true)
+
+/-- Yun's recurrence skips the first multiplicity when every root is repeated. -/
+private def yunRat : Option (Rat × Array (Array Rat × Nat)) :=
+  let p := x - DensePoly.C 1
+  let q := x - DensePoly.C 2
+  let f : DensePoly Rat := DensePoly.C 2 * (p * p) * (q * q * q)
+  match Yun.decompose (K := Rat) f with
+  | .zero => none
+  | .factors u entries =>
+      some (u, entries.map fun entry => (entry.1.toArray, entry.2))
+
+#eval yunRat
+#guard yunRat == some (2, #[(#[-1, 1], 2), (#[-2, 1], 3)])
+
+private def yunRatReconstruct : Bool :=
+  let p := x - DensePoly.C 1
+  let q := x - DensePoly.C 2
+  let f : DensePoly Rat := DensePoly.C 2 * (p * p) * (q * q * q)
+  match Yun.decompose (K := Rat) f with
+  | .zero => false
+  | .factors u entries =>
+      Yun.reconstruct u entries == f &&
+        Yun.degreeSum entries == f.natDegree
+
+#guard yunRatReconstruct
+
+/-- Zero and nonzero constants have distinct Yun outputs. -/
+private def yunZero : Bool :=
+  match Yun.decompose (0 : DensePoly Rat) with
+  | .zero => true
+  | .factors .. => false
+
+private def yunConstant : Bool :=
+  match Yun.decompose (DensePoly.C (7 / 3 : Rat)) with
+  | .zero => false
+  | .factors u entries => u == 7 / 3 && entries.isEmpty
+
+#guard yunZero
+#guard yunConstant
+
+/-- Squarefree factors are grouped at multiplicity one. -/
+private def yunSquarefree : Option (Rat × Array (Array Rat × Nat)) :=
+  let f : DensePoly Rat := DensePoly.C 2 * (x - DensePoly.C 1) *
+    (x - DensePoly.C 2)
+  match Yun.decompose (K := Rat) f with
+  | .zero => none
+  | .factors u entries =>
+      some (u, entries.map fun entry => (entry.1.toArray, entry.2))
+
+#guard yunSquarefree == some (2, #[(#[2, -3, 1], 1)])
+
+/-- A degree-five power requires four empty Yun rounds before emission. -/
+private def yunGap : Option (Nat × Array Rat) :=
+  let f : DensePoly Rat := (x - DensePoly.C 1) ^ 5
+  match Yun.decompose (K := Rat) f with
+  | .zero => none
+  | .factors _ entries =>
+      if entries.size = 1 then
+        entries[0]?.map fun entry => (entry.2, entry.1.toArray)
+      else none
+
+#eval yunGap
+#guard yunGap == some (5, #[-1, 1])
+
+/-- The same executable recurrence accepts packed selected-root coefficients. -/
+private def yunNested : Option (Nat × Nat × Bool) := do
+  let d ← Root.validate 7 raw
+  let h := d.handle
+  let alpha : Root.Handle.Value h := Root.Handle.Value.ofPoly h x
+  let y : DensePoly (Root.Handle.Value h) := DensePoly.ofCoeffs #[0, 1]
+  let f := (y - DensePoly.C alpha) * (y - DensePoly.C alpha)
+  match Yun.decomposeRaw f with
+  | .zero => none
+  | .factors u entries =>
+      let factor := entries[0]?.map Prod.fst
+      return (entries.size, entries[0]?.map Prod.snd |>.getD 0,
+        u.value == 1 &&
+          (factor.map fun p => (p.eval alpha).value == 0).getD false)
+
+#eval yunNested
+#guard yunNested == some (1, 2, true)
 
 end Hex.RealClosure.Tests
