@@ -259,6 +259,14 @@ expected = [
     f"{str(transport_preserves).lower()}, "
     f"{str(transport_preserves).lower()}, "
     f"{str(transport_changes_storage).lower()}, {str(sign(alpha) == 1).lower()})",
+    f"some ({sign(inv(below))}, "
+    f"{str(add(mul(alpha, alpha), (Q(-2), Q(0))) == (Q(0), Q(0))).lower()}, "
+    f"{str(add(alpha, below) == eval_poly([Q(-3), Q(2)], alpha)).lower()}, "
+    f"{str(mul(alpha, below) == eval_poly([Q(0), Q(-3), Q(1)], alpha)).lower()}, "
+    f"{str(mul(below, inv(below)) == (Q(1), Q(0))).lower()}, "
+    f"{str(transport_preserves).lower()}, {str(transport_preserves).lower()})",
+    f"some ({str(not ext_remainder).lower()}, {len(ext_quotient) - 1}, "
+    f"{str(ext_quotient[0] == alpha).lower()})",
 ]
 
 run = subprocess.run(
@@ -267,4 +275,4 @@ run = subprocess.run(
 )
 actual = re.findall(r"info: HexRealClosure/Tests\.lean:\d+:0: (.+)", run.stdout + run.stderr)
 assert actual == expected, f"Lean outputs {actual!r}; exact oracle expects {expected!r}"
-print("exact oracle passed for twenty-three runnable cases")
+print(f"exact oracle passed for {len(expected)} runnable cases")

@@ -102,6 +102,17 @@ stored coefficient representations differ. A runnable factor-split example
 checks the three paths, including an interior zero coefficient and a square
 coefficient that becomes constant after the split.
 
+`Root.handle` searches for the checked descriptor's canonical selected root
+once. `h.pack`, `h.add`, `h.mul`, `h.inv` and `h.value` reuse that root for
+packed values. `Root.Handle.Value h` supplies ordinary arithmetic instances
+for polynomial coefficients sharing the handle, so generic `DensePoly`
+division also reuses it. Explicit target handles let polynomial transport
+share one selected-root search across all transported coefficients. The
+computational equalities to the original `Element` operations and the
+companion's value theorems preserve their proved meaning. The handle is
+indexed by its checked descriptor, so it cannot be used for a different
+context version without a checked conversion.
+
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and
 [real-algebraic chapter](../HexManual/Chapters/HexRealAlgebraic.lean).

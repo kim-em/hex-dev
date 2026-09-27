@@ -44,6 +44,41 @@ theorem polyDenote_eq_map {context : Nat} {d : Root context}
   exact congrArg Hex.RealAlgebraicNumber.toAlgebraic
     (Element.toValue_val (p.coeff i)).symm
 
+/-- Forget the cached handle coefficientwise. Its unique stored zero keeps
+the dense polynomial's degree and leading coefficient unchanged. -/
+def polyStored {context : Nat} {d : Root context} {h : Root.Handle d}
+    (p : DensePoly (Root.Handle.Value h)) : DensePoly (Element d) :=
+  DensePoly.Interpret.map (fun a => a.stored)
+    (fun a => Root.Handle.Value.stored_eq_zero a) p
+
+theorem polyStored_coeff {context : Nat} {d : Root context}
+    {h : Root.Handle d} (p : DensePoly (Root.Handle.Value h)) (i : Nat) :
+    (polyStored p).coeff i = (p.coeff i).stored := by
+  simp [polyStored]
+
+theorem polyStored_divMod {context : Nat} {d : Root context}
+    {h : Root.Handle d} (p q : DensePoly (Root.Handle.Value h)) :
+    let r := DensePoly.divMod p q
+    (polyStored r.1, polyStored r.2) =
+      DensePoly.divMod (polyStored p) (polyStored q) := by
+  exact DensePoly.Interpret.map_divMod
+    (fun a : Root.Handle.Value h => a.stored)
+    (fun a => Root.Handle.Value.stored_eq_zero a)
+    (fun a b => Root.Handle.Value.stored_sub a b)
+    (fun a b => Root.Handle.Value.stored_mul a b)
+    (fun a b => Root.Handle.Value.stored_div a b) p q
+
+/-- Interpret cached coefficients in the same lawful selected-root field as
+ordinary packed coefficients. -/
+noncomputable def polyCachedValue {context : Nat} {d : Root context}
+    {h : Root.Handle d} (p : DensePoly (Root.Handle.Value h)) :
+    Polynomial (Value d) := polyValue (polyStored p)
+
+theorem polyCachedValue_coeff {context : Nat} {d : Root context}
+    {h : Root.Handle d} (p : DensePoly (Root.Handle.Value h)) (i : Nat) :
+    (polyCachedValue p).coeff i = (p.coeff i).stored.toValue := by
+  rw [polyCachedValue, polyValue_coeff, polyStored_coeff]
+
 theorem polyValue_C {context : Nat} {d : Root context} (a : Element d) :
     polyValue (DensePoly.C a) = Polynomial.C a.toValue := by
   exact HexPolyMathlib.Interpret.interpret_C
@@ -149,6 +184,19 @@ theorem polyValue_divMod {context : Nat} {d : Root context}
     (fun a b => Element.toValue_sub a b)
     (fun a b => Element.toValue_mul a b)
     (fun a b => Element.toValue_div a b) p q
+
+theorem polyCachedValue_divMod {context : Nat} {d : Root context}
+    {h : Root.Handle d} (p q : DensePoly (Root.Handle.Value h)) :
+    (polyCachedValue (DensePoly.divMod p q).1,
+      polyCachedValue (DensePoly.divMod p q).2) =
+      (polyCachedValue p / polyCachedValue q,
+        polyCachedValue p % polyCachedValue q) := by
+  have hs := polyStored_divMod p q
+  have hv := congrArg
+    (fun r : DensePoly (Element d) × DensePoly (Element d) =>
+      (polyValue r.1, polyValue r.2)) hs
+  simpa only [polyCachedValue] using
+    hv.trans (polyValue_divMod (polyStored p) (polyStored q))
 
 theorem polyValue_div {context : Nat} {d : Root context}
     (p q : DensePoly (Element d)) :
@@ -327,3 +375,6 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.polyDenote_refine' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.polyDenote_refine
+/-- info: 'Hex.RealClosure.polyCachedValue_divMod' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.polyCachedValue_divMod

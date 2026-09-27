@@ -506,6 +506,65 @@ example {context : Nat} (d : Root context) : Field (Value d) := inferInstance
 example {context : Nat} (d : Root context) : LinearOrder (Value d) := inferInstance
 example {context : Nat} (d : Root context) : IsStrictOrderedRing (Value d) := inferInstance
 
+namespace Root.Handle.Value
+
+theorem eq_zero_iff {context : Nat} {d : Root context}
+    {h : Root.Handle d} (a : Root.Handle.Value h) :
+    a = 0 ↔ a.value = 0 := by
+  cases a with
+  | mk stored =>
+    constructor
+    · intro ha
+      have hs : stored = 0 := congrArg
+        (fun x : Root.Handle.Value h => x.stored) ha
+      simpa [Root.Handle.Value.value_eq] using
+        (Element.eq_zero_iff stored).mp hs
+    · intro hv
+      have hs : stored = 0 := (Element.eq_zero_iff stored).mpr
+        (by simpa [Root.Handle.Value.value_eq] using hv)
+      cases hs
+      rfl
+
+theorem value_add {context : Nat} {d : Root context}
+    {h : Root.Handle d} (a b : Root.Handle.Value h) :
+    (a + b).value = a.value + b.value := by
+  have hv := Element.value_add a.stored b.stored
+  change (a.stored + b.stored).value = _ at hv
+  simpa only [Root.Handle.Value.value_eq, Root.Handle.Value.stored_add] using
+    hv
+
+theorem value_neg {context : Nat} {d : Root context}
+    {h : Root.Handle d} (a : Root.Handle.Value h) :
+    (-a).value = -a.value := by
+  have hv := Element.value_neg a.stored
+  change (-a.stored).value = _ at hv
+  simpa only [Root.Handle.Value.value_eq, Root.Handle.Value.stored_neg] using
+    hv
+
+theorem value_mul {context : Nat} {d : Root context}
+    {h : Root.Handle d} (a b : Root.Handle.Value h) :
+    (a * b).value = a.value * b.value := by
+  have hv := Element.value_mul a.stored b.stored
+  change (a.stored * b.stored).value = _ at hv
+  simpa only [Root.Handle.Value.value_eq, Root.Handle.Value.stored_mul] using
+    hv
+
+theorem value_inv {context : Nat} {d : Root context}
+    {h : Root.Handle d} (a : Root.Handle.Value h) :
+    (a⁻¹).value = a.value⁻¹ := by
+  have hv := Element.value_inv a.stored
+  change (a.stored⁻¹).value = _ at hv
+  simpa only [Root.Handle.Value.value_eq, Root.Handle.Value.stored_inv] using
+    hv
+
+theorem sign_sound {context : Nat} {d : Root context}
+    {h : Root.Handle d} (a : Root.Handle.Value h) :
+    a.sign = (SignType.sign a.stored.toExpression.denote : Int) := by
+  rw [Root.Handle.Value.sign_eq]
+  exact Element.sign_sound a.stored
+
+end Root.Handle.Value
+
 end Hex.RealClosure
 
 /-- info: 'Hex.RealClosure.Element.eq_zero_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -520,3 +579,6 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.Element.value_refine' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Element.value_refine
+/-- info: 'Hex.RealClosure.Root.Handle.Value.value_inv' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Root.Handle.Value.value_inv

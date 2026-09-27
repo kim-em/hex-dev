@@ -51,6 +51,16 @@ companion proves that the root-list search always succeeds. -/
   d.canonical?.getD
     (Hex.panicWith 0 "RealClosure.Root.toCanonical: selected root not found")
 
+/-- A checked rational descriptor with its selected canonical root cached for
+repeated packing and arithmetic in the same context. -/
+structure Root.Handle {context : Nat} (d : Root context) where
+  canonical : Hex.RealAlgebraicNumber
+  canonical_eq : canonical = d.toCanonical
+
+/-- Find the selected canonical root once and keep it with its descriptor. -/
+@[expose] def Root.handle {context : Nat} (d : Root context) : Root.Handle d :=
+  ⟨d.toCanonical, rfl⟩
+
 /-- Evaluate a stored rational expression by canonical real-algebraic
 arithmetic at its selected root. -/
 @[expose] def Expression.toCanonical {context : Nat} {d : Root context}

@@ -8,6 +8,7 @@ import VersoManual
 
 import HexRCF
 import HexRCF.RealCoefficients
+import HexRealClosure
 import HexSignDet
 
 open Verso.Genre Manual
@@ -646,6 +647,67 @@ that stated theorem. Thus these examples are kernel-checked relative to that
 one mathematical admission. The rational examples and their axiom inventory
 above do not depend on it. See {ref "hex-number-field"}[HexNumberField] and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
+
+# Arithmetic at a selected algebraic root
+%%%
+tag := "hex-rcf-selected-root"
+%%%
+
+`HexRealClosure` provides a computational interface for a selected real root
+of a rational polynomial, including a reducible one. The checked descriptor
+below selects `√2` from `(X² − 2)(X − 3)` using the open interval `(1, 2)`.
+The value `a − 3` is nonzero at that root, even though it has a nonconstant
+gcd with the defining polynomial. Its checked inverse and the cofactor split
+use the selected root, not a quotient by the whole reducible polynomial.
+
+The split creates context version `8` and explicitly refines `a` into it;
+the original `a` remains in context version `7`. The checked `d.handle`
+caches the selected canonical root. Its `pack` method stores a representative
+with a unique zero, and its `value` agrees with the independent
+`RealAlgebraicNumber` obtained from `Expression.toCanonical`.
+
+```lean
+open Hex Hex.RealClosure
+
+private def x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
+private def head : DensePoly Rat :=
+  (DensePoly.ofCoeffs #[-2, 0, 1]) *
+    (x - DensePoly.C 3)
+private def raw : SignDet.RawDescriptor Rat Nat :=
+  { context := 7, head, lower := .finite 1,
+    upper := .finite 2,
+    indices := [], signs := [] }
+
+private def selectedArithmetic :
+    Option (Int × Int × Int × Nat × Bool) := do
+  let d ← Root.validate 7 raw
+  let a : Expression d := ⟨x⟩
+  let below : Expression d := ⟨x - DensePoly.C 3⟩
+  let inverse? ← below.inverse?.toOption
+  let inverse ← inverse?
+  let split? ←
+    (below.split? 8 (.finite 1) (.finite 2)).toOption
+  let split ← split?
+  let oldSign ← a.sign?.toOption
+  let newSign ← (Expression.refine split a).sign?.toOption
+  let inverseSign ← inverse.sign?.toOption
+  let h := d.handle
+  let packed : Element d := h.pack x
+  return (oldSign, newSign, inverseSign,
+    split.binding.target.raw.head.natDegree,
+    h.value packed == a.toCanonical)
+
+#guard selectedArithmetic == some (1, 1, -1, 2, true)
+```
+
+The companion proves that checked signs, inversion, refinement and canonical
+conversion preserve the selected real value. Those proofs inherit the named
+accepted-query admission in [#10389](https://github.com/kim-em/hex-dev/issues/10389).
+For repeated coefficient arithmetic, `Root.Handle.Value h` carries the same
+packed representation and gives generic `DensePoly` algorithms operations
+that share this cached root.
+See {ref "hex-number-field"}[HexNumberField] for fixed-field arithmetic and
+{ref "hex-real-algebraic"}[HexRealAlgebraic] for the canonical value API.
 
 # Signs and selected roots with BKR
 %%%

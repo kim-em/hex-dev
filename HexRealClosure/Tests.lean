@@ -356,4 +356,52 @@ private def packedPolyTransport : Option
 #eval packedPolyTransport
 #guard packedPolyTransport == some (3, 3, 3, true, true, true, true, true)
 
+/-- One selected-root search serves repeated packing, arithmetic, and all
+coefficient transports in a checked factor split. -/
+private def cachedHandle : Option
+    (Int × Bool × Bool × Bool × Bool × Bool × Bool) := do
+  let d ← Root.validate 7 raw
+  let h := d.handle
+  let alpha := h.pack x
+  let below := h.pack (x - DensePoly.C 3)
+  let zero := h.pack (x * x - DensePoly.C 2)
+  let inverse ← h.inverse? below
+  let split? ← ((Expression.ofPoly (d := d)
+    (x - DensePoly.C 3)).split? 8 (.finite 1) (.finite 2)).toOption
+  let split ← split?
+  let encodedHandle := Root.handle split.encoding.target
+  let targetHandle := Root.handle split.binding.target
+  let p : DensePoly (Element d) :=
+    DensePoly.ofCoeffs #[alpha, zero, h.pack (x * x), alpha]
+  let encoded := Element.transportPolyWith split.encoding encodedHandle p
+  let rebound := Element.rebindPolyWith split.binding targetHandle encoded
+  let refined := Element.refinePolyWith split targetHandle p
+  return (h.sign inverse,
+    zero == 0,
+    h.add alpha below == alpha + below,
+    h.mul alpha below == alpha * below,
+    h.inv below == below⁻¹,
+    encoded == Element.transportPoly split.encoding p,
+    rebound == Element.rebindPoly split.binding encoded &&
+      refined == Element.refinePoly split p)
+
+#eval cachedHandle
+#guard cachedHandle == some (-1, true, true, true, true, true, true)
+
+/-- Ordinary polynomial division uses the same handle for every coefficient
+operation, including the semantic zero tests on leading coefficients. -/
+private def cachedPolynomial : Option (Bool × Nat × Bool) := do
+  let d ← Root.validate 7 raw
+  let h := d.handle
+  let alpha : Root.Handle.Value h := Root.Handle.Value.ofPoly h x
+  let y : DensePoly (Root.Handle.Value h) := DensePoly.ofCoeffs #[0, 1]
+  let divisor := y - DensePoly.C alpha
+  let dividend := y * y - DensePoly.C 2
+  let (quotient, remainder) := DensePoly.divMod dividend divisor
+  return (remainder.isZero, quotient.natDegree,
+    (quotient.eval (0 : Root.Handle.Value h)).value == alpha.value)
+
+#eval cachedPolynomial
+#guard cachedPolynomial == some (true, 1, true)
+
 end Hex.RealClosure.Tests
