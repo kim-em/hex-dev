@@ -108,7 +108,9 @@ coefficient that becomes constant after the split.
 
 `Root.handle` searches for the checked descriptor's canonical selected root
 once. `h.pack`, `h.add`, `h.mul`, `h.inv` and `h.value` reuse that root for
-packed values. `Root.Handle.Value h` supplies ordinary arithmetic instances
+packed values. `h.equal` compares represented values by packing their
+difference; structural `==` only compares stored representatives.
+`Root.Handle.Value h` supplies ordinary arithmetic instances
 for polynomial coefficients sharing the handle, so generic `DensePoly`
 division also reuses it. Explicit target handles let polynomial transport
 share one selected-root search across all transported coefficients. The

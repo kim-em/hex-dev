@@ -37,7 +37,9 @@ denominators are one. -/
   p.toArray.all (fun c => c.den == 1)
 
 /-- Retain the remainder for a literally monic, clean defining polynomial.
-Other definitions keep the original representative. -/
+Other definitions keep the original representative under the clean-storage
+rule, including nonmonic definitions whose reduction could introduce
+denominators. -/
 @[expose] def packedPoly {context : Nat} (d : Root context)
     (p : DensePoly Rat) : DensePoly Rat :=
   if d.raw.head.leadingCoeff == 1 && clean d.raw.head then
@@ -152,9 +154,6 @@ The companion proves that this candidate is an inverse at the selected root. -/
   match a with
   | none => none
   | some v => ofPoly v.1
-
-instance {context : Nat} {d : Root context} : DecidableEq (Element d) :=
-  inferInstance
 
 instance {context : Nat} {d : Root context} : Zero (Element d) := ⟨none⟩
 instance {context : Nat} {d : Root context} : One (Element d) := ⟨ofPoly 1⟩
@@ -349,6 +348,18 @@ theorem sub_eq {context : Nat} {d : Root context}
   change h.sub a b = Element.sub a b
   simp [sub, pack_eq, Element.sub]
 
+/-- Compare selected values using the cached root. Structural `==` only
+compares their stored polynomial representatives. -/
+@[expose] def equal {context : Nat} {d : Root context}
+    (h : Root.Handle d) (a b : Element d) : Bool :=
+  (h.sub a b).isNone
+
+theorem equal_eq {context : Nat} {d : Root context}
+    (h : Root.Handle d) (a b : Element d) :
+    h.equal a b = Element.equal a b := by
+  simp only [equal, sub_eq, Element.equal]
+  rfl
+
 @[expose] def mul {context : Nat} {d : Root context}
     (h : Root.Handle d) (a b : Element d) : Element d :=
   h.pack (a.polynomial * b.polynomial)
@@ -386,7 +397,9 @@ theorem inverse?_eq {context : Nat} {d : Root context}
     exact congrArg some (inv_eq h (some v))
 
 /-- Packed coefficients sharing one cached selected root. Generic polynomial
-algorithms use the ordinary operations below without repeating root search. -/
+algorithms use the ordinary operations below without repeating root search.
+Structural `==` compares stored representatives; use `h.equal a.stored b.stored`
+or `a - b == 0` to compare selected values. -/
 structure Value {context : Nat} {d : Root context} (h : Root.Handle d) where
   stored : Element d
 deriving DecidableEq

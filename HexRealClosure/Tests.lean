@@ -392,6 +392,19 @@ private def cachedHandle : Option
     encodedCoeffs, reboundCoeffs, refinedCoeffs)
 
 #eval cachedHandle
+#guard cachedHandle == some (-1, true, true, true, [0, -3, 1],
+  [-3 / 7, -1 / 7], [[0, 1], [], [2], [0, 1]],
+  [[0, 1], [], [2], [0, 1]], [[0, 1], [], [2], [0, 1]])
+
+/-- Distinct stored polynomials can represent the same selected value. -/
+private def cachedEquality : Option (Bool × Bool) := do
+  let d ← Root.validate 7 raw
+  let h := d.handle
+  let square := h.pack (x * x)
+  let two := h.pack 2
+  return (h.equal square two, square == two)
+
+#guard cachedEquality == some (true, false)
 
 /-- The non-monic fallback retains raw storage while the cached root still
 decides semantic zero and sign. -/
