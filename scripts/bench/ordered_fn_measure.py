@@ -33,13 +33,16 @@ def main():
     cpu, lease = acquire_cpu()
     try:
         os.sched_setaffinity(0, {cpu})
-        os.environ["LEAN_NUM_THREADS"] = "1"
+        # The parent needs workers for pipe reads and its timeout task.
+        # CPU affinity still confines the measurement to one selected CPU.
+        os.environ["LEAN_NUM_THREADS"] = "4"
         args.output.mkdir(parents=True, exist_ok=False)
         exe = ROOT / ".lake/build/bin/hexorderedfn_bench"
         command = [str(exe), "run", "--filter", args.filter,
                    "--export-file", str(args.output / "runtime.json"), *args.names]
         context = {"command": command, "cpu": cpu, "host": platform.node(),
                    "platform": platform.platform(), "load_before": os.getloadavg(),
+                   "lean_num_threads": os.environ["LEAN_NUM_THREADS"],
                    "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
                    "executable_sha256": hashlib.sha256(exe.read_bytes()).hexdigest()}
         (args.output / "context.json").write_text(json.dumps(context, indent=2) + "\n")
