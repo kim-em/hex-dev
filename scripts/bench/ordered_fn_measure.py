@@ -29,6 +29,7 @@ def paired_arithmetic(exe, output):
         for trial in range(schedule["trials"]):
             for param in schedule["parameters"]:
                 for name in names if trial % 2 == 0 else names[::-1]:
+                    # Pinned lean-bench child protocol: one tuned batch and one JSON row.
                     command = [str(exe), "_child", "--bench", name, "--param", str(param),
                                "--target-nanos", str(schedule["target_nanos"])]
                     stem = output / f"{trial}-{param}-{name.rsplit('.', 1)[-1]}"

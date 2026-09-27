@@ -363,15 +363,17 @@ def run (q : Query) : Rat × Rat :=
   let b := Real.approx q.source q.subject q.width q.progress
   (b.lower, b.upper)
 
+private def lower (n : Nat) : IO (Approximation First × Second) := do
+  -- Retain the first-level entries through n+11. The new second-level
+  -- constant is fixed; all second-level witnesses below are checked anew.
+  let base ← Successive.prepare (n + 8)
+  return ({ base.source with constant := window (33/16) }, base.subject)
+
 /-- X₃ + (X₂-X₁), at X₁=2, X₂=33/16, X₃=2⁻ⁿ-1/16.
 Every coefficient request executes its lower-level approximation searches. -/
 def prepare (n : Nat) : IO Query := do
   let δ := Real.precision n
-  -- Retain the first-level entries through n+11. The new second-level
-  -- constant is fixed; all second-level witnesses below are checked anew.
-  let base ← Successive.prepare (n + 8)
-  let source : Approximation First := { base.source with constant := window (33/16) }
-  let f := base.subject
+  let (source, f) ← lower n
   unless evalSecond f == 1/16 do
     throw (IO.userError "third-level coefficient reference value failed")
   let mut entries := #[]
@@ -490,21 +492,37 @@ private def emit (depth n searches coefficients constants operations : Nat)
     ("max_numerator_bits", Lean.toJson s.numerator),
     ("max_denominator_bits", Lean.toJson s.denominator)]).compress
 
+private def checkSearch {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    (a : Approximation K) (f : RationalFn K) (request expected : Nat) : IO Unit := do
+  for k in [:expected + 1] do
+    if (Real.approxAttempt a f (Real.precision request) k).isSome then
+      unless k == expected do
+        throw (IO.userError s!"search count changed: request {request}, expected {expected}, got {k}")
+      return
+  throw (IO.userError s!"search count changed: no success at {expected}")
+
 def run : IO UInt32 := do
   for n in [4, 6, 8, 10, 12, 14, 16, 18] do
     let q₂ ← Successive.prepare n
     let first : First := -RationalFn.X
+    checkSearch q₂.source q₂.subject n (n + 1)
+    for k in [:n + 3] do
+      checkSearch Successive.inner first k k
+      checkSearch Successive.inner 1 k 0
     let s₂ := inspect {} Successive.inner first (n + 1)
     let s₂ := inspect s₂ Successive.inner 1 0
     let s₂ := inspect s₂ q₂.source q₂.subject (n + 1)
     emit 2 n (1 + 3 * (n + 2)) ((n + 2) * (3 * n + 23) / 2)
       ((n + 2) * (n + 9)) ((n + 2) * (7 * n + 55) / 2) s₂
     let q₃ ← ThirdLevel.prepare n
-    let base ← Successive.prepare (n + 8)
-    let lower : Approximation First := { base.source with constant := window (33/16) }
+    let (lower, subject) ← ThirdLevel.lower n
+    checkSearch q₃.source q₃.subject n (n + 1)
+    for k in [:n + 2] do
+      checkSearch lower subject k (k + 1)
+      checkSearch lower 1 k 0
     let s₃ := inspect {} Successive.inner first (n + 2)
     let s₃ := inspect s₃ Successive.inner 1 0
-    let s₃ := inspect s₃ lower base.subject (n + 2)
+    let s₃ := inspect s₃ lower subject (n + 2)
     let s₃ := inspect s₃ lower 1 0
     let s₃ := inspect s₃ q₃.source q₃.subject (n + 1)
     emit 3 n (1 + (n + 2) * (3 * n + 29) / 2)

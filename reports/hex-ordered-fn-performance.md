@@ -473,8 +473,10 @@ For outer trial k, approximating X₂−X₁ costs B₂(k)=(k+2)(7k+55)/2
 bound operations. Each of the two constant-coefficient requests costs 15
 operations across its two levels; the outer trial adds seven. Summing B₂(k)+37
 for k=0,…,n+1 gives `(n+2)(7n²+121n+666)/6`. This mode-1 count is declared
-before measurement, with the same unit-weight and small-operand limitations
-as the second-level model. The schedule is 4, 6, 8, 10, 12, 14, 16 and 18,
+before measurement, with the same unit-weight assumption as the second-level
+model. GMP conversion and allocation remain part of the cost; transitions
+from native to GMP comparison products depend on the operands at each depth.
+The schedule is 4, 6, 8, 10, 12, 14, 16 and 18,
 three trial-major repetitions and four-second batches. It varies real tower
 depth without introducing algebraic roots or changing the public library.
 
@@ -487,17 +489,6 @@ records source `2c7c3f3024dccff9284303e1c3e17d344556e131`, CPU 90, four
 Lean workers and equal executable hashes before and after collection. These
 depth cases and the first-level large-precision cases vary separate axes;
 they do not establish a uniform bound in both precision and depth.
-
-The [profile at n=18](data/hex-ordered-fn/third-profile-summary.json) attributes
-36.38% of leaf samples to allocation, 36.14% to GMP, 18.72% to the Lean
-runtime, 2.51% to Hex code and 6.25% to other code. Inclusive stacks put
-98.65% in the third-level coefficient callback and 86.54% in its first-level
-search callback; these overlapping shares show where nested refinement
-executes. Filtering retains 4829 samples across 515 operation regions
-(4.839 s), with 0.999 ms alignment residual and a passing ±5 ms sensitivity
-check. The [context](data/hex-ordered-fn/third-profile-context.json) records
-the tools and commands. Raw data and symbol tables remain at
-`/home/kim/bench-results/issue-10376-third-profile`.
 
 ### Search counts and rational sizes
 
@@ -513,7 +504,9 @@ cross-products can be larger, including the small-`Int` transition described
 above.
 
 The count fields in those rows are derived from the executed search equations,
-not instrumented runtime counters. They count search invocations (including
+not instrumented runtime counters. The diagnostic checks the first successful
+trial for every coefficient and requested precision reached at each level,
+including all earlier failures. The fields count search invocations (including
 the outer search), coefficient-provider calls and argument-provider calls:
 
 | Depth | Searches | Coefficient calls | Argument calls | Bound operations |
@@ -546,8 +539,10 @@ retained; no repeat or host-load exclusion was used. The
 [schedule](data/hex-ordered-fn/arithmetic/schedule.json) and
 [context](data/hex-ordered-fn/arithmetic/context.json) identify CPU 83, source
 `da4ce7c5b3882394b580d032533fa52f29bb90a1`, and matching executable hashes
-before and after collection. That measured source remains on the
-`issue-10376-depth` branch; its commit-message amendment changed no files.
+before and after collection. The measured sources for this run, the third-level
+run and its original size diagnostic remain reachable on the
+`issue-10376-depth` branch. Each dataset records its own source revision;
+reproduction uses that revision, including its measurement driver.
 
 | Degree | Subtraction median | Comparison median | Median paired comparison/subtraction ratio |
 | ---: | ---: | ---: | ---: |
@@ -560,11 +555,16 @@ before and after collection. That measured source remains on the
 | 8192 | 6996.975 µs | 7052.168 µs | 1.008 |
 | 16384 | 14024.421 µs | 14094.413 µs | 1.005 |
 
-The observed total costs are close on this family. Individual paired ratios
+The observed total costs are close on this family. The separate scan workload
+costs about 30 µs at n=16384, only about 0.2% of subtraction's 14 ms; this
+comparison is not expected to distinguish so small a difference. Individual paired ratios
 range from 0.962 to 1.061; this run does not resolve the small incremental
 scan cost reliably or establish a speedup. It is a direct comparison with
 existing arithmetic, consistent with the profile's attribution to canonical
 normalization. It is not the downstream clean/eager selected-root ablation.
+The subtraction medians grow 123.7-fold over a 128-fold degree range,
+descriptively consistent with its linear model; this paired run does not
+produce a separate lean-bench complexity verdict.
 
 Reproduce with:
 
