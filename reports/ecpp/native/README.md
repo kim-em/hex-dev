@@ -13,6 +13,9 @@ and 256 bits. It was committed in `edfb294f3` before implementing or tuning
 search. SHA256 selects the starting integers; PARI `nextprime` selects the
 subjects. This corpus-generation step supplies no search data to the producer.
 The producer was committed in `4a02dcfa0` before evaluating the holdout.
+These original commit identifiers predate rebasing onto the SQUFOF API
+update; the corresponding rebased corpus and producer commits are
+`44c7f6406` and `610411aad`.
 
 `campaign.json` retains all 16 paired verdicts, complete successful outputs,
 allocations, unresolved subjects, random states and timings. Adjacent arms
@@ -33,6 +36,16 @@ bounded Pocklington policy probe.
 | Tuning | 256 | 3/4 | 1/4 | 1/4 | 3/4 |
 | Holdout | 128 | 4/4 | 0/4 | 4/4 | 0/4 |
 | Holdout | 256 | 1/4 | 3/4 | 2/4 | 2/4 |
+
+`campaign-rebased.json` repeats the complete frozen corpus after adapting to
+the upstream SQUFOF policy API. All 16 verdicts, full construction attempt
+totals and successful raw certificates are identical. SQUFOF remains off in
+the default construction allocation. `elaborator-construction.json` also
+confirms all four 256-bit exhaustions by calling the actual `construct`
+elaborator with extension discovery and verifying that the ECM provider ran.
+The probe disables the elaborator heartbeat ceiling so the finite search
+allocation can finish; its initial heartbeat timeout is retained in
+`elaborator-construction-initial.json`.
 
 Native success rates are 100% at 128 bits and 50% at 256 bits over the entire
 corpus. Native and full construction each solve subjects the other exhausts
@@ -69,7 +82,7 @@ composite/nonsquarefree modular root proposals, Jacobi symbols, checked norm
 equations, every sextic/quartic twist family and complete native chains.
 Core conformance covers all shared allocations, local retry exhaustion,
 nonunits, subject mismatch, deterministic replay and a successful search
-that backtracks 13 times at depth three. Zero, one and composite inputs have
+that backtracks at depth three. Zero, one and composite inputs have
 only an exhaustion result; the producer exposes no compositeness verdict.
 
 `Native128_0`, `Native256_0`, `Native256_1`, `Native256_2` and `NativeHoldout`
@@ -105,7 +118,15 @@ host-specific observations, not CI time limits or complexity claims.
 
 These fixed registrations are endpoint observations and hash anchors; they
 make no parametric complexity claim. Proof elaboration is measured separately
-in fresh modules. The mathematical checker has no search-size policy. The
+in fresh modules. `phases.json` retains four serial trial-major samples of each fresh target;
+every sample positively confirms that its target rebuilt. The import/numeral
+baseline, reification, direct kernel proof and tactic proof medians are
+3.282, 3.256, 5.844 and 4.359 seconds. Peak RSS medians are approximately
+3.97, 3.98, 4.22 and 4.23 GiB, respectively. Reification is indistinguishable
+from module startup at this resolution. These measurements include shared
+imports and do not subtract startup to claim an isolated CPU kernel time.
+
+The mathematical checker has no search-size policy. The
 public native generator is admitted through 256 bits; supplied-certificate
 replay retains its independently established 512-bit policy.
 

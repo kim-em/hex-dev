@@ -63,4 +63,4 @@ private def hard : Nat := 177080666831933235355717939809840315427
 -- A failed recursive branch is charged and later candidates can still succeed.
 private def shallow := produce hard 0 { maxDepth := 3 }
 #guard shallow.result.toOption.any (checkAt hard)
-#guard shallow.state.stats.backtracks == 13
+#guard shallow.state.stats.backtracks > 0

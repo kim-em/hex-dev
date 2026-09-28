@@ -1,0 +1,21 @@
+{
+  "cpu": 65,
+  "source": "import HexPrimality.Elab\nimport HexIntFactor.Primality\n\nopen Lean Hex.PrimalityTactic\n\n-- Let the finite construction allocation finish independently of elaboration fuel.\nset_option maxHeartbeats 0\n\nrun_cmd Lean.Elab.Command.liftTermElabM do\n  unless constructionExtensionNames == [`HexIntFactor.PrimalityTactic.constructionExtension] do\n    throwError \"the current construction portfolio changed; update the comparator\"\n  let (result, allocations) \u2190 construct 69199437377629051939477864552334532767081794053034238723740032946332041487367 Hex.Nat.constructionBudget\n  unless allocations.any (fun (name, _) => name == ``Hex.Nat.ecmConstructionFactor) do\n    throwError \"ECM extension was not tried\"\n  match result with\n  | .ok _ => throwError \"expected full construction exhaustion for 69199437377629051939477864552334532767081794053034238723740032946332041487367\"\n  | .error f =>\n    unless f.stop == .exhausted && f.attempts == 170 do\n      throwError \"construction outcome changed for 69199437377629051939477864552334532767081794053034238723740032946332041487367\"\n    logInfo \"FULL_CONSTRUCTION tuning-256-0: exhausted after {f.attempts} attempts\"\n  let (result, allocations) \u2190 construct 58462043247721851837374720714032783167040048430751222127700100782042467564843 Hex.Nat.constructionBudget\n  unless allocations.any (fun (name, _) => name == ``Hex.Nat.ecmConstructionFactor) do\n    throwError \"ECM extension was not tried\"\n  match result with\n  | .ok _ => throwError \"expected full construction exhaustion for 58462043247721851837374720714032783167040048430751222127700100782042467564843\"\n  | .error f =>\n    unless f.stop == .exhausted && f.attempts == 189 do\n      throwError \"construction outcome changed for 58462043247721851837374720714032783167040048430751222127700100782042467564843\"\n    logInfo \"FULL_CONSTRUCTION tuning-256-1: exhausted after {f.attempts} attempts\"\n  let (result, allocations) \u2190 construct 69720056183201689673043526946867998580043318488979852658170286968852334279321 Hex.Nat.constructionBudget\n  unless allocations.any (fun (name, _) => name == ``Hex.Nat.ecmConstructionFactor) do\n    throwError \"ECM extension was not tried\"\n  match result with\n  | .ok _ => throwError \"expected full construction exhaustion for 69720056183201689673043526946867998580043318488979852658170286968852334279321\"\n  | .error f =>\n    unless f.stop == .exhausted && f.attempts == 201 do\n      throwError \"construction outcome changed for 69720056183201689673043526946867998580043318488979852658170286968852334279321\"\n    logInfo \"FULL_CONSTRUCTION tuning-256-2: exhausted after {f.attempts} attempts\"\n  let (result, allocations) \u2190 construct 79115478805960826808549622107591358196461499795534342671326167515356343483999 Hex.Nat.constructionBudget\n  unless allocations.any (fun (name, _) => name == ``Hex.Nat.ecmConstructionFactor) do\n    throwError \"ECM extension was not tried\"\n  match result with\n  | .ok _ => throwError \"expected full construction exhaustion for 79115478805960826808549622107591358196461499795534342671326167515356343483999\"\n  | .error f =>\n    unless f.stop == .exhausted && f.attempts == 156 do\n      throwError \"construction outcome changed for 79115478805960826808549622107591358196461499795534342671326167515356343483999\"\n    logInfo \"FULL_CONSTRUCTION holdout-256-1: exhausted after {f.attempts} attempts\"\n",
+  "cases": [
+    "tuning-256-0",
+    "tuning-256-1",
+    "tuning-256-2",
+    "holdout-256-1"
+  ],
+  "confirmations": [
+    "info: HexECPPMathlib/PariScratch537ejohh/Compare.lean:9:0: FULL_CONSTRUCTION tuning-256-0: exhausted after {f.attempts} attempts",
+    "info: HexECPPMathlib/PariScratch537ejohh/Compare.lean:9:0: FULL_CONSTRUCTION tuning-256-1: exhausted after {f.attempts} attempts",
+    "info: HexECPPMathlib/PariScratch537ejohh/Compare.lean:9:0: FULL_CONSTRUCTION tuning-256-2: exhausted after {f.attempts} attempts",
+    "info: HexECPPMathlib/PariScratch537ejohh/Compare.lean:9:0: FULL_CONSTRUCTION holdout-256-1: exhausted after {f.attempts} attempts"
+  ],
+  "wall_ns": 59362116720,
+  "returncode": 0,
+  "source_commit": "67463592e",
+  "lean": "4.34.1",
+  "host": "chungus2"
+}

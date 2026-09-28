@@ -249,7 +249,8 @@ bit schedule's maximum additions, including compiled checker replays.
 
 Factor-work units are allocation units, not elapsed time or exact operation
 counts. A terminal construction call reserves 64 attempts under a fixed
-profile: depth eight, 16 factors, 32 subsets, 16 factor worklist entries,
+profile: depth at most eight and no greater than the remaining native
+recursion allocation, 16 factors, 32 subsets, 16 factor worklist entries,
 one rho restart of at most 2048 steps, and p-minus-one bounds 64 and 512
 with base two. An order call reserves four attempts with the same rho and
 smooth bounds, a 16-entry worklist and no recursive primality search. Each

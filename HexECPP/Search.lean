@@ -150,10 +150,11 @@ private def scalar (budget : SearchBudget) (n a k : Nat) (P : Point) :
   return (proposeScalar { defaultImportBudget with
     maxScalarBits := budget.maxBits + 2, maxInverseOps := work } n a k P).toOption
 
-private def leaf (budget : SearchBudget) (n : Nat) : SearchM (Option Cert) := do
+private def leaf (budget : SearchBudget) (depth n : Nat) : SearchM (Option Cert) := do
   charge budget n .factorWork leafBudget.maxAttempts
   let r := (← get).rand
-  match Hex.Nat.Construction.run n r leafBudget with
+  match Hex.Nat.Construction.run n r
+      { leafBudget with maxDepth := min leafBudget.maxDepth depth } with
   | .ok result =>
       modify fun s => { s with rand := result.rand }
       let c := Cert.base result.cert.raw
@@ -230,7 +231,7 @@ def search (budget : SearchBudget) : Nat → Nat → SearchM (Option Cert)
   | depth + 1, n => do
       if HexArith.bitLength n > budget.maxBits then fail n .inputBits
       if let some c := (← get).memo.find? (fun c => c.subject == n) then return some c
-      if let some c ← leaf budget n then return some (← remember budget n c)
+      if let some c ← leaf budget (depth + 1) n then return some (← remember budget n c)
       if n ≤ 3 || n % 2 == 0 || n % 3 == 0 || !Hex.Nat.isProbablePrime n then return none
       let some z ← nonresidue budget n false | return none
       for inv in CM.portfolio do
