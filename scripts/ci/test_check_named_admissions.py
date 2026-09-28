@@ -62,9 +62,11 @@ class AdmissionScannerTests(unittest.TestCase):
             arithmetic = [root / f"adapters/HexRealClosureMathlib/{name}.lean"
                           for name in ("Algebraic", "AlgebraicClean", "AlgebraicValue",
                                        "BaseClean", "AlgebraicTower")]
-            for path in (entry, bridge, sign, conformance, dependency, *arithmetic):
+            tower = [root / f"HexRealClosure/{name}.lean"
+                     for name in ("TowerCatalog", "TowerTests")]
+            for path in (entry, bridge, sign, conformance, dependency, *arithmetic, *tower):
                 path.parent.mkdir(parents=True, exist_ok=True)
-            for path in arithmetic:
+            for path in (*arithmetic, *tower):
                 path.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by\n  sorry\n", encoding="utf-8")

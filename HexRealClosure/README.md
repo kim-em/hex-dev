@@ -437,10 +437,56 @@ The semantic sign, inverse and quotient proofs inherit only the existing named
 cleanliness and the core introduce no admission. These interpretations are
 conditional on an ambient ordered real closed field, not an existence proof.
 
-The remaining tower work includes the recursive algebraic dependency catalog,
-context enlargement and transport, general root isolation and multiplicities,
+The remaining tower work includes context enlargement and transport, general
+root isolation and multiplicities,
 rational delegation agreement and a compatible real-closed union construction.
 Repeated nonconstant queries still rebuild the shared prepared domain and BKR
 table; a reusable selected-sign handle is requested from #10377. Formal tower
 performance evaluation, including nested sign/zero counts and coefficient
 growth, remains open.
+
+### Recursive tower contexts and checked readers
+
+`Tower.Chain` completes the staged base before adjoining algebraic roots. Each
+root is validated over the entire predecessor carrier using its actual sign
+and full signature. The constructors derive ordinary coefficient operations,
+recursive cleanliness and the coefficient codec; raw algebraic carriers have
+no ring or field instance.
+
+`Tower.Context` packages such a chain with its value type. `Context.adjoin?`
+accepts the exact context-bound descriptor and returns an `Extension` containing
+the new context, its selected generator and the actual constant-polynomial
+embedding. Old values keep their owning context. The optional failure checks
+structured serialization shape; descriptor acceptance is already established.
+These context packages live in `Type 1`; `Option.bind` can connect their results
+to ordinary scalar computations across universe levels.
+
+A `Tower.Signature` contains the complete base signature and every ordered
+algebraic frame. Each frame retains the literal head, interval, Thom slots and
+shared replay graph, including all witnesses. References to the exact parent
+are encoded relative to the enclosing full signature. Hashing only indexes the
+shared graph's exact node comparisons. Identity uses structured data and does
+not depend on JSON printing, byte parsing, short names or hashes.
+
+`Tower.Catalog` is an immutable catalog of caller-constructed validated prefixes.
+Insertion rejects rebinding. Its separate base catalog supplies real search
+progress and reconstructs infinitesimal stages. Unknown algebraic signatures
+are rejected until their native prefix is installed. Readers retrieve the full
+context first, then decode a scalar or polynomial in that context; returned
+packed values retain their owning context.
+
+The structured codecs have proved literal write/read roundtrips. Nonzero
+algebraic payloads retain both the polynomial and cached sign; their reader
+checks predecessor coefficients and recomputes the sign in the exact context.
+It restores the stored polynomial without arithmetic repacking, preserving
+literal certificate coefficients that are semantically equal but structurally
+different. Arithmetic still uses `Element.ofPoly` and retains its computed
+monic clean remainder. Polynomial readers reject trailing literal zeros.
+
+Run `lake build HexRealClosure.TowerTests HexRealClosureTests`. The examples build
+three actual algebraic levels, use their explicit embeddings, read old values
+after extensions, restore a noncanonical coefficient, and reject stale or
+unknown bindings, forged signs, zero claims, trailing zeros and malformed base
+payloads. The core roundtrip proofs introduce no admission. General persistent
+refinement, transport of later descriptors, interpretation of arbitrary towers,
+complete isolation and the real-closed union remain open.
