@@ -9,6 +9,7 @@ import HexSignDet.Joint
 import HexSignDet.Paired
 import HexSignDet.Maximal
 import HexSignDet.MaximalMatrix
+import HexSignDet.Height
 import LeanBench
 import Lean.Data.Json
 
@@ -58,6 +59,40 @@ open Hex.SignDet
   match i.graph with
   | none => false
   | some d => d.check Sturm.orderSign 10377 i.head .negInf .posInf i.queries
+
+/- Positive monomial preprocessing and its supplied-evidence replay have
+fixed dense dimensions. Rat normalization uses gcd(c,c), gcd(0,c), gcd(c,1),
+exact division c/c or c/1, and long-by-one-limb multiplication. The equal-input
+gcd and exact divisions are linear because their operands coincide or their
+quotient is one limb; this is not a claim about general H-bit gcd/division.
+Replay uses bounded-integer scalar products and proportional differences.
+Thus each phase performs Θ(H) bit work. These registrations isolate those
+phases so fixed BKR systems do not dominate a 64-to-4096-bit ladder. They
+are normalization evidence, not coverage of height growth in general chains,
+and do not measure full production (which includes complete tree replay). -/
+-- Declared cost-model: Θ(H), fixed query slots and degenerate gcd/division operands.
+setup_benchmark Height.runReduce height => height
+  with prep := Height.phaseInput
+  where {
+    paramSchedule := .custom Height.phaseHeights
+    paramFloor := 8192
+    paramCeiling := 524288
+    outerTrials := 6
+    targetInnerNanos := 1000000000
+    maxSecondsPerCall := 10
+  }
+
+-- Declared cost-model: Θ(H), fixed scalar identities with no unrelated long products.
+setup_benchmark Height.runCheck height => height
+  with prep := Height.phaseInput
+  where {
+    paramSchedule := .custom Height.phaseHeights
+    paramFloor := 8192
+    paramCeiling := 524288
+    outerTrials := 6
+    targetInnerNanos := 1000000000
+    maxSecondsPerCall := 10
+  }
 
 -- Declared cost-model: Θ(s log s), direct moments and bounded-size systems on the two-root family.
 setup_benchmark runSmallReduced s => s * (Nat.log2 s + 1)
@@ -282,6 +317,8 @@ def main (args : List String) : IO UInt32 :=
   if args == ["inspect"] then Hex.SignDetBench.inspect
   else if args == ["inspect-phases"] then Hex.SignDetBench.inspectPhases
   else if args == ["inspect-small"] then Hex.SignDetBench.inspectSmall
+  else if args == ["inspect-height"] then Hex.SignDetBench.Height.inspect
+  else if args == ["inspect-height-phases"] then Hex.SignDetBench.Height.inspectPhases
   else if args == ["inspect-maximal"] then Hex.SignDetBench.inspectMaximal
   else if args == ["inspect-maximal-matrices"] then Hex.SignDetBench.MaximalMatrix.inspect
   else if args == ["inspect-joint"] then Hex.SignDetBench.Joint.inspect #[3, 7, 15, 31, 63]
@@ -302,6 +339,7 @@ def main (args : List String) : IO UInt32 :=
   else if let ["paired-joint-replay", path] := args then
     Hex.SignDetBench.paired ``Hex.SignDetBench.Joint.runCheckReduced ``Hex.SignDetBench.Joint.runCheckDirect path
   else if args.head? == some "verify" then do
+    Hex.SignDetBench.Height.verify
     match Hex.SignDetBench.buildMaximal 2 with
     | .ok _ => pure ()
     | .error message => throw (IO.userError s!"maximal-support fixture failed: {message}")
