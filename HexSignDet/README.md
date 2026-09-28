@@ -384,6 +384,15 @@ python3 -m unittest scripts.oracle.test_sign_det_z3
 Run only the nested refinement API example with
 `.lake/build/bin/hexsigndet_emit_infinitesimal refinement`.
 
+The [retained representative observation](../reports/data/sign-det-refinement/f03d5daa3/metadata.json)
+records one complete `refinement` process at source revision `f03d5daa3`:
+3.967 seconds on chungus2, automatically selected CPU 5. It includes startup,
+preparation, re-encoding, interval-binding checks and JSON output. The record
+retains build freshness, clean source state, unchanged source/binary checks and
+oracle-checked output. The [earlier observation](../reports/data/sign-det-refinement/ef06438d2/metadata.json)
+is retained too; it predates the explicit returned-bound fields and lacks the
+later clean-tree/freshness metadata. Neither is a scaling or Phase-4 verdict.
+
 Structural expansion and checked graph replay deliberately treat unreachable
 entries differently: both reject invalid references, while only replay checks
 all arithmetic witnesses. An unreachable false witness can therefore coexist
