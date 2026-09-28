@@ -93,7 +93,8 @@ def validate_export(path, name, inventory, revision):
         raise ValueError("unexpected benchmark export")
     result = data["results"][0]
     if (result.get("function") != "Hex.SignDetBench." + name or
-            result.get("kind") != "parametric" or result.get("hashable") is not True or
+            result.get("kind") != "parametric" or result.get("complexity_formula") != "height" or
+            result.get("hashable") is not True or
             result.get("budget_truncated") is not False or
             result.get("env", {}).get("git_commit") != revision or
             result.get("env", {}).get("git_dirty") is not False):

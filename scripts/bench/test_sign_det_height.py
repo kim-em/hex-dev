@@ -102,7 +102,8 @@ class HeightExportValidation(unittest.TestCase):
         for key, value in [("env", {"git_commit": "old", "git_dirty": False}),
                            ("env", {"git_commit": "source", "git_dirty": True}),
                            ("function", "Hex.SignDetBench.Height.runReduce"),
-                           ("budget_truncated", True), ("verdict", "pass")]:
+                           ("budget_truncated", True), ("complexity_formula", "height*height"),
+                           ("verdict", "pass")]:
             with self.subTest(key=key), self.assertRaises(ValueError):
                 result = copy.deepcopy(self.result)
                 result[key] = value
