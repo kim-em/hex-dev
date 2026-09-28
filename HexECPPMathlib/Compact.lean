@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexECPPMathlib.Elab
+import Lean.Elab.Command
 
 /-!
 # Compact frozen ECPP certificates
@@ -60,5 +61,43 @@ meta def compactSyntax (source : String) (cert : Cert) : MetaM Term := do
   let leaf ← Hex.PrimalityTactic.certificateSyntax (terminalCert cert)
   let source := Syntax.mkStrLit source
   `(term| ecpp_cert% $source:str using $leaf)
+
+/-- Common explicit export for certificate producers. Validate the destination
+before search, then create it exclusively after kernel-checked generation. -/
+meta def exportCertificate (mod decl : TSyntax `ident) (term : Term)
+    (generator : Nat → MetaM (String × Cert)) : Command.CommandElabM Unit := do
+  if Elab.inServer.get (← getOptions) then
+    logInfo m!"#ecpp_export writes files only in batch builds. Run `lake build +{(← getEnv).mainModule}` to generate the certificate, then remove this command."
+    return
+  let modName := mod.getId
+  let declName := decl.getId
+  let valid := fun (s : String) => s != "_" &&
+    (s.toList.head?.any (fun c => c.isAlpha || c == '_')) &&
+    s.toList.all (fun c => c.isAlphanum || c == '_')
+  unless modName.toString.splitOn "." |>.all valid do
+    throwError "#ecpp_export: module name must consist of ASCII identifier components"
+  unless declName.isAtomic && valid declName.toString do
+    throwError "#ecpp_export: declaration name must be an identifier without a namespace"
+  let path := System.FilePath.mk ((modName.toString.replace "." "/") ++ ".lean")
+  if ← path.pathExists then throwError "#ecpp_export: {path} already exists"
+  let (source, cert) ← Command.liftTermElabM do
+    let e ← Term.elabTermEnsuringType term (mkConst ``Nat)
+    Term.synthesizeSyntheticMVarsNoPostponing
+    Hex.PrimalityTactic.checkClosed "#ecpp_export" e
+    let some n ← getNatValue? (← whnf (← instantiateMVars e))
+      | throwError "#ecpp_export: expected a closed natural-number numeral"
+    unless ← isDefEq e (mkNatLit n) do
+      throwError "#ecpp_export: subject must be definitionally transparent"
+    generator n
+  let fullName := modName ++ declName
+  let literal ← Command.liftTermElabM <| compactSyntax source cert
+  let definition ← `(command| def $(mkIdent fullName):ident : Hex.ECPP.Cert := $literal)
+  let rendered ← Command.liftTermElabM <| PrettyPrinter.ppCommand definition
+  let body := s!"import HexECPPMathlib.Compact\n\n{rendered}\n"
+  if let some parent := path.parent then IO.FS.createDirAll parent
+  let handle ← IO.FS.Handle.mk path .writeNew
+  handle.putStr body
+  handle.flush
+  logInfo m!"Wrote {path}. Add `import {modName}` at the top of your file, then use `ecpp using {fullName}`. Remove the export command after generation."
 
 end Hex.ECPP
