@@ -1,0 +1,19 @@
+{
+  "cpu": 44,
+  "host": "chungus2",
+  "source_commit": "c4499500068eeb909d2d32daa5371b8a3f43dfba",
+  "lean": "Lake version 5.0.0-src+5045d00 (Lean version 4.34.1)",
+  "source": "import HexPrimality.Elab\nimport HexIntFactor.Primality\n\nopen Lean Hex.PrimalityTactic\n\n-- Let the finite construction allocation finish independently of elaboration fuel.\nset_option maxHeartbeats 0\n\nrun_cmd Lean.Elab.Command.liftTermElabM do\n  unless constructionExtensionNames == [`HexIntFactor.PrimalityTactic.constructionExtension] do\n    throwError \"the current construction portfolio changed; update the comparator\"\n  let (result, allocations) \u2190 construct 103486501344950896190452867069749997421755885175897313753651924906679932591353 Hex.Nat.constructionBudget\n  unless allocations.any (fun (name, _) => name == ``Hex.Nat.ecmConstructionFactor) == false do\n    throwError \"ECM extension allocation changed\"\n  match result with\n  | .ok _ => throwError \"expected full construction exhaustion for 103486501344950896190452867069749997421755885175897313753651924906679932591353\"\n  | .error f =>\n    unless f.stop == .exhausted && f.attempts == 1024 do\n      throwError \"construction outcome changed for 103486501344950896190452867069749997421755885175897313753651924906679932591353\"\n    logInfo \"FULL_CONSTRUCTION validation-256-4: exhausted after {f.attempts} attempts\"\n  let (result, allocations) \u2190 construct 115219968303613180170318760115437973610941062152781770424416328511434156923419 Hex.Nat.constructionBudget\n  unless allocations.any (fun (name, _) => name == ``Hex.Nat.ecmConstructionFactor) == false do\n    throwError \"ECM extension allocation changed\"\n  match result with\n  | .ok _ => throwError \"expected full construction exhaustion for 115219968303613180170318760115437973610941062152781770424416328511434156923419\"\n  | .error f =>\n    unless f.stop == .exhausted && f.attempts == 1024 do\n      throwError \"construction outcome changed for 115219968303613180170318760115437973610941062152781770424416328511434156923419\"\n    logInfo \"FULL_CONSTRUCTION validation-256-5: exhausted after {f.attempts} attempts\"\n  let (result, allocations) \u2190 construct 96590133568377947488922651108406533027621815589740576200326951544495709460191 Hex.Nat.constructionBudget\n  unless allocations.any (fun (name, _) => name == ``Hex.Nat.ecmConstructionFactor) == false do\n    throwError \"ECM extension allocation changed\"\n  match result with\n  | .ok _ => throwError \"expected full construction exhaustion for 96590133568377947488922651108406533027621815589740576200326951544495709460191\"\n  | .error f =>\n    unless f.stop == .exhausted && f.attempts == 1024 do\n      throwError \"construction outcome changed for 96590133568377947488922651108406533027621815589740576200326951544495709460191\"\n    logInfo \"FULL_CONSTRUCTION validation-256-7: exhausted after {f.attempts} attempts\"\n",
+  "cases": [
+    "validation-256-4",
+    "validation-256-5",
+    "validation-256-7"
+  ],
+  "confirmations": [
+    "info: HexECPPMathlib/PariScratchpwv0evta/Compare.lean:9:0: FULL_CONSTRUCTION validation-256-4: exhausted after {f.attempts} attempts",
+    "info: HexECPPMathlib/PariScratchpwv0evta/Compare.lean:9:0: FULL_CONSTRUCTION validation-256-5: exhausted after {f.attempts} attempts",
+    "info: HexECPPMathlib/PariScratchpwv0evta/Compare.lean:9:0: FULL_CONSTRUCTION validation-256-7: exhausted after {f.attempts} attempts"
+  ],
+  "wall_ns": 121305186826,
+  "returncode": 0
+}

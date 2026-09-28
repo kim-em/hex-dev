@@ -171,34 +171,6 @@ set_option hygiene false in
 @[command_elab pariExportCmd] meta def exportCert : Command.CommandElab := fun stx => do
   let `(command| #ecpp_export $mod:ident $decl:ident for $term:term) := stx
     | throwUnsupportedSyntax
-  if Elab.inServer.get (← getOptions) then
-    logInfo m!"#ecpp_export writes files only in batch builds. Run `lake build +{(← getEnv).mainModule}` to generate the certificate, then remove this command."
-    return
-  let modName := mod.getId
-  let declName := decl.getId
-  let valid := fun (s : String) => s != "_" &&
-    (s.toList.head?.any (fun c => c.isAlpha || c == '_')) &&
-    s.toList.all (fun c => c.isAlphanum || c == '_')
-  unless modName.toString.splitOn "." |>.all valid do
-    throwError "#ecpp_export: module name must consist of ASCII identifier components"
-  unless declName.isAtomic && valid declName.toString do
-    throwError "#ecpp_export: declaration name must be an identifier without a namespace"
-  let path := System.FilePath.mk ((modName.toString.replace "." "/") ++ ".lean")
-  if ← path.pathExists then throwError "#ecpp_export: {path} already exists"
-  let (source, cert) ← Command.liftTermElabM do
-    let e ← Term.elabTermEnsuringType term (mkConst ``Nat)
-    Term.synthesizeSyntheticMVarsNoPostponing
-    let n ← subject (← instantiateMVars e)
-    generate n
-  let fullName := modName ++ declName
-  let literal ← Command.liftTermElabM <| compactSyntax source cert
-  let definition ← `(command| def $(mkIdent fullName):ident : Hex.ECPP.Cert := $literal)
-  let rendered ← Command.liftTermElabM <| PrettyPrinter.ppCommand definition
-  let body := s!"import HexECPPMathlib.Compact\n\n{rendered}\n"
-  if let some parent := path.parent then IO.FS.createDirAll parent
-  let handle ← IO.FS.Handle.mk path .writeNew
-  handle.putStr body
-  handle.flush
-  logInfo m!"Wrote {path}. Add `import {modName}` at the top of your file, then use `ecpp using {fullName}`. Remove the export command after generation."
+  exportCertificate mod decl term generate
 
 end Hex.ECPP.Pari

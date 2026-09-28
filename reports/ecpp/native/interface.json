@@ -1,0 +1,18 @@
+[
+  {
+    "bits": 128,
+    "subject": 177080666831933235355717939809840315427,
+    "seed": 0,
+    "frozen_source_bytes": 696,
+    "sha256": "1fa108784fc566b8d72cbbfc0b3cb8976346dd1a8cc45ce882d4a1ff80574022",
+    "kernel_replay_without_search_or_gp": true
+  },
+  {
+    "bits": 256,
+    "subject": 69199437377629051939477864552334532767081794053034238723740032946332041487367,
+    "seed": 0,
+    "frozen_source_bytes": 2351,
+    "sha256": "c92638f6fc346bed62b03c115cf5aa5935724cf5ae0cb89108d8f778f6628de1",
+    "kernel_replay_without_search_or_gp": true
+  }
+]
