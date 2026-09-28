@@ -13,19 +13,6 @@ namespace Hex.RealClosure.Tower
 
 variable {registry : BaseContext.Registry}
 
-/-- The operands of a later descriptor after native coefficient conversion.
-The target context owns the fresh evidence and endpoint bindings. -/
-@[expose] def Context.mapDescriptor (source target : Context registry)
-    (value : source.Value → target.Value)
-    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature) :
-    SignDet.RawDescriptor target.Value Signature :=
-  { context := target.signature
-    head := DensePoly.ofCoeffs (descriptor.raw.head.toArray.map value)
-    lower := descriptor.raw.lower.map value
-    upper := descriptor.raw.upper.map value
-    indices := descriptor.raw.indices
-    signs := descriptor.raw.signs }
-
 /-- A finite derivation of native conversion from identity, a checked root
 refinement, and rebuilding later levels with exact converted bindings.
 This is erased provenance, not a semantic arithmetic law record. -/
@@ -46,6 +33,11 @@ inductive Transport : (source target : Context registry) → (source.Value → t
         (fun x => target.ofPoly converted
           (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map value)))
 
+  | comp {source middle target : Context registry}
+      {first : source.Value → middle.Value} {next : middle.Value → target.Value}
+      (left : Transport source middle first) (right : Transport middle target next) :
+      Transport source target (fun x => next (first x))
+
 /-- An immutable target context and its actual native conversion from a source.
 Checked provenance permits recursive later-level reconstruction. -/
 structure Conversion (source : Context registry) : Type 1 where
@@ -57,6 +49,32 @@ structure Conversion (source : Context registry) : Type 1 where
 /-- Start conversion without changing the context. -/
 def Conversion.identity (source : Context registry) : Conversion source :=
   ⟨source, id, .identity source⟩
+
+/-- Compose two actual native conversions, retaining both packing closures. -/
+def Conversion.comp {source : Context registry} (first : Conversion source)
+    (next : Conversion first.context) : Conversion source :=
+  ⟨next.context, fun x => next.value (first.value x), .comp first.checked next.checked⟩
+
+private theorem Conversion.identity_spec_proof (source : Context registry) :
+    (Conversion.identity source).context = source ∧ HEq (Conversion.identity source).value (id : source.Value → source.Value) :=
+  ⟨rfl, HEq.rfl⟩
+
+/-- Identity retains the original context and its values. -/
+theorem Conversion.identity_spec (source : Context registry) :
+    (Conversion.identity source).context = source ∧ HEq (Conversion.identity source).value (id : source.Value → source.Value) :=
+  Conversion.identity_spec_proof source
+
+private theorem Conversion.comp_spec_proof {source : Context registry} (first : Conversion source)
+    (next : Conversion first.context) :
+    (first.comp next).context = next.context ∧
+      HEq (first.comp next).value (fun x => next.value (first.value x)) := ⟨rfl, HEq.rfl⟩
+
+/-- Composition uses exactly the two returned native value conversions. -/
+theorem Conversion.comp_spec {source : Context registry} (first : Conversion source)
+    (next : Conversion first.context) :
+    (first.comp next).context = next.context ∧
+      HEq (first.comp next).value (fun x => next.value (first.value x)) :=
+  Conversion.comp_spec_proof first next
 
 /-- Start conversion at a checked persistent root refinement. -/
 def Conversion.refine (parent : Context registry)
@@ -205,3 +223,14 @@ theorem Conversion.extend_root {source : Context registry} (conversion : Convers
       | some next => next.extend? rest := Conversion.extend_root_proof conversion descriptor rest
 
 end Hex.RealClosure.Tower
+
+/--
+info: 'Hex.RealClosure.Tower.Conversion.extend?' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.extend?
+/--
+info: 'Hex.RealClosure.Tower.Conversion.comp' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.comp

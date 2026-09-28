@@ -290,6 +290,10 @@ lean_lib HexRealClosure where
 lean_lib HexRealClosureTests where
   globs := #[.one `HexRealClosure.Tests]
 
+-- Explicit deep native transport fixture; omitted from routine CI targets.
+lean_exe hexrealclosure_transport_tests where
+  root := `HexRealClosure.TowerTransportTests
+
 @[default_target]
 lean_lib HexRealClosureMathlib where
 

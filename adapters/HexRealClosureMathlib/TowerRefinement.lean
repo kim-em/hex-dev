@@ -151,7 +151,7 @@ include model decK orderK closedK in
 private theorem refine_wellFormed :
     ((parent.refine encoding).mapRaw descriptor).wellFormed = true := by
   have hw := (SignDet.RawDescriptor.check_eq descriptor.accepted).1
-  unfold Refinement.mapRaw SignDet.RawDescriptor.wellFormed
+  unfold Refinement.mapRaw Context.mapDescriptor SignDet.RawDescriptor.wellFormed
   rw [model.refine_degree]
   exact hw
 
@@ -175,7 +175,7 @@ theorem refine_descriptor :
   refine ⟨rfl, model.refine_wellFormed encoding descriptor,
     (model.refine_domain encoding _ _ _).mpr hdom, ?_⟩
   dsimp only [next, old] at hcard ⊢
-  simp only [Refinement.mapRaw, model.refine_poly, model.refine_endpoint]
+  simp only [Refinement.mapRaw, Context.mapDescriptor, model.refine_poly, model.refine_endpoint]
   convert hcard using 2
   apply Finset.filter_congr
   intro x hx
@@ -204,12 +204,12 @@ theorem refine_root
     next.sub next.mul next.nat next.sign
   apply descriptor.root_unique old.value old.zero_iff old.one old.add old.sub old.mul old.nat old.sign
   · rw [hraw] at hx
-    dsimp only [Refinement.mapRaw, next] at hx
+    dsimp only [Refinement.mapRaw, Context.mapDescriptor, next] at hx
     simpa only [model.refine_poly, model.refine_endpoint] using hx
   · rw [descriptor.derivatives_at old.value old.zero_iff old.mul old.nat]
     rw [converted.derivatives_at next.value next.zero_iff next.mul next.nat] at hs
     rw [hraw] at hs
-    dsimp only [Refinement.mapRaw, next] at hs
+    dsimp only [Refinement.mapRaw, Context.mapDescriptor, next] at hs
     simpa only [model.refine_poly] using hs
 
 

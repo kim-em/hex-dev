@@ -92,6 +92,24 @@ private theorem cast_value {context other : Context registry} (h : context = oth
   cases eq_of_heq hg
   rfl
 
+omit [DecidableEq K] in
+/-- Identity interprets every value in the unchanged source model. -/
+noncomputable def identity (original : Hex.RealClosure.Tower.Model source K) :
+    Model (Conversion.identity source) original where
+  target := (Conversion.identity_spec source).1.symm ▸ original
+  value x := by
+    rw [cast_value _ _ _ _ (Conversion.identity_spec source).2]
+    rfl
+
+omit [DecidableEq K] in
+/-- Compose semantic witnesses for the actual two native conversions. -/
+noncomputable def comp {next : Conversion conversion.context}
+    (following : Model next model.target) : Model (conversion.comp next) original where
+  target := (conversion.comp_spec next).1.symm ▸ following.target
+  value x := by
+    rw [cast_value _ _ _ _ (conversion.comp_spec next).2]
+    exact (following.value (conversion.value x)).trans (model.value x)
+
 variable [IsStrictOrderedRing K] [IsRealClosed K]
 
 /-- Start a semantic conversion at the actual checked refinement. The witness
@@ -214,6 +232,15 @@ theorem extend_exists (suffix : Suffix source) :
     rw [conversion.extend_root, hnext]
     exact hresult
 
+/-- Interpret a particular result returned by recursive reconstruction. -/
+noncomputable def extend (suffix : Suffix source) (result : Conversion suffix.context)
+    (h : conversion.extend? suffix = some result) : Model result (original.extend suffix) := by
+  let spec := model.extend_exists suffix
+  let actual := Classical.choose spec
+  have output := (Classical.choose_spec spec).1
+  have same : actual = result := Option.some.inj (output.symm.trans h)
+  exact same ▸ Classical.choice (Classical.choose_spec spec).2
+
 omit [IsStrictOrderedRing K] [IsRealClosed K] in
 include model in
 /-- Native semantic equality results are preserved throughout conversion. -/
@@ -290,3 +317,37 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.compare' depends on axioms: [prope
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.compare
+
+/--
+info: 'Hex.RealClosure.Tower.Conversion.Model.identity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.identity
+/--
+info: 'Hex.RealClosure.Tower.Conversion.Model.comp' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.comp
+/--
+info: 'Hex.RealClosure.Tower.Conversion.Model.equal' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.equal
+/--
+info: 'Hex.RealClosure.Tower.Conversion.Model.root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.root
+/--
+info: 'Hex.RealClosure.Tower.Conversion.Model.descriptor_exists' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.descriptor_exists
+/--
+info: 'Hex.RealClosure.Tower.Conversion.Model.extend' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.extend

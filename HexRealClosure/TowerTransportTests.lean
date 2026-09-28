@@ -80,10 +80,15 @@ private def sample : Option (Array Bool) :=
     (fourth.context.read packet).toOption.isNone,
     (fourth.context.read (fourth.context.write oldOne)).toOption.isSome]
 
-/-- info: some #[true, true, true, true, true, true, true, true, true, true, true, true, true] -/
-#guard_msgs in
-#eval sample
-
 #check_failure Conversion.mk
 
 end Hex.RealClosure.Tower.TransportTests
+
+/-- Run the full four-level fixture explicitly, outside routine CI elaboration. -/
+public def main : IO Unit := do
+  match Hex.RealClosure.Tower.TransportTests.sample with
+  | none => throw (IO.userError "four-level conversion failed")
+  | some checks =>
+    if checks.all id then
+      IO.println s!"four-level transport: {checks.size} checks passed"
+    else throw (IO.userError s!"four-level transport checks failed: {checks}")

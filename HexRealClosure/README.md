@@ -198,7 +198,8 @@ Run `lake build hexrealclosure_bounds_conformance`, then
 
 A failed bound search is a request for whole-line BKR completion. It never
 means that the polynomial has no roots. The bounded bisection and complete
-isolation driver, general contexts and recursive transport remain unimplemented.
+isolation driver still needs complete non-Archimedean isolation. Validated
+contexts and recursive conversion are described below.
 
 `deflate? p a` removes the factor `X-a` with the shared monic polynomial division.
 `linearFactor a` stores the literal leading coefficient one, and the constructor
@@ -560,8 +561,8 @@ model through three arbitrary validated root levels, including the algebraicity
 and image-field inclusions. The semantic root results inherit only the named
 `Tarski.check_rootSum` admission (#10389), alongside the standard three axioms;
 this adds no admission. They are relative to a supplied real-closed ambient
-field and base embedding. Ambient existence, arbitrary recursive refinement of a whole dependency closure
-and the real-closed union remain open. No tower performance claim is made.
+field and base embedding. Ambient existence, automatic extraction of a whole
+dependency closure and the real-closed union remain open. No tower performance claim is made.
 
 ### Yun decomposition over native tower coefficients
 
@@ -631,19 +632,22 @@ representative of degree seven. Kernel
 examples apply the general preservation results to arbitrary validated
 three-level towers. These companion proofs retain only the inherited named
 #10389 admission and the standard three axioms; the executable refinement
-constructor uses only the standard three. This API covers a final root change
-and its immediate later level. Automated recursive rebuilding of an arbitrary
-dependency closure and base enlargement remain open. No performance result is
+constructor uses only the standard three. This interface covers a final root
+change and its immediate later level; `Conversion` below handles a supplied
+finite suffix. Automatic extraction of an arbitrary dependency closure and
+base enlargement remain open. No performance result is
 claimed here.
 
 ### Recursive conversion through later root levels
 
+`Conversion.identity` retains the original context and values.
 `Conversion.refine` starts at a checked final-root refinement.
 `Conversion.adjoin?` rebuilds a later descriptor with converted coefficients,
 endpoints and fresh context-bound evidence. It stores the new extension's
 packing closure for all subsequent value conversions. The private constructor
 retains an erased derivation of these native operations, with no semantic law
-record as an executable argument.
+record as an executable argument. `Conversion.comp` composes two actual
+conversions, retaining both closures; it supports consecutive changes.
 
 `Suffix` represents a finite sequence of validated later root levels. Its
 `context` is the original final context. `Conversion.extend?` rebuilds every
@@ -651,17 +655,24 @@ level in order and returns the conversion into the new immutable final
 context. Every original context and value remains valid independently.
 
 The companion `Conversion.Model` relates the native conversion to the original
-model and supplies the actual target model. `Model.refine` establishes this
+model and supplies the actual target model. `Model.identity` and `Model.comp`
+interpret identity and composition. `Model.refine` establishes this
 relation for the starting refinement; `Model.adjoin` preserves it after every
 successful extension. `adjoin_exists` proves each revalidation and conversion
 succeeds. `extend_exists` proves success and interpretation preservation for an
-arbitrary finite suffix, without caller-supplied replay evidence. The generic
+arbitrary finite suffix, without caller-supplied replay evidence. `Model.extend`
+interprets a particular result returned by the executable. The generic
 `zero`, `degree`, `polynomial`, `equal`, `compare` and `mono` results preserve
 canonical zero, dense-polynomial degree and interpretation, actual native
 comparison results, and inclusion of the whole original image field.
 
-Run `lake build HexRealClosure.TowerTransportTests HexRealClosureMathlib.TowerTransportTests`.
-The native fixture changes a nonmonic reducible first definition and rebuilds
+Run `lake build HexRealClosure.TowerConversionTests HexRealClosureMathlib.TowerTransportTests`.
+The routine native fixture checks a changed nonmonic reducible definition, a
+later linear root, identity, composition, equations and packet ownership.
+The explicit four-level native driver is built with
+`lake build hexrealclosure_transport_tests` and run with
+`.lake/build/bin/hexrealclosure_transport_tests`; it is outside routine CI.
+This deeper fixture changes a nonmonic reducible first definition and rebuilds
 three later square roots. It checks the sixteenth-power equation, the final
 root equation, ordering, embedded noncanonical one and inverse values, and old
 and new packet ownership. Kernel examples cover arbitrary finite suffixes over

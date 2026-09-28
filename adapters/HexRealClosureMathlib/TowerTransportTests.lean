@@ -25,6 +25,22 @@ example : ∃ result, (Conversion.refine base encoding).extend? suffix = some re
     Nonempty (Conversion.Model result ((rational.adjoin descriptor).extend suffix)) :=
   (Conversion.Model.refine rational encoding).extend_exists suffix
 
+/-- Identity can rebuild an arbitrary suffix without changing root meaning. -/
+example (suffix : Suffix base) : ∃ result,
+    (Conversion.identity base).extend? suffix = some result ∧
+      Nonempty (Conversion.Model result (rational.extend suffix)) :=
+  (Conversion.Model.identity rational).extend_exists suffix
+
+example (result : Conversion suffix.context)
+    (h : (Conversion.refine base encoding).extend? suffix = some result) :
+    Nonempty (Conversion.Model result ((rational.adjoin descriptor).extend suffix)) :=
+  ⟨(Conversion.Model.refine rational encoding).extend suffix result h⟩
+
+example {first : Conversion base} (left : Conversion.Model first rational)
+    {next : Conversion first.context} (right : Conversion.Model next left.target)
+    (x : base.Value) : (left.comp right).target.value ((first.comp next).value x) = rational.value x :=
+  (left.comp right).value x
+
 variable (result : Conversion suffix.context)
 variable (model : Conversion.Model result ((rational.adjoin descriptor).extend suffix))
 
