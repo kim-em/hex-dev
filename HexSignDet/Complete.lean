@@ -217,7 +217,8 @@ theorem Descriptor.buildCompletion_ofTable {sign : E → Int} {context : Ctx}
 
 /-- Complete the derivative encoding of a validated selected root using the
 checked producer. An internal error emits a diagnostic and returns the source
-descriptor; the companion proves that branch unreachable with lawful
+descriptor with its original indices, which may still be partial. The
+companion proves that branch unreachable with lawful
 coefficients, and that the returned descriptor is full and selects the same root. -/
 @[expose] def Descriptor.complete {sign : E → Int} {context : Ctx}
     (source : Descriptor E Ctx sign context) : Descriptor E Ctx sign context :=

@@ -51,6 +51,9 @@ def completesAs (raw : RawDescriptor CubicField Nat) (word : List Int) : Bool :=
         !({raw with context := 8}).completes out.raw &&
         !({raw with head := raw.head + 1}).completes out.raw &&
         !({raw with lower := .finite 0}).completes out.raw &&
+        !({raw with upper := .finite 3}).completes out.raw &&
+        (raw.signs.isEmpty ||
+          !({raw with signs := raw.signs.map (fun s => if s = 0 then 1 else -s)}).completes out.raw) &&
         !({raw with indices := [0]}).completes out.raw
 
 set_option maxRecDepth 4096 in
