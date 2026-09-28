@@ -159,7 +159,28 @@ no activity threshold rejected a completed sample.
 | 262,144 | 165.872 | 406.697 |
 | 524,288 | 326.715 | 812.709 |
 
-Both archived collections are consistent with the declared linear model on
+The [height-sensitive collection](data/sign-det-height/e3e380d81/metadata.json)
+uses source `e3e380d818bbd6e74937895e5ddb4207f24b6bdc` and Lean 4.35.0-rc3,
+on leased CPU 53 of the same shared host. Its 84 samples passed the exact
+schedule, compiler-pin and height-sensitive fingerprint checks. Source and
+executable hashes remained unchanged. Both verdicts are **consistent with
+declared complexity**, with normalized slopes −0.080808 for construction and
+−0.074718 for replay. The retained runtime audit confirms the executable's GMP
+gcd and base-two bit-length routes. There was no discarded sample or rerun.
+Load averages were 7.00, 11.35, 13.31 before collection and 6.30, 10.28, 12.79
+afterwards, recorded as context.
+
+| Coefficient bits | Normalization median µs | Replay median µs |
+| ---: | ---: | ---: |
+| 8,192 | 8.425 | 18.174 |
+| 16,384 | 14.399 | 33.504 |
+| 32,768 | 23.257 | 58.102 |
+| 65,536 | 42.690 | 108.412 |
+| 131,072 | 79.945 | 207.418 |
+| 262,144 | 169.303 | 407.744 |
+| 524,288 | 333.816 | 814.296 |
+
+All three collections are consistent with the declared linear model on
 their recorded revisions. The finite-range verdict does not prove an
 asymptotic bound: its ±0.15 slope tolerance cannot distinguish a small
 additional logarithmic factor across this ladder. The largest successive
