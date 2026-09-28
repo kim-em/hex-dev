@@ -221,7 +221,8 @@ example (a b : Element (.real prefixContext)) :
 #guard epsilon.sign = 1
 #guard (Element.infinitesimal mixed - epsilon.embed).sign = -1
 #guard (realPolynomial.eval included).equal 24
-#guard (namedPolynomial.eval positive).sign = 1
+#guard (namedPolynomial.eval positive).equal (positive + positive)
+#guard ((Polynomial.ofCoeffs #[-positive, 1]).eval positive).sign = 0
 #guard (Polynomial.read (realContext 1) namedPolynomial.write).map Polynomial.stored =
   some namedPolynomial.stored
 #guard (Polynomial.read (realContext 2) namedPolynomial.write).isNone
@@ -235,6 +236,8 @@ example (a b : Element (.real prefixContext)) :
 #check_failure (fun (a : Element (realContext 1)) => (a : Element (realContext 2)))
 #check_failure (fun (p : Polynomial (realContext 1)) => (p : Polynomial (realContext 2)))
 #check_failure (fun (p : Polynomial (realContext 1)) (q : Polynomial (realContext 2)) => p + q)
+
+example (p : Polynomial (realContext 1)) : Polynomial derived := p
 
 example : (registry ⟨"unknown", 1⟩).isSome = false := by decide +kernel
 
