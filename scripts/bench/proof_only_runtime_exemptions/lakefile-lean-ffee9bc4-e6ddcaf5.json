@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "ffee9bc46edf5856435dd50093a3daa0f91b55db",
+  "current_blob": "e6ddcaf577bc85bceba04f20db61da9f623e110a",
+  "reason": "This Lake transition registers independent ECPP, ordered-function, real-closure, RCF, sign-determination, Yun and selected-sign semantic proof, conformance and bench targets, and removes manual determinant experiments. It adds the pinned AINTLIB dependency for ECPP proofs; AINTLIB is outside the factorization service runtime import graph. The Mathlib pin, package compiler options, hexbz_factor_service executable and all factorization-library declarations are unchanged. The selected-sign registration adds only HexSignDetMathlib.SelectedProducer to HexQuerySemantics and HexSignDetMathlib.SelectedProducerConformance to HexConformance; neither target reaches the measured factorization executable."
+}
