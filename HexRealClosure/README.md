@@ -233,7 +233,9 @@ For existing canonical number-field arithmetic and conversions, see the
 `Bisection.bisect? sign p lower upper` uses the deterministic arithmetic
 midpoint of a finite interval. A nonroot cut retains the original polynomial.
 A root cut performs checked exact linear deflation and retains its computed
-quotient and leading scalar. Both open subintervals are freshly prepared
+quotient. `BisectionRoots` proves equality of the interpreted leading
+coefficients; it does not assert literal equality of noncanonical coefficient
+representatives. Both open subintervals are freshly prepared
 against that active head. Cuts at or beyond an endpoint are rejected by
 `Bisection.split?`.
 
@@ -248,3 +250,20 @@ root counts and invalid inputs.
 This supplies one finite bisection node. The capped interval traversal,
 transport of pending evidence after deflation, complete BKR fallback, factor
 merging and the complete root-set API remain to be assembled and proved.
+
+`Mode.removed` returns the emitted coefficient point or `none`. The companion
+`BisectionRoots` proves that roots in the original interval are exactly the
+removed point and roots in the two actual returned open intervals. Neither
+interval includes the cut, and the active head is root-free there.
+
+The existing deflation conformance driver also emits 17 bisection cases,
+including nonmonic and fractional rational heads, zero/repeated inputs,
+constants, close infinitesimal roots, inverse infinitesimals and two successive
+infinitesimal levels. FLINT exact algebraic roots independently check rational
+counts. SymPy factorization over `QQ(epsilon, delta)` and the successive positive
+infinitesimal order check the linear-factor cases. The oracle checks the
+midpoint, removal, active and returned heads, returned endpoints, counts and
+coverage. Its rejection tests detect stale heads, scalar loss, missing or
+invented cut roots, incorrect nested ordering and invalid input acceptance.
+These cases exercise one bisection node; complete isolation and simultaneous
+ordinary-real realization remain separate requirements.
