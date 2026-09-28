@@ -13,6 +13,7 @@ import HexSignDet
 import HexSignDetMathlib.SelectedProducer
 import HexSignDetMathlib.CompletionProducer
 import HexSignDetMathlib.TableProducer
+import HexSignDetMathlib.ReencodingProducer
 
 import HexSignDetMathlib.QueryHandle
 
@@ -1017,6 +1018,42 @@ the original selected root. These results use the named root-sum admission in
 [#10389](https://github.com/kim-em/hex-dev/issues/10389). The handle retains the
 original context, polynomial, interval and derivative selection; copied
 certificates must still pass the ordinary literal replay checks.
+
+Re-encoding asks whether the same selected root can be described using a
+new defining polynomial and interval. It returns `none` if the target domain
+is invalid or excludes that root. Sharing a different root is insufficient:
+the source below selects +α from `(x − α)(x + α)`, while the target `x + α`
+has only −α. Restricting the original head to `(−2, 0)` also excludes +α.
+Both calls return ordinary absence, with no internal error.
+
+```lean
+private def absentReencodingPasses : Bool :=
+  match Descriptor.validate signsFieldSign 7 signsRoot with
+  | none => false
+  | some root =>
+    let absentHead := match root.buildReencoding
+        (signsX + DensePoly.C signsAlpha) .negInf .posInf with
+      | .ok none => true
+      | _ => false
+    let absentInterval := match root.buildReencoding
+        signsHead (.finite (-2)) (.finite 0) with
+      | .ok none => true
+      | _ => false
+    absentHead && absentInterval
+
+#guard absentReencodingPasses
+```
+
+Import `HexSignDetMathlib.ReencodingProducer` for
+{name}`Hex.SignDet.Descriptor.buildReencoding_absent`. It proves this result
+for every lawful coefficient interpretation when the selected root is absent
+from the target domain. Preparation and joint table construction are proved
+from the input; successful output is not assumed. The proof uses the named
+#10389 root-sum admission. It needs neither a root-separating interval nor a
+Thom ordering theorem. General success when the root is present is a separate
+proof requirement. For an accepted re-encoding,
+{name}`Hex.SignDet.Reencoding.root_eq_source` proves that the new descriptor
+retains the source root.
 
 Two roots can be compared even if their defining polynomials differ. The
 comparison constructs a checked common squarefree polynomial and expresses

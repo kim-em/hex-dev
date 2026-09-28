@@ -358,21 +358,54 @@ theorem Descriptor.head_ne_zero {context : Ctx}
   omega
 
 include h1 ha hs hm hnat hsign in
+/-- The selected root satisfies the actual defining, derivative and strict
+endpoint constraints used by re-encoding, including infinite endpoints. -/
+theorem Descriptor.constraints_at_root {context : Ctx}
+    (d : Descriptor E Ctx sign context) :
+    signsAt f hz d.raw.constraints (d.root f hz h1 ha hs hm hnat hsign) =
+      d.raw.constraintSigns := by
+  let x := d.root f hz h1 ha hs hm hnat hsign
+  have hspec := d.root_spec f hz h1 ha hs hm hnat hsign
+  have hmember := (Tarski.mem_rootsIn _ _ _ _).mp hspec.1
+  have heval := Polynomial.isRoot_of_mem_roots hmember.1
+  have hbounds := hmember.2
+  have hword := hspec.2
+  change (interpret f hz d.raw.head).eval x = 0 at heval
+  change Tarski.InInterval (d.raw.lower.map f) (d.raw.upper.map f) x at hbounds
+  change signsAt f hz d.raw.queries x = d.raw.signs at hword
+  change signsAt f hz d.raw.constraints x = d.raw.constraintSigns
+  cases hl : d.raw.lower <;> cases hu : d.raw.upper <;>
+    simp_all [Tarski.inInterval_iff, Endpoint.map, signsAt,
+      RawDescriptor.constraints, RawDescriptor.constraintSigns,
+      endpoint_eval f hz h1 hs, castSignPos, castSignNeg]
+
+include h1 ha hs hm hnat hsign in
+/-- The actual source constraints identify exactly the original selected
+root. No target descriptor, root-separating interval or Thom theorem is a
+premise; count-one source evidence supplies uniqueness. -/
+theorem Descriptor.constraints_iff {context : Ctx}
+    (d : Descriptor E Ctx sign context) (x : K) :
+    signsAt f hz d.raw.constraints x = d.raw.constraintSigns ↔
+      x = d.root f hz h1 ha hs hm hnat hsign := by
+  constructor
+  · intro hc
+    apply d.root_unique f hz h1 ha hs hm hnat hsign x
+    · apply (Tarski.mem_rootsIn_iff _ (d.head_ne_zero f hz) _ _ _).mpr
+      exact ⟨d.constraints_head f hz x hc,
+        d.constraints_interval f hz h1 ha hs hm hnat hsign x hc⟩
+    · exact d.constraints_queries f hz x hc
+  · rintro rfl
+    exact d.constraints_at_root f hz h1 ha hs hm hnat hsign
+
+include h1 ha hs hm hnat hsign in
 /-- Checked re-encoding preserves the exact selected real root across heads. -/
 theorem Reencoding.root_eq_source {context : Ctx}
     {source : Descriptor E Ctx sign context} {head : DensePoly E}
     {a b : Endpoint E} (r : Reencoding source head a b) :
     r.target.root f hz h1 ha hs hm hnat hsign =
       source.root f hz h1 ha hs hm hnat hsign := by
-  let x := r.target.root f hz h1 ha hs hm hnat hsign
-  have hc := r.target_constraints f hz h1 ha hs hm hnat hsign
-  have hx : x ∈ Tarski.rootsIn (interpret f hz source.raw.head)
-      (source.raw.lower.map f) (source.raw.upper.map f) := by
-    apply (Tarski.mem_rootsIn_iff _ (source.head_ne_zero f hz) _ _ _).mpr
-    exact ⟨source.constraints_head f hz x hc,
-      source.constraints_interval f hz h1 ha hs hm hnat hsign x hc⟩
-  exact source.root_unique f hz h1 ha hs hm hnat hsign x hx
-    (source.constraints_queries f hz x hc)
+  exact (source.constraints_iff f hz h1 ha hs hm hnat hsign _).mp
+    (r.target_constraints f hz h1 ha hs hm hnat hsign)
 
 include h1 ha hs hm hnat hsign in
 /-- Equality returned by a checked cross-polynomial comparison identifies the

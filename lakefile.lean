@@ -594,6 +594,7 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
     `HexSignDetMathlib.CompletionProducer,
     `HexSignDetMathlib.QueryHandle, `HexSignDetMathlib.TableProducer,
+    `HexSignDetMathlib.ReencodingProducer,
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
@@ -1096,7 +1097,8 @@ lean_lib HexConformance where
       `HexSignDetMathlib.SelectedProducerConformance,
       `HexSignDetMathlib.CompletionConformance,
       `HexSignDetMathlib.QueryHandleConformance,
-      `HexSignDetMathlib.TableConformance].map Glob.one
+      `HexSignDetMathlib.TableConformance,
+      `HexSignDetMathlib.ReencodingConformance].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]

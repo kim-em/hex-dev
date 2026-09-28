@@ -94,4 +94,29 @@ def Descriptor.buildReencoding {sign : E → Int} {context : Ctx}
           else .error .replay
       | _ => .error .system
 
+/-- A failed shared-domain preparation returns absence without invoking a
+query producer or constructing a target descriptor. -/
+theorem Descriptor.buildReencoding_ofNone {sign : E → Int} {context : Ctx}
+    (source : Descriptor E Ctx sign context) (head : DensePoly E) (a b : Endpoint E)
+    (hd : Sturm.prepare sign head a b = none) :
+    source.buildReencoding head a b = .ok none := by
+  simp only [Descriptor.buildReencoding, hd]
+
+/-- An actual joint table with no row satisfying the old constraints returns
+absence, before target descriptor construction or Thom comparison. -/
+theorem Descriptor.buildReencoding_ofEmpty {sign : E → Int} {context : Ctx}
+    (source : Descriptor E Ctx sign context) (head : DensePoly E) (a b : Endpoint E)
+    (domain : Sturm.PreparedDomain E) (hd : Sturm.prepare sign head a b = some domain)
+    (t : {t : Replay E Ctx // t.check domain.sign context domain.head domain.lower domain.upper
+      (((⟨context, head, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries ++
+        source.raw.constraints) = true})
+    (ht : buildPrepared context domain
+      (((⟨context, head, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries ++
+        source.raw.constraints) = .ok t)
+    (hr : (t.val.node.system.tableRows.toList.filter fun row =>
+      decide (row.1.drop ((⟨context, head, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries.length =
+        source.raw.constraintSigns)) = []) :
+    source.buildReencoding head a b = .ok none := by
+  simp only [Descriptor.buildReencoding, hd, ht, Replay.table_rows, hr]
+
 end Hex.SignDet

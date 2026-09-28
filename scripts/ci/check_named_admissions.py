@@ -169,7 +169,7 @@ def check() -> None:
         raise ValueError("the optional rcf adapter module is missing")
     roots = ["HexRCF.RealCoefficients", "HexSignDetMathlib.SelectedProducerConformance",
              "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance",
-             "HexSignDetMathlib.TableConformance"] + [
+             "HexSignDetMathlib.TableConformance", "HexSignDetMathlib.ReencodingConformance"] + [
         "HexSignDetMathlib." + ".".join(path.relative_to(
             ROOT / "adapters/HexSignDetMathlib").with_suffix("").parts)
         for path in sorted((ROOT / "adapters/HexSignDetMathlib").rglob("*.lean"))] + [
