@@ -970,9 +970,9 @@ checks its full derivative table; use `buildCompletion` directly when you need
 the evidence as well as the completed descriptor.
 
 For successive queries at one selected root, retain its prepared domain with
-{name}`Hex.SignDet.Descriptor.prepareQueries`. This reuses the squarefree
-calculation while each query list still constructs and checks its own joint
-table. Over the same cubic coefficient field:
+{name}`Hex.SignDet.Descriptor.prepareQueries`. This avoids the initial preparation call on each query list. Table
+construction and selected-sign validation still replay the domain evidence
+and joint table; the handle carries no measured speedup guarantee. Over the same cubic coefficient field:
 
 ```lean
 private def preparedSignsFieldPasses : Bool :=

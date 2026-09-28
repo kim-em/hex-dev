@@ -32,8 +32,8 @@ query or preparation as a premise. -/
 theorem Descriptor.prepareQueries_success {context : Ctx}
     (d : Descriptor E Ctx sign context) :
     ∃ h : QueryHandle d, d.prepareQueries = some h := by
-  obtain ⟨s, hs⟩ := d.buildSigns_success f hz h1 ha hs hm hnat hsign hn hi []
-  exact d.prepareQueries_ofBuild s hs
+  obtain ⟨s, hb⟩ := d.buildSigns_success f hz h1 ha hs hm hnat hsign hn hi []
+  exact d.prepareQueries_ofBuild s hb
 
 include hz h1 ha hs hm hnat hsign hn hi in
 /-- The prepared selected-sign operation succeeds for every query list,

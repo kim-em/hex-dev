@@ -93,6 +93,12 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/Nested/AnotherConformance"):
                     audit.check()
                 additional.unlink()
+                nested_adapter = root / "adapters/HexSignDetMathlib/Nested/AnotherAdapter.lean"
+                nested_adapter.parent.mkdir()
+                nested_adapter.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in adapters/HexSignDetMathlib/Nested/AnotherAdapter"):
+                    audit.check()
+                nested_adapter.unlink()
                 sign.write_text("public import HexRCF.RealCoefficients\ntheorem bad : True := by stop\n",
                                 encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "unapproved admission"):
