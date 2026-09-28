@@ -8,6 +8,7 @@ module
 public import HexRealClosure.Algebraic
 public import HexSignDetMathlib.QueryHandle
 public import HexPolyMathlib.Interpret
+public import HexPolyMathlib.Pseudo
 
 public section
 
@@ -76,21 +77,67 @@ theorem Context.evalPoly_const (context : Context E Ctx coeffSign parent)
     _ = f (p.coeff 0) := by simp only [evalPoly, interpret_C, Polynomial.eval_C]
 
 include hn hi in
-theorem Context.signPoly_spec (context : Context E Ctx coeffSign parent) (p : DensePoly E) :
-    context.signPoly p =
+theorem Context.signQuery_spec (context : Context E Ctx coeffSign parent) (p : DensePoly E) :
+    context.signQuery p =
       (SignType.sign (context.evalPoly f hz h1 ha hs hm hnat hsign p) : Int) := by
   by_cases hsize : p.size ≤ 1
-  · rw [context.signPoly_const p hsize,
+  · rw [context.signQuery_const p hsize,
       context.evalPoly_const f hz h1 ha hs hm hnat hsign p hsize]
     exact hsign (p.coeff 0)
   · obtain ⟨signs, h⟩ := context.root.buildSigns_success f hz h1 ha hs hm hnat hsign hn hi [p]
-    rw [context.signPoly_of_success p signs h (by omega)]
+    rw [context.signQuery_of_success p signs h (by omega)]
     exact signs.value_at_root f hz h1 ha hs hm hnat hsign
 
 theorem Context.evalPoly_head (context : Context E Ctx coeffSign parent) :
     context.evalPoly f hz h1 ha hs hm hnat hsign context.root.raw.head = 0 := by
   have hr := (context.root.root_spec f hz h1 ha hs hm hnat hsign).1
   exact ((Tarski.mem_rootsIn_iff _ (context.root.head_ne_zero f hz) _ _ _).mp hr).1
+
+include hn in
+/-- The actual positive pseudo-remainder retains the selected-root sign.
+No division law or field structure on stored coefficients is required. -/
+theorem Context.queryPoly_sign (context : Context E Ctx coeffSign parent) (p : DensePoly E) :
+    SignType.sign (context.evalPoly f hz h1 ha hs hm hnat hsign (context.queryPoly p)) =
+      SignType.sign (context.evalPoly f hz h1 ha hs hm hnat hsign p) := by
+  unfold Context.queryPoly
+  split
+  · rfl
+  · split
+    · rfl
+    · have hhead : context.root.raw.head ≠ 0 := by
+        intro h
+        apply context.root.head_ne_zero f hz
+        simp only [h, interpret_zero]
+      have hsignNeg : ∀ a, coeffSign a < 0 ↔ f a < 0 := by
+        intro a
+        rw [hsign]
+        rcases lt_trichotomy (f a) 0 with h | h | h
+        · simp [_root_.sign_neg h, h]
+        · simp [h]
+        · simp [_root_.sign_pos h, not_lt.mpr h.le]
+      have hpos := positive_multiplier f hz h1 ha hs hm hn coeffSign hsignNeg p
+        context.root.raw.head hhead
+      have he := congrArg
+        (fun q : Polynomial K => q.eval (context.rootValue f hz h1 ha hs hm hnat hsign))
+        (positive_reconstruct f hz h1 ha hs hm hn coeffSign p context.root.raw.head)
+      simp only [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_add] at he
+      change f (DensePoly.positivePseudoDiv coeffSign p context.root.raw.head).multiplier *
+          context.evalPoly f hz h1 ha hs hm hnat hsign p =
+        (interpret f hz (DensePoly.positivePseudoDiv coeffSign p context.root.raw.head).quotient).eval
+            (context.rootValue f hz h1 ha hs hm hnat hsign) *
+          context.evalPoly f hz h1 ha hs hm hnat hsign context.root.raw.head +
+        context.evalPoly f hz h1 ha hs hm hnat hsign
+          (DensePoly.positivePseudoDiv coeffSign p context.root.raw.head).remainder at he
+      rw [context.evalPoly_head f hz h1 ha hs hm hnat hsign, mul_zero, zero_add] at he
+      rw [← he, _root_.sign_mul, _root_.sign_pos hpos, one_mul]
+
+include hn hi in
+/-- Query reduction preserves the existing interpretation of actual native signs. -/
+theorem Context.signPoly_spec (context : Context E Ctx coeffSign parent) (p : DensePoly E) :
+    context.signPoly p =
+      (SignType.sign (context.evalPoly f hz h1 ha hs hm hnat hsign p) : Int) := by
+  rw [Context.signPoly, context.signQuery_spec f hz h1 ha hs hm hnat hsign hn hi,
+    context.queryPoly_sign f hz h1 ha hs hm hnat hsign hn]
 
 theorem Context.evalPoly_reduce (context : Context E Ctx coeffSign parent) (p : DensePoly E) :
     context.evalPoly f hz h1 ha hs hm hnat hsign (context.reduce p) =
@@ -476,3 +523,15 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Context.handle_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Context.handle_success
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.queryPoly_sign' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.queryPoly_sign
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.signQuery_spec' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.signQuery_spec
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.signPoly_spec' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.signPoly_spec

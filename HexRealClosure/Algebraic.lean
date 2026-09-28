@@ -7,6 +7,7 @@ module
 
 public import HexSignDet.QueryHandle
 public import HexPoly.Lcm
+public import HexPoly.PseudoGcd
 
 public section
 
@@ -74,7 +75,7 @@ theorem Context.buildSigns_eq (context : Context E Ctx coeffSign parent)
 /-- Delegate the scalar query to the actual shared BKR producer. The explicit
 internal-error branch is zero; the companion proves it unreachable under a
 zero-reflecting predecessor interpretation preserving arithmetic and sign. -/
-@[expose] def Context.signPoly (context : Context E Ctx coeffSign parent)
+@[expose] def Context.signQuery (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) : Int :=
   if p.size ≤ 1 then coeffSign (p.coeff 0)
   else
@@ -82,15 +83,58 @@ zero-reflecting predecessor interpretation preserving arithmetic and sign. -/
     | .ok signs => signs.value
     | .error _ => 0
 
-theorem Context.signPoly_const (context : Context E Ctx coeffSign parent)
-    (p : DensePoly E) (h : p.size ≤ 1) : context.signPoly p = coeffSign (p.coeff 0) := by
-  simp only [signPoly, h, ↓reduceIte]
+theorem Context.signQuery_const (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) (h : p.size ≤ 1) : context.signQuery p = coeffSign (p.coeff 0) := by
+  simp only [signQuery, h, ↓reduceIte]
 
-theorem Context.signPoly_of_success (context : Context E Ctx coeffSign parent)
+theorem Context.signQuery_of_success (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) (signs : SignDet.SelectedSigns context.root [p])
     (h : context.root.buildSigns [p] = .ok signs) (hsize : 1 < p.size) :
-    context.signPoly p = signs.value := by
-  simp [signPoly, context.buildSigns_eq, h, Nat.not_le_of_gt hsize]
+    context.signQuery p = signs.value := by
+  simp [signQuery, context.buildSigns_eq, h, Nat.not_le_of_gt hsize]
+
+/-- Keep constants and already-smaller queries. For larger queries use the
+shared positive pseudo-remainder; its positive scalar preserves the sign at
+this root. Stored representatives and defining polynomials are unchanged. -/
+@[expose] def Context.queryPoly (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) : DensePoly E :=
+  if p.size ≤ 1 then p
+  else if p.natDegree < context.root.raw.head.natDegree then p
+  else (DensePoly.positivePseudoDiv coeffSign p context.root.raw.head).remainder
+
+/-- Constant queries retain the direct predecessor sign operation. -/
+theorem Context.queryPoly_const (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) (h : p.size ≤ 1) : context.queryPoly p = p := by
+  simp only [queryPoly, h, ↓reduceIte]
+
+/-- Every actual query has degree below the unchanged defining polynomial. -/
+theorem Context.queryPoly_degree (context : Context E Ctx coeffSign parent) (p : DensePoly E) :
+    (context.queryPoly p).natDegree < context.root.raw.head.natDegree := by
+  have hw := (SignDet.RawDescriptor.check_eq context.root.accepted).1
+  simp only [SignDet.RawDescriptor.wellFormed, Bool.and_eq_true, decide_eq_true_eq] at hw
+  have hpos : 0 < context.root.raw.head.natDegree := hw.1.1.1.1
+  have hhead : context.root.raw.head ≠ 0 := by
+    intro h
+    simp only [h, DensePoly.natDegree_zero, Nat.lt_irrefl] at hpos
+  unfold queryPoly
+  split
+  · rename_i h
+    rw [DensePoly.natDegree_eq_size_sub_one]
+    omega
+  · split
+    · assumption
+    · have hs := DensePoly.positivePseudoDiv_remainder_lt coeffSign p context.root.raw.head hhead
+      rw [DensePoly.natDegree_eq_size_sub_one]
+      rw [DensePoly.natDegree_eq_size_sub_one] at hpos ⊢
+      omega
+
+/-- Selected-root signs use the bounded query without changing stored syntax. -/
+@[expose] def Context.signPoly (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) : Int := context.signQuery (context.queryPoly p)
+
+theorem Context.signPoly_const (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) (h : p.size ≤ 1) : context.signPoly p = coeffSign (p.coeff 0) := by
+  rw [signPoly, context.queryPoly_const p h, context.signQuery_const p h]
 
 theorem Context.monic_of_reduce (context : Context E Ctx coeffSign parent)
     (h : context.canReduce = true) : context.root.raw.head.leadingCoeff = 1 := by
@@ -298,3 +342,7 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Element.sign_eq_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Algebraic.Element.sign_eq_zero
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.queryPoly_degree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.queryPoly_degree
