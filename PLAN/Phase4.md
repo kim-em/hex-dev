@@ -9,7 +9,7 @@ the end of Phase 4 every advertised compiled operation in the library's API
 has the strongest applicable benchmark mode from
 [`SPEC/benchmarking.md` §Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim)
 and a passing result in that mode; every advertised tactic or proof generator
-has the fresh-module evidence defined below. An *inconclusive* compiled verdict is not
+has the proof-track evidence defined below. An *inconclusive* compiled verdict is not
 a Phase 4 exit unless it is the current harness wording for a documented,
 passing one-sided upper-bound result. A failing result triggers a rollback per
 [Conventions.md §Rollback is a normal action](Conventions.md#rollback-is-a-normal-action)
@@ -35,7 +35,7 @@ observed build-cost problem.
 | Surface | Required evidence | Generic requirements replaced |
 | --- | --- | --- |
 | Mathlib-free compiled computation | An ordinary LeanBench executable, registrations with controlled one-parameter ladders and adjacent independent cost derivations, `list`/`verify`, scientific verdicts, comparator coverage, and timed-region sampling profiles. | None. |
-| Tactic execution, proof generation, and their certificate and kernel checking | Externally timed fresh-module builds below an explicit `libraries.yml` `proof_probes` root, with matched import baselines, rotated raw samples, compiler/proof artefacts, and the trust/provenance record in `SPEC/benchmarking.md`. | No LeanBench registration or executable, no `list`/`verify` entry for that surface, no complexity verdict, and no timed-region sampling profile. |
+| Tactic execution, proof generation, and their certificate and kernel checking | Build-only example modules on representative inputs, checked by the ordinary build within the default heartbeat limits, with their measured time and peak memory recorded in the headline report. Externally timed fresh-module builds below a `libraries.yml` `proof_probes` root only where the SPEC names a decision that needs them, per [`SPEC/benchmarking.md` §When to use it](../SPEC/benchmarking.md#when-to-use-it). | No LeanBench registration or executable, no `list`/`verify` entry for that surface, no complexity verdict, and no timed-region sampling profile. |
 
 A `mathlib: true` library with a separable compiled core is a **mixed**
 library, not a proof-only exception. Its compiled core obeys every ordinary
@@ -56,9 +56,9 @@ For each library `HexFoo` advancing through Phase 4:
    expression in each `setup_benchmark` is the independently derived expected
    family scaling for a two-sided registration or the cited published bound
    for a one-sided registration, never a model read from observed timings.
-   Proof-track operations instead have
-   named fresh-module probes and matched baselines under an explicit manifest
-   `proof_probes` directory; those probes are not registrations.
+   Proof-track operations instead have build-only example modules, and
+   fresh-module probes under a `proof_probes` directory only where their SPEC
+   names a decision that needs them. Neither is a registration.
 
 2. **`lakefile.lean` exe entry** for a library with compiled-track targets:
 
@@ -106,8 +106,8 @@ For each library `HexFoo` advancing through Phase 4:
    entry in `libraries.yml`, recorded in
    `reports/<lib>-performance.md §Profile`. Categorise leaf cost
    across {own code, GMP, allocation, Lean runtime}; rank inclusive
-   cost; explain the dominant entries. Proof-track probes carry the external
-   build evidence required by `SPEC/benchmarking.md` instead of a timed-region
+   cost; explain the dominant entries. Proof-track surfaces record their example
+   timings, and any fresh-module probe evidence, instead of a timed-region
    sampling profile.
 
 7. **Headline report** at `reports/<lib>-performance.md` per
@@ -160,7 +160,8 @@ For library `hex-foo`, Phase 4 is done when:
 - every compiled operation, tactic or proof generator listed in the library's
   SPEC API surface is assigned to a track, every compiled-track operation has a `setup_benchmark` or
   `setup_fixed_benchmark` registration in the `HexFoo.Bench` exe, and every
-  proof-track operation has the specified externally timed fresh-module probe;
+  proof-track operation has its build-only examples, and the fresh-module
+  probes its SPEC requires, if any;
 - the headline report names the strongest applicable mode from
   `SPEC/benchmarking.md`'s ordered rule for every performance-evidence
   registration; fixed registrations used only as hash, comparator, or protocol
@@ -206,8 +207,8 @@ For library `hex-foo`, Phase 4 is done when:
 - a profile run per
   [SPEC/profiling.md §Coverage requirement](../SPEC/profiling.md#coverage-requirement)
   is recorded in `reports/<lib>-performance.md §Profile` for every compiled
-  input family; proof-track surfaces instead record the required fresh-build
-  samples and provenance;
+  input family; proof-track surfaces instead record their example timings and
+  any required fresh-build samples and provenance;
 - the headline report at `reports/<lib>-performance.md` exists with
   the five mandated subsections and full artefact traceability;
 - the headline report's §Concerns subsection is empty. A passing mode-2 or

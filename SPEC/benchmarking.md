@@ -358,6 +358,25 @@ Ordinary mathematical theorem applications and instance-law proofs require
 correctness tests, not dedicated performance probes. Profile their compilation
 only when investigating an observed build-cost problem.
 
+### When to use it
+
+A tactic or proof generator needs correctness tests and a performance budget.
+The default evidence is a set of build-only example modules on representative
+inputs, including the largest input the SPEC claims to handle. The ordinary
+build checks them within the default heartbeat limits, which bound elaboration
+and kernel work deterministically. The library's headline report records their
+measured wall time and peak memory, with the machine and date. This is enough
+for a claim of the form "this example checks in under ten seconds and one
+gigabyte", and for comparing alternatives whose costs differ by a large factor.
+
+The paired fresh-module protocol below is for a decision that depends on a
+difference a single measurement cannot resolve, typically less than a factor
+of two: choosing between two implementations of similar cost, or detecting a
+regression of that size. Declare a `proof_probes` root only when the library's
+SPEC names such a decision, and state the decision next to the declaration.
+Do not declare one because the mechanism exists, because another library has
+one, or to complete a phase.
+
 Elaboration, tactic execution, emitted proof terms, and ordinary kernel
 checking are measured only by an external runner building fresh Lean modules.
 The module sources live recursively below a directory listed in the owning
