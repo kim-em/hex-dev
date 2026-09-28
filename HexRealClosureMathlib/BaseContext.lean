@@ -385,10 +385,8 @@ end Hex.RealClosure.BaseContext
 /-- info: 'Hex.RealClosure.BaseContext.Element.embed_compare' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.BaseContext.Element.embed_compare
-/-- info: 'Hex.RealClosure.BaseContext.InfinitesimalModel.strictOrderedRing' depends on axioms: [propext,
-  Classical.choice,
-  Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.BaseContext.InfinitesimalModel.strictOrderedRing' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.BaseContext.InfinitesimalModel.strictOrderedRing
 /-- info: 'Hex.RealClosure.BaseContext.Element.infinitesimal_orderSign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
