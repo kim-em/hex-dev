@@ -30,7 +30,7 @@ from the mapped head when the new descriptor is built. -/
   signs := raw.signs
 
 /-- Zero reflection preserves degree and therefore descriptor shape. -/
-theorem RawDescriptor.map_wellFormed [NatCast E] [Mul E] [NatCast F] [Mul F]
+theorem RawDescriptor.map_wellFormed
     (convert : E → F) (hz : ∀ a, convert a = 0 ↔ a = 0)
     (context : NewCtx) (raw : RawDescriptor E Ctx) :
     (raw.map convert hz context).wellFormed = raw.wellFormed := by

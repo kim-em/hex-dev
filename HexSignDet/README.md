@@ -70,7 +70,10 @@ no source replay and reconstructs derivative queries under target operations.
 The supplied coefficient map must reflect canonical zero. Arbitrary conversions
 retain ordinary builder diagnostics. The companion proves success and preservation
 of the selected root when both lawful coefficient interpretations denote the
-same converted values, including noninjective representations and infinitesimals.
+same converted values, including noninjective representations. They assume no
+Archimedean property and apply to any lawful interpretation into a real closed field.
+The nested-infinitesimal fixture tests executable context changes; it does not
+supply such an interpretation or a semantic proof for that coefficient type.
 Those semantic results inherit the named #10389 root-sum admission.
 
 Context, head, interval and query-list bindings use literal equality. Tarski

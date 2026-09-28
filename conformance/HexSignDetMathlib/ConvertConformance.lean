@@ -8,6 +8,7 @@ module
 public import HexSignDetMathlib.Convert
 public import HexSignDetMathlib.ReencodingConformance
 public import HexSignDet.Infinitesimal
+public import HexRCF.RealCoefficients.FieldSpecialize
 public meta import HexSignDet.Infinitesimal
 public meta import HexSignDet
 public meta import HexPoly.InterpretTests
@@ -91,28 +92,26 @@ set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
 #guard cubicContextPasses
 
-/-- Embed rational coefficients using the field's existing scalar operation. -/
-def cubicConstant (q : Rat) : CubicField := q • (1 : CubicField)
+/-- Zero reflection for the existing rational embedding into the cubic field. -/
+theorem cubic_zero (q : Rat) : (PolyQuot.ofRat q : CubicField) = 0 ↔ q = 0 := by
+  rw [← Field.value_eq_zero rep binding real,
+    FieldSpecialize.value_ofRat rep binding real, Rat.cast_eq_zero]
 
-theorem cubicConstant_value (q : Rat) : Field.value rep (cubicConstant q) = (q : ℝ) := by
-  apply Complex.ofReal_injective
-  rw [Field.value_complex rep binding real]
-  change PolyQuot.toComplex (q • (1 : CubicField)) rep binding = _
-  rw [PolyQuot.map_smul, PolyQuot.map_one, mul_one]
-  norm_cast
+/-- A converter need not preserve values; the existing builder reports its
+ordinary domain error when the converted finite bounds are reversed. -/
+def badConversionPasses : Bool :=
+  let raw : RawDescriptor Rat Nat :=
+    ⟨7, DensePoly.ofList [-2, 0, 1], .finite 1, .finite 2, [], []⟩
+  match Descriptor.validate Sturm.orderSign 7 raw with
+  | none => false
+  | some source =>
+    match source.convert (fun q => -q) (fun _ => neg_eq_zero) Sturm.orderSign 8 with
+    | .ok (.error .domain) => true
+    | _ => false
 
-theorem cubicConstant_zero (q : Rat) : cubicConstant q = 0 ↔ q = 0 := by
-  have he : PolyQuot.toComplex (cubicConstant q) rep binding = (q : ℂ) := by
-    rw [cubicConstant, PolyQuot.map_smul, PolyQuot.map_one, mul_one]
-  constructor
-  · intro h
-    rw [h, PolyQuot.map_zero] at he
-    exact_mod_cast he.symm
-  · intro h
-    apply PolyQuot.toComplex_injective rep binding
-    dsimp only
-    rw [he, PolyQuot.map_zero, h]
-    norm_cast
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard badConversionPasses
 
 /-- Move a rational root descriptor into the actual cubic coefficient field.
 The selected root is √2; comparison with ∛2 is then an ordinary selected sign. -/
@@ -122,7 +121,7 @@ def intoCubicPasses : Bool :=
   match Descriptor.validate Sturm.orderSign 7 raw with
   | none => false
   | some source =>
-    match source.convert cubicConstant cubicConstant_zero fieldSign 8 with
+    match source.convert PolyQuot.ofRat cubic_zero fieldSign 8 with
     | .ok (.ok target) =>
       target.raw.context == 8 && target.raw.indices.isEmpty && target.raw.signs.isEmpty &&
       target.raw.lower == .finite 0 && target.raw.upper == .posInf &&
@@ -134,8 +133,8 @@ set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
 #guard intoCubicPasses
 
-/-- Fresh context evidence is also required for a root trapped between nested
-infinitesimal bounds, where no positive rational isolating point exists. -/
+/-- Executable context-only conversion for a root trapped between nested
+infinitesimal bounds. This fixture supplies no real-closed interpretation. -/
 def nestedContextPasses : Bool :=
   let sourceRaw : RawDescriptor Infinitesimal.Second Nat :=
     ⟨7, Infinitesimal.nested, .finite 0, .finite (2 * Infinitesimal.delta), [], []⟩
@@ -199,12 +198,12 @@ end Noncanonical
 /-- The rational-to-cubic embedding satisfies the production success theorem
 for every validated source, independently of the particular test inputs. -/
 theorem cubic_success (source : Descriptor Rat Nat Sturm.orderSign 7) :
-    ∃ target, source.convert cubicConstant cubicConstant_zero fieldSign 8 = .ok (.ok target) := by
+    ∃ target, source.convert PolyQuot.ofRat cubic_zero fieldSign 8 = .ok (.ok target) := by
   exact source.convert_success (f := fun q : Rat => (q : ℝ))
     (hfz := fun _ => Rat.cast_eq_zero)
     (g := Field.value rep) (hgz := Field.value_eq_zero rep binding real)
-    (convert := cubicConstant) (hcz := cubicConstant_zero) (newSign := fieldSign)
-    (hvalue := cubicConstant_value) (hfnat := fun _ => Rat.cast_natCast _)
+    (convert := PolyQuot.ofRat) (hcz := cubic_zero) (newSign := fieldSign)
+    (hvalue := FieldSpecialize.value_ofRat rep binding real) (hfnat := fun _ => Rat.cast_natCast _)
     (hfm := fun _ _ => Rat.cast_mul _ _) (hgnat := Field.value_natCast rep binding real)
     (hgm := Field.value_mul rep binding real)
     (hf1 := Rat.cast_one) (hfa := fun _ _ => Rat.cast_add _ _)
@@ -212,6 +211,31 @@ theorem cubic_success (source : Descriptor Rat Nat Sturm.orderSign 7) :
     (hg1 := Field.value_one rep binding real) (hga := Field.value_add rep binding real)
     (hgs := Field.value_sub rep binding real) (hgn := value_neg)
     (hgi := Field.value_inv rep binding real) (hgsign := sign_spec) 8
+
+/-- The converted descriptor selects the same mathematical root in the actual
+cubic coefficient field, for every successful checked conversion. -/
+theorem cubic_root (source : Descriptor Rat Nat Sturm.orderSign 7)
+    (target : Descriptor CubicField Nat fieldSign 8)
+    (h : source.convert PolyQuot.ofRat cubic_zero fieldSign 8 = .ok (.ok target)) :
+    target.root (Field.value rep) (Field.value_eq_zero rep binding real)
+        (Field.value_one rep binding real) (Field.value_add rep binding real)
+        (Field.value_sub rep binding real) (Field.value_mul rep binding real)
+        (Field.value_natCast rep binding real) sign_spec =
+      source.root (fun q : Rat => (q : ℝ)) (fun _ => Rat.cast_eq_zero)
+        Rat.cast_one (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
+        (fun _ _ => Rat.cast_mul _ _) (fun _ => Rat.cast_natCast _)
+        Noncanonical.rational_sign := by
+  exact source.convert_root (f := fun q : Rat => (q : ℝ))
+    (hfz := fun _ => Rat.cast_eq_zero)
+    (g := Field.value rep) (hgz := Field.value_eq_zero rep binding real)
+    (convert := PolyQuot.ofRat) (hcz := cubic_zero) (newSign := fieldSign)
+    (hvalue := FieldSpecialize.value_ofRat rep binding real)
+    (hfnat := fun _ => Rat.cast_natCast _) (hfm := fun _ _ => Rat.cast_mul _ _)
+    (hgnat := Field.value_natCast rep binding real) (hgm := Field.value_mul rep binding real)
+    (hf1 := Rat.cast_one) (hfa := fun _ _ => Rat.cast_add _ _)
+    (hfs := fun _ _ => Rat.cast_sub _ _) (hfsign := Noncanonical.rational_sign)
+    (hg1 := Field.value_one rep binding real) (hga := Field.value_add rep binding real)
+    (hgs := Field.value_sub rep binding real) (hgsign := sign_spec) 8 target h
 
 /-- info: 'Hex.SignDet.RawDescriptor.map_wellFormed' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
@@ -232,8 +256,11 @@ theorem cubic_success (source : Descriptor Rat Nat Sturm.orderSign 7) :
 /-- info: 'Hex.SignDetMathlib.ConvertConformance.cubic_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_success
-/-- info: 'Hex.SignDetMathlib.ConvertConformance.cubicConstant_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.ConvertConformance.cubic_root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms cubicConstant_zero
+#print axioms cubic_root
+/-- info: 'Hex.SignDetMathlib.ConvertConformance.cubic_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms cubic_zero
 
 end Hex.SignDetMathlib.ConvertConformance

@@ -1090,24 +1090,17 @@ larger coefficient field. Here the source selects √2 over the rationals. Movin
 its descriptor into the existing field ℚ(∛2) allows a query comparing it with ∛2:
 
 ```lean
-private def cubicConstant (q : Rat) : signsField := q • (1 : signsField)
-
-private theorem cubicConstant_zero (q : Rat) : cubicConstant q = 0 ↔ q = 0 := by
-  have he : PolyQuot.toComplex (cubicConstant q)
-      cubicGenerator.rep cubicGenerator.rep_mk =
-      (q : ℂ) := by
-    rw [cubicConstant, PolyQuot.map_smul,
-      PolyQuot.map_one, mul_one]
-  constructor
-  · intro h
-    rw [h, PolyQuot.map_zero] at he
-    exact_mod_cast he.symm
-  · intro h
-    apply PolyQuot.toComplex_injective
-      cubicGenerator.rep cubicGenerator.rep_mk
-    dsimp only
-    rw [he, PolyQuot.map_zero, h]
-    norm_cast
+private theorem cubic_zero (q : Rat) :
+    (PolyQuot.ofRat q : signsField) = 0 ↔ q = 0 := by
+  rw [← Field.value_eq_zero cubicGenerator.rep
+      cubicGenerator.rep_mk
+      ((AlgebraicNumber.isReal_iff cubicGenerator).mp
+        CubeTwo.realAlgebraic.property),
+    FieldSpecialize.value_ofRat cubicGenerator.rep
+      cubicGenerator.rep_mk
+      ((AlgebraicNumber.isReal_iff cubicGenerator).mp
+        CubeTwo.realAlgebraic.property),
+    Rat.cast_eq_zero]
 
 private def convertedRootPasses : Bool :=
   let raw : RawDescriptor Rat Nat :=
@@ -1115,7 +1108,7 @@ private def convertedRootPasses : Bool :=
   match Descriptor.validate Sturm.orderSign 7 raw with
   | none => false
   | some root =>
-    match root.convert cubicConstant cubicConstant_zero signsFieldSign 8 with
+    match root.convert PolyQuot.ofRat cubic_zero signsFieldSign 8 with
     | .ok (.ok moved) =>
       moved.raw.context == 8 &&
         moved.signAt (signsX - DensePoly.C signsAlpha) == 1 &&
@@ -1137,8 +1130,11 @@ stay the same. No old certificate is copied by this operation.
 {name}`Hex.SignDet.Descriptor.convert_success` and
 {name}`Hex.SignDet.Descriptor.convert_root` prove success and preservation of the
 selected root when both coefficient interpretations are lawful and the
-conversion preserves their values. They also cover noninjective representations
-and infinitesimal coefficients, without assuming rational isolating intervals.
+conversion preserves their values. They cover noninjective representations and
+assume no Archimedean property or rational isolating intervals. Applying them
+to infinitesimal coefficients requires a lawful interpretation into a real
+closed field. The nested-infinitesimal fixture tests execution and context
+changes; it does not provide that interpretation.
 These semantic proofs inherit the named #10389 root-sum admission. An arbitrary
 converter still has the builder's ordinary input and internal-error diagnostics.
 
