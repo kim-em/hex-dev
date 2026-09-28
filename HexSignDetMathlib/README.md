@@ -140,7 +140,8 @@ root/sign condition, including omitted words, empty queries and root-free
 domains. `determine_isSome` proves that the option-valued frontend succeeds
 exactly on the shared valid root domains; this validity result has no root-sum
 admission. `determine_correct` gives all returned root counts and uses the
-named #10389 bridge. These proofs follow the actual prepared BKR producer and
+named #10389 bridge, as do the producer-success results. These proofs follow
+the actual prepared BKR producer and
 exclude its internal-error fallback, without assuming successful construction
 or injectivity of coefficient representations.
 

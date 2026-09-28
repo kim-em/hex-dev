@@ -308,6 +308,10 @@ fails `Replay.check`; that failure does not prove the requested mathematical
 result false. Negative/nonintegral counts or a singular selected matrix on a
 valid domain cannot occur for the specified producer. Prove these exclusions;
 do not convert an internal invariant gap into `none` or a default table.
+An explicitly specified diagnostic fallback in a total operation requires a
+proof that it is unreachable under the coefficient-interpretation laws.
+`determinePrepared_success` must establish this for the prepared table API;
+the fallback cannot replace any part of the producer-success proof.
 
 Recursion splits finite query lists strictly; empty and singleton lists are
 explicit bases. Products, derivative lists, row selection and sorting have

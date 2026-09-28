@@ -844,7 +844,8 @@ proves that the actual prepared BKR producer always supplies a checked table
 under the coefficient-interpretation laws.
 {name}`Hex.SignDet.determine_correct` identifies every returned count with the
 number of mathematical roots having that sign pattern, including zero for
-omitted patterns. These count results use the named root-sum admission in
+omitted patterns. Both the producer-success and count-correctness results use
+the named root-sum admission in
 [#10389](https://github.com/kim-em/hex-dev/issues/10389).
 
 Derivative signs identify a selected root. Here the positive root of

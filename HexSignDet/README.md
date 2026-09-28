@@ -106,8 +106,8 @@ a proof that the independent replay accepts the resulting tree. Its `BuildError`
 diagnostics remain available for arbitrary coefficient operations. The companion
 proves construction succeeds under its lawful interpretation and the named
 #10389 root-sum bridge; these diagnostics are not mathematical domain failures,
-and this is not yet the total `determinePrepared`
-API. No supplied roots or guessed counts enter construction. `referencePrepared`
+and `determinePrepared` wraps the same producer with its success guarantee.
+No supplied roots or guessed counts enter construction. `referencePrepared`
 builds the exponential full-ternary system for small-case comparisons; production
 recursion never calls it.
 

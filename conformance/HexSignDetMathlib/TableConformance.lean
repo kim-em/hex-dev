@@ -49,6 +49,8 @@ def ratHead : DensePoly Rat := ratX * ratX - 1
   [([-1, -1], 1), ([1, 0], 1)] [[0, 0], [1, 1], [], [1]]
 #guard countsAs Sturm.orderSign ratHead .negInf .posInf [ratX, ratX - 1] false
   [([-1, -1], 1), ([1, 0], 1)] [[0, 0], [1, 1]]
+#guard countsAs Sturm.orderSign ratHead .negInf .posInf [-ratX] true
+  [([-1], 1), ([1], 1)] [[0]]
 #guard countsAs Sturm.orderSign ratHead (.finite 0) (.finite 2) [ratX, ratX - 1] true
   [([1, 0], 1)] [[-1, -1], [0, 0]]
 #guard countsAs Sturm.orderSign ratHead .negInf .posInf [] true [([], 2)] [[0]]
@@ -60,6 +62,8 @@ def ratHead : DensePoly Rat := ratX * ratX - 1
 #guard (determine Sturm.orderSign 7 (0 : DensePoly Rat) .negInf .posInf []).isNone
 #guard (determine Sturm.orderSign 7 (ratHead * ratHead) .negInf .posInf [ratX]).isNone
 #guard (determine Sturm.orderSign 7 ratHead (.finite 2) (.finite 0) []).isNone
+#guard (determine Sturm.orderSign 7 ratHead (.finite 0) (.finite 0) []).isNone
+#guard (determine Sturm.orderSign 7 ratHead (.finite 1) (.finite 2) [0]).isNone
 
 -- This carrier has canonical zero and distinct representations of the same
 -- nonzero value. It has ordinary operations and no field instance.
@@ -68,6 +72,9 @@ def ratHead : DensePoly Rat := ratX * ratX - 1
   [([-1], 1), ([1], 1)] [[0], []]
 #guard decide (Hex.TarskiTests.Noncanonical.head ≠
   HexPoly.InterpretTests.x * HexPoly.InterpretTests.x - 1)
+#guard (determine Hex.TarskiTests.Noncanonical.sign 7
+  (Hex.TarskiTests.Noncanonical.head * Hex.TarskiTests.Noncanonical.head)
+  .negInf .posInf []).isNone
 
 -- Real coefficients come from the selected embedding of the actual cubic
 -- field. A nonzero query polynomial vanishes at one of the two head roots.
@@ -78,7 +85,7 @@ set_option maxHeartbeats 1000000 in
   [([-1, -1, -1], 1), ([0, 1, -1], 1)] [[1, 1, -1], [0, 0, 0]]
 
 /-- Negation respects the actual real embedding used by the coefficient sign. -/
-theorem value_neg (a : CubicField) : Field.value rep (-a) = -Field.value rep a := by
+private theorem value_neg (a : CubicField) : Field.value rep (-a) = -Field.value rep a := by
   apply Complex.ofReal_injective
   rw [Complex.ofReal_neg, Field.value_complex rep binding real,
     Field.value_complex rep binding real, PolyQuot.map_neg]
