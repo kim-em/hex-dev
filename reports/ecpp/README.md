@@ -60,11 +60,67 @@ meant later trials did not rebuild the target, so those files measure
 up-to-date checks rather than proof production. They are excluded from the
 proof medians above for that methodological reason.
 
-The explicit tactic limit is 65-bit subjects and numerals, 8,192 inspected
-syntax nodes, 32 total certificate nodes, and 128 inverse witnesses per step.
-The 256- and 512-bit fixtures are compiled-checking and oracle inputs, not
-kernel-replay CI requirements or admitted tactic inputs. The bounded PARI
-parser allows 16,384 input bytes, 170 digits per integer, 20 rows, 512-bit
-integers and scalars, 1,200 inverse operations, and 200 endpoint search fuel.
-These limits cover the measured supplied vectors; exhaustion is reported
-explicitly.
+## Larger replay and import cost
+
+`proof256.json` and `proof512.json` retain the five trial-major runs of import
+baseline, reification, direct kernel replay and tactic replay. These runs
+used temporary replay limits on source `fc032f580` (recorded in each file),
+Lean 4.34.1 and automatically leased CPUs 56 and 58. Every completed sample
+was retained. They establish replay of the frozen inputs, not successful
+certificate generation for every subject at the same bit size.
+
+| Bits | Import baseline | Reification | Direct kernel proof | Tactic proof | Tactic peak RSS |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 256 | 3.402 s | 3.421 s | 6.749 s | 4.934 s | 4.273 GiB |
+| 512 | 3.286 s | 3.390 s | 15.220 s | 8.484 s | 4.923 GiB |
+
+The frozen 256-bit raw constructor traversal uses 31,511 syntax nodes and
+13 total certificate nodes; its largest step uses 368 inverse witnesses.
+The 512-bit traversal uses 101,839 syntax nodes, 23 certificate nodes and
+at most 764 inverse witnesses in one step. The admitted policy is therefore
+512-bit subjects and numerals, 131,072 inspected syntax nodes, 32 certificate
+nodes and 1,024 inverse witnesses per step. Fresh-module probes cover all
+three admitted frozen sizes in the existing CI job. Kernel axiom audits
+report only `propext`, `Classical.choice`, and `Quot.sound`.
+
+`import-cost.json` retains six adjacent alternating pairs for `Nat.Prime 17`
+using `primality`, with and without importing the ECPP bridge (CPU 90).
+Median fresh-module time was 1.790 s without that import and 3.420 s with it;
+the median paired difference was 1.648 s. Peak RSS medians were 2.040 GiB and
+3.977 GiB. The PARI interface remains an explicit optional import.
+
+The bounded PARI parser allows 16,384 input bytes, 170 digits per integer,
+20 rows, 512-bit integers and scalars, 1,200 inverse operations per scalar,
+and 200 endpoint search fuel. These limits cover the measured supplied
+vectors; exhaustion is reported explicitly.
+
+## Compact source and PARI interface
+
+`pari-interface.json` records end-to-end generation and file export using
+PARI/GP 2.17.3, plus the deterministic protocol-stub test. Real PARI generation
+produced a 2,661-byte source module for the 256-bit subject and a 7,098-byte
+module for the 512-bit subject. The expanded constructor fixtures occupy
+137,595 and 772,367 source bytes. These are representations of the same
+checking obligations: compact source recomputes the inverse transcript during
+elaboration and the kernel still checks the complete raw certificate.
+
+The test builds the generated module and its importing proof after replacing
+`gp` with an executable that records any invocation and fails. It also copies
+both `Nat.Prime` and `Hex.Nat.Prime` TryThis replacements verbatim into a fresh
+module and kernel-replays them without calling GP. No invoked-GP marker was
+created. The initial 512-bit process attempt hit PARI's 8 MB default stack;
+that failure is retained in the interface record. The process policy now
+starts with a fixed 64 MB stack and reports stack exhaustion as a CAS failure.
+
+The process conformance tests cover missing executables, stderr/nonzero exit,
+framing, composite results, stdout/stderr bounds, cancellation and a timeout
+whose parent and descendant ignore TERM. The export test checks exclusive
+creation and that a duplicate export preserves the original file.
+
+`compact-replay.json` retains three serial trial-major fresh builds of each
+large proof probe using automatically leased CPU 56. The compact
+fixture module was already built, so this measures proof production rather
+than compact decoding or reification. Median wall times were 4.933 s
+for 256 bits and 8.561 s for 512 bits. All six axiom audits contain
+only the three standard Lean axioms listed above; all completed samples and
+host observations are retained.

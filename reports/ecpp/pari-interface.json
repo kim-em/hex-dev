@@ -1,0 +1,52 @@
+{
+  "schema": "hex-ecpp-pari-interface-v1",
+  "pari_version": "2.17.3",
+  "records": [
+    {
+      "bits": 65,
+      "producer": "stub",
+      "frozen_source_bytes": 775,
+      "sha256": "4ffd49a64bf9d0ec7d608dcac0017113428c4a5274906f1466d285816d7e2efb",
+      "kernel_replay_without_gp": true,
+      "roundtrip_suggestions": false
+    },
+    {
+      "bits": 256,
+      "producer": "real GP",
+      "frozen_source_bytes": 2661,
+      "sha256": "8b1db8dd593ea75b84417ff5f8eb086bf4df186f472b2904ffa5e0a63d901359",
+      "kernel_replay_without_gp": true,
+      "roundtrip_suggestions": false
+    },
+    {
+      "bits": 512,
+      "producer": "real GP",
+      "frozen_source_bytes": 7098,
+      "sha256": "17684c24863e0fc6fcb7499762183352d57288da82498c72f925573df576bc1b",
+      "kernel_replay_without_gp": true,
+      "roundtrip_suggestions": false
+    },
+    {
+      "bits": 512,
+      "producer": "real GP",
+      "frozen_source_bytes": 7098,
+      "sha256": "5b2188c037a0a0ad17d8d2a97d4c41b0a375a4d1768189d8bffd9e8ecfa18e1f",
+      "kernel_replay_without_gp": true,
+      "roundtrip_suggestions": true
+    },
+    {
+      "bits": 65,
+      "producer": "stub",
+      "frozen_source_bytes": 791,
+      "sha256": "9958a5894b2c8a23db26bebacbbb3a45d859ae18acb51d2f477037674aba716e",
+      "kernel_replay_without_gp": true,
+      "roundtrip_suggestions": true
+    }
+  ],
+  "initial_512_failure": {
+    "stack_bytes": 8000000,
+    "diagnostic": "PARI stack overflows",
+    "output_written": false
+  },
+  "process_stack_bytes": 64000000
+}

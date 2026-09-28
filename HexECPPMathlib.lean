@@ -11,5 +11,6 @@ import HexECPPMathlib.Reduction
 import HexECPPMathlib.Order
 import HexECPPMathlib.Soundness
 import HexECPPMathlib.Elab
+import HexECPPMathlib.Compact
 
 /-! Prime-field semantics, Hasse bound, and unconditional ECPP soundness. -/

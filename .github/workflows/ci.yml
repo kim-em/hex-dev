@@ -424,6 +424,7 @@ jobs:
             lake build HexIntFactorFieldConformance
           fi
           .lake/build/bin/hexorderedfn_liouville_test
+          python3 scripts/ci/check_ecpp_pari.py
       - name: Check real-closure architecture experiments
         if: steps.classify.outputs.docs_only != 'true'
         env:
