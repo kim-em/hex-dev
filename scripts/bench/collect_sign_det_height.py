@@ -48,7 +48,8 @@ def audit_runtime(executable, out):
         raise ValueError("the declared cost model requires verified GMP gcd and bit-length routes")
     return {"implementation": "GMP", "evidence": record.name, "sha256": digest(record),
             "bit_length": "lean_nat_log2 -> lean::mpz::log2 -> mpz_sizeinbase(base=2)",
-            "version": None, "version_note": "GMP version is not exported by this static binary"}
+            "version": None,
+            "version_note": "Precise GMP version is unrecorded; call routes are audited"}
 
 
 def main():
