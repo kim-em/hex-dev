@@ -56,14 +56,14 @@ def leafBudget : Hex.Nat.ConstructionBudget := {
   maxSubsets := 32
   maxFactors := 16
   factor := {
-    primeBudget := ⟨1, 2048⟩
+    primeBudget := { rhoRestarts := 1, rhoSteps := 2048 }
     primeFuel := 8
     factorFuel := 16
     smoothBounds := [64, 512], smoothBases := [2] } }
 
 /-- Fixed partial-factor package for one CM order. -/
 def orderBudget : Hex.Nat.FactorSearchBudget := {
-  primeBudget := ⟨1, 2048⟩
+  primeBudget := { rhoRestarts := 1, rhoSteps := 2048 }
   primeFuel := 1
   factorFuel := 16
   attemptLimit := some 4
@@ -84,7 +84,7 @@ structure SearchStats where
   scalarWork : Nat := 0
   /-- Checked proposals rejected when their recursive child could not be built. -/
   backtracks : Nat := 0
-  /-- Last unresolved local branch, retained when the portfolio is exhausted. -/
+  /-- First unresolved local branch, retained when the portfolio is exhausted. -/
   unresolved : Option SearchError := none
 deriving Repr
 
@@ -187,6 +187,11 @@ def certBits : Cert → Nat
   | .step n a b x y d ws child => 1 + ([n, a, b, x, y, d].map HexArith.bitLength).sum +
       (ws.map fun w => 1 + HexArith.bitLength w).sum + certBits child
 
+/-- Maximum scalar additions performed by a complete checker replay. -/
+def replayWork : Cert → Nat
+  | .base _ => 0
+  | .step _ _ _ _ _ _ _ child => 2 * HexArith.bitLength child.subject + replayWork child
+
 private def remember (budget : SearchBudget) (n : Nat) (c : Cert) : SearchM Cert := do
   if certBits c > budget.maxOutputBits then fail n .outputBits
   if (← get).memo.length >= budget.maxMemo then fail n .memo
@@ -211,6 +216,7 @@ private def point (budget : SearchBudget) (n q cofactor z a b : Nat) :
     if !onCurve n a b x y then continue
     let some (.affine qx qy, _) ← scalar budget n a cofactor (.affine x y) | continue
     let some (.infinity, ws) ← scalar budget n a q (.affine qx qy) | continue
+    charge budget n .scalarWork (2 * HexArith.bitLength q)
     if checkStep n a b qx qy discrInv ws q then
       return some ⟨a, b, qx, qy, discrInv, ws⟩
   return none
@@ -247,6 +253,7 @@ def search (budget : SearchBudget) : Nat → Nat → SearchM (Option Cert)
               if let some child ← search budget depth q then
                 let c := Cert.step n a b proposal.x proposal.y proposal.discrInv
                   proposal.inverses child
+                charge budget n .scalarWork (replayWork c)
                 if checkAt n c then return some (← remember budget n c)
               modify fun s => { s with stats := { s.stats with backtracks := s.stats.backtracks + 1 } }
               -- Different points on this curve have the same child obligation.
@@ -263,7 +270,12 @@ deriving Repr
 /-- Native production accepts only the subject, seed and resource allocation.
 Every success is complete raw certificate data accepted by `checkAt`. -/
 def produce (n seed : Nat) (budget : SearchBudget := {}) : SearchResult :=
-  let (result, state) := ((search budget budget.maxDepth n).run).run { rand := Hex.Rand.ofSeed seed }
+  let computation : SearchM (Option Cert) := do
+    let result ← search budget budget.maxDepth n
+    if let some c := result then
+      charge budget n .scalarWork (replayWork c)
+    return result
+  let (result, state) := computation.run.run { rand := Hex.Rand.ofSeed seed }
   let result := match result with
     | .error e => .error e
     | .ok (some c) => if checkAt n c then .ok c else .error ⟨n, .portfolio⟩

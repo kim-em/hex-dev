@@ -62,6 +62,7 @@ meta def compactSyntax (source : String) (cert : Cert) : MetaM Term := do
   let source := Syntax.mkStrLit source
   `(term| ecpp_cert% $source:str using $leaf)
 
+set_option hygiene false in
 /-- Common explicit export for certificate producers. Validate the destination
 before search, then create it exclusively after kernel-checked generation. -/
 meta def exportCertificate (mod decl : TSyntax `ident) (term : Term)
@@ -83,6 +84,7 @@ meta def exportCertificate (mod decl : TSyntax `ident) (term : Term)
   let (source, cert) ← Command.liftTermElabM do
     let e ← Term.elabTermEnsuringType term (mkConst ``Nat)
     Term.synthesizeSyntheticMVarsNoPostponing
+    let e ← instantiateMVars e
     Hex.PrimalityTactic.checkClosed "#ecpp_export" e
     let some n ← getNatValue? (← whnf (← instantiateMVars e))
       | throwError "#ecpp_export: expected a closed natural-number numeral"

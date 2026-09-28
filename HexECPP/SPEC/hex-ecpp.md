@@ -238,6 +238,28 @@ Frozen output contains curve and point proposals and an explicit checked
 terminal certificate; replay performs no CM search and invokes no external
 program. Ordinary `primality` imports and its fallback behavior are unchanged.
 
+The default allocation admits 256 input bits, depth 32, 2048 combined
+discriminant/order candidates, 8192 root calls, 4096 nonresidue attempts,
+4096 point attempts, 32768 reserved factor-work units, one million scalar
+additions, two million bits of certificate data and 128 memoized successes.
+Local point and nonresidue retry limits are eight and 64, respectively. A
+root call has a quadratic modular-operation ceiling in input bits, with
+fuel also bounding Jacobi and Euclidean descent. Scalar work reserves the
+bit schedule's maximum additions, including compiled checker replays.
+
+Factor-work units are allocation units, not elapsed time or exact operation
+counts. A terminal construction call reserves 64 attempts under a fixed
+profile: depth eight, 16 factors, 32 subsets, 16 factor worklist entries,
+one rho restart of at most 2048 steps, and p-minus-one bounds 64 and 512
+with base two. An order call reserves four attempts with the same rho and
+smooth bounds, a 16-entry worklist and no recursive primality search. Each
+package therefore bounds zero-attempt trial division and all per-attempt
+work independently. Reservations, including unused allowances, are charged
+before invocation and never refunded. Memoized certificates are individually
+subject to the output-size bound, so the memo entry and output bounds also
+bound retained data. The total mathematical checker remains independent of
+all these search policies.
+
 Acceptance requires complete native successes above 128 bits, including
 recursive ECPP chains and kernel proofs, on subjects where the full current
 `primality?` construction route (including applicable factor extensions)

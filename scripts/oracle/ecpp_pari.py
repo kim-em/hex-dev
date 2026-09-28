@@ -154,10 +154,36 @@ def pari_group_check(rows: list[dict]) -> None:
         assert normalized == want, (i, normalized, want)
 
 
+def jacobi(a: int, n: int) -> int:
+    sign = 1
+    a %= n
+    while a:
+        while a % 2 == 0:
+            a //= 2
+            if n % 8 in (3, 5):
+                sign = -sign
+        if a % 4 == n % 4 == 3:
+            sign = -sign
+        a, n = n % a, a
+    return sign if n == 1 else 0
+
+
 def main() -> int:
     rows = [json.loads(line) for line in sys.stdin if line.strip()]
     for row in rows:
         kind = row["kind"]
+        if kind == "root":
+            n, a, root = row["n"], row["a"], row["root"]
+            assert row["symbol"] == jacobi(a, n), row
+            if root is not None:
+                assert 0 <= root < n and root * root % n == a % n, row
+            continue
+        if kind == "norm":
+            if row["result"] is not None:
+                t, v = row["result"]
+                assert t * t + row["d"] * v * v == 4 * row["n"], row
+            continue
+
         if kind == "add":
             got = add(row["n"], row["a"], row["p"], row["q"], row["witnesses"])
             assert got == row["result"], row
