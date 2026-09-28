@@ -1270,8 +1270,7 @@ theorem decompose_packed {context : Nat} {d : Root context}
   rw [map_packed]
   exact decompose_sound _
 
--- The inherited `sorryAx` is `Tarski.check_rootSum` (#10389).
-/-- info: 'Hex.RealClosure.Yun.decompose_packed' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Yun.decompose_packed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Yun.decompose_packed
 
