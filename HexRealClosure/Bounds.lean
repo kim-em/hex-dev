@@ -51,9 +51,26 @@ def candidate? (sign : E → Int) (p : DensePoly E) (exponent : Nat) :
 end Bound
 
 /-- Finite policy: exponents `1, …, 2 * (degree p + 1)`, in that order.
-Failure requests whole-line BKR completion; it does not mean there are no roots. -/
-@[expose] def find? (sign : E → Int) (p : DensePoly E) : Option (Bound sign p) :=
-  (List.range (2 * (p.natDegree + 1))).findSome? fun i => Bound.candidate? sign p (i + 1)
+Coefficient absolute values are shared across candidates. Failure requests
+whole-line BKR completion; it does not mean there are no roots. -/
+def find? (sign : E → Int) (p : DensePoly E) : Option (Bound sign p) :=
+  let leading := abs sign p.leadingCoeff
+  let coefficients := (List.range p.natDegree).map fun i => abs sign (p.coeff i)
+  (List.range (2 * (p.natDegree + 1))).findSome? fun i =>
+    let bound : E := (2 ^ (i + 1) : Nat)
+    if h : (!p.isZero && (0 < sign (bound - 1)) &&
+        coefficients.all (fun a => 0 < sign ((bound - 1) * leading - a))) = true then
+      some ⟨bound, by
+        dsimp only [leading, coefficients] at h
+        simpa only [check, List.all_map, Function.comp_def] using h⟩
+    else none
+
+/-- Sharing coefficient absolute values changes no candidate or check result. -/
+theorem find?_eq (sign : E → Int) (p : DensePoly E) :
+    find? sign p = (List.range (2 * (p.natDegree + 1))).findSome?
+      (fun i => Bound.candidate? sign p (i + 1)) := by
+  simp only [find?, Bound.candidate?, check, List.all_map, Function.comp_def]
+  rfl
 
 omit [NatCast E] in
 /-- The coefficient test never accepts a zero polynomial. -/
@@ -81,6 +98,7 @@ theorem find?_exponent {sign : E → Int} {p : DensePoly E} {bound : Bound sign 
     (h : find? sign p = some bound) :
     ∃ exponent, 1 ≤ exponent ∧ exponent ≤ 2 * (p.natDegree + 1) ∧
       bound.value = ((2 ^ exponent : Nat) : E) := by
+  rw [find?_eq] at h
   obtain ⟨i, hi, hc⟩ := List.exists_of_findSome?_eq_some h
   have hi' := List.mem_range.mp hi
   exact ⟨i + 1, by omega, by omega, Bound.candidate?_value hc⟩
@@ -98,6 +116,6 @@ the polynomial has no roots or that no larger bound could work. -/
 theorem find?_none (sign : E → Int) (p : DensePoly E) :
     find? sign p = none ↔ ∀ i < 2 * (p.natDegree + 1),
       check sign p ((2 ^ (i + 1) : Nat) : E) = false := by
-  simp only [find?, List.findSome?_eq_none_iff, List.mem_range, Bound.candidate?_none]
+  simp only [find?_eq, List.findSome?_eq_none_iff, List.mem_range, Bound.candidate?_none]
 
 end Hex.RealClosure.Bounds

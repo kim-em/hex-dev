@@ -237,6 +237,13 @@ run_tuple() {
     fi
   fi
 
+  if [ "$oracle" = "scripts/oracle/real_closure_bounds.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_real_closure_bounds; then
+      echo "FAIL: $lib :: finite-bound oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
   if [ "$oracle" = "scripts/oracle/ordered_fn_z3.py" ]; then
     if ! python3 -m unittest scripts.oracle.test_ordered_fn_z3; then
       echo "FAIL: $lib :: ordered-function oracle rejection checks failed"

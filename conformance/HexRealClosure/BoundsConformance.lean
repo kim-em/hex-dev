@@ -31,18 +31,14 @@ private def nestedFraction (f : RationalFn (RationalFn Rat)) : Lean.Json :=
     ("num", .arr (f.num.toArray.map fraction)),
     ("den", .arr (f.den.toArray.map fraction))]
 
-private def emitFirst (name : String) (p : DensePoly (RationalFn Rat)) : IO Unit := do
-  let value := (Bounds.find? (OrderedFn.Infinitesimal.sign Sturm.orderSign) p).map
-    (fun b => b.value)
-  let expected : RationalFn Rat := 2
-  if name == "close roots" then
-    unless value == some expected do throw (IO.userError "close-root bound failed")
-  else
-    unless value.isNone do throw (IO.userError "inverse-infinitesimal bound accepted")
+private def emitInfinitesimal {E : Type} [Zero E] [DecidableEq E] [One E]
+    [Neg E] [Sub E] [Mul E] [NatCast E] (name : String) (depth : Nat)
+    (encode : E → Lean.Json) (sign : E → Int) (p : DensePoly E) : IO Unit := do
+  let value := (Bounds.find? sign p).map fun b => b.value
   IO.println (Lean.Json.mkObj [
     ("kind", .str "infinitesimal"), ("name", .str name),
-    ("depth", Lean.toJson (1 : Nat)), ("coefficients", .arr (p.toArray.map fraction)),
-    ("bound", if value.isNone then .null else .str "2")]).compress
+    ("depth", Lean.toJson depth), ("coefficients", .arr (p.toArray.map encode)),
+    ("bound", (value.map encode).getD .null)]).compress
 
 def main : IO Unit := do
   emit "zero" 0
@@ -56,14 +52,13 @@ def main : IO Unit := do
   emit "failure at last candidate" (DensePoly.ofCoeffs #[-15, 1])
   emit "root beyond all candidates" (DensePoly.ofCoeffs #[-1000, 2])
   let epsilon : RationalFn Rat := RationalFn.X
-  emitFirst "inverse infinitesimal" (DensePoly.ofCoeffs #[-epsilon⁻¹, 1])
+  let firstSign := OrderedFn.Infinitesimal.sign Sturm.orderSign
+  emitInfinitesimal "inverse infinitesimal" 1 fraction firstSign
+    (DensePoly.ofCoeffs #[-epsilon⁻¹, 1])
   let x : DensePoly (RationalFn Rat) := DensePoly.ofCoeffs #[0, 1]
-  emitFirst "close roots" ((x - DensePoly.C epsilon) * (x - DensePoly.C (2 * epsilon)))
+  emitInfinitesimal "close roots" 1 fraction firstSign
+    ((x - DensePoly.C epsilon) * (x - DensePoly.C (2 * epsilon)))
   let delta : RationalFn (RationalFn Rat) := RationalFn.X
   let sign := OrderedFn.Infinitesimal.sign (OrderedFn.Infinitesimal.sign Sturm.orderSign)
   let p : DensePoly (RationalFn (RationalFn Rat)) := DensePoly.ofCoeffs #[-delta⁻¹, 1]
-  unless (Bounds.find? sign p).isNone do throw (IO.userError "nested infinitesimal bound accepted")
-  IO.println (Lean.Json.mkObj [
-    ("kind", .str "infinitesimal"), ("name", .str "inverse second infinitesimal"),
-    ("depth", Lean.toJson (2 : Nat)), ("coefficients", .arr (p.toArray.map nestedFraction)),
-    ("bound", .null)]).compress
+  emitInfinitesimal "inverse second infinitesimal" 2 nestedFraction sign p

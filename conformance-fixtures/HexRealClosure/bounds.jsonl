@@ -9,5 +9,5 @@
 {"bound":null,"coefficients":["-15","1"],"kind":"rational","name":"failure at last candidate"}
 {"bound":null,"coefficients":["-1000","2"],"kind":"rational","name":"root beyond all candidates"}
 {"bound":null,"coefficients":[{"den":["0","1"],"num":["-1"]},{"den":["1"],"num":["1"]}],"depth":1,"kind":"infinitesimal","name":"inverse infinitesimal"}
-{"bound":"2","coefficients":[{"den":["1"],"num":["0","0","2"]},{"den":["1"],"num":["0","-3"]},{"den":["1"],"num":["1"]}],"depth":1,"kind":"infinitesimal","name":"close roots"}
+{"bound":{"den":["1"],"num":["2"]},"coefficients":[{"den":["1"],"num":["0","0","2"]},{"den":["1"],"num":["0","-3"]},{"den":["1"],"num":["1"]}],"depth":1,"kind":"infinitesimal","name":"close roots"}
 {"bound":null,"coefficients":[{"den":[{"den":["1"],"num":[]},{"den":["1"],"num":["1"]}],"num":[{"den":["1"],"num":["-1"]}]},{"den":[{"den":["1"],"num":["1"]}],"num":[{"den":["1"],"num":["1"]}]}],"depth":2,"kind":"infinitesimal","name":"inverse second infinitesimal"}
