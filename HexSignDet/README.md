@@ -389,7 +389,11 @@ records one complete `refinement` process at source revision `f03d5daa3`:
 3.967 seconds on chungus2, automatically selected CPU 5. It includes startup,
 preparation, re-encoding, interval-binding checks and JSON output. The record
 retains build freshness, clean source state, unchanged source/binary checks and
-oracle-checked output. The [earlier observation](../reports/data/sign-det-refinement/ef06438d2/metadata.json)
+oracle-checked output. Its executable resolved through the shared build directory
+of the original `hex-dev-issue-10377` worktree, as recorded in the metadata.
+The freshness and hash checks bind that observation to its archived source and
+binary; it is not a measurement of the current rebased implementation.
+The [earlier observation](../reports/data/sign-det-refinement/ef06438d2/metadata.json)
 is retained too; it predates the explicit returned-bound fields and lacks the
 later clean-tree/freshness metadata. Neither is a scaling or Phase-4 verdict.
 

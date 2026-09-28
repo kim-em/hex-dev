@@ -1047,8 +1047,8 @@ for every lawful coefficient interpretation when the selected root is absent
 from the target domain. Preparation and joint table construction are proved
 from the input; successful output is not assumed. The proof uses the shared
 proved root-sum theorem. It needs neither a root-separating interval nor a
-Thom ordering theorem. General success when the root is present is a separate
-proof requirement. For an accepted re-encoding,
+Thom ordering theorem. General success for a different defining polynomial
+when the root is present is a separate proof requirement. For an accepted re-encoding,
 {name}`Hex.SignDet.Reencoding.root_eq_source` proves that the new descriptor
 retains the source root.
 
