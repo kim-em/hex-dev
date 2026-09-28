@@ -26,6 +26,9 @@ def main() -> None:
         assert native["checked"] and native["converted"], case["id"]
         subjects.add(native["subject"])
         rows = json.loads(native["rows"])
+        if isinstance(rows, int):
+            assert rows == native["subject"] and native["steps"] == 0, case["id"]
+            rows = []
         matches = list(pattern.finditer(native["expanded"]))
         assert len(matches) == len(rows) == native["steps"], case["id"]
         for row, match in zip(rows, matches, strict=True):

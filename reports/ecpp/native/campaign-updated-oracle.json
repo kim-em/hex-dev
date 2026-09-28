@@ -1,0 +1,1 @@
+{"native_successes": 14, "steps": 48, "independently_prime_subjects": 62, "cases": ["tuning-128-0", "tuning-128-1", "tuning-128-2", "tuning-128-3", "tuning-256-0", "tuning-256-1", "tuning-256-2", "holdout-128-0", "holdout-128-1", "holdout-128-2", "holdout-128-3", "holdout-256-1", "holdout-256-2", "holdout-256-3"]}

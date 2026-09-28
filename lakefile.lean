@@ -685,6 +685,8 @@ lean_lib HexECPPMathlibProofProbe where
     `HexECPPMathlib.ProofProbe.NativeReify,
     `HexECPPMathlib.ProofProbe.NativeDirect,
     `HexECPPMathlib.ProofProbe.NativeHoldout,
+    `HexECPPMathlib.ProofProbe.NativeValidation,
+    `HexECPPMathlib.ProofProbe.NativeUpdated,
     `HexECPPMathlib.ProofProbe.Native256_0,
     `HexECPPMathlib.ProofProbe.Native256_1,
     `HexECPPMathlib.ProofProbe.Native256_2,

@@ -44,9 +44,10 @@ run_cmd Lean.Elab.Command.liftTermElabM do
         for case in cases:
             n = case["subject"]
             attempts = case["construction"]["construction"]["attempts"]
+            retried = "true" if case["construction"]["construction"]["ecm_retry"] else "false"
             source += f'''  let (result, allocations) ← construct {n} Hex.Nat.constructionBudget
-  unless allocations.any (fun (name, _) => name == ``Hex.Nat.ecmConstructionFactor) do
-    throwError "ECM extension was not tried"
+  unless allocations.any (fun (name, _) => name == ``Hex.Nat.ecmConstructionFactor) == {retried} do
+    throwError "ECM extension allocation changed"
   match result with
   | .ok _ => throwError "expected full construction exhaustion for {n}"
   | .error f =>

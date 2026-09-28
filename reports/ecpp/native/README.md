@@ -1,6 +1,7 @@
 # Bounded native ECPP production
 
-The class number one portfolio demonstrates a capability gain at 256 bits.
+The class number one portfolio demonstrates seven complete native 256-bit
+successes where full construction exhausts, across two frozen corpora.
 Search takes only a natural subject, seed and finite allocation; it reads no
 certificate, trace, factorization, curve or point. Every success is complete
 `Cert` data accepted by `checkAt`, and the frozen outputs below produce
@@ -47,9 +48,9 @@ The probe disables the elaborator heartbeat ceiling so the finite search
 allocation can finish; its initial heartbeat timeout is retained in
 `elaborator-construction-initial.json`.
 
-Native success rates are 100% at 128 bits and 50% at 256 bits over the entire
-corpus. Native and full construction each solve subjects the other exhausts
-on: their union solves seven of eight 256-bit subjects. The holdout rate is
+For that producer version, native success rates are 100% at 128 bits
+and 50% at 256 bits over the entire corpus. Native and full construction each solve subjects the other exhausts
+on: their union solves seven of eight 256-bit subjects. That version's holdout rate is
 25% at 256 bits, so the tuning result is not a general success-rate promise.
 No exhausted verdict is evidence of compositeness.
 
@@ -69,17 +70,70 @@ module syntax. Explicit native export produces a 2351-byte source module for
 one portfolio suffices for this acceptance campaign; no higher-degree class
 polynomial table is needed to establish the demonstrated gain.
 
+## Validation of the current producer
+
+`validation-corpus.json` freezes eight new subjects at each bit size in
+`5e2e3be8c`, before implementing the even-coordinate norm path in
+`c44995000`. This independent corpus supplies no search data. The producer
+uses the same factor packages and allocations; no parameters were tuned
+against this corpus. `validation.json` retains every paired verdict and raw
+output from this version.
+
+| Corpus | Bits | Native success | Native exhaustion | Full construction success | Full construction exhaustion |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Validation | 128 | 7/8 | 1/8 | 8/8 | 0/8 |
+| Validation | 256 | 6/8 | 2/8 | 3/8 | 5/8 |
+
+Three new 256-bit native successes exhaust the full construction allocation:
+
+| Case | ECPP steps | Full-route attempts | Native search | Full construction | Frozen row bytes | Expanded constructor bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation-256-4 | 6 | 1024 | 0.288 s | 44.657 s | 1875 | 121320 |
+| validation-256-5 | 6 | 1024 | 0.398 s | 33.207 s | 1670 | 108351 |
+| validation-256-7 | 11 | 1024 | 1.638 s | 42.856 s | 2756 | 235220 |
+
+For these subjects the core consumes the entire shared construction allowance,
+so the ECM extension receives no remaining attempts. The actual elaborator
+probe in `validation-elaborator.json` confirms the same verdicts, attempt
+totals and extension allocations. `NativeValidation` replays all 13 complete
+successes in a fresh module importing only the compact interface; guarded
+axiom audits allow only the standard axioms. `validation-oracle.json` records
+independent replay of 47 steps and primality checks for 60 distinct subjects.
+
+The previous campaigns identify their producer commits explicitly. The leaf
+depth refinement in `86b1f9395` cannot affect those default runs: all chains
+have at most seven steps, leaving more than the fixed eight leaf levels.
+The current producer additionally searches even-coordinate norm solutions;
+`campaign-updated.json` repeats the original corpus with this implementation.
+The updated original corpus has native success rates 8/8 at 128 bits and
+6/8 at 256 bits, including 3/4 on its original 256-bit holdout. Full construction
+still succeeds on 8/8 and 3/8 respectively. Four original 256-bit capability
+gains remain; the two additional original native successes are also solved by
+full construction. Together the original and fresh corpora give seven native
+256-bit gains, including four on holdouts.
+
+`NativeUpdated` replays all 14 current original-corpus successes. The two
+current corpora therefore supply 27 complete kernel replays and independent
+verification of 95 ECPP steps. `public-generation.json` checks every successful
+subject through the actual native elaborator generator, with its row-limited
+depth allocation, and confirms identical compact data after kernel proof
+production. All previous reports remain available with their original source
+versions.
+
 ## Arithmetic, replay and dependency evidence
 
-`oracle.json` records independent Python inverse/scalar replay and PARI
+`oracle.json` records the earlier independent Python inverse/scalar replay and PARI
 elliptic-curve multiplication for all 35 ECPP steps from all 12 successful
 native outputs. PARI independently confirms primality of all 47 distinct
 subjects, including recursive children and terminal subjects. Oracle code
 never participates in Lean proof production.
 
-The existing ECPP fixture emitter and oracle now cover 6443 cases, including
+The existing ECPP fixture emitter and oracle now cover 6457 cases, including
 composite/nonsquarefree modular root proposals, Jacobi symbols, checked norm
 equations, every sextic/quartic twist family and complete native chains.
+Point-count multisets match the six sextic, four quartic and ordinary
+quadratic twist orders, with independent PARI j-invariant and cardinality
+checks. Both odd and even-coordinate norms have regression cases.
 Core conformance covers all shared allocations, local retry exhaustion,
 nonunits, subject mismatch, deterministic replay and a successful search
 that backtracks at depth three. Zero, one and composite inputs have
@@ -92,7 +146,7 @@ axiom audits are guarded and allow only `propext`, `Classical.choice` and
 source and runtime benches remain Mathlib-free; ordinary primality modules
 acquire no ECPP imports.
 
-`interface.json` records native generation, exclusive export and verbatim
+`interface-updated-128.json` and `interface-updated-256.json` record native generation, exclusive export and verbatim
 replay of both Nat.Prime and Hex.Nat.Prime suggestions in fresh modules.
 Generation runs with a failing GP stub, and frozen proof modules import only
 the compact interface and exported data. No GP invocation occurs and frozen
@@ -107,21 +161,22 @@ JSON retains the selected CPU, source version, host context and every
 completed sample. Host activity never rejects a completed sample. These are
 host-specific observations, not CI time limits or complexity claims.
 
-`compiled.json` records five fixed endpoint trials with expected hashes:
+`compiled-updated.json` records five fixed endpoint trials with expected
+hashes from the current producer:
 
 | Endpoint phase | Median |
 | --- | ---: |
-| Native 128-bit search and output self-check | 61.640 ms |
-| Native 256-bit search and output self-check | 722.381 ms |
-| Compiled checking of the native 256-bit certificate | 4.775 ms |
-| Frozen conversion and recheck | 67.134 ms |
+| Native 128-bit search and output self-check | 62.416 ms |
+| Native 256-bit search and output self-check | 717.627 ms |
+| Compiled checking of the native 256-bit certificate | 4.735 ms |
+| Frozen conversion and recheck | 65.939 ms |
 
 These fixed registrations are endpoint observations and hash anchors; they
 make no parametric complexity claim. Proof elaboration is measured separately
-in fresh modules. `phases.json` retains four serial trial-major samples of each fresh target;
+in fresh modules. `phases-updated.json` retains four serial trial-major samples of each fresh target;
 every sample positively confirms that its target rebuilt. The import/numeral
 baseline, reification, direct kernel proof and tactic proof medians are
-3.282, 3.256, 5.844 and 4.359 seconds. Peak RSS medians are approximately
+3.258, 3.338, 6.042 and 4.459 seconds. Peak RSS medians are approximately
 3.97, 3.98, 4.22 and 4.23 GiB, respectively. Reification is indistinguishable
 from module startup at this resolution. These measurements include shared
 imports and do not subtract startup to claim an isolated CPU kernel time.
@@ -146,6 +201,8 @@ run was discarded. `phases-initial.json` retains the initial phase samples;
 it lacks positive per-sample rebuild confirmation and overlapped other Lake
 builds of the same artifacts, so it does not establish phase latencies.
 The final phase protocol checks each target's rebuild explicitly.
+`compiled.json`, `phases.json` and `interface.json` retain the earlier
+producer observations; their updated counterparts identify the current source.
 
 Reproduce the paired corpus with `scripts/bench/ecpp_native_campaign.py`,
 independent output checks with `scripts/oracle/ecpp_native.py`, and fresh
