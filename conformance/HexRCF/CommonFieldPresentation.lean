@@ -276,7 +276,7 @@ theorem smallReal : smallSquare.meetsRealAxis = true := by decide +kernel
 
 theorem small_re :
     smallSquare.re.toRat = (698931493666 : Rat) / 2199023255552 := by
-  decide_cbv
+  decide +kernel
 
 theorem small_radius :
     smallSquare.radiusHi.toRat = (1449 : Rat) / 140737488355328 := by

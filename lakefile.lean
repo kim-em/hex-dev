@@ -12,7 +12,7 @@ package Hex where
   leanOptions := #[⟨`doc.verso, true⟩, ⟨`doc.verso.suggestions, false⟩]
 
 require verso from git
-  "https://github.com/leanprover/verso.git" @ "v4.34.0"
+  "https://github.com/leanprover/verso.git" @ "v4.35.0-rc3"
 
 -- Test-only native oracle. Released Hex libraries do not depend on it.
 require NautyFFI from git
@@ -22,14 +22,14 @@ require NautyFFI from git
 require «lean-bench» from git
   "https://github.com/kim-em/lean-bench.git" @ "master"
 
-require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @
-    "d13f23b723b8a846827a245b89c10fc7d3f11612"
-
 -- Hasse's theorem is imported from the axiom-clean formalization in AINTLIB.
 require AINTLIB from git
   "https://github.com/CBirkbeck/AINTLIB.git" @
-    "a139855402075efea30e26c3b80ea1cd57a3ece0"
+    "3808ce862c09ad5b4de0c76f10ba00946ed2eff3"
+
+require mathlib from git
+  "https://github.com/leanprover-community/mathlib4.git" @
+    "d870b9068518a0870842d15a0cd42637ec30b587"
 
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"

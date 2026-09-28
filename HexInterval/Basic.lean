@@ -146,7 +146,9 @@ def consistent : Raw → Bool
   | .bounds (.finite lower lowerStrict) (.finite upper upperStrict) =>
       if lower < upper then
         true
-      else if lower = upper then
+      -- Here `lower ≤ upper` means equality; order tests avoid transporting
+      -- across equality proofs between computed dyadic representations.
+      else if lower ≤ upper then
         !lowerStrict && !upperStrict
       else
         false

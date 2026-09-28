@@ -115,9 +115,9 @@ meta def assertRestored : MetaM Unit := do
       let proof ← forallTelescope target fun xs body => do
         let some (_, lhs, _) := body.eq? | throwError "expected equality"
         mkLambdaFVars xs (← mkEqRefl lhs)
-      -- Mention the compiler-trusting axiom as an unapplied argument. This
-      -- tests rejection without running any native proof computation.
-      let forbidden := mkConst ``Lean.ofReduceBool
+      -- An unused argument still contributes its axiom dependency, even
+      -- though beta reduction would erase it from the candidate proof.
+      let forbidden := mkConst ``sorryAx [.zero]
       return .proved (mkApp (mkLambda `unused .default (← inferType forbidden) proof) forbidden)
   | _ => throwError "unknown test case"
 
