@@ -441,7 +441,8 @@ The remaining tower work includes the recursive algebraic dependency catalog,
 context enlargement and transport, general root isolation and multiplicities,
 rational delegation agreement and a compatible real-closed union construction.
 Each native algebraic context prepares and retains the shared selected-root
-query domain once, eagerly during context construction. `Context.buildSigns` reuses it for singleton and joint
+query domain once, eagerly during context construction. `Context.buildSigns`
+reuses it for singleton and joint
 queries; `buildSigns_eq` proves exact agreement with the original producer,
 including its certificates and errors. The BKR table and certificate replay
 still run for each query list. Under the companion coefficient interpretation,
