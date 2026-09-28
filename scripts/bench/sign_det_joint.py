@@ -7,6 +7,7 @@ import math
 import os
 from pathlib import Path
 import platform
+from fractions import Fraction
 import subprocess
 import sys
 
@@ -52,10 +53,11 @@ def expected(n, side):
     target = [monomial(k, -math.factorial(2*n)//(2*math.factorial(k)))
               for k in reversed(range(2*n))]
     queries = target + [source] + derivatives(n)
-    assert len({json.dumps(q) for q in queries}) == len(queries)
+    if len({json.dumps(q) for q in queries}) != len(queries):
+        raise ValueError("joint query polynomials are not distinct")
     # Exact evaluation at both known real roots of X^(2n)-1. No Tarski query.
     words = [[(v > 0)-(v < 0) for q in queries
-              for v in [sum(c[0]*(x**k) for k, c in enumerate(q))]] for x in (1, -1)]
+              for v in [sum(Fraction(*c)*(x**k) for k, c in enumerate(q))]] for x in (1, -1)]
     table = [[w, 1] for w in words]
     slots, max_columns = inventory(words)
     s = 3*n+1
@@ -63,11 +65,12 @@ def expected(n, side):
             "sourceIndices": list(range(1, n+1)),
             "sourceSigns": [1]*n if side == "left" else [(-1)**(n-i) for i in range(1, n+1)],
             "head": head, "queries": queries, "table": table, "directTable": table,
-            "order": "gt", "querySlots": slots, "maxColumns": max_columns, "maxSupport": 2,
+            "order": "gt", "reducedQueryWitnessBits": (math.factorial(2*n)//2).bit_length(),
+            "querySlots": slots, "maxColumns": max_columns, "maxSupport": 2,
             "treeNodes": 2*s-1, "graphNodes": 2*s-1, "graphEdges": 2*s-2}
 
 
-RECORDED = {"maxInverseBits", "maxDenominatorBits", "reducedQueryWitnessBits",
+RECORDED = {"maxInverseBits", "maxDenominatorBits",
             "directQueryWitnessBits", "reducedGraphBytes", "directGraphBytes"}
 
 
@@ -101,7 +104,7 @@ def collect(output):
     os.sched_setaffinity(0, {cpu})
     sources = source_hashes()
     for relative in ("scripts/bench/sign_det_joint.py", "scripts/bench/test_sign_det_joint.py",
-                     "scripts/bench/sign_det_compare.py", "reports/sign-det-joint-inputs.md"):
+                     "scripts/bench/sign_det_compare.py"):
         sources[relative] = hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
     metadata = {"schema": "hex-sign-det-joint-inventory-v1", "kind": "untimed-input-inventory",
                 "scientific_timing_samples": 0, "revision": revision, "source_sha256": sources,

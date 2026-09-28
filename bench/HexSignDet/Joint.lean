@@ -21,6 +21,7 @@ structure Case where
   right : Input
   leftDirect : Replay Rat Nat
   rightDirect : Replay Rat Nat
+  order : Ordering
 
 private def signs (qs : List (DensePoly Rat)) (x : Rat) : List Int :=
   qs.map fun q => Sturm.orderSign (q.eval x)
@@ -44,7 +45,8 @@ def input (n : Nat) : Option Case := do
     if lf.raw.signs != signs lf.raw.queries 1 || rf.raw.signs != signs rf.raw.queries (-1) then none else do
       let .ok comparison := lf.buildComparison rf | none
       let h := DensePoly.scale (-1/2 : Rat) (DensePoly.monomial (2*n) (1 : Rat) - 1)
-      if comparison.common.head != h || comparison.order != .gt ||
+      if comparison.common.head != h || comparison.common.factor != DensePoly.C (-2 : Rat) ||
+          comparison.order != .gt ||
           p.eval 1 != 0 || q.eval (-1) != 0 || h.eval 1 != 0 || h.eval (-1) != 0 then none else do
         let domain ← Sturm.prepare Sturm.orderSign h .negInf .posInf
         let target : RawDescriptor Rat Nat := ⟨10377, h, .negInf, .posInf, [], []⟩
@@ -62,7 +64,7 @@ def input (n : Nat) : Option Case := do
             comparison.leftEncoding.target.raw.signs != signs (target.full []).queries 1 ||
             comparison.rightEncoding.target.raw.signs != signs (target.full []).queries (-1) then none else
           some ⟨l, r, lf, rf, ⟨h, lqs, some domain, some lt, some (Dag.encode lt)⟩,
-            ⟨h, rqs, some domain, some rt, some (Dag.encode rt)⟩, ld.val, rd.val⟩
+            ⟨h, rqs, some domain, some rt, some (Dag.encode rt)⟩, ld.val, rd.val, comparison.order⟩
 
 private def bits (z : Int) : Nat := if z == 0 then 0 else z.natAbs.log2 + 1
 
@@ -84,18 +86,23 @@ private def witnessBits (tree : Replay Rat Nat) : Nat := (nodes tree).foldl (fun
 
 
 private def record (n : Nat) (side : String) (source : Root) (i : Input)
-    (direct : Replay Rat Nat) : IO Lean.Json := do
+    (direct : Replay Rat Nat) (order : Ordering) : IO Lean.Json := do
   let some tree := i.tree | throw (IO.userError "missing joint tree")
   let some graph := i.graph | throw (IO.userError "missing joint graph")
   let directGraph := Dag.encode direct
   let ns := nodes tree
   let treeBytes := graph.encodeBytes ValueCodec.rat ValueCodec.nat
   let directBytes := directGraph.encodeBytes ValueCodec.rat ValueCodec.nat
+  let expected := [(signs i.queries 1, (1 : Int)), (signs i.queries (-1), 1)]
   for (g, bytes) in [(graph, treeBytes), (directGraph, directBytes)] do
-    unless g.check Sturm.orderSign 10377 i.head .negInf .posInf i.queries &&
-        (Dag.decodeBytes ValueCodec.rat ValueCodec.nat Sturm.orderSign 10377 i.head
-          .negInf .posInf i.queries bytes {bytes := max 16777216 bytes.size}).isOk do
-      throw (IO.userError "joint graph or byte replay failed")
+    let some replayed := g.replay? Sturm.orderSign 10377 i.head .negInf .posInf i.queries
+      | throw (IO.userError "joint graph replay failed")
+    let .ok decoded := Dag.decodeBytes ValueCodec.rat ValueCodec.nat Sturm.orderSign
+        10377 i.head .negInf .posInf i.queries bytes {bytes := max 16777216 bytes.size}
+      | throw (IO.userError "joint byte replay failed")
+    unless entries replayed.val.node.system == expected &&
+        entries decoded.val.node.system == expected do
+      throw (IO.userError "joint replay table differs from the independent root table")
   return Lean.Json.mkObj [
     ("degree", Lean.toJson n), ("side", Lean.toJson side),
     ("context", Lean.toJson (10377 : Nat)), ("source", Codec.poly ValueCodec.rat source.raw.head),
@@ -104,7 +111,7 @@ private def record (n : Nat) (side : String) (source : Root) (i : Input)
     ("queries", Codec.list (Codec.poly ValueCodec.rat) i.queries),
     ("table", Lean.toJson (entries tree.node.system)),
     ("directTable", Lean.toJson (entries direct.node.system)),
-    ("order", Lean.toJson "gt"),
+    ("order", Lean.toJson (match order with | .lt => "lt" | .eq => "eq" | .gt => "gt")),
     ("querySlots", Lean.toJson (ns.foldl (fun k node => k + node.size) 0)),
     ("maxColumns", Lean.toJson (ns.foldl (fun k node => max k node.size) 0)),
     ("maxSupport", Lean.toJson (ns.foldl (fun k node => max k node.system.support.length) 0)),
@@ -126,15 +133,15 @@ def inspect (ns : Array Nat) : IO UInt32 := do
     let some i := input n | throw (IO.userError s!"invalid joint input at {n}")
     for (side, source, joint, direct) in
         [("left", i.leftFull, i.left, i.leftDirect), ("right", i.rightFull, i.right, i.rightDirect)] do
-      IO.println (← record n side source joint direct).compress
+      IO.println (← record n side source joint direct i.order).compress
       (← IO.getStdout).flush
   return 0
 
-/-- The CI smoke input includes both graph and byte replay paths. -/
+/-- The degree-three CI input includes both graph and byte replay paths. -/
 def verify : IO Unit := do
   let some i := input 3 | throw (IO.userError "joint fixture failed at degree three")
   for (side, source, joint, direct) in
       [("left", i.leftFull, i.left, i.leftDirect), ("right", i.rightFull, i.right, i.rightDirect)] do
-    discard <| record 3 side source joint direct
+    discard <| record 3 side source joint direct i.order
 
 end Hex.SignDetBench.Joint

@@ -19,8 +19,8 @@ polynomial lists agree, but their defining equations and selected-root sign
 vectors differ. They must retain separate bindings.
 
 The reduced tables come directly from the two re-encoding evidence trees
-returned by the comparison producer. The unreduced producer receives precisely
-the same prepared domain and ordered query list. Both complete tables must
+returned by the comparison producer. The unreduced producer receives a prepared domain recomputed from
+the same polynomial and interval and ordered query list. Both complete tables must
 match direct rational evaluation at the known roots -1 and 1, each with count
 one. The target descriptor words are checked at their selected roots. The
 fixture checks actual graph replay and byte-decoded replay in both modes.
@@ -35,16 +35,22 @@ parent dimension is the product of the distinct child supports. Each query
 polynomial is distinct, so exact DAG encoding cannot identify two nodes with
 different query lists. It checks all tree/graph dimensions and edge counts.
 The matrix inverse/denominator bits, query-witness bits and certificate bytes
-are recorded positive integers without a claimed closed formula. Witness
+are recorded positive integers; the validator also checks the reduced witness-bit
+maximum against `bit_length((2n)!/2)`. Witness
 bits scan stored query/reduction certificates, including quotient and scaling
 fields; they are not peak intermediate values, allocated bytes or live memory.
 
 `inspect-joint` selects degrees 3, 7, 15, 31 and 63; `inspect-joint N` selects
 one development input. This is an untimed correctness and input inventory.
-No timing registration, cost-model verdict or performance gate follows from
-it. Separate completion, comparison/re-encoding, reduced/direct construction
+No timing registration or cost-model verdict follows from it. Separate completion, comparison/re-encoding, reduced/direct construction
 and checking measurements, intermediate coefficient observations and allocation
-coverage remain required before the joint-encoding Phase-4 gate can pass.
+coverage remain required for the joint-encoding Phase-4 evaluation.
+
+This family varies query count, degree and coefficient size. Realized support
+is always two and candidate matrices have at most four columns. Its constant
+gcd removes no shared roots; both endpoints are infinite, and only the source
+equation has a zero sign. It does not cover maximal support, shared roots or
+finite endpoint constraints.
 
 ## Recorded inventory
 
@@ -68,15 +74,28 @@ counts and dimensions agree, while its serialized byte counts differ slightly.
 | 63 | 190 | 1136 | 4 | 379 | 702 | 1409 | 8982781 | 8016166 |
 
 The matrices remain bounded while polynomial degrees, stored witness bits and
-serialized certificates grow. Reducing the query polynomials roughly halves
-the recorded witness-bit maxima in this family, but introduces reduction
-evidence: the reduced certificates are larger than the direct certificates.
-Neither observation measures execution time or allocation.
+serialized certificates grow. Every query has degree below the common head,
+so reduction modulo that head cannot lower its degree. Reduced mode normalizes
+monomials to ±X^k and stores their scale factors; its maximum is the constant
+derivative's scale `(2n)!/2`. Direct-mode stored witnesses have roughly twice
+that bit count. This reflects normalization of factorial-sized input coefficients,
+not measured intermediate growth. The additional evidence makes the reduced
+serialized certificates larger. Neither observation measures time or allocation,
+and this family cannot supply the required comparison of unreduced and
+modulo-head moment construction on joint-encoding lists.
 
 The [metadata](data/sign-det-joint/9651d8947/metadata.json) and
 [raw inventory](data/sign-det-joint/9651d8947/inventory.jsonl) retain both source
 bindings and every field. The retained patch reconstructs the measured source
-against its recorded merged base. To collect a new source-bound inventory,
+against merged base `0ddbca525898432d311a80ebb97ee52427e111af`;
+the recorded revision need not remain on a branch after rebasing. The retained
+archive describes that exact source, not later revisions. Its Lake configuration
+and report differ after rebasing and recording the inventory. Subsequent fixture
+checks additionally retain the observed order, check the gcd factor literally,
+and compare decoded replay tables with the root oracle. They do not change
+these retained observations or establish a new collected-source claim. New
+collections bind executable sources and validators, excluding the editable report.
+To collect a new source-bound inventory,
 commit the sources, build `hexsigndet_bench`, then run
 `python3 scripts/bench/sign_det_joint.py --collect /tmp/unique-joint-output`.
 The collector leases one CPU, records host activity and retains failed command

@@ -45,7 +45,8 @@ class JointValidation(unittest.TestCase):
 
     def test_shape_and_integer_spoof(self):
         for key, value in (("degree", 3.0), ("context", True), ("order", "lt"),
-                           ("maxInverseBits", True), ("reducedGraphBytes", 0)):
+                           ("maxInverseBits", True), ("reducedGraphBytes", 0),
+                           ("reducedQueryWitnessBits", 1)):
             with self.subTest(key=key), self.assertRaises(ValueError):
                 rows = copy.deepcopy(self.rows)
                 rows[0][key] = value
