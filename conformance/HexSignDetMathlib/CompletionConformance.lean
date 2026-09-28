@@ -91,9 +91,14 @@ set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
 #guard completesAs (positive.full [1, 1, 1]) [1, 1, 1]
 
+-- A zero in the source word must also reject a copied changed-sign result.
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard completesAs (middle.full [-1, 0, 1]) [-1, 0, 1]
+
 /-- Negation respects the actual selected real embedding, without a field
 instance on a synthetic carrier. -/
-theorem value_neg (a : CubicField) : Field.value rep (-a) = -Field.value rep a := by
+private theorem value_neg (a : CubicField) : Field.value rep (-a) = -Field.value rep a := by
   apply Complex.ofReal_injective
   rw [Complex.ofReal_neg, Field.value_complex rep binding real,
     Field.value_complex rep binding real, PolyQuot.map_neg]

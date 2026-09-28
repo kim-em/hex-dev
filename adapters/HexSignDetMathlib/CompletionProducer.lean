@@ -61,8 +61,9 @@ theorem Descriptor.select_full_at {context : Ctx}
 
 include h1 ha hs hm hnat hsign in
 /-- The complete derivative table has exactly one count-one word restricting
-to a validated partial encoding. Root uniqueness comes from the source's
-complete count-one table, rather than an assumed Thom ordering theorem. -/
+to a validated partial encoding. The source descriptor's count-one evidence
+supplies root uniqueness; the complete derivative table supplies the counts
+for full words. No Thom ordering theorem is assumed. -/
 theorem Descriptor.completion_rows {context : Ctx}
     (d : Descriptor E Ctx sign context) (t : Replay E Ctx)
     (hc : t.check sign context d.raw.head d.raw.lower d.raw.upper

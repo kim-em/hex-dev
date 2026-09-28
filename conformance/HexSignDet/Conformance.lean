@@ -183,9 +183,16 @@ values here are independent direct evaluations at the selected roots. -/
 def completed (raw : RawDescriptor Rat Nat) (expected : List Int) : Bool :=
   match Descriptor.build sign 7 raw with
   | .ok (.ok d) => match d.buildCompletion with
-    | .ok c => c.descriptor.raw.signs == expected &&
-      d.raw.completes c.descriptor.raw &&
-      c.descriptor.raw.check sign 7 c.descriptor.evidence
+    | .ok c =>
+      let actual := d.complete
+      c.descriptor.raw.signs == expected &&
+        actual.raw.signs == expected && actual.raw.indices == c.descriptor.raw.indices &&
+        actual.raw.context == c.descriptor.raw.context &&
+        decide (actual.raw.head = c.descriptor.raw.head) &&
+        decide (actual.raw.lower = c.descriptor.raw.lower) &&
+        decide (actual.raw.upper = c.descriptor.raw.upper) &&
+        d.raw.completes actual.raw &&
+        c.descriptor.raw.check sign 7 c.descriptor.evidence
     | _ => false
   | _ => false
 
@@ -301,7 +308,11 @@ example : (descriptor [1] [-1]).completes (descriptor [1, 2] [-1, 1]) = true ∧
     (descriptor [1] [-1]).completes
       {descriptor [1, 2] [-1, 1] with context := 8} = false ∧
     (descriptor [1] [-1]).completes
-      {descriptor [1, 2] [-1, 1] with head := x * x - 2} = false := by decide +kernel
+      {descriptor [1, 2] [-1, 1] with head := x * x - 2} = false ∧
+    (descriptor [1] [-1]).completes
+      {descriptor [1, 2] [-1, 1] with lower := .finite (-2)} = false ∧
+    (descriptor [1] [-1]).completes
+      {descriptor [1, 2] [-1, 1] with upper := .finite 3} = false := by decide +kernel
 
 /-- For x³-x, ordinary lexicographic sorting puts the middle root first.
 The Thom rule uses the largest differing index and also handles -p. -/
