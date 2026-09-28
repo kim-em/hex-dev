@@ -121,18 +121,18 @@ theorem cubic_coverage (p : DensePoly CubicField) (a b : Endpoint CubicField)
     (Field.value_add rep binding real) (Field.value_sub rep binding real)
     (Field.value_mul rep binding real) (Field.value_natCast rep binding real) sign_spec h
 
-/-- info: 'Hex.SignDet.Descriptor.buildRoots_empty' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_empty' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildRoots_empty
-/-- info: 'Hex.SignDet.Descriptor.buildRoots_linear' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_linear' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildRoots_linear
 
-/-- info: 'Hex.SignDet.Descriptor.buildRoots_subsingleton' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_subsingleton' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildRoots_subsingleton
 
-/-- info: 'Hex.SignDet.Descriptor.buildRoots_constant_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_constant_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildRoots_constant_success
 
@@ -144,14 +144,11 @@ theorem cubic_coverage (p : DensePoly CubicField) (a b : Endpoint CubicField)
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildRoots_none_iff
 
-/-- info: 'Hex.SignDet.Descriptor.buildRoots_coverage' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_coverage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildRoots_coverage
 
-/-- info: 'Hex.SignDetMathlib.RootListConformance.cubic_coverage' depends on axioms: [propext,
- sorryAx,
- Classical.choice,
- Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.RootListConformance.cubic_coverage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms cubic_coverage
 

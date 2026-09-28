@@ -235,7 +235,7 @@ intervals. `buildRoots_linear` supplies the degree-one corollary directly. Table
 production success and the root counts use the same named bridge throughout;
 none of these success proofs needs a Thom theorem.
 `buildRoots_none_iff` characterizes invalid mathematical domains exactly,
-and `buildRoots_domain` proves validity of the original input without that admission.
+and `buildRoots_domain` proves validity of the original input without using the root-sum theorem.
 Universal producer success and correspondence with strict mathematical
 root order remain separate obligations requiring the Thom foundations.
 Conformance exercises whole-line and bounded domains, empty results for

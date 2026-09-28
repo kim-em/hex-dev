@@ -162,7 +162,7 @@ theorem Descriptor.buildRoots_linear (context : Ctx) (p : DensePoly E)
 omit [IsRealClosed K] in
 include hz h1 ha hs hm hnat hn hi hsign in
 /-- Successful enumeration retains the caller's valid mathematical domain.
-This follows from accepted replay and needs no root-sum admission. -/
+This follows from accepted replay and does not use the root-sum theorem. -/
 theorem Descriptor.buildRoots_domain {context : Ctx} {p : DensePoly E}
     {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
     (h : Descriptor.buildRoots sign context p a b = .ok (some out)) :
@@ -176,7 +176,7 @@ theorem Descriptor.buildRoots_domain {context : Ctx} {p : DensePoly E}
 omit [IsRealClosed K] in
 include hz h1 ha hs hm hnat hn hi hsign in
 /-- The absent-domain result characterizes exactly invalid mathematical
-domains, without the root-sum admission or a producer-success premise. -/
+domains, without the root-sum theorem or a producer-success premise. -/
 theorem Descriptor.buildRoots_none_iff (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E) :
     Descriptor.buildRoots sign context p a b = .ok none ↔

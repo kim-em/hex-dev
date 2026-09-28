@@ -1078,9 +1078,8 @@ constant heads. {name}`Hex.SignDet.Descriptor.buildRoots_subsingleton` proves
 success on every valid domain containing at most one root, including linear
 heads and isolating intervals, without a Thom-order assumption.
 {name}`Hex.SignDet.Descriptor.buildRoots_none_iff` characterizes invalid domains
-exactly and needs no root-sum admission. The success and coverage results use
-the named root-sum admission in
-[#10389](https://github.com/kim-em/hex-dev/issues/10389). A general proof that
+exactly without using the root-sum theorem. The success and coverage results use
+the shared proved root-sum theorem. A general proof that
 enumeration succeeds on every valid domain and returns roots in mathematical
 order still requires the separate Thom foundation. This example checks the
 actual output; it does not discharge those general proof obligations.
