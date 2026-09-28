@@ -136,6 +136,16 @@ that same selected root, including the certificate's one-query accessor.
 preserves the selected real root; `Completion.signs_at_source` identifies every
 returned derivative sign at that original root. These results use checked
 count-one tables and derivative identities without assuming Thom order.
+`CompletionProducer` proves `Descriptor.buildCompletion_success` for every
+validated descriptor under the existing lawful coefficient interpretation.
+It constructs the prepared full-derivative BKR table and proves that exactly
+one count-one row restricts to the source's partial word, excluding every
+internal error of the actual producer. Empty partial words are included.
+`Descriptor.complete_correct` proves that the total accessor preserves the
+original selected root, retains literal source bindings and returns all formal
+derivative signs in canonical slot order. No injectivity of coefficient
+representations or Thom ordering theorem is required. These semantic results
+depend on the same named #10389 root-sum admission.
 `Reencoding.root_eq_source` proves that checked re-encoding keeps that real root
 when the defining polynomial and interval change. Its proof uses the copied
 equation, derivative word and strict endpoint signs, plus acceptance of the
@@ -145,8 +155,9 @@ returns equality exactly when the original selected real roots coincide. It
 uses the common full derivative word and count-one descriptors; strict `<` and
 `>` still require the separate Thom-order foundation.
 The executable API retains its internal diagnostics for arbitrary coefficient
-operations. The companion rules out selected-sign errors under lawful
-coefficients; the remaining domain-exact table/root wrappers are still required.
+operations. The companion rules out selected-sign and completion errors under
+lawful coefficients. Root enumeration, re-encoding success and strict root
+order retain their separate proof obligations.
 
 `Descriptor.buildSigns_success` proves that the actual selected-sign producer
 succeeds for every validated descriptor and finite ordered query list under
