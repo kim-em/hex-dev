@@ -18,10 +18,23 @@ squarefree chain. Prepared domains have a private constructor. `certify` and
 to their query results; `check_bindings` exposes the exact bindings
 established by acceptance.
 
+`domain.withEndpoints? lower upper` reuses the same literal head, sign operation
+and squarefree chain after checking the new endpoints. It returns `none` for
+root endpoints, reversed bounds or other failed endpoint guards. It agrees
+with fresh preparation; it does not reuse an interval's old count or endpoint
+signs. A changed head requires separate preparation.
+
+`countPrepared domain` evaluates the query `1` using the stored chain in both
+certificate positions. `certifyCountPrepared context domain` produces its
+literal certificate with freshly computed endpoint signs. Both agree with the
+ordinary prepared query/certificate APIs. For example, retargeting a domain
+for `X² − 1` to `(-∞, 0)` and `(0, +∞)` gives count one on each side; the
+whole-line certificate cannot be replayed as either child certificate.
+
 The companion proves exact domain equivalence and produced-certificate
 acceptance, whole-Option backend agreement and certificate transport.
 `HexSturm.Transport` exports `TarskiCertificate.clearDenominators` for finite
 dyadic intervals and `TarskiCertificate.toRat` including infinities.
-Root-sum and replay semantics, the root-count API, singleton/sign
+Root-sum and replay semantics, the unprepared natural-number root-count API, singleton/sign
 bounds and Phase-4 evidence remain
 required; see [the specification](SPEC/hex-sturm.md).

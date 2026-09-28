@@ -80,6 +80,17 @@ theorem queryPrepared_sound (domain : Sturm.PreparedDomain E)
   exact (check_sound f hz h1 ha hs hm hnat sign hsign () _ _ _ _ _ _ checked).2
 
 include h1 ha hs hm hnat hsign hn hi in
+/-- Query one with the stored chain counts distinct roots in the current open
+interval. It inherits only the shared root-sum bridge's admission. -/
+theorem countPrepared_sound (domain : Sturm.PreparedDomain E)
+    (binding : domain.sign = sign) :
+    Sturm.countPrepared domain =
+      (Tarski.rootsIn (interpret f hz domain.head)
+        (domain.lower.map f) (domain.upper.map f)).card := by
+  rw [Sturm.countPrepared_eq, queryPrepared_sound f hz h1 ha hs hm hnat sign hsign hn hi domain binding,
+    interpret_one f hz h1, Tarski.rootSum_one]
+
+include h1 ha hs hm hnat hsign hn hi in
 /-- A successful ordinary query has the same meaning as prepared querying. -/
 theorem query_sound (p q : DensePoly E) (a b : Endpoint E) (value : Int)
     (result : Sturm.query sign p q a b = some value) :

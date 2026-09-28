@@ -183,8 +183,11 @@ in the lawful semantic field described above.
 | Theorem | Hypotheses and conclusion |
 | --- | --- |
 | `prepare_sound` | A returned prepared object establishes `Domain(P;a,b)` and binds exactly its head and endpoints. |
+| `withEndpoints_isSome` | Retargeting a prepared head succeeds exactly when `Domain(P;a,b)` holds at the new endpoints. It preserves the literal head, sign and squarefree chain. |
+| `withEndpoints_domain` | The actual retargeted object has a valid domain at the requested endpoints. |
 | `query_sound` | `query p f a b = some q` implies `Domain(P;a,b)` and `q = TaQ(F,P;a,b)` for every supplied `R,ι,hι`. |
 | `queryPrepared_sound` | The prepared query computes the same mathematical sum for its bound domain and any `f`. |
+| `countPrepared_sound` | The actual prepared query-one operation equals `Roots(P;a,b).card`, interpreted as an integer. |
 | `check_sound` | An accepted finite certificate implies domain validity and the claimed query equality through the shared replay theorem; no producer-success hypothesis is needed. |
 | `query_isSome` | `(query p f a b).isSome ↔ Domain(P;a,b)`. All coefficient decisions are total; computed degree bounds suffice. |
 | `rootCount_isSome` | `(rootCount p a b).isSome ↔ Domain(P;a,b)`. Nonnegativity of the query of `1` makes conversion failure unreachable. |
@@ -192,6 +195,7 @@ in the lawful semantic field described above.
 | `query_bound` | `|TaQ| ≤ Roots.card ≤ P.natDegree`; nonzero constant heads give zero. |
 | `query_sign` | Under the domain and `Roots(P;a,b)={α}`, the query equals `sgn(Fᴿ.eval α)`. |
 | `certify_checks` | Certificates produced on the domain pass replay and have the same value as `query`. |
+| `certifyCountPrepared_checks` | The certificate made using the stored query-one chain passes ordinary literal replay for the current endpoints and supplied context. |
 | `query_congr` | Order-preserving field maps and transported endpoints preserve the entire query result and domain validity. |
 | `check_congr` | Accepted certificates for positive-scaled inputs have equal values; produced-certificate acceptance gives whole-`Option` rational/integer agreement despite different normalizers. |
 | `query_rat_eq` | Rational coefficients and finite dyadic endpoints agree, after positive denominator clearing, with the whole `Option` returned by `ZPoly.tarskiQuery`. |

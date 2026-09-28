@@ -16,6 +16,13 @@ agreement for arbitrary accepted certificates on those corresponding inputs.
 The theorems permit noninjective coefficient interpretations and require no
 field instance on noncanonical representatives.
 
+`withEndpoints_isSome` characterizes success of endpoint retargeting by the
+same mathematical domain, and `withEndpoints_domain` proves validity for the
+actual returned object. The core `PreparedDomain.withEndpoints_bindings`
+theorem preserves the literal sign, head and chain and binds the new endpoints.
+`certifyCountPrepared_checks` proves acceptance of query-one certificates made
+from that stored chain. These results use the domain and arithmetic proofs.
+
 `query_congr` proves whole-`Option` agreement between field representations
 at corresponding finite or infinite endpoints, allowing positive scaling of
 both polynomial inputs. `check_congr` compares arbitrary accepted certificates.
@@ -30,6 +37,8 @@ accepted certificates over an ordered real closed field. `query_sound` and
 `query_count`, `query_sign` and `query_bound` give counts, singleton signs and
 degree bounds. `query_nonneg` justifies the exact natural-number conversion in
 `Sturm.rootCount`, whose success domain is unchanged.
+`countPrepared_sound` relates the actual prepared count to the number of
+distinct roots in its current open interval through the proved shared theorem.
 
 The development target `HexQuerySemantics` builds
 `adapters/HexSturmMathlib/Soundness.lean` together with the integer specialization

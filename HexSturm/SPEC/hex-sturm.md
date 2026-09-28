@@ -112,11 +112,14 @@ The required public operations use the same shared arithmetic kernel:
 | Operation | Result and responsibility |
 | --- | --- |
 | `prepare p a b` | Validate the mathematical domain and return `Option (PreparedDomain E)`. The prepared object binds the head and endpoints. |
+| `domain.withEndpoints? a b` | Retain the exact head, sign operation and squarefree chain, checking the new endpoints. Return the same whole result as fresh preparation of that head. A changed head requires fresh preparation. |
 | `query p f a b` | Return `Option Int`; `none` exactly when the domain fails. |
 | `queryPrepared domain f` | Return the query for an already validated domain. |
+| `countPrepared domain` | Return the query of `1` as `Int`, reusing the stored squarefree chain for both certificate positions and recomputing the current endpoint signs. Under the lawful interpretation this is the nonnegative root cardinality. |
 | `rootCount p a b` | Query `f=1`, returning `Option Nat` with the same domain. Prove nonnegativity before conversion; never clamp an unexpected negative value. |
 | `certify p f a b` | Run the shared kernel while retaining its literal query certificate. Return `none` on the same invalid domain. |
 | `certifyPrepared context domain f` | Retain the literal query certificate while reusing the prepared squarefree chain and binding the supplied context. |
+| `certifyCountPrepared context domain` | Produce the query-one certificate with the stored chain, fresh endpoint signs and exact context bindings. It equals the ordinary prepared certificate for `1`; old interval counts or endpoint evidence are not reused. |
 | `check` | Check a supplied finite certificate; return `Bool`, false on malformed or incorrect data. |
 
 No operation takes a caller resource budget. Squarefreeness uses the existing
