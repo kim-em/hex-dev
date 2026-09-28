@@ -1,0 +1,213 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import HexRealClosureMathlib.BaseContext
+public import HexOrderedFnMathlib.LiouvilleTests
+public meta import HexRealClosure.BaseCodec
+public meta import HexOrderedFnMathlib.LiouvilleTests
+
+public section
+
+namespace Hex.RealClosure.BaseContext.RealTests
+
+open OrderedFn OrderedFn.Oracle
+
+local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat
+
+private def key (version : Nat) : ConstantKey := ⟨"liouville", version⟩
+private def registry : Registry := fun k =>
+  if k.name = "liouville" then some OrderedFn.LiouvilleTests.provider else none
+private abbrev prefixContext := RealContext.rational registry
+
+private theorem present (version : Nat) : (registry (key version)).isSome = true := by
+  simp [registry, key]
+
+private theorem cast_source (F G : Lean.Grind.Field Rat) (h : F = G)
+    (he : @Real.Registration Rat F inferInstance = @Real.Registration Rat G inferInstance)
+    (r : @Real.Registration Rat F inferInstance) :
+    @Real.Registration.source Rat G inferInstance
+      (cast he r) =
+      @Real.Registration.source Rat F inferInstance r := by
+  cases h
+  rfl
+
+private theorem source_eq (version : Nat) :
+    prefixContext.source (key version) (present version) =
+      OrderedFn.LiouvilleCoreTests.registered.source := by
+  simp only [OrderedFn.LiouvilleCoreTests.registered,
+    cast_source _ _ HexRationalFnMathlib.ratField_eq]
+  rfl
+
+private theorem signProgress (version : Nat) (f : RationalFn Rat) :
+    Acc (Next (Real.attempt (prefixContext.source (key version) (present version)) f)) 0 := by
+  rw [source_eq]
+  exact OrderedFn.LiouvilleCoreTests.registered.signProgress f
+
+private theorem approxProgress (version : Nat) (f : RationalFn Rat) (δ : Rat) :
+    Acc (Next (Real.approxAttempt (prefixContext.source (key version) (present version))
+      f (Real.requestWidth δ))) 0 := by
+  rw [source_eq]
+  exact OrderedFn.LiouvilleCoreTests.registered.approxProgress f δ
+
+private abbrev realContext (version : Nat) := Context.real
+  (prefixContext.constant (key version) (present version)
+    (signProgress version) (approxProgress version))
+
+private def positive : Element (realContext 1) := ⟨OrderedFn.LiouvilleCoreTests.positive.val⟩
+private abbrev mixed := (realContext 1).infinitesimal
+private def epsilon : Element mixed := Element.infinitesimal (realContext 1)
+
+private theorem source_correct (version : Nat) :
+    ApproximationCorrect (Rat.castHom ℝ) (liouvilleNumber 2)
+      (prefixContext.source (key version) (present version)) := by
+  change ApproximationCorrect (Rat.castHom ℝ) (liouvilleNumber 2)
+    OrderedFn.LiouvilleTests.source
+  exact OrderedFn.LiouvilleTests.source_correct
+
+example (f : RationalFn Rat) :
+    (⟨f⟩ : Element (realContext 1)).sign =
+      sgn (Real.eval (Rat.castHom ℝ) (liouvilleNumber 2)
+        (modelFraction HexRationalFnMathlib.ratField_eq f)) :=
+  prefixContext.constant_sign HexRationalFnMathlib.ratField_eq (key 1) (present 1)
+    (signProgress 1) (approxProgress 1) (source_correct 1) f
+
+example (f : RationalFn Rat) :
+    (⟨f⟩ : Element (realContext 1)).sign = 0 ↔ (⟨f⟩ : Element (realContext 1)) = 0 :=
+  prefixContext.constant_zero HexRationalFnMathlib.ratField_eq (key 1) (present 1)
+    (signProgress 1) (approxProgress 1) (source_correct 1)
+    OrderedFn.LiouvilleTests.transcendence f
+
+example (f : RationalFn Rat) (δ : Rat) :
+    Contains ((prefixContext.constant (key 1) (present 1)
+      (signProgress 1) (approxProgress 1)).approx f δ)
+      (Real.eval (Rat.castHom ℝ) (liouvilleNumber 2)
+        (modelFraction HexRationalFnMathlib.ratField_eq f)) :=
+  prefixContext.constant_contains HexRationalFnMathlib.ratField_eq (key 1) (present 1)
+    (signProgress 1) (approxProgress 1) (source_correct 1) f δ
+
+private theorem valid (version : Nat) : Real.Valid
+    (prefixContext.source (key version) (present version)) :=
+  ⟨Rat.castHom ℝ, liouvilleNumber 2, source_correct version,
+    OrderedFn.LiouvilleTests.source_width, OrderedFn.LiouvilleTests.transcendence⟩
+
+private abbrev derived := Context.real
+  (RealContext.register HexRationalFnMathlib.ratField_eq prefixContext (key 1) (present 1) (valid 1))
+
+-- The exposed companion helper builds the same context as the core constructor.
+example (a : Element (realContext 1)) : Element derived := a
+#guard (⟨positive.stored⟩ : Element derived).sign = 1
+
+section MixedModel
+
+local instance : Field (RationalFn Rat) := HexPolyMathlib.fieldOfGrind
+noncomputable local instance : LinearOrder (RationalFn Rat) :=
+  RealContext.linearOrder HexRationalFnMathlib.ratField_eq OrderedFn.LiouvilleTests.transcendence
+local instance : IsStrictOrderedRing (RationalFn Rat) :=
+  RealContext.strictOrderedRing HexRationalFnMathlib.ratField_eq OrderedFn.LiouvilleTests.transcendence
+
+private theorem real_sign (f : RationalFn Rat) :
+    (⟨f⟩ : Element (realContext 1)).sign = (SignType.sign f : Int) :=
+  prefixContext.constant_orderSign HexRationalFnMathlib.ratField_eq (key 1) (present 1)
+    (signProgress 1) (approxProgress 1) (source_correct 1) OrderedFn.LiouvilleTests.transcendence f
+
+example (a : Element mixed) : a.sign =
+    (SignType.sign (OrderedFn.Infinitesimal.embed
+      (modelFraction HexPolyMathlib.toGrind_fieldOfGrind a.stored)) : Int) :=
+  Element.infinitesimal_sign HexPolyMathlib.toGrind_fieldOfGrind (realContext 1) real_sign a
+
+example (a : Element (realContext 1)) : a.embed.sign = a.sign :=
+  Element.embed_sign HexPolyMathlib.toGrind_fieldOfGrind (realContext 1) real_sign a
+
+example (a b : Element (realContext 1)) : a.embed.compare b.embed = a.compare b :=
+  Element.embed_compare HexPolyMathlib.toGrind_fieldOfGrind (realContext 1) real_sign a b
+
+end MixedModel
+
+private def rationalValue : Element (.real prefixContext) := ⟨3⟩
+private def included : Element (realContext 1) :=
+  Element.embedConstant prefixContext (key 1) (present 1)
+    (signProgress 1) (approxProgress 1) rationalValue
+
+private theorem rational_sign (a : Rat) : orderSign a = sgn ((Rat.castHom ℝ) a) := by
+  rw [Infinitesimal.orderSign_eq]
+  change (SignType.sign a : Int) = (SignType.sign (a : ℝ) : Int)
+  simp only [sign_apply, Rat.cast_pos, Rat.cast_lt_zero]
+
+example (a b : Element (.real prefixContext)) :
+    (Element.embedConstant prefixContext (key 1) (present 1)
+      (signProgress 1) (approxProgress 1) a).compare
+    (Element.embedConstant prefixContext (key 1) (present 1)
+      (signProgress 1) (approxProgress 1) b) = a.compare b :=
+  Element.embedConstant_compare HexRationalFnMathlib.ratField_eq prefixContext
+    (key 1) (present 1) (signProgress 1) (approxProgress 1)
+    (source_correct 1) OrderedFn.LiouvilleTests.transcendence rational_sign a b
+
+#guard positive.sign = 1
+#guard included.sign = 1
+#guard included.equal 3
+#guard positive.equal positive
+#guard !(positive.equal 0)
+#guard (0 : Element (realContext 1)).inv?.isNone
+#guard positive.inv?.isSome
+#guard (positive - positive).sign = 0
+#guard (epsilon - positive.embed).sign = -1
+#guard epsilon.sign = 1
+#guard (Element.read (realContext 1) positive.write).map Element.stored = some positive.stored
+#guard (Element.read (realContext 2) positive.write).isNone
+#guard (Element.read mixed positive.write).isNone
+#guard (Element.read mixed epsilon.write).map Element.stored = some epsilon.stored
+#check_failure (fun (a : Element (realContext 1)) => (a : Element (realContext 2)))
+
+example : (registry ⟨"unknown", 1⟩).isSome = false := by decide +kernel
+
+section TwoConstants
+
+local instance : Field (RationalFn Rat) := HexPolyMathlib.fieldOfGrind
+
+-- The second provider is arbitrary: repeating the first constant would not
+-- satisfy relative transcendence over the whole predecessor field.
+example (r : Registry) (k₁ k₂ : ConstantKey)
+    (p₁ : (r k₁).isSome = true) (p₂ : (r k₂).isSome = true) (τ σ : ℝ)
+    (ha : ApproximationCorrect (Rat.castHom ℝ) τ
+      ((RealContext.rational r).source k₁ p₁))
+    (hw : ApproximationWidth ((RealContext.rational r).source k₁ p₁))
+    (ht : Real.RelativeTranscendence (Rat.castHom ℝ) τ)
+    (hc₂ : ∀ δ, 0 < δ → Contains ((r k₂).get p₂ δ) σ)
+    (hw₂ : ∀ δ, 0 < δ → ((r k₂).get p₂ δ).width ≤ δ)
+    (ht₂ : Real.RelativeTranscendence
+      (RealContext.evalHom HexRationalFnMathlib.ratField_eq ht) σ) :
+    let first := RealContext.register HexRationalFnMathlib.ratField_eq
+      (RealContext.rational r) k₁ p₁ ⟨Rat.castHom ℝ, τ, ha, hw, ht⟩
+    ∃ (sp : ∀ f : RationalFn (RationalFn Rat),
+        Acc (Next (Real.attempt (first.source k₂ p₂) f)) 0)
+      (ap : ∀ (f : RationalFn (RationalFn Rat)) (δ : Rat),
+        Acc (Next (Real.approxAttempt (first.source k₂ p₂) f (Real.requestWidth δ))) 0),
+      (Context.real (first.constant k₂ p₂ sp ap)).signature.constants = [k₁, k₂] ∧
+      ∀ a : Element (.real (first.constant k₂ p₂ sp ap)), Element.read _ a.write = some a := by
+  let first := RealContext.register HexRationalFnMathlib.ratField_eq
+    (RealContext.rational r) k₁ p₁ ⟨Rat.castHom ℝ, τ, ha, hw, ht⟩
+  have ha₂ : ApproximationCorrect
+      (RealContext.evalHom HexRationalFnMathlib.ratField_eq ht) σ (first.source k₂ p₂) :=
+    (RealContext.rational r).source_correct HexRationalFnMathlib.ratField_eq
+      k₁ p₁ _ _ ha ht k₂ p₂ σ hc₂
+  have width₂ : ApproximationWidth (first.source k₂ p₂) :=
+    (RealContext.rational r).source_width k₁ p₁ _ _ k₂ p₂ hw₂
+  let reg₂ := first.registration HexPolyMathlib.toGrind_fieldOfGrind k₂ p₂
+    ⟨RealContext.evalHom HexRationalFnMathlib.ratField_eq ht, σ, ha₂, width₂, ht₂⟩
+  refine ⟨reg₂.signProgress, reg₂.approxProgress, ?_, ?_⟩
+  · have firstKeys : first.chain.keys = [k₁] :=
+      ((RealContext.rational r).keys_constant k₁ p₁ _ _).trans
+        (congrArg (fun ks => ks ++ [k₁]) (RealContext.keys_rational r))
+    have secondKeys := first.keys_constant k₂ p₂ reg₂.signProgress reg₂.approxProgress
+    exact congrArg Signature.constants (Context.signature_real _)
+      |>.trans (secondKeys.trans (congrArg (fun ks => ks ++ [k₂]) firstKeys))
+  · intro a
+    exact Element.read_write a
+
+end TwoConstants
+
+end Hex.RealClosure.BaseContext.RealTests
