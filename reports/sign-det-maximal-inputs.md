@@ -38,7 +38,7 @@ This is an untimed input and correctness inventory. It adds maximal-support
 coverage to the existing sparse family but contains no scientific timing
 samples, complexity verdict or speedup claim. The broader degree, support,
 coefficient-size, witness-size, nested-evidence, descriptor and performance
-gates in the SPEC remain open. The benchmark smoke checks and successful
+gates in the SPEC remain open. The benchmark fast checks and successful
 compilation do not discharge those gates.
 
 Reproduce the inventory with `lake build hexsigndet_bench` followed by
@@ -51,7 +51,22 @@ Validation before the additional `verify` integration is retained under
 inventories match the earlier record exactly, including the input and table
 hashes. Its source archive reconstructs every recorded source hash from merged
 base `a6cc38bf2`. This is another correctness inventory, with zero scientific
-timing samples. The `inspect-maximal` path is unchanged by that integration. The existing
+timing samples. The `inspect-maximal` path is unchanged by that integration.
+The existing
 `verify` command checks the two-query, nine-root input before the registered
 benchmark fast checks; this exercises a split node and nontrivial modular
 reduction.
+
+Collect a new revision-bound inventory with
+`python3 scripts/bench/sign_det_maximal.py --output <new-directory>` after
+committing the sources and building the executable. The driver leases one CPU,
+retains raw output, reconstructs and checks every archived source hash, and
+records the executable hash and host load. It rejects an existing output
+directory or changed sources. Failures retain their output and metadata.
+
+The record from this collector is retained under
+[`data/sign-det-maximal/b8bbe9fd1`](data/sign-det-maximal/b8bbe9fd1).
+All three inventories reproduce the earlier dimensions and hashes exactly.
+Its metadata uses the shared source-archive schema, including the base,
+patch application option and reconstruction check. This record also contains
+zero scientific timing samples; earlier completed records remain unchanged.
