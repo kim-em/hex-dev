@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.ContextData
+public import HexRealClosure.BaseCodec
 public import HexSignDet.Codec.Laws
 
 public section

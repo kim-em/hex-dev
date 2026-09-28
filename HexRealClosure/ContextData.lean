@@ -5,7 +5,6 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.BaseCatalog
 public import HexSignDet.Codec.Basic
 import all Lean.Data.Json.Basic
 
@@ -29,6 +28,18 @@ inductive Literals where
   deriving DecidableEq, Repr, Hashable
 end
 
+-- Preserve structural equality while skipping traversal of shared literals.
+attribute [-instance] instDecidableEqLiteral instDecidableEqLiterals
+
+instance : DecidableEq Literal := fun a b =>
+  withPtrEqDecEq a b (fun _ => instDecidableEqLiteral a b)
+instance : DecidableEq Literals := fun a b =>
+  withPtrEqDecEq a b (fun _ => instDecidableEqLiterals a b)
+
+@[expose] def Literals.toList : Literals → List Literal
+  | .nil => []
+  | .cons x xs => x :: xs.toList
+
 @[expose] def Literals.ofList : List Literal → Literals
   | [] => .nil
   | x :: xs => .cons x (Literals.ofList xs)
@@ -37,11 +48,13 @@ mutual
 @[expose] def Literal.toJson : Literal → Json
   | .number m e => .num ⟨m, e⟩
   | .string s => .str s
-  | .array xs => .arr xs.toArray
-@[expose] def Literals.toArray : Literals → Array Json
-  | .nil => #[]
-  | .cons x xs => #[x.toJson] ++ xs.toArray
+  | .array xs => .arr (xs.pushArray #[])
+@[expose] def Literals.pushArray : Literals → Array Json → Array Json
+  | .nil, values => values
+  | .cons x xs, values => xs.pushArray (values.push x.toJson)
 end
+
+@[expose] def Literals.toArray (xs : Literals) : Array Json := xs.pushArray #[]
 
 /-- Reject unsupported JSON shapes rather than assigning them a shared
 fallback identity. No byte parsing or printing is involved. -/
@@ -54,23 +67,24 @@ termination_by j => sizeOf j
 decreasing_by
   exact Nat.lt_trans (Array.sizeOf_lt_of_mem (by simpa using ‹_ ∈ xs.toList›)) (by simp)
 
-@[expose] def Literals.toList : Literals → List Literal
-  | .nil => []
-  | .cons x xs => x :: xs.toList
-
 theorem Literals.ofList_toList (xs : Literals) : Literals.ofList xs.toList = xs := by
   cases xs with
   | nil => rfl
   | cons x xs => simp [toList, ofList, Literals.ofList_toList xs]
 
+theorem Literals.pushArray_eq (xs : Literals) (values : Array Json) :
+    xs.pushArray values = values ++ (xs.toList.map Literal.toJson).toArray := by
+  cases xs with
+  | nil => simp [pushArray, toList]
+  | cons x xs =>
+    rw [pushArray, Literals.pushArray_eq xs]
+    simp only [toList, List.map_cons]
+    conv => rhs; rw [List.toArray_cons]
+    exact (Array.append_singleton_assoc).symm
+
 theorem Literals.toArray_eq (xs : Literals) :
     xs.toArray = (xs.toList.map Literal.toJson).toArray := by
-  cases xs with
-  | nil => rfl
-  | cons x xs =>
-    change #[x.toJson] ++ xs.toArray = (x.toJson :: xs.toList.map Literal.toJson).toArray
-    conv => rhs; rw [List.toArray_cons]
-    rw [Literals.toArray_eq xs]
+  simp [toArray, pushArray_eq]
 
 theorem Literals.toList_ofList (xs : List Literal) :
     (Literals.ofList xs).toList = xs := by
@@ -84,7 +98,8 @@ theorem Literal.ofJson_toJson (x : Literal) : Literal.ofJson x.toJson = some x :
   | number m e => simp [Literal.toJson, Literal.ofJson]
   | string s => simp [Literal.toJson, Literal.ofJson]
   | array xs =>
-    simp only [Literal.toJson, Literal.ofJson, Literals.toArray_eq]
+    change Literal.ofJson (.arr xs.toArray) = some (.array xs)
+    simp only [Literal.ofJson, Literals.toArray_eq]
     rw [Literals.read_list xs]
     simp [Literals.ofList_toList]
 
@@ -129,7 +144,7 @@ theorem Literal.toJson_ofJson (j : Json) (x : Literal)
       subst x
       have hm := list_read_sound Literal.ofJson Literal.toJson js.toList xs hr
         (fun a ha b hb => Literal.toJson_ofJson a b hb)
-      simp [Literal.toJson, Literals.toArray_eq, Literals.toList_ofList, hm]
+      simp [Literal.toJson, Literals.pushArray_eq, Literals.toList_ofList, hm]
   | null => simp [Literal.ofJson] at h
   | bool b => simp [Literal.ofJson] at h
   | obj fields => simp [Literal.ofJson] at h

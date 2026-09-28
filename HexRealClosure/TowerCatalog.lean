@@ -73,7 +73,7 @@ structure PackedPolynomial (registry : BaseContext.Registry) : Type 1 where
 theorem Context.ofBase_signature (entry : BaseContext.PackedContext registry) :
     (Context.ofBase entry).signature = ⟨entry.signature, []⟩ := by
   cases entry
-  simp [Context.ofBase, Context.base_signature, BaseContext.PackedContext.signature]
+  rfl
 
 /-- Immutable catalog of native validated prefixes. Entries retain exact real
 search progress and every checked algebraic descriptor. A binding can never be
@@ -156,6 +156,45 @@ theorem lookup_signature (catalog : Catalog registry) (binding : Signature)
         cases binding
         simp_all
     · contradiction
+
+/-- A successful scalar reader returns exactly the requested full binding. -/
+theorem readElement_signature (catalog : Catalog registry) (raw : Serialized)
+    (result : PackedElement registry) (h : catalog.readElement raw = .ok result) :
+    result.context.signature = raw.binding := by
+  simp only [readElement] at h
+  cases hl : catalog.lookup raw.binding with
+  | none => simp [hl] at h
+  | some context =>
+    simp only [hl] at h
+    cases hr : context.read raw with
+    | error message => simp [hr] at h
+    | ok value =>
+      simp only [hr, Except.ok.injEq] at h
+      subst result
+      exact catalog.lookup_signature _ context hl
+
+theorem readPolynomial_signature (catalog : Catalog registry) (raw : Serialized)
+    (result : PackedPolynomial registry) (h : catalog.readPolynomial raw = .ok result) :
+    result.context.signature = raw.binding := by
+  simp only [readPolynomial] at h
+  cases hl : catalog.lookup raw.binding with
+  | none => simp [hl] at h
+  | some context =>
+    simp only [hl] at h
+    cases hr : context.readPoly raw with
+    | error message => simp [hr] at h
+    | ok value =>
+      simp only [hr, Except.ok.injEq] at h
+      subst result
+      exact catalog.lookup_signature _ context hl
+
+theorem readElement_missing (catalog : Catalog registry) (raw : Serialized)
+    (h : catalog.lookup raw.binding = none) :
+    catalog.readElement raw = .error "unknown context" := by simp [readElement, h]
+
+theorem readPolynomial_missing (catalog : Catalog registry) (raw : Serialized)
+    (h : catalog.lookup raw.binding = none) :
+    catalog.readPolynomial raw = .error "unknown context" := by simp [readPolynomial, h]
 
 theorem lookup_insert (catalog : Catalog registry) (entry : Context registry)
     (h : catalog.lookup entry.signature = none) :

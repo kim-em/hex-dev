@@ -61,6 +61,13 @@ private def sample : Option (Array Bool) :=
   let wrongSign : Serialized := ⟨newest.binding, .arr #[fields[0]!, toJson (-1 : Int)]⟩
   let zeroSign : Serialized := ⟨newest.binding, .arr #[fields[0]!, toJson (0 : Int)]⟩
   (fields[0]!.getArr?.toOption).bind fun coefficients =>
+  (coefficients[1]!.getArr?.toOption).bind fun nested =>
+  (nested[0]!.getArr?.toOption).bind fun nestedCoefficients =>
+  let nestedSign : Serialized := ⟨newest.binding, .arr #[
+    .arr (coefficients.set! 1 (.arr #[nested[0]!, toJson (-1 : Int)])), fields[1]!]⟩
+  let nestedZero : Serialized := ⟨newest.binding, .arr #[
+    .arr (coefficients.set! 1 (.arr #[
+      .arr (nestedCoefficients.push (first.context.codec.encode 0)), nested[1]!])), fields[1]!]⟩
   let trailingZero : Serialized := ⟨newest.binding,
     .arr #[.arr (coefficients.push (second.context.codec.encode 0)), fields[1]!]⟩
   (Descriptor.validate base.sign base.signature
@@ -69,6 +76,8 @@ private def sample : Option (Array Bool) :=
   let poly : third.context.Poly := DensePoly.ofCoeffs #[-third.embed b, 0, 1]
   let printedPoly := third.context.writePoly poly
   ((catalog.readPolynomial printedPoly).toOption).bind fun readPoly =>
+  (printedPoly.value.getArr?.toOption).bind fun polyCoefficients =>
+  (base.adjoin? d₁).bind fun sameRoot =>
   some #[
     decide (first.context.sign a = 1), decide (second.context.sign b = 1),
     decide (third.context.sign c = 1),
@@ -87,11 +96,24 @@ private def sample : Option (Array Bool) :=
     rejected (catalog.readElement (other.context.write other.generator)),
     (catalog.insert first.context).isNone,
     rejected (catalog₁.readElement newest),
-    decide (newestRead.context.signature = third.context.signature)]
+    decide (newestRead.context.signature = third.context.signature),
+    rejected (catalog.readElement nestedSign), rejected (catalog.readElement nestedZero),
+    rejected (catalog.readElement ⟨newest.binding, .arr #[fields[0]!]⟩),
+    rejected (catalog.readElement ⟨newest.binding, .arr #[fields[0]!, fields[1]!, .null]⟩),
+    rejected (catalog.readElement ⟨newest.binding, .arr #[fields[0]!, .num ⟨10, 1⟩]⟩),
+    rejected (catalog.readElement ⟨newest.binding, .arr #[fields[0]!, .str "1"]⟩),
+    rejected (catalog.readPolynomial ⟨printedPoly.binding,
+      .arr (polyCoefficients.push (third.context.codec.encode 0))⟩),
+    decide (sameRoot.context.signature = first.context.signature),
+    (catalog.insert sameRoot.context).isNone,
+    decide ((Signature.codec.decode (Signature.codec.encode third.context.signature)).toOption =
+      some third.context.signature),
+    decide (((contextCodec base.signature).decode
+      ((contextCodec base.signature).encode third.context.signature)).toOption = some third.context.signature)]
 
 /--
 info: some #[true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-  true, true, true, true]
+  true, true, true, true, true, true, true, true, true, true, true, true, true, true, true]
 -/
 #guard_msgs in
 #eval sample
@@ -109,6 +131,24 @@ private def baseSample : Array Bool := Id.run do
 /-- info: #[true, true, true] -/
 #guard_msgs in
 #eval baseSample
+
+/-- Rational format failures and automatic native-base catalog reconstruction. -/
+private def rationalSample : Array Bool :=
+  let base := Context.base (BaseContext.rational registry)
+  let catalog := Catalog.empty registry
+  let bad (j : Json) := rejected (base.read ⟨base.signature, j⟩)
+  #[bad (.arr #[toJson (0 : Nat), toJson (2 : Int), toJson (0 : Int)]),
+    bad (.arr #[toJson (0 : Nat), toJson (2 : Int), toJson (-1 : Int)]),
+    bad (.arr #[toJson (0 : Nat), .num ⟨20, 1⟩, toJson (1 : Nat)]),
+    bad .null, bad (.mkObj []),
+    (catalog.lookup base.signature).isSome, (catalog.insert base).isNone,
+    (catalog.readElement (base.write 1)).toOption.isSome,
+    rejected (Signature.codec.decode (.arr #[.arr #[], .num ⟨0, 1⟩, .arr #[]])),
+    rejected ((contextCodec base.signature).decode (.arr #[.num ⟨0, 0⟩, .null]))]
+
+/-- info: #[true, true, true, true, true, true, true, true, true, true] -/
+#guard_msgs in
+#eval rationalSample
 
 -- Neither unchecked tower/extension construction nor operations across
 -- unrelated value types are part of the public interface.

@@ -458,6 +458,9 @@ accepts the exact context-bound descriptor and returns an `Extension` containing
 the new context, its selected generator and the actual constant-polynomial
 embedding. Old values keep their owning context. The optional failure checks
 structured serialization shape; descriptor acceptance is already established.
+The returned extension retains its literal frame, the proof of its complete
+binding, and `Context.adjoin_spec` identifies the native child, embedding and
+generator without unfolding the private constructor.
 These context packages live in `Type 1`; `Option.bind` can connect their results
 to ordinary scalar computations across universe levels.
 
@@ -467,6 +470,11 @@ shared replay graph, including all witnesses. References to the exact parent
 are encoded relative to the enclosing full signature. Hashing only indexes the
 shared graph's exact node comparisons. Identity uses structured data and does
 not depend on JSON printing, byte parsing, short names or hashes.
+Signature and relative context-reference codecs have proved structured
+roundtrips. Parsing a signature supplies an identity, not a validated root.
+Exact equality uses the core pointer shortcut for shared immutable signatures;
+context hashes are constant when indexing replay nodes with one predecessor.
+Literal arrays are emitted by an accumulator with `Array.push`.
 
 `Tower.Catalog` is an immutable catalog of caller-constructed validated prefixes.
 Insertion rejects rebinding. Its separate base catalog supplies real search
@@ -490,3 +498,6 @@ unknown bindings, forged signs, zero claims, trailing zeros and malformed base
 payloads. The core roundtrip proofs introduce no admission. General persistent
 refinement, transport of later descriptors, interpretation of arbitrary towers,
 complete isolation and the real-closed union remain open.
+Reconstructing new validated algebraic levels from serialized frames and
+proving that native frame serialization always succeeds (so the optional
+adjoin facade can become total) also remain open.
