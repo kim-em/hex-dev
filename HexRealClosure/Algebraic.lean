@@ -20,8 +20,8 @@ structure Context (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E]
     [DecidableEq Ctx] (coeffSign : E → Int) (parent : Ctx) where
   private mk ::
   root : SignDet.Descriptor E Ctx coeffSign parent
-  queries : Option (SignDet.QueryHandle root)
-  queries_checked : queries = root.prepareQueries
+  handle : Option (SignDet.QueryHandle root)
+  handle_checked : handle = root.prepareQueries
   cleanCoeff : E → Bool
   canReduce : Bool
   reduce_checked : canReduce =
@@ -59,7 +59,7 @@ For coefficients outside the companion's lawful interpretation, failed
 preparation keeps the original producer and its diagnostic behavior. -/
 @[expose] def Context.buildSigns (context : Context E Ctx coeffSign parent)
     (qs : List (DensePoly E)) : Except SignDet.BuildError (SignDet.SelectedSigns context.root qs) :=
-  match context.queries with
+  match context.handle with
   | some handle => handle.buildSigns qs
   | none => context.root.buildSigns qs
 

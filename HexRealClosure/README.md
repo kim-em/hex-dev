@@ -441,11 +441,11 @@ The remaining tower work includes the recursive algebraic dependency catalog,
 context enlargement and transport, general root isolation and multiplicities,
 rational delegation agreement and a compatible real-closed union construction.
 Each native algebraic context prepares and retains the shared selected-root
-query domain once. `Context.buildSigns` reuses it for singleton and joint
+query domain once, eagerly during context construction. `Context.buildSigns` reuses it for singleton and joint
 queries; `buildSigns_eq` proves exact agreement with the original producer,
 including its certificates and errors. The BKR table and certificate replay
 still run for each query list. Under the companion coefficient interpretation,
-`Context.queries_success` proves that preparation succeeds, inheriting the
+`Context.handle_success` proves that preparation succeeds, inheriting the
 named #10389 root-sum bridge. Arbitrary coefficient operations retain the
 original producer when preparation fails. Formal tower performance evaluation,
 including nested sign/zero counts and coefficient growth, remains open; no

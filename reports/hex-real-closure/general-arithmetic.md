@@ -33,6 +33,7 @@ No speedup is inferred from older canonical-root measurements: this is a
 single-arm observation. A formal evaluation still needs the specified depth
 and coefficient families, nested sign/zero and BKR counts, splitting and
 transport costs, clean/eager comparisons on identical semantic inputs, tower8
-and MetiTarski workloads, and representative attribution. The current shared
-selected-sign implementation repeats preparation for each nonconstant query;
-a reusable prepared selected-root handle is requested in #10377.
+and MetiTarski workloads, and representative attribution. The implementation
+measured in this report repeats preparation for each nonconstant query. Native
+contexts now retain the prepared domain through `Algebraic.Context.handle`,
+but these samples do not measure that implementation or establish its speedup.

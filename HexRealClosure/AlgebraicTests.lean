@@ -41,7 +41,7 @@ private def rationalSample (scale : Rat) : Option (Array Int) := do
     if equation.inv?.isNone then 1 else 0,
     if a.compare two == .lt then 1 else 0,
     (context.reduce (DensePoly.natPow x 4)).natDegree,
-    if context.queries.isSome then 1 else 0,
+    if context.handle.isSome then 1 else 0,
     if signs.values.toList == [1, 0] &&
       context.root.checkSigns qs signs.values signs.evidence then 1 else 0]
 
@@ -124,7 +124,7 @@ private def nestedSample (scale : Nat) : Option (Array Int) := do
     (below₂ * below₂⁻¹ - 1).sign,
     (second.reduce (DensePoly.natPow y 4)).natDegree,
     if semanticOne.equal 1 then 1 else 0, if semanticOne == 1 then 1 else 0,
-    if first.queries.isSome && second.queries.isSome then 1 else 0,
+    if first.handle.isSome && second.handle.isSome then 1 else 0,
     if signs.values.toList == [1, 0] &&
       second.root.checkSigns qs signs.values signs.evidence then 1 else 0]
 
