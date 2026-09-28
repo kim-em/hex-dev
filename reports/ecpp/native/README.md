@@ -208,3 +208,7 @@ Reproduce the paired corpus with `scripts/bench/ecpp_native_campaign.py`,
 independent output checks with `scripts/oracle/ecpp_native.py`, and fresh
 phase probes with `scripts/bench/ecpp_native_phases.py`. Use new output paths
 when collecting another campaign so existing results are preserved.
+Reproduce public generation with `scripts/bench/ecpp_native_generation.py`;
+it invokes native search before comparing the resulting frozen data and
+kernel-checks every proof. `public-generation-initial.json` retains a harness
+elaboration failure before generation caused by a missing namespace opening.

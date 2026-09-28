@@ -28,6 +28,7 @@ open Hex.ECPP
 #guard (CM.traces 3 7 1).length == 6
 #guard (CM.traces 4 4 3).length == 4
 #guard (inverse? 35 15).isNone
+#guard CM.curves 35 ⟨7, -3375⟩ 2 == []
 
 private def cardinality (n a b : Nat) : Nat :=
   1 + ((List.range n).map fun x =>
@@ -81,3 +82,11 @@ private def hard : Nat := 177080666831933235355717939809840315427
 private def shallow := produce hard 0 { maxDepth := 3 }
 #guard shallow.result.toOption.any (checkAt hard)
 #guard shallow.state.stats.backtracks > 0
+
+-- Positive point work can reject every twist without exhausting a shared cap.
+-- The completed portfolio, rather than an earlier rejected twist, is the cause.
+private def rejected := produce hard 17 { pointRetries := 1 }
+#guard rejected.state.stats.points > 0
+#guard match rejected.result with
+  | .error e => e.resource == .portfolio
+  | .ok _ => false

@@ -53,7 +53,7 @@ run_cmd Lean.Elab.Command.liftTermElabM do
   | .error f =>
     unless f.stop == .exhausted && f.attempts == {attempts} do
       throwError "construction outcome changed for {n}"
-    logInfo "FULL_CONSTRUCTION {case['id']}: exhausted after {{f.attempts}} attempts"
+    logInfo m!"FULL_CONSTRUCTION {case['id']}: exhausted after {{f.attempts}} attempts"
 '''
         (folder / "Compare.lean").write_text(source)
         start = time.monotonic_ns()

@@ -85,7 +85,7 @@ structure SearchStats where
   scalarWork : Nat := 0
   /-- Checked proposals rejected when their recursive child could not be built. -/
   backtracks : Nat := 0
-  /-- First unresolved branch. A failed child supersedes a local point retry. -/
+  /-- First unresolved branch. Portfolio or child failure supersedes local retries. -/
   unresolved : Option SearchError := none
 deriving Repr
 
@@ -104,7 +104,8 @@ private def unresolved (n : Nat) (resource : Resource) : SearchM Unit :=
   modify fun s => { s with stats := { s.stats with
     unresolved := match s.stats.unresolved with
       | some e => if (e.resource == .pointRetries || e.resource == .nonresidueRetries) &&
-          (resource == .depth || resource == .screening) then some ⟨n, resource⟩ else some e
+          (resource == .depth || resource == .screening || resource == .portfolio) then
+            some ⟨n, resource⟩ else some e
       | none => some ⟨n, resource⟩ } }
 
 /-- Charge before running any work; no backtracking restores counters. -/
@@ -219,6 +220,7 @@ private structure Proposal where
 private def point (budget : SearchBudget) (n q cofactor z a b : Nat) :
     SearchM (Option Proposal) := do
   let some discrInv := inverse? n (4 * a * a * a + 27 * b * b) | return none
+  if budget.pointRetries == 0 then fail n .pointRetries
   for _ in [:budget.pointRetries] do
     charge budget n .points
     let x ← draw n
@@ -229,7 +231,8 @@ private def point (budget : SearchBudget) (n q cofactor z a b : Nat) :
     charge budget n .scalarWork (2 * HexArith.bitLength q)
     if checkStep n a b qx qy discrInv ws q then
       return some ⟨a, b, qx, qy, discrInv, ws⟩
-  unresolved n .pointRetries
+  -- Failed draws on a twist are rejected candidates. The caller still tries
+  -- other twists and orders, so they do not diagnose overall exhaustion.
   return none
 
 /-- Structurally bounded recursion; failure of a child resumes the parent's
