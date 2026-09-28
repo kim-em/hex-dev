@@ -30,7 +30,7 @@ noncomputable def mapPoly (p : DensePoly context.Value) : DensePoly K :=
   DensePoly.Interpret.map_degree model.value model.zero_iff p
 
 /-- Polynomial zero has the same unique representation before interpretation. -/
-theorem mapPoly_zero (p : DensePoly context.Value) : model.mapPoly p = 0 ↔ p = 0 :=
+theorem mapPoly_eq_zero (p : DensePoly context.Value) : model.mapPoly p = 0 ↔ p = 0 :=
   DensePoly.Interpret.map_eq_zero model.value model.zero_iff p
 
 /-- The actual native Yun recurrence agrees with the lawful field computation
@@ -69,7 +69,7 @@ theorem decompose_factor (p : DensePoly context.Value) (hdegree : 0 < p.natDegre
     (entry : DensePoly context.Value × Nat) (he : entry ∈ entries) :
     Yun.Component (model.mapPoly p) (model.mapPoly entry.1, entry.2) := by
   have hd : 0 < (model.mapPoly p).natDegree := by
-    simpa only [mapPoly, DensePoly.Interpret.map_degree] using hdegree
+    simpa only [model.natDegree_mapPoly] using hdegree
   exact Yun.decompose_factor (model.mapPoly p) hd _ _
     (model.decompose_result p unit entries hresult) _ (Array.mem_map.mpr ⟨entry, he, rfl⟩)
 
@@ -84,7 +84,7 @@ theorem decompose_complete (p : DensePoly context.Value) (hp : p ≠ 0)
         (HexPolyMathlib.toPolynomial (model.mapPoly entry.1)).IsRoot x := by
   have hp' : model.mapPoly p ≠ 0 := by
     intro hz
-    exact hp ((DensePoly.Interpret.map_eq_zero model.value model.zero_iff p).mp hz)
+    exact hp ((model.mapPoly_eq_zero p).mp hz)
   obtain ⟨u, es, hr, e, he, hm, hx⟩ := Yun.decompose_root (model.mapPoly p) x hp' hx
   have ht := model.decompose_result p unit entries hresult
   have hs : es = entries.map (fun e => (model.mapPoly e.1, e.2)) := by
@@ -107,7 +107,7 @@ theorem decompose_root (p : DensePoly context.Value) (hp : p ≠ 0) (x : K)
     have hs := model.decompose_sound p
     rw [hr, Yun.Decomposition.map] at hs
     have hz := (Yun.check_zero_iff (model.mapPoly p)).mp hs
-    exact (hp ((DensePoly.Interpret.map_eq_zero model.value model.zero_iff p).mp hz)).elim
+    exact (hp ((model.mapPoly_eq_zero p).mp hz)).elim
   | factors unit entries =>
     exact ⟨unit, entries, rfl, model.decompose_complete p hp unit entries hr x hx⟩
 
@@ -120,7 +120,7 @@ theorem decompose_squarefree (p : DensePoly context.Value) (hdegree : 0 < p.natD
     (entry : DensePoly context.Value × Nat) (he : entry ∈ entries) :
     (DensePoly.gcd entry.1 (DensePoly.derivativeImpl entry.1)).natDegree = 0 := by
   have hd : 0 < (model.mapPoly p).natDegree := by
-    simpa only [mapPoly, DensePoly.Interpret.map_degree] using hdegree
+    simpa only [model.natDegree_mapPoly] using hdegree
   have hc := Yun.decompose_factor_gcd (model.mapPoly p) hd _ _
     (model.decompose_result p unit entries hresult) _ (Array.mem_map.mpr ⟨entry, he, rfl⟩)
   have hder := DensePoly.Interpret.map_derivative model.value model.zero_iff
@@ -134,14 +134,14 @@ theorem decompose_squarefree (p : DensePoly context.Value) (hdegree : 0 < p.natD
 
 include model decK orderK in
 /-- Different multiplicity labels in the actual native output have constant
-computed gcd, so their root sets do not overlap in the semantic field. -/
+computed gcd. -/
 theorem decompose_coprime (p : DensePoly context.Value) (hdegree : 0 < p.natDegree)
     (unit : context.Value) (entries : Array (DensePoly context.Value × Nat))
     (hresult : Yun.decomposeRaw p = .factors unit entries)
     (a b : DensePoly context.Value × Nat) (ha : a ∈ entries) (hb : b ∈ entries)
     (hne : a.2 ≠ b.2) : (DensePoly.gcd a.1 b.1).natDegree = 0 := by
   have hd : 0 < (model.mapPoly p).natDegree := by
-    simpa only [mapPoly, DensePoly.Interpret.map_degree] using hdegree
+    simpa only [model.natDegree_mapPoly] using hdegree
   have hc := Yun.decompose_coprime (model.mapPoly p) hd _ _
     (model.decompose_result p unit entries hresult) _ _
     (Array.mem_map.mpr ⟨a, ha, rfl⟩) (Array.mem_map.mpr ⟨b, hb, rfl⟩) hne
@@ -162,3 +162,9 @@ end Hex.RealClosure.Tower.Model
 /-- info: 'Hex.RealClosure.Tower.Model.decompose_squarefree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.decompose_squarefree
+/-- info: 'Hex.RealClosure.Tower.Model.decompose_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.decompose_root
+/-- info: 'Hex.RealClosure.Tower.Model.decompose_coprime' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.decompose_coprime

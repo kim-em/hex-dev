@@ -580,14 +580,16 @@ entry's monicity, positive label, positive degree, simple roots and exact root
 multiplicity. `decompose_root` covers every root of a nonzero input in the
 ambient field, with its original multiplicity and membership in the native
 output array, without a caller-supplied result premise. `decompose_complete`
-applies this coverage to a known computed result. `decompose_squarefree` and `decompose_coprime` establish the
+applies this coverage to a known computed result. `decompose_squarefree` and
+`decompose_coprime` establish the
 constant degrees of the gcds actually computed on native factors. These are
 producer results, with no caller-supplied replay acceptance premise.
 
 Run `lake build HexRealClosure.TowerYunTests HexRealClosureMathlib.TowerModelTests`.
 The executable example decomposes a nonmonic cubic with one triply repeated
 root over two actual selected-root levels, including a noncanonical coefficient
-representing one. Kernel examples apply replay, squarefreeness and completeness
+representing one. A second input has two multiplicity labels and checks the
+computed gcd between its two returned factors. Kernel examples apply replay, squarefreeness and completeness
 at three successive arbitrary validated root levels. The generic transfer
 proofs use only the standard three axioms; applications of the selected-root
 model retain its inherited #10389 dependency. This supplies tower multiplicity
