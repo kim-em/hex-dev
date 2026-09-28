@@ -17,19 +17,19 @@ Scientific registrations measure `QueryReduction.build` and
 `QueryReduction.check` separately. The construction registration also computes
 a checksum of the literal reduction output; the checking registration returns
 a Boolean. Construction times therefore include that checksum work. The phase
-ladder is fixed before measurement
-at 8192,16384,32768,65536,131072,262144,524288 bits, with six trials per
+ladder is fixed before measurement at
+8192,16384,32768,65536,131072,262144,524288 bits, with six trials per
 height and a one-second target per batch. It avoids making the bounded BKR
 systems dominate a small-height timing range. Preparation constructs only the
 reduced preprocessing evidence; it does not expand unreduced powers of c or
-build the full reference. All setup and correctness checks occur outside the
-timed operation. No completed sample is removed because of host activity,
+build the full reference. Input preparation and independent correctness
+validation occur outside the timed operation. No completed sample is removed because of host activity,
 and no retry is automatic.
 
 The mode-1 claim is `Θ(H)` for these two phases on this positive-monomial
 family. Preprocessing normalizes the monomials to unit coefficients.
-Lean 4.34.1's `Rat.mul` cancels cross-factors with gcd and exact division before
-multiplying. Here its large operands are degenerate: `gcd(c,c)`, `gcd(0,c)`,
+Lean 4.34.1 and 4.35.0-rc3 have identical `Rat.mul` definitions: they cancel
+cross-factors with gcd and exact division before multiplying. Here its large operands are degenerate: `gcd(c,c)`, `gcd(0,c)`,
 `gcd(c,1)`, and division `c/c` or `c/1`. Equality or a one-limb quotient
 makes those particular operations linear; this is not a general gcd or
 long-division bound. Other operations are multiplication by one limb and
