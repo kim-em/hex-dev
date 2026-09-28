@@ -7,3 +7,4 @@ module
 public import HexRealClosure.Yun
 public import HexRealClosure.Bounds
 public import HexRealClosure.Deflation
+public import HexRealClosure.Bisection

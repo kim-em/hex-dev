@@ -58,8 +58,10 @@ class AdmissionScannerTests(unittest.TestCase):
             tables = root / "conformance/HexSignDetMathlib/TableConformance.lean"
             reencoding = root / "conformance/HexSignDetMathlib/ReencodingConformance.lean"
             roots = root / "conformance/HexSignDetMathlib/RootListConformance.lean"
+            bisection = root / "HexRealClosure/BisectionTests.lean"
+            model = root / "adapters/HexRealClosureMathlib/Bisection.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, dependency):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, bisection, model, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by\n  sorry\n", encoding="utf-8")
@@ -70,6 +72,8 @@ class AdmissionScannerTests(unittest.TestCase):
             tables.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             reencoding.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             roots.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            bisection.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            model.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
@@ -80,10 +84,14 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/QueryHandleConformance"):
                     audit.check()
                 handle.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-                dependency.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                bisection.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            model.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            dependency.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "unapproved admission in HexExtra/SelectedField"):
                     audit.check()
-                dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                bisection.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            model.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
                 completion.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/CompletionConformance"):
                     audit.check()

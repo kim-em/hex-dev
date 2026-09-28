@@ -600,7 +600,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
     `HexRealClosureMathlib.YunInvariant, `HexRealClosureMathlib.Bounds,
-    `HexRealClosureMathlib.Deflation]
+    `HexRealClosureMathlib.Deflation, `HexRealClosureMathlib.Bisection]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction

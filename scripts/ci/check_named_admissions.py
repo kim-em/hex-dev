@@ -170,7 +170,8 @@ def check() -> None:
     roots = ["HexRCF.RealCoefficients", "HexSignDetMathlib.SelectedProducerConformance",
              "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance",
              "HexSignDetMathlib.TableConformance", "HexSignDetMathlib.ReencodingConformance",
-             "HexSignDetMathlib.RootListConformance"] + [
+             "HexSignDetMathlib.RootListConformance", "HexRealClosure.BisectionTests",
+             "HexRealClosureMathlib.Bisection"] + [
         "HexSignDetMathlib." + ".".join(path.relative_to(
             ROOT / "adapters/HexSignDetMathlib").with_suffix("").parts)
         for path in sorted((ROOT / "adapters/HexSignDetMathlib").rglob("*.lean"))] + [
