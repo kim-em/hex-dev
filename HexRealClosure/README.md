@@ -146,7 +146,8 @@ input. This includes irrational real roots after mapping to ℝ.
 coefficient map that preserves its arithmetic. The companion instantiates
 this theorem for cached rational selected-root coefficients; their inverse
 semantics retain the named `Tarski.check_rootSum` admission (#10389).
-Arbitrary ordered coefficient towers still need their interpretation laws.
+The companion `Tower.Model` below propagates these interpretation laws
+through arbitrary finite native root towers in a supplied real-closed ambient field.
 `Yun.Invariant.init`, `step` and `component` in the companion prove the
 repeated-factor recurrence's pointwise root invariant over characteristic-zero
 fields, including nonmonic inputs. Over an algebraically closed field, the
@@ -509,8 +510,8 @@ three actual algebraic levels, use their explicit embeddings, read old values
 after extensions, restore a noncanonical coefficient, and reject stale or
 unknown bindings, forged signs, zero claims, trailing zeros and malformed base
 payloads. The core roundtrip proofs introduce no admission. General persistent
-refinement, transport of later descriptors, interpretation of arbitrary towers,
-complete isolation and the real-closed union remain open.
+refinement, transport of later descriptors, complete isolation and the
+real-closed union remain open.
 Reconstructing new validated algebraic levels from serialized frames remains
 open. Native frame-format totality is proved independently of graph decoding
 and byte-parser completeness.
@@ -519,3 +520,45 @@ Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
 non-monic reducible rational definition, followed by a definition with
 noncanonical predecessor coefficients. The frame-format axiom guards use only
 the standard three axioms; no selected-root semantic admission is needed.
+
+### Interpretation, algebraicity and order of native towers
+
+`Tower.Model context K` interprets the exact native context in an ordered field.
+It is a companion result carrying zero reflection and arithmetic/sign
+correspondence; executable constructors do not accept this record. `Model.base`
+uses an embedding of the canonical base carrier and its actual sign theorem.
+The existing `fieldOfGrind` bridge preserves the native coefficient operations.
+For a real-closed ambient field, `Model.adjoin` derives the child interpretation
+from the predecessor model and the validated descriptor. It uses the actual
+public extension: `adjoin_embed` preserves predecessor values and
+`adjoin_generator` identifies the selected generator with the descriptor's root.
+These steps can be repeated at arbitrary finite depth.
+
+`Model.field` is the image subfield of the ambient field. Its values have genuine
+field and order instances, while raw native expressions retain their ordinary
+operations. `Model.toValue` is surjective and identifies expressions with the
+same mathematical value. `adjoin_mono` includes the whole predecessor field.
+Every child expression has its actual stored polynomial evaluated at the
+selected generator (`adjoin_polynomial`). The companion proves that generator,
+every child expression, and every element of the child image field are
+algebraic over the predecessor's entire image field. Reducible and nonmonic
+squarefree definitions are allowed; no minimal polynomial or representation
+degree bound is assumed.
+
+`Context.equal` and `Context.compare` execute the native sign check on a
+difference. `Model.equal_spec` and `compare_spec` prove that they compare the
+interpreted values. `adjoin_equal` and `adjoin_compare` preserve these exact
+results under the public embedding. Values must belong to the same context;
+structural equality of nonzero representatives has a different meaning.
+
+Run `lake build HexRealClosure.TowerOrderTests HexRealClosureMathlib.TowerModelTests`.
+Executable checks use a nonmonic reducible definition for √2 and a second root
+with noncanonical predecessor coefficients. They cover semantically equal
+but literally different nonzero expressions, all three comparison results,
+canonical zero and embedded comparisons. Kernel examples propagate a rational
+model through three arbitrary validated root levels, including the algebraicity
+and image-field inclusions. The semantic root results inherit only the named
+`Tarski.check_rootSum` admission (#10389), alongside the standard three axioms;
+this adds no admission. They are relative to a supplied real-closed ambient
+field and base embedding. Ambient existence, compatibility across refinements
+and the real-closed union remain open. No tower performance claim is made.
