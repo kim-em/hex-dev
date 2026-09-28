@@ -57,13 +57,18 @@ def selectedPasses : Bool :=
         !({raw with context := 8}).checkSigns fieldSign 8 queries s.values s.evidence &&
         !({raw with head := head + 1}).checkSigns fieldSign 7 queries s.values s.evidence &&
         !({raw with indices := [0]}).checkSigns fieldSign 7 queries s.values s.evidence &&
+        !({raw with indices := [2]}).checkSigns fieldSign 7 queries s.values s.evidence &&
+        !({raw with signs := [-1]}).checkSigns fieldSign 7 queries s.values s.evidence &&
         !({raw with context := 8}).check fieldSign 7 d.evidence &&
+        !({raw with context := 8}).check fieldSign 8 d.evidence &&
         !({raw with head := head + 1}).check fieldSign 7 d.evidence &&
-        !({raw with indices := [0]}).check fieldSign 7 d.evidence
+        !({raw with indices := [0]}).check fieldSign 7 d.evidence &&
+        !({raw with indices := [2]}).check fieldSign 7 d.evidence
     | _, _ => false
   | _ => false
 
 #guard generator.toAlgebraic.p.natDegree = 3
+#guard ({raw with indices := [2]}).wellFormed
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
 #guard selectedPasses
