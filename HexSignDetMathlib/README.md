@@ -183,6 +183,19 @@ and derivative-slot rejections in both descriptor validation and selected-sign
 replay. Finite-bound conformance also
 checks zero and constant queries and rejects replay on a different valid interval.
 
+`QueryHandle` proves that `Descriptor.prepareQueries` succeeds for every
+validated descriptor under the same coefficient-interpretation laws. Prepared
+singleton and joint queries use exactly the existing selected-sign producer
+and retain the original root, empty/repeated query positions and zero signs.
+`QueryHandle.signAt_correct` identifies the cached total result with evaluation
+at that root, and `signAt_success` excludes its diagnostic fallback. These
+semantic guarantees use the named #10389 bridge. The finite producer/result
+agreement proofs have only the standard kernel axioms. Actual cubic-field and
+noncanonical-carrier conformance rejects copied evidence after context,
+interval, selected-word and semantically equivalent representation changes.
+Only preparation is retained; joint table construction and replay still run
+for each query list.
+
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient
 interpretation. It neither assumes a gcd normalization nor supplies squarefreeness;

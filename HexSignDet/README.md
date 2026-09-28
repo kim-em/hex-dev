@@ -187,6 +187,18 @@ under the same explicit `Replay.Interprets` contract. Structural table validity
 alone does not prove root completeness. `buildTablePrepared` exposes sparse
 construction while retaining the internal diagnostics of `buildPrepared`.
 
+`Descriptor.prepareQueries` constructs a `QueryHandle` for successive queries
+at the same validated root. It retains the exact prepared squarefree domain.
+`QueryHandle.buildSigns` and `signAt` use the same selected-sign producer as the
+ordinary descriptor APIs; the finite agreement proofs preserve their results.
+The handle is indexed by the original descriptor, including its context,
+interval and derivative word. `checkSigns` retains the ordinary literal replay
+checks, so evidence from another selection or changed representation is rejected.
+The companion proves handle construction and every prepared query succeed
+under lawful coefficients, with the named #10389 root-sum dependency.
+Preparation is shared; each query list still builds its joint table and runs
+independent replay. No query-answer cache or performance speedup is claimed.
+
 `RawDescriptor` records its full context, root domain, distinct derivative
 indices and sign word. `RawDescriptor.check` reconstructs the formal derivative
 queries, checks the complete table replay and requires count exactly one.
