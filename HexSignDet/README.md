@@ -229,6 +229,16 @@ constructs a checked table and repeats its replay in selected-sign extraction.
 Use `buildSigns` for several queries to share one table. Preparation and replay
 costs remain part of the specified Phase-4 measurements.
 
+`Descriptor.complete` exposes the completed descriptor directly. It calls the
+same `buildCompletion` producer. An internal error prints a diagnostic and
+returns the original validated descriptor; the companion proves this branch
+unreachable when coefficient arithmetic and signs have their specified
+interpretation. Completion retains the exact head, interval and context,
+including for an empty partial encoding that selects a unique root. Call
+`buildCompletion` when the completion evidence or explicit diagnostics are
+needed. Each call constructs its full derivative table and checks the returned
+descriptor; it does not cache a previous completion.
+
 `Descriptor.buildRoots` enumerates full derivative encodings, validates each
 count-one row, and inserts them by Thom order. `rootsFrom_perm` proves that
 successful construction preserves all input encoding words. Insertion checks

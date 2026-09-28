@@ -11,6 +11,7 @@ import HexRCF.RealCoefficients
 import HexRealClosure
 import HexSignDet
 import HexSignDetMathlib.SelectedProducer
+import HexSignDetMathlib.CompletionProducer
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -926,6 +927,45 @@ when the coefficient operations satisfy their interpretation laws.
 with the evaluation sign at the descriptor's original selected root. Both
 results use the same named #10389 admission. For several queries, `buildSigns`
 shares one table across the list; each `signAt` call constructs its own table.
+
+Completing a partial derivative description supplies every derivative sign
+without changing the selected root. Over the same cubic coefficient field,
+`P = (x − α)x(x + α)` has roots `−α`, `0` and `α`. Its second derivative is
+`6x`, so its positive sign selects α. Completion returns the signs of `P′`,
+`P″` and `P‴`, all positive at α, in that order.
+
+```lean
+private def completionHead : DensePoly signsField :=
+  (signsX - DensePoly.C signsAlpha) * signsX *
+    (signsX + DensePoly.C signsAlpha)
+private def partialRoot : RawDescriptor signsField Nat :=
+  ⟨7, completionHead, .negInf, .posInf, [2], [1]⟩
+private def completionPasses : Bool :=
+  match Descriptor.validate signsFieldSign 7 partialRoot with
+  | none => false
+  | some root =>
+    match root.buildCompletion with
+    | .error _ => false
+    | .ok evidence =>
+      let full := root.complete
+      full.raw.indices == [1, 2, 3] &&
+        full.raw.signs == [1, 1, 1] &&
+        full.raw.signs == evidence.descriptor.raw.signs &&
+        root.raw.completes full.raw
+
+#guard completionPasses
+```
+
+Import `HexSignDetMathlib.CompletionProducer` for
+{name}`Hex.SignDet.Descriptor.buildCompletion_success` and
+{name}`Hex.SignDet.Descriptor.complete_correct`. They prove that completion
+succeeds for every validated partial description and retains its original
+mathematical root, head, interval and context. This includes an empty partial
+word when the interval contains exactly one root. The proofs use the named
+root-sum admission in [#10389](https://github.com/kim-em/hex-dev/issues/10389).
+They do not require the separate Thom ordering theorem. Each call computes and
+checks its full derivative table; use `buildCompletion` directly when you need
+the evidence as well as the completed descriptor.
 
 Two roots can be compared even if their defining polynomials differ. The
 comparison constructs a checked common squarefree polynomial and expresses

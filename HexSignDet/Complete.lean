@@ -141,8 +141,9 @@ theorem Descriptor.fullOrder_eq {sign : E → Int} {context : Ctx}
 variable [Neg E] [Inv E]
 
 /-- Complete a descriptor by a full derivative table and checked restriction
-to its old signs. Internal failures remain diagnostic until total producer
-completeness and the required Thom foundation have been supplied. -/
+to its old signs. Arbitrary coefficient operations retain diagnostics; the
+companion proves success for lawful interpretations, independently of strict
+Thom ordering. -/
 def Descriptor.buildCompletion {sign : E → Int} {context : Ctx}
     (source : Descriptor E Ctx sign context) : Except BuildError (Completion source) :=
   match Sturm.prepare sign source.raw.head source.raw.lower source.raw.upper with
@@ -162,5 +163,74 @@ def Descriptor.buildCompletion {sign : E → Int} {context : Ctx}
           if h : source.raw.completes target.raw = true then .ok ⟨target, h⟩
           else .error .replay
       | _ => .error .system
+
+/-- A complete prepared table with exactly one count-one row restricting to
+the source signs discharges all final guards of the actual completion code. -/
+theorem Descriptor.buildCompletion_ofTable {sign : E → Int} {context : Ctx}
+    (source : Descriptor E Ctx sign context) (domain : Sturm.PreparedDomain E)
+    (hd : Sturm.prepare sign source.raw.head source.raw.lower source.raw.upper = some domain)
+    (t : {t : Replay E Ctx //
+      t.check domain.sign context domain.head domain.lower domain.upper
+        (source.raw.full []).queries = true})
+    (ht : buildPrepared context domain (source.raw.full []).queries = .ok t)
+    (signs : List Int)
+    (hr : t.val.node.system.tableRows.toList.filter
+      (fun row => decide (Thom.select source.raw.indices row.1 = some source.raw.signs)) =
+        [(signs, 1)]) :
+    ∃ c : Completion source, source.buildCompletion = .ok c := by
+  obtain ⟨hw, hctx, _, _⟩ := RawDescriptor.check_eq source.accepted
+  have hp : 0 < source.raw.head.natDegree := by
+    simp only [RawDescriptor.wellFormed, Bool.and_eq_true, decide_eq_true_eq] at hw
+    exact hw.1.1.1.1
+  have bindings := Sturm.prepare_eq_some sign source.raw.head source.raw.lower
+    source.raw.upper domain hd
+  have hc : t.val.check sign context source.raw.head source.raw.lower source.raw.upper
+      (source.raw.full []).queries = true := by
+    simpa only [bindings.1, bindings.2.1, bindings.2.2.1, bindings.2.2.2] using t.property
+  have hmem : (signs, 1) ∈ t.val.node.system.tableRows.toList.filter
+      (fun row => decide (Thom.select source.raw.indices row.1 = some source.raw.signs)) := by
+    rw [hr]
+    exact List.mem_singleton_self _
+  obtain ⟨hrow, hselect⟩ := List.mem_filter.mp hmem
+  have hmrow : (signs, 1) ∈ (t.val.table hc).rows.toList := by
+    simpa only [Replay.table_rows] using hrow
+  have hlen : signs.length = source.raw.head.natDegree :=
+    ((t.val.table hc).wellFormed _ hmrow).1.trans (source.raw.full_queries_length [])
+  have hsigns : signs.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1)) = true :=
+    List.all_eq_true.mpr (fun s hs => decide_eq_true (((t.val.table hc).wellFormed
+      _ hmrow).2.1 s hs))
+  have hfull := source.raw.full_wellFormed signs hp hlen hsigns
+  have hone : (t.val.table hc).count signs = 1 := (t.val.table hc).count_mem hmrow
+  let target := ofTable (source.raw.full signs) t.val hfull hctx hc hone
+  have hraw : target.raw = source.raw.full signs :=
+    ofTable_raw _ _ _ _ _ _
+  have hagree : source.raw.completes target.raw = true := by
+    rw [hraw]
+    simp only [RawDescriptor.completes, RawDescriptor.full]
+    exact hselect
+  have htarget : ofReplay? sign context (source.raw.full signs) t.val = some target :=
+    ofReplay_ofTable _ _ _ _ _ _
+  refine ⟨⟨target, hagree⟩, ?_⟩
+  simp only [Descriptor.buildCompletion, hd, ht, Replay.table_rows]
+  rw [hr]
+  simp only [htarget, hagree, ↓reduceDIte]
+
+/-- Complete the derivative encoding of a validated selected root using the
+checked producer. An internal error emits a diagnostic and returns the source
+descriptor; the companion proves that branch unreachable with lawful
+coefficients, and that the returned descriptor is full and selects the same root. -/
+@[expose] def Descriptor.complete {sign : E → Int} {context : Ctx}
+    (source : Descriptor E Ctx sign context) : Descriptor E Ctx sign context :=
+  match source.buildCompletion with
+  | .ok c => c.descriptor
+  | .error err =>
+    letI : Inhabited (Descriptor E Ctx sign context) := ⟨source⟩
+    panic! s!"Descriptor.complete: internal error {repr err}"
+
+/-- Agreement with the actual successful checked completion. -/
+theorem Descriptor.complete_ofBuild {sign : E → Int} {context : Ctx}
+    (source : Descriptor E Ctx sign context) (c : Completion source)
+    (h : source.buildCompletion = .ok c) : source.complete = c.descriptor := by
+  simp only [Descriptor.complete, h]
 
 end Hex.SignDet
