@@ -30,7 +30,7 @@ variable (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
 include hz h1 ha hs hm hnat hn hi hsign in
 /-- On a valid root-free domain the actual producer succeeds with an empty
 list. This discharges both extraction branches without a Thom foundation;
-both table production success and its counts use the named #10389
+both table production success and its counts use the shared proved
 root-sum bridge. -/
 theorem Descriptor.buildRoots_empty (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
     (hdom : HexSturmMathlib.Domain f hz p a b)
@@ -68,7 +68,7 @@ include hz h1 ha hs hm hnat hn hi hsign in
 /-- Actual enumeration succeeds on every valid domain containing at most
 one root. Count-one extraction and insertion into the empty list need no
 Thom injectivity or ordering foundation, including for non-Archimedean fields.
-Table production success and counts use the named #10389 root-sum bridge. -/
+Table production success and counts use the shared proved root-sum bridge. -/
 theorem Descriptor.buildRoots_subsingleton (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E) (hdom : HexSturmMathlib.Domain f hz p a b)
     (hsmall : (Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f)).card ≤ 1) :
@@ -149,7 +149,7 @@ theorem Descriptor.buildRoots_constant_success (context : Ctx) (p : DensePoly E)
 include hz h1 ha hs hm hnat hn hi hsign in
 /-- Actual enumeration succeeds for linear heads on every valid domain.
 The degree bound supplies the small-root-set premise, without a separating
-interval or Thom foundation. Success uses the named #10389 bridge. -/
+interval or Thom foundation. Success uses the shared proved root-sum theorem. -/
 theorem Descriptor.buildRoots_linear (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E) (hdom : HexSturmMathlib.Domain f hz p a b)
     (hp : p.natDegree = 1) :

@@ -2,9 +2,12 @@
 
 Dependencies: hex-real-roots, hex-poly-mathlib, hex-poly-z-mathlib and
 Mathlib; the shared abstract Sturm–Tarski foundation uses a Tau Ceti
-import. When implemented, the release configuration must carry that pinned
-third-party dependency to the published companion and its downstream consumers.
-This SPEC does not change publication metadata.
+import in the development-only `HexQuerySemantics` target. Its proved semantic
+modules currently live under `adapters/HexRealRootsMathlib/`, outside the
+released companion. Publishing that layer remains an obligation: move it into
+the companion managed paths and carry the pinned Tau Ceti dependency through
+the release configuration and downstream consumers. The proof is complete;
+this SPEC does not claim that the semantic layer has been published.
 
 Mathlib companion for [hex-real-roots](https://github.com/leanprover/hex-real-roots). Proves
 **soundness** of the certified isolations (a `RealRootIsolation`
@@ -661,8 +664,8 @@ prove this statement: a root where `f` is negative contributes `-1`, and a
 common root contributes zero. Introduce the signed-query theorem without
 weakening the existing Sturm-count predicate or its theorems.
 
-The abstract foundation is imported from Tau Ceti through this companion,
-shared by the integer frontend and
+The abstract foundation is imported from Tau Ceti through this companion’s
+development adapters, shared by the integer frontend and
 [hex-sturm](../../SPEC/Libraries/hex-sturm.md#required-correspondence-and-specialization-theorems).
 It is not a second proof from the existing derivative-chain theorem.
 The [Sturm–Tarski theorem](https://www.isa-afp.org/entries/Sturm_Tarski.html)
@@ -725,8 +728,7 @@ Use `sgn : R → Int` with values `-1,0,1`, and the finite set
 endpoint inequalities). Infinite endpoint inequalities impose no bound on
 that side. Require `P≠0`, `Squarefree P`, `a<b` and nonzero evaluations of
 `P` at finite endpoints. For arbitrary `F : Polynomial R`, the
-shared theorem `HexRealRootsMathlib.Tarski.variation_eq` has the following
-explicit certificate hypotheses:
+checker accepts the following explicit certificate identities:
 
 ```text
 S₀ = P
@@ -744,6 +746,12 @@ For the singleton `[P]`, replace the initial identity by
 `u*(F*P')=A*P` with `u>0`; there is no second entry or terminal pair.
 This includes nonzero constant heads and every zero initial remainder.
 All branches retain the domain guards.
+
+`check_signed` translates the checked recurrence and terminal identities into
+`TauCeti.Sturm.IsSignedRemainderSeq`; `check_seed` translates the initial
+identity into `TauCeti.Sturm.IsTarskiSeed`. The proved `variation_eq` takes
+these two predicates, `Squarefree P`, ordered endpoints and nonvanishing at
+finite endpoints. It does not take the raw certificate identities separately.
 
 For a chain entry at a finite endpoint use its evaluation sign. At `+∞`
 use its leading-coefficient sign; at `−∞` multiply that by `(-1)^natDegree`.
@@ -803,8 +811,9 @@ Horner and degree-parity infinity sign agreement. Positive rescaling
 preserves signs/variations; translate every initial, step and terminal
 identity. Negative scaling alone does not preserve these quantities.
 
-The shared `Hex.TarskiCertificate.check_sound` derives the mathematical guards
-and `HexRealRootsMathlib.Tarski.variation_eq` from accepted finite literal data.
+The shared `HexRealRootsMathlib.Tarski.check_rootSum` derives the mathematical
+guards and applies `HexRealRootsMathlib.Tarski.variation_eq` to accepted finite
+literal data.
 Squarefreeness is in the fraction field (hence in `R` in characteristic zero), so integer `4*X`
 is accepted. Recurrence identities alone do not prove squarefreeness: a
 separate gcd or Bézout guard witness is checked. Prove producer correctness
@@ -855,7 +864,8 @@ import of hex-real-algebraic-mathlib, and the odd-root proof has only one copy.
 
 Instantiate the shared domain/replay bridge with `D=ℤ`, `j=Int.castRingHom ℝ`
 and exact dyadic evaluation to prove `ZPoly.tarskiQuery_eq` and
-`IntTarskiCertificate.check_sound` here. Also retain `tarskiQuery_isSome` for exactly
+`IntTarskiCertificate.check_sound` in the development adapter
+`TarskiReal.lean`. Also retain `tarskiQuery_isSome` for exactly
 the nonzero/squarefree/root-free domain and `tarskiQuery_sign` for a singleton
 root set. `DyadicInterval.lt` already supplies endpoint ordering. Optimized
 integer content and dyadic Horner operations must correspond to the shared

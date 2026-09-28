@@ -174,7 +174,8 @@ ordered-field `decompose` result passes `check`, including repeated factors.
 The generic producer proofs have no admitted dependencies and retain the field
 operations used by the executable API. `decompose_packed` applies them to the
 actual cached packed recurrence after coefficient interpretation; this
-selected-root instantiation inherits the named #10389 inverse dependency.
+selected-root instantiation uses the proved root-sum theorem through
+inverse soundness.
 
 `Bounds.find?` supplies the finite dyadic search for root isolation. It computes
 coefficient absolute values once, then tries

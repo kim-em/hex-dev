@@ -24,7 +24,13 @@ sidecar before checking the pair's diagnostics.
 The measured source is `40e1c470b52b56e06e04d471325f2cee577916c7`, using Lean
 4.35.0-rc3, Mathlib `d870b9068518a0870842d15a0cd42637ec30b587`, and merged Tau Ceti
 `ff72a2e86930d5268476ee33d55ab054ed1c3ea5`. Repository and dependency checkouts
-were clean.
+were clean. The command selects a CPU and passes that result as `--cpu`, hence
+the raw record’s `requested_cpu: 1`:
+
+```sh
+measure_cpu=$(python3 scripts/bench/idle_core.py)
+python3 scripts/bench/sturm_semantics_sweep.py --shared-host --cpu "$measure_cpu"
+```
 
 ## Observations
 

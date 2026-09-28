@@ -1251,13 +1251,13 @@ example (f : DensePoly Rat) : check f (decompose f) = true := decompose_sound f
 end Integration
 
 -- This semantic selected-root field inherits inverse soundness from
--- `Tarski.check_rootSum` (#10389); the generic producer theorem does not.
+-- the proved `Tarski.check_rootSum`; the generic producer theorem does not.
 example {context : Nat} (d : Root context) (f : DensePoly (Value d)) :
     check f (decompose f) = true := decompose_sound f
 
 /-- The actual cached packed recurrence passes full replay after interpreting
 its coefficients as canonical real algebraic numbers. This instantiation
-inherits the selected-root inverse dependency on #10389. -/
+inherits the selected-root inverse dependency on the proved root-sum theorem. -/
 theorem decompose_packed {context : Nat} {d : Root context}
     (h : Root.Handle d) (f : DensePoly (Root.Handle.Value h)) :
     check

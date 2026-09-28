@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Audit admissions in the optional RCF and all sign adapters and conformance."""
+"""Audit all development adapters and sign-determination conformance import cones.
+
+RCF's intentional negative admission probes remain kernel-checked tests,
+outside this source scan; the message below reports only the scanned cones.
+"""
 
 from __future__ import annotations
 
@@ -176,6 +180,10 @@ def check() -> None:
     # Named roots remain mandatory; the glob also audits unnamed conformance
     # modules, including their own declarations and imported dependencies.
     roots = list(dict.fromkeys(roots))
+    for path in sorted((ROOT / "adapters").rglob("*.lean")):
+        module = ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
+        if module_file(module) != path:
+            raise ValueError(f"adapter module {module} is shadowed by another source file")
     for path in sorted((ROOT / "conformance/HexSignDetMathlib").rglob("*.lean")):
         module = "HexSignDetMathlib." + ".".join(path.relative_to(
             ROOT / "conformance/HexSignDetMathlib").with_suffix("").parts)
@@ -198,7 +206,8 @@ def check() -> None:
         if admissions:
             line = source.count("\n", 0, admissions[0].start()) + 1
             raise ValueError(f"unapproved admission in {relative}:{line}")
-    print(f"{len(roots)} present adapter import cones: {len(paths)} local modules, no admissions")
+    print(f"{len(roots)} scanned adapter/conformance import cones: "
+          f"{len(paths)} local modules, no admissions in these cones")
 
 
 if __name__ == "__main__":

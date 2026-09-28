@@ -15,6 +15,12 @@ It also exports `Real.instIsRealClosed`, constructed from real square roots
 and odd-degree polynomial root existence, through `HexRealRootsMathlib.RealClosed`
 and the umbrella import.
 
+The general Sturm–Tarski root-sum theorem and integer query semantics are
+proved in the monorepo’s `adapters/HexRealRootsMathlib/` modules, built by
+`HexQuerySemantics`. These modules are not yet published in this package.
+Their publication requires adding the companion managed paths and pinned
+Tau Ceti release dependency specified in [the SPEC](SPEC/hex-real-roots-mathlib.md).
+
 # Quickstart
 
 ```toml

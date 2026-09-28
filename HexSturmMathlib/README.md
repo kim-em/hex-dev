@@ -33,7 +33,9 @@ degree bounds. `query_nonneg` justifies the exact natural-number conversion in
 
 The development target `HexQuerySemantics` builds
 `adapters/HexSturmMathlib/Soundness.lean` together with the integer specialization
-and BKR root-semantics modules. Their axiom audits admit only `propext`,
+and BKR root-semantics modules. These adapters are not published; their
+publication requires companion managed paths and pinned Tau Ceti release
+dependencies. Their axiom audits admit only `propext`,
 `Classical.choice` and `Quot.sound`. Remaining Phase-4 evidence is specified in
 [the specification](SPEC/hex-sturm-mathlib.md).
 

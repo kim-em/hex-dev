@@ -35,20 +35,25 @@ recomputes exact signs and variations at the supplied interval; its acceptance
 theorem requires the original certificate to bind that interval. Neither
 translation calls polynomial division, gcd, or a chain producer.
 
-The optional `HexQuerySemantics` target proves root-sum/replay semantics,
+The development-only `HexQuerySemantics` target proves root-sum/replay semantics,
 root counts, nonnegativity and degree bounds, and singleton-root signs through
 the shared hex-real-roots-mathlib foundation. The theorem for arbitrary
 accepted certificates has no producer-success hypothesis. All these results
 use only Lean's standard logical axioms. The remaining Phase-4 evidence below
 is required before phase completion.
 
+These proved semantic modules currently live under `adapters/`, outside the
+published companion paths. Publishing them with their pinned Tau Ceti
+dependency remains a separate delivery obligation. Companion ownership below
+specifies the intended API; it does not imply the adapters are released.
+
 `HexSturmMathlib` imports `HexSturm`, `HexPolyMathlib` and
 `HexRealRootsMathlib`. The shared signed-remainder theorem, representation and
 positive-scaling bridges, and shared replay soundness live in
 [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#shared-foundation-and-proof-ownership).
-That companion alone imports the Tau Ceti univariate foundation for these
-queries. It retains the integer/dyadic specialization and proves
-`IsRealClosed ℝ`. This companion proves the field frontend's domain guards,
+Its Tau Ceti import is confined to the development adapter. It retains the
+integer/dyadic specialization, while its companion module `RealClosed.lean` proves
+`IsRealClosed ℝ` independently. This companion proves the field frontend's domain guards,
 endpoint sign operations, query-proof composition and root-count API
 against the shared theorem, instantiating its domain and embedding as
 `D := K` and `j := ι`. A field is an admissible domain instance; the shared
@@ -240,8 +245,9 @@ The general `Hex.Sturm.rootCount` uses the same shared query computation.
 ## Integer/dyadic specialization and positive clearing
 
 `ZPoly.tarskiQuery_eq` and `IntTarskiCertificate.check_sound` stay in
-hex-real-roots-mathlib, specialized there from the shared theorem with the
-integer embedding and exact dyadic endpoints in `ℝ`. The integer ring kernel
+the development `HexRealRootsMathlib.TarskiReal` adapter, specialized from
+the shared theorem with the integer embedding and exact dyadic endpoints
+in `ℝ`. The integer ring kernel
 requires no `Field Int`. The generic rational frontend reaches infinities;
 the preserved public integer query still takes a finite `DyadicInterval`.
 

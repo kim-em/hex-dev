@@ -126,7 +126,7 @@ The model is a finite proof boundary, not an executable argument. In the optiona
 child query evidence as moments of actual roots, then proves exact support and
 counts for every sign condition, including omitted ones. `RootProducer` derives
 the finite query model for the actual prepared producer and proves its success
-and counts from the named #10389 root-sum statement. `SelectedRoot` proves that
+and counts from the shared proved root-sum statement. `SelectedRoot` proves that
 accepted count-one partial and full descriptors select a unique root, and
 `root_derivatives` identifies their signs with formal iterated derivatives
 through `derivativesFrom_get`. `SelectedSigns.values_at_root` and
@@ -140,7 +140,7 @@ root/sign condition, including omitted words, empty queries and root-free
 domains. `determine_isSome` proves that the option-valued frontend succeeds
 exactly on the shared valid root domains; this validity result does not use the root-sum
 theorem. `determine_correct` gives all returned root counts and uses the
-named #10389 bridge, as do the producer-success results. These proofs follow
+shared proved root-sum theorem, as do the producer-success results. These proofs follow
 the actual prepared BKR producer and
 exclude its internal-error fallback, without assuming successful construction
 or injectivity of coefficient representations.
@@ -194,11 +194,11 @@ descriptor's derivative signs. Domain validity supplies preparation, and
 discharged by the Mathlib-free `buildSigns_ofTable` theorem.
 `Descriptor.buildSigns_roots` identifies the returned signs with evaluation at
 the original selected root, including empty and repeated queries. These
-results use the named #10389 root-sum bridge, without a Thom order assumption.
+results use the shared proved root-sum bridge, without a Thom order assumption.
 `Descriptor.signAt_success` proves that the public total single-query operation
 uses an actual successful checked result and never its diagnostic error fallback.
 `Descriptor.signAt_correct` equates its integer with the evaluation sign at the
-original selected root, also relative to the named #10389 bridge. Neither the
+original selected root, also relative to the shared proved root-sum theorem. Neither the
 operation nor these theorems require an
 injective coefficient representation; the executable uses ordinary operations
 and carries no companion field-law package.
@@ -215,7 +215,7 @@ singleton and joint queries use exactly the existing selected-sign producer
 and retain the original root, empty/repeated query positions and zero signs.
 `QueryHandle.signAt_correct` identifies the cached total result with evaluation
 at that root, and `signAt_success` excludes its diagnostic fallback. These
-semantic guarantees use the named #10389 bridge. The finite producer/result
+semantic guarantees use the shared proved root-sum theorem. The finite producer/result
 agreement proofs have only the standard kernel axioms. Actual cubic-field and
 noncanonical-carrier conformance rejects copied evidence after context,
 interval, selected-word and semantically equivalent representation changes.
@@ -226,7 +226,7 @@ for each query list.
 root list contains every mathematical root in the requested interval exactly
 once. The proof uses the actual complete table, preserved full sign words and
 uniqueness of each accepted descriptor. It does not assume rational separators
-or injective coefficient representations. It uses the named #10389 root-sum
+or injective coefficient representations. It uses the shared proved root-sum
 bridge. `Descriptor.buildRoots_empty` proves actual success with an empty list on
 valid root-free domains; `buildRoots_constant_success` covers nonzero constant
 heads. `buildRoots_subsingleton` proves actual success on valid domains

@@ -245,7 +245,7 @@ input. A false certificate check means the proposed evidence is incorrect,
 not that the query lacks a value.
 
 The shared `Hex.TarskiCertificate.check` verifies the literal identities,
-degrees, signs and guard witnesses. `Hex.TarskiCertificate.check_sound` belongs to
+degrees, signs and guard witnesses. `HexRealRootsMathlib.Tarski.check_rootSum` is owned by
 [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#representation-and-replay-bridge).
 For ordinary exact coefficients these checks use total equality/order.
 For expensive extension comparisons, the tactic proof interface may instead
@@ -264,8 +264,12 @@ hex-sturm. No upstream module imports hex-sturm for these generic helpers.
 
 Keep existing derivative `sturmChain`, half-open `sturmCount`, RCF replay
 and `Polynomial ℝ` proofs intact. The shared abstract soundness theorem and
-integer specialization live in hex-real-roots-mathlib; field frontend
-correspondence lives in hex-sturm-mathlib. BKR matrices remain downstream.
+integer specialization are owned by hex-real-roots-mathlib; field frontend
+correspondence is owned by hex-sturm-mathlib. These proved semantic modules
+currently live under `adapters/` in the development-only `HexQuerySemantics`
+target, outside the published libraries. Publishing the layer requires the
+companion managed paths and Tau Ceti release pins specified by the companion
+SPEC. BKR matrices remain downstream.
 
 ### Literal query certificates
 

@@ -255,7 +255,7 @@ and `[IsRealClosed R]` on the Mathlib side.
 | `check_sound` | Accepted replay implies the same domain and query equality; companion via the shared replay theorem. |
 | `query_isSome` | `(query p f a b).isSome ↔ Domain p a b`; executable guard/termination proof here, interpretation in companion. |
 | `certify_checks` | Certificates produced on the domain pass replay and carry the same value as `query`. |
-| `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; companion. |
+| `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; proved in the development `HexQuerySemantics` adapters, for eventual companion publication. |
 | `query_congr` | Order-preserving field maps and transported endpoints preserve query results, including domain validity. |
 | `check_congr` | Checked positive-scaled chains have equal values; producer acceptance gives whole-`Option` rational/integer agreement with different normalizers. |
 | `query_rat_eq` | Positive denominator clearing at rational coefficients and dyadic endpoints agrees, including `none`, with `ZPoly.tarskiQuery`; companion. |

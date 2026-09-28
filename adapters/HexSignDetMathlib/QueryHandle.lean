@@ -27,7 +27,7 @@ variable (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
 
 include hz h1 ha hs hm hnat hsign hn hi in
 /-- Every validated descriptor with lawful coefficients admits its actual
-prepared handle. This uses the named #10389 bridge and assumes no successful
+prepared handle. This uses the shared proved root-sum theorem and assumes no successful
 query or preparation as a premise. -/
 theorem Descriptor.prepareQueries_success {context : Ctx}
     (d : Descriptor E Ctx sign context) :
@@ -37,7 +37,7 @@ theorem Descriptor.prepareQueries_success {context : Ctx}
 
 include hz h1 ha hs hm hnat hsign hn hi in
 /-- The prepared selected-sign operation succeeds for every query list,
-using the actual ordinary producer and the named #10389 bridge. -/
+using the actual ordinary producer and the shared proved root-sum theorem. -/
 theorem QueryHandle.buildSigns_success {context : Ctx}
     {d : Descriptor E Ctx sign context} (h : QueryHandle d) (qs : List (DensePoly E)) :
     ∃ s : SelectedSigns d qs, h.buildSigns qs = .ok s := by
@@ -66,7 +66,7 @@ theorem QueryHandle.signAt_success {context : Ctx}
 
 include hz h1 ha hs hm hnat hsign hn hi in
 /-- The cached total singleton sign is evaluation at the original selected
-root, with the same named #10389 dependency as the ordinary operation. -/
+root, with the same root-sum theorem dependency as the ordinary operation. -/
 theorem QueryHandle.signAt_correct {context : Ctx}
     {d : Descriptor E Ctx sign context} (h : QueryHandle d) (q : DensePoly E) :
     h.signAt q = (SignType.sign ((interpret f hz q).eval
