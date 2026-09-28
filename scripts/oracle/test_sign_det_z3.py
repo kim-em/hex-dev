@@ -174,12 +174,18 @@ class InfinitesimalOracle(unittest.TestCase):
 
     def test_refinement_bindings_and_old_interval_replay(self):
         original = self.record("reencode/nested/refinement")
-        for key in ("targetHead", "targetLower", "targetUpper"):
+        for key in ("targetLower", "targetUpper"):
             record = copy.deepcopy(original)
             record["value"]["data"]["result"][key] = record["value"]["data"]["source"][
-                {"targetHead": "head", "targetLower": "lower", "targetUpper": "upper"}[key]]
-            if record != original:
-                self.reject(record)
+                {"targetLower": "lower", "targetUpper": "upper"}[key]]
+            self.assertNotEqual(record, original)
+            self.reject(record)
+        # This case changes the head, so copying it is a genuine mutation.
+        original_head = self.record("reencode/nested/reencode")
+        record = copy.deepcopy(original_head)
+        record["value"]["data"]["result"]["targetHead"] = record["value"]["data"]["source"]["head"]
+        self.assertNotEqual(record, original_head)
+        self.reject(record)
         record = copy.deepcopy(original)
         record["value"]["data"]["result"]["oldIntervalReplay"] = True
         self.reject(record)

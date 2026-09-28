@@ -180,6 +180,7 @@ target domain containing the source root whose root set is contained in the
 original domain. It establishes preparation and both actual producers, using
 the original partial selection's uniqueness, and preserves the selected root.
 This needs neither general Thom injectivity nor rational isolating bounds.
+It inherits the named #10389 root-sum admission.
 General success after changing the defining head remains open.
 `Comparison.eq_iff_root_eq` proves that a successful common-product comparison
 returns equality exactly when the original selected real roots coincide. It
