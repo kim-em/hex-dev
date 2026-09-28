@@ -77,6 +77,11 @@ set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
 #guard absentAs raw head (.finite alpha) .posInf false
 
+-- An endpoint at the other root invalidates the domain, while +∛2 remains inside.
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard absentAs raw head (.finite (-alpha)) .posInf false
+
 -- Empty source words are valid on singleton intervals and retain their bounds.
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
