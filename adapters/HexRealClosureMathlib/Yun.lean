@@ -19,15 +19,16 @@ public section
 
 Accepted replay gives the rational polynomial product, separable and pairwise
 coprime factors, and complete root and multiplicity labels after any rational
-field map. This does not assert that every Yun recurrence result passes replay.
+field map. `YunInvariant` proves that every public ordered-field decomposition
+passes replay, including inputs with repeated factors.
 -/
 
 namespace Hex.RealClosure.Yun
 
 /-- A cached selected-root coefficient stream runs Yun's raw recurrence with
 the same result as its exact real-algebraic values. This theorem transports
-the computation; producer correctness still requires the characteristic-zero
-Yun invariant for lawful coefficients. -/
+the computation; `decompose_packed` in `YunInvariant` combines it with the
+producer correctness theorem. -/
 theorem map_packed {context : Nat} {d : Root context}
     (h : Root.Handle d) (f : DensePoly (Root.Handle.Value h)) :
     Decomposition.map (fun a : Root.Handle.Value h => a.value)
@@ -47,7 +48,8 @@ theorem map_packed {context : Nat} {d : Root context}
     (fun n => Root.Handle.Value.value_natCast n) f
 
 /-- Convert powers without assuming a Mathlib monoid instance on `DensePoly`. -/
-private theorem toPolynomial_pow (p : DensePoly Rat) (n : Nat) :
+private theorem toPolynomial_pow {K : Type*} [CommRing K] [DecidableEq K]
+    (p : DensePoly K) (n : Nat) :
     HexPolyMathlib.toPolynomial (p ^ n) =
       (HexPolyMathlib.toPolynomial p) ^ n := by
   induction n with
@@ -57,15 +59,14 @@ private theorem toPolynomial_pow (p : DensePoly Rat) (n : Nat) :
       rw [Lean.Grind.Semiring.pow_succ, HexPolyMathlib.toPolynomial_mul,
         ih, pow_succ]
 
-/-- Executable reconstruction agrees with multiplication of rational
-polynomials. -/
-theorem toPolynomial_reconstruct (unit : Rat)
-    (entries : Array (DensePoly Rat × Nat)) :
+/-- Executable reconstruction agrees with polynomial multiplication. -/
+theorem toPolynomial_reconstruct {K : Type*} [CommRing K] [DecidableEq K]
+    (unit : K) (entries : Array (DensePoly K × Nat)) :
     HexPolyMathlib.toPolynomial (reconstruct unit entries) =
       entries.toList.foldl (fun product entry =>
         product * (HexPolyMathlib.toPolynomial entry.1) ^ entry.2)
         (Polynomial.C unit) := by
-  have hfold (l : List (DensePoly Rat × Nat)) (acc : DensePoly Rat) :
+  have hfold (l : List (DensePoly K × Nat)) (acc : DensePoly K) :
       HexPolyMathlib.toPolynomial
         (l.foldl (fun product entry => product * entry.1 ^ entry.2) acc) =
       l.foldl (fun product entry =>
@@ -81,26 +82,15 @@ theorem toPolynomial_reconstruct (unit : Rat)
     HexPolyMathlib.toPolynomial_C] using
     hfold entries.toList (DensePoly.C unit)
 
-/-- A replay-accepted result has the same product in Mathlib polynomials. -/
-theorem check_product_polynomial (f : DensePoly Rat) (unit : Rat)
-    (entries : Array (DensePoly Rat × Nat))
-    (h : check f (.factors unit entries) = true) :
-    HexPolyMathlib.toPolynomial f =
-      entries.toList.foldl (fun product entry =>
-        product * (HexPolyMathlib.toPolynomial entry.1) ^ entry.2)
-        (Polynomial.C unit) := by
-  rw [← toPolynomial_reconstruct,
-    (check_reconstruct f unit entries h).1]
-
-/-- An accepted product can be written as an ordinary polynomial list product. -/
-theorem check_product_prod (f : DensePoly Rat) (unit : Rat)
-    (entries : Array (DensePoly Rat × Nat))
-    (h : check f (.factors unit entries) = true) :
-    HexPolyMathlib.toPolynomial f = Polynomial.C unit *
+/-- Executable reconstruction is the scalar times the powered factor
+product over any coefficient ring. -/
+theorem toPolynomial_reconstruct_prod {K : Type*} [CommRing K] [DecidableEq K]
+    (unit : K) (entries : Array (DensePoly K × Nat)) :
+    HexPolyMathlib.toPolynomial (reconstruct unit entries) = Polynomial.C unit *
       (entries.toList.map fun entry =>
         (HexPolyMathlib.toPolynomial entry.1) ^ entry.2).prod := by
-  rw [check_product_polynomial f unit entries h]
-  have hfold (l : List (DensePoly Rat × Nat)) (acc : Polynomial Rat) :
+  rw [toPolynomial_reconstruct]
+  have hfold (l : List (DensePoly K × Nat)) (acc : Polynomial K) :
       l.foldl (fun product entry =>
         product * (HexPolyMathlib.toPolynomial entry.1) ^ entry.2) acc =
       acc * (l.map fun entry =>
@@ -112,6 +102,29 @@ theorem check_product_prod (f : DensePoly Rat) (unit : Rat)
         rw [ih]
         ring
   exact hfold entries.toList (Polynomial.C unit)
+
+/-- A replay-accepted result has the same product in Mathlib polynomials. -/
+theorem check_product_polynomial (f : DensePoly Rat) (unit : Rat)
+    (entries : Array (DensePoly Rat × Nat))
+    (h : check f (.factors unit entries) = true) :
+    HexPolyMathlib.toPolynomial f =
+      entries.toList.foldl (fun product entry =>
+        product * (HexPolyMathlib.toPolynomial entry.1) ^ entry.2)
+        (Polynomial.C unit) := by
+  rw [← toPolynomial_reconstruct]
+  simpa only [reconstruct] using congrArg HexPolyMathlib.toPolynomial
+    (check_reconstruct f unit entries h).1.symm
+
+/-- An accepted product can be written as an ordinary polynomial list product. -/
+theorem check_product_prod (f : DensePoly Rat) (unit : Rat)
+    (entries : Array (DensePoly Rat × Nat))
+    (h : check f (.factors unit entries) = true) :
+    HexPolyMathlib.toPolynomial f = Polynomial.C unit *
+      (entries.toList.map fun entry =>
+        (HexPolyMathlib.toPolynomial entry.1) ^ entry.2).prod := by
+  rw [← toPolynomial_reconstruct_prod]
+  simpa only [reconstruct] using congrArg HexPolyMathlib.toPolynomial
+    (check_reconstruct f unit entries h).1.symm
 
 /-- Accepted rational replay has the same factorization over any field
 containing the rationals. -/
@@ -491,6 +504,14 @@ example (f : DensePoly Rat) (hdegree : 0 < f.natDegree)
   exact check_decompose_squarefree f hdegree hgcd
 
 end Hex.RealClosure.Yun
+
+/-- info: 'Hex.RealClosure.Yun.toPolynomial_reconstruct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.toPolynomial_reconstruct
+
+/-- info: 'Hex.RealClosure.Yun.toPolynomial_reconstruct_prod' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.toPolynomial_reconstruct_prod
 
 /-- info: 'Hex.RealClosure.Yun.check_product_polynomial' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

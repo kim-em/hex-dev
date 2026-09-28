@@ -15,12 +15,17 @@ import HexNumberFieldMathlib.Yun
 public section
 
 /-!
-# Yun's loop invariant
+# Correctness of Yun decomposition
 
 The invariant relates the executable polynomials to original root
 multiplicities. Exact quotient and derivative identities establish it at
 counter one and preserve it through the actual recurrence. The emitted gcd
 selects precisely the roots with the current multiplicity.
+
+Root multiplicities determine the powered product over an algebraic closure.
+Coefficient maps reflect reconstruction, degree accounting, squarefreeness and
+coprimality back to every characteristic-zero field. The public ordered-field
+producer therefore passes the full executable replay checker for every input.
 -/
 
 namespace Hex.RealClosure.Yun
@@ -790,6 +795,446 @@ theorem Component.coprime {K : Type*} [Field K] [DecidableEq K] [IsAlgClosed K]
   obtain ⟨hax, hbx⟩ := Polynomial.isRoot_gcd_iff_isRoot_left_right.mp hroot
   exact hne (((ha.roots x).mp hax).symm.trans ((hb.roots x).mp hbx))
 
+private theorem component_monic {K : Type*} [Field K] [DecidableEq K]
+    {f : DensePoly K} {entry : DensePoly K × Nat} (h : Component f entry) :
+    (HexPolyMathlib.toPolynomial entry.1).Monic := by
+  rw [Polynomial.Monic.def, HexPolyMathlib.leadingCoeff_toPolynomial]
+  exact h.monic
+
+private theorem multiplicity_pow {K : Type*} [Field K]
+    (p : Polynomial K) (hp : p ≠ 0) (n : Nat) (x : K) :
+    (p ^ n).rootMultiplicity x = n * p.rootMultiplicity x := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+      rw [pow_succ, Polynomial.rootMultiplicity_mul
+        (mul_ne_zero (_root_.pow_ne_zero n hp) hp), ih]
+      simp [Nat.succ_mul]
+
+private theorem multiplicity_prod {K : Type*} [Field K]
+    (ps : List (Polynomial K)) (hp : ∀ p ∈ ps, p ≠ 0) (x : K) :
+    ps.prod.rootMultiplicity x = (ps.map fun p => p.rootMultiplicity x).sum := by
+  induction ps with
+  | nil => simp
+  | cons p ps ih =>
+      have hhead : p ≠ 0 := hp p (by simp)
+      have htail : ∀ q ∈ ps, q ≠ 0 := fun q hq => hp q (by simp [hq])
+      have hprod : ps.prod ≠ 0 := List.prod_ne_zero (by
+        intro hz
+        exact htail 0 hz rfl)
+      rw [List.prod_cons, Polynomial.rootMultiplicity_mul (mul_ne_zero hhead hprod),
+        ih htail]
+      simp
+
+private theorem multiplicity_sum {K : Type*} [Field K] [DecidableEq K]
+    (f : DensePoly K) (hf : HexPolyMathlib.toPolynomial f ≠ 0) (x : K)
+    (entries : List (DensePoly K × Nat))
+    (hcomp : ∀ entry ∈ entries, Component f entry)
+    (hlabels : entries.Pairwise fun a b => a.2 < b.2)
+    (hcomplete : (HexPolyMathlib.toPolynomial f).IsRoot x →
+      ∃ entry ∈ entries, (HexPolyMathlib.toPolynomial entry.1).IsRoot x) :
+    (entries.map fun entry => entry.2 *
+      (HexPolyMathlib.toPolynomial entry.1).rootMultiplicity x).sum =
+        (HexPolyMathlib.toPolynomial f).rootMultiplicity x := by
+  revert hcomp hlabels hcomplete
+  induction entries with
+  | nil =>
+      intro hcomp hlabels hcomplete
+      have hr : (HexPolyMathlib.toPolynomial f).rootMultiplicity x = 0 := by
+        by_contra hn
+        obtain ⟨entry, he, _⟩ := hcomplete
+          ((Polynomial.rootMultiplicity_pos hf).mp (Nat.pos_of_ne_zero hn))
+        simp at he
+      simp [hr]
+  | cons entry entries ih =>
+      intro hcomp hlabels hcomplete
+      rw [List.pairwise_cons] at hlabels
+      have hc : Component f entry := hcomp entry (by simp)
+      have ht : ∀ e ∈ entries, Component f e := fun e he => hcomp e (by simp [he])
+      have hne := (component_monic hc).ne_zero
+      by_cases hz : (HexPolyMathlib.toPolynomial entry.1).rootMultiplicity x = 0
+      · simp only [List.map_cons, List.sum_cons, hz, mul_zero, zero_add]
+        apply ih ht hlabels.2
+        intro hx
+        obtain ⟨e, he, hx⟩ := hcomplete hx
+        rw [List.mem_cons] at he
+        rcases he with he | he
+        · subst e
+          have hpos := (Polynomial.rootMultiplicity_pos hne).mpr hx
+          omega
+        · exact ⟨e, he, hx⟩
+      · have hroot := (Polynomial.rootMultiplicity_pos hne).mp (Nat.pos_of_ne_zero hz)
+        have hlabel := (hc.roots x).mp hroot
+        have hone : (HexPolyMathlib.toPolynomial entry.1).rootMultiplicity x = 1 := by
+          have := hc.simple x
+          omega
+        have htail : (entries.map fun e => e.2 *
+            (HexPolyMathlib.toPolynomial e.1).rootMultiplicity x).sum = 0 := by
+          rw [List.sum_eq_zero_iff_forall_eq_nat]
+          intro value hvalue
+          obtain ⟨e, he, rfl⟩ := List.mem_map.mp hvalue
+          by_cases hezero : (HexPolyMathlib.toPolynomial e.1).rootMultiplicity x = 0
+          · simp [hezero]
+          · have hecomp := ht e he
+            have heroot := (Polynomial.rootMultiplicity_pos
+              (component_monic hecomp).ne_zero).mp (Nat.pos_of_ne_zero hezero)
+            have helabel := (hecomp.roots x).mp heroot
+            have hlt := hlabels.1 e he
+            omega
+        simp only [List.map_cons, List.sum_cons, hone, mul_one, htail, add_zero, hlabel]
+
+/-- The powered product of the actual producer components reconstructs the
+input over an algebraically closed characteristic-zero coefficient field. -/
+theorem decompose_product {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    [IsAlgClosed K] (f : DensePoly K) (hd : 0 < f.natDegree)
+    (unit : K) (entries : Array (DensePoly K × Nat))
+    (hresult : decomposeRaw f = .factors unit entries) :
+    reconstruct unit entries = f := by
+  have hf : f ≠ 0 := by
+    intro hz
+    rw [hz] at hd
+    simp at hd
+  have hfPoly := polynomial_ne_zero f hf
+  have hcomp := decompose_factor f hd unit entries hresult
+  let ps := entries.toList.map fun entry =>
+    (HexPolyMathlib.toPolynomial entry.1) ^ entry.2
+  let product := ps.prod
+  let normalized := HexPolyMathlib.toPolynomial f * Polynomial.C f.leadingCoeff⁻¹
+  have hmonic : ∀ entry ∈ entries, (HexPolyMathlib.toPolynomial entry.1).Monic := by
+    intro entry he
+    exact component_monic (hcomp entry he)
+  have hpmonic : ∀ p ∈ ps, p.Monic := by
+    intro p hp
+    obtain ⟨entry, he, rfl⟩ := List.mem_map.mp hp
+    exact (hmonic entry (Array.mem_toList_iff.mp he)).pow entry.2
+  have hproduct : product.Monic := by
+    have aux : ∀ (qs : List (Polynomial K)),
+        (∀ q ∈ qs, q.Monic) → qs.prod.Monic := by
+      intro qs hqs
+      induction qs with
+      | nil => simp
+      | cons q qs ih =>
+          rw [List.prod_cons]
+          exact (hqs q (by simp)).mul (ih (fun p hp => hqs p (by simp [hp])))
+    exact aux ps hpmonic
+  have hnormalized : normalized.Monic := by
+    simpa only [HexPolyMathlib.leadingCoeff_toPolynomial] using
+      Polynomial.monic_mul_leadingCoeff_inv hfPoly
+  have hnonzero : ∀ p ∈ ps, p ≠ 0 := fun p hp => (hpmonic p hp).ne_zero
+  have hlabels := decompose_labels f unit entries hresult
+  have hmult (x : K) : product.rootMultiplicity x =
+      (HexPolyMathlib.toPolynomial f).rootMultiplicity x := by
+    have hcomplete : (HexPolyMathlib.toPolynomial f).IsRoot x →
+        ∃ entry ∈ entries.toList, (HexPolyMathlib.toPolynomial entry.1).IsRoot x := by
+      intro hx
+      obtain ⟨u, es, hr, entry, he, _, hroot⟩ := decompose_root f x hf hx
+      have heq : es = entries := by
+        have hs := hr.symm.trans hresult
+        simp only [Decomposition.factors.injEq] at hs
+        exact hs.2
+      subst es
+      exact ⟨entry, Array.mem_toList_iff.mpr he, hroot⟩
+    calc
+      product.rootMultiplicity x = (ps.map fun p => p.rootMultiplicity x).sum :=
+        multiplicity_prod ps hnonzero x
+      _ = (entries.toList.map fun entry => entry.2 *
+          (HexPolyMathlib.toPolynomial entry.1).rootMultiplicity x).sum := by
+        congr 1
+        simp only [ps, List.map_map]
+        apply List.map_congr_left
+        intro entry he
+        exact multiplicity_pow _
+          (hmonic entry (Array.mem_toList_iff.mp he)).ne_zero entry.2 x
+      _ = (HexPolyMathlib.toPolynomial f).rootMultiplicity x :=
+        multiplicity_sum f hfPoly x entries.toList
+          (fun entry he => hcomp entry (Array.mem_toList_iff.mp he)) hlabels hcomplete
+  have hlc : f.leadingCoeff ≠ 0 := by
+    simpa only [← HexPolyMathlib.leadingCoeff_toPolynomial] using
+      Polynomial.leadingCoeff_ne_zero.mpr hfPoly
+  have hc : Polynomial.C f.leadingCoeff⁻¹ ≠ 0 :=
+    Polynomial.C_ne_zero.mpr (inv_ne_zero hlc)
+  have hnormalized_mult (x : K) : normalized.rootMultiplicity x =
+      (HexPolyMathlib.toPolynomial f).rootMultiplicity x := by
+    rw [Polynomial.rootMultiplicity_mul (mul_ne_zero hfPoly hc),
+      Polynomial.rootMultiplicity_C, add_zero]
+  have hroots : product.roots = normalized.roots := by
+    apply Multiset.ext.mpr
+    intro x
+    rw [Polynomial.count_roots, Polynomial.count_roots, hmult, hnormalized_mult]
+  have hsame : product = normalized := by
+    rw [(IsAlgClosed.splits product).eq_prod_roots_of_monic hproduct,
+      (IsAlgClosed.splits normalized).eq_prod_roots_of_monic hnormalized, hroots]
+  have hu := (decompose_unit f unit entries hresult).1
+  apply (HexPolyMathlib.equiv (R := K)).injective
+  change HexPolyMathlib.toPolynomial (reconstruct unit entries) =
+    HexPolyMathlib.toPolynomial f
+  rw [toPolynomial_reconstruct_prod]
+  change Polynomial.C unit * product = HexPolyMathlib.toPolynomial f
+  rw [hsame, hu]
+  calc
+    Polynomial.C f.leadingCoeff * normalized =
+        HexPolyMathlib.toPolynomial f *
+          (Polynomial.C f.leadingCoeff * Polynomial.C f.leadingCoeff⁻¹) := by
+      dsimp only [normalized]
+      ring
+    _ = HexPolyMathlib.toPolynomial f := by
+      rw [← Polynomial.C_mul, mul_inv_cancel₀ hlc, Polynomial.C_1, mul_one]
+
+private theorem map_reconstruct {K L : Type*} [Field K] [Field L]
+    [DecidableEq K] [DecidableEq L] (φ : K →+* L)
+    (unit : K) (entries : Array (DensePoly K × Nat)) :
+    DensePoly.Interpret.map φ (hom_zero φ) (reconstruct unit entries) =
+      reconstruct (φ unit) (entries.map fun entry =>
+        (DensePoly.Interpret.map φ (hom_zero φ) entry.1, entry.2)) := by
+  let ψ := DensePoly.Interpret.map φ (hom_zero φ)
+  have hmul : ∀ p q : DensePoly K, ψ (p * q) = ψ p * ψ q :=
+    DensePoly.Interpret.map_mul φ (hom_zero φ)
+      (fun a b => map_add φ a b) (fun a b => map_mul φ a b)
+  have hpow (p : DensePoly K) (n : Nat) : ψ (p ^ n) = (ψ p) ^ n :=
+    DensePoly.Interpret.map_natPow φ (hom_zero φ)
+      (fun a b => map_mul φ a b) (fun a b => map_add φ a b) (map_one φ) p n
+  have hc (a : K) : ψ (DensePoly.C a) = DensePoly.C (φ a) := by
+    apply DensePoly.ext_coeff
+    intro i
+    simp only [ψ, DensePoly.Interpret.map_coeff, DensePoly.coeff_C]
+    split
+    · rfl
+    · exact map_zero φ
+  have hfold (es : List (DensePoly K × Nat)) (acc : DensePoly K) :
+      ψ (es.foldl (fun product entry => product * entry.1 ^ entry.2) acc) =
+      (es.map fun entry => (ψ entry.1, entry.2)).foldl
+        (fun product entry => product * entry.1 ^ entry.2) (ψ acc) := by
+    induction es generalizing acc with
+    | nil => rfl
+    | cons entry es ih =>
+        simpa only [List.foldl_cons, List.map_cons, hmul, hpow] using
+          ih (acc * entry.1 ^ entry.2)
+  simpa only [reconstruct, ← Array.foldl_toList, Array.toList_map, hc] using
+    hfold entries.toList (DensePoly.C unit)
+
+private theorem map_result {K L : Type*} [Field K] [Field L]
+    [DecidableEq K] [DecidableEq L] (φ : K →+* L)
+    (f : DensePoly K) (unit : K) (entries : Array (DensePoly K × Nat))
+    (hresult : decomposeRaw f = .factors unit entries) :
+    decomposeRaw (DensePoly.Interpret.map φ (hom_zero φ) f) =
+      .factors (φ unit) (entries.map fun entry =>
+        (DensePoly.Interpret.map φ (hom_zero φ) entry.1, entry.2)) := by
+  have hmap := map_decomposeRaw φ (hom_zero φ)
+    (fun a b => map_sub φ a b) (fun a b => map_mul φ a b)
+    (fun a b => map_div₀ φ a b) (fun a => map_inv₀ φ a)
+    (fun n => map_natCast φ n) f
+  rw [hresult] at hmap
+  exact hmap.symm
+
+/-- Reconstruction descends along a field embedding into an algebraically
+closed characteristic-zero extension. -/
+theorem reconstruct_map {K L : Type*} [Field K] [Field L] [CharZero L]
+    [DecidableEq K] [DecidableEq L] [IsAlgClosed L]
+    (φ : K →+* L) (f : DensePoly K) (hd : 0 < f.natDegree)
+    (unit : K) (entries : Array (DensePoly K × Nat))
+    (hresult : decomposeRaw f = .factors unit entries) :
+    reconstruct unit entries = f := by
+  let ψ := DensePoly.Interpret.map φ (hom_zero φ)
+  have htarget := map_result φ f unit entries hresult
+  have hd' : 0 < (ψ f).natDegree := by
+    simpa only [ψ, DensePoly.Interpret.map_degree] using hd
+  have hprod := decompose_product (ψ f) hd' (φ unit)
+    (entries.map fun entry => (ψ entry.1, entry.2)) htarget
+  apply interpret_injective φ
+  rw [map_reconstruct, hprod]
+
+/-- Every positive-degree characteristic-zero producer result reconstructs
+the input, independently of replay acceptance. -/
+theorem decompose_reconstruct {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    (f : DensePoly K) (hd : 0 < f.natDegree)
+    (unit : K) (entries : Array (DensePoly K × Nat))
+    (hresult : decomposeRaw f = .factors unit entries) :
+    reconstruct unit entries = f := by
+  classical
+  exact reconstruct_map (algebraMap K (AlgebraicClosure K)) f hd unit entries hresult
+
+private theorem degree_sum {K : Type*} [Zero K] [DecidableEq K]
+    (entries : Array (DensePoly K × Nat)) : degreeSum entries =
+    (entries.toList.map fun entry => entry.2 * entry.1.natDegree).sum := by
+  simp only [degreeSum, ← Array.foldl_toList, List.sum_eq_foldl_nat, List.foldl_map]
+
+private theorem monic_degree_prod {K : Type*} [Field K]
+    (ps : List (Polynomial K)) (hp : ∀ p ∈ ps, p.Monic) :
+    ps.prod.Monic ∧ ps.prod.natDegree = (ps.map Polynomial.natDegree).sum := by
+  induction ps with
+  | nil => simp
+  | cons p ps ih =>
+      have hh := hp p (by simp)
+      have ht := ih (fun q hq => hp q (by simp [hq]))
+      constructor
+      · simpa only [List.prod_cons] using hh.mul ht.1
+      · rw [List.prod_cons, hh.natDegree_mul ht.1, ht.2]
+        simp
+
+/-- The producer's powered factors account for exactly the original degree
+over every characteristic-zero coefficient field. -/
+theorem decompose_degree {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    (f : DensePoly K) (hd : 0 < f.natDegree)
+    (unit : K) (entries : Array (DensePoly K × Nat))
+    (hresult : decomposeRaw f = .factors unit entries) :
+    degreeSum entries = f.natDegree := by
+  have hf : f ≠ 0 := by
+    intro hz
+    rw [hz] at hd
+    simp at hd
+  have hu := (decompose_unit f unit entries hresult).1
+  have hunit : unit ≠ 0 := by
+    rw [hu]
+    simpa only [← HexPolyMathlib.leadingCoeff_toPolynomial] using
+      Polynomial.leadingCoeff_ne_zero.mpr (polynomial_ne_zero f hf)
+  have hcomp := decompose_factor f hd unit entries hresult
+  let ps := entries.toList.map fun entry =>
+    (HexPolyMathlib.toPolynomial entry.1) ^ entry.2
+  have hmonic : ∀ p ∈ ps, p.Monic := by
+    intro p hp
+    obtain ⟨entry, he, rfl⟩ := List.mem_map.mp hp
+    exact (component_monic (hcomp entry (Array.mem_toList_iff.mp he))).pow entry.2
+  have hprod := monic_degree_prod ps hmonic
+  have hlc : (Polynomial.C unit).leadingCoeff * ps.prod.leadingCoeff ≠ 0 := by
+    rw [Polynomial.leadingCoeff_C, hprod.1.leadingCoeff, mul_one]
+    exact hunit
+  have hdegree : f.natDegree = (ps.map Polynomial.natDegree).sum := by
+    rw [← HexPolyMathlib.natDegree_toPolynomial,
+      ← decompose_reconstruct f hd unit entries hresult,
+      toPolynomial_reconstruct_prod, Polynomial.natDegree_mul' hlc,
+      Polynomial.natDegree_C, zero_add, hprod.2]
+  rw [degree_sum]
+  rw [hdegree]
+  congr 1
+  simp only [ps, List.map_map]
+  apply List.map_congr_left
+  intro entry he
+  simp only [Function.comp_apply]
+  rw [(component_monic (hcomp entry (Array.mem_toList_iff.mp he))).natDegree_pow,
+    HexPolyMathlib.natDegree_toPolynomial]
+
+/-- Each emitted factor passes the executable squarefree gcd check over
+every characteristic-zero coefficient field. -/
+theorem decompose_factor_gcd {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    (f : DensePoly K) (hd : 0 < f.natDegree)
+    (unit : K) (entries : Array (DensePoly K × Nat))
+    (hresult : decomposeRaw f = .factors unit entries)
+    (entry : DensePoly K × Nat) (he : entry ∈ entries) :
+    (DensePoly.gcd entry.1 (DensePoly.derivativeImpl entry.1)).natDegree = 0 := by
+  classical
+  let φ := algebraMap K (AlgebraicClosure K)
+  let ψ := DensePoly.Interpret.map φ (hom_zero φ)
+  have ht := map_result φ f unit entries hresult
+  have hd' : 0 < (ψ f).natDegree := by
+    simpa only [ψ, DensePoly.Interpret.map_degree] using hd
+  have hm : (ψ entry.1, entry.2) ∈
+      entries.map (fun e => (ψ e.1, e.2)) := Array.mem_map.mpr ⟨entry, he, rfl⟩
+  have hc := decompose_factor (ψ f) hd' (φ unit)
+    (entries.map fun e => (ψ e.1, e.2)) ht (ψ entry.1, entry.2) hm
+  have hg := DensePoly.Interpret.map_gcd φ (hom_zero φ)
+    (fun a b => map_sub φ a b) (fun a b => map_mul φ a b)
+    (fun a b => map_div₀ φ a b) entry.1 (DensePoly.derivativeImpl entry.1)
+  have hder : ψ (DensePoly.derivativeImpl entry.1) =
+      DensePoly.derivativeImpl (ψ entry.1) := by
+    simpa only [← DensePoly.derivative_eq_derivativeImpl] using
+      DensePoly.Interpret.map_derivative φ (hom_zero φ)
+        (fun n => map_natCast φ n) (fun a b => map_mul φ a b) entry.1
+  have hs := hc.squarefree
+  change (DensePoly.gcd (ψ entry.1) (DensePoly.derivativeImpl (ψ entry.1))).natDegree = 0 at hs
+  rw [← hder] at hs
+  change (DensePoly.gcd (DensePoly.Interpret.map φ (hom_zero φ) entry.1)
+    (DensePoly.Interpret.map φ (hom_zero φ) (DensePoly.derivativeImpl entry.1))).natDegree = 0 at hs
+  rw [← hg, DensePoly.Interpret.map_degree] at hs
+  exact hs
+
+/-- Distinct producer multiplicity labels have constant executable gcd over
+every characteristic-zero coefficient field. -/
+theorem decompose_coprime {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    (f : DensePoly K) (hd : 0 < f.natDegree)
+    (unit : K) (entries : Array (DensePoly K × Nat))
+    (hresult : decomposeRaw f = .factors unit entries)
+    (a b : DensePoly K × Nat) (ha : a ∈ entries) (hb : b ∈ entries)
+    (hne : a.2 ≠ b.2) : (DensePoly.gcd a.1 b.1).natDegree = 0 := by
+  classical
+  let φ := algebraMap K (AlgebraicClosure K)
+  let ψ := DensePoly.Interpret.map φ (hom_zero φ)
+  have ht := map_result φ f unit entries hresult
+  have hd' : 0 < (ψ f).natDegree := by
+    simpa only [ψ, DensePoly.Interpret.map_degree] using hd
+  have hcomp := decompose_factor (ψ f) hd' (φ unit)
+    (entries.map fun e => (ψ e.1, e.2)) ht
+  have ha' := hcomp (ψ a.1, a.2) (Array.mem_map.mpr ⟨a, ha, rfl⟩)
+  have hb' := hcomp (ψ b.1, b.2) (Array.mem_map.mpr ⟨b, hb, rfl⟩)
+  have hg := DensePoly.Interpret.map_gcd φ (hom_zero φ)
+    (fun a b => map_sub φ a b) (fun a b => map_mul φ a b)
+    (fun a b => map_div₀ φ a b) a.1 b.1
+  have hs := ha'.coprime hb' hne
+  change (DensePoly.gcd (DensePoly.Interpret.map φ (hom_zero φ) a.1)
+    (DensePoly.Interpret.map φ (hom_zero φ) b.1)).natDegree = 0 at hs
+  rw [← hg, DensePoly.Interpret.map_degree] at hs
+  exact hs
+
+section Producer
+
+attribute [local instance] Lean.Grind.Semiring.natCast
+
+/-- Every public Yun result passes full exact replay, including repeated
+factors, nonmonic inputs and gaps in multiplicity labels. -/
+theorem decompose_sound {K : Type*} [s : Lean.Grind.Field K]
+    [LE K] [LT K] [Std.IsPreorder K] [Std.LawfulOrderLT K]
+    [Lean.Grind.OrderedRing K] [DecidableEq K] (f : DensePoly K) :
+    check f (decompose f) = true := by
+  by_cases hf : f = 0
+  · subst f
+    exact check_decompose_zero
+  · by_cases hd : f.natDegree = 0
+    · exact check_decompose_constant f hf hd
+    · have hdegree : 0 < f.natDegree := Nat.pos_of_ne_zero hd
+      change check f (decomposeRaw f) = true
+      have hzero : f.isZero = false := by
+        apply (DensePoly.isZero_eq_false_iff f).mpr
+        have hs : f.size ≠ 0 := fun hs => hf ((DensePoly.size_eq_zero_iff f).mp hs)
+        omega
+      generalize hr : decomposeRaw f = result
+      cases result with
+      | zero =>
+          simp only [decomposeRaw, hzero, Bool.false_eq_true, hd, ↓reduceIte] at hr
+          cases hr
+      | factors unit entries =>
+          simp only [check, hzero, Bool.not_false, Bool.true_and,
+            Bool.and_eq_true, decide_eq_true_eq]
+          let : Field K := HexPolyMathlib.fieldOfGrind
+          let : CharZero K := ⟨fun m n h =>
+            @natCast_injective K s inferInstance inferInstance inferInstance inferInstance
+              inferInstance m n h⟩
+          have hu := (decompose_unit f unit entries hr).1
+          have hunit : unit ≠ 0 := by
+            rw [hu]
+            simpa only [← HexPolyMathlib.leadingCoeff_toPolynomial] using
+              Polynomial.leadingCoeff_ne_zero.mpr (polynomial_ne_zero f hf)
+          have hcomp := decompose_factor f hdegree unit entries hr
+          have hlabels := decompose_labels f unit entries hr
+          have hproduct := decompose_reconstruct f hdegree unit entries hr
+          have haccount := decompose_degree f hdegree unit entries hr
+          have hall : entries.all (fun entry =>
+              0 < entry.2 && 0 < entry.1.natDegree && decide (entry.1.leadingCoeff = 1) &&
+                (DensePoly.gcd entry.1 (DensePoly.derivativeImpl entry.1)).natDegree == 0) = true := by
+            rw [Array.all_eq_true_iff_forall_mem]
+            intro entry he
+            simp only [Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq]
+            have hc := hcomp entry he
+            exact ⟨⟨⟨hc.positive, hc.nonconstant⟩, hc.monic⟩,
+              decompose_factor_gcd f hdegree unit entries hr entry he⟩
+          have hcoprime : entries.toList.Pairwise fun a b =>
+              (DensePoly.gcd a.1 b.1).natDegree = 0 := by
+            apply hlabels.imp_of_mem
+            intro a b ha hb hab
+            exact decompose_coprime f hdegree unit entries hr a b
+              (Array.mem_toList_iff.mp ha) (Array.mem_toList_iff.mp hb) (Nat.ne_of_lt hab)
+          exact ⟨⟨⟨⟨⟨hunit, hall⟩, hlabels⟩, hcoprime⟩, hproduct⟩, haccount⟩
+
+end Producer
+
 section Integration
 
 attribute [-instance] Field.toGrindField
@@ -801,7 +1246,62 @@ example (f : DensePoly Rat) (hf : f ≠ 0) (hd : 0 < f.natDegree) (extra : Nat) 
       loop (f / a) (DensePoly.derivativeImpl f / a) 1 f.natDegree #[] :=
   ordered_bound f hf hd extra
 
+example (f : DensePoly Rat) : check f (decompose f) = true := decompose_sound f
+
 end Integration
+
+-- This semantic selected-root field inherits inverse soundness from
+-- `Tarski.check_rootSum` (#10389); the generic producer theorem does not.
+example {context : Nat} (d : Root context) (f : DensePoly (Value d)) :
+    check f (decompose f) = true := decompose_sound f
+
+/-- The actual cached packed recurrence passes full replay after interpreting
+its coefficients as canonical real algebraic numbers. This instantiation
+inherits the selected-root inverse dependency on #10389. -/
+theorem decompose_packed {context : Nat} {d : Root context}
+    (h : Root.Handle d) (f : DensePoly (Root.Handle.Value h)) :
+    check
+      (DensePoly.Interpret.map
+        (fun a : Root.Handle.Value h => a.value)
+        (fun a => (Root.Handle.Value.eq_zero_iff a).symm) f)
+      (Decomposition.map (fun a : Root.Handle.Value h => a.value)
+        (fun a => (Root.Handle.Value.eq_zero_iff a).symm)
+        (decomposeRaw f)) = true := by
+  rw [map_packed]
+  exact decompose_sound _
+
+-- The inherited `sorryAx` is `Tarski.check_rootSum` (#10389).
+/-- info: 'Hex.RealClosure.Yun.decompose_packed' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.decompose_packed
+
+/-- info: 'Hex.RealClosure.Yun.decompose_product' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.decompose_product
+
+/-- info: 'Hex.RealClosure.Yun.reconstruct_map' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.reconstruct_map
+
+/-- info: 'Hex.RealClosure.Yun.decompose_reconstruct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.decompose_reconstruct
+
+/-- info: 'Hex.RealClosure.Yun.decompose_degree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.decompose_degree
+
+/-- info: 'Hex.RealClosure.Yun.decompose_factor_gcd' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.decompose_factor_gcd
+
+/-- info: 'Hex.RealClosure.Yun.decompose_coprime' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.decompose_coprime
+
+/-- info: 'Hex.RealClosure.Yun.decompose_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.decompose_sound
 
 /-- info: 'Hex.RealClosure.Yun.Invariant.loop_weight' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

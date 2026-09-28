@@ -150,8 +150,9 @@ Arbitrary ordered coefficient towers still need their interpretation laws.
 repeated-factor recurrence's pointwise root invariant over characteristic-zero
 fields, including nonmonic inputs. Over an algebraically closed field, the
 remaining-multiplicity weight decreases on every nonconstant round and starts
-at the original degree. `initial_loop_bound` proves that the executable's fuel
-covers the multiplicity rounds, including gaps with no emitted factor. These
+at the original degree. `Invariant.loop_weight` proves that any additional fuel
+leaves the output unchanged; `initial_loop_bound` is its one-step corollary for
+the initial state. The bound covers gaps with no emitted factor. These
 proofs use ordinary kernel checking and have no admitted dependencies.
 `decompose_bound` transports this result through an algebraic closure to every
 characteristic-zero field. `ordered_bound` applies it to the public executable
@@ -161,12 +162,19 @@ injective, making the exclusion of positive characteristic explicit.
 `decompose_root` proves that every input root appears in the actual producer
 output with its original multiplicity, without a replay-acceptance premise.
 `decompose_factor` proves monicity, positive degree and labels for every emitted
-factor. Over an algebraically closed coefficient field, these factors pass
-the squarefreeness and distinct-label coprimality gcd checks. The raw recurrence
-also has strictly increasing labels and retains the input's leading coefficient
+factor. `decompose_reconstruct` proves that their powered product reconstructs
+the input, and `decompose_degree` proves exact degree accounting.
+`decompose_factor_gcd` and `decompose_coprime` prove the executable squarefreeness
+and distinct-label coprimality checks over every characteristic-zero field.
+The raw recurrence also has strictly increasing labels and retains the input's
+leading coefficient
 without requiring field laws on stored syntax.
-The proof that `decompose` always passes replay on repeated-factor inputs is
-also outstanding, so unchecked outputs are not certified decompositions.
+`decompose_sound` combines these results to prove that every public
+ordered-field `decompose` result passes `check`, including repeated factors.
+The generic producer proofs have no admitted dependencies and retain the field
+operations used by the executable API. `decompose_packed` applies them to the
+actual cached packed recurrence after coefficient interpretation; this
+selected-root instantiation inherits the named #10389 inverse dependency.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and
