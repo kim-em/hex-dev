@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.Element
+public import HexRealClosure.Yun
 
 public section
 
@@ -434,5 +434,165 @@ private def cachedPolynomial : Option (Bool × Nat × Bool) := do
 
 #eval cachedPolynomial
 #guard cachedPolynomial == some (true, 1, true)
+
+/-- Yun's recurrence skips the first multiplicity when every root is repeated. -/
+private def yunRat : Option (Rat × Array (Array Rat × Nat)) :=
+  let p := x - DensePoly.C 1
+  let q := x - DensePoly.C 2
+  let f : DensePoly Rat := DensePoly.C 2 * (p * p) * (q * q * q)
+  match Yun.decompose (K := Rat) f with
+  | .zero => none
+  | .factors u entries =>
+      some (u, entries.map fun entry => (entry.1.toArray, entry.2))
+
+#eval yunRat
+#guard yunRat == some (2, #[(#[-1, 1], 2), (#[-2, 1], 3)])
+
+private def yunRatReconstruct : Bool :=
+  let p := x - DensePoly.C 1
+  let q := x - DensePoly.C 2
+  let f : DensePoly Rat := DensePoly.C 2 * (p * p) * (q * q * q)
+  match Yun.decompose (K := Rat) f with
+  | .zero => false
+  | .factors u entries =>
+      Yun.reconstruct u entries == f &&
+        Yun.degreeSum entries == f.natDegree
+
+#guard yunRatReconstruct
+
+/-- Replay rejects a missing multiplicity and an out-of-order factor list. -/
+private def yunReplay : Bool :=
+  let p := x - DensePoly.C 1
+  let q := x - DensePoly.C 2
+  let f : DensePoly Rat := DensePoly.C 2 * (p * p) * (q * q * q)
+  Yun.check f (Yun.decompose f) &&
+    !(Yun.check f (.factors 2 #[(p, 1), (q, 3)])) &&
+    !(Yun.check f (.factors 2 #[(q, 3), (p, 2)]))
+
+#guard yunReplay
+
+/-- A powered factor reconstructs but fails the squarefreeness replay. -/
+private def yunRejectPower : Bool :=
+  let p := x - DensePoly.C 1
+  let f : DensePoly Rat := p * p
+  !(Yun.check f (.factors 1 #[(f, 1)]))
+
+#guard yunRejectPower
+
+/-- Product and degree can match while overlapping factors invalidate replay. -/
+private def yunRejectOverlap : Bool :=
+  let p : DensePoly Rat := x - DensePoly.C 1
+  let f := p ^ 3
+  let entries := #[(p, 1), (p, 2)]
+  Yun.reconstruct 1 entries == f &&
+    Yun.degreeSum entries == f.natDegree &&
+    !(Yun.check f (.factors 1 entries))
+
+#guard yunRejectOverlap
+
+/-- A rescaled factor can reconstruct correctly but is not monic. -/
+private def yunRejectNonmonic : Bool :=
+  let p : DensePoly Rat := x - DensePoly.C 1
+  let q : DensePoly Rat := x - DensePoly.C 2
+  let f := DensePoly.C 2 * p ^ 2 * q ^ 3
+  let entries := #[(DensePoly.C 2 * p, 2), (q, 3)]
+  Yun.reconstruct (1 / 2) entries == f &&
+    Yun.degreeSum entries == f.natDegree &&
+    !(Yun.check f (.factors (1 / 2) entries))
+
+#guard yunRejectNonmonic
+
+/-- Zero and nonzero constants have distinct Yun outputs. -/
+private def yunZero : Bool :=
+  match Yun.decompose (0 : DensePoly Rat) with
+  | .zero => true
+  | .factors .. => false
+
+private def yunConstant : Bool :=
+  match Yun.decompose (DensePoly.C (7 / 3 : Rat)) with
+  | .zero => false
+  | .factors u entries => u == 7 / 3 && entries.isEmpty
+
+#guard yunZero
+#guard yunConstant
+
+private def yunReplayEdges : Bool :=
+  Yun.check (0 : DensePoly Rat) (Yun.decompose 0) &&
+    Yun.check (DensePoly.C (7 / 3 : Rat))
+      (Yun.decompose (DensePoly.C (7 / 3 : Rat))) &&
+    !(Yun.check (0 : DensePoly Rat) (.factors 1 #[]))
+
+#guard yunReplayEdges
+
+/-- Squarefree factors are grouped at multiplicity one. -/
+private def yunSquarefree : Option (Rat × Array (Array Rat × Nat)) :=
+  let f : DensePoly Rat := DensePoly.C 2 * (x - DensePoly.C 1) *
+    (x - DensePoly.C 2)
+  match Yun.decompose (K := Rat) f with
+  | .zero => none
+  | .factors u entries =>
+      some (u, entries.map fun entry => (entry.1.toArray, entry.2))
+
+#guard yunSquarefree == some (2, #[(#[2, -3, 1], 1)])
+
+/-- A degree-five power requires four empty Yun rounds before emission. -/
+private def yunGap : Option (Nat × Array Rat) :=
+  let f : DensePoly Rat := (x - DensePoly.C 1) ^ 5
+  match Yun.decompose (K := Rat) f with
+  | .zero => none
+  | .factors _ entries =>
+      if entries.size = 1 then
+        entries[0]?.map fun entry => (entry.2, entry.1.toArray)
+      else none
+
+#eval yunGap
+#guard yunGap == some (5, #[-1, 1])
+
+/-- A repeated irreducible quadratic does not need rational linear roots. -/
+private def yunQuadratic : Bool :=
+  let p : DensePoly Rat := x * x + 1
+  let f := p * p * p
+  match Yun.decompose f with
+  | .zero => false
+  | .factors u entries =>
+      u == 1 && entries.size == 1 &&
+        ((entries[0]?.map (fun entry => entry.1 == p && entry.2 == 3)).getD false) &&
+        Yun.check f (.factors u entries)
+
+#guard yunQuadratic
+
+/-- Zero and nonzero roots retain their multiplicities and fractional unit. -/
+private def yunMixed : Bool :=
+  let x0 : DensePoly Rat := DensePoly.ofCoeffs #[0, 1, 0]
+  let q : DensePoly Rat := x - DensePoly.C 1
+  let f := DensePoly.C (-3 / 2 : Rat) * x0 ^ 2 * q ^ 4
+  match Yun.decompose f with
+  | .zero => false
+  | .factors u entries =>
+      u == -3 / 2 && entries == #[(x, 2), (q, 4)] &&
+        Yun.check f (.factors u entries)
+
+#guard yunMixed
+
+/-- The same executable recurrence accepts packed selected-root coefficients. -/
+private def yunNested : Option (Nat × Nat × Bool) := do
+  let d ← Root.validate 7 raw
+  let h := d.handle
+  let alpha : Root.Handle.Value h := Root.Handle.Value.ofPoly h x
+  let y : DensePoly (Root.Handle.Value h) := DensePoly.ofCoeffs #[0, 1]
+  let f := (y - DensePoly.C alpha) * (y - DensePoly.C alpha)
+  match Yun.decomposeRaw f with
+  | .zero => none
+  | .factors u entries =>
+      let factor := entries[0]?.map Prod.fst
+      return (entries.size, entries[0]?.map Prod.snd |>.getD 0,
+        u.value == 1 &&
+          (factor.map fun p =>
+            p.natDegree == 1 && (p.eval alpha).value == 0 &&
+              (DensePoly.C u * (p * p)).toArray.map (fun c => c.value) ==
+                f.toArray.map (fun c => c.value)).getD false)
+
+#eval yunNested
+#guard yunNested == some (1, 2, true)
 
 end Hex.RealClosure.Tests

@@ -177,6 +177,50 @@ product_storage = rem([Q(0), Q(-3), Q(1)], head)
 inverse_storage = [Q(-3, 7), Q(-1, 7)]
 assert eval_poly(inverse_storage, alpha) == inv(below)
 
+# Count known rational roots by repeated exact division. This is independent
+# of the Lean Yun gcd/derivative recurrence.
+yun_input = [Q(2) * c for c in poly_mul(
+    poly_mul([Q(-1), Q(1)], [Q(-1), Q(1)]),
+    poly_mul(poly_mul([Q(-2), Q(1)], [Q(-2), Q(1)]), [Q(-2), Q(1)]))]
+yun_remaining = yun_input[:]
+yun_factors = []
+for root in (Q(1), Q(2)):
+    linear = [-root, Q(1)]
+    multiplicity = 0
+    while True:
+        quotient, remainder = divmod_poly(yun_remaining, linear)
+        if remainder:
+            break
+        yun_remaining = quotient
+        multiplicity += 1
+    yun_factors.append((linear, multiplicity))
+assert yun_remaining == [Q(2)] and [m for _, m in yun_factors] == [2, 3]
+
+yun_gap = [Q(1)]
+for _ in range(5):
+    yun_gap = poly_mul(yun_gap, [Q(-1), Q(1)])
+yun_gap_remaining = yun_gap
+yun_gap_multiplicity = 0
+while True:
+    quotient, remainder = divmod_poly(yun_gap_remaining, [Q(-1), Q(1)])
+    if remainder:
+        break
+    yun_gap_remaining = quotient
+    yun_gap_multiplicity += 1
+assert yun_gap_remaining == [Q(1)] and yun_gap_multiplicity == 5
+
+yun_nested_linear = [neg(alpha), ext_one]
+yun_nested = ext_poly_mul(yun_nested_linear, yun_nested_linear)
+yun_nested_unit = yun_nested
+yun_nested_multiplicity = 0
+while True:
+    quotient, remainder = ext_divmod(yun_nested_unit, yun_nested_linear)
+    if remainder:
+        break
+    yun_nested_unit = quotient
+    yun_nested_multiplicity += 1
+assert yun_nested_multiplicity == 2 and yun_nested_unit == [ext_one]
+
 
 def lean_rats(coeffs):
     def show(q):
@@ -286,6 +330,12 @@ expected = [
     f"{sign(below)})",
     f"some ({str(not ext_remainder).lower()}, {len(ext_quotient) - 1}, "
     f"{str(ext_quotient[0] == alpha).lower()})",
+    f"some ({yun_remaining[0]}, #[" + ", ".join(
+        f"(#{lean_rats(factor)}, {multiplicity})"
+        for factor, multiplicity in yun_factors) + "])",
+    f"some ({yun_gap_multiplicity}, #{lean_rats([Q(-1), Q(1)])})",
+    f"some (1, {yun_nested_multiplicity}, "
+    f"{str(yun_nested_unit == [ext_one]).lower()})",
 ]
 
 run = subprocess.run(

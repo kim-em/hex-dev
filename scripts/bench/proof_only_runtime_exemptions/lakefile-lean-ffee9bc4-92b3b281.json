@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "ffee9bc46edf5856435dd50093a3daa0f91b55db",
+  "current_blob": "92b3b2810ead4c0bc34c10fd11d540d29783b9ad",
+  "reason": "This combined Lake transition adds AINTLIB for ECPP proofs and registers independent ECPP, ordered-function, real-closure, RCF, sign-determinant, Yun proof, conformance and bench targets. It removes manual determinant experiments. The Mathlib pin, hexbz_factor_service executable declaration, compiler options and all factorization-library declarations in its runtime import graph are unchanged. The only change relative to the merged main Lake file is a comment and HexRealClosureMathlib.Yun in the independent HexQuerySemantics proof target."
+}
