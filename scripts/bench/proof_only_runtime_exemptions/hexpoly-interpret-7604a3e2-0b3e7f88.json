@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/Interpret.lean",
+  "baseline_blob": "7604a3e22a6c3b57dbf20af41a4836c1aa2a6053",
+  "current_blob": "0b3e7f8870b83da82faa8debc4318713cadf4e1d",
+  "reason": "Adds only map_divModMonic, transporting the existing monic division routine through zero-reflecting coefficient interpretation, and its axiom guard. The new theorem is erased. All existing executable definitions, coefficient-interpretation maps and csimp rules, polynomial arithmetic, division and gcd implementations are unchanged. No factorization-service computation gains a call to the new theorem."
+}

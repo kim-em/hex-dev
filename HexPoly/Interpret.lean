@@ -301,7 +301,22 @@ private theorem array_division (p q : DensePoly E) (lead : E → E) (lead' : F �
     simpa only [map_ofCoeffs] using
       congrArg (fun r : Array F × Array F => (ofCoeffs r.1, ofCoeffs r.2)) h
 
-variable [One E] [Add E] [Div E] [One F] [Add F] [Div F]
+variable [One E] [Add E] [One F] [Add F]
+
+/-- The shared monic division needs no coefficient inverse. Its actual two
+outputs commute with zero-reflecting coefficient interpretation. -/
+theorem map_divModMonic (h1 : f (1 : E) = (1 : F)) (p q : DensePoly E)
+    (hq : q.Monic) :
+    let hq' : (map f hz q).Monic := by
+      change (map f hz q).leadingCoeff = 1
+      rw [map_leading, hq, h1]
+    let r := divModMonic p q hq
+    (map f hz r.1, map f hz r.2) = divModMonic (map f hz p) (map f hz q) hq' := by
+  apply array_division f hz hs hm
+  intro a
+  rfl
+
+variable [Div E] [Div F]
 variable (hd : ∀ a b, f (a / b) = f a / f b)
 include hd
 
@@ -450,3 +465,7 @@ theorem map_monicize (f : E → F) (hz : ∀ x, f x = 0 ↔ x = 0)
 
 end Interpret
 end Hex.DensePoly
+
+/-- info: 'Hex.DensePoly.Interpret.map_divModMonic' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.DensePoly.Interpret.map_divModMonic
