@@ -41,3 +41,12 @@ the admission rather than establish independent query correctness.
 
 Executable translations live in Mathlib-free `HexSturm.Transport`; see the
 [SPEC](SPEC/hex-sturm-mathlib.md) for their endpoint and binding contracts.
+
+`HexSignDetMathlib.ReencodingProducer` proves that the actual re-encoding
+constructor returns `none` whenever the original selected root is absent from
+the target domain. `SelectedRoot` proves that the defining equation,
+derivative signs and strict endpoint queries used in this test identify
+exactly the source root. These results cover generic lawful coefficient
+representations and finite or infinite endpoints without a separating-interval
+assumption. They inherit the named root-sum admission above. General success
+for present roots and semantic strict ordering remain separate requirements.

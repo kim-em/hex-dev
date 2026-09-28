@@ -1117,4 +1117,11 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 #guard_msgs in
 #print axioms Descriptor.fullOrder_reverse
 
+/-- info: 'Hex.SignDet.Descriptor.buildReencoding_ofNone' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.buildReencoding_ofNone
+/-- info: 'Hex.SignDet.Descriptor.buildReencoding_ofEmpty' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.buildReencoding_ofEmpty
+
 end Hex.SignDet.Conformance
