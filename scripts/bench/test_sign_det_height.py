@@ -152,5 +152,26 @@ class HeightExportValidation(unittest.TestCase):
                 self.check_export(result)
 
 
+class RetainedCollections(unittest.TestCase):
+    def test_retained_collections(self):
+        root = Path(__file__).resolve().parents[2] / "reports/data/sign-det-height"
+        expected = {"640bf10bd", "ad5e59e5a", "e3e380d81"}
+        self.assertTrue(expected.issubset({p.name for p in root.iterdir()}))
+        for folder in sorted(root.iterdir()):
+            if not folder.is_dir():
+                continue
+            with self.subTest(collection=folder.name):
+                metadata = json.loads((folder / "metadata.json").read_text())
+                self.assertEqual(validate(folder / "inventory.log"), 7)
+                self.assertEqual(validate_phases(folder / "phases.log",
+                    height_sensitive=metadata["schema"].endswith("v2")), 7)
+                toolchain = metadata.get("source_toolchain", "leanprover/lean4:v4.34.1"
+                    if folder.name == "640bf10bd" else "leanprover/lean4:v4.35.0-rc3")
+                for name in ("Height.runReduce", "Height.runCheck"):
+                    self.assertEqual(validate_export(folder / (name + ".json"), name,
+                        folder / "phases.log", metadata["revision"], toolchain)["verdict"],
+                        "consistent_with_declared_complexity")
+
+
 if __name__ == "__main__":
     unittest.main()

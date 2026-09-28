@@ -85,7 +85,7 @@ def validate_phases(path, *, height_sensitive=False):
 
 
 def validate_export(path, name, inventory, revision, toolchain):
-    """Check the registered schedule and oracle-bound outputs, retaining its verdict."""
+    """Check the registered schedule and validated-object fingerprints, retaining its verdict."""
     if name not in FUNCTIONS:
         raise ValueError("unknown height operation")
     validate_phases(inventory)
@@ -128,7 +128,7 @@ def validate_export(path, name, inventory, revision, toolchain):
         if (point.get("status") != "ok" or point.get("part_of_verdict") is not True or
                 point.get("below_signal_floor") is not False or
                 point.get("result_hash") != hex(inputs[point["param"]][key])):
-            raise ValueError("failed sample or output differs from the known root table")
+            raise ValueError("failed sample or output fingerprint differs from the validated phase object")
         nanos = point.get("per_call_nanos")
         repeats = point.get("inner_repeats")
         if (type(nanos) not in (int, float) or not math.isfinite(nanos) or nanos <= 0 or

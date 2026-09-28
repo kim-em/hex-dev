@@ -17,8 +17,11 @@ Scientific registrations measure `QueryReduction.build` and
 `QueryReduction.check` separately. The construction registration also computes
 a checksum of the literal reduction output; the checking registration returns
 a Boolean. Construction times therefore include that checksum work. The digest uses
-three large-integer doublings through the standard integer hash, which add
-linear bit work. Coefficient bit lengths make its fingerprint sensitive to
+three large-integer doublings through the standard integer hash. Integer
+hashing and explicit `Int.natAbs` conversions also copy H-bit magnitudes.
+Replay copies one magnitude to obtain its input height. These fingerprint
+operations add linear bit work; the GMP bit-length primitive itself takes
+constant time. Coefficient bit lengths make its fingerprint sensitive to
 the measured height; replay returns its input height together with its Boolean
 result. These finite hashes do not establish literal output equality.
 `phaseValid` checks every input and reduction field independently before timing. The phase
@@ -124,7 +127,9 @@ are constant across this height ladder and cannot detect a run at the wrong
 height. Literal input/reduction checks in `phaseValid`, rather than the hashes,
 provide their value validation. New collections include coefficient bit lengths
 in construction fingerprints and input height in replay results, and reject
-fingerprint collisions between the seven declared heights.
+fingerprint collisions between the seven declared phase heights. Small
+inventory table/result hashes remain height-independent and are only
+auxiliary observations; their literal inputs and tables are checked directly.
 
 The archive preserves the exact premeasurement sources, including the
 original validator. The additional model-formula and relative-size validation passes the
@@ -185,9 +190,9 @@ afterwards, recorded as context.
 All three collections are consistent with the declared linear model on
 their recorded revisions. The finite-range verdict does not prove an
 asymptotic bound: its ±0.15 slope tolerance cannot distinguish a small
-additional logarithmic factor across this ladder. The largest successive
-doubling ratios are approximately 1.86, 2.12, 1.97 for construction and
-1.91, 1.96, 2.00 for replay on Lean 4.35. These observations distinguish
+additional logarithmic factor across this ladder. The three highest doublings in the `e3e380d81` collection have ratios
+approximately 1.87, 2.12, 1.97 for construction and 1.91, 1.97, 2.00
+for replay. These observations distinguish
 linear from quadratic growth on this range, while the model itself comes
 from the stated primitive-operation analysis. General coefficient-height propagation, allocation, nested fields,
 maximal support, joint comparisons and the remaining Phase-4 requirements

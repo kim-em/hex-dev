@@ -66,9 +66,13 @@ exact division c/c or c/1, and long-by-one-limb multiplication. The equal-input
 gcd and exact divisions are linear because their operands coincide or their
 quotient is one limb; this is not a claim about general H-bit gcd/division.
 Replay uses bounded-integer scalar products and proportional differences.
-The construction checksum also doubles three large numerators through
-Hashable Int, adding Θ(H) work. Native GMP bit-length queries add constant
-work and make the result fingerprints height-sensitive.
+The construction checksum hashes three large numerators: Int hashing and
+explicit natAbs conversions copy H-bit magnitudes, and the hashes double
+those magnitudes. Replay also copies one magnitude to return its input
+height. These fingerprint operations add Θ(H) work; the subsequent GMP
+bit-length primitive itself is constant time. Polynomial degrees and query
+counts are fixed, so this supplements the SPEC arithmetic-operation bounds
+with a bit-cost model for coefficient normalization.
 Thus each phase performs Θ(H) bit work. These registrations isolate those
 phases so fixed BKR systems do not dominate a 64-to-4096-bit ladder. They
 are normalization evidence, not coverage of height growth in general chains,
@@ -85,7 +89,7 @@ setup_benchmark Height.runReduce height => height
     maxSecondsPerCall := 10
   }
 
--- Declared cost-model: Θ(H), fixed scalar identities with no unrelated long products.
+-- Declared cost-model: Θ(H), fixed scalar identities plus a magnitude copy for the height tag.
 setup_benchmark Height.runCheck height => height
   with prep := Height.phaseInput
   where {

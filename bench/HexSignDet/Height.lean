@@ -163,7 +163,7 @@ def inspectPhases : IO UInt32 := do
       ("coefficientBits", Lean.toJson height),
       ("coefficientBytes", Lean.toJson ((height + 7) / 8)),
       ("inputHash", Lean.toJson (hash i).toNat),
-      ("productionResultHash", Lean.toJson (hash (runReduce i)).toNat),
+      ("productionResultHash", Lean.toJson (hash (reductionHash i.reduction)).toNat),
       ("replayResultHash", Lean.toJson (hash (runCheck i)).toNat)]).compress
     (← IO.getStdout).flush
   return 0
