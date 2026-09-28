@@ -596,6 +596,7 @@ lean_lib HexQuerySemantics where
   globs := #[`HexRealRootsMathlib.TarskiSoundness, `HexSturmMathlib.Soundness,
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
+    `HexRealClosureMathlib.Algebraic,
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,

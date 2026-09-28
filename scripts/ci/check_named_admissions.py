@@ -167,7 +167,8 @@ def import_cone(start: str) -> set[Path]:
 def check() -> None:
     if module_file("HexRCF.RealCoefficients") is None:
         raise ValueError("the optional rcf adapter module is missing")
-    roots = ["HexRCF.RealCoefficients", "HexSignDetMathlib.SelectedProducerConformance"] + [
+    roots = ["HexRCF.RealCoefficients", "HexSignDetMathlib.SelectedProducerConformance",
+             "HexRealClosureMathlib.Algebraic"] + [
         "HexSignDetMathlib." + path.stem
         for path in sorted((ROOT / "adapters/HexSignDetMathlib").glob("*.lean"))]
     paths = set().union(*(import_cone(module) for module in roots))

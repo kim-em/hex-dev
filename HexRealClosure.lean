@@ -10,3 +10,4 @@ public import HexRealClosure.Deflation
 public import HexRealClosure.BaseCodec
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
+public import HexRealClosure.Algebraic
