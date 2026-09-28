@@ -75,8 +75,7 @@ historical quadratic or quartic measurements as passing results.
 | `horner` | 2 | Upper bound | -0.765 | [successive](data/hex-ordered-fn/successive/runtime.json) |
 | `successiveApproximation` | 1 | consistent | +0.040 | [successive-scalar-repeat](data/hex-ordered-fn/successive-scalar-repeat/runtime.json) |
 | `thirdApproximation` | 1 | consistent | +0.009 | [third](data/hex-ordered-fn/third/runtime.json) |
-
-The subtraction baseline is reported in [Subtraction scaling](#subtraction-scaling).
+| `subtraction` | 1 | consistent | -0.147 | [subtraction-4s](data/hex-ordered-fn/subtraction-4s/runtime.json) |
 
 ## Comparator ratios
 
@@ -708,3 +707,19 @@ This changes the measurement duration, not the algorithm or linear cost model;
 the initial samples are not discarded. The [context](data/hex-ordered-fn/subtraction-1s/context.json)
 records automatically selected CPU 15, four Lean workers, source and matching
 before/after executable hashes. Host load is recorded without excluding samples.
+
+The [four-second run](data/hex-ordered-fn/subtraction-4s/runtime.json) has all
+24 samples above the process floor. Its two-sided verdict is consistent with
+the declared linear model, normalized slope −0.147 (the harness tolerance is
+0.15). Medians range from 205.711 µs at n=128 to 14.433 ms at n=16384.
+Trial spreads range from 43.6% to 78.8%; the pass is close to the tolerance
+boundary and does not establish a tight constant factor. All samples are
+retained and no unchanged rerun was performed. These observations are not a
+before/after speedup comparison.
+
+The [context](data/hex-ordered-fn/subtraction-4s/context.json) records source
+`ce8c134c60f0673eff3baf9d5043da4ab6c10ede`, automatically selected CPU 21,
+four Lean workers and equal executable hashes before and after execution.
+The source and executable remained unchanged during collection. Reproduce
+with `python3 scripts/bench/ordered_fn_measure.py --output DIR --filter
+Hex.OrderedFnBench.subtraction` from that source revision.

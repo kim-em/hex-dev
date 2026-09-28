@@ -1,0 +1,41 @@
+Hex.OrderedFnBench.subtraction    expected complexity: n    [warm cache]
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=ce8c134, 2026-09-28T05:16:10Z, host=chungus2
+   param  per-call    repeats  C
+     128  215.563 µs  ×2^13    C=1607.116 [trial 1/3] †
+     256  416.477 µs  ×2^12    C=1589.050 [trial 1/3]
+     512  806.040 µs  ×2^11    C=1544.741 [trial 1/3]
+   1_024    1.614 ms  ×2^10    C=1549.114 [trial 1/3]
+   2_048    3.239 ms  ×2^9     C=1566.764 [trial 1/3]
+   4_096    6.372 ms  ×2^8     C=1555.610 [trial 1/3]
+   8_192   12.593 ms  ×2^7     C= 893.190 [trial 1/3]
+  16_384   25.578 ms  ×2^6     C= 880.914 [trial 1/3]
+     128  205.710 µs  ×2^13    C=1607.116 [trial 2/3] †
+     256  406.796 µs  ×2^12    C=1589.050 [trial 2/3]
+     512  790.907 µs  ×2^11    C=1544.741 [trial 2/3]
+   1_024    1.586 ms  ×2^10    C=1549.114 [trial 2/3]
+   2_048    3.209 ms  ×2^9     C=1566.764 [trial 2/3]
+   4_096    6.475 ms  ×2^8     C=1555.610 [trial 2/3]
+   8_192    7.317 ms  ×2^8     C= 893.190 [trial 2/3]
+  16_384   14.203 ms  ×2^7     C= 880.914 [trial 2/3]
+     128  112.635 µs  ×2^14    C=1607.116 [trial 3/3] †
+     256  235.554 µs  ×2^13    C=1589.050 [trial 3/3]
+     512  461.583 µs  ×2^12    C=1544.741 [trial 3/3]
+   1_024  919.225 µs  ×2^10    C=1549.114 [trial 3/3]
+   2_048    1.771 ms  ×2^10    C=1566.764 [trial 3/3]
+   4_096    3.482 ms  ×2^9     C=1555.610 [trial 3/3]
+   8_192    7.145 ms  ×2^8     C= 893.190 [trial 3/3]
+  16_384   14.433 ms  ×2^7     C= 880.914 [trial 3/3]
+  verdict: consistent with declared complexity (cMin=880.914, cMax=1589.050, β=-0.147)
+  per-spawn floor (harness self-measurement): 32.223 ms
+  peak RSS: 67_760 kB..74_280 kB (across 24 ok row(s))
+  trial summaries (3 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread 
+       128  3/3     205.710 µs  112.635 µs  215.563 µs  50.035%
+       256  3/3     406.796 µs  235.554 µs  416.477 µs  44.475%
+       512  3/3     790.907 µs  461.583 µs  806.040 µs  43.552%
+     1_024  3/3       1.586 ms  919.225 µs    1.614 ms  43.814%
+     2_048  3/3       3.209 ms    1.771 ms    3.239 ms  45.761%
+     4_096  3/3       6.372 ms    3.482 ms    6.475 ms  46.972%
+     8_192  3/3       7.317 ms    7.145 ms   12.593 ms  74.456%
+    16_384  3/3      14.433 ms   14.203 ms   25.578 ms  78.815%
+exported to /tmp/issue-10376-subtraction-4s/runtime.json
