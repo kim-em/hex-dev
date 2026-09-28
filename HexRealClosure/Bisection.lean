@@ -108,6 +108,6 @@ theorem split?_isSome (sign : E → Int) (p : DensePoly E) (lower upper : Endpoi
 
 end Hex.RealClosure.Bisection
 
-/-- info: 'Hex.RealClosure.Bisection.split?_isSome' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Bisection.split?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Bisection.split?_isSome
