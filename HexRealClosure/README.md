@@ -268,3 +268,40 @@ and independently computed counts; their sum also satisfies root coverage. Its r
 invented cut roots, incorrect nested ordering and invalid input acceptance.
 These cases exercise one bisection node; complete isolation and simultaneous
 ordinary-real realization remain separate requirements.
+
+### Capped bisection frontier
+
+`Bisection.Frontier.prepare?` checks a finite input interval.
+`Frontier.bisect?` then spends at most `2 * (degree p + 1)` nodes, choosing the
+first retained cell whose checked count exceeds one. It returns the current
+head, emitted coefficient roots and every remaining open cell. Count-zero and
+count-one cells remain available; unresolved cells request BKR completion.
+This frontier is an intermediate result, not a complete `RootSet`.
+
+Each cell retains a count computed once from its actual prepared domain, with
+an equality proof tying that count to the shared query. A regular cut retains
+unchanged pending cells. A root cut recomputes every pending domain and count
+against the quotient, including previously retained count-one cells. All cells
+are bound to one current head. The implementation uses shared Sturm preparation;
+reuse of its head-only chain across endpoints remains an upstream API request.
+
+The companion proves construction success under coefficient interpretation,
+the node bound, exact root coverage throughout traversal, distinct emitted
+values and exclusion of emitted roots from every later active head. These proofs use only the standard
+three axioms. Native examples cover a later root cut with an earlier count-one
+cell, positive/negative/fractional scalars, early stopping and the inseparable
+pair `epsilon, 2 * epsilon` retained after all six permitted dyadic nodes.
+
+Twelve additional exact conformance rows check whole frontiers. The existing
+FLINT/SymPy oracle verifies scalar-preserving deflation, actual pending heads,
+root counts, emitted roots, the internal node allowance and the retained
+intervals' lack of gaps or overlaps. Rejection tests cover stale count-one
+heads, missing cells, wrong cached counts, gaps, overlaps, duplicated emitted
+roots, nonroot emission and loss of a close infinitesimal root. No timing
+improvement is claimed by these correctness checks.
+
+Complete bound selection and whole-line dispatch, descriptor construction,
+BKR completion, multiplicity restoration and factor-list merging remain
+required for complete isolation. Automatic dependency transport, compatible
+real-closed union semantics and simultaneous ordinary-real realization remain
+separate requirements of the full tower.
