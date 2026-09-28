@@ -82,7 +82,7 @@ postulating a second independent named constant.
 
 The [computational performance report](../reports/hex-ordered-fn-performance.md)
 records the runtime evidence. Downstream tower integration and clean/eager
-selected-root normalization measurements remain outstanding under
+normalization measurements are owned by hex-real-closure under
 [#10378](https://github.com/kim-em/hex-dev/issues/10378).
 
 The ordinary-kernel tests check the model and order laws and audit their axiom

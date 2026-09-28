@@ -375,7 +375,7 @@ separately. Use fixed trial-major shared-host schedules, automatic CPU
 selection where supported, adjacent alternating comparisons, all completed
 samples and at most one unchanged inconclusive rerun. This companion contributes
 coefficient model/sign correctness. Algebraic tower integration measurements,
-including `tower8`, MetiTarski and clean-versus-eager selected-root normalization,
+including `tower8`, MetiTarski and clean-versus-eager normalization,
 belong to [hex-real-closure](hex-real-closure.md#conformance-and-phase-4-evidence)
 and [#10378](https://github.com/kim-em/hex-dev/issues/10378); they do not gate
 completion of either ordered-function library. The Liouville fixture above

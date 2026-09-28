@@ -686,7 +686,7 @@ and compiled fixture campaigns. Evaluation checks are not kernel proofs;
 registration extends the existing single CI job, not new workflows.
 
 This library owns the algebraic tower integration measurements, including
-`tower8`, MetiTarski workloads and clean-versus-eager selected-root normalization,
+`tower8`, MetiTarski workloads and clean-versus-eager normalization,
 tracked in [#10378](https://github.com/kim-em/hex-dev/issues/10378). These
 measurements include the ordered-function coefficient operations consumed by
 the workloads; they are not completion gates for `hex-ordered-fn` or its

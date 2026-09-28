@@ -400,16 +400,21 @@ Such measurements do not establish a universal transcendental registration;
 retain the companion integration fixture for that distinct obligation.
 Report caller approximation cost separately; no named-constant generator
 benchmark is required and no precision bound in degree alone is claimed.
-Compare with existing RationalFn arithmetic. These library-local measurements,
-together with the conformance and companion proof requirements above, complete
-this library's evidence obligations independently of algebraic tower consumers.
-The clean-versus-eager selected-root normalization comparison on identical
+Compare with existing RationalFn arithmetic. These measurements, together with the
+conformance and companion proof requirements above, are this library's
+SPEC-specific evidence obligations. The generic Phase-4 exit criteria also
+apply; algebraic tower consumers are not a prerequisite.
+The clean-versus-eager normalization comparison on identical
 expressions and outcomes, `tower8`, MetiTarski and other algebraic tower
 integration measurements belong to
 [hex-real-closure](hex-real-closure.md#conformance-and-phase-4-evidence), tracked
 in [#10378](https://github.com/kim-em/hex-dev/issues/10378). That owner measures
 the coefficient operations it consumes as part of the full workloads; those
-integration measurements do not gate completion of this library.
+integration measurements do not gate completion of this library. The
+[family representation contract](../future-work.md#real-closures-of-ordered-fields)
+applies clean versus eager reduction to algebraic defining polynomials;
+canonical RationalFn is already the required normal form at the real-constant
+and infinitesimal levels.
 
 Use the shared-host fixed trial-major schedule, automatic CPU selection when
 supported, adjacent alternating `AB`/`BA` comparisons, retained completed
@@ -418,3 +423,24 @@ profile. The companion supplies ordinary-kernel correctness proofs. Tactic and
 proof-generator performance belongs to the consuming libraries; ordinary runtime
 arithmetic needs no per-operation certificate benchmark. Historical paper
 timings are not acceptance thresholds.
+
+### Comparator coverage
+
+Inherited fraction arithmetic (`subtraction`, and the arithmetic component of
+`comparison`, `denominators` and `compareHeight`) is a **structural-layer** over
+HexRationalFn. Its informational FLINT `fmpz_poly_q` comparison and ratios are
+owned by [HexRationalFn](../../HexRationalFn/SPEC/hex-rational-fn.md), rather
+than duplicated here. The local paired subtraction/comparison run measures
+the additional order work on the same operands.
+
+For the order component and `scan`, `degree`, `height`, `second`, `third`,
+`refinement`, `jointRefinement`, `horner`, `realHeight`, `approximation`,
+`successiveApproximation`, `thirdApproximation` and `provider`, the absence
+classification is **no-comparable-surface-in-named-comparator** relative to
+that FLINT comparator. Its
+[public rational-function API](https://raw.githubusercontent.com/flintlib/flint/main/doc/source/fmpz_poly_q.rst)
+offers arithmetic, equality and rational-point evaluation, but no ordered
+successive-infinitesimal interface or refinement interface accepting the
+caller's coefficient/constant approximation functions. Z3 is an independent
+conformance oracle here, not a declared performance comparator. This library
+makes no external performance superiority claim for its order or searches.

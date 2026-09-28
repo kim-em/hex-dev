@@ -455,7 +455,7 @@ available. The query-degree findings have corrected quadratic characterizations.
 The earlier head-degree replay test failed its cubic characterization. The
 deferred-normalization implementation and its predeclared mode-2 validation
 below resolve that performance finding, subject to implementation review. Concrete
-extension-depth and nested-evidence probes belong downstream under #10376/#10378;
+extension-depth and nested-evidence probes belong downstream under #10378;
 general root-sum/replay soundness and its executable singleton/sign/bound
 consequences belong to #10389. The integer query-one finite/whole-line counts
 and rational finite-dyadic specialization are proved using the existing real

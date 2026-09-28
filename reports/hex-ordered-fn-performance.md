@@ -10,6 +10,119 @@ original verdicts. Algebraic tower integration measurements belong to
 [hex-real-closure](../SPEC/Libraries/hex-real-closure.md#conformance-and-phase-4-evidence)
 and [#10378](https://github.com/kim-em/hex-dev/issues/10378).
 
+## Bench targets
+
+All names below have prefix `Hex.OrderedFnBench.`. The formulas are the
+registration strings in `bench/HexOrderedFn/Bench.lean`. Every schedule uses
+three trial-major repetitions; the paired arithmetic experiment separately
+uses four adjacent alternating repetitions.
+
+| Targets | Declared complexity | Parameter schedule | Batch target |
+| --- | --- | --- | --- |
+| `scan`, `second`, `third`, `comparison` | `n` | 128, 256, 512, 1024, 2048, 4096, 8192, 16384 | 1 s |
+| `subtraction` | `n` | 128, 256, 512, 1024, 2048, 4096, 8192, 16384 | 4 s |
+| `degree`, `height` | `1` | 128, 256, 512, 1024, 2048, 4096, 8192, 16384 | 1 s |
+| `denominators` | `3 ^ Nat.log2 (max n 1)` | 16, 32, 64, 128, 256, 512, 1024, 2048 | 1 s |
+| `compareHeight`, `realHeight`, `provider` | `n` | 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608 | 1 s |
+| `refinement`, `jointRefinement`, `approximation` | `n * n * n` | 8192, 10240, 12288, 14336, 16384, 20480, 24576, 28672 | 1 s |
+| `horner` | `n * n * n` | 8192, 10240, 12288, 14336, 16384, 20480, 24576, 28672 | 4 s |
+| `successiveApproximation` | `(n + 2) * (7 * n + 55) / 2` | 4, 6, 8, 10, 12, 14, 16, 18 | 4 s |
+| `thirdApproximation` | `(n + 2) * (7 * n * n + 121 * n + 666) / 6` | 4, 6, 8, 10, 12, 14, 16, 18 | 4 s |
+
+The public computation is covered as follows. These are runtime measurements;
+the companion's theorem applications use ordinary-kernel correctness tests.
+
+| API | Runtime coverage |
+| --- | --- |
+| Infinitesimal coefficient scan, sign and comparison | `scan`, `degree`, `height`, `second`, `third`, `comparison`, `denominators`, `compareHeight` |
+| Inherited RationalFn and `Extension` field arithmetic | HexRationalFn's arithmetic benchmarks; local `subtraction` baseline |
+| `Real.enclose`, `attempt`, `sign`, `approxAttempt`, `approx`, `precision`, `firstSome` | `horner`, `refinement`, `jointRefinement`, `realHeight`, `approximation`; every search includes all preceding failed trials |
+| `Extension.sign`, `compare`, `approx`, derived coefficient approximation | The same `Real` calls on `.val`, subtraction and two-/three-level approximation targets; the wrapper adds no search algorithm |
+| `Real.finiteAttempt`, `sign?` | The same enclosure and per-trial bound operations as `refinement`, with a fuel cap and optional exact-zero check; finite exhaustion and zero identities are conformance cases |
+| Bounds arithmetic, width, division and endpoint decisions | `horner`, `realHeight`, `approximation`, `provider`; `inter` and `exactSign?` add a bounded number of rational endpoint comparisons, with rejection branches checked in conformance |
+| Singleton/dyadic conversion, registration, `Extension.C`/`X`/`transport` | Constructor/representation wrappers over rational and RationalFn operations; transport preserves `.val`, with no refinement or traversal |
+
+## Verdicts
+
+Mode 1 is the family-specific two-sided model. Mode 2 is a conservative
+one-sided upper bound: the four large-integer search families cross GMP
+algorithm regimes, so their source-derived counts do not give a tight fixed
+wall-time exponent. The [upper-bound derivation](#search-upper-bound-model)
+explains that choice independently of the fitted slopes. The small-operand
+successive families use mode 1 with their independently derived operation counts.
+
+In this table **consistent** means the harness verdict
+`consistent_with_declared_complexity`. **Upper bound** means the harness reads
+`inconclusive` in the faster direction and the documented mode-2 result is
+**within declared upper bound (observed faster)**. It does not reinterpret the
+historical quadratic or quartic measurements as passing results.
+
+| Target | Mode | Result | Normalized slope | Data |
+| --- | --- | --- | ---: | --- |
+| `second` | 1 | consistent | -0.007 | [1s](data/hex-ordered-fn/1s/runtime.json) |
+| `third` | 1 | consistent | -0.010 | [1s](data/hex-ordered-fn/1s/runtime.json) |
+| `comparison` | 1 | consistent | -0.002 | [1s](data/hex-ordered-fn/1s/runtime.json) |
+| `degree` | 1 | consistent | +0.002 | [1s](data/hex-ordered-fn/1s/runtime.json) |
+| `scan` | 1 | consistent | -0.031 | [1s](data/hex-ordered-fn/1s/runtime.json) |
+| `height` | 1 | consistent | +0.002 | [1s](data/hex-ordered-fn/1s/runtime.json) |
+| `denominators` | 1 | consistent | -0.105 | [height](data/hex-ordered-fn/height/runtime.json) |
+| `compareHeight` | 1 | consistent | +0.071 | [height](data/hex-ordered-fn/height/runtime.json) |
+| `realHeight` | 1 | consistent | -0.005 | [height](data/hex-ordered-fn/height/runtime.json) |
+| `provider` | 1 | consistent | +0.040 | [height](data/hex-ordered-fn/height/runtime.json) |
+| `refinement` | 2 | Upper bound | -0.629 | [search-upper](data/hex-ordered-fn/search-upper/runtime.json) |
+| `jointRefinement` | 2 | Upper bound | -0.624 | [search-upper](data/hex-ordered-fn/search-upper/runtime.json) |
+| `approximation` | 2 | Upper bound | -0.627 | [search-upper](data/hex-ordered-fn/search-upper/runtime.json) |
+| `horner` | 2 | Upper bound | -0.765 | [successive](data/hex-ordered-fn/successive/runtime.json) |
+| `successiveApproximation` | 1 | consistent | +0.040 | [successive-scalar-repeat](data/hex-ordered-fn/successive-scalar-repeat/runtime.json) |
+| `thirdApproximation` | 1 | consistent | +0.009 | [third](data/hex-ordered-fn/third/runtime.json) |
+
+The subtraction baseline is reported in [Subtraction scaling](#subtraction-scaling).
+
+## Comparator ratios
+
+Inherited fraction arithmetic uses HexRationalFn's informational
+[FLINT comparison and ratios](hex-rational-fn-performance.md#comparator-ratios).
+The [SPEC's comparator coverage](../SPEC/Libraries/hex-ordered-fn.md#comparator-coverage)
+classifies this reuse as `structural-layer`; the order and caller-refinement
+surfaces have no comparable entry point in that named comparator. There is no
+external runtime superiority claim for those surfaces.
+
+The local [paired arithmetic comparison](#canonical-arithmetic-comparison)
+measures the extra order work over canonical subtraction on identical operands.
+Its full ladder is retained below; it does not reliably resolve the approximately
+0.2% incremental scan cost, and it is not an external comparison or the
+algebraic clean/eager experiment.
+
+## Profile
+
+The [comparison profile](#comparison-profile) attributes the dominant work to
+canonical RationalFn normalization and polynomial arithmetic. The
+[large-search profile](#search-arithmetic-profile) attributes most leaf cycles to
+GMP operations; the [small successive-search profile](#successive-approximation-workload)
+records the conversion/allocation costs that its different operands incur.
+Each section records the source, region filtering and retained evidence.
+The two older raw captures are unavailable; their committed contexts and
+symbolized summaries support the stated attribution but cannot be re-filtered.
+
+## Concerns
+
+No unresolved library-local performance defect is identified by the current
+evidence. Its limits remain explicit: no uniform bound in precision and tower
+depth, no tight large-precision nested-search characterization, no resolved tiny
+comparison overhead, and no algebraic tower integration claim. The latter
+measurements remain required under #10378. Historical inconclusive samples are
+retained below without changing their verdicts.
+
+The original infinitesimal measurements predate the explicit formal-zero
+branch in `Infinitesimal.sign`. The only runtime change in that function is
+`if f.num = 0 then 0 else …`. The zero polynomial has an empty coefficient
+array; `DensePoly.decEqRuntime` compares array sizes before contents. Thus the
+new branch is constant-time, including for each fixed-depth predecessor call
+in these workloads, and preserves the declared scaling models. The reported
+absolute times remain observations of their recorded source commits, not
+measurements of the new branch. The later paired arithmetic run includes that
+branch. Real-search definitions used by the retained measurements are unchanged.
+
 ## Runtime measurements
 
 Each target uses parameters 128 through 16384, doubling at each rung, with
@@ -158,7 +271,8 @@ checks of the watchdog, not performance evidence; the commands and limitations
 are recorded in [their context](data/hex-ordered-fn/cap-context.json). The historical configuration
 kept the same quadratic model; the
 initial data remain evidence for their recorded smaller schedule. Neither
-historical quadratic schedule establishes the declared model. The current cubic upper-bound registrations and their evidence are reported in
+historical quadratic schedule establishes the former quadratic declaration.
+The current cubic upper-bound registrations and their evidence are reported in
 [Search upper-bound model](#search-upper-bound-model).
 
 ## Corrected comparison and height measurements
@@ -312,7 +426,7 @@ measures ordered comparison against existing RationalFn subtraction on identical
 operands. The existing
 [RationalFn arithmetic report](hex-rational-fn-performance.md#internal-alternatives)
 separately compares cancellation with multiply-then-normalize on identical
-canonical operands. Clean-versus-eager selected-root normalization and
+canonical operands. Clean-versus-eager normalization and
 `tower8`/MetiTarski integration remain required of the downstream real-closure
 owner under [#10378](https://github.com/kim-em/hex-dev/issues/10378); they are
 not completion gates for these ordered-function libraries.
@@ -582,3 +696,15 @@ Reproduce with:
 python3 scripts/bench/ordered_fn_measure.py --output /tmp/ordered-fn-arithmetic --paired-arithmetic
 .lake/build/bin/hexorderedfn_bench sizes
 ```
+
+## Subtraction scaling
+
+The [one-second run](data/hex-ordered-fn/subtraction-1s/runtime.json) retains
+all 24 completed samples at source `3167748b3572fda9c619ad040bc94366572eeef9`.
+Its harness verdict is consistent with the linear model, but only three samples
+clear the measured process floor, giving too little coverage across the ladder.
+The registration therefore uses four-second batches for scientific evidence.
+This changes the measurement duration, not the algorithm or linear cost model;
+the initial samples are not discarded. The [context](data/hex-ordered-fn/subtraction-1s/context.json)
+records automatically selected CPU 15, four Lean workers, source and matching
+before/after executable hashes. Host load is recorded without excluding samples.

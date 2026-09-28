@@ -77,7 +77,8 @@ def subtraction (pair : First × First) : Nat :=
 
 -- Cost model: Θ(n): the same canonical subtraction as comparison, consuming
 -- only its stored numerator size instead of scanning for its sign.
-setup_benchmark subtraction n => n with prep := prepCompare where config
+setup_benchmark subtraction n => n with prep := prepCompare
+  where { config with targetInnerNanos := 4000000000 }
 
 
 def compareConfig : LeanBench.BenchmarkConfig :=

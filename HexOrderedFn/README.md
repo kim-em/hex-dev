@@ -87,8 +87,8 @@ mathematical proofs are checked by its ordinary-kernel tests.
 
 The [performance report](../reports/hex-ordered-fn-performance.md) covers
 infinitesimal operations, total real searches through three levels, and canonical
-arithmetic comparisons. Downstream tower integration and clean/eager selected-root
-normalization measurements remain outstanding under
+arithmetic comparisons. Downstream tower integration and clean/eager normalization measurements are
+owned by hex-real-closure under
 [#10378](https://github.com/kim-em/hex-dev/issues/10378). The companion proves
 universal sign and approximation progress from containment, shrinking widths
 and relative transcendence over the whole predecessor field, and tests a
