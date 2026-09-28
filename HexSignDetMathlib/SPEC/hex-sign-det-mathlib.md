@@ -131,8 +131,10 @@ Follow the [family audit and ownership table](../../SPEC/future-work.md#proof-ow
 and the dependency pins in [the manifest](../../lake-manifest.json).
 The companion consumes Tau Ceti foundations through the shared interpretation
 interface; it must not import a concrete real-closure tower implementation.
-The required Thom identity/order statements below are mathematical completion
-requirements, not permitted axioms or assumptions of executable availability.
+The required Thom identity/order statements below are Tau Ceti completion
+requirements tracked by [#10300](https://github.com/kim-em/hex-dev/issues/10300).
+Their absence from a dependency pin leaves the corresponding proofs unfinished;
+it permits neither axioms nor a claim that executable availability supplies them.
 
 For finite BKR counting, `Function.mulVec_occCount` and
 `Function.eq_occCount` in `TauCeti.Data.Matrix.OccCount` supply the restricted
@@ -140,10 +142,15 @@ moment identity and count recovery. Candidate columns must be injective and
 cover every observation independently of the supplied inverse. The companion
 identifies observations with list positions, so repeated sign conditions
 retain their multiplicities; it transports the actual ordered integer matrices
-and checked rational inverse without changing indices or rounding counts.
-Tau Ceti's `SignDetermination.Moments`, `SignDetermination.Polynomial` and
-`SignDetermination.Roots` supply the full ternary inverse and the polynomial
-sign-sum identities used by the abstract contracts below.
+and supplied scaled integer inverse interpreted over the rationals without
+changing indices or rounding counts.
+The corresponding full-table and polynomial forms are
+`TauCeti.Geometry.RealAlgebraic.SignDetermination.Moments`,
+`TauCeti.Geometry.RealAlgebraic.SignDetermination.Polynomial` and
+`TauCeti.Geometry.RealAlgebraic.SignDetermination.Roots`. The restricted
+observation identity and recovery suffice for the per-node companion bridge;
+the polynomial moment contract also requires correspondence with evaluation
+of the actual query products.
 
 Ordered real-closure existence is a Tau Ceti input for the real-closure
 companion. Real and rational-algebraic specializations must reuse their

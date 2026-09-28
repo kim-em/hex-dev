@@ -417,6 +417,13 @@ theorem foundation_empty_support : counts (#v[] : Vector (List Int) 0) [] = #v[]
   exact s.foundation_counts (arity := 2) (by decide +kernel) _
     (by decide +kernel) (by decide +kernel)
 
+/-- A root-free domain may retain nonempty candidate columns with all
+counts zero. Recovery does not require any observed sign condition. -/
+theorem foundation_root_free : counts #v[[-1], [1]] [] = #v[0, 0] := by
+  let s : System 2 := {twoSigns with counts := #v[0, 0], values := #v[0, 0]}
+  exact s.foundation_counts (arity := 1) (by decide +kernel) _
+    (by decide +kernel) (by decide +kernel)
+
 /-- A square invertible solve may omit an observation even when its right
 hand side is the actual moment. The foundation's coverage premise is essential. -/
 theorem foundation_incomplete :
@@ -447,5 +454,17 @@ theorem foundation_incomplete :
 /-- info: 'Hex.SignDetMathlib.Conformance.foundation_empty_support' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms foundation_empty_support
+
+/-- info: 'Hex.SignDetMathlib.Conformance.foundation_root_free' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms foundation_root_free
+
+/-- info: 'Hex.SignDetMathlib.Conformance.foundation_incomplete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms foundation_incomplete
+
+/-- info: 'Hex.SignDet.Replay.foundation_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Replay.foundation_complete
 
 end Hex.SignDetMathlib.Conformance

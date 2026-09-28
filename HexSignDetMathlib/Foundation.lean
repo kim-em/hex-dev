@@ -5,7 +5,10 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSignDetMathlib.RationalSolve
+public import HexMatrixMathlib.Algebra
+public import HexRankMathlib.Sound
+public import Mathlib.Data.Rat.Cast.Order
+public import HexSignDet.Induction
 public import HexSignDet.Counts
 public import TauCeti.Data.Matrix.OccCount
 public import Mathlib.Data.List.OfFn
@@ -18,7 +21,7 @@ open HexMatrixMathlib
 
 /-- List positions, rather than distinct values, are the finite samples in
 the imported BKR counting foundation. Repeated sign words retain multiplicity. -/
-theorem occurrences_get (xs : List (List Int)) (word : List Int) :
+theorem occCount_getElem {α : Type*} [DecidableEq α] (xs : List α) (word : α) :
     Function.occCount (fun i : Fin xs.length => xs[(i : Nat)]) word =
       xs.countP (fun x => decide (x = word)) := by
   rw [Function.occCount_eq_sum]
@@ -33,8 +36,8 @@ theorem occurrences_get (xs : List (List Int)) (word : List Int) :
 
 /-- The literal list sum used by the executable moment vector is the sum
 over sample positions used by the foundation, including an empty list. -/
-theorem moments_get {R : Type*} [AddCommMonoid R] (xs : List (List Int))
-    (weight : List Int → R) :
+theorem sum_getElem {α R : Type*} [AddCommMonoid R] (xs : List α)
+    (weight : α → R) :
     ∑ i : Fin xs.length, weight xs[(i : Nat)] = (xs.map weight).sum := by
   rw [← List.sum_ofFn, List.ofFn_getElem_eq_map]
 
@@ -63,11 +66,11 @@ theorem foundation_moments {r : Nat} (rows : Vector (List Nat) r)
   rw [← hmatrix] at h
   apply vectorEquiv.injective
   rw [vectorEquiv_mulVec]
-  simpa [matrixEquiv_ofFn, momentMatrix, counts, moments, occurrences_get,
-    moments_get, vectorEquiv, _root_.Matrix.of_apply, Fin.getElem_fin] using h
+  simpa [matrixEquiv_ofFn, momentMatrix, counts, moments, occCount_getElem,
+    sum_getElem, vectorEquiv, _root_.Matrix.of_apply, Fin.getElem_fin] using h
 
 /-- The imported count-recovery theorem identifies an accepted system's
-literal integer counts. The actual rational inverse supplies its left inverse;
+literal integer counts. The supplied scaled integer inverse supplies its rational left inverse;
 the caller supplies observation coverage separately from both matrix identities. -/
 theorem System.foundation_counts {r arity : Nat} (s : System r)
     (checked : s.check arity = true) (xs : List (List Int))
@@ -85,44 +88,76 @@ theorem System.foundation_counts {r arity : Nat} (s : System r)
     intro i
     obtain ⟨j, hj, he⟩ := List.mem_iff_getElem.mp (cover xs[i] (List.getElem_mem i.isLt))
     exact ⟨⟨j, by simpa using hj⟩, by simpa using he⟩
-  obtain ⟨inv, hinv⟩ := s.rationalInverse checked
-  let m : Matrix Rat r r := Matrix.ofFn fun i j => (entry s.rows[i] s.columns[j] : Rat)
-  have hmatrix : matrixEquiv m = _root_.Matrix.of
+  let m := (matrixEquiv (momentMatrix s.rows s.columns)).map (Int.castRingHom Rat)
+  let a := (s.denominator : Rat)⁻¹ • (matrixEquiv s.inverse).map (Int.castRingHom Rat)
+  obtain ⟨hd, hi, solve⟩ := s.identities checked
+  have hden : (s.denominator : Rat) ≠ 0 := by exact_mod_cast hd
+  have hint : matrixEquiv s.inverse * matrixEquiv (momentMatrix s.rows s.columns) =
+      s.denominator • (1 : _root_.Matrix (Fin r) (Fin r) Int) := by
+    rw [← matrixEquiv_mul, hi, Matrix.scale_eq_smul, matrixEquiv_smul, matrixEquiv_identity]
+  have hrat : (matrixEquiv s.inverse).map (Int.castRingHom Rat) * m =
+      (s.denominator : Rat) • (1 : _root_.Matrix (Fin r) (Fin r) Rat) := by
+    dsimp only [m]
+    rw [← _root_.Matrix.map_mul, hint]
+    ext i j
+    simp only [_root_.Matrix.map_apply, Int.coe_castRingHom, _root_.Matrix.smul_apply,
+      smul_eq_mul, Int.cast_mul, _root_.Matrix.one_apply]
+    split_ifs <;> simp
+  have hleft : a * m = 1 := by
+    dsimp only [a]
+    rw [_root_.Matrix.smul_mul, hrat, smul_smul, inv_mul_cancel₀ hden, one_smul]
+  have hmatrix : m = _root_.Matrix.of
       (fun i j : Fin r => (entry s.rows[i] s.columns[j] : Rat)) := by
     dsimp only [m]
-    rw [matrixEquiv_ofFn]
+    rw [momentMatrix, matrixEquiv_ofFn]
     ext i j
-    simp only [_root_.Matrix.of_apply]
-  have hi : matrixEquiv inv * matrixEquiv m = 1 := by
-    rw [← matrixEquiv_mul, (Matrix.inverse?_spec m inv hinv).2, matrixEquiv_identity]
-  have he : m * s.counts.map (fun z : Int => (z : Rat)) =
-      s.values.map (fun z : Int => (z : Rat)) := by
-    have ht := (Matrix.inverse?_spec m inv hinv).1
-    rw [← s.rationalCounts checked inv hinv, ← Matrix.mul_assoc_vec,
-      ht, Matrix.identity_mulVec]
-  have hsolve : (matrixEquiv m).mulVec (fun i => (s.counts[i] : Rat)) =
+    rw [_root_.Matrix.of_apply]
+    rfl
+  have hsolveInt : (matrixEquiv (momentMatrix s.rows s.columns)).mulVec
+      (vectorEquiv s.counts) = vectorEquiv s.values := by
+    rw [← vectorEquiv_mulVec, solve]
+  have hsolveRat : m.mulVec (fun i => ((s.counts[i] : Int) : Rat)) =
+      fun i => ((s.values[i] : Int) : Rat) := by
+    funext i
+    change ((matrixEquiv (momentMatrix s.rows s.columns)).map (Int.castRingHom Rat)).mulVec
+      ((Int.castRingHom Rat) ∘ vectorEquiv s.counts) i = _
+    rw [← RingHom.map_mulVec, hsolveInt]
+    rfl
+  have hsolve : m.mulVec (fun i => ((s.counts[i] : Int) : Rat)) =
       fun i => ∑ j : Fin xs.length, (entry s.rows[i] xs[j] : Rat) := by
     funext i
     rw [show (∑ j : Fin xs.length, (entry s.rows[i] xs[j] : Rat)) =
       (xs.map fun word => (entry s.rows[i] word : Rat)).sum from
         by simpa only [Fin.getElem_fin] using
-          moments_get xs (fun word => (entry s.rows[i] word : Rat))]
-    have hv := congrArg vectorEquiv he
-    rw [vectorEquiv_mulVec] at hv
-    simpa [hm, moments, vectorEquiv, Int.cast_list_sum,
-      List.map_map, Function.comp_def, Fin.getElem_fin] using congrFun hv i
+          sum_getElem xs (fun word => (entry s.rows[i] word : Rat))]
+    simpa [hm, moments, Int.cast_list_sum, List.map_map, Function.comp_def] using
+      congrFun hsolveRat i
   have h := Function.eq_occCount (fun i : Fin xs.length => xs[i])
     (fun j : Fin r => s.columns[j]) hinj hc
     (fun i : Fin r => fun word => (entry s.rows[i] word : Rat))
-    (matrixEquiv inv) (by rw [← hmatrix]; exact hi)
-    (fun i => (s.counts[i] : Rat))
+    a (by rw [← hmatrix]; exact hleft)
+    (fun i => ((s.counts[i] : Int) : Rat))
     (by rw [← hmatrix]; exact hsolve)
   apply Vector.ext
   intro i hi
   have he := congrFun h (⟨i, hi⟩ : Fin r)
   simp only [Fin.getElem_fin] at he
-  rw [occurrences_get] at he
+  rw [occCount_getElem] at he
   simp only [SignDet.counts, Vector.getElem_ofFn]
   exact_mod_cast he.symm
+
+/-- Specialize the existing replay induction to Tau Ceti count recovery at
+every node, before pruning that node. Candidate coverage comes from the leaf
+columns or the already complete child supports, never the parent solve. -/
+theorem Replay.foundation_complete {E : Type u} {Ctx : Type v}
+    [Zero E] [One E] [Add E] [Sub E] [Mul E] [NatCast E]
+    [DecidableEq E] [DecidableEq Ctx]
+    {sign : E → Int} {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
+    {qs : List (DensePoly E)} (t : Replay E Ctx) {xs : List (List Int)}
+    (checked : t.check sign context p a b qs = true)
+    (observations : Observations qs.length xs) (interpreted : t.Interprets qs.length xs) :
+    (∀ x ∈ xs, x ∈ t.node.system.support) ∧
+      counts t.node.system.columns xs = t.node.system.counts :=
+  t.support_counts (@System.foundation_counts) checked observations interpreted
 
 end Hex.SignDet
