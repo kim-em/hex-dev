@@ -77,7 +77,8 @@ def subtraction (pair : First × First) : Nat :=
 
 -- Cost model: Θ(n): the same canonical subtraction as comparison, consuming
 -- only its stored numerator size instead of scanning for its sign.
-setup_benchmark subtraction n => n with prep := prepCompare where config
+setup_benchmark subtraction n => n with prep := prepCompare
+  where { config with targetInnerNanos := 4000000000 }
 
 
 def compareConfig : LeanBench.BenchmarkConfig :=
@@ -535,5 +536,10 @@ end Sizes
 
 end Hex.OrderedFnBench
 
-def main (args : List String) : IO UInt32 :=
-  if args == ["sizes"] then Hex.OrderedFnBench.Sizes.run else LeanBench.Cli.dispatch args
+def main (args : List String) : IO UInt32 := do
+  if args == ["sign-hashes"] then
+    IO.println (Lean.Json.mkObj (([-1, 0, 1] : List Int).map fun s =>
+      (toString s, Lean.toJson (hash s).toNat))).compress
+    return 0
+  else if args == ["sizes"] then Hex.OrderedFnBench.Sizes.run
+  else LeanBench.Cli.dispatch args

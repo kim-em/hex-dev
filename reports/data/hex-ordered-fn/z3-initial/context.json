@@ -1,0 +1,20 @@
+{
+  "commit": "1fab99765b35423f1ad780e9ab4fd3a5c1425203",
+  "command": [
+    "scripts/bench/ordered_fn_z3.py",
+    "--output",
+    "/tmp/issue-10376-z3-comparison"
+  ],
+  "cpu": 13,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "python": "3.14.6 (main, Jun 10 2026, 10:03:53) [GCC 15.3.0]",
+  "z3": "4.15.4.0",
+  "load_before": [
+    2.83642578125,
+    18.76806640625,
+    51.34521484375
+  ],
+  "executable_sha256": "ac7a257a18ed50b1c190004223c042498c846aafef6427b57dc33d9a91ec6af7",
+  "driver_sha256": "24eca3573a2b4720f32ed82e41320472ec76473e60652ddd732ae5714d575ba5"
+}

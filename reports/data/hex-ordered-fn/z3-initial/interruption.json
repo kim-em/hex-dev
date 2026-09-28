@@ -1,0 +1,7 @@
+{
+  "reason": "Server restart interrupted the coordinator after 259 completed rows. All completed rows retained; the three comparison targets each have complete trials 0 and 1. Trial 2 is collected separately without repeating completed samples.",
+  "completed_rows": 259,
+  "comparison_rows": 96,
+  "executable_sha256_at_recovery": "ac7a257a18ed50b1c190004223c042498c846aafef6427b57dc33d9a91ec6af7",
+  "child_identity_checks": "Every completed Hex child stdout matches its requested function, parameter, clean source revision and successful status."
+}
