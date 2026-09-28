@@ -138,8 +138,8 @@ that same selected root, including the public one-query accessor.
 correctness theorem relates every lookup to the cardinality of the actual
 root/sign condition, including omitted words, empty queries and root-free
 domains. `determine_isSome` proves that the option-valued frontend succeeds
-exactly on the shared valid root domains; this validity result has no root-sum
-admission. `determine_correct` gives all returned root counts and uses the
+exactly on the shared valid root domains; this validity result does not use the root-sum
+theorem. `determine_correct` gives all returned root counts and uses the
 named #10389 bridge, as do the producer-success results. These proofs follow
 the actual prepared BKR producer and
 exclude its internal-error fallback, without assuming successful construction
@@ -158,7 +158,7 @@ internal error of the actual producer. Empty partial words are included.
 original selected root, retains literal source bindings and returns all formal
 derivative signs in canonical slot order. No injectivity of coefficient
 representations or Thom ordering theorem is required. These semantic results
-depend on the same named #10389 root-sum admission.
+depend on the same shared proved root-sum theorem.
 `Reencoding.root_eq_source` proves that checked re-encoding keeps that real root
 when the defining polynomial and interval change. Its proof uses the copied
 equation, derivative word and strict endpoint signs, plus acceptance of the
@@ -170,11 +170,11 @@ identify exactly the source root. `Descriptor.buildReencoding_absent` in
 returns `none` if that root is absent from the target domain, establishing
 preparation and joint table construction from the input. These results use no
 separating interval, Archimedean or injective representation assumption and
-inherit only the named #10389 root-sum admission.
+use the shared proved root-sum theorem.
 `Descriptor.buildReencoding_invalid` separately proves ordinary absence for
 invalid mathematical target domains, even if their open-interval root set
 contains the source root. It uses shared preparation correspondence and has
-no root-sum admission dependency.
+no root-sum theorem dependency.
 `Comparison.eq_iff_root_eq` proves that a successful common-product comparison
 returns equality exactly when the original selected real roots coincide. It
 uses the common full derivative word and count-one descriptors; strict `<` and

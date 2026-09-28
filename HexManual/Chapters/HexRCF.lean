@@ -845,8 +845,7 @@ under the coefficient-interpretation laws.
 {name}`Hex.SignDet.determine_correct` identifies every returned count with the
 number of mathematical roots having that sign pattern, including zero for
 omitted patterns. Both the producer-success and count-correctness results use
-the named root-sum admission in
-[#10389](https://github.com/kim-em/hex-dev/issues/10389).
+the shared proved root-sum theorem.
 
 Derivative signs identify a selected root. Here the positive root of
 `x² − 1` is selected by the sign of the first derivative. A second checked
@@ -976,8 +975,8 @@ Import `HexSignDetMathlib.CompletionProducer` for
 {name}`Hex.SignDet.Descriptor.complete_correct`. They prove that completion
 succeeds for every validated partial description and retains its original
 mathematical root, head, interval and context. This includes an empty partial
-word when the interval contains exactly one root. The proofs use the named
-root-sum admission in [#10389](https://github.com/kim-em/hex-dev/issues/10389).
+word when the interval contains exactly one root. The proofs use the shared
+proved root-sum theorem.
 They do not require the separate Thom ordering theorem. Each call computes and
 checks its full derivative table; use `buildCompletion` directly when you need
 the evidence as well as the completed descriptor.
@@ -1012,9 +1011,8 @@ set_option maxHeartbeats 1000000 in
 succeeds for validated descriptions under the coefficient laws.
 {name}`Hex.SignDet.QueryHandle.buildSigns_roots` and
 {name}`Hex.SignDet.QueryHandle.signAt_correct` identify all returned signs at
-the original selected root. These results use the named root-sum admission in
-[#10389](https://github.com/kim-em/hex-dev/issues/10389). The handle retains the
-original context, polynomial, interval and derivative selection; copied
+the original selected root. These results use the shared proved root-sum theorem.
+The handle retains the original context, polynomial, interval and derivative selection; copied
 certificates must still pass the ordinary literal replay checks.
 
 Re-encoding asks whether the same selected root can be described using a
@@ -1046,8 +1044,8 @@ Import `HexSignDetMathlib.ReencodingProducer` for
 {name}`Hex.SignDet.Descriptor.buildReencoding_absent`. It proves this result
 for every lawful coefficient interpretation when the selected root is absent
 from the target domain. Preparation and joint table construction are proved
-from the input; successful output is not assumed. The proof uses the named
-#10389 root-sum admission. It needs neither a root-separating interval nor a
+from the input; successful output is not assumed. The proof uses the shared
+proved root-sum theorem. It needs neither a root-separating interval nor a
 Thom ordering theorem. General success when the root is present is a separate
 proof requirement. For an accepted re-encoding,
 {name}`Hex.SignDet.Reencoding.root_eq_source` proves that the new descriptor

@@ -26,7 +26,7 @@ private theorem rational_sign (x : Rat) :
   exact (StrictMono.sign_comp (f := Rat.castHom ℝ) Rat.cast_strictMono x).symm
 
 /-- The literal two-query replay retains exactly its real sign conditions.
-The acceptance proof is independent of the semantic admission. -/
+The acceptance proof is independent of the root-sum theorem. -/
 theorem literal_support (s : List Int) :
     (∃ x ∈ Tarski.rootsIn
       (interpret (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero) singletonRaw.head)

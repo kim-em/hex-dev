@@ -47,7 +47,7 @@ theorem QueryHandle.buildSigns_success {context : Ctx}
 include hz h1 ha hs hm hnat hsign hn hi in
 /-- The cached domain preserves the original root and ordered query signs.
 This includes empty lists, repetitions and zero answers, using only the
-agreed #10389 root-sum bridge as an admitted foundation. -/
+shared proved root-sum theorem. -/
 theorem QueryHandle.buildSigns_roots {context : Ctx}
     {d : Descriptor E Ctx sign context} (h : QueryHandle d) (qs : List (DensePoly E)) :
     ∃ s : SelectedSigns d qs, h.buildSigns qs = .ok s ∧
