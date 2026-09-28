@@ -594,7 +594,7 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
     `HexSignDetMathlib.CompletionProducer,
     `HexSignDetMathlib.QueryHandle, `HexSignDetMathlib.TableProducer,
-    `HexSignDetMathlib.ReencodingProducer,
+    `HexSignDetMathlib.ReencodingProducer, `HexSignDetMathlib.RootList,
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
