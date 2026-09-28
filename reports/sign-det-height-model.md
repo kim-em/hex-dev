@@ -107,8 +107,26 @@ same retained data; it does not replace or remove measurements. Later report
 and validator edits do not change the measured normalization or checking
 functions. Reproduction uses the base and patch recorded in the metadata.
 
-These passing results establish the declared normalization-phase models for
-the archived Lean 4.34.1 revision only. They do not establish performance on
-the current Lean 4.35.0-rc3 toolchain. General coefficient-height propagation, allocation, nested fields,
+The [Lean 4.35.0-rc3 collection](data/sign-det-height/ad5e59e5a/metadata.json)
+uses committed source `ad5e59e5aee5f8a0ae3003f86658f6de2dfa42a5` on the same
+shared host, automatically leased CPU 89. All 84 scientific samples passed
+output and schedule validation, with sources and executable unchanged. Both
+mode-1 verdicts are **consistent with declared complexity**, with normalized
+slopes −0.079653 for construction and −0.074067 for checking. No sample was
+removed and no rerun was used. Recorded cache sizes match the earlier host
+context. Medians include all six completed samples at each height.
+
+| Coefficient bits | Normalization median µs | Replay median µs |
+| ---: | ---: | ---: |
+| 8,192 | 8.281 | 18.118 |
+| 16,384 | 14.024 | 33.355 |
+| 32,768 | 22.719 | 57.861 |
+| 65,536 | 41.923 | 108.350 |
+| 131,072 | 78.099 | 207.005 |
+| 262,144 | 165.872 | 406.697 |
+| 524,288 | 326.715 | 812.709 |
+
+The two collections establish the declared normalization-phase models
+separately for their recorded Lean 4.34.1 and 4.35.0-rc3 revisions. General coefficient-height propagation, allocation, nested fields,
 maximal support, joint comparisons and the remaining Phase-4 requirements
 remain open under #10377.
