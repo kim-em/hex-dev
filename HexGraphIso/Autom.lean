@@ -20,6 +20,19 @@ namespace Hex.GraphIso
 
 variable {n k : Nat}
 
+/-- The entries of a checked raw permutation array. -/
+theorem Perm.val_get_of_ofNatArray? {a : Array Nat} {p : Perm n}
+    (h : Perm.ofNatArray? n a = some p) (i : Fin n) :
+    (p.get i).val = a[i.val]! := by
+  rw [Perm.ofNatArray?] at h
+  split at h
+  · rename_i hc
+    have hsz : i.val < a.size := hc.1.symm ▸ i.isLt
+    rw [Perm.get, Perm.vec_of_ofVector? h]
+    rw [getElem!_pos a i.val hsz]
+    simp
+  · simp at h
+
 /-- Accept one raw generator array from the traversal: rebuild it as a
 permutation of `Fin n` and check that it is an automorphism. This is
 the only step that admits a generator, and the admission test is

@@ -766,6 +766,19 @@ theorem ofNatArray_permOfImages {n : Nat} {l : List Nat} (h : imagesOk n l = tru
     obtain ⟨j, hj, hji⟩ := List.mem_map.mp this
     rwa [Fin.ext hji] at hj
 
+/-- The entries of a checked raw permutation array. -/
+theorem val_get_of_ofNatArray? {a : Array Nat} {p : Perm n}
+    (h : Perm.ofNatArray? n a = some p) (i : Fin n) :
+    (p.get i).val = a[i.val]! := by
+  rw [Perm.ofNatArray?] at h
+  split at h
+  · rename_i hc
+    have hsz : i.val < a.size := hc.1.symm ▸ i.isLt
+    rw [Perm.get, Perm.vec_of_ofVector? h]
+    rw [getElem!_pos a i.val hsz]
+    simp
+  · simp at h
+
 theorem pack_ofEquiv_permOfImages {n : Nat} {l : List Nat} (h : imagesOk n l = true) :
     pack (Perm.ofEquiv (permOfImages n l)) = packList n l := by
   obtain ⟨p, hp⟩ := ofNatArray_permOfImages h
@@ -774,7 +787,7 @@ theorem pack_ofEquiv_permOfImages {n : Nat} {l : List Nat} (h : imagesOk n l = t
   obtain ⟨hlen, hlt, -⟩ := imagesOk_spec h
   have hval : ∀ i : Fin n, (p.get i).val = l.getD i.val 0 := by
     intro i
-    rw [Perm.val_get_of_ofNatArray? hp]
+    rw [val_get_of_ofNatArray? hp]
     simp [List.getD_eq_getElem?_getD]
   have hbound : ∀ i < n, l.getD i 0 < 2 ^ width n := fun i hi =>
     Nat.lt_trans (hlt _ (by
