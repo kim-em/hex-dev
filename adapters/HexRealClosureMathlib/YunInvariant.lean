@@ -1,0 +1,522 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexRealClosureMathlib.Yun
+public import Mathlib.Algebra.Polynomial.FieldDivision
+public import Mathlib.FieldTheory.IsAlgClosed.Basic
+import HexNumberFieldMathlib.Yun
+
+public section
+
+/-!
+# Yun's loop invariant
+
+The invariant relates the executable polynomials to original root
+multiplicities. Exact quotient and derivative identities establish it at
+counter one and preserve it through the actual recurrence. The emitted gcd
+selects precisely the roots with the current multiplicity.
+-/
+
+namespace Hex.RealClosure.Yun
+
+attribute [local instance 2000] Field.toGrindField
+
+private theorem polynomial_ne_zero {K : Type*} [Field K] [DecidableEq K]
+    (f : DensePoly K) (hf : f ≠ 0) : HexPolyMathlib.toPolynomial f ≠ 0 := by
+  intro h
+  exact hf ((HexPolyMathlib.equiv (R := K)).injective
+    (h.trans HexPolyMathlib.toPolynomial_zero.symm))
+
+private theorem divide_mul {K : Type*} [Field K] [DecidableEq K]
+    (p a : DensePoly K) (hp : a ∣ p) :
+    HexPolyMathlib.toPolynomial (p / a) * HexPolyMathlib.toPolynomial a =
+      HexPolyMathlib.toPolynomial p := by
+  have h := DensePoly.div_mul_add_mod p a
+  rw [DensePoly.mod_eq_zero_of_dvd p a hp] at h
+  simpa only [HexPolyMathlib.toPolynomial_add, HexPolyMathlib.toPolynomial_mul,
+    HexPolyMathlib.toPolynomial_zero, add_zero] using
+    congrArg HexPolyMathlib.toPolynomial h
+
+private theorem gcd_associated {K : Type*} [Field K] [DecidableEq K]
+    (f g : DensePoly K) (hf : f ≠ 0) :
+    Associated (HexPolyMathlib.toPolynomial (DensePoly.monicize (DensePoly.gcd f g)))
+      (EuclideanDomain.gcd (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g)) := by
+  have hg : DensePoly.gcd f g ≠ 0 := by
+    intro h
+    have hd := DensePoly.gcd_dvd_left f g
+    rw [h] at hd
+    obtain ⟨q, hq⟩ := hd
+    exact hf (hq.trans (DensePoly.zero_mul q))
+  apply Associated.trans _ (HexPolyMathlib.toPolynomial_gcd_associated f g)
+  apply associated_of_dvd_dvd
+  · exact HexPolyMathlib.toPolynomial_dvd_iff.mpr
+      (DensePoly.monicize_dvd_of_dvd hg
+        ⟨1, (DensePoly.mul_one_right_poly _).symm⟩)
+  · exact HexPolyMathlib.toPolynomial_dvd_iff.mpr (DensePoly.dvd_monicize _)
+
+private theorem gcd_divisors {K : Type*} [Field K] [DecidableEq K]
+    (f g : DensePoly K) (hf : f ≠ 0) :
+    DensePoly.monicize (DensePoly.gcd f g) ∣ f ∧
+      DensePoly.monicize (DensePoly.gcd f g) ∣ g := by
+  have h := gcd_associated f g hf
+  exact ⟨HexPolyMathlib.toPolynomial_dvd_iff.mp
+      (h.dvd.trans (EuclideanDomain.gcd_dvd_left _ _)),
+    HexPolyMathlib.toPolynomial_dvd_iff.mp
+      (h.dvd.trans (EuclideanDomain.gcd_dvd_right _ _))⟩
+
+/-- Dividing a polynomial and its derivative by a common divisor which
+removes all but one copy of a root retains the original multiplicity in the
+derivative quotient's value at that root. -/
+theorem eval_quotient {K : Type*} [Field K]
+    (f a v w : Polynomial K) (x : K) (hf : f ≠ 0) (ha : a ≠ 0)
+    (hroot : f.IsRoot x)
+    (hm : a.rootMultiplicity x = f.rootMultiplicity x - 1)
+    (hv : v * a = f) (hw : w * a = f.derivative) :
+    w.eval x = (f.rootMultiplicity x : K) * v.derivative.eval x := by
+  classical
+  set r := f.rootMultiplicity x
+  obtain ⟨q, hfq, _⟩ := f.exists_eq_pow_rootMultiplicity_mul_and_not_dvd hf x
+  obtain ⟨b, hab, hbn⟩ := a.exists_eq_pow_rootMultiplicity_mul_and_not_dvd ha x
+  rw [hm] at hab
+  change f = (Polynomial.X - Polynomial.C x) ^ r * q at hfq
+  change a = (Polynomial.X - Polynomial.C x) ^ (r - 1) * b at hab
+  have hb : b.eval x ≠ 0 := by
+    simpa only [Polynomial.dvd_iff_isRoot, Polynomial.IsRoot] using hbn
+  have hr : 0 < r :=
+    (Polynomial.rootMultiplicity_pos hf).mpr hroot
+  have hrsub : r - 1 + 1 = r := by omega
+  have hpowers : (Polynomial.X - Polynomial.C x) ^ r =
+      (Polynomial.X - Polynomial.C x) ^ (r - 1) * (Polynomial.X - Polynomial.C x) := by
+    simpa only [hrsub] using pow_succ (Polynomial.X - Polynomial.C x) (r - 1)
+  have hpow : (Polynomial.X - Polynomial.C x) ^ (r - 1) ≠ 0 :=
+    _root_.pow_ne_zero _ (Polynomial.X_sub_C_ne_zero x)
+  have hvb : v * b = (Polynomial.X - Polynomial.C x) * q := by
+    apply mul_left_cancel₀ hpow
+    calc
+      _ = v * a := by rw [hab]; ring
+      _ = f := hv
+      _ = (Polynomial.X - Polynomial.C x) ^ r * q := hfq
+      _ = _ := by rw [hpowers]; ring
+  have hwb : w * b = Polynomial.C (r : K) * q +
+      (Polynomial.X - Polynomial.C x) * q.derivative := by
+    apply mul_left_cancel₀ hpow
+    calc
+      _ = w * a := by rw [hab]; ring
+      _ = f.derivative := hw
+      _ = ((Polynomial.X - Polynomial.C x) ^ r * q).derivative :=
+        congrArg Polynomial.derivative hfq
+      _ = _ := by
+        rw [Polynomial.derivative_mul, Polynomial.derivative_X_sub_C_pow, hpowers]
+        ring
+  have hvzero : v.eval x = 0 := by
+    have h := congrArg (Polynomial.eval x) hvb
+    simp only [Polynomial.eval_mul, Polynomial.eval_sub, Polynomial.eval_X,
+      Polynomial.eval_C, sub_self, zero_mul] at h
+    exact (mul_eq_zero.mp h).resolve_right hb
+  have hvderiv : v.derivative.eval x * b.eval x = q.eval x := by
+    have h := congrArg (fun p : Polynomial K => p.derivative.eval x) hvb
+    simpa only [Polynomial.derivative_mul, Polynomial.eval_add,
+      Polynomial.eval_mul, Polynomial.derivative_X_sub_C,
+      Polynomial.eval_one, Polynomial.eval_sub, Polynomial.eval_X,
+      Polynomial.eval_C, sub_self, hvzero, zero_mul, add_zero,
+      zero_add, one_mul] using h
+  apply mul_right_cancel₀ hb
+  have h := congrArg (Polynomial.eval x) hwb
+  simp only [Polynomial.eval_add, Polynomial.eval_mul,
+    Polynomial.eval_C, Polynomial.eval_sub, Polynomial.eval_X,
+    sub_self, zero_mul, add_zero] at h
+  rw [h, mul_assoc, hvderiv]
+
+/-- The initial executable derivative quotient carries each root's original
+multiplicity. The gcd, normalization and exact divisions are the operations
+used in `decomposeRaw`. -/
+theorem eval_initial {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    (f : DensePoly K) (x : K) (hf : f ≠ 0) (hdegree : 0 < f.natDegree)
+    (hroot : (HexPolyMathlib.toPolynomial f).IsRoot x) :
+    let a := DensePoly.monicize (DensePoly.gcd f (DensePoly.derivativeImpl f))
+    (HexPolyMathlib.toPolynomial (DensePoly.derivativeImpl f / a)).eval x =
+      ((HexPolyMathlib.toPolynomial f).rootMultiplicity x : K) *
+        (HexPolyMathlib.toPolynomial (f / a)).derivative.eval x := by
+  let a := DensePoly.monicize (DensePoly.gcd f (DensePoly.derivativeImpl f))
+  have hfPoly : HexPolyMathlib.toPolynomial f ≠ 0 := by
+    intro h
+    exact hf ((HexPolyMathlib.equiv (R := K)).injective
+      (h.trans HexPolyMathlib.toPolynomial_zero.symm))
+  have hderiv : HexPolyMathlib.toPolynomial (DensePoly.derivativeImpl f) =
+      (HexPolyMathlib.toPolynomial f).derivative := by
+    rw [← DensePoly.derivative_eq_derivativeImpl,
+      HexPolyMathlib.toPolynomial_derivative]
+  have hdPoly : (HexPolyMathlib.toPolynomial f).derivative ≠ 0 := by
+    apply Polynomial.derivative_ne_zero.mpr
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    omega
+  have hassociated := gcd_associated f (DensePoly.derivativeImpl f) hf
+  rw [hderiv] at hassociated
+  have haPoly : HexPolyMathlib.toPolynomial a ≠ 0 := by
+    intro h
+    have hz := hassociated.eq_zero_iff.mp h
+    exact hfPoly (EuclideanDomain.gcd_eq_zero_iff.mp hz).1
+  have hm : (HexPolyMathlib.toPolynomial a).rootMultiplicity x =
+      (HexPolyMathlib.toPolynomial f).rootMultiplicity x - 1 := by
+    rw [Hex.PolyQuot.Roots.rootMultiplicity_associated hassociated x,
+      Hex.PolyQuot.Roots.rootMultiplicity_gcd _ _ hfPoly hdPoly x,
+      Polynomial.derivative_rootMultiplicity_of_root hroot]
+    omega
+  have ⟨haF, haD⟩ := gcd_divisors f (DensePoly.derivativeImpl f) hf
+  exact eval_quotient _ _ _ _ x hfPoly haPoly hroot hm
+    (divide_mul f a haF) ((divide_mul (DensePoly.derivativeImpl f) a haD).trans hderiv)
+
+private theorem initial_multiplicity {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    (f : DensePoly K) (x : K) (hf : f ≠ 0) (hdegree : 0 < f.natDegree) :
+    let a := DensePoly.monicize (DensePoly.gcd f (DensePoly.derivativeImpl f))
+    (HexPolyMathlib.toPolynomial (f / a)).rootMultiplicity x =
+      if (HexPolyMathlib.toPolynomial f).IsRoot x then 1 else 0 := by
+  let a := DensePoly.monicize (DensePoly.gcd f (DensePoly.derivativeImpl f))
+  have hfPoly := polynomial_ne_zero f hf
+  have hderiv : HexPolyMathlib.toPolynomial (DensePoly.derivativeImpl f) =
+      (HexPolyMathlib.toPolynomial f).derivative := by
+    rw [← DensePoly.derivative_eq_derivativeImpl,
+      HexPolyMathlib.toPolynomial_derivative]
+  have hdPoly : (HexPolyMathlib.toPolynomial f).derivative ≠ 0 := by
+    apply Polynomial.derivative_ne_zero.mpr
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    omega
+  have hassociated := gcd_associated f (DensePoly.derivativeImpl f) hf
+  rw [hderiv] at hassociated
+  have hm := Hex.PolyQuot.Roots.rootMultiplicity_associated hassociated x
+  rw [Hex.PolyQuot.Roots.rootMultiplicity_gcd _ _ hfPoly hdPoly x] at hm
+  have haF := (gcd_divisors f (DensePoly.derivativeImpl f) hf).1
+  have hquotient := Hex.PolyQuot.Roots.rootMultiplicity_div f a haF hfPoly x
+  change (HexPolyMathlib.toPolynomial (f / a)).rootMultiplicity x = _
+  rw [hquotient, hm]
+  by_cases hx : (HexPolyMathlib.toPolynomial f).IsRoot x
+  · have hr := (Polynomial.rootMultiplicity_pos hfPoly).mpr hx
+    rw [Polynomial.derivative_rootMultiplicity_of_root hx, ite_eq_left hx]
+    omega
+  · rw [Polynomial.rootMultiplicity_eq_zero hx, ite_eq_right hx]
+    simp
+
+/-- At counter `i`, the current polynomial contains each remaining root once.
+The derivative quotient records how many copies remain in the original input.
+The fields refer to the polynomials carried by the executable recurrence. -/
+structure Invariant {K : Type*} [Field K] [DecidableEq K]
+    (f : DensePoly K) (i : Nat) (v w : DensePoly K) : Prop where
+  positive : 0 < i
+  nonzero : v ≠ 0
+  simple : ∀ x, (HexPolyMathlib.toPolynomial v).rootMultiplicity x ≤ 1
+  roots : ∀ x, (HexPolyMathlib.toPolynomial v).IsRoot x ↔
+    i ≤ (HexPolyMathlib.toPolynomial f).rootMultiplicity x
+  derivative : ∀ x, (HexPolyMathlib.toPolynomial v).IsRoot x →
+    (HexPolyMathlib.toPolynomial w).eval x =
+      (((HexPolyMathlib.toPolynomial f).rootMultiplicity x : K) - (i : K) + 1) *
+        (HexPolyMathlib.toPolynomial v).derivative.eval x
+
+/-- The executable gcd and derivative-quotient setup establishes the
+invariant at counter one, including nonmonic inputs. -/
+theorem Invariant.init {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    (f : DensePoly K) (hf : f ≠ 0) (hdegree : 0 < f.natDegree) :
+    let a := DensePoly.monicize (DensePoly.gcd f (DensePoly.derivativeImpl f))
+    Invariant f 1 (f / a) (DensePoly.derivativeImpl f / a) := by
+  let a := DensePoly.monicize (DensePoly.gcd f (DensePoly.derivativeImpl f))
+  have haF := (gcd_divisors f (DensePoly.derivativeImpl f) hf).1
+  have hv : f / a ≠ 0 := by
+    intro h
+    have he := divide_mul f a haF
+    rw [h, HexPolyMathlib.toPolynomial_zero, zero_mul] at he
+    exact polynomial_ne_zero f hf he.symm
+  refine ⟨by omega, hv, ?_, ?_, ?_⟩
+  · intro x
+    rw [initial_multiplicity f x hf hdegree]
+    split <;> omega
+  · intro x
+    rw [← Polynomial.rootMultiplicity_pos (polynomial_ne_zero (f / a) hv),
+      initial_multiplicity f x hf hdegree]
+    by_cases hx : (HexPolyMathlib.toPolynomial f).IsRoot x
+    · have hr := (Polynomial.rootMultiplicity_pos (polynomial_ne_zero f hf)).mpr hx
+      rw [ite_eq_left hx]
+      omega
+    · rw [ite_eq_right hx, Polynomial.rootMultiplicity_eq_zero hx]
+      omega
+  · intro x hx
+    have hm : (HexPolyMathlib.toPolynomial (f / a)).rootMultiplicity x =
+        if (HexPolyMathlib.toPolynomial f).IsRoot x then 1 else 0 :=
+      initial_multiplicity f x hf hdegree
+    have hr := (Polynomial.rootMultiplicity_pos (polynomial_ne_zero (f / a) hv)).mpr hx
+    have hfroot : (HexPolyMathlib.toPolynomial f).IsRoot x := by
+      by_contra hn
+      rw [ite_eq_right hn] at hm
+      omega
+    simpa only [Nat.cast_one, sub_add_cancel] using eval_initial f x hf hdegree hfroot
+
+private theorem derivative_ne_zero {K : Type*} [Field K] [DecidableEq K]
+    {v : DensePoly K} (hv : v ≠ 0)
+    (hs : ∀ x, (HexPolyMathlib.toPolynomial v).rootMultiplicity x ≤ 1)
+    (x : K) (hx : (HexPolyMathlib.toPolynomial v).IsRoot x) :
+    (HexPolyMathlib.toPolynomial v).derivative.eval x ≠ 0 := by
+  intro h
+  have hm := (Polynomial.one_lt_rootMultiplicity_iff_isRoot
+    (polynomial_ne_zero v hv)).mpr ⟨hx, h⟩
+  have hb := hs x
+  omega
+
+private theorem quotient_ne_zero {K : Type*} [Field K] [DecidableEq K]
+    (v z : DensePoly K) (hv : v ≠ 0) (hz : z ∣ v) : v / z ≠ 0 := by
+  intro h
+  have he := divide_mul v z hz
+  rw [h, HexPolyMathlib.toPolynomial_zero, zero_mul] at he
+  exact polynomial_ne_zero v hv he.symm
+
+private theorem quotient_roots {K : Type*} [Field K] [DecidableEq K]
+    (v z : DensePoly K) (hv : v ≠ 0) (hz : z ∣ v)
+    (hs : ∀ x, (HexPolyMathlib.toPolynomial v).rootMultiplicity x ≤ 1) (x : K) :
+    (HexPolyMathlib.toPolynomial (v / z)).IsRoot x ↔
+      (HexPolyMathlib.toPolynomial v).IsRoot x ∧
+        ¬(HexPolyMathlib.toPolynomial z).IsRoot x := by
+  have hvPoly := polynomial_ne_zero v hv
+  have hqPoly := polynomial_ne_zero (v / z) (quotient_ne_zero v z hv hz)
+  have hzPoly : HexPolyMathlib.toPolynomial z ≠ 0 := by
+    intro h
+    have he := divide_mul v z hz
+    rw [h, mul_zero] at he
+    exact hvPoly he.symm
+  have hm := Hex.PolyQuot.Roots.rootMultiplicity_div v z hz hvPoly x
+  have hzle := Polynomial.rootMultiplicity_le_rootMultiplicity_of_dvd hvPoly
+    (HexPolyMathlib.toPolynomial_dvd_iff.mpr hz) x
+  have hsx := hs x
+  rw [← Polynomial.rootMultiplicity_pos hqPoly, hm,
+    ← Polynomial.rootMultiplicity_pos hvPoly, ← Polynomial.rootMultiplicity_pos hzPoly]
+  omega
+
+/-- The gcd emitted in a Yun round has precisely the roots whose original
+multiplicity equals the current counter. -/
+theorem Invariant.component {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    {f v w : DensePoly K} {i : Nat} (h : Invariant f i v w) (x : K) :
+    let t := w - DensePoly.derivativeImpl v
+    let z := DensePoly.monicize (DensePoly.gcd v t)
+    (HexPolyMathlib.toPolynomial z).IsRoot x ↔
+      (HexPolyMathlib.toPolynomial f).rootMultiplicity x = i := by
+  let t := w - DensePoly.derivativeImpl v
+  let z := DensePoly.monicize (DensePoly.gcd v t)
+  change (HexPolyMathlib.toPolynomial z).IsRoot x ↔
+    (HexPolyMathlib.toPolynomial f).rootMultiplicity x = i
+  have hg := gcd_associated v t h.nonzero
+  have hz : (HexPolyMathlib.toPolynomial z).IsRoot x ↔
+      (HexPolyMathlib.toPolynomial v).IsRoot x ∧
+        (HexPolyMathlib.toPolynomial t).IsRoot x := by
+    rw [← Polynomial.dvd_iff_isRoot, hg.dvd_iff_dvd_right,
+      Polynomial.dvd_iff_isRoot, Polynomial.isRoot_gcd_iff_isRoot_left_right]
+  have ht (hx : (HexPolyMathlib.toPolynomial v).IsRoot x) :
+      (HexPolyMathlib.toPolynomial t).IsRoot x ↔
+        (HexPolyMathlib.toPolynomial f).rootMultiplicity x = i := by
+    have hd := derivative_ne_zero h.nonzero h.simple x hx
+    have he : (HexPolyMathlib.toPolynomial t).eval x =
+        (((HexPolyMathlib.toPolynomial f).rootMultiplicity x : K) - (i : K)) *
+          (HexPolyMathlib.toPolynomial v).derivative.eval x := by
+      dsimp [t]
+      rw [HexPolyMathlib.toPolynomial_sub, ← DensePoly.derivative_eq_derivativeImpl,
+        HexPolyMathlib.toPolynomial_derivative, Polynomial.eval_sub, h.derivative x hx]
+      ring
+    rw [Polynomial.IsRoot, he, mul_eq_zero, or_iff_left hd,
+      sub_eq_zero, Nat.cast_inj]
+  rw [hz]
+  constructor
+  · rintro ⟨hx, htroot⟩
+    exact (ht hx).mp htroot
+  · intro hm
+    have hx : (HexPolyMathlib.toPolynomial v).IsRoot x :=
+      (h.roots x).mpr (by omega)
+    exact ⟨hx, (ht hx).mpr hm⟩
+
+/-- The exact divisions executed by a Yun round preserve the invariant at
+the next multiplicity counter. No degree decrease of `v` is assumed. -/
+theorem Invariant.step {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    {f v w : DensePoly K} {i : Nat} (h : Invariant f i v w) :
+    let t := w - DensePoly.derivativeImpl v
+    let z := DensePoly.monicize (DensePoly.gcd v t)
+    Invariant f (i + 1) (v / z) (t / z) := by
+  let t := w - DensePoly.derivativeImpl v
+  let z := DensePoly.monicize (DensePoly.gcd v t)
+  have hd := gcd_divisors v t h.nonzero
+  have hq := quotient_ne_zero v z h.nonzero hd.1
+  refine ⟨by have := h.positive; omega, hq, ?_, ?_, ?_⟩
+  · intro x
+    rw [Hex.PolyQuot.Roots.rootMultiplicity_div v z hd.1
+      (polynomial_ne_zero v h.nonzero) x]
+    have hv := h.simple x
+    omega
+  · intro x
+    have hc : (HexPolyMathlib.toPolynomial z).IsRoot x ↔
+        (HexPolyMathlib.toPolynomial f).rootMultiplicity x = i := h.component x
+    rw [quotient_roots v z h.nonzero hd.1 h.simple x, h.roots x, hc]
+    omega
+  · intro x hx
+    have ⟨hv, hz⟩ := (quotient_roots v z h.nonzero hd.1 h.simple x).mp hx
+    have hxzero : (HexPolyMathlib.toPolynomial (v / z)).eval x = 0 := hx
+    have hzEval : (HexPolyMathlib.toPolynomial z).eval x ≠ 0 := hz
+    have hvderiv : (HexPolyMathlib.toPolynomial v).derivative.eval x =
+        (HexPolyMathlib.toPolynomial (v / z)).derivative.eval x *
+          (HexPolyMathlib.toPolynomial z).eval x := by
+      have he := congrArg (fun p : Polynomial K => p.derivative.eval x)
+        (divide_mul v z hd.1)
+      simpa only [Polynomial.derivative_mul, Polynomial.eval_add,
+        Polynomial.eval_mul, hxzero, zero_mul, add_zero] using he.symm
+    apply mul_right_cancel₀ hzEval
+    calc
+      _ = (HexPolyMathlib.toPolynomial t).eval x := by
+        simpa only [Polynomial.eval_mul] using
+          congrArg (Polynomial.eval x) (divide_mul t z hd.2)
+      _ = (HexPolyMathlib.toPolynomial w).eval x -
+          (HexPolyMathlib.toPolynomial v).derivative.eval x := by
+        dsimp [t]
+        rw [HexPolyMathlib.toPolynomial_sub, ← DensePoly.derivative_eq_derivativeImpl,
+          HexPolyMathlib.toPolynomial_derivative, Polynomial.eval_sub]
+      _ = (((HexPolyMathlib.toPolynomial f).rootMultiplicity x : K) - (i : K)) *
+          (HexPolyMathlib.toPolynomial v).derivative.eval x := by
+        rw [h.derivative x hv]
+        ring
+      _ = _ := by
+        rw [hvderiv, Nat.cast_add, Nat.cast_one]
+        ring
+
+/-- The remaining multiplicity weight sums the copies still represented at
+counter `i`. It decreases even when the emitted gcd is constant. -/
+noncomputable def remaining {K : Type*} [Field K] [DecidableEq K]
+    (f : DensePoly K) (i : Nat) : Nat :=
+  (HexPolyMathlib.toPolynomial f).roots.toFinset.sum fun x =>
+    (HexPolyMathlib.toPolynomial f).rootMultiplicity x + 1 - i
+
+/-- Over an algebraically closed field, the initial remaining multiplicity
+weight is the input's degree. -/
+theorem remaining_one {K : Type*} [Field K] [DecidableEq K] [IsAlgClosed K]
+    (f : DensePoly K) : remaining f 1 = f.natDegree := by
+  unfold remaining
+  simp only [Nat.add_sub_cancel, ← Polynomial.count_roots]
+  rw [Multiset.toFinset_sum_count_eq, IsAlgClosed.card_roots_eq_natDegree,
+    HexPolyMathlib.natDegree_toPolynomial]
+
+/-- Advancing the multiplicity counter removes one copy of every remaining
+root from the weight. -/
+theorem remaining_succ {K : Type*} [Field K] [DecidableEq K]
+    (f : DensePoly K) (i : Nat) :
+    remaining f i = remaining f (i + 1) +
+      (HexPolyMathlib.toPolynomial f).roots.toFinset.sum
+        (fun x => if i ≤ (HexPolyMathlib.toPolynomial f).rootMultiplicity x then 1 else 0) := by
+  unfold remaining
+  rw [← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro x hx
+  split <;> omega
+
+/-- On a nonconstant loop state the remaining multiplicity weight strictly
+decreases. This supplies descent for rounds which emit no factor. -/
+theorem Invariant.remaining_lt {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    [IsAlgClosed K] {f v w : DensePoly K} {i : Nat}
+    (h : Invariant f i v w) (hdegree : 0 < v.natDegree) :
+    remaining f (i + 1) < remaining f i := by
+  have hpos : 0 < (HexPolyMathlib.toPolynomial v).natDegree := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    exact hdegree
+  obtain ⟨x, hx⟩ := IsAlgClosed.exists_root (HexPolyMathlib.toPolynomial v)
+    (ne_of_gt (Polynomial.natDegree_pos_iff_degree_pos.mp hpos))
+  have hr := (h.roots x).mp hx
+  have hp := h.positive
+  have hrpos : 0 < (HexPolyMathlib.toPolynomial f).rootMultiplicity x := by omega
+  have hmem : x ∈ (HexPolyMathlib.toPolynomial f).roots.toFinset := by
+    rw [Multiset.mem_toFinset, ← Multiset.count_pos, Polynomial.count_roots]
+    exact hrpos
+  have hsum : 0 < (HexPolyMathlib.toPolynomial f).roots.toFinset.sum
+      (fun x => if i ≤ (HexPolyMathlib.toPolynomial f).rootMultiplicity x then 1 else 0) := by
+    have hle := Finset.single_le_sum
+      (fun y hy => Nat.zero_le
+        (if i ≤ (HexPolyMathlib.toPolynomial f).rootMultiplicity y then 1 else 0)) hmem
+    rw [ite_eq_left hr] at hle
+    omega
+  rw [remaining_succ f i]
+  omega
+
+/-- Once the counter exceeds the original degree, no root remains and the
+actual loop state is constant. -/
+theorem Invariant.exhausted {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    [IsAlgClosed K] {f v w : DensePoly K} {i : Nat}
+    (h : Invariant f i v w) (hf : f ≠ 0) (hi : f.natDegree < i) :
+    v.natDegree = 0 := by
+  by_contra hv
+  have hpos : 0 < (HexPolyMathlib.toPolynomial v).natDegree := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    omega
+  obtain ⟨x, hx⟩ := IsAlgClosed.exists_root (HexPolyMathlib.toPolynomial v)
+    (ne_of_gt (Polynomial.natDegree_pos_iff_degree_pos.mp hpos))
+  have hr := (h.roots x).mp hx
+  have hb := Hex.PolyQuot.Roots.rootMultiplicity_le_natDegree
+    (HexPolyMathlib.toPolynomial f) (polynomial_ne_zero f hf) x
+  rw [HexPolyMathlib.natDegree_toPolynomial] at hb
+  omega
+
+private theorem loop_constant {K : Type*} [Field K] [DecidableEq K]
+    (v w : DensePoly K) (i fuel : Nat) (out : Array (DensePoly K × Nat))
+    (hv : v.natDegree = 0) : loop v w i fuel out = out := by
+  cases fuel <;> simp only [loop, hv, ↓reduceIte]
+
+/-- The actual loop needs at most the original degree minus the rounds
+already completed. Larger fuel produces exactly the same factor array. -/
+theorem Invariant.loop_bound {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    [IsAlgClosed K] {f v w : DensePoly K} {i : Nat}
+    (h : Invariant f i v w) (hf : f ≠ 0)
+    (fuel : Nat) (out : Array (DensePoly K × Nat)) :
+    loop v w i fuel out =
+      loop v w i (min fuel (f.natDegree + 1 - i)) out := by
+  induction fuel generalizing v w i out with
+  | zero => rw [Nat.zero_min]
+  | succ fuel ih =>
+      by_cases hv : v.natDegree = 0
+      · rw [loop_constant v w i (fuel + 1) out hv,
+          loop_constant v w i (min (fuel + 1) (f.natDegree + 1 - i)) out hv]
+      · have hi : i ≤ f.natDegree := by
+          by_contra hn
+          exact hv (h.exhausted hf (by omega))
+        have hmin : min (fuel + 1) (f.natDegree + 1 - i) =
+            min fuel (f.natDegree + 1 - (i + 1)) + 1 := by omega
+        rw [hmin]
+        simp only [loop, hv, ↓reduceIte]
+        exact ih h.step _
+
+/-- The producer's original-degree fuel covers every multiplicity round,
+including gaps where no factor is emitted. -/
+theorem initial_loop_bound {K : Type*} [Field K] [CharZero K] [DecidableEq K]
+    [IsAlgClosed K] (f : DensePoly K) (hf : f ≠ 0) (hdegree : 0 < f.natDegree) :
+    let a := DensePoly.monicize (DensePoly.gcd f (DensePoly.derivativeImpl f))
+    loop (f / a) (DensePoly.derivativeImpl f / a) 1 (f.natDegree + 1) #[] =
+      loop (f / a) (DensePoly.derivativeImpl f / a) 1 f.natDegree #[] := by
+  have h := (Invariant.init f hf hdegree).loop_bound hf (f.natDegree + 1) #[]
+  simpa only [Nat.add_sub_cancel, Nat.min_eq_right (Nat.le_succ _)] using h
+
+/-- info: 'Hex.RealClosure.Yun.eval_initial' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.eval_initial
+
+/-- info: 'Hex.RealClosure.Yun.Invariant.init' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.Invariant.init
+
+/-- info: 'Hex.RealClosure.Yun.Invariant.component' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.Invariant.component
+
+/-- info: 'Hex.RealClosure.Yun.Invariant.step' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.Invariant.step
+
+/-- info: 'Hex.RealClosure.Yun.Invariant.remaining_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.Invariant.remaining_lt
+
+/-- info: 'Hex.RealClosure.Yun.initial_loop_bound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.initial_loop_bound
+
+end Hex.RealClosure.Yun

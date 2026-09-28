@@ -146,6 +146,13 @@ coefficient map that preserves its arithmetic. The companion instantiates
 this theorem for cached rational selected-root coefficients; their inverse
 semantics retain the named `Tarski.check_rootSum` admission (#10389).
 Arbitrary ordered coefficient towers still need their interpretation laws.
+`Yun.Invariant.init`, `step` and `component` in the companion prove the
+repeated-factor recurrence's pointwise root invariant over characteristic-zero
+fields, including nonmonic inputs. Over an algebraically closed field, the
+remaining-multiplicity weight decreases on every nonconstant round and starts
+at the original degree. `initial_loop_bound` proves that the executable's fuel
+covers the multiplicity rounds, including gaps with no emitted factor. These
+proofs use ordinary kernel checking and have no admitted dependencies.
 The proof that `decompose` always passes replay on repeated-factor inputs is
 also outstanding, so unchecked outputs are not certified decompositions.
 

@@ -594,7 +594,8 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
-    `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun]
+    `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
+    `HexRealClosureMathlib.YunInvariant]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
