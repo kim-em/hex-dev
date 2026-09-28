@@ -325,8 +325,8 @@ holding a whole transversal would make each read a shift of an `o*n*W`-bit
 number, which costs time proportional to that size. An `RArray` has no shape
 invariant and `get` is defined at every index, so the stored size `o` is the
 only size the checker uses, and every read is at an index it has checked to be
-below `o`. `HexBasic` provides the `RArray` facts the proofs need that Lean does
-not, including `get_ofArray` for in-range indices.
+below `o`. The soundness proof therefore never inspects the shape of an
+`RArray`, only the values `get` returns.
 
 The certificate stores inverse transversals so that the checker never inverts
 a permutation.
@@ -341,10 +341,13 @@ accepts exactly when all of the following hold for every level:
    `n`. `L(O[j]) = j + 1` for every `j < o`. For every `x < n`, either
    `L(x) = 0`, or `L(x) ≤ o` and `O[L(x) - 1] = x`.
 2. Generators. For every `i < g` there is `i' < g` with
-   `comp n s_i s_i' = ident n`. For the first level, every input is some
-   `s_i` or has `comp n s_i input = ident n` for some `i < g`, and every `s_i`
-   is an input or satisfies that equation for some input. With no levels,
-   every input equals `ident n`.
+   `comp n s_i s_i' = ident n`. For the first level, every `s_i` is an input or
+   satisfies `comp n s_i input = ident n` for some input, and every input sifts
+   to `ident n` through all the levels. With no levels, this says that every
+   input equals `ident n`. Sifting the inputs, rather than requiring each to
+   be a generator, accepts the chains `Group.ofGenerators` builds when the
+   first base point is fixed: the first nontrivial level then keeps only the
+   inputs that Schreier–Sims found to be needed.
 3. Orbit closure. For every `i < g` and `j < o`, `L(s_i(O[j])) ≠ 0`.
 4. Transversal. `t_0 = ident n`. For every `0 < j < o`, the parent `(i, k)` has
    `i < g` and `k < j`, `s_i(O[k]) = O[j]`, and `t_j = comp n s_i t_k`. For
@@ -391,7 +394,7 @@ per-declaration heartbeat limit, and its peak memory grows with its reduction
 work. The kernel obligation is therefore a list of independent checks, each
 proved in its own declaration:
 
-- the input part of item 2;
+- the input part of item 2, including the sift of every input;
 - for each level, items 1, 2 (inverse closure), 4 and 6;
 - for each level, items 3 and 5 over one range `[lo, hi)` of the row-major
   pair index `i*o + j`.
@@ -1181,8 +1184,7 @@ Implement in this order:
    Develop each correspondence and its tests alongside the relevant
    computational module; this ordering does not defer all proofs to the end.
 10. Kernel certificates: move the loop drivers and raw `Nat` spelling lemmas
-    from `HexGraphIso/Kernel/Packed.lean` to `HexBasic`, with the `RArray`
-    lemmas. Then `HexPermGroup/Kernel/{Pack,Check,Chunks,Certify}.lean`,
+    from `HexGraphIso/Kernel/Packed.lean` to `HexBasic.Kernel`. Then `HexPermGroup/Kernel/{Pack,Check,Certify}.lean`,
     `HexPermGroupMathlib/Kernel.lean` with the soundness theorems,
     `HexPermGroupMathlib/Tactic.lean` with `perm_group` and
     `#perm_group_certificate`, the examples, the proof probes and the manual
