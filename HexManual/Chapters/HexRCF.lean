@@ -1135,7 +1135,7 @@ assume no Archimedean property or rational isolating intervals. Applying them
 to infinitesimal coefficients requires a lawful interpretation into a real
 closed field. The nested-infinitesimal fixture tests execution and context
 changes; it does not provide that interpretation.
-These semantic proofs inherit the named #10389 root-sum admission. An arbitrary
+These semantic proofs use the proved shared Sturm–Tarski theorem. An arbitrary
 converter still has the builder's ordinary input and internal-error diagnostics.
 
 Root enumeration constructs a full derivative description for each root. This

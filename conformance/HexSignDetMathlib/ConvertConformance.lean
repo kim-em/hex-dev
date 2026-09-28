@@ -240,23 +240,23 @@ theorem cubic_root (source : Descriptor Rat Nat Sturm.orderSign 7)
 /-- info: 'Hex.SignDet.RawDescriptor.map_wellFormed' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.RawDescriptor.map_wellFormed
-/-- info: 'Hex.SignDet.Descriptor.convert_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.convert_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.convert_success
-/-- info: 'Hex.SignDet.Descriptor.convert_root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.convert_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.convert_root
-/-- info: 'Hex.SignDetMathlib.ConvertConformance.Noncanonical.success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.ConvertConformance.Noncanonical.success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Noncanonical.success
-/-- info: 'Hex.SignDetMathlib.ConvertConformance.Noncanonical.root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.ConvertConformance.Noncanonical.root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Noncanonical.root
 
-/-- info: 'Hex.SignDetMathlib.ConvertConformance.cubic_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.ConvertConformance.cubic_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_success
-/-- info: 'Hex.SignDetMathlib.ConvertConformance.cubic_root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.ConvertConformance.cubic_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_root
 /-- info: 'Hex.SignDetMathlib.ConvertConformance.cubic_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
