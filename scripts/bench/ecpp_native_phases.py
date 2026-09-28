@@ -22,6 +22,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "reports/ecpp/native/phases.json")
     args = parser.parse_args()
+    if args.output.exists():
+        parser.error("output already exists; preserve completed phase measurements")
     cpu, lease = cpu_lease()
     report = dict(host=os.uname().nodename, cpu=cpu,
                   source=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
