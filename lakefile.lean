@@ -1045,6 +1045,10 @@ lean_lib HexBerlekampMathlibProofProbeScientific where
     `HexBerlekampMathlib.ProofProbe.Irreducible8,
     `HexBerlekampMathlib.ProofProbe.Irreducible16]
 
+lean_lib HexSignDetMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[.submodules `HexSignDetMathlib.ProofProbe]
+
 lean_lib HexRealFormulaProofProbe where
   srcDir := "bench"
   globs := #[`HexRealFormulaMathlib.ProofProbe.Support,
