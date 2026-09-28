@@ -192,6 +192,8 @@ alone does not prove root completeness. `buildTablePrepared` exposes sparse
 construction while retaining the internal diagnostics of `buildPrepared`.
 `Replay.count_table` is the representation adapter from independently proved
 support coverage and exact integer counts to this same sparse lookup.
+`SelectedSigns.signs_of_count` similarly shares the selected-sign lookup
+argument with the companion, while `signs_eq` keeps its Mathlib-free contract.
 
 `Descriptor.prepareQueries` constructs a `QueryHandle` for successive queries
 at the same validated root. It retains the exact prepared squarefree domain.

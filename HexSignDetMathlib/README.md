@@ -56,7 +56,8 @@ inverse interpreted over the rationals provides the foundation's left inverse.
 `Replay.foundation_complete` specializes the existing split-tree induction
 to this bridge at every solve. Leaves and child support products supply
 candidate coverage before that node is solved or pruned; shared query
-semantics supply the actual moments. Root support, counts and sparse lookup
+semantics supply the actual moments. Root support, counts, sparse lookup
+and selected-root signs
 consume that specialization. No coefficient representation is made into
 a field, and the executable checker gains no companion dependency.
 The companion's finite-system and counted-node producer proofs use the same
