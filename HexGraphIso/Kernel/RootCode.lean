@@ -27,7 +27,7 @@ number. `Kernel.rootCode_eq` identifies it with the head of
 
 namespace Hex.GraphIso
 
-open Nauty
+open Nauty Hex.Kernel
 
 variable {n k : Nat}
 

@@ -38,6 +38,8 @@ applies. The compiled search and the soundness proofs stay on the
 
 namespace Hex.GraphIso.Kernel
 
+open Hex.Kernel
+
 /-- A canonical key with bitset rows: the literal reading of
 `Nauty.Key` that the kernel replay produces and compares. -/
 structure Key where
@@ -55,6 +57,8 @@ vertices. -/
 end Hex.GraphIso.Kernel
 
 namespace Hex.GraphIso.Nauty
+
+open Hex.Kernel
 
 variable {n k : Nat}
 
@@ -2790,6 +2794,8 @@ theorem checkNodeP_eq {ctx : CtxP} {ctxL : CtxL} (h : CtxRep ctx ctxL)
 /-! The packed replay agrees with the list replay: `checkNodeP_eq`. -/
 end Hex.GraphIso.Nauty
 namespace Hex.GraphIso
+
+open Hex.Kernel
 
 open Nauty
 
