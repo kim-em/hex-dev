@@ -37,7 +37,7 @@ def clean():
 def audit_runtime(executable, out):
     """Record the actual native routes used by the GMP-specific cost model."""
     text = ""
-    for symbol in ("lean_nat_gcd", "lean_nat_log2", "_ZN4lean3gcdERNS_3mpzERKS0_S3_",
+    for symbol in ("lean_nat_gcd", "lean_nat_log2", "lean_big_int_to_nat", "_ZN4lean3gcdERNS_3mpzERKS0_S3_",
                    "_ZNK4lean3mpz4log2Ev"):
         result = subprocess.run(["objdump", "-d", "--disassemble=" + symbol, str(executable)],
                                 check=True, capture_output=True, text=True)
@@ -47,7 +47,8 @@ def audit_runtime(executable, out):
     if "<__gmpz_gcd>" not in text or "<__gmpz_sizeinbase>" not in text:
         raise ValueError("the declared cost model requires verified GMP gcd and bit-length routes")
     return {"implementation": "GMP", "evidence": record.name, "sha256": digest(record),
-            "bit_length": "lean_nat_log2 -> lean::mpz::log2 -> mpz_sizeinbase(base=2)"}
+            "bit_length": "lean_nat_log2 -> lean::mpz::log2 -> mpz_sizeinbase(base=2)",
+            "version": None, "version_note": "GMP version is not exported by this static binary"}
 
 
 def main():

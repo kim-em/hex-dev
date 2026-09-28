@@ -65,6 +65,9 @@ head degree. The equal-operand termination path is described in GMP's
 The native backend audit records the actual gcd and bit-length call targets.
 Bit length uses GMP's [base-two size calculation](https://github.com/gmp-mirror/gmp/blob/master/mpz/sizeinbase.c).
 Earlier archived collections did not record this backend audit explicitly.
+The static executable does not export `__gmp_version`, so its precise GMP
+version is unrecorded. The linked call routes are verified; the source links
+explain the relevant operations without identifying the exact linked release.
 
 This family removes coefficient height at preprocessing. It covers that phase,
 not height growth through general Sturm chains, full production, shared-graph
