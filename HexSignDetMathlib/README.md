@@ -131,7 +131,19 @@ accepted count-one partial and full descriptors select a unique root, and
 `root_derivatives` identifies their signs with formal iterated derivatives
 through `derivativesFrom_get`. `SelectedSigns.values_at_root` and
 `value_at_root` prove that every checked requested sign equals evaluation at
-that same selected root, including the certificate's one-query accessor.
+that same selected root, including the public one-query accessor.
+
+`TableProducer` proves success of `buildTablePrepared` and the ordinary total
+`determinePrepared` API under the same coefficient-interpretation laws. Its
+correctness theorem relates every lookup to the cardinality of the actual
+root/sign condition, including omitted words, empty queries and root-free
+domains. `determine_isSome` proves that the option-valued frontend succeeds
+exactly on the shared valid root domains; this validity result has no root-sum
+admission. `determine_correct` gives all returned root counts and uses the
+named #10389 bridge. These proofs follow the actual prepared BKR producer and
+exclude its internal-error fallback, without assuming successful construction
+or injectivity of coefficient representations.
+
 `Completion.root_eq_source` proves that accepted full-derivative completion
 preserves the selected real root; `Completion.signs_at_source` identifies every
 returned derivative sign at that original root. These results use checked
@@ -156,8 +168,9 @@ uses the common full derivative word and count-one descriptors; strict `<` and
 `>` still require the separate Thom-order foundation.
 The executable API retains its internal diagnostics for arbitrary coefficient
 operations. The companion rules out selected-sign and completion errors under
-lawful coefficients. Root enumeration, re-encoding success and strict root
-order retain their separate proof obligations.
+lawful coefficients. The domain-exact total table wrappers are available; root
+enumeration, re-encoding success and strict root order retain their separate
+proof obligations.
 
 `Descriptor.buildSigns_success` proves that the actual selected-sign producer
 succeeds for every validated descriptor and finite ordered query list under

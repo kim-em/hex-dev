@@ -55,8 +55,9 @@ class AdmissionScannerTests(unittest.TestCase):
             conformance = root / "conformance/HexSignDetMathlib/SelectedProducerConformance.lean"
             completion = root / "conformance/HexSignDetMathlib/CompletionConformance.lean"
             handle = root / "conformance/HexSignDetMathlib/QueryHandleConformance.lean"
+            tables = root / "conformance/HexSignDetMathlib/TableConformance.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, dependency):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by\n  sorry\n", encoding="utf-8")
@@ -64,6 +65,7 @@ class AdmissionScannerTests(unittest.TestCase):
             conformance.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             completion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             handle.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            tables.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
@@ -105,6 +107,13 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved admission in adapters/HexSignDetMathlib/Nested/AnotherAdapter"):
                     audit.check()
                 nested_adapter.unlink()
+                tables.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/TableConformance"):
+                    audit.check()
+                tables.unlink()
+                with self.assertRaisesRegex(ValueError, "missing local import"):
+                    audit.check()
+                tables.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 sign.write_text("public import HexRCF.RealCoefficients\ntheorem bad : True := by stop\n",
                                 encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "unapproved admission"):
