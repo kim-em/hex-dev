@@ -362,7 +362,6 @@ lean_lib HexPermGroup where
 
 @[default_target]
 lean_lib HexPermGroupMathlib where
-  precompileModules := true
 
 @[default_target]
 lean_lib HexPermGroupTests where
