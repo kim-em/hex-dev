@@ -160,7 +160,9 @@ fixes `a` alone proves only one inclusion and does not complete this theorem.
 The first version fixes the base to `0,1,...,n-1`. It stores singleton
 orbits for fixed base points and does not require a minimal base. This avoids
 a hidden assumption that some caller-supplied short base is faithful.
-Variable bases and base-change optimizations are later work.
+Variable bases and base-change optimizations of this chain are outside its
+scope. Kernel certificates use an explicit list of base points: see
+[Kernel certificates](#kernel-certificates).
 
 Let `S_i` be the generators at level `i`, and `G_i = <S_i>`. A complete
 chain proves
@@ -257,6 +259,171 @@ Schreier pairs, sift steps and certificate nodes. It returns either a group
 with a passing chain for exactly `S`, or an incomplete result. Incomplete
 results may report verified words or subgroups discovered so far, but expose
 no final negative membership answer or exact order of `<S>`.
+
+## Kernel certificates
+
+A complete chain as above is checked efficiently by compiled code, but its
+representation is expensive for the kernel. The kernel has no support for
+`Array` and reads a `List` or `Vector` entry by walking the spine, and it
+reduces structural recursion through `Nat.brecOn`, so each permutation
+operation on `Hex.Perm n` costs a number of reduction steps quadratic in `n`.
+The kernel also keeps the intermediate terms of one declaration alive until
+that declaration is checked, so its memory grows with the total reduction work
+of the declaration. Kernel replay therefore uses a separate certificate format
+and a separate Boolean checker, `Hex.PermGroup.Kernel.check`, designed for
+kernel reduction. `checkChain` and `Group` remain the interface for compiled
+code.
+
+### Packed permutations
+
+Fix the degree `n` and the field width `W = Nat.log2 n + 1`, so that one field
+holds every value in `0..n`. `W` is computed from `n` and is not certificate
+data. The field `i` of a natural number `x` is `(x >>> (i*W)) &&& (2^W - 1)`.
+`Kernel.pack (p : Perm n) : Nat` holds `p(i)` in field `i` for every `i < n`
+and has no bits at or above `n*W`. Composition `Kernel.comp n x y` is the
+number whose field `i` is field `field(y, i)` of `x`, for `i < n`, with no
+higher bits; it satisfies `comp n (pack p) (pack q) = pack (p.comp q)`.
+`Kernel.ident n = pack (Perm.id n)`.
+
+The checker reads only fields `0..n-1` of a packed value, and composes only
+on the right with values whose fields are below `n`. It compares packed values
+with `Nat.beq`, which implies equality of those fields. It therefore needs no
+separate validity check of packed values: every value it uses semantically
+agrees on fields `0..n-1` with `pack p` for some `p : Perm n`, because it is
+the packing of an input, a composition of such values, or a value whose
+composition on the right with such a value is `ident n`. Such a value may have
+arbitrary bits at or above `n*W`. The soundness proof works with this
+agreement on low fields, and proves that `comp` respects it.
+
+### Certificate data
+
+A `Kernel.Certificate` is raw data with no proof fields: a list of levels.
+Each level records:
+
+- its base point `b` and its orbit size `o`;
+- its generators, a `List Nat` of packed permutations;
+- its orbit, the transversal `t_j` and the inverse transversal `u_j`, each a
+  `Lean.RArray Nat` read at indices `j < o` only;
+- a packed lookup table whose field `x` is `j + 1` when `x` is orbit point `j`
+  and `0` when `x` is not in the orbit;
+- for each `0 < j < o`, a Schreier-tree parent `(i, k)`, stored in a
+  `Lean.RArray`, recording that `t_j = s_i * t_k`;
+- for each generator of the next level, the index `(i, j)` of the Schreier
+  generator of this level that equals it.
+
+The input generators are not certificate data. `Kernel.check n inputs c` takes
+them as the list `inputs` of packed permutations, and soundness is stated for
+`inputs = S.map pack`.
+
+The producer omits levels whose orbit has one point. The checker accepts
+them; they contribute a factor `1` to the order. An input generating the
+trivial group has a certificate with no levels.
+
+`RArray.get` reads entry `j` in a number of `Nat.ble` comparisons logarithmic
+in the orbit size. A `List` would cost `j` spine steps per read. A single `Nat`
+holding a whole transversal would make each read a shift of an `o*n*W`-bit
+number, which costs time proportional to that size. An `RArray` has no shape
+invariant and `get` is defined at every index, so the stored size `o` is the
+only size the checker uses, and every read is at an index it has checked to be
+below `o`. `HexBasic` provides the `RArray` facts the proofs need that Lean does
+not, including `get_ofArray` for in-range indices.
+
+The certificate stores inverse transversals so that the checker never inverts
+a permutation.
+
+### Checker
+
+Write `s_i` for generator `i` of a level, `g` for their number, `O[j]` for orbit
+entry `j`, and `L(x)` for field `x` of the lookup table. `Kernel.check n inputs c`
+accepts exactly when all of the following hold for every level:
+
+1. Shape. `b < n`, `0 < o`, and `O[0] = b`. Every `O[j]` with `j < o` is below
+   `n`. `L(O[j]) = j + 1` for every `j < o`. For every `x < n`, either
+   `L(x) = 0`, or `L(x) ≤ o` and `O[L(x) - 1] = x`.
+2. Generators. For every `i < g` there is `i' < g` with
+   `comp n s_i s_i' = ident n`. For the first level, every input is some
+   `s_i` or has `comp n s_i input = ident n` for some `i < g`, and every `s_i`
+   is an input or satisfies that equation for some input. With no levels,
+   every input equals `ident n`.
+3. Orbit closure. For every `i < g` and `j < o`, `L(s_i(O[j])) ≠ 0`.
+4. Transversal. `t_0 = ident n`. For every `0 < j < o`, the parent `(i, k)` has
+   `i < g` and `k < j`, `s_i(O[k]) = O[j]`, and `t_j = comp n s_i t_k`. For
+   every `j < o`, `comp n u_j t_j = ident n`.
+5. Schreier generators. For every `i < g` and `j < o`, with
+   `k = L(s_i(O[j])) - 1`, the Schreier generator
+   `h(i, j) = comp n u_k (comp n s_i t_j)` sifts to `ident n` through the later
+   levels. The checker enumerates this whole family itself. It accepts no
+   producer list of Schreier pairs.
+6. Next-level provenance. The next level's index list has one entry per
+   next-level generator, each `(i, j)` has `i < g` and `j < o`, and the
+   generator equals `h(i, j)`.
+
+After the last level, sifting accepts exactly the value `ident n`. Sifting a
+packed `x` at a level reads `j = L(x(b))`, rejects when `j = 0`, and otherwise
+continues with `comp n u_{j-1} x`.
+
+`Kernel.order c` is the product of the orbit sizes, in arbitrary-precision
+`Nat` arithmetic.
+
+Distinct base points are neither checked nor required. Items 4 and 6 place
+each level's generators in the stabilizer of the previous base point, so by
+induction over the levels each level's generators fix all earlier base points,
+and a repeated base point has an orbit of one point that contributes the
+factor `1`. The condition that a generator fixes earlier base points is
+therefore not checked either.
+
+Every function the kernel evaluates is written for kernel reduction, following
+`HexGraphIso.Kernel.Packed`. Field reads and writes use the raw
+`Nat.land`, `Nat.shiftRight`, `Nat.shiftLeft`, `Nat.lor`, `Nat.mul`,
+`Nat.sub` and `Nat.beq` functions, which the kernel evaluates in one step on
+arbitrary-precision operands, including in index arithmetic passed to
+`RArray.get`. Counted loops are one `Nat.rec` step per iteration, never
+structural recursion on a fuel argument and never a fold over `List.range`.
+The generic loop drivers (`iterUp`, `allRange`, `mapRange`, `fuelRec` and
+their equations) and the raw `Nat` spelling lemmas live in `HexBasic`, and
+`HexGraphIso.Kernel.Packed` uses them from there. `HexPermGroup` cannot import
+`HexGraphIso`.
+
+### Bounded declarations
+
+A single `decide +kernel` over a large certificate exceeds the default
+per-declaration heartbeat limit, and its peak memory grows with its reduction
+work. The kernel obligation is therefore a list of independent checks, each
+proved in its own declaration:
+
+- the input part of item 2;
+- for each level, items 1, 2 (inverse closure), 4 and 6;
+- for each level, items 3 and 5 over one range `[lo, hi)` of the row-major
+  pair index `i*o + j`.
+
+`Kernel.check_eq_all` proves that `Kernel.check n inputs c` equals the
+conjunction of these pieces whenever the ranges of each level are adjacent:
+the first starts at `0`, each ends where the next starts, and the last ends
+at `g*o`. `Kernel.chunks n inputs.length c budget` returns such a partition
+for each level. It rejects `budget = 0`. Its cost estimate counts, for one pair,
+the two compositions forming `h(i, j)` and one composition and one lookup for
+each later level, each composition costing `n` field operations, and it counts
+the unsplit per-level and input checks the same way. When one unsplit check
+exceeds the budget, the producer fails before emitting any declaration and
+reports the check and its estimated cost. The default budget is set from the
+proof-probe measurements of this checker and recorded in the benchmark report.
+No proof, test or example raises `maxHeartbeats` for these checks.
+
+Certificate constants are `noncomputable`. They are data for the kernel, and
+their literals exceed the compiler's recursion limits at larger degrees.
+
+### Producer
+
+`Kernel.certify (S : Array (Perm n)) : Kernel.Certificate` is computed from the
+complete chain of `Group.ofGenerators S`: it drops singleton levels, packs the
+data, computes inverse transversals, and records Schreier-tree parents and
+next-level indices. Prove `Kernel.check_certify`: `Kernel.check n
+(S.toList.map pack) (certify S) = true`. Its generators at each level are the
+chain's symmetric working arrays, and each retained next-level generator is a
+Schreier generator of the level, so items 2 and 6 hold by construction.
+
+The soundness theorems are stated and proved in `HexPermGroupMathlib`: see
+[Kernel replay in Mathlib](#kernel-replay-in-mathlib).
 
 ## Group operations
 
@@ -636,10 +803,11 @@ Computational conformance owner: `HexPermGroup`.
 
 Computational performance owner: `HexPermGroup`.
 
-Expose permutation operations, straight-line-program evaluation and chain
-checks for kernel replay. A compiled producer supplies untrusted certificate
-data. A kernel proof applies `checkChain_sound` and the Mathlib correspondence
-to an accepted literal check. Replay budgets are separate from search budgets.
+Kernel proofs about generated subgroups use `Kernel.check` of
+[Kernel certificates](#kernel-certificates), not replay of `checkChain`. A
+compiled producer supplies untrusted certificate data. A kernel proof applies
+`Kernel.card_closure` or `Kernel.sift_pack_iff` to accepted literal checks.
+Replay budgets are separate from search budgets.
 For large groups, fail explicitly when the certificate is too expensive.
 There is no `native_decide`, new axiom, trusted external group-order call or
 unverified classification table. Checker completeness includes the whole
@@ -648,6 +816,129 @@ Action closure, search-tree coverage, forced block merges and normal-subgroup
 iterations are also replayable; action laws supplied as proofs remain
 kernel-checked. An external image table with no action-law proof cannot
 cross this boundary just because each generator image is a permutation.
+
+### Kernel replay in Mathlib
+
+`HexPermGroupMathlib/Kernel.lean` states and proves soundness of
+`Kernel.check`. For `S : Array (Perm n)` and a certificate `c` with
+`h : Kernel.check n (S.toList.map Kernel.pack) c = true`:
+
+```lean
+theorem Kernel.sift_pack_iff (h : …) (p : Perm n) :
+    Kernel.sift n c (Kernel.pack p) = true ↔ p.toEquiv ∈ closure S
+
+theorem Kernel.card_closure (h : …) :
+    Nat.card (closure S) = Kernel.order c
+```
+
+where `closure S` is the subgroup of `Equiv.Perm (Fin n)` defined in
+`HexPermGroupMathlib.Word`. Membership is stated for packed typed permutations
+only: a raw `Nat` need not encode a permutation. Write `G_ℓ` for the subgroup
+generated by the generators of level `ℓ`, and `G_ℓ = ⊥` after the last level.
+The proof shows, from the last level upward, that sifting from level `ℓ`
+accepts exactly the packings of elements of `G_ℓ`, that the orbit of `b_ℓ`
+under `G_ℓ` is the stored orbit, and that `G_(ℓ+1)` is the stabilizer of `b_ℓ`
+in `G_ℓ`. The last fact uses item 6 for one inclusion and Schreier's lemma
+with item 5 for the other. Orbit–stabilizer then gives
+`Nat.card G_ℓ = o_ℓ * Nat.card G_(ℓ+1)`, and item 2 gives `G_0 = closure S`.
+`Kernel.check_eq_all` lets these hypotheses be supplied as separate
+declarations.
+
+The `perm_group` tactic, in `HexPermGroupMathlib/Tactic.lean`, closes goals of
+the following forms:
+
+```lean
+example : Nat.card (Subgroup.closure ({σ, τ} : Set (Equiv.Perm (Fin 11)))) = 7920 := by
+  perm_group
+
+example : g ∈ Subgroup.closure ({σ, τ} : Set (Equiv.Perm (Fin 11))) := by
+  perm_group
+
+example : g ∉ Subgroup.closure ({σ, τ} : Set (Equiv.Perm (Fin 11))) := by
+  perm_group
+
+example : Subgroup.closure ({σ, τ} : Set (Equiv.Perm (Fin 11))) = ⊤ := by
+  perm_group
+```
+
+The degree is a numeral. The generating set is a set literal `{σ₁, …, σₖ}` or
+the coercion of a `Finset` literal. Each generator and the query `g` are
+closed terms of type `Equiv.Perm (Fin n)` that the compiler can evaluate, and
+the claimed order is a numeral.
+
+The tactic evaluates each generator and the query to image lists, runs
+`Kernel.certify` and `Kernel.chunks` with the degree and the number of inputs, and computes the order or the sift verdict
+in compiled code. If the goal is false, or `Kernel.chunks` fails, it reports the
+certified order, the verdict or the limit that failed, and stops before adding
+any declaration. Otherwise it adds:
+
+- a `noncomputable` definition holding the certificate literal;
+- one theorem per generator and query, proving by `decide +kernel` that its
+  packing equals the literal the tactic computed;
+- one theorem per piece of [Bounded declarations](#bounded-declarations),
+  proved by `decide +kernel`;
+
+and closes the goal from `Kernel.check_eq_all`, the theorems above, a proof
+that the set literal equals the range of the input list, and, for
+`closure S = ⊤`, the equality of the certified order with `n!`. Each
+`decide +kernel` proof is an ascribed `Eq.refl true`, so the elaborator does
+not evaluate it a second time. The optional configuration
+`perm_group (maxChunkWork := k)` sets a positive chunk budget, and
+`set_option trace.perm_group true` reports the certificate shape and each
+chunk's range.
+
+Large certificates can also be committed as data. The command
+`#perm_group_certificate name for S`, with `S` as in the tactic, prints Lean
+source containing the same definitions and theorems, named from `name`, and a
+final theorem `name_card : Nat.card (Subgroup.closure S) = N`. A downstream
+project pastes it into a file and checks it like any other source.
+
+`HexPermGroup.lean` publicly imports the kernel checker, and
+`HexPermGroupMathlib.lean` publicly imports `HexPermGroupMathlib.Kernel` and
+`HexPermGroupMathlib.Tactic`, so importing either umbrella provides the whole
+surface.
+
+## User-facing examples
+
+`HexPermGroupMathlib/Examples/Kernel.lean` states each example in Mathlib
+types alone, with generators written in Mathlib's cycle notation, and proves it
+with `perm_group`:
+
+- the Mathieu group `M11` as the closure of the 11-cycle
+  `c[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]` and
+  `c[2, 6, 10, 7] * c[3, 9, 4, 5]` in `Equiv.Perm (Fin 11)` has order 7920;
+- the transposition `c[0, 1]` and the same 11-cycle generate all of
+  `Equiv.Perm (Fin 11)`, stated as `closure {…} = ⊤`;
+- a product of the two `M11` generators lies in `M11`, and the
+  transposition `c[0, 1]` does not, since `M11` contains only even
+  permutations;
+- the Mathieu group `M24` on `Fin 24` has order 244823040, with its
+  certificate split into several chunks;
+- `M12` and `M22` from their standard generators, with orders 95040 and
+  443520.
+
+A failing example uses `fail_if_success perm_group` on a false order claim for
+`M11` and checks the reported certified order with `#guard_msgs`.
+
+## Manual example: the Mathieu group M11 in the kernel
+
+The manual chapter `HexManual/Chapters/HexPermGroup.lean` gains a section
+proving `Nat.card (Subgroup.closure {σ, τ}) = 7920` for the generators of `M11`
+above. The statement uses only Mathlib types, and the proof is `perm_group`.
+The section then shows what that proof checks. It prints the certificate `Kernel.certify`
+produces (four levels with basic orbits of sizes 11, 10, 9 and 8, whose
+product is 7920), shows one Schreier generator sifting to the identity, and
+states the theorem `Kernel.card_closure` that turns the accepted check into
+the Mathlib cardinality.
+
+The section explains why the kernel uses a separate certificate format, and
+illustrates the difference with a table for this `M11` example. The table has
+one row for kernel replay of the compiled `checkChain` certificate and one for
+`Kernel.check`, and columns for kernel type-checking time and peak memory. Its
+values are read from the committed proof-probe record for `M11` (see
+[Benchmarks](#complexity-benchmarks-and-placement)), not typed by hand, and the
+chapter names the machine they were measured on. A sentence below the table
+points to the benchmark report for larger groups.
 
 ## Conformance and comparisons
 
@@ -756,6 +1047,19 @@ and propose an incorrect normal closure/core that is nevertheless normal.
 The checker must reject each corruption. Exercise every new search, action
 and iteration budget without turning incomplete output into a negative
 mathematical answer.
+For kernel certificates, conformance checks that `Kernel.check` accepts
+`Kernel.certify S` for every fixture and that the certified order equals
+`Group.order`. It also corrupts one transversal entry, one stored inverse, one
+lookup field, one orbit point, one orbit size, one Schreier-tree parent and
+its index bounds, one next-level index, and one base point, including a base
+point equal to `n` with an orbit containing a point below `n`, and a
+first-level generator unrelated to the inputs. `Kernel.check` must reject
+each. A range partition that omits, repeats or exceeds one Schreier pair must
+not satisfy the hypothesis of `Kernel.check_eq_all`, and `Kernel.chunks`
+rejects the budget `0`. Fixtures include degrees 0 and 1, degrees that are
+powers of two (16 and 32), where the field width must still hold the lookup
+value `n`, and the trivial group, which has no levels.
+
 The companion also proves that no action of `C_2` can send its generator
 to a three-cycle. This build-only counterexample exercises the relation-law
 requirement on action constructors; generator bijectivity is insufficient.
@@ -840,7 +1144,23 @@ Use [benchmarking](../../SPEC/benchmarking.md)'s ordered complexity modes, named
 hardware and complete output checks. Profile orbit construction, full-array
 composition, sifting, suffix rebuilding and word storage. Benches remain
 Mathlib-free. Extend existing conformance/oracle scripts and the single CI
-job, with scientific timing on the existing dedicated hardware workflow.
+job, with scientific timing under the
+[shared-host measurement policy](../../SPEC/benchmarking.md#shared-host-measurement-policy).
+
+Kernel replay is measured by fresh-module proof probes under
+`bench/HexPermGroupMathlib/ProofProbe`, declared in `libraries.yml:
+proof_probes`, following [benchmarking](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+Each probe records kernel type-checking time per declaration, the whole-module
+wall time and the peak resident memory of the Lean process, run alone under a
+recorded memory limit. The default probes are `M11`, `M24` and `HS`
+(degree 100) by `Kernel.check`. A non-default local target adds `M11` by
+`checkChain` replay, which needs about 6 GB, and `McL` and `Co3` (degree 275
+and 276) by `Kernel.check` with chunking. Records live under `reports/bench-results/` as
+`hexpermgroup-kernel-*.json`, and the manual table reads the `M11` record.
+The default chunk budget of `Kernel.chunks` is set from these records.
+Changes to `Kernel.check`, its loop drivers or the chunk cost estimate are
+judged against them. Probe runners must not run several of these
+modules concurrently, since each can use several gigabytes.
 
 Implement in this order:
 
@@ -865,6 +1185,13 @@ Implement in this order:
    and `HexManual/Chapters/HexPermGroup.lean` complete every surface above.
    Develop each correspondence and its tests alongside the relevant
    computational module; this ordering does not defer all proofs to the end.
+10. Kernel certificates: move the loop drivers and raw `Nat` spelling lemmas
+    from `HexGraphIso/Kernel/Packed.lean` to `HexBasic`, with the `RArray`
+    lemmas. Then `HexPermGroup/Kernel/{Pack,Check,Chunks,Certify}.lean`,
+    `HexPermGroupMathlib/Kernel.lean` with the soundness theorems,
+    `HexPermGroupMathlib/Tactic.lean` with `perm_group` and
+    `#perm_group_certificate`, the examples, the proof probes and the manual
+    section on `M11`.
 
 The manual should use rotations and reflections of an indexed polygon to
 compute a point stabilizer, distinguish orbit size from group order, and
@@ -875,6 +1202,8 @@ the theorem that this subgroup is the entire automorphism group.
 Further examples show the dihedral action on opposite-vertex blocks and
 its kernel, a set transporter, a rank/unrank round trip, the derived series
 of `S_4`, and the four-point action of `C_2 wr C_2` with explicit embeddings.
+The kernel proof of the order of `M11` is specified in
+[Manual example: the Mathieu group M11 in the kernel](#manual-example-the-mathieu-group-m11-in-the-kernel).
 
 Both libraries start planned at phase zero. Activation and graph-isomorphism
 migration must satisfy its existing conformance and benchmark requirements,
