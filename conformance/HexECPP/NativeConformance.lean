@@ -20,12 +20,28 @@ open Hex.ECPP
 #guard CM.normValid 13 3 7 1
 #guard CM.sqrt? 13 2 10 == some 7 || CM.sqrt? 13 2 10 == some 6
 #guard CM.norm? 13 3 6 == some (5, 3)
+#guard CM.norm? 11 7 2 == some (4, 2)
+#guard CM.norm? 47 11 6 == some (12, 2)
 #guard (CM.curves 13 ⟨3, 0⟩ 2).length == 6
 #guard (CM.curves 17 ⟨4, 1728⟩ 3).length == 4
 #guard (CM.curves 101 ⟨7, -3375⟩ 2).length == 2
 #guard (CM.traces 3 7 1).length == 6
 #guard (CM.traces 4 4 3).length == 4
 #guard (inverse? 35 15).isNone
+
+private def cardinality (n a b : Nat) : Nat :=
+  1 + ((List.range n).map fun x =>
+    ((List.range n).filter (onCurve n a b x)).length).sum
+
+private def orders (n d : Nat) (j : Int) (g : Nat) : List Nat :=
+  ((CM.curves n ⟨d, j⟩ g).map fun (a, b) => cardinality n a b).mergeSort (· ≤ ·)
+
+private def expected (n d t v : Nat) : List Nat :=
+  ((CM.traces d t v).map fun t => ((n : Int) + 1 - t).toNat).mergeSort (· ≤ ·)
+
+#guard orders 13 3 0 2 == expected 13 3 5 3
+#guard orders 17 4 1728 3 == expected 17 4 8 1
+#guard orders 11 7 (-3375) 2 == expected 11 7 4 2
 
 -- Every successful root is checked, even for nonsquarefree inputs.
 #guard ([9, 25, 35, 49, 101, 113].all fun n => (List.range n).all fun a =>
@@ -49,8 +65,9 @@ private def hard : Nat := 177080666831933235355717939809840315427
 #guard exhausted hard { maxPoints := 0 } .points
 #guard exhausted hard { maxScalarWork := 0 } .scalarWork
 #guard exhausted hard { maxDepth := 1 } .depth
-#guard exhausted hard { nonresidueRetries := 0 } .portfolio
-#guard exhausted hard { pointRetries := 0 } .portfolio
+#guard exhausted hard { nonresidueRetries := 0 } .nonresidueRetries
+#guard exhausted hard { pointRetries := 0 } .pointRetries
+#guard exhausted 9 {} .screening
 
 #guard ([0, 1, 4, 9, 25, 35, 49, 121, 100003 * 100003].all fun n =>
   (produce n 0).result.toOption.isNone)

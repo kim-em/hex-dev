@@ -98,17 +98,23 @@ private def cornacchia (m d : Nat) : Nat → Nat → Nat → Option (Nat × Nat)
       else if b == 0 then none
       else cornacchia m d fuel b (a % b)
 
-/-- Solve `t² + d*v² = 4*n` from a checked modular root. For odd
-discriminants lift the root to an odd root modulo `4*n`; even discriminants
-use the equivalent norm equation modulo `n`. -/
+/-- Solve `t² + d*v² = 4*n` from a checked modular root. Odd discriminants
+also try `x² + d*y² = n`, since a solution can have both coordinates even.
+Even discriminants use the equivalent norm equation modulo `n`. -/
 def norm? (n d root : Nat) : Option (Nat × Nat) := do
   if n ≤ 2 || d == 0 then none else do
     let (m, k, r) := if d % 4 == 0 then (n, d / 4, root)
       else (4 * n, d, if root % 2 == 1 then root else root + n)
-    if !rootValid m (modSub m 0 (k % m)) r then none else do
-      let (x, v) ← cornacchia m k (4 * HexArith.bitLength m + 4) m r
-      let t := if d % 4 == 0 then 2 * x else x
-      if normValid n d t v then some (t, v) else none
+    let primitive := do
+      if !rootValid m (modSub m 0 (k % m)) r then none else do
+        let (x, v) ← cornacchia m k (4 * HexArith.bitLength m + 4) m r
+        let t := if d % 4 == 0 then 2 * x else x
+        if normValid n d t v then some (t, v) else none
+    if primitive.isSome then primitive
+    else if d % 2 == 0 || !rootValid n (modSub n 0 (d % n)) root then none
+    else do
+      let (x, y) ← cornacchia n d (4 * HexArith.bitLength n + 4) n root
+      if normValid n d (2 * x) (2 * y) then some (2 * x, 2 * y) else none
 
 /-- Candidate traces, including all extra associates for j=0 and j=1728. -/
 def traces (d t v : Nat) : List Int :=

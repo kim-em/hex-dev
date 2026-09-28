@@ -121,14 +121,17 @@ def pari_group_check(rows: list[dict]) -> None:
     curve = None
     for row in rows:
         kind = row["kind"]
-        if kind not in ("add", "scalar", "step") or row.get("result") is None and kind != "step":
+        if kind not in ("add", "scalar", "step", "curve") or (row.get("result") is None and kind not in ("step", "curve")):
             continue
         key = (row["n"], row["a"], row["b"])
         if key != curve:
             n, a, b = key
             commands.append(f"E=ellinit([0,0,0,{a},{b}],{n});")
             curve = key
-        if kind == "add":
+        if kind == "curve":
+            commands.append("print([lift(E.j),ellcard(E)]);")
+            expected.append([row["j"], row["order"]])
+        elif kind == "add":
             commands.append(
                 f"print(lift(elladd(E,{_gp_point(row['p'])},{_gp_point(row['q'])})));"
             )
@@ -172,6 +175,13 @@ def main() -> int:
     rows = [json.loads(line) for line in sys.stdin if line.strip()]
     for row in rows:
         kind = row["kind"]
+        if kind == "curve":
+            n, a, b = (row[k] for k in ("n", "a", "b"))
+            order = 1 + sum((y*y - x*x*x - a*x - b) % n == 0
+                            for x in range(n) for y in range(n))
+            assert row["order"] == order, row
+            assert row["j"] == 1728*4*a**3*pow(4*a**3+27*b*b, -1, n) % n, row
+            continue
         if kind == "root":
             n, a, root = row["n"], row["a"], row["root"]
             assert row["symbol"] == jacobi(a, n), row

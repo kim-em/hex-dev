@@ -26,17 +26,18 @@ meta def generate (n : Nat) (seed : Nat := 0) (budget : SearchBudget := {}) :
     MetaM (String × Cert) := do
   if budget.maxBits > 256 then
     throwError "native ECPP: native production is admitted only through 256 bits"
+  let budget := { budget with maxDepth := min budget.maxDepth defaultImportBudget.maxRows }
   let c ← match (produce n seed budget).result with
     | .ok c => pure c
-    | .error e => throwError "native ECPP: exhausted {repr e.resource}; unresolved subject {e.subject}; seed {seed}"
-  let proof ← certProof c n (mkNatLit n)
-  checkWithKernel proof
+    | .error e => throwError "native ECPP: no certificate; stopped at {repr e.resource}; unresolved subject {e.subject}; seed {seed}"
   let source := frozenRows c
   -- The public compact representation must itself fit its conversion budget.
   match convertText defaultImportBudget source (terminalCert c) with
   | .error e => throwError "native ECPP: frozen conversion failed at row {e.row}: {repr e.kind}"
   | .ok frozen =>
     unless checkAt n frozen do throwError "native ECPP: frozen certificate failed checkAt"
+  let proof ← certProof c n (mkNatLit n)
+  checkWithKernel proof
   return (source, c)
 
 syntax (name := nativeSuggestTac) "primality?" " (" &"method" " := " &"ecpp" ")"

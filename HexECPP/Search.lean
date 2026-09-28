@@ -29,6 +29,7 @@ namespace Hex.ECPP
 inductive Resource where
   | inputBits | depth | candidates | roots | nonresidues | points
   | factorWork | scalarWork | outputBits | memo | portfolio
+  | screening | nonresidueRetries | pointRetries
 deriving Repr, BEq, DecidableEq
 
 structure SearchBudget where
@@ -84,7 +85,7 @@ structure SearchStats where
   scalarWork : Nat := 0
   /-- Checked proposals rejected when their recursive child could not be built. -/
   backtracks : Nat := 0
-  /-- First unresolved local branch, retained when the portfolio is exhausted. -/
+  /-- First unresolved branch. A failed child supersedes a local point retry. -/
   unresolved : Option SearchError := none
 deriving Repr
 
@@ -98,6 +99,13 @@ deriving Repr
 abbrev SearchM := ExceptT SearchError (StateM SearchState)
 
 private def fail (n : Nat) (resource : Resource) : SearchM α := throw ⟨n, resource⟩
+
+private def unresolved (n : Nat) (resource : Resource) : SearchM Unit :=
+  modify fun s => { s with stats := { s.stats with
+    unresolved := match s.stats.unresolved with
+      | some e => if (e.resource == .pointRetries || e.resource == .nonresidueRetries) &&
+          (resource == .depth || resource == .screening) then some ⟨n, resource⟩ else some e
+      | none => some ⟨n, resource⟩ } }
 
 /-- Charge before running any work; no backtracking restores counters. -/
 def charge (budget : SearchBudget) (n : Nat) (resource : Resource)
@@ -137,6 +145,7 @@ private def nonresidue (budget : SearchBudget) (n : Nat) (sextic : Bool) :
     if (inverse? n g).isSome && CM.symbol g n == -1 &&
         HexArith.powMod g ((n - 1) / 2) n == n - 1 &&
         (!sextic || HexArith.powMod g ((n - 1) / 3) n != 1) then return some g
+  unresolved n .nonresidueRetries
   return none
 
 private def sqrt (budget : SearchBudget) (n z a : Nat) : SearchM (Option Nat) := do
@@ -220,19 +229,22 @@ private def point (budget : SearchBudget) (n q cofactor z a b : Nat) :
     charge budget n .scalarWork (2 * HexArith.bitLength q)
     if checkStep n a b qx qy discrInv ws q then
       return some ⟨a, b, qx, qy, discrInv, ws⟩
+  unresolved n .pointRetries
   return none
 
 /-- Structurally bounded recursion; failure of a child resumes the parent's
 remaining CM orders, without resetting any allocation or random state. -/
 def search (budget : SearchBudget) : Nat → Nat → SearchM (Option Cert)
   | 0, n => do
-      modify fun s => { s with stats := { s.stats with unresolved := some ⟨n, .depth⟩ } }
+      unresolved n .depth
       return none
   | depth + 1, n => do
       if HexArith.bitLength n > budget.maxBits then fail n .inputBits
       if let some c := (← get).memo.find? (fun c => c.subject == n) then return some c
       if let some c ← leaf budget (depth + 1) n then return some (← remember budget n c)
-      if n ≤ 3 || n % 2 == 0 || n % 3 == 0 || !Hex.Nat.isProbablePrime n then return none
+      if n ≤ 3 || n % 2 == 0 || n % 3 == 0 || !Hex.Nat.isProbablePrime n then
+        unresolved n .screening
+        return none
       let some z ← nonresidue budget n false | return none
       for inv in CM.portfolio do
         charge budget n .candidates
@@ -259,8 +271,7 @@ def search (budget : SearchBudget) : Nat → Nat → SearchM (Option Cert)
               modify fun s => { s with stats := { s.stats with backtracks := s.stats.backtracks + 1 } }
               -- Different points on this curve have the same child obligation.
               break
-      modify fun s => { s with stats := { s.stats with
-        unresolved := s.stats.unresolved.or (some ⟨n, .portfolio⟩) } }
+      unresolved n .portfolio
       return none
 
 structure SearchResult where
@@ -289,7 +300,8 @@ private def rows : Cert → List String
       s!"[{n},{(n : Int) + 1 - child.subject},1,{a},[{x},{y}]]" :: rows child
 
 /-- Freeze only replay inputs. Each row uses the already found q-order point
-and cofactor one, so conversion need not repeat any CM or factor search. -/
+and cofactor one, so conversion need not repeat any CM or factor search.
+The stored `t = n + 1 - q` is an encoding field, not a Frobenius trace. -/
 def frozenRows (c : Cert) : String :=
   match rows c with
   | [] => toString c.subject

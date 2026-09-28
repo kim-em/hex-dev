@@ -12,11 +12,11 @@ import HexECPPMathlib.Native
 #guard_msgs in
 example : True := by primality? (method := ecpp)
 
-/-- error: native ECPP: exhausted Hex.ECPP.Resource.portfolio; unresolved subject 9; seed 0 -/
+/-- error: native ECPP: no certificate; stopped at Hex.ECPP.Resource.screening; unresolved subject 9; seed 0 -/
 #guard_msgs in
 example : Nat.Prime 9 := by primality? (method := ecpp)
 
-/-- error: native ECPP: exhausted Hex.ECPP.Resource.factorWork; unresolved subject 17; seed 9 -/
+/-- error: native ECPP: no certificate; stopped at Hex.ECPP.Resource.factorWork; unresolved subject 17; seed 9 -/
 #guard_msgs in
 run_cmd Lean.Elab.Command.liftTermElabM do
   discard <| Hex.ECPP.Native.generate 17 9 { maxFactorWork := 0 }

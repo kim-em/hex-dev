@@ -223,6 +223,9 @@ points, and the existing scalar schedule generates checked inverse witnesses.
 Every returned certificate passes subject-bound `checkAt`. Roots and norm
 equations are checked by arithmetic even for composite moduli. The `j=0`
 sextic and `j=1728` quartic twist families are handled explicitly.
+For odd discriminants, norm search tries both primitive solutions modulo
+`4*n` and the equation `x² + d*y² = n`, whose doubled coordinates supply
+solutions with both coordinates even.
 
 One allocation is shared across recursion and backtracking. It bounds input
 bits, depth, discriminant and order candidates, root and nonresidue attempts,
@@ -231,12 +234,20 @@ entries. Failed candidates consume their work and advance the random stream.
 Exhaustion reports the unresolved subject and resource, and makes no
 compositeness claim. A compositeness diagnostic requires a separately checked
 witness. Neither CM theory nor a probable-prime filter is a proof dependency.
+Diagnostics distinguish screening, exhausted local point/nonresidue retries,
+the complete portfolio and exhausted shared allocations. A failed recursive
+child takes diagnostic priority over an earlier local retry failure.
 
 `HexECPPMathlib/Native.lean` owns `primality? (method := ecpp)` and explicit
 export. It shares frozen compact data and kernel replay with the PARI route.
 Frozen output contains curve and point proposals and an explicit checked
 terminal certificate; replay performs no CM search and invokes no external
 program. Ordinary `primality` imports and its fallback behavior are unchanged.
+Native frozen rows use an already found child-order point and cofactor one:
+the stored field `t = n + 1 - q` encodes the child and is not a Frobenius
+trace. Conversion reconstructs and checks the certificate arithmetic. The
+elaborator caps its recursion allocation to the compact interface's row
+limit and verifies conversion before elaborating the kernel proof.
 
 The default allocation admits 256 input bits, depth 32, 2048 combined
 discriminant/order candidates, 8192 root calls, 4096 nonresidue attempts,
