@@ -8,6 +8,7 @@ module
 public import HexRealClosure.Yun
 public import HexRealClosure.Bounds
 public import HexRealClosure.Deflation
+public import HexRealClosure.BaseTests
 public meta import HexSturm.Basic
 public meta import HexRealClosure.Bounds
 public meta import HexRealClosure.Deflation

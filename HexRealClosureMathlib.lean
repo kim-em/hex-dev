@@ -6,3 +6,4 @@ Authors: Kim Morrison
 module
 public import HexRealClosure
 public import HexPolyMathlib.Interpret
+public import HexRealClosureMathlib.BaseContext

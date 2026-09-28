@@ -227,3 +227,46 @@ Run `lake build hexrealclosure_deflation_conformance`, then
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and
 [real-algebraic chapter](../HexManual/Chapters/HexRealAlgebraic.lean).
+
+## Ordered bases and checked value readers
+
+`BaseContext.RealContext` constructs a real-constant prefix, starting at ℚ.
+`RealContext.constant` looks up a name/version key in one fixed immutable
+`Registry`. It requires the key's presence and erased progress for the exact
+source returned by `parent.source key present`: coefficient bounds come from
+the predecessor and constant bounds come from that registry entry. The
+Mathlib companion's `RealContext.register` derives this progress from the
+existing containment, width and relative-transcendence hypotheses. Its sign,
+containment and zero-reflection theorems concern the actual constructed child.
+
+`BaseContext.Context.real` finishes that prefix. `Context.infinitesimal` then
+adds any number of successive positive infinitesimals. The types prevent
+adding another real constant after this step. These carriers use the existing
+canonical rational-function fields; no coefficient-operation record or field
+instance on selected-root syntax is introduced. The companion ties the child's
+actual infinitesimal sign to the shared Hahn-series interpretation under the
+predecessor sign hypothesis.
+
+`BaseContext.Element ctx` is a nominal wrapper indexed by the entire immutable
+context. Equal carrier types do not permit implicit context changes. Ordinary
+arithmetic stays in one context; `a.embed` includes a predecessor value in its
+new infinitesimal child, and `Element.embedConstant` includes a real-prefix
+value in its registered child. The infinitesimal embedding preserves zero,
+one, addition, multiplication and total inversion.
+
+`a.write` produces finite recursive rational/fraction syntax with the full
+base signature: the real keys in predecessor order and the infinitesimal
+count. `Element.read ctx raw` first checks that literal signature, then checks
+every level and denominator before canonical fraction construction. Round-trip
+preservation and stale-binding rejection have kernel proofs. Readers are
+relative to the application's fixed registry; identical keys in unrelated
+registries do not establish provider identity. This is a value reader in a
+supplied context, not a serialized-context reconstruction API.
+
+Run `lake build HexRealClosure.BaseTests HexRealClosureMathlib.BaseContext`.
+The compiled examples exercise successive infinitesimals, explicit embeddings,
+inverse infinitesimals, fraction normalization, round trips, incompatible
+bindings, malformed level shapes and zero denominators. These base contexts do
+not yet contain algebraic levels. Integrating general selected-root storage,
+full dependency transport, context reconstruction, isolation and exploration
+remains part of the tower implementation.
