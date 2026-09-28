@@ -15,8 +15,8 @@ private def sample (scale : Rat) (rootCut : Bool) : Option (Array Bool) := do
   let factor := x * x - DensePoly.C 2
   let head := DensePoly.scale scale (if rootCut then factor * (x - 1) else factor)
   let split ← bisect? Sturm.orderSign head 0 2
-  let removed := match split.mode with | .regular _ => false | .root _ => true
-  return #[decide (midpoint (0 : Rat) 2 = 1), decide (removed = rootCut),
+  let removed := split.mode.removed.isSome
+  return #[decide (midpoint (0 : Rat) 2 = 1), decide (removed = rootCut && split.mode.removed = if rootCut then some 1 else none),
     decide (split.mode.head = DensePoly.scale scale factor),
     decide (split.left.head = split.right.head),
     decide (Sturm.queryPrepared split.left 1 = 0),

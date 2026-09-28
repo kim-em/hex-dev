@@ -58,11 +58,27 @@ class DeflationTests(unittest.TestCase):
 
     def test_rejects_missing_midpoint(self) -> None:
         with self.assertRaisesRegex(ValueError, "wrong removed point"):
-            verify(self.change_split("split cubic root cut", "removed", False))
+            verify(self.change_split("split cubic root cut", "removed", None))
 
     def test_rejects_invented_midpoint(self) -> None:
         with self.assertRaisesRegex(ValueError, "wrong removed point"):
-            verify(self.change_split("split regular quadratic", "removed", True))
+            verify(self.change_split("split regular quadratic", "removed", "1"))
+
+    def test_rejects_wrong_removed_value(self) -> None:
+        with self.assertRaisesRegex(ValueError, "wrong removed point"):
+            verify(self.change_split("split cubic root cut", "removed", "2"))
+
+    def test_rejects_wrong_right_count(self) -> None:
+        with self.assertRaisesRegex(ValueError, "wrong right count"):
+            verify(self.change_split("split roots on both sides of root cut", "right_count", 0))
+
+    def test_rejects_wrong_original_count(self) -> None:
+        with self.assertRaisesRegex(ValueError, "wrong original count"):
+            verify(self.changed("split roots on both sides of regular cut", "original_count", 1))
+
+    def test_rejects_count_on_invalid_domain(self) -> None:
+        with self.assertRaisesRegex(ValueError, "count on invalid domain"):
+            verify(self.changed("split repeated root", "original_count", 1))
 
     def test_rejects_split_scalar_loss(self) -> None:
         with self.assertRaisesRegex(ValueError, "wrong active head or scalar"):

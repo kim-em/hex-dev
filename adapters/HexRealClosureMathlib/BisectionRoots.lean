@@ -50,7 +50,7 @@ include hz h1 hs hm in
 omit [LinearOrder K] [IsStrictOrderedRing K] in
 /-- Exact linear deflation preserves the interpreted leading coefficient.
 No literal equality between noncanonical coefficient representatives is asserted. -/
-theorem Mode.leadingCoeff (mode : Mode sign p point) :
+theorem Mode.leadingCoeff_head (mode : Mode sign p point) :
     (interpret φ hz mode.head).leadingCoeff = (interpret φ hz p).leadingCoeff := by
   cases mode with
   | regular _ => rfl
@@ -62,7 +62,7 @@ theorem Mode.leadingCoeff (mode : Mode sign p point) :
 include hz h1 hs hm in
 omit [LinearOrder K] [IsStrictOrderedRing K] in
 /-- The removed coefficient point and active head cover the original roots. -/
-theorem Mode.roots_removed (mode : Mode sign p point) (x : K) :
+theorem Mode.roots (mode : Mode sign p point) (x : K) :
     (interpret φ hz p).IsRoot x ↔
       (∃ r ∈ mode.removed, x = φ r) ∨ (interpret φ hz mode.head).IsRoot x := by
   cases mode with
@@ -78,7 +78,7 @@ variable (hpos : ∀ a, sign a = 1 ↔ 0 < φ a) (hneg : ∀ a, sign a < 0 ↔ �
 
 include hz h1 hs hm ha hzero hn hi hnat hpos hneg in
 /-- The actual returned intervals and removed point partition all original
-roots in the input interval. The active head has no root at the cut. -/
+roots in the input interval. -/
 theorem Split.partition {lower upper : Endpoint E}
     (split : Split sign p lower upper point) (x : K) :
     (interpret φ hz p).IsRoot x ∧ InInterval (lower.map φ) (upper.map φ) x ↔
@@ -94,7 +94,7 @@ theorem Split.partition {lower upper : Endpoint E}
     apply (inInterval_iff _ _ _).mpr
     cases lower <;> cases upper <;> exact ⟨dl.2.2.1, dr.2.2.1⟩
   have hnroot : ¬ (interpret φ hz split.mode.head).IsRoot (φ point) := dl.2.2.2.2
-  have roots := split.mode.roots_removed φ hz h1 hs hm x
+  have roots := split.mode.roots φ hz h1 hs hm x
   constructor
   · rintro ⟨hp, hx⟩
     rcases roots.mp hp with removed | active
@@ -114,13 +114,13 @@ theorem Split.partition {lower upper : Endpoint E}
 
 end Hex.RealClosure.Bisection
 
-/-- info: 'Hex.RealClosure.Bisection.Mode.leadingCoeff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Bisection.Mode.leadingCoeff_head' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Bisection.Mode.leadingCoeff
+#print axioms Hex.RealClosure.Bisection.Mode.leadingCoeff_head
 
-/-- info: 'Hex.RealClosure.Bisection.Mode.roots_removed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Bisection.Mode.roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Bisection.Mode.roots_removed
+#print axioms Hex.RealClosure.Bisection.Mode.roots
 
 /-- info: 'Hex.RealClosure.Bisection.Split.partition' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

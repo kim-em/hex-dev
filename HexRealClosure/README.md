@@ -220,7 +220,7 @@ check cancellation of structurally different coefficient values. Thirteen
 independent exact fixtures include nonmonic and repeated inputs, nonroot
 rejection, inverse infinitesimals and removal at either of two infinitesimal
 levels. Their SymPy oracle uses synthetic division in `QQ(epsilon, delta)`.
-Run `lake build hexrealclosure_deflation_conformance`, then
+With SymPy and python-flint installed, run `lake build hexrealclosure_deflation_conformance`, then
 `.lake/build/bin/hexrealclosure_deflation_conformance | python3 scripts/oracle/real_closure_deflation.py`.
 
 For existing canonical number-field arithmetic and conversions, see the
@@ -232,15 +232,12 @@ For existing canonical number-field arithmetic and conversions, see the
 `Bisection.bisect? sign p lower upper` uses the deterministic arithmetic
 midpoint of a finite interval. A nonroot cut retains the original polynomial.
 A root cut performs checked exact linear deflation and retains its computed
-quotient. `BisectionRoots` proves equality of the interpreted leading
-coefficients; it does not assert literal equality of noncanonical coefficient
-representatives. Both open subintervals are freshly prepared
+quotient. Both open subintervals are freshly prepared
 against that active head. Cuts at or beyond an endpoint are rejected by
 `Bisection.split?`.
 
 The companion proves native midpoint interpretation, success for every
-admissible finite interval, exact root coverage by a removed point and the
-active head, and validity of both returned prepared domains. These results
+admissible finite interval and validity of both returned prepared domains. These results
 use only the standard three axioms and ordinary coefficient interpretations;
 no field instance on raw syntax is required. Native examples exercise regular
 and root cuts, nonmonic and fractional heads, root-free deflated endpoints,
@@ -253,16 +250,21 @@ merging and the complete root-set API remain to be assembled and proved.
 `Mode.removed` returns the emitted coefficient point or `none`. The companion
 `BisectionRoots` proves that roots in the original interval are exactly the
 removed point and roots in the two actual returned open intervals. Neither
-interval includes the cut, and the active head is root-free there.
+interval includes the cut. It also proves equality of the interpreted leading
+coefficients, without asserting raw equality of noncanonical representatives.
+The RationalFn fixtures use normalized coefficients; packed deflation tests
+separately exercise structurally different representatives.
 
-The existing deflation conformance driver also emits 17 bisection cases,
+The existing deflation conformance driver also emits 21 bisection cases,
 including nonmonic and fractional rational heads, zero/repeated inputs,
-constants, close infinitesimal roots, inverse infinitesimals and two successive
+constants, roots on both sides of regular and root cuts, negative lower
+endpoints, a linear root cut with constant quotient, close infinitesimal roots,
+inverse infinitesimals and two successive
 infinitesimal levels. FLINT exact algebraic roots independently check rational
 counts. SymPy factorization over `QQ(epsilon, delta)` and the successive positive
 infinitesimal order check the linear-factor cases. The oracle checks the
-midpoint, removal, active and returned heads, returned endpoints, counts and
-coverage. Its rejection tests detect stale heads, scalar loss, missing or
+midpoint, exact removed value, active and returned heads, returned endpoints
+and independently computed counts; their sum also satisfies root coverage. Its rejection tests detect stale heads, scalar loss, missing or
 invented cut roots, incorrect nested ordering and invalid input acceptance.
 These cases exercise one bisection node; complete isolation and simultaneous
 ordinary-real realization remain separate requirements.
