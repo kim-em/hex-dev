@@ -208,6 +208,7 @@ theorem traverse?_roots (budget : Nat) (frontier : Frontier sign) {result : Fron
         exact (frontier.advance?_roots φ hz h1 ha hs hm sign hzero hn hi hnat hpos hneg
           cell rest hc hnext x).trans (ih next accepted)
 
+omit [IsStrictOrderedRing K] in
 /-- An accepted initial frontier contains exactly the original roots inside
 its supplied open interval, with no removed points. -/
 theorem Frontier.prepare?_roots {p : DensePoly E} {lower upper : E}
@@ -264,7 +265,8 @@ theorem traverse?_nonvanishing (budget : Nat) (frontier : Frontier sign)
         exact ih next accepted (frontier.advance?_nonvanishing φ hz h1 ha hs hm sign
           hzero hn hi hnat hpos hneg cell rest hc hnext old)
 
-include hz h1 ha hs hm hzero hn hi hnat hpos hneg in
+include hz h1 hs hm in
+omit [LinearOrder K] [IsStrictOrderedRing K] in
 /-- A step emits no value equal to an earlier emitted value. This is semantic
 inequality and does not assert equality laws on raw coefficient syntax. -/
 theorem Frontier.advance?_distinct (frontier : Frontier sign)
@@ -311,7 +313,7 @@ theorem traverse?_distinct (budget : Nat) (frontier : Frontier sign)
         apply ih next accepted
         · exact frontier.advance?_nonvanishing φ hz h1 ha hs hm sign hzero hn hi hnat hpos hneg
             cell rest hc hnext excluded
-        · exact frontier.advance?_distinct φ hz h1 ha hs hm sign hzero hn hi hnat hpos hneg
+        · exact frontier.advance?_distinct φ hz h1 hs hm sign
             cell rest hc hnext excluded old
 
 end Hex.RealClosure.Bisection
