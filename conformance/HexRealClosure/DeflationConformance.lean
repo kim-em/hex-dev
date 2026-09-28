@@ -44,7 +44,7 @@ private def emitZero {E : Type} [Zero E] [DecidableEq E] [One E]
   IO.println (Lean.Json.mkObj [
     ("kind", .str "zero-factor"), ("name", .str name), ("depth", Lean.toJson depth),
     ("coefficients", .arr (p.toArray.map encode)),
-    ("head", .arr (result.1.toArray.map encode)),
+    ("cofactor", .arr (result.1.toArray.map encode)),
     ("multiplicity", Lean.toJson result.2)]).compress
 
 private def emitZeroRat := emitZero (E := Rat) (depth := 0)

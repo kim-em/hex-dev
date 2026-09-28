@@ -230,14 +230,16 @@ For existing canonical number-field arithmetic and conversions, see the
 
 ## Zero-root multiplicity
 
-`ZeroFactor.remove p` removes the complete power of `X` by successive checked
-monic divisions, using the input degree as fuel. It returns the computed head
-and the number of removed factors, retaining the original leading scalar.
-The companion proves exact factorization, that the nonzero returned head has
-no zero root, that the exponent is the original zero-root multiplicity, and
-that every nonzero root is retained. These proofs require a zero-reflecting
-coefficient interpretation preserving one, subtraction and multiplication;
-they impose no field laws on raw storage and use no root-count admission.
+`ZeroFactor.remove p` removes the complete power of `X` by scanning the literal
+zero coefficients once and copying the remaining coefficient slice. It performs
+no coefficient arithmetic. The coefficient scan and copy use linear work in
+the input's stored size; costs of the supplied zero-equality operation remain
+part of the coefficient representation. The returned quotient keeps the original
+leading scalar. The companion proves exact factorization, that a nonzero input's
+quotient has no zero root, and that the extracted exponent is the original
+zero-root multiplicity. Every nonzero root retains its exact multiplicity.
+These proofs require only a zero-reflecting coefficient interpretation; they
+impose no field laws on raw storage and use no root-count admission.
 
 A zero polynomial returns `(0, 0)`. This transformation does not construct a
 root set: a complete roots API must still return `all` for zero and restore
@@ -245,4 +247,4 @@ the extracted multiplicity when merging its other roots. The exact deflation
 fixture driver also covers constants, a pure power, mixed nonzero roots,
 fractional and negative scalars, and one and two infinitesimal levels. Its
 independent SymPy oracle determines the zero multiplicity from the first
-nonzero coefficient and checks the entire returned head.
+nonzero coefficient and checks the entire returned quotient.

@@ -40,15 +40,18 @@ def verify(fixtures: list[dict]) -> None:
         coefficients = [decode(a, depth) for a in row["coefficients"]]
         require(not coefficients or bool(coefficients[-1]), "zero leading coefficient")
         if row.get("kind") == "zero-factor":
+            require(set(row) == {"kind", "name", "depth", "coefficients", "cofactor", "multiplicity"},
+                    "invalid zero-factor fields")
             # The order of the first nonzero coefficient determines the exact
             # power of X, independently of the executable division recurrence.
             multiplicity = next((i for i, a in enumerate(coefficients) if a), 0)
             require(type(row["multiplicity"]) is int and row["multiplicity"] == multiplicity,
                     f"{row['name']}: wrong zero multiplicity")
-            actual = [decode(a, depth) for a in row["head"]]
+            actual = [decode(a, depth) for a in row["cofactor"]]
             require(actual == coefficients[multiplicity:],
                     f"{row['name']}: wrong zero quotient or scalar")
             continue
+        require(row.get("kind") is None, "unsupported fixture kind")
         root = decode(row["root"], depth)
         # Independent Horner recurrence, not the executable long-division kernel.
         quotient = []

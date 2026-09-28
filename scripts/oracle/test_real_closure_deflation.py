@@ -58,15 +58,23 @@ class DeflationTests(unittest.TestCase):
 
     def test_rejects_zero_quotient_scalar_loss(self) -> None:
         with self.assertRaisesRegex(ValueError, "wrong zero quotient or scalar"):
-            verify(self.changed("extract pure power", "head", ["1"]))
+            verify(self.changed("extract pure power", "cofactor", ["1"]))
 
     def test_rejects_zero_polynomial_finite_payload(self) -> None:
         with self.assertRaisesRegex(ValueError, "wrong zero quotient or scalar"):
-            verify(self.changed("extract zero polynomial", "head", ["1"]))
+            verify(self.changed("extract zero polynomial", "cofactor", ["1"]))
 
     def test_rejects_zero_polynomial_multiplicity(self) -> None:
         with self.assertRaisesRegex(ValueError, "wrong zero multiplicity"):
             verify(self.changed("extract zero polynomial", "multiplicity", 1))
+
+    def test_rejects_malformed_zero_factor_fields(self) -> None:
+        for rows in (
+            self.changed("extract pure power", "kind", "zero-facor"),
+            self.changed("extract pure power", "root", "0"),
+        ):
+            with self.assertRaises(ValueError):
+                verify(rows)
 
     def test_rejects_empty_and_duplicate_data(self) -> None:
         for rows in ([], self.fixtures + self.fixtures[:1]):
