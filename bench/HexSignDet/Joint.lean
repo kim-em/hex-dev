@@ -140,6 +140,22 @@ def inspect (ns : Array Nat) : IO UInt32 := do
 /-- The degree-three CI input includes both graph and byte replay paths. -/
 def verify : IO Unit := do
   let some i := input 3 | throw (IO.userError "joint fixture failed at degree three")
+  -- Individual query preprocessing only normalizes these monomials. Moment
+  -- construction also reduces their products: (-3X^5)^2 becomes X^4 modulo
+  -- (1-X^6)/2 after positive normalization. Direct mode retains 9X^10.
+  let q := DensePoly.monomial 5 (-3 : Rat)
+  let some tree := i.left.tree | throw (IO.userError "missing joint tree")
+  let some reduced := (nodes tree).find? (fun node => node.queries == [q])
+    | throw (IO.userError "missing first-derivative reduced leaf")
+  let some direct := (nodes i.leftDirect).find? (fun node => node.queries == [q])
+    | throw (IO.userError "missing first-derivative direct leaf")
+  let some reducedMoment := reduced.moments.toArray[2]?
+    | throw (IO.userError "missing squared reduced moment")
+  let some directMoment := direct.moments.toArray[2]?
+    | throw (IO.userError "missing squared direct moment")
+  unless reducedMoment.queryPoly == DensePoly.monomial 4 (1 : Rat) &&
+      directMoment.queryPoly == DensePoly.monomial 10 (9 : Rat) do
+    throw (IO.userError "joint moment reduction differs from the polynomial remainder")
   for (side, source, joint, direct) in
       [("left", i.leftFull, i.left, i.leftDirect), ("right", i.rightFull, i.right, i.rightDirect)] do
     discard <| record 3 side source joint direct i.order

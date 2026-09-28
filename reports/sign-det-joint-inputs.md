@@ -75,8 +75,8 @@ counts and dimensions agree, while its serialized byte counts differ slightly.
 | 63 | 190 | 1136 | 4 | 379 | 702 | 1409 | 8982781 | 8016166 |
 
 The matrices remain bounded while polynomial degrees, stored witness bits and
-serialized certificates grow. Every query has degree below the common head,
-so reduction modulo that head cannot lower its degree. Reduced mode normalizes
+serialized certificates grow. Every original query has degree below the common head, so initial query
+preprocessing cannot lower its degree. Reduced mode normalizes
 monomials to ±X^k and stores their scale factors; its maximum is the normalization scale of the common head's constant and
 linear target derivatives, both of absolute value `(2n)!/2`. In direct mode the
 initial Sturm–Tarski remainder for the squared constant-derivative query has leading coefficient
@@ -86,8 +86,13 @@ checks its formula. Normalizing first avoids storing that large product.
 These are stored intermediate coefficients and scales, not measurements of the
 largest temporary value reached during arithmetic. The additional evidence makes the reduced
 serialized certificates larger. Neither observation measures time or allocation,
-and this family cannot supply the required comparison of unreduced and
-modulo-head moment construction on joint-encoding lists.
+Moment products do undergo degree reduction. For degree three the first target
+query is `−3X^5` and the common head is `(1−X^6)/2`. Its squared direct moment
+is `9X^10`, while normalized reduced construction produces `X^4`. The existing
+verification command checks both actual leaf certificates against those
+polynomials. Thus this family supplies inputs for comparing unreduced and
+modulo-head moment construction; the required runtime/reduction-replay
+comparison has not yet been measured.
 
 The [metadata](data/sign-det-joint/9651d8947/metadata.json) and
 [raw inventory](data/sign-det-joint/9651d8947/inventory.jsonl) retain both source
