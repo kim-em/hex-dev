@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Yun
+public import HexRealClosureMathlib.Element
 public import HexPolyMathlib.Euclid
 public import Mathlib.FieldTheory.Separable
 public import Mathlib.Basic.Real.Basic
@@ -22,6 +23,28 @@ field map. This does not assert that every Yun recurrence result passes replay.
 -/
 
 namespace Hex.RealClosure.Yun
+
+/-- A cached selected-root coefficient stream runs Yun's raw recurrence with
+the same result as its exact real-algebraic values. This theorem transports
+the computation; producer correctness still requires the characteristic-zero
+Yun invariant for lawful coefficients. -/
+theorem map_packed {context : Nat} {d : Root context}
+    (h : Root.Handle d) (f : DensePoly (Root.Handle.Value h)) :
+    Decomposition.map (fun a : Root.Handle.Value h => a.value)
+        (fun a => (Root.Handle.Value.eq_zero_iff a).symm)
+        (decomposeRaw f) =
+      decomposeRaw
+        (DensePoly.Interpret.map
+          (fun a : Root.Handle.Value h => a.value)
+          (fun a => (Root.Handle.Value.eq_zero_iff a).symm) f) := by
+  exact map_decomposeRaw
+    (fun a : Root.Handle.Value h => a.value)
+    (fun a => (Root.Handle.Value.eq_zero_iff a).symm)
+    (fun a b => Root.Handle.Value.value_sub a b)
+    (fun a b => Root.Handle.Value.value_mul a b)
+    (fun a b => Root.Handle.Value.value_div a b)
+    (fun a => Root.Handle.Value.value_inv a)
+    (fun n => Root.Handle.Value.value_natCast n) f
 
 /-- Convert powers without assuming a Mathlib monoid instance on `DensePoly`. -/
 private theorem toPolynomial_pow (p : DensePoly Rat) (n : Nat) :
@@ -470,3 +493,8 @@ end Hex.RealClosure.Yun
 /-- info: 'Hex.RealClosure.Yun.check_map_roots_label' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Yun.check_map_roots_label
+
+-- The inherited `sorryAx` is `Tarski.check_rootSum` (#10389).
+/-- info: 'Hex.RealClosure.Yun.map_packed' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.map_packed
