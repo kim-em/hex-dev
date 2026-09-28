@@ -27,6 +27,14 @@ class DeflationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "not a root: wrong success result"):
             verify(self.changed("not a root", "quotient", ["1"]))
 
+    def test_rejects_root_failure(self) -> None:
+        with self.assertRaisesRegex(ValueError, "linear: wrong success result"):
+            verify(self.changed("linear", "quotient", None))
+
+    def test_rejects_failed_division_payload(self) -> None:
+        with self.assertRaisesRegex(ValueError, "not a root: result on failed division"):
+            verify(self.changed("not a root", "remaining_at_root", "0"))
+
     def test_rejects_missing_scalar(self) -> None:
         with self.assertRaisesRegex(ValueError, "nonmonic fractional root: wrong quotient or scalar"):
             verify(self.changed("nonmonic fractional root", "quotient", ["1"]))
