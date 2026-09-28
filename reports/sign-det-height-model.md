@@ -14,7 +14,10 @@ bytes are recorded. Stored maxima do not measure temporary arithmetic or
 aggregate live memory. These graphs have no shared nodes.
 
 Scientific registrations measure `QueryReduction.build` and
-`QueryReduction.check` separately. The phase ladder is fixed before measurement
+`QueryReduction.check` separately. The construction registration also computes
+a checksum of the literal reduction output; the checking registration returns
+a Boolean. Construction times therefore include that checksum work. The phase
+ladder is fixed before measurement
 at 8192,16384,32768,65536,131072,262144,524288 bits, with six trials per
 height and a one-second target per batch. It avoids making the bounded BKR
 systems dominate a small-height timing range. Preparation constructs only the
@@ -99,7 +102,7 @@ of a general byte-parser roundtrip or an independent reconstruction of every
 encoded byte.
 
 The archive preserves the exact premeasurement sources, including the
-original validator. The additional relative-size validation above passes the
+original validator. The additional model-formula and relative-size validation passes the
 same retained data; it does not replace or remove measurements. Later report
 and validator edits do not change the measured normalization or checking
 functions. Reproduction uses the base and patch recorded in the metadata.
