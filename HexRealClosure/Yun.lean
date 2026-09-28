@@ -22,8 +22,8 @@ equality. The public version requires an ordered field, hence characteristic
 zero. The zero, constant and squarefree producer proofs are Mathlib-free;
 the companion interprets accepted replay as mathematical factorization and
 root multiplicities. The companion proves the repeated-factor loop invariant
-and degree bound over algebraically closed fields; transport of the bound
-to the public ordered-field API and general producer replay acceptance remain open.
+and degree bound, transported through an algebraic closure to the public
+executable fields; general producer replay acceptance remains open.
 -/
 
 namespace Hex.RealClosure.Yun
