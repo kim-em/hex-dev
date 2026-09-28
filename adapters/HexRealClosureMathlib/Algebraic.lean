@@ -48,13 +48,34 @@ theorem Context.buildSigns_ne_error (context : Context E Ctx coeffSign parent)
   intro he
   cases he
 
+theorem Context.evalPoly_const (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) (hsize : p.size ≤ 1) :
+    context.evalPoly f hz h1 ha hs hm hnat hsign p = f (p.coeff 0) := by
+  have hp : p = DensePoly.C (p.coeff 0) := by
+    apply DensePoly.ext_coeff
+    intro i
+    rw [DensePoly.coeff_C]
+    split
+    · rename_i hi
+      subst i
+      rfl
+    · exact DensePoly.coeff_eq_zero_of_size_le p (by omega)
+  calc
+    _ = context.evalPoly f hz h1 ha hs hm hnat hsign (DensePoly.C (p.coeff 0)) :=
+      congrArg (context.evalPoly f hz h1 ha hs hm hnat hsign) hp
+    _ = f (p.coeff 0) := by simp only [evalPoly, interpret_C, Polynomial.eval_C]
+
 include hn hi in
 theorem Context.signPoly_spec (context : Context E Ctx coeffSign parent) (p : DensePoly E) :
     context.signPoly p =
       (SignType.sign (context.evalPoly f hz h1 ha hs hm hnat hsign p) : Int) := by
-  obtain ⟨signs, h⟩ := context.root.buildSigns_success f hz h1 ha hs hm hnat hsign hn hi [p]
-  rw [context.signPoly_of_success p signs h]
-  exact signs.value_at_root f hz h1 ha hs hm hnat hsign
+  by_cases hsize : p.size ≤ 1
+  · rw [context.signPoly_const p hsize,
+      context.evalPoly_const f hz h1 ha hs hm hnat hsign p hsize]
+    exact hsign (p.coeff 0)
+  · obtain ⟨signs, h⟩ := context.root.buildSigns_success f hz h1 ha hs hm hnat hsign hn hi [p]
+    rw [context.signPoly_of_success p signs h (by omega)]
+    exact signs.value_at_root f hz h1 ha hs hm hnat hsign
 
 theorem Context.evalPoly_head (context : Context E Ctx coeffSign parent) :
     context.evalPoly f hz h1 ha hs hm hnat hsign context.root.raw.head = 0 := by
@@ -66,22 +87,21 @@ theorem Context.evalPoly_reduce (context : Context E Ctx coeffSign parent) (p : 
       context.evalPoly f hz h1 ha hs hm hnat hsign p := by
   unfold Context.reduce
   split
-  · rename_i hmonic
-    split
-    · unfold evalPoly
-      have hr := congrArg Prod.snd
-        (interpret_divModMonic f hz hs hm h1 p context.root.raw.head hmonic)
-      dsimp only at hr
-      rw [hr]
-      have he := congrArg
-        (fun q : Polynomial K => q.eval (context.rootValue f hz h1 ha hs hm hnat hsign))
-        (EuclideanDomain.div_add_mod (interpret f hz p) (interpret f hz context.root.raw.head))
-      have hzero := context.evalPoly_head f hz h1 ha hs hm hnat hsign
-      change (interpret f hz context.root.raw.head).eval
-        (context.rootValue f hz h1 ha hs hm hnat hsign) = 0 at hzero
-      simpa only [Polynomial.eval_add, Polynomial.eval_mul,
-        hzero, zero_mul, zero_add] using he
-    · rfl
+  · rename_i hreduce
+    have hmonic := context.monic_of_reduce hreduce
+    unfold evalPoly
+    have hr := congrArg Prod.snd
+      (interpret_divModMonic f hz hs hm h1 p context.root.raw.head hmonic)
+    dsimp only at hr
+    rw [hr]
+    have he := congrArg
+      (fun q : Polynomial K => q.eval (context.rootValue f hz h1 ha hs hm hnat hsign))
+      (EuclideanDomain.div_add_mod (interpret f hz p) (interpret f hz context.root.raw.head))
+    have hzero := context.evalPoly_head f hz h1 ha hs hm hnat hsign
+    change (interpret f hz context.root.raw.head).eval
+      (context.rootValue f hz h1 ha hs hm hnat hsign) = 0 at hzero
+    simpa only [Polynomial.eval_add, Polynomial.eval_mul,
+      hzero, zero_mul, zero_add] using he
   · rfl
 
 theorem Context.evalPoly_zero (context : Context E Ctx coeffSign parent) :

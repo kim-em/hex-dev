@@ -103,14 +103,60 @@ def sign(p):
     raise AssertionError("exact root interval did not determine a sign")
 
 
-def rational_expected(degree):
+RATIONAL_HEAD = mul([Q(-2), Q(0), Q(1)], [Q(-3), Q(1)])
+
+
+def retained(p, head, clean):
+    return divmod_poly(p, head)[1] if head[-1] == 1 and all(clean(c) for c in head) else p
+
+
+def rational_expected(scale):
+    head = [scale * c for c in RATIONAL_HEAD]
+    raw_square = retained([Q(0), Q(0), Q(1)], head, lambda c: c.denominator == 1)
     below = sub(A, [Q(3)])
     inv_below = inverse(below)
     expected_inv = [c * Q(-1, 7) for c in add(A, [Q(3)])]
     square = product(A, A)
-    return [sign(A), sign(below), sign(sub(square, [Q(2)])), sign(inv_below),
+    equation = sub(square, [Q(2)])
+    raw_fourth = retained([Q(0)] * 4 + [Q(1)], head, lambda c: c.denominator == 1)
+    return [sign(A), sign(below), sign(equation), sign(inv_below),
             sign(sub(product(below, inv_below), ONE)), sign(sub(inv_below, expected_inv)),
-            int(not sub(square, [Q(2)])), 0, 1, int(sign(sub(A, [Q(2)])) < 0), degree]
+            int(not equation), int(raw_square == [Q(2)]), int(not equation),
+            int(sign(sub(A, [Q(2)])) < 0), len(raw_fourth) - 1]
+
+
+def field_remainder(p, q):
+    """Univariate division with coefficients in the independently constructed quartic field."""
+    p, q = trim(p), trim(q)
+    while p and len(p) >= len(q):
+        k, c = len(p) - len(q), product(p[-1], inverse(q[-1]))
+        for i, a in enumerate(q):
+            p[k + i] = sub(p[k + i], product(c, a))
+        p = trim(p)
+    return p
+
+
+def nested_expected(scale):
+    # The stored parent representative of (a-3)/(a-3) is (9-X²)/7,
+    # computed in the full reducible cubic before selected-root evaluation.
+    raw_inverse = [Q(-3, 7), Q(-1, 7)]
+    raw_one = retained(mul([Q(-3), Q(1)], raw_inverse), RATIONAL_HEAD,
+                       lambda c: c.denominator == 1)
+    semantic_one = product(sub(A, [Q(3)]), inverse(sub(A, [Q(3)])))
+    assert semantic_one == ONE and raw_one != [Q(1)]
+    head = [product([Q(3)], A), neg(A), [Q(-3)], ONE]
+    scaled_head = [[Q(scale) * c for c in coefficient] for coefficient in head]
+    # scale=0 means the semantic-one representative, whose leading coefficient
+    # differs structurally from literal one and whose coefficients are unclean.
+    literal_monic = scale != 0 and scaled_head[-1] == ONE
+    raw_fourth = [[], [], [], [], ONE]
+    kept = field_remainder(raw_fourth, scaled_head) if literal_monic else raw_fourth
+    remainder = field_remainder([neg(A), [], ONE], [neg(B), ONE])
+    below = sub(B, [Q(3)])
+    return [sign(B), sign(sub(B, A)), sign(sub(product(B, B), A)),
+            sign(sub(product(B, inverse(B)), ONE)), int(not remainder),
+            sign(inverse(below)), sign(sub(product(below, inverse(below)), ONE)),
+            len(kept) - 1, int(semantic_one == ONE), int(raw_one == [Q(1)])]
 
 
 def germ_add(p, q):
@@ -138,17 +184,19 @@ def germ_sign(p):
 
 
 def expected():
-    # Embed epsilon=t^2 and its positive square root=t in positive Laurent germs.
+    # Embed epsilon=t² and its selected positive square root=t in positive Laurent germs.
     t, epsilon, inv_t, one = {1: Q(1)}, {2: Q(1)}, {-1: Q(1)}, {0: Q(1)}
+    assert germ_sign(t) > 0 and germ_sign(germ_add(one, germ_neg(t))) > 0
+    assert not germ_add(germ_mul(t, t), germ_neg(epsilon))
+    # Monic division of Y³ by Y²-epsilon leaves epsilon*Y.
+    remainder = [germ_mul(epsilon, {}), epsilon]
+    clean = lambda g: all(n >= 0 and c.denominator == 1 for n, c in g.items())
     infinitesimal = [germ_sign(t), germ_sign(germ_add(t, germ_neg(epsilon))),
                     germ_sign(germ_add(germ_mul(t, t), germ_neg(epsilon))),
                     germ_sign(germ_add(germ_mul(t, inv_t), germ_neg(one))),
-                    germ_sign(inv_t), 1, 1]
-    nested = [sign(B), sign(sub(B, A)), sign(sub(product(B, B), A)),
-              sign(sub(product(B, inverse(B)), ONE)), 1]
-    # Storage flags check the separate contract: semantic equality need not imply
-    # structural equality; only monic clean definitions retain a remainder.
-    return [rational_expected(2), rational_expected(4), infinitesimal, nested]
+                    germ_sign(inv_t), int(clean(one)), len(trim(remainder)) - 1]
+    return [rational_expected(Q(1)), rational_expected(Q(2)), infinitesimal,
+            nested_expected(1), nested_expected(2), nested_expected(0)]
 
 
 def main():

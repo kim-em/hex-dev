@@ -42,6 +42,10 @@ class AdmissionScannerTests(unittest.TestCase):
                             "private constant bad : False", "constant\n  bad : False"):
             with self.subTest(declaration=declaration):
                 self.assertIsNotNone(ADMISSION.search(code_only(declaration)))
+    def test_constant_field_assignment(self):
+        self.assertIsNone(ADMISSION.search(code_only("theorem width : Bounds where\n  constant := h\n")))
+        self.assertIsNone(ADMISSION.search(code_only("structure Approximation where\n  constant : Rat → Bounds\n")))
+        self.assertIsNotNone(ADMISSION.search(code_only("private constant hidden : False\n")))
 
     def test_interpolated_admission_fails_closed(self):
         for prefix in ("s!", "m!", "f!"):
@@ -75,8 +79,13 @@ class AdmissionScannerTests(unittest.TestCase):
             specialize = root / "adapters/HexRealClosureMathlib/Specialize.lean"
             specialize_tests = root / "adapters/HexRealClosureMathlib/SpecializeTests.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, specialize, specialize_tests, dependency):
+            arithmetic = [root / f"adapters/HexRealClosureMathlib/{name}.lean"
+                          for name in ("Algebraic", "AlgebraicClean", "AlgebraicValue",
+                                       "BaseClean", "AlgebraicTower")]
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, specialize, specialize_tests, dependency, *arithmetic):
                 path.parent.mkdir(parents=True, exist_ok=True)
+            for path in arithmetic:
+                path.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
             sign.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")

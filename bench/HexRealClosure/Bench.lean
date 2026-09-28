@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRealClosure.Element
+import HexRealClosure.AlgebraicContext
 import LeanBench
 
 namespace Hex.RealClosure.Bench
@@ -183,6 +184,29 @@ def runTransportCached : Unit → IO UInt64 := fun _ => do
     throw (IO.userError "cached transport benchmark: unexpected polynomial shape")
 
 setup_fixed_benchmark runTransportCached where {
+  repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
+}
+
+/-- Functional timing anchor for general selected-root arithmetic. The input
+and semantic checks match the rational packed anchor. This includes descriptor
+validation, nonliteral-zero packing, cancellation and local gcd inversion;
+it makes no complexity claim. -/
+def runGeneral : Unit → IO UInt64 := fun _ => do
+  let some input ← rawRef.get
+    | throw (IO.userError "general arithmetic benchmark: missing input")
+  let some d := SignDet.Descriptor.validate Sturm.orderSign 7 input
+    | throw (IO.userError "general arithmetic benchmark: descriptor rejected")
+  let context := Algebraic.Context.adjoin d (fun q => q.den == 1)
+  let alpha := Algebraic.Element.ofPoly (context := context) x
+  let selectedZero := Algebraic.Element.ofPoly (context := context) (x * x - DensePoly.C 2)
+  let below := Algebraic.Element.ofPoly (context := context) (x - DensePoly.C 3)
+  if selectedZero == 0 && alpha + -alpha == 0 &&
+      (below * below⁻¹ - 1).sign == 0 then
+    return 1
+  else
+    throw (IO.userError "general arithmetic benchmark: arithmetic mismatch")
+
+setup_fixed_benchmark runGeneral where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 

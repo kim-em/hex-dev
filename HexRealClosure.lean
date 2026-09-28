@@ -11,4 +11,4 @@ public import HexRealClosure.BaseCodec
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
 public import HexRealClosure.ZeroFactor
-public import HexRealClosure.Algebraic
+public import HexRealClosure.AlgebraicContext
