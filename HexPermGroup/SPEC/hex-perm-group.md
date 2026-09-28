@@ -426,10 +426,10 @@ the chain's symmetric working arrays, and each retained next-level generator is
 a Schreier generator of the level, so items 2 and 6 hold by construction. It
 reports an error, rather than a certificate, if a parent edge or a next-level
 index cannot be found. The producer is untrusted: soundness rests on
-`Kernel.check` alone. Its completeness is evidenced by conformance, which
-requires `Kernel.check` to accept `Kernel.certify S` for every conformance
-input, rather than by a theorem, since a proof would have to follow the
-internal order of `Group.ofGenerators` and its normalization.
+`Kernel.check` alone. No theorem states that the producer always succeeds and
+is accepted, since its proof would have to follow the internal order of
+`Group.ofGenerators` and its normalization. Conformance tests instead that
+`Kernel.check` accepts `Kernel.certify S` on every input of its corpus.
 
 The soundness theorems are stated and proved in `HexPermGroupMathlib`: see
 [Kernel replay in Mathlib](#kernel-replay-in-mathlib).

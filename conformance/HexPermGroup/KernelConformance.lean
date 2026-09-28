@@ -88,32 +88,40 @@ private meta def withFirst (c : Certificate) (f : Level → Level) : Certificate
   | L :: rest => f L :: rest
   | [] => []
 
--- Every corruption is rejected.
+-- Every corruption is rejected by the check that targets it, which accepts the
+-- unmodified level, and by `check` as a whole.
 #eval do
   let (inputs, c) ← s4
   let W := width 4
+  let e := ident 4 W
   let some L := c.head? | fail "no levels"
-  let rejects (name : String) (bad : Certificate) : IO Unit := do
-    if check 4 inputs bad then fail s!"accepted a certificate with a corrupted {name}"
+  let rest := c.tail
   let setAt {α : Type} [Inhabited α] (r : Lean.RArray α) (j : Nat) (x : α) :=
     rarrayOf ((entries r L.size).set! j x)
-  rejects "transversal entry" (withFirst c fun L => { L with reps := setAt L.reps 1 (L.reps.get 2) })
-  rejects "stored inverse" (withFirst c fun L => { L with invs := setAt L.invs 1 (L.invs.get 2) })
-  rejects "lookup field" (withFirst c fun L => { L with lookup := L.lookup ^^^ (1 <<< W) })
-  rejects "orbit point" (withFirst c fun L => { L with orbit := setAt L.orbit 1 (L.orbit.get 2) })
-  rejects "orbit size" (withFirst c fun L => { L with size := L.size - 1 })
-  rejects "Schreier-tree parent" (withFirst c fun L =>
-    { L with parents := setAt L.parents 1 ((L.parents.get 1).1, 1) })
-  rejects "parent generator index" (withFirst c fun L =>
-    { L with parents := setAt L.parents 1 (L.gens.length, (L.parents.get 1).2) })
-  rejects "next-level index" (withFirst c fun L =>
-    { L with next := L.next.map fun (i, j) => (i, (j + 1) % L.size) })
-  rejects "base point" (withFirst c fun L => { L with base := 4 })
-  rejects "first-level generator" (withFirst c fun L =>
-    { L with gens := L.gens.map fun s => if s == L.gens.head! then pack (Perm.id 4) else s })
-  -- A base point equal to `n`, with an orbit starting at a point below `n`.
-  rejects "base point with a reachable orbit" (withFirst c fun L =>
-    { L with base := 4, orbit := setAt L.orbit 0 0 })
+  let targets (name : String) (component : Level → Bool) (bad : Level) : IO Unit := do
+    unless component L do fail s!"the {name} check rejects the unmodified level"
+    if component bad then fail s!"the {name} check accepted a corrupted level"
+    if check 4 inputs (bad :: rest) then fail s!"check accepted a corrupted {name}"
+  let shape := fun L => shapeOk 4 W L
+  let trans := fun L => transversalOk 4 W e L
+  let next := fun L => nextOk 4 W L (headGens rest)
+  targets "transversal" trans { L with reps := setAt L.reps 1 (L.reps.get 2) }
+  targets "stored inverse" trans { L with invs := setAt L.invs 1 (L.invs.get 2) }
+  targets "lookup" shape { L with lookup := L.lookup ^^^ (1 <<< W) }
+  targets "orbit point" shape { L with orbit := setAt L.orbit 1 (L.orbit.get 2) }
+  targets "orbit size" shape { L with size := L.size - 1 }
+  targets "base point" shape { L with base := 4 }
+  targets "Schreier-tree parent" trans
+    { L with parents := setAt L.parents 1 ((L.parents.get 1).1, 1) }
+  targets "parent generator index" trans
+    { L with parents := setAt L.parents 1 (L.gens.length, (L.parents.get 1).2) }
+  targets "next-level index" next
+    { L with next := L.next.map fun (i, j) => (i, (j + 1) % L.size) }
+  -- A first-level generator unrelated to the inputs fails the input check.
+  let bad := { L with
+    gens := L.gens.map fun s => if s == L.gens.head! then pack (Perm.id 4) else s }
+  unless inputsOk 4 W e inputs c do fail "the input check rejects the unmodified certificate"
+  if inputsOk 4 W e inputs (bad :: rest) then fail "the input check accepted an unrelated generator"
   if check 4 [] c then fail "accepted a certificate for different inputs"
 
 -- `chunks` covers every Schreier pair with adjacent ranges, and rejects budget zero.
