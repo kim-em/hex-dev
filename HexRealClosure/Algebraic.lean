@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSignDet.SelectedSigns
+public import HexSignDet.QueryHandle
 public import HexPoly.Lcm
 
 public section
@@ -20,6 +20,8 @@ structure Context (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E]
     [DecidableEq Ctx] (coeffSign : E → Int) (parent : Ctx) where
   private mk ::
   root : SignDet.Descriptor E Ctx coeffSign parent
+  queries : Option (SignDet.QueryHandle root)
+  queries_checked : queries = root.prepareQueries
   cleanCoeff : E → Bool
   canReduce : Bool
   reduce_checked : canReduce =
@@ -33,7 +35,7 @@ variable [DecidableEq Ctx] {coeffSign : E → Int} {parent : Ctx}
 Interpretation and field/order laws are companion conclusions. -/
 def Context.adjoin (root : SignDet.Descriptor E Ctx coeffSign parent)
     (cleanCoeff : E → Bool) : Context E Ctx coeffSign parent :=
-  ⟨root, cleanCoeff,
+  ⟨root, root.prepareQueries, rfl, cleanCoeff,
     decide (root.raw.head.leadingCoeff = 1) && root.raw.head.toArray.all cleanCoeff, rfl⟩
 
 private theorem Context.root_adjoin_proof
@@ -52,6 +54,23 @@ theorem Context.clean_adjoin (root : SignDet.Descriptor E Ctx coeffSign parent)
     (cleanCoeff : E → Bool) : (Context.adjoin root cleanCoeff).cleanCoeff = cleanCoeff :=
   Context.clean_adjoin_proof root cleanCoeff
 
+/-- Reuse the prepared root domain retained when the context was constructed.
+For coefficients outside the companion's lawful interpretation, failed
+preparation keeps the original producer and its diagnostic behavior. -/
+@[expose] def Context.buildSigns (context : Context E Ctx coeffSign parent)
+    (qs : List (DensePoly E)) : Except SignDet.BuildError (SignDet.SelectedSigns context.root qs) :=
+  match context.queries with
+  | some handle => handle.buildSigns qs
+  | none => context.root.buildSigns qs
+
+/-- Domain reuse changes neither the actual certificates nor query failure. -/
+theorem Context.buildSigns_eq (context : Context E Ctx coeffSign parent)
+    (qs : List (DensePoly E)) : context.buildSigns qs = context.root.buildSigns qs := by
+  unfold buildSigns
+  split
+  · exact SignDet.QueryHandle.buildSigns_eq _ _
+  · rfl
+
 /-- Delegate the scalar query to the actual shared BKR producer. The explicit
 internal-error branch is zero; the companion proves it unreachable under a
 zero-reflecting predecessor interpretation preserving arithmetic and sign. -/
@@ -59,7 +78,7 @@ zero-reflecting predecessor interpretation preserving arithmetic and sign. -/
     (p : DensePoly E) : Int :=
   if p.size ≤ 1 then coeffSign (p.coeff 0)
   else
-    match context.root.buildSigns [p] with
+    match context.buildSigns [p] with
     | .ok signs => signs.value
     | .error _ => 0
 
@@ -71,7 +90,7 @@ theorem Context.signPoly_of_success (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) (signs : SignDet.SelectedSigns context.root [p])
     (h : context.root.buildSigns [p] = .ok signs) (hsize : 1 < p.size) :
     context.signPoly p = signs.value := by
-  simp [signPoly, h, Nat.not_le_of_gt hsize]
+  simp [signPoly, context.buildSigns_eq, h, Nat.not_le_of_gt hsize]
 
 theorem Context.monic_of_reduce (context : Context E Ctx coeffSign parent)
     (h : context.canReduce = true) : context.root.raw.head.leadingCoeff = 1 := by

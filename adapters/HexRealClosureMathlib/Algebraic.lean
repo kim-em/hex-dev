@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Algebraic
-public import HexSignDetMathlib.SelectedProducer
+public import HexSignDetMathlib.QueryHandle
 public import HexPolyMathlib.Interpret
 
 public section
@@ -36,6 +36,15 @@ real closed field. This interpretation is never a core constructor argument. -/
   (interpret f hz p).eval (context.rootValue f hz h1 ha hs hm hnat hsign)
 
 variable (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
+
+include hz h1 ha hs hm hnat hsign hn hi in
+/-- Native construction retains a prepared query domain whenever the actual
+coefficient operations have the supplied lawful interpretation. The proof
+inherits only the named #10389 root-sum bridge from the shared producer. -/
+theorem Context.queries_success (context : Context E Ctx coeffSign parent) :
+    ∃ handle : SignDet.QueryHandle context.root, context.queries = some handle := by
+  rw [context.queries_checked]
+  exact context.root.prepareQueries_success f hz h1 ha hs hm hnat hsign hn hi
 
 include hz h1 ha hs hm hnat hsign hn hi in
 /-- The explicit internal-error branch of the scalar adapter is unreachable
@@ -462,3 +471,7 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Element.compare_spec' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Element.compare_spec
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.queries_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.queries_success

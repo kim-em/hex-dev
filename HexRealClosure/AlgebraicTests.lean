@@ -30,18 +30,25 @@ private def rationalSample (scale : Rat) : Option (Array Int) := do
   let equation := square - two
   let expected := Element.ofPoly (context := context)
     (DensePoly.scale (-(1 / 7 : Rat)) (x + DensePoly.C 3))
+  let qs := [x, x * x - DensePoly.C 2]
+  let signs ← match context.buildSigns qs with
+    | .ok signs => some signs
+    | .error _ => none
   return #[a.sign, b.sign, equation.sign, (b⁻¹).sign,
     (b * b⁻¹ - 1).sign, (b⁻¹ - expected).sign,
     if square.equal two then 1 else 0,
     if square == two then 1 else 0,
     if equation.inv?.isNone then 1 else 0,
     if a.compare two == .lt then 1 else 0,
-    (context.reduce (DensePoly.natPow x 4)).natDegree]
+    (context.reduce (DensePoly.natPow x 4)).natDegree,
+    if context.queries.isSome then 1 else 0,
+    if signs.values.toList == [1, 0] &&
+      context.root.checkSigns qs signs.values signs.evidence then 1 else 0]
 
 #eval rationalSample 1
-#guard rationalSample 1 == some #[1, -1, 0, -1, 0, 0, 1, 0, 1, 1, 2]
+#guard rationalSample 1 == some #[1, -1, 0, -1, 0, 0, 1, 0, 1, 1, 2, 1, 1]
 #eval rationalSample 2
-#guard rationalSample 2 == some #[1, -1, 0, -1, 0, 0, 1, 0, 1, 1, 4]
+#guard rationalSample 2 == some #[1, -1, 0, -1, 0, 0, 1, 0, 1, 1, 4, 1, 1]
 
 /-- A fractional coefficient prevents retained reduction, even when the
 leading coefficient is literal one. -/
@@ -108,18 +115,25 @@ private def nestedSample (scale : Nat) : Option (Array Int) := do
   let poly : DensePoly (Element second) := DensePoly.ofCoeffs #[-old, 0, 1]
   let divisor : DensePoly (Element second) := DensePoly.ofCoeffs #[-b, 1]
   let remainder := (DensePoly.divMod poly divisor).2
+  let qs := [y, y * y - DensePoly.C a]
+  let signs ← match second.buildSigns qs with
+    | .ok signs => some signs
+    | .error _ => none
   return #[b.sign, (b - old).sign, (b * b - old).sign, (b * b⁻¹ - 1).sign,
     if remainder.isZero then 1 else 0, (below₂⁻¹).sign,
     (below₂ * below₂⁻¹ - 1).sign,
     (second.reduce (DensePoly.natPow y 4)).natDegree,
-    if semanticOne.equal 1 then 1 else 0, if semanticOne == 1 then 1 else 0]
+    if semanticOne.equal 1 then 1 else 0, if semanticOne == 1 then 1 else 0,
+    if first.queries.isSome && second.queries.isSome then 1 else 0,
+    if signs.values.toList == [1, 0] &&
+      second.root.checkSigns qs signs.values signs.evidence then 1 else 0]
 
 #eval nestedSample 1
-#guard nestedSample 1 == some #[1, -1, 0, 0, 1, -1, 0, 2, 1, 0]
+#guard nestedSample 1 == some #[1, -1, 0, 0, 1, -1, 0, 2, 1, 0, 1, 1]
 #eval nestedSample 2
-#guard nestedSample 2 == some #[1, -1, 0, 0, 1, -1, 0, 4, 1, 0]
+#guard nestedSample 2 == some #[1, -1, 0, 0, 1, -1, 0, 4, 1, 0, 1, 1]
 #eval nestedSample 0
-#guard nestedSample 0 == some #[1, -1, 0, 0, 1, -1, 0, 4, 1, 0]
+#guard nestedSample 0 == some #[1, -1, 0, 0, 1, -1, 0, 4, 1, 0, 1, 1]
 
 -- Ownership includes the whole context, not only the descriptor's parent tag.
 #check_failure Element.mk
