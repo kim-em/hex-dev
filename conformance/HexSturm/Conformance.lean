@@ -136,26 +136,26 @@ theorem stale_rejected : check orderSign 8 p 1 (.finite (-2)) (.finite 2) 2 lite
 #guard_msgs in
 #print axioms stale_rejected
 
-/-- info: 'Hex.Sturm.prepare_eq_some' depends on axioms: [propext] -/
+/-- info: 'Hex.Sturm.prepare_eq_some' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.Sturm.prepare_eq_some
-/-- info: 'Hex.Sturm.certifyPrepared_value' depends on axioms: [propext] -/
+/-- info: 'Hex.Sturm.certifyPrepared_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.Sturm.certifyPrepared_value
-/-- info: 'Hex.Sturm.certify_value' depends on axioms: [propext] -/
+/-- info: 'Hex.Sturm.certify_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.Sturm.certify_value
-/-- info: 'Hex.Sturm.check_bindings' depends on axioms: [propext] -/
+/-- info: 'Hex.Sturm.check_bindings' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.Sturm.check_bindings
 
-/-- info: 'Hex.Sturm.query_prepared' depends on axioms: [propext] -/
+/-- info: 'Hex.Sturm.query_prepared' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.Sturm.query_prepared
-/-- info: 'Hex.Sturm.certify_prepared' depends on axioms: [propext] -/
+/-- info: 'Hex.Sturm.certify_prepared' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.Sturm.certify_prepared
-/-- info: 'Hex.Sturm.prepare_isSome' depends on axioms: [propext] -/
+/-- info: 'Hex.Sturm.prepare_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.Sturm.prepare_isSome
 

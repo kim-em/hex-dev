@@ -84,7 +84,7 @@ theorem descriptor_kernel :
   check ⟨#[⟨valid, none⟩], 0⟩ valid.queries &&
     !check ⟨#[⟨invalid, none⟩], 0⟩ invalid.queries
 
-/-- info: 'Hex.SignDet.checkMoment_eq' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'Hex.SignDet.checkMoment_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms checkMoment_eq
 /-- info: 'Hex.SignDet.Node.check_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/

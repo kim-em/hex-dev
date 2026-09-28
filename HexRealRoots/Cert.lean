@@ -198,7 +198,7 @@ end ZPoly
 private theorem dyadic_le_of_lt {a b : Dyadic} (h : a < b) : a ≤ b := by
   rcases Dyadic.le_total a b with h1 | h1
   · exact h1
-  · exact absurd h (Dyadic.not_le.mpr h1)
+  · exact absurd h (Dyadic.not_lt.mpr h1)
 
 /-- An `O(n)` adjacent-pair order check on an emitted isolation array: every
 consecutive pair has `upperᵢ ≤ lowerᵢ₊₁`. The elaborator `decide`s this in place

@@ -207,9 +207,9 @@ private theorem compareChecked_gt {limit : EndpointLimit} {left right : Dyadic}
           simp only [fits, Bool.not_true, selfNotLess, ↓reduceIte] at checked
           change Except.ok Ordering.eq = Except.ok Ordering.gt at checked
           contradiction
-        · apply Dyadic.not_lt.mp
+        · apply Dyadic.not_le.mp
           intro leftLeRight
-          exact equal (Dyadic.le_antisymm leftLeRight (Dyadic.not_le.mp less))
+          exact equal (Dyadic.le_antisymm leftLeRight (Dyadic.not_lt.mp less))
 
 private theorem lowerContains_intersect {limit : EndpointLimit}
     {left right result : Lower} {x : ℝ}

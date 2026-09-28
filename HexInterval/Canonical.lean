@@ -123,7 +123,7 @@ def ofOrderedBoundsUnchecked (lower upper : Dyadic) (ordered : lower ≤ upper) 
     by_cases less : lower < upper
     · simp [less]
     · have equal : lower = upper :=
-        Dyadic.le_antisymm ordered (Dyadic.not_le.mp less)
+        Dyadic.le_antisymm ordered (Dyadic.not_lt.mp less)
       simp [equal])
 
 /-- An unchecked ordered-bounds construction exposes its exact closed cuts. -/
