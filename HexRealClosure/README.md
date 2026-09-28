@@ -635,3 +635,39 @@ constructor uses only the standard three. This API covers a final root change
 and its immediate later level. Automated recursive rebuilding of an arbitrary
 dependency closure and base enlargement remain open. No performance result is
 claimed here.
+
+### Recursive conversion through later root levels
+
+`Conversion.refine` starts at a checked final-root refinement.
+`Conversion.adjoin?` rebuilds a later descriptor with converted coefficients,
+endpoints and fresh context-bound evidence. It stores the new extension's
+packing closure for all subsequent value conversions. The private constructor
+retains an erased derivation of these native operations, with no semantic law
+record as an executable argument.
+
+`Suffix` represents a finite sequence of validated later root levels. Its
+`context` is the original final context. `Conversion.extend?` rebuilds every
+level in order and returns the conversion into the new immutable final
+context. Every original context and value remains valid independently.
+
+The companion `Conversion.Model` relates the native conversion to the original
+model and supplies the actual target model. `Model.refine` establishes this
+relation for the starting refinement; `Model.adjoin` preserves it after every
+successful extension. `adjoin_exists` proves each revalidation and conversion
+succeeds. `extend_exists` proves success and interpretation preservation for an
+arbitrary finite suffix, without caller-supplied replay evidence. The generic
+`zero`, `degree`, `polynomial`, `equal`, `compare` and `mono` results preserve
+canonical zero, dense-polynomial degree and interpretation, actual native
+comparison results, and inclusion of the whole original image field.
+
+Run `lake build HexRealClosure.TowerTransportTests HexRealClosureMathlib.TowerTransportTests`.
+The native fixture changes a nonmonic reducible first definition and rebuilds
+three later square roots. It checks the sixteenth-power equation, the final
+root equation, ordering, embedded noncanonical one and inverse values, and old
+and new packet ownership. Kernel examples cover arbitrary finite suffixes over
+a validated rational-root context. Generic coefficient and comparison transfer
+uses only the standard three axioms; root construction and recursive success
+inherit only the named #10389 admission. Base enlargement, automatic extraction
+of a suffix from requested expressions or a catalog, uncached reader
+completeness, ambient existence and the compatible real-closed union remain
+open. No performance result is claimed.

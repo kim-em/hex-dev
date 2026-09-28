@@ -63,9 +63,9 @@ class AdmissionScannerTests(unittest.TestCase):
             dependency = root / "HexExtra/SelectedField.lean"
             arithmetic = [root / f"adapters/HexRealClosureMathlib/{name}.lean"
                           for name in ("Algebraic", "AlgebraicClean", "AlgebraicValue",
-                                       "BaseClean", "AlgebraicTower", "TowerModelTests", "TowerModel", "TowerAlgebraic", "TowerYun", "TowerRefinement")]
+                                       "BaseClean", "AlgebraicTower", "TowerModelTests", "TowerModel", "TowerAlgebraic", "TowerYun", "TowerRefinement", "TowerTransport", "TowerTransportTests")]
             tower = [root / f"HexRealClosure/{name}.lean"
-                     for name in ("TowerCatalog", "TowerTests", "FrameFormat", "FrameFormatTests", "TowerOrderTests", "TowerOrder", "TowerYunTests", "TowerPolynomial", "TowerRefinement", "TowerRefinementTests")]
+                     for name in ("TowerCatalog", "TowerTests", "FrameFormat", "FrameFormatTests", "TowerOrderTests", "TowerOrder", "TowerYunTests", "TowerPolynomial", "TowerRefinement", "TowerRefinementTests", "TowerTransport", "TowerTransportTests")]
             for path in (entry, bridge, sign, conformance, completion, handle, dependency, *arithmetic, *tower):
                 path.parent.mkdir(parents=True, exist_ok=True)
             for path in (*arithmetic, *tower):

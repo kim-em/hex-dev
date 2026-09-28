@@ -178,6 +178,8 @@ def check() -> None:
              "HexRealClosureMathlib.TowerYun", "HexRealClosure.TowerYunTests",
              "HexRealClosureMathlib.TowerRefinement", "HexRealClosure.TowerRefinement",
              "HexRealClosure.TowerPolynomial", "HexRealClosure.TowerRefinementTests",
+             "HexRealClosure.TowerTransport", "HexRealClosure.TowerTransportTests",
+             "HexRealClosureMathlib.TowerTransport", "HexRealClosureMathlib.TowerTransportTests",
              "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance"] + [
         "HexSignDetMathlib." + ".".join(path.relative_to(
             ROOT / "adapters/HexSignDetMathlib").with_suffix("").parts)
