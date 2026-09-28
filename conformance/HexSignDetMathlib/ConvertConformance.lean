@@ -64,11 +64,18 @@ set_option maxHeartbeats 1000000 in
 /-- A context-only conversion over the actual nonquadratic QAdjoin field
 rebuilds child queries even when head, bounds and derivative signs are identical. -/
 def cubicContextPasses : Bool :=
-  match Descriptor.validate fieldSign 7 Hex.SignDetMathlib.SelectedProducerConformance.raw with
+  let raw := {Hex.SignDetMathlib.SelectedProducerConformance.raw with
+    indices := [1, 2], signs := [1, 1]}
+  match Descriptor.validate fieldSign 7 raw with
   | none => false
   | some source =>
     match source.convert id (fun _ => Iff.rfl) fieldSign 8 with
     | .ok (.ok target) =>
+      let staleChildRejected := match source.evidence, target.evidence with
+        | .split _ oldLeft _, .split node _ freshRight =>
+          !target.raw.check fieldSign 8 (.split node oldLeft freshRight)
+        | _, _ => false
+      staleChildRejected &&
       target.raw.context == 8 && target.raw.head == source.raw.head &&
       target.raw.lower == source.raw.lower && target.raw.upper == source.raw.upper &&
       target.raw.indices == source.raw.indices && target.raw.signs == source.raw.signs &&
