@@ -13,11 +13,14 @@ public section
 /-!
 Compiled implementations of permutation operations.
 
-`Perm.comp` and `Perm.id` are defined through `Hex.Vector.ofFn'` so that the
-kernel reduces them structurally. Compiled code that goes through the same
-definitions builds an intermediate list and calls a closure for every image.
-The `@[csimp]` lemmas below replace them, in compiled code only, by single
-array passes. The kernel and all proofs keep the original definitions.
+`Perm.comp` is defined through `Hex.Vector.ofFn'` and `Perm.inv` through a fold
+over `List.finRange`, so that the kernel reduces them structurally. Compiled,
+`comp` calls a closure for every image and `inv` allocates the list of points
+and an identity vector for every inversion. The `@[csimp]` lemmas below replace
+them, in compiled code only, by single array passes. The kernel and all proofs
+keep the original definitions. Code compiled before this module is imported,
+including `HexGraphIso`, which imports only `HexPermGroup.Perm`, keeps the
+original compiled forms.
 -/
 
 namespace Hex.Perm
@@ -42,24 +45,6 @@ def compImpl (p q : Perm n) : Perm n :=
 @[csimp] theorem comp_eq_compImpl : @comp = @compImpl := by
   funext n p q
   exact ext_vec (compVec_eq p q).symm
-
-/-- The image vector of the identity. -/
-def idVec (n : Nat) : Vector (Fin n) n := Vector.ofFn fun i => i
-
-theorem idVec_eq (n : Nat) : idVec n = (Perm.id n).vec := by
-  apply Vector.ext
-  intro i hi
-  have := get_id (n := n) ⟨i, hi⟩
-  simp only [get, Fin.getElem_fin] at this
-  simp [idVec, this]
-
-/-- `Perm.id` for compiled code. -/
-def idImpl (n : Nat) : Perm n :=
-  ⟨idVec n, idVec_eq n ▸ (Perm.id n).nodup, idVec_eq n ▸ (Perm.id n).complete⟩
-
-@[csimp] theorem id_eq_idImpl : @Perm.id = @idImpl := by
-  funext n
-  exact ext_vec (idVec_eq n).symm
 
 /-- `invVec` for compiled code: the same scatter pass as a `Fin.foldl`, with no
 intermediate list. It starts from `p`'s own image vector rather than the

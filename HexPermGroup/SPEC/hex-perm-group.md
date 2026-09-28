@@ -58,11 +58,13 @@ The rightmost factor acts first. This is the convention of the existing
 cosets, transporters and Mathlib correspondence. Oracle adapters must translate
 other action conventions explicitly.
 
-`Perm.comp`, `Perm.id` and `Perm.inv` are defined for kernel reduction, through
+`Perm.comp` and `Perm.inv` are defined for kernel reduction, through
 `Hex.Vector.ofFn'` and a fold over `List.finRange`. `HexPermGroup.Perm.Fast`
 registers array implementations of them with `@[csimp]`, each proved equal to
 the definition it replaces, so compiled code makes one array pass per
-operation while the kernel and all proofs use the original definitions.
+operation while the kernel and all proofs use the original definitions. It is
+imported by the first modules above `HexPermGroup.Perm`, so that the group
+operations and instances in `Cycles` and everything built on `Word` use it.
 
 Provide checked construction from raw image arrays, identity, composition,
 inverse, natural powers, point application, support, canonical disjoint cycle

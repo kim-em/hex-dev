@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexPermGroup.Perm
 public import HexPermGroup.Perm.Fast
 
 public section
