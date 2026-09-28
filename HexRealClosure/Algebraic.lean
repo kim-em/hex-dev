@@ -21,6 +21,9 @@ structure Context (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E]
   private mk ::
   root : SignDet.Descriptor E Ctx coeffSign parent
   cleanCoeff : E → Bool
+  canReduce : Bool
+  reduce_checked : canReduce =
+    (decide (root.raw.head.leadingCoeff = 1) && root.raw.head.toArray.all cleanCoeff)
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
@@ -29,7 +32,9 @@ variable [DecidableEq Ctx] {coeffSign : E → Int} {parent : Ctx}
 /-- Construct from the shared checked descriptor and predecessor cleanliness.
 Interpretation and field/order laws are companion conclusions. -/
 def Context.adjoin (root : SignDet.Descriptor E Ctx coeffSign parent)
-    (cleanCoeff : E → Bool) : Context E Ctx coeffSign parent := ⟨root, cleanCoeff⟩
+    (cleanCoeff : E → Bool) : Context E Ctx coeffSign parent :=
+  ⟨root, cleanCoeff,
+    decide (root.raw.head.leadingCoeff = 1) && root.raw.head.toArray.all cleanCoeff, rfl⟩
 
 private theorem Context.root_adjoin_proof
     (root : SignDet.Descriptor E Ctx coeffSign parent) (cleanCoeff : E → Bool) :
@@ -39,42 +44,61 @@ theorem Context.root_adjoin (root : SignDet.Descriptor E Ctx coeffSign parent)
     (cleanCoeff : E → Bool) : (Context.adjoin root cleanCoeff).root = root :=
   Context.root_adjoin_proof root cleanCoeff
 
+private theorem Context.clean_adjoin_proof
+    (root : SignDet.Descriptor E Ctx coeffSign parent) (cleanCoeff : E → Bool) :
+    (Context.adjoin root cleanCoeff).cleanCoeff = cleanCoeff := rfl
+
+theorem Context.clean_adjoin (root : SignDet.Descriptor E Ctx coeffSign parent)
+    (cleanCoeff : E → Bool) : (Context.adjoin root cleanCoeff).cleanCoeff = cleanCoeff :=
+  Context.clean_adjoin_proof root cleanCoeff
+
 /-- Delegate the scalar query to the actual shared BKR producer. The explicit
 internal-error branch is zero; the companion proves it unreachable under a
 zero-reflecting predecessor interpretation preserving arithmetic and sign. -/
 @[expose] def Context.signPoly (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) : Int :=
-  match context.root.buildSigns [p] with
-  | .ok signs => signs.value
-  | .error _ => 0
+  if p.size ≤ 1 then coeffSign (p.coeff 0)
+  else
+    match context.root.buildSigns [p] with
+    | .ok signs => signs.value
+    | .error _ => 0
+
+theorem Context.signPoly_const (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) (h : p.size ≤ 1) : context.signPoly p = coeffSign (p.coeff 0) := by
+  simp only [signPoly, h, ↓reduceIte]
 
 theorem Context.signPoly_of_success (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) (signs : SignDet.SelectedSigns context.root [p])
-    (h : context.root.buildSigns [p] = .ok signs) : context.signPoly p = signs.value := by
-  simp [signPoly, h]
+    (h : context.root.buildSigns [p] = .ok signs) (hsize : 1 < p.size) :
+    context.signPoly p = signs.value := by
+  simp [signPoly, h, Nat.not_le_of_gt hsize]
+
+theorem Context.monic_of_reduce (context : Context E Ctx coeffSign parent)
+    (h : context.canReduce = true) : context.root.raw.head.leadingCoeff = 1 := by
+  have hc := context.reduce_checked.symm.trans h
+  by_cases hm : context.root.raw.head.leadingCoeff = 1
+  · exact hm
+  · simp [hm] at hc
 
 /-- Compute and retain the exact monic remainder only for a clean definition.
 Nonmonic or nonclean definitions keep the original representative. -/
 @[expose] def Context.reduce (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) : DensePoly E :=
-  if hm : context.root.raw.head.leadingCoeff = 1 then
-    if context.root.raw.head.toArray.all context.cleanCoeff then
-      (DensePoly.divModMonic p context.root.raw.head hm).2
-    else p
+  if h : context.canReduce = true then
+    (DensePoly.divModMonic p context.root.raw.head (context.monic_of_reduce h)).2
   else p
 
 theorem Context.reduce_nonmonic (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) (h : context.root.raw.head.leadingCoeff ≠ 1) :
-    context.reduce p = p := by simp [reduce, h]
+    context.reduce p = p := by
+  have hc : context.canReduce = false := by rw [context.reduce_checked]; simp [h]
+  simp only [reduce, hc, Bool.false_eq_true, ↓reduceDIte]
 
 theorem Context.reduce_unclean (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) (h : context.root.raw.head.toArray.all context.cleanCoeff = false) :
     context.reduce p = p := by
-  unfold reduce
-  split
-  · rw [h]
-    rfl
-  · rfl
+  have hc : context.canReduce = false := by rw [context.reduce_checked, h, Bool.and_false]
+  simp only [reduce, hc, Bool.false_eq_true, ↓reduceDIte]
 
 /-- A nonzero representative and its cached sign, bound to the whole immutable
 context and the exact stored polynomial. Equality of stored forms is structural. -/

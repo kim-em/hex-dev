@@ -1,0 +1,18 @@
+Hex.RealClosure.Bench.runGeneral    [fixed] repeats=10
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=84c200f-dirty, 2026-09-28T09:37:27Z, host=chungus2
+  repeat 0  5.551 ms
+  repeat 1  5.513 ms
+  repeat 2  5.516 ms
+  repeat 3  5.577 ms
+  repeat 4  5.490 ms
+  repeat 5  5.539 ms
+  repeat 6  5.497 ms
+  repeat 7  5.560 ms
+  repeat 8  5.618 ms
+  repeat 9  5.504 ms
+  median: 5.539 ms    min: 5.490 ms    max: 5.618 ms
+  hash: all repeats agree
+  observed hash: 0x1
+  expected hash: matches
+  peak RSS: 63_876 kB..68_184 kB (across 10 ok repeat(s))
+exported to reports/hex-real-closure/general-arithmetic-anchor.json

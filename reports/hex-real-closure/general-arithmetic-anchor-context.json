@@ -1,0 +1,27 @@
+{
+  "cpu": 37,
+  "load": [
+    10.45703125,
+    6.275390625,
+    4.880859375
+  ],
+  "source_sha256": {
+    "bench/HexRealClosure/Bench.lean": "ab15af4ff1d476ee18102b2ecc6ea17bbf581c8024c926d37fa9ab8ce8ec75d8",
+    "HexRealClosure/Algebraic.lean": "646f86997551e911e4c65519978e247720b24cf83f83c99d2323e7d1e56f81ee",
+    "HexRealClosure/AlgebraicContext.lean": "650d73132c07857b8830eaaeb03388708e3a5b08a9275ecd16b44ed527ec2637",
+    "HexSignDet/SelectedSigns.lean": "80ea8e643a00f92d5bcb45f03dd97e29a764d95c926eeffc297973a9bf2a9382",
+    "HexSturm/Basic.lean": "98efe8b1f7bc78798874ca4dd28a5d7ff6427af558e3f758fc6b844e3de079cf",
+    "lake-manifest.json": "e5bb53ede96d99fba9577c41b8e3bd579c0e7b24229fe04bf9b9015e93233fa5",
+    "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b",
+    "HexRealClosure.lean": "2356fb711a32069292f0746e0280da693fa1dcde658d3f0da2b5e6e64bc2b014",
+    ".lake/build/bin/hexrealclosure_bench": "b6ea8ef2162b427f24d9847ec6baf6142c50aebe37512eaf3fd0076370655fd5"
+  },
+  "command": [
+    ".lake/build/bin/hexrealclosure_bench",
+    "run",
+    "Hex.RealClosure.Bench.runGeneral",
+    "--export-file",
+    "reports/hex-real-closure/general-arithmetic-anchor.json"
+  ],
+  "purpose": "functional timing anchor; no complexity or full tower performance claim"
+}

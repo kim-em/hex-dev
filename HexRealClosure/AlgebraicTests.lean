@@ -5,10 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.Algebraic
-public import HexRealClosure.BaseContext
-public meta import HexRealClosure.Algebraic
-public meta import HexRealClosure.BaseContext
+public import HexRealClosure.AlgebraicContext
+public meta import HexRealClosure.AlgebraicContext
 
 public section
 
@@ -73,7 +71,7 @@ private def infinitesimalSample : Option (Array Int) := do
   let d ← SignDet.Descriptor.validate BaseContext.Element.sign base.signature
     { context := base.signature, head := p, lower := .finite 0, upper := .finite 1,
       indices := [], signs := [] }
-  let context := Context.adjoin d BaseContext.Element.isClean
+  let context := base.adjoin d
   let a := Element.ofPoly (context := context) (DensePoly.ofCoeffs #[0, 1])
   let e := Element.ofCoeff (context := context) epsilon
   return #[a.sign, (a - e).sign, (a * a - e).sign,
@@ -85,28 +83,43 @@ private def infinitesimalSample : Option (Array Int) := do
 
 /-- The second descriptor computes over noncanonical selected-root values,
 which deliberately have no Field instance. -/
-private def nestedSample : Option (Array Int) := do
+private def nestedSample (scale : Nat) : Option (Array Int) := do
   let raw₁ : SignDet.RawDescriptor Rat Nat :=
-    { context := 1, head := DensePoly.ofCoeffs #[-2, 0, 1],
+    { context := 1, head := definition,
       lower := .finite 1, upper := .finite 2, indices := [], signs := [] }
   let d ← SignDet.Descriptor.validate Sturm.orderSign 1 raw₁
   let first := Context.adjoin d (fun q => q.den == 1)
   let a := Element.ofPoly (context := first) x
+  let below := a - 3
+  -- This represents one with nonconstant fractional coefficients.
+  let semanticOne := below * below⁻¹
+  let factor : Element first := if scale == 0 then semanticOne else scale
+  let y : DensePoly (Element first) := DensePoly.ofCoeffs #[0, 1]
+  let head := DensePoly.scale factor
+    (DensePoly.ofCoeffs #[-a, 0, 1] * (y - DensePoly.C 3))
   let raw : SignDet.RawDescriptor (Element first) Nat :=
-    { context := 2, head := DensePoly.ofCoeffs #[-a, 0, 1],
+    { context := 2, head := head,
       lower := .finite 1, upper := .finite 2, indices := [], signs := [] }
   let d₂ ← SignDet.Descriptor.validate Element.sign 2 raw
-  let second := Context.adjoin d₂ Element.isClean
-  let b := Element.ofPoly (context := second) (DensePoly.ofCoeffs #[0, 1])
+  let second := first.extend d₂
+  let b := Element.ofPoly (context := second) y
   let old := Element.ofCoeff (context := second) a
+  let below₂ := b - 3
   let poly : DensePoly (Element second) := DensePoly.ofCoeffs #[-old, 0, 1]
   let divisor : DensePoly (Element second) := DensePoly.ofCoeffs #[-b, 1]
   let remainder := (DensePoly.divMod poly divisor).2
   return #[b.sign, (b - old).sign, (b * b - old).sign, (b * b⁻¹ - 1).sign,
-    if remainder.isZero then 1 else 0]
+    if remainder.isZero then 1 else 0, (below₂⁻¹).sign,
+    (below₂ * below₂⁻¹ - 1).sign,
+    (second.reduce (DensePoly.natPow y 4)).natDegree,
+    if semanticOne.equal 1 then 1 else 0, if semanticOne == 1 then 1 else 0]
 
-#eval nestedSample
-#guard nestedSample == some #[1, -1, 0, 0, 1]
+#eval nestedSample 1
+#guard nestedSample 1 == some #[1, -1, 0, 0, 1, -1, 0, 2, 1, 0]
+#eval nestedSample 2
+#guard nestedSample 2 == some #[1, -1, 0, 0, 1, -1, 0, 4, 1, 0]
+#eval nestedSample 0
+#guard nestedSample 0 == some #[1, -1, 0, 0, 1, -1, 0, 4, 1, 0]
 
 -- Ownership includes the whole context, not only the descriptor's parent tag.
 #check_failure Element.mk

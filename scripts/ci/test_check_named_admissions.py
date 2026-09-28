@@ -35,6 +35,11 @@ class AdmissionScannerTests(unittest.TestCase):
                 self.assertIsNotNone(ADMISSION.search(code_only(token)))
         self.assertIsNone(ADMISSION.search(code_only("rw [Array.foldl_push_eq_append (stop := n) rfl]")))
 
+    def test_constant_field_assignment(self):
+        self.assertIsNone(ADMISSION.search(code_only("theorem width : Bounds where\n  constant := h\n")))
+        self.assertIsNone(ADMISSION.search(code_only("structure Approximation where\n  constant : Rat → Bounds\n")))
+        self.assertIsNotNone(ADMISSION.search(code_only("private constant hidden : False\n")))
+
     def test_interpolated_admission_fails_closed(self):
         for prefix in ("s!", "m!", "f!"):
             with self.subTest(prefix=prefix), self.assertRaises(ValueError):
@@ -54,8 +59,13 @@ class AdmissionScannerTests(unittest.TestCase):
             sign = root / "adapters/HexSignDetMathlib/RootProducer.lean"
             conformance = root / "conformance/HexSignDetMathlib/SelectedProducerConformance.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, dependency):
+            arithmetic = [root / f"adapters/HexRealClosureMathlib/{name}.lean"
+                          for name in ("Algebraic", "AlgebraicClean", "AlgebraicValue",
+                                       "BaseClean", "AlgebraicTower")]
+            for path in (entry, bridge, sign, conformance, dependency, *arithmetic):
                 path.parent.mkdir(parents=True, exist_ok=True)
+            for path in arithmetic:
+                path.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by\n  sorry\n", encoding="utf-8")
             sign.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")

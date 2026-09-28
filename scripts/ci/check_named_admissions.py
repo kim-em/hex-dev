@@ -9,7 +9,7 @@ import re
 ROOT = Path(__file__).resolve().parents[2]
 BRIDGE = Path("adapters/HexRealRootsMathlib/TarskiSoundness.lean")
 ADMISSION = re.compile(
-    r"\b[A-Za-z_]*[sS]orry[A-Za-z_]*\b|\b(?:admit|admitGoal|axiom)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*constant\b|(?<!\.)\bstop\b(?!\s*:=)",
+    r"\b[A-Za-z_]*[sS]orry[A-Za-z_]*\b|\b(?:admit|admitGoal|axiom)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*constant\b(?!\s*:)|(?<!\.)\bstop\b(?!\s*:=)",
     re.MULTILINE,
 )
 DECLARATION = re.compile(
@@ -168,7 +168,9 @@ def check() -> None:
     if module_file("HexRCF.RealCoefficients") is None:
         raise ValueError("the optional rcf adapter module is missing")
     roots = ["HexRCF.RealCoefficients", "HexSignDetMathlib.SelectedProducerConformance",
-             "HexRealClosureMathlib.Algebraic"] + [
+             "HexRealClosureMathlib.Algebraic", "HexRealClosureMathlib.AlgebraicClean",
+             "HexRealClosureMathlib.AlgebraicValue", "HexRealClosureMathlib.BaseClean",
+             "HexRealClosureMathlib.AlgebraicTower"] + [
         "HexSignDetMathlib." + path.stem
         for path in sorted((ROOT / "adapters/HexSignDetMathlib").glob("*.lean"))]
     paths = set().union(*(import_cone(module) for module in roots))
