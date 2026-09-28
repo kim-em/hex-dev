@@ -433,14 +433,18 @@ owned by [HexRationalFn](../../HexRationalFn/SPEC/hex-rational-fn.md), rather
 than duplicated here. The local paired subtraction/comparison run measures
 the additional order work on the same operands.
 
-For the order component and `scan`, `degree`, `height`, `second`, `third`,
-`refinement`, `jointRefinement`, `horner`, `realHeight`, `approximation`,
+Z3 RCF is an **informational** comparator for the eight infinitesimal targets
+`scan`, `degree`, `height`, `second`, `third`, `comparison`, `denominators` and
+`compareHeight`. Use the pinned Z3 Python/FFI API on the same mathematical
+operands, with preparation outside timing. Its representation and cached signs
+differ from Hex's dense coefficient scans; report ratios without requiring a
+constant-factor match or external superiority. The scheduled driver is
+`scripts/bench/ordered_fn_z3.py`; it invokes the existing lean-bench child for
+Hex, with adjacent alternating trials, and checks the returned signs.
+
+For `refinement`, `jointRefinement`, `horner`, `realHeight`, `approximation`,
 `successiveApproximation`, `thirdApproximation` and `provider`, the absence
 classification is **no-comparable-surface-in-named-comparator** relative to
-that FLINT comparator. Its
-[public rational-function API](https://raw.githubusercontent.com/flintlib/flint/main/doc/source/fmpz_poly_q.rst)
-offers arithmetic, equality and rational-point evaluation, but no ordered
-successive-infinitesimal interface or refinement interface accepting the
-caller's coefficient/constant approximation functions. Z3 is an independent
-conformance oracle here, not a declared performance comparator. This library
-makes no external performance superiority claim for its order or searches.
+Z3 RCF. Z3 refines its built-in real constants internally but does not expose
+the caller-supplied coefficient/constant approximation protocol measured here.
+Named-constant generation remains outside this library's benchmark contract.

@@ -82,9 +82,10 @@ historical quadratic or quartic measurements as passing results.
 Inherited fraction arithmetic uses HexRationalFn's informational
 [FLINT comparison and ratios](hex-rational-fn-performance.md#comparator-ratios).
 The [SPEC's comparator coverage](../SPEC/Libraries/hex-ordered-fn.md#comparator-coverage)
-classifies this reuse as `structural-layer`; the order and caller-refinement
-surfaces have no comparable entry point in that named comparator. There is no
-external runtime superiority claim for those surfaces.
+classifies this reuse as `structural-layer`. Z3 RCF supplies the informational
+comparison of infinitesimal signs and comparisons described below. It has no
+caller-approximation entry point for the real-search targets. No external
+runtime superiority claim is made.
 
 The local [paired arithmetic comparison](#canonical-arithmetic-comparison)
 measures the extra order work over canonical subtraction on identical operands.
@@ -105,22 +106,7 @@ symbolized summaries support the stated attribution but cannot be re-filtered.
 
 ## Concerns
 
-No unresolved library-local performance defect is identified by the current
-evidence. Its limits remain explicit: no uniform bound in precision and tower
-depth, no tight large-precision nested-search characterization, no resolved tiny
-comparison overhead, and no algebraic tower integration claim. The latter
-measurements remain required under #10378. Historical inconclusive samples are
-retained below without changing their verdicts.
-
-The original infinitesimal measurements predate the explicit formal-zero
-branch in `Infinitesimal.sign`. The only runtime change in that function is
-`if f.num = 0 then 0 else …`. The zero polynomial has an empty coefficient
-array; `DensePoly.decEqRuntime` compares array sizes before contents. Thus the
-new branch is constant-time, including for each fixed-depth predecessor call
-in these workloads, and preserves the declared scaling models. The reported
-absolute times remain observations of their recorded source commits, not
-measurements of the new branch. The later paired arithmetic run includes that
-branch. Real-search definitions used by the retained measurements are unchanged.
+None.
 
 ## Runtime measurements
 
@@ -413,6 +399,23 @@ no longer available. The committed summary and context retain attribution and
 alignment diagnostics, but cannot substitute for raw data when re-filtering.
 
 ## Evidence scope
+
+No unresolved library-local performance defect is identified by the current
+evidence. Its limits remain explicit: no uniform bound in precision and tower
+depth, no tight large-precision nested-search characterization, no resolved tiny
+comparison overhead, and no algebraic tower integration claim. The latter
+measurements remain required under #10378. Historical inconclusive samples are
+retained below without changing their verdicts.
+
+The original infinitesimal measurements predate the explicit formal-zero
+branch in `Infinitesimal.sign`. The only runtime change in that function is
+`if f.num = 0 then 0 else …`. The zero polynomial has an empty coefficient
+array; `DensePoly.decEqRuntime` compares array sizes before contents. Thus the
+new branch is constant-time, including for each fixed-depth predecessor call
+in these workloads, and preserves the declared scaling models. The reported
+absolute times remain observations of their recorded source commits, not
+measurements of the new branch. The later paired arithmetic run includes that
+branch. Real-search definitions used by the retained measurements are unchanged.
 
 The four single-level search families have passing conservative upper-bound
 evidence. Successive approximation has one inconclusive operation-count run and one
@@ -723,3 +726,10 @@ four Lean workers and equal executable hashes before and after execution.
 The source and executable remained unchanged during collection. Reproduce
 with `python3 scripts/bench/ordered_fn_measure.py --output DIR --filter
 Hex.OrderedFnBench.subtraction` from that source revision.
+
+The complete first and third subtraction sweeps have nearly constant time/n:
+trial 1 ranges from 1.68 µs at n=128 to 1.56 µs at n=16384, and trial 3
+from 0.880 µs to 0.881 µs. Trial 2 changes between the slower and faster
+levels near n=8192. That change affects the cross-trial medians and their
+normalized slope. This describes the recorded samples; the accompanying load
+change alone does not establish its cause, and no trial is excluded.

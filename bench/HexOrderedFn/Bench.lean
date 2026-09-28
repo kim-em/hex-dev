@@ -536,5 +536,10 @@ end Sizes
 
 end Hex.OrderedFnBench
 
-def main (args : List String) : IO UInt32 :=
-  if args == ["sizes"] then Hex.OrderedFnBench.Sizes.run else LeanBench.Cli.dispatch args
+def main (args : List String) : IO UInt32 := do
+  if args == ["sign-hashes"] then
+    IO.println (Lean.Json.mkObj (([-1, 0, 1] : List Int).map fun s =>
+      (toString s, Lean.toJson (hash s).toNat))).compress
+    return 0
+  else if args == ["sizes"] then Hex.OrderedFnBench.Sizes.run
+  else LeanBench.Cli.dispatch args
