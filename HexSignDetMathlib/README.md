@@ -222,6 +222,21 @@ interval, selected-word and semantically equivalent representation changes.
 Only preparation is retained; joint table construction and replay still run
 for each query list.
 
+`RootList` proves `Descriptor.buildRoots_coverage`: every successful actual
+root list contains every mathematical root in the requested interval exactly
+once. The proof uses the actual complete table, preserved full sign words and
+uniqueness of each accepted descriptor. It does not assume rational separators
+or injective coefficient representations. It uses the named #10389 root-sum
+bridge. `Descriptor.buildRoots_empty` proves actual success with an empty list on
+valid root-free domains; `buildRoots_constant_success` covers nonzero constant
+heads. Both use the same named bridge and need no Thom theorem.
+`buildRoots_domain` proves validity of the original input without that admission.
+Universal producer success and correspondence with strict mathematical
+root order remain separate obligations requiring the Thom foundations.
+Conformance exercises whole-line and bounded domains, empty results for
+constants and root-free heads, negative leading coefficients, noncanonical
+coefficients, and the actual cubic field ℚ(∛2).
+
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient
 interpretation. It neither assumes a gcd normalization nor supplies squarefreeness;

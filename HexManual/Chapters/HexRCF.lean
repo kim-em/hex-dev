@@ -17,6 +17,8 @@ import HexSignDetMathlib.ReencodingProducer
 
 import HexSignDetMathlib.QueryHandle
 
+import HexSignDetMathlib.RootList
+
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -1054,6 +1056,35 @@ Thom ordering theorem. General success when the root is present is a separate
 proof requirement. For an accepted re-encoding,
 {name}`Hex.SignDet.Reencoding.root_eq_source` proves that the new descriptor
 retains the source root.
+
+Root enumeration constructs a full derivative description for each root. This
+example uses the same actual cubic coefficient field and enumerates the roots
+of `P = (x − α)x(x + α)`. The returned words correspond to `−α`, `0` and `α`:
+
+```lean
+private def rootsFieldPasses : Bool :=
+  let p := signsHead * signsX
+  match Descriptor.buildRoots signsFieldSign 7 p .negInf .posInf with
+  | .ok (some roots) =>
+    roots.map (fun d => d.raw.signs) ==
+      [[1, -1, 1], [-1, 0, 1], [1, 1, 1]]
+  | _ => false
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard rootsFieldPasses
+```
+
+{name}`Hex.SignDet.Descriptor.buildRoots_coverage` proves that every successful
+output covers every mathematical root in the interval exactly once. On valid
+domains with no roots, {name}`Hex.SignDet.Descriptor.buildRoots_empty` proves
+the actual constructor succeeds with an empty list;
+{name}`Hex.SignDet.Descriptor.buildRoots_constant_success` covers nonzero
+constant heads. These results use the named root-sum admission in
+[#10389](https://github.com/kim-em/hex-dev/issues/10389). A general proof that
+enumeration succeeds on every valid domain and returns roots in mathematical
+order still requires the separate Thom foundation. This example checks the
+actual output; it does not discharge those general proof obligations.
 
 Two roots can be compared even if their defining polynomials differ. The
 comparison constructs a checked common squarefree polynomial and expresses

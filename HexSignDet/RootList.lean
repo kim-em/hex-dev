@@ -307,6 +307,29 @@ def Descriptor.buildRoots (sign : E → Int) (context : Ctx) (p : DensePoly E)
       | .error err => .error err
       | .ok roots => .ok (some roots)
 
+/-- An actual empty full table makes enumeration succeed with no descriptors,
+in both degree branches. No ordering or count-one guard is needed. -/
+theorem Descriptor.buildRoots_ofEmpty {sign : E → Int} {context : Ctx}
+    (p : DensePoly E) (a b : Endpoint E) (domain : Sturm.PreparedDomain E)
+    (hd : Sturm.prepare sign p a b = some domain)
+    (t : {t : Replay E Ctx // t.check domain.sign context domain.head
+      domain.lower domain.upper
+        ((⟨context, p, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries = true})
+    (ht : buildPrepared context domain
+      ((⟨context, p, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries = .ok t)
+    (hr : t.val.node.system.tableRows.toList = []) :
+    buildRoots sign context p a b = .ok (some []) := by
+  unfold buildRoots
+  split
+  · rename_i hn
+    simp only [hd, reduceCtorEq] at hn
+  · rename_i other hother
+    have he : other = domain := Option.some.inj (hother.symm.trans hd)
+    subst other
+    by_cases hp : 0 < p.natDegree
+    · simp only [ht, Replay.table_rows, hr, hp, ↓reduceDIte, rootsFromTable]
+    · simp only [ht, Replay.table_rows, hr, hp, ↓reduceDIte, rootsFrom]
+
 /-- Successful public root construction extracts from its actual prepared
 BKR table. Both degree branches agree with literal per-descriptor replay. -/
 theorem Descriptor.buildRoots_spec {sign : E → Int} {context : Ctx} {p : DensePoly E}
