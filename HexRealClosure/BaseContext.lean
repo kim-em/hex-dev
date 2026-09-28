@@ -192,6 +192,19 @@ theorem Context.signature_real {registry : Registry} {K : Type}
     (parent : RealContext registry K approx sign) :
     (Context.real parent).signature = ⟨parent.chain.keys, 0⟩ := Context.signature_real_proof parent
 
+private theorem Context.signature_infinitesimal_proof {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (context : Context registry K sign) :
+    context.infinitesimal.signature =
+      { context.signature with infinitesimals := context.signature.infinitesimals + 1 } := rfl
+
+theorem Context.signature_infinitesimal {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (context : Context registry K sign) :
+    context.infinitesimal.signature =
+      { context.signature with infinitesimals := context.signature.infinitesimals + 1 } :=
+  Context.signature_infinitesimal_proof context
+
 /-- Values are nominally bound to their entire immutable context, even when
 two contexts have definitionally equal carriers and sign operations. -/
 structure Element {registry : Registry} {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int} (context : Context registry K sign) where
