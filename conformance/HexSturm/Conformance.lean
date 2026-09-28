@@ -26,6 +26,15 @@ open DensePoly Hex.Sturm.Fixtures
 open scoped Hex
 
 
+#guard rootCount orderSign p .negInf .posInf == some 2
+#guard rootCount orderSign p (.finite 0) .posInf == some 1
+#guard rootCount orderSign p .negInf (.finite 0) == some 1
+#guard rootCount orderSign (C 5 : DensePoly Rat) .negInf .posInf == some 0
+#guard rootCount orderSign (0 : DensePoly Rat) .negInf .posInf == none
+#guard rootCount orderSign (natPow (x - 1) 2) .negInf .posInf == none
+#guard rootCount orderSign p (.finite 1) .posInf == none
+#guard rootCount orderSign p (.finite 2) (.finite (-2)) == none
+
 #guard query orderSign p 1 .negInf .posInf == some 2
 #guard query orderSign p (C (-1)) .negInf .posInf == some (-2)
 #guard query orderSign p 0 .negInf .posInf == some 0

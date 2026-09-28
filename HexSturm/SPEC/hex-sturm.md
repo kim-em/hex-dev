@@ -21,8 +21,8 @@ agreement and whole-`Option` rational/integer agreement on finite ordered dyadic
 intervals after positive denominator clearing. It also proves whole-`Option`
 congruence across field representations, with finite or infinite endpoints,
 and acceptance of literal certificate translations by denominator clearing
-and integer-to-rational embedding. Root-sum/replay semantics, `rootCount`,
-singleton/sign bounds and remaining Phase-4 evidence are still required.
+and integer-to-rational embedding. The shared root-sum theorem supplies replay semantics, `rootCount` and
+singleton/sign bounds. Remaining Phase-4 evidence is required.
 No release or phase completion is claimed.
 
 `HexSturm` depends on `HexPoly` and `HexRealRoots`, with no Mathlib or
@@ -274,15 +274,12 @@ exact dyadic Horner optimizations; it does not acquire a `Field Int` instance.
 
 The foundation is imported once, through
 [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#sturm-tarski-correspondence).
-The family audit at Mathlib revision
-`1cf325a0cf67aca2b04d76b5380ff6a9e410aefa` does not supply the required generic
-real-closed-field foundation or `IsRealClosed ℝ`. Required Tau Ceti imports
-are polynomial IVT on `[a,b]`, Rolle between distinct roots, and the signed
-remainder/Cauchy-index identity equating variation drop to the above finite
-sum, including infinite endpoints, common factors and zero initial remainder;
-root counting is its `F=1` specialization. These are planned imports requested
-by [#10300](https://github.com/kim-em/hex-dev/issues/10300), not available
-Lean theorem names or assumptions silently installed as axioms.
+Tau Ceti supplies polynomial IVT and Rolle over abstract real closed fields
+and the signed-remainder identity equating variation drop to the finite root
+sum. The companion records the imported modules and declarations, including
+infinite endpoints, common factors and zero initial remainder; root counting
+is the query-one specialization. Hex proves the correspondence with the
+single shared executable checker.
 
 Hex locally proves ordinary polynomial correspondence, pseudo-division and
 positive-scaling correspondence, literal replay soundness and integer

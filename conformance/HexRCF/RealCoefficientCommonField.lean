@@ -81,11 +81,11 @@ theorem cubic_and_sqrt :
 /-- info: '_private.HexRCF.RealCoefficientCommonField.0.cubic_and_sqrt' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms cubic_and_sqrt
 
 /-- info: 'Hex.QAdjoin.common_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.QAdjoin.common_spec
 
 set_option maxHeartbeats 5000000 in
@@ -130,15 +130,15 @@ example : ∃ x : ℝ,
 /-- info: '_private.HexRCF.RealCoefficientCommonField.0.field_and_sqrt' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms field_and_sqrt
 
 /-- info: '_private.HexRCF.RealCoefficientCommonField.0.selected_field_and_sqrt' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms selected_field_and_sqrt
 
 /-- info: 'Hex.RCF.RealCoefficients.Selected.field_eval' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.RealCoefficients.Selected.field_eval

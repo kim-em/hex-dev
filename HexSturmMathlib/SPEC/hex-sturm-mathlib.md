@@ -200,13 +200,15 @@ semantic root sets; they do not introduce root enumeration into the runtime.
 
 ### Root-count boundary
 
-The missing general lemma is nonnegativity of the **actual** query:
-`Sturm.query sign p 1 a b = some q → 0 ≤ q`, under the companion's existing
-operation/sign-preserving, zero-reflecting interpretation into an ordered
-field and the exact domain established by producer success. Equivalently, for
-the accepted derivative chain, the upper-endpoint variation must be at most
-the lower-endpoint variation. Neither degree descent nor polynomial identities
-alone currently supply that endpoint monotonicity theorem.
+`query_count` identifies every successful query of `1` with the cardinality of
+the distinct-root set under the companion's operation/sign-preserving,
+zero-reflecting interpretation into an ordered real closed field.
+`query_nonneg` therefore proves nonnegativity of the actual computed answer.
+`Hex.Sturm.rootCount` maps the query through `Int.toNat`; `rootCount_query`
+proves the exact round trip `(n : Int) = value`, so no lawful query answer is
+clamped. `rootCount_eq` identifies the natural answer with the root-set
+cardinality, and `rootCount_isSome` preserves the existing query domain
+without adding a failure case or a caller-supplied correctness premise.
 
 `HexRealRootsMathlib.Tarski.check_singleton` and `check_constant` prove zero
 values directly from checked data, including constant-head queries of `1`.
@@ -231,11 +233,8 @@ producer. `query_rat_count` and `query_rat_nonneg` in `Rational.lean` transport
 finite dyadic-interval counts to the rational frontend after positive clearing.
 These use the existing real foundation, not a new analytic proof.
 
-Thus the remaining arbitrary-field nonnegativity lemma and its dependent
-`Option Nat` wrapper belong to #10389. The implementation does not use
-`Int.toNat` to clamp negative answers, invent a new failure case, or ask callers
-for the missing semantic law. The existing integer root-count APIs are retained;
-this exception concerns the specified new general `Hex.Sturm.rootCount` API.
+The existing integer root-count APIs and their proofs remain available.
+The general `Hex.Sturm.rootCount` uses the same shared query computation.
 
 ## Integer/dyadic specialization and positive clearing
 

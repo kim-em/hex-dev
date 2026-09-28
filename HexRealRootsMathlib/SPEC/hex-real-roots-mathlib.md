@@ -661,7 +661,7 @@ prove this statement: a root where `f` is negative contributes `-1`, and a
 common root contributes zero. Introduce the signed-query theorem without
 weakening the existing Sturm-count predicate or its theorems.
 
-The abstract foundation is a planned Tau Ceti import through this companion,
+The abstract foundation is imported from Tau Ceti through this companion,
 shared by the integer frontend and
 [hex-sturm](../../SPEC/Libraries/hex-sturm.md#required-correspondence-and-specialization-theorems).
 It is not a second proof from the existing derivative-chain theorem.
@@ -690,25 +690,33 @@ distinct-root set under squarefreeness and endpoint nonvanishing.
 `integer_check_rootSum` and `integer_query_rootSum` give the supported
 query-one identity with the mathematical root sum; the rational companion
 transports this identity through positive denominator clearing.
-The shared abstract variation/root-sum identity and its
-executable semantic consequences belong to #10389; effective implementation,
-algebraic correspondence and independent evidence belong to #10375.
+`TarskiFoundation.lean` connects accepted positive-scaled remainder chains to
+Tau Ceti’s abstract Sturm–Tarski identity. `Tarski.check_rootSum` proves the
+shared checker’s semantics for arbitrary coefficient and endpoint
+representations over an ordered real closed field. `TarskiReal.lean` specializes
+it to integer coefficients and dyadic endpoints, including the query producer
+and unique-root sign theorem. The existing derivative-Sturm proofs remain
+available independently.
 
 ### Shared foundation and proof ownership
 
-The following are planned statement shapes, not available declarations at
-the [Mathlib pin](../../lake-manifest.json)
-`1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`. Import the family foundation
-requested from Tau Ceti by [#10300](https://github.com/kim-em/hex-dev/issues/10300)
-once here: polynomial IVT on `[a,b]`, Rolle between distinct roots, and the
-signed-remainder/Cauchy-index formula. With
-`[Field R] [LinearOrder R] [IsStrictOrderedRing R] [IsRealClosed R]`, that
-formula equates zero-skipping variation drop to
-`∑ α ∈ Roots(P;a,b), sign (F.eval α)` for nonzero squarefree `P`, strictly
-ordered finite or infinite endpoints, and nonvanishing at finite endpoints.
-It includes `F=0`, initial reduction of `F*P'`, zero initial remainder,
-positive-scaled recurrence identities and nonconstant terminal gcd; root
-count is the `F=1` specialization. It must not assume `P,F` are coprime.
+The foundation is imported through
+`TauCeti.Algebra.Polynomial.Sturm.Infinity`. Its declarations
+`TauCeti.Sturm.sum_sign`, `sum_sign_Ioi`, `sum_sign_Iio`, and `sum_sign_univ`
+provide the finite, right-unbounded, left-unbounded, and whole-field identities.
+They assume `[Field R] [LinearOrder R] [IsStrictOrderedRing R] [IsRealClosed R]`,
+a signed remainder sequence, a Tarski seed, simple roots in the relevant
+interval, and nonvanishing at finite endpoints. `IsTarskiSeed` expresses
+agreement of the second chain entry with `F * P′` at roots of `P`, so initial
+reduction modulo `P` is supported. No coprimality hypothesis is imposed.
+
+Hex proves the passage from its checked positive-scaled recurrence identities
+to these hypotheses, the squarefree-to-simple-root implication, the endpoint
+variation correspondence, and the zero-seed singleton-chain case. The resulting
+shared theorem covers zero queries, nonconstant terminal gcds, constant heads,
+and infinite endpoints. Root count is its query-one specialization. Its exact
+upstream revision is recorded by the Tau Ceti dependency in the Lake manifest;
+the Mathlib pin alone does not supply this foundation.
 
 ### Abstract signed remainders
 

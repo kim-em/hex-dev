@@ -236,8 +236,8 @@ attribute [local rcf_handler] aDecline
 #guard_msgs in
 @[rcf_handler] meta def polymorphic.{u} : (α : Type u) → Handler := fun _ _ => return .declined
 
--- A handler cannot register a local declaration with the bridge's name and
--- use that name to smuggle an unrelated admission through the audit.
+-- A familiar semantic theorem name grants no exception to the axiom audit.
+-- A handler-created declaration with that name must still be admission-free.
 run_meta do
   let spoof : Name :=
     .str (.str (.str .anonymous "HexRealRootsMathlib") "Tarski") "check_rootSum"

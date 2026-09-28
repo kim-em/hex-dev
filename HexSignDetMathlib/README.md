@@ -250,8 +250,9 @@ and `endpoint_upper` prove the semantics of the actual finite-boundary polynomia
 used by joint re-encoding.
 
 General Thom ordering, re-encoding success for present roots, the remaining
-total public interfaces and Phase-4 evidence remain required. The root-sum/replay bridge in #10389
-and the specified Tau Ceti BKR/Thom foundations remain separate proof gates.
+total public interfaces and Phase-4 evidence remain required.
+Root-sum/replay soundness follows from the shared proved theorem;
+the specified BKR/Thom foundations retain their separate integration obligations.
 See the
 [specification](SPEC/hex-sign-det-mathlib.md) for the complete assignment.
 

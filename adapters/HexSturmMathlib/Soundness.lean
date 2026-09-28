@@ -156,4 +156,15 @@ theorem rootCount_query (p : DensePoly E) (a b : Endpoint E) (value : Int)
   · simp only [Sturm.rootCount, result, Option.map_some]
   · exact query_nonneg f hz h1 ha hs hm hnat sign hsign hn hi p a b value result
 
+include hz h1 ha hs hm hnat hsign hn hi in
+/-- Casting natural counts back to integers preserves the whole query result. -/
+theorem rootCount_map (p : DensePoly E) (a b : Endpoint E) :
+    (Sturm.rootCount sign p a b).map (fun n => (n : Int)) = Sturm.query sign p 1 a b := by
+  cases result : Sturm.query sign p 1 a b with
+  | none => simp [Sturm.rootCount, result]
+  | some value =>
+    simp only [Sturm.rootCount, result, Option.map_some]
+    exact congrArg some (Int.toNat_of_nonneg
+      (query_nonneg f hz h1 ha hs hm hnat sign hsign hn hi p a b value result))
+
 end HexSturmMathlib

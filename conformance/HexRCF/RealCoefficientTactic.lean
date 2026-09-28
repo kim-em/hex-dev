@@ -67,10 +67,8 @@ example : ∃ x : ℝ, Real.sqrt 2 < x ∧ x < (3 : ℝ) / 2 := by
 theorem cubicRootDemo : ∀ x : ℝ, x ^ 2 + (2 : ℝ) ^ (1 / 3 : ℝ) > 0 := by
   rcf
 
-/-- info: '_private.HexRCF.RealCoefficientTactic.0.cubicRootDemo' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
+/-- info: '_private.HexRCF.RealCoefficientTactic.0.cubicRootDemo' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms cubicRootDemo
 
 example : ∀ x : ℝ,
@@ -86,7 +84,7 @@ theorem algebraicWitnessDemo : ∃ x : ℝ, x ^ 2 = literalCubic.toReal := by
 /-- info: '_private.HexRCF.RealCoefficientTactic.0.algebraicWitnessDemo' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms algebraicWitnessDemo
 
 theorem cubicIntervalDemo : ∃ x : ℝ,
@@ -97,7 +95,7 @@ theorem cubicIntervalDemo : ∃ x : ℝ,
 /-- info: '_private.HexRCF.RealCoefficientTactic.0.cubicIntervalDemo' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms cubicIntervalDemo
 
 example : ∀ x : ℝ, x ^ 2 + genericCoefficient.toReal > 0 := by
@@ -128,11 +126,11 @@ theorem rcf_two_square_roots :
 /-- info: '_private.HexRCF.RealCoefficientTactic.0.rcf_two_square_roots' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms rcf_two_square_roots
 
 /-- info: 'Hex.RCF.RealCoefficients.SquareRoot.selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.RealCoefficients.SquareRoot.selected
 
 set_option maxHeartbeats 5000000 in
@@ -143,7 +141,7 @@ theorem rcf_between_square_roots :
 /-- info: '_private.HexRCF.RealCoefficientTactic.0.rcf_between_square_roots' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms rcf_between_square_roots
 
 /-- error: rcf: the universal sentence is false on the prepared cells -/

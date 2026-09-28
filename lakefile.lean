@@ -586,11 +586,12 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.Tactic,
     `HexRCF.RealCoefficients.CellFormula].map Glob.one
 
--- Optional semantic results; selected-root proofs inherit the #10389 admission.
+-- Semantic results connecting accepted queries to roots and selected values.
 @[default_target]
 lean_lib HexQuerySemantics where
   srcDir := "adapters"
-  globs := #[`HexRealRootsMathlib.TarskiSoundness, `HexSturmMathlib.Soundness,
+  globs := #[`HexRealRootsMathlib.TarskiFoundation, `HexRealRootsMathlib.TarskiSoundness, `HexRealRootsMathlib.TarskiReal,
+    `HexSturmMathlib.Soundness,
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
     `HexSignDetMathlib.CompletionProducer,

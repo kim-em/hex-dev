@@ -155,7 +155,7 @@ exact counts for the actual checked tree, conditional on `Replay.Interprets`:
 each node's moments must be the sums over the same finite observations restricted
 to its query positions. `Replay.support_iff` excludes both missing and spurious
 positive conditions. The companion establishes this explicit moment contract
-from query/root semantics through the admitted #10389 bridge; the executable
+from query/root semantics through the proved shared root-sum theorem; the executable
 checker does not assume it, and the finite induction is not a root-sum
 soundness theorem.
 

@@ -238,27 +238,23 @@ theorem left_sample_sign :
     (Or.inr (fun _ h => h)) x hx
 
 /-- info: 'Hex.RCF.IsoTests.covered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms covered
 
 /-- info: 'Hex.RCF.IsoTests.accepted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms accepted
 
-/-- info: 'Hex.RCF.RealCoefficients.IsolationReplay.check_roots' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RCF.RealCoefficients.IsolationReplay.check_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms RealCoefficients.IsolationReplay.check_roots
 
-/-- info: 'Hex.RCF.RealCoefficients.IsolationReplay.check_sign' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RCF.RealCoefficients.IsolationReplay.check_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms RealCoefficients.IsolationReplay.check_sign
 
 /-- info: 'Hex.RCF.RealCoefficients.IsolationReplay.open_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms RealCoefficients.IsolationReplay.open_sign
 
 -- The same producer accepts a head with a nonquadratic algebraic coefficient.
@@ -270,7 +266,7 @@ theorem left_sample_sign :
 #guard (RealCoefficients.isolateAt 7 algebraicHead 8).isSome
 
 /-- info: 'Hex.RCF.RealCoefficients.isolateAt_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms RealCoefficients.isolateAt_roots
 
 end Hex.RCF.IsoTests
