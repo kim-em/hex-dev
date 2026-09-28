@@ -358,6 +358,7 @@ lean_lib HexMatrix where
 
 @[default_target]
 lean_lib HexPermGroup where
+  precompileModules := true
 
 @[default_target]
 lean_lib HexPermGroupMathlib where
@@ -1623,6 +1624,10 @@ lean_lib HexGraphIsoSparseCfiProbe where
   srcDir := "bench"
   moreLeanArgs := #["-Dprofiler=true"]
   globs := #[`HexGraphIso.SparseProofProbe.Support, `HexGraphIso.SparseProofProbe.Cfi]
+
+lean_lib HexPermGroupMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[`HexPermGroupMathlib.ProofProbe.Kernel]
 
 lean_lib HexGraphIsoMathlibProofProbe where
   srcDir := "bench"

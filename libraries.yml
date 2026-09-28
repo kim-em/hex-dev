@@ -728,6 +728,7 @@ libraries:
     mathlib: true
     done_through: 7
     status: active
+    proof_probes: [bench/HexPermGroupMathlib/ProofProbe]
   HexGraphIso:
     deps: [HexBasic, HexMatrix, HexPermGroup]
     mathlib: false

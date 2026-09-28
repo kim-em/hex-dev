@@ -28,6 +28,7 @@ BUILD_ONLY_LIBS = {
     "HexGraphIsoSparseProofProbe",
     "HexGraphIsoSparseCfiProbe",
     "HexGraphIsoMathlibProofProbe",
+    "HexPermGroupMathlibProofProbe",
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
     "HexRankBenchSupport",
