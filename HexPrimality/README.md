@@ -77,6 +77,9 @@ return closed certificate data; the kernel still checks the resulting literal.
   divisor satisfies `Squfof.factor_spec`; the three accounting bounds also
   have public theorems. This route is not enabled in default certificate
   search. See the [native evidence](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-squfof.md).
+- `Squfof.Policy` explicitly selects `.first limits` or `.rescue limits`
+  in the factor-search budgets; all defaults remain `.off`. The producer
+  and nested certificate allocations are separate.
 - `PMinusOne.start` saves the stage-1 residue; `PMinusOne.stage2` continues it
   over an exact prime interval. `PMinusOne.search` runs both stages, while
   the counted forms retain attempts, unchanged random state, and batch diagnostics.

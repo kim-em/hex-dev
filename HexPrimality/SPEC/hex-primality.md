@@ -639,6 +639,7 @@ structure FactorSearchResult where
   raw      : PartialFactors
   rand     : Rand
   attempts : Nat
+  events   : List FactorEvent := []
 
 structure FactorSearchBudget where
   primeBudget : PrimeCertBudget
@@ -646,6 +647,9 @@ structure FactorSearchBudget where
   factorFuel  : Nat
   smoothBounds : List Nat := []
   smoothBases : List Nat := []
+  attemptLimit : Option Nat := none
+  pMinusOneStage2 : Bool := false
+  squfof : Squfof.Policy := .off
 
 abbrev FactorSearch :=
   FactorSearchBudget → Nat → Rand → FactorSearchResult
@@ -656,6 +660,7 @@ private structure PartialSearch where
   raw      : PartialFactors
   rand     : Rand
   attempts : Nat
+  events   : List FactorEvent
 
 private def partialFactor (budget : PrimeCertBudget) (n : Nat)
     (r : Rand) (fuel : Nat) : PartialSearch
@@ -933,6 +938,51 @@ The external checker should verify divisor arithmetic independently and not
 copy the continued-fraction recurrence. Trace checks supplement it for the
 algorithm and accounting details that a proper-divisor oracle cannot detect.
 Prove the four public theorems without `sorry`, `axiom`, or `native_decide`.
+
+#### Explicit portfolio policy
+
+`Squfof.Policy` has constructors `off`, `first limits`, and `rescue limits`.
+Every default allocation uses `off`. Opt-in placement makes no claim about
+factor balance or a general speed advantage and does not promote a default.
+`first` runs at the producer's rho boundary; `rescue` runs after all of that
+producer's existing splitters have failed. The complete factorizer therefore
+runs rescue after rho, p−1, and ECM; the core partial producer runs it after
+its p−1 phase and rho. The ECM construction provider defers rescue until its
+own ECM curves fail.
+
+`PrimeCertBudget.squfof : Squfof.Policy := .off` authorizes the composite
+worklist entries inside nested certificate search. The independent
+`FactorSearchBudget.squfof : Squfof.Policy := .off` authorizes the producer's
+own entries. Certificate search propagates its selected policy to the
+partial-factor allocation. Other producer calls must set their own field
+explicitly; a nested budget alone grants no extra producer work. The
+HexIntFactor callback forwards both allocations separately. Its existing
+unsupported-global-limit policy still declines without work.
+
+Trial division, structural reductions where present, and probable-prime or
+certificate filtering precede the SQUFOF boundary. It runs at each composite
+cofactor, not merely on the original input. Unsupported input, queue or step
+exhaustion, and no-factor outcomes fall through to the existing routes, with
+proper-factor successes entering the same recursive worklist and checker.
+A prime-certificate failure caused only by exhaustion does not authorize a
+SQUFOF attempt on that subject.
+
+SQUFOF has its own limits: zero rho allocation enables no new route unless
+SQUFOF is explicitly selected. Zero multiplier or step allocation does no
+SQUFOF work, including preliminary factor shortcuts. Worklist fuel remains
+unchanged. A total-limit-aware producer clips the multiplier allowance to
+remaining attempts, without changing the per-multiplier recurrence cap or
+queue bound. In this shared pool, first-placement attempts reduce the
+allowance left for later routes. When no total limit is supplied, the core
+construction producer derives one from the worklist fuel times the sum of
+per-entry caps; adding the SQUFOF cap leaves rho and smooth per-entry caps
+unchanged. Each actually started multiplier is one attempt, including
+successful ones; skipped unsupported calls and disabled limits use zero. A selected phase with
+a zero allowance records `exhausted` with zero attempts and steps.
+The counted event records subject, placement, effective limits, outcome,
+actual attempts, recurrence steps, queue peak, and returned divisor.
+Deterministic SQUFOF work leaves `Rand` unchanged; subsequent randomized
+routes use exactly the state of the preceding work.
 
 #### Native evidence and production promotion
 
@@ -1685,6 +1735,7 @@ def defaultPrimeFuel (n : Nat) : Nat
 structure PrimeCertBudget where
   rhoRestarts : Nat
   rhoSteps    : Nat
+  squfof      : Squfof.Policy := .off
 
 def defaultPrimeCertBudget : PrimeCertBudget
 

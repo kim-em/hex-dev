@@ -981,8 +981,52 @@ setup_benchmark runPower n => n where {
 
 end Hex.IntFactorProfile
 
+/-- Native full-factorization samples for explicitly selected SQUFOF policies.
+All certificate construction and checked acceptance are inside the timed region. -/
+private def squfofProbe (n seed fuel : Nat) (mode : String) (limits : Hex.Nat.Squfof.Limits) :
+    IO UInt32 := do
+  let policy : Hex.Nat.Squfof.Policy := match mode with
+    | "first" => .first limits
+    | "rescue" => .rescue limits
+    | _ => .off
+  let start ← IO.monoNanosNow
+  let ref ← IO.mkRef (Hex.Nat.Internal.factorCounted? n (Hex.Rand.ofSeed seed) fuel
+    (squfof := policy))
+  let result : Except Hex.Nat.FactorFailure (Hex.Nat.Internal.FactorSuccess n) ← ref.get
+  let stop ← IO.monoNanosNow
+  let (status, attempts, factors, events, rand) :
+      String × Nat × List (Nat × Nat) × List Hex.Nat.FactorEvent × Hex.Rand := match result with
+    | .ok s => ("complete", s.attempts,
+        s.factorization.raw.factors.map (fun e => (e.prime, e.exponent)), s.events, s.rand)
+    | .error f => (reprStr f.stop, f.attempts,
+        (f.snapshot.map (fun s => s.raw.factors.map (fun e => (e.prime, e.exponent)))).getD [],
+        f.events, f.rand)
+  let eventJson : List Lean.Json := events.map fun (e : Hex.Nat.FactorEvent) => match e with
+    | .route name fields => Lean.Json.mkObj [
+        ("route", Lean.toJson name),
+        ("fields", Lean.Json.mkObj (fields.map fun (entry : String × String) => (entry.1, Lean.toJson entry.2)))]
+    | .pMinusOne event => Lean.Json.mkObj [("pMinusOne", Lean.toJson (reprStr event))]
+  IO.println (Lean.Json.mkObj [
+    ("n", Lean.toJson n), ("mode", Lean.toJson mode), ("seed", Lean.toJson seed),
+    ("fuel", Lean.toJson fuel), ("multipliers", Lean.toJson limits.multipliers),
+    ("stepCap", Lean.toJson limits.steps), ("queueCapacity", Lean.toJson limits.queueCapacity),
+    ("status", Lean.toJson status), ("attempts", Lean.toJson attempts),
+    ("factors", Lean.toJson factors), ("events", Lean.toJson eventJson),
+    ("rand", Lean.toJson (reprStr rand)), ("nanos", Lean.toJson (stop - start))]).compress
+  return 0
+
 def main (args : List String) : IO UInt32 :=
   match args with
+  | ["squfof-factor", n, mode, multipliers, steps, queue, seed, fuel] => do
+      if !(["off", "first", "rescue"].contains mode) then
+        IO.eprintln "squfof-factor mode must be off, first, or rescue"
+        return 1
+      let [some n, some multipliers, some steps, some queue, some seed, some fuel] :=
+        [n, multipliers, steps, queue, seed, fuel].map String.toNat? | do
+          IO.eprintln "squfof-factor expects natural-number arguments"
+          return 1
+      squfofProbe n seed fuel mode
+        { multipliers, steps, queueCapacity := queue }
   | "stage2-factor" :: args => Hex.IntFactorBench.Stage2.probe args
   | ["divisor-audit"] => Hex.IntFactorBench.auditDivisors
   | ["default-fuel"] => Hex.IntFactorBench.reportDefaultFuel

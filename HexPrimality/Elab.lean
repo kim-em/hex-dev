@@ -226,7 +226,7 @@ meta def primalityRhoStepBudget : Nat := 1 <<< 15
 
 /-- The explicit rho allocation shared by every elaboration-time route. -/
 meta def primalitySearchBudget : Hex.Nat.PrimeCertBudget :=
-  ⟨primalityRhoRestartBudget, primalityRhoStepBudget⟩
+  ⟨primalityRhoRestartBudget, primalityRhoStepBudget, .off⟩
 
 /-- The fuel selected by every elaboration-time certificate route. -/
 meta def primalityFuel (n : Nat) : Nat :=

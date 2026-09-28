@@ -14,7 +14,7 @@ private def subject : Nat := Hex.ECPP.Fixture256.cert.subject
 
 #guard Hex.ECPP.checkAt subject Hex.ECPP.Fixture256.cert
 
-#guard match Hex.Nat.Internal.primeCertCountedWith? ⟨2, 32768⟩ subject
+#guard match Hex.Nat.Internal.primeCertCountedWith? ⟨2, 32768, .off⟩ subject
     (Hex.Rand.ofSeed subject) (min (Hex.Nat.defaultPrimeFuel subject) 512) with
   | .error failure =>
       match failure.stop with

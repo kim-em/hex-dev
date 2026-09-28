@@ -229,6 +229,36 @@ def smoothSearch (n : Nat) (r : Rand) (fuel : Nat)
       ⟨ecm.factor, ecm.rand, p1.attempts + ecm.attempts,
         p1.events ++ ecm.events⟩
 
+/-- Split result with exact accounting across the explicit portfolio. -/
+structure FactorSplit where
+  factor : Option Nat
+  rand : Rand
+  attempts : Nat
+  events : List FactorEvent
+
+/-- Opt-in SQUFOF runs before rho or after both rho and the smooth routes.
+The caller enables it only after the composite filter rejects the cofactor. -/
+def factorSplit (budget : PrimeCertBudget) (policy : Squfof.Policy)
+    (n : Nat) (r : Rand) (fuel : Nat) (stage2 : Bool) : FactorSplit :=
+  let first := squfofSearch policy true n r
+  match first.divisor with
+  | some d => ⟨some d.val, r, first.attempts, first.events⟩
+  | none =>
+    match rhoSplitCountedWith? n r
+        (min budget.rhoRestarts (rhoRestartBudget fuel)) budget.rhoSteps with
+    | .ok split =>
+        ⟨some split.factor, split.rand, first.attempts + split.attempts, first.events⟩
+    | .error failure =>
+        let smooth := smoothSearch n failure.rand fuel stage2
+        let events := first.events ++ smooth.events.map (SmoothEvent.toFactorEvent n)
+        let attempts := first.attempts + failure.attempts + smooth.attempts
+        match smooth.factor with
+        | some d => ⟨some d, smooth.rand, attempts, events⟩
+        | none =>
+            let rescue := squfofSearch policy false n smooth.rand
+            ⟨rescue.divisor.map Subtype.val, rescue.rand, attempts + rescue.attempts,
+              events ++ rescue.events⟩
+
 end Internal
 
 private structure SearchState where
@@ -239,7 +269,8 @@ private structure SearchState where
   powerRoutes : Nat
   events : List FactorEvent := []
 
-private def searchGo (budget : PrimeCertBudget) (primeFuel : Nat) (stage2 : Bool) :
+private def searchGo (budget : PrimeCertBudget) (primeFuel : Nat) (stage2 : Bool)
+    (squfof : Squfof.Policy) :
     Nat → List (Nat × Nat) → List PrimePower → Nat → Rand → Nat → Nat →
       List FactorEvent →
       SearchState
@@ -255,7 +286,7 @@ private def searchGo (budget : PrimeCertBudget) (primeFuel : Nat) (stage2 : Bool
   | fuel + 1, (m, multiplier) :: stack, factors, residual, r, attempts,
       powerRoutes, events =>
       if m = 1 then
-        searchGo budget primeFuel stage2 fuel stack factors residual r attempts powerRoutes events
+        searchGo budget primeFuel stage2 squfof fuel stack factors residual r attempts powerRoutes events
       else
         -- Keep the full structural pipeline here: table-coprimality of stack
         -- entries is an invariant of the current producers, not of their type.
@@ -269,60 +300,47 @@ private def searchGo (budget : PrimeCertBudget) (primeFuel : Nat) (stage2 : Bool
         let m := candidate.residualBase
         let multiplier := candidate.residualExponent
         if m = 1 then
-          searchGo budget primeFuel stage2 fuel stack factors residual r attempts powerRoutes events
+          searchGo budget primeFuel stage2 squfof fuel stack factors residual r attempts powerRoutes events
         else
           match Internal.primeCertCountedWith? budget m r
               (min primeFuel (fuel + 1)) with
           | .ok certified =>
-              searchGo budget primeFuel stage2 fuel stack
+              searchGo budget primeFuel stage2 squfof fuel stack
                 (Internal.insertPower ⟨multiplier, certified.cert.raw⟩ factors)
-                residual certified.rand (attempts + certified.attempts) powerRoutes events
+                residual certified.rand (attempts + certified.attempts) powerRoutes (events ++ certified.events)
           | .error primeFailure =>
-              match Internal.rhoSplitCountedWith? m primeFailure.rand
-                  (min budget.rhoRestarts (Internal.rhoRestartBudget (fuel + 1)))
-                  budget.rhoSteps with
-              | .ok split =>
-                  searchGo budget primeFuel stage2 fuel
-                    ((split.factor, multiplier) ::
-                      (m / split.factor, multiplier) :: stack)
-                    factors residual split.rand
-                    (attempts + primeFailure.attempts + split.attempts) powerRoutes events
-              | .error rhoFailure =>
-                  let smooth := Internal.smoothSearch m rhoFailure.rand (fuel + 1) stage2
-                  let events := events ++ smooth.events.map (Internal.SmoothEvent.toFactorEvent m)
-                  match smooth.factor with
-                  | some d =>
-                      searchGo budget primeFuel stage2 fuel
-                        ((d, multiplier) :: (m / d, multiplier) :: stack) factors
-                        residual smooth.rand
-                        (attempts + primeFailure.attempts + rhoFailure.attempts +
-                          smooth.attempts)
-                        powerRoutes events
-                  | none =>
-                      searchGo budget primeFuel stage2 fuel stack factors
-                        (residual * m ^ multiplier) smooth.rand
-                        (attempts + primeFailure.attempts + rhoFailure.attempts +
-                          smooth.attempts)
-                        powerRoutes events
+              let policy := if primeFailure.stop == .composite then squfof else .off
+              let split := Internal.factorSplit budget policy m primeFailure.rand (fuel + 1) stage2
+              let events := events ++ primeFailure.events ++ split.events
+              let attempts := attempts + primeFailure.attempts + split.attempts
+              match split.factor with
+              | some d =>
+                  searchGo budget primeFuel stage2 squfof fuel
+                    ((d, multiplier) :: (m / d, multiplier) :: stack)
+                    factors residual split.rand attempts powerRoutes events
+              | none =>
+                  searchGo budget primeFuel stage2 squfof fuel stack factors
+                    (residual * m ^ multiplier) split.rand attempts powerRoutes events
 
 /-- Run the dispatcher with explicit budgets for nested primality and rho
 searches. The worklist and smooth-factor routes remain bounded by `fuel`. -/
 private def smallAttemptWith (budget : PrimeCertBudget) (primeFuel : Nat)
-    (n : Nat) (r : Rand) (fuel : Nat) (stage2 : Bool := false) :
+    (n : Nat) (r : Rand) (fuel : Nat) (stage2 : Bool := false)
+    (squfof : Squfof.Policy := budget.squfof) :
     FactorAttempt n :=
   let candidate := smallCandidate n
   let powerRoutes := match candidate.route with
     | .trial | .twos => 0
     | .perfectPower | .twosPower => 1
-  let result := searchGo budget primeFuel stage2 fuel
+  let result := searchGo budget primeFuel stage2 squfof fuel
     [(candidate.residualBase, candidate.residualExponent)]
     candidate.factors 1 r 0 powerRoutes []
   ⟨⟨n, result.factors, result.residual⟩, rfl,
     result.rand, result.attempts, result.powerRoutes, result.events⟩
 
 private def smallAttempt (n : Nat) (r : Rand) (fuel : Nat)
-    (stage2 : Bool := false) : FactorAttempt n :=
-  smallAttemptWith defaultPrimeCertBudget (fuel + 1) n r fuel stage2
+    (stage2 : Bool := false) (squfof : Squfof.Policy := .off) : FactorAttempt n :=
+  smallAttemptWith { defaultPrimeCertBudget with squfof } (fuel + 1) n r fuel stage2 squfof
 
 namespace Internal
 
@@ -390,11 +408,12 @@ structure FactorSuccess (n : Nat) where
 /-- Complete factorization with explicit nested primality and rho budgets,
 retaining exact successful-attempt metering. -/
 def factorCountedWith? (budget : PrimeCertBudget) (primeFuel : Nat) (n : Nat)
-    (r : Rand) (fuel : Nat) (pMinusOneStage2 : Bool := false) :
+    (r : Rand) (fuel : Nat) (pMinusOneStage2 : Bool := false)
+    (squfof : Squfof.Policy := budget.squfof) :
     Except FactorFailure (FactorSuccess n) :=
   if hn : n = 0 then .error { stop := .zero, attempts := 0, rand := r }
   else
-    let out := smallAttemptWith budget primeFuel n r fuel pMinusOneStage2
+    let out := smallAttemptWith budget primeFuel n r fuel pMinusOneStage2 squfof
     match acceptPartial? n (Nat.pos_of_ne_zero hn) out.raw
         out.subject_eq out.rand out.attempts out.events with
     | .error failure => .error failure
@@ -414,35 +433,35 @@ def factorCountedWith? (budget : PrimeCertBudget) (primeFuel : Nat) (n : Nat)
 
 /-- Complete factorization retaining exact successful-attempt metering. -/
 def factorCounted? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n)
-    (pMinusOneStage2 : Bool := false) :
+    (pMinusOneStage2 : Bool := false) (squfof : Squfof.Policy := .off) :
     Except FactorFailure (FactorSuccess n) :=
-  factorCountedWith? defaultPrimeCertBudget (fuel + 1) n r fuel pMinusOneStage2
+  factorCountedWith? { defaultPrimeCertBudget with squfof } (fuel + 1) n r fuel pMinusOneStage2 squfof
 
 end Internal
 
 /-- Return checked partial data for positive input, or expose a rejected
 internal candidate. -/
 def factorPartial? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n)
-    (pMinusOneStage2 : Bool := false) :
+    (pMinusOneStage2 : Bool := false) (squfof : Squfof.Policy := .off) :
     Except FactorFailure (CheckedPartialFactorization n × Rand) :=
   if hn : n = 0 then .error { stop := .zero, attempts := 0, rand := r }
   else
-    let out := smallAttempt n r fuel pMinusOneStage2
+    let out := smallAttempt n r fuel pMinusOneStage2 squfof
     Internal.acceptPartial? n (Nat.pos_of_ne_zero hn) out.raw out.subject_eq
       out.rand out.attempts out.events
 
 /-- Complete factorization when the checked partial residual is `1`. -/
 def factor? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n)
-    (pMinusOneStage2 : Bool := false) :
+    (pMinusOneStage2 : Bool := false) (squfof : Squfof.Policy := .off) :
     Except FactorFailure (CheckedFactorization n × Rand) :=
-  match Internal.factorCounted? n r fuel pMinusOneStage2 with
+  match Internal.factorCounted? n r fuel pMinusOneStage2 squfof with
   | .error failure => .error failure
   | .ok success => .ok (success.factorization, success.rand)
 
 /-- Partial search errors are either the distinguished zero input or an
 internal candidate rejection. -/
-theorem factorPartial?_error {n r fuel stage2 f}
-    (h : factorPartial? n r fuel stage2 = .error f) :
+theorem factorPartial?_error {n r fuel stage2 squfof f}
+    (h : factorPartial? n r fuel stage2 squfof = .error f) :
     (f.stop = .zero ∧ n = 0) ∨
       (f.stop = .rejected ∧
         ∃ rejected saved, f.culprit = some rejected ∧
@@ -462,13 +481,13 @@ theorem factorPartial?_error {n r fuel stage2 f}
 
 /-- Every positive input either has checked partial data or exposes an internal
 candidate rejection; rejection is never reported as ordinary exhaustion. -/
-theorem factorPartial?_result {n r fuel stage2} (hn : 0 < n) :
-    (∃ F r', factorPartial? n r fuel stage2 = .ok (F, r')) ∨
-      ∃ f rejected saved, factorPartial? n r fuel stage2 = .error f ∧
+theorem factorPartial?_result {n r fuel stage2 squfof} (hn : 0 < n) :
+    (∃ F r', factorPartial? n r fuel stage2 squfof = .ok (F, r')) ∨
+      ∃ f rejected saved, factorPartial? n r fuel stage2 squfof = .error f ∧
         f.stop = .rejected ∧ f.culprit = some rejected ∧
           checkPartial rejected = false ∧ f.snapshot = some saved ∧
             saved.raw.subject = n := by
-  cases hresult : factorPartial? n r fuel stage2 with
+  cases hresult : factorPartial? n r fuel stage2 squfof with
   | ok result => exact Or.inl ⟨result.1, result.2, rfl⟩
   | error f =>
       rcases factorPartial?_error hresult with ⟨_, hz⟩ | ⟨hrejected, evidence⟩

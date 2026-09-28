@@ -5,8 +5,10 @@
 arithmetic, a bounded FIFO queue, and one combined forward/reverse step cap per
 multiplier. A final validation gate checks every reported proper divisor. The
 four public theorems prove divisor soundness and the attempt, step, and queue
-bounds for all inputs and limits. The production factorization and certificate
-dispatchers do not call this route.
+bounds for all inputs and limits. Factorization and certificate
+search expose this route through an explicit opt-in policy; default allocations
+leave it disabled. The [complete-factorization examples](hex-int-factor-squfof.md)
+measure two selected uses of that policy.
 
 ## Corpus and protocol
 

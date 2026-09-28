@@ -190,7 +190,7 @@ def run (args : List String) : IO UInt32 := do
           throw (IO.userError "provider boundary")
     let enabled := { constructionBudget.factor with
       pMinusOneStage2 := true, smoothBounds := [2], smoothBases := [2]
-      primeBudget := ⟨0, 0⟩, primeFuel := 0, attemptLimit := some 32 }
+      primeBudget := ⟨0, 0, .off⟩, primeFuel := 0, attemptLimit := some 32 }
     let core := Construction.factorSearch enabled 1000036000099 (Hex.Rand.ofSeed 1)
     let combined := ecmFactorSearch 64 8192 8 false enabled 1000036000099 (Hex.Rand.ofSeed 1)
     unless !core.events.isEmpty && combined.events.take core.events.length == core.events &&

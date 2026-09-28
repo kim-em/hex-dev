@@ -21,6 +21,21 @@ structure Limits where
   queueCapacity : Nat := 128
 deriving Repr, DecidableEq
 
+/-- Explicit placement of bounded SQUFOF work in a factorization portfolio.
+`first` runs before rho; `rescue` runs after the producer's existing splitters
+fail. Both retain the caller's limits at each composite worklist entry. -/
+inductive Policy where
+  | off
+  | first (limits : Limits)
+  | rescue (limits : Limits)
+deriving Repr, DecidableEq
+
+/-- Maximum multiplier attempts authorized at one worklist entry. -/
+def Policy.attemptCap : Policy → Nat
+  | .off => 0
+  | .first limits | .rescue limits =>
+      if limits.steps = 0 then 0 else min limits.multipliers 16
+
 inductive Outcome where
   | factor (divisor : Nat)
   | noFactor

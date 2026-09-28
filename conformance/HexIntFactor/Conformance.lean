@@ -824,7 +824,7 @@ private def route (fuel : Nat) := Internal.smoothSearch 1000000007 seed fuel tru
 
 -- Disable preceding rho explicitly to test the dispatcher boundary rather
 -- than relying on probabilistic exhaustion to reach this route.
-private def factored := Internal.factorCountedWith? ⟨0, 0⟩ 0
+private def factored := Internal.factorCountedWith? ⟨0, 0, .off⟩ 0
   (4175126843 * 4294967291) seed 128 true
 #guard (match factored with
   | .ok _ => false
@@ -832,7 +832,7 @@ private def factored := Internal.factorCountedWith? ⟨0, 0⟩ 0
       | .pMinusOne p => p.requestedB2 == some 4096 && p.outcome == .factor 4175126843
       | _ => false))
 
-#guard (match Internal.factorCountedWith? ⟨0, 0⟩ 128
+#guard (match Internal.factorCountedWith? ⟨0, 0, .off⟩ 128
     (4175126843 * 4294967291) seed 128 true with
   | .ok s => checkFactorization s.factorization.raw &&
       s.events.any (fun e => match e with
@@ -845,3 +845,185 @@ private def factored := Internal.factorCountedWith? ⟨0, 0⟩ 0
     ("effectiveBound", "64"), ("outcome", "whole"), ("attempts", "1")]
 
 end PollardStage2Tests
+
+namespace SqufofDispatch
+
+private def seed := Rand.ofSeed 10452
+private def n := 40249308338448479
+private def limits : Squfof.Limits := { multipliers := 2, steps := 65536 }
+private def fields (subject : Nat) (events : List FactorEvent) : List (List (String × String)) :=
+  events.filterMap fun event => match event with
+    | .route "squfof" fields =>
+        if fields.lookup "subject" == some (toString subject) then some fields else none
+    | _ => none
+
+-- A full checked result, with the exact raw split counters retained.
+private def complete := Internal.factorCounted? n seed (squfof := .first limits)
+#guard (match complete with
+  | .ok s => checkFactorization s.factorization.raw &&
+      s.factorization.raw.factors.map (fun e => (e.prime, e.exponent)) ==
+        [(184185251, 1), (218526229, 1)] &&
+      (fields n s.events).map (fun f => (f.lookup "attempts", f.lookup "steps")) ==
+        [(some "1", some "2548")]
+  | _ => false)
+#guard (match factorPartial? n seed (squfof := .first limits) with
+  | .ok (s, _) => s.raw.residual == 1 && checkPartial s.raw
+  | _ => false)
+#guard (match factor? n seed (squfof := .first limits) with
+  | .ok (s, _) => checkFactorization s.raw
+  | _ => false)
+
+-- The selected splitter itself is deterministic, with no random draws.
+private def first := Internal.factorSplit ⟨8, 4194304, .off⟩ (.first limits) n seed 8 false
+#guard first.factor == some 184185251 && first.rand == seed && first.attempts == 1
+#guard (Internal.factorSplit ⟨8, 4194304, .off⟩ (.first limits) n
+  (Rand.ofSeed 9) 8 false).factor == first.factor
+
+-- Exhaustion preserves the ordinary rho call and its exact random trajectory.
+private def short := Internal.factorSplit defaultPrimeCertBudget
+  (.first { multipliers := 1, steps := 1 }) n seed 8 false
+private def ordinary := Internal.factorSplit defaultPrimeCertBudget .off n seed 8 false
+#guard short.factor == ordinary.factor && short.rand == ordinary.rand &&
+  short.attempts == ordinary.attempts + 1
+#guard (fields n short.events).map (fun f => f.lookup "outcome") == [some "exhausted"]
+private def disabled := Internal.factorSplit defaultPrimeCertBudget
+  (.first { multipliers := 0 }) n seed 8 false
+#guard disabled.factor == ordinary.factor && disabled.rand == ordinary.rand &&
+  disabled.attempts == ordinary.attempts
+#guard (Internal.factorSplit defaultPrimeCertBudget
+  (.first { steps := 0 }) n seed 8 false).attempts == ordinary.attempts
+
+-- Rescue is suppressed by a successful rho or smooth split.
+private def rescuedRho := Internal.factorSplit defaultPrimeCertBudget (.rescue limits) n seed 8 false
+#guard rescuedRho.factor == ordinary.factor && rescuedRho.rand == ordinary.rand &&
+  rescuedRho.attempts == ordinary.attempts && (fields n rescuedRho.events).isEmpty
+private def smooth := Internal.factorSplit ⟨0, 0, .off⟩ (.rescue limits)
+  (100549 * 100049) seed 8 false
+#guard smooth.factor.isSome && (fields (100549 * 100049) smooth.events).isEmpty
+-- One failed stage-1 call precedes the rescue; no ECM slot is displaced.
+private def rescue := Internal.factorSplit ⟨0, 0, .off⟩ (.rescue limits) n seed 1 false
+#guard rescue.factor == first.factor && rescue.rand == seed && rescue.attempts == 2
+#guard (fields n rescue.events).map (fun f => f.lookup "placement") == [some "rescue"]
+#guard (match rescue.events.head? with | some (.pMinusOne _) => true | _ => false)
+
+-- Recursive stack entries inherit the policy and still cross the checker.
+private def triple := 100003 * 100109 * 100129
+#guard (match Internal.factorCounted? triple seed (squfof := .first limits) with
+  | .ok s => checkFactorization s.factorization.raw &&
+      s.factorization.raw.factors.map (fun e => (e.prime, e.exponent)) ==
+        [(100003, 1), (100109, 1), (100129, 1)] &&
+      (s.events.filter fun e => match e with | .route "squfof" _ => true | _ => false).length == 2
+  | _ => false)
+#guard (match Internal.factorCounted? n seed 0 (squfof := .first limits) with
+  | .error f => f.attempts == 0 && f.events.isEmpty &&
+      f.snapshot.any (fun s => s.raw.residual == n && checkPartial s.raw)
+  | _ => false)
+#guard (match Internal.factorCounted? 0 seed (squfof := .first limits) with
+  | .error f => f.stop == .zero && f.attempts == 0 && f.events.isEmpty && f.rand == seed
+  | _ => false)
+#guard (match Internal.factorCounted? 100003 seed (squfof := .first limits) with
+  | .ok s => (fields 100003 s.events).isEmpty
+  | _ => false)
+#guard (Internal.squfofSearch (.first limits) true (2^64) seed).attempts == 0
+#guard (fields (2^64) (Internal.squfofSearch (.first limits) true (2^64) seed).events).map
+  (fun f => f.lookup "outcome") == [some "unsupported"]
+
+-- The total-limit-aware producer clips multiplier attempts, including k=3.
+private def twoMultiplier := 49540069561170641
+private def allocation : FactorSearchBudget := {
+  primeBudget := ⟨0, 0, .off⟩, primeFuel := 16, factorFuel := 8
+  squfof := .first limits }
+private def capped (cap : Nat) := Construction.factorSearch
+  { allocation with attemptLimit := some cap } twoMultiplier seed
+#guard (capped 0).attempts == 0 && (capped 0).raw.residual == twoMultiplier
+#guard (capped 1).attempts == 1 && (capped 1).raw.residual == twoMultiplier
+#guard (capped 2).attempts == 2 &&
+  (fields twoMultiplier (capped 2).events).any (fun f => f.lookup "outcome" == some "factor")
+#guard (capped 3).attempts == 2 && (capped 3).raw.residual == 1
+#guard (fields twoMultiplier (capped 1).events).map (fun f => f.lookup "multipliers") == [some "1"]
+#guard (capped 2).rand == seed
+-- The ECM provider defers rescue until its own curves have been exhausted.
+private def ecmRescue := ecmFactorSearch 32768 524288 0 false
+  { allocation with squfof := .rescue limits, attemptLimit := some 3 } twoMultiplier seed
+#guard ecmRescue.attempts == 2 && ecmRescue.raw.residual == 1 && ecmRescue.rand == seed
+
+-- Explicitly granting SQUFOF does not require enabling rho.
+private def upstream := defaultFactorSearch allocation n seed
+#guard upstream.attempts == 2 && upstream.raw.residual == 1 && upstream.rand == seed
+private def adapter := intFactorSearch allocation n seed
+#guard adapter.raw.residual == 1 && (fields n adapter.events).length == 1
+-- A nested-primality budget cannot grant work to a different producer entry.
+#guard (defaultFactorSearch { allocation with
+  squfof := .off
+  primeBudget := { allocation.primeBudget with squfof := .first limits } } n seed).events.isEmpty
+
+-- Certificate search positively propagates its allocation into n-1 factoring.
+private def certBudget : PrimeCertBudget := {
+  rhoRestarts := 0, rhoSteps := 0, squfof := .first limits }
+private def certified := Internal.primeCertCountedWith? certBudget
+  80498616676896959 seed 64
+#guard (match certified with
+  | .ok s => (s.cert.raw.subject == 80498616676896959 && checkPrime s.cert.raw) && s.attempts == 18 &&
+      (fields n s.events).map (fun f => (f.lookup "placement", f.lookup "steps")) ==
+        [(some "first", some "2548")]
+  | _ => false)
+-- A producer policy of off still respects a separately enabled nested budget.
+#guard (match Internal.factorCountedWith? certBudget 64 80498616676896959 seed 64
+    (squfof := .off) with
+  | .ok s => checkFactorization s.factorization.raw &&
+      (fields n s.events).length == 1 && (fields 80498616676896959 s.events).isEmpty
+  | _ => false)
+
+-- Both upstream partial producers exercise rescue after their own fallbacks.
+private def upstreamRescue := defaultFactorSearch
+  { allocation with squfof := .rescue limits } n seed
+#guard upstreamRescue.raw.residual == 1 && upstreamRescue.attempts == 2 &&
+  upstreamRescue.rand == seed &&
+  (fields n upstreamRescue.events).map (fun f => f.lookup "placement") == [some "rescue"]
+private def coreRescue := Construction.factorSearch { allocation with
+  primeBudget := ⟨1, 1, .off⟩, squfof := .rescue limits
+  smoothBounds := [64], smoothBases := [2]
+  pMinusOneStage2 := true, attemptLimit := some 8 } n seed
+private def rhoMiss := Internal.rhoFactorCountedWith? n seed 1 1
+#guard (match rhoMiss with
+  | .error f => f.attempts == 1 && coreRescue.rand == f.rand
+  | _ => false)
+#guard coreRescue.raw.residual == 1 && coreRescue.attempts == 4 &&
+  (coreRescue.events.map fun e => match e with
+    | .pMinusOne _ => "p1"
+    | .route name _ => name) == ["p1", "p1", "squfof"] &&
+  (fields n coreRescue.events).map (fun f => f.lookup "placement") == [some "rescue"]
+private def coreSmooth := Construction.factorSearch { allocation with
+  smoothBounds := [64], smoothBases := [2] } (100549 * 100049) seed
+#guard coreSmooth.attempts == 1 && coreSmooth.raw.residual == 1 &&
+  coreSmooth.events.isEmpty && coreSmooth.rand == seed
+
+-- Two unsuccessful ECM curves consume four stage attempts before rescue.
+private def ecmMiss := ecmFactorSearch 8 64 2 false
+  { allocation with squfof := .off, attemptLimit := some 8 } n seed
+#guard ecmMiss.attempts == 4 && ecmMiss.raw.residual == n && ecmMiss.rand == seed
+private def ecmAfter := ecmFactorSearch 8 64 2 false
+  { allocation with squfof := .rescue limits, attemptLimit := some 6 } n seed
+#guard ecmAfter.attempts == 5 && ecmAfter.raw.residual == 1 && ecmAfter.rand == seed &&
+  (fields n ecmAfter.events).map (fun f => (f.lookup "placement", f.lookup "attempts")) ==
+    [(some "rescue", some "1")]
+private def ecmCapped := ecmFactorSearch 8 64 2 false
+  { allocation with squfof := .rescue limits, attemptLimit := some 4 } n seed
+#guard ecmCapped.attempts == 4 && ecmCapped.raw.residual == n &&
+  (fields n ecmCapped.events).map (fun f => (f.lookup "outcome", f.lookup "attempts")) ==
+    [(some "exhausted", some "0")]
+
+-- A derived total bound adds no rho work on an unsupported subject: the
+-- unchanged per-entry rho cap already fits within the original derived bound.
+private def unsupportedBudget : FactorSearchBudget := {
+  allocation with primeBudget := ⟨1, 1, .off⟩ }
+private def unsupportedOn := Construction.factorSearch unsupportedBudget (2^64 + 1) seed
+private def unsupportedOff := Construction.factorSearch
+  { unsupportedBudget with squfof := .off } (2^64 + 1) seed
+#guard unsupportedOn.raw.factors == unsupportedOff.raw.factors &&
+  unsupportedOn.raw.residual == unsupportedOff.raw.residual &&
+  unsupportedOn.rand == unsupportedOff.rand && unsupportedOn.attempts == unsupportedOff.attempts
+#guard (fields (2^64 + 1) unsupportedOn.events).map
+  (fun f => (f.lookup "outcome", f.lookup "attempts")) == [(some "unsupported", some "0")]
+
+end SqufofDispatch

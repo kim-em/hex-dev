@@ -255,7 +255,7 @@ private def stage2Allocation (limit : Nat) : FactorSearchBudget := {
   constructionBudget.factor with
   smoothBounds := [64]
   smoothBases := [2]
-  primeBudget := ⟨0, 0⟩
+  primeBudget := ⟨0, 0, .off⟩
   factorFuel := 8
   attemptLimit := some limit
   pMinusOneStage2 := true }

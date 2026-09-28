@@ -45,6 +45,11 @@ def twelve : CheckedFactorization 12 :=
   the continuation from bound 64 to 4096; the option defaults to `false`.
   It uses one extra counted attempt when fuel permits, preserving the four
   stage-1 calls (through bound 9999) and the ECM allocation.
+- Both factorization APIs also accept `(squfof := .first limits)` to try
+  explicitly bounded SQUFOF before rho, or `.rescue limits` after the existing
+  splitters fail. The default is `.off`. The policy applies recursively and
+  carries its own attempt, step, and queue limits. See the
+  [complete-factorization examples and native timings](https://github.com/kim-em/hex-dev/blob/main/reports/hex-int-factor-squfof.md).
 - `checkFactorization` and `checkPartial` replay untrusted factorization data.
   Prime entries carry `hex-primality` certificates, and bounded products reject
   oversized powers before constructing them.

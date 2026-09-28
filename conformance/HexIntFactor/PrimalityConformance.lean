@@ -38,7 +38,7 @@ private def squareSeed : Rand := Rand.ofSeed squarePrime
 
 private def squareFuel : Nat := min (defaultPrimeFuel squarePrime) 512
 
-private def tacticBudget : PrimeCertBudget := ⟨2, 1 <<< 15⟩
+private def tacticBudget : PrimeCertBudget := ⟨2, 1 <<< 15, .off⟩
 
 private def squareAllocation (factorFuel : Nat) : FactorSearchBudget :=
   { primeBudget := tacticBudget, primeFuel := squareFuel - 1, factorFuel := factorFuel }
