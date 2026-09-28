@@ -1701,7 +1701,7 @@ lean_exe hexsigndet_bench where
 lean_lib HexSignDetBenchSupport where
   srcDir := "bench"
   globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
-    .one `HexSignDet.Paired]
+    .one `HexSignDet.Paired, .one `HexSignDet.Maximal]
 
 lean_exe hexsturm_bench where
   srcDir := "bench"
