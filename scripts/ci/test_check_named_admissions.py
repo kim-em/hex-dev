@@ -60,8 +60,9 @@ class AdmissionScannerTests(unittest.TestCase):
             roots = root / "conformance/HexSignDetMathlib/RootListConformance.lean"
             refinement = root / "conformance/HexSignDetMathlib/RefinementConformance.lean"
             conversion = root / "conformance/HexSignDetMathlib/ConvertConformance.lean"
+            deflation = root / "conformance/HexRealClosure/DeflationConformance.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, dependency):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, deflation, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
@@ -74,6 +75,7 @@ class AdmissionScannerTests(unittest.TestCase):
             roots.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             refinement.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            deflation.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
