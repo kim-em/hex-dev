@@ -724,7 +724,7 @@ Use `sgn : R → Int` with values `-1,0,1`, and the finite set
 `Roots(P;a,b)` of **distinct** roots (`P.roots.toFinset` filtered by strict
 endpoint inequalities). Infinite endpoint inequalities impose no bound on
 that side. Require `P≠0`, `Squarefree P`, `a<b` and nonzero evaluations of
-`P` at finite endpoints. For arbitrary `F : Polynomial R`, the planned
+`P` at finite endpoints. For arbitrary `F : Polynomial R`, the
 shared theorem `HexRealRootsMathlib.Tarski.variation_eq` has the following
 explicit certificate hypotheses:
 
