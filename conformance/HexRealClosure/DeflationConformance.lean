@@ -206,3 +206,7 @@ def main : IO Unit := do
   emitSearch "dispatch bounded close infinitesimals" 1 fraction sign₁ close
   emitSearch "dispatch whole inverse infinitesimal" 1 fraction sign₁ (linearFactor epsilon⁻¹)
   emitSearch "dispatch whole inverse second infinitesimal" 2 nestedFraction sign₂ (linearFactor delta⁻¹)
+
+  emitRatSearch "dispatch whole negative scalar" (DensePoly.scale (-3) (linearFactor (1000 : Rat)))
+  emitRatSearch "dispatch whole root-free" (DensePoly.ofCoeffs #[1000000, 0, (1 : Rat)])
+  emitRatSearch "dispatch whole repeated root rejected" (linearFactor (1000 : Rat) * linearFactor 1000)

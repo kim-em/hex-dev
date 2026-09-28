@@ -35,14 +35,14 @@ private def bounded (scalar : Rat) : Option (Array Bool) := do
 #eval bounded (1 / 2)
 
 private def whole {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E] [Mul E]
-    [NatCast E] [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E) : Option (Array Bool) := do
+    [NatCast E] [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E) (expected : Int := 1) : Option (Array Bool) := do
   let search ← search? sign p
   match search.route with
   | .bounded _ _ => none
   | .whole whole =>
     return #[decide ((Bounds.find? sign p).isNone), decide (whole.domain.head = p),
       decide (whole.domain.lower = .negInf), decide (whole.domain.upper = .posInf),
-      decide (Sturm.queryPrepared whole.domain 1 = 1)]
+      decide (Sturm.queryPrepared whole.domain 1 = expected)]
 
 /-- info: some #[true, true, true, true, true] -/
 #guard_msgs in
@@ -69,5 +69,17 @@ private def sign₂ : RationalFn (RationalFn Rat) → Int := OrderedFn.Infinites
 /-- info: true -/
 #guard_msgs in
 #eval (search? Sturm.orderSign (linearFactor (1 : Rat) * linearFactor 1)).isNone
+
+/-- info: some #[true, true, true, true, true] -/
+#guard_msgs in
+#eval whole Sturm.orderSign (DensePoly.scale (-3) (linearFactor (1000 : Rat)))
+
+/-- info: some #[true, true, true, true, true] -/
+#guard_msgs in
+#eval whole Sturm.orderSign (DensePoly.ofCoeffs #[1000000, 0, (1 : Rat)]) 0
+
+/-- info: true -/
+#guard_msgs in
+#eval (search? Sturm.orderSign (linearFactor (1000 : Rat) * linearFactor 1000)).isNone
 
 end Hex.RealClosure.Isolation.Tests

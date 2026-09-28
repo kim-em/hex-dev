@@ -221,6 +221,14 @@ class DeflationTests(unittest.TestCase):
             verify(self.mutate_dispatch(lambda result: result.update(count=0),
                                        "dispatch whole inverse infinitesimal"))
 
+    def test_rejects_whole_line_success_on_repeated_input(self):
+        with self.assertRaisesRegex(ValueError, "wrong dispatch success"):
+            verify(self.changed("dispatch whole repeated root rejected", "result", {"route": "whole"}))
+
+    def test_rejects_whole_line_invented_root(self):
+        with self.assertRaisesRegex(ValueError, "wrong whole-line count"):
+            verify(self.mutate_dispatch(lambda result: result.update(count=1), "dispatch whole root-free"))
+
     def test_rejects_empty_and_duplicate_data(self) -> None:
         for rows in ([], self.fixtures + self.fixtures[:1]):
             with self.assertRaises(ValueError):

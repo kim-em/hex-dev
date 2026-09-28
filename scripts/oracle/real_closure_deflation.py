@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact deflation, bisection and frontier checks using FLINT and QQ(epsilon, delta)."""
+"""Exact deflation, bisection, frontier and dispatch checks using FLINT and QQ(epsilon, delta)."""
 
 from fractions import Fraction
 from pathlib import Path
@@ -247,9 +247,11 @@ def verify_dispatch(row, decode, coefficient_field):
                 return str(value)
             return {"num": [encode_constant(value, level - 1)],
                     "den": [encode_constant(1, level - 1)]}
+        bounded_count = count(coefficients, -bound, bound)
+        require(bounded_count == count(coefficients, None, None), f"{name}: bound misses a real root")
         frontier_row = dict(row, kind="frontier", lower=encode_constant(-bound, depth),
                             upper=encode_constant(bound, depth),
-                            original_count=count(coefficients, -bound, bound), result=payload["frontier"])
+                            original_count=bounded_count, result=payload["frontier"])
         verify_frontier(frontier_row, decode, coefficient_field)
 
 
