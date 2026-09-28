@@ -100,6 +100,30 @@ uses the upstream primitive directly. Native splitter and portfolio evidence
 must establish any proposed default placement and budget; this addition does
 not change the existing dispatcher.
 
+The complete and partial APIs accept a named `squfof : Squfof.Policy := .off`
+argument. `.first limits` tries bounded SQUFOF after structural reduction and
+composite rejection, before rho. `.rescue limits` tries it only after rho and
+the existing p−1/ECM portfolio fail. Both apply to every composite worklist
+entry and propagate their allocation into nested certificate search. The
+explicitly budgeted counted API can select the producer policy separately
+from `PrimeCertBudget.squfof`; `intFactorSearch` uses
+`FactorSearchBudget.squfof` for its own entries and retains the independent
+nested budget. Disabled policies preserve the existing route schedule.
+
+Every proper divisor is validated before the recursive split. The complete
+factorization and partial-snapshot checkers remain the acceptance boundary.
+SQUFOF multiplier attempts join the existing exact attempt count; events
+retain limits, steps, queue peak, placement, and outcomes on success and
+exhaustion. The deterministic route draws no randomness. Its bounded failure
+does not displace or reduce rho, p−1, or ECM work. Exhaustion of a prime's
+certificate construction skips SQUFOF on that prime. There is no inferred
+balance test or automatic bit-length cutoff beyond the primitive's domain.
+
+The [native opt-in examples](../../reports/hex-int-factor-squfof.md) compare
+complete checked factorization, including certificate construction, on two
+selected examples and unchanged-route controls. They do not establish a
+general portfolio advantage or authorize default promotion.
+
 ECM stage 1 without stage 2 may not earn its maintenance cost. Milestone
 6 is therefore benchmark-gated: if the specified stage-1 route does not
 win on an unbalanced-semiprime family, it is removed from the initial
@@ -270,10 +294,13 @@ structure FactorFailure where
 def defaultFuel (n : Nat) : Nat
 
 def Internal.factorCountedWith? (budget : PrimeCertBudget)
-    (primeFuel : Nat) (n : Nat) (r : Rand) (fuel : Nat) :
+    (primeFuel : Nat) (n : Nat) (r : Rand) (fuel : Nat)
+    (pMinusOneStage2 : Bool := false)
+    (squfof : Squfof.Policy := budget.squfof) :
     Except FactorFailure (Internal.FactorSuccess n)
 
-def factor? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) :
+def factor? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n)
+    (pMinusOneStage2 : Bool := false) (squfof : Squfof.Policy := .off) :
     Except FactorFailure (CheckedFactorization n × Rand)
 ```
 
@@ -841,7 +868,8 @@ structure CheckedPartialFactorization (n : Nat) where
   subject_eq : raw.subject = n
   valid      : checkPartial raw = true
 
-def factorPartial? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) :
+def factorPartial? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n)
+    (pMinusOneStage2 : Bool := false) (squfof : Squfof.Policy := .off) :
     Except FactorFailure (CheckedPartialFactorization n × Rand)
 ```
 

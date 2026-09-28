@@ -31,7 +31,12 @@ def ecmFactorSearch (b₁ : Nat := 32768) (b₂ : Nat := 524288)
   if n == 0 then return ⟨⟨[], 0⟩, r, 0, []⟩
   let limit := allocation.attemptLimit.getD 1024
   let allocation := { allocation with attemptLimit := some limit }
-  let initial := Construction.factorSearch allocation n r
+  -- Rescue belongs after this producer's ECM routes, rather than after the
+  -- core provider's shorter smooth/rho portfolio.
+  let coreAllocation := { allocation with squfof := match allocation.squfof with
+    | .rescue _ => .off
+    | policy => policy }
+  let initial := Construction.factorSearch coreAllocation n r
   -- Do not factor a residual already unnecessary for the square-root criterion.
   if initial.raw.residual > 0 && (n / initial.raw.residual)^2 > n + 1 then
     return initial
@@ -59,10 +64,15 @@ def ecmFactorSearch (b₁ : Nat := 32768) (b₂ : Nat := 524288)
         if 1 < d && d < m && m % d == 0 then
           divisor := d
           break
+    if divisor == 0 && !isProbablePrime m then
+      let rescue := Internal.squfofSearch allocation.squfof false m rand (limit - work)
+      work := work + rescue.attempts
+      events := events ++ rescue.events
+      if let some d := rescue.divisor then divisor := d.val
     if divisor == 0 then residual := residual * m
     else
       for part in [divisor, m / divisor] do
-        let found := Construction.factorSearch { allocation with attemptLimit := some (limit - work) } part rand
+        let found := Construction.factorSearch { coreAllocation with attemptLimit := some (limit - work) } part rand
         work := work + found.attempts
         rand := found.rand
         events := events ++ found.events

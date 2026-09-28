@@ -326,6 +326,63 @@ reused by hex-int-factor, and validates every factor it returns:
 
 {docstring Hex.Nat.rhoFactor?_spec}
 
+# Deterministic bounded splitting
+%%%
+tag := "hex-primality-squfof"
+%%%
+
+{name}`Hex.Nat.Squfof.factor` searches for a proper divisor of an input below
+`2^64`, using exact arithmetic and no random seed. Its result includes the
+actual multiplier attempts, recurrence steps, and peak queue length. A
+reported divisor need not itself be prime; {name}`Hex.Nat.Squfof.factor_spec`
+proves that it is strictly between one and the input and divides the input.
+
+The combined forward/reverse budget is visible on a small example:
+
+```lean (name := squfofTrace)
+#eval let r := Hex.Nat.Squfof.factor 22117019
+        { multipliers := 1, steps := 25 }
+      let d := match r.outcome with
+        | .factor d => some d
+        | _ => none
+      (d, r.attempts, r.steps)
+```
+```leanOutput squfofTrace
+(some 4451, 1, 25)
+```
+
+One fewer step exhausts the selected search. Exhaustion is not a primality
+verdict:
+
+```lean (name := squfofExhausted)
+#eval (Hex.Nat.Squfof.factor 22117019
+  { multipliers := 1, steps := 24 }).outcome == .exhausted
+```
+```leanOutput squfofExhausted
+true
+```
+
+Very close factors can give an immediate square form even at 64 bits. This
+example has factors `4026531853` and `4026532019`:
+
+```lean (name := squfofClose)
+#eval let r := Hex.Nat.Squfof.factor 16212959431627901207
+        { multipliers := 1, steps := 128 }
+      let d := match r.outcome with
+        | .factor d => some d
+        | _ => none
+      (d, r.attempts, r.steps)
+```
+```leanOutput squfofClose
+(some 4026531853, 1, 2)
+```
+
+This close-factor example does not predict the cost of a general 64-bit
+composite. Primes, unsuitable forms, and resource exhaustion can produce no
+factor; inputs at or above `2^64` return `unsupported`. The complete checked
+factorization interface offers an explicit SQUFOF policy in
+{ref "hex-int-factor-squfof"}[the integer-factorization chapter].
+
 # The prime table and initial segments
 %%%
 tag := "hex-primality-table"

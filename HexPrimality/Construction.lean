@@ -19,7 +19,7 @@ structure ConstructionBudget where
   maxDepth : Nat := 32
   maxAttempts : Nat := 1024
   factor : FactorSearchBudget := {
-    primeBudget := ⟨2, 32768⟩
+    primeBudget := ⟨2, 32768, .off⟩
     primeFuel := 32
     factorFuel := 1024
     smoothBounds := [64, 512, 4096, 32768, 262144, 524288]
@@ -129,14 +129,16 @@ private def factorGo (allocation : FactorSearchBudget) (limit : Nat) :
         | some d => factorGo allocation limit fuel (d :: m / d :: stack) acc residual r
             (attempts + work) events
         | none =>
-            match Internal.rhoFactorCountedWith? m r
-                (min allocation.primeBudget.rhoRestarts (limit - attempts - work))
-                allocation.primeBudget.rhoSteps with
-            | .ok success =>
-                factorGo allocation limit fuel (success.factor :: m / success.factor :: stack)
-                  acc residual success.rand (attempts + work + success.attempts) events
-            | .error f => factorGo allocation limit fuel stack acc (residual * m) f.rand
-                (attempts + work + f.attempts) events
+            let split := Internal.splitSearch
+              { allocation.primeBudget with squfof := allocation.squfof } m r
+              (some (limit - attempts - work))
+            let events := events ++ split.events
+            match split.divisor with
+            | some d =>
+                factorGo allocation limit fuel (d.val :: m / d.val :: stack)
+                  acc residual split.rand (attempts + work + split.attempts) events
+            | none => factorGo allocation limit fuel stack acc (residual * m) split.rand
+                (attempts + work + split.attempts) events
 
 /-- Table division followed by the explicitly budgeted smooth/rho worklist.
 Every unresolved component is retained in the residual. -/
@@ -148,7 +150,7 @@ def factorSearch : FactorSearch := fun allocation n r =>
       (allocation.smoothBounds.filter (fun b => 0 < smoothBound b && smoothBound b ≤ 4096)).length *
         allocation.smoothBases.length else 0
     let limit := allocation.attemptLimit.getD
-      (allocation.factorFuel * (calls + continuations + allocation.primeBudget.rhoRestarts))
+      (allocation.factorFuel * (calls + continuations + allocation.primeBudget.rhoRestarts + allocation.squfof.attemptCap))
     factorGo allocation limit allocation.factorFuel [initial.residual] initial.factors 1 r 0 []
 
 private def product (n : Nat) (factors : List (Nat × Nat)) : Option Nat := do

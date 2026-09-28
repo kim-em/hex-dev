@@ -41,7 +41,7 @@ attempt limit is not supported by this adapter: it declines without work. -/
 def intFactorSearch : FactorSearch := fun allocation n r =>
   if allocation.attemptLimit.isSome then ⟨⟨[], n⟩, r, 0, []⟩ else
   match Internal.factorCountedWith? allocation.primeBudget
-      allocation.primeFuel n r allocation.factorFuel allocation.pMinusOneStage2 with
+      allocation.primeFuel n r allocation.factorFuel allocation.pMinusOneStage2 allocation.squfof with
   | .ok success =>
       ⟨⟨factorPairs success.factorization.raw.factors, 1⟩,
         success.rand, success.attempts, success.events⟩

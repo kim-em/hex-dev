@@ -200,7 +200,7 @@ end PollardStage2Tests
 #guard defaultPrimeFuel 0 == 1
 #guard defaultPrimeFuel 2 == 2
 #guard defaultPrimeFuel (2 ^ 128) == 129
-#guard defaultPrimeCertBudget == ⟨8, 1 <<< 22⟩
+#guard defaultPrimeCertBudget == ⟨8, 1 <<< 22, .off⟩
 
 -- Direct and counted p−1 calls pin all three terminal gcd outcomes. Each
 -- counted call costs one attempt and preserves `Rand`.
@@ -350,7 +350,7 @@ example {factor : FactorSearch} {n fuel : Nat} {r : Hex.Rand}
 -- Table division leaves `100549 · 100049`; base-2 stage 1 at bound 64
 -- splits it even with rho disabled. Acceptance still requires replay by the
 -- ordinary certificate checker.
-#guard (match Internal.primeCertCountedWith? ⟨0, 0⟩ 20119653803
+#guard (match Internal.primeCertCountedWith? ⟨0, 0, .off⟩ 20119653803
     (Hex.Rand.ofSeed 17) (defaultPrimeFuel 20119653803) with
   | .ok success =>
       success.cert.raw.subject == 20119653803 && checkPrime success.cert.raw
@@ -392,7 +392,7 @@ example {factor : FactorSearch} {n fuel : Nat} {r : Hex.Rand}
 -- untouched. It is below the square-root Pocklington threshold and above the
 -- cube-root threshold, so search must construct a `pock3` node and the ordinary
 -- checker must replay it.
-#guard (match Internal.primeCertCountedWith? ⟨0, 0⟩ 104929010073468929
+#guard (match Internal.primeCertCountedWith? ⟨0, 0, .off⟩ 104929010073468929
     (Hex.Rand.ofSeed 23) (defaultPrimeFuel 104929010073468929) with
   | .ok success =>
       match success.cert.raw with
@@ -515,7 +515,7 @@ set_option maxRecDepth 10000 in
 
 -- The elaborator's explicit rho allocation reaches a deterministic success
 -- on the committed 512-bit boundary prime.
-#guard (match Internal.primeCertCountedWith? ⟨2, 1 <<< 15⟩
+#guard (match Internal.primeCertCountedWith? ⟨2, 1 <<< 15, .off⟩
     9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177
     (Hex.Rand.ofSeed 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177)
     (defaultPrimeFuel 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177) with
@@ -523,7 +523,7 @@ set_option maxRecDepth 10000 in
   | .error _ => false)
 
 -- The same allocation fails promptly when both bounded restarts miss.
-#guard (match Internal.primeCertCountedWith? ⟨2, 1 <<< 15⟩
+#guard (match Internal.primeCertCountedWith? ⟨2, 1 <<< 15, .off⟩
     11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123
     (Hex.Rand.ofSeed 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123)
     (defaultPrimeFuel 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123) with

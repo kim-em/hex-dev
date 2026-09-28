@@ -197,6 +197,73 @@ control or diagnostics. `factorPower?` adds a checked cyclotomic pre-split for
 numbers of the form `b ^ n − 1` or `b ^ n + 1`; failed subproblems may fall
 back to generic search, while checker rejection is propagated.
 
+# Opt-in SQUFOF
+%%%
+tag := "hex-int-factor-squfof"
+%%%
+
+Both {name}`Hex.Nat.factor?` and {name}`Hex.Nat.factorPartial?` accept
+`squfof := .first limits` to try deterministic bounded SQUFOF before rho.
+Structural reductions and composite filtering run first. The policy applies
+to recursive cofactors and nested certificate search. On bounded SQUFOF
+failure, the existing rho, p−1, and ECM routes remain available.
+`squfof := .rescue limits` instead runs SQUFOF after those routes fail.
+The default is `.off`.
+
+This 56-bit example has factors differing by about 19%. The result is a
+complete checked factorization, ready for consumers such as
+{name}`Hex.Nat.totient`:
+
+```lean (name := squfofComplete)
+open Hex Hex.Nat
+
+set_option maxRecDepth 100000 in
+#eval (factor? 40249308338448479
+  (Rand.ofSeed 40249308338448479)
+  (squfof := .first
+    { multipliers := 2, steps := 65536 })).map
+    fun (F, _) =>
+      (F.raw.factors.map (fun (e : PrimePower) =>
+        (e.prime, e.exponent)), totient F)
+```
+```leanOutput squfofComplete
+Except.ok ([(184185251, 1), (218526229, 1)], 40249307935737000)
+```
+
+The close 64-bit pair is a deliberately favorable case and needs only a
+small recurrence cap:
+
+```lean (name := squfofComplete64)
+open Hex Hex.Nat
+
+set_option maxRecDepth 100000 in
+#eval (factor? 16212959431627901207
+  (Rand.ofSeed 16212959431627901207)
+  (squfof := .first
+    { multipliers := 1, steps := 128 })).map
+    fun (F, _) => F.raw.factors.map
+      (fun (e : PrimePower) => (e.prime, e.exponent))
+```
+```leanOutput squfofComplete64
+Except.ok [(4026531853, 1), (4026532019, 1)]
+```
+
+On the shared measurement host, eight adjacent paired trials measured
+median complete-factorization times of 8.71 ms with the default portfolio
+and 1.40 ms with this policy. For the close 64-bit pair in
+{ref "hex-primality-squfof"}[the splitting example], the complete times were
+20.69 ms and 2.25 ms using one multiplier with 128 steps. These measurements
+include prime-certificate construction and checked acceptance; they describe
+these selected examples rather than a general speed guarantee.
+
+Small factors just above the trial table can favor rho strongly, even when
+the product is large. Input bit length does not reveal factor balance, so
+SQUFOF is explicitly selected rather than enabled automatically. Limits
+bound multiplier attempts, combined recurrence steps per multiplier, and
+queue capacity. A zero multiplier or step limit does no SQUFOF work. The
+counted API retains route diagnostics and charges every started multiplier,
+while SQUFOF itself leaves the random state unchanged.
+
 # Orders, primitive roots, and Carmichael exponents
 %%%
 tag := "hex-int-factor-orders"
