@@ -5,3 +5,4 @@ Authors: Kim Morrison
 -/
 module
 public import HexRealClosure.Yun
+public import HexRealClosure.Bounds
