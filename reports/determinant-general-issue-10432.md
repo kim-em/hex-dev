@@ -1,4 +1,11 @@
-# General determinant proof evaluator evidence
+# Archived determinant proof evaluator evidence
+
+**These historical builds include `#print axioms` after each proof.** That
+diagnostic traversal is additional work beyond kernel checking, so the numbers
+below must not be used as tactic-only timings or evidence of a speed advantage.
+The [corrected comparison](determinant-general-performance.md) separates auditing
+from measurement and tests the shipped evaluator. Raw historical samples remain
+linked for inspection.
 
 The archived measured Bird evaluator and the pinned Mathlib `norm_det`/`ring`
 comparator were built as fresh Lean modules on one automatically leased CPU per
@@ -8,26 +15,25 @@ result comparator built a sigma value by simplifying the determinant with
 Both arms' declaration checks and output cleanup were inside the timed build.
 The raw samples, build output, host observations, source hashes and import
 baselines are in the linked JSON files below.
-An archive retains the exact measured probe sources. The active probe files
-subsequently received required copyright headers, and their import-only
-baselines had trailing blank lines removed. Their executable Lean content is
-otherwise identical.
+An archive retains the exact measured probe sources. Current probes export their
+declarations for separate audit modules, use matching imports, and carry accurate
+fixture names; use the archive to reproduce these historical builds.
 
 The integrated evaluator now retains symbolic quotients as compact atoms and
 expands only indexed relation collisions. That policy has kernel and direct
 cache tests, but **no timed samples from this 30-minute allowance**. The table
 therefore describes the archived measured snapshot, not current-source speed.
-Current-source gains, ties, losses and declines are all unmeasured.
+This archive contains no current-source performance classification.
 
-| Archived snapshot case | Mathlib net median (ms) | Hex net median (ms) | Observed direction |
+| Archived snapshot case | Mathlib net median (ms) | Hex net median (ms) | Historical label (includes audit) |
 | --- | ---: | ---: | --- |
 | Numeric 2×2 equality | 15.3 | 11.5 | tie |
 | Symbolic 2×2 equality | 81.2 | −12.2 | Hex gain |
 | Numeric 2×2 result | 4.1 | 54.3 | Hex loss |
 | Symbolic 2×2 result | 44.1 | 39.7 | tie |
 | Quotient 2×2 equality | 129.4 | −8.2 | Hex gain |
-| Quadratic 4×4 equality | −18.7 | 32.3 | Hex loss |
-| Quadratic 4×4 result | 114.6 | 34.9 | Hex gain |
+| Tridiagonal 4×4 equality | −18.7 | 32.3 | Hex loss |
+| Tridiagonal 4×4 result | 114.6 | 34.9 | Hex gain |
 
 These are the six paired medians of each proof build minus its immediately
 adjacent import-only build, rounded to 0.1 ms. A negative net median means
@@ -36,7 +42,7 @@ proof time. Differences below 5 ms are shown as ties. The other directions are
 descriptive, not claims of statistical superiority. In particular, the
 symbolic equality and result forms remain explicit or opt-in.
 
-The broader final-source batch retained two complete pairs per arm for the
+The broader archived-snapshot batch retained two complete pairs per arm for the
 4×4 two-term and degree-eight quotient cases, product denominators 5×5,
 identity-plus-rank-one 5×5, dense generic-ring 4×4, dependent-row independent
 quotients 6×6, rank-one 10×10, and the nonzero 3×3 and identity-plus-rank-one
@@ -60,11 +66,14 @@ The prototype at revision `dccd276f7` established relation cancellation and
 reported two-pair wins and losses on different generated fixtures. Its final
 cache and diagnostic fixes had correctness validation but no new timings.
 Those prototype numbers are **not** a direct speed baseline for the integrated
-source. The current source has no valid final-source speed comparison with
-Mathlib or the prototype under the exhausted allowance. The snapshot results
-show three apparent gains, two ties and two losses on small cases, no Hex
-declines, and incomplete larger-case coverage. They do not justify a matrix
-family dispatcher or a default simp registration.
+source. The old `Quadratic4` fixture is a one-variable tridiagonal matrix,
+now named `Tridiagonal4`; it is not the original two-variable quadratic input
+from #10320. That exact statement and target are restored as `OriginalQuadratic4`.
+That allowance produced no valid final-source speed comparison with Mathlib or
+the prototype. The old direction labels include audit costs and do not classify
+tactic performance. The samples record no Hex declines and incomplete larger-case
+coverage. They do not justify a matrix-family dispatcher or a default simp
+registration.
 
 - [Focused six-pair raw results](bench-results/det-general-focused-issue-10432.json)
 - [Broad partial raw results](bench-results/det-general-final-issue-10432.json)

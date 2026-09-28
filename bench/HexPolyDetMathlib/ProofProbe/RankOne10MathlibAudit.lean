@@ -4,8 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Mathlib.Tactic.NormDet
-import Mathlib.Tactic.Ring
-import HexPolyDetMathlib.ProofProbe.GeneralSupport
+import HexPolyDetMathlib.ProofProbe.RankOne10Mathlib
 
-open Matrix
+#print axioms HexPolyDetMathlib.ProofProbe.RankOne10Mathlib.result

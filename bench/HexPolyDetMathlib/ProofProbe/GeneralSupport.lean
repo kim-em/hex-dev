@@ -8,8 +8,8 @@ import Mathlib.Data.ZMod.Basic
 
 namespace HexPolyDetMathlib.ProofProbe
 
-/-- Shared small symbolic fixture; both measured arms elaborate this same input. -/
-def quadratic (x : Int) : Matrix (Fin 4) (Fin 4) Int :=
+/-- Shared tridiagonal symbolic fixture; both measured arms elaborate this same input. -/
+def tridiagonal (x : Int) : Matrix (Fin 4) (Fin 4) Int :=
   !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x]
 
 /-- Rank-one update of the identity with symbolic entries. -/
