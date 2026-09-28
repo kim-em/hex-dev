@@ -22,8 +22,8 @@ equality. The public version requires an ordered field, hence characteristic
 zero. The zero, constant and squarefree producer proofs are Mathlib-free;
 the companion interprets accepted replay as mathematical factorization and
 root multiplicities. The companion proves the repeated-factor loop invariant
-and degree bound over algebraically closed fields; transport of the bound
-to the public ordered-field API and general producer replay acceptance remain open.
+and degree bound, transported through an algebraic closure to the public
+executable fields; general producer replay acceptance remains open.
 -/
 
 namespace Hex.RealClosure.Yun
@@ -63,6 +63,60 @@ original degree bounds the fuel, including rounds that emit no factor. -/
         let z := DensePoly.monicize (DensePoly.gcd v t)
         let out := if 0 < z.natDegree then out.push (z, multiplicity) else out
         loop (v / z) (t / z) (multiplicity + 1) fuel out
+
+/-- Every already emitted factor remains in the loop's final array. -/
+theorem mem_loop {K : Type u} [Zero K] [One K] [Add K] [Sub K]
+    [Mul K] [Div K] [Inv K] [NatCast K] [DecidableEq K]
+    (v w : DensePoly K) (i fuel : Nat) (out : Array (DensePoly K × Nat))
+    (entry : DensePoly K × Nat) (hentry : entry ∈ out) :
+    entry ∈ loop v w i fuel out := by
+  induction fuel generalizing v w i out with
+  | zero => exact hentry
+  | succ fuel ih =>
+      by_cases hv : v.natDegree = 0
+      · simpa only [loop, hv, ↓reduceIte] using hentry
+      · simp only [loop, hv, ↓reduceIte]
+        apply ih
+        split
+        · exact Array.mem_push_of_mem _ hentry
+        · exact hentry
+
+/-- The loop emits strictly increasing multiplicity labels. -/
+theorem loop_labels {K : Type u} [Zero K] [One K] [Add K] [Sub K]
+    [Mul K] [Div K] [Inv K] [NatCast K] [DecidableEq K]
+    (v w : DensePoly K) (i fuel : Nat) (out : Array (DensePoly K × Nat))
+    (hpairwise : out.toList.Pairwise fun a b => a.2 < b.2)
+    (hbelow : ∀ entry ∈ out.toList, entry.2 < i) :
+    (loop v w i fuel out).toList.Pairwise (fun a b => a.2 < b.2) ∧
+      ∀ entry ∈ (loop v w i fuel out).toList, entry.2 < i + fuel := by
+  induction fuel generalizing v w i out with
+  | zero =>
+      exact ⟨hpairwise, by simpa only [loop, Nat.add_zero] using hbelow⟩
+  | succ fuel ih =>
+      rw [loop]
+      split
+      · exact ⟨hpairwise, fun entry he => by have := hbelow entry he; omega⟩
+      · dsimp only
+        let t := w - DensePoly.derivativeImpl v
+        let z := DensePoly.monicize (DensePoly.gcd v t)
+        split
+        · have hr := ih (v / z) (t / z) (i + 1) (out.push (z, i)) (by
+            rw [Array.toList_push, List.pairwise_append]
+            refine ⟨hpairwise, by simp, ?_⟩
+            intro a ha b hb
+            rw [List.mem_singleton] at hb
+            subst b
+            exact hbelow a ha) (by
+            intro entry he
+            rw [Array.toList_push, List.mem_append, List.mem_singleton] at he
+            rcases he with he | rfl
+            · have := hbelow entry he
+              omega
+            · omega)
+          exact ⟨hr.1, fun entry he => by have := hr.2 entry he; omega⟩
+        · have hr := ih (v / z) (t / z) (i + 1) out hpairwise
+            (fun entry he => by have := hbelow entry he; omega)
+          exact ⟨hr.1, fun entry he => by have := hr.2 entry he; omega⟩
 
 /-- Yun's recurrence commutes with a zero-reflecting coefficient
 interpretation. No ring laws are required of the stored coefficients. -/
@@ -143,6 +197,41 @@ into an ordered field before claiming multiplicity correctness. -/
     let w := DensePoly.derivativeImpl f / a
     .factors f.leadingCoeff (loop v w 1 (f.natDegree + 1) #[])
 
+/-- Every factor array produced by the raw recurrence has strictly
+increasing multiplicity labels, without requiring coefficient field laws. -/
+theorem decompose_labels {K : Type u} [Zero K] [One K] [Add K] [Sub K]
+    [Mul K] [Div K] [Inv K] [NatCast K] [DecidableEq K]
+    (f : DensePoly K) (unit : K) (entries : Array (DensePoly K × Nat))
+    (hresult : decomposeRaw f = .factors unit entries) :
+    entries.toList.Pairwise (fun a b => a.2 < b.2) := by
+  unfold decomposeRaw at hresult
+  split at hresult
+  · cases hresult
+  · split at hresult
+    · cases hresult
+      simp
+    · simp only [Decomposition.factors.injEq] at hresult
+      rw [← hresult.2]
+      exact (loop_labels _ _ 1 (f.natDegree + 1) #[]
+        (by simp) (by intro entry he; simp at he)).1
+
+/-- A nonzero result retains exactly the input's leading coefficient. -/
+theorem decompose_unit {K : Type u} [Zero K] [One K] [Add K] [Sub K]
+    [Mul K] [Div K] [Inv K] [NatCast K] [DecidableEq K]
+    (f : DensePoly K) (unit : K) (entries : Array (DensePoly K × Nat))
+    (hresult : decomposeRaw f = .factors unit entries) :
+    unit = f.leadingCoeff ∧ f.isZero = false := by
+  unfold decomposeRaw at hresult
+  split at hresult
+  · cases hresult
+  · rename_i hzero
+    have hz : f.isZero = false := Bool.eq_false_of_ne_true hzero
+    split at hresult
+    · simp only [Decomposition.factors.injEq] at hresult
+      exact ⟨hresult.1.symm, hz⟩
+    · simp only [Decomposition.factors.injEq] at hresult
+      exact ⟨hresult.1.symm, hz⟩
+
 /-- The raw Yun computation has exactly the same interpreted result as its
 ordered-field counterpart whenever coefficient operations preserve values and
 stored zero reflects semantic zero. -/
@@ -216,11 +305,21 @@ theorem decomposeRaw_constant {K : Type u} [Zero K] [One K]
     decomposeRaw f = .factors f.leadingCoeff #[] := by
   simp [decomposeRaw, hzero, hdegree]
 
+/-- The lawful strict order excludes positive characteristic. -/
+theorem natCast_injective {K : Type u} [Lean.Grind.Field K]
+    [LE K] [LT K] [Std.IsPreorder K] [Std.LawfulOrderLT K]
+    [Lean.Grind.OrderedRing K] (m n : Nat) (h : (m : K) = (n : K)) : m = n := by
+  have hmn : m ≤ n := Lean.Grind.OrderedRing.le_of_natCast_le_natCast m n
+    (by rw [h]; exact Std.IsPreorder.le_refl _)
+  have hnm : n ≤ m := Lean.Grind.OrderedRing.le_of_natCast_le_natCast n m
+    (by rw [h]; exact Std.IsPreorder.le_refl _)
+  omega
+
 /-- Yun's recurrence over a lawful ordered field. Zero has its own result;
 nonzero constants return their scalar and an empty factor list. -/
 @[expose] def decompose {K : Type u} [Lean.Grind.Field K]
     [LE K] [LT K] [Std.IsPreorder K]
-    [Lean.Grind.OrderedRing K] [DecidableEq K]
+    [Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]
     (f : DensePoly K) : Decomposition K :=
   decomposeRaw f
 
@@ -242,7 +341,7 @@ This is also useful to independently check a computed result. -/
 exclude positive characteristic; this check is not run inside `decompose`. -/
 @[expose] def check {K : Type u} [Lean.Grind.Field K]
     [LE K] [LT K] [Std.IsPreorder K]
-    [Lean.Grind.OrderedRing K] [DecidableEq K]
+    [Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]
     (f : DensePoly K) : Decomposition K → Bool
   | .zero => f.isZero
   | .factors unit entries =>
@@ -260,7 +359,7 @@ exclude positive characteristic; this check is not run inside `decompose`. -/
 
 @[simp] theorem check_zero_iff {K : Type u} [Lean.Grind.Field K]
     [LE K] [LT K] [Std.IsPreorder K]
-    [Lean.Grind.OrderedRing K] [DecidableEq K]
+    [Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]
     (f : DensePoly K) : check f .zero = true ↔ f = 0 := by
   simp only [check, DensePoly.isZero_eq_true_iff,
     DensePoly.size_eq_zero_iff]
@@ -268,7 +367,7 @@ exclude positive characteristic; this check is not run inside `decompose`. -/
 /-- A nonzero Yun result must carry a nonzero unit. -/
 theorem check_unit {K : Type u} [Lean.Grind.Field K]
     [LE K] [LT K] [Std.IsPreorder K]
-    [Lean.Grind.OrderedRing K] [DecidableEq K]
+    [Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]
     (f : DensePoly K) (unit : K)
     (entries : Array (DensePoly K × Nat))
     (h : check f (.factors unit entries) = true) : unit ≠ 0 := by
@@ -278,7 +377,7 @@ theorem check_unit {K : Type u} [Lean.Grind.Field K]
 /-- Accepted replay reconstructs the input and accounts for its degree. -/
 theorem check_reconstruct {K : Type u} [Lean.Grind.Field K]
     [LE K] [LT K] [Std.IsPreorder K]
-    [Lean.Grind.OrderedRing K] [DecidableEq K]
+    [Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]
     (f : DensePoly K) (unit : K)
     (entries : Array (DensePoly K × Nat))
     (h : check f (.factors unit entries) = true) :
@@ -290,7 +389,7 @@ theorem check_reconstruct {K : Type u} [Lean.Grind.Field K]
 /-- Replay requires strictly increasing multiplicity labels. -/
 theorem check_multiplicities {K : Type u} [Lean.Grind.Field K]
     [LE K] [LT K] [Std.IsPreorder K]
-    [Lean.Grind.OrderedRing K] [DecidableEq K]
+    [Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]
     (f : DensePoly K) (unit : K)
     (entries : Array (DensePoly K × Nat))
     (h : check f (.factors unit entries) = true) :
@@ -301,7 +400,7 @@ theorem check_multiplicities {K : Type u} [Lean.Grind.Field K]
 /-- Replay requires every pair of emitted factors to have constant gcd. -/
 theorem check_coprime {K : Type u} [Lean.Grind.Field K]
     [LE K] [LT K] [Std.IsPreorder K]
-    [Lean.Grind.OrderedRing K] [DecidableEq K]
+    [Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]
     (f : DensePoly K) (unit : K)
     (entries : Array (DensePoly K × Nat))
     (h : check f (.factors unit entries) = true) :
@@ -313,7 +412,7 @@ theorem check_coprime {K : Type u} [Lean.Grind.Field K]
 /-- Replay checks each factor's degree, monicity, and squarefree gcd. -/
 theorem check_factor {K : Type u} [Lean.Grind.Field K]
     [LE K] [LT K] [Std.IsPreorder K]
-    [Lean.Grind.OrderedRing K] [DecidableEq K]
+    [Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]
     (f : DensePoly K) (unit : K)
     (entries : Array (DensePoly K × Nat))
     (entry : DensePoly K × Nat) (hmem : entry ∈ entries)
@@ -338,7 +437,7 @@ theorem check_factor {K : Type u} [Lean.Grind.Field K]
 /-- Yun's zero result passes exact replay. -/
 @[simp] theorem check_decompose_zero {K : Type u} [Lean.Grind.Field K]
     [LE K] [LT K] [Std.IsPreorder K]
-    [Lean.Grind.OrderedRing K] [DecidableEq K] :
+    [Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K] :
     check (0 : DensePoly K) (decompose 0) = true := by
   change check (0 : DensePoly K) (decomposeRaw 0) = true
   rw [decomposeRaw_zero]
@@ -347,7 +446,7 @@ theorem check_factor {K : Type u} [Lean.Grind.Field K]
 /-- Yun's nonzero constant result passes exact replay. -/
 theorem check_decompose_constant {K : Type u} [Lean.Grind.Field K]
     [LE K] [LT K] [Std.IsPreorder K]
-    [Lean.Grind.OrderedRing K] [DecidableEq K]
+    [Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]
     (f : DensePoly K) (hzero : f ≠ 0)
     (hdegree : f.natDegree = 0) :
     check f (decompose f) = true := by
@@ -380,7 +479,7 @@ private theorem divide_product {K : Type u} [Lean.Grind.Field K] [DecidableEq K]
 /-- On a squarefree input, Yun emits its monic associate once with
 multiplicity one and retains its leading coefficient as the unit. -/
 theorem decompose_squarefree {K : Type u} [Lean.Grind.Field K] [LE K] [LT K] [Std.IsPreorder K]
-    [Lean.Grind.OrderedRing K] [DecidableEq K]
+    [Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]
     (f : DensePoly K) (hdegree : 0 < f.natDegree)
     (hgcd : DensePoly.monicize
       (DensePoly.gcd f (DensePoly.derivativeImpl f)) = 1) :
@@ -432,7 +531,7 @@ theorem decompose_squarefree {K : Type u} [Lean.Grind.Field K] [LE K] [LT K] [St
 
 /-- Yun's result on a squarefree input passes the exact replay checker. -/
 theorem check_decompose_squarefree {K : Type u} [Lean.Grind.Field K] [LE K] [LT K] [Std.IsPreorder K]
-    [Lean.Grind.OrderedRing K] [DecidableEq K]
+    [Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]
     (f : DensePoly K) (hdegree : 0 < f.natDegree)
     (hgcd : DensePoly.monicize
       (DensePoly.gcd f (DensePoly.derivativeImpl f)) = 1) :
@@ -493,6 +592,26 @@ theorem check_decompose_squarefree {K : Type u} [Lean.Grind.Field K] [LE K] [LT 
   exact hlc
 
 end Hex.RealClosure.Yun
+
+/-- info: 'Hex.RealClosure.Yun.mem_loop' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.mem_loop
+
+/-- info: 'Hex.RealClosure.Yun.loop_labels' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.loop_labels
+
+/-- info: 'Hex.RealClosure.Yun.decompose_labels' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.decompose_labels
+
+/-- info: 'Hex.RealClosure.Yun.decompose_unit' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.decompose_unit
+
+/-- info: 'Hex.RealClosure.Yun.natCast_injective' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.natCast_injective
 
 /-- info: 'Hex.RealClosure.Yun.check_decompose_zero' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
