@@ -864,6 +864,15 @@ the coercion of a `Finset` literal. Each generator and the query `g` are
 closed terms of type `Equiv.Perm (Fin n)` that the compiler can evaluate, and
 the claimed order is a numeral.
 
+`Kernel.permOfImages n l` is the permutation of `Fin n` with image list `l`, or
+the identity when `l` is not the image list of a permutation. A statement
+using it contains only numerals, so it elaborates in time linear in `n`,
+whereas a product of many cycles in Mathlib's `c[…]` notation elaborates in
+time quadratic in the number of factors. For a generator or query of this
+form the tactic checks `imagesOk n l` and the packing of `l` in the kernel in
+time linear in `n`, through `pack_ofEquiv_permOfImages`. Any other closed
+permutation is packed by kernel evaluation.
+
 The tactic evaluates each generator and the query to image lists, runs
 `Kernel.certify` and `Kernel.chunks` with the degree and the number of inputs, and computes the order or the sift verdict
 in compiled code. If the goal is false, or `Kernel.chunks` fails, it reports the

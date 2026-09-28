@@ -80,6 +80,16 @@ example : Nat.card (Subgroup.closure
       Set (Equiv.Perm (Fin 11)))) = 7921 := by
   perm_group
 
+/-- The Mathieu group `M24` with its generators given as image lists, which elaborate in time
+linear in the degree and are checked by the kernel in time linear in the degree. -/
+example : Nat.card (Subgroup.closure ({
+    Hex.PermGroup.Kernel.permOfImages 24
+      [3, 6, 16, 0, 12, 8, 1, 14, 5, 18, 17, 20, 4, 15, 7, 13, 2, 10, 9, 23, 11, 22, 21, 19],
+    Hex.PermGroup.Kernel.permOfImages 24
+      [3, 20, 8, 5, 17, 0, 6, 7, 14, 4, 10, 11, 16, 1, 2, 12, 15, 9, 23, 19, 13, 21, 18, 22]} :
+      Set (Equiv.Perm (Fin 24)))) = 244823040 := by
+  perm_group
+
 -- `#perm_group_certificate` prints the same proof as Lean source, for committing a large
 -- certificate as data.
 #guard_msgs (drop info) in

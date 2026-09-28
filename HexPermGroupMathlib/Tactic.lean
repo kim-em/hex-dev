@@ -111,7 +111,7 @@ meta def evalImages (n : Nat) (g : Expr) : MetaM (List Nat) := do
       \nThe generators and the query must be closed terms the compiler can evaluate."
 
 /-- A runtime permutation from its image list. -/
-meta def permOfImages (n : Nat) (l : List Nat) : MetaM (Perm n) := do
+meta def parsePerm (n : Nat) (l : List Nat) : MetaM (Perm n) := do
   let imgs : Array (Fin n) ← l.toArray.mapM fun x =>
     if h : x < n then pure ⟨x, h⟩ else throwError "perm_group: image {x} out of range"
   if h : imgs.size = n then
@@ -196,23 +196,54 @@ meta def readGoal (goal : Expr) : MetaM (Expr × GoalKind) := do
   throwError "perm_group: unsupported goal{indentExpr goal}\nExpected `Nat.card (closure s) = N`, \
     `g ∈ closure s`, `g ∉ closure s` or `closure s = ⊤`."
 
+/-- A proof of `{x | x ∈ [g₁, …, gₖ]} = {g₁, …, gₖ}` built from the list lemmas,
+without traversing the elements. -/
+meta partial def setOfListEq (permTy : Expr) : List Expr → MetaM Expr
+  | [] => mkAppOptM ``setOf_mem_nil #[permTy]
+  | [g] => mkAppM ``setOf_mem_singleton #[g]
+  | g :: g' :: rest => do
+    let restE ← mkListLit permTy rest
+    let step ← mkAppM ``setOf_mem_cons #[g, g', restE]
+    let ih ← setOfListEq permTy (g' :: rest)
+    let ins ← withLocalDeclD `t (← mkAppOptM ``Set #[permTy]) fun t => do
+      mkLambdaFVars #[t] (← mkAppM ``Insert.insert #[g, t])
+    mkEqTrans step (← mkCongrArg ins ih)
+
 /-- Replace the generating set `s` in the goal by `{x | x ∈ gs}`. -/
-meta def rewriteSet (mvarId : MVarId) (s gsList : Expr) : TacticM MVarId := do
+meta def rewriteSet (mvarId : MVarId) (s gsList : Expr) (gens : List Expr) (permTy : Expr) :
+    TacticM MVarId := do
   -- `{x | x ∈ gs}` in exactly the form the soundness statements use
   let clTy ← whnfR (← inferType (← mkAppM ``closure_ofEquiv #[gsList]))
   let target := (clTy.getArg! 2).getArg! 2
-  let eqTy ← mkEq s target
-  let pf ← mkFreshExprMVar eqTy
-  let rem ← Term.withoutErrToSorry <| Tactic.run pf.mvarId! do
-    evalTactic (← `(tactic| (
-      symm
-      simp only [Hex.PermGroup.Kernel.setOf_mem_cons,
-        Hex.PermGroup.Kernel.setOf_mem_singleton, Hex.PermGroup.Kernel.setOf_mem_nil,
-        Finset.coe_insert, Finset.coe_singleton, Finset.coe_empty])))
-  unless rem.isEmpty do
-    throwError "perm_group: could not identify the generating set with a list"
-  let r ← mvarId.rewrite (← mvarId.getType) (← instantiateMVars pf)
+  let direct ← setOfListEq permTy gens
+  let pf ← if ← isDefEq (← inferType direct) (← mkEq target s) then
+      pure direct
+    else
+      -- a coerced `Finset` literal: identify it by rewriting
+      let pf ← mkFreshExprMVar (← mkEq target s)
+      let rem ← Term.withoutErrToSorry <| Tactic.run pf.mvarId! do
+        evalTactic (← `(tactic| simp only [Hex.PermGroup.Kernel.setOf_mem_cons,
+          Hex.PermGroup.Kernel.setOf_mem_singleton, Hex.PermGroup.Kernel.setOf_mem_nil,
+          Finset.coe_insert, Finset.coe_singleton, Finset.coe_empty]))
+      unless rem.isEmpty do
+        throwError "perm_group: could not identify the generating set with a list"
+      instantiateMVars pf
+  let r ← mvarId.rewrite (← mvarId.getType) (← mkEqSymm pf)
   mvarId.replaceTargetEq r.eNew r.eqProof
+
+/-- A proof that `pack (Perm.ofEquiv g) = x`. A generator written `permOfImages n l` is
+checked in time linear in `n`. Any other closed permutation is evaluated by the kernel. -/
+meta def packTie (nE g : Expr) (x : Nat) (suffix : String) : TacticM Expr := do
+  if g.isAppOfArity ``Hex.PermGroup.Kernel.permOfImages 2 then
+    let l := g.getArg! 1
+    let hok ← addKernelEq (← auxName s!"{suffix}_images") (← mkAppM ``imagesOk #[nE, l])
+      (mkConst ``Bool.true)
+    let hpk ← addKernelEq (← auxName s!"{suffix}_pack") (← mkAppM ``packList #[nE, l])
+      (mkNatLit x)
+    mkEqTrans (← mkAppM ``pack_ofEquiv_permOfImages #[hok]) hpk
+  else
+    addKernelEq (← auxName suffix)
+      (← mkAppOptM ``pack #[nE, ← mkAppOptM ``Perm.ofEquiv #[nE, g]]) (mkNatLit x)
 
 meta def permGroupTac (cfg : Config) : TacticM Unit := withMainContext do
   let mvarId ← getMainGoal
@@ -226,7 +257,7 @@ meta def permGroupTac (cfg : Config) : TacticM Unit := withMainContext do
   let n ← permDegree permTy
   -- compiled evaluation and certificate
   let images ← gens.mapM fun g => evalImages n g
-  let perms : List (Perm n) ← images.mapM fun l => (permOfImages n l : MetaM (Perm n))
+  let perms : List (Perm n) ← images.mapM fun l => (parsePerm n l : MetaM (Perm n))
   let c ← match certify perms.toArray with
     | .ok c => pure c
     | .error msg => throwError "perm_group: certificate construction failed: {msg}"
@@ -241,7 +272,7 @@ meta def permGroupTac (cfg : Config) : TacticM Unit := withMainContext do
   -- decide the goal in compiled code before adding any declaration
   let query ← match kind with
     | .mem g | .notMem g => do
-      let p : Perm n ← (permOfImages n (← evalImages n g) : MetaM (Perm n))
+      let p : Perm n ← (parsePerm n (← evalImages n g) : MetaM (Perm n))
       pure (some (g, pack p))
     | _ => pure none
   match kind with
@@ -276,9 +307,11 @@ meta def permGroupTac (cfg : Config) : TacticM Unit := withMainContext do
   let gsList ← mkListLit permTy gens
   let inputsE ← natListLit inputs
   -- the inputs are the packings of the generators
-  let hS ← addKernelEq (← auxName "inputs")
-    (← mkAppM ``List.map #[← mkAppOptM ``pack #[nE], ← mkAppM ``List.map #[
-      ← mkAppOptM ``Perm.ofEquiv #[nE], gsList]]) inputsE
+  let mut hS ← mkAppOptM ``map_pack_nil #[nE]
+  for k' in [0:gens.length] do
+    let k := gens.length - 1 - k'
+    let hk ← packTie nE gens[k]! inputs[k]! s!"input_{k}"
+    hS ← mkAppM ``map_pack_cons #[hk, hS]
   let hIn ← addKernelEq (← auxName "inputs_ok")
     (← mkAppM ``inputsOk #[nE, WE, eE, inputsE, certE]) (mkConst ``Bool.true)
   -- levels, from the last to the first
@@ -309,7 +342,7 @@ meta def permGroupTac (cfg : Config) : TacticM Unit := withMainContext do
       hi := hi'
     hLevels ← mkAppM ``levelsOk_cons_of #[hl, hN, hp, hLevels]
   let hCheck ← mkAppM ``check_of #[hIn, hLevels]
-  let mvarId ← rewriteSet mvarId s gsList
+  let mvarId ← rewriteSet mvarId s gsList gens permTy
   let proof ← match kind with
     | .card N =>
       let hO ← addKernelEq (← auxName "order") (← mkAppM ``order #[certE]) (mkNatLit N)
@@ -320,15 +353,13 @@ meta def permGroupTac (cfg : Config) : TacticM Unit := withMainContext do
       mkAppM ``eq_top_of_check #[hS, hCheck, hO]
     | .mem g =>
       let (_, x) := query.get!
-      let hx ← addKernelEq (← auxName "query")
-        (← mkAppOptM ``pack #[nE, ← mkAppOptM ``Perm.ofEquiv #[nE, g]]) (mkNatLit x)
+      let hx ← packTie nE g x "query"
       let hs ← addKernelEq (← auxName "sift")
         (← mkAppM ``Kernel.sift #[nE, WE, eE, certE, mkNatLit x]) (mkConst ``Bool.true)
       mkAppM ``mem_of_check #[hS, hCheck, hx, hs]
     | .notMem g =>
       let (_, x) := query.get!
-      let hx ← addKernelEq (← auxName "query")
-        (← mkAppOptM ``pack #[nE, ← mkAppOptM ``Perm.ofEquiv #[nE, g]]) (mkNatLit x)
+      let hx ← packTie nE g x "query"
       let hs ← addKernelEq (← auxName "sift")
         (← mkAppM ``Kernel.sift #[nE, WE, eE, certE, mkNatLit x]) (mkConst ``Bool.false)
       mkAppM ``not_mem_of_check #[hS, hCheck, hx, hs]
@@ -396,7 +427,7 @@ meta def elabPermGroupCertificate : Command.CommandElab := fun stx => do
       | ty => throwError "#perm_group_certificate: unexpected set type{indentExpr ty}"
     let n ← permDegree permTy
     let images ← gens.mapM fun g => evalImages n g
-    let perms : List (Perm n) ← images.mapM fun l => (permOfImages n l : MetaM (Perm n))
+    let perms : List (Perm n) ← images.mapM fun l => (parsePerm n l : MetaM (Perm n))
     let c ← match certify perms.toArray with
       | .ok c => pure c
       | .error msg => throwError "#perm_group_certificate: {msg}"
