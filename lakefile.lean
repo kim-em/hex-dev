@@ -27,6 +27,11 @@ require AINTLIB from git
   "https://github.com/CBirkbeck/AINTLIB.git" @
     "3808ce862c09ad5b4de0c76f10ba00946ed2eff3"
 
+-- Abstract Sturm–Tarski semantics for the optional query adapters.
+require TauCeti from git
+  "https://github.com/TauCetiProject/TauCeti.git" @
+    "ff72a2e86930d5268476ee33d55ab054ed1c3ea5"
+
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @
     "d870b9068518a0870842d15a0cd42637ec30b587"
