@@ -6,6 +6,9 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Yun
+public import HexRealClosure.Bounds
+public meta import HexSturm.Basic
+public meta import HexRealClosure.Bounds
 
 public section
 
@@ -594,5 +597,31 @@ private def yunNested : Option (Nat × Nat × Bool) := do
 
 #eval yunNested
 #guard yunNested == some (1, 2, true)
+
+-- Equality at the strict coefficient threshold must be rejected.
+#guard !Bounds.check Sturm.orderSign (DensePoly.ofCoeffs (#[-2, 0, 1] : Array Rat)) 3
+#guard Bounds.check Sturm.orderSign (DensePoly.ofCoeffs (#[-2, 0, 1] : Array Rat)) 4
+#guard (Bounds.find? Sturm.orderSign (DensePoly.ofCoeffs (#[-2, 0, 1] : Array Rat))).map
+  (fun b => b.value) == some 4
+#guard (Bounds.find? Sturm.orderSign (DensePoly.ofCoeffs (#[2, 0, -1] : Array Rat))).map
+  (fun b => b.value) == some 4
+#guard (Bounds.find? Sturm.orderSign (0 : DensePoly Rat)).isNone
+
+-- A finite-search failure can coexist with an ordinary rational root.
+#guard (Bounds.find? Sturm.orderSign (DensePoly.ofCoeffs (#[-1000, 2] : Array Rat))).isNone
+#guard (DensePoly.ofCoeffs (#[-1000, 2] : Array Rat)).eval 500 == 0
+
+/-- The bound search accepts packed coefficients with structural inequality
+between representatives of the same nonzero value. -/
+private def packedBound : Option Bool := do
+  let d ← Root.validate 7 raw
+  let h := d.handle
+  let alpha : Root.Handle.Value h := Root.Handle.Value.ofPoly h x
+  let square := alpha * alpha
+  let p : DensePoly (Root.Handle.Value h) := DensePoly.ofCoeffs #[-square, 0, 1]
+  let b ← Bounds.find? Root.Handle.Value.sign p
+  return square != (2 : Root.Handle.Value h) && (square - 2).value == 0 && b.value.value == 4
+
+#guard packedBound == some true
 
 end Hex.RealClosure.Tests
