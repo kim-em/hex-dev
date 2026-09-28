@@ -3,6 +3,8 @@
 **These historical builds include `#print axioms` after each proof.** That
 diagnostic traversal is additional work beyond kernel checking, so the numbers
 below must not be used as tactic-only timings or evidence of a speed advantage.
+The two arms also used different imports, unlike the corrected common-environment
+comparison.
 The [corrected comparison](determinant-general-performance.md) separates auditing
 from measurement and tests the shipped evaluator. Raw historical samples remain
 linked for inspection.

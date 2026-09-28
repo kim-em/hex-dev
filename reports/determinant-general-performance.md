@@ -13,7 +13,8 @@ this run does not establish a robust speed advantage there. The result-producing
 Each value is the median of six complete proof-file builds minus their adjacent
 import-only builds. Both arms and both baselines have identical imports. Every
 proof build includes statement elaboration, proof construction, output cleanup,
-Lean kernel checking, ordinary linting and serialization. Axiom audits and
+Lean kernel checking, ordinary linting and serialization. Result-producing
+`def` probes also include the compiler work requested by their olean build. Axiom audits and
 profiling are outside the timing samples.
 
 | Example | Mathlib | Hex |
@@ -32,8 +33,9 @@ No host-activity threshold was used to discard samples or wait for an idle CPU.
 
 All six 10×10 Hex differences lie between 0.988 and 1.006 seconds, versus
 0.902–1.117 seconds for Mathlib; Hex is faster in five of the six paired
-baseline-subtracted observations. The 6×6 medians differ by only 4 ms, with
-opposite pair directions. These are host-specific observations, not a universal
+baseline-subtracted observations. The 6×6 medians differ by only 4 ms; Hex is slower in four pairs and faster
+in two. Individual differences span 0.132–0.304 seconds for Mathlib and
+0.125–0.399 seconds for Hex. These are host-specific observations, not a universal
 speed claim or a reason to introduce matrix-family dispatch.
 
 ## Complete fresh-file builds
@@ -71,7 +73,12 @@ The run used six adjacent alternating AB/BA pairs, serially on automatically
 leased CPU 22, with one Lean thread. The selected cases were
 `OriginalQuadratic4`, `Products5`, `Independent6`, `RankOne10` and
 `ResultSymbolic3`. Equality comparison uses unchanged Mathlib
-`simp only [norm_det] <;> ring`. Result production uses `det%` versus determinant
+`simp only [norm_det] <;> ring`. That is unchanged tactic code running in the
+common Hex-importing environment, not in a minimal Mathlib-only environment.
+Extra imports may affect elaboration and simplification even after subtracting
+import-only time, so these data do not establish the same advantage for a
+Mathlib-only user. No separate natural-import proof control was collected.
+Result production uses `det%` versus determinant
 simplification constructing a certified value; neither receives the answer.
 
 All ten separate axiom audits passed with exactly `propext`, `Classical.choice`
@@ -88,9 +95,13 @@ records the working-tree source hashes, dependency states, host observations,
 compiler output, every completed sample and the executed protocol.
 
 The source archive preserves the exact measured probes and runner. The final
-runner additionally binds audit parsing to the exact exported declaration name;
-all ten retained audit outputs were revalidated against that check. This
-post-measurement parser hardening changes neither proofs nor timing commands.
+runner additionally binds audit parsing to the exact exported declaration name,
+builds each proof before auditing with separate process limits, and distinguishes
+aggregate-deadline truncation from a full 60-second case timeout. It retains
+warm-up failures and exits unsuccessfully for incomplete runs. All ten retained
+audit outputs were revalidated against the exact-declaration check. These runner
+changes affect preparation and failure handling, not the timed proof commands
+or the successful samples above; the archive records the runner actually used.
 
 `OriginalQuadratic4` restores the exact matrix and target from
 `dccd276f7:bench/HexPolyDetMathlib/ProofProbe/N4K2D2S4Hex.lean` (#10320).

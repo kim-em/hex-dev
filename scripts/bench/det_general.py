@@ -34,7 +34,7 @@ class Admission:
             return False, "aggregate measurement limit"
         for prior in self.timeouts.get((case.family, arm), []):
             if prior.dimension <= case.dimension and prior.complexity <= case.complexity:
-                return False, f"larger comparable case after timeout: {prior.name}"
+                return False, f"same or larger comparable case after timeout: {prior.name}"
         return True, None
 
     def observe(self, case: Case, arm: str, state: str) -> None:
@@ -86,13 +86,19 @@ def validate_sources(root: Path, cases: list[Case]) -> None:
     directory = root / 'bench/HexPolyDetMathlib/ProofProbe'
     for case in cases:
         imports = []
+        statements = []
         for arm in ('Mathlib', 'Hex'):
             stem = f'{case.name}{arm}'
             for suffix in ('', 'Baseline'):
                 source = (directory / f'{stem}{suffix}.lean').read_text()
-                if re.search(r'^\s*(#|run_meta\b|run_cmd\b|set_option\s+(profiler|trace\.))', source, re.M):
+                if re.search(r'^\s*(#|run_meta\b|run_cmd\b|trace_state\b|set_option\s+(profiler|diagnostics|trace\.))', source, re.M):
                     raise ValueError(f'diagnostic in timed module: {stem}{suffix}')
                 imports.append(re.findall(r'^import .+$', source, re.M))
+                if not suffix:
+                    match = re.search(rf'(?:theorem|def) {re.escape(PREFIX + "." + stem)}\.(?:result|certificate)\s*(.*?)\s*:=\s*by', source, re.S)
+                    if match is None:
+                        raise ValueError(f'missing exported proof declaration: {stem}')
+                    statements.append(' '.join(match[1].split()))
             audit = (directory / f'{stem}Audit.lean').read_text()
             declaration = 'certificate' if case.name.startswith('Result') else 'result'
             if re.findall(r'^import .+$', audit, re.M) != [f'import {PREFIX}.{stem}']:
@@ -101,6 +107,8 @@ def validate_sources(root: Path, cases: list[Case]) -> None:
                 raise ValueError(f'audit must inspect its exported declaration: {stem}')
         if not imports[0] or any(value != imports[0] for value in imports):
             raise ValueError(f'proof arms and baselines must have identical imports: {case.name}')
+        if statements[0] != statements[1]:
+            raise ValueError(f'proof arms must state the same theorem/result type: {case.name}')
 
 
 def run(output: Path, selected: set[str] | None = None, prior_seconds: float = 0,
@@ -137,8 +145,10 @@ def run(output: Path, selected: set[str] | None = None, prior_seconds: float = 0
     os.sched_setaffinity(0, {cpu})
     os.environ['LEAN_NUM_THREADS'] = '1'
     rows: list[dict] = []
+    preparations: list[dict] = []
     audits: list[dict] = []
     imports: list[dict] = []
+    warmup: dict = {'state': 'pending'}
     output.parent.mkdir(parents=True, exist_ok=True)
     environment = sweep.environment()
     source_hashes = sweep.source_hashes(spec, Path(__file__))
@@ -172,9 +182,11 @@ def run(output: Path, selected: set[str] | None = None, prior_seconds: float = 0
             'aggregate_elapsed_seconds': time.monotonic() - budget_started,
             'schedule_complete': len(rows) == len(cases) * 2 * PAIRS,
             'measurement_complete': len(rows) == len(cases) * 2 * PAIRS
-                and len(audits) == len(cases) * 2 and len(imports) == PAIRS * 2
-                and all(r['state'] == 'complete' for r in rows + audits + imports),
+                and len(audits) == len(cases) * 2 and len(preparations) == len(cases) * 2
+                and len(imports) == PAIRS * 2 and warmup['state'] == 'complete'
+                and all(r['state'] == 'complete' for r in rows + preparations + audits + imports),
             'subset': selected is not None, 'samples': rows, 'summary': summary,
+            'warmup': warmup, 'proof_preparation': preparations,
             'audits': audits, 'import_samples': imports,
         }
         output.write_text(json.dumps(report, indent=2) + '\n')
@@ -193,23 +205,45 @@ def run(output: Path, selected: set[str] | None = None, prior_seconds: float = 0
                 [cpu], lambda _m, row: observed.append(row), retain_compiler_output=True)
             if module.module.endswith('Audit'):
                 result['axioms'] = audited_axioms(module.module, result['compiler_output'])
+            elif re.search(rf'(?:info|trace): [^\n]*{re.escape(module.module.rsplit(".", 1)[-1])}\.lean:', result['compiler_output']):
+                raise RuntimeError(f'diagnostic output from timed module: {module.module}')
             sweep.validate_axioms(case.name, arm, module, result)
             return dict(result, state='complete')
         except RuntimeError as exc:
             row = dict(observed[-1]) if observed else {'state': 'failed'}
             if row.get('state') != 'timeout':
                 row['state'] = 'failed'
+            elif remaining < PROCESS_SECONDS:
+                row['state'] = 'truncated'
+                row['reason'] = 'aggregate measurement limit reached during build'
             row['error'] = str(exc)
             admission.observe(case, arm, row['state'])
             return row
 
     try:
-        if seconds - (time.monotonic() - budget_started) > 0:
-            sweep.warm_imports(spec, min(PROCESS_SECONDS, seconds - (time.monotonic() - budget_started)))
+        save()
+        warm_started = time.monotonic()
+        remaining = seconds - (warm_started - budget_started)
+        if remaining <= 0:
+            warmup = {'state': 'skipped', 'reason': 'aggregate measurement limit'}
+            return save()
+        try:
+            sweep.warm_imports(spec, min(PROCESS_SECONDS, remaining))
+            warmup = {'state': 'complete', 'elapsed_seconds': time.monotonic() - warm_started}
+        except RuntimeError as exc:
+            warmup = {'state': 'failed', 'error': str(exc),
+                      'elapsed_seconds': time.monotonic() - warm_started}
+            return save()
         for case in cases:
             for arm in ('Mathlib', 'Hex'):
+                print(f'[prepare] {case.name} {arm}', flush=True)
+                preparation = build(sweep.ProbeModule(f'{PREFIX}.{case.name}{arm}'), case, arm)
+                preparations.append(dict(preparation, case=case.name, arm=arm))
+                save()
                 print(f'[audit] {case.name} {arm}', flush=True)
-                result = build(sweep.ProbeModule(f'{PREFIX}.{case.name}{arm}Audit', AXIOMS), case, arm)
+                result = build(sweep.ProbeModule(f'{PREFIX}.{case.name}{arm}Audit', AXIOMS), case, arm) if preparation['state'] == 'complete' else {
+                    'state': 'skipped',
+                    'reason': f"proof preparation {preparation['state']}: {preparation.get('reason', preparation.get('error', ''))}"}
                 audits.append(dict(result, case=case.name, arm=arm))
                 save()
         for trial in range(PAIRS):
@@ -225,7 +259,7 @@ def run(output: Path, selected: set[str] | None = None, prior_seconds: float = 0
                     pair = next(p for p in pairs if p.name == f'{case.name}{arm}')
                     audited = next(r for r in audits if r['case'] == case.name and r['arm'] == arm)
                     built = {role: build(module, case, arm) if audited['state'] == 'complete'
-                             else {'state': 'skipped', 'reason': 'axiom audit did not pass'}
+                             else {'state': 'skipped', 'reason': f"audit {audited['state']}: {audited.get('reason', audited.get('error', ''))}"}
                              for role, module in sweep.ordered_modules(pair, trial)}
                     good = all(item['state'] == 'complete' for item in built.values())
                     rows.append({'case': case.name, 'arm': arm, 'trial': trial + 1,
@@ -248,4 +282,5 @@ if __name__ == '__main__':
     parser.add_argument('--seconds', type=float, default=TOTAL_SECONDS,
                         help='total allowance including audits and import builds, at most 1800')
     args = parser.parse_args()
-    run(args.output, set(args.case) if args.case else None, args.prior_seconds, args.seconds)
+    result = run(args.output, set(args.case) if args.case else None, args.prior_seconds, args.seconds)
+    raise SystemExit(0 if result['measurement_complete'] else 1)

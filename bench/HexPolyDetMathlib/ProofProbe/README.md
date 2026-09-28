@@ -9,7 +9,9 @@ work in a common environment. It is not an import-cost comparison.
 Each `*Audit.lean` imports its proof module and prints the axioms of that exact
 exported declaration. The runner checks these builds separately before timing;
 a failed or missing audit prevents that arm from contributing timing samples.
-Audit builds count towards the overall allowance but not towards proof times.
+Each proof is prepared first and audited afterward, with a separate 60-second
+process limit for each build. Preparation and audits count towards the overall
+allowance but not towards proof times.
 `ImportsHex.lean` and `ImportsMathlib.lean` measure each interface's own imports
 separately, including Lake startup.
 
@@ -29,8 +31,10 @@ python3 -m scripts.bench.det_general \
 The schedule uses six adjacent pairs in alternating AB/BA order, serially on an
 automatically leased CPU. Every process has a 60-second ceiling, and audits,
 import preparation, import measurements and proof builds share the total
-allowance. A timeout suppresses larger comparable inputs. Retain partial results
-and failed samples; do not restart the allowance to complete a grid.
+allowance. A full process timeout suppresses the same or larger comparable
+inputs; reaching a shorter remaining aggregate deadline records a truncated
+build instead. Warm-up failures and skipped-audit reasons are retained. The CLI
+exits unsuccessfully for incomplete runs. Retain partial results and failed samples; do not restart the allowance to complete a grid.
 
 The JSON records full proof-build time, its adjacent import baseline, their
 difference, separate import samples and audit output. Small or negative differences
