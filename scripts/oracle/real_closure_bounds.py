@@ -6,6 +6,11 @@ import json
 import sys
 
 
+def require(condition: bool, message: str) -> None:
+    if not condition:
+        raise ValueError(message)
+
+
 def expected_bound(coefficients: list[str]) -> Fraction | None:
     if not coefficients:
         return None
@@ -22,13 +27,13 @@ def leading(value, depth: int):
     if depth == 0:
         coefficient = Fraction(value)
         return ((), coefficient) if coefficient else None
-    assert set(value) == {"num", "den"}
+    require(set(value) == {"num", "den"}, "invalid fraction fields")
     terms = []
     for polynomial in (value["num"], value["den"]):
         terms.append(next(((index, signature) for index, coefficient in enumerate(polynomial)
                            if (signature := leading(coefficient, depth - 1)) is not None), None))
     numerator, denominator = terms
-    assert denominator is not None, "zero denominator"
+    require(denominator is not None, "zero denominator")
     if numerator is None:
         return None
     ni, (nv, nc) = numerator
@@ -45,9 +50,9 @@ def is_constant(value, depth: int) -> bool:
 
 
 def infinitesimal_bound(coefficients, depth: int) -> Fraction | None:
-    assert depth in (1, 2)
+    require(depth in (1, 2), "unsupported infinitesimal depth")
     signatures = [leading(coefficient, depth) for coefficient in coefficients]
-    assert signatures and signatures[-1] is not None
+    require(bool(signatures) and signatures[-1] is not None, "zero leading coefficient")
     lead_value, lead_coefficient = signatures[-1]
     for exponent in range(1, 2 * len(coefficients) + 1):
         bound = Fraction(2**exponent)
@@ -62,26 +67,37 @@ def infinitesimal_bound(coefficients, depth: int) -> Fraction | None:
             elif relative == (0,) * depth:
                 ratio = abs(coefficient / lead_coefficient)
                 if ratio == bound - 1:
-                    assert is_constant(coefficients[index], depth) and is_constant(coefficients[-1], depth), \
-                        "leading-coefficient equality needs higher terms"
+                    require(is_constant(coefficients[index], depth)
+                            and is_constant(coefficients[-1], depth),
+                            "leading-coefficient equality needs higher terms")
                 accepted &= ratio < bound - 1
         if accepted:
             return bound
     return None
 
 
-def main() -> None:
-    fixtures = [json.loads(line) for line in sys.stdin if line.strip()]
-    assert len(fixtures) == 13, f"expected 13 fixtures, got {len(fixtures)}"
-    assert len({fixture["name"] for fixture in fixtures}) == len(fixtures), "duplicate fixture"
+def verify(fixtures: list[dict]) -> None:
+    require(bool(fixtures), "no fixtures")
+    require(len({fixture["name"] for fixture in fixtures}) == len(fixtures), "duplicate fixture")
     for fixture in fixtures:
         if fixture["kind"] == "rational":
             expected = expected_bound(fixture["coefficients"])
+            actual = Fraction(fixture["bound"]) if fixture["bound"] is not None else None
         else:
-            assert fixture["kind"] == "infinitesimal"
-            expected = infinitesimal_bound(fixture["coefficients"], fixture["depth"])
-        actual = Fraction(fixture["bound"]) if fixture["bound"] is not None else None
-        assert actual == expected, (fixture["name"], actual, expected)
+            require(fixture["kind"] == "infinitesimal", "unknown fixture kind")
+            depth = fixture["depth"]
+            expected = infinitesimal_bound(fixture["coefficients"], depth)
+            actual = None
+            if fixture["bound"] is not None:
+                require(is_constant(fixture["bound"], depth), "bound is not a rational constant")
+                signature = leading(fixture["bound"], depth)
+                actual = signature[1] if signature is not None else Fraction(0)
+        require(actual == expected, f"{fixture['name']}: got {actual}, expected {expected}")
+
+
+def main() -> None:
+    fixtures = [json.loads(line) for line in sys.stdin if line.strip()]
+    verify(fixtures)
     print(f"verified {len(fixtures)} finite-bound fixtures")
 
 

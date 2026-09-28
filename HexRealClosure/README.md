@@ -176,10 +176,12 @@ operations used by the executable API. `decompose_packed` applies them to the
 actual cached packed recurrence after coefficient interpretation; this
 selected-root instantiation inherits the named #10389 inverse dependency.
 
-`Bounds.find?` supplies the finite dyadic search for root isolation. It tries
+`Bounds.find?` supplies the finite dyadic search for root isolation. It computes
+coefficient absolute values once, then tries
 `2^j` for `1 ≤ j ≤ 2 * (degree p + 1)` and checks the strict Cauchy coefficient
 inequalities without coefficient division. `find?_exponent` records the finite
-range of every returned value; `find?_none` records rejection of all candidates.
+range of every returned value; `find?_eq` proves agreement with separate
+candidate checks. `find?_none` records rejection of all candidates.
 `find?_dyadic` interprets them as dyadic powers when natural casts are preserved.
 The companion's `Bounds.check_sound` and `Bound.roots` prove that accepted
 values give strict open endpoints for all roots in any ordered field. These
