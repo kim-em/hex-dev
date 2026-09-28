@@ -64,4 +64,48 @@ The pinned harness has no allocation-byte counter; a missing value is not
 zero. These registrations alone cannot discharge allocation, nested-field,
 maximal-support, joint-query, unreduced comparison or complete Phase-4 gates.
 
-No completed timing campaign is claimed here.
+The [retained collection](data/sign-det-height/640bf10bd/metadata.json)
+uses committed source `640bf10bd72d2ad25e6ce5d9f1c409e5dfc13eaa` on shared
+host `chungus2`, automatically leased CPU 82. All 84 scientific samples
+completed with the expected outputs and exact trial-major schedules. Sources
+and executable hashes were unchanged. Both mode-1 verdicts are **consistent
+with declared complexity**; no sample was removed and no rerun was used.
+The normalized slopes are −0.081272 for construction and −0.074066 for
+replay. The harness omits the first rung from its fitted verdict, while the
+raw exports retain it.
+
+The host's recorded data L1 is 48 KiB, L2 is 1 MiB and L3 is 32 MiB. These
+are context, not a claim of cache isolation. Medians below include every
+completed sample at each height; they are observations on this host.
+
+| Coefficient bits | Normalization median µs | Replay median µs |
+| ---: | ---: | ---: |
+
+| 8,192 | 8.261 | 18.054 |
+| 16,384 | 14.018 | 33.216 |
+| 32,768 | 22.650 | 57.533 |
+| 65,536 | 41.920 | 107.791 |
+| 131,072 | 77.885 | 206.123 |
+| 262,144 | 164.919 | 404.705 |
+| 524,288 | 324.728 | 808.804 |
+
+The source-derived reduced byte-size difference is 16 times the difference
+in the decimal digit count of c. The five unshared nodes have eight original
+query occurrences; each stores c once in the query and once as a preprocessing
+scale. Every other reduced graph literal is height-independent. The small
+inventory passes this additional relative-size check at all seven heights.
+The absolute size remains an observed value: at 4096 bits the reduced graph
+has 25,297 bytes and the unreduced graph 46,760 bytes. This is not a proof
+of a general byte-parser roundtrip or an independent reconstruction of every
+encoded byte.
+
+The archive preserves the exact premeasurement sources, including the
+original validator. The additional relative-size validation above passes the
+same retained data; it does not replace or remove measurements. Later report
+and validator edits do not change the measured normalization or checking
+functions. Reproduction uses the base and patch recorded in the metadata.
+
+These passing results discharge the declared normalization-phase registrations
+only. General coefficient-height propagation, allocation, nested fields,
+maximal support, joint comparisons and the remaining Phase-4 requirements
+remain open under #10377.

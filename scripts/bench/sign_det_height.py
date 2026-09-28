@@ -47,6 +47,14 @@ def validate(path):
         if (any(not 0 <= row[key] < 2**64 for key in HASH_FIELDS) or
                 row["reducedGraphBytes"] <= 0 or row["directGraphBytes"] <= 0):
             raise ValueError("invalid byte size or hash")
+    # The five unshared nodes have 3+1+2+1+1 query occurrences. Each
+    # stores c once in the raw query and once as its preparation scale.
+    # All other reduced graph literals are independent of height.
+    baseline = rows[0]["reducedGraphBytes"]
+    digits = len(str(2**HEIGHTS[0]-1))
+    for row, height in zip(rows, HEIGHTS, strict=True):
+        if row["reducedGraphBytes"] - baseline != 16*(len(str(2**height-1))-digits):
+            raise ValueError("reduced byte-size differences disagree with the 16 coefficient copies")
     return len(rows)
 
 

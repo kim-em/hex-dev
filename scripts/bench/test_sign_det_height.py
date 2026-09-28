@@ -16,7 +16,7 @@ class HeightValidation(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.path = Path(self.temp.name) / "inventory.jsonl"
         self.rows = [dict(expected(h), inputHash=1, productionResultHash=1, replayResultHash=2,
-                          reducedGraphBytes=100,
+                          reducedGraphBytes=100+16*(len(str(2**h-1))-len(str(2**64-1))),
                           directGraphBytes=100) for h in HEIGHTS]
 
     def check(self, rows):
@@ -33,6 +33,11 @@ class HeightValidation(unittest.TestCase):
                 rows = copy.deepcopy(self.rows)
                 rows[0][field] = 0
                 self.check(rows)
+
+    def test_wrong_byte_growth(self):
+        self.rows[2]["reducedGraphBytes"] += 1
+        with self.assertRaises(ValueError):
+            self.check(self.rows)
 
     def test_same_hash_changed_height(self):
         self.rows[1] = copy.deepcopy(self.rows[0])
