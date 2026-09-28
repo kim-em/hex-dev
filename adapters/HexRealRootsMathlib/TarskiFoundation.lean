@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import TauCeti.Algebra.Polynomial.Sturm.Infinity
+public import TauCeti.Algebra.Polynomial.Squarefree
 public import HexRealRootsMathlib.TarskiGcd
 public import HexRealRootsMathlib.TarskiSigns
 public import HexRealRootsMathlib.TarskiSum
