@@ -49,6 +49,21 @@ def divmod_poly(p, q):
     return trim(quotient), p
 
 
+def polynomial_gcd(p, q):
+    while q:
+        p, q = q, divmod_poly(p, q)[1]
+    return [c / p[-1] for c in p] if p else []
+
+
+def polynomial_xgcd_left(p, q):
+    left, right = ONE, []
+    while q:
+        quotient, remainder = divmod_poly(p, q)
+        p, q = q, remainder
+        left, right = right, sub(left, mul(quotient, right))
+    return p, left
+
+
 # Work in Q[b]/(b^4-2); the positive b in (1,2) is 2^(1/4).
 MODULUS = [Q(-2), Q(0), Q(0), Q(0), Q(1)]
 ONE = [Q(1)]
@@ -139,7 +154,13 @@ def field_remainder(p, q):
 def nested_expected(scale):
     # The stored parent representative of (a-3)/(a-3) is (9-X²)/7,
     # computed in the full reducible cubic before selected-root evaluation.
-    raw_inverse = [Q(-3, 7), Q(-1, 7)]
+    operand = [Q(-3), Q(1)]
+    local_gcd = polynomial_gcd(RATIONAL_HEAD, operand)
+    cofactor, leftover = divmod_poly(RATIONAL_HEAD, local_gcd)
+    assert not leftover
+    constant_gcd, bezout = polynomial_xgcd_left(operand, cofactor)
+    assert len(constant_gcd) == 1 and constant_gcd[0]
+    raw_inverse = [c / constant_gcd[0] for c in bezout]
     raw_one = retained(mul([Q(-3), Q(1)], raw_inverse), RATIONAL_HEAD,
                        lambda c: c.denominator == 1)
     semantic_one = product(sub(A, [Q(3)]), inverse(sub(A, [Q(3)])))
@@ -148,7 +169,8 @@ def nested_expected(scale):
     scaled_head = [[Q(scale) * c for c in coefficient] for coefficient in head]
     # scale=0 means the semantic-one representative, whose leading coefficient
     # differs structurally from literal one and whose coefficients are unclean.
-    literal_monic = scale != 0 and scaled_head[-1] == ONE
+    stored_factor = raw_one if scale == 0 else [Q(scale)]
+    literal_monic = stored_factor == [Q(1)]
     raw_fourth = [[], [], [], [], ONE]
     kept = field_remainder(raw_fourth, scaled_head) if literal_monic else raw_fourth
     remainder = field_remainder([neg(A), [], ONE], [neg(B), ONE])
@@ -183,18 +205,30 @@ def germ_sign(p):
     return (c > 0) - (c < 0)
 
 
+def germ_remainder(p, q):
+    """Exact monic division in the Laurent polynomial coefficient ring."""
+    p, q = trim(p), trim(q)
+    assert q[-1] == {0: Q(1)}
+    while p and len(p) >= len(q):
+        k, c = len(p) - len(q), p[-1]
+        for i, a in enumerate(q):
+            p[k + i] = germ_add(p[k + i], germ_neg(germ_mul(c, a)))
+        p = trim(p)
+    return p
+
+
 def expected():
     # Embed epsilon=t² and its selected positive square root=t in positive Laurent germs.
     t, epsilon, inv_t, one = {1: Q(1)}, {2: Q(1)}, {-1: Q(1)}, {0: Q(1)}
     assert germ_sign(t) > 0 and germ_sign(germ_add(one, germ_neg(t))) > 0
     assert not germ_add(germ_mul(t, t), germ_neg(epsilon))
     # Monic division of Y³ by Y²-epsilon leaves epsilon*Y.
-    remainder = [germ_mul(epsilon, {}), epsilon]
+    remainder = germ_remainder([{}, {}, {}, one], [germ_neg(epsilon), {}, one])
     clean = lambda g: all(n >= 0 and c.denominator == 1 for n, c in g.items())
     infinitesimal = [germ_sign(t), germ_sign(germ_add(t, germ_neg(epsilon))),
                     germ_sign(germ_add(germ_mul(t, t), germ_neg(epsilon))),
                     germ_sign(germ_add(germ_mul(t, inv_t), germ_neg(one))),
-                    germ_sign(inv_t), int(clean(one)), len(trim(remainder)) - 1]
+                    germ_sign(inv_t), int(all(clean(c) for c in [{}, one])), len(trim(remainder)) - 1]
     return [rational_expected(Q(1)), rational_expected(Q(2)), infinitesimal,
             nested_expected(1), nested_expected(2), nested_expected(0)]
 

@@ -423,7 +423,10 @@ including zero reflection, sign and gcd/cofactor inversion.
 and order instances inherited from the ambient field. `Element.toValue`
 preserves arithmetic and sign, is surjective, and identifies exactly the
 representatives accepted by executable `equal`. `Context.quotientEquiv`
-identifies the semantic quotient of storage with this field. Stored
+identifies the semantic quotient of storage with this field.
+`quotientField`, `quotientOrder` and `quotientOrdered` transfer lawful field and
+order structures to that quotient; the `quotient_add`, `quotient_mul`,
+`quotient_inv` and related equations prove descent of the actual packed operations. Stored
 representatives have no asserted field instance.
 
 `BaseContext.Element.isClean` checks integral rational coefficients and
@@ -433,8 +436,9 @@ coefficients. `BaseClean.lean` proves closure of the actual recursive base
 predicate under zero, one, addition, subtraction and multiplication, and derives
 clean packing for the native base constructor. `AlgebraicClean.lean` proves that
 these closure properties preserve coefficients through actual polynomial
-arithmetic and monic division, retained reduction and packed arithmetic. Those
-lemmas also propagate cleanliness through subsequent algebraic levels. They
+arithmetic and monic division, retained reduction and packed arithmetic. `Context.extend_clean`
+proves clean packing at the next algebraic level from those preceding-operation
+closure theorems. They
 need no field laws on stored syntax and have no admitted dependencies.
 
 Run `lake build HexRealClosure.AlgebraicTests HexQuerySemantics` and

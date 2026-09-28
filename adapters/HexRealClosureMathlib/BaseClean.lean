@@ -34,6 +34,15 @@ private theorem rational_closed : Closed (fun q : Rat => q.den == 1) := by
     rw [← he]
     simp only [Rat.den_intCast, beq_self_eq_true]
 
+/-- Integral rational storage is closed under all operations used by retained
+monic division. This also applies to direct rational backend contexts. -/
+theorem rational_clean :
+    ((0 : Rat).den == 1) = true ∧ ((1 : Rat).den == 1) = true ∧
+    (∀ a b : Rat, (a.den == 1) = true → (b.den == 1) = true → ((a + b).den == 1) = true) ∧
+    (∀ a b : Rat, (a.den == 1) = true → (b.den == 1) = true → ((a - b).den == 1) = true) ∧
+    (∀ a b : Rat, (a.den == 1) = true → (b.den == 1) = true → ((a * b).den == 1) = true) :=
+  rational_closed
+
 private theorem function_closed {K : Type} [Lean.Grind.Field K] [DecidableEq K]
     (clean : K → Bool) (hc : Closed clean) :
     Closed (fun f : RationalFn K => (f.den == 1) && f.num.toArray.all clean) := by
