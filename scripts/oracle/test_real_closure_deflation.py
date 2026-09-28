@@ -51,6 +51,23 @@ class DeflationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "repeated root: wrong residual evaluation"):
             verify(self.changed("repeated root", "remaining_at_root", "1"))
 
+    def test_rejects_wrong_zero_multiplicity(self) -> None:
+        for multiplicity in (0, 1, 3, -1, True):
+            with self.assertRaisesRegex(ValueError, "wrong zero multiplicity"):
+                verify(self.changed("extract mixed fractional scalar", "multiplicity", multiplicity))
+
+    def test_rejects_zero_quotient_scalar_loss(self) -> None:
+        with self.assertRaisesRegex(ValueError, "wrong zero quotient or scalar"):
+            verify(self.changed("extract pure power", "head", ["1"]))
+
+    def test_rejects_zero_polynomial_finite_payload(self) -> None:
+        with self.assertRaisesRegex(ValueError, "wrong zero quotient or scalar"):
+            verify(self.changed("extract zero polynomial", "head", ["1"]))
+
+    def test_rejects_zero_polynomial_multiplicity(self) -> None:
+        with self.assertRaisesRegex(ValueError, "wrong zero multiplicity"):
+            verify(self.changed("extract zero polynomial", "multiplicity", 1))
+
     def test_rejects_empty_and_duplicate_data(self) -> None:
         for rows in ([], self.fixtures + self.fixtures[:1]):
             with self.assertRaises(ValueError):

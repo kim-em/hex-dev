@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact synthetic-division oracle in QQ(epsilon, delta), using SymPy fields."""
+"""Exact deflation and zero multiplicities in QQ(epsilon, delta)."""
 
 from fractions import Fraction
 import json
@@ -38,8 +38,18 @@ def verify(fixtures: list[dict]) -> None:
         depth = row["depth"]
         require(depth in (0, 1, 2), "unsupported coefficient depth")
         coefficients = [decode(a, depth) for a in row["coefficients"]]
-        root = decode(row["root"], depth)
         require(not coefficients or bool(coefficients[-1]), "zero leading coefficient")
+        if row.get("kind") == "zero-factor":
+            # The order of the first nonzero coefficient determines the exact
+            # power of X, independently of the executable division recurrence.
+            multiplicity = next((i for i, a in enumerate(coefficients) if a), 0)
+            require(type(row["multiplicity"]) is int and row["multiplicity"] == multiplicity,
+                    f"{row['name']}: wrong zero multiplicity")
+            actual = [decode(a, depth) for a in row["head"]]
+            require(actual == coefficients[multiplicity:],
+                    f"{row['name']}: wrong zero quotient or scalar")
+            continue
+        root = decode(row["root"], depth)
         # Independent Horner recurrence, not the executable long-division kernel.
         quotient = []
         remainder = coefficient_field.zero
@@ -66,7 +76,7 @@ def verify(fixtures: list[dict]) -> None:
 def main() -> None:
     fixtures = [json.loads(line) for line in sys.stdin if line.strip()]
     verify(fixtures)
-    print(f"verified {len(fixtures)} exact-deflation fixtures")
+    print(f"verified {len(fixtures)} exact-deflation and zero-factor fixtures")
 
 
 if __name__ == "__main__":
