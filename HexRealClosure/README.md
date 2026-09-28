@@ -40,7 +40,7 @@ Run `lake build HexRealClosure.Tests HexQuerySemantics` and
 `python3 HexRealClosure/verify.py` from the repository root. The test uses
 `(X²−2)(X−3)` with the root in `(1,2)`, plus a non-monic definition and a
 checked factor split. The Python oracle computes exact arithmetic in ℚ(√2)
-independently of Lean for 26 cases and is run manually; CI builds the Lean
+independently of Lean for 29 cases and is run manually; CI builds the Lean
 `#guard` tests.
 The companion proofs inherit the named #10389 admission in
 `HexRealRootsMathlib.Tarski.check_rootSum`; no new admission is used here.
@@ -120,6 +120,34 @@ indexed by its checked descriptor, so it cannot be used for a different
 context version without a checked conversion. Bind it once as
 `let h := d.handle` and pass `h` to cached values; writing `d.handle` afresh
 at each call repeats the search.
+
+`Yun.decompose` runs the specified finite recurrence over an executable
+ordered field. `Yun.decomposeRaw` runs the same recurrence on packed tower
+coefficients, where stored equality need not be value equality. The zero and
+nonzero-constant cases, including acceptance by replay, have direct proofs.
+For a positive-degree input whose monic gcd with its derivative is one,
+the producer returns its leading coefficient and its monic associate with
+multiplicity one, and this result is proved to pass replay. These squarefree
+producer proofs use the same field instances as the executable API.
+Runnable checks cover a
+non-monic input, gaps in multiplicities, mixed zero and nonzero roots with a
+fractional unit, a repeated irreducible quadratic, and coefficients in
+`ℚ(√2)`.
+The optional `Yun.check` recomputes the product and degree, checks positive
+ordered multiplicities and nonconstant monic factors, and checks squarefree and
+pairwise gcd conditions. Core lemmas extract those accepted conditions; the
+Mathlib companion transports the product to mathematical polynomials and
+proves that accepted rational factors are squarefree and pairwise coprime.
+For every field embedding of ℚ, accepted factors cover exactly the roots of
+the input, and each factor label is the multiplicity of its roots in the
+input. This includes irrational real roots after mapping to ℝ.
+`Yun.map_decomposeRaw` transports the raw recurrence through a zero-reflecting
+coefficient map that preserves its arithmetic. The companion instantiates
+this theorem for cached rational selected-root coefficients; their inverse
+semantics retain the named `Tarski.check_rootSum` admission (#10389).
+Arbitrary ordered coefficient towers still need their interpretation laws.
+The proof that `decompose` always passes replay on repeated-factor inputs is
+also outstanding, so unchecked outputs are not certified decompositions.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and

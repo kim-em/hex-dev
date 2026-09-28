@@ -103,8 +103,10 @@ existing integer rank producer to select the retained row basis.
 and per-row operands used by both construction and its companion statements.
 `buildPrepared` additionally returns
 a proof that the independent replay accepts the resulting tree. Its `BuildError`
-diagnostics expose outstanding producer-completeness obligations; they are not
-mathematical domain failures and this is not yet the total `determinePrepared`
+diagnostics remain available for arbitrary coefficient operations. The companion
+proves construction succeeds under its lawful interpretation and the named
+#10389 root-sum bridge; these diagnostics are not mathematical domain failures,
+and this is not yet the total `determinePrepared`
 API. No supplied roots or guessed counts enter construction. `referencePrepared`
 builds the exponential full-ternary system for small-case comparisons; production
 recursion never calls it.
@@ -143,18 +145,19 @@ identity. Tensor correspondence preserves the exact Cartesian-product order.
 exponent/sign vectors. `Node.product_inverse` then proves the parent witness
 identity with the precise retained row and support lists used by `buildTreeFrom`.
 `solveScaled_eq` proves that solving a checked integer system recovers its
-counts, including zero dimensions and non-unit denominators. Integrating these
-finite facts with root/query semantics into full producer completeness remains
-required.
+counts, including zero dimensions and non-unit denominators. The companion
+combines these finite facts with the actual root-query semantics to prove
+producer completeness relative to the named #10389 bridge.
 
 `count_moments` proves the finite counting identity on an independently complete
 candidate support. `Replay.support_complete` then proves recursive coverage and
 exact counts for the actual checked tree, conditional on `Replay.Interprets`:
 each node's moments must be the sums over the same finite observations restricted
 to its query positions. `Replay.support_iff` excludes both missing and spurious
-positive conditions. The companion must establish this explicit moment contract
-from query/root semantics through #10389; the executable checker does not assume
-it, and the finite induction is not a root-sum soundness theorem.
+positive conditions. The companion establishes this explicit moment contract
+from query/root semantics through the admitted #10389 bridge; the executable
+checker does not assume it, and the finite induction is not a root-sum
+soundness theorem.
 
 The conformance target includes recursive rational examples with supplied exact
 roots, malformed matrices and tree mutations, and ordinary-kernel literal
@@ -272,9 +275,11 @@ for its cost against the required comparison bounds remain required.
 The total `determinePrepared` API remains required.
 The optional companion proves producer completeness and root-count correspondence
 relative to the named #10389 root-sum bridge; it does not yet provide those
-total executable wrappers. Completion,
-root lists and selected signs still expose internal diagnostics until their
-totality proofs are supplied. Strict-order comparison correspondence,
+total executable wrappers. `Descriptor.buildSigns_success` rules out every
+internal selected-sign error on validated descriptors with lawful coefficients;
+the executable diagnostic interface is retained for arbitrary operations.
+Completion and root lists still require their totality proofs.
+Strict-order comparison correspondence,
 re-encoding success characterization and domain-exact totality, the consumer
 sample-point interface, serialization and
 nested evidence sharing also remain required. The semantic proofs interpret the

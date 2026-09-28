@@ -1,0 +1,22 @@
+{
+  "names": [
+    "comparison",
+    "denominators",
+    "compareHeight"
+  ],
+  "parameters": {
+    "comparison": [
+      0
+    ],
+    "denominators": [
+      0
+    ],
+    "compareHeight": [
+      0
+    ]
+  },
+  "trials": 3,
+  "first_trial": 0,
+  "target_nanos": 1000000000,
+  "order": "trial-major Z3 rational controls"
+}

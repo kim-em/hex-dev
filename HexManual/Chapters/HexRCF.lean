@@ -10,6 +10,7 @@ import HexRCF
 import HexRCF.RealCoefficients
 import HexRealClosure
 import HexSignDet
+import HexSignDetMathlib.SelectedProducer
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -506,9 +507,13 @@ The next examples mix Mathlib's `Real.sqrt 2` with a Hex root selected from
 `X² − 3`. They also use the ordinary `QAdjoin` element `1 + √3`, converted
 back to a real algebraic number. `rcf` checks each proposed common-field
 coordinate against the original selected root before proving the sentence.
-For multiple sources, this path currently needs a checked quadratic-norm
-certificate for the computed common field. Other field combinations decline
-with a diagnostic.
+For multiple sources, the tactic checks a defining polynomial and selected
+real root for the common field, then verifies that every original coefficient
+has the proposed value there. The higher-degree example below combines the
+selected real root of `X³ − 2` with `Real.sqrt 2`.
+Some larger combinations still decline with an irreducibility-witness
+diagnostic: the current certificate search does not cover every polynomial
+that can define a common field.
 
 ```lean
 open Hex.RCF.RealCoefficients
@@ -641,6 +646,11 @@ example : ∀ x : ℝ,
 set_option maxHeartbeats 5000000 in
 example : ∀ x : ℝ,
     x ^ 2 + shiftedThree.toReal - Real.sqrt 2 > 0 := by
+  rcf
+
+set_option maxHeartbeats 5000000 in
+example : ∀ x : ℝ,
+    x ^ 2 + selectedCubic.toReal - Real.sqrt 2 + 1 > 0 := by
   rcf
 
 /-- error: rcf: the universal sentence is false on the
@@ -847,6 +857,52 @@ private def selectedSignsPass : Bool :=
 #guard selectedSignsPass
 ```
 
+The same operation works over a real number field. Let α be the positive cube
+root of 2 constructed above, and work in ℚ(α) using ordinary {name}`Hex.QAdjoin`
+arithmetic. The polynomial `(x − α)(x + α)` has two real roots; the positive
+first-derivative sign selects α. At that root, `x − 1`, `x − 2` and `x³ − 2`
+have signs `+`, `−` and `0`. Repeating the first query repeats its sign in the
+same position. An empty query list returns an empty sign vector.
+
+```lean
+private abbrev signsField := Hex.QAdjoin cubicGenerator
+private def signsAlpha : signsField :=
+  cubicGenerator.toQAdjoin
+private def signsFieldSign (a : signsField) : Int :=
+  (Coefficients.ofField CubeTwo.realAlgebraic a).sign
+private def signsX : DensePoly signsField :=
+  DensePoly.ofList [0, 1]
+private def signsHead : DensePoly signsField :=
+  (signsX - DensePoly.C signsAlpha) *
+    (signsX + DensePoly.C signsAlpha)
+private def signsRoot : RawDescriptor signsField Nat :=
+  ⟨7, signsHead, .negInf, .posInf, [1], [1]⟩
+private def signsFieldPasses : Bool :=
+  match Descriptor.build signsFieldSign 7 signsRoot with
+  | .ok (.ok root) =>
+    let queries := [signsX - 1, signsX - DensePoly.C 2,
+      signsX.natPow 3 - DensePoly.C 2, signsX - 1]
+    match root.buildSigns queries, root.buildSigns [] with
+    | .ok signs, .ok empty =>
+      signs.values.toList == [1, -1, 0, 1] &&
+        empty.values.toList == []
+    | _, _ => false
+  | _ => false
+
+#guard signsFieldPasses
+```
+
+Import `HexSignDetMathlib.SelectedProducer` for the success and correctness
+theorems. {name}`Hex.SignDet.Descriptor.buildSigns_success` proves that this operation
+always succeeds for a validated descriptor when coefficient arithmetic and
+signs have their specified mathematical meaning. It proves preparation and
+table construction succeed and rules out every final internal error; successful
+output is not a hypothesis. {name}`Hex.SignDet.Descriptor.buildSigns_roots`
+also proves that the returned list gives the signs at the original selected
+root, in query order. These proofs use the named root-sum admission in
+[#10389](https://github.com/kim-em/hex-dev/issues/10389); they do not require a
+theorem about ordering roots by Thom encodings.
+
 Two roots can be compared even if their defining polynomials differ. The
 comparison constructs a checked common squarefree polynomial and expresses
 both root selections in it. This example finds `1 < 2`.
@@ -927,11 +983,12 @@ private def independentRootsPass : Bool :=
 ```
 
 The sign-table and descriptor examples run checked producers and finite
-certificate checks; the changed sign vector above is rejected. Their
-interpretation as exact real-root counts and orders is not yet proved. That
-requires the root-sum bridge tracked by
-[#10389](https://github.com/kim-em/hex-dev/issues/10389), as well as the
-moment, support-reduction and Thom foundations required from Tau Ceti. The
+certificate checks; the changed sign vector above is rejected. The companion
+proves complete real-root counts, selected-root identity and signs using the
+root-sum bridge tracked by
+[#10389](https://github.com/kim-em/hex-dev/issues/10389), which remains admitted.
+Strict root ordering still requires the Thom foundation from Tau Ceti, and the
+full library assignment retains its separate BKR/Thom foundation gate. The
 separate common-field conversion preserves the selected algebraic values by
 the proved `QAdjoin.common_get` theorem.
 

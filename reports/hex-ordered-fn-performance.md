@@ -4,6 +4,123 @@ The Mathlib-free targets exercise production signs, comparisons, Horner bounds
 and real refinement on canonical rational functions. The initial six targets
 cover infinitesimals; the later sections cover real searches and general comparisons.
 API review and conformance are recorded separately from these runtime results.
+The current library-local performance requirements are satisfied by the
+measurements below. Historical inconclusive runs remain recorded with their
+original verdicts. Algebraic tower integration measurements belong to
+[hex-real-closure](../SPEC/Libraries/hex-real-closure.md#conformance-and-phase-4-evidence)
+and [#10378](https://github.com/kim-em/hex-dev/issues/10378).
+
+## Bench targets
+
+All names below have prefix `Hex.OrderedFnBench.`. The formulas are the
+registration strings in `bench/HexOrderedFn/Bench.lean`. Every schedule uses
+three trial-major repetitions; the paired arithmetic experiment separately
+uses four adjacent alternating repetitions.
+
+| Targets | Declared complexity | Parameter schedule | Batch target |
+| --- | --- | --- | --- |
+| `scan`, `second`, `third`, `comparison` | `n` | 128, 256, 512, 1024, 2048, 4096, 8192, 16384 | 1 s |
+| `subtraction` | `n` | 128, 256, 512, 1024, 2048, 4096, 8192, 16384 | 4 s |
+| `degree`, `height` | `1` | 128, 256, 512, 1024, 2048, 4096, 8192, 16384 | 1 s |
+| `denominators` | `3 ^ Nat.log2 (max n 1)` | 16, 32, 64, 128, 256, 512, 1024, 2048 | 1 s |
+| `compareHeight`, `realHeight`, `provider` | `n` | 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608 | 1 s |
+| `refinement`, `jointRefinement`, `approximation` | `n * n * n` | 8192, 10240, 12288, 14336, 16384, 20480, 24576, 28672 | 1 s |
+| `horner` | `n * n * n` | 8192, 10240, 12288, 14336, 16384, 20480, 24576, 28672 | 4 s |
+| `successiveApproximation` | `(n + 2) * (7 * n + 55) / 2` | 4, 6, 8, 10, 12, 14, 16, 18 | 4 s |
+| `thirdApproximation` | `(n + 2) * (7 * n * n + 121 * n + 666) / 6` | 4, 6, 8, 10, 12, 14, 16, 18 | 4 s |
+
+The public computation is covered as follows. These are runtime measurements;
+the companion's theorem applications use ordinary-kernel correctness tests.
+
+| API | Runtime coverage |
+| --- | --- |
+| Infinitesimal coefficient scan, sign and comparison | `scan`, `degree`, `height`, `second`, `third`, `comparison`, `denominators`, `compareHeight` |
+| Inherited RationalFn and `Extension` field arithmetic | HexRationalFn's arithmetic benchmarks; local `subtraction` baseline |
+| `Real.enclose`, `attempt`, `sign`, `approxAttempt`, `approx`, `precision`, `firstSome` | `horner`, `refinement`, `jointRefinement`, `realHeight`, `approximation`; every search includes all preceding failed trials |
+| `Extension.sign`, `compare`, `approx`, derived coefficient approximation | The same `Real` calls on `.val`, subtraction and two-/three-level approximation targets; the wrapper adds no search algorithm |
+| `Real.finiteAttempt`, `sign?` | The same enclosure and per-trial bound operations as `refinement`, with a fuel cap and optional exact-zero check; finite exhaustion and zero identities are conformance cases |
+| Bounds arithmetic, width, division and endpoint decisions | `horner`, `realHeight`, `approximation`, `provider`; `inter` and `exactSign?` add a bounded number of rational endpoint comparisons, with rejection branches checked in conformance |
+| Singleton/dyadic conversion, registration, `Extension.C`/`X`/`transport` | Constructor/representation wrappers over rational and RationalFn operations; transport preserves `.val`, with no refinement or traversal |
+
+## Verdicts
+
+Mode 1 is the family-specific two-sided model. Mode 2 is a conservative
+one-sided upper bound: the four large-integer search families cross GMP
+algorithm regimes, so their source-derived counts do not give a tight fixed
+wall-time exponent. The [upper-bound derivation](#search-upper-bound-model)
+explains that choice independently of the fitted slopes. The small-operand
+successive families use mode 1 with their independently derived operation counts.
+
+In this table **consistent** means the harness verdict
+`consistent_with_declared_complexity`. **Upper bound** means the harness reads
+`inconclusive` in the faster direction and the documented mode-2 result is
+**within declared upper bound (observed faster)**. It does not reinterpret the
+historical quadratic or quartic measurements as passing results.
+
+| Target | Mode | Result | Normalized slope | Data |
+| --- | --- | --- | ---: | --- |
+| `second` | 1 | consistent | -0.007 | [1s](data/hex-ordered-fn/1s/runtime.json) |
+| `third` | 1 | consistent | -0.010 | [1s](data/hex-ordered-fn/1s/runtime.json) |
+| `comparison` | 1 | consistent | -0.002 | [1s](data/hex-ordered-fn/1s/runtime.json) |
+| `degree` | 1 | consistent | +0.002 | [1s](data/hex-ordered-fn/1s/runtime.json) |
+| `scan` | 1 | consistent | -0.031 | [1s](data/hex-ordered-fn/1s/runtime.json) |
+| `height` | 1 | consistent | +0.002 | [1s](data/hex-ordered-fn/1s/runtime.json) |
+| `denominators` | 1 | consistent | -0.105 | [height](data/hex-ordered-fn/height/runtime.json) |
+| `compareHeight` | 1 | consistent | +0.071 | [height](data/hex-ordered-fn/height/runtime.json) |
+| `realHeight` | 1 | consistent | -0.005 | [height](data/hex-ordered-fn/height/runtime.json) |
+| `provider` | 1 | consistent | +0.040 | [height](data/hex-ordered-fn/height/runtime.json) |
+| `refinement` | 2 | Upper bound | -0.629 | [search-upper](data/hex-ordered-fn/search-upper/runtime.json) |
+| `jointRefinement` | 2 | Upper bound | -0.624 | [search-upper](data/hex-ordered-fn/search-upper/runtime.json) |
+| `approximation` | 2 | Upper bound | -0.627 | [search-upper](data/hex-ordered-fn/search-upper/runtime.json) |
+| `horner` | 2 | Upper bound | -0.765 | [successive](data/hex-ordered-fn/successive/runtime.json) |
+| `successiveApproximation` | 1 | consistent | +0.040 | [successive-scalar-repeat](data/hex-ordered-fn/successive-scalar-repeat/runtime.json) |
+| `thirdApproximation` | 1 | consistent | +0.009 | [third](data/hex-ordered-fn/third/runtime.json) |
+| `subtraction` | 1 | consistent | -0.147 | [subtraction-4s](data/hex-ordered-fn/subtraction-4s/runtime.json) |
+
+## Comparator ratios
+
+Inherited fraction arithmetic uses HexRationalFn's informational
+[FLINT comparison and ratios](hex-rational-fn-performance.md#comparator-ratios).
+The [SPEC's comparator coverage](../SPEC/Libraries/hex-ordered-fn.md#comparator-coverage)
+classifies this reuse as `structural-layer`. Z3 RCF supplies the informational
+comparison of subtraction followed by sign described below. It has no
+caller-approximation entry point for the real-search targets. No external
+runtime superiority claim is made.
+
+The local [paired arithmetic comparison](#canonical-arithmetic-comparison)
+measures the extra order work over canonical subtraction on identical operands.
+Its full ladder is retained below; it does not reliably resolve the approximately
+0.2% incremental scan cost, and it is not an external comparison or the
+algebraic clean/eager experiment.
+
+## Profile
+
+The [comparison profile](#comparison-profile) attributes the dominant work to
+canonical RationalFn normalization and polynomial arithmetic. The
+[large-search profile](#search-arithmetic-profile) attributes most leaf cycles to
+GMP operations; the [small successive-search profile](#successive-approximation-workload)
+records the conversion/allocation costs that its different operands incur.
+Each section records the source, region filtering and retained evidence.
+The two older raw captures are unavailable; their committed contexts and
+symbolized summaries support the stated attribution but cannot be re-filtered.
+
+The manifest's input families use these existing attribution measurements:
+
+| Input family | Profile coverage |
+| --- | --- |
+| `fraction-arithmetic` | Comparison profile, including canonical normalization and polynomial arithmetic; inherited arithmetic also has HexRationalFn's profiles. |
+| `infinitesimal-order` | Comparison profile includes the subtraction and the final coefficient scan; standalone scan/depth scaling is measured separately. |
+| `real-refinement` | Large-search and successive-search profiles cover the actual refinement loops and coefficient callbacks. |
+| `horner-bounds` | The search profiles include the executed Horner arithmetic, rational normalization and quotient enclosure. |
+| `finite-comparison` | The same bound operations and endpoint decisions occur in the search profiles; finite fuel and exact-zero branches add bounded control work and have conformance tests. |
+
+No serialized boundary-certificate checker is implemented here. The optional
+finite comparison functions reuse the measured exact-bound operations; they do
+not add a separate certificate-checking algorithm or a proof-timing surface.
+
+## Concerns
+
+None.
 
 ## Runtime measurements
 
@@ -152,8 +269,10 @@ one worker instead completes a 1.854-second operation. The
 checks of the watchdog, not performance evidence; the commands and limitations
 are recorded in [their context](data/hex-ordered-fn/cap-context.json). The historical configuration
 kept the same quadratic model; the
-initial data remain evidence for their recorded smaller schedule. Both schedules
-remain unresolved evidence, without a Phase-4 completion claim.
+initial data remain evidence for their recorded smaller schedule. Neither
+historical quadratic schedule establishes the former quadratic declaration.
+The current cubic upper-bound registrations and their evidence are reported in
+[Search upper-bound model](#search-upper-bound-model).
 
 ## Corrected comparison and height measurements
 
@@ -293,7 +412,24 @@ The raw capture was collected at `/tmp/issue-10376-search-profile` and is
 no longer available. The committed summary and context retain attribution and
 alignment diagnostics, but cannot substitute for raw data when re-filtering.
 
-## Remaining evidence
+## Evidence scope
+
+No unresolved library-local performance defect is identified by the current
+evidence. Its limits remain explicit: no uniform bound in precision and tower
+depth, no tight large-precision nested-search characterization, no resolved tiny
+comparison overhead, and no algebraic tower integration claim. The latter
+measurements remain required under #10378. Historical inconclusive samples are
+retained below without changing their verdicts.
+
+The original infinitesimal measurements predate the explicit formal-zero
+branch in `Infinitesimal.sign`. The only runtime change in that function is
+`if f.num = 0 then 0 else …`. The zero polynomial has an empty coefficient
+array; `DensePoly.decEqRuntime` compares array sizes before contents. Thus the
+new branch is constant-time, including for each fixed-depth predecessor call
+in these workloads, and preserves the declared scaling models. The reported
+absolute times remain observations of their recorded source commits, not
+measurements of the new branch. The later paired arithmetic run includes that
+branch. Real-search definitions used by the retained measurements are unchanged.
 
 The four single-level search families have passing conservative upper-bound
 evidence. Successive approximation has one inconclusive operation-count run and one
@@ -301,11 +437,15 @@ consistent unchanged repeat on small operands; its earlier quartic comparison
 does not qualify. The three-level workload also has consistent operation-count
 evidence. Large precision is measured at the first level and depth is varied
 on the small-operand families; no uniform multivariate bound is claimed.
-Clean versus eager normalization
-comparisons and downstream tower integration also remain part of the full issue.
-The existing [RationalFn arithmetic report](hex-rational-fn-performance.md#internal-alternatives)
-provides cancellation versus multiply-then-normalize comparisons on identical
-canonical operands, but does not replace the ordered-extension measurements.
+The [canonical arithmetic comparison](#canonical-arithmetic-comparison) below
+measures ordered comparison against existing RationalFn subtraction on identical
+operands. The existing
+[RationalFn arithmetic report](hex-rational-fn-performance.md#internal-alternatives)
+separately compares cancellation with multiply-then-normalize on identical
+canonical operands. Clean-versus-eager normalization and
+`tower8`/MetiTarski integration remain required of the downstream real-closure
+owner under [#10378](https://github.com/kim-em/hex-dev/issues/10378); they are
+not completion gates for these ordered-function libraries.
 The companion's mathematical theorems have ordinary-kernel regression tests
 and axiom audits; applying them is not a performance benchmark.
 
@@ -572,3 +712,158 @@ Reproduce with:
 python3 scripts/bench/ordered_fn_measure.py --output /tmp/ordered-fn-arithmetic --paired-arithmetic
 .lake/build/bin/hexorderedfn_bench sizes
 ```
+
+## Subtraction scaling
+
+The [one-second run](data/hex-ordered-fn/subtraction-1s/runtime.json) retains
+all 24 completed samples at source `3167748b3572fda9c619ad040bc94366572eeef9`.
+Its harness verdict is consistent with the linear model, but only three samples
+clear the measured process floor, giving too little coverage across the ladder.
+The registration therefore uses four-second batches for scientific evidence.
+This changes the measurement duration, not the algorithm or linear cost model;
+the initial samples are not discarded. The [context](data/hex-ordered-fn/subtraction-1s/context.json)
+records automatically selected CPU 15, four Lean workers, source and matching
+before/after executable hashes. Host load is recorded without excluding samples.
+
+The [four-second run](data/hex-ordered-fn/subtraction-4s/runtime.json) has all
+24 samples above the process floor. Its two-sided verdict is consistent with
+the declared linear model, normalized slope −0.147 (the harness tolerance is
+0.15). Medians range from 205.711 µs at n=128 to 14.433 ms at n=16384.
+Trial spreads range from 43.6% to 78.8%; the pass is close to the tolerance
+boundary and does not establish a tight constant factor. All samples are
+retained and no unchanged rerun was performed. These observations are not a
+before/after speedup comparison.
+
+The [context](data/hex-ordered-fn/subtraction-4s/context.json) records source
+`ce8c134c60f0673eff3baf9d5043da4ab6c10ede`, automatically selected CPU 21,
+four Lean workers and equal executable hashes before and after execution.
+The source and executable remained unchanged during collection. Reproduce
+with `python3 scripts/bench/ordered_fn_measure.py --output DIR --filter
+Hex.OrderedFnBench.subtraction` from that source revision.
+
+The complete first and third subtraction sweeps have nearly constant time/n:
+trial 1 ranges from 1.68 µs at n=128 to 1.56 µs at n=16384, and trial 3
+from 0.880 µs to 0.881 µs. Trial 2 changes between the slower and faster
+levels near n=8192. That change affects the cross-trial medians and their
+normalized slope. This describes the recorded samples; the accompanying load
+change alone does not establish its cause, and no trial is excluded.
+
+## Z3 RCF comparison
+
+The informational comparison times `Infinitesimal.compare` against subtraction
+followed by sign through Z3 4.15.4's
+[Python/FFI API](https://github.com/Z3Prover/z3/blob/z3-4.15.4/src/api/python/z3/z3rcf.py).
+Both arms receive the same prepared mathematical operands from the registered
+`comparison`, `denominators` and `compareHeight` families. Hex uses its existing
+lean-bench `_child`; Z3 executes its own arithmetic in the coordinator process.
+Preparation, import and process startup are outside the operation timers.
+Every returned Hex sign hash agrees with the independently evaluated Z3 sign.
+
+The [initial data](data/hex-ordered-fn/z3-initial/paired.jsonl) retain 259
+completed rows before a server restart interrupted the coordinator. They include
+both arms of trials 0 and 1 for all three comparison families. The
+[completion data](data/hex-ordered-fn/z3-final/paired.jsonl) add only the missing
+48 rows of trial 2. Together these give three trials at every rung, with adjacent
+arms in AB/BA/AB order and no repeated or dropped completed sample. The other
+163 initial rows are retained sign-lookup diagnostics, not external algorithm
+ratios: Z3's [representation caches signs during construction](https://github.com/Z3Prover/z3/blob/z3-4.15.4/src/math/realclosure/realclosure.cpp),
+so comparing a prepared value with zero does not reproduce Hex's coefficient
+scan. Including construction only on Z3's side would change the timed operation.
+
+The [FFI controls](data/hex-ordered-fn/z3-controls/paired.jsonl) run each same
+subtraction/sign function at n=0 on rational operands, three times. Their median
+costs are 3.550 µs (`comparison`), 3.584 µs (`denominators`) and 2.689 µs
+(`compareHeight`). They include Python/ctypes dispatch, wrapper allocation and
+deletion, the sign branches, and a small rational subtraction. Thus they are a
+conservative overhead estimate, not a measurement of pure dispatch alone.
+The initial pure-Python loop controls are retained but are insufficient to
+estimate FFI cost and are not used for the adjusted ratios. The FFI controls
+were collected afterward on automatically selected CPU 92, separately from
+the paired measurements on CPUs 13 and 42. Positive-result
+controls take the same two sign decisions as their family; negative-result
+controls take the same single decision. No process or pipe overhead occurs in
+the Z3 timer.
+
+Each table entry reports the median of three adjacent Hex/Z3 ratios. Adjusted
+ratios subtract the family's median FFI control from each Z3 per-call time
+before division. They are descriptive estimates, including the small arithmetic
+cost in the control. Removing that small arithmetic cost as well as dispatch
+can overcorrect and raise Hex/Z3 above the underlying arithmetic-cost ratio;
+neither column isolates the C++ kernel. A rung is
+eligible only when every sample has control cost at most 50% of Z3 time and
+both arms stay below the one-second per-call soft ceiling. All rungs are shown;
+only `comparison` at 128 and 256 fails the overhead criterion. Both raw and
+adjusted ratios are provided even below the 5% adjustment threshold.
+
+| Target | n | Hex median (µs) | Z3 median (µs) | Raw Hex/Z3 | Adjusted Hex/Z3 | Eligible |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `comparison` | 128 | 113.385 | 5.001 | 22.67 | 78.15 | no |
+| `comparison` | 256 | 221.718 | 5.970 | 37.27 | 92.14 | no |
+| `comparison` | 512 | 442.615 | 7.837 | 57.09 | 104.36 | yes |
+| `comparison` | 1024 | 869.650 | 11.007 | 78.99 | 116.59 | yes |
+| `comparison` | 2048 | 1758.964 | 17.328 | 101.29 | 127.09 | yes |
+| `comparison` | 4096 | 3515.031 | 30.021 | 116.51 | 131.82 | yes |
+| `comparison` | 8192 | 7051.173 | 55.843 | 126.19 | 134.89 | yes |
+| `comparison` | 16384 | 13936.944 | 106.310 | 130.99 | 135.51 | yes |
+| `denominators` | 16 | 127.023 | 9.976 | 12.72 | 19.85 | yes |
+| `denominators` | 32 | 301.505 | 25.182 | 11.97 | 13.96 | yes |
+| `denominators` | 64 | 781.877 | 84.071 | 9.30 | 9.71 | yes |
+| `denominators` | 128 | 2107.313 | 317.550 | 6.70 | 6.78 | yes |
+| `denominators` | 256 | 5750.261 | 1230.393 | 4.67 | 4.69 | yes |
+| `denominators` | 512 | 16322.028 | 4874.323 | 3.36 | 3.37 | yes |
+| `denominators` | 1024 | 47254.233 | 22444.473 | 2.11 | 2.11 | yes |
+| `denominators` | 2048 | 138602.393 | 94269.417 | 1.47 | 1.47 | yes |
+| `compareHeight` | 65536 | 8.499 | 6.571 | 1.29 | 2.19 | yes |
+| `compareHeight` | 131072 | 12.957 | 10.281 | 1.26 | 1.70 | yes |
+| `compareHeight` | 262144 | 21.711 | 17.728 | 1.22 | 1.44 | yes |
+| `compareHeight` | 524288 | 40.483 | 32.573 | 1.24 | 1.35 | yes |
+| `compareHeight` | 1048576 | 109.239 | 62.354 | 1.75 | 1.83 | yes |
+| `compareHeight` | 2097152 | 228.554 | 122.135 | 1.87 | 1.92 | yes |
+| `compareHeight` | 4194304 | 476.277 | 241.894 | 1.97 | 1.99 | yes |
+| `compareHeight` | 8388608 | 951.775 | 482.523 | 1.97 | 1.98 | yes |
+
+Hex is slower on all three measured families. For constant-denominator
+`comparison`, the adjusted ratio approaches about 135 at the last rungs;
+the earlier profile attributes 84.2% inclusive time to `normalizeWith` and
+68.7% to `xgcdWith`, even though both denominators are one. On this family,
+(a/1)−(b/1) could retain the already-canonical denominator one and avoid that
+general normalization work. That is an optimization opportunity in the
+inherited HexRationalFn arithmetic, not an incremental sign-scan cost or a
+failure of this informational comparison's acceptance criteria. For `denominators`, the raw ratio decreases from 12.72 to 1.47 over
+the ladder: on the last doubling Z3 time grows about 4.2-fold while Hex grows
+about 2.9-fold, consistent with Hex's independently declared Karatsuba model.
+For `compareHeight`, the raw ratio changes from 1.24 to 1.75 between 524288
+and 1048576 bits, then approaches 1.97 at the top two rungs. The step occurs
+in every trial; its cause is not established by these measurements.
+These trends describe the tested families and representations, not universal
+speed ratios. Z3 is informational: no external constant-factor acceptance goal
+or performance superiority claim is made.
+
+The [summary](data/hex-ordered-fn/z3-summary.json) records the exact median
+calculations. Each group's contexts and schedules sit alongside its raw rows.
+Initial source `1fab99765b35423f1ad780e9ab4fd3a5c1425203` used CPU 13;
+completion source `45c363885f2e565a5a4fabf7b4a965f81c08e2d4` used CPU 42.
+The compiled benchmark hash is identical across both collections. The initial
+coordinator has no final timestamp because it was interrupted; its
+[recovery record](data/hex-ordered-fn/z3-initial/interruption.json) verifies the
+unchanged executable and the original child identities. Z3 rows from the initial
+run have no individual timestamps; Hex rows retain theirs. The
+[runtime identity](data/hex-ordered-fn/z3-initial/runtime-identity.json) was
+captured from the unchanged environment during that run, and matches the
+completion/control contexts' loaded `libz3.so` hash. The latter also record
+the interpreter and Z3 sample completion timestamps. Host load is context,
+not a sample exclusion rule.
+
+Reproduce a complete new comparison and its separate overhead measurement with:
+
+```sh
+lake build hexorderedfn_bench
+python3 scripts/bench/ordered_fn_z3.py --output /tmp/ordered-fn-z3
+python3 scripts/bench/ordered_fn_z3.py --output /tmp/ordered-fn-z3-controls --overhead-only
+```
+
+Use the pinned `z3-solver==4.15.4.0` environment. `--first-trial 2` is only
+for completing the retained interrupted schedule, not a full three-trial run.
+
+The initial sign-lookup diagnostics use the driver at `1fab99765`; the current
+driver's default schedule includes only the three subtraction-based comparisons.

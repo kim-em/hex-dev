@@ -144,8 +144,26 @@ source descriptor to rule out impossible infinite endpoint orientations.
 returns equality exactly when the original selected real roots coincide. It
 uses the common full derivative word and count-one descriptors; strict `<` and
 `>` still require the separate Thom-order foundation.
-The executable API still exposes internal errors, and the domain-exact total
-wrapper remains to be implemented.
+The executable API retains its internal diagnostics for arbitrary coefficient
+operations. The companion rules out selected-sign errors under lawful
+coefficients; the domain-exact total wrappers remain to be implemented.
+
+`Descriptor.buildSigns_success` proves that the actual selected-sign producer
+succeeds for every validated descriptor and finite ordered query list under
+the shared lawful coefficient interpretation. `Descriptor.signs_rows` shows
+that the complete joint table has exactly one count-one row extending the
+descriptor's derivative signs. Domain validity supplies preparation, and
+`buildPrepared_roots` supplies the actual table before its final guards are
+discharged by the Mathlib-free `buildSigns_ofTable` theorem.
+`Descriptor.buildSigns_roots` identifies the returned signs with evaluation at
+the original selected root, including empty and repeated queries. These
+results use the named #10389 root-sum bridge, without a Thom order assumption.
+The cubic-field conformance example uses ordinary `QAdjoin` arithmetic over
+ℚ(∛2) and retains the selected real embedding. It rejects changed sign vectors
+and query order in selected-sign replay, and tests context, defining-polynomial
+and derivative-slot rejections in both descriptor validation and selected-sign
+replay. Finite-bound conformance also
+checks zero and constant queries and rejects replay on a different valid interval.
 
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient

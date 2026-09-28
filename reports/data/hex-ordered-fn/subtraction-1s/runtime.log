@@ -1,0 +1,37 @@
+Hex.OrderedFnBench.subtraction    expected complexity: n    [warm cache]
+  env: lean=4.34.1, os=linux, arch=x86_64, commit=3167748, 2026-09-28T05:12:23Z, host=chungus2
+   param  per-call    repeats  C
+     128  591.247 µs  ×2^10    C=2791.564 [<floor] [trial 1/3]
+     256  675.665 µs  ×2^11    C=2639.317 [trial 1/3]
+     512  989.515 µs  ×2^10    C=   —     [<floor] [trial 1/3]
+   1_024    3.499 ms  ×2^7     C=   —     [<floor] [trial 1/3]
+   2_048    4.576 ms  ×2^7     C=   —     [<floor] [trial 1/3]
+   4_096    8.724 ms  ×2^7     C=   —     [<floor] [trial 1/3]
+   8_192   29.229 ms  ×2^3     C=   —     [<floor] [trial 1/3]
+  16_384   48.471 ms  ×2^5     C=2958.438 [trial 1/3]
+     128  357.320 µs  ×2^12    C=2791.564 [trial 2/3]
+     256  498.150 µs  ×2^11    C=2639.317 [<floor] [trial 2/3]
+     512    1.122 ms  ×2^10    C=   —     [<floor] [trial 2/3]
+   1_024    2.087 ms  ×2^9     C=   —     [<floor] [trial 2/3]
+   2_048    4.078 ms  ×2^7     C=   —     [<floor] [trial 2/3]
+   4_096    9.662 ms  ×2^7     C=   —     [<floor] [trial 2/3]
+   8_192   17.533 ms  ×2^5     C=   —     [<floor] [trial 2/3]
+  16_384   33.273 ms  ×2^4     C=2958.438 [<floor] [trial 2/3]
+     128  284.664 µs  ×2^10    C=2791.564 [<floor] [trial 3/3]
+     256  467.727 µs  ×2^11    C=2639.317 [<floor] [trial 3/3]
+     512    1.039 ms  ×2^8     C=   —     [<floor] [trial 3/3]
+   1_024    2.025 ms  ×2^9     C=   —     [<floor] [trial 3/3]
+   2_048    4.037 ms  ×2^8     C=   —     [<floor] [trial 3/3]
+   4_096    8.633 ms  ×2^5     C=   —     [<floor] [trial 3/3]
+   8_192   17.502 ms  ×2^4     C=   —     [<floor] [trial 3/3]
+  16_384   36.485 ms  ×2^3     C=2958.438 [<floor] [trial 3/3]
+  verdict: consistent with declared complexity (cMin=2639.317, cMax=2958.438, β=+0.017)
+  per-spawn floor (harness self-measurement): 126.908 ms
+  peak RSS: 61_776 kB..67_352 kB (across 24 ok row(s))
+  trial summaries (3 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread
+       256  1/3     675.665 µs  675.665 µs  675.665 µs  0.000%
+    16_384  1/3      48.471 ms   48.471 ms   48.471 ms  0.000%
+       128  1/3     357.320 µs  357.320 µs  357.320 µs  0.000%
+  ‼ 21/24 ok rows were below 10.000× the per-spawn floor; those rungs are excluded from the verdict. Drop the smallest params from the declared `paramSchedule := .custom #[...]` array to skip the cold regime if the trimmed warmup isn't enough.
+exported to /tmp/issue-10376-subtraction/runtime.json

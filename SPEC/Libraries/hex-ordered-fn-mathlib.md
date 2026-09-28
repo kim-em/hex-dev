@@ -372,7 +372,11 @@ The owner varies degree, coefficient height, lowest index, separation
 precision and tower depth, with caller approximation cost attributed
 separately. Use fixed trial-major shared-host schedules, automatic CPU
 selection where supported, adjacent alternating comparisons, all completed
-samples and at most one unchanged inconclusive rerun. Family tower8 and
-other root workloads supply integration evidence; this companion contributes
-coefficient model/sign correctness. No CI fan-out or
-historical-paper timing threshold is introduced.
+samples and at most one unchanged inconclusive rerun. This companion contributes
+coefficient model/sign correctness. Algebraic tower integration measurements,
+including `tower8`, MetiTarski and clean-versus-eager normalization,
+belong to [hex-real-closure](hex-real-closure.md#conformance-and-phase-4-evidence)
+and [#10378](https://github.com/kim-em/hex-dev/issues/10378); they do not gate
+completion of either ordered-function library. The Liouville fixture above
+remains required here. No CI fan-out or historical-paper timing threshold is
+introduced.

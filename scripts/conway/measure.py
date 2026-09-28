@@ -104,9 +104,26 @@ def main():
             and Path(name.replace(".", "/") + ".lean").is_file()
         }
     )
+    # Elaborating against a `precompileModules` library loads the library's
+    # native shared library, so warm that facet too, not only the oleans.
+    precompiled, lib = set(), None
+    for line in Path("lakefile.lean").read_text().splitlines():
+        if match := re.match(r"lean_lib (\w+) where", line):
+            lib = match[1]
+        elif line and not line[0].isspace():
+            lib = None
+        elif lib and line.strip() == "precompileModules := true":
+            precompiled.add(lib)
+    native_imports = sorted(
+        {
+            path.parts[0].removesuffix(".lean") + ":shared"
+            for path in dependencies(measured_sources)
+            if path.parts[0].removesuffix(".lean") in precompiled
+        }
+    )
     if args.warm_dependencies and external_imports:
         subprocess.run(
-            ["lake", "--no-cache", "build", *external_imports],
+            ["lake", "--no-cache", "build", *external_imports, *native_imports],
             check=True,
             env={**os.environ, "LEAN_NUM_THREADS": str(args.threads)},
         )

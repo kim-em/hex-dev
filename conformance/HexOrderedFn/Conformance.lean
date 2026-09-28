@@ -39,8 +39,8 @@ proof for executable coverage. The SPEC-required companion integration test
 `HexOrderedFnMathlib.LiouvilleTests` / `hexorderedfn_liouville_test` supplies it:
 ordinary field arithmetic, sign, approximation, comparisons, provider transport
 and derived coefficient approximation are checked on the same core definitions.
-This test remains separate from Mathlib-free conformance. Outstanding evidence
-and downstream integration are tracked under #10376.
+This test remains separate from Mathlib-free conformance. Algebraic tower
+integration measurements belong to hex-real-closure under #10378.
 Serialized source/context/version validation belongs to the consuming tactic;
 this API binds registrations by type and the oracle rejects malformed fixtures.
 

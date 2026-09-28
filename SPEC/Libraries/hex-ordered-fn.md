@@ -400,10 +400,21 @@ Such measurements do not establish a universal transcendental registration;
 retain the companion integration fixture for that distinct obligation.
 Report caller approximation cost separately; no named-constant generator
 benchmark is required and no precision bound in degree alone is claimed.
-Compare with existing RationalFn arithmetic and measure clean versus eager
-normalization on identical expressions and outcomes. The family's `tower8`,
-MetiTarski and other tower workloads contribute integration measurements;
-root isolation remains the downstream owner's responsibility.
+Compare with existing RationalFn arithmetic. These measurements, together with the
+conformance and companion proof requirements above, are this library's
+SPEC-specific evidence obligations. The generic Phase-4 exit criteria also
+apply; algebraic tower consumers are not a prerequisite.
+The clean-versus-eager normalization comparison on identical
+expressions and outcomes, `tower8`, MetiTarski and other algebraic tower
+integration measurements belong to
+[hex-real-closure](hex-real-closure.md#conformance-and-phase-4-evidence), tracked
+in [#10378](https://github.com/kim-em/hex-dev/issues/10378). That owner measures
+the coefficient operations it consumes as part of the full workloads; those
+integration measurements do not gate completion of this library. The
+[family representation contract](../future-work.md#real-closures-of-ordered-fields)
+applies clean versus eager reduction to algebraic defining polynomials;
+canonical RationalFn is already the required normal form at the real-constant
+and infinitesimal levels.
 
 Use the shared-host fixed trial-major schedule, automatic CPU selection when
 supported, adjacent alternating `AB`/`BA` comparisons, retained completed
@@ -412,3 +423,35 @@ profile. The companion supplies ordinary-kernel correctness proofs. Tactic and
 proof-generator performance belongs to the consuming libraries; ordinary runtime
 arithmetic needs no per-operation certificate benchmark. Historical paper
 timings are not acceptance thresholds.
+
+### Comparator coverage
+
+Inherited fraction arithmetic (`subtraction`, and the arithmetic component of
+`comparison`, `denominators` and `compareHeight`) is a **structural-layer** over
+HexRationalFn. Its informational FLINT `fmpz_poly_q` comparison and ratios are
+owned by [HexRationalFn](../../HexRationalFn/SPEC/hex-rational-fn.md), rather
+than duplicated here. The local paired subtraction/comparison run measures
+the additional order work on the same operands.
+
+[Z3 RCF](https://github.com/Z3Prover/z3/blob/z3-4.15.4/src/api/python/z3/z3rcf.py)
+is an **informational** comparator for `comparison`, `denominators` and
+`compareHeight`. Use the pinned Z3 Python/FFI API on the same mathematical
+operands, with preparation outside timing. Its representation and cached signs
+differ from Hex's dense coefficient scans; report ratios without requiring a
+constant-factor match or external superiority. The scheduled driver is
+`scripts/bench/ordered_fn_z3.py`; it invokes the existing lean-bench child for
+Hex, with adjacent alternating trials, and checks the returned signs.
+
+For `scan`, `degree`, `height`, `second` and `third`, declare
+**no-comparable-surface-in-named-comparator**: Z3 determines and caches the
+sign while constructing a value, and its public comparison with zero only
+reads that cached information. Timing construction instead would include work
+excluded from the Hex sign timer. Retain any sign-lookup observations as
+diagnostics, not as ratios of sign-computation costs.
+
+For `refinement`, `jointRefinement`, `horner`, `realHeight`, `approximation`,
+`successiveApproximation`, `thirdApproximation` and `provider`, the absence
+classification is **no-comparable-surface-in-named-comparator** relative to
+Z3 RCF. Z3 refines its built-in real constants internally but does not expose
+the caller-supplied coefficient/constant approximation protocol measured here.
+Named-constant generation remains outside this library's benchmark contract.

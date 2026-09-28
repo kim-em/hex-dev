@@ -8,14 +8,14 @@ Hasse bound, and resulting primality theorem belong to [its Mathlib companion](.
 
 ## Scope and placement
 
-This SPEC owns the proposed `HexECPP` and `HexECPPMathlib` pair. Their first
-implementation delivers certificate verification, conversion of supplied
+This SPEC owns the `HexECPP` and `HexECPPMathlib` pair. They provide
+certificate verification, conversion of supplied
 PARI certificates, and explicit certificate elaboration. Native complex
 multiplication search, Hilbert class polynomials, point counting, ECM,
 automatic search fallback, and cryptographic curve APIs are outside this
-scope. Conversion consumes supplied data; ordinary proof elaboration does
-not invoke an external program. This is an ECPP verification service, not a
-promise to generate certificates for arbitrary primes.
+scope. Core conversion consumes supplied data. The optional bridge can
+explicitly invoke PARI to obtain a certificate, then freeze its inputs for
+replay without an external program. Bounded production may exhaust on a prime.
 
 The dependencies are:
 
@@ -181,7 +181,7 @@ is required by this API; an offline script may produce the input artifact.
 
 Provide an opt-in bridge tactic `ecpp using c` for a closed literal `n` and
 a closed certificate literal or an exposed constant `c` containing such data,
-targeting `Nat.Prime n`. Cross-module certificate constants and every checker
+targeting `Nat.Prime n`. In `module` files, cross-module certificate constants and every checker
 definition needed by replay must be `@[expose]`. Restrict the accepted term
 form to constructor data and exposed data constants; reject arbitrary
 computations. Bound traversal, unfolding, numeral size and total certificate
@@ -198,6 +198,17 @@ integer, 20 rows, 512 bits per integer and scalar, 1200 inverse operations
 per scalar replay, and 200 endpoint-search fuel. These bounds admit the
 frozen 512-bit supplied PARI vector. Direct callers can provide smaller
 explicit budgets; the mathematical checker itself has no size policy.
+
+The bridge's compact `ecpp_cert% "rows" using leaf` representation freezes
+the PARI rows and an explicit checked Hex terminal certificate. Conversion
+reconstructs the inverse transcript during elaboration and emits exposed raw
+constructor data. No terminal search or external process runs when replaying
+this representation. Its proof still uses the complete raw checker, rather
+than trusting the row format or conversion code.
+
+Explicit process invocation and certificate-file export belong to
+`HexECPPMathlib.Pari`; they do not add a dependency to the core or change the
+ordinary `primality` tactic. See the companion SPEC for the process contract.
 
 ## Conformance and evidence
 
@@ -230,11 +241,10 @@ Freeze complete certificates and expected outcomes so conformance never
 requires live external ECPP generation.
 
 For bridge elaboration policy, measure kernel replay of the 65-bit
-fixture, then successive chain lengths and subject sizes. The initial single
-CI job kernel-replays that fixture and small branch/boundary probes. The
-256-bit and 512-bit fixtures initially exercise compiled checking and oracle
-comparison; promote them to CI kernel proofs only after fresh-module evidence
-establishes their fit within the existing CI budget. Compiled-only coverage
+fixture, then successive chain lengths and subject sizes. The single CI job
+kernel-replays the admitted frozen certificates and small branch/boundary
+probes. Promote larger fixtures to CI kernel proofs only after fresh-module
+evidence establishes their fit within the existing CI budget. Compiled-only coverage
 does not establish an elaborator size ceiling or claim fast kernel replay.
 If the first fixture exceeds the budget, keep the elaborator unreleased and
 optimize replay with proved equivalence before promising a supported ceiling.

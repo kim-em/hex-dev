@@ -10,6 +10,25 @@ import HexRCF.RealCoefficients
 open Hex
 
 private abbrev squarePolynomial : Hex.ZPoly := Hex.DensePoly.ofList [-3, 0, 1]
+private abbrev cubicPolynomial : Hex.ZPoly := Hex.DensePoly.ofList [-2, 0, 0, 1]
+private abbrev cubicSelection : Hex.DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 1290 10, 0, 12⟩
+
+private theorem cubicChecked : cubicPolynomial.CheckedIrreducible :=
+  Hex.RCF.RealCoefficients.Field.checkedIrreducible cubicPolynomial
+    (.eisenstein 2 0) (by decide +kernel) (by decide)
+
+private theorem cubicSquarefree : Hex.HasOnlySimpleRoots cubicPolynomial := by
+  have hne : cubicPolynomial ≠ 0 := by decide
+  letI : cubicPolynomial.CheckedIrreducible := cubicChecked
+  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable cubicPolynomial hne).mpr
+    (Hex.ZPoly.CheckedIrreducible.separable cubicPolynomial)
+
+private def selectedCubic : Hex.RealAlgebraicNumber :=
+  Hex.RCF.RealCoefficients.Selected.real cubicPolynomial cubicSelection
+    (by decide +kernel) (by decide +kernel) (by rfl)
+    (by decide) (by decide)
+    cubicChecked cubicSquarefree (by decide +kernel)
 private abbrev squareSelection : Hex.DyadicSquare :=
   ⟨(Dyadic.ofInt 7094) >>> (12 : Int), 0, 10⟩
 
@@ -55,6 +74,22 @@ private abbrev selectedShiftedThree : Hex.RealAlgebraicNumber :=
 set_option maxRecDepth 2048
 
 set_option maxHeartbeats 5000000 in
+theorem cubic_and_sqrt :
+    ∀ x : ℝ, x ^ 2 + selectedCubic.toReal - Real.sqrt 2 + 1 > 0 := by
+  rcf
+
+/-- info: '_private.HexRCF.RealCoefficientCommonField.0.cubic_and_sqrt' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms cubic_and_sqrt
+
+/-- info: 'Hex.QAdjoin.common_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.QAdjoin.common_spec
+
+set_option maxHeartbeats 5000000 in
 theorem selected_and_sqrt :
     ∀ x : ℝ, x ^ 2 + selectedThree.toReal - Real.sqrt 2 > 0 := by
   rcf
@@ -62,6 +97,11 @@ theorem selected_and_sqrt :
 set_option maxHeartbeats 5000000 in
 theorem field_and_sqrt :
     ∀ x : ℝ, x ^ 2 + shiftedThree.toReal - Real.sqrt 2 > 0 := by
+  rcf
+
+set_option maxHeartbeats 5000000 in
+theorem same_field_pair :
+    ∀ x : ℝ, x ^ 2 + selectedThree.toReal + shiftedThree.toReal > 0 := by
   rcf
 
 set_option maxHeartbeats 5000000 in

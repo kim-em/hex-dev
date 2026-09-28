@@ -7,6 +7,7 @@ module
 
 public import HexSignDetMathlib.RootProducer
 public import HexSignDetMathlib.SelectedRoot
+public import HexSignDetMathlib.SelectedProducer
 public import HexSignDet.Conformance
 public import HexRealRootsMathlib.RealClosed
 
@@ -104,6 +105,22 @@ theorem literal_support (s : List Int) :
 /-- info: 'Hex.SignDet.SelectedSigns.value_at_root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.SelectedSigns.value_at_root
+
+/-- info: 'Hex.SignDet.Descriptor.buildSigns_ofTable' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.buildSigns_ofTable
+
+/-- info: 'Hex.SignDet.Descriptor.signs_rows' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.signs_rows
+
+/-- info: 'Hex.SignDet.Descriptor.buildSigns_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.buildSigns_success
+
+/-- info: 'Hex.SignDet.Descriptor.buildSigns_roots' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.buildSigns_roots
 
 /-- info: 'Hex.SignDet.Reencoding.target_constraints' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in

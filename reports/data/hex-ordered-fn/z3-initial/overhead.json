@@ -1,0 +1,20 @@
+[
+  {
+    "inner_repeats": 8388608,
+    "total_nanos": 170407574,
+    "per_call_nanos": 20.314165830612183,
+    "result": 1
+  },
+  {
+    "inner_repeats": 8388608,
+    "total_nanos": 170527171,
+    "per_call_nanos": 20.328422904014587,
+    "result": 1
+  },
+  {
+    "inner_repeats": 8388608,
+    "total_nanos": 170712225,
+    "per_call_nanos": 20.350483059883118,
+    "result": 1
+  }
+]
