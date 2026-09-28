@@ -118,7 +118,8 @@ verification of 95 ECPP steps. `public-generation.json` checks every successful
 subject through the actual native elaborator generator, with its row-limited
 depth allocation, and confirms identical compact data after kernel proof
 production. All previous reports remain available with their original source
-versions.
+versions. `corpus-oracle.json` independently verifies primality of all 32
+subjects, including every exhausted subject, with PARI.
 
 ## Arithmetic, replay and dependency evidence
 
@@ -212,3 +213,6 @@ Reproduce public generation with `scripts/bench/ecpp_native_generation.py`;
 it invokes native search before comparing the resulting frozen data and
 kernel-checks every proof. `public-generation-initial.json` retains a harness
 elaboration failure before generation caused by a missing namespace opening.
+
+`public-generation-reproduced.json` confirms all 27 successes using the
+committed reproduction script and the final diagnostic implementation.
