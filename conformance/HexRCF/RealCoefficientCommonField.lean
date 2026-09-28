@@ -79,7 +79,6 @@ theorem cubic_and_sqrt :
   rcf
 
 /-- info: '_private.HexRCF.RealCoefficientCommonField.0.cubic_and_sqrt' depends on axioms: [propext,
- sorryAx,
  Classical.choice,
  Quot.sound] -/
 #guard_msgs in
@@ -129,14 +128,12 @@ example : ∃ x : ℝ,
   rcf
 
 /-- info: '_private.HexRCF.RealCoefficientCommonField.0.field_and_sqrt' depends on axioms: [propext,
- sorryAx,
  Classical.choice,
  Quot.sound] -/
 #guard_msgs in
 #print axioms field_and_sqrt
 
 /-- info: '_private.HexRCF.RealCoefficientCommonField.0.selected_field_and_sqrt' depends on axioms: [propext,
- sorryAx,
  Classical.choice,
  Quot.sound] -/
 #guard_msgs in

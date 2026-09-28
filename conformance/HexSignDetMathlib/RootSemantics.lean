@@ -42,7 +42,7 @@ theorem literal_support (s : List Int) :
   have hs : fullReplay.node.system.support = [[1, 1]] := by decide +kernel
   simpa only [hs, List.mem_singleton] using h.symm
 
-/-- info: 'Hex.SignDetMathlib.RootSemantics.literal_support' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.RootSemantics.literal_support' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms literal_support
 
@@ -50,59 +50,59 @@ theorem literal_support (s : List Int) :
 #guard_msgs in
 #print axioms Hex.SignDet.Conformance.full_kernel
 
-/-- info: 'Hex.SignDet.Replay.check_counts' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Replay.check_counts' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Replay.check_counts
 
-/-- info: 'Hex.SignDet.buildPrepared_roots' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.buildPrepared_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.buildPrepared_roots
 
-/-- info: 'Hex.SignDet.Descriptor.build_noError' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.build_noError' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.build_noError
 
-/-- info: 'Hex.SignDet.Descriptor.build_of_unique_root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.build_of_unique_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.build_of_unique_root
 
-/-- info: 'Hex.SignDet.Descriptor.build_success_iff' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.build_success_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.build_success_iff
 
-/-- info: 'Hex.SignDet.Descriptor.validate_success_iff' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.validate_success_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.validate_success_iff
 
-/-- info: 'Hex.SignDet.Descriptor.build_valid_cases' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.build_valid_cases' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.build_valid_cases
 
-/-- info: 'Hex.SignDet.Descriptor.build_success_formal' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.build_success_formal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.build_success_formal
 
-/-- info: 'Hex.SignDet.Descriptor.validate_success_formal' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.validate_success_formal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.validate_success_formal
 
-/-- info: 'Hex.SignDet.Descriptor.existsUnique_root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.existsUnique_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.existsUnique_root
 
-/-- info: 'Hex.SignDet.Descriptor.root_derivatives' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.root_derivatives' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.root_derivatives
 
-/-- info: 'Hex.SignDet.Completion.root_eq_source' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Completion.root_eq_source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Completion.root_eq_source
 
-/-- info: 'Hex.SignDet.Completion.signs_at_source' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Completion.signs_at_source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Completion.signs_at_source
 
-/-- info: 'Hex.SignDet.SelectedSigns.value_at_root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.SelectedSigns.value_at_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.SelectedSigns.value_at_root
 
@@ -110,15 +110,15 @@ theorem literal_support (s : List Int) :
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildSigns_ofTable
 
-/-- info: 'Hex.SignDet.Descriptor.signs_rows' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.signs_rows' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.signs_rows
 
-/-- info: 'Hex.SignDet.Descriptor.buildSigns_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.buildSigns_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildSigns_success
 
-/-- info: 'Hex.SignDet.Descriptor.buildSigns_roots' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.buildSigns_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildSigns_roots
 
@@ -130,23 +130,23 @@ theorem literal_support (s : List Int) :
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.signAt_ternary
 
-/-- info: 'Hex.SignDet.Descriptor.signAt_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.signAt_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.signAt_success
 
-/-- info: 'Hex.SignDet.Descriptor.signAt_correct' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.signAt_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.signAt_correct
 
-/-- info: 'Hex.SignDet.Reencoding.target_constraints' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Reencoding.target_constraints' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Reencoding.target_constraints
 
-/-- info: 'Hex.SignDet.Reencoding.root_eq_source' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Reencoding.root_eq_source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Reencoding.root_eq_source
 
-/-- info: 'Hex.SignDet.Comparison.eq_iff_root_eq' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Comparison.eq_iff_root_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Comparison.eq_iff_root_eq
 

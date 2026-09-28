@@ -12,11 +12,8 @@ ADMISSION = re.compile(
     r"\b[A-Za-z_]*[sS]orry[A-Za-z_]*\b|\b(?:admit|admitGoal|axiom)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*constant\b|(?<!\.)\bstop\b(?!\s*:=)",
     re.MULTILINE,
 )
-DECLARATION = re.compile(
-    r"\b(?:theorem|lemma|axiom|def|example|instance|abbrev|opaque|structure)\s+([A-Za-z0-9_]+)"
-)
 IMPORT = re.compile(r"\bimport\s+(?:all\s+)?(\S+)")
-EXTERNAL = {"Batteries", "Mathlib", "Lean", "Init", "Std", "Lake", "Qq", "Verso"}
+EXTERNAL = {"Batteries", "Mathlib", "Lean", "Init", "Std", "Lake", "Qq", "Verso", "TauCeti"}
 
 
 def code_only(source: str) -> str:
@@ -199,26 +196,10 @@ def check() -> None:
                 "Term.withoutErrToSorry (elabArgument" in
                 source.splitlines()[source.count("\n", 0, match.start())]
             )]
-        if relative == Path("HexRCF/Tactic.lean"):
-            # Only these two checks may mention the bridge's admitted axiom.
-            approved = {"unless axioms.contains ``sorryAx do",
-                        "unless ordinaryAxiom dependency || dependency == ``sorryAx do"}
-            admissions = [match for match in admissions if not
-                          (match.group().strip() == "sorryAx" and
-                           source.splitlines()[source.count("\n", 0, match.start())].strip() in approved)]
-        if relative != BRIDGE:
-            if admissions:
-                line = source.count("\n", 0, admissions[0].start()) + 1
-                raise ValueError(f"unapproved admission in {relative}:{line}")
-            continue
-        if len(admissions) != 1 or admissions[0].group() != "sorry":
-            raise ValueError(f"expected one check_rootSum sorry in {BRIDGE}, got {len(admissions)}")
-        declarations = list(DECLARATION.finditer(source, 0, admissions[0].start()))
-        if not declarations or declarations[-1].group(1) != "check_rootSum":
-            raise ValueError(f"the {BRIDGE} sorry is not in check_rootSum")
-        if not re.search(r":=\s*by\s*$", source[declarations[-1].end() : admissions[0].start()]):
-            raise ValueError(f"the {BRIDGE} admission is no longer the direct theorem body")
-    print(f"{len(roots)} adapter/conformance import cones: {len(paths)} local modules, only check_rootSum is admitted")
+        if admissions:
+            line = source.count("\n", 0, admissions[0].start()) + 1
+            raise ValueError(f"unapproved admission in {relative}:{line}")
+    print(f"{len(roots)} present adapter import cones: {len(paths)} local modules, no admissions")
 
 
 if __name__ == "__main__":

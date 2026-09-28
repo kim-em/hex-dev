@@ -12,13 +12,11 @@ public import HexPoly.InterpretTests
 
 public section
 
-/-! Semantic replay dependencies, separate from the fully proved acceptance probe.
+/-! Semantic replay probes for canonical and noninjective representations.
 Computational conformance owner: `HexSturm`.
-These probes audit the exact #10389 admission dependencies and type-check the
-canonical and noninjective instantiations; they do not establish mathematical
-query correctness independently. The explicit `sorryAx` expectations must be
-updated when #10389 supplies the proof. Acceptance and domain audits protect
-the independently proved replay boundary from acquiring that dependency. -/
+The universal query theorem and each instantiated literal result have only
+Lean's standard logical axioms. Acceptance and domain audits also retain that
+axiom boundary. -/
 
 namespace HexSturmMathlib.ReplayTests
 
@@ -72,19 +70,19 @@ theorem noncanonical_value {Ctx : Type*} [DecidableEq Ctx] (context : Ctx)
     (fun n => by simp [value_natCast]) (fun x => Sturm.orderSign (value x))
     (fun x => rational_sign (value x)) context p q a b v certificate checked).2
 
-/-- info: 'HexSturmMathlib.ReplayTests.rational_value' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'HexSturmMathlib.ReplayTests.rational_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms rational_value
 
-/-- info: 'HexSturmMathlib.ReplayTests.literal_value' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'HexSturmMathlib.ReplayTests.literal_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms literal_value
 
-/-- info: 'HexSturmMathlib.ReplayTests.noncanonical_value' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'HexSturmMathlib.ReplayTests.noncanonical_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms noncanonical_value
 
--- Admission of semantic soundness must not contaminate acceptance or domain proofs.
+-- Acceptance and domain proofs retain the same axiom boundary.
 /-- info: 'HexSturmMathlib.ReplayTests.accepted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms accepted

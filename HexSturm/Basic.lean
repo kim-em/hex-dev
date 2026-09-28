@@ -87,6 +87,13 @@ records mathematical domain failure; signs and arithmetic are total. -/
 @[expose] def query [Neg E] [Inv E] (sign : E → Int) (p f : DensePoly E) (a b : Endpoint E) : Option Int :=
   TarskiCertificate.query sign (EndpointSigns.ofSign sign) (normalize sign) p f a b
 
+/-- Count distinct roots on the same domain as a query. The companion proves
+that every query-one result is a natural count before this conversion is used;
+conversion introduces no additional domain guard. -/
+@[expose] def rootCount [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E)
+    (a b : Endpoint E) : Option Nat :=
+  (query sign p 1 a b).map Int.toNat
+
 /-- Produce a certificate with exact literal context and input bindings. -/
 @[expose] def certify [Neg E] [Inv E] {Ctx : Type v} (sign : E → Int) (context : Ctx)
     (p f : DensePoly E) (a b : Endpoint E) : Option (TarskiCertificate E E Ctx) :=

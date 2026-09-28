@@ -117,12 +117,11 @@ theorem cubeZero (a : CubeField) :
 #guard_msgs in
 #print axioms cubeZero
 
-/-- info: 'Hex.RCF.RealCoefficients.Field.checkSignTable_spec' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.RealCoefficients.Field.checkSignTable_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Field.checkSignTable_spec
 
 /-- info: 'Hex.RCF.RealCoefficients.CommonPresentation.checkPresentation_sound' depends on axioms: [propext,
- sorryAx,
  Classical.choice,
  Quot.sound] -/
 #guard_msgs in

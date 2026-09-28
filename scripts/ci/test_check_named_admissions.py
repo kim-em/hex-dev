@@ -62,7 +62,7 @@ class AdmissionScannerTests(unittest.TestCase):
             for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
-            bridge.write_text("theorem check_rootSum : True := by\n  sorry\n", encoding="utf-8")
+            bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
             sign.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
             conformance.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             completion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
@@ -80,6 +80,10 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/QueryHandleConformance"):
                     audit.check()
                 handle.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                bridge.write_text("theorem check_rootSum : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in adapters/HexRealRootsMathlib"):
+                    audit.check()
+                bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
                 dependency.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "unapproved admission in HexExtra/SelectedField"):
                     audit.check()
