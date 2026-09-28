@@ -128,8 +128,9 @@ The query and replay declarations are implemented in `SignedRemainderChain.lean`
 The ordered-domain kernel is shared with the
 [ordered-field frontend](../../SPEC/Libraries/hex-sturm.md). The companion
 proves algebraic correspondence, produced-certificate acceptance and exact
-semantic domain equivalence. The root-sum theorem and new Phase-4 evidence
-remain required.
+semantic domain equivalence. The root-sum theorem is proved in the development
+`HexQuerySemantics` adapters. Publication of that semantic layer and the
+remaining Phase-4 evidence are still required.
 
 Preserve the following public integer/dyadic frontend for the
 [fixed-field sign consumer](../../HexNumberField/SPEC/hex-number-field.md#fixed-field-sign):
@@ -302,10 +303,10 @@ descent and a terminal nonzero constant. Common-root packages replay the gcd's
 own derivative chain. Consequently it does not check a general Tarski query.
 Its soundness theorem yields `Sturm.IsSturmChain`, whose root-flank orientation
 and constant-tail conditions cannot describe negative or zero contributions.
-Require a new signed-remainder/Cauchy-index theorem in
+The signed-remainder/Cauchy-index theorem is proved in the development adapters of
 [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#sturm-tarski-correspondence),
-including arbitrary common gcd and zero remainder, rather than asserting this
-as a corollary of the root-count theorem. Keep the current RCF checker intact;
+including arbitrary common gcd and zero remainder; it is not a corollary
+of the root-count theorem. Keep the current RCF checker intact;
 shared recurrence helpers can move downward without creating an import cycle.
 
 Require `tarskiQuery_eq` for the displayed signed sum and `tarskiQuery_isSome`

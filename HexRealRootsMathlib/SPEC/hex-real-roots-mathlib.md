@@ -627,7 +627,8 @@ correspondence, the squarefreeness check and success exactly on squarefreeness
 plus the executable endpoint guards. `TarskiDomain.lean` proves integer/dyadic
 endpoint correspondence, exact mathematical domain equivalence and domain
 soundness of accepted replay. Root-sum and semantic replay soundness,
-singleton-sign and count/bound results below remain proof gates.
+singleton-sign and count/bound results are proved in the development
+`HexQuerySemantics` adapters; publishing that layer remains required.
 
 `TarskiCompare.lean` proves that arbitrary accepted chains for positively
 scaled inputs have equal lengths and entrywise positive scaling under their
@@ -647,7 +648,8 @@ zero. This rational-count extension does not require the root-free guards
 of the separate Tarski-query API.
 
 The [Tarski-query primitive](../../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries)
-requires new signed-remainder/Cauchy-index semantics here. Prove
+uses the general signed-remainder/Cauchy-index semantics proved in the
+development adapters. Its contract requires
 `tarskiQuery_eq`, identifying the executable variation drop with the sum of
 `sign (f(α))` over the real roots of squarefree nonzero `p` in the interval,
 under its non-root endpoint guards. Prove `tarskiQuery_isSome` for that domain

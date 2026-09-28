@@ -251,8 +251,8 @@ and `[IsRealClosed R]` on the Mathlib side.
 
 | Statement | Required conclusion / owner |
 | --- | --- |
-| `query_sound` | `query p f a b = some q` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; companion. |
-| `check_sound` | Accepted replay implies the same domain and query equality; companion via the shared replay theorem. |
+| `query_sound` | `query p f a b = some q` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; development `HexQuerySemantics` adapter. |
+| `check_sound` | Accepted replay implies the same domain and query equality; development `HexQuerySemantics` adapter via the shared replay theorem. |
 | `query_isSome` | `(query p f a b).isSome ↔ Domain p a b`; executable guard/termination proof here, interpretation in companion. |
 | `certify_checks` | Certificates produced on the domain pass replay and carry the same value as `query`. |
 | `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; proved in the development `HexQuerySemantics` adapters, for eventual companion publication. |

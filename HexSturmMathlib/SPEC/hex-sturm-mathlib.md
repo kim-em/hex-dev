@@ -43,7 +43,7 @@ use only Lean's standard logical axioms. The remaining Phase-4 evidence below
 is required before phase completion.
 
 These proved semantic modules currently live under `adapters/`, outside the
-published companion paths. Publishing them with their pinned Tau Ceti
+`HexSturmMathlib` library target. This companion is not yet released. Publishing them with their pinned Tau Ceti
 dependency remains a separate delivery obligation. Companion ownership below
 specifies the intended API; it does not imply the adapters are released.
 
@@ -51,8 +51,8 @@ specifies the intended API; it does not imply the adapters are released.
 `HexRealRootsMathlib`. The shared signed-remainder theorem, representation and
 positive-scaling bridges, and shared replay soundness live in
 [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#shared-foundation-and-proof-ownership).
-Its Tau Ceti import is confined to the development adapter. It retains the
-integer/dyadic specialization, while its companion module `RealClosed.lean` proves
+Its Tau Ceti import and general integer/dyadic specialization are confined to
+the development adapters. The companion module `RealClosed.lean` proves
 `IsRealClosed ℝ` independently. This companion proves the field frontend's domain guards,
 endpoint sign operations, query-proof composition and root-count API
 against the shared theorem, instantiating its domain and embedding as
@@ -166,13 +166,11 @@ descent and a terminal zero-remainder identity. A zero initial remainder
 uses `[Pᴿ]`. A nonconstant terminal gcd is admissible. Under the domain
 guards its variation drop equals `TaQ`.
 
-Imports requested from Tau Ceti by
-[#10300](https://github.com/kim-em/hex-dev/issues/10300) are polynomial IVT,
-polynomial Rolle and the signed-remainder/Cauchy-index identity, including
-infinite endpoints and arbitrary common gcd. These are named mathematical
-obligations, not assumed available Lean declarations or new axioms. The
-[owner's audit and real instance contract](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#real-specialization)
-record what the Mathlib pin actually supplies. Ordinary derivative-seeded
+Tau Ceti supplies polynomial IVT, Rolle and the signed-remainder identity,
+including infinite endpoints and arbitrary common gcd, through the pinned
+foundation named in the [owning companion's contract](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#shared-foundation-and-proof-ownership).
+The development adapters prove correspondence with the checked Hex data.
+Ordinary derivative-seeded
 `Sturm.IsSturmChain` has incompatible root-flank and root-free-tail conditions;
 it cannot establish this signed sum.
 

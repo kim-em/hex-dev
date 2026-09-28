@@ -31,7 +31,7 @@ include hz h1 ha hs hm hnat hn hi hsign in
 /-- On a valid root-free domain the actual producer succeeds with an empty
 list. This discharges both extraction branches without a Thom foundation;
 both table production success and its counts use the shared proved
-root-sum bridge. -/
+root-sum theorem. -/
 theorem Descriptor.buildRoots_empty (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
     (hdom : HexSturmMathlib.Domain f hz p a b)
     (hempty : Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f) = ∅) :
@@ -68,7 +68,7 @@ include hz h1 ha hs hm hnat hn hi hsign in
 /-- Actual enumeration succeeds on every valid domain containing at most
 one root. Count-one extraction and insertion into the empty list need no
 Thom injectivity or ordering foundation, including for non-Archimedean fields.
-Table production success and counts use the shared proved root-sum bridge. -/
+Table production success and counts use the shared proved root-sum theorem. -/
 theorem Descriptor.buildRoots_subsingleton (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E) (hdom : HexSturmMathlib.Domain f hz p a b)
     (hsmall : (Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f)).card ≤ 1) :

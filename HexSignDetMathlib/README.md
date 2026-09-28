@@ -121,7 +121,7 @@ two and twelve queries with independently supplied sign counts, including a
 root-free constant head. The finite theorem applies to those same construction
 paths when its query-value model is established.
 
-The model is a finite proof boundary, not an executable argument. In the optional
+The model is a finite proof boundary, not an executable argument. In the development-only
 `HexQuerySemantics` target, `RootModel` interprets arbitrary accepted node and
 child query evidence as moments of actual roots, then proves exact support and
 counts for every sign condition, including omitted ones. `RootProducer` derives
@@ -194,7 +194,7 @@ descriptor's derivative signs. Domain validity supplies preparation, and
 discharged by the Mathlib-free `buildSigns_ofTable` theorem.
 `Descriptor.buildSigns_roots` identifies the returned signs with evaluation at
 the original selected root, including empty and repeated queries. These
-results use the shared proved root-sum bridge, without a Thom order assumption.
+results use the shared proved root-sum theorem, without a Thom order assumption.
 `Descriptor.signAt_success` proves that the public total single-query operation
 uses an actual successful checked result and never its diagnostic error fallback.
 `Descriptor.signAt_correct` equates its integer with the evaluation sign at the
@@ -227,12 +227,12 @@ root list contains every mathematical root in the requested interval exactly
 once. The proof uses the actual complete table, preserved full sign words and
 uniqueness of each accepted descriptor. It does not assume rational separators
 or injective coefficient representations. It uses the shared proved root-sum
-bridge. `Descriptor.buildRoots_empty` proves actual success with an empty list on
+theorem. `Descriptor.buildRoots_empty` proves actual success with an empty list on
 valid root-free domains; `buildRoots_constant_success` covers nonzero constant
 heads. `buildRoots_subsingleton` proves actual success on valid domains
 containing at most one mathematical root, including linear heads and isolating
 intervals. `buildRoots_linear` supplies the degree-one corollary directly. Table
-production success and the root counts use the same named bridge throughout;
+production success and the root counts use the same root-sum theorem throughout;
 none of these success proofs needs a Thom theorem.
 `buildRoots_none_iff` characterizes invalid mathematical domains exactly,
 and `buildRoots_domain` proves validity of the original input without using the root-sum theorem.

@@ -117,10 +117,11 @@ variation value.
 Together they support the rational/integer whole-`Option` agreement theorem
 in hex-sturm-mathlib without assuming root-sum semantics.
 
-The signed-remainder/Cauchy-index theorem and its polynomial IVT/Rolle
-foundation remain required for general root-sum semantics and its
-singleton-sign and arbitrary ordered-field count consequences. These algebraic replay results do not assert those outstanding
-semantic theorems.
+The development adapters import the proved signed-remainder theorem and
+polynomial IVT/Rolle foundation from Tau Ceti. They prove general root-sum
+semantics, singleton-sign and arbitrary ordered-field count consequences.
+These semantic modules remain outside the published package; the algebraic
+replay results above are independent of them.
 
 `TarskiSum.lean` defines the mathematical sum over distinct roots in an open
 interval, allowing infinite endpoints. It proves singleton and constant cases,

@@ -27,7 +27,7 @@ variable (sign : E → Int) (hsign : ∀ a, sign a = (SignType.sign (f a) : Int)
 include hz h1 ha hs hm hnat hn hi hsign in
 /-- The actual prepared sparse-table producer succeeds for every query list
 under lawful coefficients, including empty lists and root domains, using
-the shared proved root-sum bridge. -/
+the shared proved root-sum theorem. -/
 theorem buildTablePrepared_success (context : Ctx) (domain : Sturm.PreparedDomain E)
     (binding : domain.sign = sign) (qs : List (DensePoly E)) (reduced : Bool) :
     ∃ table, buildTablePrepared context domain qs reduced = .ok table := by
@@ -39,7 +39,7 @@ theorem buildTablePrepared_success (context : Ctx) (domain : Sturm.PreparedDomai
 include hz h1 ha hs hm hnat hn hi hsign in
 /-- The total prepared operation returns a successful checked table,
 excluding its empty-table diagnostic fallback, using the shared proved
-root-sum bridge. -/
+root-sum theorem. -/
 theorem determinePrepared_success (context : Ctx) (domain : Sturm.PreparedDomain E)
     (binding : domain.sign = sign) (qs : List (DensePoly E)) (reduced : Bool) :
     ∃ table, buildTablePrepared context domain qs reduced = .ok table ∧

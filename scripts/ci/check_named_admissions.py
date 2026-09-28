@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Audit all development adapters and sign-determination conformance import cones.
 
-RCF's intentional negative admission probes remain kernel-checked tests,
-outside this source scan; the message below reports only the scanned cones.
+RCF conformance (including intentional negative admission probes) and Sturm
+semantic replay conformance remain kernel-checked tests outside this source
+scan; the message below reports only the scanned cones.
 """
 
 from __future__ import annotations
