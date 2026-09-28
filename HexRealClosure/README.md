@@ -340,17 +340,25 @@ until its full prefix has been installed. No lookup uses a shortened name or a
 hash, and reconstruction stays relative to the same immutable registry.
 
 `Catalog.readElement raw` and `Catalog.readPolynomial raw` reconstruct the
-context first, then use its checked scalar or polynomial reader. Their packed
+context first, then use its checked scalar or polynomial reader.
+`PackedContext.readElement` also checks bindings when reusing a supplied packed
+context; `readPayload` explicitly accepts unbound coefficient syntax. Their packed
 results retain that context and a value indexed by it. `PackedElement.sign`
 uses its own context's native sign. Malformed recursive coefficients, missing
 paths and changed provider versions are rejected. Kernel round-trip proofs
 return the original context and value whenever that exact prefix is installed.
+`PackedContext.reconstruct` decomposes every ordinary native context into its
+actual real prefix and depth. `Catalog.read_self` therefore needs only the
+installed-prefix lookup, without a caller-provided reconstruction equality.
+`insert_isSome_iff` and `lookup_of_insert` describe the concrete catalog returned
+by insertion. The compiled stage constructor uses a proved tail-recursive loop.
 Proofs are not serialized.
 
 Run `lake build HexRealClosure.BaseCatalogTests HexRealClosureMathlibTests`.
 The examples exercise rational reconstruction, two infinitesimal levels, an
 actual named real followed by two infinitesimals, immutable catalog extension,
 duplicate paths, changed versions, missing registrations, malformed fractions,
-and scalar/polynomial round trips. These readers cover the real and
+and kernel round trips for a concrete installed named-real catalog. These
+readers cover the real and
 infinitesimal base stages. Algebraic descriptors, dependency transport and
 complete algebraic context reconstruction remain part of the tower work.

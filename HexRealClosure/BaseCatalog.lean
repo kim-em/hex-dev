@@ -11,61 +11,7 @@ public section
 
 namespace Hex.RealClosure.BaseContext
 
-/-- An existing real prefix, including the progress proofs already supplied
-when its providers were registered. Packing does not construct a new field. -/
-inductive RealPrefix (registry : Registry) : Type 1
-  | pack {K : Type} [Lean.Grind.Field K] [DecidableEq K]
-      {approx : K → Rat → OrderedFn.Oracle.Bounds} {sign : K → Int}
-      (context : RealContext registry K approx sign)
-
-/-- An existing staged base context with its native carrier hidden. -/
-inductive PackedContext (registry : Registry) : Type 1
-  | pack {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
-      (context : Context registry K sign)
-
-namespace RealPrefix
-
-@[expose] def keys {registry : Registry} (entry : RealPrefix registry) : List ConstantKey := by
-  cases entry with
-  | pack context => exact context.keys
-
-@[expose] def finish {registry : Registry} (entry : RealPrefix registry) : PackedContext registry := by
-  cases entry with
-  | pack context => exact .pack (.real context)
-
-theorem keys_rational (registry : Registry) :
-    (pack (.rational registry)).keys = [] := RealContext.keys_rational registry
-
-end RealPrefix
-
 namespace PackedContext
-
-@[expose] def signature {registry : Registry} (entry : PackedContext registry) : Signature := by
-  cases entry with
-  | pack context => exact context.signature
-
-@[expose] def infinitesimal {registry : Registry} (entry : PackedContext registry) : PackedContext registry := by
-  cases entry with
-  | pack context => exact .pack context.infinitesimal
-
-/-- Reconstruct finitely many infinitesimal stages using the native constructor. -/
-@[expose] def extend {registry : Registry} (context : PackedContext registry) :
-    Nat → PackedContext registry
-  | 0 => context
-  | n + 1 => (context.extend n).infinitesimal
-
-theorem infinitesimal_signature {registry : Registry} (context : PackedContext registry) :
-    context.infinitesimal.signature =
-      { context.signature with infinitesimals := context.signature.infinitesimals + 1 } := by
-  cases context with
-  | pack context => exact Context.signature_infinitesimal context
-
-theorem extend_signature {registry : Registry} (context : PackedContext registry) (n : Nat) :
-    (context.extend n).signature =
-      { context.signature with infinitesimals := context.signature.infinitesimals + n } := by
-  induction n with
-  | zero => simp [extend]
-  | succ n ih => simp [extend, infinitesimal_signature, ih, Nat.add_assoc]
 
 @[expose] def Value {registry : Registry} (entry : PackedContext registry) : Type := by
   cases entry with
@@ -76,7 +22,7 @@ theorem extend_signature {registry : Registry} (context : PackedContext registry
   cases context with
   | pack context => exact fun a => context.write a.stored
 
-@[expose] def read {registry : Registry} (context : PackedContext registry) :
+@[expose] def readPayload {registry : Registry} (context : PackedContext registry) :
     Syntax → Option context.Value := by
   cases context with
   | pack context => exact fun raw => (context.read raw).map Element.mk
@@ -86,12 +32,22 @@ theorem extend_signature {registry : Registry} (context : PackedContext registry
   cases context with
   | pack context => exact Element.sign
 
-theorem read_write {registry : Registry} (context : PackedContext registry)
-    (a : context.Value) : context.read (context.write a) = some a := by
+theorem readPayload_write {registry : Registry} (context : PackedContext registry)
+    (a : context.Value) : context.readPayload (context.write a) = some a := by
   cases context with
   | pack context =>
-    simp only [read, write, Context.read_write]
+    simp only [readPayload, write, Context.read_write]
     rfl
+
+/-- Check the full binding before reading a scalar payload in a supplied context. -/
+@[expose] def readElement {registry : Registry} (context : PackedContext registry)
+    (raw : Serialized) : Option context.Value :=
+  if raw.binding = context.signature then context.readPayload raw.value else none
+
+theorem readElement_write {registry : Registry} (context : PackedContext registry)
+    (a : context.Value) :
+    context.readElement ⟨context.signature, context.write a⟩ = some a := by
+  simp [readElement, readPayload_write]
 
 @[expose] def Poly {registry : Registry} (entry : PackedContext registry) : Type := by
   cases entry with
@@ -118,11 +74,6 @@ theorem readPoly_write {registry : Registry} (context : PackedContext registry)
   | pack context => exact Polynomial.read_write p
 
 end PackedContext
-
-theorem RealPrefix.finish_signature {registry : Registry} (entry : RealPrefix registry) :
-    entry.finish.signature = ⟨entry.keys, 0⟩ := by
-  cases entry with
-  | pack context => exact Context.signature_real context
 
 /-- A reconstructed value retains the entire context returned by the reader. -/
 structure PackedElement (registry : Registry) : Type 1 where
@@ -182,7 +133,7 @@ No convergence or relative-transcendence proposition is decided by this reader. 
 @[expose] def readElement {registry : Registry} (catalog : Catalog registry)
     (raw : Serialized) : Option (PackedElement registry) := do
   let context ← catalog.read raw.binding
-  match context.read raw.value with
+  match context.readElement raw with
   | none => none
   | some value => some ⟨context, value⟩
 
@@ -243,6 +194,25 @@ theorem lookup_insert_other {registry : Registry} (catalog : Catalog registry)
   simp only [insert, h, Option.bind]
   simp [lookup, findPrefix, hne]
 
+theorem insert_isSome_iff {registry : Registry} (catalog : Catalog registry)
+    (entry : RealPrefix registry) :
+    (catalog.insert entry).isSome = true ↔ catalog.lookup entry.keys = none := by
+  cases h : catalog.lookup entry.keys <;> simp [insert, h]
+
+/-- Every lookup in the returned catalog is determined by the successful insert. -/
+theorem lookup_of_insert {registry : Registry} (catalog next : Catalog registry)
+    (entry : RealPrefix registry) (keys : List ConstantKey)
+    (h : catalog.insert entry = some next) :
+    next.lookup keys = if keys = entry.keys then some entry else catalog.lookup keys := by
+  have he : catalog.lookup entry.keys = none :=
+    (insert_isSome_iff catalog entry).mp (by rw [h]; rfl)
+  by_cases hk : keys = entry.keys
+  · subst keys
+    have hl := lookup_insert catalog entry he
+    simpa [h] using hl
+  · have hl := lookup_insert_other catalog entry keys he (Ne.symm hk)
+    simpa [h, hk] using hl
+
 /-- Reconstruction reuses the exact registered prefix and native stages. -/
 theorem read_prefix {registry : Registry} (catalog : Catalog registry)
     (entry : RealPrefix registry) (n : Nat) (h : catalog.lookup entry.keys = some entry) :
@@ -254,6 +224,15 @@ theorem read_extend {registry : Registry} (catalog : Catalog registry)
     catalog.read (entry.finish.extend n).signature = some (entry.finish.extend n) := by
   rw [PackedContext.extend_signature, RealPrefix.finish_signature]
   simpa only [Nat.zero_add] using read_prefix catalog entry n h
+
+/-- Installing a context's actual real prefix suffices for exact reconstruction,
+regardless of how the native context was constructed. -/
+theorem read_self {registry : Registry} (catalog : Catalog registry)
+    (context : PackedContext registry)
+    (h : catalog.lookup context.realPrefix.keys = some context.realPrefix) :
+    catalog.read context.signature = some context := by
+  have hr := read_extend catalog context.realPrefix context.depth h
+  simpa only [PackedContext.reconstruct] using hr
 
 theorem read_signature {registry : Registry} (catalog : Catalog registry)
     (raw : Signature) (context : PackedContext registry)
@@ -282,7 +261,7 @@ theorem readElement_signature {registry : Registry} (catalog : Catalog registry)
   | none => simp [readElement, hc] at h
   | some context =>
     simp only [readElement, hc, bind, Option.bind] at h
-    cases hv : context.read raw.value with
+    cases hv : context.readElement raw with
     | none => simp [hv] at h
     | some value =>
       simp only [hv] at h
@@ -293,21 +272,21 @@ theorem readElement_signature {registry : Registry} (catalog : Catalog registry)
 read. Canonical scalar readers then return the original value. -/
 theorem read_write {registry : Registry} (catalog : Catalog registry)
     (a : PackedElement registry)
-    (h : catalog.read a.context.signature = some a.context) :
+    (h : catalog.lookup a.context.realPrefix.keys = some a.context.realPrefix) :
     catalog.readElement a.write = some a := by
   cases a with
   | mk context value =>
-    simp only [readElement, PackedElement.write, h, bind, Option.bind,
-      PackedContext.read_write]
+    simp only [readElement, PackedElement.write, read_self catalog context h, bind, Option.bind,
+      PackedContext.readElement_write]
 
 theorem readPolynomial_write {registry : Registry} (catalog : Catalog registry)
     (p : PackedPolynomial registry)
-    (h : catalog.read p.context.signature = some p.context) :
+    (h : catalog.lookup p.context.realPrefix.keys = some p.context.realPrefix) :
     catalog.readPolynomial p.write = some p := by
   cases p with
   | mk context value =>
     simp only [readPolynomial, PackedPolynomial.write, PackedContext.writePoly_binding,
-      h, bind, Option.bind, PackedContext.readPoly_write]
+      read_self catalog context h, bind, Option.bind, PackedContext.readPoly_write]
 
 end Catalog
 end Hex.RealClosure.BaseContext

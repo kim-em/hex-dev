@@ -241,7 +241,7 @@ example (a b : Element (.real prefixContext)) :
 
 example (p : Polynomial (realContext 1)) : Polynomial derived := p
 
-private def entry (version : Nat) : RealPrefix registry := .pack
+private abbrev entry (version : Nat) : RealPrefix registry := .pack
   (prefixContext.constant (key version) (present version)
     (signProgress version) (approxProgress version))
 private def installed := (Catalog.empty registry).insert (entry 1)
@@ -269,11 +269,42 @@ private def extendedCatalog := (catalog.insert (entry 2)).getD catalog
 #guard (catalog.readPolynomial { namedPolynomial.write with coefficients :=
   [.rational 1] }).isNone
 
-example (c : Catalog registry) (h : c.lookup (entry 1).keys = some (entry 1))
-    (a : ((entry 1).finish.extend 2).Value) :
-    c.readElement (PackedElement.write ⟨(entry 1).finish.extend 2, a⟩) =
-      some ⟨(entry 1).finish.extend 2, a⟩ :=
-  Catalog.read_write c _ (Catalog.read_extend c (entry 1) 2 h)
+private theorem entry_keys (version : Nat) : (entry version).keys = [key version] := by
+  rw [RealPrefix.keys_pack]
+  have h := RealContext.keys_constant prefixContext (key version) (present version)
+    (signProgress version) (approxProgress version)
+  have hp : prefixContext.chain.keys = [] := RealContext.keys_rational registry
+  simpa only [RealContext.keys, hp, List.nil_append] using h
+
+private theorem installed_some : installed.isSome = true :=
+  (Catalog.insert_isSome_iff (Catalog.empty registry) (entry 1)).mpr
+    (Catalog.lookup_empty registry (entry 1).keys (by rw [entry_keys]; simp))
+
+private theorem installed_eq : installed = some catalog := by
+  cases h : installed with
+  | none =>
+    have hs := installed_some
+    simp [h] at hs
+  | some c => simp [catalog, h]
+
+private theorem catalog_lookup : catalog.lookup (entry 1).keys = some (entry 1) := by
+  simpa using Catalog.lookup_of_insert (Catalog.empty registry) catalog (entry 1)
+    (entry 1).keys installed_eq
+
+private theorem named_prefix :
+    (PackedContext.pack (realContext 1)).realPrefix = entry 1 :=
+  Context.realPrefix_real _
+
+example : catalog.readElement positive.write =
+    some (⟨.pack (realContext 1), positive⟩ : PackedElement registry) := by
+  exact Catalog.read_write catalog (⟨.pack (realContext 1), positive⟩ : PackedElement registry)
+    (by simpa only [named_prefix] using catalog_lookup)
+
+example : catalog.readPolynomial namedPolynomial.write =
+    some (⟨.pack (realContext 1), namedPolynomial⟩ : PackedPolynomial registry) := by
+  exact Catalog.readPolynomial_write catalog
+    (⟨.pack (realContext 1), namedPolynomial⟩ : PackedPolynomial registry)
+    (by simpa only [named_prefix] using catalog_lookup)
 
 example : (registry ⟨"unknown", 1⟩).isSome = false := by decide +kernel
 
