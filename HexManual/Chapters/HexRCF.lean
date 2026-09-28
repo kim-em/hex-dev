@@ -11,6 +11,9 @@ import HexRCF.RealCoefficients
 import HexRealClosure
 import HexSignDet
 import HexSignDetMathlib.SelectedProducer
+import HexSignDetMathlib.CompletionProducer
+
+import HexSignDetMathlib.QueryHandle
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -893,7 +896,7 @@ private def signsFieldPasses : Bool :=
 ```
 
 Import `HexSignDetMathlib.SelectedProducer` for the success and correctness
-theorems. {name}`Hex.SignDet.Descriptor.buildSigns_success` proves that this operation
+theorems. {name}`Hex.SignDet.Descriptor.buildSigns_success` proves that `buildSigns`
 always succeeds for a validated descriptor when coefficient arithmetic and
 signs have their specified mathematical meaning. It proves preparation and
 table construction succeed and rules out every final internal error; successful
@@ -902,6 +905,104 @@ also proves that the returned list gives the signs at the original selected
 root, in query order. These proofs use the named root-sum admission in
 [#10389](https://github.com/kim-em/hex-dev/issues/10389); they do not require a
 theorem about ordering roots by Thom encodings.
+
+For one polynomial, a validated descriptor provides an ordinary integer sign.
+The same cubic-field example can use this operation directly, receiving only the integer
+sign from the checked calculation:
+
+```lean
+private def totalSignsFieldPasses : Bool :=
+  match Descriptor.validate signsFieldSign 7 signsRoot with
+  | some root =>
+    [root.signAt (signsX - 1),
+      root.signAt (signsX - DensePoly.C 2),
+      root.signAt (signsX.natPow 3 - DensePoly.C 2)] == [1, -1, 0]
+  | none => false
+
+#guard totalSignsFieldPasses
+```
+
+{name}`Hex.SignDet.Descriptor.signAt_success` proves that the underlying
+checked calculation succeeds, so its diagnostic zero fallback is unreachable
+when the coefficient operations satisfy their interpretation laws.
+{name}`Hex.SignDet.Descriptor.signAt_correct` identifies the returned integer
+with the evaluation sign at the descriptor's original selected root. Both
+results use the same named #10389 admission. For several queries, `buildSigns`
+shares one table across the list; each `signAt` call constructs its own table.
+
+Completing a partial derivative description supplies every derivative sign
+without changing the selected root. Over the same cubic coefficient field,
+`P = (x − α)x(x + α)` has roots `−α`, `0` and `α`. Its second derivative is
+`6x`, so its positive sign selects α. Completion returns the signs of `P′`,
+`P″` and `P‴`, all positive at α, in that order.
+
+```lean
+private def completionHead : DensePoly signsField :=
+  (signsX - DensePoly.C signsAlpha) * signsX *
+    (signsX + DensePoly.C signsAlpha)
+private def partialRoot : RawDescriptor signsField Nat :=
+  ⟨7, completionHead, .negInf, .posInf, [2], [1]⟩
+private def completionPasses : Bool :=
+  match Descriptor.validate signsFieldSign 7 partialRoot with
+  | none => false
+  | some root =>
+    match root.buildCompletion with
+    | .error _ => false
+    | .ok evidence =>
+      let full := root.complete
+      full.raw.indices == [1, 2, 3] &&
+        full.raw.signs == [1, 1, 1] &&
+        full.raw.signs == evidence.descriptor.raw.signs &&
+        root.raw.completes full.raw
+
+#guard completionPasses
+```
+
+Import `HexSignDetMathlib.CompletionProducer` for
+{name}`Hex.SignDet.Descriptor.buildCompletion_success` and
+{name}`Hex.SignDet.Descriptor.complete_correct`. They prove that completion
+succeeds for every validated partial description and retains its original
+mathematical root, head, interval and context. This includes an empty partial
+word when the interval contains exactly one root. The proofs use the named
+root-sum admission in [#10389](https://github.com/kim-em/hex-dev/issues/10389).
+They do not require the separate Thom ordering theorem. Each call computes and
+checks its full derivative table; use `buildCompletion` directly when you need
+the evidence as well as the completed descriptor.
+
+For successive queries at one selected root, retain its prepared domain with
+{name}`Hex.SignDet.Descriptor.prepareQueries`. This avoids the initial preparation call on each query list. Table
+construction and selected-sign validation still replay the domain evidence
+and joint table; the handle carries no measured speedup guarantee. Over the same cubic coefficient field:
+
+```lean
+private def preparedSignsFieldPasses : Bool :=
+  match Descriptor.validate signsFieldSign 7 signsRoot with
+  | none => false
+  | some root =>
+    match root.prepareQueries with
+    | none => false
+    | some handle =>
+      match handle.buildSigns [signsX - 1, signsX - DensePoly.C 2],
+          handle.buildSigns [signsX.natPow 3 - DensePoly.C 2] with
+      | .ok pair, .ok zero =>
+        pair.values.toList == [1, -1] && zero.value == 0 &&
+          handle.signAt (signsX - 1) == 1 &&
+          handle.signAt (signsX.natPow 3 - DensePoly.C 2) == 0
+      | _, _ => false
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard preparedSignsFieldPasses
+```
+
+{name}`Hex.SignDet.Descriptor.prepareQueries_success` proves that preparation
+succeeds for validated descriptions under the coefficient laws.
+{name}`Hex.SignDet.QueryHandle.buildSigns_roots` and
+{name}`Hex.SignDet.QueryHandle.signAt_correct` identify all returned signs at
+the original selected root. These results use the named root-sum admission in
+[#10389](https://github.com/kim-em/hex-dev/issues/10389). The handle retains the
+original context, polynomial, interval and derivative selection; copied
+certificates must still pass the ordinary literal replay checks.
 
 Two roots can be compared even if their defining polynomials differ. The
 comparison constructs a checked common squarefree polynomial and expresses

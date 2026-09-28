@@ -1,0 +1,13 @@
+{
+  "cpu": 91,
+  "host": "chungus2",
+  "loadavg": [
+    5.0859375,
+    5.255859375,
+    5.03515625
+  ],
+  "source": "4a02dcfa0b8fab001d10ebb9c8155d37d618b9bd",
+  "worktree": "checker replay charged to scalar work; endpoint bench additions",
+  "returncode": 0,
+  "output": "runNative128    [fixed] repeats=5\n  env: lean=4.34.1, os=linux, arch=x86_64, commit=4a02dcf-dirty, 2026-09-28T08:12:53Z, host=chungus2\n  repeat 0  61.640 ms\n  repeat 1  61.137 ms\n  repeat 2  62.699 ms\n  repeat 3  61.282 ms\n  repeat 4  62.239 ms\n  median: 61.640 ms    min: 61.137 ms    max: 62.699 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 71_928 kB..72_576 kB (across 5 ok repeat(s))\n\nrunNative256    [fixed] repeats=5\n  env: lean=4.34.1, os=linux, arch=x86_64, commit=4a02dcf-dirty, 2026-09-28T08:12:58Z, host=chungus2\n  repeat 0  722.381 ms\n  repeat 1  715.683 ms\n  repeat 2  722.911 ms\n  repeat 3  723.276 ms\n  repeat 4  721.204 ms\n  median: 722.381 ms    min: 715.683 ms    max: 723.276 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 71_912 kB..72_328 kB (across 5 ok repeat(s))\n\nrunNativeCheck    [fixed] repeats=5\n  env: lean=4.34.1, os=linux, arch=x86_64, commit=4a02dcf-dirty, 2026-09-28T08:13:06Z, host=chungus2\n  repeat 0  4.801 ms\n  repeat 1  4.754 ms\n  repeat 2  4.829 ms\n  repeat 3  4.720 ms\n  repeat 4  4.775 ms\n  median: 4.775 ms    min: 4.720 ms    max: 4.829 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 71_900 kB..72_452 kB (across 5 ok repeat(s))\n\nrunNativeConvert    [fixed] repeats=5\n  env: lean=4.34.1, os=linux, arch=x86_64, commit=4a02dcf-dirty, 2026-09-28T08:13:11Z, host=chungus2\n  repeat 0  67.134 ms\n  repeat 1  67.868 ms\n  repeat 2  75.767 ms\n  repeat 3  66.481 ms\n  repeat 4  66.415 ms\n  median: 67.134 ms    min: 66.415 ms    max: 75.767 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 71_964 kB..74_580 kB (across 5 ok repeat(s))\n\nexported to reports/ecpp/native/compiled.json\n"
+}

@@ -187,6 +187,18 @@ under the same explicit `Replay.Interprets` contract. Structural table validity
 alone does not prove root completeness. `buildTablePrepared` exposes sparse
 construction while retaining the internal diagnostics of `buildPrepared`.
 
+`Descriptor.prepareQueries` constructs a `QueryHandle` for successive queries
+at the same validated root. It retains the exact prepared squarefree domain.
+`QueryHandle.buildSigns` and `signAt` use the same selected-sign producer as the
+ordinary descriptor APIs; the finite agreement proofs preserve their results.
+The handle is indexed by the original descriptor, including its context,
+interval and derivative word. `checkSigns` retains the ordinary literal replay
+checks, so evidence from another selection or changed representation is rejected.
+The companion proves handle construction and every prepared query succeed
+under lawful coefficients, with the named #10389 root-sum dependency.
+Preparation is shared; each query list still builds its joint table and runs
+independent replay. No query-answer cache or performance speedup is claimed.
+
 `RawDescriptor` records its full context, root domain, distinct derivative
 indices and sign word. `RawDescriptor.check` reconstructs the formal derivative
 queries, checks the complete table replay and requires count exactly one.
@@ -218,6 +230,29 @@ selected derivatives followed by the exact requested queries. `SelectedSigns`
 retains the full replay, a fixed-length sign vector and the assertion that
 filtering gives exactly its count-one row. `SelectedSigns.signs_eq` proves
 agreement for every matching finite observation under `Replay.Interprets`.
+`Descriptor.signAt` returns an ordinary integer for one polynomial using the
+same checked joint-table construction. Its explicit internal-error branch
+emits a panic diagnostic in compiled execution and returns zero;
+`Descriptor.signAt_success` in the companion proves that branch
+unreachable under lawful coefficient interpretation, and `signAt_correct`
+identifies the result with evaluation at the selected root. The executable
+operation takes no companion proof package. Each call prepares its domain,
+constructs a checked table and repeats its replay in selected-sign extraction.
+Use `buildSigns` for several queries to share one table. Preparation and replay
+costs remain part of the specified Phase-4 measurements.
+
+`Descriptor.complete` exposes the completed descriptor directly. It calls the
+same `buildCompletion` producer. An internal error prints a diagnostic and
+returns the original validated descriptor; the companion proves this branch
+unreachable when coefficient arithmetic and signs have their specified
+interpretation. The fallback retains the source's indices and may still be
+partial; `complete_correct` proves fullness under those interpretation laws.
+Completion retains the exact head, interval and context,
+including for an empty partial encoding that selects a unique root. Call
+`buildCompletion` when the completion evidence or explicit diagnostics are
+needed. Each call constructs and checks its full derivative table, then checks
+that replay again when constructing the returned descriptor. It does not cache
+a previous completion.
 
 `Descriptor.buildRoots` enumerates full derivative encodings, validates each
 count-one row, and inserts them by Thom order. `rootsFrom_perm` proves that
@@ -275,7 +310,7 @@ for its cost against the required comparison bounds remain required.
 The total `determinePrepared` API remains required.
 The optional companion proves producer completeness and root-count correspondence
 relative to the named #10389 root-sum bridge; it does not yet provide those
-total executable wrappers. `Descriptor.buildSigns_success` rules out every
+total table wrappers. `Descriptor.buildSigns_success` rules out every
 internal selected-sign error on validated descriptors with lawful coefficients;
 the executable diagnostic interface is retained for arbitrary operations.
 Completion and root lists still require their totality proofs.

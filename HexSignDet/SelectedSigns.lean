@@ -113,6 +113,27 @@ theorem SelectedSigns.signs_eq {sign : E → Int} {context : Ctx}
 
 variable [Neg E] [Inv E]
 
+/-- Joint selected-root signs from a supplied prepared domain. The ordinary
+selected-sign checker retains the descriptor's literal bindings; a mismatched
+domain remains an internal diagnostic. This is the same producer as buildSigns. -/
+def Descriptor.buildSignsPrepared {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (domain : Sturm.PreparedDomain E)
+    (qs : List (DensePoly E)) : Except BuildError (SelectedSigns d qs) :=
+  match buildPrepared context domain (d.raw.queries ++ qs) with
+  | .error err => .error err
+  | .ok t =>
+    let candidates := (t.val.table t.property).rows.toList.filter fun row =>
+      decide (row.1.take d.raw.queries.length = d.raw.signs)
+    match candidates with
+    | [(signs, 1)] =>
+      let values := signs.drop d.raw.queries.length
+      if hv : values.length = qs.length then
+        let v : Vector Int qs.length := ⟨values.toArray, by simpa using hv⟩
+        if h : d.checkSigns qs v t.val = true then .ok ⟨v, t.val, h⟩
+        else .error .replay
+      else .error .dimensions
+    | _ => .error .system
+
 /-- Build joint selected-root signs. The companion proves success for every
 validated descriptor under a lawful coefficient interpretation. Arbitrary
 coefficient operations retain the internal diagnostics. -/
@@ -121,21 +142,24 @@ def Descriptor.buildSigns {sign : E → Int} {context : Ctx}
     Except BuildError (SelectedSigns d qs) :=
   match Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper with
   | none => .error .replay
-  | some domain =>
-    match buildPrepared context domain (d.raw.queries ++ qs) with
-    | .error err => .error err
-    | .ok t =>
-      let candidates := (t.val.table t.property).rows.toList.filter fun row =>
-        decide (row.1.take d.raw.queries.length = d.raw.signs)
-      match candidates with
-      | [(signs, 1)] =>
-        let values := signs.drop d.raw.queries.length
-        if hv : values.length = qs.length then
-          let v : Vector Int qs.length := ⟨values.toArray, by simpa using hv⟩
-          if h : d.checkSigns qs v t.val = true then .ok ⟨v, t.val, h⟩
-          else .error .replay
-        else .error .dimensions
-      | _ => .error .system
+  | some domain => d.buildSignsPrepared domain qs
+
+/-- A cached actual preparation uses precisely the ordinary selected producer. -/
+theorem Descriptor.buildSigns_prepared {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (domain : Sturm.PreparedDomain E)
+    (hd : Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper = some domain)
+    (qs : List (DensePoly E)) :
+    d.buildSigns qs = d.buildSignsPrepared domain qs := by
+  simp only [Descriptor.buildSigns, hd]
+
+/-- Successful actual construction includes successful shared preparation. -/
+theorem Descriptor.buildSigns_domain {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) {qs : List (DensePoly E)}
+    (s : SelectedSigns d qs) (hs : d.buildSigns qs = .ok s) :
+    ∃ domain, Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper = some domain := by
+  cases hd : Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper with
+  | none => simp only [Descriptor.buildSigns, hd, reduceCtorEq] at hs
+  | some domain => exact ⟨domain, rfl⟩
 
 /-- A successful prepared table with exactly one extending count-one row
 discharges every remaining guard of the actual selected-sign constructor. -/
@@ -162,12 +186,40 @@ theorem Descriptor.buildSigns_ofTable {sign : E → Int} {context : Ctx}
     simp only [Descriptor.checkSigns, RawDescriptor.checkSigns, hw, hctx,
       decide_true, Bool.true_and, hc, hr]
   refine ⟨⟨values, t.val, ha⟩, ?_⟩
-  simp only [Descriptor.buildSigns, hd, ht, Replay.table_rows]
+  simp only [Descriptor.buildSigns, hd, Descriptor.buildSignsPrepared, ht, Replay.table_rows]
   rw [hr]
   simp only [← hlen, List.drop_left, Vector.length_toList, ↓reduceDIte]
   simpa only [Vector.toArray_toList] using
     (show (if h : d.checkSigns qs values t.val = true then
       Except.ok (SelectedSigns.mk values t.val h) else .error BuildError.replay) =
         .ok (SelectedSigns.mk values t.val ha) by rw [dite_eq_left ha])
+
+/-- The sign of a polynomial at a validated selected root, using the checked
+joint-table constructor. The diagnostic zero fallback records an internal failure for
+arbitrary coefficient operations; the companion proves it unreachable under
+the lawful coefficient interpretation. No field-law package is executed. -/
+@[expose] def Descriptor.signAt {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (q : DensePoly E) : Int :=
+  match d.buildSigns [q] with
+  | .ok s => s.value
+  | .error err => panic! s!"Descriptor.signAt: internal error {repr err}"
+
+/-- The total accessor uses the sign from the actual successful construction. -/
+theorem Descriptor.signAt_ofBuild {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (q : DensePoly E)
+    (s : SelectedSigns d [q]) (h : d.buildSigns [q] = .ok s) :
+    d.signAt q = s.value := by
+  simp only [Descriptor.signAt, h]
+
+/-- The public accessor always returns a ternary integer code. Its semantic
+meaning, including exclusion of internal failure, is proved in the companion. -/
+theorem Descriptor.signAt_ternary {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (q : DensePoly E) :
+    d.signAt q = -1 ∨ d.signAt q = 0 ∨ d.signAt q = 1 := by
+  cases h : d.buildSigns [q] with
+  | error e => simp [Descriptor.signAt, h]
+  | ok s =>
+    simpa [Descriptor.signAt, h, SelectedSigns.value] using
+      s.ternary ⟨0, by simp⟩
 
 end Hex.SignDet

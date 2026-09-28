@@ -153,4 +153,24 @@ theorem Descriptor.buildSigns_roots {context : Ctx}
   obtain ⟨s, hbuild⟩ := d.buildSigns_success f hz h1 ha hs hm hnat hsign hn hi qs
   exact ⟨s, hbuild, s.values_at_root f hz h1 ha hs hm hnat hsign⟩
 
+include hz h1 ha hs hm hnat hn hi hsign in
+/-- The single-query total operation uses an actual successful checked
+construction. In particular its internal error fallback is unreachable. -/
+theorem Descriptor.signAt_success {context : Ctx}
+    (d : Descriptor E Ctx sign context) (q : DensePoly E) :
+    ∃ s : SelectedSigns d [q], d.buildSigns [q] = .ok s ∧ d.signAt q = s.value := by
+  obtain ⟨s, h⟩ := d.buildSigns_success f hz h1 ha hs hm hnat hsign hn hi [q]
+  exact ⟨s, h, d.signAt_ofBuild q s h⟩
+
+include hz h1 ha hs hm hnat hn hi hsign in
+/-- The total single-query operation is the mathematical evaluation sign at
+the original selected root. It requires no injective stored representation. -/
+theorem Descriptor.signAt_correct {context : Ctx}
+    (d : Descriptor E Ctx sign context) (q : DensePoly E) :
+    d.signAt q = (SignType.sign ((interpret f hz q).eval
+      (d.root f hz h1 ha hs hm hnat hsign)) : Int) := by
+  obtain ⟨s, _, h⟩ := d.signAt_success f hz h1 ha hs hm hnat hsign hn hi q
+  rw [h]
+  exact s.value_at_root f hz h1 ha hs hm hnat hsign
+
 end Hex.SignDet

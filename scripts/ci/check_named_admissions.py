@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit admissions reachable from the optional RCF and present sign adapters."""
+"""Audit admissions in the optional RCF and all sign adapters and conformance."""
 
 from __future__ import annotations
 
@@ -172,9 +172,22 @@ def check() -> None:
              "HexRealClosureMathlib.AlgebraicValue", "HexRealClosureMathlib.BaseClean",
              "HexRealClosureMathlib.AlgebraicTower", "HexRealClosure.TowerCatalog",
              "HexRealClosure.TowerTests", "HexRealClosure.FrameFormat",
-             "HexRealClosure.FrameFormatTests"] + [
-        "HexSignDetMathlib." + path.stem
-        for path in sorted((ROOT / "adapters/HexSignDetMathlib").glob("*.lean"))]
+             "HexRealClosure.FrameFormatTests",
+             "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance"] + [
+        "HexSignDetMathlib." + ".".join(path.relative_to(
+            ROOT / "adapters/HexSignDetMathlib").with_suffix("").parts)
+        for path in sorted((ROOT / "adapters/HexSignDetMathlib").rglob("*.lean"))] + [
+        "HexSignDetMathlib." + ".".join(path.relative_to(
+            ROOT / "conformance/HexSignDetMathlib").with_suffix("").parts)
+        for path in sorted((ROOT / "conformance/HexSignDetMathlib").rglob("*.lean"))]
+    # Named roots remain mandatory; the glob also audits unnamed conformance
+    # modules, including their own declarations and imported dependencies.
+    roots = list(dict.fromkeys(roots))
+    for path in sorted((ROOT / "conformance/HexSignDetMathlib").rglob("*.lean")):
+        module = "HexSignDetMathlib." + ".".join(path.relative_to(
+            ROOT / "conformance/HexSignDetMathlib").with_suffix("").parts)
+        if module_file(module) != path:
+            raise ValueError(f"conformance module {module} is shadowed by another source file")
     paths = set().union(*(import_cone(module) for module in roots))
     if BRIDGE not in paths:
         raise ValueError(f"the optional adapter no longer imports {BRIDGE}")
@@ -208,7 +221,7 @@ def check() -> None:
             raise ValueError(f"the {BRIDGE} sorry is not in check_rootSum")
         if not re.search(r":=\s*by\s*$", source[declarations[-1].end() : admissions[0].start()]):
             raise ValueError(f"the {BRIDGE} admission is no longer the direct theorem body")
-    print(f"{len(roots)} present adapter import cones: {len(paths)} local modules, only check_rootSum is admitted")
+    print(f"{len(roots)} adapter/conformance import cones: {len(paths)} local modules, only check_rootSum is admitted")
 
 
 if __name__ == "__main__":

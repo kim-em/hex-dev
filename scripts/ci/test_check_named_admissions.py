@@ -58,13 +58,15 @@ class AdmissionScannerTests(unittest.TestCase):
             bridge = root / "adapters/HexRealRootsMathlib/TarskiSoundness.lean"
             sign = root / "adapters/HexSignDetMathlib/RootProducer.lean"
             conformance = root / "conformance/HexSignDetMathlib/SelectedProducerConformance.lean"
+            completion = root / "conformance/HexSignDetMathlib/CompletionConformance.lean"
+            handle = root / "conformance/HexSignDetMathlib/QueryHandleConformance.lean"
             dependency = root / "HexExtra/SelectedField.lean"
             arithmetic = [root / f"adapters/HexRealClosureMathlib/{name}.lean"
                           for name in ("Algebraic", "AlgebraicClean", "AlgebraicValue",
                                        "BaseClean", "AlgebraicTower")]
             tower = [root / f"HexRealClosure/{name}.lean"
                      for name in ("TowerCatalog", "TowerTests", "FrameFormat", "FrameFormatTests")]
-            for path in (entry, bridge, sign, conformance, dependency, *arithmetic, *tower):
+            for path in (entry, bridge, sign, conformance, completion, handle, dependency, *arithmetic, *tower):
                 path.parent.mkdir(parents=True, exist_ok=True)
             for path in (*arithmetic, *tower):
                 path.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
@@ -72,13 +74,49 @@ class AdmissionScannerTests(unittest.TestCase):
             bridge.write_text("theorem check_rootSum : True := by\n  sorry\n", encoding="utf-8")
             sign.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
             conformance.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            completion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            handle.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
+                handle.unlink()
+                with self.assertRaisesRegex(ValueError, "missing local import"):
+                    audit.check()
+                handle.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/QueryHandleConformance"):
+                    audit.check()
+                handle.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 dependency.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "unapproved admission in HexExtra/SelectedField"):
                     audit.check()
                 dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                completion.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/CompletionConformance"):
+                    audit.check()
+                completion.unlink()
+                with self.assertRaisesRegex(ValueError, "missing local import"):
+                    audit.check()
+                completion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+
+                additional = root / "conformance/HexSignDetMathlib/Nested/AnotherConformance.lean"
+                additional.parent.mkdir()
+                additional.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/Nested/AnotherConformance"):
+                    audit.check()
+                additional.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                shadow = root / "adapters/HexSignDetMathlib/Nested/AnotherConformance.lean"
+                shadow.parent.mkdir(parents=True, exist_ok=True)
+                shadow.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "conformance module .* is shadowed"):
+                    audit.check()
+                shadow.unlink()
+                additional.unlink()
+                nested_adapter = root / "adapters/HexSignDetMathlib/Nested/AnotherAdapter.lean"
+                nested_adapter.parent.mkdir(exist_ok=True)
+                nested_adapter.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in adapters/HexSignDetMathlib/Nested/AnotherAdapter"):
+                    audit.check()
+                nested_adapter.unlink()
                 sign.write_text("public import HexRCF.RealCoefficients\ntheorem bad : True := by stop\n",
                                 encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "unapproved admission"):

@@ -131,11 +131,21 @@ accepted count-one partial and full descriptors select a unique root, and
 `root_derivatives` identifies their signs with formal iterated derivatives
 through `derivativesFrom_get`. `SelectedSigns.values_at_root` and
 `value_at_root` prove that every checked requested sign equals evaluation at
-that same selected root, including the public one-query accessor.
+that same selected root, including the certificate's one-query accessor.
 `Completion.root_eq_source` proves that accepted full-derivative completion
 preserves the selected real root; `Completion.signs_at_source` identifies every
 returned derivative sign at that original root. These results use checked
 count-one tables and derivative identities without assuming Thom order.
+`CompletionProducer` proves `Descriptor.buildCompletion_success` for every
+validated descriptor under the existing lawful coefficient interpretation.
+It constructs the prepared full-derivative BKR table and proves that exactly
+one count-one row restricts to the source's partial word, excluding every
+internal error of the actual producer. Empty partial words are included.
+`Descriptor.complete_correct` proves that the total accessor preserves the
+original selected root, retains literal source bindings and returns all formal
+derivative signs in canonical slot order. No injectivity of coefficient
+representations or Thom ordering theorem is required. These semantic results
+depend on the same named #10389 root-sum admission.
 `Reencoding.root_eq_source` proves that checked re-encoding keeps that real root
 when the defining polynomial and interval change. Its proof uses the copied
 equation, derivative word and strict endpoint signs, plus acceptance of the
@@ -145,8 +155,9 @@ returns equality exactly when the original selected real roots coincide. It
 uses the common full derivative word and count-one descriptors; strict `<` and
 `>` still require the separate Thom-order foundation.
 The executable API retains its internal diagnostics for arbitrary coefficient
-operations. The companion rules out selected-sign errors under lawful
-coefficients; the domain-exact total wrappers remain to be implemented.
+operations. The companion rules out selected-sign and completion errors under
+lawful coefficients. Root enumeration, re-encoding success and strict root
+order retain their separate proof obligations.
 
 `Descriptor.buildSigns_success` proves that the actual selected-sign producer
 succeeds for every validated descriptor and finite ordered query list under
@@ -158,12 +169,32 @@ discharged by the Mathlib-free `buildSigns_ofTable` theorem.
 `Descriptor.buildSigns_roots` identifies the returned signs with evaluation at
 the original selected root, including empty and repeated queries. These
 results use the named #10389 root-sum bridge, without a Thom order assumption.
+`Descriptor.signAt_success` proves that the public total single-query operation
+uses an actual successful checked result and never its diagnostic error fallback.
+`Descriptor.signAt_correct` equates its integer with the evaluation sign at the
+original selected root, also relative to the named #10389 bridge. Neither the
+operation nor these theorems require an
+injective coefficient representation; the executable uses ordinary operations
+and carries no companion field-law package.
 The cubic-field conformance example uses ordinary `QAdjoin` arithmetic over
 ℚ(∛2) and retains the selected real embedding. It rejects changed sign vectors
 and query order in selected-sign replay, and tests context, defining-polynomial
 and derivative-slot rejections in both descriptor validation and selected-sign
 replay. Finite-bound conformance also
 checks zero and constant queries and rejects replay on a different valid interval.
+
+`QueryHandle` proves that `Descriptor.prepareQueries` succeeds for every
+validated descriptor under the same coefficient-interpretation laws. Prepared
+singleton and joint queries use exactly the existing selected-sign producer
+and retain the original root, empty/repeated query positions and zero signs.
+`QueryHandle.signAt_correct` identifies the cached total result with evaluation
+at that root, and `signAt_success` excludes its diagnostic fallback. These
+semantic guarantees use the named #10389 bridge. The finite producer/result
+agreement proofs have only the standard kernel axioms. Actual cubic-field and
+noncanonical-carrier conformance rejects copied evidence after context,
+interval, selected-word and semantically equivalent representation changes.
+Only preparation is retained; joint table construction and replay still run
+for each query list.
 
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient
