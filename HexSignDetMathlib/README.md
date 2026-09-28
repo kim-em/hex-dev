@@ -48,6 +48,14 @@ acceptance and decoding proofs in `HexMatrixMathlib.Rational`.
 covered by its candidate support. `empty_system` and `singleton_system` provide
 the two complete leaf systems, with their explicit inverses checked by the
 ordinary kernel before any solving or pruning.
+`foundation_moments` and `System.foundation_counts` apply Tau Ceti's finite
+moment and count-recovery theorems to the actual ordered vectors. List positions
+index the observations, preserving repeated conditions. Coverage is supplied
+separately from the accepted matrix identities; the checked rational inverse
+provides the foundation's left inverse. `Replay.check_counts` uses this bridge
+after recursive support completeness and shared query semantics have supplied
+coverage and the actual moments. No coefficient representation is made into
+a field, and the executable checker gains no companion dependency.
 `system_counts` requires only the literal shape guards, a scaled inverse and
 complete support: column distinctness, nonnegative counts and both system
 identities follow from those inputs.

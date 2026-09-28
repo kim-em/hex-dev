@@ -8,6 +8,7 @@ module
 public import HexSignDet.Induction
 public import HexSignDet.Table
 public import HexSignDetMathlib.QueryReduction
+public import HexSignDetMathlib.Foundation
 public import HexSturmMathlib.Soundness
 
 public section
@@ -140,8 +141,18 @@ theorem Replay.check_counts {Ctx : Type w} [DecidableEq Ctx]
     (qs : List (DensePoly E)) (t : Replay E Ctx)
     (checked : t.check sign context p a b qs = true) :
     counts t.node.system.columns (rootObservations f hz p qs a b) = t.node.system.counts := by
-  exact (t.support_complete checked (rootObservations_valid f hz p qs a b)
-    (t.check_interprets f hz h1 ha hs hm hnat sign hsign context p a b qs checked)).2
+  have interpreted :=
+    t.check_interprets f hz h1 ha hs hm hnat sign hsign context p a b qs checked
+  have covered :=
+    (t.support_complete checked (rootObservations_valid f hz p qs a b) interpreted).1
+  apply t.node.system.foundation_counts
+    (Node.check_bindings (Replay.check_node checked)).2 _ ?_
+    (Node.check_values f hz h1 ha hs hm hnat sign hsign context p a b qs t.node
+      (Replay.check_node checked))
+  intro word hw
+  obtain ⟨i, _, he⟩ := List.mem_map.mp (covered word hw)
+  exact he ▸ (List.mem_iff_getElem.mpr
+    ⟨i.val, by simp, by simp⟩)
 
 include h1 ha hs hm hnat hsign in
 /-- Sparse lookup is the cardinality of the roots realizing the requested

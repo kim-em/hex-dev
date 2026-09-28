@@ -128,18 +128,27 @@ columns, exponent ranges and every index before arithmetic or allocation.
 ## Imported foundations and ownership
 
 Follow the [family audit and ownership table](../../SPEC/future-work.md#proof-ownership-and-public-surface)
-at Mathlib revision `1cf325a0cf67aca2b04d76b5380ff6a9e410aefa` in
-[the manifest](../../lake-manifest.json). `IsRealClosed` and
-`IsRealClosed.of_linearOrderedField` exist; the generic Thom, BKR and
-Sturm–Tarski foundations below are planned imports requested by
-[#10300](https://github.com/kim-em/hex-dev/issues/10300), not available
-Lean declaration names or permitted axioms. The pin supplies neither
-ordered real-closure existence nor `IsRealClosed ℝ`. The latter is owned
-by hex-real-roots-mathlib; the former by Tau Ceti for the real-closure
-companion. Hex already has
-[`IsRealClosed RealAlgebraicNumber`](../../HexRealAlgebraicMathlib/RealClosed.lean)
-for rational-base semantics, without making that downstream implementation
-an import here.
+and the dependency pins in [the manifest](../../lake-manifest.json).
+The companion consumes Tau Ceti foundations through the shared interpretation
+interface; it must not import a concrete real-closure tower implementation.
+The required Thom identity/order statements below are mathematical completion
+requirements, not permitted axioms or assumptions of executable availability.
+
+For finite BKR counting, `Function.mulVec_occCount` and
+`Function.eq_occCount` in `TauCeti.Data.Matrix.OccCount` supply the restricted
+moment identity and count recovery. Candidate columns must be injective and
+cover every observation independently of the supplied inverse. The companion
+identifies observations with list positions, so repeated sign conditions
+retain their multiplicities; it transports the actual ordered integer matrices
+and checked rational inverse without changing indices or rounding counts.
+Tau Ceti's `SignDetermination.Moments`, `SignDetermination.Polynomial` and
+`SignDetermination.Roots` supply the full ternary inverse and the polynomial
+sign-sum identities used by the abstract contracts below.
+
+Ordered real-closure existence is a Tau Ceti input for the real-closure
+companion. Real and rational-algebraic specializations must reuse their
+existing proved interpretations and `IsRealClosed` instances; they do not
+require those concrete representations as imports here.
 
 Existing total polynomial arithmetic comes from hex-poly and its companion.
 The shared query/replay implementation belongs to hex-real-roots and the
@@ -168,7 +177,7 @@ Actual counts are defined from `Z`, independently of the proposed solution.
 
 ### Recursive support-preserving BKR reduction
 
-Import abstract correctness of the finite recursive reduction with these
+Consume the finite BKR foundation in the recursive reduction with these
 explicit premises and conclusions:
 
 - The empty-list support is `{()}` and singleton support is all three
@@ -202,7 +211,8 @@ justify its own discarded columns. Row-basis existence uses ordinary
 linear algebra from the matrix companions, not another real-algebra
 foundation. Hex proves the elementary root restriction to child sign
 vectors and the literal-to-abstract recursion correspondence locally,
-consuming this abstract reduction theorem rather than redeveloping BKR.
+consuming the imported finite BKR identities and count-recovery theorem at the
+corresponding solve steps, rather than introducing a second BKR algorithm.
 
 ### Thom injectivity and order
 

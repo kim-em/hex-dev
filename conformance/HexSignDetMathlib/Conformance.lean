@@ -388,4 +388,64 @@ example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := 
 #guard_msgs in
 #print axioms false_model
 
+/-- Repeated observations are counted separately and the unrealized zero
+column retains exactly zero. This consumes the imported count-recovery proof. -/
+theorem foundation_repeated :
+    counts #v[[-1], [0], [1]] [[-1], [-1], [-1], [1]] = #v[3, 0, 1] := by
+  let s : System 3 := {
+    rows := #v[[0], [1], [2]], columns := #v[[-1], [0], [1]]
+    counts := #v[3, 0, 1], values := #v[4, -2, 4]
+    inverse := Matrix.ofRows #v[#v[0, -1, 1], #v[2, 0, -2], #v[0, 1, 1]]
+    denominator := 2 }
+  exact s.foundation_counts (arity := 1) (by decide +kernel) _
+    (by decide +kernel) (by decide +kernel)
+
+/-- The empty query word occurs once per observation. -/
+theorem foundation_empty_word : counts #v[[]] [[], [], []] = #v[3] := by
+  let s : System 1 := {
+    rows := #v[[]], columns := #v[[]], counts := #v[3], values := #v[3]
+    inverse := Matrix.identity 1, denominator := 1 }
+  exact s.foundation_counts (arity := 0) (by decide +kernel) _
+    (by decide +kernel) (by decide +kernel)
+
+/-- Count recovery also applies to the zero-dimensional matrix and empty
+observation family; there is no nonempty-support hypothesis. -/
+theorem foundation_empty_support : counts (#v[] : Vector (List Int) 0) [] = #v[] := by
+  let s : System 0 := {
+    rows := #v[], columns := #v[], counts := #v[], values := #v[]
+    inverse := Matrix.identity 0, denominator := 1 }
+  exact s.foundation_counts (arity := 2) (by decide +kernel) _
+    (by decide +kernel) (by decide +kernel)
+
+/-- A square invertible solve may omit an observation even when its right
+hand side is the actual moment. The foundation's coverage premise is essential. -/
+theorem foundation_incomplete :
+    ∃ s : System 1, s.check 1 = true ∧
+      s.values = moments s.rows [[-1], [1]] ∧
+      counts s.columns [[-1], [1]] ≠ s.counts ∧
+      ¬ (∀ x ∈ ([[-1], [1]] : List (List Int)), x ∈ s.columns.toList) := by
+  exact ⟨{
+    rows := #v[[0]], columns := #v[[1]], counts := #v[2], values := #v[2]
+    inverse := Matrix.identity 1, denominator := 1 }, by decide +kernel⟩
+
+/-- info: 'Hex.SignDet.foundation_moments' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms foundation_moments
+
+/-- info: 'Hex.SignDet.System.foundation_counts' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms System.foundation_counts
+
+/-- info: 'Hex.SignDetMathlib.Conformance.foundation_repeated' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms foundation_repeated
+
+/-- info: 'Hex.SignDetMathlib.Conformance.foundation_empty_word' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms foundation_empty_word
+
+/-- info: 'Hex.SignDetMathlib.Conformance.foundation_empty_support' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms foundation_empty_support
+
 end Hex.SignDetMathlib.Conformance
