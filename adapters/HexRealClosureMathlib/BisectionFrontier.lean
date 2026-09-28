@@ -32,6 +32,12 @@ variable (hpos : ∀ a, sign a = 1 ↔ 0 < φ a) (hneg : ∀ a, sign a < 0 ↔ �
       ∃ bounds ∈ frontier.cells.map (fun cell => (cell.lower, cell.upper)),
         InInterval (.finite (φ bounds.1)) (.finite (φ bounds.2)) x
 
+/-- Distinct retained open intervals have no common point. -/
+@[expose] def Frontier.Disjoint (frontier : Frontier sign) : Prop :=
+  (frontier.cells.map (fun cell => (cell.lower, cell.upper))).Pairwise
+    (fun a b => ∀ x : K, InInterval (.finite (φ a.1)) (.finite (φ a.2)) x →
+      ¬ InInterval (.finite (φ b.1)) (.finite (φ b.2)) x)
+
 include hz h1 ha hs hm hzero hn hi hnat hpos hneg in
 /-- Every stored finite cell has the domain of its actual current head. -/
 theorem Cell.domain_valid {p : DensePoly E} (cell : Cell sign p) :
@@ -316,6 +322,118 @@ theorem traverse?_distinct (budget : Nat) (frontier : Frontier sign)
         · exact frontier.advance?_distinct φ hz h1 hs hm sign
             cell rest hc hnext excluded old
 
+include hz h1 ha hs hm hzero hn hi hnat hpos hneg in
+/-- A step preserves disjointness of the actual retained intervals. -/
+theorem Frontier.advance?_disjoint (frontier : Frontier sign)
+    (selected : Cell sign frontier.head) (rest : List (Cell sign frontier.head))
+    (chosen : select frontier.cells = some (selected, rest)) {next : Frontier sign}
+    (accepted : frontier.advance? selected rest chosen = some next)
+    (old : frontier.Disjoint φ sign) : next.Disjoint φ sign := by
+  obtain ⟨split, _, pending, hpending, _, _, hcoords⟩ :=
+    frontier.advance?_result selected rest chosen accepted
+  rw [split.mode.reprepare?_endpoints rest hpending] at hcoords
+  have perm := (select_perm chosen).map (fun cell => (cell.lower, cell.upper))
+  have symm {a b : E × E}
+      (h : ∀ x : K, InInterval (.finite (φ a.1)) (.finite (φ a.2)) x →
+        ¬ InInterval (.finite (φ b.1)) (.finite (φ b.2)) x) :
+      ∀ x : K, InInterval (.finite (φ b.1)) (.finite (φ b.2)) x →
+        ¬ InInterval (.finite (φ a.1)) (.finite (φ a.2)) x := by
+    intro x hb ha
+    exact h x ha hb
+  have original := old.perm perm symm
+  simp only [List.map_cons, List.pairwise_cons] at original
+  obtain ⟨against, remaining⟩ := original
+  obtain ⟨leftDomain, rightDomain⟩ :=
+    split.domains φ hz h1 ha hs hm sign hzero hn hi hnat hpos hneg
+  have hl : φ selected.lower < φ (midpoint selected.lower selected.upper) := leftDomain.2.2.1
+  have hu : φ (midpoint selected.lower selected.upper) < φ selected.upper := rightDomain.2.2.1
+  unfold Frontier.Disjoint
+  rw [hcoords]
+  simp only [List.cons_append, List.nil_append, List.pairwise_cons]
+  refine ⟨?_, ?_, remaining⟩
+  · intro bounds hb x hx hy
+    simp only [List.mem_cons] at hb
+    rcases hb with rfl | hb
+    · simp only [inInterval_iff] at hx hy
+      exact lt_asymm hx.2 hy.1
+    · apply against bounds hb x
+      · simp only [inInterval_iff] at hx ⊢
+        exact ⟨hx.1, hx.2.trans hu⟩
+      · exact hy
+  · intro bounds hb x hx hy
+    apply against bounds hb x
+    · simp only [inInterval_iff] at hx ⊢
+      exact ⟨hl.trans hx.1, hx.2⟩
+    · exact hy
+
+include hz h1 ha hs hm hzero hn hi hnat hpos hneg in
+/-- Every frontier's current head is semantically nonzero. -/
+theorem Frontier.head_nonzero (frontier : Frontier sign) :
+    interpret φ hz frontier.head ≠ 0 := by
+  obtain ⟨cell, member⟩ := List.exists_mem_of_ne_nil _ frontier.nonempty
+  exact (cell.domain_valid φ hz h1 ha hs hm sign hzero hn hi hnat hpos hneg).1
+
+include hz h1 ha hs hm hzero hn hi hnat hpos hneg in
+/-- Disjoint retained intervals remain disjoint through the entire traversal. -/
+theorem traverse?_disjoint (budget : Nat) (frontier : Frontier sign)
+    {result : Frontier sign} (accepted : traverse? budget frontier = some result)
+    (old : frontier.Disjoint φ sign) : result.Disjoint φ sign := by
+  induction budget generalizing frontier with
+  | zero =>
+    simp only [traverse?, Option.some.injEq] at accepted
+    subst result
+    exact old
+  | succ budget ih =>
+    simp only [traverse?] at accepted
+    split at accepted
+    · simp only [Option.some.injEq] at accepted
+      subst result
+      exact old
+    · rename_i cell rest hc
+      cases hnext : frontier.advance? cell rest hc with
+      | none => simp [hnext] at accepted
+      | some next =>
+        simp [hnext] at accepted
+        exact ih next accepted (frontier.advance?_disjoint φ hz h1 ha hs hm sign
+          hzero hn hi hnat hpos hneg cell rest hc hnext old)
+
+include hz h1 ha hs hm hzero hn hi hnat hpos hneg in
+/-- The capped entry point succeeds under the shared coefficient interpretation. -/
+theorem Frontier.refine?_success (frontier : Frontier sign) :
+    frontier.refine?.isSome = true :=
+  traverse?_success φ hz h1 ha hs hm sign hzero hn hi hnat hpos hneg _ frontier
+
+include hz h1 ha hs hm hzero hn hi hnat hpos hneg in
+/-- Preparing and refining a finite interval preserves exactly its original
+roots, within the fixed node allowance. Emitted values are distinct and
+excluded from the current head; retained intervals are disjoint. -/
+theorem Frontier.refine?_spec {p : DensePoly E} {lower upper : E}
+    {initial result : Frontier sign}
+    (prepared : Frontier.prepare? sign p lower upper = some initial)
+    (refined : initial.refine? = some result) :
+    result.nodes ≤ 2 * (p.natDegree + 1) ∧
+    (∀ x : K, result.Roots φ hz sign x ↔
+      (interpret φ hz p).IsRoot x ∧ InInterval (.finite (φ lower)) (.finite (φ upper)) x) ∧
+    result.removed.Pairwise (fun a b => φ a ≠ φ b) ∧
+    (∀ r ∈ result.removed, ¬ (interpret φ hz result.head).IsRoot (φ r)) ∧
+    result.Disjoint φ sign ∧
+    (select result.cells = none ∨ result.nodes = 2 * (p.natDegree + 1)) := by
+  obtain ⟨head, removed, nodes, coords⟩ := Frontier.prepare?_result prepared
+  have excluded : ∀ r ∈ initial.removed, ¬ (interpret φ hz initial.head).IsRoot (φ r) := by
+    simp [removed]
+  have distinct : initial.removed.Pairwise (fun a b => φ a ≠ φ b) := by simp [removed]
+  have disjoint : initial.Disjoint φ sign := by simp [Frontier.Disjoint, coords]
+  have trace : traverse? (2 * (initial.head.natDegree + 1)) initial = some result := refined
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+  · simpa only [head, nodes, Nat.zero_add] using traverse?_nodes _ initial trace
+  · intro x
+    exact (traverse?_roots φ hz h1 ha hs hm sign hzero hn hi hnat hpos hneg _ initial trace x).symm.trans
+      (Frontier.prepare?_roots φ hz sign prepared x)
+  · exact traverse?_distinct φ hz h1 ha hs hm sign hzero hn hi hnat hpos hneg _ initial trace excluded distinct
+  · exact traverse?_nonvanishing φ hz h1 ha hs hm sign hzero hn hi hnat hpos hneg _ initial trace excluded
+  · exact traverse?_disjoint φ hz h1 ha hs hm sign hzero hn hi hnat hpos hneg _ initial trace disjoint
+  · simpa only [head, nodes, Nat.zero_add] using traverse?_stopped _ initial trace
+
 end Hex.RealClosure.Bisection
 
 /-- info: 'Hex.RealClosure.Bisection.Cell.domain_valid' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -359,3 +477,23 @@ end Hex.RealClosure.Bisection
 /-- info: 'Hex.RealClosure.Bisection.traverse?_distinct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Bisection.traverse?_distinct
+
+/-- info: 'Hex.RealClosure.Bisection.Frontier.advance?_disjoint' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Bisection.Frontier.advance?_disjoint
+
+/-- info: 'Hex.RealClosure.Bisection.Frontier.head_nonzero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Bisection.Frontier.head_nonzero
+
+/-- info: 'Hex.RealClosure.Bisection.traverse?_disjoint' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Bisection.traverse?_disjoint
+
+/-- info: 'Hex.RealClosure.Bisection.Frontier.refine?_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Bisection.Frontier.refine?_success
+
+/-- info: 'Hex.RealClosure.Bisection.Frontier.refine?_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Bisection.Frontier.refine?_spec

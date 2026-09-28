@@ -243,9 +243,9 @@ no field instance on raw syntax is required. Native examples exercise regular
 and root cuts, nonmonic and fractional heads, root-free deflated endpoints,
 root counts and invalid inputs.
 
-This supplies one finite bisection node. The capped interval traversal,
-transport of pending evidence after deflation, complete BKR fallback, factor
-merging and the complete root-set API remain to be assembled and proved.
+The capped frontier below composes these finite nodes and recomputes pending
+evidence after deflation. Complete BKR fallback, factor merging and the
+complete root-set API remain to be assembled and proved.
 
 `Mode.removed` returns the emitted coefficient point or `none`. The companion
 `BisectionRoots` proves that roots in the original interval are exactly the
@@ -272,7 +272,7 @@ ordinary-real realization remain separate requirements.
 ### Capped bisection frontier
 
 `Bisection.Frontier.prepare?` checks a finite input interval.
-`Frontier.bisect?` then spends at most `2 * (degree p + 1)` nodes, choosing the
+`Frontier.refine?` then spends at most `2 * (degree p + 1)` nodes, choosing the
 first retained cell whose checked count exceeds one. It returns the current
 head, emitted coefficient roots and every remaining open cell. Count-zero and
 count-one cells remain available; unresolved cells request BKR completion.
@@ -286,19 +286,31 @@ are bound to one current head. The implementation uses shared Sturm preparation;
 reuse of its head-only chain across endpoints remains an upstream API request.
 
 The companion proves construction success under coefficient interpretation,
-the node bound, exact root coverage throughout traversal, distinct emitted
-values and exclusion of emitted roots from every later active head. These proofs use only the standard
-three axioms. Native examples cover a later root cut with an earlier count-one
-cell, positive/negative/fractional scalars, early stopping and the inseparable
-pair `epsilon, 2 * epsilon` retained after all six permitted dyadic nodes.
+the node bound, exact root coverage, disjoint retained intervals, distinct
+emitted values and exclusion of emitted roots from every later active head.
+The capped entry theorem also proves that traversal stops only when every
+cell has count at most one or the node allowance has been spent. These
+structural proofs use only the standard three axioms.
+`BisectionCounts` proves that retained counts plus emitted roots equal the
+original interval's root count, under an exact three-valued sign interpretation.
+This count theorem inherits the shared query-soundness gap #10389.
 
-Twelve additional exact conformance rows check whole frontiers. The existing
+Fifty-one native checks cover later root cuts with earlier count-one and
+count-zero cells, two emitted roots, positive/negative/fractional scalars,
+early stopping and close infinitesimal roots retained after the node allowance.
+Fourteen additional exact conformance rows check whole frontiers. The existing
 FLINT/SymPy oracle verifies scalar-preserving deflation, actual pending heads,
 root counts, emitted roots, the internal node allowance and the retained
-intervals' lack of gaps or overlaps. Rejection tests cover stale count-one
-heads, missing cells, wrong cached counts, gaps, overlaps, duplicated emitted
-roots, nonroot emission and loss of a close infinitesimal root. No timing
-improvement is claimed by these correctness checks.
+intervals' lack of gaps or overlaps. It independently reproduces the prescribed
+cell selection and cuts. Rejection tests cover stale heads, missing cells,
+wrong counts, gaps, overlaps, duplicated or invented roots, premature stopping
+and spending the allowance on the wrong cell.
+
+The current shared API rebuilds the same Sturm chain four times per node:
+twice for preparation and twice for counts. A root cut also rebuilds it twice
+for each pending cell, including count-zero cells. Reusing its head-only chain
+across endpoints remains an upstream API request. No timing improvement is
+claimed by these correctness checks.
 
 Complete bound selection and whole-line dispatch, descriptor construction,
 BKR completion, multiplicity restoration and factor-list merging remain

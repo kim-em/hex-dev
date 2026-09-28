@@ -8,6 +8,7 @@ module
 public import HexRealClosure.Deflation
 public import HexRealClosure.Bisection
 public import HexRealClosure.BisectionFrontier
+public import HexRealClosure.BisectionFrontierTests
 public import HexOrderedFn.Infinitesimal
 public import Lean.Data.Json.Printer
 public import Lean.Data.Json.FromToJson.Basic
@@ -75,7 +76,7 @@ private def emitFrontier {E : Type} [Zero E] [DecidableEq E] [One E]
     (name : String) (depth : Nat) (encode : E → Lean.Json) (sign : E → Int)
     (p : DensePoly E) (lower upper : E) : IO Unit := do
   let initial := Bisection.Frontier.prepare? sign p lower upper
-  let result := initial.bind fun frontier => frontier.bisect?
+  let result := initial.bind fun frontier => frontier.refine?
   let payload := result.map fun frontier => Lean.Json.mkObj [
     ("active", .arr (frontier.head.toArray.map encode)),
     ("removed", .arr (frontier.removed.toArray.map encode)),
@@ -157,3 +158,8 @@ def main : IO Unit := do
   emitRatFrontier "frontier repeated root rejected" (linearFactor (1 : Rat) * linearFactor 1) 0 2
   emitRatFrontier "frontier reversed interval rejected" quadratic 2 0
   emitRatFrontier "frontier root endpoint rejected" pending (-3) 4
+
+  emitRatFrontier "frontier two root cuts with pending zero cell"
+    (linearFactor (0 : Rat) * linearFactor 1 * linearFactor 2 * linearFactor 3) (-4) 4
+  emitFrontier "frontier root cut before exhausted fallback" 1 fraction sign₁
+    (linearFactor (0 : RationalFn Rat) * close) (-1) 1

@@ -173,7 +173,7 @@ def check() -> None:
              "HexSignDetMathlib.RootListConformance", "HexRealClosure.BisectionTests",
              "HexRealClosureMathlib.Bisection", "HexRealClosureMathlib.BisectionRoots",
              "HexRealClosure.DeflationConformance", "HexRealClosure.BisectionFrontierTests",
-             "HexRealClosureMathlib.BisectionFrontier"] + [
+             "HexRealClosureMathlib.BisectionFrontier", "HexRealClosureMathlib.BisectionCounts"] + [
         "HexSignDetMathlib." + ".".join(path.relative_to(
             ROOT / "adapters/HexSignDetMathlib").with_suffix("").parts)
         for path in sorted((ROOT / "adapters/HexSignDetMathlib").rglob("*.lean"))] + [
