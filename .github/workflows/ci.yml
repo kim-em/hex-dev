@@ -155,7 +155,7 @@ jobs:
           python3 -m unittest scripts/bench/test_sign_det_compare.py
           python3 -m unittest scripts/bench/test_sign_det_maximal.py
           python3 -m unittest scripts/bench/test_sign_det_joint.py
-          python3 scripts/bench/sign_det_joint.py reports/data/sign-det-joint/9651d8947/inventory.jsonl
+          python3 scripts/bench/sign_det_joint.py reports/data/sign-det-joint/9651d8947/inventory.jsonl --retained
           python3 -m unittest scripts/bench/test_real_roots_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_bz_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_berlekamp_mathlib_sweep.py
@@ -508,6 +508,10 @@ jobs:
             # The decision target has fixed timing registrations above plus a
             # separate canonical logical policy-comparison canary.
             .lake/build/bin/hexinterval_decision_bench canary
+          fi
+          if [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" HexSignDet "* ]]; then
+            .lake/build/bin/hexsigndet_bench inspect-joint 3 > "$RUNNER_TEMP/sign-det-joint.jsonl"
+            python3 scripts/bench/sign_det_joint.py "$RUNNER_TEMP/sign-det-joint.jsonl" --degree 3
           fi
           .lake/build/bin/hexprimality_field_probe verify-ecm2
           touch "$RUNNER_TEMP/bench.ok"

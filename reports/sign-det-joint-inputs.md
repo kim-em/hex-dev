@@ -34,9 +34,9 @@ known-root restrictions before solving: leaf dimensions are three, and each
 parent dimension is the product of the distinct child supports. Each query
 polynomial is distinct, so exact DAG encoding cannot identify two nodes with
 different query lists. It checks all tree/graph dimensions and edge counts.
-The matrix inverse/denominator bits, query-witness bits and certificate bytes
-are recorded positive integers; the validator also checks the reduced witness-bit
-maximum against `bit_length((2n)!/2)`. Witness
+The matrix inverse/denominator bits and certificate bytes are recorded positive
+integers; the validator checks the query-witness bit maxima against the formulas
+described below. Witness
 bits scan stored query/reduction certificates, including quotient and scaling
 fields; they are not peak intermediate values, allocated bytes or live memory.
 
@@ -49,8 +49,9 @@ coverage remain required for the joint-encoding Phase-4 evaluation.
 This family varies query count, degree and coefficient size. Realized support
 is always two and candidate matrices have at most four columns. Its constant
 gcd removes no shared roots; both endpoints are infinite, and only the source
-equation has a zero sign. It does not cover maximal support, shared roots or
-finite endpoint constraints.
+equation has a zero sign. It does not cover heads with more than two real roots
+(support above two or matrices wider than four columns), shared roots or finite
+endpoint constraints.
 
 ## Recorded inventory
 
@@ -76,10 +77,14 @@ counts and dimensions agree, while its serialized byte counts differ slightly.
 The matrices remain bounded while polynomial degrees, stored witness bits and
 serialized certificates grow. Every query has degree below the common head,
 so reduction modulo that head cannot lower its degree. Reduced mode normalizes
-monomials to ±X^k and stores their scale factors; its maximum is the constant
-derivative's scale `(2n)!/2`. Direct-mode stored witnesses have roughly twice
-that bit count. This reflects normalization of factorial-sized input coefficients,
-not measured intermediate growth. The additional evidence makes the reduced
+monomials to ±X^k and stores their scale factors; its maximum is the normalization scale of the common head's constant
+2n-th derivative, whose absolute value is `(2n)!/2`. In direct mode the initial
+Sturm–Tarski remainder for its squared query has leading coefficient
+`−n·((2n)!/2)²`; the chain stores that absolute value as its initial right scale.
+This is the direct witness-bit maximum in the retained rows, and the validator
+checks its formula. Normalizing first avoids storing that large product.
+These are stored intermediate coefficients and scales, not measurements of the
+largest temporary value reached during arithmetic. The additional evidence makes the reduced
 serialized certificates larger. Neither observation measures time or allocation,
 and this family cannot supply the required comparison of unreduced and
 modulo-head moment construction on joint-encoding lists.

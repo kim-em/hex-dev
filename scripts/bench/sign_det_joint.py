@@ -65,16 +65,30 @@ def expected(n, side):
             "sourceIndices": list(range(1, n+1)),
             "sourceSigns": [1]*n if side == "left" else [(-1)**(n-i) for i in range(1, n+1)],
             "head": head, "queries": queries, "table": table, "directTable": table,
-            "order": "gt", "reducedQueryWitnessBits": (math.factorial(2*n)//2).bit_length(),
+            "order": "gt" if 1 > -1 else "lt",
+            "reducedQueryWitnessBits": (math.factorial(2*n)//2).bit_length(),
+            "directQueryWitnessBits": (n*(math.factorial(2*n)//2)**2).bit_length(),
             "querySlots": slots, "maxColumns": max_columns, "maxSupport": 2,
             "treeNodes": 2*s-1, "graphNodes": 2*s-1, "graphEdges": 2*s-2}
 
 
 RECORDED = {"maxInverseBits", "maxDenominatorBits",
-            "directQueryWitnessBits", "reducedGraphBytes", "directGraphBytes"}
+            "reducedGraphBytes", "directGraphBytes"}
 
 
-def validate(path, degrees=DEGREES):
+def validate(path, degrees=DEGREES, retained=False):
+    if retained:
+        metadata = json.loads((path.parent / "metadata.json").read_text())
+        if metadata.get("state") != "complete":
+            raise ValueError("retained inventory is not complete")
+        if hashlib.sha256(path.read_bytes()).hexdigest() != metadata["inventory_sha256"]:
+            raise ValueError("retained inventory hash differs")
+        archive = metadata["source_archive"]
+        if archive["file"] != "committed-source.patch":
+            raise ValueError("unexpected retained source archive path")
+        patch = path.parent / archive["file"]
+        if hashlib.sha256(patch.read_bytes()).hexdigest() != archive["sha256"]:
+            raise ValueError("retained source archive hash differs")
     rows = [json.loads(line) for line in path.read_text().splitlines()]
     schedule = [(n, side) for n in degrees for side in ("left", "right")]
     if len(rows) != len(schedule):
@@ -146,10 +160,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("inventory", type=Path, nargs="?")
     parser.add_argument("--collect", type=Path, help="collect the complete untimed inventory outside the source tree")
+    parser.add_argument("--retained", action="store_true", help="verify complete metadata and retained inventory/archive hashes")
     parser.add_argument("--degree", type=int, action="append", help="validate an explicit development subset")
     args = parser.parse_args()
     if args.collect is not None:
-        if args.inventory is not None or args.degree is not None:
+        if args.inventory is not None or args.degree is not None or args.retained:
             parser.error("--collect cannot be combined with an inventory or development subset")
         if args.collect.resolve().is_relative_to(ROOT):
             parser.error("collect outside the source tree")
@@ -157,5 +172,5 @@ if __name__ == "__main__":
     else:
         if args.inventory is None:
             parser.error("provide an inventory or --collect")
-        count = validate(args.inventory, args.degree or DEGREES)
+        count = validate(args.inventory, args.degree or DEGREES, args.retained)
     print(f"{count} joint rows validated")
