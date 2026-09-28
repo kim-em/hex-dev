@@ -299,7 +299,8 @@ cell has count at most one or the node allowance has been spent. These
 structural proofs use only the standard three axioms.
 `BisectionCounts` proves that retained counts plus emitted roots equal the
 original interval's root count, under an exact three-valued sign interpretation.
-This count theorem inherits the shared query-soundness gap #10389.
+This count theorem uses the proved shared query-soundness theorem and only
+the standard three axioms.
 
 Fifty-eight native checks cover later root cuts with earlier count-one and
 count-zero and multi-root cells, two emitted roots, positive/negative/fractional scalars,

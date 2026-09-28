@@ -88,7 +88,7 @@ variable [IsRealClosed K] (hsign : ∀ a, sign a = (SignType.sign (φ a) : Int))
 
 include hz h1 ha hs hm hnat hn hi hsign in
 /-- The stored count equals the mathematical number of roots in its actual
-interval. This uses the shared query-soundness theorem and inherits #10389. -/
+interval. This uses the proved shared query-soundness theorem. -/
 theorem Cell.count_card {p : DensePoly E} (cell : Cell sign p) :
     cell.count = (rootsIn (interpret φ hz p)
       (.finite (φ cell.lower)) (.finite (φ cell.upper))).card := by
@@ -147,7 +147,7 @@ theorem Frontier.rootSet_card (frontier : Frontier sign)
 
 include hz h1 ha hs hm hnat hn hi hsign in
 /-- The capped entry preserves the original interval's root count, including
-emitted values and all retained cached counts. It inherits only #10389. -/
+emitted values and all retained cached counts. -/
 theorem Frontier.refine?_count {p : DensePoly E} {lower upper : E}
     {initial result : Frontier sign}
     (prepared : Frontier.prepare? sign p lower upper = some initial)
@@ -173,13 +173,13 @@ theorem Frontier.refine?_count {p : DensePoly E} {lower upper : E}
 
 end Hex.RealClosure.Bisection
 
-/-- info: 'Hex.RealClosure.Bisection.Cell.count_card' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Bisection.Cell.count_card' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Bisection.Cell.count_card
-/-- info: 'Hex.RealClosure.Bisection.Frontier.rootSet_card' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Bisection.Frontier.rootSet_card' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Bisection.Frontier.rootSet_card
-/-- info: 'Hex.RealClosure.Bisection.Frontier.refine?_count' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Bisection.Frontier.refine?_count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Bisection.Frontier.refine?_count
 
