@@ -166,11 +166,16 @@ def nested_expected(scale):
     semantic_one = product(sub(A, [Q(3)]), inverse(sub(A, [Q(3)])))
     assert semantic_one == ONE and raw_one != [Q(1)]
     head = [product([Q(3)], A), neg(A), [Q(-3)], ONE]
-    scaled_head = [[Q(scale) * c for c in coefficient] for coefficient in head]
+    semantic_factor = semantic_one if scale == 0 else [Q(scale)]
+    scaled_head = [product(semantic_factor, coefficient) for coefficient in head]
     # scale=0 means the semantic-one representative, whose leading coefficient
     # differs structurally from literal one and whose coefficients are unclean.
     stored_factor = raw_one if scale == 0 else [Q(scale)]
-    literal_monic = stored_factor == [Q(1)]
+    stored_head = [retained(mul(stored_factor, coefficient), RATIONAL_HEAD,
+                            lambda c: c.denominator == 1)
+                   for coefficient in [[Q(0), Q(3)], [Q(0), Q(-1)], [Q(-3)], [Q(1)]]]
+    literal_monic = (stored_head[-1] == [Q(1)] and
+                     all(c.denominator == 1 for coefficient in stored_head for c in coefficient))
     raw_fourth = [[], [], [], [], ONE]
     kept = field_remainder(raw_fourth, scaled_head) if literal_monic else raw_fourth
     remainder = field_remainder([neg(A), [], ONE], [neg(B), ONE])
@@ -223,8 +228,10 @@ def expected():
     assert germ_sign(t) > 0 and germ_sign(germ_add(one, germ_neg(t))) > 0
     assert not germ_add(germ_mul(t, t), germ_neg(epsilon))
     # Monic division of Y³ by Y²-epsilon leaves epsilon*Y.
-    remainder = germ_remainder([{}, {}, {}, one], [germ_neg(epsilon), {}, one])
     clean = lambda g: all(n >= 0 and c.denominator == 1 for n, c in g.items())
+    germ_head = [germ_neg(epsilon), {}, one]
+    assert germ_head[-1] == one and all(clean(c) for c in germ_head)
+    remainder = germ_remainder([{}, {}, {}, one], germ_head)
     infinitesimal = [germ_sign(t), germ_sign(germ_add(t, germ_neg(epsilon))),
                     germ_sign(germ_add(germ_mul(t, t), germ_neg(epsilon))),
                     germ_sign(germ_add(germ_mul(t, inv_t), germ_neg(one))),

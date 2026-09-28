@@ -286,19 +286,34 @@ theorem neg_clean (a : Element context) (hac : a.isClean = true) : (-a).isClean 
 end Element
 
 include hz h1 ha hs hm in
+/-- The derived predicate supplies every closure fact needed for another
+algebraic level, so this theorem can be iterated through the tower. -/
+theorem Context.extend_closed {NextCtx : Type w} [DecidableEq NextCtx] {key : NextCtx}
+    (root : SignDet.Descriptor (Element context) NextCtx Element.sign key) :
+    (context.extend root).cleanCoeff 0 = true ∧
+    (context.extend root).cleanCoeff 1 = true ∧
+    (∀ a b, (context.extend root).cleanCoeff a = true →
+      (context.extend root).cleanCoeff b = true → (context.extend root).cleanCoeff (a + b) = true) ∧
+    (∀ a b, (context.extend root).cleanCoeff a = true →
+      (context.extend root).cleanCoeff b = true → (context.extend root).cleanCoeff (a - b) = true) ∧
+    (∀ a b, (context.extend root).cleanCoeff a = true →
+      (context.extend root).cleanCoeff b = true → (context.extend root).cleanCoeff (a * b) = true) := by
+  simp only [Context.extend, Context.clean_adjoin]
+  exact ⟨Element.zero_clean context hz, Element.one_clean context hz h1 ha hs hm,
+    Element.add_clean context hz h1 ha hs hm, Element.sub_clean context hz h1 ha hs hm,
+    Element.mul_clean context hz h1 ha hs hm⟩
+
+include hz h1 ha hs hm in
 /-- Clean packing at the next algebraic level derives closure from the actual
 preceding packed operations. No new closure premises are assumed there. -/
 theorem Context.extend_clean {NextCtx : Type w} [DecidableEq NextCtx] {key : NextCtx}
     (root : SignDet.Descriptor (Element context) NextCtx Element.sign key)
     (p : DensePoly (Element context)) (hp : p.toArray.all Element.isClean = true) :
     (Element.ofPoly (context := context.extend root) p).isClean = true := by
+  have hc := context.extend_closed hz h1 ha hs hm root
   apply Element.ofPoly_clean (context.extend root)
-  · simpa only [Context.extend, Context.clean_adjoin] using Element.zero_clean context hz
-  · simpa only [Context.extend, Context.clean_adjoin] using Element.one_clean context hz h1 ha hs hm
-  · simpa only [Context.extend, Context.clean_adjoin] using Element.add_clean context hz h1 ha hs hm
-  · simpa only [Context.extend, Context.clean_adjoin] using Element.sub_clean context hz h1 ha hs hm
-  · simpa only [Context.extend, Context.clean_adjoin] using Element.mul_clean context hz h1 ha hs hm
-  · simpa only [Context.extend, Context.clean_adjoin] using hp
+    hc.1 hc.2.1 hc.2.2.1 hc.2.2.2.1 hc.2.2.2.2
+  simpa only [Context.extend, Context.clean_adjoin] using hp
 
 /-- info: 'Hex.RealClosure.Algebraic.Context.reduce_clean' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
