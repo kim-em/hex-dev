@@ -593,6 +593,22 @@ theorem check_decompose_squarefree {K : Type u} [Lean.Grind.Field K] [LE K] [LT 
 
 end Hex.RealClosure.Yun
 
+/-- info: 'Hex.RealClosure.Yun.mem_loop' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.mem_loop
+
+/-- info: 'Hex.RealClosure.Yun.loop_labels' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.loop_labels
+
+/-- info: 'Hex.RealClosure.Yun.decompose_labels' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.decompose_labels
+
+/-- info: 'Hex.RealClosure.Yun.decompose_unit' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Yun.decompose_unit
+
 /-- info: 'Hex.RealClosure.Yun.natCast_injective' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Yun.natCast_injective

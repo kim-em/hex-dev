@@ -469,52 +469,6 @@ theorem Invariant.loop_weight {K : Type*} [Field K] [CharZero K] [DecidableEq K]
           exact ih _ _ _ h.step hn extra _
   exact bound _ _ _ _ h (Nat.le_refl _) extra out
 
-/-- Once the counter exceeds the original degree, no root remains and the
-actual loop state is constant. -/
-theorem Invariant.exhausted {K : Type*} [Field K] [CharZero K] [DecidableEq K]
-    [IsAlgClosed K] {f v w : DensePoly K} {i : Nat}
-    (h : Invariant f i v w) (hf : f ≠ 0) (hi : f.natDegree < i) :
-    v.natDegree = 0 := by
-  by_contra hv
-  have hpos : 0 < (HexPolyMathlib.toPolynomial v).natDegree := by
-    rw [HexPolyMathlib.natDegree_toPolynomial]
-    omega
-  obtain ⟨x, hx⟩ := IsAlgClosed.exists_root (HexPolyMathlib.toPolynomial v)
-    (ne_of_gt (Polynomial.natDegree_pos_iff_degree_pos.mp hpos))
-  have hr := (h.roots x).mp hx
-  have hb := Hex.PolyQuot.Roots.rootMultiplicity_le_natDegree
-    (HexPolyMathlib.toPolynomial f) (polynomial_ne_zero f hf) x
-  rw [HexPolyMathlib.natDegree_toPolynomial] at hb
-  omega
-
-private theorem loop_constant {K : Type*} [Field K] [DecidableEq K]
-    (v w : DensePoly K) (i fuel : Nat) (out : Array (DensePoly K × Nat))
-    (hv : v.natDegree = 0) : loop v w i fuel out = out := by
-  cases fuel <;> simp only [loop, hv, ↓reduceIte]
-
-/-- The actual loop needs at most the original degree minus the rounds
-already completed. Larger fuel produces exactly the same factor array. -/
-theorem Invariant.loop_bound {K : Type*} [Field K] [CharZero K] [DecidableEq K]
-    [IsAlgClosed K] {f v w : DensePoly K} {i : Nat}
-    (h : Invariant f i v w) (hf : f ≠ 0)
-    (fuel : Nat) (out : Array (DensePoly K × Nat)) :
-    loop v w i fuel out =
-      loop v w i (min fuel (f.natDegree + 1 - i)) out := by
-  induction fuel generalizing v w i out with
-  | zero => rw [Nat.zero_min]
-  | succ fuel ih =>
-      by_cases hv : v.natDegree = 0
-      · rw [loop_constant v w i (fuel + 1) out hv,
-          loop_constant v w i (min (fuel + 1) (f.natDegree + 1 - i)) out hv]
-      · have hi : i ≤ f.natDegree := by
-          by_contra hn
-          exact hv (h.exhausted hf (by omega))
-        have hmin : min (fuel + 1) (f.natDegree + 1 - i) =
-            min fuel (f.natDegree + 1 - (i + 1)) + 1 := by omega
-        rw [hmin]
-        simp only [loop, hv, ↓reduceIte]
-        exact ih h.step _
-
 /-- The producer's original-degree fuel covers every multiplicity round,
 including gaps where no factor is emitted. -/
 theorem initial_loop_bound {K : Type*} [Field K] [CharZero K] [DecidableEq K]
@@ -542,9 +496,9 @@ private theorem interpret_injective {K L : Type*} [Field K] [Field L]
 an algebraically closed extension. -/
 theorem loop_bound_map {K L : Type*} [Field K] [Field L] [CharZero L]
     [DecidableEq K] [DecidableEq L] [IsAlgClosed L]
-    (φ : K →+* L) (f : DensePoly K) (hf : f ≠ 0) (hd : 0 < f.natDegree) :
+    (φ : K →+* L) (f : DensePoly K) (hf : f ≠ 0) (hd : 0 < f.natDegree) (extra : Nat) :
     let a := DensePoly.monicize (DensePoly.gcd f (DensePoly.derivativeImpl f))
-    loop (f / a) (DensePoly.derivativeImpl f / a) 1 (f.natDegree + 1) #[] =
+    loop (f / a) (DensePoly.derivativeImpl f / a) 1 (f.natDegree + extra) #[] =
       loop (f / a) (DensePoly.derivativeImpl f / a) 1 f.natDegree #[] := by
   let ψ := DensePoly.Interpret.map φ (hom_zero φ)
   let a := DensePoly.monicize (DensePoly.gcd f (DensePoly.derivativeImpl f))
@@ -573,7 +527,7 @@ theorem loop_bound_map {K L : Type*} [Field K] [Field L] [CharZero L]
     (fun x y => map_div₀ φ x y) (fun x => map_inv₀ φ x)
     (fun n => map_natCast φ n) (f / a) (DensePoly.derivativeImpl f / a)
     1 fuel #[]
-  change loop (f / a) (DensePoly.derivativeImpl f / a) 1 (f.natDegree + 1) #[] =
+  change loop (f / a) (DensePoly.derivativeImpl f / a) 1 (f.natDegree + extra) #[] =
     loop (f / a) (DensePoly.derivativeImpl f / a) 1 f.natDegree #[]
   have hinj : ∀ x y : DensePoly K × Nat,
       (ψ x.1, x.2) = (ψ y.1, y.2) → x = y := by
@@ -584,7 +538,7 @@ theorem loop_bound_map {K L : Type*} [Field K] [Field L] [CharZero L]
   rw [hmap, hmap]
   simp only [Array.map_empty]
   change loop (ψ (f / a)) (ψ (DensePoly.derivativeImpl f / a)) 1
-      (f.natDegree + 1) #[] =
+      (f.natDegree + extra) #[] =
     loop (ψ (f / a)) (ψ (DensePoly.derivativeImpl f / a)) 1 f.natDegree #[]
   simp only [hdiv, hderiv, ha]
   have hf' : ψ f ≠ 0 := by
@@ -593,17 +547,18 @@ theorem loop_bound_map {K L : Type*} [Field K] [Field L] [CharZero L]
       (hom_zero φ) f).mp hz)
   have hd' : 0 < (ψ f).natDegree := by
     simpa only [ψ, DensePoly.Interpret.map_degree] using hd
-  simpa only [ψ, DensePoly.Interpret.map_degree] using initial_loop_bound (ψ f) hf' hd'
+  simpa only [remaining_one, ψ, DensePoly.Interpret.map_degree] using
+    (Invariant.init (ψ f) hf' hd').loop_weight extra #[]
 
 /-- Yun's initial recurrence needs at most the original degree over every
 characteristic-zero field, via its algebraic closure. -/
 theorem decompose_bound {K : Type*} [Field K] [CharZero K] [DecidableEq K]
-    (f : DensePoly K) (hf : f ≠ 0) (hd : 0 < f.natDegree) :
+    (f : DensePoly K) (hf : f ≠ 0) (hd : 0 < f.natDegree) (extra : Nat) :
     let a := DensePoly.monicize (DensePoly.gcd f (DensePoly.derivativeImpl f))
-    loop (f / a) (DensePoly.derivativeImpl f / a) 1 (f.natDegree + 1) #[] =
+    loop (f / a) (DensePoly.derivativeImpl f / a) 1 (f.natDegree + extra) #[] =
       loop (f / a) (DensePoly.derivativeImpl f / a) 1 f.natDegree #[] := by
   classical
-  exact loop_bound_map (algebraMap K (AlgebraicClosure K)) f hf hd
+  exact loop_bound_map (algebraMap K (AlgebraicClosure K)) f hf hd extra
 
 section Ordered
 
@@ -614,15 +569,15 @@ its Mathlib interpretation retains every arithmetic operation. -/
 theorem ordered_bound {K : Type*} [s : Lean.Grind.Field K]
     [LE K] [LT K] [Std.IsPreorder K] [Std.LawfulOrderLT K]
     [Lean.Grind.OrderedRing K] [DecidableEq K]
-    (f : DensePoly K) (hf : f ≠ 0) (hd : 0 < f.natDegree) :
+    (f : DensePoly K) (hf : f ≠ 0) (hd : 0 < f.natDegree) (extra : Nat) :
     let a := DensePoly.monicize (DensePoly.gcd f (DensePoly.derivativeImpl f))
-    loop (f / a) (DensePoly.derivativeImpl f / a) 1 (f.natDegree + 1) #[] =
+    loop (f / a) (DensePoly.derivativeImpl f / a) 1 (f.natDegree + extra) #[] =
       loop (f / a) (DensePoly.derivativeImpl f / a) 1 f.natDegree #[] := by
   let : Field K := HexPolyMathlib.fieldOfGrind
   let : CharZero K := ⟨fun m n h =>
     @natCast_injective K s inferInstance inferInstance inferInstance inferInstance
       inferInstance m n h⟩
-  have h := decompose_bound f hf hd
+  have h := decompose_bound f hf hd extra
   exact h
 
 end Ordered
@@ -840,11 +795,11 @@ section Integration
 attribute [-instance] Field.toGrindField
 attribute [local instance] Lean.Grind.Semiring.natCast
 
-example (f : DensePoly Rat) (hf : f ≠ 0) (hd : 0 < f.natDegree) :
+example (f : DensePoly Rat) (hf : f ≠ 0) (hd : 0 < f.natDegree) (extra : Nat) :
     let a := DensePoly.monicize (DensePoly.gcd f (DensePoly.derivativeImpl f))
-    loop (f / a) (DensePoly.derivativeImpl f / a) 1 (f.natDegree + 1) #[] =
+    loop (f / a) (DensePoly.derivativeImpl f / a) 1 (f.natDegree + extra) #[] =
       loop (f / a) (DensePoly.derivativeImpl f / a) 1 f.natDegree #[] :=
-  ordered_bound f hf hd
+  ordered_bound f hf hd extra
 
 end Integration
 
