@@ -55,17 +55,6 @@ theorem Mode.domains {p : DensePoly E} {point : E} (mode : Mode sign p point)
       ⟨domain.1, domain.2.1, hu, hn, domain.2.2.2.2⟩⟩
   | root d => exact d.domains φ hz h1 hs hm lower upper domain hl hu
 
-include hz h1 hs hm in
-omit [LinearOrder K] [IsStrictOrderedRing K] in
-/-- Exact coverage of the original polynomial by the cut point and active head. -/
-theorem Mode.roots {p : DensePoly E} {point : E} (mode : Mode sign p point) (x : K) :
-    (interpret φ hz p).IsRoot x ↔
-      (match mode with | .regular _ => False | .root _ => x = φ point) ∨
-        (interpret φ hz mode.head).IsRoot x := by
-  cases mode with
-  | regular _ => simp only [Mode.head, false_or]
-  | root d => exact d.roots φ hz h1 hs hm x
-
 variable [NatCast E] [Neg E] [Inv E]
 variable (hn : ∀ a, φ (-a) = -φ a) (hi : ∀ a, φ a⁻¹ = (φ a)⁻¹)
 variable (hnat : ∀ n : Nat, φ (n : E) = (n : K))
@@ -137,10 +126,6 @@ end Hex.RealClosure.Bisection
 /-- info: 'Hex.RealClosure.Bisection.Mode.domains' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Bisection.Mode.domains
-
-/-- info: 'Hex.RealClosure.Bisection.Mode.roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Bisection.Mode.roots
 
 /-- info: 'Hex.RealClosure.Bisection.split?_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

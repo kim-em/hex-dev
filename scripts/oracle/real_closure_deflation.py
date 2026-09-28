@@ -17,7 +17,6 @@ def require(condition: bool, message: str) -> None:
         raise ValueError(message)
 
 
-
 def divide_linear(coefficients, root, zero):
     quotient = []
     remainder = zero
@@ -98,8 +97,9 @@ def verify_bisection(row, decode, coefficient_field):
                              "right_lower", "right_upper", "left_count", "right_count"},
             f"{name}: invalid split fields")
     removed = not evaluate(coefficients, point)
-    require(type(payload["removed"]) is bool and payload["removed"] == removed,
-            f"{name}: wrong removed point")
+    require((payload["removed"] is not None) == removed, f"{name}: wrong removed point")
+    if removed:
+        require(decode(payload["removed"], depth) == point, f"{name}: wrong removed point")
     expected = divide_linear(coefficients, point, coefficient_field.zero)[0] if removed else coefficients
     active = [decode(c, depth) for c in payload["active"]]
     require(active == expected, f"{name}: wrong active head or scalar")

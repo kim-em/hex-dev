@@ -49,7 +49,7 @@ private def emitSplit {E : Type} [Zero E] [DecidableEq E] [One E]
   let point := Bisection.midpoint lower upper
   let result := Bisection.bisect? sign p lower upper
   let payload := result.map fun split => Lean.Json.mkObj [
-    ("removed", Lean.toJson split.mode.removed.isSome),
+    ("removed", (split.mode.removed.map encode).getD .null),
     ("active", .arr (split.mode.head.toArray.map encode)),
     ("left_head", .arr (split.left.head.toArray.map encode)),
     ("right_head", .arr (split.right.head.toArray.map encode)),
@@ -100,6 +100,9 @@ def main : IO Unit := do
   emitRatSplit "split repeated root" (linearFactor (1 : Rat) * linearFactor 1) 0 2
   emitRatSplit "split reversed interval" quadratic 2 0
   emitRatSplit "split root endpoint" (linearFactor (1 : Rat) * linearFactor 3) 1 4
+  emitRatSplit "split roots on both sides of root cut" cubic (-2) 4
+  emitRatSplit "split roots on both sides of regular cut" quadratic (-2) 2
+  emitRatSplit "split linear root to constant" (linearFactor (1 : Rat)) 0 2
   emitRatSplit "split constant" (DensePoly.C 3) 0 2
   let sign₁ := OrderedFn.Infinitesimal.sign OrderedFn.orderSign
   emitSplit "split close infinitesimal roots" 1 fraction sign₁ close 0 1
@@ -108,6 +111,8 @@ def main : IO Unit := do
   emitSplit "split inverse infinitesimal root" 1 fraction sign₁
     (linearFactor epsilon⁻¹ * linearFactor (3 * epsilon⁻¹)) 0 (2 * epsilon⁻¹)
   emitSplit "split infinitesimal root endpoint" 1 fraction sign₁ close epsilon 1
+  emitSplit "split infinitesimal roots on both sides" 1 fraction sign₁
+    (linearFactor epsilon * linearFactor (-epsilon)) (-1) 1
   let sign₂ := OrderedFn.Infinitesimal.sign sign₁
   emitSplit "split first infinitesimal root" 2 nestedFraction sign₂ nested 0 (2 * first)
   emitSplit "split second infinitesimal root" 2 nestedFraction sign₂
