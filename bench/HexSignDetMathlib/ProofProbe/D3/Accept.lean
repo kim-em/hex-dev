@@ -28,6 +28,7 @@ theorem checked : check 3 evidence = true := by
 #guard_msgs in
 #print axioms checked
 
+-- The external measurement runner reads this unguarded inventory.
 #print axioms checked
 
 end Hex.SignDetMathlib.ProofProbe.D3.Accept

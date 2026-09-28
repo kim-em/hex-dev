@@ -22,7 +22,7 @@ PAIRS = tuple(
                   "depth": depth, "query_arity": 2**depth,
                   "graph_nodes": depth + 1, "graph_edges": 2*depth,
                   "measurement_scope": "literal normalization plus ordinary-kernel replay",
-                  "semantic_root_soundness": "foundation gate remains open"})
+                  "semantic_root_soundness": "not established by Boolean replay probes"})
     for depth in (1, 3, 5, 7)
     for kind, literal in (("Accept", "Literal"), ("Reject", "BadLiteral")))
 

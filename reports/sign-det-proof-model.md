@@ -6,14 +6,20 @@ and stale-context graphs at depths 1, 3, 5 and 7. Their query arities are 2,
 2, and each parent has one candidate sign word. Both child edges refer to
 the preceding node. This gives depth+1 graph entries and twice-depth edges.
 The rejection fixture changes only the final node's context, after a valid
-prefix. It does not time a missing-root or empty-input shortcut.
+prefix. The final node fails its context check before moment replay; this
+is the cheapest local rejection after a valid prefix. Forged arithmetic,
+altered domains, malformed bytes and nested coefficient rejection are separate
+requirements.
 
 These are schematic literal certificates: their compact expressions use
 replication and arrays to express supplied rows, counts and witnesses.
 They invoke no prepared-domain, query, sign-table or rank producer. Each
-candidate module rewrites the proved cache-invariance identities, unfolds the
-actual graph/local/query checkers and closes
-its theorem with `decide +kernel`. It does not reuse an imported conformance
+candidate module rewrites the proved cache-invariance identities and evaluates
+their cache-free right-hand sides with `decide +kernel`. The theorem still
+asserts the result of the actual `Dag.check`, but its kernel reduction has a
+different schedule from compiled replay: shared domain validation is repeated
+inside the moment checks. These measurements describe that proof strategy;
+they do not measure the compiled checker’s cached schedule. It does not reuse an imported conformance
 acceptance theorem. The kernel therefore checks the literal data and its
 normalization. All eight replay theorem declarations have exactly
 `propext`, `Classical.choice` and `Quot.sound` in their axiom inventories.
@@ -33,7 +39,9 @@ compiler output and axiom inspection. An automatically leased CPU is used
 without a host-idleness test. No null control or automatic rerun is required.
 
 The paired difference includes reduction of the compact certificate expression,
-proof elaboration and ordinary kernel checking. It is not pure compiled
+proof elaboration, ordinary kernel checking, proof-term serialization, one
+unguarded `#print axioms` and Lake/build scheduling overhead. Pairing does
+not eliminate variable host or build overhead. It is not pure compiled
 checker time and receives no LeanBench complexity verdict. Timeouts are
 operational safeguards; this suite declares no absolute performance budget.
 A runner `release_quality` flag establishes its provenance and complete
@@ -43,10 +51,57 @@ This is one same-level graph family with constant coefficient/witness size
 and support one. It does not replace proof evidence for nested coefficient
 certificates, arbitrary root-sum soundness, increasing matrix/support or
 witness sizes, descriptor operations, or the final semantic theorems. Those
-remain separate requirements. The shared semantic bridge in #10389 and the
-separate Thom/BKR foundations are still needed for root-level conclusions.
+remain separate requirements. The probes prove only Boolean acceptance/rejection. They do not depend on or
+discharge `HexRealRootsMathlib.Tarski.check_rootSum`, declared at
+`adapters/HexRealRootsMathlib/TarskiSoundness.lean:24` with `sorry` at line 42
+and owned by [#10389](https://github.com/kim-em/hex-dev/issues/10389).
+Root-level correctness also requires the separately specified Tau Ceti Thom
+injectivity/order and BKR foundations. Their actual delivery and use remain
+requirements for [#10377](https://github.com/kim-em/hex-dev/issues/10377).
 
-## Recorded observations
+## Measurements at 45582256f
+
+The source revision `45582256fc5dd9adbf53a8dfbb10f6c90b66d717` supplies
+48 complete adjacent pairs (96 fresh-module builds), with six rotated rounds
+and balanced arm orientations on `chungus2`, automatically leased CPU 47.
+All completed samples are retained. Every candidate has exactly the three
+standard axioms, and the runner reports no provenance exceptions. The source
+archive reconstructs and verifies all 213 recorded local source hashes.
+
+The theorem statements, proof bodies, checker and compiler match the probes
+at `1d07a2fcf0afe9406ca9dd1ecc63df9c47ae16d3`. These measured modules precede the added
+CI message guards; the timings cover the archived modules and do not include
+those additional guard commands. No comparison with the older compiler's
+timings is claimed.
+
+| Depth | Outcome | Literal median (ms) | Replay median (ms) | Paired delta median (ms) | Delta range (ms) | Delta sample SD (ms) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | accept | 2421.384 | 2925.886 | 499.540 | 495.607–1281.249 | 317.510 |
+| 1 | reject | 2437.585 | 2921.962 | 485.266 | 471.369–558.081 | 32.266 |
+| 3 | accept | 2474.323 | 3023.334 | 596.967 | 504.090–2456.333 | 756.997 |
+| 3 | reject | 2479.327 | 3021.235 | 590.818 | 495.854–1104.812 | 219.328 |
+| 5 | accept | 2420.095 | 3127.913 | 715.458 | 670.011–924.432 | 91.889 |
+| 5 | reject | 2422.821 | 3116.437 | 690.714 | -0.166–699.721 | 281.984 |
+| 7 | accept | 2436.244 | 3420.429 | 988.248 | 963.586–1627.387 | 263.669 |
+| 7 | reject | 2424.305 | 3313.784 | 891.942 | 799.167–2790.595 | 783.532 |
+
+The positive median paired overhead increases across this measured arity range, but
+this is a fixed-support family and establishes no asymptotic bound. All
+`no-comparable-control` classifications are retained. The
+[raw sweep](data/sign-det-proofs/45582256f/sweep.json) includes compiler output,
+wall time, peak compiler RSS, emitted module sizes and host activity. As above,
+compiler RSS is not replay allocation and module size is not certificate size.
+The [source archive](data/sign-det-proofs/45582256f/source-archive.json) preserves
+the measured source independently of subsequent merges. The final round has elevated wall times across the pairs; several spreads are
+large, and one depth-five rejection delta is slightly negative. Every sample
+is retained; these observations do not identify a cause or exclude samples.
+
+The wider families, nested coefficient proofs, descriptor operations, recorded
+matrix dimensions, serialized certificate sizes, peak intermediate bits,
+runtime allocation and representative attribution required by
+[#10377](https://github.com/kim-em/hex-dev/issues/10377) remain separate obligations.
+
+## Archived measurements at 06d77092b
 
 The clean source revision `06d77092b1e5824191b7fd9716aeefa46dfe2db8`
 produced all 48 adjacent pairs (96 fresh-module builds) on `chungus2`, using
@@ -78,9 +133,9 @@ does not provide a null-control resolution verdict. Host activity is recorded
 context and did not exclude any completed sample.
 
 The recorded timings apply only to the archived `06d77092b` sources and
-toolchain. The current checker and compiler differ from that archive, so these
+toolchain. The checker and compiler at `45582256f` differ from that archive, so these
 figures are not performance evidence for the current implementation. The
-current proof modules use general cache-invariance identities to expose the
+proof modules at `45582256f` use general cache-invariance identities to expose the
 complete literal checks; they do not reuse an acceptance theorem.
 
 The [raw sweep](data/sign-det-proofs/06d77092b/sweep.json) retains compiler
@@ -91,40 +146,3 @@ certificate sizes. The [source archive](data/sign-det-proofs/06d77092b/source-ar
 identifies a committed patch against a merged base. Reconstruction in a
 temporary Git index verified every recorded source hash, preserving the
 measured source closure across subsequent rebases and squash merges.
-
-## Measurements at 45582256f
-
-The source revision `45582256fc5dd9adbf53a8dfbb10f6c90b66d717` supplies
-48 complete adjacent pairs (96 fresh-module builds), with six rotated rounds
-and balanced arm orientations on `chungus2`, automatically leased CPU 47.
-All completed samples are retained. Every candidate has exactly the three
-standard axioms, and the runner reports no provenance exceptions. The source
-archive reconstructs and verifies all 213 recorded local source hashes.
-
-The theorem statements, proof bodies, checker and compiler are the same as
-those used by the current probes. These measured modules precede the added
-CI message guards; the timings cover the archived modules and do not include
-those additional guard commands. No comparison with the older compiler's
-timings is claimed.
-
-| Depth | Outcome | Literal median (ms) | Replay median (ms) | Paired delta median (ms) | Delta range (ms) | Delta sample SD (ms) |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| 1 | accept | 2421.384 | 2925.886 | 499.540 | 495.607–1281.249 | 317.510 |
-| 1 | reject | 2437.585 | 2921.962 | 485.266 | 471.369–558.081 | 32.266 |
-| 3 | accept | 2474.323 | 3023.334 | 596.967 | 504.090–2456.333 | 756.997 |
-| 3 | reject | 2479.327 | 3021.235 | 590.818 | 495.854–1104.812 | 219.328 |
-| 5 | accept | 2420.095 | 3127.913 | 715.458 | 670.011–924.432 | 91.889 |
-| 5 | reject | 2422.821 | 3116.437 | 690.714 | -0.166–699.721 | 281.984 |
-| 7 | accept | 2436.244 | 3420.429 | 988.248 | 963.586–1627.387 | 263.669 |
-| 7 | reject | 2424.305 | 3313.784 | 891.942 | 799.167–2790.595 | 783.532 |
-
-The positive paired overhead increases across this measured arity range, but
-this is a fixed-support family and establishes no asymptotic bound. All
-`no-comparable-control` classifications are retained. The
-[raw sweep](data/sign-det-proofs/45582256f/sweep.json) includes compiler output,
-wall time, peak compiler RSS, emitted module sizes and host activity. As above,
-compiler RSS is not replay allocation and module size is not certificate size.
-The [source archive](data/sign-det-proofs/45582256f/source-archive.json) preserves
-the measured source independently of subsequent merges. The wider families,
-nested coefficient proofs, descriptor operations and attribution required by
-#10377 remain separate obligations.
