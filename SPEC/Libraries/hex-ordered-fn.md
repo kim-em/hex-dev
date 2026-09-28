@@ -433,14 +433,21 @@ owned by [HexRationalFn](../../HexRationalFn/SPEC/hex-rational-fn.md), rather
 than duplicated here. The local paired subtraction/comparison run measures
 the additional order work on the same operands.
 
-Z3 RCF is an **informational** comparator for the eight infinitesimal targets
-`scan`, `degree`, `height`, `second`, `third`, `comparison`, `denominators` and
+[Z3 RCF](https://github.com/Z3Prover/z3/blob/z3-4.15.4/src/api/python/z3/z3rcf.py)
+is an **informational** comparator for `comparison`, `denominators` and
 `compareHeight`. Use the pinned Z3 Python/FFI API on the same mathematical
 operands, with preparation outside timing. Its representation and cached signs
 differ from Hex's dense coefficient scans; report ratios without requiring a
 constant-factor match or external superiority. The scheduled driver is
 `scripts/bench/ordered_fn_z3.py`; it invokes the existing lean-bench child for
 Hex, with adjacent alternating trials, and checks the returned signs.
+
+For `scan`, `degree`, `height`, `second` and `third`, declare
+**no-comparable-surface-in-named-comparator**: Z3 determines and caches the
+sign while constructing a value, and its public comparison with zero only
+reads that cached information. Timing construction instead would include work
+excluded from the Hex sign timer. Retain any sign-lookup observations as
+diagnostics, not as ratios of sign-computation costs.
 
 For `refinement`, `jointRefinement`, `horner`, `realHeight`, `approximation`,
 `successiveApproximation`, `thirdApproximation` and `provider`, the absence

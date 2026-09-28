@@ -4,6 +4,10 @@
 Hex uses the existing lean-bench child; Z3 uses its pinned Python/FFI API in
 this process. Preparation and process startup are outside both operation timers.
 All samples are retained in adjacent, alternating, trial-major order.
+Only subtraction-based comparisons are timed: Z3 has no separate operation
+that computes an uncached sign of a prepared value. The rational n=0 controls
+include dispatch, ctypes, allocation/deletion, a small subtraction and the
+same sign branches; they are a conservative estimate of the FFI overhead.
 """
 import argparse
 import hashlib
@@ -20,8 +24,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.bench.structural_tactic_sweep import acquire_cpu
 
-NAMES = ['scan', 'degree', 'height', 'second', 'third', 'comparison',
-         'denominators', 'compareHeight']
+NAMES = ['comparison', 'denominators', 'compareHeight']
 PARAMS = [128, 256, 512, 1024, 2048, 4096, 8192, 16384]
 
 
@@ -96,6 +99,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--check', action='store_true')
+    parser.add_argument('--first-trial', type=int, choices=range(3), default=0,
+                        help='first trial to collect when completing an interrupted schedule')
+    parser.add_argument('--overhead-only', action='store_true',
+                        help='measure the same subtraction/sign FFI calls at rational inputs (n=0)')
     args = parser.parse_args()
     import z3
     if version('z3-solver') != '4.15.4.0' or z3.get_version() != (4, 15, 4, 0):
@@ -104,7 +111,7 @@ def main():
         for name in NAMES:
             for n in [0, 1, 4]:
                 prepare(name, n)
-        print('Z3 comparator: 24 preparation/sign checks passed')
+        print('Z3 comparator: 9 preparation/sign checks passed')
         return
     os.chdir(ROOT)
     if subprocess.check_output(['git', 'status', '--porcelain'], text=True):
@@ -122,22 +129,29 @@ def main():
                    'command': sys.argv, 'cpu': cpu, 'host': platform.node(),
                    'platform': platform.platform(), 'python': sys.version,
                    'z3': version('z3-solver'), 'load_before': os.getloadavg(),
+                   'python_executable': sys.executable, 'started_unix_ns': time.time_ns(),
+                   'overhead_only': args.overhead_only,
                    'executable_sha256': sha(exe), 'driver_sha256': sha(__file__)}
-        schedule = {'names': NAMES, 'parameters': {n: parameters(n) for n in NAMES},
-                    'trials': 3, 'target_nanos': 1000000000,
-                    'order': 'trial-major; adjacent Hex/Z3 on even trials, Z3/Hex on odd trials'}
+        libs = {line.split()[-1] for line in Path('/proc/self/maps').read_text().splitlines()
+                if 'libz3.so' in line}
+        if len(libs) != 1:
+            raise RuntimeError('cannot identify the loaded Z3 library')
+        lib = Path(libs.pop()).resolve()
+        context.update(libz3_path=str(lib), libz3_sha256=sha(lib))
+        params = lambda name: [0] if args.overhead_only else parameters(name)
+        schedule = {'names': NAMES, 'parameters': {n: params(n) for n in NAMES},
+                    'trials': 3, 'first_trial': args.first_trial, 'target_nanos': 1000000000,
+                    'order': ('trial-major Z3 rational controls' if args.overhead_only else
+                              'trial-major; adjacent Hex/Z3 on even trials, Z3/Hex on odd trials')}
         (output/'context.json').write_text(json.dumps(context, indent=2)+'\n')
         (output/'schedule.json').write_text(json.dumps(schedule, indent=2)+'\n')
-        # In-process Python dispatch/loop overhead; no Z3 process/protocol startup
-        # occurs in the timed region. Retain all three controls, no exclusion.
-        overhead = [measure(lambda: 1, 100000000) for _ in range(3)]
-        (output/'overhead.json').write_text(json.dumps(overhead, indent=2)+'\n')
         with (output/'paired.jsonl').open('w') as rows:
-            for trial in range(3):
+            for trial in range(args.first_trial, 3):
                 for name in NAMES:
-                    for n in parameters(name):
+                    for n in params(name):
                         operation, expected = prepare(name, n)
-                        for arm in (['hex', 'z3'] if trial % 2 == 0 else ['z3', 'hex']):
+                        arms = ['z3'] if args.overhead_only else (['hex', 'z3'] if trial % 2 == 0 else ['z3', 'hex'])
+                        for arm in arms:
                             if arm == 'hex':
                                 command = [str(exe), '_child', '--bench', 'Hex.OrderedFnBench.'+name,
                                            '--param', str(n), '--target-nanos', '1000000000']
@@ -145,17 +159,23 @@ def main():
                                 with stem.with_suffix('.stdout').open('w') as out, stem.with_suffix('.stderr').open('w') as err:
                                     subprocess.run(command, stdout=out, stderr=err, check=True, timeout=60)
                                 row = json.loads(stem.with_suffix('.stdout').read_text())
-                                if row['status'] != 'ok' or int(row['result_hash'], 16) != hashes[str(expected)]:
+                                if (row['function'] != 'Hex.OrderedFnBench.'+name or row['param'] != n
+                                        or row['env']['git_dirty']
+                                        or not context['commit'].startswith(row['env']['git_commit'])
+                                        or row['status'] != 'ok'
+                                        or int(row['result_hash'], 16) != hashes[str(expected)]):
                                     raise AssertionError(row)
                             else:
                                 row = measure(operation, 1000000000)
+                                row['completed_unix_ns'] = time.time_ns()
                                 if row['result'] != expected:
                                     raise AssertionError(row)
                             row.update(arm=arm, case=name, param=n, trial=trial)
                             rows.write(json.dumps(row)+'\n')
                             rows.flush()
                         del operation
-        context.update(load_after=os.getloadavg(), executable_sha256_after=sha(exe))
+        context.update(load_after=os.getloadavg(), executable_sha256_after=sha(exe),
+                       completed_unix_ns=time.time_ns())
         (output/'context.json').write_text(json.dumps(context, indent=2)+'\n')
     finally:
         lease.close()

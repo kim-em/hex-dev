@@ -1,0 +1,7 @@
+{
+  "python_executable": "/tmp/issue-10376-oracle-venv/bin/python3",
+  "libz3_path": "/tmp/issue-10376-oracle-venv/lib/python3.14/site-packages/z3/lib/libz3.so",
+  "libz3_sha256": "56d9977b9276bcb8cda9973a14058fcaa9f3bfee14ed57408b9faacd76d4d8f3",
+  "captured_unix_ns": 1790573616042178533,
+  "note": "Runtime identity from the same unchanged Python environment during the paired run; the initial coordinator records the version pin."
+}

@@ -83,7 +83,7 @@ Inherited fraction arithmetic uses HexRationalFn's informational
 [FLINT comparison and ratios](hex-rational-fn-performance.md#comparator-ratios).
 The [SPEC's comparator coverage](../SPEC/Libraries/hex-ordered-fn.md#comparator-coverage)
 classifies this reuse as `structural-layer`. Z3 RCF supplies the informational
-comparison of infinitesimal signs and comparisons described below. It has no
+comparison of subtraction followed by sign described below. It has no
 caller-approximation entry point for the real-search targets. No external
 runtime superiority claim is made.
 

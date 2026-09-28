@@ -195,7 +195,7 @@ libraries:
       comparators:
         - tool: Z3 RCF
           class: informational
-          rationale: "Z3 uses its own rational-function representation and cached signs, while Hex scans dense coefficients and composes caller approximations. The Python/FFI comparison covers prepared infinitesimal signs and comparisons, with wrapper cost retained; it is an external reference, not a constant-factor acceptance threshold."
+          rationale: "Z3 uses its own rational-function representation and cached signs, while Hex scans dense coefficients and composes caller approximations. The Python/FFI comparison covers subtraction followed by sign on prepared operands, with wrapper cost measured separately; it is an external reference, not a constant-factor acceptance threshold."
   HexOrderedFnMathlib:
     deps: [HexOrderedFn, HexRationalFnMathlib, HexPolyMathlib]
     mathlib: true
