@@ -366,7 +366,7 @@ lean_lib HexPermGroupMathlib where
 
 @[default_target]
 lean_lib HexPermGroupTests where
-  globs := #[`HexPermGroupMathlib.Tests, `HexPermGroupMathlib.Examples.Kernel]
+  globs := #[`HexPermGroupMathlib.Tests]
 
 lean_lib HexGraph where
 
@@ -1229,7 +1229,6 @@ lean_lib HexReleaseTests where
     `HexGraphIsoMathlib.TacticTests,
     `HexGraphIsoMathlib.SparseTacticTests,
     `HexPermGroupMathlib.Tests,
-    `HexPermGroupMathlib.Examples.Kernel,
     `HexNumberFieldTower.Embed,
     `HexRCF.LanguageTests,
     `HexRCF.SturmBuilderTests,
@@ -1596,6 +1595,10 @@ lean_lib HexGraphIsoSparseCfiProbe where
   srcDir := "bench"
   moreLeanArgs := #["-Dprofiler=true"]
   globs := #[`HexGraphIso.SparseProofProbe.Support, `HexGraphIso.SparseProofProbe.Cfi]
+
+lean_lib HexPermGroupMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[`HexPermGroupMathlib.ProofProbe.Kernel]
 
 lean_lib HexGraphIsoMathlibProofProbe where
   srcDir := "bench"

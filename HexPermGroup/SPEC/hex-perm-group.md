@@ -907,7 +907,7 @@ surface.
 
 ## User-facing examples
 
-`HexPermGroupMathlib/Examples/Kernel.lean` states each example in Mathlib
+`bench/HexPermGroupMathlib/ProofProbe/Kernel.lean` states each example in Mathlib
 types alone, with generators written in Mathlib's cycle notation, and proves it
 with `perm_group`:
 
