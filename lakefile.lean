@@ -599,7 +599,7 @@ lean_lib HexQuerySemantics where
     `HexSturmMathlib.Soundness,
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
-    `HexSignDetMathlib.CompletionProducer,
+    `HexSignDetMathlib.CompletionProducer, `HexSignDetMathlib.Convert,
     `HexSignDetMathlib.QueryHandle, `HexSignDetMathlib.TableProducer,
     `HexSignDetMathlib.ReencodingProducer, `HexSignDetMathlib.RootList,
     `HexSignDetMathlib.ReencodingRefinement,
