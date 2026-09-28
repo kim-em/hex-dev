@@ -85,14 +85,16 @@ This is the direct witness-bit maximum in the retained rows, and the validator
 checks its formula. Normalizing first avoids storing that large product.
 These are stored intermediate coefficients and scales, not measurements of the
 largest temporary value reached during arithmetic. The additional evidence makes the reduced
-serialized certificates larger. Neither observation measures time or allocation,
+serialized certificates larger. Neither observation measures time or allocation.
+
 Moment products do undergo degree reduction. For degree three the first target
 query is `−3X^5` and the common head is `(1−X^6)/2`. Its squared direct moment
 is `9X^10`, while normalized reduced construction produces `X^4`. The existing
-verification command checks both actual leaf certificates against those
+`hexsigndet_bench verify` command checks both actual leaf certificates against those
 polynomials. Thus this family supplies inputs for comparing unreduced and
 modulo-head moment construction; the required runtime/reduction-replay
-comparison has not yet been measured.
+comparison has not yet been measured. These binomial heads make monomial
+reduction especially simple and do not represent reduction against general heads.
 
 The [metadata](data/sign-det-joint/9651d8947/metadata.json) and
 [raw inventory](data/sign-det-joint/9651d8947/inventory.jsonl) retain both source
