@@ -6,6 +6,7 @@ Authors: Kim Morrison
 import HexSignDet.Phases
 import HexSignDet.Small
 import HexSignDet.Paired
+import HexSignDet.Maximal
 import LeanBench
 import Lean.Data.Json
 
@@ -189,7 +190,13 @@ def main (args : List String) : IO UInt32 :=
   if args == ["inspect"] then Hex.SignDetBench.inspect
   else if args == ["inspect-phases"] then Hex.SignDetBench.inspectPhases
   else if args == ["inspect-small"] then Hex.SignDetBench.inspectSmall
+  else if args == ["inspect-maximal"] then Hex.SignDetBench.inspectMaximal
   else if args == ["inspect-full"] then Hex.SignDetBench.inspectFull
   else if let ["paired-small", path] := args then
     Hex.SignDetBench.paired ``Hex.SignDetBench.runSmallReduced ``Hex.SignDetBench.runSmallFull path
+  else if args.head? == some "verify" then do
+    match Hex.SignDetBench.buildMaximal 2 with
+    | .ok _ => pure ()
+    | .error message => throw (IO.userError s!"maximal-support fixture failed: {message}")
+    LeanBench.Cli.dispatch args
   else LeanBench.Cli.dispatch args
