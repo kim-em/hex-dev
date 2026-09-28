@@ -608,7 +608,8 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.YunInvariant, `HexRealClosureMathlib.Bounds,
     `HexRealClosureMathlib.Deflation, `HexRealClosureMathlib.Bisection,
     `HexRealClosureMathlib.BisectionRoots, `HexRealClosureMathlib.BisectionFrontier,
-    `HexRealClosureMathlib.BisectionCounts, `HexRealClosureMathlib.Isolation]
+    `HexRealClosureMathlib.BisectionCounts, `HexRealClosureMathlib.Isolation,
+    `HexRealClosureMathlib.BisectionFactor, `HexRealClosureMathlib.IsolationFactor]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction

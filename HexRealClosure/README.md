@@ -358,3 +358,21 @@ checks that the accepted bound contains every real root. Its rejection
 tests detect wrong routes, later bounds, stale heads, finite whole-line endpoints,
 wrong counts and failure on valid input. The existing count-soundness dependency
 #10389 remains in native root-count correspondence, not these dispatch proofs.
+
+### Exact deflation provenance
+
+`BisectionFactor` proves that the original polynomial is exactly the product
+of the emitted linear factors and the actual returned active head. The proof
+uses each actual cut's stored quotient and the traversal's returned-head and
+emitted-list equations. It preserves the original leading coefficient without
+monicizing the input or asserting equality of coefficient representations.
+`IsolationFactor` exposes this identity for a checked bounded search, together
+with leading-coefficient preservation and the degree identity: original degree
+is active-head degree plus emitted-root count. The degree identity requires a
+nonzero active head, supplied by the existing domain companion.
+
+These algebraic proofs need a zero-reflecting field interpretation preserving
+one, subtraction and multiplication. They need no root-count theorem, root
+ordering, squarefreeness or sign interpretation, and their axiom guards use only
+the standard three axioms. They provide factor provenance for descriptor
+completion and multiplicity restoration, rather than a complete root set.
