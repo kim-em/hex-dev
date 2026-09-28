@@ -9,3 +9,4 @@ public import HexRealClosure.Bounds
 public import HexRealClosure.Deflation
 public import HexRealClosure.Bisection
 public import HexRealClosure.BisectionFrontier
+public import HexRealClosure.Isolation

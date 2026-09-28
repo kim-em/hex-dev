@@ -197,6 +197,12 @@ def Frontier.prepare? (sign : E → Int) (p : DensePoly E) (lower upper : E) :
   let cell ← Cell.prepare? sign p lower upper
   return ⟨p, [cell], [], 0, by simp⟩
 
+/-- Frontier preparation has exactly the domain of its initial cell. -/
+theorem Frontier.prepare?_isSome (sign : E → Int) (p : DensePoly E) (lower upper : E) :
+    (Frontier.prepare? sign p lower upper).isSome =
+      (Cell.prepare? sign p lower upper).isSome := by
+  cases h : Cell.prepare? sign p lower upper <;> simp [Frontier.prepare?, h]
+
 /-- Initial construction retains exactly the supplied head and interval. -/
 theorem Frontier.prepare?_result {sign : E → Int} {p : DensePoly E} {lower upper : E}
     {frontier : Frontier sign} (accepted : Frontier.prepare? sign p lower upper = some frontier) :

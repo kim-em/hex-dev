@@ -319,8 +319,35 @@ for each pending cell, including count-zero cells. Reusing its head-only chain
 across endpoints remains an upstream API request. No timing improvement is
 claimed by these correctness checks.
 
-Complete bound selection and whole-line dispatch, descriptor construction,
-BKR completion, multiplicity restoration and factor-list merging remain
-required for complete isolation. Automatic dependency transport, compatible
+Descriptor construction, BKR completion, multiplicity restoration and
+factor-list merging remain required for complete isolation. Automatic dependency transport, compatible
 real-closed union semantics and simultaneous ordinary-real realization remain
 separate requirements of the full tower.
+
+### Bound selection and whole-line dispatch
+
+`Isolation.search? sign p` follows the fixed finite dyadic bound policy. On an
+accepted bound it prepares `(-B, B)` and calls capped refinement once. If every
+bound candidate fails, it prepares the shared Sturm producer on the whole line.
+The private `Search` constructor retains the actual dispatch trace; its bounded
+route contains the accepted bound and actual returned frontier, and its whole
+route contains a domain bound to the exact input head, sign and infinite
+endpoints. Domain failure remains explicit and never means an empty root set.
+
+Under a zero-reflecting coefficient interpretation preserving arithmetic and
+three-valued signs, every nonzero squarefree input has a successful search.
+The returned route retains exactly all original roots, and whole-line domains
+are admissible for their exact input. These proofs use only the standard three
+axioms. The result is prepared input for descriptor completion, rather than an
+executable complete root set; it does not assert mathematical root ordering,
+general descriptor-producer success or restoration of multiplicities.
+
+Thirty-two native checks cover positive, negative and fractional scalar inputs,
+a large rational root beyond every bound candidate, inverse infinitesimal roots
+at two levels and rejection of zero or repeated-root inputs. Ten independent
+exact fixtures check dispatch and the full bounded frontier or whole-line
+domain. The FLINT/SymPy oracle recomputes the first accepted bound, checks the
+selected route, and verifies actual head/endpoints and root counts. Its rejection
+tests detect wrong routes, later bounds, stale heads, finite whole-line endpoints,
+wrong counts and failure on valid input. The existing count-soundness dependency
+#10389 remains in native root-count correspondence, not these dispatch proofs.

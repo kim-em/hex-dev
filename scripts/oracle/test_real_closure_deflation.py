@@ -189,6 +189,38 @@ class DeflationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "wrong selection policy"):
             verify(self.mutate_frontier(alter, "frontier close infinitesimal fallback"))
 
+    def mutate_dispatch(self, change, name="dispatch bounded nonmonic"):
+        rows = deepcopy(self.fixtures)
+        change(next(row for row in rows if row["name"] == name)["result"])
+        return rows
+
+    def test_rejects_dispatch_failure_on_valid_input(self):
+        with self.assertRaisesRegex(ValueError, "wrong dispatch success"):
+            verify(self.changed("dispatch whole rational root", "result", None))
+
+    def test_rejects_dispatch_wrong_route(self):
+        with self.assertRaisesRegex(ValueError, "wrong dispatch route"):
+            verify(self.mutate_dispatch(lambda result: result.update(route="whole")))
+
+    def test_rejects_dispatch_later_bound(self):
+        with self.assertRaisesRegex(ValueError, "wrong first accepted bound"):
+            verify(self.mutate_dispatch(lambda result: result.update(bound="16")))
+
+    def test_rejects_whole_line_stale_head(self):
+        with self.assertRaisesRegex(ValueError, "wrong whole-line head"):
+            verify(self.mutate_dispatch(lambda result: result.update(head=["-1000", "2"]),
+                                       "dispatch whole rational root"))
+
+    def test_rejects_whole_line_finite_endpoint(self):
+        with self.assertRaisesRegex(ValueError, "wrong whole-line endpoints"):
+            verify(self.mutate_dispatch(lambda result: result.update(lower={"finite": "-1"}),
+                                       "dispatch whole rational root"))
+
+    def test_rejects_whole_line_wrong_count(self):
+        with self.assertRaisesRegex(ValueError, "wrong whole-line count"):
+            verify(self.mutate_dispatch(lambda result: result.update(count=0),
+                                       "dispatch whole inverse infinitesimal"))
+
     def test_rejects_empty_and_duplicate_data(self) -> None:
         for rows in ([], self.fixtures + self.fixtures[:1]):
             with self.assertRaises(ValueError):

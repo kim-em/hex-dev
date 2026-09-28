@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Deflation
+public import HexRealClosure.Isolation
 public import HexRealClosure.Bisection
 public import HexRealClosure.BisectionFrontier
 public import HexOrderedFn.Infinitesimal
@@ -93,6 +94,33 @@ private def emitFrontier {E : Type} [Zero E] [DecidableEq E] [One E]
 private def emitRatFrontier := emitFrontier (E := Rat) (depth := 0)
   (encode := fun a => .str (toString a)) (sign := Sturm.orderSign)
 
+private def emitSearch {E : Type} [Zero E] [DecidableEq E] [One E]
+    [Add E] [Sub E] [Mul E] [Neg E] [NatCast E] [Inv E]
+    (name : String) (depth : Nat) (encode : E → Lean.Json) (sign : E → Int)
+    (p : DensePoly E) : IO Unit := do
+  let result := Isolation.search? sign p
+  let payload := result.map fun search => match search.route with
+    | .whole whole => Lean.Json.mkObj [
+      ("route", .str "whole"), ("head", .arr (whole.domain.head.toArray.map encode)),
+      ("lower", endpoint encode whole.domain.lower), ("upper", endpoint encode whole.domain.upper),
+      ("count", Lean.toJson (Sturm.queryPrepared whole.domain 1))]
+    | .bounded bound frontier => Lean.Json.mkObj [
+      ("route", .str "bounded"), ("bound", encode bound.value),
+      ("frontier", Lean.Json.mkObj [
+        ("active", .arr (frontier.head.toArray.map encode)),
+        ("removed", .arr (frontier.removed.toArray.map encode)),
+        ("nodes", Lean.toJson frontier.nodes),
+        ("cells", .arr (frontier.cells.toArray.map fun cell => Lean.Json.mkObj [
+          ("head", .arr (cell.domain.head.toArray.map encode)),
+          ("lower", endpoint encode cell.domain.lower), ("upper", endpoint encode cell.domain.upper),
+          ("count", Lean.toJson cell.count)]))])]
+  IO.println (Lean.Json.mkObj [
+    ("kind", .str "dispatch"), ("name", .str name), ("depth", Lean.toJson depth),
+    ("coefficients", .arr (p.toArray.map encode)), ("result", payload.getD .null)]).compress
+
+private def emitRatSearch := emitSearch (E := Rat) (depth := 0)
+  (encode := fun a => .str (toString a)) (sign := Sturm.orderSign)
+
 def main : IO Unit := do
   emitRat "zero" 0 0
   emitRat "constant" (DensePoly.C 3) 0
@@ -166,3 +194,15 @@ def main : IO Unit := do
   emitRatFrontier "frontier reprepare multi-root pending cell"
     (linearFactor (-3 : Rat) * linearFactor (-2) * linearFactor (-1) *
       linearFactor 1 * linearFactor 2 * linearFactor 3) (-4) 4
+
+  let dispatchCubic := linearFactor (0 : Rat) * linearFactor 1 * linearFactor 2
+  emitRatSearch "dispatch bounded nonmonic" (DensePoly.scale 3 dispatchCubic)
+  emitRatSearch "dispatch bounded negative scalar" (DensePoly.scale (-3) dispatchCubic)
+  emitRatSearch "dispatch bounded fractional scalar" (DensePoly.scale (1 / 2) dispatchCubic)
+  emitRatSearch "dispatch whole rational root" (linearFactor (1000 : Rat))
+  emitRatSearch "dispatch constant" (DensePoly.C 3)
+  emitRatSearch "dispatch zero rejected" 0
+  emitRatSearch "dispatch repeated root rejected" (linearFactor (1 : Rat) * linearFactor 1)
+  emitSearch "dispatch bounded close infinitesimals" 1 fraction sign₁ close
+  emitSearch "dispatch whole inverse infinitesimal" 1 fraction sign₁ (linearFactor epsilon⁻¹)
+  emitSearch "dispatch whole inverse second infinitesimal" 2 nestedFraction sign₂ (linearFactor delta⁻¹)
