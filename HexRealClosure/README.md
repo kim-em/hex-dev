@@ -198,6 +198,26 @@ A failed bound search is a request for whole-line BKR completion. It never
 means that the polynomial has no roots. The bounded bisection and complete
 isolation driver, general contexts and recursive transport remain unimplemented.
 
+`deflate? p a` removes the factor `X-a` with the shared polynomial division.
+It returns an opaque `Deflation p a` only for a nonzero input with zero
+remainder and retains the computed quotient, including its leading scalar.
+The companion proves success exactly when `a` denotes a root of a nonzero
+input, exact factorization, a degree drop of one, and preservation of all other
+roots. For squarefree inputs the quotient is squarefree and no longer vanishes
+at `a`. `Deflation.domains` then supplies the two open Sturm domains after an
+interior split; previous root-free endpoints remain valid. It does not reuse
+old descriptors or counts. The driver still needs their checked transport or
+recomputation and must retain the original multiplicities.
+
+The generic deflation proofs use zero-reflecting coefficient interpretation
+into a field and introduce no admissions. Packed selected-root execution tests
+check cancellation of structurally different coefficient values. Thirteen
+independent exact fixtures include nonmonic and repeated inputs, nonroot
+rejection, inverse infinitesimals and removal at either of two infinitesimal
+levels. Their SymPy oracle uses synthetic division in `QQ(epsilon, delta)`.
+Run `lake build hexrealclosure_deflation_conformance`, then
+`.lake/build/bin/hexrealclosure_deflation_conformance | python3 scripts/oracle/real_closure_deflation.py`.
+
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and
 [real-algebraic chapter](../HexManual/Chapters/HexRealAlgebraic.lean).

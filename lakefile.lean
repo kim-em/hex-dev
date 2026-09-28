@@ -595,7 +595,8 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
-    `HexRealClosureMathlib.YunInvariant, `HexRealClosureMathlib.Bounds]
+    `HexRealClosureMathlib.YunInvariant, `HexRealClosureMathlib.Bounds,
+    `HexRealClosureMathlib.Deflation]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
@@ -1553,6 +1554,10 @@ lean_exe hexrealclosure_bench where
 lean_exe hexrealclosure_bounds_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.BoundsConformance
+
+lean_exe hexrealclosure_deflation_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.DeflationConformance
 
 lean_exe hexnumberfieldtower_bench where
   srcDir := "bench"
