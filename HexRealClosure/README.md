@@ -227,3 +227,24 @@ Run `lake build hexrealclosure_deflation_conformance`, then
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and
 [real-algebraic chapter](../HexManual/Chapters/HexRealAlgebraic.lean).
+
+### Finite bisection nodes
+
+`Bisection.bisect? sign p lower upper` uses the deterministic arithmetic
+midpoint of a finite interval. A nonroot cut retains the original polynomial.
+A root cut performs checked exact linear deflation and retains its computed
+quotient and leading scalar. Both open subintervals are freshly prepared
+against that active head. Cuts at or beyond an endpoint are rejected by
+`Bisection.split?`.
+
+The companion proves native midpoint interpretation, success for every
+admissible finite interval, exact root coverage by a removed point and the
+active head, and validity of both returned prepared domains. These results
+use only the standard three axioms and ordinary coefficient interpretations;
+no field instance on raw syntax is required. Native examples exercise regular
+and root cuts, nonmonic and fractional heads, root-free deflated endpoints,
+root counts and invalid inputs.
+
+This supplies one finite bisection node. The capped interval traversal,
+transport of pending evidence after deflation, complete BKR fallback, factor
+merging and the complete root-set API remain to be assembled and proved.
