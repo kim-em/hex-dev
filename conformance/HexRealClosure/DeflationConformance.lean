@@ -25,7 +25,7 @@ private def nestedFraction (f : RationalFn (RationalFn Rat)) : Lean.Json :=
     ("den", .arr (f.den.toArray.map fraction))]
 
 private def emit {E : Type} [Zero E] [DecidableEq E] [One E]
-    [Add E] [Sub E] [Mul E] [Div E] (name : String) (depth : Nat)
+    [Add E] [Sub E] [Mul E] (name : String) (depth : Nat)
     (encode : E → Lean.Json) (p : DensePoly E) (root : E) : IO Unit := do
   let result := deflate? p root
   IO.println (Lean.Json.mkObj [
@@ -43,15 +43,15 @@ def main : IO Unit := do
   emitRat "linear" (DensePoly.ofCoeffs #[0, 1]) 0
   emitRat "nonmonic fractional root" (DensePoly.ofCoeffs #[-2, 3]) (2 / 3)
   emitRat "negative leading coefficient" (DensePoly.ofCoeffs #[2, -3]) (2 / 3)
-  emitRat "reducible nonmonic" ((DensePoly.ofCoeffs #[-2, 0, 1]) * linear (3 : Rat) * DensePoly.C 5) 3
+  emitRat "reducible nonmonic" ((DensePoly.ofCoeffs #[-2, 0, 1]) * linearFactor (3 : Rat) * DensePoly.C 5) 3
   emitRat "repeated root" (DensePoly.ofCoeffs #[1, -2, 1]) 1
   let epsilon : RationalFn Rat := RationalFn.X
-  let close := linear epsilon * linear (2 * epsilon)
+  let close := linearFactor epsilon * linearFactor (2 * epsilon)
   emit "close roots" 1 fraction close epsilon
   emit "nonroot between close roots" 1 fraction close (epsilon / 2)
-  emit "inverse infinitesimal" 1 fraction (linear epsilon⁻¹ * linear 3) epsilon⁻¹
+  emit "inverse infinitesimal" 1 fraction (linearFactor epsilon⁻¹ * linearFactor 3) epsilon⁻¹
   let delta : RationalFn (RationalFn Rat) := RationalFn.X
   let first : RationalFn (RationalFn Rat) := RationalFn.C epsilon
-  let nested := linear first * linear delta
+  let nested := linearFactor first * linearFactor delta
   emit "remove second infinitesimal" 2 nestedFraction nested delta
   emit "remove first infinitesimal" 2 nestedFraction nested first

@@ -177,6 +177,31 @@ theorem interpret_divMod (p q : DensePoly E) :
       exact add_right_cancel (hc.trans hc'.symm)
   · exact interpret_rem f hz hs hm hd p q
 
+omit hd [Div E] in
+/-- The shared monic division corresponds to mathematical division without
+requiring an inverse or division operation on coefficient representatives. -/
+theorem interpret_divModMonic (h1 : f (1 : E) = 1)
+    (p q : DensePoly E) (hq : q.Monic) :
+    (interpret f hz (divModMonic p q hq).1, interpret f hz (divModMonic p q hq).2) =
+      (interpret f hz p / interpret f hz q, interpret f hz p % interpret f hz q) := by
+  let a := DensePoly.Interpret.map f hz p
+  let b := DensePoly.Interpret.map f hz q
+  have hb : b.Monic := by
+    change (DensePoly.Interpret.map f hz q).leadingCoeff = 1
+    rw [DensePoly.Interpret.map_leading, hq, h1]
+  have h := DensePoly.Interpret.map_divModMonic f hz hs hm h1 p q hq
+  dsimp only at h
+  rw [divModMonic_eq_divMod_of_monic a b hb] at h
+  have hid (r : DensePoly K) :
+      interpret (fun x : K => x) (fun _ => Iff.rfl) r = toPolynomial r := by
+    ext i
+    simp only [coeff_interpret, coeff_toPolynomial]
+  have hv := interpret_divMod (fun x : K => x) (fun _ => Iff.rfl)
+    (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl) a b
+  simp only [hid] at hv
+  exact (congrArg (fun qr : DensePoly K × DensePoly K =>
+    (toPolynomial qr.1, toPolynomial qr.2)) h).trans hv
+
 /-- The raw gcd is associated to Mathlib's normalized gcd. -/
 theorem interpret_gcd (p q : DensePoly E) :
     Associated (interpret f hz (gcd p q))
@@ -200,3 +225,7 @@ theorem interpret_bezout (ha : ∀ a b, f (a + b) = f a + f b)
   exact toPolynomial_xgcd_bezout_raw _ _
 
 end HexPolyMathlib.Interpret
+
+/-- info: 'HexPolyMathlib.Interpret.interpret_divModMonic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexPolyMathlib.Interpret.interpret_divModMonic

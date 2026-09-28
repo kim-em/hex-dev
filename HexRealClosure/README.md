@@ -198,7 +198,12 @@ A failed bound search is a request for whole-line BKR completion. It never
 means that the polynomial has no roots. The bounded bisection and complete
 isolation driver, general contexts and recursive transport remain unimplemented.
 
-`deflate? p a` removes the factor `X-a` with the shared polynomial division.
+`deflate? p a` removes the factor `X-a` with the shared monic polynomial division.
+`linearFactor a` stores the literal leading coefficient one, and the constructor
+checks monicity before dividing. The coefficient interpretation proves this
+finite check succeeds. The operation needs no coefficient division or inverse;
+the shared monic kernel and its correspondence proofs preserve the input's
+leading scalar even when the input polynomial is nonmonic.
 It returns an opaque `Deflation p a` only for a nonzero input with zero
 remainder and retains the computed quotient, including its leading scalar.
 The companion proves success exactly when `a` denotes a root of a nonzero
