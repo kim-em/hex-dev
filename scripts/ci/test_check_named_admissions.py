@@ -66,9 +66,9 @@ class AdmissionScannerTests(unittest.TestCase):
             traversal = root / "adapters/HexRealClosureMathlib/BisectionFrontier.lean"
             counts = root / "adapters/HexRealClosureMathlib/BisectionCounts.lean"
             isolation = root / "adapters/HexRealClosureMathlib/Isolation.lean"
-            isolationTests = root / "conformance/HexRealClosure/IsolationTests.lean"
+            isolation_tests = root / "conformance/HexRealClosure/IsolationTests.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, bisection, model, partition, deflation, frontier, traversal, counts, isolation, isolationTests, dependency):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, bisection, model, partition, deflation, frontier, traversal, counts, isolation, isolation_tests, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
@@ -87,7 +87,7 @@ class AdmissionScannerTests(unittest.TestCase):
             traversal.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             counts.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             isolation.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            isolationTests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            isolation_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()

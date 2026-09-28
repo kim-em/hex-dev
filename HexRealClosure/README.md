@@ -303,7 +303,8 @@ This count theorem uses the proved shared query-soundness theorem and only
 the standard three axioms.
 
 Fifty-eight native checks cover later root cuts with earlier count-one and
-count-zero and multi-root cells, two emitted roots, positive/negative/fractional scalars,
+count-zero and multi-root cells, two emitted roots,
+positive/negative/fractional scalars,
 early stopping and close infinitesimal roots retained after the node allowance.
 Fifteen additional exact conformance rows check whole frontiers. The existing
 FLINT/SymPy oracle verifies scalar-preserving deflation, actual pending heads,
@@ -320,7 +321,8 @@ across endpoints remains an upstream API request. No timing improvement is
 claimed by these correctness checks.
 
 Descriptor construction, BKR completion, multiplicity restoration and
-factor-list merging remain required for complete isolation. Automatic dependency transport, compatible
+factor-list merging remain required for complete isolation. Automatic dependency
+transport, compatible
 real-closed union semantics and simultaneous ordinary-real realization remain
 separate requirements of the full tower.
 
@@ -337,17 +339,22 @@ endpoints. Domain failure remains explicit and never means an empty root set.
 Under a zero-reflecting coefficient interpretation preserving arithmetic and
 three-valued signs, every nonzero squarefree input has a successful search.
 The returned route retains exactly all original roots, and whole-line domains
-are admissible for their exact input. These proofs use only the standard three
+are admissible for their exact input. Coverage is stated using the actual stored
+whole-line head and endpoints. `Search.bounded_spec` exposes bound selection,
+node allowance, disjoint cells, distinct emitted values excluded from the active
+head and the stopping condition. These proofs use only the standard three
 axioms. The result is prepared input for descriptor completion, rather than an
 executable complete root set; it does not assert mathematical root ordering,
 general descriptor-producer success or restoration of multiplicities.
 
-Thirty-two native checks cover positive, negative and fractional scalar inputs,
+Native checks cover positive, negative and fractional scalar inputs,
 a large rational root beyond every bound candidate, inverse infinitesimal roots
-at two levels and rejection of zero or repeated-root inputs. Ten independent
-exact fixtures check dispatch and the full bounded frontier or whole-line
+at two levels, root-free whole-line input and rejection of zero or repeated
+roots on both routes. Independent exact fixtures check dispatch and the full
+bounded frontier or whole-line
 domain. The FLINT/SymPy oracle recomputes the first accepted bound, checks the
-selected route, and verifies actual head/endpoints and root counts. Its rejection
+selected route, and verifies actual head/endpoints and root counts. It also
+checks that the accepted bound contains every real root. Its rejection
 tests detect wrong routes, later bounds, stale heads, finite whole-line endpoints,
 wrong counts and failure on valid input. The existing count-soundness dependency
 #10389 remains in native root-count correspondence, not these dispatch proofs.

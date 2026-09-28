@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Isolation
+public import HexRealRoots.Map
 public import HexSturmMathlib.Soundness
 public import HexRealClosureMathlib.Bounds
 public import HexRealClosureMathlib.BisectionFrontier
@@ -85,7 +86,8 @@ theorem search?_success (p : DensePoly E)
 @[expose] def Route.Roots {p : DensePoly E} (route : Route sign p) (x : K) : Prop :=
   match route with
   | .bounded _ frontier => frontier.Roots φ hz sign x
-  | .whole _ => (interpret φ hz p).IsRoot x
+  | .whole stored => (interpret φ hz stored.domain.head).IsRoot x ∧
+      InInterval (stored.domain.lower.map φ) (stored.domain.upper.map φ) x
 
 include hz h1 ha hs hm hn hi hnat hsign in
 /-- Every checked search retains exactly all roots of its original polynomial,
@@ -94,7 +96,11 @@ theorem Search.roots {p : DensePoly E} (result : Search sign p) (x : K) :
     result.route.Roots φ hz sign x ↔ (interpret φ hz p).IsRoot x := by
   have hsg := sign_spec φ sign hsign
   cases route : result.route with
-  | whole whole => rfl
+  | whole whole =>
+    change (interpret φ hz whole.domain.head).IsRoot x ∧
+      InInterval (whole.domain.lower.map φ) (whole.domain.upper.map φ) x ↔ _
+    rw [whole.bound.2.1, whole.bound.2.2.1, whole.bound.2.2.2]
+    simp only [Endpoint.map, inInterval_univ, and_true]
   | bounded bound frontier =>
     have computed := result.computed
     rw [route] at computed
@@ -110,6 +116,27 @@ theorem Search.roots {p : DensePoly E} (result : Search sign p) (x : K) :
       obtain ⟨lower, upper⟩ := (bound.roots φ hz h1 hn hs hm sign hsign p).2 x root
       refine ⟨root, ?_⟩
       simpa only [inInterval_finite, hn] using And.intro lower upper
+
+include hz h1 ha hs hm hn hi hnat hsign in
+/-- A checked bounded search exposes the actual bound selection and every
+structural invariant needed for descriptor completion. -/
+theorem Search.bounded_spec {p : DensePoly E} (result : Search sign p)
+    {bound : Bounds.Bound sign p} {frontier : Bisection.Frontier sign}
+    (route : result.route = .bounded bound frontier) :
+    Bounds.find? sign p = some bound ∧
+    frontier.nodes ≤ 2 * (p.natDegree + 1) ∧
+    frontier.removed.Pairwise (fun a b => φ a ≠ φ b) ∧
+    (∀ r ∈ frontier.removed, ¬ (interpret φ hz frontier.head).IsRoot (φ r)) ∧
+    frontier.Disjoint φ sign ∧
+    (Bisection.select frontier.cells = none ∨ frontier.nodes = 2 * (p.natDegree + 1)) := by
+  have hsg := sign_spec φ sign hsign
+  have computed := result.computed
+  rw [route] at computed
+  obtain ⟨found, initial, prepared, refined⟩ := dispatch?_bounded computed
+  obtain ⟨nodes, _, distinct, excluded, disjoint, stopped⟩ := Bisection.Frontier.refine?_spec
+    φ hz h1 ha hs hm sign (fun a => (hsg a).2.2.1) hn hi hnat
+    (fun a => (hsg a).1) (fun a => (hsg a).2.1) prepared refined
+  exact ⟨found, nodes, distinct, excluded, disjoint, stopped⟩
 
 include hz h1 ha hs hm hn hi hnat hsign in
 /-- The stored whole-line domain is admissible for its exact input. -/
@@ -138,3 +165,7 @@ end Hex.RealClosure.Isolation
 /-- info: 'Hex.RealClosure.Isolation.Whole.domain_valid' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Isolation.Whole.domain_valid
+
+/-- info: 'Hex.RealClosure.Isolation.Search.bounded_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Isolation.Search.bounded_spec
