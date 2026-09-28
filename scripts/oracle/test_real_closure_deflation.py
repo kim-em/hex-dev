@@ -121,6 +121,53 @@ class DeflationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unknown fixture kind"):
             verify(self.changed("split constant", "kind", "unknown"))
 
+    def mutate_frontier(self, change, name="frontier reprepare count-one cell"):
+        rows = deepcopy(self.fixtures)
+        change(next(row for row in rows if row["name"] == name)["result"])
+        return rows
+
+    def test_rejects_stale_count_one_head(self):
+        head = next(row for row in self.fixtures if row["name"] == "frontier reprepare count-one cell")["coefficients"]
+        with self.assertRaisesRegex(ValueError, "stale pending head"):
+            verify(self.mutate_frontier(lambda result: result["cells"][2].update(head=head)))
+
+    def test_rejects_wrong_cached_count(self):
+        with self.assertRaisesRegex(ValueError, "wrong cached count"):
+            verify(self.mutate_frontier(lambda result: result["cells"][0].update(count=2)))
+
+    def test_rejects_dropped_count_one_cell(self):
+        with self.assertRaisesRegex(ValueError, "lost or duplicated cell"):
+            verify(self.mutate_frontier(lambda result: result["cells"].pop()))
+
+    def test_rejects_interval_gap(self):
+        with self.assertRaisesRegex(ValueError, "interval gap or overlap"):
+            verify(self.mutate_frontier(lambda result: result["cells"][0].update(lower={"finite": "1/2"})))
+
+    def test_rejects_interval_overlap(self):
+        with self.assertRaisesRegex(ValueError, "interval gap or overlap"):
+            verify(self.mutate_frontier(lambda result: result["cells"][0].update(upper={"finite": "5/2"})))
+
+    def test_rejects_node_allowance(self):
+        with self.assertRaisesRegex(ValueError, "wrong node allowance"):
+            verify(self.mutate_frontier(lambda result: result.update(nodes=11)))
+
+    def test_rejects_duplicate_emitted_root(self):
+        with self.assertRaisesRegex(ValueError, "duplicate emitted root"):
+            verify(self.mutate_frontier(lambda result: result["removed"].append("2")))
+
+    def test_rejects_emitted_nonroot(self):
+        with self.assertRaisesRegex(ValueError, "emitted nonroot"):
+            verify(self.mutate_frontier(lambda result: result["removed"].append("5/2")))
+
+    def test_rejects_frontier_scalar_loss(self):
+        with self.assertRaisesRegex(ValueError, "wrong active head or scalar"):
+            verify(self.mutate_frontier(lambda result: result.update(active=["9", "-9", "-1", "1"])))
+
+    def test_rejects_lost_fallback_root(self):
+        with self.assertRaisesRegex(ValueError, "wrong cached count"):
+            verify(self.mutate_frontier(lambda result: result["cells"][0].update(count=1),
+                                       "frontier close infinitesimal fallback"))
+
     def test_rejects_empty_and_duplicate_data(self) -> None:
         for rows in ([], self.fixtures + self.fixtures[:1]):
             with self.assertRaises(ValueError):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact deflation and bisection checks using FLINT and QQ(epsilon, delta)."""
+"""Exact deflation, bisection and frontier checks using FLINT and QQ(epsilon, delta)."""
 
 from fractions import Fraction
 from pathlib import Path
@@ -29,15 +29,9 @@ def divide_linear(coefficients, root, zero):
     return quotient, remainder
 
 
-def verify_bisection(row, decode, coefficient_field):
+def root_checks(name, depth, coefficient_field):
     from flint import fmpq, fmpq_poly
     from scripts.oracle.real_algebraic_qqbar import QQBar
-
-    name, depth = row["name"], row["depth"]
-    coefficients = [decode(a, depth) for a in row["coefficients"]]
-    lower, upper, point = (decode(row[key], depth) for key in ("lower", "upper", "point"))
-    require(point == (lower + upper) / 2, f"{name}: wrong midpoint")
-    require(not coefficients or bool(coefficients[-1]), f"{name}: zero leading coefficient")
 
     def sign(value):
         if not value:
@@ -62,18 +56,10 @@ def verify_bisection(row, decode, coefficient_field):
 
     def squarefree(poly):
         if depth == 0:
-            p = fmpq_poly([fmpq(str(c)) for c in row["coefficients"]])
+            p = fmpq_poly([fmpq(str(c)) for c in poly])
             return p.gcd(p.derivative()).degree() == 0
         p = formal_polynomial(poly)
         return p.gcd(p.diff()).degree() == 0
-
-    valid = bool(coefficients) and squarefree(coefficients) and sign(upper - lower) > 0
-    valid = valid and bool(evaluate(coefficients, lower)) and bool(evaluate(coefficients, upper))
-    payload = row["result"]
-    require((payload is not None) == valid, f"{name}: wrong split success")
-    if not valid:
-        require(row["original_count"] is None, f"{name}: count on invalid domain")
-        return
 
     def count(poly, a, b):
         if depth == 0:
@@ -90,6 +76,26 @@ def verify_bisection(row, decode, coefficient_field):
             require(factor.degree() == 1, f"{name}: unsupported infinitesimal factor")
             roots.append(coefficient_field.from_expr(-factor.nth(0) / factor.nth(1)))
         return sum(sign(root - a) > 0 and sign(b - root) > 0 for root in roots)
+
+    return sign, evaluate, squarefree, count
+
+
+def verify_bisection(row, decode, coefficient_field):
+    name, depth = row["name"], row["depth"]
+    coefficients = [decode(a, depth) for a in row["coefficients"]]
+    lower, upper, point = (decode(row[key], depth) for key in ("lower", "upper", "point"))
+    require(point == (lower + upper) / 2, f"{name}: wrong midpoint")
+    require(not coefficients or bool(coefficients[-1]), f"{name}: zero leading coefficient")
+
+    sign, evaluate, squarefree, count = root_checks(name, depth, coefficient_field)
+
+    valid = bool(coefficients) and squarefree(coefficients) and sign(upper - lower) > 0
+    valid = valid and bool(evaluate(coefficients, lower)) and bool(evaluate(coefficients, upper))
+    payload = row["result"]
+    require((payload is not None) == valid, f"{name}: wrong split success")
+    if not valid:
+        require(row["original_count"] is None, f"{name}: count on invalid domain")
+        return
 
     require(type(row["original_count"]) is int and row["original_count"] == count(coefficients, lower, upper),
             f"{name}: wrong original count")
@@ -119,6 +125,63 @@ def verify_bisection(row, decode, coefficient_field):
             f"{name}: lost or duplicated root")
 
 
+def verify_frontier(row, decode, coefficient_field):
+    from functools import cmp_to_key
+
+    name, depth = row["name"], row["depth"]
+    sign, evaluate, squarefree, count = root_checks(name, depth, coefficient_field)
+    coefficients = [decode(a, depth) for a in row["coefficients"]]
+    lower, upper = (decode(row[key], depth) for key in ("lower", "upper"))
+    require(not coefficients or bool(coefficients[-1]), f"{name}: zero leading coefficient")
+    valid = bool(coefficients) and squarefree(coefficients) and sign(upper - lower) > 0
+    valid = valid and bool(evaluate(coefficients, lower)) and bool(evaluate(coefficients, upper))
+    payload = row["result"]
+    require((payload is not None) == valid, f"{name}: wrong frontier success")
+    if not valid:
+        require(row["original_count"] is None, f"{name}: count on invalid domain")
+        return
+    require(set(payload) == {"active", "removed", "nodes", "cells"}, f"{name}: invalid frontier fields")
+    require(type(row["original_count"]) is int and row["original_count"] == count(coefficients, lower, upper),
+            f"{name}: wrong original count")
+    removed = [decode(a, depth) for a in payload["removed"]]
+    expected = coefficients
+    for i, root in enumerate(removed):
+        require(root not in removed[:i], f"{name}: duplicate emitted root")
+        require(sign(root - lower) > 0 and sign(upper - root) > 0, f"{name}: emitted root outside domain")
+        expected, remainder = divide_linear(expected, root, coefficient_field.zero)
+        require(not remainder, f"{name}: emitted nonroot")
+    active = [decode(a, depth) for a in payload["active"]]
+    require(active == expected, f"{name}: wrong active head or scalar")
+    require(all(evaluate(active, root) for root in removed), f"{name}: emitted root remains active")
+    cells = payload["cells"]
+    require(isinstance(cells, list) and bool(cells), f"{name}: no retained cells")
+    nodes, cap = payload["nodes"], 2 * len(coefficients)
+    require(type(nodes) is int and 0 <= nodes <= cap, f"{name}: wrong node allowance")
+    require(len(cells) == nodes + 1, f"{name}: lost or duplicated cell")
+    intervals = []
+    for cell in cells:
+        require(set(cell) == {"head", "lower", "upper", "count"}, f"{name}: invalid cell fields")
+        require([decode(a, depth) for a in cell["head"]] == active, f"{name}: stale pending head")
+        ends = []
+        for key in ("lower", "upper"):
+            endpoint = cell[key]
+            require(isinstance(endpoint, dict) and set(endpoint) == {"finite"}, f"{name}: invalid cell endpoint")
+            ends.append(decode(endpoint["finite"], depth))
+        a, b = ends
+        require(sign(b - a) > 0, f"{name}: reversed cell")
+        require(evaluate(active, a) and evaluate(active, b), f"{name}: active root endpoint")
+        require(type(cell["count"]) is int and cell["count"] == count(active, a, b),
+                f"{name}: wrong cached count")
+        intervals.append((a, b))
+    intervals.sort(key=cmp_to_key(lambda a, b: sign(a[0] - b[0])))
+    require(intervals[0][0] == lower and intervals[-1][1] == upper and
+            all(a[1] == b[0] for a, b in zip(intervals, intervals[1:])),
+            f"{name}: interval gap or overlap")
+    require(nodes == cap or all(cell["count"] <= 1 for cell in cells), f"{name}: premature traversal stop")
+    require(sum(cell["count"] for cell in cells) + len(removed) == row["original_count"],
+            f"{name}: inconsistent root coverage")
+
+
 def verify(fixtures: list[dict]) -> None:
     require(bool(fixtures), "no fixtures")
     require(len({row["name"] for row in fixtures}) == len(fixtures), "duplicate fixture")
@@ -142,7 +205,10 @@ def verify(fixtures: list[dict]) -> None:
     for row in fixtures:
         depth = row["depth"]
         require(depth in (0, 1, 2), "unsupported coefficient depth")
-        require(row.get("kind", "deflation") in ("deflation", "bisection"), "unknown fixture kind")
+        require(row.get("kind", "deflation") in ("deflation", "bisection", "frontier"), "unknown fixture kind")
+        if row.get("kind") == "frontier":
+            verify_frontier(row, decode, coefficient_field)
+            continue
         if row.get("kind") == "bisection":
             verify_bisection(row, decode, coefficient_field)
             continue
@@ -168,7 +234,7 @@ def verify(fixtures: list[dict]) -> None:
 def main() -> None:
     fixtures = [json.loads(line) for line in sys.stdin if line.strip()]
     verify(fixtures)
-    print(f"verified {len(fixtures)} exact deflation/bisection fixtures")
+    print(f"verified {len(fixtures)} exact deflation/bisection/frontier fixtures")
 
 
 if __name__ == "__main__":

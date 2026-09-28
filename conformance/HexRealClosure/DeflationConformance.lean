@@ -7,6 +7,7 @@ module
 
 public import HexRealClosure.Deflation
 public import HexRealClosure.Bisection
+public import HexRealClosure.BisectionFrontier
 public import HexOrderedFn.Infinitesimal
 public import Lean.Data.Json.Printer
 public import Lean.Data.Json.FromToJson.Basic
@@ -69,6 +70,29 @@ private def emitSplit {E : Type} [Zero E] [DecidableEq E] [One E]
 private def emitRatSplit := emitSplit (E := Rat) (depth := 0)
   (encode := fun a => .str (toString a)) (sign := Sturm.orderSign)
 
+private def emitFrontier {E : Type} [Zero E] [DecidableEq E] [One E]
+    [Add E] [Sub E] [Mul E] [Neg E] [NatCast E] [Inv E]
+    (name : String) (depth : Nat) (encode : E → Lean.Json) (sign : E → Int)
+    (p : DensePoly E) (lower upper : E) : IO Unit := do
+  let initial := Bisection.Frontier.prepare? sign p lower upper
+  let result := initial.bind fun frontier => frontier.bisect?
+  let payload := result.map fun frontier => Lean.Json.mkObj [
+    ("active", .arr (frontier.head.toArray.map encode)),
+    ("removed", .arr (frontier.removed.toArray.map encode)),
+    ("nodes", Lean.toJson frontier.nodes),
+    ("cells", .arr (frontier.cells.toArray.map fun cell => Lean.Json.mkObj [
+      ("head", .arr (cell.domain.head.toArray.map encode)),
+      ("lower", endpoint encode cell.domain.lower), ("upper", endpoint encode cell.domain.upper),
+      ("count", Lean.toJson cell.count)]))]
+  IO.println (Lean.Json.mkObj [
+    ("kind", .str "frontier"), ("name", .str name), ("depth", Lean.toJson depth),
+    ("coefficients", .arr (p.toArray.map encode)), ("lower", encode lower), ("upper", encode upper),
+    ("original_count", Lean.toJson (initial.bind fun frontier => frontier.cells.head?.map (·.count))),
+    ("result", payload.getD .null)]).compress
+
+private def emitRatFrontier := emitFrontier (E := Rat) (depth := 0)
+  (encode := fun a => .str (toString a)) (sign := Sturm.orderSign)
+
 def main : IO Unit := do
   emitRat "zero" 0 0
   emitRat "constant" (DensePoly.C 3) 0
@@ -119,3 +143,17 @@ def main : IO Unit := do
     (linearFactor delta * linearFactor (3 * delta)) 0 (2 * delta)
   emitSplit "split nested roots before fallback" 2 nestedFraction sign₂ nested 0 1
   emitSplit "split nested root endpoint" 2 nestedFraction sign₂ nested delta 1
+
+  let pending := linearFactor (-3 : Rat) * linearFactor 1 * linearFactor 2 * linearFactor 3
+  emitRatFrontier "frontier reprepare count-one cell" (DensePoly.scale 3 pending) (-4) 4
+  emitRatFrontier "frontier negative scalar" (DensePoly.scale (-3) pending) (-4) 4
+  emitRatFrontier "frontier fractional scalar" (DensePoly.scale (1 / 2) pending) (-4) 4
+  emitRatFrontier "frontier cubic both sides" cubic (-2) 4
+  emitFrontier "frontier close infinitesimal fallback" 1 fraction sign₁ close 0 1
+  emitFrontier "frontier successive infinitesimal fallback" 2 nestedFraction sign₂ nested 0 1
+  emitRatFrontier "frontier linear retained" (linearFactor (1 : Rat)) 0 2
+  emitRatFrontier "frontier constant retained" (DensePoly.C 3) 0 2
+  emitRatFrontier "frontier zero rejected" 0 0 2
+  emitRatFrontier "frontier repeated root rejected" (linearFactor (1 : Rat) * linearFactor 1) 0 2
+  emitRatFrontier "frontier reversed interval rejected" quadratic 2 0
+  emitRatFrontier "frontier root endpoint rejected" pending (-3) 4
