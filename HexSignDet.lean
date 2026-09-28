@@ -24,6 +24,7 @@ public import HexSignDet.Descriptor
 public import HexSignDet.Complete
 public import HexSignDet.ThomOrder
 public import HexSignDet.SelectedSigns
+public import HexSignDet.QueryHandle
 public import HexSignDet.RootList
 public import HexSignDet.CommonProduct
 public import HexSignDet.Reencode

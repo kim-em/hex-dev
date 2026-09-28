@@ -168,9 +168,15 @@ def check() -> None:
     if module_file("HexRCF.RealCoefficients") is None:
         raise ValueError("the optional rcf adapter module is missing")
     roots = ["HexRCF.RealCoefficients", "HexSignDetMathlib.SelectedProducerConformance",
-             "HexSignDetMathlib.CompletionConformance"] + [
+             "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance"] + [
         "HexSignDetMathlib." + path.stem
-        for path in sorted((ROOT / "adapters/HexSignDetMathlib").glob("*.lean"))]
+        for path in sorted((ROOT / "adapters/HexSignDetMathlib").glob("*.lean"))] + [
+        "HexSignDetMathlib." + ".".join(path.relative_to(
+            ROOT / "conformance/HexSignDetMathlib").with_suffix("").parts)
+        for path in sorted((ROOT / "conformance/HexSignDetMathlib").rglob("*.lean"))]
+    # Named roots remain mandatory; the glob also audits each new conformance
+    # module's own declarations rather than only its imported dependencies.
+    roots = list(dict.fromkeys(roots))
     paths = set().union(*(import_cone(module) for module in roots))
     if BRIDGE not in paths:
         raise ValueError(f"the optional adapter no longer imports {BRIDGE}")
