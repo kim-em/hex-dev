@@ -1220,7 +1220,8 @@ lean_lib HexConformance where
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
 
-    ++ #[`HexGraphIso.Cases, `HexGraphIso.SparseCases, `HexPermGroup.Conformance, `HexPermGroup.Limits].map Glob.one
+    ++ #[`HexGraphIso.Cases, `HexGraphIso.SparseCases, `HexPermGroup.Conformance,
+      `HexPermGroup.KernelConformance, `HexPermGroup.Limits].map Glob.one
 
     ++ #[`HexInterval.PolicyFeatureConformance,
       `HexInterval.FeaturePolicyConformance,
