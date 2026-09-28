@@ -400,10 +400,16 @@ Such measurements do not establish a universal transcendental registration;
 retain the companion integration fixture for that distinct obligation.
 Report caller approximation cost separately; no named-constant generator
 benchmark is required and no precision bound in degree alone is claimed.
-Compare with existing RationalFn arithmetic and measure clean versus eager
-normalization on identical expressions and outcomes. The family's `tower8`,
-MetiTarski and other tower workloads contribute integration measurements;
-root isolation remains the downstream owner's responsibility.
+Compare with existing RationalFn arithmetic. These library-local measurements,
+together with the conformance and companion proof requirements above, complete
+this library's evidence obligations independently of algebraic tower consumers.
+The clean-versus-eager selected-root normalization comparison on identical
+expressions and outcomes, `tower8`, MetiTarski and other algebraic tower
+integration measurements belong to
+[hex-real-closure](hex-real-closure.md#conformance-and-phase-4-evidence), tracked
+in [#10378](https://github.com/kim-em/hex-dev/issues/10378). That owner measures
+the coefficient operations it consumes as part of the full workloads; those
+integration measurements do not gate completion of this library.
 
 Use the shared-host fixed trial-major schedule, automatic CPU selection when
 supported, adjacent alternating `AB`/`BA` comparisons, retained completed

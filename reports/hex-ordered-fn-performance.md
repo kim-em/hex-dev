@@ -4,6 +4,11 @@ The Mathlib-free targets exercise production signs, comparisons, Horner bounds
 and real refinement on canonical rational functions. The initial six targets
 cover infinitesimals; the later sections cover real searches and general comparisons.
 API review and conformance are recorded separately from these runtime results.
+The current library-local performance requirements are satisfied by the
+measurements below. Historical inconclusive runs remain recorded with their
+original verdicts. Algebraic tower integration measurements belong to
+[hex-real-closure](../SPEC/Libraries/hex-real-closure.md#conformance-and-phase-4-evidence)
+and [#10378](https://github.com/kim-em/hex-dev/issues/10378).
 
 ## Runtime measurements
 
@@ -152,8 +157,9 @@ one worker instead completes a 1.854-second operation. The
 checks of the watchdog, not performance evidence; the commands and limitations
 are recorded in [their context](data/hex-ordered-fn/cap-context.json). The historical configuration
 kept the same quadratic model; the
-initial data remain evidence for their recorded smaller schedule. Both schedules
-remain unresolved evidence, without a Phase-4 completion claim.
+initial data remain evidence for their recorded smaller schedule. Neither
+historical quadratic schedule establishes the declared model. The current cubic upper-bound registrations and their evidence are reported in
+[Search upper-bound model](#search-upper-bound-model).
 
 ## Corrected comparison and height measurements
 
@@ -293,7 +299,7 @@ The raw capture was collected at `/tmp/issue-10376-search-profile` and is
 no longer available. The committed summary and context retain attribution and
 alignment diagnostics, but cannot substitute for raw data when re-filtering.
 
-## Remaining evidence
+## Evidence scope
 
 The four single-level search families have passing conservative upper-bound
 evidence. Successive approximation has one inconclusive operation-count run and one
@@ -301,11 +307,15 @@ consistent unchanged repeat on small operands; its earlier quartic comparison
 does not qualify. The three-level workload also has consistent operation-count
 evidence. Large precision is measured at the first level and depth is varied
 on the small-operand families; no uniform multivariate bound is claimed.
-Clean versus eager normalization
-comparisons and downstream tower integration also remain part of the full issue.
-The existing [RationalFn arithmetic report](hex-rational-fn-performance.md#internal-alternatives)
-provides cancellation versus multiply-then-normalize comparisons on identical
-canonical operands, but does not replace the ordered-extension measurements.
+The [canonical arithmetic comparison](#canonical-arithmetic-comparison) below
+measures ordered comparison against existing RationalFn subtraction on identical
+operands. The existing
+[RationalFn arithmetic report](hex-rational-fn-performance.md#internal-alternatives)
+separately compares cancellation with multiply-then-normalize on identical
+canonical operands. Clean-versus-eager selected-root normalization and
+`tower8`/MetiTarski integration remain required of the downstream real-closure
+owner under [#10378](https://github.com/kim-em/hex-dev/issues/10378); they are
+not completion gates for these ordered-function libraries.
 The companion's mathematical theorems have ordinary-kernel regression tests
 and axiom audits; applying them is not a performance benchmark.
 

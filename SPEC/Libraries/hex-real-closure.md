@@ -685,6 +685,14 @@ and compiled fixture campaigns. Evaluation checks are not kernel proofs;
 `native_decide` is banned. Future oracle
 registration extends the existing single CI job, not new workflows.
 
+This library owns the algebraic tower integration measurements, including
+`tower8`, MetiTarski workloads and clean-versus-eager selected-root normalization,
+tracked in [#10378](https://github.com/kim-em/hex-dev/issues/10378). These
+measurements include the ordered-function coefficient operations consumed by
+the workloads; they are not completion gates for `hex-ordered-fn` or its
+companion. Their own conformance, proofs, Liouville fixture and library-local
+runtime measurements remain required by their respective contracts.
+
 Phase 4 must report `tower8` isolation and an adjacent clean-versus-eager
 normalization ablation with identical inputs and semantic outcomes. Record
 coefficient bit sizes and stored degrees, scalar inversions, gcd/xgcd work,
