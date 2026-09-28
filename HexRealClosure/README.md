@@ -279,7 +279,8 @@ every level and denominator before canonical fraction construction. Round-trip
 preservation and stale-binding rejection have kernel proofs. Readers are
 relative to the application's fixed registry; identical keys in unrelated
 registries do not establish provider identity. This is a value reader in a
-supplied context, not a serialized-context reconstruction API.
+supplied context. The catalog below reconstructs base contexts before reading
+values or polynomials.
 
 Run `lake build HexRealClosure.BaseTests HexRealClosureMathlib.BaseTests`.
 The compiled examples exercise successive infinitesimals, explicit embeddings,
@@ -292,9 +293,8 @@ from the exact first-level bounds, relative transcendence over that whole field,
 second-level sign/zero/order correspondence, embedding comparisons, key order
 and reader round trips. These base contexts do not yet contain algebraic levels.
 Integrating general selected-root storage,
-full dependency transport, context reconstruction with registered proof premises,
-isolation and exploration
-remains part of the tower implementation.
+full dependency transport, algebraic context reconstruction, isolation and
+exploration remains part of the tower implementation.
 
 ### Polynomials in a base context
 
@@ -320,3 +320,36 @@ Run `lake build HexRealClosure.BasePolynomialTests HexRealClosureMathlibTests`.
 The tests include two infinitesimal levels, inverse-infinitesimal coefficients,
 evaluation and coefficient transport, incompatible operand types, stale data,
 malformed coefficients and a polynomial embedded into a named real context.
+
+### Reconstructing base contexts
+
+`BaseContext.Catalog registry` is an immutable catalog of real prefixes already
+constructed against that fixed registry. Wrap a prefix with `RealPrefix.pack`
+and install it using `Catalog.insert`. Insertion returns a new catalog and
+rejects a path already installed; the rational prefix is always present.
+Existing catalogs and their values remain valid. Kernel proofs show that
+insertion preserves every other lookup.
+
+`Catalog.read signature` resolves the complete ordered list of provider names
+and versions, reuses the installed prefix, and constructs the specified number
+of infinitesimal stages. It retrieves the progress premises already stored in
+the prefix, rather than deciding convergence or relative transcendence from
+serialized data. A provider present in the underlying registry is insufficient
+until its full prefix has been installed. No lookup uses a shortened name or a
+hash, and reconstruction stays relative to the same immutable registry.
+
+`Catalog.readElement raw` and `Catalog.readPolynomial raw` reconstruct the
+context first, then use its checked scalar or polynomial reader. Their packed
+results retain that context and a value indexed by it. `PackedElement.sign`
+uses its own context's native sign. Malformed recursive coefficients, missing
+paths and changed provider versions are rejected. Kernel round-trip proofs
+return the original context and value whenever that exact prefix is installed.
+Proofs are not serialized.
+
+Run `lake build HexRealClosure.BaseCatalogTests HexRealClosureMathlibTests`.
+The examples exercise rational reconstruction, two infinitesimal levels, an
+actual named real followed by two infinitesimals, immutable catalog extension,
+duplicate paths, changed versions, missing registrations, malformed fractions,
+and scalar/polynomial round trips. These readers cover the real and
+infinitesimal base stages. Algebraic descriptors, dependency transport and
+complete algebraic context reconstruction remain part of the tower work.

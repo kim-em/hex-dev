@@ -7,9 +7,11 @@ module
 
 public import HexRealClosureMathlib.BaseContext
 public import HexRealClosure.BasePolynomial
+public import HexRealClosure.BaseCatalog
 public import HexOrderedFnMathlib.LiouvilleTests
 public meta import HexRealClosure.BaseCodec
 public meta import HexRealClosure.BasePolynomial
+public meta import HexRealClosure.BaseCatalog
 public meta import HexOrderedFnMathlib.LiouvilleTests
 
 public section
@@ -238,6 +240,40 @@ example (a b : Element (.real prefixContext)) :
 #check_failure (fun (p : Polynomial (realContext 1)) (q : Polynomial (realContext 2)) => p + q)
 
 example (p : Polynomial (realContext 1)) : Polynomial derived := p
+
+private def entry (version : Nat) : RealPrefix registry := .pack
+  (prefixContext.constant (key version) (present version)
+    (signProgress version) (approxProgress version))
+private def installed := (Catalog.empty registry).insert (entry 1)
+private def catalog := installed.getD (Catalog.empty registry)
+private def extendedCatalog := (catalog.insert (entry 2)).getD catalog
+
+#guard installed.isSome
+#guard (catalog.insert (entry 1)).isNone
+#guard (catalog.readElement positive.write).map PackedElement.sign = some 1
+#guard (catalog.readElement (positive - positive).write).map PackedElement.sign = some 0
+#guard (catalog.readElement epsilon.write).map PackedElement.sign = some 1
+#guard (catalog.readElement (Element.infinitesimal mixed - epsilon.embed).write).map
+  PackedElement.sign = some (-1)
+#guard ((Catalog.empty registry).read (realContext 1).signature).isNone
+#guard (catalog.read (realContext 2).signature).isNone
+#guard (extendedCatalog.read (realContext 2).signature).isSome
+#guard (extendedCatalog.readElement positive.write).map PackedElement.sign = some 1
+#guard (catalog.read ⟨[key 1, key 1], 0⟩).isNone
+#guard (catalog.read ⟨[⟨"other", 1⟩], 0⟩).isNone
+#guard (catalog.readElement ⟨(realContext 1).signature, .rational 1⟩).isNone
+#guard (catalog.readPolynomial namedPolynomial.write).isSome
+#guard ((Catalog.empty registry).readPolynomial namedPolynomial.write).isNone
+#guard (catalog.readPolynomial { namedPolynomial.write with binding :=
+  (realContext 2).signature }).isNone
+#guard (catalog.readPolynomial { namedPolynomial.write with coefficients :=
+  [.rational 1] }).isNone
+
+example (c : Catalog registry) (h : c.lookup (entry 1).keys = some (entry 1))
+    (a : ((entry 1).finish.extend 2).Value) :
+    c.readElement (PackedElement.write ⟨(entry 1).finish.extend 2, a⟩) =
+      some ⟨(entry 1).finish.extend 2, a⟩ :=
+  Catalog.read_write c _ (Catalog.read_extend c (entry 1) 2 h)
 
 example : (registry ⟨"unknown", 1⟩).isSome = false := by decide +kernel
 
