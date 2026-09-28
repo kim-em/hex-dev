@@ -104,6 +104,20 @@ Each section records the source, region filtering and retained evidence.
 The two older raw captures are unavailable; their committed contexts and
 symbolized summaries support the stated attribution but cannot be re-filtered.
 
+The manifest's input families use these existing attribution measurements:
+
+| Input family | Profile coverage |
+| --- | --- |
+| `fraction-arithmetic` | Comparison profile, including canonical normalization and polynomial arithmetic; inherited arithmetic also has HexRationalFn's profiles. |
+| `infinitesimal-order` | Comparison profile includes the subtraction and the final coefficient scan; standalone scan/depth scaling is measured separately. |
+| `real-refinement` | Large-search and successive-search profiles cover the actual refinement loops and coefficient callbacks. |
+| `horner-bounds` | The search profiles include the executed Horner arithmetic, rational normalization and quotient enclosure. |
+| `finite-comparison` | The same bound operations and endpoint decisions occur in the search profiles; finite fuel and exact-zero branches add bounded control work and have conformance tests. |
+
+No serialized boundary-certificate checker is implemented here. The optional
+finite comparison functions reuse the measured exact-bound operations; they do
+not add a separate certificate-checking algorithm or a proof-timing surface.
+
 ## Concerns
 
 None.
@@ -763,7 +777,9 @@ costs are 3.550 µs (`comparison`), 3.584 µs (`denominators`) and 2.689 µs
 deletion, the sign branches, and a small rational subtraction. Thus they are a
 conservative overhead estimate, not a measurement of pure dispatch alone.
 The initial pure-Python loop controls are retained but are insufficient to
-estimate FFI cost and are not used for the adjusted ratios. Positive-result
+estimate FFI cost and are not used for the adjusted ratios. The FFI controls
+were collected afterward on automatically selected CPU 92, separately from
+the paired measurements on CPUs 13 and 42. Positive-result
 controls take the same two sign decisions as their family; negative-result
 controls take the same single decision. No process or pipe overhead occurs in
 the Z3 timer.
@@ -771,7 +787,9 @@ the Z3 timer.
 Each table entry reports the median of three adjacent Hex/Z3 ratios. Adjusted
 ratios subtract the family's median FFI control from each Z3 per-call time
 before division. They are descriptive estimates, including the small arithmetic
-cost in the control; they are not isolated C++-kernel measurements. A rung is
+cost in the control. Removing that small arithmetic cost as well as dispatch
+can overcorrect and raise Hex/Z3 above the underlying arithmetic-cost ratio;
+neither column isolates the C++ kernel. A rung is
 eligible only when every sample has control cost at most 50% of Z3 time and
 both arms stay below the one-second per-call soft ceiling. All rungs are shown;
 only `comparison` at 128 and 256 fails the overhead criterion. Both raw and
@@ -806,10 +824,17 @@ adjusted ratios are provided even below the 5% adjustment threshold.
 
 Hex is slower on all three measured families. For constant-denominator
 `comparison`, the adjusted ratio approaches about 135 at the last rungs;
-the earlier profile attributes most Hex work to its existing canonical
-normalization and polynomial arithmetic. This is not an incremental sign-scan
-ratio. For `denominators`, the raw ratio decreases from 12.72 to 1.47 over
-the ladder. For `compareHeight`, it approaches 1.97 at the top two rungs.
+the earlier profile attributes 84.2% inclusive time to `normalizeWith` and
+68.7% to `xgcdWith`, even though both denominators are one. On this family,
+(a/1)−(b/1) could retain the already-canonical denominator one and avoid that
+general normalization work. That is an optimization opportunity in the
+inherited HexRationalFn arithmetic, not an incremental sign-scan cost or a
+failure of this informational comparison's acceptance criteria. For `denominators`, the raw ratio decreases from 12.72 to 1.47 over
+the ladder: on the last doubling Z3 time grows about 4.2-fold while Hex grows
+about 2.9-fold, consistent with Hex's independently declared Karatsuba model.
+For `compareHeight`, the raw ratio changes from 1.24 to 1.75 between 524288
+and 1048576 bits, then approaches 1.97 at the top two rungs. The step occurs
+in every trial; its cause is not established by these measurements.
 These trends describe the tested families and representations, not universal
 speed ratios. Z3 is informational: no external constant-factor acceptance goal
 or performance superiority claim is made.
@@ -839,3 +864,6 @@ python3 scripts/bench/ordered_fn_z3.py --output /tmp/ordered-fn-z3-controls --ov
 
 Use the pinned `z3-solver==4.15.4.0` environment. `--first-trial 2` is only
 for completing the retained interrupted schedule, not a full three-trial run.
+
+The initial sign-lookup diagnostics use the driver at `1fab99765`; the current
+driver's default schedule includes only the three subtraction-based comparisons.

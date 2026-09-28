@@ -196,6 +196,17 @@ libraries:
         - tool: Z3 RCF
           class: informational
           rationale: "Z3 uses its own rational-function representation and cached signs, while Hex scans dense coefficients and composes caller approximations. The Python/FFI comparison covers subtraction followed by sign on prepared operands, with wrapper cost measured separately; it is an external reference, not a constant-factor acceptance threshold."
+      input_families:
+        - name: fraction-arithmetic
+          description: Canonical subtraction and normalization on identical ordered and unordered inputs.
+        - name: infinitesimal-order
+          description: Coefficient scans and comparisons varying degree, lowest index, height and successive depth.
+        - name: real-refinement
+          description: Total signs and approximations varying separation precision, coefficient refinement and real depth.
+        - name: horner-bounds
+          description: Exact rational enclosure arithmetic varying degree and endpoint bit size.
+        - name: finite-comparison
+          description: Finite attempts and exact endpoint decisions using the same bound operations as total searches.
   HexOrderedFnMathlib:
     deps: [HexOrderedFn, HexRationalFnMathlib, HexPolyMathlib]
     mathlib: true
