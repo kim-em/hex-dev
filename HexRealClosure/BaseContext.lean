@@ -129,8 +129,9 @@ literally. No hash or caller-chosen version number replaces this binding. -/
     (context : Chain registry K sign) : Signature := by
   cases context with
   | real parent => exact ⟨parent.keys, 0⟩
-  | infinitesimal parent => exact { parent.signature with
-      infinitesimals := parent.signature.infinitesimals + 1 }
+  | infinitesimal parent =>
+    let previous := parent.signature
+    exact { previous with infinitesimals := previous.infinitesimals + 1 }
 
 @[expose] def RealContext.keys {registry : Registry} {K : Type}
     [Lean.Grind.Field K] [DecidableEq K] {approx : K → Rat → Bounds} {sign : K → Int}
@@ -154,6 +155,42 @@ theorem RealChain.registered {registry : Registry} {K : Type}
 @[expose] def Context.signature {registry : Registry} {K : Type}
     [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
     (context : Context registry K sign) : Signature := context.chain.signature
+
+private theorem RealContext.keys_rational_proof (registry : Registry) :
+    (RealContext.rational registry).chain.keys = [] := rfl
+
+private theorem RealContext.keys_constant_proof {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {approx : K → Rat → Bounds} {sign : K → Int}
+    (parent : RealContext registry K approx sign) (key : ConstantKey)
+    (present : (registry key).isSome = true)
+    (sp : ∀ f : RationalFn K, Acc (Next (OrderedFn.Real.attempt (parent.source key present) f)) 0)
+    (ap : ∀ (f : RationalFn K) (δ : Rat),
+      Acc (Next (OrderedFn.Real.approxAttempt (parent.source key present) f
+        (OrderedFn.Real.requestWidth δ))) 0) :
+    (parent.constant key present sp ap).chain.keys = parent.chain.keys ++ [key] := rfl
+
+private theorem Context.signature_real_proof {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {approx : K → Rat → Bounds} {sign : K → Int}
+    (parent : RealContext registry K approx sign) :
+    (Context.real parent).signature = ⟨parent.chain.keys, 0⟩ := rfl
+
+theorem RealContext.keys_rational (registry : Registry) :
+    (RealContext.rational registry).chain.keys = [] := RealContext.keys_rational_proof registry
+
+theorem RealContext.keys_constant {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {approx : K → Rat → Bounds} {sign : K → Int}
+    (parent : RealContext registry K approx sign) (key : ConstantKey)
+    (present : (registry key).isSome = true)
+    (sp : ∀ f : RationalFn K, Acc (Next (OrderedFn.Real.attempt (parent.source key present) f)) 0)
+    (ap : ∀ (f : RationalFn K) (δ : Rat),
+      Acc (Next (OrderedFn.Real.approxAttempt (parent.source key present) f
+        (OrderedFn.Real.requestWidth δ))) 0) :
+    (parent.constant key present sp ap).chain.keys = parent.chain.keys ++ [key] := RealContext.keys_constant_proof parent key present sp ap
+
+theorem Context.signature_real {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {approx : K → Rat → Bounds} {sign : K → Int}
+    (parent : RealContext registry K approx sign) :
+    (Context.real parent).signature = ⟨parent.chain.keys, 0⟩ := Context.signature_real_proof parent
 
 /-- Values are nominally bound to their entire immutable context, even when
 two contexts have definitionally equal carriers and sign operations. -/
@@ -192,6 +229,16 @@ instance : Div (Element context) := ⟨fun a b => ⟨a.stored / b.stored⟩⟩
   let s := (a - b).sign
   if s < 0 then .lt else if s = 0 then .eq else .gt
 
+/-- Equality of canonical base-field values within one context. -/
+@[expose] def equal (a b : Element context) : Bool := decide (a.stored = b.stored)
+
+/-- Optional nonzero inverse; the ordinary inverse still maps zero to zero. -/
+@[expose] def inv? (a : Element context) : Option (Element context) :=
+  if a = 0 then none else some a⁻¹
+
+theorem inv?_isNone (a : Element context) : a.inv?.isNone = true ↔ a = 0 := by
+  simp [inv?]
+
 theorem stored_eq_zero (a : Element context) : a.stored = 0 ↔ a = 0 :=
   ⟨fun h => ext h, fun h => congrArg stored h⟩
 
@@ -208,6 +255,24 @@ theorem embed_one : (1 : Element context).embed = 1 := ext RationalFn.C_one
 
 theorem embed_add (a b : Element context) : (a + b).embed = a.embed + b.embed :=
   ext (RationalFn.C_add a.stored b.stored)
+
+private theorem C_sub (a b : K) :
+    RationalFn.C (a - b) = RationalFn.C a - RationalFn.C b := by
+  have h := RationalFn.C_add (a - b) b
+  have hab : a - b + b = a := by grind
+  rw [hab] at h
+  grind
+
+private theorem C_injective : Function.Injective (RationalFn.C (K := K)) := by
+  intro a b h
+  have hc := congrArg (fun f : RationalFn K => f.num.coeff 0) h
+  simpa [RationalFn.C, RationalFn.ofPoly, DensePoly.coeff_C] using hc
+
+theorem embed_sub (a b : Element context) : (a - b).embed = a.embed - b.embed :=
+  ext (C_sub a.stored b.stored)
+
+theorem embed_equal (a b : Element context) : a.embed.equal b.embed = a.equal b := by
+  simp only [equal, stored_embed, C_injective.eq_iff]
 
 theorem embed_mul (a b : Element context) : (a * b).embed = a.embed * b.embed :=
   ext (RationalFn.C_mul a.stored b.stored)
@@ -228,6 +293,47 @@ theorem embed_inv (a : Element context) : a⁻¹.embed = a.embed⁻¹ :=
       Acc (Next (Real.approxAttempt (parent.source key present) f (Real.requestWidth δ))) 0)
     (a : Element (.real parent)) : Element (.real (.constant parent key present sp ap)) :=
   ⟨RationalFn.C a.stored⟩
+
+section Constant
+
+variable {approx : K → Rat → Bounds}
+variable (parent : RealContext registry K approx baseSign) (key : ConstantKey)
+variable (present : (registry key).isSome = true)
+variable (sp : ∀ f : RationalFn K, Acc (Next (Real.attempt (parent.source key present) f)) 0)
+variable (ap : ∀ (f : RationalFn K) (δ : Rat),
+  Acc (Next (Real.approxAttempt (parent.source key present) f (Real.requestWidth δ))) 0)
+
+theorem embedConstant_zero :
+    embedConstant parent key present sp ap 0 = 0 := ext RationalFn.C_zero
+
+theorem embedConstant_one :
+    embedConstant parent key present sp ap 1 = 1 := ext RationalFn.C_one
+
+theorem embedConstant_add (a b : Element (.real parent)) :
+    embedConstant parent key present sp ap (a + b) =
+      embedConstant parent key present sp ap a + embedConstant parent key present sp ap b :=
+  ext (RationalFn.C_add a.stored b.stored)
+
+theorem embedConstant_sub (a b : Element (.real parent)) :
+    embedConstant parent key present sp ap (a - b) =
+      embedConstant parent key present sp ap a - embedConstant parent key present sp ap b :=
+  ext (C_sub a.stored b.stored)
+
+theorem embedConstant_equal (a b : Element (.real parent)) :
+    (embedConstant parent key present sp ap a).equal
+      (embedConstant parent key present sp ap b) = a.equal b := by
+  simp only [equal, embedConstant, C_injective.eq_iff]
+
+theorem embedConstant_mul (a b : Element (.real parent)) :
+    embedConstant parent key present sp ap (a * b) =
+      embedConstant parent key present sp ap a * embedConstant parent key present sp ap b :=
+  ext (RationalFn.C_mul a.stored b.stored)
+
+theorem embedConstant_inv (a : Element (.real parent)) :
+    embedConstant parent key present sp ap a⁻¹ = (embedConstant parent key present sp ap a)⁻¹ :=
+  ext (RationalFn.C_inv a.stored)
+
+end Constant
 
 end Element
 end Hex.RealClosure.BaseContext

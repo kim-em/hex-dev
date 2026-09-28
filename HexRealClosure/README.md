@@ -238,6 +238,12 @@ the predecessor and constant bounds come from that registry entry. The
 Mathlib companion's `RealContext.register` derives this progress from the
 existing containment, width and relative-transcendence hypotheses. Its sign,
 containment and zero-reflection theorems concern the actual constructed child.
+The companion explicitly relates the executable and Mathlib field dictionaries:
+use `HexRationalFnMathlib.ratField_eq` at ℚ and
+`HexPolyMathlib.toGrind_fieldOfGrind` for subsequent native fraction fields.
+`RealContext.evalHom` embeds the native canonical carrier into ℝ;
+`RealContext.linearOrder` and `strictOrderedRing` give its induced order and
+ordered-ring laws. The resulting order supports infinitesimals after real levels.
 
 `BaseContext.Context.real` finishes that prefix. `Context.infinitesimal` then
 adds any number of successive positive infinitesimals. The types prevent
@@ -251,8 +257,10 @@ predecessor sign hypothesis.
 context. Equal carrier types do not permit implicit context changes. Ordinary
 arithmetic stays in one context; `a.embed` includes a predecessor value in its
 new infinitesimal child, and `Element.embedConstant` includes a real-prefix
-value in its registered child. The infinitesimal embedding preserves zero,
-one, addition, multiplication and total inversion.
+value in its registered child. Both embeddings preserve zero, one, addition,
+subtraction, multiplication, total inversion and canonical equality. Their
+companion theorems preserve signs and every `compare` result, including strict
+inequalities. `a.equal b` tests canonical equality, while `a.inv?` rejects zero.
 
 `a.write` produces finite recursive rational/fraction syntax with the full
 base signature: the real keys in predecessor order and the infinitesimal
@@ -263,10 +271,14 @@ relative to the application's fixed registry; identical keys in unrelated
 registries do not establish provider identity. This is a value reader in a
 supplied context, not a serialized-context reconstruction API.
 
-Run `lake build HexRealClosure.BaseTests HexRealClosureMathlib.BaseContext`.
+Run `lake build HexRealClosure.BaseTests HexRealClosureMathlib.BaseTests`.
 The compiled examples exercise successive infinitesimals, explicit embeddings,
 inverse infinitesimals, fraction normalization, round trips, incompatible
-bindings, malformed level shapes and zero denominators. These base contexts do
-not yet contain algebraic levels. Integrating general selected-root storage,
+bindings, malformed level shapes and zero denominators. Companion tests apply
+the semantic theorems to an executable named constant and its infinitesimal
+child. A conditional two-constant construction verifies progress from the exact
+first-level bounds, relative transcendence over that whole field, key order and
+reader round trips. These base contexts do not yet contain algebraic levels.
+Integrating general selected-root storage,
 full dependency transport, context reconstruction, isolation and exploration
 remains part of the tower implementation.
