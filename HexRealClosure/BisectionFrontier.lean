@@ -160,6 +160,26 @@ theorem select_perm {sign : E → Int} {p : DensePoly E}
         rcases chosen with ⟨rfl, rfl⟩
         exact (List.Perm.cons cell (ih hc)).trans (List.Perm.swap _ _ _)
 
+/-- The selection policy never spends a node on a count-zero or count-one cell. -/
+theorem select_count {sign : E → Int} {p : DensePoly E}
+    {cells : List (Cell sign p)} {selected : Cell sign p} {rest : List (Cell sign p)}
+    (chosen : select cells = some (selected, rest)) : selected.count > 1 := by
+  induction cells generalizing selected rest with
+  | nil => simp [select] at chosen
+  | cons cell cells ih =>
+    simp only [select] at chosen
+    split at chosen
+    · rename_i hc
+      cases Option.some.inj chosen
+      exact hc
+    · cases hc : select cells with
+      | none => simp [hc] at chosen
+      | some result =>
+        rcases result with ⟨next, remaining⟩
+        simp only [hc, Option.map_some, Option.some.injEq, Prod.mk.injEq] at chosen
+        rcases chosen with ⟨rfl, rfl⟩
+        exact ih hc
+
 /-- A frontier owns one current head and cells bound to that head. Removed
 coefficient roots are separate from the remaining open intervals. -/
 structure Frontier (sign : E → Int) where
@@ -168,12 +188,13 @@ structure Frontier (sign : E → Int) where
   cells : List (Cell sign head)
   removed : List E
   nodes : Nat
+  nonempty : cells ≠ []
 
 /-- The initial finite frontier has no emitted roots and has used no nodes. -/
 def Frontier.prepare? (sign : E → Int) (p : DensePoly E) (lower upper : E) :
     Option (Frontier sign) := do
   let cell ← Cell.prepare? sign p lower upper
-  return ⟨p, [cell], [], 0⟩
+  return ⟨p, [cell], [], 0, by simp⟩
 
 /-- Initial construction retains exactly the supplied head and interval. -/
 theorem Frontier.prepare?_result {sign : E → Int} {p : DensePoly E} {lower upper : E}
@@ -203,7 +224,7 @@ def Frontier.advance? {sign : E → Int} (frontier : Frontier sign)
     ⟨point, selected.upper, split.right, split.right_bound, Sturm.queryPrepared split.right 1, rfl⟩
   let pending ← split.mode.reprepare? rest
   return ⟨split.mode.head, left :: right :: pending,
-    frontier.removed ++ split.mode.removed.toList, frontier.nodes + 1⟩
+    frontier.removed ++ split.mode.removed.toList, frontier.nodes + 1, by simp⟩
 
 /-- Advancement succeeds exactly when the actual split and pending-domain
 recomputation both succeed. -/
@@ -295,9 +316,35 @@ theorem traverse?_nodes {sign : E → Int} (budget : Nat) (frontier : Frontier s
         have spent := frontier.advance?_nodes cell rest hc hn
         omega
 
+/-- Traversal stops only when selection is exhausted or its node budget is spent. -/
+theorem traverse?_stopped {sign : E → Int} (budget : Nat) (frontier : Frontier sign)
+    {result : Frontier sign} (accepted : traverse? budget frontier = some result) :
+    select result.cells = none ∨ result.nodes = frontier.nodes + budget := by
+  induction budget generalizing frontier with
+  | zero =>
+    simp only [traverse?, Option.some.injEq] at accepted
+    subst result
+    exact Or.inr (by omega)
+  | succ budget ih =>
+    simp only [traverse?] at accepted
+    split at accepted
+    · rename_i hc
+      simp only [Option.some.injEq] at accepted
+      subst result
+      exact Or.inl hc
+    · rename_i cell rest hc
+      cases hnext : frontier.advance? cell rest hc with
+      | none => simp [hnext] at accepted
+      | some next =>
+        simp [hnext] at accepted
+        rcases ih next accepted with done | spent
+        · exact Or.inl done
+        · have nodes := frontier.advance?_nodes cell rest hc hnext
+          exact Or.inr (by omega)
+
 /-- The finite policy is fixed by the input degree, not a requested accuracy.
 This returns a frontier for completion, never a purported partial root set. -/
-@[expose] def Frontier.bisect? {sign : E → Int} (frontier : Frontier sign) :
+@[expose] def Frontier.refine? {sign : E → Int} (frontier : Frontier sign) :
     Option (Frontier sign) :=
   traverse? (2 * (frontier.head.natDegree + 1)) frontier
 
@@ -312,3 +359,10 @@ end Hex.RealClosure.Bisection
 /-- info: 'Hex.RealClosure.Bisection.traverse?_nodes' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Bisection.traverse?_nodes
+
+/-- info: 'Hex.RealClosure.Bisection.select_count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Bisection.select_count
+/-- info: 'Hex.RealClosure.Bisection.traverse?_stopped' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Bisection.traverse?_stopped

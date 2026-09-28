@@ -178,6 +178,27 @@ def verify_frontier(row, decode, coefficient_field):
             all(a[1] == b[0] for a, b in zip(intervals, intervals[1:])),
             f"{name}: interval gap or overlap")
     require(nodes == cap or all(cell["count"] <= 1 for cell in cells), f"{name}: premature traversal stop")
+    # Independently evaluate the deterministic policy with exact root counts.
+    # This also distinguishes a cap-spending split of a root-free cell from
+    # the prescribed first cell whose count exceeds one.
+    policy_head, policy_removed, policy_cells = coefficients, [], [(lower, upper)]
+    policy_nodes = 0
+    for _ in range(cap):
+        selected = next((i for i, (a, b) in enumerate(policy_cells) if count(policy_head, a, b) > 1), None)
+        if selected is None:
+            break
+        a, b = policy_cells[selected]
+        point = (a + b) / 2
+        if not evaluate(policy_head, point):
+            policy_head = divide_linear(policy_head, point, coefficient_field.zero)[0]
+            policy_removed.append(point)
+        remaining = policy_cells[:selected] + policy_cells[selected + 1:]
+        policy_cells = [(a, point), (point, b)] + remaining
+        policy_nodes += 1
+    actual_cells = [(decode(cell["lower"]["finite"], depth), decode(cell["upper"]["finite"], depth))
+                    for cell in cells]
+    require(nodes == policy_nodes and removed == policy_removed and active == policy_head and
+            actual_cells == policy_cells, f"{name}: wrong selection policy")
     require(sum(cell["count"] for cell in cells) + len(removed) == row["original_count"],
             f"{name}: inconsistent root coverage")
 

@@ -168,6 +168,27 @@ class DeflationTests(unittest.TestCase):
             verify(self.mutate_frontier(lambda result: result["cells"][0].update(count=1),
                                        "frontier close infinitesimal fallback"))
 
+    def test_rejects_premature_traversal_stop(self):
+        def shorten(result):
+            result["cells"][0]["upper"] = deepcopy(result["cells"][1]["upper"])
+            result["cells"].pop(1)
+            result["nodes"] -= 1
+        with self.assertRaisesRegex(ValueError, "premature traversal stop"):
+            verify(self.mutate_frontier(shorten, "frontier close infinitesimal fallback"))
+
+    def test_rejects_spending_cap_on_zero_cell(self):
+        def alter(result):
+            result["cells"][0]["upper"] = deepcopy(result["cells"][1]["upper"])
+            result["cells"].pop(1)
+            last = result["cells"][-1]
+            new = deepcopy(last)
+            point = {"finite": {"num": ["3/4"], "den": ["1"]}}
+            last["upper"] = deepcopy(point)
+            new["lower"] = point
+            result["cells"].append(new)
+        with self.assertRaisesRegex(ValueError, "wrong selection policy"):
+            verify(self.mutate_frontier(alter, "frontier close infinitesimal fallback"))
+
     def test_rejects_empty_and_duplicate_data(self) -> None:
         for rows in ([], self.fixtures + self.fixtures[:1]):
             with self.assertRaises(ValueError):
