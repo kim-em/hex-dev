@@ -30,7 +30,8 @@ variable (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
 include hz h1 ha hs hm hnat hn hi hsign in
 /-- On a valid root-free domain the actual producer succeeds with an empty
 list. This discharges both extraction branches without a Thom foundation;
-the complete table counts use the named #10389 root-sum bridge. -/
+both table production success and its counts use the named #10389
+root-sum bridge. -/
 theorem Descriptor.buildRoots_empty (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
     (hdom : HexSturmMathlib.Domain f hz p a b)
     (hempty : Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f) = ∅) :
@@ -66,7 +67,8 @@ theorem Descriptor.buildRoots_empty (context : Ctx) (p : DensePoly E) (a b : End
 include hz h1 ha hs hm hnat hn hi hsign in
 /-- Actual enumeration succeeds on every valid domain containing at most
 one root. Count-one extraction and insertion into the empty list need no
-Thom injectivity or ordering foundation, including for non-Archimedean fields. -/
+Thom injectivity or ordering foundation, including for non-Archimedean fields.
+Table production success and counts use the named #10389 root-sum bridge. -/
 theorem Descriptor.buildRoots_subsingleton (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E) (hdom : HexSturmMathlib.Domain f hz p a b)
     (hsmall : (Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f)).card ≤ 1) :
@@ -143,6 +145,19 @@ theorem Descriptor.buildRoots_constant_success (context : Ctx) (p : DensePoly E)
   have bound := Tarski.rootsIn_card_le (interpret f hz p) (a.map f) (b.map f)
   rw [natDegree_interpret, hp] at bound
   omega
+
+include hz h1 ha hs hm hnat hn hi hsign in
+/-- Actual enumeration succeeds for linear heads on every valid domain.
+The degree bound supplies the small-root-set premise, without a separating
+interval or Thom foundation. Success uses the named #10389 bridge. -/
+theorem Descriptor.buildRoots_linear (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (hdom : HexSturmMathlib.Domain f hz p a b)
+    (hp : p.natDegree = 1) :
+    ∃ out, Descriptor.buildRoots sign context p a b = .ok (some out) := by
+  apply Descriptor.buildRoots_subsingleton f hz h1 ha hs hm hnat hsign hn hi
+    context p a b hdom
+  have bound := Tarski.rootsIn_card_le (interpret f hz p) (a.map f) (b.map f)
+  simpa only [natDegree_interpret, hp] using bound
 
 omit [IsRealClosed K] in
 include hz h1 ha hs hm hnat hn hi hsign in

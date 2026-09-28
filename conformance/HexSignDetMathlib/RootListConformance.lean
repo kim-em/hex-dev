@@ -44,6 +44,9 @@ def ratX : DensePoly Rat := DensePoly.ofList [0, 1]
 def ratHead : DensePoly Rat := ratX * ratX - 1
 
 #guard rootsAs Sturm.orderSign ratX .negInf .posInf [[1]]
+#guard rootsAs Sturm.orderSign (-ratX) .negInf .posInf [[-1]]
+#guard rootsAs Sturm.orderSign ratX (.finite (-1)) (.finite 1) [[1]]
+#guard rootsAs Sturm.orderSign ratX (.finite 1) (.finite 2) []
 #guard rootsAs Sturm.orderSign ratHead .negInf .posInf [[-1, 1], [1, 1]]
 #guard rootsAs Sturm.orderSign (-ratHead) .negInf .posInf [[1, -1], [-1, -1]]
 #guard rootsAs Sturm.orderSign ratHead (.finite 0) .posInf [[1, 1]]
@@ -52,18 +55,27 @@ def ratHead : DensePoly Rat := ratX * ratX - 1
 #guard rootsAs Sturm.orderSign ratHead (.finite 2) (.finite 3) []
 #guard rootsAs Sturm.orderSign (ratX * ratX + 1) .negInf .posInf []
 #guard rootsAs Sturm.orderSign (DensePoly.C (2 : Rat)) .negInf .posInf []
-def invalidDomain (p : DensePoly Rat) (a b : Endpoint Rat) : Bool :=
-  match Descriptor.buildRoots Sturm.orderSign 7 p a b with
+def invalidDomain {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E]
+    [Mul E] [NatCast E] [Neg E] [Inv E]
+    (sign : E → Int) (p : DensePoly E) (a b : Endpoint E) : Bool :=
+  match Descriptor.buildRoots sign 7 p a b with
   | .ok none => true
   | _ => false
 
-#guard invalidDomain 0 .negInf .posInf
-#guard invalidDomain (ratHead * ratHead) .negInf .posInf
-#guard invalidDomain ratHead (.finite 1) (.finite 2)
-#guard invalidDomain ratHead .posInf .posInf
-#guard invalidDomain ratHead .negInf .negInf
-#guard invalidDomain ratHead (.finite 2) (.finite (-2))
-#guard invalidDomain ratHead (.finite 2) (.finite 2)
+#guard invalidDomain Sturm.orderSign (0 : DensePoly Rat) .negInf .posInf
+#guard invalidDomain Sturm.orderSign (ratHead * ratHead) .negInf .posInf
+#guard invalidDomain Sturm.orderSign ratHead (.finite 1) (.finite 2)
+#guard invalidDomain Sturm.orderSign ratHead .posInf .posInf
+#guard invalidDomain Sturm.orderSign ratHead .negInf .negInf
+#guard invalidDomain Sturm.orderSign ratHead (.finite 2) (.finite (-2))
+#guard invalidDomain Sturm.orderSign ratHead (.finite 2) (.finite 2)
+#guard invalidDomain Sturm.orderSign ratHead .posInf .negInf
+#guard invalidDomain Sturm.orderSign ratHead (.finite 0) .negInf
+#guard invalidDomain Sturm.orderSign ratHead .posInf (.finite 0)
+#guard invalidDomain Sturm.orderSign ratHead (.finite (-2)) (.finite (-1))
+#guard invalidDomain Hex.TarskiTests.Noncanonical.sign
+  (Hex.TarskiTests.Noncanonical.head * Hex.TarskiTests.Noncanonical.head) .negInf .posInf
+#guard invalidDomain fieldSign head (.finite 2) (.finite 1)
 
 -- The coefficient carrier has canonical zero and several representations of
 -- nonzero values. Enumeration needs ordinary operations, not a field instance.
@@ -112,6 +124,10 @@ theorem cubic_coverage (p : DensePoly CubicField) (a b : Endpoint CubicField)
 /-- info: 'Hex.SignDet.Descriptor.buildRoots_empty' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildRoots_empty
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_linear' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.buildRoots_linear
+
 /-- info: 'Hex.SignDet.Descriptor.buildRoots_subsingleton' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildRoots_subsingleton

@@ -231,7 +231,9 @@ bridge. `Descriptor.buildRoots_empty` proves actual success with an empty list o
 valid root-free domains; `buildRoots_constant_success` covers nonzero constant
 heads. `buildRoots_subsingleton` proves actual success on valid domains
 containing at most one mathematical root, including linear heads and isolating
-intervals. All three use the same named bridge and need no Thom theorem.
+intervals. `buildRoots_linear` supplies the degree-one corollary directly. Table
+production success and the root counts use the same named bridge throughout;
+none of these success proofs needs a Thom theorem.
 `buildRoots_none_iff` characterizes invalid mathematical domains exactly,
 and `buildRoots_domain` proves validity of the original input without that admission.
 Universal producer success and correspondence with strict mathematical
