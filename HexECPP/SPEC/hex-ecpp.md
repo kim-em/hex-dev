@@ -10,10 +10,10 @@ Hasse bound, and resulting primality theorem belong to [its Mathlib companion](.
 
 This SPEC owns the `HexECPP` and `HexECPPMathlib` pair. They provide
 certificate verification, conversion of supplied
-PARI certificates, and explicit certificate elaboration. Native complex
-multiplication search, Hilbert class polynomials, point counting, ECM,
-automatic search fallback, and cryptographic curve APIs are outside this
-scope. Core conversion consumes supplied data. The optional bridge can
+PARI certificates, explicit certificate elaboration, and an opt-in bounded
+native CM certificate producer. General Hilbert class polynomial generation,
+arbitrary point counting, native CM completeness, automatic search fallback,
+and cryptographic curve APIs are outside this scope. Core conversion consumes supplied data. The optional bridge can
 explicitly invoke PARI to obtain a certificate, then freeze its inputs for
 replay without an external program. Bounded production may exhaust on a prime.
 
@@ -209,6 +209,52 @@ than trusting the row format or conversion code.
 Explicit process invocation and certificate-file export belong to
 `HexECPPMathlib.Pari`; they do not add a dependency to the core or change the
 ordinary `primality` tactic. See the companion SPEC for the process contract.
+
+## Bounded native production
+
+`HexECPP/CM.lean` owns bounded Jacobi, modular square-root and Cornacchia
+proposals and the fixed class number one invariants for discriminants
+`-3, -4, -7, -8, -11, -19, -43, -67, -163`.
+`HexECPP/Search.lean` owns deterministic production from a natural subject,
+seed and finite allocation. Search first tries the existing bounded
+`PrimeCert` constructor. CM orders are proposals only: partial factor search
+selects descending children satisfying `sizeBound`, curves and twists yield
+points, and the existing scalar schedule generates checked inverse witnesses.
+Every returned certificate passes subject-bound `checkAt`. Roots and norm
+equations are checked by arithmetic even for composite moduli. The `j=0`
+sextic and `j=1728` quartic twist families are handled explicitly.
+
+One allocation is shared across recursion and backtracking. It bounds input
+bits, depth, discriminant and order candidates, root and nonresidue attempts,
+point attempts, factor work, scalar additions, certificate size and memoized
+entries. Failed candidates consume their work and advance the random stream.
+Exhaustion reports the unresolved subject and resource, and makes no
+compositeness claim. A compositeness diagnostic requires a separately checked
+witness. Neither CM theory nor a probable-prime filter is a proof dependency.
+
+`HexECPPMathlib/Native.lean` owns `primality? (method := ecpp)` and explicit
+export. It shares frozen compact data and kernel replay with the PARI route.
+Frozen output contains curve and point proposals and an explicit checked
+terminal certificate; replay performs no CM search and invokes no external
+program. Ordinary `primality` imports and its fallback behavior are unchanged.
+
+Acceptance requires complete native successes above 128 bits, including
+recursive ECPP chains and kernel proofs, on subjects where the full current
+`primality?` construction route (including applicable factor extensions)
+exhausts under recorded budgets. Freeze separate tuning and holdout corpora,
+retain every verdict, and report whole-corpus success and exhaustion rates.
+Begin with 128 and 256 bits; support for 512-bit native search requires
+separate evidence. If the class number one portfolio cannot establish this
+gain, extend it with an attributed finite table of low-degree class
+polynomials and bounded root finding before claiming completion.
+
+Measure native search, conversion, compiled checking, compact and expanded
+source size, reification and kernel replay separately under the shared-host
+protocol. Record source versions and parameter values in build configuration
+and reports. Conformance covers composites, nonsquarefree moduli, nonunits,
+bad root/norm proposals, exceptional twists, recursive backtracking and each
+allocation's exhaustion. Independent oracle checks and fresh-module frozen
+replay with PARI absent complement the existing dependency audits.
 
 ## Conformance and evidence
 
