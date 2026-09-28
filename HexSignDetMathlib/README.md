@@ -229,8 +229,11 @@ uniqueness of each accepted descriptor. It does not assume rational separators
 or injective coefficient representations. It uses the named #10389 root-sum
 bridge. `Descriptor.buildRoots_empty` proves actual success with an empty list on
 valid root-free domains; `buildRoots_constant_success` covers nonzero constant
-heads. Both use the same named bridge and need no Thom theorem.
-`buildRoots_domain` proves validity of the original input without that admission.
+heads. `buildRoots_subsingleton` proves actual success on valid domains
+containing at most one mathematical root, including linear heads and isolating
+intervals. All three use the same named bridge and need no Thom theorem.
+`buildRoots_none_iff` characterizes invalid mathematical domains exactly,
+and `buildRoots_domain` proves validity of the original input without that admission.
 Universal producer success and correspondence with strict mathematical
 root order remain separate obligations requiring the Thom foundations.
 Conformance exercises whole-line and bounded domains, empty results for

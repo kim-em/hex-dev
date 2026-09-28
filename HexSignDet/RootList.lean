@@ -307,6 +307,24 @@ def Descriptor.buildRoots (sign : E → Int) (context : Ctx) (p : DensePoly E)
       | .error err => .error err
       | .ok roots => .ok (some roots)
 
+/-- Only failed preparation returns the public absent-domain result;
+internal errors and successful extraction cannot become `none`. -/
+theorem Descriptor.buildRoots_none {sign : E → Int} {context : Ctx}
+    (p : DensePoly E) (a b : Endpoint E) :
+    buildRoots sign context p a b = .ok none ↔ Sturm.prepare sign p a b = none := by
+  unfold buildRoots
+  split
+  · rename_i hn
+    exact ⟨fun _ => hn, fun _ => rfl⟩
+  · rename_i domain hd
+    have hp : Sturm.prepare sign p a b ≠ none := by simp [hd]
+    refine ⟨?_, fun hn => False.elim (hp hn)⟩
+    intro h
+    dsimp only at h
+    split at h
+    · cases h
+    · split at h <;> cases h
+
 /-- An actual empty full table makes enumeration succeed with no descriptors,
 in both degree branches. No ordering or count-one guard is needed. -/
 theorem Descriptor.buildRoots_ofEmpty {sign : E → Int} {context : Ctx}
@@ -329,6 +347,28 @@ theorem Descriptor.buildRoots_ofEmpty {sign : E → Int} {context : Ctx}
     by_cases hp : 0 < p.natDegree
     · simp only [ht, Replay.table_rows, hr, hp, ↓reduceDIte, rootsFromTable]
     · simp only [ht, Replay.table_rows, hr, hp, ↓reduceDIte, rootsFrom]
+
+/-- A full table with one unit-count row makes enumeration succeed. Inserting
+into the empty list requires no Thom ordering theorem. -/
+theorem Descriptor.buildRoots_ofSingle {sign : E → Int} {context : Ctx}
+    (p : DensePoly E) (a b : Endpoint E) (domain : Sturm.PreparedDomain E)
+    (hd : Sturm.prepare sign p a b = some domain)
+    (t : {t : Replay E Ctx // t.check domain.sign context domain.head
+      domain.lower domain.upper
+        ((⟨context, p, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries = true})
+    (ht : buildPrepared context domain
+      ((⟨context, p, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries = .ok t)
+    (row : List Int × Nat) (hr : t.val.node.system.tableRows.toList = [row])
+    (hone : row.2 = 1) (hp : 0 < p.natDegree) :
+    ∃ out, buildRoots sign context p a b = .ok (some out) := by
+  unfold buildRoots
+  split
+  · rename_i hn
+    simp only [hd, reduceCtorEq] at hn
+  · rename_i other hother
+    have he : other = domain := Option.some.inj (hother.symm.trans hd)
+    subst other
+    simp [ht, Replay.table_rows, hr, hp, rootsFromTable, hone, bind, Except.bind, Thom.insert]
 
 /-- Successful public root construction extracts from its actual prepared
 BKR table. Both degree branches agree with literal per-descriptor replay. -/

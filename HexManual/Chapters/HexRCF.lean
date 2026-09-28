@@ -1080,7 +1080,12 @@ output covers every mathematical root in the interval exactly once. On valid
 domains with no roots, {name}`Hex.SignDet.Descriptor.buildRoots_empty` proves
 the actual constructor succeeds with an empty list;
 {name}`Hex.SignDet.Descriptor.buildRoots_constant_success` covers nonzero
-constant heads. These results use the named root-sum admission in
+constant heads. {name}`Hex.SignDet.Descriptor.buildRoots_subsingleton` proves
+success on every valid domain containing at most one root, including linear
+heads and isolating intervals, without a Thom-order assumption.
+{name}`Hex.SignDet.Descriptor.buildRoots_none_iff` characterizes invalid domains
+exactly and needs no root-sum admission. The success and coverage results use
+the named root-sum admission in
 [#10389](https://github.com/kim-em/hex-dev/issues/10389). A general proof that
 enumeration succeeds on every valid domain and returns roots in mathematical
 order still requires the separate Thom foundation. This example checks the

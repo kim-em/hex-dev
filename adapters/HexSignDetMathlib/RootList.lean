@@ -64,6 +64,74 @@ theorem Descriptor.buildRoots_empty (context : Ctx) (p : DensePoly E) (a b : End
     exact Descriptor.buildRoots_ofEmpty p a b domain hd t ht hr
 
 include hz h1 ha hs hm hnat hn hi hsign in
+/-- Actual enumeration succeeds on every valid domain containing at most
+one root. Count-one extraction and insertion into the empty list need no
+Thom injectivity or ordering foundation, including for non-Archimedean fields. -/
+theorem Descriptor.buildRoots_subsingleton (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (hdom : HexSturmMathlib.Domain f hz p a b)
+    (hsmall : (Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f)).card ≤ 1) :
+    ∃ out, Descriptor.buildRoots sign context p a b = .ok (some out) := by
+  let raw : RawDescriptor E Ctx := ⟨context, p, a, b, [], []⟩
+  let roots := Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f)
+  change roots.card ≤ 1 at hsmall
+  have hsg := HexSturmMathlib.sign_spec f sign hsign
+  have hprepared : (Sturm.prepare sign p a b).isSome = true :=
+    (HexSturmMathlib.prepare_isSome f hz ha hs hm sign
+      (fun a => (hsg a).2.1) (fun a => (hsg a).2.2.1)
+      h1 hn hi hnat (fun a => (hsg a).1) p a b).mpr hdom
+  cases hd : Sturm.prepare sign p a b with
+  | none => simp only [hd, Option.isSome_none, Bool.false_eq_true] at hprepared
+  | some domain =>
+    have bindings := Sturm.prepare_eq_some sign p a b domain hd
+    obtain ⟨t, ht, _⟩ := buildPrepared_roots f hz h1 ha hs hm hnat hn hi sign hsign
+      context domain bindings.1 (raw.full []).queries true
+    have hc : t.val.check sign context p a b (raw.full []).queries = true := by
+      simpa only [bindings.1, bindings.2.1, bindings.2.2.1, bindings.2.2.2] using t.property
+    let table := t.val.table hc
+    have member (row : List Int × Nat) (hr : row ∈ t.val.node.system.tableRows.toList) :
+        row ∈ table.rows.toList := by
+      simpa only [table, Replay.table_rows] using hr
+    have meaning (row : List Int × Nat) (hr : row ∈ t.val.node.system.tableRows.toList) :
+        row.2 = (roots.filter fun x => signsAt f hz (raw.full []).queries x = row.1).card := by
+      have count := table.count_mem (member row hr)
+      rw [Replay.table_lookup, t.val.count_roots f hz h1 ha hs hm hnat sign hsign
+        context p a b (raw.full []).queries hc row.1] at count
+      exact count.symm
+    have witness (row : List Int × Nat) (hr : row ∈ t.val.node.system.tableRows.toList) :
+        ∃ x ∈ roots, signsAt f hz (raw.full []).queries x = row.1 := by
+      have positive := (table.wellFormed row (member row hr)).2.2
+      rw [meaning row hr] at positive
+      obtain ⟨x, hx⟩ := Finset.card_pos.mp positive
+      exact ⟨x, (Finset.mem_filter.mp hx).1, (Finset.mem_filter.mp hx).2⟩
+    cases hr : t.val.node.system.tableRows.toList with
+    | nil => exact ⟨[], Descriptor.buildRoots_ofEmpty p a b domain hd t ht hr⟩
+    | cons row rest =>
+      have hrow : row ∈ t.val.node.system.tableRows.toList := by rw [hr]; simp
+      obtain ⟨x, hx, hword⟩ := witness row hrow
+      have positive := (table.wellFormed row (member row hrow)).2.2
+      have countBound := Finset.card_filter_le roots
+        (fun x => signsAt f hz (raw.full []).queries x = row.1)
+      rw [← meaning row hrow] at countBound
+      have hone : row.2 = 1 := by omega
+      have hrest : rest = [] := by
+        apply List.eq_nil_iff_forall_not_mem.mpr
+        intro other hother
+        obtain ⟨y, hy, hyword⟩ := witness other (by rw [hr]; exact List.mem_cons_of_mem _ hother)
+        have hxy : x = y := Finset.card_le_one.mp hsmall x hx y hy
+        have he : other.1 = row.1 := hyword.symm.trans (hxy ▸ hword)
+        have distinct := table.distinct
+        simp only [table, Replay.table_rows, hr, List.map_cons, List.nodup_cons] at distinct
+        exact distinct.1 (List.mem_map.mpr ⟨other, hother, he⟩)
+      have hp : 0 < p.natDegree := by
+        have rootPositive : 0 < roots.card := Finset.card_pos.mpr ⟨x, hx⟩
+        have bound := Tarski.rootsIn_card_le (interpret f hz p) (a.map f) (b.map f)
+        rw [natDegree_interpret] at bound
+        change roots.card ≤ p.natDegree at bound
+        omega
+      exact Descriptor.buildRoots_ofSingle p a b domain hd t ht row
+        (by simpa only [hrest] using hr) hone hp
+
+include hz h1 ha hs hm hnat hn hi hsign in
 /-- Nonzero constant heads on a valid domain return an actual empty list.
 Success is proved rather than assumed, with no Thom foundation. -/
 theorem Descriptor.buildRoots_constant_success (context : Ctx) (p : DensePoly E)
@@ -89,6 +157,22 @@ theorem Descriptor.buildRoots_domain {context : Ctx} {p : DensePoly E}
   exact (HexSturmMathlib.prepare_sound f hz ha hs hm sign
     (fun a => (hsg a).2.1) (fun a => (hsg a).2.2.1)
     h1 hn hi hnat (fun a => (hsg a).1) p a b domain hd).1
+
+omit [IsRealClosed K] in
+include hz h1 ha hs hm hnat hn hi hsign in
+/-- The absent-domain result characterizes exactly invalid mathematical
+domains, without the root-sum admission or a producer-success premise. -/
+theorem Descriptor.buildRoots_none_iff (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) :
+    Descriptor.buildRoots sign context p a b = .ok none ↔
+      ¬ HexSturmMathlib.Domain f hz p a b := by
+  rw [Descriptor.buildRoots_none]
+  have hsg := HexSturmMathlib.sign_spec f sign hsign
+  have validity := HexSturmMathlib.prepare_isSome f hz ha hs hm sign
+    (fun a => (hsg a).2.1) (fun a => (hsg a).2.2.1)
+    h1 hn hi hnat (fun a => (hsg a).1) p a b
+  rw [← validity]
+  cases Sturm.prepare sign p a b <;> simp
 
 include h1 ha hs hm hnat hsign in
 /-- Every successful actual root enumeration covers all roots exactly once.

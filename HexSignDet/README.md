@@ -291,6 +291,11 @@ both degree branches of the public entry point to the actual prepared table;
 `buildRoots_perm` and `buildRoots_sorted` give its row preservation and finite
 strict sortedness. `buildRoots_raw` binds every returned descriptor to
 the requested context, head, interval and full derivative slots.
+`buildRoots_none` proves that the absent-domain result occurs exactly when
+preparation fails. `buildRoots_ofEmpty` proves actual empty-table success in
+both degree branches, without any ordering premise. `buildRoots_ofSingle`
+proves actual success for one unit-count row without any comparator premise. These finite proofs have
+no admitted dependencies.
 `buildRoots_constant` proves that any successful constant-head result is empty
 using descriptor shape alone. Constants retain the literal checking path.
 Each descriptor still constructs its full index list. Every insertion comparison
