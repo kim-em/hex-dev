@@ -65,17 +65,20 @@ def root_checks(name, depth, coefficient_field):
         if depth == 0:
             # FLINT's exact algebraic roots; no native Sturm recurrence is replayed.
             with QQBar() as q:
-                lo, hi = q.number(str(a)), q.number(str(b))
+                lo = None if a is None else q.number(str(a))
+                hi = None if b is None else q.number(str(b))
                 roots = q.roots([q.number(str(c)) for c in poly])
                 require(all(m == 1 for _, m in roots), f"{name}: repeated active root")
-                return sum(q.compare(lo, root) < 0 and q.compare(root, hi) < 0 for root, _ in roots)
+                return sum((lo is None or q.compare(lo, root) < 0) and
+                           (hi is None or q.compare(root, hi) < 0) for root, _ in roots)
         _, factors = formal_polynomial(poly).factor_list()
         roots = []
         for factor, multiplicity in factors:
             require(multiplicity == 1, f"{name}: repeated active root")
             require(factor.degree() == 1, f"{name}: unsupported infinitesimal factor")
             roots.append(coefficient_field.from_expr(-factor.nth(0) / factor.nth(1)))
-        return sum(sign(root - a) > 0 and sign(b - root) > 0 for root in roots)
+        return sum((a is None or sign(root - a) > 0) and
+                   (b is None or sign(b - root) > 0) for root in roots)
 
     return sign, evaluate, squarefree, count
 
@@ -203,6 +206,53 @@ def verify_frontier(row, decode, coefficient_field):
             f"{name}: inconsistent root coverage")
 
 
+def verify_dispatch(row, decode, coefficient_field):
+    name, depth = row["name"], row["depth"]
+    coefficients = [decode(a, depth) for a in row["coefficients"]]
+    require(not coefficients or bool(coefficients[-1]), f"{name}: zero leading coefficient")
+    sign, _, squarefree, count = root_checks(name, depth, coefficient_field)
+    valid = bool(coefficients) and squarefree(coefficients)
+    payload = row["result"]
+    require((payload is not None) == valid, f"{name}: wrong dispatch success")
+    if not valid:
+        return
+
+    def absolute(value):
+        return -value if sign(value) < 0 else value
+
+    bound = None
+    for exponent in range(1, 2 * len(coefficients) + 1):
+        candidate = coefficient_field(2**exponent)
+        limit = (candidate - 1) * absolute(coefficients[-1])
+        if all(sign(limit - absolute(a)) > 0 for a in coefficients[:-1]):
+            bound = candidate
+            break
+    require(payload.get("route") == ("whole" if bound is None else "bounded"),
+            f"{name}: wrong dispatch route")
+    if bound is None:
+        require(set(payload) == {"route", "head", "lower", "upper", "count"},
+                f"{name}: invalid whole-line fields")
+        require([decode(a, depth) for a in payload["head"]] == coefficients,
+                f"{name}: wrong whole-line head")
+        require(payload["lower"] == "-infinity" and payload["upper"] == "+infinity",
+                f"{name}: wrong whole-line endpoints")
+        require(type(payload["count"]) is int and payload["count"] == count(coefficients, None, None),
+                f"{name}: wrong whole-line count")
+    else:
+        require(set(payload) == {"route", "bound", "frontier"}, f"{name}: invalid bounded fields")
+        require(decode(payload["bound"], depth) == bound, f"{name}: wrong first accepted bound")
+        # Native casts at depth d are represented by constant rational functions.
+        def encode_constant(value, level):
+            if level == 0:
+                return str(value)
+            return {"num": [encode_constant(value, level - 1)],
+                    "den": [encode_constant(1, level - 1)]}
+        frontier_row = dict(row, kind="frontier", lower=encode_constant(-bound, depth),
+                            upper=encode_constant(bound, depth),
+                            original_count=count(coefficients, -bound, bound), result=payload["frontier"])
+        verify_frontier(frontier_row, decode, coefficient_field)
+
+
 def verify(fixtures: list[dict]) -> None:
     require(bool(fixtures), "no fixtures")
     require(len({row["name"] for row in fixtures}) == len(fixtures), "duplicate fixture")
@@ -226,7 +276,10 @@ def verify(fixtures: list[dict]) -> None:
     for row in fixtures:
         depth = row["depth"]
         require(depth in (0, 1, 2), "unsupported coefficient depth")
-        require(row.get("kind", "deflation") in ("deflation", "bisection", "frontier"), "unknown fixture kind")
+        require(row.get("kind", "deflation") in ("deflation", "bisection", "frontier", "dispatch"), "unknown fixture kind")
+        if row.get("kind") == "dispatch":
+            verify_dispatch(row, decode, coefficient_field)
+            continue
         if row.get("kind") == "frontier":
             verify_frontier(row, decode, coefficient_field)
             continue
@@ -255,7 +308,7 @@ def verify(fixtures: list[dict]) -> None:
 def main() -> None:
     fixtures = [json.loads(line) for line in sys.stdin if line.strip()]
     verify(fixtures)
-    print(f"verified {len(fixtures)} exact deflation/bisection/frontier fixtures")
+    print(f"verified {len(fixtures)} exact deflation/bisection/frontier/dispatch fixtures")
 
 
 if __name__ == "__main__":

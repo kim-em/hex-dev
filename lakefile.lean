@@ -601,7 +601,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
     `HexRealClosureMathlib.YunInvariant, `HexRealClosureMathlib.Bounds,
     `HexRealClosureMathlib.Deflation, `HexRealClosureMathlib.Bisection,
-    `HexRealClosureMathlib.BisectionRoots, `HexRealClosureMathlib.BisectionFrontier, `HexRealClosureMathlib.BisectionCounts]
+    `HexRealClosureMathlib.BisectionRoots, `HexRealClosureMathlib.BisectionFrontier, `HexRealClosureMathlib.BisectionCounts, `HexRealClosureMathlib.Isolation]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
@@ -1102,7 +1102,7 @@ lean_lib HexConformance where
       `HexSignDetMathlib.TableConformance,
       `HexSignDetMathlib.ReencodingConformance, `HexSignDetMathlib.RootListConformance].map Glob.one
 
-    ++ #[`HexRealClosure.BisectionFrontierTests].map Glob.one
+    ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]
