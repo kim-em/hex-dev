@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyDetMathlib
-import HexPolyDetMathlib.ProofProbe.GeneralSupport
+import HexPolyDetMathlib.ProofProbe.Products5Hex
 
-open Matrix
+#print axioms HexPolyDetMathlib.ProofProbe.Products5Hex.result

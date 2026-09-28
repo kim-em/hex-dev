@@ -5,12 +5,11 @@ Authors: Kim Morrison
 -/
 
 import HexPolyDetMathlib
+import Mathlib.Tactic.NormDet
+import Mathlib.Tactic.Ring
 import HexPolyDetMathlib.ProofProbe.GeneralSupport
 
 open Matrix
 
-private def certificate (x : Int) : {d : Int // Matrix.det (HexPolyDetMathlib.ProofProbe.quadratic x) = d} := by
-  let c := det% (HexPolyDetMathlib.ProofProbe.quadratic x)
-  exact ⟨c.value, c.proof⟩
-
-#print axioms certificate
+theorem HexPolyDetMathlib.ProofProbe.Tridiagonal4Hex.result (x : Int) : Matrix.det (HexPolyDetMathlib.ProofProbe.tridiagonal x) = x^4-3*x^2+1 := by
+  det
