@@ -343,6 +343,8 @@ The `scripts/bench/sturm_semantics_sweep.py` driver compares the semantic
 replay module with its exact import-only baseline, retaining compiler output
 and axiom audits. It measures fresh applications of the imported theorem;
 it does not count the foundation's first build as replay cost.
+The [semantic replay report](../../reports/sturm-tarski-semantics.md) records
+the measured source, complete samples, and scope of this evidence.
 
 Compare matched rational/integer replay paths and positive-clearing transport;
 record arithmetic/guard/translation costs separately and include one
