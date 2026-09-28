@@ -24,12 +24,10 @@ tactic specified in
 and the examples of
 [User-facing examples](../../HexPermGroup/SPEC/hex-perm-group.md#user-facing-examples).
 The correspondence modules form a correspondence-only layer, with comparator
-absence class **correspondence-only-layer**, and `libraries.yml` records the
-library as `correspondence_only: true` until the kernel replay surface exists.
-A library that provides a tactic is not correspondence-only, so the change
-that adds `perm_group` also removes that flag and declares
-`proof_probes: [bench/HexPermGroupMathlib/ProofProbe]` and a Phase 4 input
-family `kernel-certificates` covering the probes of
+absence class **correspondence-only-layer**. The kernel replay theorems and
+`perm_group` are measured by fresh-module proof probes in
+`bench/HexPermGroupMathlib/ProofProbe`, declared in `libraries.yml:
+proof_probes` with a Phase 4 input family `kernel-certificates`, as specified in
 [Complexity, benchmarks and placement](../../HexPermGroup/SPEC/hex-perm-group.md#complexity-benchmarks-and-placement).
 
 Build-only examples in

@@ -1,15 +1,22 @@
 # Kernel replay of permutation-group certificates: sizing
 
-Measurements behind the [Kernel certificates](../HexPermGroup/SPEC/hex-perm-group.md#kernel-certificates)
-section of the `hex-perm-group` SPEC. Host `chungus2` (96 cores, 125 GB,
+Feasibility measurements behind the
+[Kernel certificates](../HexPermGroup/SPEC/hex-perm-group.md#kernel-certificates)
+section of the `hex-perm-group` SPEC. They are single samples, not the
+adjacent alternating paired protocol of
+[benchmarking](../SPEC/benchmarking.md#fresh-module-proof-evidence), and the
+packed-certificate numbers come from a prototype checker without a soundness
+proof that omits several checks the SPEC requires (see the appendix). They
+show which designs are feasible at which degrees. They do not set the default
+chunk budget, which the SPEC takes from proof probes of the final checker. Host `chungus2` (96 cores, 125 GB,
 shared with other work), Lean v4.34.1, hex-dev at `20f6c424`. Every run
 was a single `lake env lean` process under a `systemd-run --user --scope -p
 MemoryMax=… -p MemorySwapMax=0` limit, one at a time. "Kernel" is the
-profiler's type-checking time; "peak" is the cgroup's `memory.peak`.
+profiler's type-checking time, and "peak" is the cgroup's `memory.peak`.
 
 ## Inputs
 
-ATLAS permutation generators from GAP 4.15.1 with AtlasRep; chains built by
+ATLAS permutation generators from GAP 4.15.1 with AtlasRep. Chains were built by
 `Group.ofGenerators`, whose orders agree with GAP's in every case.
 
 | group | degree | order | nontrivial levels (orbit sizes) | Schreier generators sifted |
@@ -46,9 +53,10 @@ Kernel construction (`(Group.ofGenerators S).order = 7920 := by decide
 In isolation for M11, `Chain.Normalized`, `Working`, `Fixed` and `checkWords`
 each take under 60 ms, the top `Orbit.Valid` 0.3 s, and one sift 0.16 s, so
 the time is the Schreier sifts. Each sift visits all `n` levels of the fixed
-base and recomputes `Perm.inv` and `Perm.comp` at each. Single operations:
-compose, inverse and compose take 53 ms at degree 11, 3.5 s at degree 100 and
-4.2 s at degree 276. Comparing two degree-276 permutations with
+base and recomputes `Perm.inv` and `Perm.comp` at each. One sift step computes
+an inverse and a composition, and one Schreier generator needs a further
+composition. Evaluating these three operations in the kernel took 53 ms at
+degree 11, 3.5 s at degree 100 and 4.2 s at degree 276. Comparing two degree-276 permutations with
 `DecidableEq` takes 23 s, and the `decide +kernel` proofs of one degree-276
 literal's `nodup` and `complete` fields about 2 s. Degree-275 literals need
 `maxRecDepth 100000` and `maxHeartbeats 0` to elaborate.
@@ -62,7 +70,7 @@ at nontrivial base points, packed permutations with `W` bits per image, stored
 inverse transversals, full Schreier-family sifting. Variants differ in how the
 transversal is read and how arithmetic is written:
 
-- A: `List Nat` transversals read by `List.getD`; operators `&&&`, `>>>`, `|||`;
+- A: `List Nat` transversals read by `List.getD`, operators `&&&`, `>>>`, `|||`,
   compose by structural recursion.
 - B: as A with compose as one `Nat.rec` step per image.
 - C: as B with each transversal packed into one `Nat`, read by shift and mask.
@@ -86,8 +94,9 @@ Single declaration:
 | McL | timeout at 107 s, 19.7 GB | | | | | |
 | Co3 | timeout at 107 s, 19.8 GB | | | | | |
 
-The HS columns B to F were run back to back; other cells were run at
-different times on the shared host and vary by up to about 20%.
+The HS columns B to F were run back to back. Other cells were run at
+different times on the shared host. Two runs of the same M11 replay, at
+different load, took 20 s and 41 s.
 
 Split into declarations (one per level for the non-sifting checks, and one
 per 256 consecutive Schreier generators), total kernel time, largest
@@ -103,31 +112,39 @@ The default heartbeat limit ended the single-declaration McL and Co3 checks
 at 107 s, so a certificate of this size must be split. Peak memory is roughly
 proportional to the kernel work in one declaration.
 
-Compiling a 276-entry `List Nat` literal hits `maximum recursion depth`; the
+Compiling a 276-entry `List Nat` literal hits `maximum recursion depth`. The
 same literal in a `noncomputable def` elaborates and checks.
 
 ## Observations
 
-- For the `M11` example of the manual, variant F takes 0.14 s and 0.28 GB
-  against 28.3 s and 5.8 GB for `checkChain` replay. Most of the 0.28 GB is
-  the Lean process itself.
+These describe the listed prototype runs. The variants differ in more than
+one respect at a time, so the attributions below are to the variant, not to
+a single change.
 
-- Packing permutations into `Nat` and dropping singleton levels is the large
-  change: M24 goes from over 30 GB unfinished to seconds.
-- Raw `Nat` spellings halve the time again (HS 30.9 s to 13.9 s).
-- A transversal packed into one `Nat` is no better than a list at degree 100
-  and worse at degree 276, since each read shifts the whole number.
-- `RArray` transversals help together with raw spellings: HS 13.9 s to
-  10.2 s, and Co3 173 s to 114 s, with its largest declaration (the level
-  whose orbit has 276 points) 24 s to 8.6 s. With operator spellings they
-  were slower than lists (HS 53.7 s against 30.9 s); the cause was not
-  investigated.
-- With all of these, Co3 checks in about two minutes of kernel time in
+- For the `M11` example of the manual, variant F took 0.14 s and 0.28 GB
+  against 28.3 s and 5.8 GB for `checkChain` replay.
+- Variant A, which packs permutations, drops singleton levels, stores inverse
+  transversals and carries no proofs in its data, checked M24 in 6 s, where
+  `checkChain` replay exceeded 30 GB without finishing.
+- On HS, run back to back, variant D (raw `Nat` spellings) took 13.9 s against
+  30.9 s for variant B.
+- A transversal packed into one `Nat` (variant C) was no faster than a list on
+  HS and slower on Co3.
+- `RArray` transversals with raw spellings (variant F) took 10.2 s on HS against
+  13.9 s for D, and 114 s on Co3 against 173 s, with the largest declaration
+  (the level whose orbit has 276 points) 8.6 s against 24 s. With operator
+  spellings (variant E) they were slower than lists (HS 53.7 s against
+  30.9 s). The cause was not investigated.
+- With variant F, Co3 checked in about two minutes of kernel time, in
   declarations of under ten seconds each.
 
 ## Appendix: prototype checker (variant F)
 
-No soundness proof. Certificates were generated from `Group.ofGenerators`
+No soundness proof, and not the SPEC's checker: it reads lengths from lists
+kept beside the `RArray` fields without checking that they agree, does not
+bound base points, orbit points or table indices by `n` and the orbit size,
+does not check that the lookup table agrees with the orbit at every point, and
+loops over `List.range`. Certificates were generated from `Group.ofGenerators`
 chains by a Python script that packs permutations, builds balanced `RArray`
 literals and records Schreier-tree parents and next-level indices.
 
