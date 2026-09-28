@@ -1080,7 +1080,7 @@ private def refinedCubicRootPasses : Bool :=
 preservation of the selected root for a valid smaller root domain of the same
 polynomial containing that root. Its hypotheses describe the input interval;
 they do not assume a successful computation. The proof uses the old validated
-selection's uniqueness and the named #10389 root-sum admission. It applies to
+selection's uniqueness and the proved shared Sturm–Tarski theorem. It applies to
 generic lawful coefficients, including non-Archimedean interpretations, without
 assuming rational isolating bounds. General success after changing the defining
 polynomial still requires the separate Thom foundations.

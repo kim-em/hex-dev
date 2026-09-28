@@ -190,20 +190,20 @@ end Noncanonical
 /-- info: 'Hex.SignDet.Descriptor.buildReencoding_ofTable' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.buildReencoding_ofTable
-/-- info: 'Hex.SignDet.Descriptor.reencoding_rows' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.reencoding_rows' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.reencoding_rows
-/-- info: 'Hex.SignDet.Descriptor.refinement_fiber' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.refinement_fiber' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.refinement_fiber
-/-- info: 'Hex.SignDet.Descriptor.buildReencoding_refinement' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.buildReencoding_refinement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.buildReencoding_refinement
 
-/-- info: 'Hex.SignDetMathlib.RefinementConformance.cubic_refinement' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.RefinementConformance.cubic_refinement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_refinement
-/-- info: 'Hex.SignDetMathlib.RefinementConformance.Noncanonical.refinement' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.RefinementConformance.Noncanonical.refinement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Noncanonical.refinement
 
