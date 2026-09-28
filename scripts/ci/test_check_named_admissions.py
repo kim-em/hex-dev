@@ -52,13 +52,21 @@ class AdmissionScannerTests(unittest.TestCase):
             entry = root / "adapters/HexRCF/RealCoefficients.lean"
             bridge = root / "adapters/HexRealRootsMathlib/TarskiSoundness.lean"
             sign = root / "adapters/HexSignDetMathlib/RootProducer.lean"
-            for path in (entry, bridge, sign):
+            conformance = root / "conformance/HexSignDetMathlib/SelectedProducerConformance.lean"
+            dependency = root / "HexExtra/SelectedField.lean"
+            for path in (entry, bridge, sign, conformance, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by\n  sorry\n", encoding="utf-8")
             sign.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
+            conformance.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
+                dependency.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in HexExtra/SelectedField"):
+                    audit.check()
+                dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
                 sign.write_text("public import HexRCF.RealCoefficients\ntheorem bad : True := by stop\n",
                                 encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "unapproved admission"):

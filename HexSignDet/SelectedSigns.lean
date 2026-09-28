@@ -113,8 +113,9 @@ theorem SelectedSigns.signs_eq {sign : E → Int} {context : Ctx}
 
 variable [Neg E] [Inv E]
 
-/-- Build joint selected-root signs. Internal diagnostics remain visible
-until total producer completeness rules them out on validated descriptors. -/
+/-- Build joint selected-root signs. The companion proves success for every
+validated descriptor under a lawful coefficient interpretation. Arbitrary
+coefficient operations retain the internal diagnostics. -/
 def Descriptor.buildSigns {sign : E → Int} {context : Ctx}
     (d : Descriptor E Ctx sign context) (qs : List (DensePoly E)) :
     Except BuildError (SelectedSigns d qs) :=
@@ -135,5 +136,38 @@ def Descriptor.buildSigns {sign : E → Int} {context : Ctx}
           else .error .replay
         else .error .dimensions
       | _ => .error .system
+
+/-- A successful prepared table with exactly one extending count-one row
+discharges every remaining guard of the actual selected-sign constructor. -/
+theorem Descriptor.buildSigns_ofTable {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (qs : List (DensePoly E))
+    (domain : Sturm.PreparedDomain E)
+    (hd : Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper = some domain)
+    (t : {t : Replay E Ctx //
+      t.check domain.sign context domain.head domain.lower domain.upper
+        (d.raw.queries ++ qs) = true})
+    (ht : buildPrepared context domain (d.raw.queries ++ qs) = .ok t)
+    (values : Vector Int qs.length)
+    (hr : t.val.node.system.tableRows.toList.filter
+      (fun row => decide (row.1.take d.raw.queries.length = d.raw.signs)) =
+        [(d.raw.signs ++ values.toList, 1)]) :
+    ∃ s, d.buildSigns qs = .ok s := by
+  obtain ⟨hw, hctx, _, _⟩ := RawDescriptor.check_eq d.accepted
+  have hlen := d.raw.wellFormed_length hw
+  have bindings := Sturm.prepare_eq_some sign d.raw.head d.raw.lower d.raw.upper domain hd
+  have hc : t.val.check sign context d.raw.head d.raw.lower d.raw.upper
+      (d.raw.queries ++ qs) = true := by
+    simpa only [bindings.1, bindings.2.1, bindings.2.2.1, bindings.2.2.2] using t.property
+  have ha : d.checkSigns qs values t.val = true := by
+    simp only [Descriptor.checkSigns, RawDescriptor.checkSigns, hw, hctx,
+      decide_true, Bool.true_and, hc, hr]
+  refine ⟨⟨values, t.val, ha⟩, ?_⟩
+  simp only [Descriptor.buildSigns, hd, ht, Replay.table_rows]
+  rw [hr]
+  simp only [← hlen, List.drop_left, Vector.length_toList, ↓reduceDIte]
+  simpa only [Vector.toArray_toList] using
+    (show (if h : d.checkSigns qs values t.val = true then
+      Except.ok (SelectedSigns.mk values t.val h) else .error BuildError.replay) =
+        .ok (SelectedSigns.mk values t.val ha) by rw [dite_eq_left ha])
 
 end Hex.SignDet
