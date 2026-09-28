@@ -893,7 +893,7 @@ private def signsFieldPasses : Bool :=
 ```
 
 Import `HexSignDetMathlib.SelectedProducer` for the success and correctness
-theorems. {name}`Hex.SignDet.Descriptor.buildSigns_success` proves that this operation
+theorems. {name}`Hex.SignDet.Descriptor.buildSigns_success` proves that `buildSigns`
 always succeeds for a validated descriptor when coefficient arithmetic and
 signs have their specified mathematical meaning. It proves preparation and
 table construction succeed and rules out every final internal error; successful
@@ -902,6 +902,30 @@ also proves that the returned list gives the signs at the original selected
 root, in query order. These proofs use the named root-sum admission in
 [#10389](https://github.com/kim-em/hex-dev/issues/10389); they do not require a
 theorem about ordering roots by Thom encodings.
+
+For one polynomial, a validated descriptor provides an ordinary integer sign.
+The same cubic-field example can use this operation directly, receiving only the integer
+sign from the checked calculation:
+
+```lean
+private def totalSignsFieldPasses : Bool :=
+  match Descriptor.validate signsFieldSign 7 signsRoot with
+  | some root =>
+    [root.signAt (signsX - 1),
+      root.signAt (signsX - DensePoly.C 2),
+      root.signAt (signsX.natPow 3 - DensePoly.C 2)] == [1, -1, 0]
+  | none => false
+
+#guard totalSignsFieldPasses
+```
+
+{name}`Hex.SignDet.Descriptor.signAt_success` proves that the underlying
+checked calculation succeeds, so its diagnostic zero fallback is unreachable
+when the coefficient operations satisfy their interpretation laws.
+{name}`Hex.SignDet.Descriptor.signAt_correct` identifies the returned integer
+with the evaluation sign at the descriptor's original selected root. Both
+results use the same named #10389 admission. For several queries, `buildSigns`
+shares one table across the list; each `signAt` call constructs its own table.
 
 Two roots can be compared even if their defining polynomials differ. The
 comparison constructs a checked common squarefree polynomial and expresses

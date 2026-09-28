@@ -170,4 +170,32 @@ theorem Descriptor.buildSigns_ofTable {sign : E → Int} {context : Ctx}
       Except.ok (SelectedSigns.mk values t.val h) else .error BuildError.replay) =
         .ok (SelectedSigns.mk values t.val ha) by rw [dite_eq_left ha])
 
+/-- The sign of a polynomial at a validated selected root, using the checked
+joint-table constructor. The diagnostic zero fallback records an internal failure for
+arbitrary coefficient operations; the companion proves it unreachable under
+the lawful coefficient interpretation. No field-law package is executed. -/
+@[expose] def Descriptor.signAt {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (q : DensePoly E) : Int :=
+  match d.buildSigns [q] with
+  | .ok s => s.value
+  | .error err => panic! s!"Descriptor.signAt: internal error {repr err}"
+
+/-- The total accessor uses the sign from the actual successful construction. -/
+theorem Descriptor.signAt_ofBuild {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (q : DensePoly E)
+    (s : SelectedSigns d [q]) (h : d.buildSigns [q] = .ok s) :
+    d.signAt q = s.value := by
+  simp only [Descriptor.signAt, h]
+
+/-- The public accessor always returns a ternary integer code. Its semantic
+meaning, including exclusion of internal failure, is proved in the companion. -/
+theorem Descriptor.signAt_ternary {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (q : DensePoly E) :
+    d.signAt q = -1 ∨ d.signAt q = 0 ∨ d.signAt q = 1 := by
+  cases h : d.buildSigns [q] with
+  | error e => simp [Descriptor.signAt, h]
+  | ok s =>
+    simpa [Descriptor.signAt, h, SelectedSigns.value] using
+      s.ternary ⟨0, by simp⟩
+
 end Hex.SignDet

@@ -122,6 +122,22 @@ theorem literal_support (s : List Int) :
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildSigns_roots
 
+/-- info: 'Hex.SignDet.Descriptor.signAt_ofBuild' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.signAt_ofBuild
+
+/-- info: 'Hex.SignDet.Descriptor.signAt_ternary' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.signAt_ternary
+
+/-- info: 'Hex.SignDet.Descriptor.signAt_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.signAt_success
+
+/-- info: 'Hex.SignDet.Descriptor.signAt_correct' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.signAt_correct
+
 /-- info: 'Hex.SignDet.Reencoding.target_constraints' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Reencoding.target_constraints

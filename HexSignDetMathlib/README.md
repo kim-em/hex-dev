@@ -131,7 +131,7 @@ accepted count-one partial and full descriptors select a unique root, and
 `root_derivatives` identifies their signs with formal iterated derivatives
 through `derivativesFrom_get`. `SelectedSigns.values_at_root` and
 `value_at_root` prove that every checked requested sign equals evaluation at
-that same selected root, including the public one-query accessor.
+that same selected root, including the certificate's one-query accessor.
 `Completion.root_eq_source` proves that accepted full-derivative completion
 preserves the selected real root; `Completion.signs_at_source` identifies every
 returned derivative sign at that original root. These results use checked
@@ -146,7 +146,7 @@ uses the common full derivative word and count-one descriptors; strict `<` and
 `>` still require the separate Thom-order foundation.
 The executable API retains its internal diagnostics for arbitrary coefficient
 operations. The companion rules out selected-sign errors under lawful
-coefficients; the domain-exact total wrappers remain to be implemented.
+coefficients; the remaining domain-exact table/root wrappers are still required.
 
 `Descriptor.buildSigns_success` proves that the actual selected-sign producer
 succeeds for every validated descriptor and finite ordered query list under
@@ -158,6 +158,13 @@ discharged by the Mathlib-free `buildSigns_ofTable` theorem.
 `Descriptor.buildSigns_roots` identifies the returned signs with evaluation at
 the original selected root, including empty and repeated queries. These
 results use the named #10389 root-sum bridge, without a Thom order assumption.
+`Descriptor.signAt_success` proves that the public total single-query operation
+uses an actual successful checked result and never its diagnostic error fallback.
+`Descriptor.signAt_correct` equates its integer with the evaluation sign at the
+original selected root, also relative to the named #10389 bridge. Neither the
+operation nor these theorems require an
+injective coefficient representation; the executable uses ordinary operations
+and carries no companion field-law package.
 The cubic-field conformance example uses ordinary `QAdjoin` arithmetic over
 ℚ(∛2) and retains the selected real embedding. It rejects changed sign vectors
 and query order in selected-sign replay, and tests context, defining-polynomial
