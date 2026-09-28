@@ -304,6 +304,24 @@ theorem C_add (a b : K) : C (a + b) = C a + C b := by
   · change (0 : K) = 0 + 0
     grind
 
+/-- Constants preserve subtraction. -/
+theorem C_sub (a b : K) : C (a - b) = C a - C b := by
+  have h := C_add (a - b) b
+  have hab : a - b + b = a := by grind
+  rw [hab] at h
+  grind
+
+/-- The constant embedding is injective. -/
+theorem C_injective : Function.Injective (C (K := K)) := by
+  intro a b h
+  have hc := congrArg (fun f : RationalFn K => f.num.coeff 0) h
+  simpa [C, ofPoly, DensePoly.coeff_C] using hc
+
+/-- Constants reflect zero. -/
+theorem C_eq_zero_iff (a : K) : C a = 0 ↔ a = 0 := by
+  rw [← C_zero]
+  exact C_injective.eq_iff
+
 /-- Constants preserve multiplication. -/
 theorem C_mul (a b : K) : C (a * b) = C a * C b := by
   change ofPoly (DensePoly.C (a * b)) = ofPoly (DensePoly.C a) * ofPoly (DensePoly.C b)
