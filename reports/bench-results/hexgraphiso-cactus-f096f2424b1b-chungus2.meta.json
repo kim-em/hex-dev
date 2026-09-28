@@ -1,0 +1,16 @@
+{
+  "fingerprint": "f096f2424b1b",
+  "host": "chungus2",
+  "date": "2026-09-28T19:45:09Z",
+  "describe": "c11a000f0a4e",
+  "label": "TauCeti dependency and integrated main configuration",
+  "cpu_affinity": [
+    14
+  ],
+  "loadavg_after": [
+    9.51416015625,
+    13.84375,
+    14.30224609375
+  ],
+  "command": "measure_cpu=$(python3 scripts/bench/idle_core.py); export HEX_MEASURE_CPU=\"$measure_cpu\"; uv run --no-project --with matplotlib==3.11.1 bash -c 'taskset -c \"$HEX_MEASURE_CPU\" bash scripts/bench/graphiso_cactus_sweep.sh \"TauCeti dependency and integrated main configuration\"'"
+}
