@@ -36,3 +36,46 @@ to contain only `propext`, `Classical.choice` and `Quot.sound`.
 These are diagnostic observations, with no complexity verdict or absolute
 performance budget. They do not establish all Phase-4 requirements. The
 ordinary CI proof-probe target builds the examples; timing runs are external.
+
+## Observations
+
+Source `8ba814887079ddf45e9682371d4565c49d3d2171` supplies 16 adjacent pairs
+(32 fresh builds) on `chungus2`, automatically leased CPU 68, with one Lean
+thread. Lean is 4.35.0-rc3, Mathlib is
+`d870b9068518a0870842d15a0cd42637ec30b587`, and Tau Ceti is
+`ff72a2e86930d5268476ee33d55ab054ed1c3ea5`. Repository and dependency
+checkouts were clean. This checkout used the same owned `.lake` directory
+as the height worktree; no other build in that directory ran during collection.
+
+| Depth | Query positions | Import-only median (s) | Semantic median (s) | Median paired difference (s) |
+|---|---:|---:|---:|---:|
+| 1 | 2 | 2.666 | 2.762 | 0.060 |
+| 3 | 8 | 2.652 | 2.717 | 0.055 |
+| 5 | 32 | 2.651 | 2.747 | 0.097 |
+| 7 | 128 | 2.659 | 2.747 | 0.085 |
+
+The semantic `.olean` files contain 41,376–41,512 bytes, and their
+`.olean.private` files contain 18,592–18,632 bytes. Baselines contain 1,576
+and 96 bytes respectively. Median semantic-arm maximum resident sets are
+1,728,612–1,729,592 KiB. These resource observations include the rebuild
+process and imports; they do not isolate the theorem's memory usage or
+measure allocated bytes.
+
+All semantic guards and axiom inventories passed. The observed paired
+differences do not establish asymptotic behavior or a speedup. The imported
+acceptance proofs already bind the full certificates, so these applications
+need not unfold those certificates again as query count grows. No rerun or
+null control was used.
+
+Run the diagnostic with:
+
+```sh
+python3 scripts/bench/sign_det_semantics.py --output /tmp/bkr-semantic-probes.json
+```
+
+The output path must be fresh. The runner automatically selects and leases
+its CPU. Raw records retain all completed observations, compiler output,
+artifact sizes, source hashes, dependency identities and host context:
+
+- [Complete measurement](bench-results/hex-sign-det-semantics-8ba814887-chungus2.json).
+- [Incremental arm records](bench-results/hex-sign-det-semantics-8ba814887-chungus2.json.samples.jsonl).
