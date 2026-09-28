@@ -1106,7 +1106,8 @@ lean_lib HexConformance where
       `HexSignDetMathlib.CompletionConformance,
       `HexSignDetMathlib.QueryHandleConformance,
       `HexSignDetMathlib.TableConformance, `HexSignDetMathlib.ReencodingConformance,
-      `HexSignDetMathlib.RootListConformance, `HexSignDetMathlib.RefinementConformance].map Glob.one
+      `HexSignDetMathlib.RootListConformance, `HexSignDetMathlib.RefinementConformance,
+      `HexSignDetMathlib.ConvertConformance].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]

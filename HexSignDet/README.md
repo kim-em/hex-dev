@@ -62,6 +62,17 @@ and context codecs must preserve their whole values. General codec roundtrip
 proofs, lower-level coefficient-sign edges and performance measurements remain
 required.
 
+`RawDescriptor.map` maps coefficients and finite endpoints to a new
+representation and context while retaining derivative indices and signs.
+`Descriptor.convert` feeds that raw input to the existing descriptor builder.
+It constructs fresh preparation, query, support and matrix evidence; it copies
+no source replay and reconstructs derivative queries under target operations.
+The supplied coefficient map must reflect canonical zero. Arbitrary conversions
+retain ordinary builder diagnostics. The companion proves success and preservation
+of the selected root when both lawful coefficient interpretations denote the
+same converted values, including noninjective representations and infinitesimals.
+Those semantic results inherit the named #10389 root-sum admission.
+
 Context, head, interval and query-list bindings use literal equality. Tarski
 polynomial identities use the shared zero-difference checks. Context values
 must contain the caller's full immutable context data, including any refinement;

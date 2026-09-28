@@ -15,6 +15,7 @@ import HexSignDetMathlib.CompletionProducer
 import HexSignDetMathlib.TableProducer
 import HexSignDetMathlib.ReencodingProducer
 import HexSignDetMathlib.ReencodingRefinement
+import HexSignDetMathlib.Convert
 
 import HexSignDetMathlib.QueryHandle
 
@@ -1084,6 +1085,62 @@ selection's uniqueness and the proved shared Sturm–Tarski theorem. It applies 
 generic lawful coefficients, including non-Archimedean interpretations, without
 assuming rational isolating bounds. General success after changing the defining
 polynomial still requires the separate Thom foundations.
+A coefficient conversion lets a selected root participate in queries over a
+larger coefficient field. Here the source selects √2 over the rationals. Moving
+its descriptor into the existing field ℚ(∛2) allows a query comparing it with ∛2:
+
+```lean
+private def cubicConstant (q : Rat) : signsField := q • (1 : signsField)
+
+private theorem cubicConstant_zero (q : Rat) : cubicConstant q = 0 ↔ q = 0 := by
+  have he : PolyQuot.toComplex (cubicConstant q)
+      cubicGenerator.rep cubicGenerator.rep_mk =
+      (q : ℂ) := by
+    rw [cubicConstant, PolyQuot.map_smul,
+      PolyQuot.map_one, mul_one]
+  constructor
+  · intro h
+    rw [h, PolyQuot.map_zero] at he
+    exact_mod_cast he.symm
+  · intro h
+    apply PolyQuot.toComplex_injective
+      cubicGenerator.rep cubicGenerator.rep_mk
+    dsimp only
+    rw [he, PolyQuot.map_zero, h]
+    norm_cast
+
+private def convertedRootPasses : Bool :=
+  let raw : RawDescriptor Rat Nat :=
+    ⟨7, bkrX * bkrX - 2, .finite 0, .posInf, [], []⟩
+  match Descriptor.validate Sturm.orderSign 7 raw with
+  | none => false
+  | some root =>
+    match root.convert cubicConstant cubicConstant_zero signsFieldSign 8 with
+    | .ok (.ok moved) =>
+      moved.raw.context == 8 &&
+        moved.signAt (signsX - DensePoly.C signsAlpha) == 1 &&
+        moved.signAt (signsX * signsX - DensePoly.C 2) == 0
+    | _ => false
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard convertedRootPasses
+```
+
+{name}`Hex.SignDet.Descriptor.convert` maps the head and endpoints, retains the
+partial derivative selection and builds fresh evidence in the new context.
+It reconstructs every derivative query using the target's ordinary operations.
+A context identifier here stands for the caller's immutable context data;
+changing its binding requires fresh evidence even when all polynomial values
+stay the same. No old certificate is copied by this operation.
+
+{name}`Hex.SignDet.Descriptor.convert_success` and
+{name}`Hex.SignDet.Descriptor.convert_root` prove success and preservation of the
+selected root when both coefficient interpretations are lawful and the
+conversion preserves their values. They also cover noninjective representations
+and infinitesimal coefficients, without assuming rational isolating intervals.
+These semantic proofs inherit the named #10389 root-sum admission. An arbitrary
+converter still has the builder's ordinary input and internal-error diagnostics.
 
 Root enumeration constructs a full derivative description for each root. This
 example uses the same actual cubic coefficient field and enumerates the roots
