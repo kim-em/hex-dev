@@ -7,8 +7,10 @@ module
 
 public import HexRealClosure.Yun
 public import HexRealClosure.Bounds
+public import HexRealClosure.Deflation
 public meta import HexSturm.Basic
 public meta import HexRealClosure.Bounds
+public meta import HexRealClosure.Deflation
 
 public section
 
@@ -623,5 +625,27 @@ private def packedBound : Option Bool := do
   return square != (2 : Root.Handle.Value h) && (square - 2).value == 0 && b.value.value == 4
 
 #guard packedBound == some true
+
+#guard (deflate? (0 : DensePoly Rat) 0).isNone
+#guard (deflate? (DensePoly.C (3 : Rat)) 0).isNone
+#guard (deflate? (DensePoly.ofCoeffs (#[-2, 0, 1] : Array Rat)) 1).isNone
+#guard (deflate? (DensePoly.ofCoeffs (#[-2, 3] : Array Rat)) (2 / 3)).map
+  (fun d => d.quotient) == some (DensePoly.C 3)
+#guard (deflate? (DensePoly.ofCoeffs (#[1, -2, 1] : Array Rat)) 1).map
+  (fun d => d.quotient.eval 1) == some 0
+
+/-- Exact removal uses represented coefficient zero, including cancellation
+between structurally different nonzero coefficients in a selected-root field. -/
+private def packedDeflation : Option Bool := do
+  let d ← Root.validate 7 raw
+  let h := d.handle
+  let alpha : Root.Handle.Value h := Root.Handle.Value.ofPoly h x
+  let p : DensePoly (Root.Handle.Value h) := DensePoly.ofCoeffs #[-2, 0, 1]
+  let removed ← deflate? p alpha
+  let q := removed.quotient
+  return q.natDegree == 1 && (q.coeff 0 - alpha).value == 0 &&
+    q.coeff 1 == 1 && (q.eval alpha).value == (2 * alpha).value
+
+#guard packedDeflation == some true
 
 end Hex.RealClosure.Tests
