@@ -163,6 +163,18 @@ depend on the same named #10389 root-sum admission.
 when the defining polynomial and interval change. Its proof uses the copied
 equation, derivative word and strict endpoint signs, plus acceptance of the
 source descriptor to rule out impossible infinite endpoint orientations.
+`Descriptor.constraints_iff` proves that the defining equation, selected
+formal-derivative signs and strict finite endpoint queries used by re-encoding
+identify exactly the source root. `Descriptor.buildReencoding_absent` in
+`HexSignDetMathlib.ReencodingProducer` proves that the actual constructor
+returns `none` if that root is absent from the target domain, establishing
+preparation and joint table construction from the input. These results use no
+separating interval, Archimedean or injective representation assumption and
+inherit only the named #10389 root-sum admission.
+`Descriptor.buildReencoding_invalid` separately proves ordinary absence for
+invalid mathematical target domains, even if their open-interval root set
+contains the source root. It uses shared preparation correspondence and has
+no root-sum admission dependency.
 `Comparison.eq_iff_root_eq` proves that a successful common-product comparison
 returns equality exactly when the original selected real roots coincide. It
 uses the common full derivative word and count-one descriptors; strict `<` and
@@ -217,9 +229,8 @@ the latter remains a separate shared-domain check. `endpoint_eval`, `endpoint_lo
 and `endpoint_upper` prove the semantics of the actual finite-boundary polynomials
 used by joint re-encoding.
 
-Semantic Thom equality/order, the success characterization and correctness of
-the re-encoding builder, the total public API and Phase-4 evidence remain
-required. The root-sum/replay bridge in #10389
+General Thom ordering, re-encoding success for present roots, the remaining
+total public interfaces and Phase-4 evidence remain required. The root-sum/replay bridge in #10389
 and the specified Tau Ceti BKR/Thom foundations remain separate proof gates.
 See the
 [specification](SPEC/hex-sign-det-mathlib.md) for the complete assignment.

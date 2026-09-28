@@ -24,10 +24,30 @@ variable (hnat : ∀ n : Nat, f (n : E) = (n : K))
 variable {sign : E → Int} (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
 variable (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
 
+omit [IsRealClosed K] in
+include hz h1 ha hs hm hnat hn hi hsign in
+/-- An invalid mathematical target domain returns absence through shared
+preparation. In particular, repeated heads and rejected endpoints are invalid
+even if their open-interval root set contains the selected source root. This
+result uses no root-sum theorem. -/
+theorem Descriptor.buildReencoding_invalid {context : Ctx}
+    (source : Descriptor E Ctx sign context) (head : DensePoly E) (a b : Endpoint E)
+    (hinvalid : ¬ HexSturmMathlib.Domain f hz head a b) :
+    source.buildReencoding head a b = .ok none := by
+  have hsg := HexSturmMathlib.sign_spec f sign hsign
+  cases hd : Sturm.prepare sign head a b with
+  | none => exact source.buildReencoding_ofNone head a b hd
+  | some domain =>
+    have hp : (Sturm.prepare sign head a b).isSome = true := by rw [hd]; rfl
+    exact False.elim (hinvalid ((HexSturmMathlib.prepare_isSome f hz ha hs hm sign
+      (fun a => (hsg a).2.1) (fun a => (hsg a).2.2.1)
+      h1 hn hi hnat (fun a => (hsg a).1) head a b).mp hp))
+
 include hz h1 ha hs hm hnat hn hi hsign in
 /-- If the selected source root is absent from the target domain, the actual
 re-encoding producer returns `none`, rather than an internal error. This also
-covers invalid target domains, nonzero constants, and excluded roots. No
+covers nonzero constants and roots excluded by the target interval. Invalid
+target domains are handled separately by `buildReencoding_invalid`. No
 Thom ordering theorem, separating interval or injective representation is used. -/
 theorem Descriptor.buildReencoding_absent {context : Ctx}
     (source : Descriptor E Ctx sign context) (head : DensePoly E) (a b : Endpoint E)

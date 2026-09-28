@@ -26,10 +26,11 @@ open Hex.RCF.RealCoefficients HexPolyMathlib.Interpret HexRealRootsMathlib
 /-- Internal errors and failed source validation must fail the test, rather
 than being mistaken for the absence of the selected root. -/
 def absentAs (source : RawDescriptor CubicField Nat) (target : DensePoly CubicField)
-    (a b : Endpoint CubicField) : Bool :=
+    (a b : Endpoint CubicField) (prepared : Bool := true) : Bool :=
   match Descriptor.validate fieldSign 7 source with
   | none => false
   | some d =>
+    ((Sturm.prepare fieldSign target a b).isSome == prepared) &&
     match d.buildReencoding target a b with
     | .ok none => true
     | _ => false
@@ -65,16 +66,16 @@ set_option maxHeartbeats 1000000 in
 -- Invalid targets are also ordinary absence results, before joint determination.
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
-#guard absentAs raw (0 : DensePoly CubicField) .negInf .posInf
+#guard absentAs raw (0 : DensePoly CubicField) .negInf .posInf false
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
-#guard absentAs raw ((xPoly - DensePoly.C alpha).natPow 2) .negInf .posInf
+#guard absentAs raw ((xPoly - DensePoly.C alpha).natPow 2) .negInf .posInf false
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
-#guard absentAs raw head (.finite 2) (.finite 1)
+#guard absentAs raw head (.finite 2) (.finite 1) false
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
-#guard absentAs raw head (.finite alpha) .posInf
+#guard absentAs raw head (.finite alpha) .posInf false
 
 -- Empty source words are valid on singleton intervals and retain their bounds.
 set_option maxRecDepth 4096 in
@@ -110,7 +111,9 @@ def noncanonicalPasses : Bool :=
   let x := HexPoly.InterpretTests.x
   let one := HexPoly.InterpretTests.root
   let source : RawDescriptor HexPoly.InterpretTests.Rep Nat :=
-    ⟨7, x*x - DensePoly.C one, .negInf, .posInf, [1], [1]⟩
+    ⟨7, x*x - DensePoly.C one,
+      .finite (HexPoly.InterpretTests.pack 0 (-2)),
+      .finite (HexPoly.InterpretTests.pack 1 1), [1], [1]⟩
   match Descriptor.validate Hex.TarskiTests.Noncanonical.sign 7 source with
   | none => false
   | some d =>
@@ -123,7 +126,13 @@ def noncanonicalPasses : Bool :=
     let constantHead := match d.buildReencoding (DensePoly.C one) .negInf .posInf with
       | .ok none => true
       | _ => false
-    absentHead && absentInterval && constantHead
+    let target := x - DensePoly.C (1 : HexPoly.InterpretTests.Rep)
+    let present := match d.buildReencoding target .negInf .posInf with
+      | .ok (some r) =>
+        d.checkReencoding r.target target .negInf .posInf r.evidence &&
+          r.target.raw.head == target
+      | _ => false
+    absentHead && absentInterval && constantHead && present
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
@@ -146,6 +155,64 @@ theorem cubic_absent (d : Descriptor CubicField Nat fieldSign 7)
     (Field.value_natCast rep binding real) sign_spec value_neg
     (Field.value_inv rep binding real) target a b habsent
 
+namespace Noncanonical
+
+open HexPoly.InterpretTests
+
+def realValue (a : Rep) : ℝ := (value a : ℝ)
+theorem zero (a : Rep) : realValue a = 0 ↔ a = 0 := by
+  simp only [realValue, Rat.cast_eq_zero, value_eq_zero]
+theorem one : realValue 1 = 1 := by simp [realValue, value_one]
+theorem add (a b : Rep) : realValue (a + b) = realValue a + realValue b := by
+  simp [realValue, value_add, Rat.cast_add]
+theorem sub (a b : Rep) : realValue (a - b) = realValue a - realValue b := by
+  simp [realValue, value_sub, Rat.cast_sub]
+theorem mul (a b : Rep) : realValue (a * b) = realValue a * realValue b := by
+  simp [realValue, value_mul, Rat.cast_mul]
+theorem natCast (n : Nat) : realValue (n : Rep) = (n : ℝ) := by
+  simp [realValue, value_natCast]
+theorem neg (a : Rep) : realValue (-a) = -realValue a := by
+  have h : value (-a) = -value a := by
+    change value (pack (-(HexPoly.InterpretTests.raw a).1)
+      (-(HexPoly.InterpretTests.raw a).2)) = -value a
+    rw [value_pack]
+    exact (neg_add _ _).symm
+  simp [realValue, h]
+theorem inv (a : Rep) : realValue a⁻¹ = (realValue a)⁻¹ := by
+  simp [realValue, value_inv, Rat.cast_inv]
+theorem sign (a : Rep) : Hex.TarskiTests.Noncanonical.sign a =
+    (SignType.sign (realValue a) : Int) := by
+  have hr : Hex.TarskiTests.Noncanonical.sign a = (SignType.sign (value a) : Int) := by
+    by_cases hn : value a < 0
+    · simp only [Hex.TarskiTests.Noncanonical.sign,
+        Int.sign_eq_neg_one_of_neg (Rat.num_neg.mpr hn), sign_eq_neg_one_iff.mpr hn]
+      rfl
+    · by_cases hz : value a = 0
+      · simp [Hex.TarskiTests.Noncanonical.sign, hz]
+      · have hp : 0 < value a := lt_of_le_of_ne (le_of_not_gt hn) (Ne.symm hz)
+        simp only [Hex.TarskiTests.Noncanonical.sign,
+          Int.sign_eq_one_of_pos (Rat.num_pos.mpr hp), sign_eq_one_iff.mpr hp]
+        rfl
+  rw [hr]
+  congr 1
+  exact (StrictMono.sign_comp (f := Rat.castHom ℝ) Rat.cast_strictMono (value a)).symm
+
+/-- The semantic absence guarantee also applies to the noninjective stored
+representation, interpreted in ℝ with its actual ordinary operations. -/
+theorem absent (d : Descriptor Rep Nat Hex.TarskiTests.Noncanonical.sign 7)
+    (target : DensePoly Rep) (a b : Endpoint Rep)
+    (habsent : d.root realValue zero one add sub mul natCast sign ∉
+      Tarski.rootsIn (interpret realValue zero target) (a.map realValue) (b.map realValue)) :
+    d.buildReencoding target a b = .ok none := by
+  exact d.buildReencoding_absent realValue zero one add sub mul natCast sign neg inv
+    target a b habsent
+
+end Noncanonical
+
+/-- info: 'Hex.SignDet.Descriptor.buildReencoding_invalid' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.buildReencoding_invalid
+
 /-- info: 'Hex.SignDet.Descriptor.constraints_at_root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.constraints_at_root
@@ -158,5 +225,9 @@ theorem cubic_absent (d : Descriptor CubicField Nat fieldSign 7)
 /-- info: 'Hex.SignDetMathlib.ReencodingConformance.cubic_absent' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_absent
+
+/-- info: 'Hex.SignDetMathlib.ReencodingConformance.Noncanonical.absent' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Noncanonical.absent
 
 end Hex.SignDetMathlib.ReencodingConformance

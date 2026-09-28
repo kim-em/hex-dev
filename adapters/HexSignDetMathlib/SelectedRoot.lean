@@ -404,15 +404,8 @@ theorem Reencoding.root_eq_source {context : Ctx}
     {a b : Endpoint E} (r : Reencoding source head a b) :
     r.target.root f hz h1 ha hs hm hnat hsign =
       source.root f hz h1 ha hs hm hnat hsign := by
-  let x := r.target.root f hz h1 ha hs hm hnat hsign
-  have hc := r.target_constraints f hz h1 ha hs hm hnat hsign
-  have hx : x ∈ Tarski.rootsIn (interpret f hz source.raw.head)
-      (source.raw.lower.map f) (source.raw.upper.map f) := by
-    apply (Tarski.mem_rootsIn_iff _ (source.head_ne_zero f hz) _ _ _).mpr
-    exact ⟨source.constraints_head f hz x hc,
-      source.constraints_interval f hz h1 ha hs hm hnat hsign x hc⟩
-  exact source.root_unique f hz h1 ha hs hm hnat hsign x hx
-    (source.constraints_queries f hz x hc)
+  exact (source.constraints_iff f hz h1 ha hs hm hnat hsign _).mp
+    (r.target_constraints f hz h1 ha hs hm hnat hsign)
 
 include h1 ha hs hm hnat hsign in
 /-- Equality returned by a checked cross-polynomial comparison identifies the
