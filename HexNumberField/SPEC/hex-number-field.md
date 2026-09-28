@@ -1167,6 +1167,9 @@ def ofAlgebraics? (a : AlgebraicNumber) (bs : Array AlgebraicNumber) :
 structure Presentation where
   generator : AlgebraicNumber
   entries : Array (QAdjoin generator)
+def recoverShift? (theta alpha gamma : AlgebraicNumber) (shift : Int) :
+    Option (QAdjoin gamma × QAdjoin gamma)
+def fastPair? (theta alpha : AlgebraicNumber) : Option Presentation
 def common (bs : Array AlgebraicNumber) : Presentation
 end QAdjoin
 ```
@@ -1210,9 +1213,14 @@ this branch away from the negative real axis, not unconditionally.
 `ofAlgebraics? a bs` shares the power table and preserves one option per input.
 `QAdjoin.common bs` returns a `Presentation` with one `generator` and an
 `entries : Array (QAdjoin generator)`, preserving input values, order and
-duplicates. Empty and all-zero inputs use generator zero. These wrappers
-reuse the existing certified primitive-element search and coordinate recovery;
-no independent field-search implementation is added.
+duplicates. Empty and all-zero inputs use generator zero. `recoverShift?`
+computes the linear gcd for a proposed generator `gamma = theta + shift * alpha`
+and accepts its coordinates only after exact comparison with both original
+algebraic numbers. The two-generator path tries shift one when its degree is
+the product of the input degrees; general cases use the existing certified
+primitive-element search and trace-based coordinate recovery. The tower
+flattening operation shares this checked linear-gcd recovery. There is no
+second field-search implementation.
 
 The real library owns `AlgebraicNumber.re`, `im`, and `ofReal`, with both
 projections returning `RealAlgebraicNumber`. It computes them through

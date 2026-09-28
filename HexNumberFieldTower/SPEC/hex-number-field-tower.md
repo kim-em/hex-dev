@@ -403,7 +403,8 @@ searches and root selection have input-computable finite bounds.
 For an accepted `γ = θ + cα`, first lift the minimal polynomials of `θ` and `α`
 into `ℚ(γ)[Y]` and take the gcd of `mα(Y)` with `mθ(γ - cY)`. A linear gcd gives
 coordinates for `α` and `θ = γ - cα`, which are validated against their
-canonical algebraic values. Direct scanning accepts only this fast path. For
+canonical algebraic values through `QAdjoin.recoverShift?`, shared with the
+common-field presentation. Direct scanning accepts only this fast path. For
 the maximum-degree fallback, failed fast recovery is followed by exact trace
 pairing in the proved-equal generated field. Substitute the prior generator
 coordinates through the recovered `θ`. These coordinate expressions define

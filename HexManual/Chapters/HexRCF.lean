@@ -506,9 +506,13 @@ The next examples mix Mathlib's `Real.sqrt 2` with a Hex root selected from
 `X² − 3`. They also use the ordinary `QAdjoin` element `1 + √3`, converted
 back to a real algebraic number. `rcf` checks each proposed common-field
 coordinate against the original selected root before proving the sentence.
-For multiple sources, this path currently needs a checked quadratic-norm
-certificate for the computed common field. Other field combinations decline
-with a diagnostic.
+For multiple sources, the tactic checks a defining polynomial and selected
+real root for the common field, then verifies that every original coefficient
+has the proposed value there. The higher-degree example below combines the
+selected real root of `X³ − 2` with `Real.sqrt 2`.
+Some larger combinations still decline with an irreducibility-witness
+diagnostic: the current certificate search does not cover every polynomial
+that can define a common field.
 
 ```lean
 open Hex.RCF.RealCoefficients
@@ -641,6 +645,11 @@ example : ∀ x : ℝ,
 set_option maxHeartbeats 5000000 in
 example : ∀ x : ℝ,
     x ^ 2 + shiftedThree.toReal - Real.sqrt 2 > 0 := by
+  rcf
+
+set_option maxHeartbeats 5000000 in
+example : ∀ x : ℝ,
+    x ^ 2 + selectedCubic.toReal - Real.sqrt 2 + 1 > 0 := by
   rcf
 
 /-- error: rcf: the universal sentence is false on the

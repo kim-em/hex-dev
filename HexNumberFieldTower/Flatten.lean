@@ -103,14 +103,6 @@ def candidateAt? (theta alpha : AlgebraicNumber) (target index : Nat) :
         none
   | none => none
 
-/-- Lift an integer polynomial coefficientwise into a fixed primitive
-presentation. -/
-@[expose]
-def liftZPoly {p : ZPoly} {x : SimpleRoot p}
-    (f : ZPoly) : DensePoly (PolyQuot p x) :=
-  DensePoly.ofCoeffs <| f.toArray.map fun (coefficient : Int) =>
-    (coefficient : Rat) • (1 : PolyQuot p x)
-
 /-- Evaluate a rational coordinate polynomial in another fixed presentation. -/
 @[expose]
 def evalRatPoly {p : ZPoly} {x : SimpleRoot p}
@@ -133,48 +125,11 @@ def tracePair? (theta alpha gamma : AlgebraicNumber) :
     AlgebraicPoly.Common.coordinates? gamma alpha powers
   some (thetaCoordinate, alphaCoordinate)
 
-/-- Validate a recovered primitive coordinate against its canonical algebraic
-target. -/
-@[expose]
-def checkCoordinate? (target gamma : AlgebraicNumber)
-    (coordinate : PolyQuot gamma.p gamma.x) :
-    Option (PolyQuot gamma.p gamma.x) := do
-  let recovered ← @PolyQuot.toAlgebraicNumber? gamma.p gamma.x gamma.checked
-    coordinate gamma.rep gamma.rep_mk
-  if recovered == target then some coordinate else none
-
-/-- Validate both fast gcd coordinates before exposing them. -/
-@[expose]
-def checkPair? (theta alpha gamma : AlgebraicNumber)
-    (coordinates : PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x) :
-    Option (PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x) := do
-  let thetaCoordinate ← checkCoordinate? theta gamma coordinates.1
-  let alphaCoordinate ← checkCoordinate? alpha gamma coordinates.2
-  some (thetaCoordinate, alphaCoordinate)
-
-/-- Recover `theta` and `alpha` in a candidate presentation
-`gamma = theta + shift * alpha` using the validated linear-gcd path only. -/
+/-- Recover both inputs through the shared checked linear-gcd conversion. -/
 @[expose]
 def recoverPairFast? (theta alpha gamma : AlgebraicNumber) (shift : Int) :
-    Option (PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x) := do
-  if shift = 0 then none else
-  letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
-  let gammaCoordinate : PolyQuot gamma.p gamma.x := gamma.toQAdjoin
-  let affine : DensePoly (PolyQuot gamma.p gamma.x) :=
-    DensePoly.ofList
-      [gammaCoordinate, (-(shift : Rat)) • (1 : PolyQuot gamma.p gamma.x)]
-  let thetaRelation :=
-    DensePoly.composeImpl (liftZPoly theta.p) affine
-  let alphaRelation : DensePoly (PolyQuot gamma.p gamma.x) :=
-    liftZPoly alpha.p
-  let common := DensePoly.gcd thetaRelation alphaRelation
-  if common.natDegree = 1 && common.leadingCoeff != 0 then
-    let alphaCoordinate := -(common.coeff 0) / common.leadingCoeff
-    let thetaCoordinate :=
-      gammaCoordinate - (shift : Rat) • alphaCoordinate
-    checkPair? theta alpha gamma (thetaCoordinate, alphaCoordinate)
-  else
-    none
+    Option (PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x) :=
+  QAdjoin.recoverShift? theta alpha gamma shift
 
 /-- Recover `theta` and `alpha` in a primitive candidate presentation. The
 bounded scan uses only `recoverPairFast?`; this total fallback adds trace
