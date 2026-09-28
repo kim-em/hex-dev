@@ -16,6 +16,7 @@ public import HexRealClosure.TowerTests
 public import HexRealClosure.FrameFormatTests
 public import HexRealClosure.TowerOrderTests
 public import HexRealClosure.TowerYunTests
+public import HexRealClosure.TowerRefinementTests
 public meta import HexSturm.Basic
 public meta import HexRealClosure.Bounds
 public meta import HexRealClosure.Deflation

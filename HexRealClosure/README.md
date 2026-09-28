@@ -560,7 +560,7 @@ model through three arbitrary validated root levels, including the algebraicity
 and image-field inclusions. The semantic root results inherit only the named
 `Tarski.check_rootSum` admission (#10389), alongside the standard three axioms;
 this adds no admission. They are relative to a supplied real-closed ambient
-field and base embedding. Ambient existence, compatibility across refinements
+field and base embedding. Ambient existence, arbitrary recursive refinement of a whole dependency closure
 and the real-closed union remain open. No tower performance claim is made.
 
 ### Yun decomposition over native tower coefficients
@@ -595,3 +595,39 @@ proofs use only the standard three axioms; applications of the selected-root
 model retain its inherited #10389 dependency. This supplies tower multiplicity
 semantics, not complete root isolation or the remaining conformance and
 performance evaluation.
+
+### Checked persistent root refinement
+
+`Context.refine` takes a checked upstream `Reencoding` of the final root over
+an unchanged predecessor. It creates a new immutable context and transports
+each old value by reading its actual stored polynomial and packing it at the
+same selected root in the new definition. The old context and its values stay
+valid. `Context.polynomial` and `Context.ofPoly` expose these native operations
+without imposing a degree bound on general representatives.
+
+`Model.refine_value`, `refine_zero`, `refine_equal` and `refine_compare` prove
+value preservation, canonical zero preservation and reflection, and preservation
+of actual native comparison results. `refine_field` identifies the whole image
+field before and after refinement. `Refinement.mapPoly` converts native
+coefficients; `refine_degree` and `refine_poly` prove exact degree and ambient
+polynomial preservation.
+
+`Refinement.mapDescriptor?` transports a later root's head and endpoints and
+rebuilds its evidence against the new predecessor signature. `refine_descriptor`
+proves this operation succeeds for every validated later descriptor;
+`refine_root` proves it selects the same ambient root. `Refinement.mapValue`
+converts values at that later level using their actual stored polynomial, and
+`refine_later` proves preservation when using the descriptor returned by
+revalidation. Old context bindings are rejected by the new reader and validator.
+
+Run `lake build HexRealClosure.TowerRefinementTests HexRealClosureMathlib.TowerModelTests`.
+Native checks refine a nonmonic reducible definition over an algebraic
+predecessor, including canonical zero, a noncanonical one, inverses, polynomial
+transport, stale packets, and a third root with a transported inverse. Kernel
+examples apply the general preservation results to arbitrary validated
+three-level towers. These companion proofs retain only the inherited named
+#10389 admission and the standard three axioms; the executable refinement
+constructor uses only the standard three. This API covers a final root change
+and its immediate later level. Automated recursive rebuilding of an arbitrary
+dependency closure and base enlargement remain open. No performance result is
+claimed here.

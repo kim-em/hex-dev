@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.FrameFormat
+public import HexRealClosure.TowerPolynomial
 public import HexRealClosure.TowerOrder
 public import HexRealClosureMathlib.Algebraic
 public import HexPolyMathlib.GrindTransport
@@ -214,7 +214,8 @@ theorem root_generator :
       descriptor.root model.value model.zero_iff model.one model.add model.sub
         model.mul model.nat model.sign := by
   dsimp only [root]
-  rw [Algebraic.Element.denote_ofPoly model.value model.zero_iff model.one
+  rw [Algebraic.Element.denote_ofPoly
+        (context := Algebraic.Context.adjoin descriptor (Context.pack chain).isClean) model.value model.zero_iff model.one
     model.add model.sub model.mul model.nat model.sign model.neg model.inv]
   have hz : model.value (@Zero.zero E inferInstance) = 0 :=
     (model.zero_iff (@Zero.zero E inferInstance)).mpr rfl
@@ -293,26 +294,54 @@ theorem adjoin_compare (model : Model context K)
   rw [(model.adjoin descriptor).compare_spec, model.compare_spec,
     model.adjoin_embed, model.adjoin_embed]
 
-/-- Every native child expression retains a polynomial representative evaluated
-at the selected generator. No degree bound or literal equality is asserted. -/
+/-- Interpret the actual polynomial retained by the native public child. -/
+theorem adjoin_value (model : Model context K)
+    (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature)
+    (a : (context.adjoin descriptor).context.Value) :
+    (model.adjoin descriptor).value a =
+      (HexPolyMathlib.Interpret.interpret model.value model.zero_iff
+        (context.polynomial descriptor a)).eval
+          ((model.adjoin descriptor).value (context.adjoin descriptor).generator) := by
+  cases context with
+  | pack chain =>
+    have hc := (Context.adjoin_native chain descriptor).1
+    let b := _root_.cast (congrArg Context.Value hc) a
+    rw [model.adjoin_generator]
+    unfold adjoin
+    rw [cast_value _ _ b a (cast_heq _ _).symm]
+    simp only [root, Context.polynomial, Algebraic.Element.denote, Algebraic.Context.evalPoly,
+      Algebraic.Context.rootValue, Algebraic.Context.root_adjoin]
+    rfl
+
+/-- Every native child expression has its actual polynomial representative
+at the selected generator. General representatives have no degree bound. -/
 theorem adjoin_polynomial (model : Model context K)
     (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature)
     (a : (context.adjoin descriptor).context.Value) :
     ∃ p : DensePoly context.Value,
       (model.adjoin descriptor).value a =
         (HexPolyMathlib.Interpret.interpret model.value model.zero_iff p).eval
-          ((model.adjoin descriptor).value (context.adjoin descriptor).generator) := by
+          ((model.adjoin descriptor).value (context.adjoin descriptor).generator) :=
+  ⟨context.polynomial descriptor a, model.adjoin_value descriptor a⟩
+
+/-- Packing through the actual public child evaluates at its selected root. -/
+theorem adjoin_ofPoly (model : Model context K)
+    (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature)
+    (p : DensePoly context.Value) :
+    (model.adjoin descriptor).value (context.ofPoly descriptor p) =
+      (HexPolyMathlib.Interpret.interpret model.value model.zero_iff p).eval
+        ((model.adjoin descriptor).value (context.adjoin descriptor).generator) := by
   cases context with
   | pack chain =>
-    let extension := Context.adjoin (.pack chain) descriptor
-    have hc := (Context.adjoin_native chain descriptor).1
-    let b := _root_.cast (congrArg Context.Value hc) a
-    refine ⟨Algebraic.Element.polynomial b, ?_⟩
     rw [model.adjoin_generator]
     unfold adjoin
-    rw [cast_value _ _ b a (cast_heq _ _).symm]
-    simp only [root, Algebraic.Element.denote, Algebraic.Context.evalPoly,
-      Algebraic.Context.rootValue, Algebraic.Context.root_adjoin]
+    dsimp only [Context.ofPoly]
+    rw [cast_value _ _ _ _ (cast_heq _ _)]
+    simpa only [root, Algebraic.Context.evalPoly, Algebraic.Context.rootValue,
+      Algebraic.Context.root_adjoin] using
+      Algebraic.Element.denote_ofPoly
+        (context := Algebraic.Context.adjoin descriptor (Context.pack chain).isClean) model.value model.zero_iff model.one model.add
+        model.sub model.mul model.nat model.sign model.neg model.inv p
 
 /-- Successive native root levels include the predecessor's entire value field. -/
 theorem adjoin_mono (model : Model context K)

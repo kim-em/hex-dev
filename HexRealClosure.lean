@@ -14,3 +14,4 @@ public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.TowerCatalog
 public import HexRealClosure.FrameFormat
 public import HexRealClosure.TowerOrder
+public import HexRealClosure.TowerRefinement
