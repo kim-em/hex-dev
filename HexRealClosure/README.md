@@ -153,6 +153,13 @@ remaining-multiplicity weight decreases on every nonconstant round and starts
 at the original degree. `initial_loop_bound` proves that the executable's fuel
 covers the multiplicity rounds, including gaps with no emitted factor. These
 proofs use ordinary kernel checking and have no admitted dependencies.
+`decompose_root` proves that every input root appears in the actual producer
+output with its original multiplicity, without a replay-acceptance premise.
+`decompose_factor` proves monicity, positive degree and labels for every emitted
+factor. Over an algebraically closed coefficient field, these factors pass
+the squarefreeness and distinct-label coprimality gcd checks. The raw recurrence
+also has strictly increasing labels and retains the input's leading coefficient
+without requiring field laws on stored syntax.
 The proof that `decompose` always passes replay on repeated-factor inputs is
 also outstanding, so unchecked outputs are not certified decompositions.
 

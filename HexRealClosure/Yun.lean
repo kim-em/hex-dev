@@ -64,6 +64,60 @@ original degree bounds the fuel, including rounds that emit no factor. -/
         let out := if 0 < z.natDegree then out.push (z, multiplicity) else out
         loop (v / z) (t / z) (multiplicity + 1) fuel out
 
+/-- Every already emitted factor remains in the loop's final array. -/
+theorem mem_loop {K : Type u} [Zero K] [One K] [Add K] [Sub K]
+    [Mul K] [Div K] [Inv K] [NatCast K] [DecidableEq K]
+    (v w : DensePoly K) (i fuel : Nat) (out : Array (DensePoly K × Nat))
+    (entry : DensePoly K × Nat) (hentry : entry ∈ out) :
+    entry ∈ loop v w i fuel out := by
+  induction fuel generalizing v w i out with
+  | zero => exact hentry
+  | succ fuel ih =>
+      by_cases hv : v.natDegree = 0
+      · simpa only [loop, hv, ↓reduceIte] using hentry
+      · simp only [loop, hv, ↓reduceIte]
+        apply ih
+        split
+        · exact Array.mem_push_of_mem _ hentry
+        · exact hentry
+
+/-- The loop emits strictly increasing multiplicity labels. -/
+theorem loop_labels {K : Type u} [Zero K] [One K] [Add K] [Sub K]
+    [Mul K] [Div K] [Inv K] [NatCast K] [DecidableEq K]
+    (v w : DensePoly K) (i fuel : Nat) (out : Array (DensePoly K × Nat))
+    (hpairwise : out.toList.Pairwise fun a b => a.2 < b.2)
+    (hbelow : ∀ entry ∈ out.toList, entry.2 < i) :
+    (loop v w i fuel out).toList.Pairwise (fun a b => a.2 < b.2) ∧
+      ∀ entry ∈ (loop v w i fuel out).toList, entry.2 < i + fuel := by
+  induction fuel generalizing v w i out with
+  | zero =>
+      exact ⟨hpairwise, by simpa only [loop, Nat.add_zero] using hbelow⟩
+  | succ fuel ih =>
+      rw [loop]
+      split
+      · exact ⟨hpairwise, fun entry he => by have := hbelow entry he; omega⟩
+      · dsimp only
+        let t := w - DensePoly.derivativeImpl v
+        let z := DensePoly.monicize (DensePoly.gcd v t)
+        split
+        · have hr := ih (v / z) (t / z) (i + 1) (out.push (z, i)) (by
+            rw [Array.toList_push, List.pairwise_append]
+            refine ⟨hpairwise, by simp, ?_⟩
+            intro a ha b hb
+            rw [List.mem_singleton] at hb
+            subst b
+            exact hbelow a ha) (by
+            intro entry he
+            rw [Array.toList_push, List.mem_append, List.mem_singleton] at he
+            rcases he with he | rfl
+            · have := hbelow entry he
+              omega
+            · omega)
+          exact ⟨hr.1, fun entry he => by have := hr.2 entry he; omega⟩
+        · have hr := ih (v / z) (t / z) (i + 1) out hpairwise
+            (fun entry he => by have := hbelow entry he; omega)
+          exact ⟨hr.1, fun entry he => by have := hr.2 entry he; omega⟩
+
 /-- Yun's recurrence commutes with a zero-reflecting coefficient
 interpretation. No ring laws are required of the stored coefficients. -/
 theorem map_loop {E : Type u} {F : Type v}
@@ -142,6 +196,41 @@ into an ordered field before claiming multiplicity correctness. -/
     let v := f / a
     let w := DensePoly.derivativeImpl f / a
     .factors f.leadingCoeff (loop v w 1 (f.natDegree + 1) #[])
+
+/-- Every factor array produced by the raw recurrence has strictly
+increasing multiplicity labels, without requiring coefficient field laws. -/
+theorem decompose_labels {K : Type u} [Zero K] [One K] [Add K] [Sub K]
+    [Mul K] [Div K] [Inv K] [NatCast K] [DecidableEq K]
+    (f : DensePoly K) (unit : K) (entries : Array (DensePoly K × Nat))
+    (hresult : decomposeRaw f = .factors unit entries) :
+    entries.toList.Pairwise (fun a b => a.2 < b.2) := by
+  unfold decomposeRaw at hresult
+  split at hresult
+  · cases hresult
+  · split at hresult
+    · cases hresult
+      simp
+    · simp only [Decomposition.factors.injEq] at hresult
+      rw [← hresult.2]
+      exact (loop_labels _ _ 1 (f.natDegree + 1) #[]
+        (by simp) (by intro entry he; simp at he)).1
+
+/-- A nonzero result retains exactly the input's leading coefficient. -/
+theorem decompose_unit {K : Type u} [Zero K] [One K] [Add K] [Sub K]
+    [Mul K] [Div K] [Inv K] [NatCast K] [DecidableEq K]
+    (f : DensePoly K) (unit : K) (entries : Array (DensePoly K × Nat))
+    (hresult : decomposeRaw f = .factors unit entries) :
+    unit = f.leadingCoeff ∧ f.isZero = false := by
+  unfold decomposeRaw at hresult
+  split at hresult
+  · cases hresult
+  · rename_i hzero
+    have hz : f.isZero = false := Bool.eq_false_of_ne_true hzero
+    split at hresult
+    · simp only [Decomposition.factors.injEq] at hresult
+      exact ⟨hresult.1.symm, hz⟩
+    · simp only [Decomposition.factors.injEq] at hresult
+      exact ⟨hresult.1.symm, hz⟩
 
 /-- The raw Yun computation has exactly the same interpreted result as its
 ordered-field counterpart whenever coefficient operations preserve values and
