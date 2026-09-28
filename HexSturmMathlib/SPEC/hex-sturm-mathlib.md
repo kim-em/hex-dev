@@ -35,11 +35,12 @@ recomputes exact signs and variations at the supplied interval; its acceptance
 theorem requires the original certificate to bind that interval. Neither
 translation calls polynomial division, gcd, or a chain producer.
 
-The root-sum/replay semantics, root-count and singleton-sign theorems still
-require the foundation delivered through hex-real-roots-mathlib. The remaining
-Phase-4 evidence below is also required. No axioms or
-conditional stand-ins supply the missing Sturm–Tarski theorem. No release or
-phase completion is claimed.
+The optional `HexQuerySemantics` target proves root-sum/replay semantics,
+root counts, nonnegativity and degree bounds, and singleton-root signs through
+the shared hex-real-roots-mathlib foundation. The theorem for arbitrary
+accepted certificates has no producer-success hypothesis. All these results
+use only Lean's standard logical axioms. The remaining Phase-4 evidence below
+is required before phase completion.
 
 `HexSturmMathlib` imports `HexSturm`, `HexPolyMathlib` and
 `HexRealRootsMathlib`. The shared signed-remainder theorem, representation and
@@ -338,6 +339,10 @@ include valid and rejected replay probes. Separate producer,
 coefficient-sign and endpoint arithmetic measurements in Mathlib-free benches
 owned by hex-sturm/hex-real-roots from elaboration and kernel proof costs.
 No ordinary bench target imports this companion.
+The `scripts/bench/sturm_semantics_sweep.py` driver compares the semantic
+replay module with its exact import-only baseline, retaining compiler output
+and axiom audits. It measures fresh applications of the imported theorem;
+it does not count the foundation's first build as replay cost.
 
 Compare matched rational/integer replay paths and positive-clearing transport;
 record arithmetic/guard/translation costs separately and include one

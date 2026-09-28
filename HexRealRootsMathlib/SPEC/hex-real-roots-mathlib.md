@@ -1,7 +1,7 @@
 # hex-real-roots-mathlib
 
 Dependencies: hex-real-roots, hex-poly-mathlib, hex-poly-z-mathlib and
-Mathlib; the shared abstract Sturm–Tarski foundation adds a planned Tau Ceti
+Mathlib; the shared abstract Sturm–Tarski foundation uses a Tau Ceti
 import. When implemented, the release configuration must carry that pinned
 third-party dependency to the published companion and its downstream consumers.
 This SPEC does not change publication metadata.
