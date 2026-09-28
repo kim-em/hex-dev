@@ -317,6 +317,15 @@ strict finite-endpoint queries. It retains joint count-one evidence and a
 validated target descriptor. Invalid target domains and absent selected roots
 return `none`; internal invariant failures remain diagnostic. The companion
 proves that each actual endpoint query expresses its strict bound.
+`Descriptor.buildReencoding_refinement` proves that the actual algorithm succeeds
+when a valid interval for the same head retains the selected root and its root
+set is contained in the original domain. The output preserves that root and
+has fresh evidence bound to the new interval. The old validated partial word
+supplies uniqueness, so this proof applies to noninjective representations
+and non-Archimedean coefficient interpretations without a general Thom
+injectivity theorem. `Descriptor.reencoding_rows` proves the unique joint row
+whenever any target contains the source root; establishing uniqueness from a
+new head's derivative word alone remains a separate foundation requirement.
 `Descriptor.buildComparison` re-encodes both roots on the common head over the
 whole line, then applies the guarded full Thom rule. It retains both joint
 replays and the common-product witness. This handles shared roots, different
