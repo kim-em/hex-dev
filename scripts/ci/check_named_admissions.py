@@ -175,9 +175,14 @@ def check() -> None:
         "HexSignDetMathlib." + ".".join(path.relative_to(
             ROOT / "conformance/HexSignDetMathlib").with_suffix("").parts)
         for path in sorted((ROOT / "conformance/HexSignDetMathlib").rglob("*.lean"))]
-    # Named roots remain mandatory; the glob also audits each new conformance
-    # module's own declarations rather than only its imported dependencies.
+    # Named roots remain mandatory; the glob also audits unnamed conformance
+    # modules, including their own declarations and imported dependencies.
     roots = list(dict.fromkeys(roots))
+    for path in sorted((ROOT / "conformance/HexSignDetMathlib").rglob("*.lean")):
+        module = "HexSignDetMathlib." + ".".join(path.relative_to(
+            ROOT / "conformance/HexSignDetMathlib").with_suffix("").parts)
+        if module_file(module) != path:
+            raise ValueError(f"conformance module {module} is shadowed by another source file")
     paths = set().union(*(import_cone(module) for module in roots))
     if BRIDGE not in paths:
         raise ValueError(f"the optional adapter no longer imports {BRIDGE}")

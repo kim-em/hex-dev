@@ -63,7 +63,6 @@ class AdmissionScannerTests(unittest.TestCase):
             sign.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
             conformance.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             completion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-
             handle.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
@@ -92,9 +91,16 @@ class AdmissionScannerTests(unittest.TestCase):
                 additional.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/Nested/AnotherConformance"):
                     audit.check()
+                additional.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                shadow = root / "adapters/HexSignDetMathlib/Nested/AnotherConformance.lean"
+                shadow.parent.mkdir(parents=True, exist_ok=True)
+                shadow.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "conformance module .* is shadowed"):
+                    audit.check()
+                shadow.unlink()
                 additional.unlink()
                 nested_adapter = root / "adapters/HexSignDetMathlib/Nested/AnotherAdapter.lean"
-                nested_adapter.parent.mkdir()
+                nested_adapter.parent.mkdir(exist_ok=True)
                 nested_adapter.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "unapproved admission in adapters/HexSignDetMathlib/Nested/AnotherAdapter"):
                     audit.check()
