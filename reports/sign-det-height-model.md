@@ -130,7 +130,9 @@ The archive preserves the exact premeasurement sources, including the
 original validator. The additional model-formula and relative-size validation passes the
 same retained data; it does not replace or remove measurements. Later report
 and validator edits do not change the measured normalization or checking
-functions. Reproduction uses the base and patch recorded in the metadata. Revision
+functions. Reproduction uses the base and patch recorded in each metadata file.
+Measurement revision identifiers need not remain in the published branch
+history; the archived patches and file hashes preserve the measured sources. Revision
 `640bf10bd` is not in the published branch history; its archived patch over
 base `18eb65686` reconstructs that source. Its build directory was shared
 with another worktree, as recorded by the resolved binary path. Hash and
