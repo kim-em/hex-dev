@@ -105,9 +105,9 @@ section MixedModel
 
 local instance : Field (RationalFn Rat) := HexPolyMathlib.fieldOfGrind
 noncomputable local instance : LinearOrder (RationalFn Rat) :=
-  RealContext.linearOrder HexRationalFnMathlib.ratField_eq OrderedFn.LiouvilleTests.transcendence
+  RealModel.linearOrder HexRationalFnMathlib.ratField_eq OrderedFn.LiouvilleTests.transcendence
 local instance : IsStrictOrderedRing (RationalFn Rat) :=
-  RealContext.strictOrderedRing HexRationalFnMathlib.ratField_eq OrderedFn.LiouvilleTests.transcendence
+  RealModel.strictOrderedRing HexRationalFnMathlib.ratField_eq OrderedFn.LiouvilleTests.transcendence
 
 private theorem real_sign (f : RationalFn Rat) :
     (⟨f⟩ : Element (realContext 1)).sign = (SignType.sign f : Int) :=
@@ -125,7 +125,50 @@ example (a : Element (realContext 1)) : a.embed.sign = a.sign :=
 example (a b : Element (realContext 1)) : a.embed.compare b.embed = a.compare b :=
   Element.embed_compare HexPolyMathlib.toGrind_fieldOfGrind (realContext 1) real_sign a b
 
+example : epsilon.sign = 1 :=
+  Element.infinitesimal_pos HexPolyMathlib.toGrind_fieldOfGrind (realContext 1) real_sign
+
+example (a : Element (realContext 1)) (ha : 0 < a.stored) :
+    epsilon.compare a.embed = .lt :=
+  Element.infinitesimal_lt HexPolyMathlib.toGrind_fieldOfGrind (realContext 1) real_sign a ha
+
+section SecondInfinitesimal
+
+local instance : Field (RationalFn (RationalFn Rat)) := HexPolyMathlib.fieldOfGrind
+noncomputable local instance : LinearOrder (RationalFn (RationalFn Rat)) :=
+  InfinitesimalModel.linearOrder HexPolyMathlib.toGrind_fieldOfGrind
+local instance : IsStrictOrderedRing (RationalFn (RationalFn Rat)) :=
+  InfinitesimalModel.strictOrderedRing HexPolyMathlib.toGrind_fieldOfGrind
+
+private theorem mixed_sign (f : RationalFn (RationalFn Rat)) :
+    (⟨f⟩ : Element mixed).sign = (SignType.sign f : Int) :=
+  Element.infinitesimal_orderSign HexPolyMathlib.toGrind_fieldOfGrind
+    (realContext 1) real_sign ⟨f⟩
+
+example (a : Element mixed.infinitesimal) : a.sign =
+    (SignType.sign (Infinitesimal.embed
+      (modelFraction HexPolyMathlib.toGrind_fieldOfGrind a.stored)) : Int) :=
+  Element.infinitesimal_sign HexPolyMathlib.toGrind_fieldOfGrind mixed mixed_sign a
+
+example (a b : Element mixed) : a.embed.compare b.embed = a.compare b :=
+  Element.embed_compare HexPolyMathlib.toGrind_fieldOfGrind mixed mixed_sign a b
+
+example : (Element.infinitesimal mixed).sign = 1 :=
+  Element.infinitesimal_pos HexPolyMathlib.toGrind_fieldOfGrind mixed mixed_sign
+
+example (a : Element mixed) (ha : 0 < a.stored) :
+    (Element.infinitesimal mixed).compare a.embed = .lt :=
+  Element.infinitesimal_lt HexPolyMathlib.toGrind_fieldOfGrind mixed mixed_sign a ha
+
+end SecondInfinitesimal
+
 end MixedModel
+
+example (a : Element (rational registry).infinitesimal) : a.sign =
+    (SignType.sign (Infinitesimal.embed
+      (modelFraction HexRationalFnMathlib.ratField_eq a.stored)) : Int) :=
+  Element.infinitesimal_sign HexRationalFnMathlib.ratField_eq (rational registry)
+    Infinitesimal.orderSign_eq a
 
 private def rationalValue : Element (.real prefixContext) := ⟨3⟩
 private def included : Element (realContext 1) :=
@@ -179,7 +222,7 @@ example (r : Registry) (k₁ k₂ : ConstantKey)
     (hc₂ : ∀ δ, 0 < δ → Contains ((r k₂).get p₂ δ) σ)
     (hw₂ : ∀ δ, 0 < δ → ((r k₂).get p₂ δ).width ≤ δ)
     (ht₂ : Real.RelativeTranscendence
-      (RealContext.evalHom HexRationalFnMathlib.ratField_eq ht) σ) :
+      (RealModel.evalHom HexRationalFnMathlib.ratField_eq ht) σ) :
     let first := RealContext.register HexRationalFnMathlib.ratField_eq
       (RealContext.rational r) k₁ p₁ ⟨Rat.castHom ℝ, τ, ha, hw, ht⟩
     ∃ (sp : ∀ f : RationalFn (RationalFn Rat),
@@ -187,24 +230,55 @@ example (r : Registry) (k₁ k₂ : ConstantKey)
       (ap : ∀ (f : RationalFn (RationalFn Rat)) (δ : Rat),
         Acc (Next (Real.approxAttempt (first.source k₂ p₂) f (Real.requestWidth δ))) 0),
       (Context.real (first.constant k₂ p₂ sp ap)).signature.constants = [k₁, k₂] ∧
+      (∀ f : RationalFn (RationalFn Rat),
+        (⟨f⟩ : Element (.real (first.constant k₂ p₂ sp ap))).sign =
+          sgn (Real.eval (RealModel.evalHom HexRationalFnMathlib.ratField_eq ht) σ
+            (modelFraction HexPolyMathlib.toGrind_fieldOfGrind f)) ∧
+        ((⟨f⟩ : Element (.real (first.constant k₂ p₂ sp ap))).sign = 0 ↔
+          (⟨f⟩ : Element (.real (first.constant k₂ p₂ sp ap))) = 0)) ∧
+      (letI : Field (RationalFn (RationalFn Rat)) := HexPolyMathlib.fieldOfGrind
+       letI : LinearOrder (RationalFn (RationalFn Rat)) :=
+         RealModel.linearOrder HexPolyMathlib.toGrind_fieldOfGrind ht₂
+       ∀ f : RationalFn (RationalFn Rat),
+         (⟨f⟩ : Element (.real (first.constant k₂ p₂ sp ap))).sign = (SignType.sign f : Int)) ∧
+      (∀ a b : Element (.real first),
+        (Element.embedConstant first k₂ p₂ sp ap a).compare
+          (Element.embedConstant first k₂ p₂ sp ap b) = a.compare b) ∧
       ∀ a : Element (.real (first.constant k₂ p₂ sp ap)), Element.read _ a.write = some a := by
   let first := RealContext.register HexRationalFnMathlib.ratField_eq
     (RealContext.rational r) k₁ p₁ ⟨Rat.castHom ℝ, τ, ha, hw, ht⟩
   have ha₂ : ApproximationCorrect
-      (RealContext.evalHom HexRationalFnMathlib.ratField_eq ht) σ (first.source k₂ p₂) :=
+      (RealModel.evalHom HexRationalFnMathlib.ratField_eq ht) σ (first.source k₂ p₂) :=
     (RealContext.rational r).source_correct HexRationalFnMathlib.ratField_eq
       k₁ p₁ _ _ ha ht k₂ p₂ σ hc₂
   have width₂ : ApproximationWidth (first.source k₂ p₂) :=
     (RealContext.rational r).source_width k₁ p₁ _ _ k₂ p₂ hw₂
   let reg₂ := first.registration HexPolyMathlib.toGrind_fieldOfGrind k₂ p₂
-    ⟨RealContext.evalHom HexRationalFnMathlib.ratField_eq ht, σ, ha₂, width₂, ht₂⟩
-  refine ⟨reg₂.signProgress, reg₂.approxProgress, ?_, ?_⟩
+    ⟨RealModel.evalHom HexRationalFnMathlib.ratField_eq ht, σ, ha₂, width₂, ht₂⟩
+  refine ⟨reg₂.signProgress, reg₂.approxProgress, ?_, ?_, ?_, ?_, ?_⟩
   · have firstKeys : first.chain.keys = [k₁] :=
       ((RealContext.rational r).keys_constant k₁ p₁ _ _).trans
         (congrArg (fun ks => ks ++ [k₁]) (RealContext.keys_rational r))
     have secondKeys := first.keys_constant k₂ p₂ reg₂.signProgress reg₂.approxProgress
     exact congrArg Signature.constants (Context.signature_real _)
       |>.trans (secondKeys.trans (congrArg (fun ks => ks ++ [k₂]) firstKeys))
+  · intro f
+    exact ⟨first.constant_sign HexPolyMathlib.toGrind_fieldOfGrind k₂ p₂
+      reg₂.signProgress reg₂.approxProgress ha₂ f,
+      first.constant_zero HexPolyMathlib.toGrind_fieldOfGrind k₂ p₂
+        reg₂.signProgress reg₂.approxProgress ha₂ ht₂ f⟩
+  · intro f
+    exact first.constant_orderSign HexPolyMathlib.toGrind_fieldOfGrind k₂ p₂
+      reg₂.signProgress reg₂.approxProgress ha₂ ht₂ f
+  · intro a b
+    have firstSign (f : RationalFn Rat) :
+        (⟨f⟩ : Element (.real first)).sign =
+          sgn (RealModel.evalHom HexRationalFnMathlib.ratField_eq ht f) := by
+      rw [RealModel.evalHom_apply]
+      exact (RealContext.rational r).constant_sign HexRationalFnMathlib.ratField_eq
+        k₁ p₁ _ _ ha f
+    exact Element.embedConstant_compare HexPolyMathlib.toGrind_fieldOfGrind first k₂ p₂
+      reg₂.signProgress reg₂.approxProgress ha₂ ht₂ firstSign a b
   · intro a
     exact Element.read_write a
 

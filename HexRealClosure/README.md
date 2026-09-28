@@ -240,9 +240,20 @@ containment and zero-reflection theorems concern the actual constructed child.
 The companion explicitly relates the executable and Mathlib field dictionaries:
 use `HexRationalFnMathlib.ratField_eq` at ℚ and
 `HexPolyMathlib.toGrind_fieldOfGrind` for subsequent native fraction fields.
-`RealContext.evalHom` embeds the native canonical carrier into ℝ;
-`RealContext.linearOrder` and `strictOrderedRing` give its induced order and
+In Mathlib-side code, select the executable rational dictionary before naming
+the rational context or its fraction carrier:
+
+```lean
+local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat
+```
+
+`RealModel.evalHom` embeds the native canonical carrier into ℝ;
+`RealModel.linearOrder` and `strictOrderedRing` give its induced order and
 ordered-ring laws. The resulting order supports infinitesimals after real levels.
+`InfinitesimalModel.embed`, `linearOrder` and `strictOrderedRing` provide the
+corresponding native Hahn model. `Element.infinitesimal_orderSign` gives sign
+agreement for the next step, so it can be repeated at arbitrary finite depth.
+The new infinitesimal is positive and below every positive predecessor element.
 
 `BaseContext.Context.real` finishes that prefix. `Context.infinitesimal` then
 adds any number of successive positive infinitesimals. The types prevent
@@ -274,10 +285,13 @@ Run `lake build HexRealClosure.BaseTests HexRealClosureMathlib.BaseTests`.
 The compiled examples exercise successive infinitesimals, explicit embeddings,
 inverse infinitesimals, fraction normalization, round trips, incompatible
 bindings, malformed level shapes and zero denominators. Companion tests apply
-the semantic theorems to an executable named constant and its infinitesimal
-child. A conditional two-constant construction verifies progress from the exact
-first-level bounds, relative transcendence over that whole field, key order and
-reader round trips. These base contexts do not yet contain algebraic levels.
+the semantic theorems to an executable named constant and two successive
+infinitesimals, including positivity and comparison with every positive
+predecessor element. A conditional two-constant construction verifies progress
+from the exact first-level bounds, relative transcendence over that whole field,
+second-level sign/zero/order correspondence, embedding comparisons, key order
+and reader round trips. These base contexts do not yet contain algebraic levels.
 Integrating general selected-root storage,
-full dependency transport, context reconstruction, isolation and exploration
+full dependency transport, context reconstruction with registered proof premises,
+isolation and exploration
 remains part of the tower implementation.
