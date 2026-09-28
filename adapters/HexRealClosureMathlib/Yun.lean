@@ -473,8 +473,22 @@ theorem check_real_rootMultiplicity (f : DensePoly Rat) (unit : Rat)
       ((HexPolyMathlib.toPolynomial entry.1).map (Rat.castHom ℝ)) x) :
     Polynomial.rootMultiplicity x
       ((HexPolyMathlib.toPolynomial f).map (Rat.castHom ℝ)) =
-      entry.2 :=
+    entry.2 :=
   check_map_rootMultiplicity (Rat.castHom ℝ) f unit entries entry hmem h x hroot
+
+/-- The producer proof composes with rational replay semantics using the
+same field instances as the executable rational tests. -/
+example (f : DensePoly Rat) (hdegree : 0 < f.natDegree)
+    (hgcd : DensePoly.monicize
+      (DensePoly.gcd f (DensePoly.derivativeImpl f)) = 1) :
+    HexPolyMathlib.toPolynomial f =
+      (#[(DensePoly.monicize f, 1)] : Array (DensePoly Rat × Nat)).toList.foldl
+        (fun product entry => product *
+          (HexPolyMathlib.toPolynomial entry.1) ^ entry.2)
+        (Polynomial.C f.leadingCoeff) := by
+  apply check_product_polynomial
+  rw [← decompose_squarefree f hdegree hgcd]
+  exact check_decompose_squarefree f hdegree hgcd
 
 end Hex.RealClosure.Yun
 

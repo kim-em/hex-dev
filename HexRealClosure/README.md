@@ -125,6 +125,10 @@ at each call repeats the search.
 ordered field. `Yun.decomposeRaw` runs the same recurrence on packed tower
 coefficients, where stored equality need not be value equality. The zero and
 nonzero-constant cases, including acceptance by replay, have direct proofs.
+For a positive-degree input whose monic gcd with its derivative is one,
+the producer returns its leading coefficient and its monic associate with
+multiplicity one, and this result is proved to pass replay. These squarefree
+producer proofs use the same field instances as the executable API.
 Runnable checks cover a
 non-monic input, gaps in multiplicities, mixed zero and nonzero roots with a
 fractional unit, a repeated irreducible quadratic, and coefficients in
@@ -136,10 +140,14 @@ Mathlib companion transports the product to mathematical polynomials and
 proves that accepted rational factors are squarefree and pairwise coprime.
 For every field embedding of ℚ, accepted factors cover exactly the roots of
 the input, and each factor label is the multiplicity of its roots in the
-input. This includes irrational real roots after mapping to ℝ. Arbitrary
-ordered coefficient towers still need an interpretation theorem. The proof
-that `decompose` always passes replay is also outstanding, so unchecked
-outputs are not certified decompositions.
+input. This includes irrational real roots after mapping to ℝ.
+`Yun.map_decomposeRaw` transports the raw recurrence through a zero-reflecting
+coefficient map that preserves its arithmetic. The companion instantiates
+this theorem for cached rational selected-root coefficients; their inverse
+semantics retain the named `Tarski.check_rootSum` admission (#10389).
+Arbitrary ordered coefficient towers still need their interpretation laws.
+The proof that `decompose` always passes replay on repeated-factor inputs is
+also outstanding, so unchecked outputs are not certified decompositions.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and
