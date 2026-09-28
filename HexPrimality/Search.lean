@@ -41,7 +41,7 @@ an individual divisor. Restart draws exclude degenerate polynomials and
 fixed starting points before entering the bounded loop.
 
 `partialFactor` is internal: trial division by the committed table, one
-counted deterministic Pollard `p - 1` stage-1 call, then Brent rho over a
+counted deterministic Pollard `p - 1` stage-1 call, then the bounded split portfolio over a
 worklist, with everything unsplittable multiplied into the residual. Its one
 theorem is the product invariant its certificate-search consumer needs; no
 primality and no completeness is claimed.
@@ -601,7 +601,7 @@ private theorem pMinusOnePhase_prod (acc : List (Nat × Nat)) (m : Nat)
 /-- Restart budget for each rho call inside the worklist. -/
 private def rhoRestartBudget : Nat := Internal.rhoRestartCap
 
-/-- Pollard-rho work admitted at each partial-factor worklist entry during
+/-- Bounded split work admitted at each partial-factor worklist entry during
 certificate search. This controls search resources only; every reported
 factor is still validated dynamically and every emitted certificate is
 checker-replayed. -/
@@ -610,7 +610,7 @@ structure PrimeCertBudget where
   rhoRestarts : Nat
   /-- Maximum Brent cycle steps per restart. -/
   rhoSteps : Nat
-  /-- Independently authorized SQUFOF work; zero rho work does not enable it. -/
+  /-- SQUFOF is authorized independently of rho and defaults to off. -/
   squfof : Squfof.Policy := .off
 deriving Repr, DecidableEq
 
@@ -714,7 +714,7 @@ def splitSearch (budget : PrimeCertBudget) (n : Nat) (r : Rand)
 end Internal
 
 /-- Internal partial-factor worklist result with exact search work. -/
-private structure RhoPhaseResult where
+private structure SplitPhaseResult where
   factors : List (Nat × Nat)
   residual : Nat
   rand : Rand
@@ -723,45 +723,45 @@ private structure RhoPhaseResult where
 
 /-- Composite worklist entries use the explicitly budgeted split portfolio.
 Fuel exhaustion retains every pending component in the residual. -/
-private def rhoPhase (budget : PrimeCertBudget) :
+private def splitPhase (budget : PrimeCertBudget) :
     Nat → List Nat → List (Nat × Nat) → Nat → Rand → Nat →
-      List FactorEvent → RhoPhaseResult
+      List FactorEvent → SplitPhaseResult
   | 0, stack, acc, residual, r, attempts, events =>
       ⟨acc, listProd stack * residual, r, attempts, events⟩
   | _ + 1, [], acc, residual, r, attempts, events => ⟨acc, residual, r, attempts, events⟩
   | fuel + 1, m :: stack, acc, residual, r, attempts, events =>
-      if m = 1 then rhoPhase budget fuel stack acc residual r attempts events
+      if m = 1 then splitPhase budget fuel stack acc residual r attempts events
       else if isProbablePrime m then
-        rhoPhase budget fuel stack (insertFactor m acc) residual r attempts events
+        splitPhase budget fuel stack (insertFactor m acc) residual r attempts events
       else
         let split := Internal.splitSearch budget m r
         match split.divisor with
         | some d =>
-            rhoPhase budget fuel (d.val :: m / d.val :: stack) acc residual
+            splitPhase budget fuel (d.val :: m / d.val :: stack) acc residual
               split.rand (attempts + split.attempts) (events ++ split.events)
         | none =>
-            rhoPhase budget fuel stack acc (residual * m) split.rand
+            splitPhase budget fuel stack acc (residual * m) split.rand
               (attempts + split.attempts) (events ++ split.events)
 
-private theorem rhoPhase_prod :
+private theorem splitPhase_prod :
     ∀ (budget : PrimeCertBudget) (fuel : Nat) (stack : List Nat)
       (acc : List (Nat × Nat)) (residual : Nat) (r : Rand)
       (attempts : Nat) (events : List FactorEvent),
-      prodPows (rhoPhase budget fuel stack acc residual r attempts events).factors *
-          (rhoPhase budget fuel stack acc residual r attempts events).residual =
+      prodPows (splitPhase budget fuel stack acc residual r attempts events).factors *
+          (splitPhase budget fuel stack acc residual r attempts events).residual =
         prodPows acc * listProd stack * residual := by
   intro budget fuel
   induction fuel with
   | zero =>
       intro stack acc residual r attempts events
-      simp only [rhoPhase]
+      simp only [splitPhase]
       rw [Nat.mul_assoc]
   | succ fuel ih =>
       intro stack acc residual r attempts events
       match stack with
-      | [] => simp [rhoPhase, listProd]
+      | [] => simp [splitPhase, listProd]
       | m :: stack =>
-          unfold rhoPhase
+          unfold splitPhase
           by_cases h1 : m = 1
           · rw [ite_eq_left h1, ih]
             subst h1
@@ -792,7 +792,7 @@ private structure PartialSearch where
   events : List FactorEvent
 
 /-- Trial division by the committed table, one base-2 stage-1 attempt at bound
-64 when fuel is positive and the cofactor is composite, then Brent rho over a
+64 when fuel is positive and the cofactor is composite, then the split portfolio over a
 worklist, with `fuel` bounding the worklist steps. Everything the search cannot
 split multiplies into the residual. Internal; certificate search is the only
 consumer, and hex-int-factor builds its own assembly over the counted search
@@ -802,7 +802,7 @@ private def partialFactor (budget : PrimeCertBudget) (n : Nat) (r : Rand)
     PartialSearch :=
   let trial := trialGo primeTable.toList [] n
   let smooth := pMinusOnePhase trial.1 trial.2 r fuel
-  let phase := rhoPhase budget fuel smooth.stack smooth.factors 1 smooth.rand
+  let phase := splitPhase budget fuel smooth.stack smooth.factors 1 smooth.rand
     smooth.attempts []
   ⟨⟨phase.factors, phase.residual⟩, phase.rand, phase.attempts, phase.events⟩
 
@@ -825,7 +825,7 @@ private theorem partialFactor_prod (budget : PrimeCertBudget) (n : Nat)
       (partialFactor budget n r fuel).raw.residual = n := by
   unfold partialFactor
   dsimp only
-  rw [rhoPhase_prod]
+  rw [splitPhase_prod]
   rw [pMinusOnePhase_prod]
   simpa [prodPows] using trialGo_prod primeTable.toList [] n
 

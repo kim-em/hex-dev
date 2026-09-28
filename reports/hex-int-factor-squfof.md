@@ -102,3 +102,43 @@ The manual presents these as explicit options for users who know their input
 family. Bit length alone does not establish balanced factors or make a bounded
 SQUFOF attempt profitable; the default portfolio and tactic allocations remain
 unchanged.
+
+## Exploratory raw policy comparisons
+
+The [retained exploratory data](bench-results/squfof-dispatch-exploratory/)
+contains 13 completed native schedules (3760 timed records), five input lists
+(150 prime pairs), and two unpinned manual-output diagnostics. All 2878 reported
+proper divisors were independently checked by integer division; all input
+prime pairs were independently checked for primality and product equality.
+Every completed sample is retained. Each schedule records its CPU lease,
+host, executable hash, source commit, exact arms and caps, and end record.
+These are compiled raw splitter observations, without certificates or checked
+complete-factorization work. They are not a preregistered default-promotion
+comparison. The diagnostic records are explicitly excluded from timing claims.
+
+The schedules explore short and wide multiplier caps, independently drawn
+balanced pairs, intermediate bit sizes, seeds `1`, `27`, `10452`, and `n`,
+unbalanced pairs, and a short rho prepass. The candidate bit-length policy
+uses one multiplier/128 steps at 34–39 and 60–64 bits, one/8192 at 40–47,
+one/65536 at 48–55, and two/65536 at 56–59. Raw first-placement cost is
+estimated as SQUFOF time on success, or SQUFOF plus the adjacent raw rho time
+on failure. This estimate excludes dispatch overhead and changes to later
+randomized/certificate work. Each file records the actual schedule; arm order
+alternates where an adjacent comparison is specified.
+
+On the [40 unbalanced cases](bench-results/squfof-dispatch-exploratory/hex-10452-unbalanced-probe.jsonl),
+the median per-input estimated first/rho ratio is **3.58**. SQUFOF misses on
+two inputs. For `278156805478759213 = 177601 × 1566189410413`, its two-multiplier
+65536-step call exhausts at a median 14.215 ms, versus rho's 0.168 ms. Trying
+SQUFOF first and then rho therefore has an estimated **85.84×** raw cost.
+On the [20 intermediate unbalanced cases](bench-results/squfof-dispatch-exploratory/hex-10452-midunbalanced-probe.jsonl),
+the median estimated first/rho ratio is **2.11**, with one SQUFOF miss and a
+worst ratio of **7.06** even on a SQUFOF success. Some inputs favor SQUFOF
+strongly, but these regressions prevent treating bit length as a safe
+automatic selector.
+
+First-placement attempts share an explicitly supplied total attempt pool with
+later routes, so they can also reduce the work left for those routes. The
+complete `factor?`/`factorPartial?` APIs instead retain separate fallback
+allocations. `.rescue` can avoid paying SQUFOF cost on a successful existing
+route; its benefit requires a separate comparison of capped failures.

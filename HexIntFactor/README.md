@@ -49,7 +49,7 @@ def twelve : CheckedFactorization 12 :=
   explicitly bounded SQUFOF before rho, or `.rescue limits` after the existing
   splitters fail. The default is `.off`. The policy applies recursively and
   carries its own attempt, step, and queue limits. See the
-  [complete-factorization examples and native timings](../reports/hex-int-factor-squfof.md).
+  [complete-factorization examples and native timings](https://github.com/kim-em/hex-dev/blob/main/reports/hex-int-factor-squfof.md).
 - `checkFactorization` and `checkPartial` replay untrusted factorization data.
   Prime entries carry `hex-primality` certificates, and bounded products reject
   oversized powers before constructing them.

@@ -115,7 +115,9 @@ factorization and partial-snapshot checkers remain the acceptance boundary.
 SQUFOF multiplier attempts join the existing exact attempt count; events
 retain limits, steps, queue peak, placement, and outcomes on success and
 exhaustion. The deterministic route draws no randomness. Its bounded failure
-does not displace or reduce rho, p−1, or ECM work. Exhaustion of a prime's
+does not reduce the separate fallback allocations in `factor?` or
+`factorPartial?`. In producers with a shared total attempt limit, first-placement
+SQUFOF attempts reduce the allowance left for later routes. Exhaustion of a prime's
 certificate construction skips SQUFOF on that prime. There is no inferred
 balance test or automatic bit-length cutoff beyond the primitive's domain.
 

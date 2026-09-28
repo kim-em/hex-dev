@@ -957,4 +957,73 @@ private def adapter := intFactorSearch allocation n seed
   squfof := .off
   primeBudget := { allocation.primeBudget with squfof := .first limits } } n seed).events.isEmpty
 
+-- Certificate search positively propagates its allocation into n-1 factoring.
+private def certBudget : PrimeCertBudget := {
+  rhoRestarts := 0, rhoSteps := 0, squfof := .first limits }
+private def certified := Internal.primeCertCountedWith? certBudget
+  80498616676896959 seed 64
+#guard (match certified with
+  | .ok s => (s.cert.raw.subject == 80498616676896959 && checkPrime s.cert.raw) && s.attempts == 18 &&
+      (fields n s.events).map (fun f => (f.lookup "placement", f.lookup "steps")) ==
+        [(some "first", some "2548")]
+  | _ => false)
+-- A producer policy of off still respects a separately enabled nested budget.
+#guard (match Internal.factorCountedWith? certBudget 64 80498616676896959 seed 64
+    (squfof := .off) with
+  | .ok s => checkFactorization s.factorization.raw &&
+      (fields n s.events).length == 1 && (fields 80498616676896959 s.events).isEmpty
+  | _ => false)
+
+-- Both upstream partial producers exercise rescue after their own fallbacks.
+private def upstreamRescue := defaultFactorSearch
+  { allocation with squfof := .rescue limits } n seed
+#guard upstreamRescue.raw.residual == 1 && upstreamRescue.attempts == 2 &&
+  upstreamRescue.rand == seed &&
+  (fields n upstreamRescue.events).map (fun f => f.lookup "placement") == [some "rescue"]
+private def coreRescue := Construction.factorSearch { allocation with
+  primeBudget := ⟨1, 1, .off⟩, squfof := .rescue limits
+  smoothBounds := [64], smoothBases := [2]
+  pMinusOneStage2 := true, attemptLimit := some 8 } n seed
+private def rhoMiss := Internal.rhoFactorCountedWith? n seed 1 1
+#guard (match rhoMiss with
+  | .error f => f.attempts == 1 && coreRescue.rand == f.rand
+  | _ => false)
+#guard coreRescue.raw.residual == 1 && coreRescue.attempts == 4 &&
+  (coreRescue.events.map fun e => match e with
+    | .pMinusOne _ => "p1"
+    | .route name _ => name) == ["p1", "p1", "squfof"] &&
+  (fields n coreRescue.events).map (fun f => f.lookup "placement") == [some "rescue"]
+private def coreSmooth := Construction.factorSearch { allocation with
+  smoothBounds := [64], smoothBases := [2] } (100549 * 100049) seed
+#guard coreSmooth.attempts == 1 && coreSmooth.raw.residual == 1 &&
+  coreSmooth.events.isEmpty && coreSmooth.rand == seed
+
+-- Two unsuccessful ECM curves consume four stage attempts before rescue.
+private def ecmMiss := ecmFactorSearch 8 64 2 false
+  { allocation with squfof := .off, attemptLimit := some 8 } n seed
+#guard ecmMiss.attempts == 4 && ecmMiss.raw.residual == n && ecmMiss.rand == seed
+private def ecmAfter := ecmFactorSearch 8 64 2 false
+  { allocation with squfof := .rescue limits, attemptLimit := some 6 } n seed
+#guard ecmAfter.attempts == 5 && ecmAfter.raw.residual == 1 && ecmAfter.rand == seed &&
+  (fields n ecmAfter.events).map (fun f => (f.lookup "placement", f.lookup "attempts")) ==
+    [(some "rescue", some "1")]
+private def ecmCapped := ecmFactorSearch 8 64 2 false
+  { allocation with squfof := .rescue limits, attemptLimit := some 4 } n seed
+#guard ecmCapped.attempts == 4 && ecmCapped.raw.residual == n &&
+  (fields n ecmCapped.events).map (fun f => (f.lookup "outcome", f.lookup "attempts")) ==
+    [(some "exhausted", some "0")]
+
+-- A derived total bound adds no rho work on an unsupported subject: the
+-- unchanged per-entry rho cap already fits within the original derived bound.
+private def unsupportedBudget : FactorSearchBudget := {
+  allocation with primeBudget := ⟨1, 1, .off⟩ }
+private def unsupportedOn := Construction.factorSearch unsupportedBudget (2^64 + 1) seed
+private def unsupportedOff := Construction.factorSearch
+  { unsupportedBudget with squfof := .off } (2^64 + 1) seed
+#guard unsupportedOn.raw.factors == unsupportedOff.raw.factors &&
+  unsupportedOn.raw.residual == unsupportedOff.raw.residual &&
+  unsupportedOn.rand == unsupportedOff.rand && unsupportedOn.attempts == unsupportedOff.attempts
+#guard (fields (2^64 + 1) unsupportedOn.events).map
+  (fun f => (f.lookup "outcome", f.lookup "attempts")) == [(some "unsupported", some "0")]
+
 end SqufofDispatch

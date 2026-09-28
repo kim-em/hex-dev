@@ -645,11 +645,11 @@ structure FactorSearchBudget where
   primeBudget : PrimeCertBudget
   primeFuel   : Nat
   factorFuel  : Nat
-  squfof : Squfof.Policy := .off
   smoothBounds : List Nat := []
   smoothBases : List Nat := []
   attemptLimit : Option Nat := none
   pMinusOneStage2 : Bool := false
+  squfof : Squfof.Policy := .off
 
 abbrev FactorSearch :=
   FactorSearchBudget → Nat → Rand → FactorSearchResult
@@ -972,8 +972,13 @@ SQUFOF is explicitly selected. Zero multiplier or step allocation does no
 SQUFOF work, including preliminary factor shortcuts. Worklist fuel remains
 unchanged. A total-limit-aware producer clips the multiplier allowance to
 remaining attempts, without changing the per-multiplier recurrence cap or
-queue bound. Each actually started multiplier is one attempt, including
-successful ones; skipped unsupported calls and disabled limits use zero.
+queue bound. In this shared pool, first-placement attempts reduce the
+allowance left for later routes. When no total limit is supplied, the core
+construction producer derives one from the worklist fuel times the sum of
+per-entry caps; adding the SQUFOF cap leaves rho and smooth per-entry caps
+unchanged. Each actually started multiplier is one attempt, including
+successful ones; skipped unsupported calls and disabled limits use zero. A selected phase with
+a zero allowance records `exhausted` with zero attempts and steps.
 The counted event records subject, placement, effective limits, outcome,
 actual attempts, recurrence steps, queue peak, and returned divisor.
 Deterministic SQUFOF work leaves `Rand` unchanged; subsequent randomized
