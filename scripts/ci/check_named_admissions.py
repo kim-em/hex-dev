@@ -14,7 +14,7 @@ import re
 ROOT = Path(__file__).resolve().parents[2]
 BRIDGE = Path("adapters/HexRealRootsMathlib/TarskiSoundness.lean")
 ADMISSION = re.compile(
-    r"\b[A-Za-z_]*[sS]orry[A-Za-z_]*\b|\b(?:admit|admitGoal|axiom)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*constant\b|(?<!\.)\bstop\b(?!\s*:=)",
+    r"\b[A-Za-z_]*[sS]orry[A-Za-z_]*\b|\b(?:admit|admitGoal|axiom)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*constant\b(?!\s*:)|(?<!\.)\bstop\b(?!\s*:=)",
     re.MULTILINE,
 )
 IMPORT = re.compile(r"\bimport\s+(?:all\s+)?(\S+)")
@@ -173,7 +173,8 @@ def check() -> None:
              "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance",
              "HexSignDetMathlib.TableConformance", "HexSignDetMathlib.ReencodingConformance",
              "HexSignDetMathlib.RootListConformance", "HexSignDetMathlib.RefinementConformance",
-             "HexSignDetMathlib.ConvertConformance"] + [
+             "HexSignDetMathlib.ConvertConformance", "HexRealClosure.BaseTests",
+             "HexRealClosureMathlib.BaseTests"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
         "HexSignDetMathlib." + ".".join(path.relative_to(
