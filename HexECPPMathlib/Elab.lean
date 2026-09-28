@@ -52,10 +52,10 @@ meta def reifyCert : Cert → Expr
         mkNatLit b, mkNatLit x, mkNatLit y, mkNatLit d,
         reifyNats ws, reifyCert child]
 
-/-- The measured 65-bit fixture is the current kernel replay policy limit. -/
-private meta def maxBits : Nat := 65
-private meta def maxSyntaxNodes : Nat := 8192
-private meta def maxInverseWitnesses : Nat := 128
+/-- Numeral ceiling admitted by the fresh-module kernel replay probes. -/
+def maxBits : Nat := 512
+private meta def maxSyntaxNodes : Nat := 131072
+private meta def maxInverseWitnesses : Nat := 1024
 private meta def maxCertNodes : Nat := 32
 
 private meta def dataConstant (name : Name) : Bool :=
@@ -124,11 +124,7 @@ private meta opaque evalCert (e : Expr) : MetaM Cert
 
 /-- Build a proof from a supplied exposed certificate. The evaluated producer
 is discarded; the kernel checks the reified raw data and checker reduction. -/
-private meta def proveUsing (stx : Term) (n : Nat) (nE : Expr) : Term.TermElabM Expr := do
-  let e ← Term.withoutErrToSorry do
-    Term.elabTermEnsuringType stx certType
-  Term.synthesizeSyntheticMVarsNoPostponing
-  let e ← instantiateMVars e
+meta def readCert (e : Expr) : MetaM Cert := do
   Hex.PrimalityTactic.checkClosed "ecpp using" e
   if e.hasSorry then throwError "ecpp: certificate contains an unfinished proof"
   discard <| checkData e maxSyntaxNodes
@@ -136,12 +132,36 @@ private meta def proveUsing (stx : Term) (n : Nat) (nE : Expr) : Term.TermElabM 
   if countCert cert > maxCertNodes then
     throwError "ecpp: certificate exceeds {maxCertNodes} total nodes"
   checkCertBudget cert
+  unless check cert do
+    throwError "ecpp: certificate failed check"
+  return cert
+
+/-- Validate a raw proposal against the finite replay policy. -/
+meta def validateCert (cert : Cert) : MetaM Unit := do
+  discard <| checkData (reifyCert cert) maxSyntaxNodes
+  if countCert cert > maxCertNodes then
+    throwError "ecpp: certificate exceeds {maxCertNodes} total nodes"
+  checkCertBudget cert
+  unless check cert do
+    throwError "ecpp: certificate failed check"
+
+/-- Produce the subject-bound proof from checked raw constructor data. -/
+meta def certProof (cert : Cert) (n : Nat) (nE : Expr) : MetaM Expr := do
+  validateCert cert
   unless cert.subject == n do
     throwError "ecpp: certificate subject is {cert.subject}; expected {n}"
   unless checkAt n cert do
     throwError "ecpp: certificate for {n} failed checkAt"
   return mkApp3 (mkConst ``Hex.ECPP.natPrime_of_checkAt) nE
     (reifyCert cert) Hex.PrimalityTactic.reflTrue
+
+private meta def proveUsing (stx : Term) (n : Nat) (nE : Expr) : Term.TermElabM Expr := do
+  withOptions (maxRecDepth.set · 65536) do
+    let e ← Term.withoutErrToSorry do
+      Term.elabTermEnsuringType stx certType
+    Term.synthesizeSyntheticMVarsNoPostponing
+    let e ← instantiateMVars e
+    certProof (← readCert e) n nE
 
 /-- Produce `Nat.Prime n` from an explicit, checked ECPP certificate. -/
 syntax (name := ecppUsingTac) "ecpp" " using " term : tactic
@@ -157,8 +177,10 @@ syntax (name := ecppUsingTac) "ecpp" " using " term : tactic
           throwError "ecpp: expected a `Nat.Prime n` goal, got {target.getAppFn.constName!}{indentExpr target}"
         let nE := target.appArg!
         Hex.PrimalityTactic.checkClosed "ecpp" nE
-        let some n ← getNatValue? nE
+        let some n ← getNatValue? (← whnf nE)
           | throwError "ecpp: goal subject is not a natural-number numeral"
+        unless ← isDefEq nE (mkNatLit n) do
+          throwError "ecpp: subject must be definitionally transparent"
         if HexArith.bitLength n > maxBits then
           throwError "ecpp: subject exceeds the measured {maxBits}-bit replay limit"
         proveUsing source n nE

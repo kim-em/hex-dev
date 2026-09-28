@@ -88,7 +88,7 @@ allows only `propext`, `Classical.choice`, and `Quot.sound`.
 
 Provide an opt-in bridge tactic `ecpp using c` for a closed literal `n` and
 a closed certificate literal or an exposed constant `c` containing such data,
-targeting `Nat.Prime n`. Cross-module certificate constants and every checker
+targeting `Nat.Prime n`. In `module` files, cross-module certificate constants and every checker
 definition needed by replay must be `@[expose]`. Restrict the accepted term
 form to constructor data and exposed data constants; reject arbitrary
 computations. Bound traversal, unfolding, numeral size and total certificate
@@ -102,22 +102,67 @@ from the existing `primality` tactic is changed by this SPEC.
 
 
 The explicit `ecpp using c` policy admits subjects and individual
-certificate numerals through 65 bits, at most 8192 inspected syntax nodes,
-32 total certificate nodes including embedded `PrimeCert` nodes, and 128
-inverse witnesses per ECPP step. These limits admit the frozen 65-bit
-certificate and its fresh-module kernel proof. The 256-bit and 512-bit
-fixtures are compiled-checking and oracle inputs; their kernel replay is
-not part of the supported tactic policy.
+certificate numerals through 512 bits, at most 131072 inspected syntax nodes,
+32 total certificate nodes including embedded `PrimeCert` nodes, and 1024
+inverse witnesses per ECPP step. The frozen 65-, 256- and 512-bit certificates
+have fresh-module kernel proof probes. These bounds constrain replay; they
+do not guarantee successful production for every prime of these sizes.
+
+## Compact certificates and explicit PARI production
+
+`HexECPPMathlib.Compact` provides `ecpp_cert% "rows" using leaf`. The string
+is a bounded PARI vector or integer, and the leaf is explicit closed
+`Hex.Nat.PrimeCert` constructor data. Conversion uses the existing core
+converter with `defaultImportBudget`, checks the result and reifies the full
+raw constructor certificate. An auxiliary exposed data definition keeps the
+enclosing term small without requiring users to change recursion options.
+The auxiliary body has no compiled replacement or proof assumptions.
+No PARI invocation or terminal certificate search runs during replay.
+
+Users explicitly import `HexECPPMathlib.Pari` to enable
+`primality? (method := pari)` for `Nat.Prime` and `Hex.Nat.Prime` goals. The
+generator runs `gp` from PATH with `-q -f`, passing only the evaluated natural
+numeral to `primecert` in a private temporary request file. Null stdin keeps
+the original process-group handle intact; remove the request file on every
+exit path. It uses no shell and ignores GP startup files. The initial PARI
+stack is 64000000 bytes; GP startup preferences cannot
+enable automatic stack growth. The process is limited to 30000 milliseconds,
+16448 stdout bytes and 4096 stderr bytes. On POSIX, cancellation and exhaustion
+terminate the process group with KILL and reap the child. Collect both pipe
+readers before reaping the leader, and never wait or kill that PID again after
+reaping it. Missing
+executables, process failures, framing errors, conversion diagnostics and
+timeout are reported distinctly. Conversion failure alone proves no
+compositeness.
+
+Before offering a suggestion or writing a file, verify subject-bound
+acceptance and the resulting proof with the Lean kernel. The suggestion
+contains compact frozen data and its explicit Hex leaf, so applying it removes
+both the CAS call and endpoint search. The producer and converter are not
+proof dependencies. Ordinary `primality` imports and behavior are unchanged;
+no automatic fallback or `norm_num` handler is registered.
+
+`#ecpp_export MyCertificates.Prime cert for n` writes
+`MyCertificates/Prime.lean`, relative to the process working directory. The
+file imports `HexECPPMathlib.Compact` and contains one certificate declaration
+named `MyCertificates.Prime.cert`. After generation, remove the command, put
+the file under the project's Lean source root, import `MyCertificates.Prime`,
+and use `ecpp using MyCertificates.Prime.cert`. Parent directories may be
+created; existing files are never overwritten. The command runs only in batch
+builds: the language server displays instructions to run `lake build +Module`
+and performs no process invocation or file write. This prevents partially typed
+subjects from creating files. Exclusive creation enforces
+that rule even when another process creates the path concurrently. Export is
+an explicit source-generation operation, not an ordinary build dependency.
 
 ## Conformance and evidence
 
 Before fixing an elaborator policy, measure kernel replay of the 65-bit
-fixture, then successive chain lengths and subject sizes. The initial single
-CI job kernel-replays that fixture and small branch/boundary probes. The
-256-bit and 512-bit fixtures initially exercise compiled checking and oracle
-comparison; promote them to CI kernel proofs only after fresh-module evidence
-establishes their fit within the existing CI budget. Compiled-only coverage
-does not establish an elaborator size ceiling or claim fast kernel replay.
+fixture, then successive chain lengths and subject sizes. The single CI job
+kernel-replays the admitted frozen certificates and small branch/boundary
+probes. Promote larger fixtures to kernel proofs only after fresh-module
+evidence establishes their fit within the existing CI budget. Compiled-only
+coverage does not establish an elaborator size ceiling or fast kernel replay.
 If the first fixture exceeds the budget, keep the elaborator unreleased and
 optimize replay with proved equivalence before promising a supported ceiling.
 
