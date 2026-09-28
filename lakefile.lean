@@ -364,7 +364,7 @@ lean_lib HexPermGroupMathlib where
 
 @[default_target]
 lean_lib HexPermGroupTests where
-  globs := #[`HexPermGroupMathlib.Tests]
+  globs := #[`HexPermGroupMathlib.Tests, `HexPermGroupMathlib.Examples.Kernel]
 
 lean_lib HexGraph where
 
@@ -1227,6 +1227,7 @@ lean_lib HexReleaseTests where
     `HexGraphIsoMathlib.TacticTests,
     `HexGraphIsoMathlib.SparseTacticTests,
     `HexPermGroupMathlib.Tests,
+    `HexPermGroupMathlib.Examples.Kernel,
     `HexNumberFieldTower.Embed,
     `HexRCF.LanguageTests,
     `HexRCF.SturmBuilderTests,
