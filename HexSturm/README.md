@@ -24,12 +24,14 @@ root endpoints, reversed bounds or other failed endpoint guards. It agrees
 with fresh preparation; it does not reuse an interval's old count or endpoint
 signs. A changed head requires separate preparation.
 
-`countPrepared domain` evaluates the query `1` using the stored chain in both
+`countPrepared domain` returns an `Int` by evaluating the query `1` using the stored chain in both
 certificate positions. `certifyCountPrepared context domain` produces its
 literal certificate with freshly computed endpoint signs. Both agree with the
 ordinary prepared query/certificate APIs. For example, retargeting a domain
 for `X² − 1` to `(-∞, 0)` and `(0, +∞)` gives count one on each side; the
 whole-line certificate cannot be replayed as either child certificate.
+Compare integer counts directly or establish nonnegativity before converting
+to `Nat`; unexpected negative results must not be clamped.
 
 The companion proves exact domain equivalence and produced-certificate
 acceptance, whole-Option backend agreement and certificate transport.

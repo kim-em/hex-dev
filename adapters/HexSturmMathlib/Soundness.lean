@@ -90,6 +90,14 @@ theorem countPrepared_sound (domain : Sturm.PreparedDomain E)
   rw [Sturm.countPrepared_eq, queryPrepared_sound f hz h1 ha hs hm hnat sign hsign hn hi domain binding,
     interpret_one f hz h1, Tarski.rootSum_one]
 
+include hz h1 ha hs hm hnat hsign hn hi in
+/-- Lawful prepared counts are nonnegative before any conversion to `Nat`.
+This inherits the same root-sum dependency as their cardinality theorem. -/
+theorem countPrepared_nonneg (domain : Sturm.PreparedDomain E)
+    (binding : domain.sign = sign) : 0 ≤ Sturm.countPrepared domain := by
+  rw [countPrepared_sound f hz h1 ha hs hm hnat sign hsign hn hi domain binding]
+  exact Nat.cast_nonneg _
+
 include h1 ha hs hm hnat hsign hn hi in
 /-- A successful ordinary query has the same meaning as prepared querying. -/
 theorem query_sound (p q : DensePoly E) (a b : Endpoint E) (value : Int)

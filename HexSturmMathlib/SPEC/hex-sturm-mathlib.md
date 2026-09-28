@@ -183,11 +183,12 @@ in the lawful semantic field described above.
 | Theorem | Hypotheses and conclusion |
 | --- | --- |
 | `prepare_sound` | A returned prepared object establishes `Domain(P;a,b)` and binds exactly its head and endpoints. |
-| `withEndpoints_isSome` | Retargeting a prepared head succeeds exactly when `Domain(P;a,b)` holds at the new endpoints. It preserves the literal head, sign and squarefree chain. |
+| `withEndpoints_isSome` | Retargeting a prepared head succeeds exactly when `Domain(P;a,b)` holds at the new endpoints. The core `PreparedDomain.withEndpoints_bindings` theorem separately preserves the literal head, sign and squarefree chain. |
 | `withEndpoints_domain` | The actual retargeted object has a valid domain at the requested endpoints. |
 | `query_sound` | `query p f a b = some q` implies `Domain(P;a,b)` and `q = TaQ(F,P;a,b)` for every supplied `R,ι,hι`. |
 | `queryPrepared_sound` | The prepared query computes the same mathematical sum for its bound domain and any `f`. |
 | `countPrepared_sound` | The actual prepared query-one operation equals `Roots(P;a,b).card`, interpreted as an integer. |
+| `countPrepared_nonneg` | The actual prepared integer count is nonnegative under the lawful coefficient interpretation, before conversion to `Nat`. |
 | `check_sound` | An accepted finite certificate implies domain validity and the claimed query equality through the shared replay theorem; no producer-success hypothesis is needed. |
 | `query_isSome` | `(query p f a b).isSome ↔ Domain(P;a,b)`. All coefficient decisions are total; computed degree bounds suffice. |
 | `rootCount_isSome` | `(rootCount p a b).isSome ↔ Domain(P;a,b)`. Nonnegativity of the query of `1` makes conversion failure unreachable. |

@@ -39,6 +39,8 @@ degree bounds. `query_nonneg` justifies the exact natural-number conversion in
 `Sturm.rootCount`, whose success domain is unchanged.
 `countPrepared_sound` relates the actual prepared count to the number of
 distinct roots in its current open interval through the proved shared theorem.
+`countPrepared_nonneg` proves nonnegativity under the same coefficient laws
+before a consumer converts the count to `Nat`.
 
 The development target `HexQuerySemantics` builds
 `adapters/HexSturmMathlib/Soundness.lean` together with the integer specialization

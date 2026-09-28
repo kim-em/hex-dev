@@ -116,12 +116,6 @@ theorem prepare_eq_some [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E)
   TarskiCertificate.fromChains domain.sign (EndpointSigns.ofSign domain.sign) context domain.head f domain.lower domain.upper
     domain.squarefree (SignedRemainderChain.build domain.sign (normalize domain.sign) domain.head f)
 
-/-- Query one using the already stored chain in both certificate positions.
-Endpoint sign lists and the query value are recomputed for this domain. -/
-@[expose] def countPrepared [Neg E] [Inv E] (domain : PreparedDomain E) : Int :=
-  (TarskiCertificate.fromChains domain.sign (EndpointSigns.ofSign domain.sign) ()
-    domain.head 1 domain.lower domain.upper domain.squarefree domain.squarefree).value
-
 /-- A query-one certificate with fresh literal context and endpoint bindings,
 using the existing squarefree chain rather than building it a second time. -/
 @[expose] def certifyCountPrepared [Neg E] [Inv E] {Ctx : Type v} (context : Ctx)
@@ -129,10 +123,19 @@ using the existing squarefree chain rather than building it a second time. -/
   TarskiCertificate.fromChains domain.sign (EndpointSigns.ofSign domain.sign) context
     domain.head 1 domain.lower domain.upper domain.squarefree domain.squarefree
 
+/-- Query one using the already stored chain in both certificate positions.
+Endpoint sign lists and the query value are recomputed for this domain.
+Compare the integer directly or prove nonnegativity before converting to `Nat`;
+do not clamp an unexpected negative result. -/
+@[expose] def countPrepared [Neg E] [Inv E] (domain : PreparedDomain E) : Int :=
+  (certifyCountPrepared () domain).value
+
+/-- Chain reuse preserves the ordinary prepared query-one result. -/
 theorem countPrepared_eq [Neg E] [Inv E] (domain : PreparedDomain E) :
     countPrepared domain = queryPrepared domain 1 := by
-  simp only [countPrepared, queryPrepared, ← domain.produced]
+  simp only [countPrepared, certifyCountPrepared, queryPrepared, ← domain.produced]
 
+/-- Chain reuse preserves the full literal query-one certificate. -/
 theorem certifyCountPrepared_eq [Neg E] [Inv E] {Ctx : Type v} (context : Ctx)
     (domain : PreparedDomain E) :
     certifyCountPrepared context domain = certifyPrepared context domain 1 := by
