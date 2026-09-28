@@ -338,6 +338,30 @@ theorem Context.quotient_nat (context : Context E Ctx coeffSign parent) (n : Nat
   rw [e.apply_symm_apply]
   exact Element.toValue_nat f hz h1 ha hs hm hnat hsign hn hi hd n
 
+include hn hi hd in
+/-- Executable comparison agrees with the transferred quotient order. -/
+theorem Context.quotient_compare (context : Context E Ctx coeffSign parent)
+    (a b : Element context) :
+    letI := context.quotientField f hz h1 ha hs hm hnat hsign hn hi hd
+    letI := context.quotientOrder f hz h1 ha hs hm hnat hsign hn hi hd
+    a.compare b =
+      if Quotient.mk (context.setoid f hz h1 ha hs hm hnat hsign hn hi) a < Quotient.mk (context.setoid f hz h1 ha hs hm hnat hsign hn hi) b
+      then .lt else if Quotient.mk (context.setoid f hz h1 ha hs hm hnat hsign hn hi) a =
+        Quotient.mk (context.setoid f hz h1 ha hs hm hnat hsign hn hi) b then .eq else .gt := by
+  let := context.quotientField f hz h1 ha hs hm hnat hsign hn hi hd
+  let := context.quotientOrder f hz h1 ha hs hm hnat hsign hn hi hd
+  let e := context.quotientEquiv f hz h1 ha hs hm hnat hsign hn hi hd
+  have heq : Quotient.mk (context.setoid f hz h1 ha hs hm hnat hsign hn hi) a =
+      Quotient.mk (context.setoid f hz h1 ha hs hm hnat hsign hn hi) b ↔
+      a.denote f hz h1 ha hs hm hnat hsign = b.denote f hz h1 ha hs hm hnat hsign := by
+    rw [← e.injective.eq_iff]
+    exact Subtype.ext_iff
+  have hlt : Quotient.mk (context.setoid f hz h1 ha hs hm hnat hsign hn hi) a <
+      Quotient.mk (context.setoid f hz h1 ha hs hm hnat hsign hn hi) b ↔
+      a.denote f hz h1 ha hs hm hnat hsign < b.denote f hz h1 ha hs hm hnat hsign := Iff.rfl
+  rw [Element.compare_spec f hz h1 ha hs hm hnat hsign hn hi]
+  simp only [heq, hlt]
+
 /-- info: 'Hex.RealClosure.Algebraic.Context.quotientEquiv' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Algebraic.Context.quotientEquiv
@@ -350,4 +374,7 @@ theorem Context.quotient_nat (context : Context E Ctx coeffSign parent) (n : Nat
 /-- info: 'Hex.RealClosure.Algebraic.Context.quotient_inv' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Algebraic.Context.quotient_inv
+/-- info: 'Hex.RealClosure.Algebraic.Context.quotient_compare' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Algebraic.Context.quotient_compare
 end Hex.RealClosure.Algebraic

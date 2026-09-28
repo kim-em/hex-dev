@@ -404,7 +404,8 @@ preserves arithmetic and sign, is surjective, and identifies exactly the
 representatives accepted by executable `equal`. `Context.quotientEquiv`
 identifies the semantic quotient of storage with this field.
 `quotientField`, `quotientOrder` and `quotientOrdered` transfer lawful field and
-order structures to that quotient; the `quotient_add`, `quotient_mul`,
+order structures to that quotient; `quotient_compare` ties the executable
+comparison to its order. The `quotient_add`, `quotient_mul`,
 `quotient_inv` and related equations prove descent of the actual packed operations. Stored
 representatives have no asserted field instance.
 
@@ -417,7 +418,7 @@ clean packing for the native base constructor. `AlgebraicClean.lean` proves that
 these closure properties preserve coefficients through actual polynomial
 arithmetic and monic division, retained reduction and packed arithmetic. `Context.extend_clean`
 proves clean packing at the next algebraic level from those preceding-operation
-closure theorems. They
+closure theorems; `extend_closed` retains all five closure facts for further levels. They
 need no field laws on stored syntax and have no admitted dependencies.
 
 Run `lake build HexRealClosure.AlgebraicTests HexQuerySemantics` and
