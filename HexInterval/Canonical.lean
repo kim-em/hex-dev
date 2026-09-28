@@ -97,9 +97,7 @@ theorem ordered_of_consistent {lower upper : Dyadic}
   by_cases less : lower < upper
   · rw [← Dyadic.toRat_le_toRat_iff]
     exact Rat.le_of_lt (Dyadic.toRat_lt_toRat_iff.mpr less)
-  · by_cases equal : lower = upper
-    · exact equal ▸ Dyadic.le_refl lower
-    · simp [Raw.CutConsistent, Raw.consistent, less, equal] at h
+  · simpa [Raw.CutConsistent, Raw.consistent, less] using h
 
 /-- Construct a closed interval from independently preflighted ordered bounds.
 
@@ -122,9 +120,7 @@ def ofOrderedBoundsUnchecked (lower upper : Dyadic) (ordered : lower ≤ upper) 
     simp only [Raw.CutConsistent, Raw.consistent]
     by_cases less : lower < upper
     · simp [less]
-    · have equal : lower = upper :=
-        Dyadic.le_antisymm ordered (Dyadic.not_lt.mp less)
-      simp [equal])
+    · simp [less, ordered])
 
 /-- An unchecked ordered-bounds construction exposes its exact closed cuts. -/
 @[simp]
