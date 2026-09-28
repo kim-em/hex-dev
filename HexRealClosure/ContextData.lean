@@ -31,9 +31,9 @@ end
 -- Preserve structural equality while skipping traversal of shared literals.
 attribute [-instance] instDecidableEqLiteral instDecidableEqLiterals
 
-instance : DecidableEq Literal := fun a b =>
+instance (priority := high) : DecidableEq Literal := fun a b =>
   withPtrEqDecEq a b (fun _ => instDecidableEqLiteral a b)
-instance : DecidableEq Literals := fun a b =>
+instance (priority := high) : DecidableEq Literals := fun a b =>
   withPtrEqDecEq a b (fun _ => instDecidableEqLiterals a b)
 
 @[expose] def Literals.toList : Literals → List Literal

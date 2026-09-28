@@ -437,8 +437,8 @@ The semantic sign, inverse and quotient proofs inherit only the existing named
 cleanliness and the core introduce no admission. These interpretations are
 conditional on an ambient ordered real closed field, not an existence proof.
 
-The remaining tower work includes context enlargement and transport, general
-root isolation and multiplicities,
+The remaining tower work includes the recursive algebraic dependency catalog,
+context enlargement and transport, general root isolation and multiplicities,
 rational delegation agreement and a compatible real-closed union construction.
 Repeated nonconstant queries still rebuild the shared prepared domain and BKR
 table; a reusable selected-sign handle is requested from #10377. Formal tower

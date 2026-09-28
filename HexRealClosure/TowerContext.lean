@@ -28,7 +28,7 @@ attribute [-instance] instDecidableEqSignature
 
 /-- Exact equality, with core's sound pointer shortcut for the immutable
 signature shared by every node in one query. -/
-instance : DecidableEq Signature := fun a b =>
+instance (priority := high) : DecidableEq Signature := fun a b =>
   withPtrEqDecEq a b (fun _ => instDecidableEqSignature a b)
 
 @[expose] def Signature.literal (signature : Signature) : Literal :=
@@ -113,7 +113,7 @@ variable {sign : E → Int} {binding : Signature}
 /-- Serialize the actual finite replay graph, with sharing determined by exact
 node equality. Hashing only indexes that equality search. The descriptor's
 head, bounds and ordered Thom slots are retained separately from the replay. -/
-def rootData (value : ValueCodec E) (root : Descriptor E Signature sign binding) : Json :=
+@[expose] def rootData (value : ValueCodec E) (root : Descriptor E Signature sign binding) : Json :=
   letI : Hashable E := ⟨fun a => match Literal.ofJson (value.encode a) with
     | some literal => hash literal
     | none => 0⟩
@@ -159,22 +159,11 @@ theorem Chain.codec_lawful (chain : Chain registry E sign clean codec binding) :
   | base context => exact BaseContext.Element.codec_lawful context
   | root parent descriptor frame encoded ih => exact Algebraic.Element.codec_lawful _ ih
 
+omit [Neg E] [Inv E] [Div E] in
 /-- The checked frame retains the entire structured descriptor and replay. -/
 theorem Chain.frame_data (descriptor : Descriptor E Signature sign binding) (frame : Literal)
     (h : Literal.ofJson (rootData codec descriptor) = some frame) :
     frame.toJson = rootData codec descriptor := Literal.toJson_ofJson _ _ h
-
-/-- Attach the actual descriptor to the whole predecessor and retain its
-complete checked frame. Format failure is separate from descriptor validity. -/
-def Chain.adjoin? (chain : Chain registry E sign clean codec binding)
-    (descriptor : Descriptor E Signature sign binding) :
-    Option (Σ frame : Literal,
-      Chain registry (Algebraic.Element (Algebraic.Context.adjoin descriptor clean))
-        Algebraic.Element.sign Algebraic.Element.isClean (Algebraic.Element.codec codec)
-        (binding.extend frame)) :=
-  match he : Literal.ofJson (rootData codec descriptor) with
-  | none => none
-  | some frame => some ⟨frame, .root chain descriptor frame he⟩
 
 end
 
