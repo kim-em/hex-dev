@@ -177,8 +177,10 @@ syntax (name := ecppUsingTac) "ecpp" " using " term : tactic
           throwError "ecpp: expected a `Nat.Prime n` goal, got {target.getAppFn.constName!}{indentExpr target}"
         let nE := target.appArg!
         Hex.PrimalityTactic.checkClosed "ecpp" nE
-        let some n ← getNatValue? nE
+        let some n ← getNatValue? (← whnf nE)
           | throwError "ecpp: goal subject is not a natural-number numeral"
+        unless ← isDefEq nE (mkNatLit n) do
+          throwError "ecpp: subject must be definitionally transparent"
         if HexArith.bitLength n > maxBits then
           throwError "ecpp: subject exceeds the measured {maxBits}-bit replay limit"
         proveUsing source n nE

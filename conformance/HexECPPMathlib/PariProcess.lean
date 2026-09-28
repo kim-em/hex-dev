@@ -25,6 +25,7 @@ private def fails (part : String) (act : IO String) : IO Unit := do
     throw <| IO.userError s!"expected '{part}', got {error}"
 
 private def processChecks : IO Unit := do
+  let start ← IO.monoMsNow
   fails "cannot start" (run 17 (executable := "/hex-missing-gp"))
   fake "test \"$1\" = '-q' && test \"$2\" = '-f' || exit 3\ncat >/dev/null\nprintf 'HEX_ECPP_BEGIN\\n17\\nHEX_ECPP_END\\n'" fun path => do
     unless (← run 17 (executable := path)) == "17" do
@@ -42,9 +43,14 @@ private def processChecks : IO Unit := do
   -- Both the parent and descendant ignore TERM; force cleanup must still finish.
   fake "trap '' TERM\nsleep 20 &\nwait" fun path =>
     fails "timed out" (run 17 { timeoutMs := 100 } path)
+  -- Reaping the leader before these pipes close used to cause ECHILD.
+  fake "sleep 20 &\nprintf 'HEX_ECPP_BEGIN\\n17\\nHEX_ECPP_END\\n'" fun path =>
+    fails "timed out" (run 17 { timeoutMs := 100 } path)
   fake "sleep 20" fun path => do
     let token ← IO.CancelToken.new
     token.set
     fails "cancelled" (run 17 (executable := path) (cancel := some token))
+  if (← IO.monoMsNow) - start > 5000 then
+    throw <| IO.userError "process cleanup exceeded five seconds"
 
 #eval processChecks

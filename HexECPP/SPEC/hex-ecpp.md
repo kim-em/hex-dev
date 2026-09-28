@@ -8,8 +8,8 @@ Hasse bound, and resulting primality theorem belong to [its Mathlib companion](.
 
 ## Scope and placement
 
-This SPEC owns the proposed `HexECPP` and `HexECPPMathlib` pair. Their first
-implementation delivers certificate verification, conversion of supplied
+This SPEC owns the `HexECPP` and `HexECPPMathlib` pair. They provide
+certificate verification, conversion of supplied
 PARI certificates, and explicit certificate elaboration. Native complex
 multiplication search, Hilbert class polynomials, point counting, ECM,
 automatic search fallback, and cryptographic curve APIs are outside this

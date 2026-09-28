@@ -7,6 +7,7 @@ with a real executable; neither route trusts the producer's output.
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import hashlib
 import json
 import os
@@ -18,6 +19,17 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+@contextmanager
+def scratch_modules():
+    with tempfile.TemporaryDirectory(prefix="PariScratch", dir=ROOT / "HexECPPMathlib") as scratch:
+        path = Path(scratch)
+        try:
+            yield path
+        finally:
+            for folder in (ROOT / ".lake/build/lib/lean", ROOT / ".lake/build/ir"):
+                shutil.rmtree(folder / "HexECPPMathlib" / path.name, ignore_errors=True)
 
 
 def build(module: str, env: dict[str, str], *, expected_error: str | None = None) -> str:
@@ -45,8 +57,7 @@ def main() -> None:
     payload = json.loads(re.search(
         rf'def pari{args.bits} : String :=\s*("[^\n]*")', source).group(1))
     n = json.loads(payload)[0][0]
-    with tempfile.TemporaryDirectory(prefix="PariScratch", dir=ROOT / "HexECPPMathlib") as scratch:
-        scratch_path = Path(scratch)
+    with scratch_modules() as scratch_path:
         module = "HexECPPMathlib." + scratch_path.name
         with tempfile.TemporaryDirectory(prefix="hex-gp-") as tools:
             tools_path = Path(tools)
@@ -55,17 +66,18 @@ def main() -> None:
                 gp.symlink_to(Path(args.gp).resolve())
             else:
                 gp.write_text(f"#!{sys.executable}\nimport sys\n"
-                              "assert sys.argv[1:] == ['-q', '-f', '-s', '64000000']\n"
-                              "sys.stdin.read()\n"
+                              "assert sys.argv[1:5] == ['-q', '-f', '-s', '64000000']\n"
+                              "assert len(sys.argv) == 6\n"
+                              "assert 'primecert(' in open(sys.argv[5]).read()\n"
                               f"print('HEX_ECPP_BEGIN\\n' + {payload!r} + '\\nHEX_ECPP_END')\n")
                 gp.chmod(0o755)
             env = dict(os.environ, PATH=str(tools_path) + os.pathsep + os.environ["PATH"])
             (scratch_path / "Generate.lean").write_text(
                 "import HexECPPMathlib.Pari\n\n"
                 f"#ecpp_export {module}.Certificate cert for {n}\n\n"
-                f"theorem result : Nat.Prime {n} := by\n  primality? (method := pari)\n\n"
+                f"theorem result : Nat.Prime ({n} - 1 + 1) := by\n  primality? (method := pari)\n\n"
                 "#print axioms result\n"
-                f"example : Hex.Nat.Prime {n} := by primality? (method := pari)\n")
+                f"example : Hex.Nat.Prime ({n} - 1 + 1) := by primality? (method := pari)\n")
             output = build(module + ".Generate", env)
             assert "Try this:" in output and "ecpp_cert%" in output
             assert "[propext, Classical.choice, Quot.sound]" in output
@@ -93,18 +105,27 @@ def main() -> None:
                 f"import {module}.Certificate\n\n"
                 f"theorem result : Nat.Prime {n} := by\n"
                 f"  ecpp using {module}.Certificate.cert\n\n#print axioms result\n"
-                f"example : Nat.Prime {n} := by\n  " + suggestions[0].strip() + "\n\n"
-                f"example : Hex.Nat.Prime {n} := by\n  " + suggestions[1].strip() + "\n")
+                f"theorem suggestedNat : Nat.Prime ({n} - 1 + 1) := by\n  " + suggestions[0].strip() + "\n\n"
+                f"theorem suggestedCore : Hex.Nat.Prime ({n} - 1 + 1) := by\n  " + suggestions[1].strip() + "\n")
             output = build(module + ".Frozen", env)
             assert "[propext, Classical.choice, Quot.sound]" in output
             assert not accessed.exists(), "frozen proof invoked GP"
+            (scratch_path / "Editor.lean").write_text(
+                "import HexECPPMathlib.Pari\nset_option Elab.inServer true in\n"
+                f"#ecpp_export {module}.EditorOutput cert for 5\n")
+            build(module + ".Editor", env)
+            assert not accessed.exists(), "editor export invoked GP"
+            assert not (scratch_path / "EditorOutput.lean").exists()
+            (scratch_path / "InvalidNames.lean").write_text(
+                'import HexECPPMathlib.Pari\n#ecpp_export «../escape» cert for 17\n'
+                f'#ecpp_export {module}.Unused invalid.name for 17\n')
+            output = build(module + ".InvalidNames", env, expected_error="ASCII identifier components")
+            assert "without a namespace" in output
+            assert not accessed.exists(), "invalid export invoked GP"
             print(json.dumps({"bits": args.bits, "producer": "real GP" if args.gp else "stub",
                               "frozen_source_bytes": len(frozen),
                               "sha256": hashlib.sha256(frozen).hexdigest(),
                               "kernel_replay_without_gp": True}))
-        # Scratch modules also leave generated Lake outputs; remove only ours.
-        for folder in (ROOT / ".lake/build/lib/lean", ROOT / ".lake/build/ir"):
-            shutil.rmtree(folder / "HexECPPMathlib" / scratch_path.name, ignore_errors=True)
 
 
 if __name__ == "__main__":

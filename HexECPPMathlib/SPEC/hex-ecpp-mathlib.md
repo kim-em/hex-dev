@@ -122,11 +122,15 @@ No PARI invocation or terminal certificate search runs during replay.
 Users explicitly import `HexECPPMathlib.Pari` to enable
 `primality? (method := pari)` for `Nat.Prime` and `Hex.Nat.Prime` goals. The
 generator runs `gp` from PATH with `-q -f`, passing only the evaluated natural
-numeral to `primecert` over stdin. It uses no shell and ignores GP startup
-files. The initial PARI stack is 64000000 bytes; GP startup preferences cannot
+numeral to `primecert` in a private temporary request file. Null stdin keeps
+the original process-group handle intact; remove the request file on every
+exit path. It uses no shell and ignores GP startup files. The initial PARI
+stack is 64000000 bytes; GP startup preferences cannot
 enable automatic stack growth. The process is limited to 30000 milliseconds,
 16448 stdout bytes and 4096 stderr bytes. On POSIX, cancellation and exhaustion
-terminate the process group, escalating to KILL and reaping the child. Missing
+terminate the process group with KILL and reap the child. Collect both pipe
+readers before reaping the leader, and never wait or kill that PID again after
+reaping it. Missing
 executables, process failures, framing errors, conversion diagnostics and
 timeout are reported distinctly. Conversion failure alone proves no
 compositeness.
@@ -144,7 +148,10 @@ file imports `HexECPPMathlib.Compact` and contains one certificate declaration
 named `MyCertificates.Prime.cert`. After generation, remove the command, put
 the file under the project's Lean source root, import `MyCertificates.Prime`,
 and use `ecpp using MyCertificates.Prime.cert`. Parent directories may be
-created; existing files are never overwritten. Exclusive creation enforces
+created; existing files are never overwritten. The command runs only in batch
+builds: the language server displays instructions to run `lake build +Module`
+and performs no process invocation or file write. This prevents partially typed
+subjects from creating files. Exclusive creation enforces
 that rule even when another process creates the path concurrently. Export is
 an explicit source-generation operation, not an ordinary build dependency.
 

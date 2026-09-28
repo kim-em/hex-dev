@@ -106,8 +106,9 @@ elaboration and the kernel still checks the complete raw certificate.
 
 The test builds the generated module and its importing proof after replacing
 `gp` with an executable that records any invocation and fails. It also copies
-both `Nat.Prime` and `Hex.Nat.Prime` TryThis replacements verbatim into a fresh
-module and kernel-replays them without calling GP. No invoked-GP marker was
+both `Nat.Prime` and `Hex.Nat.Prime` TryThis replacements verbatim into fresh
+theorem bodies, including computed subjects, and kernel-replays them without
+calling GP. No invoked-GP marker was
 created. The initial 512-bit process attempt hit PARI's 8 MB default stack;
 that failure is retained in the interface record. The process policy now
 starts with a fixed 64 MB stack and reports stack exhaustion as a CAS failure.
@@ -115,7 +116,11 @@ starts with a fixed 64 MB stack and reports stack exhaustion as a CAS failure.
 The process conformance tests cover missing executables, stderr/nonzero exit,
 framing, composite results, stdout/stderr bounds, cancellation and a timeout
 whose parent and descendant ignore TERM. The export test checks exclusive
-creation and that a duplicate export preserves the original file.
+creation, invalid names, an editor invocation that leaves no file and calls no
+GP, and that a duplicate export preserves the original file. An exited leader
+with descendants holding its pipes also exhausts cleanly; process cleanup stays
+within the operational test limit. GP requests use private temporary files
+with null stdin, preserving the original process-group handle.
 
 `compact-replay.json` retains three serial trial-major fresh builds of each
 large proof probe using automatically leased CPU 56. The compact

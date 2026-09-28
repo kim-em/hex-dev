@@ -41,6 +41,28 @@
       "sha256": "9958a5894b2c8a23db26bebacbbb3a45d859ae18acb51d2f477037674aba716e",
       "kernel_replay_without_gp": true,
       "roundtrip_suggestions": true
+    },
+    {
+      "bits": 65,
+      "producer": "stub",
+      "frozen_source_bytes": 791,
+      "sha256": "8deb65cb65a4dbeb32f2943ffe14e02bfcbddf7aa86ad4ad57617fc40a3cd894",
+      "kernel_replay_without_gp": true,
+      "roundtrip_suggestions": true,
+      "computed_subjects": true,
+      "batch_export_guard": true,
+      "private_request_file": true
+    },
+    {
+      "bits": 512,
+      "producer": "real GP",
+      "frozen_source_bytes": 7098,
+      "sha256": "995a36617a86a150a57c41414c4a4aed6f097fc72502acb0d2471c90aaf99fbb",
+      "kernel_replay_without_gp": true,
+      "roundtrip_suggestions": true,
+      "computed_subjects": true,
+      "batch_export_guard": true,
+      "private_request_file": true
     }
   ],
   "initial_512_failure": {

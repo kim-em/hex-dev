@@ -12,8 +12,9 @@ import Lean.Meta.Tactic.TryThis
 # Explicit PARI certificate production
 
 `primality? (method := pari)` calls `gp` on PATH and suggests a compact,
-frozen certificate. `#ecpp_export Module.Name certName for n` writes a reusable
-Lean module. Importing that module and replaying suggestions never calls PARI.
+frozen certificate. In a batch build, `#ecpp_export Module.Name certName for n`
+writes a reusable Lean module. The language server displays build instructions.
+Importing that module and replaying suggestions never calls PARI.
 -/
 
 open Lean Elab Meta
@@ -41,41 +42,38 @@ private def readBounded (handle : IO.FS.Handle) (limit : Nat) : IO String := do
     data := data ++ chunk
 
 private def stop {cfg : IO.Process.StdioConfig} (child : IO.Process.Child cfg) : IO Unit := do
+  -- Lean's process runtime kills the session with SIGKILL. Keep the child
+  -- unreaped until its pipes close, so its PID cannot be reused before cleanup.
   try child.kill catch _ => pure ()
-  IO.sleep 100
-  -- On POSIX, kill the entire session, including descendants holding pipes.
-  if !System.Platform.isWindows then
-    try
-      discard <| IO.Process.output { cmd := "kill", args := #["-KILL", "--", s!"-{child.pid}"] }
-    catch _ => pure ()
   try discard <| child.wait catch _ => pure ()
 
-/-- Run only the evaluated natural numeral, without a shell or user startup file.
-The injectable executable and budget are used by process conformance tests. -/
-def run (n : Nat) (budget : ProcessBudget := {}) (executable : String := "gp")
-    (cancel : Option IO.CancelToken := none) : IO String := do
-  if HexArith.bitLength n > maxBits then
-    throw <| IO.userError s!"PARI: subject exceeds the {maxBits}-bit replay limit"
+private def requestFile (n : Nat) : IO System.FilePath := do
+  let (handle, path) ← IO.FS.createTempFile
+  try
+    handle.putStr s!"print(\"HEX_ECPP_BEGIN\"); print(primecert({n})); print(\"HEX_ECPP_END\"); quit\n"
+    handle.flush
+    return path
+  catch err =>
+    IO.FS.removeFile path
+    throw err
+
+private def runFile (n : Nat) (request : System.FilePath) (budget : ProcessBudget)
+    (executable : String) (cancel : Option IO.CancelToken) : IO String := do
   let child ← try
     IO.Process.spawn {
       cmd := executable
-      args := #["-q", "-f", "-s", toString budget.stackBytes]
-      stdin := .piped
+      args := #["-q", "-f", "-s", toString budget.stackBytes, request.toString]
+      stdin := .null
       stdout := .piped
       stderr := .piped
       setsid := true }
   catch err =>
     throw <| IO.userError s!"PARI: cannot start `{executable}`; install PARI/GP and put `gp` on PATH ({err})"
-  let (input, child) ← child.takeStdin
   let stdout ← IO.asTask (readBounded child.stdout budget.maxOutputBytes) .dedicated
   let stderr ← IO.asTask (readBounded child.stderr budget.maxErrorBytes) .dedicated
   let start ← IO.monoMsNow
   let completed ← IO.mkRef false
   try
-    do
-      let input := input
-      input.putStr s!"print(\"HEX_ECPP_BEGIN\"); print(primecert({n})); print(\"HEX_ECPP_END\"); quit\n"
-      input.flush
     repeat
       if let some cancel := cancel then
         if ← cancel.isSet then throw <| IO.userError "PARI: certificate generation cancelled"
@@ -87,8 +85,10 @@ def run (n : Nat) (budget : ProcessBudget := {}) (executable : String := "gp")
         if let .error err := stdout.get then throw err
       if errDone then
         if let .error err := stderr.get then throw err
-      if let some status ← child.tryWait then
-        if outDone && errDone then
+      -- Do not reap the leader while a descendant still holds either pipe.
+      -- Once reaped, there must be no subsequent wait or kill of this PID.
+      if outDone && errDone then
+        if let some status ← child.tryWait then
           completed.set true
           let output ← IO.ofExcept stdout.get
           let errors ← IO.ofExcept stderr.get
@@ -106,6 +106,17 @@ def run (n : Nat) (budget : ProcessBudget := {}) (executable : String := "gp")
       IO.sleep 25
   finally
     unless ← completed.get do stop child
+
+/-- Run only the evaluated natural numeral, without a shell or user startup file.
+Null stdin preserves the original process-group handle. The private GP input
+file is removed on every exit path. The executable is injectable for tests. -/
+def run (n : Nat) (budget : ProcessBudget := {}) (executable : String := "gp")
+    (cancel : Option IO.CancelToken := none) : IO String := do
+  if HexArith.bitLength n > maxBits then
+    throw <| IO.userError s!"PARI: subject exceeds the {maxBits}-bit replay limit"
+  let request ← requestFile n
+  try runFile n request budget executable cancel
+  finally IO.FS.removeFile request
 
 private meta def subject (e : Expr) : MetaM Nat := do
   Hex.PrimalityTactic.checkClosed "PARI" e
@@ -160,6 +171,9 @@ set_option hygiene false in
 @[command_elab pariExportCmd] meta def exportCert : Command.CommandElab := fun stx => do
   let `(command| #ecpp_export $mod:ident $decl:ident for $term:term) := stx
     | throwUnsupportedSyntax
+  if Elab.inServer.get (← getOptions) then
+    logInfo m!"#ecpp_export writes files only in batch builds. Run `lake build +{(← getEnv).mainModule}` to generate the certificate, then remove this command."
+    return
   let modName := mod.getId
   let declName := decl.getId
   let valid := fun (s : String) => s != "_" &&

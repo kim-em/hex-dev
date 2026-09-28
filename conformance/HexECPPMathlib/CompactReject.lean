@@ -9,6 +9,9 @@ import HexECPPMathlib.Compact
 example : Nat.Prime 17 := by
   ecpp using (ecpp_cert% "17" using (.small 17))
 
+theorem computedSubject : Nat.Prime (2 ^ 4 + 1) := by
+  ecpp using (ecpp_cert% "17" using (.small 17))
+
 example : True := by
   fail_if_success
     have : Nat.Prime 19 := by
