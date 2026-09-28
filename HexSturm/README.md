@@ -20,7 +20,7 @@ established by acceptance.
 
 `domain.withEndpoints? lower upper` reuses the same literal head, sign operation
 and squarefree chain after checking the new endpoints. It returns `none` for
-root endpoints, reversed bounds or other failed endpoint guards. It agrees
+root endpoints, equal or reversed bounds, or other failed endpoint guards. It agrees
 with fresh preparation; it does not reuse an interval's old count or endpoint
 signs. A changed head requires separate preparation.
 

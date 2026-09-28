@@ -176,7 +176,7 @@ it cannot establish this signed sum.
 
 ## Required frontend theorems
 
-Names below live under `Hex.Sturm`, except upstream names explicitly
+Theorems below live under `HexSturmMathlib`, except upstream names explicitly
 identified. Assume the operation-preserving, zero-reflecting interpretation
 in the lawful semantic field described above.
 
