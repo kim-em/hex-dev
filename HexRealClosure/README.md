@@ -538,7 +538,7 @@ These steps can be repeated at arbitrary finite depth.
 field and order instances, while raw native expressions retain their ordinary
 operations. `Model.toValue` is surjective and identifies expressions with the
 same mathematical value. `adjoin_mono` includes the whole predecessor field.
-Every child expression has its actual stored polynomial evaluated at the
+Every child expression has a polynomial representative evaluated at the
 selected generator (`adjoin_polynomial`). The companion proves that generator,
 every child expression, and every element of the child image field are
 algebraic over the predecessor's entire image field. Reducible and nonmonic

@@ -38,7 +38,7 @@ variable [Field K] [LinearOrder K]
 namespace Model
 
 /-- Transport an interpretation along literal equality of native contexts. -/
-noncomputable def cast {context other : Context registry} (model : Model context K)
+private noncomputable def cast {context other : Context registry} (model : Model context K)
     (h : context = other) : Model other K := h ▸ model
 
 private theorem cast_map {context other : Context registry} (model : Model context K)
@@ -147,6 +147,19 @@ noncomputable def base
       inv := fun a => map_inv₀ f a.stored
       div := fun a b => map_div₀ f a.stored b.stored
       sign := fun a => hsign a.stored }
+private theorem base_value_proof
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* K)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+    (a : BaseContext.Element context) :
+    (Model.base context f hsign).value a = f a.stored := rfl
+
+/-- Read the base interpretation without unfolding the companion constructor. -/
+@[simp] theorem base_value
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* K)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+    (a : BaseContext.Element context) :
+    (Model.base context f hsign).value a = f a.stored :=
+  base_value_proof context f hsign a
 end Base
 
 section Root

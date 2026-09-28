@@ -35,8 +35,9 @@ private noncomputable abbrev model₃ : Model (third d₁ d₂ d₃).context ℝ
 example (a : base.Value) :
     (model₃ d₁ d₂ d₃).value
       ((third d₁ d₂ d₃).embed ((second d₁ d₂).embed ((first d₁).embed a))) =
-      rational.value a := by
+      (a.stored : ℝ) := by
   rw [Model.adjoin_embed, Model.adjoin_embed, Model.adjoin_embed]
+  exact Model.base_value (BaseContext.rational registry) (Rat.castHom ℝ) ratSign a
 
 example (a : (third d₁ d₂ d₃).context.Value) :
     (model₃ d₁ d₂ d₃).value a⁻¹ = ((model₃ d₁ d₂ d₃).value a)⁻¹ :=
