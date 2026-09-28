@@ -296,3 +296,28 @@ Integrating general selected-root storage,
 full dependency transport, context reconstruction with registered proof premises,
 isolation and exploration
 remains part of the tower implementation.
+
+### Polynomials in a base context
+
+`BaseContext.Polynomial ctx` owns all its coefficients in one immutable base
+context. `Polynomial.ofCoeffs` accepts only values of that context; `coeff` and
+`eval` return values in it. Ordinary polynomial arithmetic delegates to
+`DensePoly` on the existing canonical coefficient carrier.
+
+`p.embed` and `p.embedConstant` include every coefficient in the corresponding
+infinitesimal or real child. Kernel proofs preserve coefficients, evaluation,
+zero, one, addition, subtraction, negation, multiplication, stored array length
+and degree. The shared coefficient-map implementation retains normalization
+without scanning again for trailing zero coefficients.
+
+`p.write` records a full base signature and a finite coefficient list.
+`Polynomial.read ctx raw` checks that signature and every coefficient using
+the context's scalar reader before constructing the polynomial. Round trips
+and rejection of stale signatures have kernel proofs. Malformed fractions and
+level shapes are rejected; valid trailing zero coefficients are normalized.
+These are polynomials over the real/infinitesimal base, before algebraic levels.
+
+Run `lake build HexRealClosure.BasePolynomialTests HexRealClosureMathlibTests`.
+The tests include two infinitesimal levels, inverse-infinitesimal coefficients,
+evaluation and coefficient transport, incompatible operand types, stale data,
+malformed coefficients and a polynomial embedded into a named real context.
