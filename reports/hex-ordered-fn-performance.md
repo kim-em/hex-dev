@@ -733,3 +733,109 @@ from 0.880 µs to 0.881 µs. Trial 2 changes between the slower and faster
 levels near n=8192. That change affects the cross-trial medians and their
 normalized slope. This describes the recorded samples; the accompanying load
 change alone does not establish its cause, and no trial is excluded.
+
+## Z3 RCF comparison
+
+The informational comparison times `Infinitesimal.compare` against subtraction
+followed by sign through Z3 4.15.4's
+[Python/FFI API](https://github.com/Z3Prover/z3/blob/z3-4.15.4/src/api/python/z3/z3rcf.py).
+Both arms receive the same prepared mathematical operands from the registered
+`comparison`, `denominators` and `compareHeight` families. Hex uses its existing
+lean-bench `_child`; Z3 executes its own arithmetic in the coordinator process.
+Preparation, import and process startup are outside the operation timers.
+Every returned Hex sign hash agrees with the independently evaluated Z3 sign.
+
+The [initial data](data/hex-ordered-fn/z3-initial/paired.jsonl) retain 259
+completed rows before a server restart interrupted the coordinator. They include
+both arms of trials 0 and 1 for all three comparison families. The
+[completion data](data/hex-ordered-fn/z3-final/paired.jsonl) add only the missing
+48 rows of trial 2. Together these give three trials at every rung, with adjacent
+arms in AB/BA/AB order and no repeated or dropped completed sample. The other
+163 initial rows are retained sign-lookup diagnostics, not external algorithm
+ratios: Z3's [representation caches signs during construction](https://github.com/Z3Prover/z3/blob/z3-4.15.4/src/math/realclosure/realclosure.cpp),
+so comparing a prepared value with zero does not reproduce Hex's coefficient
+scan. Including construction only on Z3's side would change the timed operation.
+
+The [FFI controls](data/hex-ordered-fn/z3-controls/paired.jsonl) run each same
+subtraction/sign function at n=0 on rational operands, three times. Their median
+costs are 3.550 µs (`comparison`), 3.584 µs (`denominators`) and 2.689 µs
+(`compareHeight`). They include Python/ctypes dispatch, wrapper allocation and
+deletion, the sign branches, and a small rational subtraction. Thus they are a
+conservative overhead estimate, not a measurement of pure dispatch alone.
+The initial pure-Python loop controls are retained but are insufficient to
+estimate FFI cost and are not used for the adjusted ratios. Positive-result
+controls take the same two sign decisions as their family; negative-result
+controls take the same single decision. No process or pipe overhead occurs in
+the Z3 timer.
+
+Each table entry reports the median of three adjacent Hex/Z3 ratios. Adjusted
+ratios subtract the family's median FFI control from each Z3 per-call time
+before division. They are descriptive estimates, including the small arithmetic
+cost in the control; they are not isolated C++-kernel measurements. A rung is
+eligible only when every sample has control cost at most 50% of Z3 time and
+both arms stay below the one-second per-call soft ceiling. All rungs are shown;
+only `comparison` at 128 and 256 fails the overhead criterion. Both raw and
+adjusted ratios are provided even below the 5% adjustment threshold.
+
+| Target | n | Hex median (µs) | Z3 median (µs) | Raw Hex/Z3 | Adjusted Hex/Z3 | Eligible |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `comparison` | 128 | 113.385 | 5.001 | 22.67 | 78.15 | no |
+| `comparison` | 256 | 221.718 | 5.970 | 37.27 | 92.14 | no |
+| `comparison` | 512 | 442.615 | 7.837 | 57.09 | 104.36 | yes |
+| `comparison` | 1024 | 869.650 | 11.007 | 78.99 | 116.59 | yes |
+| `comparison` | 2048 | 1758.964 | 17.328 | 101.29 | 127.09 | yes |
+| `comparison` | 4096 | 3515.031 | 30.021 | 116.51 | 131.82 | yes |
+| `comparison` | 8192 | 7051.173 | 55.843 | 126.19 | 134.89 | yes |
+| `comparison` | 16384 | 13936.944 | 106.310 | 130.99 | 135.51 | yes |
+| `denominators` | 16 | 127.023 | 9.976 | 12.72 | 19.85 | yes |
+| `denominators` | 32 | 301.505 | 25.182 | 11.97 | 13.96 | yes |
+| `denominators` | 64 | 781.877 | 84.071 | 9.30 | 9.71 | yes |
+| `denominators` | 128 | 2107.313 | 317.550 | 6.70 | 6.78 | yes |
+| `denominators` | 256 | 5750.261 | 1230.393 | 4.67 | 4.69 | yes |
+| `denominators` | 512 | 16322.028 | 4874.323 | 3.36 | 3.37 | yes |
+| `denominators` | 1024 | 47254.233 | 22444.473 | 2.11 | 2.11 | yes |
+| `denominators` | 2048 | 138602.393 | 94269.417 | 1.47 | 1.47 | yes |
+| `compareHeight` | 65536 | 8.499 | 6.571 | 1.29 | 2.19 | yes |
+| `compareHeight` | 131072 | 12.957 | 10.281 | 1.26 | 1.70 | yes |
+| `compareHeight` | 262144 | 21.711 | 17.728 | 1.22 | 1.44 | yes |
+| `compareHeight` | 524288 | 40.483 | 32.573 | 1.24 | 1.35 | yes |
+| `compareHeight` | 1048576 | 109.239 | 62.354 | 1.75 | 1.83 | yes |
+| `compareHeight` | 2097152 | 228.554 | 122.135 | 1.87 | 1.92 | yes |
+| `compareHeight` | 4194304 | 476.277 | 241.894 | 1.97 | 1.99 | yes |
+| `compareHeight` | 8388608 | 951.775 | 482.523 | 1.97 | 1.98 | yes |
+
+Hex is slower on all three measured families. For constant-denominator
+`comparison`, the adjusted ratio approaches about 135 at the last rungs;
+the earlier profile attributes most Hex work to its existing canonical
+normalization and polynomial arithmetic. This is not an incremental sign-scan
+ratio. For `denominators`, the raw ratio decreases from 12.72 to 1.47 over
+the ladder. For `compareHeight`, it approaches 1.97 at the top two rungs.
+These trends describe the tested families and representations, not universal
+speed ratios. Z3 is informational: no external constant-factor acceptance goal
+or performance superiority claim is made.
+
+The [summary](data/hex-ordered-fn/z3-summary.json) records the exact median
+calculations. Each group's contexts and schedules sit alongside its raw rows.
+Initial source `1fab99765b35423f1ad780e9ab4fd3a5c1425203` used CPU 13;
+completion source `45c363885f2e565a5a4fabf7b4a965f81c08e2d4` used CPU 42.
+The compiled benchmark hash is identical across both collections. The initial
+coordinator has no final timestamp because it was interrupted; its
+[recovery record](data/hex-ordered-fn/z3-initial/interruption.json) verifies the
+unchanged executable and the original child identities. Z3 rows from the initial
+run have no individual timestamps; Hex rows retain theirs. The
+[runtime identity](data/hex-ordered-fn/z3-initial/runtime-identity.json) was
+captured from the unchanged environment during that run, and matches the
+completion/control contexts' loaded `libz3.so` hash. The latter also record
+the interpreter and Z3 sample completion timestamps. Host load is context,
+not a sample exclusion rule.
+
+Reproduce a complete new comparison and its separate overhead measurement with:
+
+```sh
+lake build hexorderedfn_bench
+python3 scripts/bench/ordered_fn_z3.py --output /tmp/ordered-fn-z3
+python3 scripts/bench/ordered_fn_z3.py --output /tmp/ordered-fn-z3-controls --overhead-only
+```
+
+Use the pinned `z3-solver==4.15.4.0` environment. `--first-trial 2` is only
+for completing the retained interrupted schedule, not a full three-trial run.
