@@ -7,18 +7,18 @@ module
 
 public import HexSturmMathlib.Replay.Accepted
 public import HexSturmMathlib.Soundness
+public import HexRealRootsMathlib.TarskiReal
+public import HexRealRoots.TarskiTests
 public import HexRealRootsMathlib.RealClosed
 public import HexPoly.InterpretTests
 
 public section
 
-/-! Semantic replay dependencies, separate from the fully proved acceptance probe.
+/-! Semantic replay probes for canonical and noninjective representations.
 Computational conformance owner: `HexSturm`.
-These probes audit the exact #10389 admission dependencies and type-check the
-canonical and noninjective instantiations; they do not establish mathematical
-query correctness independently. The explicit `sorryAx` expectations must be
-updated when #10389 supplies the proof. Acceptance and domain audits protect
-the independently proved replay boundary from acquiring that dependency. -/
+The universal query theorem and each instantiated literal result have only
+Lean's standard logical axioms. Acceptance and domain audits also retain that
+axiom boundary. -/
 
 namespace HexSturmMathlib.ReplayTests
 
@@ -72,25 +72,77 @@ theorem noncanonical_value {Ctx : Type*} [DecidableEq Ctx] (context : Ctx)
     (fun n => by simp [value_natCast]) (fun x => Sturm.orderSign (value x))
     (fun x => rational_sign (value x)) context p q a b v certificate checked).2
 
-/-- info: 'HexSturmMathlib.ReplayTests.rational_value' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- Kernel replay with integer coefficients and distinct dyadic endpoint storage. -/
+theorem integer_accepted :
+    TarskiCertificate.check Int.sign EndpointSigns.intDyadic (7 : Nat)
+      Hex.TarskiTests.p 1 (.finite Hex.TarskiTests.interval.lower)
+      (.finite Hex.TarskiTests.interval.upper) 2 Hex.TarskiTests.sharedLiteral = true := by
+  simp only [TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+/-- The integer/dyadic literal has the same root-sum semantics as the field replay. -/
+theorem integer_value :
+    2 = Tarski.rootSum (toPolyℝ Hex.TarskiTests.p) (toPolyℝ 1)
+      (.finite (HexRealRootsMathlib.Dyadic.toReal Hex.TarskiTests.interval.lower))
+      (.finite (HexRealRootsMathlib.Dyadic.toReal Hex.TarskiTests.interval.upper)) :=
+  Tarski.integer_check_sound 7 _ _ _ _ _ _ integer_accepted
+
+/-- info: 'HexSturmMathlib.ReplayTests.integer_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms integer_value
+
+/-- info: 'HexSturmMathlib.ReplayTests.rational_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms rational_value
 
-/-- info: 'HexSturmMathlib.ReplayTests.literal_value' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'HexSturmMathlib.ReplayTests.literal_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms literal_value
 
-/-- info: 'HexSturmMathlib.ReplayTests.noncanonical_value' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'HexSturmMathlib.ReplayTests.noncanonical_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms noncanonical_value
 
--- Admission of semantic soundness must not contaminate acceptance or domain proofs.
+-- Acceptance and domain proofs retain the same axiom boundary.
 /-- info: 'HexSturmMathlib.ReplayTests.accepted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms accepted
 
 /-- info: 'HexSturmMathlib.ReplayTests.domain' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms domain
+
+/-- info: 'HexRealRootsMathlib.Tarski.integer_check_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms HexRealRootsMathlib.Tarski.integer_check_sound
+
+/-- info: 'Hex.ZPoly.tarskiQuery_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.ZPoly.tarskiQuery_eq
+
+/-- info: 'HexSturmMathlib.query_nonneg' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms HexSturmMathlib.query_nonneg
+
+/-- info: 'HexSturmMathlib.rootCount_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms HexSturmMathlib.rootCount_eq
+
+/-- info: 'HexSturmMathlib.rootCount_query' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms HexSturmMathlib.rootCount_query
+
+/-- info: 'HexSturmMathlib.rootCount_map' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms HexSturmMathlib.rootCount_map
+
+/-- info: 'HexSturmMathlib.query_bound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms HexSturmMathlib.query_bound
+
+/-- info: 'HexSturmMathlib.query_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms HexSturmMathlib.query_sign
 
 end HexSturmMathlib.ReplayTests

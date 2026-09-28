@@ -122,7 +122,7 @@ theorem cubic_table (p : DensePoly CubicField) (a b : Endpoint CubicField)
     (Field.value_natCast rep binding real) value_neg (Field.value_inv rep binding real)
     fieldSign sign_spec 7 p a b qs reduced table h
 
-/-- info: 'Hex.SignDet.SignTable.empty_count' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'Hex.SignDet.SignTable.empty_count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.SignTable.empty_count
 /-- info: 'Hex.SignDet.buildTablePrepared_ofReplay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -131,22 +131,22 @@ theorem cubic_table (p : DensePoly CubicField) (a b : Endpoint CubicField)
 /-- info: 'Hex.SignDet.determinePrepared_ofBuild' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.determinePrepared_ofBuild
-/-- info: 'Hex.SignDet.buildTablePrepared_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.buildTablePrepared_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.buildTablePrepared_success
-/-- info: 'Hex.SignDet.determinePrepared_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.determinePrepared_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.determinePrepared_success
-/-- info: 'Hex.SignDet.determinePrepared_correct' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.determinePrepared_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.determinePrepared_correct
 /-- info: 'Hex.SignDet.determine_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.determine_isSome
-/-- info: 'Hex.SignDet.determine_correct' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.determine_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.determine_correct
-/-- info: 'Hex.SignDetMathlib.TableConformance.cubic_table' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.TableConformance.cubic_table' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms cubic_table
 

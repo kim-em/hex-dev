@@ -218,20 +218,20 @@ end Noncanonical
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.buildReencoding_invalid
 
-/-- info: 'Hex.SignDet.Descriptor.constraints_at_root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.constraints_at_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.constraints_at_root
-/-- info: 'Hex.SignDet.Descriptor.constraints_iff' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.constraints_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.constraints_iff
-/-- info: 'Hex.SignDet.Descriptor.buildReencoding_absent' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.buildReencoding_absent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.buildReencoding_absent
-/-- info: 'Hex.SignDetMathlib.ReencodingConformance.cubic_absent' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.ReencodingConformance.cubic_absent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms cubic_absent
 
-/-- info: 'Hex.SignDetMathlib.ReencodingConformance.Noncanonical.absent' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.ReencodingConformance.Noncanonical.absent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Noncanonical.absent
 

@@ -37,7 +37,7 @@ theorem buildTablePrepared_ofReplay {E : Type u} {Ctx : Type v} [Zero E] [Decida
 /-- Total sign determination over a prepared domain, using the same checked
 BKR producer. An internal error emits a diagnostic and returns an empty table;
 the companion proves that branch unreachable with lawful coefficients,
-using the named #10389 root-sum bridge. -/
+using the shared proved root-sum theorem. -/
 @[expose] def determinePrepared {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
     [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E] [DecidableEq Ctx]
     (context : Ctx) (domain : Sturm.PreparedDomain E) (qs : List (DensePoly E))

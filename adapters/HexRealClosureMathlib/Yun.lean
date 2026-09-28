@@ -514,22 +514,21 @@ end Hex.RealClosure.Yun
 #print axioms Hex.RealClosure.Yun.toPolynomial_reconstruct_prod
 
 /-- info: 'Hex.RealClosure.Yun.check_product_polynomial' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Yun.check_product_polynomial
 /-- info: 'Hex.RealClosure.Yun.check_factor_separable' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Yun.check_factor_separable
 /-- info: 'Hex.RealClosure.Yun.check_pairwise_coprime' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Yun.check_pairwise_coprime
 /-- info: 'Hex.RealClosure.Yun.check_real_rootMultiplicity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Yun.check_real_rootMultiplicity
 /-- info: 'Hex.RealClosure.Yun.check_map_roots_label' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Yun.check_map_roots_label
 
--- The inherited `sorryAx` is `Tarski.check_rootSum` (#10389).
-/-- info: 'Hex.RealClosure.Yun.map_packed' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.Yun.map_packed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Yun.map_packed

@@ -13,7 +13,7 @@ public import HexRealRootsMathlib.RealClosed
 public section
 
 /-! Mathematical root and sign meaning of the finite isolation replay. These
-semantic theorems consume the single shared root-sum bridge owned by #10389;
+semantic theorems consume the single shared proved root-sum theorem;
 the Boolean checker and its literal acceptance do not. -/
 
 namespace Hex.RCF.RealCoefficients.IsolationReplay

@@ -104,8 +104,8 @@ and per-row operands used by both construction and its companion statements.
 `buildPrepared` additionally returns
 a proof that the independent replay accepts the resulting tree. Its `BuildError`
 diagnostics remain available for arbitrary coefficient operations. The companion
-proves construction succeeds under its lawful interpretation and the named
-#10389 root-sum bridge; these diagnostics are not mathematical domain failures,
+proves construction succeeds under its lawful interpretation and the shared
+proved root-sum theorem; these diagnostics are not mathematical domain failures,
 and `determinePrepared` wraps the same producer with its success guarantee.
 No supplied roots or guessed counts enter construction. `referencePrepared`
 builds the exponential full-ternary system for small-case comparisons; production
@@ -147,7 +147,7 @@ identity with the precise retained row and support lists used by `buildTreeFrom`
 `solveScaled_eq` proves that solving a checked integer system recovers its
 counts, including zero dimensions and non-unit denominators. The companion
 combines these finite facts with the actual root-query semantics to prove
-producer completeness relative to the named #10389 bridge.
+producer completeness relative to the shared proved root-sum theorem.
 
 `count_moments` proves the finite counting identity on an independently complete
 candidate support. `Replay.support_complete` then proves recursive coverage and
@@ -155,7 +155,7 @@ exact counts for the actual checked tree, conditional on `Replay.Interprets`:
 each node's moments must be the sums over the same finite observations restricted
 to its query positions. `Replay.support_iff` excludes both missing and spurious
 positive conditions. The companion establishes this explicit moment contract
-from query/root semantics through the admitted #10389 bridge; the executable
+from query/root semantics through the proved shared root-sum theorem; the executable
 checker does not assume it, and the finite induction is not a root-sum
 soundness theorem.
 
@@ -195,22 +195,22 @@ The handle is indexed by the original descriptor, including its context,
 interval and derivative word. `checkSigns` retains the ordinary literal replay
 checks, so evidence from another selection or changed representation is rejected.
 The companion proves handle construction and every prepared query succeed
-under lawful coefficients, with the named #10389 root-sum dependency.
+under lawful coefficients, with the shared proved root-sum dependency.
 Preparation is shared; each query list still builds its joint table and runs
 independent replay. No query-answer cache or performance speedup is claimed.
 
 `determinePrepared context domain queries` returns the table directly using
 that same checked producer. Its internal-error branch prints a diagnostic and
 returns an empty table; `determinePrepared_success` excludes that branch under
-the lawful coefficient-interpretation assumptions using the named #10389
-root-sum bridge. Each call constructs the BKR evidence and runs its full
+the lawful coefficient-interpretation assumptions using the shared proved
+root-sum theorem. Each call constructs the BKR evidence and runs its full
 independent replay check. `determine sign context
 head lower upper queries` first prepares the root domain and returns `none`
 exactly for an invalid domain. Valid domains without roots return an empty
 table. Empty query lists count all roots at the empty sign word; zero and
 repeated queries keep their positions. The companion proves exact root counts
-for every word, including zero for omitted words, using the same named
-#10389 bridge. Use `buildTablePrepared`
+for every word, including zero for omitted words, using the same shared
+proved root-sum theorem. Use `buildTablePrepared`
 for explicit diagnostics, or `buildPrepared` to retain the replay certificate.
 
 `RawDescriptor` records its full context, root domain, distinct derivative
@@ -327,7 +327,7 @@ separate target descriptor for each side. Sharing this work and accounting
 for its cost against the required comparison bounds remain required.
 
 The total table APIs have producer completeness and root-count correspondence
-relative to the named #10389 root-sum bridge. Other selected-root wrappers
+relative to the shared proved root-sum theorem. Other selected-root wrappers
 retain their separate obligations. `Descriptor.buildSigns_success` rules out every
 internal selected-sign error on validated descriptors with lawful coefficients;
 the executable diagnostic interface is retained for arbitrary operations.
@@ -336,7 +336,7 @@ Strict-order comparison correspondence,
 re-encoding success characterization and domain-exact totality, the consumer
 sample-point interface, serialization and
 nested evidence sharing also remain required. The semantic proofs interpret the
-actual query replays through #10389; the specified BKR/Thom foundations are a
+actual query replays through the shared proved root-sum theorem; the specified BKR/Thom foundations are a
 separate completion gate. No performance milestone is claimed here. See the [specification](SPEC/hex-sign-det.md)
 for the complete contract and [#10377](https://github.com/kim-em/hex-dev/issues/10377)
 for the remaining assignment.

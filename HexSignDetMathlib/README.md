@@ -121,12 +121,12 @@ two and twelve queries with independently supplied sign counts, including a
 root-free constant head. The finite theorem applies to those same construction
 paths when its query-value model is established.
 
-The model is a finite proof boundary, not an executable argument. In the optional
+The model is a finite proof boundary, not an executable argument. In the development-only
 `HexQuerySemantics` target, `RootModel` interprets arbitrary accepted node and
 child query evidence as moments of actual roots, then proves exact support and
 counts for every sign condition, including omitted ones. `RootProducer` derives
 the finite query model for the actual prepared producer and proves its success
-and counts from the named #10389 root-sum statement. `SelectedRoot` proves that
+and counts from the shared proved root-sum statement. `SelectedRoot` proves that
 accepted count-one partial and full descriptors select a unique root, and
 `root_derivatives` identifies their signs with formal iterated derivatives
 through `derivativesFrom_get`. `SelectedSigns.values_at_root` and
@@ -138,9 +138,9 @@ that same selected root, including the public one-query accessor.
 correctness theorem relates every lookup to the cardinality of the actual
 root/sign condition, including omitted words, empty queries and root-free
 domains. `determine_isSome` proves that the option-valued frontend succeeds
-exactly on the shared valid root domains; this validity result has no root-sum
-admission. `determine_correct` gives all returned root counts and uses the
-named #10389 bridge, as do the producer-success results. These proofs follow
+exactly on the shared valid root domains; this validity result does not use the root-sum
+theorem. `determine_correct` gives all returned root counts and uses the
+shared proved root-sum theorem, as do the producer-success results. These proofs follow
 the actual prepared BKR producer and
 exclude its internal-error fallback, without assuming successful construction
 or injectivity of coefficient representations.
@@ -158,7 +158,7 @@ internal error of the actual producer. Empty partial words are included.
 original selected root, retains literal source bindings and returns all formal
 derivative signs in canonical slot order. No injectivity of coefficient
 representations or Thom ordering theorem is required. These semantic results
-depend on the same named #10389 root-sum admission.
+depend on the same shared proved root-sum theorem.
 `Reencoding.root_eq_source` proves that checked re-encoding keeps that real root
 when the defining polynomial and interval change. Its proof uses the copied
 equation, derivative word and strict endpoint signs, plus acceptance of the
@@ -170,11 +170,11 @@ identify exactly the source root. `Descriptor.buildReencoding_absent` in
 returns `none` if that root is absent from the target domain, establishing
 preparation and joint table construction from the input. These results use no
 separating interval, Archimedean or injective representation assumption and
-inherit only the named #10389 root-sum admission.
+use the shared proved root-sum theorem.
 `Descriptor.buildReencoding_invalid` separately proves ordinary absence for
 invalid mathematical target domains, even if their open-interval root set
 contains the source root. It uses shared preparation correspondence and has
-no root-sum admission dependency.
+no root-sum theorem dependency.
 `Comparison.eq_iff_root_eq` proves that a successful common-product comparison
 returns equality exactly when the original selected real roots coincide. It
 uses the common full derivative word and count-one descriptors; strict `<` and
@@ -194,11 +194,11 @@ descriptor's derivative signs. Domain validity supplies preparation, and
 discharged by the Mathlib-free `buildSigns_ofTable` theorem.
 `Descriptor.buildSigns_roots` identifies the returned signs with evaluation at
 the original selected root, including empty and repeated queries. These
-results use the named #10389 root-sum bridge, without a Thom order assumption.
+results use the shared proved root-sum theorem, without a Thom order assumption.
 `Descriptor.signAt_success` proves that the public total single-query operation
 uses an actual successful checked result and never its diagnostic error fallback.
 `Descriptor.signAt_correct` equates its integer with the evaluation sign at the
-original selected root, also relative to the named #10389 bridge. Neither the
+original selected root, also relative to the shared proved root-sum theorem. Neither the
 operation nor these theorems require an
 injective coefficient representation; the executable uses ordinary operations
 and carries no companion field-law package.
@@ -215,7 +215,7 @@ singleton and joint queries use exactly the existing selected-sign producer
 and retain the original root, empty/repeated query positions and zero signs.
 `QueryHandle.signAt_correct` identifies the cached total result with evaluation
 at that root, and `signAt_success` excludes its diagnostic fallback. These
-semantic guarantees use the named #10389 bridge. The finite producer/result
+semantic guarantees use the shared proved root-sum theorem. The finite producer/result
 agreement proofs have only the standard kernel axioms. Actual cubic-field and
 noncanonical-carrier conformance rejects copied evidence after context,
 interval, selected-word and semantically equivalent representation changes.
@@ -226,16 +226,16 @@ for each query list.
 root list contains every mathematical root in the requested interval exactly
 once. The proof uses the actual complete table, preserved full sign words and
 uniqueness of each accepted descriptor. It does not assume rational separators
-or injective coefficient representations. It uses the named #10389 root-sum
-bridge. `Descriptor.buildRoots_empty` proves actual success with an empty list on
+or injective coefficient representations. It uses the shared proved root-sum
+theorem. `Descriptor.buildRoots_empty` proves actual success with an empty list on
 valid root-free domains; `buildRoots_constant_success` covers nonzero constant
 heads. `buildRoots_subsingleton` proves actual success on valid domains
 containing at most one mathematical root, including linear heads and isolating
 intervals. `buildRoots_linear` supplies the degree-one corollary directly. Table
-production success and the root counts use the same named bridge throughout;
+production success and the root counts use the same root-sum theorem throughout;
 none of these success proofs needs a Thom theorem.
 `buildRoots_none_iff` characterizes invalid mathematical domains exactly,
-and `buildRoots_domain` proves validity of the original input without that admission.
+and `buildRoots_domain` proves validity of the original input without using the root-sum theorem.
 Universal producer success and correspondence with strict mathematical
 root order remain separate obligations requiring the Thom foundations.
 Conformance exercises whole-line and bounded domains, empty results for
@@ -250,8 +250,9 @@ and `endpoint_upper` prove the semantics of the actual finite-boundary polynomia
 used by joint re-encoding.
 
 General Thom ordering, re-encoding success for present roots, the remaining
-total public interfaces and Phase-4 evidence remain required. The root-sum/replay bridge in #10389
-and the specified Tau Ceti BKR/Thom foundations remain separate proof gates.
+total public interfaces and Phase-4 evidence remain required.
+Root-sum/replay soundness follows from the shared proved theorem;
+the specified BKR/Thom foundations retain their separate integration obligations.
 See the
 [specification](SPEC/hex-sign-det-mathlib.md) for the complete assignment.
 

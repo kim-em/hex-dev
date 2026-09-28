@@ -719,13 +719,10 @@ original divisor obligations before normalization. Closed values built with
 supported sentences, a divisor must be proved nonzero before certificate
 construction.
 
-The algebraic examples use the generic accepted-query soundness theorem
-`HexRealRootsMathlib.Tarski.check_rootSum`. Its proof is currently admitted in
-[#10389](https://github.com/kim-em/hex-dev/issues/10389); the fixed-field
-certificate checks and the chosen-root identifications above are proved from
-that stated theorem. Thus these examples are kernel-checked relative to that
-one mathematical admission. The rational examples and their axiom inventory
-above do not depend on it. See {ref "hex-number-field"}[HexNumberField] and
+The algebraic examples use the proved generic accepted-query soundness theorem
+`HexRealRootsMathlib.Tarski.check_rootSum`. Their fixed-field certificate checks
+and chosen-root identifications use only Lean's standard logical axioms.
+See {ref "hex-number-field"}[HexNumberField] and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
 
 # Arithmetic at a selected algebraic root
@@ -798,8 +795,8 @@ end
 ```
 
 The companion proves that checked signs, inversion, refinement and canonical
-conversion preserve the selected real value. Those proofs inherit the named
-accepted-query admission in [#10389](https://github.com/kim-em/hex-dev/issues/10389).
+conversion preserve the selected real value. Those proofs use the shared
+accepted-query soundness theorem `HexRealRootsMathlib.Tarski.check_rootSum`.
 `Root.Handle.Value h` carries the same packed representation and gives
 generic `DensePoly` algorithms operations that share this cached root.
 See {ref "hex-number-field"}[HexNumberField] for fixed-field arithmetic and
@@ -848,8 +845,7 @@ under the coefficient-interpretation laws.
 {name}`Hex.SignDet.determine_correct` identifies every returned count with the
 number of mathematical roots having that sign pattern, including zero for
 omitted patterns. Both the producer-success and count-correctness results use
-the named root-sum admission in
-[#10389](https://github.com/kim-em/hex-dev/issues/10389).
+the shared proved root-sum theorem.
 
 Derivative signs identify a selected root. Here the positive root of
 `x² − 1` is selected by the sign of the first derivative. A second checked
@@ -919,9 +915,8 @@ signs have their specified mathematical meaning. It proves preparation and
 table construction succeed and rules out every final internal error; successful
 output is not a hypothesis. {name}`Hex.SignDet.Descriptor.buildSigns_roots`
 also proves that the returned list gives the signs at the original selected
-root, in query order. These proofs use the named root-sum admission in
-[#10389](https://github.com/kim-em/hex-dev/issues/10389); they do not require a
-theorem about ordering roots by Thom encodings.
+root, in query order. These proofs use the shared root-sum theorem
+`HexRealRootsMathlib.Tarski.check_rootSum`.
 
 For one polynomial, a validated descriptor provides an ordinary integer sign.
 The same cubic-field example can use this operation directly, receiving only the integer
@@ -944,7 +939,7 @@ checked calculation succeeds, so its diagnostic zero fallback is unreachable
 when the coefficient operations satisfy their interpretation laws.
 {name}`Hex.SignDet.Descriptor.signAt_correct` identifies the returned integer
 with the evaluation sign at the descriptor's original selected root. Both
-results use the same named #10389 admission. For several queries, `buildSigns`
+results use the same shared root-sum theorem. For several queries, `buildSigns`
 shares one table across the list; each `signAt` call constructs its own table.
 
 Completing a partial derivative description supplies every derivative sign
@@ -980,8 +975,8 @@ Import `HexSignDetMathlib.CompletionProducer` for
 {name}`Hex.SignDet.Descriptor.complete_correct`. They prove that completion
 succeeds for every validated partial description and retains its original
 mathematical root, head, interval and context. This includes an empty partial
-word when the interval contains exactly one root. The proofs use the named
-root-sum admission in [#10389](https://github.com/kim-em/hex-dev/issues/10389).
+word when the interval contains exactly one root. The proofs use the shared
+proved root-sum theorem.
 They do not require the separate Thom ordering theorem. Each call computes and
 checks its full derivative table; use `buildCompletion` directly when you need
 the evidence as well as the completed descriptor.
@@ -1016,9 +1011,8 @@ set_option maxHeartbeats 1000000 in
 succeeds for validated descriptions under the coefficient laws.
 {name}`Hex.SignDet.QueryHandle.buildSigns_roots` and
 {name}`Hex.SignDet.QueryHandle.signAt_correct` identify all returned signs at
-the original selected root. These results use the named root-sum admission in
-[#10389](https://github.com/kim-em/hex-dev/issues/10389). The handle retains the
-original context, polynomial, interval and derivative selection; copied
+the original selected root. These results use the shared proved root-sum theorem.
+The handle retains the original context, polynomial, interval and derivative selection; copied
 certificates must still pass the ordinary literal replay checks.
 
 Re-encoding asks whether the same selected root can be described using a
@@ -1050,8 +1044,8 @@ Import `HexSignDetMathlib.ReencodingProducer` for
 {name}`Hex.SignDet.Descriptor.buildReencoding_absent`. It proves this result
 for every lawful coefficient interpretation when the selected root is absent
 from the target domain. Preparation and joint table construction are proved
-from the input; successful output is not assumed. The proof uses the named
-#10389 root-sum admission. It needs neither a root-separating interval nor a
+from the input; successful output is not assumed. The proof uses the shared
+proved root-sum theorem. It needs neither a root-separating interval nor a
 Thom ordering theorem. General success when the root is present is a separate
 proof requirement. For an accepted re-encoding,
 {name}`Hex.SignDet.Reencoding.root_eq_source` proves that the new descriptor
@@ -1084,9 +1078,8 @@ constant heads. {name}`Hex.SignDet.Descriptor.buildRoots_subsingleton` proves
 success on every valid domain containing at most one root, including linear
 heads and isolating intervals, without a Thom-order assumption.
 {name}`Hex.SignDet.Descriptor.buildRoots_none_iff` characterizes invalid domains
-exactly and needs no root-sum admission. The success and coverage results use
-the named root-sum admission in
-[#10389](https://github.com/kim-em/hex-dev/issues/10389). A general proof that
+exactly without using the root-sum theorem. The success and coverage results use
+the shared proved root-sum theorem. A general proof that
 enumeration succeeds on every valid domain and returns roots in mathematical
 order still requires the separate Thom foundation. This example checks the
 actual output; it does not discharge those general proof obligations.
@@ -1173,8 +1166,7 @@ private def independentRootsPass : Bool :=
 The sign-table and descriptor examples run checked producers and finite
 certificate checks; the changed sign vector above is rejected. The companion
 proves complete real-root counts, selected-root identity and signs using the
-root-sum bridge tracked by
-[#10389](https://github.com/kim-em/hex-dev/issues/10389), which remains admitted.
+proved root-sum theorem `HexRealRootsMathlib.Tarski.check_rootSum`.
 Strict root ordering still requires the Thom foundation from Tau Ceti, and the
 full library assignment retains its separate BKR/Thom foundation gate. The
 separate common-field conversion preserves the selected algebraic values by

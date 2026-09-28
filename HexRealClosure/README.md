@@ -42,8 +42,8 @@ Run `lake build HexRealClosure.Tests HexQuerySemantics` and
 checked factor split. The Python oracle computes exact arithmetic in ℚ(√2)
 independently of Lean for 29 cases and is run manually; CI builds the Lean
 `#guard` tests.
-The companion proofs inherit the named #10389 admission in
-`HexRealRootsMathlib.Tarski.check_rootSum`; no new admission is used here.
+The companion proofs use the shared theorem
+`HexRealRootsMathlib.Tarski.check_rootSum` and only Lean’s standard logical axioms.
 
 `adapters/HexRealClosureMathlib/Canonical.lean` uses the existing integer
 root-list completeness theorem to show that every checked rational selected
@@ -144,7 +144,7 @@ input. This includes irrational real roots after mapping to ℝ.
 `Yun.map_decomposeRaw` transports the raw recurrence through a zero-reflecting
 coefficient map that preserves its arithmetic. The companion instantiates
 this theorem for cached rational selected-root coefficients; their inverse
-semantics retain the named `Tarski.check_rootSum` admission (#10389).
+semantics use the proved `Tarski.check_rootSum` theorem.
 Arbitrary ordered coefficient towers still need their interpretation laws.
 `Yun.Invariant.init`, `step` and `component` in the companion prove the
 repeated-factor recurrence's pointwise root invariant over characteristic-zero
@@ -174,7 +174,8 @@ ordered-field `decompose` result passes `check`, including repeated factors.
 The generic producer proofs have no admitted dependencies and retain the field
 operations used by the executable API. `decompose_packed` applies them to the
 actual cached packed recurrence after coefficient interpretation; this
-selected-root instantiation inherits the named #10389 inverse dependency.
+selected-root instantiation uses the proved root-sum theorem through
+inverse soundness.
 
 `Bounds.find?` supplies the finite dyadic search for root isolation. It computes
 coefficient absolute values once, then tries
