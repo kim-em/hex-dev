@@ -74,7 +74,8 @@ strictly positive `Nat` counts. Its total lookup returns zero for omitted
 conditions. Completeness means this lookup equals `count(σ)` for **every**
 condition, including omitted ones. Consequently the sum is `#Z ≤ degree P`,
 and there are at most `#Z` output rows. Sorting table rows in the fixed order
-`-1<0<1` only makes serialization deterministic; it is not root ordering.
+`-1<0<1`, lexicographically with the first query most significant, only
+makes serialization deterministic; it is not root ordering.
 Certificate count vectors include zeros and are nonnegative integers; exact
 rational intermediate solutions must be proved integral and nonnegative
 before conversion. Never round, truncate or clamp them.
@@ -275,7 +276,7 @@ the companion proves their semantic meanings.
 
 | Operation | Result |
 | --- | --- |
-| `determine p I Q` | `Option SignTable`, with `none` exactly for an invalid root domain. `determinePrepared` is total on a prepared domain. |
+| `determine p I Q` | `Option SignTable`, with `none` exactly for an invalid root domain. `determinePrepared` is total on a prepared domain. Its specified internal-error branch emits a `panic!` diagnostic and returns `SignTable.empty`; the companion proves that branch unreachable under lawful coefficient interpretations. |
 | `validate raw` | `Option (Descriptor K)`, with success exactly for a uniquely realized well-formed descriptor. |
 | `complete d` | Full descriptor of the same root, total on `Descriptor K`. |
 | `roots p I` | Complete strictly increasing descriptor list, or `none` for an invalid domain. Constants give an empty list; multiplicities belong downstream. |
@@ -307,7 +308,11 @@ resource exhaustion or ordinary coefficient arithmetic. A malformed certificate
 fails `Replay.check`; that failure does not prove the requested mathematical
 result false. Negative/nonintegral counts or a singular selected matrix on a
 valid domain cannot occur for the specified producer. Prove these exclusions;
-do not convert an internal invariant gap into `none` or a default table.
+do not return `none` for them or use a default table to avoid proving success.
+The specified diagnostic fallback of `determinePrepared` is unreachable under
+the coefficient-interpretation laws. `determinePrepared_success` must prove
+that the actual producer returns `.ok`, without assuming successful
+construction, and that the total operation returns that produced table.
 
 Recursion splits finite query lists strictly; empty and singleton lists are
 explicit bases. Products, derivative lists, row selection and sorting have

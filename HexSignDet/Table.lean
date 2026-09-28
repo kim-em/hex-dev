@@ -21,9 +21,18 @@ structure SignTable (arity : Nat) where
     (∀ s ∈ row.1, s = -1 ∨ s = 0 ∨ s = 1) ∧ 0 < row.2
   distinct : (rows.toList.map Prod.fst).Nodup
 
+/-- The empty sparse table has count zero for every condition. It describes
+a domain without roots only after the root interpretation has been proved. -/
+def SignTable.empty (arity : Nat) : SignTable arity :=
+  ⟨#[], by simp, by simp⟩
+
 /-- Total lookup, including zero for every omitted condition. -/
 @[expose] def SignTable.count {arity : Nat} (t : SignTable arity) (condition : List Int) : Nat :=
   (t.rows.toList.lookup condition).getD 0
+
+theorem SignTable.empty_count (arity : Nat) (condition : List Int) :
+    (empty arity).count condition = 0 := by
+  rfl
 
 /-- Convert only positive coordinates; zero counts remain implicit. -/
 @[expose] def System.tableRows {r : Nat} (s : System r) : Array (List Int × Nat) :=

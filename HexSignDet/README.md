@@ -106,8 +106,8 @@ a proof that the independent replay accepts the resulting tree. Its `BuildError`
 diagnostics remain available for arbitrary coefficient operations. The companion
 proves construction succeeds under its lawful interpretation and the named
 #10389 root-sum bridge; these diagnostics are not mathematical domain failures,
-and this is not yet the total `determinePrepared`
-API. No supplied roots or guessed counts enter construction. `referencePrepared`
+and `determinePrepared` wraps the same producer with its success guarantee.
+No supplied roots or guessed counts enter construction. `referencePrepared`
 builds the exponential full-ternary system for small-case comparisons; production
 recursion never calls it.
 
@@ -198,6 +198,20 @@ The companion proves handle construction and every prepared query succeed
 under lawful coefficients, with the named #10389 root-sum dependency.
 Preparation is shared; each query list still builds its joint table and runs
 independent replay. No query-answer cache or performance speedup is claimed.
+
+`determinePrepared context domain queries` returns the table directly using
+that same checked producer. Its internal-error branch prints a diagnostic and
+returns an empty table; `determinePrepared_success` excludes that branch under
+the lawful coefficient-interpretation assumptions using the named #10389
+root-sum bridge. Each call constructs the BKR evidence and runs its full
+independent replay check. `determine sign context
+head lower upper queries` first prepares the root domain and returns `none`
+exactly for an invalid domain. Valid domains without roots return an empty
+table. Empty query lists count all roots at the empty sign word; zero and
+repeated queries keep their positions. The companion proves exact root counts
+for every word, including zero for omitted words, using the same named
+#10389 bridge. Use `buildTablePrepared`
+for explicit diagnostics, or `buildPrepared` to retain the replay certificate.
 
 `RawDescriptor` records its full context, root domain, distinct derivative
 indices and sign word. `RawDescriptor.check` reconstructs the formal derivative
@@ -307,10 +321,9 @@ four BKR tables and four prepared domains: joint re-encoding evidence and a
 separate target descriptor for each side. Sharing this work and accounting
 for its cost against the required comparison bounds remain required.
 
-The total `determinePrepared` API remains required.
-The optional companion proves producer completeness and root-count correspondence
-relative to the named #10389 root-sum bridge; it does not yet provide those
-total table wrappers. `Descriptor.buildSigns_success` rules out every
+The total table APIs have producer completeness and root-count correspondence
+relative to the named #10389 root-sum bridge. Other selected-root wrappers
+retain their separate obligations. `Descriptor.buildSigns_success` rules out every
 internal selected-sign error on validated descriptors with lawful coefficients;
 the executable diagnostic interface is retained for arbitrary operations.
 Completion and root lists still require their totality proofs.

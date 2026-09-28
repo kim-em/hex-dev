@@ -12,6 +12,7 @@ import HexRealClosure
 import HexSignDet
 import HexSignDetMathlib.SelectedProducer
 import HexSignDetMathlib.CompletionProducer
+import HexSignDetMathlib.TableProducer
 
 import HexSignDetMathlib.QueryHandle
 
@@ -821,18 +822,31 @@ private def bkrX : DensePoly Rat :=
   DensePoly.ofCoeffs #[0, 1]
 
 private def bkrTablePasses : Bool :=
-  match Sturm.prepare Sturm.orderSign bkrHead
-      .negInf .posInf with
+  match determine Sturm.orderSign 7 bkrHead
+      .negInf .posInf [bkrX, bkrX - 1] with
   | none => false
-  | some domain =>
-    match buildTablePrepared 7 domain [bkrX, bkrX - 1] with
-    | .error _ => false
-    | .ok table =>
-      table.rows.toList == [([-1, -1], 1), ([1, 0], 1)] &&
-        table.count [0, 0] == 0
+  | some table =>
+    table.rows.toList == [([-1, -1], 1), ([1, 0], 1)] &&
+      table.count [0, 0] == 0
 
 #guard bkrTablePasses
 ```
+
+{name}`Hex.SignDet.determine` returns `none` exactly when the defining
+polynomial and interval do not form a valid root domain. An interval with no
+roots returns an empty table. With no queries, the count at the empty sign
+pattern is the number of roots. To reuse a prepared polynomial and
+interval, call {name}`Hex.SignDet.determinePrepared` directly.
+
+The success and correctness theorems are in
+`HexSignDetMathlib.TableProducer`. {name}`Hex.SignDet.determinePrepared_success`
+proves that the actual prepared BKR producer always supplies a checked table
+under the coefficient-interpretation laws.
+{name}`Hex.SignDet.determine_correct` identifies every returned count with the
+number of mathematical roots having that sign pattern, including zero for
+omitted patterns. Both the producer-success and count-correctness results use
+the named root-sum admission in
+[#10389](https://github.com/kim-em/hex-dev/issues/10389).
 
 Derivative signs identify a selected root. Here the positive root of
 `x² − 1` is selected by the sign of the first derivative. A second checked
