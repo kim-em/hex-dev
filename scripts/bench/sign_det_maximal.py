@@ -34,7 +34,7 @@ def validate_inventory(path):
                     "rootCount": roots, "realizedSupport": roots,
                     "headDegree": roots, "maxColumns": roots,
                     "treeNodes": 2*queries-1, "graphNodes": 2*queries-1,
-                    "graphEdges": 2*(queries-1)}
+                    "graphEdges": 2*(queries-1), "querySlots": (3, 15, 45)[queries-1]}
         if any(row.get(key) != value for key, value in expected.items()):
             raise ValueError("wrong maximal-support dimensions at query count " + str(queries))
         for key in ("headDegree", "queryDegree", "headCoefficientBits",
@@ -59,12 +59,15 @@ def main():
     executable = ROOT / ".lake/build/bin/hexsigndet_bench"
     if not executable.exists():
         raise ValueError("build hexsigndet_bench first")
+    subprocess.run(["lake", "build", "--no-build", "hexsigndet_bench"],
+                   cwd=ROOT, check=True)
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
     cpu, lease = acquire_cpu()
     os.sched_setaffinity(0, {cpu})
     sources = source_hashes()
-    for relative in ("scripts/bench/sign_det_maximal.py", "scripts/bench/sign_det_compare.py"):
+    for relative in ("scripts/bench/sign_det_maximal.py", "scripts/bench/sign_det_compare.py",
+                     "scripts/bench/test_sign_det_maximal.py"):
         sources[relative] = hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
     metadata = {"schema": "hex-sign-det-maximal-inventory-v1",
                 "kind": "untimed-input-inventory", "scientific_timing_samples": 0,
@@ -89,6 +92,12 @@ def main():
         for relative, expected in sources.items():
             if hashlib.sha256((ROOT / relative).read_bytes()).hexdigest() != expected:
                 raise ValueError("source changed during inventory collection: " + relative)
+        metadata["binary_sha256_after"] = hashlib.sha256(executable.read_bytes()).hexdigest()
+        metadata["revision_after"] = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+        if (metadata["binary_sha256_after"] != metadata["binary_sha256"] or
+                metadata["revision_after"] != metadata["revision"]):
+            raise ValueError("source revision or executable changed during collection")
         metadata["validation"] = {"inputs": len(rows), "maximal_support": True}
         metadata["state"] = "complete"
     except Exception as error:

@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from sign_det_maximal import ROOT, validate_inventory
+from scripts.bench.sign_det_maximal import ROOT, validate_inventory
 
 
 class MaximalInventoryTests(unittest.TestCase):
@@ -28,7 +28,8 @@ class MaximalInventoryTests(unittest.TestCase):
                 self.validate(rows)
 
     def test_wrong_support_or_missing_graph_edge(self):
-        for key in ("rootCount", "realizedSupport", "maxColumns", "graphEdges"):
+        for key in ("rootCount", "realizedSupport", "maxColumns", "graphEdges",
+                    "treeNodes", "graphNodes", "headDegree", "querySlots"):
             rows = copy.deepcopy(self.rows)
             rows[1][key] -= 1
             with self.subTest(key=key), self.assertRaises(ValueError):

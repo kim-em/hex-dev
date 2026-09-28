@@ -12,15 +12,16 @@ The point product has degree `n` and these `n` distinct roots. Consequently the
 expected complete sign table has all `3^s` words with count one. The actual
 reduced producer, unreduced producer and full reference solver must return
 that exact ordered table. Full reference replay and the generally encoded
-reduced graph must also accept. The fixture returns no input if any check
-fails. This known-root construction is independent of the Tarski variation
+reduced graph must also accept. The fixture reports which validation failed and returns no input on failure. This known-root construction is independent of the Tarski variation
 calculation; it does not prove arbitrary-field semantic replay soundness.
 
-The fixed inventory is retained under
-[`data/sign-det-maximal/247dfcc2c`](data/sign-det-maximal/247dfcc2c), including
-metadata, the executable hash and a reconstructible source archive. It was
-collected with the automatically leased CPU 77 on the shared host. All three
-completed inputs are retained.
+The inventory collected by the committed driver is retained under
+[`data/sign-det-maximal/b8bbe9fd1`](data/sign-det-maximal/b8bbe9fd1), including
+metadata, the executable hash and a reconstructible source archive. All three
+completed inputs are retained. Earlier records from a temporary collector remain
+under [`data/sign-det-maximal/247dfcc2c`](data/sign-det-maximal/247dfcc2c) and
+[`data/sign-det-maximal/4b5e1b29e`](data/sign-det-maximal/4b5e1b29e); their metadata
+uses an older format. The table below is identical in all three records.
 
 | Queries | Head degree / roots / realized conditions | Maximum matrix size | Query degree | Head coefficient bits | Query coefficient bits | Remainder coefficient bits | Query slots | Tree / graph nodes |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -38,8 +39,8 @@ This is an untimed input and correctness inventory. It adds maximal-support
 coverage to the existing sparse family but contains no scientific timing
 samples, complexity verdict or speedup claim. The broader degree, support,
 coefficient-size, witness-size, nested-evidence, descriptor and performance
-gates in the SPEC remain open. The benchmark fast checks and successful
-compilation do not discharge those gates.
+requirements in the SPEC remain open. The benchmark fast checks and successful
+compilation do not discharge those requirements.
 
 Reproduce the inventory with `lake build hexsigndet_bench` followed by
 `.lake/build/bin/hexsigndet_bench inspect-maximal`. For source reproduction,
@@ -51,7 +52,7 @@ Validation before the additional `verify` integration is retained under
 inventories match the earlier record exactly, including the input and table
 hashes. Its source archive reconstructs every recorded source hash from merged
 base `a6cc38bf2`. This is another correctness inventory, with zero scientific
-timing samples. The `inspect-maximal` path is unchanged by that integration.
+timing samples. The diagnostic refactor produces exactly the same successful inventories.
 The existing
 `verify` command checks the two-query, nine-root input before the registered
 benchmark fast checks; this exercises a split node and nontrivial modular
@@ -62,7 +63,7 @@ Collect a new revision-bound inventory with
 committing the sources and building the executable. The driver leases one CPU,
 retains raw output, reconstructs and checks every archived source hash, and
 records the executable hash and host load. It rejects an existing output
-directory or changed sources. Failures retain their output and metadata.
+directory or changed sources. After setup, collection and validation failures retain their output and metadata.
 
 The record from this collector is retained under
 [`data/sign-det-maximal/b8bbe9fd1`](data/sign-det-maximal/b8bbe9fd1).

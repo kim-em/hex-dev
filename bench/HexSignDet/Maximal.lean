@@ -54,9 +54,6 @@ def buildMaximal (s : Nat) : Except String Input := do
   if !graph.check Sturm.orderSign 10377 p .negInf .posInf qs then throw "graph replay failed"
   return ⟨p, qs, some domain, some reduced.val, some graph⟩
 
-/-- Optional preparation interface for benchmark registrations. -/
-def maximalInput (s : Nat) : Option Input := (buildMaximal s).toOption
-
 private def intBits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
 private def ratBits (q : Rat) : Nat := max (intBits q.num) (q.den.log2 + 1)
 private def polyBits (p : DensePoly Rat) : Nat := p.toArray.foldl (fun n q => max n (ratBits q)) 0
