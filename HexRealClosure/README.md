@@ -176,6 +176,28 @@ operations used by the executable API. `decompose_packed` applies them to the
 actual cached packed recurrence after coefficient interpretation; this
 selected-root instantiation inherits the named #10389 inverse dependency.
 
+`Bounds.find?` supplies the finite dyadic search for root isolation. It computes
+coefficient absolute values once, then tries
+`2^j` for `1 ≤ j ≤ 2 * (degree p + 1)` and checks the strict Cauchy coefficient
+inequalities without coefficient division. `find?_exponent` records the finite
+range of every returned value; `find?_eq` proves agreement with separate
+candidate checks. `find?_none` records rejection of all candidates.
+`find?_dyadic` interprets them as dyadic powers when natural casts are preserved.
+The companion's `Bounds.check_sound` and `Bound.roots` prove that accepted
+values give strict open endpoints for all roots in any ordered field. These
+proofs reflect zero and preserve the actual coefficient arithmetic; they need
+neither injective coefficient representations nor an Archimedean assumption.
+`Bound.domain` supplies the shared Sturm domain from an accepted bound and
+squarefreeness, including ordered root-free finite endpoints.
+The 13 exact oracle fixtures include nonmonic and fractional inputs, strict
+thresholds, inverse infinitesimals at two levels and close infinitesimal roots.
+Run `lake build hexrealclosure_bounds_conformance`, then
+`.lake/build/bin/hexrealclosure_bounds_conformance | python3 scripts/oracle/real_closure_bounds.py`.
+
+A failed bound search is a request for whole-line BKR completion. It never
+means that the polynomial has no roots. The bounded bisection and complete
+isolation driver, general contexts and recursive transport remain unimplemented.
+
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and
 [real-algebraic chapter](../HexManual/Chapters/HexRealAlgebraic.lean).
