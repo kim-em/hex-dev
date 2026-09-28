@@ -33,8 +33,7 @@ private def missing : Signature := ⟨[⟨"missing", 1⟩], 2⟩
 #guard (catalog.readElement { a.write with binding := base.signature }).isNone
 #guard (catalog.readElement { a.write with value := .fraction [] [] }).isNone
 
-private abbrev packed := PackedContext.pack base
-private abbrev reconstructed := packed.extend 2
+private abbrev reconstructed := PackedContext.pack second
 private def value : PackedElement registry := ⟨reconstructed, a⟩
 private def polynomial : Polynomial second := Polynomial.ofCoeffs #[a, delta, 2]
 private def packedPolynomial : PackedPolynomial registry := ⟨reconstructed, polynomial⟩
@@ -43,21 +42,23 @@ private def packedPolynomial : PackedPolynomial registry := ⟨reconstructed, po
 #guard (catalog.readPolynomial { polynomial.write with binding := missing }).isNone
 #guard (catalog.readPolynomial { polynomial.write with coefficients := [.rational 1] }).isNone
 
-private theorem read_reconstructed :
-    catalog.read reconstructed.signature = some reconstructed := by
-  have hs : packed.signature = ⟨[], 0⟩ := by
-    simpa only [packed, PackedContext.signature, base, rational, RealContext.keys_rational] using
-      Context.signature_real (.rational registry)
-  simp only [PackedContext.extend_signature, hs, Nat.zero_add]
-  simpa only [RealPrefix.keys_rational, RealPrefix.finish, reconstructed, packed, base, rational] using
-    Catalog.read_prefix catalog (.pack (.rational registry)) 2
-      (by simpa only [RealPrefix.keys_rational] using Catalog.lookup_rational catalog)
+private theorem installed_prefix :
+    catalog.lookup reconstructed.realPrefix.keys = some reconstructed.realPrefix := by
+  simp only [PackedContext.realPrefix, second, first,
+    Context.realPrefix_infinitesimal, base, rational, Context.realPrefix_real,
+    RealPrefix.keys_rational]
+  exact Catalog.lookup_rational catalog
 
 example : catalog.readElement value.write = some value :=
-  Catalog.read_write catalog value read_reconstructed
+  Catalog.read_write catalog value installed_prefix
 
 example : catalog.readPolynomial packedPolynomial.write = some packedPolynomial :=
-  Catalog.readPolynomial_write catalog packedPolynomial read_reconstructed
+  Catalog.readPolynomial_write catalog packedPolynomial installed_prefix
+
+#guard (reconstructed.readElement { a.write with binding := base.signature }).isNone
+
+example : catalog.read reconstructed.signature = some reconstructed :=
+  Catalog.read_self catalog reconstructed installed_prefix
 
 example (raw : Signature) (context : PackedContext registry)
     (h : catalog.read raw = some context) : context.signature = raw :=
