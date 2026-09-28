@@ -834,8 +834,8 @@ private def bkrTablePasses : Bool :=
 
 {name}`Hex.SignDet.determine` returns `none` exactly when the defining
 polynomial and interval do not form a valid root domain. An interval with no
-roots returns an empty table. An empty query list instead counts all the
-roots in its single empty sign pattern. To reuse a prepared polynomial and
+roots returns an empty table. With no queries, the count at the empty sign
+pattern is the number of roots. To reuse a prepared polynomial and
 interval, call {name}`Hex.SignDet.determinePrepared` directly.
 
 The success and correctness theorems are in

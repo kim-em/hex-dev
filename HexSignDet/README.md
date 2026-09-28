@@ -202,12 +202,15 @@ independent replay. No query-answer cache or performance speedup is claimed.
 `determinePrepared context domain queries` returns the table directly using
 that same checked producer. Its internal-error branch prints a diagnostic and
 returns an empty table; `determinePrepared_success` excludes that branch under
-the lawful coefficient-interpretation assumptions. `determine sign context
+the lawful coefficient-interpretation assumptions using the named #10389
+root-sum bridge. Each call constructs the BKR evidence and runs its full
+independent replay check. `determine sign context
 head lower upper queries` first prepares the root domain and returns `none`
 exactly for an invalid domain. Valid domains without roots return an empty
 table. Empty query lists count all roots at the empty sign word; zero and
 repeated queries keep their positions. The companion proves exact root counts
-for every word, including zero for omitted words. Use `buildTablePrepared`
+for every word, including zero for omitted words, using the same named
+#10389 bridge. Use `buildTablePrepared`
 for explicit diagnostics, or `buildPrepared` to retain the replay certificate.
 
 `RawDescriptor` records its full context, root domain, distinct derivative

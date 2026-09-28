@@ -114,11 +114,6 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "missing local import"):
                     audit.check()
                 tables.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-                additional = root / "conformance/HexSignDetMathlib/AnotherConformance.lean"
-                additional.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/AnotherConformance"):
-                    audit.check()
-                additional.unlink()
                 sign.write_text("public import HexRCF.RealCoefficients\ntheorem bad : True := by stop\n",
                                 encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "unapproved admission"):

@@ -49,6 +49,10 @@ def ratHead : DensePoly Rat := ratX * ratX - 1
   [([-1, -1], 1), ([1, 0], 1)] [[0, 0], [1, 1], [], [1]]
 #guard countsAs Sturm.orderSign ratHead .negInf .posInf [ratX, ratX - 1] false
   [([-1, -1], 1), ([1, 0], 1)] [[0, 0], [1, 1]]
+#guard countsAs Sturm.orderSign ratHead .negInf .posInf [ratX, -ratX] true
+  [([-1, 1], 1), ([1, -1], 1)] [[0, 0]]
+#guard countsAs Sturm.orderSign (ratHead * ratX) .negInf .posInf [ratX, -ratX, ratX - 1] true
+  [([-1, 1, -1], 1), ([0, 0, -1], 1), ([1, -1, 0], 1)] [[1, 1, 1]]
 #guard countsAs Sturm.orderSign ratHead .negInf .posInf [-ratX] true
   [([-1], 1), ([1], 1)] [[0]]
 #guard countsAs Sturm.orderSign ratHead (.finite 0) (.finite 2) [ratX, ratX - 1] true
@@ -75,6 +79,16 @@ def ratHead : DensePoly Rat := ratX * ratX - 1
 #guard (determine Hex.TarskiTests.Noncanonical.sign 7
   (Hex.TarskiTests.Noncanonical.head * Hex.TarskiTests.Noncanonical.head)
   .negInf .posInf []).isNone
+
+#guard countsAs Hex.TarskiTests.Noncanonical.sign Hex.TarskiTests.Noncanonical.head
+  (.finite (HexPoly.InterpretTests.pack 0 (-2))) (.finite (HexPoly.InterpretTests.pack 0 2))
+  [HexPoly.InterpretTests.x - DensePoly.C HexPoly.InterpretTests.root] true
+  [([-1], 1), ([0], 1)] [[1]]
+#guard (determine Hex.TarskiTests.Noncanonical.sign 7 Hex.TarskiTests.Noncanonical.head
+  (.finite HexPoly.InterpretTests.root) .posInf []).isNone
+#guard (determine Sturm.orderSign 7 ratHead .posInf .negInf []).isNone
+#guard (determine Sturm.orderSign 7 ratHead (.finite 0) .negInf []).isNone
+#guard (determine Sturm.orderSign 7 ratHead (.finite 0) (.finite 1) []).isNone
 
 -- Real coefficients come from the selected embedding of the actual cubic
 -- field. A nonzero query polynomial vanishes at one of the two head roots.
