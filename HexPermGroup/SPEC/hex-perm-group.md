@@ -399,10 +399,10 @@ proved in its own declaration:
 - for each level, items 3 and 5 over one range `[lo, hi)` of the row-major
   pair index `i*o + j`.
 
-`Kernel.check_eq_all` proves that `Kernel.check n inputs c` equals the
-conjunction of these pieces whenever the ranges of each level are adjacent:
-the first starts at `0`, each ends where the next starts, and the last ends
-at `g*o`. `Kernel.chunks n inputs.length c budget` returns such a partition
+`Kernel.check_of`, `Kernel.levelsOk_cons_of` and `Kernel.pairsOk_append`
+assemble `Kernel.check n inputs c = true` from these pieces. `pairsOk_append`
+joins two adjacent ranges, so the ranges of each level must start at `0`, each
+end where the next starts, and the last end at `g*o`. `Kernel.chunks n inputs.length c budget` returns such a partition
 for each level. It rejects `budget = 0`. Its cost estimate counts, for one pair,
 the two compositions forming `h(i, j)` and one composition and one lookup for
 each later level, each composition costing `n` field operations, and it counts
@@ -839,8 +839,8 @@ under `G_ℓ` is the stored orbit, and that `G_(ℓ+1)` is the stabilizer of `b_
 in `G_ℓ`. The last fact uses item 6 for one inclusion and Schreier's lemma
 with item 5 for the other. Orbit–stabilizer then gives
 `Nat.card G_ℓ = o_ℓ * Nat.card G_(ℓ+1)`, and item 2 gives `G_0 = closure S`.
-`Kernel.check_eq_all` lets these hypotheses be supplied as separate
-declarations.
+The assembly lemmas of [Bounded declarations](#bounded-declarations) let these
+hypotheses be supplied as separate declarations.
 
 The `perm_group` tactic, in `HexPermGroupMathlib/Tactic.lean`, closes goals of
 the following forms:
@@ -885,7 +885,7 @@ any declaration. Otherwise it adds:
 - one theorem per piece of [Bounded declarations](#bounded-declarations),
   proved by `decide +kernel`;
 
-and closes the goal from `Kernel.check_eq_all`, the theorems above, a proof
+and closes the goal from the assembly lemmas, the theorems above, a proof
 that the set literal equals the range of the input list, and, for
 `closure S = ⊤`, the equality of the certified order with `n!`. Each
 `decide +kernel` proof is an ascribed `Eq.refl true`, so the elaborator does
@@ -1059,8 +1059,7 @@ lookup field, one orbit point, one orbit size, one Schreier-tree parent and
 its index bounds, one next-level index, and one base point, including a base
 point equal to `n` with an orbit containing a point below `n`, and a
 first-level generator unrelated to the inputs. `Kernel.check` must reject
-each. A range partition that omits, repeats or exceeds one Schreier pair must
-not satisfy the hypothesis of `Kernel.check_eq_all`, and `Kernel.chunks`
+each. `Kernel.chunks` returns adjacent ranges covering every Schreier pair, and
 rejects the budget `0`. Fixtures include degrees 0 and 1, degrees that are
 powers of two (16 and 32), where the field width must still hold the lookup
 value `n`, and the trivial group, which has no levels.

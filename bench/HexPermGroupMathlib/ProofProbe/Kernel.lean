@@ -95,4 +95,10 @@ example : Nat.card (Subgroup.closure ({
 #guard_msgs (drop info) in
 #perm_group_certificate symmetricThree for ({c[0, 1, 2], c[0, 1]} : Set (Equiv.Perm (Fin 3)))
 
+-- Goals of any other shape are rejected before any work is done.
+example : c[0, 1] ∉ Subgroup.closure ({c[0, 1, 2]} : Set (Equiv.Perm (Fin 3))) ⊓ ⊥ := by
+  fail_if_success perm_group
+  rw [Subgroup.mem_inf, Subgroup.mem_bot]
+  exact fun h => absurd h.2 (by decide)
+
 end Hex.PermGroup.ProofProbe

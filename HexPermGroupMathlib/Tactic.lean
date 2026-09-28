@@ -176,25 +176,51 @@ meta inductive GoalKind where
   | notMem (g : Expr)
   | top
 
-/-- Find the generating set and classify the goal. -/
+/-- The generating set `s` when `H` is exactly `Subgroup.closure s`. -/
+meta def closureArg? (H : Expr) : MetaM (Option Expr) := do
+  let H ← instantiateMVars H
+  if H.isAppOfArity ``Subgroup.closure 3 then return some (H.getArg! 2)
+  let H' ← whnfR H
+  if H'.isAppOfArity ``Subgroup.closure 3 then return some (H'.getArg! 2)
+  return none
+
+/-- The subgroup `H` when the type `T` is `↥H`, that is `{x // x ∈ H}`. -/
+meta def coeSortArg? (T : Expr) : MetaM (Option Expr) := do
+  let T ← whnfR (← instantiateMVars T)
+  unless T.isAppOfArity ``Subtype 2 do return none
+  let .lam _ _ body _ := T.getArg! 1 | return none
+  unless body.isAppOfArity ``Membership.mem 5 do return none
+  let H := body.getArg! 3
+  if H.hasLooseBVars then return none
+  return some H
+
+/-- Match one of the four supported goals exactly, returning the generating set. -/
 meta def readGoal (goal : Expr) : MetaM (Expr × GoalKind) := do
   let goal ← instantiateMVars goal
-  let some cl := goal.find? (·.isAppOfArity ``Subgroup.closure 3)
-    | throwError "perm_group: the goal does not mention `Subgroup.closure`{indentExpr goal}"
-  let s := cl.getArg! 2
+  let unsupported {α} : MetaM α := throwError "perm_group: unsupported goal{indentExpr goal}\n\
+    Expected `Nat.card (Subgroup.closure s) = N`, `g ∈ Subgroup.closure s`, \
+    `g ∉ Subgroup.closure s` or `Subgroup.closure s = ⊤`."
   if goal.isAppOfArity ``Eq 3 then
     let lhs := goal.getArg! 1
     let rhs := goal.getArg! 2
     if lhs.isAppOfArity ``Nat.card 1 then
+      let some H ← coeSortArg? (lhs.getArg! 0) | unsupported
+      let some s ← closureArg? H | unsupported
       let some N ← (evalNat rhs).run
         | throwError "perm_group: the claimed order must be a numeral{indentExpr rhs}"
       return (s, .card N)
-    if rhs.isAppOfArity ``Top.top 2 then return (s, .top)
-  if goal.isAppOfArity ``Membership.mem 5 then return (s, .mem (goal.getArg! 4))
+    if rhs.isAppOfArity ``Top.top 2 then
+      let some s ← closureArg? lhs | unsupported
+      return (s, .top)
+    unsupported
+  if goal.isAppOfArity ``Membership.mem 5 then
+    let some s ← closureArg? (goal.getArg! 3) | unsupported
+    return (s, .mem (goal.getArg! 4))
   if goal.isAppOfArity ``Not 1 && (goal.getArg! 0).isAppOfArity ``Membership.mem 5 then
-    return (s, .notMem ((goal.getArg! 0).getArg! 4))
-  throwError "perm_group: unsupported goal{indentExpr goal}\nExpected `Nat.card (closure s) = N`, \
-    `g ∈ closure s`, `g ∉ closure s` or `closure s = ⊤`."
+    let m := goal.getArg! 0
+    let some s ← closureArg? (m.getArg! 3) | unsupported
+    return (s, .notMem (m.getArg! 4))
+  unsupported
 
 /-- A proof of `{x | x ∈ [g₁, …, gₖ]} = {g₁, …, gₖ}` built from the list lemmas,
 without traversing the elements. -/
@@ -374,7 +400,12 @@ syntax (name := permGroup) "perm_group" optConfig : tactic
 
 @[tactic permGroup] meta def evalPermGroup : Tactic := fun stx => do
   let cfg ← elabPermGroupConfig stx[1]
-  permGroupTac cfg
+  -- A failure after declarations have been added removes them again.
+  let env ← getEnv
+  try permGroupTac cfg
+  catch ex =>
+    setEnv env
+    throw ex
 
 /-! # Printing a certificate as source -/
 
@@ -398,6 +429,7 @@ ascription. -/
 meta partial def setLitStx (stx : Syntax) : Option (Array Syntax) :=
   if stx.getKind == ``Lean.Parser.Term.typeAscription then setLitStx stx[1]
   else if stx.getKind == ``Lean.Parser.Term.paren then setLitStx stx[1]
+  else if stx.getKind == `coeNotation then setLitStx stx[1]
   else if stx.getNumArgs == 3 && stx[0].isToken "{" && stx[2].isToken "}" then
     some stx[1].getSepArgs
   else none
@@ -436,18 +468,39 @@ meta def elabPermGroupCertificate : Command.CommandElab := fun stx => do
       | .ok p => pure p
       | .error msg => throwError "#perm_group_certificate: {msg}"
     let ctx := s!"{n} (width {n}) (ident {n} (width {n}))"
-    let simpLemmas := match gens.length with
+    let finsetLemmas := if sSrc.contains '↑' then
+        ", Finset.coe_insert, Finset.coe_singleton" else ""
+    let simpLemmas := (match gens.length with
       | 0 => "setOf_mem_nil"
       | 1 => "setOf_mem_singleton"
-      | _ => "setOf_mem_cons, setOf_mem_singleton"
+      | _ => "setOf_mem_cons, setOf_mem_singleton") ++ finsetLemmas
     let lv (k : Nat) : String :=
       listSrc (fun j => s!"{name}_level_{j}") (List.range' k (c.length - k))
     let mut out := "section\n\nopen Hex Hex.PermGroup Hex.PermGroup.Kernel\n\n"
     for h : i in [0:c.length] do
       out := out ++ s!"noncomputable def {name}_level_{i} : Level :=\n  {levelSrc c[i]}\n\n"
+    -- one packing theorem per generator, as in the tactic
+    let mut hS := "map_pack_nil"
+    for k' in [0:gens.length] do
+      let k := gens.length - 1 - k'
+      let g := gens[k]!
+      let x := inputs[k]!
+      let tie ← if g.isAppOfArity ``Hex.PermGroup.Kernel.permOfImages 2 then do
+          let l := listSrc toString images[k]!
+          out := out ++ s!"theorem {name}_input_{k}_images : imagesOk {n} {l} = true := by\n" ++
+            "  decide +kernel\n\n"
+          out := out ++ s!"theorem {name}_input_{k}_pack : packList {n} {l} = {x} := by\n" ++
+            "  decide +kernel\n\n"
+          pure s!"((pack_ofEquiv_permOfImages {name}_input_{k}_images).trans {name}_input_{k}_pack)"
+        else do
+          out := out ++ s!"theorem {name}_input_{k} :\n" ++
+            s!"    pack (Perm.ofEquiv ({elemSrc[k]!} : Equiv.Perm (Fin {n}))) = {x} := by\n" ++
+            "  decide +kernel\n\n"
+          pure s!"{name}_input_{k}"
+      hS := s!"(map_pack_cons {tie}\n      {hS})"
     out := out ++ s!"theorem {name}_inputs :\n" ++
       s!"    (({gsSrc} : List (Equiv.Perm (Fin {n}))).map Perm.ofEquiv).map pack =\n" ++
-      s!"      {listSrc toString inputs} := by\n  decide +kernel\n\n"
+      s!"      {listSrc toString inputs} :=\n  {hS}\n\n"
     out := out ++ s!"theorem {name}_inputs_ok :\n    inputsOk {ctx} {listSrc toString inputs}\n" ++
       s!"      {lv 0} = true := by\n  decide +kernel\n\n"
     let mut levels := "levelsOk_nil"

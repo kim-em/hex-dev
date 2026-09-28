@@ -805,13 +805,6 @@ theorem check_of {inputs : List Nat} {c : Certificate}
     (hl : levelsOk n (width n) (ident n (width n)) c = true) : check n inputs c = true := by
   simp only [check, hi, hl, Bool.and_self]
 
-/-- `check` is the conjunction of its pieces, with the Schreier pairs of each
-level split at any sequence of adjacent ranges. -/
-theorem check_eq_all (inputs : List Nat) (c : Certificate) :
-    check n inputs c = true ↔
-      inputsOk n (width n) (ident n (width n)) inputs c = true ∧
-      levelsOk n (width n) (ident n (width n)) c = true := check_iff inputs c
-
 theorem setOf_mem_cons {α : Type} (a b : α) (l : List α) :
     {x | x ∈ a :: b :: l} = insert a {x | x ∈ b :: l} := by
   ext x
