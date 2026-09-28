@@ -437,7 +437,7 @@ The semantic sign, inverse and quotient proofs inherit only the existing named
 cleanliness and the core introduce no admission. These interpretations are
 conditional on an ambient ordered real closed field, not an existence proof.
 
-The remaining tower work includes the recursive algebraic dependency catalog,
+The remaining tower work includes formal completeness of reconstruction from algebraic frames,
 context enlargement and transport, general root isolation and multiplicities,
 rational delegation agreement and a compatible real-closed union construction.
 Repeated nonconstant queries still rebuild the shared prepared domain and BKR
@@ -498,6 +498,40 @@ unknown bindings, forged signs, zero claims, trailing zeros and malformed base
 payloads. The core roundtrip proofs introduce no admission. General persistent
 refinement, transport of later descriptors, interpretation of arbitrary towers,
 complete isolation and the real-closed union remain open.
-Reconstructing new validated algebraic levels from serialized frames and
-proving that native frame serialization always succeeds (so the optional
-adjoin facade can become total) also remain open.
+Proving that native frame serialization always succeeds (so the optional
+adjoin facade can become total), and that every native tower can be reconstructed
+without an installed algebraic prefix, also remain open.
+
+### Reconstruction from algebraic frames
+
+`Context.readDescriptor` reads the exact seven-field descriptor frame and
+independently replays its supplied graph over the native predecessor. Its
+formal derivatives, count-one condition, context and root-domain bindings are
+checked by the shared descriptor checker. `Context.readFrame` then constructs
+the native extension and checks that it re-encodes to the exact requested
+frame. A replay with extra unused entries may be mathematically accepted but
+has a different full identity and is rejected by this last check.
+
+`Catalog.reconstruct` recovers an entire context from its structured signature.
+It retrieves the validated real base and its actual erased search progress,
+then visits algebraic frames in predecessor order, reusing installed prefixes
+and checking each missing one. Its returned context carries a proof of the
+requested full signature. Unknown validated bases and false or differently
+encoded frames produce errors. Catalog insertion remains an explicit operation.
+
+`Catalog.restoreElement` and `restorePolynomial` reconstruct the native context
+before decoding the payload; the returned packed value retains that context.
+The existing `readElement` and `readPolynomial` use only installed algebraic
+prefixes. Successful restoration has proved binding preservation, and cached
+scalar/polynomial write-read roundtrips are proved. `RestoredRoot.frame_data`
+proves exact re-encoding of every successful root-frame reconstruction.
+
+Run `lake build HexRealClosure.RootFrameTests`. The examples reconstruct two
+successive roots, restore generator payloads and polynomials, reuse cached
+prefixes, and reject stale predecessors, false graph versions and matrix
+certificates, unknown real providers, malformed frames and extra unreachable
+graph entries. These are
+structured JSON APIs; they do not establish byte-parser or pretty-printer laws.
+Completeness for every freshly encoded native tower still needs the native
+frame-format and graph-shape proofs. General interpretation, refinement and
+transport retain the obligations listed above.
