@@ -285,12 +285,15 @@ number whose field `i` is field `field(y, i)` of `x`, for `i < n`, with no
 higher bits; it satisfies `comp n (pack p) (pack q) = pack (p.comp q)`.
 `Kernel.ident n = pack (Perm.id n)`.
 
-A checker statement about a packed value only ever reads its fields `0..n-1`,
-and only at positions below `n`. It compares packed values with `Nat.beq`,
-which implies equality of those fields. It therefore needs no separate
-validity check of packed values: every permutation it reasons about is
-`pack p` for an input `p`, a composition of such values, or a value whose
-composition with such a value is `ident n`.
+The checker reads only fields `0..n-1` of a packed value, and composes only
+on the right with values whose fields are below `n`. It compares packed values
+with `Nat.beq`, which implies equality of those fields. It therefore needs no
+separate validity check of packed values: every value it uses semantically
+agrees on fields `0..n-1` with `pack p` for some `p : Perm n`, because it is
+the packing of an input, a composition of such values, or a value whose
+composition on the right with such a value is `ident n`. Such a value may have
+arbitrary bits at or above `n*W`. The soundness proof works with this
+agreement on low fields, and proves that `comp` respects it.
 
 ### Certificate data
 
@@ -362,9 +365,12 @@ continues with `comp n u_{j-1} x`.
 `Kernel.order c` is the product of the orbit sizes, in arbitrary-precision
 `Nat` arithmetic.
 
-Distinct base points and the condition that a generator fixes earlier base
-points are not checked: both follow from item 6, since it places each level's
-generators in the stabilizer of the previous base point.
+Distinct base points are neither checked nor required. Items 4 and 6 place
+each level's generators in the stabilizer of the previous base point, so by
+induction over the levels each level's generators fix all earlier base points,
+and a repeated base point has an orbit of one point that contributes the
+factor `1`. The condition that a generator fixes earlier base points is
+therefore not checked either.
 
 Every function the kernel evaluates is written for kernel reduction, following
 `HexGraphIso.Kernel.Packed`. Field reads and writes use the raw
@@ -391,9 +397,10 @@ proved in its own declaration:
   pair index `i*o + j`.
 
 `Kernel.check_eq_all` proves that `Kernel.check n inputs c` equals the
-conjunction of these pieces whenever the ranges of each level are in bounds,
-ordered, and cover `[0, g*o)` exactly. `Kernel.chunks c budget` returns such a
-partition. It rejects `budget = 0`. Its cost estimate counts, for one pair,
+conjunction of these pieces whenever the ranges of each level are adjacent:
+the first starts at `0`, each ends where the next starts, and the last ends
+at `g*o`. `Kernel.chunks n inputs.length c budget` returns such a partition
+for each level. It rejects `budget = 0`. Its cost estimate counts, for one pair,
 the two compositions forming `h(i, j)` and one composition and one lookup for
 each later level, each composition costing `n` field operations, and it counts
 the unsplit per-level and input checks the same way. When one unsplit check
@@ -860,7 +867,7 @@ closed terms of type `Equiv.Perm (Fin n)` that the compiler can evaluate, and
 the claimed order is a numeral.
 
 The tactic evaluates each generator and the query to image lists, runs
-`Kernel.certify` and `Kernel.chunks`, and computes the order or the sift verdict
+`Kernel.certify` and `Kernel.chunks` with the degree and the number of inputs, and computes the order or the sift verdict
 in compiled code. If the goal is false, or `Kernel.chunks` fails, it reports the
 certified order, the verdict or the limit that failed, and stops before adding
 any declaration. Otherwise it adds:
