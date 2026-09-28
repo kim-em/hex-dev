@@ -213,22 +213,31 @@ theorem refine_root
     simpa only [model.refine_poly] using hs
 
 
-/-- Every value at the revalidated later root preserves its interpretation,
-using the actual native polynomial conversion and packing operations. -/
-theorem refine_later
-    (converted : SignDet.Descriptor (parent.refine encoding).extension.context.Value Signature
-      (parent.refine encoding).extension.context.sign (parent.refine encoding).extension.context.signature)
-    (hconverted : (parent.refine encoding).mapDescriptor? descriptor = some converted)
+/-- Interpret the actual cached extension in a checked later conversion. -/
+noncomputable def later
+    (converted : Later (parent.refine encoding) descriptor) :
+    Model converted.extension.context K :=
+  (congrArg Extension.context converted.canonical).symm ▸
+    (model.refine encoding).adjoin converted.descriptor
+
+include model decK orderK closedK in
+/-- Preparing a checked later-level transport always succeeds. -/
+theorem refine_later_exists :
+    ∃ converted, (parent.refine encoding).later? descriptor = some converted :=
+  (parent.refine encoding).later_exists descriptor (model.refine_descriptor encoding descriptor)
+
+/-- Every value at the checked later root preserves its interpretation. The
+bundle supplies its own revalidation proof and captured native packing closure. -/
+theorem refine_later (converted : Later (parent.refine encoding) descriptor)
     (value : ((parent.adjoin source).context.adjoin descriptor).context.Value) :
-    ((model.refine encoding).adjoin converted).value
-      ((parent.refine encoding).mapValue descriptor converted value) =
+    (model.later encoding descriptor converted).value (converted.transport value) =
     ((model.adjoin source).adjoin descriptor).value value := by
-  unfold Refinement.mapValue
-  rw [Model.adjoin_ofPoly, model.refine_poly,
-    Model.adjoin_generator, model.refine_root encoding descriptor converted hconverted,
+  unfold later
+  rw [transport_value _ _ _ _ (converted.repacked value), Model.adjoin_ofPoly,
+    model.refine_poly, Model.adjoin_generator,
+    model.refine_root encoding descriptor converted.descriptor converted.checked,
     (model.adjoin source).adjoin_value descriptor value,
     (model.adjoin source).adjoin_generator]
-
 
 end Hex.RealClosure.Tower.Model
 

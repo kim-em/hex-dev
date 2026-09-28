@@ -336,7 +336,7 @@ theorem adjoin_ofPoly (model : Model context K)
     rw [model.adjoin_generator]
     unfold adjoin
     dsimp only [Context.ofPoly]
-    rw [cast_value _ _ _ _ (cast_heq _ _)]
+    rw [cast_map _ _ _ _ (Context.adjoin_pack chain descriptor)]
     simpa only [root, Algebraic.Context.evalPoly, Algebraic.Context.rootValue,
       Algebraic.Context.root_adjoin] using
       Algebraic.Element.denote_ofPoly

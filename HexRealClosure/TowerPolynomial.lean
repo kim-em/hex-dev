@@ -23,14 +23,9 @@ General representatives have no degree bound. -/
     exact fun value => Algebraic.Element.polynomial
       (_root_.cast (congrArg Context.Value h) value)
 
-/-- Pack a predecessor-coefficient polynomial in the actual public child.
-Partial application retains the native target context for repeated packing. -/
-@[expose] def Context.ofPoly : DensePoly parent.Value → (parent.adjoin descriptor).context.Value := by
-  cases parent with
-  | pack chain =>
-    have h := (Context.adjoin_native chain descriptor).1
-    let native := Algebraic.Context.adjoin descriptor (Context.pack chain).isClean
-    exact fun p => _root_.cast (congrArg Context.Value h.symm)
-      (Algebraic.Element.ofPoly (context := native) p)
+/-- Pack through the public extension. For repeated packing, retain the
+extension itself and call its `pack` closure. -/
+@[expose] def Context.ofPoly : DensePoly parent.Value → (parent.adjoin descriptor).context.Value :=
+  (parent.adjoin descriptor).pack
 
 end Hex.RealClosure.Tower

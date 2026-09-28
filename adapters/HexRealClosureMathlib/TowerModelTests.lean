@@ -135,15 +135,14 @@ example (p : DensePoly (second d₁ d₂).context.Value) :
 example : ∃ converted, ((first d₁).context.refine encoding).mapDescriptor? d₃ = some converted :=
   (model₁ d₁).refine_descriptor encoding d₃
 
-example (converted : SignDet.Descriptor (((first d₁).context.refine encoding).extension.context.Value)
-    Signature (((first d₁).context.refine encoding).extension.context.sign)
-    (((first d₁).context.refine encoding).extension.context.signature))
-    (hconverted : ((first d₁).context.refine encoding).mapDescriptor? d₃ = some converted)
+example : ∃ converted, ((first d₁).context.refine encoding).later? d₃ = some converted :=
+  (model₁ d₁).refine_later_exists encoding d₃
+
+example (converted : Later ((first d₁).context.refine encoding) d₃)
     (value : (third d₁ d₂ d₃).context.Value) :
-    (((model₁ d₁).refine encoding).adjoin converted).value
-      (((first d₁).context.refine encoding).mapValue d₃ converted value) =
-        (model₃ d₁ d₂ d₃).value value :=
-  (model₁ d₁).refine_later encoding d₃ converted hconverted value
+    ((model₁ d₁).later encoding d₃ converted).value (converted.transport value) =
+      (model₃ d₁ d₂ d₃).value value :=
+  (model₁ d₁).refine_later encoding d₃ converted value
 
 end Successive
 

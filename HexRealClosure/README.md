@@ -615,15 +615,19 @@ polynomial preservation.
 `Refinement.mapDescriptor?` transports a later root's head and endpoints and
 rebuilds its evidence against the new predecessor signature. `refine_descriptor`
 proves this operation succeeds for every validated later descriptor;
-`refine_root` proves it selects the same ambient root. `Refinement.mapValue`
-converts values at that later level using their actual stored polynomial, and
-`refine_later` proves preservation when using the descriptor returned by
-revalidation. Old context bindings are rejected by the new reader and validator.
+`refine_root` proves it selects the same ambient root. `Refinement.later?` packages that revalidation with its cached extension and
+transport closure in a private `Later` bundle. `Later.transport` converts values
+using their actual stored polynomial; `refine_later` proves preservation without
+a caller-supplied descriptor-matching premise. `refine_later_exists` proves
+bundle construction succeeds. Retain the extension and use `Extension.pack`
+for repeated packing with its captured native prepared state. When the root frame changes, old context bindings are rejected by the new reader and validator.
 
 Run `lake build HexRealClosure.TowerRefinementTests HexRealClosureMathlib.TowerModelTests`.
 Native checks refine a nonmonic reducible definition over an algebraic
-predecessor, including canonical zero, a noncanonical one, inverses, polynomial
-transport, stale packets, and a third root with a transported inverse. Kernel
+predecessor and directly over the rational base, including canonical zero, a noncanonical one, inverses, polynomial
+transport, stale packets, and a third root with a transported inverse. A
+fractional nonmonic target checks actual stored polynomials and a retained
+representative of degree seven. Kernel
 examples apply the general preservation results to arbitrary validated
 three-level towers. These companion proofs retain only the inherited named
 #10389 admission and the standard three axioms; the executable refinement

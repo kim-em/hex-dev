@@ -58,11 +58,12 @@ private def sample : Option (Array Bool) :=
     { context := old.context.signature, head := DensePoly.ofCoeffs #[-beta, 0, 1],
       lower := .finite 1, upper := .finite (1 + 1), indices := [1], signs := [1] }
   (Descriptor.validate old.context.sign old.context.signature raw₃).bind fun later =>
-  (refinement.mapDescriptor? later).map fun convertedLater =>
+  (refinement.later? later).map fun moved =>
+  let convertedLater := moved.descriptor
   let oldThird := old.context.adjoin later
-  let third := next.adjoin convertedLater
+  let third := moved.extension
   let laterInverse := (oldThird.generator - oldThird.embed beta)⁻¹
-  let movedInverse := refinement.mapValue later convertedLater laterInverse
+  let movedInverse := moved.transport laterInverse
   let stale := { refinement.mapRaw later with context := old.context.signature }
   #[
     decide (old.context.signature ≠ next.signature),
@@ -90,6 +91,40 @@ info: some #[true, true, true, true, true, true, true, true, true, true, true, t
 #guard_msgs in
 #eval sample
 
+/-- Direct refinement over the rational base into a fractional nonmonic
+head keeps general stored representatives without a degree bound. -/
+private def baseSample : Option (Array Bool) :=
+  let base := Context.base (BaseContext.rational registry)
+  let two : base.Value := 1 + 1
+  let three : base.Value := two + 1
+  let x : DensePoly base.Value := DensePoly.ofCoeffs #[0, 1]
+  let factor := x * x - DensePoly.C two
+  let raw : RawDescriptor base.Value Signature :=
+    { context := base.signature, head := DensePoly.scale three (factor * (x - DensePoly.C three)),
+      lower := .finite 1, upper := .finite two, indices := [], signs := [] }
+  (Descriptor.validate base.sign base.signature raw).bind fun source =>
+  let old := base.adjoin source
+  let half : base.Value := 1 / two
+  ((source.buildReencoding (DensePoly.scale half factor) (.finite 1) (.finite two)).toOption).bind fun result =>
+  result.map fun encoding =>
+  let refinement := base.refine encoding
+  let next := refinement.extension.context
+  let root := refinement.transport old.generator
+  let p := DensePoly.natPow x 7
+  let packed := refinement.extension.pack p
+  let packet := next.write packed
+  #[next.equal (root * root) (refinement.extension.embed two),
+    decide (refinement.polynomial root = x),
+    decide ((refinement.polynomial packed).natDegree = 7),
+    (next.read packet).toOption.isSome,
+    (old.context.read packet).toOption.isNone,
+    decide (old.context.signature ≠ next.signature)]
+
+/-- info: some #[true, true, true, true, true, true] -/
+#guard_msgs in
+#eval baseSample
+
 #check_failure Refinement.mk
+#check_failure Later.mk
 
 end Hex.RealClosure.Tower.RefinementTests

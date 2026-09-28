@@ -24,15 +24,17 @@ structure Refinement (encoding : SignDet.Reencoding source head a b) : Type 1 wh
   extension : Extension parent encoding.target
   canonical : extension = parent.adjoin encoding.target
   transport : (parent.adjoin source).context.Value → extension.context.Value
+  repacked : ∀ value, HEq (transport value)
+    (parent.ofPoly encoding.target (parent.polynomial source value))
 
 /-- Repack every old polynomial representative at the checked same root of
 the new definition. No semantic law record is an executable argument. -/
 def Context.refine (encoding : SignDet.Reencoding source head a b) :
     Refinement parent encoding :=
   let extension := parent.adjoin encoding.target
-  let pack := parent.ofPoly encoding.target
+  let pack := extension.pack
   let polynomial := parent.polynomial source
-  ⟨extension, rfl, fun value => pack (polynomial value)⟩
+  ⟨extension, rfl, fun value => pack (polynomial value), fun _ => HEq.rfl⟩
 
 private theorem Context.refine_transport_proof
     (encoding : SignDet.Reencoding source head a b)
@@ -83,18 +85,58 @@ Its selection slots stay fixed; its replay must be rebuilt in the new context. -
   SignDet.Descriptor.validate refinement.extension.context.sign
     refinement.extension.context.signature (refinement.mapRaw descriptor)
 
-/-- Convert a value at the later root by transporting its actual predecessor
-coefficients and packing at the new descriptor. Semantic preservation uses
-successful `mapDescriptor?` in the companion. -/
-@[expose] def Refinement.mapValue (refinement : Refinement parent encoding)
+/-- One checked later-root conversion. Its private constructor binds the
+selected descriptor, cached extension and actual transport together. -/
+structure Later (refinement : Refinement parent encoding)
+    (original : SignDet.Descriptor (parent.adjoin source).context.Value Signature
+      (parent.adjoin source).context.sign (parent.adjoin source).context.signature) : Type 1 where
+  private mk ::
+  descriptor : SignDet.Descriptor refinement.extension.context.Value Signature
+    refinement.extension.context.sign refinement.extension.context.signature
+  checked : refinement.mapDescriptor? original = some descriptor
+  extension : Extension refinement.extension.context descriptor
+  canonical : extension = refinement.extension.context.adjoin descriptor
+  transport : ((parent.adjoin source).context.adjoin original).context.Value → extension.context.Value
+  repacked : ∀ value, HEq (transport value)
+    (refinement.extension.context.ofPoly descriptor
+      (refinement.mapPoly ((parent.adjoin source).context.polynomial original value)))
+
+/-- Revalidate and prepare a later conversion once. Every transported value
+then uses the captured old predecessor and new packing closure. -/
+def Refinement.later? (refinement : Refinement parent encoding)
+    (descriptor : SignDet.Descriptor (parent.adjoin source).context.Value Signature
+      (parent.adjoin source).context.sign (parent.adjoin source).context.signature) :
+    Option (Later refinement descriptor) :=
+  match h : refinement.mapDescriptor? descriptor with
+  | none => none
+  | some converted =>
+    let old := parent.adjoin source
+    let extension := refinement.extension.context.adjoin converted
+    let pack := extension.pack
+    let polynomial := old.context.polynomial descriptor
+    some ⟨converted, h, extension, rfl,
+      fun value => pack (refinement.mapPoly (polynomial value)), fun _ => HEq.rfl⟩
+
+private theorem Refinement.later_exists_proof (refinement : Refinement parent encoding)
     (descriptor : SignDet.Descriptor (parent.adjoin source).context.Value Signature
       (parent.adjoin source).context.sign (parent.adjoin source).context.signature)
-    (converted : SignDet.Descriptor refinement.extension.context.Value Signature
-      refinement.extension.context.sign refinement.extension.context.signature)
-    (value : ((parent.adjoin source).context.adjoin descriptor).context.Value) :
-    (refinement.extension.context.adjoin converted).context.Value :=
-  refinement.extension.context.ofPoly converted
-    (refinement.mapPoly ((parent.adjoin source).context.polynomial descriptor value))
+    (h : ∃ converted, refinement.mapDescriptor? descriptor = some converted) :
+    ∃ later, refinement.later? descriptor = some later := by
+  obtain ⟨converted, h⟩ := h
+  unfold Refinement.later?
+  split
+  · rename_i he
+    have hn := he.symm.trans h
+    cases hn
+  · exact ⟨_, rfl⟩
+
+/-- Preparing the bundle succeeds whenever its descriptor revalidation does. -/
+theorem Refinement.later_exists (refinement : Refinement parent encoding)
+    (descriptor : SignDet.Descriptor (parent.adjoin source).context.Value Signature
+      (parent.adjoin source).context.sign (parent.adjoin source).context.signature)
+    (h : ∃ converted, refinement.mapDescriptor? descriptor = some converted) :
+    ∃ later, refinement.later? descriptor = some later :=
+  Refinement.later_exists_proof refinement descriptor h
 
 end Hex.RealClosure.Tower
 
