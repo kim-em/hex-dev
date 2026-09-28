@@ -93,6 +93,21 @@ set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
 #guard finitePasses
 
+/-- Ordinary total calls over the actual cubic field, with a nonzero
+polynomial vanishing at the selected root as well as both strict signs. -/
+def totalSignsPasses : Bool :=
+  match Descriptor.validate fieldSign 7 raw with
+  | some d =>
+    d.signAt (xPoly - 1) == 1 &&
+      d.signAt (xPoly - DensePoly.C 2) == -1 &&
+      d.signAt (xPoly.natPow 3 - DensePoly.C 2) == 0 &&
+      d.signAt 0 == 0
+  | none => false
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard totalSignsPasses
+
 abbrev rep := generator.toAlgebraic.rep
 theorem real : rep.root.im = 0 :=
   (AlgebraicNumber.isReal_iff generator.toAlgebraic).mp generator.property
@@ -132,6 +147,30 @@ theorem cubic_success (d : Descriptor CubicField Nat fieldSign 7)
     rw [Complex.ofReal_neg, Field.value_complex rep binding real,
       Field.value_complex rep binding real, PolyQuot.map_neg]
   · exact Field.value_inv rep binding real
+
+/-- The total operation has the selected real embedding's evaluation sign
+for every validated descriptor and polynomial in the cubic field. -/
+theorem cubic_sign (d : Descriptor CubicField Nat fieldSign 7)
+    (q : DensePoly CubicField) :
+    d.signAt q = (SignType.sign ((interpret (Field.value rep)
+      (Field.value_eq_zero rep binding real) q).eval
+      (d.root (Field.value rep) (Field.value_eq_zero rep binding real)
+        (Field.value_one rep binding real) (Field.value_add rep binding real)
+        (Field.value_sub rep binding real) (Field.value_mul rep binding real)
+        (Field.value_natCast rep binding real) sign_spec)) : Int) := by
+  obtain ⟨s, h, _⟩ := cubic_success d [q]
+  rw [d.signAt_ofBuild q s h]
+  exact s.value_at_root (Field.value rep) (Field.value_eq_zero rep binding real)
+    (Field.value_one rep binding real) (Field.value_add rep binding real)
+    (Field.value_sub rep binding real) (Field.value_mul rep binding real)
+    (Field.value_natCast rep binding real) sign_spec
+
+/-- info: 'Hex.SignDetMathlib.SelectedProducerConformance.cubic_sign' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms cubic_sign
 
 /-- info: 'Hex.SignDetMathlib.SelectedProducerConformance.sign_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

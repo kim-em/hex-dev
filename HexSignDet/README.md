@@ -218,6 +218,12 @@ selected derivatives followed by the exact requested queries. `SelectedSigns`
 retains the full replay, a fixed-length sign vector and the assertion that
 filtering gives exactly its count-one row. `SelectedSigns.signs_eq` proves
 agreement for every matching finite observation under `Replay.Interprets`.
+`Descriptor.signAt` returns an ordinary integer for one polynomial using the
+same checked joint-table construction. Its explicit internal-error branch
+returns zero; `Descriptor.signAt_success` in the companion proves that branch
+unreachable under lawful coefficient interpretation, and `signAt_correct`
+identifies the result with evaluation at the selected root. The executable
+operation takes no companion proof package.
 
 `Descriptor.buildRoots` enumerates full derivative encodings, validates each
 count-one row, and inserts them by Thom order. `rootsFrom_perm` proves that
@@ -275,7 +281,7 @@ for its cost against the required comparison bounds remain required.
 The total `determinePrepared` API remains required.
 The optional companion proves producer completeness and root-count correspondence
 relative to the named #10389 root-sum bridge; it does not yet provide those
-total executable wrappers. `Descriptor.buildSigns_success` rules out every
+total table wrappers. `Descriptor.buildSigns_success` rules out every
 internal selected-sign error on validated descriptors with lawful coefficients;
 the executable diagnostic interface is retained for arbitrary operations.
 Completion and root lists still require their totality proofs.

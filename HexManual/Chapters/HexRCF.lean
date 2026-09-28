@@ -892,6 +892,28 @@ private def signsFieldPasses : Bool :=
 #guard signsFieldPasses
 ```
 
+For one polynomial, a validated descriptor provides an ordinary integer sign.
+The same cubic-field example can use this operation directly, without asking
+for a certificate or handling an internal error:
+
+```lean
+private def totalSignsFieldPasses : Bool :=
+  match Descriptor.validate signsFieldSign 7 signsRoot with
+  | some root =>
+    [root.signAt (signsX - 1),
+      root.signAt (signsX - DensePoly.C 2),
+      root.signAt (signsX.natPow 3 - DensePoly.C 2)] == [1, -1, 0]
+  | none => false
+
+#guard totalSignsFieldPasses
+```
+
+{name}`Hex.SignDet.Descriptor.signAt_success` proves that the underlying
+checked calculation succeeds, so its internal zero fallback is unreachable
+when the coefficient operations satisfy their interpretation laws.
+{name}`Hex.SignDet.Descriptor.signAt_correct` identifies the returned integer
+with the evaluation sign at the descriptor's original selected root.
+
 Import `HexSignDetMathlib.SelectedProducer` for the success and correctness
 theorems. {name}`Hex.SignDet.Descriptor.buildSigns_success` proves that this operation
 always succeeds for a validated descriptor when coefficient arithmetic and
