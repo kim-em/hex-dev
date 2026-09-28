@@ -340,8 +340,8 @@ record `spawn_floor_nanos` and `signal_floor_multiplier`.
 - proof-search tactics inside `Bench.lean`.
 
 These are out of scope for **LeanBench**. When a library advertises a tactic or
-proof-producing API, Phase 4 covers that surface through the build-only
-fresh-module evidence below; it must not disguise elaboration or kernel time as
+proof-producing API, Phase 4 covers that surface through the proof-probe
+example files below; it must not disguise elaboration or kernel time as
 compiled benchmark time.
 
 CPU profiling of compiled benchmark binaries is **in scope** and is
@@ -350,98 +350,31 @@ verdict only checks the selected asymptotic claim; profiling attributes the
 constant factor and catches dominant costs that the registered targets do not
 measure.
 
-## Fresh-module proof evidence
+## Proof-probe example files
 
-This evidence measures tactics, proof generators, their certificate checking,
-and the kernel computations they use.
-Ordinary mathematical theorem applications and instance-law proofs require
-correctness tests, not dedicated performance probes. Profile their compilation
-only when investigating an observed build-cost problem.
+A library that advertises a tactic, elaborator, or proof generator keeps a few
+example files that run it on representative inputs. Ordinary theorem
+applications and instance-law proofs need correctness tests, not probes.
 
-Elaboration, tactic execution, emitted proof terms, and ordinary kernel
-checking are measured only by an external runner building fresh Lean modules.
-The module sources live recursively below a directory listed in the owning
-library's `libraries.yml: proof_probes`. A path may reserve a
-not-yet-created directory for a stacked change, but when present it must be a
-directory below `bench/<Owner>/`, must resolve physically inside `bench/`, and
-must contain no symlinks. Reservations are staging-only: before a library may
-claim `done_through: 4`, each declared root must exist and contain at least one
-Lean source.
-Names such as `HexFooMathlib` and a library's `mathlib: true` flag grant no
-implicit directory-wide exception.
+The files live recursively below a directory listed in the owning library's
+`libraries.yml: proof_probes`. The directory is below `bench/<Owner>/`, resolves
+physically inside `bench/`, and contains no symlinks; before a library claims
+`done_through: 4` it exists and contains at least one Lean source. A
+`mathlib: true` library's probes may import Mathlib. For a library with both
+tracks, a probe subtree may coexist with an ordinary Mathlib-free
+`bench/<Owner>/Bench.lean` executable; a declaration of
+`bench/HexFoo/ProofProbe` admits neither `bench/HexFoo/Bench.lean` nor
+`bench/HexFoo/ProofProbeExtra`.
 
-For a mixed library, a proof-probe subtree may coexist with an ordinary
-Mathlib-free `bench/<Owner>/Bench.lean` executable. The exception is exact and
-component-aware: a declaration of `bench/HexFoo/ProofProbe` admits neither
-`bench/HexFoo/Bench.lean` nor `bench/HexFoo/ProofProbeExtra`. Every undeclared
-bench source whose transitive import closure reaches Mathlib is rejected.
+A probe and every repository-local source it imports may not import
+`LeanBench`, register a benchmark, define `main`, read an in-process clock, or
+contain a timing loop, and a probe cannot root a `lean_exe`.
 
-Neither a proof probe nor any repository-local source in its transitive import
-closure may import `LeanBench`, register a benchmark, define `main`, read an
-in-process clock, or contain a timing loop. A probe also cannot root any
-`lean_exe`. Their external runner must:
-
-- before each sample, remove only the measured module's generated artefacts
-  and run `lake build +<module>:olean`, keeping imported dependency artefacts
-  warm; build each matched reference/candidate pair adjacently, rotate pair
-  order, and alternate pair orientation over an even preregistered number of
-  rounds;
-- retain every raw wall-time sample and paired delta, and identify the exact
-  source hashes, repository commit, dirty-state decision, toolchain, command,
-  host/CPU/OS, load state, and timeout/cleanup policy;
-- record emitted artefact sizes and the axiom set of the accepted theorem;
-- refuse a release-quality verdict on a dirty tree, a timed-out build, an
-  incomplete pair, or a provenance mismatch.
-
-Fresh-module evidence follows the shared-host policy above. Each reference and
-candidate pair is adjacent, pair orientation alternates, and the preregistered
-sample count is even. The runner may pin all descendants to an automatically
-selected CPU and may retain scheduler, frequency, SMT and process telemetry,
-but those observations are descriptive. Every completed pair enters the
-summary. The runner neither waits for quiet nor retries a pair because of host
-activity.
-
-A proof-track sweep may include same-module null controls when a small
-reference/candidate difference needs a direct noise measurement. They are not
-required for routine fresh-module evidence and do not reject otherwise complete
-samples. Reports distinguish a large, well-resolved paired effect from a small
-effect that the observed variation cannot resolve.
-
-A suite may preregister `absolute_only` when every substantive pair declares an
-absolute fresh-module wall-clock budget and no pair declares a
-reference-subtracted tactic budget. In that mode the raw candidate maximum,
-not a paired delta, is the recorded contract. Null controls, when present,
-describe paired noise but do not gate release quality. Dirty-state, provenance,
-timeout and absolute-budget failures retain their ordinary fail-closed
-behavior. The harness rejects `absolute_only` manifests that omit an absolute
-budget from any substantive pair or add a relative tactic budget. The result is
-a host-specific observation, not a portable absolute performance claim.
-
-When a suite names an import-only baseline, its same-round wall time is
-subtracted from both arms before a workload ratio is formed. When the two arms
-also construct materially different inputs, a matched construction-only pair
-is subtracted round by round as well. Reports retain the raw arm timings and
-paired deltas; they do not correct timings using host telemetry.
-
-A fixed tactic budget is release-quality only when its retained median passes.
-Artifact `release_quality` is derived from pristine provenance, complete paired
-samples and every required budget conclusion.
-
-Phase attribution uses matched module variants, not clocks embedded in the
-probe. A tactic library may use a baseline; a reify-only module; an input module
-containing the reflected sentence literal; a search module that runs compiled
-certificate construction from that input through a meta checksum but emits no
-proof; a literal module adding the pre-generated certificate; a replay module
-adding the kernel-checked theorem; and a full tactic module. The matched
-differences attribute reification, compiled search within the build, emitted
-literal elaboration, kernel replay, and whole-tactic cost.
-
-The search variant is phase-attribution evidence only: it gets no asymptotic
-verdict. The same Mathlib-free operation is also timed by LeanBench on a
-controlled ladder for its scientific complexity claim. The report links the
-two by input and source hash and never substitutes the fresh-build delta for
-the LeanBench verdict or adds both times together. Fixed tactic budgets apply
-to the predeclared paired fresh-build cases and are not asymptotic evidence.
+CI builds every probe root on every PR. That build is the whole Phase-4
+requirement for the proof track: there is no timing sweep, sample record,
+provenance record, or headline report. When a build-cost problem needs
+investigating, `scripts/bench/fresh_module_sweep.py` times fresh builds of
+matched probe modules; its output is diagnostic, not a phase deliverable.
 
 ## Within-Lean comparisons
 
@@ -684,8 +617,8 @@ which bench target each comparator covers. This is the common shape
 when an external tool exposes some of a library's surfaces as
 user-callable functions but not others.
 
-Where a bench target has no external comparator, or where the library
-has no bench target at all, the per-library SPEC declares the absence
+Where a bench target has no external comparator, the per-library SPEC
+declares the absence
 with a library-specific reason identifying exactly one of:
 
 - **implementation-is-extern** — the surface is an external library
@@ -697,23 +630,10 @@ with a library-specific reason identifying exactly one of:
 - **input-source-only** — the only published external implementation
   is itself the input source (e.g. a committed table), not an
   executable comparator.
-- **mathlib-bridge** — the library is a `Hex*Mathlib` bridge whose
-  comparison surface is a within-Lean `compare` group against
-  Mathlib's native types.
 - **no-comparable-surface-in-named-comparator** — the library
   declares a comparator for some surfaces but the named comparator
   tool does not expose this specific surface as a callable function
   (the tool builds it internally but doesn't surface it as user API).
-- **correspondence-only-layer** — the library is a correspondence-only
-  mathlib layer explicitly classified by `correspondence_only: true` in
-  `libraries.yml` and therefore has zero bench targets (see
-  [§Mathlib-free benches](#mathlib-free-benches)), so there is no
-  surface of its own to compare. The declaration names the
-  computational performance owner or owners whose bench targets carry
-  the evidence for the operations it transports; more than one owner is
-  normal, since a layer may transport operations from several
-  Mathlib-free libraries.
-
 Generic "not applicable" is not a valid declaration. Unwired-but-
 required comparators are declared with the `blocked` state per
 [§Comparator classification](#comparator-classification-gating-vs-informational)
@@ -859,8 +779,8 @@ hard invariants:
    invariant (1) above, no bench imports them either.
 
 There is one narrow, non-computational exception. Any library may declare
-recursive directory roots in `libraries.yml: proof_probes` for the fresh-module
-evidence specified above. A declaration owned by a `mathlib: true` library may
+recursive directory roots in `libraries.yml: proof_probes` for the proof-probe
+example files specified above. A declaration owned by a `mathlib: true` library may
 import Mathlib; a declaration owned by a Mathlib-free library remains
 Mathlib-free. No suffix or library flag grants an implicit directory-wide
 exception, and files outside the exact declared roots remain ordinary
@@ -915,9 +835,9 @@ child exits cleanly, and verifies hashable benchmarks emit hashes.
 It does NOT assert timing values — the gate detects bitrot of the
 bench module itself, not regressions in the implementation.
 
-A proof-only track instead builds its reduced declared probes in that same
-single CI job and runs the structural lint. A mixed library does both. Proof
-probes never add a second job, matrix, executable, or `list`/`verify` command.
+A proof track instead builds its declared probes in that same single CI job
+and runs the structural lint. Proof probes never add a second job, matrix,
+executable, or `list`/`verify` command.
 
 The `Bench verify` step lives in `ci.yml`'s `build` ubuntu job (per
 [SPEC/CI.md §Job-count budget](CI.md)), one sequential block, no
@@ -1024,27 +944,21 @@ in the JSONL output, agreement via the result hash and `compare`.
 
 ## Headline reports
 
-Every library at `done_through ≥ 4` must have a headline performance
-report at `reports/<lib>-performance.md`. The report is the
+Every library with a compiled track at `done_through ≥ 4` must have a
+headline performance report at `reports/<lib>-performance.md`. The report is the
 single, scannable place a reviewer can land on to see whether
 Phase-4 coverage is real and what is known about the library's
 performance shape.
 
-A `libraries.yml` entry explicitly declaring `correspondence_only: true` is
-the one exception: it has zero bench targets and no proof-track probes of its
-own, so it has nothing to report, and no headline report is required of it.
-Its performance evidence lives in the computational owners named by its
-`correspondence-only-layer` declaration ([§Comparator
-naming](#comparator-naming)). A report already committed for such a
-library is a historical artefact and need not be deleted.
+A library with no compiled track, including every `mathlib: true` library,
+has no headline report. A report already committed for such a library is a
+historical artefact and need not be deleted.
 
 The report contains five subsections:
 
 1. **Bench targets.** The registered compiled targets and their declared
    complexities, copied (not paraphrased) from the `setup_benchmark`
-   registration sites. A mixed/proof library also lists every fresh-module
-   probe, its matched baseline, and the generic requirements that probe
-   replaces.
+   registration sites.
 2. **Verdicts.** Each performance-evidence registration's selected mode, the
    reasons the preceding stronger modes do not apply, and its result at
    scientific settings. Fixed hash/comparator anchors instead name their
@@ -1057,11 +971,7 @@ The report contains five subsections:
    Each mode-3 fixed registration records its absolute budget, median per-call
    time, and observed-hash agreement. Fixed hash, comparator, and protocol
    anchors record their median per-call time and observed-hash agreement but
-   do not acquire a performance budget. Proof-track entries report
-   all raw rotated fresh-build samples and paired deltas, never a complexity
-   verdict. When the sweep has null controls, their raw deltas, absolute and
-   relative ranges, and medians precede the substantive proof deltas in
-   `config.order` and remain descriptive only.
+   do not acquire a performance budget.
 3. **Comparator ratios.** Each comparator named in the per-library
    SPEC ([§Comparator naming](#comparator-naming)) — `gating` and
    `informational` alike — with measured ratios across the full
@@ -1147,20 +1057,18 @@ The report contains five subsections:
    bench target is filed as an audit-found issue per
    [Conventions.md §Bench-found, conformance-found, and audit-found
    issues](../PLAN/Conventions.md#bench-found-conformance-found-and-audit-found-issues)
-   and linked from the next subsection. Proof-track surfaces cite their
-   fresh-build artefacts and state that timed-region sampling does not apply.
+   and linked from the next subsection.
 5. **Concerns.** Audit-found issues filed against this library
-   that have not yet resolved. The library cannot **remain** at
-   `done_through: 4` while any Concern is unresolved (see
-   [PLAN/Phase4.md §Exit criteria](../PLAN/Phase4.md#exit-criteria)
-   for the rollback rule). Each Concern entry is a one-line
-   summary linking the open HO issue.
+   that have not yet resolved. A library cannot claim `done_through: 4`
+   while any Concern is unresolved (see
+   [PLAN/Phase4.md §Exit criteria](../PLAN/Phase4.md#exit-criteria)).
+   Each Concern entry is a one-line summary linking the open HO issue.
 
 ### Artefact traceability
 
 Every numeric claim in a headline report is traceable: the report cites the
-exact bench/probe case name, command line, seed or parameter, JSONL row or raw
-fresh-build sample path/hash, applicable profile artefact location, source
+exact bench case name, command line, seed or parameter, JSONL row,
+applicable profile artefact location, source
 hash, host/toolchain/commit, and comparator source. A narrative without
 traceable artefacts does not satisfy this requirement.
 

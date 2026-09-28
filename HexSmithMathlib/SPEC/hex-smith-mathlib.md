@@ -5,9 +5,6 @@
 The correspondence API and `smith` frontend share this companion. The
 frontend has its own conformance and fresh-module proof-performance track.
 
-Computational conformance owner: `HexSmith`
-Computational performance owner: `HexSmith`
-
 `hex-smith-mathlib` is the Mathlib correspondence layer for the executable
 integer Smith normal form in `hex-smith`. It imports Mathlib; `hex-smith`
 remains Mathlib-free.
@@ -103,7 +100,7 @@ in `HexSmithMathlib/Kernel.lean`. No library name changes.
 
 For the named families below, shipping requires complete clean-tree evidence
 under the `absolute_only` mode of
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
 Preregister six rounds and a per-candidate absolute build budget of 60 seconds
 on the measurement host for every stated rung. Every candidate sample must
 meet it; report the median and kernel-only time as well. A timeout, incomplete
@@ -161,8 +158,7 @@ certificate over `[Lean.Grind.Field F] [DecidableEq F]`. It must transport to
 Mathlib `Polynomial F` under coherent Mathlib field instances, use monic
 nonzero factors and exact coefficient-list identities, and supply its own
 arbitrary-certificate quotient bridge and proof evidence. Activating this optional arm requires a future HexPolySmithMathlib change:
-add a dependency on HexSmithMathlib to import the syntax kind, remove its
-`correspondence_only` flag, reserve its own proof probes and reopen its
+add a dependency on HexSmithMathlib to import the syntax kind, reserve its own proof probes and reopen its
 conformance/performance phases as above. No such manifest edge or activation
 is part of the integer frontend. The integer arm acquires no HexPolySmith
 dependency. This optional arm is not an assertion
@@ -275,7 +271,7 @@ heights `8, 32`, and `64, 256` bits for the last family. Include factors
 absolute fresh-module times/medians, baseline deltas and one kernel-only
 profile per family, not a speedup ratio. Use six samples paired adjacently
 with import-only baselines, alternating orientation, per
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
 Record certificate entry counts, serialized bytes, maximum integer height,
 emitted artifact sizes, axiom sets and complete source/toolchain/host
 provenance; retain every completed sample and report timeouts. Preregister

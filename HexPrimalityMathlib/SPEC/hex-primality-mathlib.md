@@ -7,7 +7,7 @@ search, and initial-segment results, extends the bare `primality` tactic to
 `Nat.Prime` goals, and provides an explicit opt-in `Nat.Prime` `norm_num`
 policy.
 
-This is not a correspondence-only layer. Its elaborators choose registrations,
+Its elaborators choose registrations,
 dispatch between proof-producing routes, run bounded untrusted search, and
 reify terms for kernel checking. This SPEC therefore owns their success,
 decline, failure, resource, conformance, and proof-performance contracts.
@@ -369,8 +369,7 @@ taskset -c "$cpu" python3 scripts/bench/primality_negative_sweep.py --samples 6 
 
 `lake build HexPrimalityElabProbe` is the untimed build-only reproduction.
 
-These probes are proof-performance evidence, not a claim that the layer is
-correspondence-only and exempt from review. Any change to registration,
+These probes are proof-performance evidence. Any change to registration,
 dispatch, thresholds, search budgets, reification, emitted proof shape, or
 imports must refresh the affected conformance and fresh-module evidence.
 

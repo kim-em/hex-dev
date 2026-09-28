@@ -305,7 +305,7 @@ order.
 tag := "hex-int-factor-mathlib"
 %%%
 
-`HexIntFactorMathlib` is correspondence-only: it neither searches for factors
+`HexIntFactorMathlib` neither searches for factors
 nor replays certificates. It identifies values already computed and checked
 by `HexIntFactor` with Mathlib's canonical definitions.
 

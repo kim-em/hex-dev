@@ -23,21 +23,15 @@ tactic specified in
 [hex-perm-group, Kernel replay in Mathlib](../../HexPermGroup/SPEC/hex-perm-group.md#kernel-replay-in-mathlib),
 and the examples of
 [User-facing examples](../../HexPermGroup/SPEC/hex-perm-group.md#user-facing-examples).
-The correspondence modules form a correspondence-only layer, with comparator
-absence class **correspondence-only-layer**. The kernel replay theorems and
-`perm_group` are measured by fresh-module proof probes in
-`bench/HexPermGroupMathlib/ProofProbe`, declared in `libraries.yml:
-proof_probes` with a Phase 4 input family `kernel-certificates`, as specified in
-[Complexity, benchmarks and placement](../../HexPermGroup/SPEC/hex-perm-group.md#complexity-benchmarks-and-placement).
+Because it owns a tactic, its Phase 4 deliverable is the proof track: example
+files running the kernel replay theorems and `perm_group` in
+`bench/HexPermGroupMathlib/ProofProbe`, declared as its `libraries.yml`
+`proof_probes` root and built by CI on every PR.
 
 Build-only examples in
 `HexPermGroupMathlib/Tests.lean` exercise membership, exact order, stabilizers,
 nonnormal-subgroup cosets, a nonfaithful induced action, minimal blocks,
 normal and derived subgroups, rank/unrank and product embeddings.
 Runtime conformance and compiled benchmarking belong
-to the computational owner below. Kernel replay of `Kernel.check` is measured
-by this library's proof probes.
-
-Computational conformance owner: `HexPermGroup`.
-
-Computational performance owner: `HexPermGroup`.
+to `HexPermGroup`. Kernel replay of `Kernel.check` is exercised by this
+library's proof probes.

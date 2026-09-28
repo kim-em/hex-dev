@@ -330,7 +330,7 @@ signs at the two positive roots. Include multiple infinitesimal levels and
 nested certificates. These are downstream tests against pinned Z3 RCF data,
 not imports back into this companion or claims about arbitrary `0<ε<1`.
 
-Phase 4 uses the [fresh-module proof evidence](../../SPEC/benchmarking.md#fresh-module-proof-evidence)
+Phase 4 uses the [fresh-module proof evidence](../../SPEC/benchmarking.md#proof-probe-example-files)
 track for ordinary kernel replay: build fresh measured modules with warm
 imports, record source/toolchain hashes, theorem axiom sets, emitted artifact
 sizes, wall time and host activity. Sweep head/query degree, coefficient and

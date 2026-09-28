@@ -53,7 +53,7 @@ example : (Hex.Nat.divisors twelve).toList.toFinset = Nat.divisors 12 :=
 
 # Verification
 
-The bridge is correspondence-only. It performs no factor search, certificate
+This library performs no factor search, certificate
 replay, reification, or tactic execution; all transported values are computed
 by `hex-int-factor`.
 

@@ -30,11 +30,8 @@ hex-rank-mathlib without a second instance.
 
 ## Validation ownership
 
-This is a `correspondence_only: true` library, with comparator absence class
-**correspondence-only-layer**. It defines proofs and transports executable
-decidability; it owns no independent benchmark algorithm.
-
-Computational conformance owners: `HexModularMatrix`.
-Computational performance owners: `HexModularMatrix`.
+This library defines proofs and transports executable decidability; it owns
+no independent benchmark algorithm. Runtime conformance and performance belong
+to `HexModularMatrix`.
 
 The default Lake build checks all companion modules and their dependencies.

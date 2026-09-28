@@ -355,7 +355,7 @@ and Z3 end-to-end comparisons are informational where they expose comparable
 queries; record any lack of a matching query surface rather than timing root
 isolation as if it were query evaluation. No external system supplies a
 comparable Lean kernel proof surface. Replay uses the companion's
-[fresh-module proof evidence](../../SPEC/benchmarking.md#fresh-module-proof-evidence)
+[fresh-module proof evidence](../../SPEC/benchmarking.md#proof-probe-example-files)
 track, with ordinary kernel checking and axiom inspection; executable benches
 remain Mathlib-free. Include valid and rejected nested replay probes and one
 representative profile attributing arithmetic versus coefficient-sign cost.

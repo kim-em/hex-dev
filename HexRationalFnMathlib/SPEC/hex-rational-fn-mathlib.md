@@ -115,10 +115,6 @@ Place conversion and equivalence in
 identities needed independently of Mathlib belong in the computational
 library or `HexPoly`, according to their subject.
 
-Computational conformance owner: `HexRationalFn`.
-
-Computational performance owner: `HexRationalFn`.
-
 Runtime examples and oracle comparisons belong to
 `conformance/HexRationalFn/Conformance.lean`. Build-only examples in
 `HexRationalFnMathlib/Tests.lean` prove the transported operations and
@@ -129,9 +125,8 @@ the headline theorem, and inspect its theorem dependencies for `sorryAx`.
 The manual's Mathlib examples state their goals in Mathlib types and introduce
 executable values only inside proofs.
 
-This is a `correspondence_only: true` library. It has no executable benchmark
-targets and its comparator absence class is **correspondence-only-layer**.
-The owner's normalization, arithmetic, certificate and evaluation targets
+This library has no executable benchmark targets. `HexRationalFn`'s
+normalization, arithmetic, certificate and evaluation targets
 supply the runtime evidence.
 Build-time conformance examples do not advertise a tactic-performance API.
 Expression reification and user tactics are separate future work.

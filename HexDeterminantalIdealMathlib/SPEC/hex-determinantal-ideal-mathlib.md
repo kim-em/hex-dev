@@ -14,13 +14,9 @@ restated here.
 
 The correspondence part of this library owns no runtime search,
 conformance driver or benchmark process; the `rank_locus` tactic below
-adds proof probes, so the library is not `correspondence_only` and carries
-a `proof_probes` entry in `libraries.yml`. Build-only examples live in
+adds proof probes, so the library carries a `proof_probes` entry in
+`libraries.yml`. Build-only examples live in
 `HexDeterminantalIdealMathlib/Tests.lean`.
-
-Computational conformance owner: `HexDeterminantalIdeal`.
-
-Computational performance owner: `HexDeterminantalIdeal`.
 
 ## Transport
 
@@ -431,8 +427,8 @@ restricted to `r ≤ 3`. There is no Mathlib comparator (no Lean tactic
 states a rank locus), declared as
 **no-comparable-surface-in-named-comparator**; the report is
 `reports/hex-determinantal-ideal-mathlib-performance.md` with absolute
-numbers and preregistered ceilings. The library therefore drops
-`correspondence_only` in `libraries.yml` and gains `proof_probes`, and its
+numbers and preregistered ceilings. The library therefore gains
+`proof_probes` in `libraries.yml`, and its
 dependencies gain `HexRankMathlib`, `HexReflect`, `HexReflectMathlib` and
 `HexMatrixMathlib`.
 

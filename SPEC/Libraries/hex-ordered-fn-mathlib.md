@@ -301,8 +301,7 @@ positive infinitesimal over ℚ; the family's stages remain
 
 ## Conformance and Phase-4 evidence
 
-This is `correspondence_only: true`, comparator absence class
-**correspondence-only-layer**. HexOrderedFn owns runtime conformance and
+HexOrderedFn owns runtime conformance and
 benchmarks. Here use build-only proof tests of semantic conclusions:
 
 - Existing RationalFn representation/arithmetic correspondence, inverse zero,

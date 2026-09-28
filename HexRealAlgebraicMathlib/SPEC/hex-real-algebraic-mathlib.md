@@ -1,10 +1,5 @@
 # hex-real-algebraic-mathlib
 
-This library is a `correspondence-only-layer`.
-
-Computational conformance owners: `HexRealAlgebraic`
-Computational performance owners: `HexRealAlgebraic`
-
 The companion shares the
 [ordered real algebraic number specification](../../SPEC/Libraries/hex-real-algebraic.md)
 with the computational library. It proves closure, arithmetic and order

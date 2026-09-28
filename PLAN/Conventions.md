@@ -508,6 +508,11 @@ forward bump records "phases 1..K are complete"; a backward bump
 records "we discovered phase ≤K wasn't actually complete and we are
 redoing it." Both directions are first-class.
 
+Rollback records a defect found in the library itself: a wrong result, a
+failing verdict, a broken build. A later change to a phase's criteria is not a
+defect in libraries that already completed that phase; it applies to libraries
+advancing after it merges, and does not roll anything back.
+
 Operationally, rolling library `L` back from `K` to `K-1` (or
 further) means:
 

@@ -40,8 +40,7 @@ Mathlib’s generic odd-root theorem using the shared `Real.instIsRealClosed`
 from `HexRealRootsMathlib`; real-closedness of `RealAlgebraicNumber` is then
 proved from the recovered canonical witnesses.
 
-Build with `lake build HexRealAlgebraicMathlib`. This is a correspondence-only
-layer; executable fixtures and external oracle checks belong to the
+Build with `lake build HexRealAlgebraicMathlib`. Executable fixtures and external oracle checks belong to the
 computational library. See the
 [joint specification](../SPEC/Libraries/hex-real-algebraic.md) for the dependency
 contract and theorems required of replacement comparison implementations.

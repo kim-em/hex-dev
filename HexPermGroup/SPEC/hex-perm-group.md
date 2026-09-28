@@ -795,13 +795,8 @@ multiplicative equivalences for direct products and the stated wreath
 semidirect product, compatible with all embeddings, projections and actions.
 These are required parts of the library's scope, not optional examples.
 
-The companion is to be classified `correspondence_only: true` at activation,
-with absence class **correspondence-only-layer** and build-only examples in
-`HexPermGroupMathlib/Tests.lean`. Runtime tests and performance are owned below.
-
-Computational conformance owner: `HexPermGroup`.
-
-Computational performance owner: `HexPermGroup`.
+The companion has build-only examples in `HexPermGroupMathlib/Tests.lean`.
+Runtime tests and performance belong to this library.
 
 Kernel proofs about generated subgroups use `Kernel.check` of
 [Kernel certificates](#kernel-certificates), not replay of `checkChain`. A

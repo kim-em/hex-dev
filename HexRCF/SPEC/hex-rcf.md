@@ -1617,7 +1617,7 @@ are independent differential tests, never soundness premises. Kernel tests
 must rebuild quoted proofs in fresh modules and audit the transitive axiom
 set, excluding `sorryAx`, new axioms and compiled evaluation trust.
 
-Keep separate [compiled and fresh-module proof tracks](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+Keep separate [compiled and fresh-module proof tracks](../../SPEC/benchmarking.md#proof-probe-example-files).
 Mathlib-free family drivers measure coefficient production, root/sign search,
 executable replay and specialization arithmetic separately. Build-only HexRCF
 probes measure coefficient abstraction/reification, literal elaboration,
