@@ -220,10 +220,14 @@ filtering gives exactly its count-one row. `SelectedSigns.signs_eq` proves
 agreement for every matching finite observation under `Replay.Interprets`.
 `Descriptor.signAt` returns an ordinary integer for one polynomial using the
 same checked joint-table construction. Its explicit internal-error branch
-returns zero; `Descriptor.signAt_success` in the companion proves that branch
+emits a panic diagnostic in compiled execution and returns zero;
+`Descriptor.signAt_success` in the companion proves that branch
 unreachable under lawful coefficient interpretation, and `signAt_correct`
 identifies the result with evaluation at the selected root. The executable
-operation takes no companion proof package.
+operation takes no companion proof package. Each call prepares its domain,
+constructs a checked table and repeats its replay in selected-sign extraction.
+Use `buildSigns` for several queries to share one table. Preparation and replay
+costs remain part of the specified Phase-4 measurements.
 
 `Descriptor.buildRoots` enumerates full derivative encodings, validates each
 count-one row, and inserts them by Thom order. `rootsFrom_perm` proves that

@@ -171,14 +171,14 @@ theorem Descriptor.buildSigns_ofTable {sign : E → Int} {context : Ctx}
         .ok (SelectedSigns.mk values t.val ha) by rw [dite_eq_left ha])
 
 /-- The sign of a polynomial at a validated selected root, using the checked
-joint-table constructor. The zero branch records an internal failure for
+joint-table constructor. The diagnostic zero fallback records an internal failure for
 arbitrary coefficient operations; the companion proves it unreachable under
 the lawful coefficient interpretation. No field-law package is executed. -/
 @[expose] def Descriptor.signAt {sign : E → Int} {context : Ctx}
     (d : Descriptor E Ctx sign context) (q : DensePoly E) : Int :=
   match d.buildSigns [q] with
   | .ok s => s.value
-  | .error _ => 0
+  | .error err => panic! s!"Descriptor.signAt: internal error {repr err}"
 
 /-- The total accessor uses the sign from the actual successful construction. -/
 theorem Descriptor.signAt_ofBuild {sign : E → Int} {context : Ctx}

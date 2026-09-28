@@ -101,7 +101,13 @@ def totalSignsPasses : Bool :=
     d.signAt (xPoly - 1) == 1 &&
       d.signAt (xPoly - DensePoly.C 2) == -1 &&
       d.signAt (xPoly.natPow 3 - DensePoly.C 2) == 0 &&
-      d.signAt 0 == 0
+      d.signAt 0 == 0 &&
+      (match d.buildSigns [xPoly.natPow 3 - DensePoly.C 2] with
+      | .ok s => s.value == 0
+      | .error _ => false) &&
+      (match d.buildSigns [0] with
+      | .ok s => s.value == 0
+      | .error _ => false)
   | none => false
 
 set_option maxRecDepth 4096 in
@@ -126,6 +132,12 @@ theorem sign_spec (a : CubicField) :
       simp only [hn, hz, ↓reduceIte, sign_eq_one_iff.mpr hp]
       rfl
 
+/-- Negation respects the selected real embedding of the actual cubic field. -/
+theorem value_neg (a : CubicField) : Field.value rep (-a) = -Field.value rep a := by
+  apply Complex.ofReal_injective
+  rw [Complex.ofReal_neg, Field.value_complex rep binding real,
+    Field.value_complex rep binding real, PolyQuot.map_neg]
+
 /-- The semantic guarantee applies to every validated descriptor and every
 finite query list over this genuinely cubic field, using its actual total
 operations and selected real embedding. -/
@@ -142,10 +154,7 @@ theorem cubic_success (d : Descriptor CubicField Nat fieldSign 7)
     (Field.value_one rep binding real) (Field.value_add rep binding real)
     (Field.value_sub rep binding real) (Field.value_mul rep binding real)
     (Field.value_natCast rep binding real) sign_spec
-  · intro a
-    apply Complex.ofReal_injective
-    rw [Complex.ofReal_neg, Field.value_complex rep binding real,
-      Field.value_complex rep binding real, PolyQuot.map_neg]
+  · exact value_neg
   · exact Field.value_inv rep binding real
 
 /-- The total operation has the selected real embedding's evaluation sign
@@ -158,12 +167,11 @@ theorem cubic_sign (d : Descriptor CubicField Nat fieldSign 7)
         (Field.value_one rep binding real) (Field.value_add rep binding real)
         (Field.value_sub rep binding real) (Field.value_mul rep binding real)
         (Field.value_natCast rep binding real) sign_spec)) : Int) := by
-  obtain ⟨s, h, _⟩ := cubic_success d [q]
-  rw [d.signAt_ofBuild q s h]
-  exact s.value_at_root (Field.value rep) (Field.value_eq_zero rep binding real)
+  exact d.signAt_correct (Field.value rep) (Field.value_eq_zero rep binding real)
     (Field.value_one rep binding real) (Field.value_add rep binding real)
     (Field.value_sub rep binding real) (Field.value_mul rep binding real)
-    (Field.value_natCast rep binding real) sign_spec
+    (Field.value_natCast rep binding real) sign_spec value_neg
+    (Field.value_inv rep binding real) q
 
 /-- info: 'Hex.SignDetMathlib.SelectedProducerConformance.cubic_sign' depends on axioms: [propext,
  sorryAx,

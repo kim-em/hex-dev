@@ -892,9 +892,20 @@ private def signsFieldPasses : Bool :=
 #guard signsFieldPasses
 ```
 
+Import `HexSignDetMathlib.SelectedProducer` for the success and correctness
+theorems. {name}`Hex.SignDet.Descriptor.buildSigns_success` proves that `buildSigns`
+always succeeds for a validated descriptor when coefficient arithmetic and
+signs have their specified mathematical meaning. It proves preparation and
+table construction succeed and rules out every final internal error; successful
+output is not a hypothesis. {name}`Hex.SignDet.Descriptor.buildSigns_roots`
+also proves that the returned list gives the signs at the original selected
+root, in query order. These proofs use the named root-sum admission in
+[#10389](https://github.com/kim-em/hex-dev/issues/10389); they do not require a
+theorem about ordering roots by Thom encodings.
+
 For one polynomial, a validated descriptor provides an ordinary integer sign.
-The same cubic-field example can use this operation directly, without asking
-for a certificate or handling an internal error:
+The same cubic-field example can use this operation directly, receiving only the integer
+sign from the checked calculation:
 
 ```lean
 private def totalSignsFieldPasses : Bool :=
@@ -909,21 +920,12 @@ private def totalSignsFieldPasses : Bool :=
 ```
 
 {name}`Hex.SignDet.Descriptor.signAt_success` proves that the underlying
-checked calculation succeeds, so its internal zero fallback is unreachable
+checked calculation succeeds, so its diagnostic zero fallback is unreachable
 when the coefficient operations satisfy their interpretation laws.
 {name}`Hex.SignDet.Descriptor.signAt_correct` identifies the returned integer
-with the evaluation sign at the descriptor's original selected root.
-
-Import `HexSignDetMathlib.SelectedProducer` for the success and correctness
-theorems. {name}`Hex.SignDet.Descriptor.buildSigns_success` proves that this operation
-always succeeds for a validated descriptor when coefficient arithmetic and
-signs have their specified mathematical meaning. It proves preparation and
-table construction succeed and rules out every final internal error; successful
-output is not a hypothesis. {name}`Hex.SignDet.Descriptor.buildSigns_roots`
-also proves that the returned list gives the signs at the original selected
-root, in query order. These proofs use the named root-sum admission in
-[#10389](https://github.com/kim-em/hex-dev/issues/10389); they do not require a
-theorem about ordering roots by Thom encodings.
+with the evaluation sign at the descriptor's original selected root. Both
+results use the same named #10389 admission. For several queries, `buildSigns`
+shares one table across the list; each `signAt` call constructs its own table.
 
 Two roots can be compared even if their defining polynomials differ. The
 comparison constructs a checked common squarefree polynomial and expresses
