@@ -15,13 +15,14 @@ that exact ordered table. Full reference replay and the generally encoded
 reduced graph must also accept. The fixture reports which validation failed and returns no input on failure. This known-root construction is independent of the Tarski variation
 calculation; it does not prove arbitrary-field semantic replay soundness.
 
-The inventory collected by the committed driver is retained under
-[`data/sign-det-maximal/b8bbe9fd1`](data/sign-det-maximal/b8bbe9fd1), including
+The inventory collected by the committed driver with an up-to-date executable
+is retained under
+[`data/sign-det-maximal/7f85749b9`](data/sign-det-maximal/7f85749b9), including
 metadata, the executable hash and a reconstructible source archive. All three
 completed inputs are retained. Earlier records from a temporary collector remain
 under [`data/sign-det-maximal/247dfcc2c`](data/sign-det-maximal/247dfcc2c) and
 [`data/sign-det-maximal/4b5e1b29e`](data/sign-det-maximal/4b5e1b29e); their metadata
-uses an older format. The table below is identical in all three records.
+uses an older format. The table below is identical in all retained records.
 
 | Queries | Head degree / roots / realized conditions | Maximum matrix size | Query degree | Head coefficient bits | Query coefficient bits | Remainder coefficient bits | Query slots | Tree / graph nodes |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -71,3 +72,10 @@ All three inventories reproduce the earlier dimensions and hashes exactly.
 Its metadata uses the shared source-archive schema, including the base,
 patch application option and reconstruction check. This record also contains
 zero scientific timing samples; earlier completed records remain unchanged.
+
+The later [`7f85749b9` record](data/sign-det-maximal/7f85749b9) additionally
+checks build freshness using `lake build --no-build hexsigndet_bench`, and
+records matching executable hashes and source revisions before and after the
+collection. Its archived sources include the collector regression tests.
+All earlier records remain unchanged, including the first committed-collector
+record linked above. None of these records supplies scientific timings.
