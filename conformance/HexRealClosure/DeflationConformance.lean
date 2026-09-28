@@ -8,7 +8,6 @@ module
 public import HexRealClosure.Deflation
 public import HexRealClosure.Bisection
 public import HexRealClosure.BisectionFrontier
-public import HexRealClosure.BisectionFrontierTests
 public import HexOrderedFn.Infinitesimal
 public import Lean.Data.Json.Printer
 public import Lean.Data.Json.FromToJson.Basic
@@ -163,3 +162,7 @@ def main : IO Unit := do
     (linearFactor (0 : Rat) * linearFactor 1 * linearFactor 2 * linearFactor 3) (-4) 4
   emitFrontier "frontier root cut before exhausted fallback" 1 fraction sign₁
     (linearFactor (0 : RationalFn Rat) * close) (-1) 1
+
+  emitRatFrontier "frontier reprepare multi-root pending cell"
+    (linearFactor (-3 : Rat) * linearFactor (-2) * linearFactor (-1) *
+      linearFactor 1 * linearFactor 2 * linearFactor 3) (-4) 4
