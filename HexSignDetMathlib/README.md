@@ -147,6 +147,20 @@ uses the common full derivative word and count-one descriptors; strict `<` and
 The executable API still exposes internal errors, and the domain-exact total
 wrapper remains to be implemented.
 
+`Descriptor.buildSigns_success` proves that the actual selected-sign producer
+succeeds for every validated descriptor and finite ordered query list under
+the shared lawful coefficient interpretation. `Descriptor.signs_rows` shows
+that the complete joint table has exactly one count-one row extending the
+descriptor's derivative signs. Domain validity supplies preparation, and
+`buildPrepared_roots` supplies the actual table before its final guards are
+discharged by the Mathlib-free `buildSigns_ofTable` theorem.
+`Descriptor.buildSigns_roots` identifies the returned signs with evaluation at
+the original selected root, including empty and repeated queries. These
+results use the named #10389 root-sum bridge, without a Thom order assumption.
+The cubic-field conformance example uses ordinary `QAdjoin` arithmetic over
+ℚ(∛2), retains the selected real embedding, and rejects changed sign vectors,
+query order, contexts, defining polynomials and invalid derivative slots.
+
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient
 interpretation. It neither assumes a gcd normalization nor supplies squarefreeness;

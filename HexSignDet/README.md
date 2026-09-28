@@ -272,9 +272,11 @@ for its cost against the required comparison bounds remain required.
 The total `determinePrepared` API remains required.
 The optional companion proves producer completeness and root-count correspondence
 relative to the named #10389 root-sum bridge; it does not yet provide those
-total executable wrappers. Completion,
-root lists and selected signs still expose internal diagnostics until their
-totality proofs are supplied. Strict-order comparison correspondence,
+total executable wrappers. `Descriptor.buildSigns_success` rules out every
+internal selected-sign error on validated descriptors with lawful coefficients;
+the executable diagnostic interface is retained for arbitrary operations.
+Completion and root lists still require their totality proofs.
+Strict-order comparison correspondence,
 re-encoding success characterization and domain-exact totality, the consumer
 sample-point interface, serialization and
 nested evidence sharing also remain required. The semantic proofs interpret the
