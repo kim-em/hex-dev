@@ -15,8 +15,11 @@ candidate module rewrites the proved cache-invariance identities, unfolds the
 actual graph/local/query checkers and closes
 its theorem with `decide +kernel`. It does not reuse an imported conformance
 acceptance theorem. The kernel therefore checks the literal data and its
-normalization. All eight accepted theorem declarations have exactly
+normalization. All eight replay theorem declarations have exactly
 `propext`, `Classical.choice` and `Quot.sound` in their axiom inventories.
+Each inventory is guarded in the source, so introducing an admission fails
+the CI build. The build-only target is included in the existing CI job;
+no scientific timing campaign runs in CI.
 
 Each replay module is paired with a separate fresh module declaring the
 identical certificate expression but no replay theorem. Accepted and rejected
@@ -88,3 +91,40 @@ certificate sizes. The [source archive](data/sign-det-proofs/06d77092b/source-ar
 identifies a committed patch against a merged base. Reconstruction in a
 temporary Git index verified every recorded source hash, preserving the
 measured source closure across subsequent rebases and squash merges.
+
+## Measurements at 45582256f
+
+The source revision `45582256fc5dd9adbf53a8dfbb10f6c90b66d717` supplies
+48 complete adjacent pairs (96 fresh-module builds), with six rotated rounds
+and balanced arm orientations on `chungus2`, automatically leased CPU 47.
+All completed samples are retained. Every candidate has exactly the three
+standard axioms, and the runner reports no provenance exceptions. The source
+archive reconstructs and verifies all 213 recorded local source hashes.
+
+The theorem statements, proof bodies, checker and compiler are the same as
+those used by the current probes. These measured modules precede the added
+CI message guards; the timings cover the archived modules and do not include
+those additional guard commands. No comparison with the older compiler's
+timings is claimed.
+
+| Depth | Outcome | Literal median (ms) | Replay median (ms) | Paired delta median (ms) | Delta range (ms) | Delta sample SD (ms) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | accept | 2421.384 | 2925.886 | 499.540 | 495.607–1281.249 | 317.510 |
+| 1 | reject | 2437.585 | 2921.962 | 485.266 | 471.369–558.081 | 32.266 |
+| 3 | accept | 2474.323 | 3023.334 | 596.967 | 504.090–2456.333 | 756.997 |
+| 3 | reject | 2479.327 | 3021.235 | 590.818 | 495.854–1104.812 | 219.328 |
+| 5 | accept | 2420.095 | 3127.913 | 715.458 | 670.011–924.432 | 91.889 |
+| 5 | reject | 2422.821 | 3116.437 | 690.714 | -0.166–699.721 | 281.984 |
+| 7 | accept | 2436.244 | 3420.429 | 988.248 | 963.586–1627.387 | 263.669 |
+| 7 | reject | 2424.305 | 3313.784 | 891.942 | 799.167–2790.595 | 783.532 |
+
+The positive paired overhead increases across this measured arity range, but
+this is a fixed-support family and establishes no asymptotic bound. All
+`no-comparable-control` classifications are retained. The
+[raw sweep](data/sign-det-proofs/45582256f/sweep.json) includes compiler output,
+wall time, peak compiler RSS, emitted module sizes and host activity. As above,
+compiler RSS is not replay allocation and module size is not certificate size.
+The [source archive](data/sign-det-proofs/45582256f/source-archive.json) preserves
+the measured source independently of subsequent merges. The wider families,
+nested coefficient proofs, descriptor operations and attribution required by
+#10377 remain separate obligations.

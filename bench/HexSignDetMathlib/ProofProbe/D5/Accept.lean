@@ -24,6 +24,10 @@ theorem checked : check 5 evidence = true := by
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
+/-- info: 'Hex.SignDetMathlib.ProofProbe.D5.Accept.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms checked
+
 #print axioms checked
 
 end Hex.SignDetMathlib.ProofProbe.D5.Accept
