@@ -383,9 +383,10 @@ arbitrary-precision operands, including in index arithmetic passed to
 `RArray.get`. Counted loops are one `Nat.rec` step per iteration, never
 structural recursion on a fuel argument and never a fold over `List.range`.
 The generic loop drivers (`iterUp`, `allRange`, `mapRange`, `fuelRec` and
-their equations) and the raw `Nat` spelling lemmas live in `HexBasic`, and
-`HexGraphIso.Kernel.Packed` uses them from there. `HexPermGroup` cannot import
-`HexGraphIso`.
+their equations) and the raw `Nat` spelling lemmas live in `HexBasic.Kernel`,
+since `HexPermGroup` cannot import `HexGraphIso`. `HexGraphIso.Kernel.Packed`
+switches to them, dropping its own copies, in the change that next regenerates
+its cactus sweep, since that benchmark admits no exemption for source changes.
 
 ### Bounded declarations
 
@@ -1183,8 +1184,8 @@ Implement in this order:
    and `HexManual/Chapters/HexPermGroup.lean` complete every surface above.
    Develop each correspondence and its tests alongside the relevant
    computational module; this ordering does not defer all proofs to the end.
-10. Kernel certificates: move the loop drivers and raw `Nat` spelling lemmas
-    from `HexGraphIso/Kernel/Packed.lean` to `HexBasic.Kernel`. Then `HexPermGroup/Kernel/{Pack,Check,Certify}.lean`,
+10. Kernel certificates: `HexBasic.Kernel` with the loop drivers and raw `Nat`
+    spelling lemmas, then `HexPermGroup/Kernel/{Pack,Check,Certify}.lean`,
     `HexPermGroupMathlib/Kernel.lean` with the soundness theorems,
     `HexPermGroupMathlib/Tactic.lean` with `perm_group` and
     `#perm_group_certificate`, the examples, the benchmark report and the manual
