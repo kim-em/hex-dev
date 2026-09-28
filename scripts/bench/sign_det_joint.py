@@ -65,7 +65,7 @@ def expected(n, side):
             "sourceIndices": list(range(1, n+1)),
             "sourceSigns": [1]*n if side == "left" else [(-1)**(n-i) for i in range(1, n+1)],
             "head": head, "queries": queries, "table": table, "directTable": table,
-            "order": "gt" if 1 > -1 else "lt",
+            "order": "gt",  # The left root 1 exceeds the right root -1.
             "reducedQueryWitnessBits": (math.factorial(2*n)//2).bit_length(),
             "directQueryWitnessBits": (n*(math.factorial(2*n)//2)**2).bit_length(),
             "querySlots": slots, "maxColumns": max_columns, "maxSupport": 2,
@@ -90,6 +90,10 @@ def validate(path, degrees=DEGREES, retained=False):
         if hashlib.sha256(patch.read_bytes()).hexdigest() != archive["sha256"]:
             raise ValueError("retained source archive hash differs")
     rows = [json.loads(line) for line in path.read_text().splitlines()]
+    if retained and (metadata.get("exit_code") != 0 or
+                     metadata.get("validated_rows") != len(rows) or
+                     metadata.get("revision_after") != metadata.get("revision")):
+        raise ValueError("retained completion metadata differs")
     schedule = [(n, side) for n in degrees for side in ("left", "right")]
     if len(rows) != len(schedule):
         raise ValueError("missing joint observations")

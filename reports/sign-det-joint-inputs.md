@@ -43,7 +43,7 @@ fields; they are not peak intermediate values, allocated bytes or live memory.
 `inspect-joint` selects degrees 3, 7, 15, 31 and 63; `inspect-joint N` selects
 one development input. This is an untimed correctness and input inventory.
 No timing registration or cost-model verdict follows from it. Separate completion, comparison/re-encoding, reduced/direct construction
-and checking measurements, intermediate coefficient observations and allocation
+and checking measurements, peak intermediate coefficient observations and allocation
 coverage remain required for the joint-encoding Phase-4 evaluation.
 
 This family varies query count, degree and coefficient size. Realized support
@@ -77,9 +77,9 @@ counts and dimensions agree, while its serialized byte counts differ slightly.
 The matrices remain bounded while polynomial degrees, stored witness bits and
 serialized certificates grow. Every query has degree below the common head,
 so reduction modulo that head cannot lower its degree. Reduced mode normalizes
-monomials to ±X^k and stores their scale factors; its maximum is the normalization scale of the common head's constant
-2n-th derivative, whose absolute value is `(2n)!/2`. In direct mode the initial
-Sturm–Tarski remainder for its squared query has leading coefficient
+monomials to ±X^k and stores their scale factors; its maximum is the normalization scale of the common head's constant and
+linear target derivatives, both of absolute value `(2n)!/2`. In direct mode the
+initial Sturm–Tarski remainder for the squared constant-derivative query has leading coefficient
 `−n·((2n)!/2)²`; the chain stores that absolute value as its initial right scale.
 This is the direct witness-bit maximum in the retained rows, and the validator
 checks its formula. Normalizing first avoids storing that large product.
@@ -95,7 +95,7 @@ bindings and every field. The retained patch reconstructs the measured source
 against merged base `0ddbca525898432d311a80ebb97ee52427e111af`;
 the recorded revision need not remain on a branch after rebasing. The retained
 archive describes that exact source, not later revisions. Its Lake configuration
-and report differ after rebasing and recording the inventory. Subsequent fixture
+and report differ after rebasing and recording the inventory. The current fixture
 checks additionally retain the observed order, check the gcd factor literally,
 and compare decoded replay tables with the root oracle. They do not change
 these retained observations or establish a new collected-source claim. New

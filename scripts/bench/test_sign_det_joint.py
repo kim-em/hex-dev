@@ -48,7 +48,8 @@ class JointValidation(unittest.TestCase):
         self.check(self.rows)
         patch = self.path.parent / "committed-source.patch"
         patch.write_bytes(b"literal source archive")
-        metadata = {"state": "complete",
+        metadata = {"state": "complete", "exit_code": 0, "validated_rows": 2,
+                    "revision": "bound-source", "revision_after": "bound-source",
                     "inventory_sha256": hashlib.sha256(self.path.read_bytes()).hexdigest(),
                     "source_archive": {"file": patch.name,
                                        "sha256": hashlib.sha256(patch.read_bytes()).hexdigest()}}
@@ -65,6 +66,16 @@ class JointValidation(unittest.TestCase):
         patch.write_bytes(b"changed archive")
         with self.assertRaisesRegex(ValueError, "archive hash"):
             validate(self.path, [3], retained=True)
+        metadata["source_archive"]["file"] = "../foreign.patch"
+        metadata_path.write_text(json.dumps(metadata))
+        with self.assertRaisesRegex(ValueError, "archive path"):
+            validate(self.path, [3], retained=True)
+        metadata["source_archive"]["file"] = patch.name
+        patch.write_bytes(b"literal source archive")
+        metadata["exit_code"] = 1
+        metadata_path.write_text(json.dumps(metadata))
+        with self.assertRaisesRegex(ValueError, "completion metadata"):
+            validate(self.path, [3], retained=True)
         metadata["state"] = "running"
         metadata_path.write_text(json.dumps(metadata))
         with self.assertRaisesRegex(ValueError, "not complete"):
@@ -73,7 +84,7 @@ class JointValidation(unittest.TestCase):
     def test_shape_and_integer_spoof(self):
         for key, value in (("degree", 3.0), ("context", True), ("order", "lt"),
                            ("maxInverseBits", True), ("reducedGraphBytes", 0),
-                           ("reducedQueryWitnessBits", 1)):
+                           ("reducedQueryWitnessBits", 1), ("directQueryWitnessBits", 1)):
             with self.subTest(key=key), self.assertRaises(ValueError):
                 rows = copy.deepcopy(self.rows)
                 rows[0][key] = value
