@@ -106,11 +106,13 @@ parent certificate or a foreign context cannot stand in for the child. -/
       let parent := certifyCountPrepared (7 : Nat) domain
       let child := certifyCountPrepared (7 : Nat) left
       let forged := { parent with upper := .finite 0, value := 1 }
+      let staleSigns := { parent with upper := .finite 0 }
       countPrepared domain == 2 && countPrepared left == 1 && countPrepared right == 1 &&
       check orderSign 7 p 1 .negInf (.finite 0) 1 child &&
       !check orderSign 8 p 1 .negInf (.finite 0) 1 child &&
       !check orderSign 7 p 1 .negInf (.finite 0) 1 parent &&
       !check orderSign 7 p 1 .negInf (.finite 0) 1 forged &&
+      !check orderSign 7 p 1 .negInf (.finite 0) 2 staleSigns &&
       !check orderSign 7 p 1 .negInf .posInf 2 child
     | _, _ => false
 
