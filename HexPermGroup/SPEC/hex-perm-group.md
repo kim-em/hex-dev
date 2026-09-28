@@ -408,8 +408,8 @@ the two compositions forming `h(i, j)` and one composition and one lookup for
 each later level, each composition costing `n` field operations, and it counts
 the unsplit per-level and input checks the same way. When one unsplit check
 exceeds the budget, the producer fails before emitting any declaration and
-reports the check and its estimated cost. The default budget is set from the
-proof-probe measurements of this checker and recorded in the benchmark report.
+reports the check and its estimated cost. The default budget keeps every
+declaration of the examples well within the default heartbeat limit.
 No proof, test or example raises `maxHeartbeats` for these checks.
 
 Certificate constants are `noncomputable`. They are data for the kernel, and
@@ -932,11 +932,9 @@ the Mathlib cardinality.
 The section explains why the kernel uses a separate certificate format, and
 illustrates the difference with a table for this `M11` example. The table has
 one row for kernel replay of the compiled `checkChain` certificate and one for
-`Kernel.check`, and columns for kernel type-checking time and peak memory. Its
-values are read from the committed proof-probe record for `M11` (see
-[Benchmarks](#complexity-benchmarks-and-placement)), not typed by hand, and the
-chapter names the machine they were measured on. A sentence below the table
-points to the benchmark report for larger groups.
+`Kernel.check`, and columns for kernel type-checking time and peak memory,
+measured on a named machine and date. A sentence below the table points to the
+benchmark report for larger groups.
 
 ## Conformance and comparisons
 
@@ -1145,20 +1143,14 @@ Mathlib-free. Extend existing conformance/oracle scripts and the single CI
 job, with scientific timing under the
 [shared-host measurement policy](../../SPEC/benchmarking.md#shared-host-measurement-policy).
 
-Kernel replay is measured by fresh-module proof probes under
-`bench/HexPermGroupMathlib/ProofProbe`, declared in `libraries.yml:
-proof_probes`, following [benchmarking](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
-Each probe records kernel type-checking time per declaration, the whole-module
-wall time and the peak resident memory of the Lean process, run alone under a
-recorded memory limit. The default probes are `M11`, `M24` and `HS`
-(degree 100) by `Kernel.check`. A non-default local target adds `M11` by
-`checkChain` replay, which needs about 6 GB, and `McL` and `Co3` (degree 275
-and 276) by `Kernel.check` with chunking. Records live under `reports/bench-results/` as
-`hexpermgroup-kernel-*.json`, and the manual table reads the `M11` record.
-The default chunk budget of `Kernel.chunks` is set from these records.
-Changes to `Kernel.check`, its loop drivers or the chunk cost estimate are
-judged against them. Probe runners must not run several of these
-modules concurrently, since each can use several gigabytes.
+Kernel replay is evidenced by the build-only examples of
+[User-facing examples](#user-facing-examples), each checked within the default
+heartbeat limits. The report
+[`reports/20260928-perm-group-kernel-replay-sizing.md`](../../reports/20260928-perm-group-kernel-replay-sizing.md)
+records the kernel time, largest
+declaration and peak memory of `Kernel.check` for `M11`, `M24`, `HS`, `McL` and
+`Co3`, and of `checkChain` replay for `M11`, each run alone under a memory
+limit, with the machine and date.
 
 Implement in this order:
 
@@ -1187,7 +1179,7 @@ Implement in this order:
     from `HexGraphIso/Kernel/Packed.lean` to `HexBasic.Kernel`. Then `HexPermGroup/Kernel/{Pack,Check,Certify}.lean`,
     `HexPermGroupMathlib/Kernel.lean` with the soundness theorems,
     `HexPermGroupMathlib/Tactic.lean` with `perm_group` and
-    `#perm_group_certificate`, the examples, the proof probes and the manual
+    `#perm_group_certificate`, the examples, the benchmark report and the manual
     section on `M11`.
 
 The manual should use rotations and reflections of an indexed polygon to
