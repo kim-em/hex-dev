@@ -30,6 +30,7 @@ private def a : Element first := epsilon + 1
 #guard (p.embed.eval a.embed).equal (p.eval a).embed
 #guard ((p * p).embed.eval a.embed).equal ((p.eval a) * (p.eval a)).embed
 #guard (p.embed.eval delta).sign = 1
+#guard ((Polynomial.ofCoeffs #[-epsilon, 1 / epsilon]).embed.eval delta).sign = -1
 #guard (Polynomial.read first p.write).map Polynomial.stored = some p.stored
 #guard (Polynomial.read second p.write).isNone
 #guard (Polynomial.read first p.embed.write).isNone
