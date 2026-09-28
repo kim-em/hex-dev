@@ -132,6 +132,16 @@ noncomputable def refine {parent : Context registry}
     rw [cast_value _ _ _ _ (Conversion.refine_spec parent encoding).2]
     exact original.refine_value encoding x
 
+/-- The actual target interpretation agrees with the canonical reencoded-root model. -/
+theorem refine_heq {parent : Context registry}
+    (original : Hex.RealClosure.Tower.Model parent K)
+    {descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature}
+    {head : DensePoly parent.Value} {lower upper : Endpoint parent.Value}
+    (encoding : SignDet.Reencoding descriptor head lower upper) :
+    HEq (refine original encoding).target (original.adjoin encoding.target) := by
+  unfold refine
+  exact ((original.refine encoding).cast_heq _).trans (original.refine_heq encoding)
+
 omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
 private theorem endpoint (point : Endpoint source.Value) :
     (point.map conversion.value).map model.target.value = point.map original.value := by
@@ -364,3 +374,7 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.cast' depends on axioms: [propext,
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.cast
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.refine_heq' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.refine_heq

@@ -26,6 +26,11 @@ variable (encoding : SignDet.Reencoding source head a b)
 noncomputable def refine : Model (parent.refine encoding).extension.context K :=
   (congrArg Extension.context (parent.refine encoding).canonical).symm ▸ model.adjoin encoding.target
 
+/-- The refined model is the canonical target-root model with context ownership reconciled. -/
+theorem refine_heq : HEq (model.refine encoding) (model.adjoin encoding.target) := by
+  unfold refine
+  exact (model.adjoin encoding.target).cast_heq _
+
 omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
 private theorem transport_value {context other : Context registry} (h : context = other)
     (m : Model context K) (x : context.Value) (y : other.Value) (hy : HEq y x) :
@@ -79,7 +84,7 @@ theorem refine_polynomial (value : (parent.refine encoding).extension.context.Va
         ((parent.refine encoding).polynomial value)).eval
           ((model.adjoin source).value (parent.adjoin source).generator) := by
   unfold refine
-  rw [transport_value _ _ _ _ (cast_heq _ _).symm,
+  rw [transport_value _ _ _ _ (_root_.cast_heq _ _).symm,
     model.adjoin_value encoding.target, model.adjoin_generator,
     model.adjoin_generator,
     encoding.root_eq_source model.value model.zero_iff model.one model.add model.sub
@@ -264,3 +269,7 @@ end Hex.RealClosure.Tower.Model
 /-- info: 'Hex.RealClosure.Tower.Model.refine_later' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.refine_later
+
+/-- info: 'Hex.RealClosure.Tower.Model.refine_heq' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.refine_heq

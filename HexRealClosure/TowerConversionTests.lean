@@ -35,12 +35,12 @@ private def sample : Option (Array Bool) :=
   let later : RawDescriptor first.context.Value Signature :=
     { context := first.context.signature, head := DensePoly.ofCoeffs #[-first.generator, 1],
       lower := .finite 1, upper := .finite (1 + 1), indices := [1], signs := [1] }
-  (Descriptor.validate first.context.sign first.context.signature later).bind fun next =>
-  let old := first.context.adjoin next
+  (Descriptor.validate first.context.sign first.context.signature later).bind fun later =>
+  let old := first.context.adjoin later
   ((descriptor.buildReencoding factor (.finite 1) (.finite two)).toOption).bind fun result =>
   result.bind fun encoding =>
   let initial := Conversion.refine base encoding
-  let suffix : Suffix first.context := .root next .nil
+  let suffix : Suffix first.context := .root later .nil
   ((encoding.target.buildReencoding (DensePoly.scale two factor)
     (.finite 1) (.finite two)).toOption).bind fun result =>
   result.bind fun following =>

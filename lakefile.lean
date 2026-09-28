@@ -290,7 +290,7 @@ lean_lib HexRealClosure where
 lean_lib HexRealClosureTests where
   globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.TowerTransportTests]
 
--- Explicit deep native transport fixture; omitted from routine CI targets.
+-- The deep fixture is type-checked above; only its execution is outside routine CI.
 lean_exe hexrealclosure_transport_tests where
   root := `HexRealClosure.TowerTransportTests
 
