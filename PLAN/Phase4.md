@@ -8,8 +8,8 @@ Phase 4 makes algorithmic complexity a first-class deliverable. By
 the end of Phase 4 every advertised compiled operation in the library's API
 has the strongest applicable benchmark mode from
 [`SPEC/benchmarking.md` §Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim)
-and a passing result in that mode; every advertised tactic or proof generator
-has the proof-track evidence defined below. An *inconclusive* compiled verdict is not
+and a passing result in that mode. Tactics and proof generators are not benchmark
+registrations; see the proof track below. An *inconclusive* compiled verdict is not
 a Phase 4 exit unless it is the current harness wording for a documented,
 passing one-sided upper-bound result. A failing result triggers a rollback per
 [Conventions.md §Rollback is a normal action](Conventions.md#rollback-is-a-normal-action)
@@ -35,7 +35,7 @@ observed build-cost problem.
 | Surface | Required evidence | Generic requirements replaced |
 | --- | --- | --- |
 | Mathlib-free compiled computation | An ordinary LeanBench executable, registrations with controlled one-parameter ladders and adjacent independent cost derivations, `list`/`verify`, scientific verdicts, comparator coverage, and timed-region sampling profiles. | None. |
-| Tactic execution, proof generation, and their certificate and kernel checking | Build-only example modules on representative inputs, checked by the ordinary build within the default heartbeat limits, with their measured time and peak memory recorded in the headline report. Externally timed fresh-module builds below a `libraries.yml` `proof_probes` root only where the SPEC names a decision that needs them, per [`SPEC/benchmarking.md` §When to use it](../SPEC/benchmarking.md#when-to-use-it). | No LeanBench registration or executable, no `list`/`verify` entry for that surface, no complexity verdict, and no timed-region sampling profile. |
+| Tactic execution, proof generation, and their certificate and kernel checking | Correctness tests in ordinary builds. Externally timed fresh-module builds below a `libraries.yml` `proof_probes` root only for a performance decision named by the library SPEC, per [`SPEC/benchmarking.md` §When to use it](../SPEC/benchmarking.md#when-to-use-it). | No LeanBench registration or executable, no `list`/`verify` entry for that surface, no complexity verdict, and no timed-region sampling profile. |
 
 A `mathlib: true` library with a separable compiled core is a **mixed**
 library, not a proof-only exception. Its compiled core obeys every ordinary
@@ -56,9 +56,9 @@ For each library `HexFoo` advancing through Phase 4:
    expression in each `setup_benchmark` is the independently derived expected
    family scaling for a two-sided registration or the cited published bound
    for a one-sided registration, never a model read from observed timings.
-   Proof-track operations instead have build-only example modules, and
-   fresh-module probes under a `proof_probes` directory only where their SPEC
-   names a decision that needs them. Neither is a registration.
+   Proof-track operations are not benchmark registrations. Fresh-module
+   probes are required only for performance decisions named by the library
+   SPEC.
 
 2. **`lakefile.lean` exe entry** for a library with compiled-track targets:
 
@@ -75,7 +75,7 @@ For each library `HexFoo` advancing through Phase 4:
    `lake exe hexfoo_bench list && lake exe hexfoo_bench verify`.
    `verify` is the bitrot gate; it does not assert timing values.
    It may use reduced smoke settings, but may not weaken the
-   scientific settings used for real runs. Build-only proof probes extend the
+   scientific settings used for real runs. Declared proof probes extend the
    existing build job with structural/reduced build checks; they never become
    executable roots.
 
@@ -106,9 +106,8 @@ For each library `HexFoo` advancing through Phase 4:
    entry in `libraries.yml`, recorded in
    `reports/<lib>-performance.md §Profile`. Categorise leaf cost
    across {own code, GMP, allocation, Lean runtime}; rank inclusive
-   cost; explain the dominant entries. Proof-track surfaces record their example
-   timings, and any fresh-module probe evidence, instead of a timed-region
-   sampling profile.
+   cost; explain the dominant entries. Proof-track surfaces have no
+   timed-region sampling profile.
 
 7. **Headline report** at `reports/<lib>-performance.md` per
    [SPEC/benchmarking.md §Headline reports](../SPEC/benchmarking.md#headline-reports).
@@ -160,8 +159,7 @@ For library `hex-foo`, Phase 4 is done when:
 - every compiled operation, tactic or proof generator listed in the library's
   SPEC API surface is assigned to a track, every compiled-track operation has a `setup_benchmark` or
   `setup_fixed_benchmark` registration in the `HexFoo.Bench` exe, and every
-  proof-track operation has its build-only examples, and the fresh-module
-  probes its SPEC requires, if any;
+  fresh-module probe the library SPEC requires exists;
 - the headline report names the strongest applicable mode from
   `SPEC/benchmarking.md`'s ordered rule for every performance-evidence
   registration; fixed registrations used only as hash, comparator, or protocol
@@ -207,8 +205,8 @@ For library `hex-foo`, Phase 4 is done when:
 - a profile run per
   [SPEC/profiling.md §Coverage requirement](../SPEC/profiling.md#coverage-requirement)
   is recorded in `reports/<lib>-performance.md §Profile` for every compiled
-  input family; proof-track surfaces instead record their example timings and
-  any required fresh-build samples and provenance;
+  input family; proof-track surfaces record fresh-build samples only where
+  their SPEC requires probes;
 - the headline report at `reports/<lib>-performance.md` exists with
   the five mandated subsections and full artefact traceability;
 - the headline report's §Concerns subsection is empty. A passing mode-2 or
@@ -260,8 +258,8 @@ attach to.
 The exemption is narrow, and every other `mathlib: true` library takes
 ordinary track assignment per [§Evidence tracks](#evidence-tracks) in
 whichever shape its SPEC declares: compiled-only, proof-only (an
-elaboration or tactic surface evidenced by fresh-module probes, as with
-HexRealRootsMathlib's `isolate_roots` term elaborator), or mixed. A
+elaboration or tactic surface, as with HexRealRootsMathlib's `isolate_roots`
+term elaborator), or mixed. A
 library declaring a `libraries.yml` `proof_probes` root is normally
 outside the exemption, since those probes measure a proof surface it
 owns; so is a library owning an executable reifier, certificate

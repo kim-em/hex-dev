@@ -339,10 +339,9 @@ record `spawn_floor_nanos` and `signal_floor_multiplier`.
 - kernel reduction (proof terms, `decide` after elaboration),
 - proof-search tactics inside `Bench.lean`.
 
-These are out of scope for **LeanBench**. When a library advertises a tactic or
-proof-producing API, Phase 4 covers that surface through the build-only
-fresh-module evidence below; it must not disguise elaboration or kernel time as
-compiled benchmark time.
+These are out of scope for **LeanBench**, which must not disguise elaboration or
+kernel time as compiled benchmark time. A tactic or proof-producing API uses the
+fresh-module evidence below only as §When to use it allows.
 
 CPU profiling of compiled benchmark binaries is **in scope** and is
 a Phase-4 deliverable; see [profiling.md](profiling.md). A passing parametric
@@ -360,25 +359,13 @@ only when investigating an observed build-cost problem.
 
 ### When to use it
 
-A tactic or proof generator needs correctness tests and a performance budget.
-The default evidence is a set of build-only example modules on representative
-inputs, including the largest input the SPEC claims to handle. The ordinary
-build checks them within the default heartbeat limits, which bound elaboration
-and kernel work deterministically. The library's headline report records their
-measured wall time and peak memory, with the machine and date. This is enough
-for a claim of the form "this example checks in under ten seconds and one
-gigabyte", and for comparing alternatives whose costs differ by a large factor.
+Correctness examples belong in ordinary tests and builds. Use fresh-module proof
+evidence only when a library SPEC names a performance decision that requires
+it. It is not required merely because an API contains a tactic or proof
+generator, or for Phase 4 completion.
 
-The paired fresh-module protocol below is for a decision that depends on a
-difference a single measurement cannot resolve, typically less than a factor
-of two: choosing between two implementations of similar cost, or detecting a
-regression of that size. Declare a `proof_probes` root only when the library's
-SPEC names such a decision, and state the decision next to the declaration.
-Do not declare one because the mechanism exists, because another library has
-one, or to complete a phase.
-
-Elaboration, tactic execution, emitted proof terms, and ordinary kernel
-checking are measured only by an external runner building fresh Lean modules.
+When measured, elaboration, tactic execution, emitted proof terms, and ordinary
+kernel checking are measured by an external runner building fresh Lean modules.
 The module sources live recursively below a directory listed in the owning
 library's `libraries.yml: proof_probes`. A path may reserve a
 not-yet-created directory for a stacked change, but when present it must be a
