@@ -1,4 +1,4 @@
-# Rational selected-root expressions
+# Selected-root arithmetic and immutable bases
 
 `Root.validate` checks a `Hex.SignDet.RawDescriptor Rat Nat` against its exact
 version tag. The tag is a `Nat` and does not yet own a defining polynomial or
@@ -12,8 +12,9 @@ inverse has a proof of its real value in
 The companion also proves that the selected root lies in the computed cofactor
 for a nonzero value, that squarefreeness makes this cofactor coprime to the
 operand, and that the scaled Bézout candidate has product one. Once both sign queries
-return, `inverse?` cannot fail its candidate check. Total sign-query producer
-success remains an upstream requirement.
+return, `inverse?` cannot fail its candidate check. The shared selected-sign producer
+now has a success theorem under a lawful predecessor interpretation;
+the generic arithmetic interface below uses it for total scalar sign.
 
 ```lean
 let d ← Root.validate 7 raw
@@ -383,6 +384,51 @@ fixture driver also covers constants, a pure power, mixed nonzero roots,
 fractional and negative scalars, and one and two infinitesimal levels. Its
 independent SymPy oracle determines the zero multiplicity from the first
 nonzero coefficient and checks the entire returned quotient.
+### Arithmetic over general selected-root predecessors
+
+`Algebraic.Context.adjoin descriptor cleanCoeff` binds an extension to its
+validated selected-root descriptor and the predecessor's actual ordinary
+operations and sign. `Algebraic.Element ctx` owns its complete extension
+context. It stores a unique zero or a nonzero polynomial with its checked
+sign. Packing performs one shared BKR sign query after optional monic reduction;
+reading a stored sign reuses that result. It does not enumerate canonical
+rational roots.
+
+Ordinary addition, subtraction, negation, multiplication, inversion and
+division operate on these values without a field instance on stored
+representations. Inversion computes the defining polynomial's local gcd with
+the operand, takes the complementary factor, and scales the actual one-sided
+Bézout coefficient. `ofCoeff` explicitly includes a predecessor value.
+`equal` and `compare` use the selected value; structural equality only compares
+stored forms. `inv?` rejects canonical zero.
+
+The companion in `adapters/HexRealClosureMathlib/Algebraic.lean` proves zero
+reflection, sign, comparison and arithmetic preservation for every
+zero-reflecting predecessor interpretation into a real closed field that
+preserves the relevant ordinary operations. Injectivity is unnecessary.
+Producer success proves the scalar adapter's explicit internal-error branch
+unreachable under these hypotheses. Inverse correctness derives the cofactor
+root and constant gcd properties of the actual computation. The semantic
+proofs inherit only the existing named `Tarski.check_rootSum` admission; the
+core introduces no admission.
+
+`BaseContext.Element.isClean` checks integral rational coefficients and
+recursively denominator-one polynomials through all real and infinitesimal
+stages. `Algebraic.Element.isClean` checks its stored polynomial's predecessor
+coefficients. Packing retains a remainder only for a literally monic definition
+with clean coefficients; nonmonic and fractional definitions retain the raw
+representative. A nonzero remainder still requires selected-root zero testing.
+
+Run `lake build HexRealClosure.AlgebraicTests HexQuerySemantics` and
+`python3 HexRealClosure/verify_algebraic.py`. Executable examples cover a
+reducible nonmonic definition, noncanonical equal values, inversion and
+cancellation, square roots of infinitesimals, and two algebraic levels whose
+coefficient carriers have ordinary operations only. The independent exact
+oracle uses arithmetic in the quartic field and positive Laurent germs.
+These generic arithmetic contexts can use nominal predecessor carriers.
+They do not yet provide a recursive dependency catalog, context enlargement
+and transport, general root isolation, or a real-closed union construction.
+
 ## Ordered algebraic ambient models
 
 `Ambient.ofField K` in the companion consumes Tau Ceti's proved ordered
