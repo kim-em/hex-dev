@@ -65,8 +65,8 @@ zero. These registrations alone cannot discharge allocation, nested-field,
 maximal-support, joint-query, unreduced comparison or complete Phase-4 gates.
 
 The [retained collection](data/sign-det-height/640bf10bd/metadata.json)
-uses committed source `640bf10bd72d2ad25e6ce5d9f1c409e5dfc13eaa` on shared
-host `chungus2`, automatically leased CPU 82. All 84 scientific samples
+uses Lean 4.34.1 and committed source
+`640bf10bd72d2ad25e6ce5d9f1c409e5dfc13eaa` on shared host `chungus2`, automatically leased CPU 82. All 84 scientific samples
 completed with the expected outputs and exact trial-major schedules. Sources
 and executable hashes were unchanged. Both mode-1 verdicts are **consistent
 with declared complexity**; no sample was removed and no rerun was used.
@@ -80,7 +80,6 @@ completed sample at each height; they are observations on this host.
 
 | Coefficient bits | Normalization median µs | Replay median µs |
 | ---: | ---: | ---: |
-
 | 8,192 | 8.261 | 18.054 |
 | 16,384 | 14.018 | 33.216 |
 | 32,768 | 22.650 | 57.533 |
@@ -105,7 +104,8 @@ same retained data; it does not replace or remove measurements. Later report
 and validator edits do not change the measured normalization or checking
 functions. Reproduction uses the base and patch recorded in the metadata.
 
-These passing results discharge the declared normalization-phase registrations
-only. General coefficient-height propagation, allocation, nested fields,
+These passing results establish the declared normalization-phase models for
+the archived Lean 4.34.1 revision only. They do not establish performance on
+the current Lean 4.35.0-rc3 toolchain. General coefficient-height propagation, allocation, nested fields,
 maximal support, joint comparisons and the remaining Phase-4 requirements
 remain open under #10377.
