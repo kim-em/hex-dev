@@ -35,8 +35,9 @@ finite-field polynomials have no global Mathlib `CommRing` instance and are all
 covered by this one transport; `denseCommRing` names the dense-polynomial case.
 The private structure in `HexResultantMathlib/Specialize.lean` uses `npowRec`
 and is not a substitute: it replaces the executable power.
-`fieldOfGrind` extends this construction with the executable inverse, division and integer powers; `toGrind_fieldOfGrind`
-proves that the entire field reduct is preserved.
+`fieldOfGrind` extends this construction with the executable inverse,
+division and integer powers; `toGrind_fieldOfGrind` proves that the entire
+field reduct is preserved.
 -/
 
 namespace HexPolyMathlib
