@@ -44,3 +44,11 @@ Reproduce the inventory with `lake build hexsigndet_bench` followed by
 `.lake/build/bin/hexsigndet_bench inspect-maximal`. For source reproduction,
 apply the recorded patch to its recorded base and verify every source hash
 in `metadata.json`; the archive remains usable after rebases and squash merges.
+
+The current fixture validation is retained under
+[`data/sign-det-maximal/4b5e1b29e`](data/sign-det-maximal/4b5e1b29e). All three
+inventories match the earlier record exactly, including the input and table
+hashes. Its source archive reconstructs every recorded source hash from merged
+base `a6cc38bf2`. This is another correctness inventory, with zero scientific
+timing samples. The existing `verify` command also checks the smallest
+maximal-support input before the registered benchmark smoke checks.
