@@ -63,7 +63,7 @@ class AdmissionScannerTests(unittest.TestCase):
                           for name in ("Algebraic", "AlgebraicClean", "AlgebraicValue",
                                        "BaseClean", "AlgebraicTower")]
             tower = [root / f"HexRealClosure/{name}.lean"
-                     for name in ("TowerCatalog", "TowerTests")]
+                     for name in ("TowerCatalog", "TowerTests", "FrameFormat", "FrameFormatTests")]
             for path in (entry, bridge, sign, conformance, dependency, *arithmetic, *tower):
                 path.parent.mkdir(parents=True, exist_ok=True)
             for path in (*arithmetic, *tower):

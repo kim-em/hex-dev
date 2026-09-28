@@ -171,7 +171,8 @@ def check() -> None:
              "HexRealClosureMathlib.Algebraic", "HexRealClosureMathlib.AlgebraicClean",
              "HexRealClosureMathlib.AlgebraicValue", "HexRealClosureMathlib.BaseClean",
              "HexRealClosureMathlib.AlgebraicTower", "HexRealClosure.TowerCatalog",
-             "HexRealClosure.TowerTests"] + [
+             "HexRealClosure.TowerTests", "HexRealClosure.FrameFormat",
+             "HexRealClosure.FrameFormatTests"] + [
         "HexSignDetMathlib." + path.stem
         for path in sorted((ROOT / "adapters/HexSignDetMathlib").glob("*.lean"))]
     paths = set().union(*(import_cone(module) for module in roots))

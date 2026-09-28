@@ -453,14 +453,20 @@ and full signature. The constructors derive ordinary coefficient operations,
 recursive cleanliness and the coefficient codec; raw algebraic carriers have
 no ring or field instance.
 
-`Tower.Context` packages such a chain with its value type. `Context.adjoin?`
+`Tower.Context` packages such a chain with its value type. `Context.adjoin`
 accepts the exact context-bound descriptor and returns an `Extension` containing
 the new context, its selected generator and the actual constant-polynomial
-embedding. Old values keep their owning context. The optional failure checks
-structured serialization shape; descriptor acceptance is already established.
+embedding. Old values keep their owning context. Descriptor acceptance is
+already established. Native encoders emit only supported structured shapes,
+so `Context.adjoin_isSome` proves the existing optional facade always succeeds.
 The returned extension retains its literal frame, the proof of its complete
 binding, and `Context.adjoin_spec` identifies the native child, embedding and
 generator without unfolding the private constructor.
+`Context.adjoin_some` identifies the total result with that optional facade;
+`Context.adjoin_native` identifies its actual native child, embedding and generator.
+The format proof follows the existing scalar, polynomial, endpoint and full
+graph encoders. Supported coefficient encoding is derived recursively from
+the actual `Tower.Chain`, not supplied as a constructor law.
 These context packages live in `Type 1`; `Option.bind` can connect their results
 to ordinary scalar computations across universe levels.
 
@@ -498,6 +504,11 @@ unknown bindings, forged signs, zero claims, trailing zeros and malformed base
 payloads. The core roundtrip proofs introduce no admission. General persistent
 refinement, transport of later descriptors, interpretation of arbitrary towers,
 complete isolation and the real-closed union remain open.
-Reconstructing new validated algebraic levels from serialized frames and
-proving that native frame serialization always succeeds (so the optional
-adjoin facade can become total) also remain open.
+Reconstructing new validated algebraic levels from serialized frames remains
+open. Native frame-format totality is proved independently of graph decoding
+and byte-parser completeness.
+
+Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
+non-monic reducible rational definition, followed by a definition with
+noncanonical predecessor coefficients. The frame-format axiom guards use only
+the standard three axioms; no selected-root semantic admission is needed.
