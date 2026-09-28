@@ -27,8 +27,8 @@ namespace Hex.RealClosure.Yun
 
 /-- A cached selected-root coefficient stream runs Yun's raw recurrence with
 the same result as its exact real-algebraic values. This theorem transports
-the computation; producer correctness still requires the characteristic-zero
-Yun invariant for lawful coefficients. -/
+the computation; `decompose_packed` in `YunInvariant` combines it with the
+producer correctness theorem. -/
 theorem map_packed {context : Nat} {d : Root context}
     (h : Root.Handle d) (f : DensePoly (Root.Handle.Value h)) :
     Decomposition.map (fun a : Root.Handle.Value h => a.value)
