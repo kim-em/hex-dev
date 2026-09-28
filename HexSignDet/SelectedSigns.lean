@@ -153,10 +153,7 @@ theorem Descriptor.buildSigns_ofTable {sign : E → Int} {context : Ctx}
         [(d.raw.signs ++ values.toList, 1)]) :
     ∃ s, d.buildSigns qs = .ok s := by
   obtain ⟨hw, hctx, _, _⟩ := RawDescriptor.check_eq d.accepted
-  have hlen : d.raw.signs.length = d.raw.queries.length := by
-    have hb := hw
-    simp only [RawDescriptor.wellFormed, Bool.and_eq_true, decide_eq_true_eq] at hb
-    simpa only [RawDescriptor.queries, List.length_map] using hb.1.1.1.2.symm
+  have hlen := d.raw.wellFormed_length hw
   have bindings := Sturm.prepare_eq_some sign d.raw.head d.raw.lower d.raw.upper domain hd
   have hc : t.val.check sign context d.raw.head d.raw.lower d.raw.upper
       (d.raw.queries ++ qs) = true := by

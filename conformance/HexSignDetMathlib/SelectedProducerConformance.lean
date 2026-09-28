@@ -41,9 +41,6 @@ abbrev queries : List (DensePoly CubicField) :=
 def raw : RawDescriptor CubicField Nat :=
   ⟨7, head, .negInf, .posInf, [1], [1]⟩
 
-set_option maxRecDepth 4096
-set_option maxHeartbeats 1000000
-
 /-- The derivative word selects +∛2 rather than the other root −∛2. Query
 order and repetitions are retained; a nonzero cubic query vanishes there. -/
 def selectedPasses : Bool :=
@@ -56,6 +53,10 @@ def selectedPasses : Bool :=
         !d.checkSigns queries #v[-1, -1, 0, 1] s.evidence &&
         !d.checkSigns [xPoly - DensePoly.C 2, xPoly - 1, xPoly.natPow 3 - DensePoly.C 2, xPoly - 1]
           s.values s.evidence &&
+        !raw.checkSigns fieldSign 8 queries s.values s.evidence &&
+        !({raw with context := 8}).checkSigns fieldSign 8 queries s.values s.evidence &&
+        !({raw with head := head + 1}).checkSigns fieldSign 7 queries s.values s.evidence &&
+        !({raw with indices := [0]}).checkSigns fieldSign 7 queries s.values s.evidence &&
         !({raw with context := 8}).check fieldSign 7 d.evidence &&
         !({raw with head := head + 1}).check fieldSign 7 d.evidence &&
         !({raw with indices := [0]}).check fieldSign 7 d.evidence
@@ -63,7 +64,29 @@ def selectedPasses : Bool :=
   | _ => false
 
 #guard generator.toAlgebraic.p.natDegree = 3
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
 #guard selectedPasses
+
+/-- Finite bounds isolate the same positive cubic root. Zero and constant
+queries retain their signs; another valid interval cannot reuse this replay. -/
+def finitePasses : Bool :=
+  let bounded : RawDescriptor CubicField Nat :=
+    {raw with lower := .finite 1, upper := .finite 2}
+  let qs : List (DensePoly CubicField) := [0, DensePoly.C (-2), 1, xPoly]
+  match Descriptor.build fieldSign 7 bounded with
+  | .ok (.ok d) =>
+    match d.buildSigns qs with
+    | .ok s =>
+      s.values.toList == [0, -1, 1, 1] &&
+        d.checkSigns qs s.values s.evidence &&
+        !({bounded with lower := .finite 0}).checkSigns fieldSign 7 qs s.values s.evidence
+    | _ => false
+  | _ => false
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard finitePasses
 
 abbrev rep := generator.toAlgebraic.rep
 theorem real : rep.root.im = 0 :=

@@ -61,6 +61,12 @@ theorem RawDescriptor.wellFormed_bounds (d : RawDescriptor E Ctx)
   let ds := derivatives d.head
   d.indices.map fun i => ds[i - 1]?.getD 0
 
+/-- A well-formed descriptor has one sign for each ordered derivative query. -/
+theorem RawDescriptor.wellFormed_length (d : RawDescriptor E Ctx)
+    (h : d.wellFormed = true) : d.signs.length = d.queries.length := by
+  simp only [wellFormed, Bool.and_eq_true, decide_eq_true_eq] at h
+  simpa only [queries, List.length_map] using h.1.1.1.2.symm
+
 namespace Thom
 
 /-- Inspect the highest differing position first. A difference in the last
