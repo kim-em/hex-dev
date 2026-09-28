@@ -93,7 +93,7 @@ def inspect : IO UInt32 := do
       ("reducedGraphBytes", Lean.toJson reducedBytes.size),
       ("directGraphBytes", Lean.toJson directBytes.size),
       ("inputHash", Lean.toJson (hash i).toNat),
-      ("productionResultHash", Lean.toJson (hash (some (hash expected))).toNat),
+      ("productionResultHash", Lean.toJson (hash (some (hash (entries reduced.node.system)))).toNat),
       ("replayResultHash", Lean.toJson (hash true).toNat)]).compress
     (← IO.getStdout).flush
   return 0
@@ -107,9 +107,12 @@ structure PhaseInput where
   queries : List (DensePoly Rat)
   reduction : QueryReduction Rat
 
+/-- Integer hashes truncate to 64 bits. Bit lengths keep the phase
+fingerprint sensitive to these large coefficients; they are not equality proofs. -/
 private def reductionHash (r : QueryReduction Rat) : UInt64 :=
   hash (r.steps.map fun s => (s.index, polyHash s.next,
-    s.witness.leftScale, polyHash s.witness.quotient, s.witness.rightScale))
+    s.witness.leftScale, polyHash s.witness.quotient, s.witness.rightScale,
+    s.witness.rightScale.num.natAbs.log2, s.witness.rightScale.den.log2))
 
 instance : Hashable PhaseInput where
   hash i := hash (polyHash i.head, i.queries.map polyHash, reductionHash i.reduction)
@@ -140,8 +143,9 @@ def phaseValid (height : Nat) (i : PhaseInput) : Bool :=
 @[noinline] def runReduce (i : PhaseInput) : UInt64 :=
   reductionHash (QueryReduction.build Sturm.orderSign i.head i.queries)
 
-@[noinline] def runCheck (i : PhaseInput) : Bool :=
-  i.reduction.check Sturm.orderSign i.head i.queries
+@[noinline] def runCheck (i : PhaseInput) : Nat × Bool :=
+  let height := ((i.queries.getD 2 0).coeff 0).num.natAbs.log2 + 1
+  (height, i.reduction.check Sturm.orderSign i.head i.queries)
 
 /-- Large-phase inputs are recorded symbolically, avoiding decimal JSON tokens
 whose parser limits are unrelated to normalization or replay performance. -/

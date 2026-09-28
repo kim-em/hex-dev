@@ -64,7 +64,7 @@ def phase_expected(height):
             "coefficientBytes": (height+7)//8}
 
 
-def validate_phases(path):
+def validate_phases(path, *, height_sensitive=False):
     rows = [json.loads(line) for line in path.read_text().splitlines()]
     if len(rows) != len(PHASE_HEIGHTS):
         raise ValueError("incomplete normalization phase ladder")
@@ -78,10 +78,13 @@ def validate_phases(path):
                     ("height", "steps", "coefficientBits", "coefficientBytes")) or
                 not integer_tree(row["queryDegrees"])):
             raise ValueError("normalization phase input differs from the symbolic oracle")
+    if height_sensitive and any(len({row[key] for row in rows}) != len(rows)
+                                for key in HASH_FIELDS):
+        raise ValueError("phase fingerprints do not distinguish the declared heights")
     return len(rows)
 
 
-def validate_export(path, name, inventory, revision):
+def validate_export(path, name, inventory, revision, toolchain):
     """Check the registered schedule and oracle-bound outputs, retaining its verdict."""
     if name not in FUNCTIONS:
         raise ValueError("unknown height operation")
@@ -99,6 +102,12 @@ def validate_export(path, name, inventory, revision):
             result.get("env", {}).get("git_commit") != revision or
             result.get("env", {}).get("git_dirty") is not False):
         raise ValueError("benchmark is not bound to the clean measured source")
+    # lean-toolchain pins spell release tags with v; the harness omits it.
+    owner, version = toolchain.strip().rsplit(":", 1)
+    version = version.removeprefix("v")
+    if (result.get("env", {}).get("lean_toolchain") != owner + ":" + version or
+            result.get("env", {}).get("lean_version") != version):
+        raise ValueError("measurement compiler differs from the source toolchain pin")
     config = result.get("config", {})
     required = {"param_floor": PHASE_HEIGHTS[0], "param_ceiling": PHASE_HEIGHTS[-1],
                 "outer_trials": 6, "target_inner_nanos": 1000000000,

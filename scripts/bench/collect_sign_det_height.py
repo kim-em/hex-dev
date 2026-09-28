@@ -33,6 +33,23 @@ def clean():
         raise ValueError("commit source changes before collecting measurements")
 
 
+
+def audit_runtime(executable, out):
+    """Record the actual native routes used by the GMP-specific cost model."""
+    text = ""
+    for symbol in ("lean_nat_gcd", "lean_nat_log2", "_ZN4lean3gcdERNS_3mpzERKS0_S3_",
+                   "_ZNK4lean3mpz4log2Ev"):
+        result = subprocess.run(["objdump", "-d", "--disassemble=" + symbol, str(executable)],
+                                check=True, capture_output=True, text=True)
+        text += result.stdout
+    record = out / "runtime-backend.log"
+    record.write_text(text)
+    if "<__gmpz_gcd>" not in text or "<__gmpz_sizeinbase>" not in text:
+        raise ValueError("the declared cost model requires verified GMP gcd and bit-length routes")
+    return {"implementation": "GMP", "evidence": record.name, "sha256": digest(record),
+            "bit_length": "lean_nat_log2 -> lean::mpz::log2 -> mpz_sizeinbase(base=2)"}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
@@ -42,6 +59,8 @@ def main():
     if out.is_relative_to(ROOT):
         raise ValueError("write measurement output outside the source worktree")
     executable = ROOT / ".lake/build/bin/hexsigndet_bench"
+    if not executable.resolve().is_relative_to(ROOT):
+        raise ValueError("measurement executable must resolve inside the source worktree")
     if not executable.exists():
         raise ValueError("build hexsigndet_bench first")
     subprocess.run(["lake", "build", "--no-build", "hexsigndet_bench"], cwd=ROOT, check=True)
@@ -54,8 +73,11 @@ def main():
                      "scripts/bench/sign_det_compare.py", "reports/sign-det-height-model.md"):
         sources[relative] = digest(ROOT / relative)
     metadata = {
-        "schema": "hex-sign-det-height-measurement-v1", "revision": revision(),
+        "schema": "hex-sign-det-height-measurement-v2", "revision": revision(),
         "source_sha256": sources, "binary_sha256": digest(executable),
+        "source_toolchain": (ROOT / "lean-toolchain").read_text().strip(),
+        "bignum_backend": audit_runtime(executable, out),
+        "checksum": "coefficient bit lengths included",
         "binary_path": str(executable), "binary_resolved_path": str(executable.resolve()),
         "freshness_check": "lake build --no-build hexsigndet_bench",
         "host": platform.node(), "platform": platform.platform(), "cpu": cpu,
@@ -99,7 +121,7 @@ def main():
         metadata["inventory_rows"] = validate(inventory)
         run("phases", ["inspect-height-phases"]).check_returncode()
         phase_inventory = out / "phases.log"
-        metadata["phase_rows"] = validate_phases(phase_inventory)
+        metadata["phase_rows"] = validate_phases(phase_inventory, height_sensitive=True)
         save()
         for name in FUNCTIONS:
             export = out / (name + ".json")
@@ -107,7 +129,8 @@ def main():
                                 "--export-file", str(export)])
             # An inconclusive verdict can return nonzero. Validate the complete
             # export before interpreting the exit code; never discard its samples.
-            summary = validate_export(export, name, phase_inventory, metadata["revision"])
+            summary = validate_export(export, name, phase_inventory, metadata["revision"],
+                                      metadata["source_toolchain"])
             if result.returncode not in (0, 1) or (
                     result.returncode == 1 and summary["verdict"] != "inconclusive"):
                 result.check_returncode()

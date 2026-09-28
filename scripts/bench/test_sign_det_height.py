@@ -64,7 +64,9 @@ class HeightExportValidation(unittest.TestCase):
         self.result = {
             "function": "Hex.SignDetBench.Height.runCheck", "kind": "parametric",
             "hashable": True, "budget_truncated": False,
-            "env": {"git_commit": "source", "git_dirty": False},
+            "env": {"git_commit": "source", "git_dirty": False,
+                    "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+                    "lean_version": "4.35.0-rc3"},
             "config": {"param_floor": 8192, "param_ceiling": 524288,
                        "outer_trials": 6, "target_inner_nanos": 1000000000,
                        "max_seconds_per_call": 10, "signal_floor_multiplier": 10,
@@ -80,7 +82,8 @@ class HeightExportValidation(unittest.TestCase):
 
     def check_export(self, result):
         self.export.write_text(json.dumps({"export_schema_version": 1, "results": [result]}))
-        return validate_export(self.export, "Height.runCheck", self.path, "source")
+        return validate_export(self.export, "Height.runCheck", self.path, "source",
+                               "leanprover/lean4:v4.35.0-rc3")
 
     def test_symbolic_phase_oracle(self):
         self.assertEqual(validate_phases(self.path), 7)
@@ -94,6 +97,16 @@ class HeightExportValidation(unittest.TestCase):
             with self.subTest(key=key), self.assertRaises(ValueError):
                 validate_phases(self.path)
         self.path.write_text("\n".join(map(json.dumps, rows)))
+
+    def test_height_sensitive_fingerprints(self):
+        with self.assertRaises(ValueError):
+            validate_phases(self.path, height_sensitive=True)
+        rows = [json.loads(line) for line in self.path.read_text().splitlines()]
+        for index, row in enumerate(rows):
+            for key in ("inputHash", "productionResultHash", "replayResultHash"):
+                row[key] = index + 1
+        self.path.write_text("\n".join(map(json.dumps, rows)))
+        self.assertEqual(validate_phases(self.path, height_sensitive=True), 7)
 
     def test_inconclusive_is_retained(self):
         self.assertEqual(self.check_export(self.result)["verdict"], "inconclusive")
@@ -112,6 +125,14 @@ class HeightExportValidation(unittest.TestCase):
         result["config"]["outer_trials"] = 2
         with self.assertRaises(ValueError):
             self.check_export(result)
+
+    def test_wrong_compiler(self):
+        for key, value in [("lean_version", "4.34.1"),
+                           ("lean_toolchain", "leanprover/lean4:4.34.1")]:
+            result = copy.deepcopy(self.result)
+            result["env"][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                self.check_export(result)
 
     def test_missing_reordered_and_duplicated_samples(self):
         points = self.result["points"]

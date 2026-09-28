@@ -16,7 +16,12 @@ aggregate live memory. These graphs have no shared nodes.
 Scientific registrations measure `QueryReduction.build` and
 `QueryReduction.check` separately. The construction registration also computes
 a checksum of the literal reduction output; the checking registration returns
-a Boolean. Construction times therefore include that checksum work. The phase
+a Boolean. Construction times therefore include that checksum work. The digest uses
+three large-integer doublings through the standard integer hash, which add
+linear bit work. Coefficient bit lengths make its fingerprint sensitive to
+the measured height; replay returns its input height together with its Boolean
+result. These finite hashes do not establish literal output equality.
+`phaseValid` checks every input and reduction field independently before timing. The phase
 ladder is fixed before measurement at
 8192,16384,32768,65536,131072,262144,524288 bits, with six trials per
 height and a one-second target per batch. It avoids making the bounded BKR
@@ -46,6 +51,18 @@ using enormous decimal JSON tokens. The largest input integer occupies
 cache or allocator effects can still make a finite-range result inconclusive.
 The declared model is not changed to fit those observations.
 
+The library SPEC bounds count arithmetic operations in terms of polynomial
+degrees and query counts. Those parameters are fixed here, so their operation
+counts are bounded independently of H. This experiment supplies a bit-cost
+model for coefficient normalization, including its output fingerprint. It
+does not exercise polynomial-division work: each query degree is below the
+head degree. The equal-operand termination path is described in GMP's
+[gcd source](https://github.com/gmp-mirror/gmp/blob/master/mpn/generic/gcd.c) and
+[equality branch](https://github.com/gmp-mirror/gmp/blob/master/mpn/generic/gcd_subdiv_step.c).
+The native backend audit records the actual gcd and bit-length call targets.
+Bit length uses GMP's [base-two size calculation](https://github.com/gmp-mirror/gmp/blob/master/mpz/sizeinbase.c).
+Earlier archived collections did not record this backend audit explicitly.
+
 This family removes coefficient height at preprocessing. It covers that phase,
 not height growth through general Sturm chains, full production, shared-graph
 replay or nested coefficients. A harder coefficient family and the other
@@ -57,7 +74,7 @@ after committing sources and building `hexsigndet_bench`. The output must be
 outside the source worktree. The driver leases one CPU, verifies build
 freshness, archives reconstructible sources, records executable hashes and
 host context, and retains every log and export. Validation checks the exact
-schedule, settings, oracle-bound output hashes and clean source revision.
+schedule, settings, output fingerprints, compiler pin and clean source revision.
 Complete measurements and model verdicts are recorded separately; the
 collector returns nonzero if either verdict is inconclusive.
 
@@ -67,8 +84,8 @@ The pinned harness has no allocation-byte counter; a missing value is not
 zero. These registrations alone cannot discharge allocation, nested-field,
 maximal-support, joint-query, unreduced comparison or complete Phase-4 gates.
 
-The [retained collection](data/sign-det-height/640bf10bd/metadata.json)
-uses Lean 4.34.1 and committed source
+The [archived Lean 4.34.1 collection](data/sign-det-height/640bf10bd/metadata.json)
+uses Lean 4.34.1 and pre-rebase source revision
 `640bf10bd72d2ad25e6ce5d9f1c409e5dfc13eaa` on shared host `chungus2`, automatically leased CPU 82. All 84 scientific samples
 completed with the expected outputs and exact trial-major schedules. Sources
 and executable hashes were unchanged. Both mode-1 verdicts are **consistent
@@ -101,11 +118,24 @@ has 25,297 bytes and the unreduced graph 46,760 bytes. This is not a proof
 of a general byte-parser roundtrip or an independent reconstruction of every
 encoded byte.
 
+Both earlier archives use the original checksum, whose integer hashes
+truncate high bits and whose replay result is only a Boolean. Those hashes
+are constant across this height ladder and cannot detect a run at the wrong
+height. Literal input/reduction checks in `phaseValid`, rather than the hashes,
+provide their value validation. New collections include coefficient bit lengths
+in construction fingerprints and input height in replay results, and reject
+fingerprint collisions between the seven declared heights.
+
 The archive preserves the exact premeasurement sources, including the
 original validator. The additional model-formula and relative-size validation passes the
 same retained data; it does not replace or remove measurements. Later report
 and validator edits do not change the measured normalization or checking
-functions. Reproduction uses the base and patch recorded in the metadata.
+functions. Reproduction uses the base and patch recorded in the metadata. Revision
+`640bf10bd` is not in the published branch history; its archived patch over
+base `18eb65686` reconstructs that source. Its build directory was shared
+with another worktree, as recorded by the resolved binary path. Hash and
+freshness checks passed at collection time. New collections require the
+executable to resolve inside their own source worktree.
 
 The [Lean 4.35.0-rc3 collection](data/sign-det-height/ad5e59e5a/metadata.json)
 uses committed source `ad5e59e5aee5f8a0ae3003f86658f6de2dfa42a5` on the same
@@ -114,7 +144,10 @@ output and schedule validation, with sources and executable unchanged. Both
 mode-1 verdicts are **consistent with declared complexity**, with normalized
 slopes −0.079653 for construction and −0.074067 for checking. No sample was
 removed and no rerun was used. Recorded cache sizes match the earlier host
-context. Medians include all six completed samples at each height.
+context. Medians include all six completed samples at each height. Host load averages
+were 9.35, 22.84, 18.77 at collection start and
+5.88, 18.81, 17.67 at collection end. They are recorded context;
+no activity threshold rejected a completed sample.
 
 | Coefficient bits | Normalization median µs | Replay median µs |
 | ---: | ---: | ---: |
@@ -126,7 +159,13 @@ context. Medians include all six completed samples at each height.
 | 262,144 | 165.872 | 406.697 |
 | 524,288 | 326.715 | 812.709 |
 
-The two collections establish the declared normalization-phase models
-separately for their recorded Lean 4.34.1 and 4.35.0-rc3 revisions. General coefficient-height propagation, allocation, nested fields,
+Both archived collections are consistent with the declared linear model on
+their recorded revisions. The finite-range verdict does not prove an
+asymptotic bound: its ±0.15 slope tolerance cannot distinguish a small
+additional logarithmic factor across this ladder. The largest successive
+doubling ratios are approximately 1.86, 2.12, 1.97 for construction and
+1.91, 1.96, 2.00 for replay on Lean 4.35. These observations distinguish
+linear from quadratic growth on this range, while the model itself comes
+from the stated primitive-operation analysis. General coefficient-height propagation, allocation, nested fields,
 maximal support, joint comparisons and the remaining Phase-4 requirements
 remain open under #10377.

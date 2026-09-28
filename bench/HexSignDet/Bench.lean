@@ -66,6 +66,9 @@ exact division c/c or c/1, and long-by-one-limb multiplication. The equal-input
 gcd and exact divisions are linear because their operands coincide or their
 quotient is one limb; this is not a claim about general H-bit gcd/division.
 Replay uses bounded-integer scalar products and proportional differences.
+The construction checksum also doubles three large numerators through
+Hashable Int, adding Θ(H) work. Native GMP bit-length queries add constant
+work and make the result fingerprints height-sensitive.
 Thus each phase performs Θ(H) bit work. These registrations isolate those
 phases so fixed BKR systems do not dominate a 64-to-4096-bit ladder. They
 are normalization evidence, not coverage of height growth in general chains,
