@@ -562,3 +562,34 @@ and image-field inclusions. The semantic root results inherit only the named
 this adds no admission. They are relative to a supplied real-closed ambient
 field and base embedding. Ambient existence, compatibility across refinements
 and the real-closed union remain open. No tower performance claim is made.
+
+### Yun decomposition over native tower coefficients
+
+`Model.decompose_map` identifies the result of `Yun.decomposeRaw` on the actual
+native coefficients with the lawful field recurrence on their interpreted
+values. `Model.decompose_sound` proves full replay acceptance of that
+interpreted output. This works for any context model and requires no
+real-closedness hypothesis beyond the hypotheses used to construct the model.
+The raw coefficients have ordinary total operations and a canonical zero;
+several nonzero expressions can represent the same field value. The model
+supplies the arithmetic correspondence needed to apply the existing field
+proof, without assigning field laws to those stored expressions.
+
+For positive-degree inputs, `Model.decompose_factor` gives each interpreted output
+entry's monicity, positive label, positive degree, simple roots and exact root
+multiplicity. `decompose_root` covers every root of a nonzero input in the
+ambient field, with its original multiplicity and membership in the native
+output array, without a caller-supplied result premise. `decompose_complete`
+applies this coverage to a known computed result. `decompose_squarefree` and `decompose_coprime` establish the
+constant degrees of the gcds actually computed on native factors. These are
+producer results, with no caller-supplied replay acceptance premise.
+
+Run `lake build HexRealClosure.TowerYunTests HexRealClosureMathlib.TowerModelTests`.
+The executable example decomposes a nonmonic cubic with one triply repeated
+root over two actual selected-root levels, including a noncanonical coefficient
+representing one. Kernel examples apply replay, squarefreeness and completeness
+at three successive arbitrary validated root levels. The generic transfer
+proofs use only the standard three axioms; applications of the selected-root
+model retain its inherited #10389 dependency. This supplies tower multiplicity
+semantics, not complete root isolation or the remaining conformance and
+performance evaluation.

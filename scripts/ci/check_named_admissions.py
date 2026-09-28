@@ -175,6 +175,7 @@ def check() -> None:
              "HexRealClosure.FrameFormatTests", "HexRealClosure.TowerOrderTests",
              "HexRealClosureMathlib.TowerModelTests", "HexRealClosureMathlib.TowerModel",
              "HexRealClosureMathlib.TowerAlgebraic", "HexRealClosure.TowerOrder",
+             "HexRealClosureMathlib.TowerYun", "HexRealClosure.TowerYunTests",
              "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance"] + [
         "HexSignDetMathlib." + ".".join(path.relative_to(
             ROOT / "adapters/HexSignDetMathlib").with_suffix("").parts)

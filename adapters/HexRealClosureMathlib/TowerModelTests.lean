@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.TowerAlgebraic
+public import HexRealClosureMathlib.TowerYun
 public import HexRealClosureMathlib.SelectedRoot
 
 namespace Hex.RealClosure.Tower.Model.Tests
@@ -92,6 +93,27 @@ example (a b : base.Value) :
       base.compare a b := by
   rw [Model.adjoin_compare (model₂ d₁ d₂), Model.adjoin_compare (model₁ d₁),
     Model.adjoin_compare rational]
+example (p : DensePoly (third d₁ d₂ d₃).context.Value) :
+    Yun.check ((model₃ d₁ d₂ d₃).mapPoly p)
+      (Yun.Decomposition.map (model₃ d₁ d₂ d₃).value (model₃ d₁ d₂ d₃).zero_iff
+        (Yun.decomposeRaw p)) = true :=
+  (model₃ d₁ d₂ d₃).decompose_sound p
+
+example (p : DensePoly (third d₁ d₂ d₃).context.Value) (hd : 0 < p.natDegree)
+    (unit : (third d₁ d₂ d₃).context.Value)
+    (entries : Array (DensePoly (third d₁ d₂ d₃).context.Value × Nat))
+    (hresult : Yun.decomposeRaw p = .factors unit entries)
+    (entry : DensePoly (third d₁ d₂ d₃).context.Value × Nat) (he : entry ∈ entries) :
+    (DensePoly.gcd entry.1 (DensePoly.derivativeImpl entry.1)).natDegree = 0 :=
+  (model₃ d₁ d₂ d₃).decompose_squarefree p hd unit entries hresult entry he
+
+example (p : DensePoly (third d₁ d₂ d₃).context.Value) (hp : p ≠ 0) (x : ℝ)
+    (hx : (HexPolyMathlib.toPolynomial ((model₃ d₁ d₂ d₃).mapPoly p)).IsRoot x) :
+    ∃ unit entries, Yun.decomposeRaw p = .factors unit entries ∧
+      ∃ entry ∈ entries,
+        entry.2 = (HexPolyMathlib.toPolynomial ((model₃ d₁ d₂ d₃).mapPoly p)).rootMultiplicity x ∧
+          (HexPolyMathlib.toPolynomial ((model₃ d₁ d₂ d₃).mapPoly entry.1)).IsRoot x :=
+  (model₃ d₁ d₂ d₃).decompose_root p hp x hx
 end Successive
 
 end Hex.RealClosure.Tower.Model.Tests
