@@ -4,8 +4,9 @@ The fixture in `bench/HexSignDet/Maximal.lean` realizes every ternary word of
 length `s` at a distinct integer root. Set `n = 3^s` and use the point product
 with roots `0,…,n−1` as the head. The existing `HexPolyFast.InterpPlan` constructs
 one query per coordinate, taking the prescribed values `−1,0,1` at those roots.
-The constructor checks the word count, distinctness, lengths and sign range,
-then checks every head and query evaluation directly over `Rat`.
+Sanity checks validate word count, distinctness, lengths and sign range.
+The roots are distinct by construction; the constructor checks degree and
+every head and query evaluation directly over `Rat`.
 
 The point product has degree `n` and these `n` distinct roots. Consequently the
 expected complete sign table has all `3^s` words with count one. The actual
@@ -45,10 +46,12 @@ Reproduce the inventory with `lake build hexsigndet_bench` followed by
 apply the recorded patch to its recorded base and verify every source hash
 in `metadata.json`; the archive remains usable after rebases and squash merges.
 
-The current fixture validation is retained under
+Validation before the additional `verify` integration is retained under
 [`data/sign-det-maximal/4b5e1b29e`](data/sign-det-maximal/4b5e1b29e). All three
 inventories match the earlier record exactly, including the input and table
 hashes. Its source archive reconstructs every recorded source hash from merged
 base `a6cc38bf2`. This is another correctness inventory, with zero scientific
-timing samples. The existing `verify` command also checks the smallest
-maximal-support input before the registered benchmark smoke checks.
+timing samples. The `inspect-maximal` path is unchanged by that integration. The existing
+`verify` command checks the two-query, nine-root input before the registered
+benchmark fast checks; this exercises a split node and nontrivial modular
+reduction.

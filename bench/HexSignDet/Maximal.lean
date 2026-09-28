@@ -11,35 +11,51 @@ import Lean.Data.Json
 namespace Hex.SignDetBench
 open Hex.SignDet Hex.DensePoly
 
-/-- Every ternary word is realized once at an integer root. The existing
-interpolation plan assigns the word's coordinates to the query polynomials.
-Direct evaluation checks those values independently of Tarski replay. This is
-an untimed fixture constructor, not a sign-determination implementation. -/
-def maximalInput (s : Nat) : Option Input := do
+/-- Every ternary word is realized once at a distinct integer root. Word
+count/shape checks are sanity checks on `words`; root distinctness comes from
+the consecutive integer points. Degree and direct evaluation check the complete
+root/sign oracle independently of interpolation and Tarski replay. -/
+def buildMaximal (s : Nat) : Except String Input := do
   let conditions := (words [-1, 0, 1] s).toArray
   if conditions.size != 3^s || !decide conditions.toList.Nodup ||
-      conditions.any (fun word => word.length != s || word.any (fun v => v < -1 || 1 < v)) then none else
+      conditions.any (fun word => word.length != s || word.any (fun v => v < -1 || 1 < v)) then
+    throw "invalid ternary word inventory"
   let points : Array Rat := (Array.range conditions.size).map fun (i : Nat) => (i : Rat)
-  let plan ← InterpPlan.build? (karatsubaPlan 2) points
-  let built ← plan.evalPlan.cachedNode
+  let some plan := InterpPlan.build? (karatsubaPlan 2) points |
+    throw "interpolation plan failed"
+  let some built := plan.evalPlan.cachedNode | throw "point product is missing"
   let p := built.1
-  let qs ← (List.range s).mapM fun j =>
-    plan.interpolate? (conditions.map fun word => ((word[j]! : Int) : Rat))
-  if p.natDegree != 3^s || points.any (fun a => p.eval a != 0) then none else
-  if !(List.range conditions.size).all (fun i =>
-      (List.range s).all fun j => (qs.getD j 0).eval points[i]! == ((conditions[i]![j]! : Int) : Rat)) then none else
-  let domain ← Sturm.prepare Sturm.orderSign p .negInf .posInf
-  let .ok reduced := buildPrepared (10377 : Nat) domain qs | none
-  let .ok direct := buildPrepared (10377 : Nat) domain qs false | none
-  let .ok full := referencePrepared (10377 : Nat) domain qs | none
+  let qs ← (List.range s).mapM fun j => do
+    let some q := plan.interpolate? (conditions.map fun word => ((word[j]! : Int) : Rat)) |
+      throw s!"query interpolation failed at coordinate {j}"
+    pure q
+  if p.natDegree != 3^s then throw "point product has the wrong degree"
+  for i in [:conditions.size] do
+    if p.eval points[i]! != 0 then throw s!"head does not vanish at root {i}"
+    for j in [:s] do
+      if (qs.getD j 0).eval points[i]! != ((conditions[i]![j]! : Int) : Rat) then
+        throw s!"wrong query value at root {i}, coordinate {j}"
+  let some domain := Sturm.prepare Sturm.orderSign p .negInf .posInf |
+    throw "invalid maximal root domain"
+  let .ok reduced := buildPrepared (10377 : Nat) domain qs |
+    throw "reduced table construction failed"
+  let .ok direct := buildPrepared (10377 : Nat) domain qs false |
+    throw "unreduced table construction failed"
+  let .ok full := referencePrepared (10377 : Nat) domain qs |
+    throw "full reference construction failed"
   let expected := conditions.toList.map fun word => (word, (1 : Int))
+  if entries reduced.val.node.system != expected then throw "wrong reduced complete table"
+  if entries direct.val.node.system != expected then throw "wrong unreduced complete table"
+  if entries full.system != expected then throw "wrong full reference complete table"
+  if full.size != 3^s then throw "wrong reference column count"
+  if !full.check Sturm.orderSign 10377 p .negInf .posInf qs then
+    throw "full reference replay failed"
   let graph := Dag.encode reduced.val
-  if entries reduced.val.node.system == expected && entries direct.val.node.system == expected &&
-      entries full.system == expected && full.size == 3^s &&
-      full.check Sturm.orderSign 10377 p .negInf .posInf qs &&
-      graph.check Sturm.orderSign 10377 p .negInf .posInf qs then
-    some ⟨p, qs, some domain, some reduced.val, some graph⟩
-  else none
+  if !graph.check Sturm.orderSign 10377 p .negInf .posInf qs then throw "graph replay failed"
+  return ⟨p, qs, some domain, some reduced.val, some graph⟩
+
+/-- Optional preparation interface for benchmark registrations. -/
+def maximalInput (s : Nat) : Option Input := (buildMaximal s).toOption
 
 private def intBits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
 private def ratBits (q : Rat) : Nat := max (intBits q.num) (q.den.log2 + 1)
@@ -50,7 +66,9 @@ are observations of the actual certificates, not peak allocation/bit counts or
 a complexity measurement. Every line is flushed before the next input starts. -/
 def inspectMaximal : IO UInt32 := do
   for s in #[1, 2, 3] do
-    let some input := maximalInput s | throw (IO.userError s!"invalid maximal input at {s}")
+    let input ← match buildMaximal s with
+      | .ok input => pure input
+      | .error message => throw (IO.userError s!"maximal input {s}: {message}")
     let some tree := input.tree | throw (IO.userError "missing maximal tree")
     let some graph := input.graph | throw (IO.userError "missing maximal graph")
     let ns := nodes tree

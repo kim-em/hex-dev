@@ -195,7 +195,8 @@ def main (args : List String) : IO UInt32 :=
   else if let ["paired-small", path] := args then
     Hex.SignDetBench.paired ``Hex.SignDetBench.runSmallReduced ``Hex.SignDetBench.runSmallFull path
   else if args.head? == some "verify" then do
-    unless (Hex.SignDetBench.maximalInput 1).isSome do
-      throw (IO.userError "maximal-support fixture failed")
+    match Hex.SignDetBench.buildMaximal 2 with
+    | .ok _ => pure ()
+    | .error message => throw (IO.userError s!"maximal-support fixture failed: {message}")
     LeanBench.Cli.dispatch args
   else LeanBench.Cli.dispatch args
