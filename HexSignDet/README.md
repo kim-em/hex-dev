@@ -359,7 +359,10 @@ coefficient levels and starts a fresh oracle context. The corrected
 `(εx²−1)(εx³−1)` example exercises the two positive partial descriptors,
 completion, root order, selected signs and cross-polynomial re-encoding without
 a rational separator. Two-level fixtures isolate `δ` from `ε` and `ε+δ` using
-an endpoint `2δ`. Both coefficient levels reject changed context, head and
+an endpoint `2δ`. Interval refinement narrows `(0,2δ)` to `(δ/2,3δ/2)`,
+retaining δ with the full word `(+,-,+)` even though no positive rational lies
+between those endpoints. The independent oracle checks the selected-root
+identity after refinement. Both coefficient levels reject changed context, head and
 derivative-query bindings, and reject a multi-query table presented as a leaf.
 These leaf-arity checks do not test an identity-preserving incomplete support
 forgery. The oracle enforces each case’s coefficient depth and the corrected
@@ -377,6 +380,9 @@ lake build HexSignDet +HexSignDet.Conformance hexsigndet_emit_infinitesimal
 python3 scripts/oracle/sign_det_z3.py --check
 python3 -m unittest scripts.oracle.test_sign_det_z3
 ```
+
+Run only the nested refinement API example with
+`.lake/build/bin/hexsigndet_emit_infinitesimal refinement`.
 
 Structural expansion and checked graph replay deliberately treat unreachable
 entries differently: both reject invalid references, while only replay checks

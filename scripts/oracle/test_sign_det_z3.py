@@ -165,7 +165,8 @@ class InfinitesimalOracle(unittest.TestCase):
             oracle.check_record(record)
             record["value"]["data"]["result"]["order"] = "gt"
             self.reject(record)
-        for name in ("reencode/passmore/reencode", "reencode/nested/reencode"):
+        for name in ("reencode/passmore/reencode", "reencode/nested/reencode",
+                     "reencode/nested/refinement"):
             record = self.record(name)
             oracle.check_record(record)
             record["value"]["data"]["result"]["signs"][0] *= -1

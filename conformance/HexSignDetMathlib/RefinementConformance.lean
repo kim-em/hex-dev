@@ -11,6 +11,8 @@ public meta import HexSignDetMathlib.ReencodingConformance
 public meta import HexSignDet
 public meta import HexNumberField
 public meta import HexRCF.RealCoefficients.Coefficients
+public import HexSignDet.Infinitesimal
+public meta import HexSignDet.Infinitesimal
 
 public section
 
@@ -122,6 +124,30 @@ def noncanonicalPasses : Bool :=
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
 #guard noncanonicalPasses
+
+/-- Refine an infinitesimal-width interval using two ordered coefficient levels.
+There is no positive rational bound inside the interval; the supplied endpoints
+are ordinary elements of the nested rational-function field. -/
+def infinitesimalPasses : Bool :=
+  let head := Hex.SignDet.Infinitesimal.nested
+  let delta := Hex.SignDet.Infinitesimal.delta
+  let sign := Hex.SignDet.Infinitesimal.secondSign
+  let source : RawDescriptor Hex.SignDet.Infinitesimal.Second Nat :=
+    ⟨7, head, .finite 0, .finite (2 * delta), [], []⟩
+  match Descriptor.validate sign 7 source with
+  | none => false
+  | some d =>
+    match d.buildReencoding head (.finite (delta / 2)) (.finite (3 * delta / 2)) with
+    | .ok (some r) =>
+      r.target.raw.signs == [1, -1, 1] &&
+        r.target.signAt (Hex.SignDet.Infinitesimal.x - DensePoly.C delta) == 0 &&
+        r.target.raw.check sign 7 r.target.evidence &&
+        !r.target.raw.check sign 7 d.evidence
+    | _ => false
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard infinitesimalPasses
 
 namespace Noncanonical
 
