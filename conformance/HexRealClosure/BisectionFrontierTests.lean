@@ -98,4 +98,19 @@ private def rootFallback : Option (Array Bool) := do
 #guard_msgs in
 #eval rootFallback
 
+private def pendingMultiple : Option (Array Bool) := do
+  let head := linearFactor (-3 : Rat) * linearFactor (-2) * linearFactor (-1) *
+    linearFactor 1 * linearFactor 2 * linearFactor 3
+  let initial ← Frontier.prepare? Sturm.orderSign head (-4) 4
+  let result ← initial.refine?
+  let active := linearFactor (-3 : Rat) * linearFactor (-1) * linearFactor 1 * linearFactor 3
+  return #[decide (result.nodes = 3), decide (result.removed = [-2, 2]),
+    decide (result.head = active), decide (result.cells.length = 4),
+    decide (result.cells.all fun cell => cell.domain.head == active),
+    decide (result.cells.all fun cell => cell.count == 1), decide ((select result.cells).isNone)]
+
+/-- info: some #[true, true, true, true, true, true, true] -/
+#guard_msgs in
+#eval pendingMultiple
+
 end Hex.RealClosure.Bisection.Tests

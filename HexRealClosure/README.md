@@ -196,8 +196,9 @@ Run `lake build hexrealclosure_bounds_conformance`, then
 `.lake/build/bin/hexrealclosure_bounds_conformance | python3 scripts/oracle/real_closure_bounds.py`.
 
 A failed bound search is a request for whole-line BKR completion. It never
-means that the polynomial has no roots. The bounded bisection and complete
-isolation driver, general contexts and recursive transport remain unimplemented.
+means that the polynomial has no roots. Capped bounded bisection is implemented
+below. Complete isolation and automatic dependency transport remain required;
+general contexts and explicit recursive transport have separate APIs above.
 
 `deflate? p a` removes the factor `X-a` with the shared monic polynomial division.
 `linearFactor a` stores the literal leading coefficient one, and the constructor
@@ -212,8 +213,9 @@ input, exact factorization, a degree drop of one, and preservation of all other
 roots. For squarefree inputs the quotient is squarefree and no longer vanishes
 at `a`. `Deflation.domains` then supplies the two open Sturm domains after an
 interior split; previous root-free endpoints remain valid. It does not reuse
-old descriptors or counts. The driver still needs their checked transport or
-recomputation and must retain the original multiplicities.
+old descriptors or counts. The frontier below recomputes every pending domain
+and count after deflation. Complete isolation still needs descriptor construction
+and restoration of the original multiplicities.
 
 The generic deflation proofs use zero-reflecting coefficient interpretation
 into a field and introduce no admissions. Packed selected-root execution tests
@@ -274,7 +276,10 @@ ordinary-real realization remain separate requirements.
 
 `Bisection.Frontier.prepare?` checks a finite input interval.
 `Frontier.refine?` then spends at most `2 * (degree p + 1)` nodes, choosing the
-first retained cell whose checked count exceeds one. It returns the current
+first retained cell whose checked count exceeds one. The policy is depth-first:
+new halves precede pending cells, so an inseparable cluster can spend the
+allowance before another cluster is refined. Call `refine?` once after
+`prepare?`; repeating it grants a new allowance. It returns the current
 head, emitted coefficient roots and every remaining open cell. Count-zero and
 count-one cells remain available; unresolved cells request BKR completion.
 This frontier is an intermediate result, not a complete `RootSet`.
@@ -296,10 +301,10 @@ structural proofs use only the standard three axioms.
 original interval's root count, under an exact three-valued sign interpretation.
 This count theorem inherits the shared query-soundness gap #10389.
 
-Fifty-one native checks cover later root cuts with earlier count-one and
-count-zero cells, two emitted roots, positive/negative/fractional scalars,
+Fifty-eight native checks cover later root cuts with earlier count-one and
+count-zero and multi-root cells, two emitted roots, positive/negative/fractional scalars,
 early stopping and close infinitesimal roots retained after the node allowance.
-Fourteen additional exact conformance rows check whole frontiers. The existing
+Fifteen additional exact conformance rows check whole frontiers. The existing
 FLINT/SymPy oracle verifies scalar-preserving deflation, actual pending heads,
 root counts, emitted roots, the internal node allowance and the retained
 intervals' lack of gaps or overlaps. It independently reproduces the prescribed

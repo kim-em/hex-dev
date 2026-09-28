@@ -103,7 +103,8 @@ theorem Mode.reprepare?_endpoints {sign : E → Int} {p : DensePoly E} {point : 
   | root d => exact Cell.reprepare?_endpoints cells accepted
 
 /-- Choose the first cell containing multiple roots. Other cells retain their
-order; count-one cells remain available for descriptor construction. -/
+order; count-one cells remain available for descriptor construction. New
+halves precede pending cells, so refinement follows a depth-first policy. -/
 @[expose] def select {sign : E → Int} {p : DensePoly E} :
     List (Cell sign p) → Option (Cell sign p × List (Cell sign p))
   | [] => none
@@ -343,6 +344,8 @@ theorem traverse?_stopped {sign : E → Int} (budget : Nat) (frontier : Frontier
           exact Or.inr (by omega)
 
 /-- The finite policy is fixed by the input degree, not a requested accuracy.
+Call this once after `prepare?`; each call grants a new allowance based on
+the supplied current head. The node bound is for one prepare-then-refine run.
 This returns a frontier for completion, never a purported partial root set. -/
 @[expose] def Frontier.refine? {sign : E → Int} (frontier : Frontier sign) :
     Option (Frontier sign) :=
