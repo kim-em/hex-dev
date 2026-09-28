@@ -184,6 +184,9 @@ private def realPolynomial : Polynomial (realContext 1) :=
   rationalPolynomial.embedConstant prefixContext (key 1) (present 1)
     (signProgress 1) (approxProgress 1)
 
+private def namedPolynomial : Polynomial (realContext 1) :=
+  Polynomial.ofCoeffs #[positive, 1]
+
 example (p : Polynomial (.real prefixContext)) (a : Element (.real prefixContext)) :
     (p.embedConstant prefixContext (key 1) (present 1) (signProgress 1) (approxProgress 1)).eval
       (Element.embedConstant prefixContext (key 1) (present 1) (signProgress 1) (approxProgress 1) a) =
@@ -218,6 +221,10 @@ example (a b : Element (.real prefixContext)) :
 #guard epsilon.sign = 1
 #guard (Element.infinitesimal mixed - epsilon.embed).sign = -1
 #guard (realPolynomial.eval included).equal 24
+#guard (namedPolynomial.eval positive).sign = 1
+#guard (Polynomial.read (realContext 1) namedPolynomial.write).map Polynomial.stored =
+  some namedPolynomial.stored
+#guard (Polynomial.read (realContext 2) namedPolynomial.write).isNone
 #guard (Polynomial.read (realContext 1) realPolynomial.write).map Polynomial.stored =
   some realPolynomial.stored
 #guard (Polynomial.read (realContext 2) realPolynomial.write).isNone
@@ -226,6 +233,8 @@ example (a b : Element (.real prefixContext)) :
 #guard (Element.read mixed positive.write).isNone
 #guard (Element.read mixed epsilon.write).map Element.stored = some epsilon.stored
 #check_failure (fun (a : Element (realContext 1)) => (a : Element (realContext 2)))
+#check_failure (fun (p : Polynomial (realContext 1)) => (p : Polynomial (realContext 2)))
+#check_failure (fun (p : Polynomial (realContext 1)) (q : Polynomial (realContext 2)) => p + q)
 
 example : (registry ⟨"unknown", 1⟩).isSome = false := by decide +kernel
 

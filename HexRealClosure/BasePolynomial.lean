@@ -42,61 +42,44 @@ instance : Mul (Polynomial context) := ⟨fun p q => ⟨p.stored * q.stored⟩�
 @[expose] def eval (p : Polynomial context) (a : Element context) : Element context :=
   ⟨p.stored.eval a.stored⟩
 
-theorem C_zero_iff (a : K) : RationalFn.C a = 0 ↔ a = 0 := by
-  constructor
-  · intro h
-    rw [← RationalFn.C_zero] at h
-    have hc := congrArg (fun f : RationalFn K => f.num.coeff 0) h
-    simpa [RationalFn.C, RationalFn.ofPoly, DensePoly.coeff_C] using hc
-  · intro h
-    subst a
-    exact RationalFn.C_zero
-
-private theorem C_sub (a b : K) :
-    RationalFn.C (a - b) = RationalFn.C a - RationalFn.C b := by
-  have h := RationalFn.C_add (a - b) b
-  have hab : a - b + b = a := by grind
-  rw [hab] at h
-  grind
-
 /-- Include every coefficient in the new infinitesimal child. Zero reflection
 retains the stored array length without a trailing-zero scan. -/
 @[expose] def embed (p : Polynomial context) : Polynomial (.infinitesimal context) :=
-  ⟨DensePoly.Interpret.map RationalFn.C C_zero_iff p.stored⟩
+  ⟨DensePoly.Interpret.map RationalFn.C RationalFn.C_eq_zero_iff p.stored⟩
 
 theorem embed_coeff (p : Polynomial context) (i : Nat) :
     p.embed.coeff i = (p.coeff i).embed :=
-  Element.ext (DensePoly.Interpret.map_coeff RationalFn.C C_zero_iff p.stored i)
+  Element.ext (DensePoly.Interpret.map_coeff RationalFn.C RationalFn.C_eq_zero_iff p.stored i)
 
 theorem embed_eval (p : Polynomial context) (a : Element context) :
     p.embed.eval a.embed = (p.eval a).embed :=
-  Element.ext (DensePoly.Interpret.map_eval RationalFn.C C_zero_iff
+  Element.ext (DensePoly.Interpret.map_eval RationalFn.C RationalFn.C_eq_zero_iff
     RationalFn.C_add RationalFn.C_mul p.stored a.stored).symm
 
 theorem embed_zero : (0 : Polynomial context).embed = 0 :=
-  ext (DensePoly.Interpret.map_zero_poly RationalFn.C C_zero_iff)
+  ext (DensePoly.Interpret.map_zero_poly RationalFn.C RationalFn.C_eq_zero_iff)
 
 theorem embed_one : (1 : Polynomial context).embed = 1 :=
-  ext (DensePoly.Interpret.map_one RationalFn.C C_zero_iff RationalFn.C_one)
+  ext (DensePoly.Interpret.map_one RationalFn.C RationalFn.C_eq_zero_iff RationalFn.C_one)
 
 theorem embed_add (p q : Polynomial context) : (p + q).embed = p.embed + q.embed :=
-  ext (DensePoly.Interpret.map_add RationalFn.C C_zero_iff RationalFn.C_add p.stored q.stored)
+  ext (DensePoly.Interpret.map_add RationalFn.C RationalFn.C_eq_zero_iff RationalFn.C_add p.stored q.stored)
 
 theorem embed_sub (p q : Polynomial context) : (p - q).embed = p.embed - q.embed :=
-  ext (DensePoly.Interpret.map_sub RationalFn.C C_zero_iff C_sub p.stored q.stored)
+  ext (DensePoly.Interpret.map_sub RationalFn.C RationalFn.C_eq_zero_iff RationalFn.C_sub p.stored q.stored)
 
 theorem embed_neg (p : Polynomial context) : (-p).embed = -p.embed :=
-  ext (DensePoly.Interpret.map_neg RationalFn.C C_zero_iff C_sub p.stored)
+  ext (DensePoly.Interpret.map_neg RationalFn.C RationalFn.C_eq_zero_iff RationalFn.C_sub p.stored)
 
 theorem embed_mul (p q : Polynomial context) : (p * q).embed = p.embed * q.embed :=
-  ext (DensePoly.Interpret.map_mul RationalFn.C C_zero_iff RationalFn.C_add
+  ext (DensePoly.Interpret.map_mul RationalFn.C RationalFn.C_eq_zero_iff RationalFn.C_add
     RationalFn.C_mul p.stored q.stored)
 
 theorem embed_size (p : Polynomial context) : p.embed.stored.size = p.stored.size :=
-  DensePoly.Interpret.map_size RationalFn.C C_zero_iff p.stored
+  DensePoly.Interpret.map_size RationalFn.C RationalFn.C_eq_zero_iff p.stored
 
 theorem embed_degree (p : Polynomial context) : p.embed.stored.natDegree = p.stored.natDegree :=
-  DensePoly.Interpret.map_degree RationalFn.C C_zero_iff p.stored
+  DensePoly.Interpret.map_degree RationalFn.C RationalFn.C_eq_zero_iff p.stored
 
 /-- Serialized coefficients have one literal context binding. -/
 structure Serialized where
@@ -144,56 +127,56 @@ variable (ap : ∀ (f : RationalFn K) (δ : Rat),
 /-- Include all coefficients in the new registered real level. -/
 @[expose] def embedConstant (p : Polynomial (.real parent)) :
     Polynomial (.real (parent.constant key present sp ap)) :=
-  ⟨DensePoly.Interpret.map RationalFn.C C_zero_iff p.stored⟩
+  ⟨DensePoly.Interpret.map RationalFn.C RationalFn.C_eq_zero_iff p.stored⟩
 
 theorem embedConstant_coeff (p : Polynomial (.real parent)) (i : Nat) :
     (p.embedConstant parent key present sp ap).coeff i =
       Element.embedConstant parent key present sp ap (p.coeff i) :=
-  Element.ext (DensePoly.Interpret.map_coeff RationalFn.C C_zero_iff p.stored i)
+  Element.ext (DensePoly.Interpret.map_coeff RationalFn.C RationalFn.C_eq_zero_iff p.stored i)
 
 theorem embedConstant_eval (p : Polynomial (.real parent)) (a : Element (.real parent)) :
     (p.embedConstant parent key present sp ap).eval
       (Element.embedConstant parent key present sp ap a) =
         Element.embedConstant parent key present sp ap (p.eval a) :=
-  Element.ext (DensePoly.Interpret.map_eval RationalFn.C C_zero_iff
+  Element.ext (DensePoly.Interpret.map_eval RationalFn.C RationalFn.C_eq_zero_iff
     RationalFn.C_add RationalFn.C_mul p.stored a.stored).symm
 
 theorem embedConstant_zero :
     (0 : Polynomial (.real parent)).embedConstant parent key present sp ap = 0 :=
-  ext (DensePoly.Interpret.map_zero_poly RationalFn.C C_zero_iff)
+  ext (DensePoly.Interpret.map_zero_poly RationalFn.C RationalFn.C_eq_zero_iff)
 
 theorem embedConstant_one :
     (1 : Polynomial (.real parent)).embedConstant parent key present sp ap = 1 :=
-  ext (DensePoly.Interpret.map_one RationalFn.C C_zero_iff RationalFn.C_one)
+  ext (DensePoly.Interpret.map_one RationalFn.C RationalFn.C_eq_zero_iff RationalFn.C_one)
 
 theorem embedConstant_add (p q : Polynomial (.real parent)) :
     (p + q).embedConstant parent key present sp ap =
       p.embedConstant parent key present sp ap + q.embedConstant parent key present sp ap :=
-  ext (DensePoly.Interpret.map_add RationalFn.C C_zero_iff RationalFn.C_add p.stored q.stored)
+  ext (DensePoly.Interpret.map_add RationalFn.C RationalFn.C_eq_zero_iff RationalFn.C_add p.stored q.stored)
 
 theorem embedConstant_sub (p q : Polynomial (.real parent)) :
     (p - q).embedConstant parent key present sp ap =
       p.embedConstant parent key present sp ap - q.embedConstant parent key present sp ap :=
-  ext (DensePoly.Interpret.map_sub RationalFn.C C_zero_iff C_sub p.stored q.stored)
+  ext (DensePoly.Interpret.map_sub RationalFn.C RationalFn.C_eq_zero_iff RationalFn.C_sub p.stored q.stored)
 
 theorem embedConstant_neg (p : Polynomial (.real parent)) :
     (-p).embedConstant parent key present sp ap =
       -(p.embedConstant parent key present sp ap) :=
-  ext (DensePoly.Interpret.map_neg RationalFn.C C_zero_iff C_sub p.stored)
+  ext (DensePoly.Interpret.map_neg RationalFn.C RationalFn.C_eq_zero_iff RationalFn.C_sub p.stored)
 
 theorem embedConstant_mul (p q : Polynomial (.real parent)) :
     (p * q).embedConstant parent key present sp ap =
       p.embedConstant parent key present sp ap * q.embedConstant parent key present sp ap :=
-  ext (DensePoly.Interpret.map_mul RationalFn.C C_zero_iff RationalFn.C_add
+  ext (DensePoly.Interpret.map_mul RationalFn.C RationalFn.C_eq_zero_iff RationalFn.C_add
     RationalFn.C_mul p.stored q.stored)
 
 theorem embedConstant_size (p : Polynomial (.real parent)) :
     (p.embedConstant parent key present sp ap).stored.size = p.stored.size :=
-  DensePoly.Interpret.map_size RationalFn.C C_zero_iff p.stored
+  DensePoly.Interpret.map_size RationalFn.C RationalFn.C_eq_zero_iff p.stored
 
 theorem embedConstant_degree (p : Polynomial (.real parent)) :
     (p.embedConstant parent key present sp ap).stored.natDegree = p.stored.natDegree :=
-  DensePoly.Interpret.map_degree RationalFn.C C_zero_iff p.stored
+  DensePoly.Interpret.map_degree RationalFn.C RationalFn.C_eq_zero_iff p.stored
 
 end Constant
 

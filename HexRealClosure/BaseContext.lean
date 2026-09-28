@@ -256,23 +256,11 @@ theorem embed_one : (1 : Element context).embed = 1 := ext RationalFn.C_one
 theorem embed_add (a b : Element context) : (a + b).embed = a.embed + b.embed :=
   ext (RationalFn.C_add a.stored b.stored)
 
-private theorem C_sub (a b : K) :
-    RationalFn.C (a - b) = RationalFn.C a - RationalFn.C b := by
-  have h := RationalFn.C_add (a - b) b
-  have hab : a - b + b = a := by grind
-  rw [hab] at h
-  grind
-
-private theorem C_injective : Function.Injective (RationalFn.C (K := K)) := by
-  intro a b h
-  have hc := congrArg (fun f : RationalFn K => f.num.coeff 0) h
-  simpa [RationalFn.C, RationalFn.ofPoly, DensePoly.coeff_C] using hc
-
 theorem embed_sub (a b : Element context) : (a - b).embed = a.embed - b.embed :=
-  ext (C_sub a.stored b.stored)
+  ext (RationalFn.C_sub a.stored b.stored)
 
 theorem embed_equal (a b : Element context) : a.embed.equal b.embed = a.equal b := by
-  simp only [equal, stored_embed, C_injective.eq_iff]
+  simp only [equal, stored_embed, RationalFn.C_injective.eq_iff]
 
 theorem embed_mul (a b : Element context) : (a * b).embed = a.embed * b.embed :=
   ext (RationalFn.C_mul a.stored b.stored)
@@ -317,12 +305,12 @@ theorem embedConstant_add (a b : Element (.real parent)) :
 theorem embedConstant_sub (a b : Element (.real parent)) :
     embedConstant parent key present sp ap (a - b) =
       embedConstant parent key present sp ap a - embedConstant parent key present sp ap b :=
-  ext (C_sub a.stored b.stored)
+  ext (RationalFn.C_sub a.stored b.stored)
 
 theorem embedConstant_equal (a b : Element (.real parent)) :
     (embedConstant parent key present sp ap a).equal
       (embedConstant parent key present sp ap b) = a.equal b := by
-  simp only [equal, embedConstant, C_injective.eq_iff]
+  simp only [equal, embedConstant, RationalFn.C_injective.eq_iff]
 
 theorem embedConstant_mul (a b : Element (.real parent)) :
     embedConstant parent key present sp ap (a * b) =

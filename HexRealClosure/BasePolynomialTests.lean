@@ -13,6 +13,8 @@ public section
 namespace Hex.RealClosure.BaseContext.PolynomialTests
 
 private def registry : Registry := fun _ => none
+private def otherRegistry : Registry := fun _ =>
+  some (fun _ => OrderedFn.Oracle.Bounds.singleton 0)
 private abbrev base := rational registry
 private abbrev first := base.infinitesimal
 private abbrev second := first.infinitesimal
@@ -37,6 +39,20 @@ private def a : Element first := epsilon + 1
 #check_failure (fun (q : Polynomial first) => q + p.embed)
 #check_failure (fun (q : Polynomial first) => q.eval delta)
 #check_failure (fun (b : Element first) => Polynomial.ofCoeffs #[b, delta])
+#check_failure (fun (q : Polynomial base) => (q : Polynomial (rational otherRegistry)))
+#check_failure (fun (q : Polynomial base) (r : Polynomial (rational otherRegistry)) => q + r)
+#check_failure (fun (q : Polynomial first) =>
+  (q : Polynomial (rational otherRegistry).infinitesimal))
+
+private def square : Element first := (epsilon + 1) * (epsilon + 1)
+private def expanded : Element first := epsilon * epsilon + 2 * epsilon + 1
+private def high : Polynomial first := Polynomial.ofCoeffs #[1, epsilon, square]
+private def equivalent : Polynomial first := Polynomial.ofCoeffs #[0, epsilon, expanded]
+#guard (high - equivalent).stored.natDegree = 0
+#guard (high - equivalent).stored.size = 1
+#guard (high - high).stored.size = 0
+#guard (high.embed - equivalent.embed).stored.natDegree = 0
+#guard (high.embed - high.embed).stored.size = 0
 
 private def malformed : Polynomial.Serialized :=
   ⟨first.signature, [.fraction [.rational 1] [.rational 0]]⟩
