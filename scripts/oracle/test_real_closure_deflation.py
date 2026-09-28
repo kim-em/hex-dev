@@ -1,0 +1,53 @@
+"""Reject incorrect exact division and residual-root results."""
+
+from copy import deepcopy
+import json
+from pathlib import Path
+import unittest
+
+from scripts.oracle.real_closure_deflation import verify
+
+
+FIXTURES = Path(__file__).resolve().parents[2] / "conformance-fixtures/HexRealClosure/deflation.jsonl"
+
+
+class DeflationTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.fixtures = [json.loads(line) for line in FIXTURES.read_text().splitlines() if line.strip()]
+
+    def changed(self, name: str, field: str, value) -> list[dict]:
+        rows = deepcopy(self.fixtures)
+        next(row for row in rows if row["name"] == name)[field] = value
+        return rows
+
+    def test_accepts_emitted_data(self) -> None:
+        verify(self.fixtures)
+
+    def test_rejects_nonroot_success(self) -> None:
+        with self.assertRaisesRegex(ValueError, "not a root: wrong success result"):
+            verify(self.changed("not a root", "quotient", ["1"]))
+
+    def test_rejects_missing_scalar(self) -> None:
+        with self.assertRaisesRegex(ValueError, "nonmonic fractional root: wrong quotient or scalar"):
+            verify(self.changed("nonmonic fractional root", "quotient", ["1"]))
+
+    def test_rejects_second_removal_of_repeated_root(self) -> None:
+        with self.assertRaisesRegex(ValueError, "repeated root: wrong quotient or scalar"):
+            verify(self.changed("repeated root", "quotient", ["1"]))
+
+    def test_rejects_wrong_nested_quotient(self) -> None:
+        with self.assertRaisesRegex(ValueError, "remove second infinitesimal: wrong quotient or scalar"):
+            verify(self.changed("remove second infinitesimal", "quotient", []))
+
+    def test_rejects_wrong_residual_evaluation(self) -> None:
+        with self.assertRaisesRegex(ValueError, "repeated root: wrong residual evaluation"):
+            verify(self.changed("repeated root", "remaining_at_root", "1"))
+
+    def test_rejects_empty_and_duplicate_data(self) -> None:
+        for rows in ([], self.fixtures + self.fixtures[:1]):
+            with self.assertRaises(ValueError):
+                verify(rows)
+
+
+if __name__ == "__main__":
+    unittest.main()
