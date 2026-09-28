@@ -25,6 +25,19 @@ inductive Mode (sign : E → Int) (p : DensePoly E) (point : E) where
   | .regular _ => p
   | .root d => d.quotient
 
+/-- The coefficient point emitted by a root cut, or no point for a regular cut. -/
+@[expose] def Mode.removed {sign : E → Int} {p : DensePoly E} {point : E} :
+    Mode sign p point → Option E
+  | .regular _ => none
+  | .root _ => some point
+
+/-- A classified cut can emit only its own point. -/
+theorem Mode.mem_removed {sign : E → Int} {p : DensePoly E} {point : E}
+    (mode : Mode sign p point) (r : E) (h : r ∈ mode.removed) : r = point := by
+  cases mode with
+  | regular _ => simp [Mode.removed, Option.mem_def] at h
+  | root _ => exact (Option.some.inj h).symm
+
 /-- Test the cut using native signs and checked exact division. -/
 @[expose] def Mode.read? (sign : E → Int) (p : DensePoly E) (point : E) : Option (Mode sign p point) :=
   if h : sign (p.eval point) = 0 then (deflate? p point).map Mode.root

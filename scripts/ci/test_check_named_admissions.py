@@ -60,8 +60,10 @@ class AdmissionScannerTests(unittest.TestCase):
             roots = root / "conformance/HexSignDetMathlib/RootListConformance.lean"
             bisection = root / "HexRealClosure/BisectionTests.lean"
             model = root / "adapters/HexRealClosureMathlib/Bisection.lean"
+            partition = root / "adapters/HexRealClosureMathlib/BisectionRoots.lean"
+            deflation = root / "conformance/HexRealClosure/DeflationConformance.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, bisection, model, dependency):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, bisection, model, partition, deflation, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by\n  sorry\n", encoding="utf-8")
@@ -74,6 +76,8 @@ class AdmissionScannerTests(unittest.TestCase):
             roots.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             bisection.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             model.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            partition.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            deflation.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
