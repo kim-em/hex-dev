@@ -37,19 +37,26 @@ def clean():
 def audit_runtime(executable, out):
     """Record the actual native routes used by the GMP-specific cost model."""
     text = ""
-    for symbol in ("lean_nat_gcd", "lean_nat_log2", "lean_big_int_to_nat", "_ZN4lean3gcdERNS_3mpzERKS0_S3_",
-                   "_ZNK4lean3mpz4log2Ev"):
+    routes = {
+        "lean_nat_gcd": "_ZN4lean3gcdERNS_3mpzERKS0_S3_",
+        "lean_nat_log2": "_ZNK4lean3mpz4log2Ev",
+        "lean_big_int_to_nat": "_ZN4lean3mpzC1ERKS0_",
+        "_ZN4lean3gcdERNS_3mpzERKS0_S3_": "__gmpz_gcd",
+        "_ZNK4lean3mpz4log2Ev": "__gmpz_sizeinbase",
+    }
+    for symbol, target in routes.items():
         result = subprocess.run(["objdump", "-d", "--disassemble=" + symbol, str(executable)],
                                 check=True, capture_output=True, text=True)
         text += result.stdout
+        if f"<{symbol}>:" not in result.stdout or f"<{target}>" not in result.stdout:
+            raise ValueError(f"missing declared runtime call route: {symbol} -> {target}")
     record = out / "runtime-backend.log"
     record.write_text(text)
-    if "<__gmpz_gcd>" not in text or "<__gmpz_sizeinbase>" not in text:
-        raise ValueError("the declared cost model requires verified GMP gcd and bit-length routes")
     return {"implementation": "GMP", "evidence": record.name, "sha256": digest(record),
-            "bit_length": "lean_nat_log2 -> lean::mpz::log2 -> mpz_sizeinbase(base=2)",
+            "bit_length": "lean_nat_log2 -> lean::mpz::log2 -> mpz_sizeinbase",
+            "magnitude_copy": "lean_big_int_to_nat -> lean::mpz copy constructor",
             "version": None,
-            "version_note": "Precise GMP version is unrecorded; call routes are audited"}
+            "version_note": "Precise GMP version is unrecorded"}
 
 
 def main():
