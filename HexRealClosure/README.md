@@ -647,7 +647,9 @@ endpoints and fresh context-bound evidence. It stores the new extension's
 packing closure for all subsequent value conversions. The private constructor
 retains an erased derivation of these native operations, with no semantic law
 record as an executable argument. `Conversion.comp` composes two actual
-conversions, retaining both closures; it supports consecutive changes.
+conversions, retaining both closures. `Conversion.cast` reconciles source
+ownership using a proved context equality. Together these support consecutive
+changes without discarding the actual conversion closures.
 
 `Suffix` represents a finite sequence of validated later root levels. Its
 `context` is the original final context. `Conversion.extend?` rebuilds every
@@ -656,7 +658,8 @@ context. Every original context and value remains valid independently.
 
 The companion `Conversion.Model` relates the native conversion to the original
 model and supplies the actual target model. `Model.identity` and `Model.comp`
-interpret identity and composition. `Model.refine` establishes this
+interpret identity and composition; `Model.cast` reconciles the source model
+with its proved context equality. `Model.refine` establishes this
 relation for the starting refinement; `Model.adjoin` preserves it after every
 successful extension. `adjoin_exists` proves each revalidation and conversion
 succeeds. `extend_exists` proves success and interpretation preservation for an
@@ -668,10 +671,12 @@ comparison results, and inclusion of the whole original image field.
 
 Run `lake build HexRealClosure.TowerConversionTests HexRealClosureMathlib.TowerTransportTests`.
 The routine native fixture checks a changed nonmonic reducible definition, a
-later linear root, identity, composition, equations and packet ownership.
+later linear root, identity, two successive definition changes composed with
+proved context reconciliation, equations and packet ownership.
 The explicit four-level native driver is built with
 `lake build hexrealclosure_transport_tests` and run with
-`.lake/build/bin/hexrealclosure_transport_tests`; it is outside routine CI.
+`.lake/build/bin/hexrealclosure_transport_tests`. Routine CI type-checks this
+fixture but does not execute the deep calculation.
 This deeper fixture changes a nonmonic reducible first definition and rebuilds
 three later square roots. It checks the sixteenth-power equation, the final
 root equation, ordering, embedded noncanonical one and inverse values, and old

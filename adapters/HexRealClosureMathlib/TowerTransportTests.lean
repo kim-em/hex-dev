@@ -36,6 +36,11 @@ example (result : Conversion suffix.context)
     Nonempty (Conversion.Model result ((rational.adjoin descriptor).extend suffix)) :=
   ⟨(Conversion.Model.refine rational encoding).extend suffix result h⟩
 
+example {first : Conversion base} (model : Conversion.Model first rational)
+    {other : Context registry} (h : base = other) (x : other.Value) :
+    (model.cast h).target.value ((first.cast h).value x) =
+      (h ▸ rational).value x := (model.cast h).value x
+
 example {first : Conversion base} (left : Conversion.Model first rational)
     {next : Conversion first.context} (right : Conversion.Model next left.target)
     (x : base.Value) : (left.comp right).target.value ((first.comp next).value x) = rational.value x :=

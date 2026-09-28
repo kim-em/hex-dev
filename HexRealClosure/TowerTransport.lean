@@ -55,6 +55,20 @@ def Conversion.comp {source : Context registry} (first : Conversion source)
     (next : Conversion first.context) : Conversion source :=
   ⟨next.context, fun x => next.value (first.value x), .comp first.checked next.checked⟩
 
+/-- Reconcile source ownership using a proved equality of immutable contexts.
+The actual target and value closure are retained. -/
+@[expose] def Conversion.cast {source other : Context registry}
+    (conversion : Conversion source) (h : source = other) : Conversion other := h ▸ conversion
+
+/-- Changing source ownership by equality retains the actual target and values. -/
+theorem Conversion.cast_spec {source other : Context registry}
+    (conversion : Conversion source) (h : source = other) :
+    (conversion.cast h).context = conversion.context ∧
+      HEq (conversion.cast h).value (fun x : other.Value =>
+        conversion.value (_root_.cast (congrArg Context.Value h.symm) x)) := by
+  cases h
+  exact ⟨rfl, HEq.rfl⟩
+
 private theorem Conversion.identity_spec_proof (source : Context registry) :
     (Conversion.identity source).context = source ∧ HEq (Conversion.identity source).value (id : source.Value → source.Value) :=
   ⟨rfl, HEq.rfl⟩
@@ -234,3 +248,14 @@ info: 'Hex.RealClosure.Tower.Conversion.comp' depends on axioms: [propext, Class
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.comp
+
+/--
+info: 'Hex.RealClosure.Tower.Conversion.cast' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.cast
+/--
+info: 'Hex.RealClosure.Tower.Conversion.cast_spec' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.cast_spec

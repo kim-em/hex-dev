@@ -18,7 +18,7 @@ open SignDet
 private def registry : BaseContext.Registry := fun _ => none
 
 /-- Refine a reducible nonmonic definition, reconstruct a later linear root,
-and compose its actual value conversion with an identity conversion. -/
+and compose two checked definition changes before rebuilding the later root. -/
 private def sample : Option (Array Bool) :=
   let base := Context.base (BaseContext.rational registry)
   let two : base.Value := 1 + 1
@@ -41,12 +41,18 @@ private def sample : Option (Array Bool) :=
   result.bind fun encoding =>
   let initial := Conversion.refine base encoding
   let suffix : Suffix first.context := .root next .nil
-  (initial.extend? suffix).map fun conversion =>
-  let identity := Conversion.identity conversion.context
-  let composed := conversion.comp identity
+  ((encoding.target.buildReencoding (DensePoly.scale two factor)
+    (.finite 1) (.finite two)).toOption).bind fun result =>
+  result.bind fun following =>
+  let same := (Conversion.refine_spec base encoding).1.trans
+    (congrArg Extension.context (base.refine encoding).canonical)
+  let next := (Conversion.refine base following).cast same.symm
+  let successive := initial.comp next
+  (successive.extend? suffix).map fun composed =>
   let value := composed.value old.generator
   let movedOne := composed.value (old.embed one)
   let packet := composed.context.write movedOne
+  let identity := Conversion.identity base
   #[decide (composed.context.signature.roots.length = 2),
     decide (old.context.signature ≠ composed.context.signature),
     composed.context.equal (value * value) (composed.value (old.embed (first.embed two))),
@@ -55,14 +61,17 @@ private def sample : Option (Array Bool) :=
     decide (composed.value (old.embed (first.generator * first.generator - first.embed two)) = 0),
     (composed.context.read packet).toOption.isSome,
     (old.context.read packet).toOption.isNone,
-    decide (identity.context.signature = conversion.context.signature),
-    identity.context.equal (identity.value (conversion.value old.generator)) (identity.value 1 +
-      identity.value (conversion.value old.generator - 1))]
+    decide (successive.context.signature ≠ initial.context.signature),
+    successive.context.equal (successive.value first.generator * successive.value first.generator)
+      (successive.value (first.embed two)),
+    identity.context.equal (identity.value two) (1 + 1)]
 
-/-- info: some #[true, true, true, true, true, true, true, true, true, true, true] -/
+/-- info: some #[true, true, true, true, true, true, true, true, true, true, true, true] -/
 #guard_msgs in
 #eval sample
 
 #check_failure Conversion.mk
+#check_failure (show Conversion (Context.base (BaseContext.rational registry)) from
+  ⟨Context.base (BaseContext.rational registry), id, .identity _⟩)
 
 end Hex.RealClosure.Tower.ConversionTests

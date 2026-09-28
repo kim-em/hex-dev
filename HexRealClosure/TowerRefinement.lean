@@ -52,7 +52,8 @@ theorem Context.refine_transport (encoding : SignDet.Reencoding source head a b)
 variable {parent}
 variable {encoding : SignDet.Reencoding source head a b}
 
-/-- Transport every coefficient and normalize only trailing target zeros. -/
+/-- Transport every coefficient and normalize only trailing target zeros.
+Reducibility exposes the shared coefficient map to the correspondence lemmas. -/
 @[expose, reducible] def Refinement.mapPoly (refinement : Refinement parent encoding)
     (p : DensePoly (parent.adjoin source).context.Value) : DensePoly refinement.extension.context.Value :=
   DensePoly.ofCoeffs (p.toArray.map refinement.transport)

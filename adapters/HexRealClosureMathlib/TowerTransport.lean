@@ -102,6 +102,13 @@ noncomputable def identity (original : Hex.RealClosure.Tower.Model source K) :
     rfl
 
 omit [DecidableEq K] in
+/-- Reconcile both source ownership and its interpretation by context equality. -/
+noncomputable def cast {other : Context registry} (h : source = other) :
+    Model (conversion.cast h) (h ▸ original) := by
+  cases h
+  exact model
+
+omit [DecidableEq K] in
 /-- Compose semantic witnesses for the actual two native conversions. -/
 noncomputable def comp {next : Conversion conversion.context}
     (following : Model next model.target) : Model (conversion.comp next) original where
@@ -351,3 +358,9 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.extend' depends on axioms: [propex
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.extend
+
+/--
+info: 'Hex.RealClosure.Tower.Conversion.Model.cast' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.cast
