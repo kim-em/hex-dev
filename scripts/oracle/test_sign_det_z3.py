@@ -172,6 +172,18 @@ class InfinitesimalOracle(unittest.TestCase):
             record["value"]["data"]["result"]["signs"][0] *= -1
             self.reject(record)
 
+    def test_refinement_bindings_and_old_interval_replay(self):
+        original = self.record("reencode/nested/refinement")
+        for key in ("targetHead", "targetLower", "targetUpper"):
+            record = copy.deepcopy(original)
+            record["value"]["data"]["result"][key] = record["value"]["data"]["source"][
+                {"targetHead": "head", "targetLower": "lower", "targetUpper": "upper"}[key]]
+            if record != original:
+                self.reject(record)
+        record = copy.deepcopy(original)
+        record["value"]["data"]["result"]["oldIntervalReplay"] = True
+        self.reject(record)
+
     def test_version_pin(self):
         with patch.object(oracle, "version", return_value="4.15.3.0"):
             with self.assertRaises(OracleMismatch):

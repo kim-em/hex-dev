@@ -1069,7 +1069,8 @@ private def refinedCubicRootPasses : Bool :=
         r.target.raw.signs == [1, 1] &&
         r.target.signAt (signsX.natPow 3 - DensePoly.C 2) == 0 &&
         r.target.raw.check signsFieldSign 7 r.target.evidence &&
-        !r.target.raw.check signsFieldSign 7 root.evidence
+        !({signsRoot with lower := .finite 1, upper := .finite (3/2)}).check
+          signsFieldSign 7 root.evidence
     | _ => false
 
 #guard refinedCubicRootPasses

@@ -142,6 +142,11 @@ private def emitReencoding (coeff : E → Json) (sign : E → Int) (depth : Nat)
       | .ok none => Json.mkObj [("status", toJson "none")]
       | .ok (some r) => Json.mkObj [("status", toJson "ok"),
           ("signs", toJson r.target.raw.signs), ("indices", toJson r.target.raw.indices),
+          ("targetHead", poly coeff r.target.raw.head),
+          ("targetLower", endpoint coeff r.target.raw.lower),
+          ("targetUpper", endpoint coeff r.target.raw.upper),
+          ("oldIntervalReplay", toJson (r.evidence.check sign 10377 head raw.lower raw.upper
+            (r.target.raw.queries ++ d.raw.constraints))),
           ("replay", toJson (d.checkReencoding r.target head a b r.evidence))]
     | _ => Json.mkObj [("status", toJson "invalid-input")]
   emit depth ("reencode/" ++ name) "reencode"

@@ -41,7 +41,8 @@ def retained (source : RawDescriptor CubicField Nat) (a b : Endpoint CubicField)
         !r.target.raw.check fieldSign 7 d.evidence &&
         !({source with lower := a, upper := b}).check fieldSign 7 d.evidence &&
         d.checkReencoding r.target source.head a b r.evidence &&
-        !d.checkReencoding r.target source.head source.lower source.upper r.evidence
+        !r.evidence.check fieldSign 7 source.head source.lower source.upper
+          (r.target.raw.queries ++ d.raw.constraints)
     | _ => false
 
 set_option maxRecDepth 4096 in
@@ -59,6 +60,12 @@ set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
 #guard retained {raw with lower := .finite 0, upper := .finite 2, indices := [], signs := []}
   (.finite 1) (.finite (3/2))
+
+-- The root domain is contained even though the target interval extends farther right.
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard retained {raw with lower := .finite 0, upper := .finite 2, indices := [], signs := []}
+  (.finite 1) (.finite 5)
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
@@ -114,6 +121,8 @@ def noncanonicalPasses : Bool :=
     match d.buildReencoding source.head a b with
     | .ok (some r) =>
       r.target.raw.lower == a && r.target.raw.upper == b &&
+        !r.evidence.check Hex.TarskiTests.Noncanonical.sign 7 source.head
+          source.lower source.upper (r.target.raw.queries ++ d.raw.constraints) &&
         r.target.raw.signs == [1, 1] && r.target.signAt (x - DensePoly.C one) == 0 &&
         r.target.raw.check Hex.TarskiTests.Noncanonical.sign 7 r.target.evidence &&
         !r.target.raw.check Hex.TarskiTests.Noncanonical.sign 7 d.evidence &&
@@ -139,7 +148,13 @@ def infinitesimalPasses : Bool :=
   | some d =>
     match d.buildReencoding head (.finite (delta / 2)) (.finite (3 * delta / 2)) with
     | .ok (some r) =>
-      r.target.raw.signs == [1, -1, 1] &&
+      r.target.raw.head == head && r.target.raw.lower == .finite (delta / 2) &&
+        r.target.raw.upper == .finite (3 * delta / 2) &&
+        !({source with lower := .finite (delta / 2), upper := .finite (3 * delta / 2)}).check
+          sign 7 d.evidence &&
+        !r.evidence.check sign 7 head source.lower source.upper
+          (r.target.raw.queries ++ d.raw.constraints) &&
+        r.target.raw.signs == [1, -1, 1] &&
         r.target.signAt (Hex.SignDet.Infinitesimal.x - DensePoly.C delta) == 0 &&
         r.target.raw.check sign 7 r.target.evidence &&
         !r.target.raw.check sign 7 d.evidence
