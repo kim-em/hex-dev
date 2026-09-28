@@ -37,6 +37,8 @@ The companion proves exact domain equivalence and produced-certificate
 acceptance, whole-Option backend agreement and certificate transport.
 `HexSturm.Transport` exports `TarskiCertificate.clearDenominators` for finite
 dyadic intervals and `TarskiCertificate.toRat` including infinities.
-Root-sum and replay semantics, the unprepared natural-number root-count API, singleton/sign
-bounds and Phase-4 evidence remain
-required; see [the specification](SPEC/hex-sturm.md).
+The development semantic companion proves root sums, arbitrary-certificate
+soundness, singleton signs and bounds using the pinned Tau Ceti foundation.
+`rootCount` returns an `Option Nat` on exactly the valid domains, with
+nonnegativity proved before conversion. Remaining Phase-4 evidence is
+specified; see [the specification](SPEC/hex-sturm.md).

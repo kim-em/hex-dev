@@ -81,7 +81,7 @@ theorem queryPrepared_sound (domain : Sturm.PreparedDomain E)
 
 include h1 ha hs hm hnat hsign hn hi in
 /-- Query one with the stored chain counts distinct roots in the current open
-interval. It inherits only the shared root-sum bridge's admission. -/
+interval, using the proved shared root-sum theorem. -/
 theorem countPrepared_sound (domain : Sturm.PreparedDomain E)
     (binding : domain.sign = sign) :
     Sturm.countPrepared domain =
@@ -92,7 +92,7 @@ theorem countPrepared_sound (domain : Sturm.PreparedDomain E)
 
 include hz h1 ha hs hm hnat hsign hn hi in
 /-- Lawful prepared counts are nonnegative before any conversion to `Nat`.
-This inherits the same root-sum dependency as their cardinality theorem. -/
+This uses the same proved root-sum theorem as their cardinality theorem. -/
 theorem countPrepared_nonneg (domain : Sturm.PreparedDomain E)
     (binding : domain.sign = sign) : 0 ≤ Sturm.countPrepared domain := by
   rw [countPrepared_sound f hz h1 ha hs hm hnat sign hsign hn hi domain binding]

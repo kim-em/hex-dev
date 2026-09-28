@@ -107,7 +107,7 @@ theorem integer_value :
 /-- info: 'HexSturmMathlib.countPrepared_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms HexSturmMathlib.countPrepared_sound
-/-- info: 'HexSturmMathlib.countPrepared_nonneg' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'HexSturmMathlib.countPrepared_nonneg' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms HexSturmMathlib.countPrepared_nonneg
 
