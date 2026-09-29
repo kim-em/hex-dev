@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from scripts.bench import sign_det_joint_timing as timing
 
@@ -13,7 +14,7 @@ class JointTimingTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.path = Path(self.tmp.name)/"records.json"
-        self.expected = {n: {key: 11 for key in set(timing.RESULT_KEYS.values())}
+        self.expected = {n: {key: 100+i for i, key in enumerate(sorted(set(timing.RESULT_KEYS.values())))}
                          for n in timing.DEGREES}
         self.env = {"git_commit": "measured", "git_dirty": False}
 
@@ -22,14 +23,14 @@ class JointTimingTests(unittest.TestCase):
                 "budget_truncated": False, "env": self.env, "config": timing.CONFIG,
                 "complexity_formula": "n^3", "verdict": "inconclusive", "slope": 3,
                 "c_min": 1, "c_max": 2, "advisories": [], "points": [
-                    {"trial_index": trial, "param": n, "status": "ok", "result_hash": "0xb",
+                    {"trial_index": trial, "param": n, "status": "ok",
+                     "result_hash": hex(self.expected[n][timing.RESULT_KEYS[name]]),
                      "part_of_verdict": True, "below_signal_floor": False,
                      "per_call_nanos": n**3, "inner_repeats": 1,
                      "peak_rss_kb": 1000, "alloc_bytes": None}
                     for trial in range(timing.TRIALS) for n in timing.DEGREES]}
 
-    def pair(self):
-        names = ("runReduced", "runDirect")
+    def pair(self, names=("runReduced", "runDirect")):
         results = [self.result(name) for name in names]
         rows = [{"kind": "header", "schema": "hex-sign-det-paired-v1", "params": timing.DEGREES,
                  "trials": timing.TRIALS, "left": timing.PREFIX+names[0],
@@ -109,6 +110,76 @@ class JointTimingTests(unittest.TestCase):
                 changed[0][key] = value
                 self.path.write_text("\n".join(map(json.dumps, changed)))
                 timing.validate_hashes(self.path)
+
+    def test_single_exports_and_distinct_result_hashes(self):
+        export = {"export_schema_version": 1, "results": [self.result("runCompletion")]}
+        self.path.write_text(json.dumps(export))
+        timing.validate_single(self.path, "runCompletion", self.expected, "measured")
+        for change in (lambda d: d.update(export_schema_version=2),
+                       lambda d: d["results"].append(d["results"][0])):
+            changed = copy.deepcopy(export)
+            change(changed)
+            self.path.write_text(json.dumps(changed))
+            with self.assertRaises(ValueError):
+                timing.validate_single(self.path, "runCompletion", self.expected, "measured")
+        swapped = copy.deepcopy(export)
+        swapped["results"][0]["points"][0]["result_hash"] = hex(
+            self.expected[3][timing.RESULT_KEYS["runComparison"]])
+        self.path.write_text(json.dumps(swapped))
+        with self.assertRaises(ValueError):
+            timing.validate_single(self.path, "runCompletion", self.expected, "measured")
+
+    def test_pair_header_and_summary_environment_rejected(self):
+        names, rows = self.pair()
+        for change in (lambda r: r[0].update(params=[3]),
+                       lambda r: r[0]["env"].update(git_dirty=True),
+                       lambda r: r[-1]["result"].update(env={"git_commit": "other", "git_dirty": False})):
+            changed = copy.deepcopy(rows)
+            change(changed)
+            with self.assertRaises(ValueError):
+                self.validate_pair(names, changed)
+
+    def test_callback_reordering_and_extra_fields_rejected(self):
+        rows = [{"degree": n, "queries": 3*n+1, **self.expected[n]} for n in timing.DEGREES]
+        for change in (lambda r: r.reverse(), lambda r: r[0].update(extra=1)):
+            changed = copy.deepcopy(rows)
+            change(changed)
+            self.path.write_text("\n".join(map(json.dumps, changed)))
+            with self.assertRaises(ValueError):
+                timing.validate_hashes(self.path)
+
+    def test_bad_first_arm_does_not_suppress_later_measurements(self):
+        calls = []
+        def run(label, arguments):
+            calls.append(label)
+            target = Path(arguments[-1])
+            if label in ("runCompletion", "runComparison"):
+                result = self.result(label)
+                if label == "runCompletion":
+                    result["points"][0]["status"] = "timed_out"
+                target.write_text(json.dumps({"export_schema_version": 1, "results": [result]}))
+            else:
+                names = (("runReduced", "runDirect") if label == "production" else
+                         ("runCheckReduced", "runCheckDirect"))
+                target.write_text("\n".join(map(json.dumps, self.pair(names)[1])))
+            return 1
+        summary = timing.collect_results(run, Path(self.tmp.name), self.expected, "measured")
+        self.assertEqual(calls, ["runCompletion", "runComparison", "production", "replay"])
+        self.assertEqual(summary["validation_errors"][0]["label"], "runCompletion")
+        self.assertEqual(set(summary["observations"]), set(timing.RESULT_KEYS)-{"runCompletion"})
+        self.assertEqual(json.loads((Path(self.tmp.name)/"summary.json").read_text()), summary)
+
+    def test_harness_must_match_clean_manifest_pin(self):
+        root = Path(self.tmp.name)
+        (root/"lake-manifest.json").write_text(json.dumps({"packages": [
+            {"name": "«lean-bench»", "rev": "pinned"}]}))
+        for revision, status in (("other", ""), ("pinned", " M source.lean\n")):
+            with patch.object(timing.subprocess, "check_output", side_effect=[revision, status]):
+                with self.assertRaises(ValueError):
+                    timing.harness_binding(root)
+        with patch.object(timing.subprocess, "check_output", side_effect=["pinned", ""]):
+            self.assertEqual(timing.harness_binding(root), {
+                "revision": "pinned", "manifest_revision": "pinned", "status": ""})
 
 
 def rows_to_expected(rows):

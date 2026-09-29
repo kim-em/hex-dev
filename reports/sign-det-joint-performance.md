@@ -15,9 +15,13 @@ The timed bodies in `bench/HexSignDet/Joint.lean` exercise:
   moment products;
 - checking both supplied evidence trees in each production mode.
 
-The comparison constructs four tables: each joint table and its separate
-target descriptor. Table-construction bodies use prepared domains. Completion
-and comparison construct the domains required by their actual APIs. Result
+The table-production bodies each build two tables and replay both. They use
+prepared domains. Completion builds two source tables and runs four tree
+replays: `buildPrepared` checks each constructed tree, then
+`Descriptor.ofReplay?` checks it again. Comparison builds four tables and runs
+six tree replays: each re-encoding builds and checks a joint table, builds and
+checks a target-descriptor table, then checks the joint tree again.
+Completion and comparison construct the domains required by their actual APIs. Result
 hashes include both returned derivative words or both table counts; the
 comparison hash also includes its common head and ordering.
 
@@ -45,15 +49,28 @@ zeros. Consequently the sum of leaf square sizes is
 ```
 
 Positive preprocessing changes the scale of these monomials without changing
-their degrees. The leaf products therefore supply the cubic term in both
+their degrees. The leaf products therefore give a cubic lower bound in both
 production modes. Checking also reconstructs these products in the direct
-moment identities or the supplied reduction identities.
+moment identities or the supplied reduction identities. Every nonconstant
+query also multiplies its moment polynomial by the head derivative and runs
+pseudo-division. Those operations contribute O(n²) per row over O(n) rows.
+Many visited coefficients are zero: this bound includes dense storage overhead
+for sparse monomials, rather than work intrinsic to these particular roots.
+
+The direct path uses `DensePoly.natPow`. In the measured implementation,
+`natPow q 1` evaluates `q*q` before recursing to exponent zero, and discards
+that square. Exponent two consequently also computes and discards a fourth
+power. These additional dense products retain the cubic bound and contribute
+to the direct timings. Reduced/direct ratios compare the complete current
+implementations, including this work and their replay costs; they do not
+isolate the mathematical benefit of reducing products modulo the head.
 
 The complete child restrictions have at most two sign conditions. The retained
 row basis starts with the constant row and, when two conditions occur, one
 separating query row. Their tensor products have exponent sum at most two.
 There are O(n) nodes and at most four moment rows per node. The inventory
-requires maximum exponent sum two and candidate width at most four.
+requires maximum exponent sum two across both production modes and candidate
+width at most four.
 
 All moment operands have degree O(n). The head is a binomial, and the queries
 are monomials apart from the one source equation. Reducing the source equation
@@ -61,7 +78,9 @@ or its square modulo the common head leaves a multiple of Xⁿ±1. After a
 monomial shift, division of X²ⁿ−1 leaves that same binomial, which divides the
 next remainder. Thus the remainder chains have bounded length rather than
 the degree-dependent length possible for general heads. The inventory records
-both modes' maximum chain lengths and rejects a length above eight. Dense
+both modes' maximum chain lengths and rejects a length above eight. This check
+describes the sparse family; it is not a claim that longer chains necessarily
+violate the cubic coefficient-operation bound. Dense
 query-kernel products and certificate identity products cost O(n²) per row,
 giving O(n³) over all rows. Balanced query/exponent/sign slot work contributes
 O(n² log n); the matrices have bounded dimensions and scalar sizes. Completion
@@ -92,6 +111,12 @@ tables and dimensions. Callback result hashes bind the measured answers to
 those checked inputs. The collector retains source reconstruction, executable
 identity, command output, exact schedules and the shared harness verdicts.
 Inconclusive verdicts remain observations, not successful performance gates.
+At most one unchanged rerun is allowed after an inconclusive result. A changed
+implementation requires a separate collection with its own source identity.
+The collector runs all scientific arms before validation, so a timeout or bad
+point in one arm does not suppress later measurements; the raw records and
+validation failures are retained. The harness checkout must be clean and match
+the manifest pin before and after collection.
 
 LeanBench records each child's peak resident set, including preparation,
 calibration and repeated timed calls. It does not isolate one operation's live

@@ -135,6 +135,50 @@ def validate_pair(path, names, expected, revision):
     return {"observations": observations, "paired": paired}
 
 
+def collect_results(run, out, expected, revision):
+    """Retain all scheduled arms before judging any scientific observation."""
+    records = []
+    for name in ("runCompletion", "runComparison"):
+        target = out/(name+".json")
+        code = run(name, ["run", PREFIX+name, "--export-file", str(target)])
+        records.append((name, target, code, None))
+    for label, names, command in (
+            ("production", ("runReduced", "runDirect"), "paired-joint-production"),
+            ("replay", ("runCheckReduced", "runCheckDirect"), "paired-joint-replay")):
+        target = out/(label+".jsonl")
+        records.append((label, target, run(label, [command, str(target)]), names))
+    summary = {"observations": {}, "pairs": {}, "validation_errors": []}
+    for label, target, code, names in records:
+        if code not in (0, 1):
+            summary["validation_errors"].append({"label": label, "exit_code": code})
+        try:
+            if names is None:
+                summary["observations"][label] = validate_single(target, label, expected, revision)
+            else:
+                pair = validate_pair(target, names, expected, revision)
+                summary["observations"].update(pair["observations"])
+                summary["pairs"][label] = pair["paired"]
+        except (ValueError, KeyError, TypeError, IndexError, OSError) as exc:
+            summary["validation_errors"].append({"label": label, "error": str(exc),
+                                                   "exception": type(exc).__name__})
+    (out/"summary.json").write_text(json.dumps(summary, indent=2)+"\n")
+    return summary
+
+
+def harness_binding(root):
+    package = root/".lake/packages/lean-bench"
+    revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=package, text=True).strip()
+    status = subprocess.check_output(["git", "status", "--porcelain"], cwd=package, text=True)
+    pins = [p["rev"] for p in json.loads((root/"lake-manifest.json").read_text())["packages"]
+            if p["name"] in ("lean-bench", "«lean-bench»")]
+    if len(pins) != 1:
+        raise ValueError("manifest must contain one benchmark harness pin")
+    pin = pins[0]
+    if status or revision != pin:
+        raise ValueError("benchmark harness must be clean and match the manifest pin")
+    return {"revision": revision, "manifest_revision": pin, "status": status}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
@@ -144,6 +188,7 @@ def main():
         raise ValueError("commit the measurement sources first")
     exe = ROOT / ".lake/build/bin/hexsigndet_bench"
     subprocess.run(["lake", "build", "--no-build", "hexsigndet_bench"], cwd=ROOT, check=True)
+    harness = harness_binding(ROOT)
     out = args.output.resolve()
     if out.is_relative_to(ROOT.resolve()):
         raise ValueError("write measurement output outside the source checkout")
@@ -159,8 +204,7 @@ def main():
                 "source_sha256": sources, "binary_sha256": hashlib.sha256(exe.read_bytes()).hexdigest(),
                 "host": platform.node(), "platform": platform.platform(), "cpu": cpu,
                 "affinity": sorted(os.sched_getaffinity(0)), "load_before": os.getloadavg(),
-                "harness_revision": subprocess.check_output(["git", "rev-parse", "HEAD"],
-                    cwd=ROOT/".lake/packages/lean-bench", text=True).strip(),
+                "harness_revision": harness["revision"], "harness_binding": harness,
                 "runs": [], "state": "running"}
 
     def save():
@@ -187,22 +231,7 @@ def main():
         if any(not COST_FIELDS <= set(json.loads(line)) for line in (out/"inputs.log").read_text().splitlines()):
             raise ValueError("joint cost-model inventory is missing")
         expected = validate_hashes(out/"callbacks.log")
-        summary = {"observations": {}, "pairs": {}}
-        for name in ("runCompletion", "runComparison"):
-            target = out/(name+".json")
-            if run(name, ["run", PREFIX+name, "--export-file", str(target)]) not in (0, 1):
-                raise ValueError("joint benchmark command failed")
-            summary["observations"][name] = validate_single(target, name, expected, revision)
-        for label, names, command in (
-                ("production", ("runReduced", "runDirect"), "paired-joint-production"),
-                ("replay", ("runCheckReduced", "runCheckDirect"), "paired-joint-replay")):
-            target = out/(label+".jsonl")
-            if run(label, [command, str(target)]) not in (0, 1):
-                raise ValueError("paired joint benchmark command failed")
-            pair = validate_pair(target, names, expected, revision)
-            summary["observations"].update(pair["observations"])
-            summary["pairs"][label] = pair["paired"]
-        (out/"summary.json").write_text(json.dumps(summary, indent=2)+"\n")
+        summary = collect_results(run, out, expected, revision)
         metadata["source_sha256_after"] = {
             p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in sources}
         metadata["binary_sha256_after"] = hashlib.sha256(exe.read_bytes()).hexdigest()
@@ -210,10 +239,14 @@ def main():
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
         metadata["status_after"] = subprocess.check_output(
             ["git", "status", "--porcelain"], cwd=ROOT, text=True)
+        metadata["harness_binding_after"] = harness_binding(ROOT)
         if (metadata["source_sha256_after"] != sources or
                 metadata["binary_sha256_after"] != metadata["binary_sha256"] or
-                metadata["revision_after"] != revision or metadata["status_after"]):
+                metadata["revision_after"] != revision or metadata["status_after"] or
+                metadata["harness_binding_after"] != harness):
             raise ValueError("measurement source or executable changed during collection")
+        if summary["validation_errors"]:
+            raise ValueError("scientific validation failed; all scheduled arm records are retained")
         metadata["state"] = "complete"
         metadata["scientific_samples"] = 180
         return int(any(v["verdict"] == "inconclusive" for v in summary["observations"].values()))

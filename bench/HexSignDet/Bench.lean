@@ -139,8 +139,9 @@ setup_benchmark runGraph s => s
 
 /- Joint Thom-query family: n is the odd source degree, the target degree is
 2n, and each joint list has 3n+1 entries. The model counts coefficient
-operations: Θ(n³) from summing the schoolbook squares of Θ(n) derivative
-monomials of degrees Θ(n). Candidate dimensions stay at most four; every
+operations: leaf squares give Ω(n³); moment/head-derivative products and
+pseudo-division contribute O(n²) per row over O(n) rows. The actual direct
+power algorithm also computes unused squares. Production includes replay. Candidate dimensions stay at most four; every
 moment row has exponent sum at most two. The sparse binomial/monomial PRS
 has bounded chain length. Remaining query-slot scans sum to O(n² log n).
 The inventory checks these structural hypotheses. Rational bit sizes grow;

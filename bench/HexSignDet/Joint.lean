@@ -180,7 +180,7 @@ private def record (n : Nat) (side : String) (source : Root) (i : Input)
     ("querySlots", Lean.toJson (ns.foldl (fun k node => k + node.size) 0)),
     ("maxColumns", Lean.toJson (ns.foldl (fun k node => max k node.size) 0)),
     ("maxSupport", Lean.toJson (ns.foldl (fun k node => max k node.system.support.length) 0)),
-    ("maxExponentSum", Lean.toJson (ns.foldl (fun k node =>
+    ("maxExponentSum", Lean.toJson ((ns ++ nodes direct).foldl (fun k node =>
       node.system.rows.toList.foldl (fun k es => max k es.sum) k) 0)),
     ("maxDirectChainLength", Lean.toJson ((nodes direct).foldl (fun k node =>
       node.moments.toList.foldl (fun k c => max k c.remainders.chain.size) k) 0)),
