@@ -76,6 +76,66 @@ open scoped Hex
     !check orderSign 8 p (x - 1) .negInf .posInf (-1) cert &&
     !check orderSign 7 p (x - 1) (.finite 0) .posInf (-1) cert
 
+/- Endpoint retargeting checks every finite/infinite pair, including root
+endpoints and reversed bounds. The count oracle evaluates the two known roots
+against the requested open interval, independently of remainder chains. -/
+#guard match prepare orderSign p .negInf .posInf with
+  | none => false
+  | some domain =>
+    let bounds : Array (Endpoint Rat) :=
+      #[.negInf, .finite (-2), .finite (-1), .finite 0, .finite 1, .finite 2, .posInf]
+    bounds.all fun a => bounds.all fun b =>
+      let retargeted := domain.withEndpoints? a b
+      (retargeted.map countPrepared == query orderSign p 1 a b) &&
+      match retargeted with
+      | none => !TarskiCertificate.checkEndpoints (EndpointSigns.ofSign orderSign) p a b
+      | some next =>
+        let expected := (#[-1, 1] : Array Rat).filter fun root =>
+          a.lt (EndpointSigns.ofSign orderSign) (.finite root) &&
+          (Endpoint.finite root).lt (EndpointSigns.ofSign orderSign) b
+        next.head == domain.head && next.squarefree == domain.squarefree &&
+          next.lower == a && next.upper == b && countPrepared next == (expected.size : Int)
+
+/- Each side receives fresh endpoint signs and literal certificates. A
+parent certificate or a foreign context cannot stand in for the child. -/
+#guard match prepare orderSign p .negInf .posInf with
+  | none => false
+  | some domain => match domain.withEndpoints? .negInf (.finite 0),
+      domain.withEndpoints? (.finite 0) .posInf with
+    | some left, some right =>
+      let parent := certifyCountPrepared (7 : Nat) domain
+      let child := certifyCountPrepared (7 : Nat) left
+      let forged := { parent with upper := .finite 0, value := 1 }
+      let staleSigns := { parent with upper := .finite 0 }
+      countPrepared domain == 2 && countPrepared left == 1 && countPrepared right == 1 &&
+      check orderSign 7 p 1 .negInf (.finite 0) 1 child &&
+      !check orderSign 8 p 1 .negInf (.finite 0) 1 child &&
+      !check orderSign 7 p 1 .negInf (.finite 0) 1 parent &&
+      !check orderSign 7 p 1 .negInf (.finite 0) 1 forged &&
+      !check orderSign 7 p 1 .negInf (.finite 0) 2 staleSigns &&
+      !check orderSign 7 p 1 .negInf .posInf 2 child
+    | _, _ => false
+
+#guard (#[(-p, 2), (x * x + 1, 0), (C 5, 0)] : Array (DensePoly Rat × Int)).all fun (head, count) =>
+  match prepare orderSign head .negInf .posInf with
+  | none => false
+  | some domain => countPrepared domain == count &&
+    check orderSign (7 : Nat) head 1 .negInf .posInf count (certifyCountPrepared 7 domain) &&
+    match domain.withEndpoints? (.finite (-2)) (.finite 2) with
+    | none => false
+    | some next => countPrepared next == count
+
+/- Storage has no field instance and is genuinely noncanonical. -/
+#guard match prepare Hex.TarskiTests.Noncanonical.sign Hex.TarskiTests.Noncanonical.head
+    .negInf .posInf with
+  | none => false
+  | some domain => match domain.withEndpoints? (.finite 0) .posInf with
+    | none => false
+    | some next => countPrepared domain == 2 && countPrepared next == 1 &&
+      check Hex.TarskiTests.Noncanonical.sign (7 : Nat) Hex.TarskiTests.Noncanonical.head 1
+        (.finite 0) .posInf 1
+        (certifyCountPrepared 7 next)
+
 /- Positive independent denominator clearing preserves complete runtime
 results, including the `none` cases and zero query polynomials. -/
 #guard (#[0, C 5, Hex.TarskiTests.p, -Hex.TarskiTests.p,

@@ -48,6 +48,20 @@ acceptance and decoding proofs in `HexMatrixMathlib.Rational`.
 covered by its candidate support. `empty_system` and `singleton_system` provide
 the two complete leaf systems, with their explicit inverses checked by the
 ordinary kernel before any solving or pruning.
+`foundation_moments` and `System.foundation_counts` apply Tau Ceti's finite
+moment and count-recovery theorems to the actual ordered vectors. List positions
+index the observations, preserving repeated conditions. Coverage is supplied
+separately from the accepted matrix identities; the supplied scaled integer
+inverse interpreted over the rationals provides the foundation's left inverse.
+`Replay.foundation_complete` specializes the existing split-tree induction
+to this bridge at every solve. Leaves and child support products supply
+candidate coverage before that node is solved or pruned; shared query
+semantics supply the actual moments. Root support, counts, sparse lookup
+and selected-root signs
+consume that specialization. No coefficient representation is made into
+a field, and the executable checker gains no companion dependency.
+The companion's finite-system and counted-node producer proofs use the same
+imported moment and count-recovery bridges.
 `system_counts` requires only the literal shape guards, a scaled inverse and
 complete support: column distinctness, nonnegative counts and both system
 identities follow from those inputs.
@@ -175,6 +189,13 @@ use the shared proved root-sum theorem.
 invalid mathematical target domains, even if their open-interval root set
 contains the source root. It uses shared preparation correspondence and has
 no root-sum theorem dependency.
+`Descriptor.buildReencoding_refinement` proves success for a valid same-head
+target domain containing the source root whose root set is contained in the
+original domain. It establishes preparation and both actual producers, using
+the original partial selection's uniqueness, and preserves the selected root.
+This needs neither general Thom injectivity nor rational isolating bounds.
+It inherits the named #10389 root-sum admission.
+General success after changing the defining head remains open.
 `Comparison.eq_iff_root_eq` proves that a successful common-product comparison
 returns equality exactly when the original selected real roots coincide. It
 uses the common full derivative word and count-one descriptors; strict `<` and
@@ -182,7 +203,7 @@ uses the common full derivative word and count-one descriptors; strict `<` and
 The executable API retains its internal diagnostics for arbitrary coefficient
 operations. The companion rules out selected-sign and completion errors under
 lawful coefficients. The domain-exact total table wrappers are available; root
-enumeration, re-encoding success and strict root order retain their separate
+enumeration, general re-encoding success and strict root order retain their separate
 proof obligations.
 
 `Descriptor.buildSigns_success` proves that the actual selected-sign producer

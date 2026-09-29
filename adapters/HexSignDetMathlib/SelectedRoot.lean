@@ -181,7 +181,9 @@ theorem SelectedSigns.values_at_root {context : Ctx}
   have hprefix : (signsAt f hz (d.raw.queries ++ qs) x).take d.raw.queries.length =
       d.raw.signs := by
     simpa [signsAt, x] using hsx
-  have hrow := s.signs_eq ho hinterprets hobs hprefix
+  obtain ⟨cover, counts⟩ := s.evidence.foundation_complete hc ho hinterprets
+  have hrow := s.signs_of_count (fun c => by
+    rw [← s.evidence.table_lookup hc, s.evidence.count_table hc cover counts]) hobs hprefix
   have hlength : d.raw.signs.length = d.raw.queries.length := by
     simpa [signsAt] using congrArg List.length hsx.symm
   have htail := congrArg (List.drop d.raw.queries.length) hrow

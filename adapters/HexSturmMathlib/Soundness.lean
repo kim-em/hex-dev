@@ -80,6 +80,25 @@ theorem queryPrepared_sound (domain : Sturm.PreparedDomain E)
   exact (check_sound f hz h1 ha hs hm hnat sign hsign () _ _ _ _ _ _ checked).2
 
 include h1 ha hs hm hnat hsign hn hi in
+/-- Query one with the stored chain counts distinct roots in the current open
+interval, using the proved shared root-sum theorem. -/
+theorem countPrepared_sound (domain : Sturm.PreparedDomain E)
+    (binding : domain.sign = sign) :
+    Sturm.countPrepared domain =
+      (Tarski.rootsIn (interpret f hz domain.head)
+        (domain.lower.map f) (domain.upper.map f)).card := by
+  rw [Sturm.countPrepared_eq, queryPrepared_sound f hz h1 ha hs hm hnat sign hsign hn hi domain binding,
+    interpret_one f hz h1, Tarski.rootSum_one]
+
+include hz h1 ha hs hm hnat hsign hn hi in
+/-- Lawful prepared counts are nonnegative before any conversion to `Nat`.
+This uses the same proved root-sum theorem as their cardinality theorem. -/
+theorem countPrepared_nonneg (domain : Sturm.PreparedDomain E)
+    (binding : domain.sign = sign) : 0 ≤ Sturm.countPrepared domain := by
+  rw [countPrepared_sound f hz h1 ha hs hm hnat sign hsign hn hi domain binding]
+  exact Nat.cast_nonneg _
+
+include h1 ha hs hm hnat hsign hn hi in
 /-- A successful ordinary query has the same meaning as prepared querying. -/
 theorem query_sound (p q : DensePoly E) (a b : Endpoint E) (value : Int)
     (result : Sturm.query sign p q a b = some value) :

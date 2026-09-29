@@ -14,6 +14,7 @@ import HexSignDetMathlib.SelectedProducer
 import HexSignDetMathlib.CompletionProducer
 import HexSignDetMathlib.TableProducer
 import HexSignDetMathlib.ReencodingProducer
+import HexSignDetMathlib.ReencodingRefinement
 
 import HexSignDetMathlib.QueryHandle
 
@@ -1046,10 +1047,43 @@ for every lawful coefficient interpretation when the selected root is absent
 from the target domain. Preparation and joint table construction are proved
 from the input; successful output is not assumed. The proof uses the shared
 proved root-sum theorem. It needs neither a root-separating interval nor a
-Thom ordering theorem. General success when the root is present is a separate
-proof requirement. For an accepted re-encoding,
+Thom ordering theorem. General success for a different defining polynomial
+when the root is present is a separate proof requirement. For an accepted re-encoding,
 {name}`Hex.SignDet.Reencoding.root_eq_source` proves that the new descriptor
 retains the source root.
+
+Refining the interval can retain the root instead. Here `(1, 3/2)` contains
++α and excludes −α. The producer constructs a complete derivative word and
+fresh evidence for those bounds. Evidence from the original whole-line
+description is rejected at the refined interval.
+
+```lean
+private def refinedCubicRootPasses : Bool :=
+  match Descriptor.validate signsFieldSign 7 signsRoot with
+  | none => false
+  | some root =>
+    match root.buildReencoding signsHead (.finite 1) (.finite (3/2)) with
+    | .ok (some r) =>
+      r.target.raw.lower == .finite 1 &&
+        r.target.raw.upper == .finite (3/2) &&
+        r.target.raw.signs == [1, 1] &&
+        r.target.signAt (signsX.natPow 3 - DensePoly.C 2) == 0 &&
+        r.target.raw.check signsFieldSign 7 r.target.evidence &&
+        !({signsRoot with lower := .finite 1, upper := .finite (3/2)}).check
+          signsFieldSign 7 root.evidence
+    | _ => false
+
+#guard refinedCubicRootPasses
+```
+
+{name}`Hex.SignDet.Descriptor.buildReencoding_refinement` proves success and
+preservation of the selected root for a valid smaller root domain of the same
+polynomial containing that root. Its hypotheses describe the input interval;
+they do not assume a successful computation. The proof uses the old validated
+selection's uniqueness and the proved shared Sturm–Tarski theorem. It applies to
+generic lawful coefficients, including non-Archimedean interpretations, without
+assuming rational isolating bounds. General success after changing the defining
+polynomial still requires the separate Thom foundations.
 
 Root enumeration constructs a full derivative description for each root. This
 example uses the same actual cubic coefficient field and enumerates the roots

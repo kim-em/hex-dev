@@ -8,6 +8,7 @@ module
 public import HexSignDet.Induction
 public import HexSignDet.Table
 public import HexSignDetMathlib.QueryReduction
+public import HexSignDetMathlib.Foundation
 public import HexSturmMathlib.Soundness
 
 public section
@@ -128,8 +129,12 @@ theorem Replay.check_support {Ctx : Type w} [DecidableEq Ctx]
     (checked : t.check sign context p a b qs = true) (s : List Int) :
     s ∈ t.node.system.support ↔
       ∃ x ∈ Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f), signsAt f hz qs x = s := by
-  rw [t.support_iff checked (rootObservations_valid f hz p qs a b)
-    (t.check_interprets f hz h1 ha hs hm hnat sign hsign context p a b qs checked)]
+  obtain ⟨cover, counts⟩ := t.foundation_complete checked
+    (rootObservations_valid f hz p qs a b)
+    (t.check_interprets f hz h1 ha hs hm hnat sign hsign context p a b qs checked)
+  have hsupport : s ∈ t.node.system.support ↔ s ∈ rootObservations f hz p qs a b :=
+    ⟨t.node.system.support_subset _ counts s, cover s⟩
+  rw [hsupport]
   simp only [rootObservations, List.mem_map, Finset.mem_toList]
 
 include h1 ha hs hm hnat hsign in
@@ -140,7 +145,7 @@ theorem Replay.check_counts {Ctx : Type w} [DecidableEq Ctx]
     (qs : List (DensePoly E)) (t : Replay E Ctx)
     (checked : t.check sign context p a b qs = true) :
     counts t.node.system.columns (rootObservations f hz p qs a b) = t.node.system.counts := by
-  exact (t.support_complete checked (rootObservations_valid f hz p qs a b)
+  exact (t.foundation_complete checked (rootObservations_valid f hz p qs a b)
     (t.check_interprets f hz h1 ha hs hm hnat sign hsign context p a b qs checked)).2
 
 include h1 ha hs hm hnat hsign in
@@ -153,8 +158,10 @@ theorem Replay.count_roots {Ctx : Type w} [DecidableEq Ctx]
     t.node.system.count s =
       ((Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f)).filter
         (fun x => signsAt f hz qs x = s)).card := by
-  rw [← t.table_lookup checked, t.table_count checked (rootObservations_valid f hz p qs a b)
-    (t.check_interprets f hz h1 ha hs hm hnat sign hsign context p a b qs checked)]
+  obtain ⟨cover, counts⟩ := t.foundation_complete checked
+    (rootObservations_valid f hz p qs a b)
+    (t.check_interprets f hz h1 ha hs hm hnat sign hsign context p a b qs checked)
+  rw [← t.table_lookup checked, t.count_table checked cover counts]
   simp only [rootObservations, List.countP_map]
   simpa [Function.comp_def] using (Finset.nodup_toList
     (Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f))).card_eq_countP

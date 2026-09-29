@@ -602,6 +602,7 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.CompletionProducer,
     `HexSignDetMathlib.QueryHandle, `HexSignDetMathlib.TableProducer,
     `HexSignDetMathlib.ReencodingProducer, `HexSignDetMathlib.RootList,
+    `HexSignDetMathlib.ReencodingRefinement,
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
@@ -1107,8 +1108,8 @@ lean_lib HexConformance where
       `HexSignDetMathlib.SelectedProducerConformance,
       `HexSignDetMathlib.CompletionConformance,
       `HexSignDetMathlib.QueryHandleConformance,
-      `HexSignDetMathlib.TableConformance,
-      `HexSignDetMathlib.ReencodingConformance, `HexSignDetMathlib.RootListConformance].map Glob.one
+      `HexSignDetMathlib.TableConformance, `HexSignDetMathlib.ReencodingConformance,
+      `HexSignDetMathlib.RootListConformance, `HexSignDetMathlib.RefinementConformance].map Glob.one
 
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests].map Glob.one
 
@@ -1732,7 +1733,7 @@ lean_exe hexsigndet_bench where
 lean_lib HexSignDetBenchSupport where
   srcDir := "bench"
   globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
-    .one `HexSignDet.Paired, .one `HexSignDet.Maximal]
+    .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint]
 
 lean_exe hexsturm_bench where
   srcDir := "bench"

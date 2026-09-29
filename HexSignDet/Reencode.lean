@@ -119,4 +119,30 @@ theorem Descriptor.buildReencoding_ofEmpty {sign : E → Int} {context : Ctx}
     source.buildReencoding head a b = .ok none := by
   simp only [Descriptor.buildReencoding, hd, ht, Replay.table_rows, hr]
 
+/-- A unique matching joint row, a successful target descriptor and the
+literal re-encoding guard establish success of the actual producer. -/
+theorem Descriptor.buildReencoding_ofTable {sign : E → Int} {context : Ctx}
+    (source : Descriptor E Ctx sign context) (head : DensePoly E) (a b : Endpoint E)
+    (domain : Sturm.PreparedDomain E) (hd : Sturm.prepare sign head a b = some domain)
+    (t : {t : Replay E Ctx // t.check domain.sign context domain.head domain.lower domain.upper
+      (((⟨context, head, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries ++
+        source.raw.constraints) = true})
+    (ht : buildPrepared context domain
+      (((⟨context, head, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries ++
+        source.raw.constraints) = .ok t)
+    (word : List Int)
+    (hr : (t.val.node.system.tableRows.toList.filter fun row =>
+      decide (row.1.drop ((⟨context, head, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries.length =
+        source.raw.constraintSigns)) = [(word, 1)])
+    (target : Descriptor E Ctx sign context)
+    (hbuild : Descriptor.build sign context
+      ((⟨context, head, a, b, [], []⟩ : RawDescriptor E Ctx).full
+        (word.take ((⟨context, head, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries.length)) =
+      .ok (.ok target))
+    (hcheck : source.checkReencoding target head a b t.val = true) :
+    ∃ r : Reencoding source head a b, source.buildReencoding head a b = .ok (some r) := by
+  refine ⟨⟨target, t.val, hcheck⟩, ?_⟩
+  simp only [Descriptor.buildReencoding, hd, ht, Replay.table_rows, hr, hbuild]
+  simp only [hcheck, ↓reduceDIte]
+
 end Hex.SignDet
