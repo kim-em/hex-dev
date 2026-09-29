@@ -448,8 +448,8 @@ from the level’s existing semantic theorems. Positive and count-one results
 supply existence and uniqueness in the ambient field. The replay context-key
 type can differ from the current level’s key type. A validated next-level
 descriptor obtains its finite interpretation package directly from the current
-level and can be checked over the ambient field with its literal replay. Its
-selected root realizes additional query signs in their original order;
+level and can be checked over the ambient field with its literal replay. The
+root used by the next level realizes additional query signs in their original order;
 certificate acceptance remains an explicit premise.
 
 `AlgebraicYun.lean` specializes the coefficient interpretation to Yun's
