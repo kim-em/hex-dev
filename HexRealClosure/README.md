@@ -383,3 +383,29 @@ fixture driver also covers constants, a pure power, mixed nonzero roots,
 fractional and negative scalars, and one and two infinitesimal levels. Its
 independent SymPy oracle determines the zero multiplicity from the first
 nonzero coefficient and checks the entire returned quotient.
+## Ordered algebraic ambient models
+
+`Ambient.ofField K` in the companion consumes Tau Ceti's proved ordered
+real-closure existence theorem. Its carrier is real closed and algebraic over
+the actual strictly monotone inclusion of `K`. Every ambient element comes
+with a nonzero polynomial over that embedded base that vanishes at the element.
+The inclusion preserves zero, arithmetic, order and signs. This is a semantic
+construction and supplies no executable field instance on raw selected-root
+representations.
+
+`Ambient.infinitesimal K` applies this construction to the canonical ordered
+rational-function field. The companion proves existence of a positive square
+root of the new infinitesimal strictly above it and below every positive
+embedded predecessor coefficient. Its reciprocal exceeds every embedded
+integer. The checked construction examples use one and two infinitesimal
+levels, including a square root of the second infinitesimal below every power
+of the first. All these statements consume the actual chosen ambient model.
+`Ambient.nativeHom compatible model` interprets one executable fraction level
+through its proved field-dictionary equality. It preserves arithmetic, zero
+and the native infinitesimal sign; the separate caller test uses the actual
+core rational dictionary without changing caller instance priorities. The two-level
+construction examples use the semantic coefficient dictionaries.
+
+Compatible algebraic unions, native descriptor construction and simultaneous
+realization of finite sign conditions at one ordinary real point remain
+separate obligations.
