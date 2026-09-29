@@ -39,6 +39,37 @@ These are diagnostic observations, with no complexity verdict or absolute
 performance budget. They do not establish all Phase-4 requirements. The
 ordinary CI proof-probe target builds the examples; timing runs are external.
 
+## Graph-bound observations
+
+Source `0acfbaf3f4e0295e5a23ca24e4ab64e03ed443df` supplies 16 adjacent pairs
+(32 fresh builds) on `chungus2`, automatically leased CPU 25, with one Lean
+thread. Lean, Mathlib and Tau Ceti revisions match the original records below.
+The repository and dependency checkouts were clean. The owned shared build
+directory had no concurrent build during collection.
+
+| Depth | Query positions | Import-only median (s) | Semantic median (s) | Median paired difference (s) |
+|---|---:|---:|---:|---:|
+| 1 | 2 | 2.673 | 2.761 | 0.092 |
+| 3 | 8 | 2.668 | 2.763 | 0.087 |
+| 5 | 32 | 2.665 | 2.762 | 0.100 |
+| 7 | 128 | 2.672 | 2.774 | 0.100 |
+
+Every candidate inventory is selected from its measured semantic namespace
+and contains only the three standard axioms. Baselines have no inventory in
+their measured namespace; replayed import diagnostics are excluded. All
+32 completed arms and their full compiler outputs are retained.
+
+Semantic `.olean` files contain 42,992–43,128 bytes, and their private files
+contain 16,752–16,792 bytes. Median semantic-arm maximum resident sets are
+1,729,996–1,730,132 KiB, including imports and the rebuild process. These are
+not isolated theorem memory or allocated-byte measurements. The paired
+observations do not establish a complexity bound, speedup or full Phase-4
+coverage. This collection measures changed theorem statements and inventory
+selection; it is not an unchanged rerun of the original collection.
+
+- [Complete graph-bound measurement](bench-results/hex-sign-det-semantics-0acfbaf3f-chungus2.json).
+- [Incremental graph-bound arm records](bench-results/hex-sign-det-semantics-0acfbaf3f-chungus2.json.samples.jsonl).
+
 ## Original observations
 
 Source `8ba814887079ddf45e9682371d4565c49d3d2171` supplies 16 adjacent pairs
