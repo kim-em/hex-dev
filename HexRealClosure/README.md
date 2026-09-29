@@ -586,11 +586,11 @@ native rational dictionary, its proved compatibility equation and
 
 `Transport.polynomial` interprets a stored coefficient array without field laws
 on its source expressions. Zero preservation handles implicit coefficients;
-zero reflection is required only on the finite input arrays. The actual
+only the interpreted top coefficient must stay nonzero when an input array is nonempty. The actual
 normalized size, degree, leading coefficient and zero test are preserved. Interpreting `ofCoeffs`
 commutes with normalization even when nonzero source coefficients map to zero.
 Addition, subtraction, scaling and differentiation use only the finite scalar
-operations at coefficient positions, together with the input zero patterns.
+operations at coefficient positions, together with the input leading guards.
 Multiplication follows the native schoolbook loop: `productPrefix` records the
 accumulator immediately before each coefficient product is added. Horner
 evaluation uses `hornerPrefix` to record the actual descending evaluation order.
@@ -598,5 +598,12 @@ Their transport proofs require arithmetic identities only at these reached
 accumulators. No ring laws on the source expressions or arithmetic preservation
 at unrelated expressions are required. These lemmas apply to raw algebraic
 representatives as well as infinitesimal fractions.
-Full query transport additionally requires the query identities, signs and
-guards at the jointly realized algebraic root.
+`Difference`, `Scaling`, `Product`, `Sum` and `Differentiation` package those
+finite obligations. `Initial.zero`, `Recurrence.zero` and `Terminal.zero`
+transport the actual checker's zero differences. `ChainData` collects the
+literal chain's arithmetic and leading guards together with its scale signs;
+`chain_check` transports the complete signed-chain replay, including head
+binding, serialized degrees, strict descent, every recurrence and the terminal
+pair. No division or chain producer runs during this transport.
+Full Tarski-query transport additionally requires constants and powers,
+endpoint signs and ordering, and guards at the jointly realized algebraic root.

@@ -14,7 +14,7 @@ namespace Hex.RealClosure.Transport
 variable {E : Type u} {K : Type v} [Zero E] [DecidableEq E] [Zero K] [DecidableEq K]
 
 /-- Interpret the stored finite coefficient array and normalize its image.
-No field laws or global zero reflection on the source expressions are needed. -/
+No field laws or global zero reflection on source expressions are needed. -/
 @[expose] def polynomial (read : E → K) (p : Hex.DensePoly E) : Hex.DensePoly K :=
   Hex.DensePoly.ofCoeffs (p.toArray.map read)
 
@@ -53,28 +53,9 @@ theorem polynomial_ofCoeffs (read : E → K) (zero : read 0 = 0) (a : Array E) :
   | some value =>
     simp only [Option.map_some, Option.getD_some]
 
-/-- Only the stored coefficient zero pattern is needed for polynomial zero reflection. -/
-theorem polynomial_zero (read : E → K) (zero : read 0 = 0) (p : Hex.DensePoly E)
-    (reflects : ∀ i < p.size, read (p.coeff i) = 0 ↔ p.coeff i = 0) :
-    polynomial read p = 0 ↔ p = 0 := by
-  constructor
-  · intro mapped
-    apply Hex.DensePoly.ext_coeff
-    intro i
-    rw [Hex.DensePoly.coeff_zero]
-    by_cases hi : i < p.size
-    · apply (reflects i hi).mp
-      rw [← polynomial_coeff read zero, mapped, Hex.DensePoly.coeff_zero]
-    · exact Hex.DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_gt hi)
-  · intro original
-    subst p
-    apply Hex.DensePoly.ext_coeff
-    intro i
-    rw [polynomial_coeff read zero, Hex.DensePoly.coeff_zero, zero, Hex.DensePoly.coeff_zero]
-
-/-- Finite zero reflection preserves the actual normalized array length. -/
+/-- Nonvanishing of the interpreted top coefficient preserves normalized size. -/
 theorem polynomial_size (read : E → K) (zero : read 0 = 0) (p : Hex.DensePoly E)
-    (reflects : ∀ i < p.size, read (p.coeff i) = 0 ↔ p.coeff i = 0) :
+    (leading : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0) :
     (polynomial read p).size = p.size := by
   have upper : (polynomial read p).size ≤ p.size := by
     simpa only [polynomial, Array.size_map, Hex.DensePoly.toArray_size] using
@@ -83,20 +64,26 @@ theorem polynomial_size (read : E → K) (zero : read 0 = 0) (p : Hex.DensePoly 
   by_cases empty : p.size = 0
   · omega
   · have positive : 0 < p.size := Nat.pos_of_ne_zero empty
-    have last : read (p.coeff (p.size - 1)) ≠ 0 :=
-      (reflects (p.size - 1) (by omega)).not.mpr
-        (Hex.DensePoly.coeff_last_ne_zero_of_pos_size p positive)
+    have last : read (p.coeff (p.size - 1)) ≠ 0 := leading positive
     rw [← polynomial_coeff read zero] at last
     by_contra small
     exact last (Hex.DensePoly.coeff_eq_zero_of_size_le _ (by omega))
 
-/-- Finite zero reflection retains the entire stored coefficient array. -/
+/-- Nonvanishing of the top coefficient preserves polynomial zero testing.
+Interior coefficients may be nonzero representatives of zero. -/
+theorem polynomial_zero (read : E → K) (zero : read 0 = 0) (p : Hex.DensePoly E)
+    (leading : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0) :
+    polynomial read p = 0 ↔ p = 0 := by
+  rw [← Hex.DensePoly.size_eq_zero_iff, ← Hex.DensePoly.size_eq_zero_iff,
+    polynomial_size read zero p leading]
+
+/-- The top-coefficient guard retains the entire stored coefficient array. -/
 theorem polynomial_array (read : E → K) (zero : read 0 = 0) (p : Hex.DensePoly E)
-    (reflects : ∀ i < p.size, read (p.coeff i) = 0 ↔ p.coeff i = 0) :
+    (leading : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0) :
     (polynomial read p).toArray = p.toArray.map read := by
   apply Array.ext
   · simp only [Hex.DensePoly.toArray_size, Array.size_map,
-      polynomial_size read zero p reflects]
+      polynomial_size read zero p leading]
   · intro i hi hi'
     simp only [Array.getElem_map]
     rw [Array.getElem_eq_getD (h := hi) (0 : K),
@@ -104,17 +91,17 @@ theorem polynomial_array (read : E → K) (zero : read 0 = 0) (p : Hex.DensePoly
     change (polynomial read p).coeff i = read (p.coeff i)
     exact polynomial_coeff read zero p i
 
-/-- Degree preservation uses the same finite coefficient pattern. -/
+/-- Degree preservation uses the same top-coefficient guard. -/
 theorem polynomial_degree (read : E → K) (zero : read 0 = 0) (p : Hex.DensePoly E)
-    (reflects : ∀ i < p.size, read (p.coeff i) = 0 ↔ p.coeff i = 0) :
+    (leading : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0) :
     (polynomial read p).natDegree = p.natDegree := by
-  rw [Hex.DensePoly.natDegree_eq_size_sub_one, polynomial_size read zero p reflects,
+  rw [Hex.DensePoly.natDegree_eq_size_sub_one, polynomial_size read zero p leading,
     Hex.DensePoly.natDegree_eq_size_sub_one]
 
 /-- The leading coefficient of the interpreted polynomial is the image
-of its stored leading coefficient under the finite zero pattern. -/
+of its stored leading coefficient under the top-coefficient guard. -/
 theorem polynomial_leading (read : E → K) (zero : read 0 = 0) (p : Hex.DensePoly E)
-    (reflects : ∀ i < p.size, read (p.coeff i) = 0 ↔ p.coeff i = 0) :
+    (leading : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0) :
     (polynomial read p).leadingCoeff = read p.leadingCoeff := by
   by_cases empty : p.size = 0
   · have original := (Hex.DensePoly.size_eq_zero_iff p).mp empty
@@ -123,23 +110,23 @@ theorem polynomial_leading (read : E → K) (zero : read 0 = 0) (p : Hex.DensePo
     exact zero.symm
   · have positive : 0 < p.size := Nat.pos_of_ne_zero empty
     rw [Hex.DensePoly.leadingCoeff_eq_coeff_last _
-      (by rw [polynomial_size read zero p reflects]; exact positive),
-      polynomial_size read zero p reflects, polynomial_coeff read zero,
+      (by rw [polynomial_size read zero p leading]; exact positive),
+      polynomial_size read zero p leading, polynomial_coeff read zero,
       Hex.DensePoly.leadingCoeff_eq_coeff_last p positive]
 
-/-- The actual executable zero test is retained by finite coefficient interpretation. -/
+/-- The actual executable zero test is retained under the top-coefficient guard. -/
 theorem polynomial_isZero (read : E → K) (zero : read 0 = 0) (p : Hex.DensePoly E)
-    (reflects : ∀ i < p.size, read (p.coeff i) = 0 ↔ p.coeff i = 0) :
+    (leading : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0) :
     (polynomial read p).isZero = p.isZero := by
   change ((polynomial read p).size == 0) = (p.size == 0)
-  rw [polynomial_size read zero p reflects]
+  rw [polynomial_size read zero p leading]
 
 /-- Addition uses only the recorded scalar sums and input coefficient zero
-patterns. No source ring laws or global arithmetic-preservation law is assumed. -/
+leading guards. No source ring laws or global arithmetic-preservation law is assumed. -/
 theorem polynomial_add [Add E] [Add K] (read : E → K) (zero : read 0 = 0)
     (p q : Hex.DensePoly E)
-    (first : ∀ i < p.size, read (p.coeff i) = 0 ↔ p.coeff i = 0)
-    (second : ∀ i < q.size, read (q.coeff i) = 0 ↔ q.coeff i = 0)
+    (first : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0)
+    (second : 0 < q.size → read (q.coeff (q.size - 1)) ≠ 0)
     (sums : ∀ i < max p.size q.size,
       read (p.coeff i + q.coeff i) = read (p.coeff i) + read (q.coeff i)) :
     polynomial read (p + q) = polynomial read p + polynomial read q := by
@@ -156,11 +143,11 @@ theorem polynomial_add [Add E] [Add K] (read : E → K) (zero : read 0 = 0)
     simpa only [Array.size_map, Array.size_ofFn] using hi
 
 /-- Subtraction transports the recorded scalar differences at their actual
-coefficient positions, with no ring laws on the source expressions. -/
+coefficient positions, under input leading guards, with no ring laws on source expressions. -/
 theorem polynomial_sub [Sub E] [Sub K] (read : E → K) (zero : read 0 = 0)
     (p q : Hex.DensePoly E)
-    (first : ∀ i < p.size, read (p.coeff i) = 0 ↔ p.coeff i = 0)
-    (second : ∀ i < q.size, read (q.coeff i) = 0 ↔ q.coeff i = 0)
+    (first : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0)
+    (second : 0 < q.size → read (q.coeff (q.size - 1)) ≠ 0)
     (differences : ∀ i < max p.size q.size,
       read (p.coeff i - q.coeff i) = read (p.coeff i) - read (q.coeff i)) :
     polynomial read (p - q) = polynomial read p - polynomial read q := by
@@ -180,7 +167,7 @@ theorem polynomial_sub [Sub E] [Sub K] (read : E → K) (zero : read 0 = 0)
 stored coefficients. The interpreted product may normalize to a smaller array. -/
 theorem polynomial_scale [Mul E] [Mul K] (read : E → K) (zero : read 0 = 0)
     (scalar : E) (p : Hex.DensePoly E)
-    (reflects : ∀ i < p.size, read (p.coeff i) = 0 ↔ p.coeff i = 0)
+    (leading : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0)
     (products : ∀ i < p.size,
       read (scalar * p.coeff i) = read scalar * read (p.coeff i)) :
     polynomial read (Hex.DensePoly.scale scalar p) =
@@ -190,7 +177,7 @@ theorem polynomial_scale [Mul E] [Mul K] (read : E → K) (zero : read 0 = 0)
   congr 1
   apply Array.ext
   · simp only [Array.size_map, Hex.DensePoly.toArray_size,
-      polynomial_size read zero p reflects]
+      polynomial_size read zero p leading]
   · intro i hi hi'
     simp only [Array.getElem_map]
     rw [Array.getElem_eq_getD (h := by simpa using hi) (0 : E),
@@ -203,7 +190,7 @@ theorem polynomial_scale [Mul E] [Mul K] (read : E → K) (zero : read 0 = 0)
 operations. No natural-cast or multiplication law on every expression is assumed. -/
 theorem polynomial_derivative [NatCast E] [Mul E] [NatCast K] [Mul K]
     (read : E → K) (zero : read 0 = 0) (p : Hex.DensePoly E)
-    (reflects : ∀ i < p.size, read (p.coeff i) = 0 ↔ p.coeff i = 0)
+    (leading : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0)
     (products : ∀ i < p.size - 1,
       read (((i + 1 : Nat) : E) * p.coeff (i + 1)) =
         ((i + 1 : Nat) : K) * read (p.coeff (i + 1))) :
@@ -213,7 +200,7 @@ theorem polynomial_derivative [NatCast E] [Mul E] [NatCast K] [Mul K]
     Hex.DensePoly.derivativeImpl]
   congr 1
   apply Array.ext
-  · simp only [Array.size_map, Array.size_ofFn, polynomial_size read zero p reflects]
+  · simp only [Array.size_map, Array.size_ofFn, polynomial_size read zero p leading]
   · intro i hi hi'
     simp only [Array.getElem_map, Array.getElem_ofFn, polynomial_coeff read zero]
     exact products i (by simpa only [Array.size_map, Array.size_ofFn] using hi)

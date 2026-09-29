@@ -46,8 +46,8 @@ multiplication processes the pair `(i,j)`. It uses the native coefficient step. 
 /-- The actual schoolbook coefficient fold transports from finitely many
 products and additions at the accumulators reached by the native loop. -/
 theorem product_coeff (read : E → K) (zero : read 0 = 0) (p q : Hex.DensePoly E)
-    (first : ∀ i < p.size, read (p.coeff i) = 0 ↔ p.coeff i = 0)
-    (second : ∀ i < q.size, read (q.coeff i) = 0 ↔ q.coeff i = 0)
+    (first : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0)
+    (second : 0 < q.size → read (q.coeff (q.size - 1)) ≠ 0)
     (products : ∀ i < p.size, ∀ j < q.size,
       read (p.coeff i * q.coeff j) = read (p.coeff i) * read (q.coeff j))
     (sums : ∀ i < p.size, ∀ j < q.size,
@@ -84,8 +84,8 @@ theorem product_coeff (read : E → K) (zero : read 0 = 0) (p q : Hex.DensePoly 
 /-- Polynomial multiplication transports the finite scalar work of the
 executable schoolbook loop, including each actual accumulation. -/
 theorem polynomial_mul (read : E → K) (zero : read 0 = 0) (p q : Hex.DensePoly E)
-    (first : ∀ i < p.size, read (p.coeff i) = 0 ↔ p.coeff i = 0)
-    (second : ∀ i < q.size, read (q.coeff i) = 0 ↔ q.coeff i = 0)
+    (first : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0)
+    (second : 0 < q.size → read (q.coeff (q.size - 1)) ≠ 0)
     (products : ∀ i < p.size, ∀ j < q.size,
       read (p.coeff i * q.coeff j) = read (p.coeff i) * read (q.coeff j))
     (sums : ∀ i < p.size, ∀ j < q.size,
@@ -105,7 +105,7 @@ evaluation, in the executable's descending coefficient order. -/
 /-- Horner evaluation transports from scalar identities at the finite sequence
 of accumulators actually reached by the executable. -/
 theorem polynomial_eval (read : E → K) (zero : read 0 = 0) (p : Hex.DensePoly E) (x : E)
-    (reflects : ∀ i < p.size, read (p.coeff i) = 0 ↔ p.coeff i = 0)
+    (leading : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0)
     (products : ∀ i < p.size,
       read (hornerPrefix p x i * x) = read (hornerPrefix p x i) * read x)
     (sums : ∀ i < p.size,
@@ -115,7 +115,7 @@ theorem polynomial_eval (read : E → K) (zero : read 0 = 0) (p : Hex.DensePoly 
   have initial : read (Zero.zero : E) = (Zero.zero : K) := zero
   rw [Hex.DensePoly.eval_eq_evalImpl, Hex.DensePoly.eval_eq_evalImpl,
     Hex.DensePoly.evalImpl, Hex.DensePoly.evalImpl,
-    polynomial_array read zero p reflects, ← Array.foldr_toList, ← Array.foldr_toList,
+    polynomial_array read zero p leading, ← Array.foldr_toList, ← Array.foldr_toList,
     Array.toList_map, List.foldr_eq_foldl_reverse, List.foldr_eq_foldl_reverse,
     ← List.map_reverse, List.foldl_map]
   have mapped := foldl_read read (fun acc coeff => acc * x + coeff)
