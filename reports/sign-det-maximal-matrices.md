@@ -18,7 +18,7 @@ implements a new query kernel.
 Untimed input inspection compares the entire system with the polynomial
 reference producer on the
 existing maximal-support interpolation family for `s=1,2,3`. No polynomial
-comparison is claimed at `s=4,5`; their larger matrices represent the same complete
+comparison is claimed at `s=4,5,6`; their larger matrices represent the same complete
 finite moment problem. The independent part of this comparison is that the
 Tarski-query moments equal the finite observation sums, in the same row and column
 order. Both paths use `solveSystem`, so matching inverse witnesses are a consistency
@@ -83,6 +83,56 @@ The collector's default `--parameter queries` preserves validation of the
 original schedule and its `27^s` declaration. The dimension mode records schema
 v2, its parameter choice and the `r^3` declaration. It introduces no new
 matrix implementation, query primitive or CI job.
+
+## Retained dimension-parameter collection
+
+The [dimension collection](data/sign-det-maximal-matrices/ff35bd9da-dimensions/metadata.json)
+contains all 72 completed samples from clean source
+`ff35bd9daacfca51b62f931d5b6d7afd9e143614` on `chungus2`, leased CPU 41.
+Both arms pass schedule, exact-result, timing and provenance validation.
+Source, executable and pinned harness bindings agree before and after
+collection. All 257 recorded source hashes were checked against the measured
+revision. The [source archive](data/sign-det-maximal-matrices/ff35bd9da-dimensions/archive.json)
+reconstructs that checkout from main ancestor
+`69c2c363f9789e497f5106cf65756253b420809b`; the measured commit need not
+survive the squash merge. The archive retains every export and child log,
+including the untimed inventory.
+
+| Matrix size | Queries | Solve median (ms) | Check median (ms) |
+| ---: | ---: | ---: | ---: |
+| 3 | 1 | 0.016546 | 0.002246 |
+| 9 | 2 | 0.270661 | 0.021804 |
+| 27 | 3 | 4.627596 | 0.253301 |
+| 81 | 4 | 80.826140 | 3.252235 |
+| 243 | 5 | 1449.698225 | 51.440856 |
+| 729 | 6 | 26580.263278 | 991.465444 |
+
+The fitter drops one leading parameter under its unchanged warmup setting.
+It fits the normalized ratios `time/r³` over `r=9,…,729`, with sufficient
+logarithmic span. Both verdicts remain **inconclusive**: solve has normalized
+slope `−0.384273` and ratio range `68.608306…371.276430` ns; check has slope
+`−0.563903` and range `2.559146…29.910025` ns. These slopes describe the
+normalized ratios, not the unnormalized timing exponent. Both exceed the
+fixed `0.15` tolerance in the faster-than-declared direction. This resolves
+the previous insufficient-range limitation without establishing the cubic
+wall-time gate. The [summary](data/sign-det-maximal-matrices/ff35bd9da-dimensions/summary.json)
+reports no validation errors. The collector's exit status 1 records these
+inconclusive verdicts, rather than lost or failed samples.
+
+At size 729, median process peak RSS is 119.785 MiB for solve and 119.406 MiB
+for check. These observations include input preparation and process startup;
+they are not allocation counts or isolated callback memory. All allocation
+counters remain absent. Smaller sizes use repeated inner calls; solve uses
+one call per sample at sizes 81 and above, while check uses one at sizes 243
+and 729. The [table data](data/sign-det-maximal-matrices/ff35bd9da-dimensions/table.json)
+retains timing and resident-set medians for all six sizes.
+
+No model, fit setting or completed sample was changed after this observation,
+and no unchanged rerun was used. The declared law counts scalar operations;
+unequal scalar costs and lower-order terms remain possible explanations of
+the finite timing behavior, not established conclusions. The earlier profile
+at size 243 supplies attribution for that input only. General bit-cost
+analysis and the remaining Phase-4 obligations are still outstanding.
 
 ## Collection
 
