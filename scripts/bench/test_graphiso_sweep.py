@@ -28,7 +28,8 @@ class SweepTest(unittest.TestCase):
         pid = int(caught.exception.stdout.strip())
         stat = Path(f"/proc/{pid}/stat")
         try:
-            self.assertEqual(stat.read_text().split()[2], "Z")
+            # A killed child may be a zombie or be exiting through EXIT_DEAD.
+            self.assertIn(stat.read_text().split()[2], {"Z", "X"})
         except (FileNotFoundError, ProcessLookupError):
             with self.assertRaises(ProcessLookupError):
                 os.kill(pid, 0)
