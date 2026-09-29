@@ -429,10 +429,10 @@ internal selected-sign error on validated descriptors with lawful coefficients;
 the executable diagnostic interface is retained for arbitrary operations.
 Completion and re-encoding have producer success proofs under lawful
 coefficients. `Comparison.order_root` identifies every accepted comparison
-with the mathematical order of the original roots. Universal root-list
-production and mathematical sorting are proved; common-product comparison
-production and the remaining total
-public interfaces, the consumer sample-point interface, serialization and
+with the mathematical order of the original roots. `Descriptor.compare_success`
+proves success of the actual common-product construction and total comparison.
+Universal root-list production and mathematical sorting are also proved. The
+remaining total public interfaces, the consumer sample-point interface, serialization and
 nested evidence sharing remain required. The semantic proofs interpret the
 actual query replays through the shared proved root-sum theorem; the specified BKR/Thom foundations are a
 separate completion gate. No performance milestone is claimed here. See the [specification](SPEC/hex-sign-det.md)
