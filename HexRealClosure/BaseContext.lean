@@ -192,6 +192,170 @@ theorem Context.signature_real {registry : Registry} {K : Type}
     (parent : RealContext registry K approx sign) :
     (Context.real parent).signature = ⟨parent.chain.keys, 0⟩ := Context.signature_real_proof parent
 
+private theorem Context.signature_infinitesimal_proof {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (context : Context registry K sign) :
+    context.infinitesimal.signature =
+      { context.signature with infinitesimals := context.signature.infinitesimals + 1 } := rfl
+
+theorem Context.signature_infinitesimal {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (context : Context registry K sign) :
+    context.infinitesimal.signature =
+      { context.signature with infinitesimals := context.signature.infinitesimals + 1 } :=
+  Context.signature_infinitesimal_proof context
+
+/-- An existing real prefix, including the progress proofs already supplied
+when its providers were registered. Packing does not construct a new field. -/
+inductive RealPrefix (registry : Registry) : Type 1
+  | pack {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+      {approx : K → Rat → OrderedFn.Oracle.Bounds} {sign : K → Int}
+      (context : RealContext registry K approx sign)
+
+/-- An existing staged base context with its native carrier hidden. -/
+inductive PackedContext (registry : Registry) : Type 1
+  | pack {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+      (context : Context registry K sign)
+
+namespace RealPrefix
+
+@[expose] def keys {registry : Registry} (entry : RealPrefix registry) : List ConstantKey := by
+  cases entry with
+  | pack context => exact context.keys
+
+@[expose] def finish {registry : Registry} (entry : RealPrefix registry) : PackedContext registry := by
+  cases entry with
+  | pack context => exact .pack (.real context)
+
+theorem keys_rational (registry : Registry) :
+    (pack (.rational registry)).keys = [] := RealContext.keys_rational registry
+
+theorem keys_pack {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {approx : K → Rat → Bounds} {sign : K → Int}
+    (context : RealContext registry K approx sign) : (pack context).keys = context.keys := rfl
+
+end RealPrefix
+
+namespace PackedContext
+
+@[expose] def signature {registry : Registry} (entry : PackedContext registry) : Signature := by
+  cases entry with
+  | pack context => exact context.signature
+
+@[expose] def infinitesimal {registry : Registry} (entry : PackedContext registry) : PackedContext registry := by
+  cases entry with
+  | pack context => exact .pack context.infinitesimal
+
+/-- Reconstruct finitely many infinitesimal stages using the native constructor. -/
+@[expose] def extend {registry : Registry} (context : PackedContext registry) :
+    Nat → PackedContext registry
+  | 0 => context
+  | n + 1 => (context.extend n).infinitesimal
+
+theorem infinitesimal_signature {registry : Registry} (context : PackedContext registry) :
+    context.infinitesimal.signature =
+      { context.signature with infinitesimals := context.signature.infinitesimals + 1 } := by
+  cases context with
+  | pack context => exact Context.signature_infinitesimal context
+
+theorem extend_signature {registry : Registry} (context : PackedContext registry) (n : Nat) :
+    (context.extend n).signature =
+      { context.signature with infinitesimals := context.signature.infinitesimals + n } := by
+  induction n with
+  | zero => simp [extend]
+  | succ n ih => simp [extend, infinitesimal_signature, ih, Nat.add_assoc]
+
+/-- Accumulate native stages without retaining a recursive call on the stack. -/
+@[expose] def extendImpl {registry : Registry} (context : PackedContext registry) :
+    Nat → PackedContext registry
+  | 0 => context
+  | n + 1 => extendImpl context.infinitesimal n
+
+private theorem extend_infinitesimal {registry : Registry}
+    (context : PackedContext registry) (n : Nat) :
+    context.infinitesimal.extend n = (context.extend n).infinitesimal := by
+  induction n with
+  | zero => rfl
+  | succ n ih => exact congrArg PackedContext.infinitesimal ih
+
+private theorem extendImpl_eq {registry : Registry} (context : PackedContext registry)
+    (n : Nat) : context.extendImpl n = context.extend n := by
+  induction n generalizing context with
+  | zero => rfl
+  | succ n ih =>
+    rw [extendImpl, ih, extend_infinitesimal]
+    rfl
+
+@[csimp] theorem extend_eq_impl : @extend = @extendImpl := by
+  funext registry context n
+  exact (extendImpl_eq context n).symm
+
+end PackedContext
+
+theorem RealPrefix.finish_signature {registry : Registry} (entry : RealPrefix registry) :
+    entry.finish.signature = ⟨entry.keys, 0⟩ := by
+  cases entry with
+  | pack context => exact Context.signature_real context
+
+private def Chain.realPrefix {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (chain : Chain registry K sign) : RealPrefix registry := by
+  cases chain with
+  | real parent => exact .pack ⟨parent⟩
+  | infinitesimal parent => exact parent.realPrefix
+
+/-- Retrieve the actual real prefix, retaining its registered progress premises. -/
+def Context.realPrefix {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (context : Context registry K sign) : RealPrefix registry := context.chain.realPrefix
+
+private theorem Context.realPrefix_real_proof {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {approx : K → Rat → Bounds} {sign : K → Int}
+    (context : RealContext registry K approx sign) :
+    (Context.real context).realPrefix = .pack context := rfl
+
+theorem Context.realPrefix_real {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {approx : K → Rat → Bounds} {sign : K → Int}
+    (context : RealContext registry K approx sign) :
+    (Context.real context).realPrefix = .pack context := Context.realPrefix_real_proof context
+
+private theorem Context.realPrefix_infinitesimal_proof {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (context : Context registry K sign) :
+    context.infinitesimal.realPrefix = context.realPrefix := rfl
+
+theorem Context.realPrefix_infinitesimal {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (context : Context registry K sign) :
+    context.infinitesimal.realPrefix = context.realPrefix :=
+  Context.realPrefix_infinitesimal_proof context
+
+namespace PackedContext
+
+@[expose] def realPrefix {registry : Registry} (context : PackedContext registry) :
+    RealPrefix registry := by
+  cases context with
+  | pack context => exact context.realPrefix
+
+@[expose] def depth {registry : Registry} (context : PackedContext registry) : Nat :=
+  context.signature.infinitesimals
+
+private theorem reconstruct_proof {registry : Registry} (context : PackedContext registry) :
+    context.realPrefix.finish.extend context.depth = context := by
+  cases context with
+  | pack context =>
+    rcases context with ⟨chain⟩
+    induction chain with
+    | real parent => rfl
+    | infinitesimal parent ih =>
+      exact congrArg PackedContext.infinitesimal ih
+
+/-- Every native staged context decomposes into its actual prefix and depth. -/
+theorem reconstruct {registry : Registry} (context : PackedContext registry) :
+    context.realPrefix.finish.extend context.depth = context := reconstruct_proof context
+
+end PackedContext
+
 /-- Values are nominally bound to their entire immutable context, even when
 two contexts have definitionally equal carriers and sign operations. -/
 structure Element {registry : Registry} {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int} (context : Context registry K sign) where

@@ -7,9 +7,11 @@ module
 
 public import HexRealClosureMathlib.BaseContext
 public import HexRealClosure.BasePolynomial
+public import HexRealClosure.BaseCatalog
 public import HexOrderedFnMathlib.LiouvilleTests
 public meta import HexRealClosure.BaseCodec
 public meta import HexRealClosure.BasePolynomial
+public meta import HexRealClosure.BaseCatalog
 public meta import HexOrderedFnMathlib.LiouvilleTests
 
 public section
@@ -238,6 +240,71 @@ example (a b : Element (.real prefixContext)) :
 #check_failure (fun (p : Polynomial (realContext 1)) (q : Polynomial (realContext 2)) => p + q)
 
 example (p : Polynomial (realContext 1)) : Polynomial derived := p
+
+private abbrev entry (version : Nat) : RealPrefix registry := .pack
+  (prefixContext.constant (key version) (present version)
+    (signProgress version) (approxProgress version))
+private def installed := (Catalog.empty registry).insert (entry 1)
+private def catalog := installed.getD (Catalog.empty registry)
+private def extendedCatalog := (catalog.insert (entry 2)).getD catalog
+
+#guard installed.isSome
+#guard (catalog.insert (entry 1)).isNone
+#guard (catalog.readElement positive.write).map PackedElement.sign = some 1
+#guard (catalog.readElement (positive - positive).write).map PackedElement.sign = some 0
+#guard (catalog.readElement epsilon.write).map PackedElement.sign = some 1
+#guard (catalog.readElement (Element.infinitesimal mixed - epsilon.embed).write).map
+  PackedElement.sign = some (-1)
+#guard ((Catalog.empty registry).read (realContext 1).signature).isNone
+#guard (catalog.read (realContext 2).signature).isNone
+#guard (extendedCatalog.read (realContext 2).signature).isSome
+#guard (extendedCatalog.readElement positive.write).map PackedElement.sign = some 1
+#guard (catalog.read ⟨[key 1, key 1], 0⟩).isNone
+#guard (catalog.read ⟨[⟨"other", 1⟩], 0⟩).isNone
+#guard (catalog.readElement ⟨(realContext 1).signature, .rational 1⟩).isNone
+#guard (catalog.readPolynomial namedPolynomial.write).isSome
+#guard ((Catalog.empty registry).readPolynomial namedPolynomial.write).isNone
+#guard (catalog.readPolynomial { namedPolynomial.write with binding :=
+  (realContext 2).signature }).isNone
+#guard (catalog.readPolynomial { namedPolynomial.write with coefficients :=
+  [.rational 1] }).isNone
+
+private theorem entry_keys (version : Nat) : (entry version).keys = [key version] := by
+  rw [RealPrefix.keys_pack]
+  have h := RealContext.keys_constant prefixContext (key version) (present version)
+    (signProgress version) (approxProgress version)
+  have hp : prefixContext.chain.keys = [] := RealContext.keys_rational registry
+  simpa only [RealContext.keys, hp, List.nil_append] using h
+
+private theorem installed_some : installed.isSome = true :=
+  (Catalog.insert_isSome_iff (Catalog.empty registry) (entry 1)).mpr
+    (Catalog.lookup_empty registry (entry 1).keys (by rw [entry_keys]; simp))
+
+private theorem installed_eq : installed = some catalog := by
+  cases h : installed with
+  | none =>
+    have hs := installed_some
+    simp [h] at hs
+  | some c => simp [catalog, h]
+
+private theorem catalog_lookup : catalog.lookup (entry 1).keys = some (entry 1) := by
+  simpa using Catalog.lookup_of_insert (Catalog.empty registry) catalog (entry 1)
+    (entry 1).keys installed_eq
+
+private theorem named_prefix :
+    (PackedContext.pack (realContext 1)).realPrefix = entry 1 :=
+  Context.realPrefix_real _
+
+example : catalog.readElement positive.write =
+    some (⟨.pack (realContext 1), positive⟩ : PackedElement registry) := by
+  exact Catalog.read_write catalog (⟨.pack (realContext 1), positive⟩ : PackedElement registry)
+    (by simpa only [named_prefix] using catalog_lookup)
+
+example : catalog.readPolynomial namedPolynomial.write =
+    some (⟨.pack (realContext 1), namedPolynomial⟩ : PackedPolynomial registry) := by
+  exact Catalog.readPolynomial_write catalog
+    (⟨.pack (realContext 1), namedPolynomial⟩ : PackedPolynomial registry)
+    (by simpa only [named_prefix] using catalog_lookup)
 
 example : (registry ⟨"unknown", 1⟩).isSome = false := by decide +kernel
 
