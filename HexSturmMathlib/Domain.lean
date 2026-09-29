@@ -149,6 +149,28 @@ theorem prepared_domain (domain : Sturm.PreparedDomain E) (hsign : domain.sign =
   rw [← hsign, Sturm.query_prepared]
   rfl
 
+include hz ha hs hm h1 hn hi hnat hpos hneg hzero in
+/-- Reusing a head's stored chain succeeds on exactly the mathematical domains
+with the requested endpoints, including finite and infinite bounds. -/
+theorem withEndpoints_isSome (domain : Sturm.PreparedDomain E)
+    (binding : domain.sign = sign) (a b : Endpoint E) :
+    (domain.withEndpoints? a b).isSome = true ↔ Domain f hz domain.head a b := by
+  rw [Sturm.PreparedDomain.withEndpoints_eq, binding]
+  exact prepare_isSome f hz ha hs hm sign hneg hzero h1 hn hi hnat hpos domain.head a b
+
+include hz ha hs hm h1 hn hi hnat hpos hneg hzero in
+/-- The actual retargeted object has a valid domain at its new endpoints.
+Literal head, sign and chain preservation are supplied by the core bindings theorem. -/
+theorem withEndpoints_domain (domain next : Sturm.PreparedDomain E)
+    (binding : domain.sign = sign) (a b : Endpoint E)
+    (result : domain.withEndpoints? a b = some next) : Domain f hz next.head a b := by
+  have prepared := (Sturm.PreparedDomain.withEndpoints_eq domain a b).symm.trans result
+  rw [binding] at prepared
+  obtain ⟨valid, _, head, _, _⟩ :=
+    prepare_sound f hz ha hs hm sign hneg hzero h1 hn hi hnat hpos domain.head a b next prepared
+  rw [head]
+  exact valid
+
 include hz ha hs hm h1 hn hi hpos hneg in
 /-- Every produced certificate passes the shared literal replay. The sign
 range is a law of the supplied exact coefficient sign operation. -/
@@ -175,6 +197,18 @@ theorem certifyPrepared_checks (hbound : ∀ x, -1 ≤ sign x ∧ sign x ≤ 1)
     context domain.head g domain.lower domain.upper
   rw [← hsign]
   exact Sturm.certify_prepared context domain g
+
+include hz ha hs hm h1 hn hi hpos hneg in
+/-- Reusing the query-one chain still produces an accepted literal certificate
+at this domain's current endpoints and the caller's exact context. -/
+theorem certifyCountPrepared_checks (hbound : ∀ x, -1 ≤ sign x ∧ sign x ≤ 1)
+    {Ctx : Type w} [DecidableEq Ctx] (context : Ctx)
+    (domain : Sturm.PreparedDomain E) (binding : domain.sign = sign) :
+    Sturm.check sign context domain.head 1 domain.lower domain.upper
+      (Sturm.countPrepared domain) (Sturm.certifyCountPrepared context domain) = true := by
+  rw [Sturm.countPrepared_eq, Sturm.certifyCountPrepared_eq,
+    ← Sturm.certifyPrepared_value context domain 1]
+  exact certifyPrepared_checks f hz ha hs hm sign hneg h1 hn hi hpos hbound context domain binding 1
 
 include hz ha hs hm h1 hnat hpos hneg hzero in
 omit [Neg E] [Inv E] in
