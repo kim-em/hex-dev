@@ -13,7 +13,7 @@ namespace Hex.RealClosure.Transport
 
 /-- A fold transports from identities at its actual finite sequence of
 accumulators; no law at unrelated source states is assumed. -/
-private theorem foldl_read {A : Type u} {E : Type v} {K : Type w}
+theorem foldl_read {A : Type u} {E : Type v} {K : Type w}
     (read : E → K) (step : E → A → E) (target : K → A → K)
     (xs : List A) (initial : E)
     (steps : ∀ (i : Nat) (hi : i < xs.length),
@@ -147,3 +147,7 @@ end Hex.RealClosure.Transport
 /-- info: 'Hex.RealClosure.Transport.polynomial_eval' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Transport.polynomial_eval
+
+/-- info: 'Hex.RealClosure.Transport.foldl_read' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.foldl_read

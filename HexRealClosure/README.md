@@ -584,26 +584,44 @@ native rational dictionary, its proved compatibility equation and
 
 ### Finite coefficient interpretation
 
-`Transport.polynomial` interprets a stored coefficient array without field laws
-on its source expressions. Zero preservation handles implicit coefficients;
-only the interpreted top coefficient must stay nonzero when an input array is nonempty. The actual
-normalized size, degree, leading coefficient and zero test are preserved. Interpreting `ofCoeffs`
-commutes with normalization even when nonzero source coefficients map to zero.
-Addition, subtraction, scaling and differentiation use only the finite scalar
-operations at coefficient positions, together with the input leading guards.
-Multiplication follows the native schoolbook loop: `productPrefix` records the
-accumulator immediately before each coefficient product is added. Horner
-evaluation uses `hornerPrefix` to record the actual descending evaluation order.
-Their transport proofs require arithmetic identities only at these reached
-accumulators. No ring laws on the source expressions or arithmetic preservation
-at unrelated expressions are required. These lemmas apply to raw algebraic
-representatives as well as infinitesimal fractions.
-`Difference`, `Scaling`, `Product`, `Sum` and `Differentiation` package those
-finite obligations. `Initial.zero`, `Recurrence.zero` and `Terminal.zero`
-transport the actual checker's zero differences. `ChainData` collects the
-literal chain's arithmetic and leading guards together with its scale signs;
+`Transport.polynomial` interprets and normalizes the literal coefficient array
+without field or ring laws on its source expressions. Zero preservation handles
+implicit coefficients, and interpreting `ofCoeffs` commutes with normalization
+even when nonzero source coefficients denote zero. Nonvanishing of only the
+interpreted top coefficient preserves stored size, degree, leading coefficient
+and executable zero tests; interior noncanonical zeros are allowed.
+
+The operation-only lemmas retain input sizes under these leading guards.
+`Transport.Ring` instead assumes ring laws on the target coefficients and allows
+input and intermediate arrays to shrink or become zero. Its addition,
+subtraction, scaling, differentiation and multiplication proofs need finite
+scalar equations only at actual coefficient positions and reached native
+schoolbook accumulators. `productPrefix` and `hornerPrefix` record the precise
+multiplication and descending Horner order. `PowerData` follows the native
+binary-power recursion, recording each actual square and odd-exponent product.
+Constants and the unit polynomial are also transported.
+
+`Difference`, `Scaling`, `Product`, `Sum` and `Differentiation` package finite
+arithmetic obligations without source or intermediate leading guards.
+`Initial.zero`, `Recurrence.zero` and `Terminal.zero` transport the checker's
+actual zero differences. `ChainData` requires leading guards only on the head
+and stored chain entries, where nonzero and degree checks need them.
 `chain_check` transports the complete signed-chain replay, including head
 binding, serialized degrees, strict descent, every recurrence and the terminal
-pair. No division or chain producer runs during this transport.
-Full Tarski-query transport additionally requires constants and powers,
-endpoint signs and ordering, and guards at the jointly realized algebraic root.
+pair. No division or chain producer runs during transport.
+
+`Closed` describes a domain containing zero and closed under addition and
+multiplication where interpretation preserves those operations.
+`Product.of_closed` and `Evaluation.of_closed` derive every accumulator
+obligation from finite stored coefficient membership in that domain.
+Interpretation need not preserve arithmetic outside it. Kernel-checked examples
+include an interior raw representative of zero and a complete accepted
+three-entry chain whose query and initial quotient lose their leading
+coefficients at the selected root.
+
+`query_check` transports the full Tarski certificate with an explicit context
+map: all literal bindings, endpoint order and nonroot guards, both chain checks,
+endpoint signs, stored variations and the integer value are retained. Each
+endpoint uses its actual finite Horner arithmetic or leading coefficient sign.
+BKR reductions and moments, joint algebraic-root realization, recursive sample
+replay and successive infinitesimal levels remain separate obligations.

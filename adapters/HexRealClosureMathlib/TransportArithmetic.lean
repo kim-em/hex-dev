@@ -5,44 +5,39 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.TransportProduct
+public import HexRealClosureMathlib.TransportRing
 
 public section
 
 namespace Hex.RealClosure.Transport
 
-variable {E : Type u} {K : Type v} [Zero E] [DecidableEq E] [Zero K] [DecidableEq K]
+variable {E : Type u} {K : Type v} [Zero E] [DecidableEq E] [CommRing K] [DecidableEq K]
 
 /-- The interpreted leading coefficient is nonzero for a nonempty source array. -/
 @[expose] def Leading (read : E → K) (p : Hex.DensePoly E) : Prop :=
   0 < p.size → read (p.coeff (p.size - 1)) ≠ 0
 
 /-- The finite scalar obligations of one native polynomial subtraction. -/
-structure Difference [Sub E] [Sub K] (read : E → K) (p q : Hex.DensePoly E) : Prop where
-  first : Leading read p
-  second : Leading read q
+structure Difference [Sub E] (read : E → K) (p q : Hex.DensePoly E) : Prop where
   differences : ∀ i < max p.size q.size,
     read (p.coeff i - q.coeff i) = read (p.coeff i) - read (q.coeff i)
 
 /-- The finite scalar obligations of one native polynomial scaling. -/
-structure Scaling [Mul E] [Mul K] (read : E → K) (scalar : E) (p : Hex.DensePoly E) : Prop where
-  leading : Leading read p
+structure Scaling [Mul E] (read : E → K) (scalar : E) (p : Hex.DensePoly E) : Prop where
   products : ∀ i < p.size,
     read (scalar * p.coeff i) = read scalar * read (p.coeff i)
 
 /-- The finite scalar obligations at each pair and reached accumulator of
 one native schoolbook multiplication. -/
-structure Product [Add E] [Mul E] [Add K] [Mul K]
+structure Product [Add E] [Mul E]
     (read : E → K) (p q : Hex.DensePoly E) : Prop where
-  first : Leading read p
-  second : Leading read q
   products : ∀ i < p.size, ∀ j < q.size,
     read (p.coeff i * q.coeff j) = read (p.coeff i) * read (q.coeff j)
   sums : ∀ i < p.size, ∀ j < q.size,
     read (productPrefix p q (i + j) i j + p.coeff i * q.coeff j) =
       read (productPrefix p q (i + j) i j) + read (p.coeff i * q.coeff j)
 
-variable [Sub E] [Sub K]
+variable [Sub E]
 
 /-- A checked zero difference remains zero from the finite subtraction work.
 The result needs no zero reflection on arbitrary expressions. -/
@@ -51,7 +46,7 @@ theorem Difference.zero (read : E → K) (zero : read 0 = 0) (p q : Hex.DensePol
     (polynomial read p - polynomial read q).isZero = true := by
   have source : p - q = 0 := (Hex.DensePoly.size_eq_zero_iff _).mp
     ((Hex.DensePoly.isZero_eq_true_iff _).mp accepted)
-  have mapped := polynomial_sub read zero p q data.first data.second data.differences
+  have mapped := Ring.polynomial_sub read zero p q data.differences
   rw [source] at mapped
   have empty : polynomial read (0 : Hex.DensePoly E) = 0 :=
     (polynomial_zero read zero 0 (by simp)).mpr rfl
@@ -59,19 +54,16 @@ theorem Difference.zero (read : E → K) (zero : read 0 = 0) (p q : Hex.DensePol
   rw [← mapped]
   rfl
 
-variable [Add E] [Mul E] [Add K] [Mul K]
+variable [Add E] [Mul E]
 
 /-- The finite scalar obligations of one native polynomial addition. -/
 structure Sum (read : E → K) (p q : Hex.DensePoly E) : Prop where
-  first : Leading read p
-  second : Leading read q
   sums : ∀ i < max p.size q.size,
     read (p.coeff i + q.coeff i) = read (p.coeff i) + read (q.coeff i)
 
 /-- The finite cast-times-coefficient obligations of differentiation. -/
-structure Differentiation [NatCast E] [NatCast K]
+structure Differentiation [NatCast E]
     (read : E → K) (p : Hex.DensePoly E) : Prop where
-  leading : Leading read p
   products : ∀ i < p.size - 1,
     read (((i + 1 : Nat) : E) * p.coeff (i + 1)) =
       ((i + 1 : Nat) : K) * read (p.coeff (i + 1))
@@ -98,18 +90,16 @@ theorem Recurrence.zero (read : E → K) (zero : read 0 = 0) (a b c : Hex.DenseP
       (polynomial read quotient * polynomial read b -
         Hex.DensePoly.scale (read right) (polynomial read c))).isZero = true := by
   have mapped := data.identity.zero read zero _ _ accepted
-  rw [polynomial_scale read zero left a data.leftScale.leading data.leftScale.products,
-    polynomial_sub read zero _ _ data.remainder.first data.remainder.second
-      data.remainder.differences,
-    polynomial_mul read zero quotient b data.quotientProduct.first data.quotientProduct.second
-      data.quotientProduct.products data.quotientProduct.sums,
-    polynomial_scale read zero right c data.rightScale.leading data.rightScale.products]
+  rw [Ring.polynomial_scale read zero left a data.leftScale.products,
+    Ring.polynomial_sub read zero _ _ data.remainder.differences,
+    Ring.polynomial_mul read zero quotient b data.quotientProduct.products data.quotientProduct.sums,
+    Ring.polynomial_scale read zero right c data.rightScale.products]
     at mapped
   exact mapped
 
 /-- The finite scalar work in the checker's initial reduction of `f*p'`.
 The stored quotient and scales are retained literally. -/
-structure Initial [NatCast E] [NatCast K] (read : E → K) (p f c : Hex.DensePoly E)
+structure Initial [NatCast E] (read : E → K) (p f c : Hex.DensePoly E)
     (left : E) (quotient : Hex.DensePoly E) (right : E) : Prop where
   derivative : Differentiation read p
   inputProduct : Product read f p.derivative
@@ -122,7 +112,7 @@ structure Initial [NatCast E] [NatCast K] (read : E → K) (p f c : Hex.DensePol
 
 /-- The accepted initial zero identity transports by its finite executable
 arithmetic, including the actual derivative and multiplication accumulators. -/
-theorem Initial.zero [NatCast E] [NatCast K]
+theorem Initial.zero [NatCast E]
     (read : E → K) (zero : read 0 = 0) (p f c : Hex.DensePoly E)
     (left : E) (quotient : Hex.DensePoly E) (right : E)
     (data : Initial read p f c left quotient right)
@@ -132,14 +122,12 @@ theorem Initial.zero [NatCast E] [NatCast K]
       (polynomial read quotient * polynomial read p +
         Hex.DensePoly.scale (read right) (polynomial read c))).isZero = true := by
   have mapped := data.identity.zero read zero _ _ accepted
-  rw [polynomial_scale read zero left _ data.leftScale.leading data.leftScale.products,
-    polynomial_mul read zero f p.derivative data.inputProduct.first data.inputProduct.second
-      data.inputProduct.products data.inputProduct.sums,
-    polynomial_derivative read zero p data.derivative.leading data.derivative.products,
-    polynomial_add read zero _ _ data.remainder.first data.remainder.second data.remainder.sums,
-    polynomial_mul read zero quotient p data.quotientProduct.first data.quotientProduct.second
-      data.quotientProduct.products data.quotientProduct.sums,
-    polynomial_scale read zero right c data.rightScale.leading data.rightScale.products]
+  rw [Ring.polynomial_scale read zero left _ data.leftScale.products,
+    Ring.polynomial_mul read zero f p.derivative data.inputProduct.products data.inputProduct.sums,
+    Ring.polynomial_derivative read zero p data.derivative.products,
+    Ring.polynomial_add read zero _ _ data.remainder.sums,
+    Ring.polynomial_mul read zero quotient p data.quotientProduct.products data.quotientProduct.sums,
+    Ring.polynomial_scale read zero right c data.rightScale.products]
     at mapped
   exact mapped
 
@@ -157,9 +145,8 @@ theorem Terminal.zero (read : E → K) (zero : read 0 = 0) (a b : Hex.DensePoly 
     (Hex.DensePoly.scale (read scale) (polynomial read a) -
       polynomial read quotient * polynomial read b).isZero = true := by
   have mapped := data.identity.zero read zero _ _ accepted
-  rw [polynomial_scale read zero scale a data.scaling.leading data.scaling.products,
-    polynomial_mul read zero quotient b data.product.first data.product.second
-      data.product.products data.product.sums] at mapped
+  rw [Ring.polynomial_scale read zero scale a data.scaling.products,
+    Ring.polynomial_mul read zero quotient b data.product.products data.product.sums] at mapped
   exact mapped
 
 end Hex.RealClosure.Transport

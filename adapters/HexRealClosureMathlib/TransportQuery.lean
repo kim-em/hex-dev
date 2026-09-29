@@ -12,7 +12,7 @@ public section
 
 namespace Hex.RealClosure.Transport
 
-variable {E : Type u} {K : Type v} [Zero E] [DecidableEq E] [Zero K] [DecidableEq K]
+variable {E : Type u} {K : Type v} [Zero E] [DecidableEq E] [CommRing K] [DecidableEq K]
 
 /-- Interpret exactly the supplied quotient and scales; no division runs. -/
 @[expose] def step (read : E → K) (s : Hex.RemainderStep E) : Hex.RemainderStep K :=
@@ -39,7 +39,7 @@ theorem chain_entry (read : E → K) (zero : read 0 = 0)
     exact ((polynomial_zero read zero 0 (by simp)).mpr rfl).symm
   | some p => simp only [Option.map_some, Option.getD_some]
 
-variable [Add E] [Sub E] [Mul E] [Add K] [Sub K] [Mul K]
+variable [Add E] [Sub E] [Mul E]
 
 /-- One accepted signed recurrence transports from finite scalar work and the
 signs of its two literal scales. No field laws on source expressions are used. -/
@@ -59,7 +59,7 @@ theorem step_check (read : E → K) (zero : read 0 = 0)
   · simpa only [step, right] using accepted.2.1
   · exact data.zero read zero a b c s.leftScale s.quotient s.rightScale accepted.2.2
 
-omit [Add E] [Sub E] [Mul E] [Add K] [Sub K] [Mul K] in
+omit [Add E] [Sub E] [Mul E] in
 /-- Default-indexed step reads retain the exact supplied data. -/
 theorem chain_step (read : E → K) (zero : read 0 = 0)
     (cert : Hex.SignedRemainderChain E) (i : Nat) :
@@ -72,7 +72,7 @@ theorem chain_step (read : E → K) (zero : read 0 = 0)
       (polynomial_zero read zero 0 (by simp)).mpr rfl]
   | some s => simp only [Option.map_some, Option.getD_some]
 
-variable [NatCast E] [NatCast K]
+variable [NatCast E]
 
 /-- Finite arithmetic, leading guards and scale signs for precisely the stored
 initial identity, recurrence entries and terminal pair of one chain. -/

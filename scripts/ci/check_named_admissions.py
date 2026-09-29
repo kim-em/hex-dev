@@ -181,7 +181,9 @@ def check() -> None:
              "HexRealClosureMathlib.SpecializeReduction", "HexRealClosureMathlib.SpecializeMoment",
              "HexRealClosureMathlib.SpecializeReplay", "HexRealClosureMathlib.SpecializeSample", "HexRealClosureMathlib.SpecializeSelected", "HexRealClosureMathlib.SpecializeDescriptor",
              "HexRealClosureMathlib.TransportPolynomial", "HexRealClosureMathlib.TransportProduct",
-             "HexRealClosureMathlib.TransportArithmetic", "HexRealClosureMathlib.TransportQuery", "HexRealClosureMathlib.TransportTests"] + [
+             "HexRealClosureMathlib.TransportArithmetic", "HexRealClosureMathlib.TransportQuery", "HexRealClosureMathlib.TransportTests",
+             "HexRealClosureMathlib.TransportRing", "HexRealClosureMathlib.TransportPower",
+             "HexRealClosureMathlib.TransportTarski", "HexRealClosureMathlib.TransportClosed"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
         "HexSignDetMathlib." + ".".join(path.relative_to(
