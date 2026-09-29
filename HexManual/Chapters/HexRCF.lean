@@ -1398,6 +1398,63 @@ private def independentRootsPass : Bool :=
 #guard independentRootsPass
 ```
 
+The converted coordinates can also be coefficients of a new sign/root problem.
+Write a = √2 and b = √3 in that common field. At the roots of
+`(x − a)(x − b)`, the ordered queries `x − a`, `x − b`, and `a − b` have
+signs `(0,−,−)` and `(+,0,−)`, each once. The impossible pattern `(0,0,−)`
+has count zero. The same check enumerates a before b, then compares roots
+selected by the different linear polynomials `x − a` and `x − b`.
+Both linear derivative words are `[+]`; their equality does not identify
+the roots because the defining polynomials differ.
+
+```lean
+private def independentSign {generator : Hex.AlgebraicNumber}
+    (a : Hex.QAdjoin generator) : Int :=
+  match Hex.RealAlgebraicNumber.ofAlgebraic? a.toAlgebraicNumber with
+  | some value => value.sign
+  | none => Hex.panicWith 0 "nonreal common-field coefficient"
+
+private def independentSignsPass : Bool := Id.run do
+  let common := Hex.QAdjoin.common independentInputs
+  if hr : common.generator.isReal = true then
+    let sign := independentSign
+    let some a := common.entries[0]? | return false
+    let some b := common.entries[1]? | return false
+    let x : DensePoly (Hex.QAdjoin common.generator) :=
+      DensePoly.ofList [0, 1]
+    let qa := x - DensePoly.C a
+    let qb := x - DensePoly.C b
+    let head := qa * qb
+    let some table := determine sign 7 head .negInf .posInf
+      [qa, qb, DensePoly.C (a - b)] | return false
+    let .ok (some roots) := Descriptor.buildRoots sign 7 head
+      .negInf .posInf | return false
+    let some left := Descriptor.validate sign 7
+      ⟨7, qa, .negInf, .posInf, [1], [1]⟩ | return false
+    let some right := Descriptor.validate sign 7
+      ⟨7, qb, .negInf, .posInf, [1], [1]⟩ | return false
+    return table.rows.toList ==
+      [([0, -1, -1], 1), ([1, 0, -1], 1)] &&
+      table.count [0, 0, -1] == 0 &&
+      roots.map (fun d => d.signAt qa) == [0, 1] &&
+      roots.map (fun d => d.signAt qb) == [-1, 0] &&
+      left.compare right == .lt && right.compare left == .gt
+  else return false
+
+#guard independentSignsPass
+```
+
+Here the common generator has degree four. Coefficient arithmetic uses actual
+`QAdjoin` coordinates, and coefficient signs use the selected real algebraic
+embedding. `Hex.SignDetMathlib.CommonFieldConformance.value_eq` proves
+that this conversion equals {name}`Hex.RCF.RealCoefficients.Coefficients.ofField`
+for every coordinate of a real-generated field.
+The value-preservation theorem {name}`Hex.QAdjoin.common_get` connects the
+coordinates to the independently selected original algebraic numbers.
+The table, selected-sign, and comparison correctness theorems apply to that
+embedding; their proofs use only Lean's standard logical axioms and the proved
+shared query and Tau Ceti foundations.
+
 The sign-table and descriptor examples run checked producers and finite
 certificate checks; the changed sign vector above is rejected. The companion
 proves complete real-root counts, selected-root identity and signs using the

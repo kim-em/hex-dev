@@ -82,3 +82,22 @@ implemented descriptor operations, including comparison and re-encoding.
 The infinitesimal sign callbacks are test providers. General coefficient
 interpretation, nested semantic replay and root-sum/Thom correspondence proofs
 remain required. None of these fixtures supplies Phase-4 performance evidence.
+
+`common-fields.jsonl` contains two actual common-number-field cases: independent
+√2/√3 inputs producing a degree-four generator and independently constructed
+∛2/∛4 inputs represented in a degree-three field. Each record includes the
+selected generator interval, both independently selected input intervals,
+QAdjoin coordinates, the checked table, complete root list, selected signs,
+comparison in both directions, re-encoding and rejected stale evidence.
+`scripts/oracle/sign_det_common_fields.py` reconstructs all selected algebraic
+values and checks the coordinates, roots, signs and orders with FLINT `qqbar`
+using exact algebraic arithmetic. It checks the coefficient and context
+bindings and rejects incomplete fixture streams. The oracle never consumes
+Lean's BKR moments, support choices or Thom ordering rule.
+
+```sh
+lake build hexsigndet_emit_common_fields
+.lake/build/bin/hexsigndet_emit_common_fields > conformance-fixtures/HexSignDet/common-fields.jsonl
+python3 scripts/oracle/sign_det_common_fields.py --check
+python3 -m unittest scripts.oracle.test_sign_det_common_fields
+```
