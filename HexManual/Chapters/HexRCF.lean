@@ -1373,9 +1373,11 @@ proved root-sum theorem `HexRealRootsMathlib.Tarski.check_rootSum`.
 The full-word comparison uses Tau Ceti’s delivered Thom identity and order
 theorems through the companion. {name}`Hex.SignDet.Comparison.order_root`
 proves that all three orders returned by an accepted comparison agree with the
-original selected roots. Universal root-list production and mathematical
-sorting are proved; common-product comparison production remains required. The
-separate common-field conversion preserves the selected algebraic values by
+original selected roots. {name}`Hex.SignDet.Descriptor.buildComparison_success`
+proves that the actual comparison constructor succeeds;
+{name}`Hex.SignDet.Descriptor.compare_correct` gives the result of the total
+operation. Universal root-list production and mathematical sorting are also
+proved. The common-field conversion preserves the selected algebraic values by
 the proved `QAdjoin.common_get` theorem.
 
 # Cross-references

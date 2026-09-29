@@ -107,7 +107,7 @@ theorem Descriptor.compare_eq_iff {context : Ctx}
   · by_cases hyx : right.root f hz h1 ha hs hm hnat hsign < left.root f hz h1 ha hs hm hnat hsign
     · simp [hxy, hyx, ne_of_gt hyx]
     · have he := le_antisymm (le_of_not_gt hyx) (le_of_not_gt hxy)
-      simp [hxy, he]
+      simp [he]
 
 include hz h1 ha hs hm hnat hsign hn hi hd in
 /-- Strict increasing order returned by the total comparison is exactly the
