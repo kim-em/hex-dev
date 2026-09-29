@@ -71,8 +71,9 @@ class AdmissionScannerTests(unittest.TestCase):
             base = root / "HexRealClosure/BaseTests.lean"
             model = root / "HexRealClosureMathlib/BaseTests.lean"
             catalog = root / "HexRealClosure/BaseCatalogTests.lean"
+            deflation = root / "conformance/HexRealClosure/DeflationConformance.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, dependency):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
@@ -88,6 +89,7 @@ class AdmissionScannerTests(unittest.TestCase):
             base.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             model.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             catalog.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            deflation.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
@@ -113,6 +115,13 @@ class AdmissionScannerTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "unapproved admission in .*Base(Catalog)?Tests"):
                         audit.check()
                     probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                deflation.unlink()
+                with self.assertRaisesRegex(ValueError, "missing local import"):
+                    audit.check()
+                deflation.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexRealClosure/DeflationConformance"):
+                    audit.check()
+                deflation.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 handle.unlink()
                 with self.assertRaisesRegex(ValueError, "missing local import"):
                     audit.check()

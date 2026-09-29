@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Deflation
+public import HexRealClosure.ZeroFactor
 public import HexOrderedFn.Infinitesimal
 public import Lean.Data.Json.Printer
 public import Lean.Data.Json.FromToJson.Basic
@@ -36,6 +37,19 @@ private def emit {E : Type} [Zero E] [DecidableEq E] [One E]
 
 private def emitRat := emit (E := Rat) (depth := 0) (encode := fun a => .str (toString a))
 
+private def emitZero {E : Type} [Zero E] [DecidableEq E] [One E]
+    [Add E] [Sub E] [Mul E] (name : String) (depth : Nat)
+    (encode : E → Lean.Json) (p : DensePoly E) : IO Unit := do
+  let result := ZeroFactor.remove p
+  IO.println (Lean.Json.mkObj [
+    ("kind", .str "zero-factor"), ("name", .str name), ("depth", Lean.toJson depth),
+    ("coefficients", .arr (p.toArray.map encode)),
+    ("cofactor", .arr (result.1.toArray.map encode)),
+    ("multiplicity", Lean.toJson result.2)]).compress
+
+private def emitZeroRat := emitZero (E := Rat) (depth := 0)
+  (encode := fun a => .str (toString a))
+
 def main : IO Unit := do
   emitRat "zero" 0 0
   emitRat "constant" (DensePoly.C 3) 0
@@ -55,3 +69,18 @@ def main : IO Unit := do
   let nested := linearFactor first * linearFactor delta
   emit "remove second infinitesimal" 2 nestedFraction nested delta
   emit "remove first infinitesimal" 2 nestedFraction nested first
+  emitZeroRat "extract zero polynomial" 0
+  emitZeroRat "extract positive constant" (DensePoly.C 3)
+  emitZeroRat "extract negative constant" (DensePoly.C (-3))
+  emitZeroRat "extract nonzero constant coefficient" (linearFactor (1 : Rat))
+  emitZeroRat "extract pure power" (DensePoly.ofCoeffs #[0, 0, 0, 0, 0, 0, -5])
+  let x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
+  emitZeroRat "extract mixed fractional scalar"
+    (DensePoly.scale (-(3 / 2 : Rat)) (x * x *
+      DensePoly.ofCoeffs #[-2, 0, 1] * linearFactor 3))
+  let xe : DensePoly (RationalFn Rat) := DensePoly.ofCoeffs #[0, 1]
+  emitZero "extract infinitesimal scalar" 1 fraction
+    (DensePoly.scale epsilon (xe * xe * xe * linearFactor epsilon))
+  let xd : DensePoly (RationalFn (RationalFn Rat)) := DensePoly.ofCoeffs #[0, 1]
+  emitZero "extract nested scalar" 2 nestedFraction
+    (DensePoly.scale (-delta) (xd * xd * nested))
