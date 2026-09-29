@@ -125,3 +125,46 @@ memory. Its allocated-byte field is unavailable, so resident-set observations
 do not complete the separate allocated-byte requirement. Stored witness bits
 and serialized certificate sizes likewise do not measure temporary peak bits
 or allocation. This family alone does not complete Phase 4 or #10377.
+
+## Retained collection at 1f55c4de9
+
+The [raw records](data/sign-det-joint-timing/1f55c4de9/metadata.json) bind the
+measurement to source `1f55c4de910bcc9715031d8ff03d081491020726`, CPU 20 on
+`chungus2`, and the pinned shared harness. This collection used a 60-second
+child-process cap. It retained 30 successful completion observations and 24
+successful comparison observations, plus six `killed_at_cap` comparison records
+at degree 63. Production and replay were not scheduled because this version of
+the collector stopped when validating the capped comparison. No records are
+removed or counted as successful timings when they lack an answer.
+
+Median per-call times, excluding preparation and calibration, in milliseconds:
+
+| Source degree | Complete both sources | Compare completed sources |
+| --- | ---: | ---: |
+| 3 | 1.040 | 12.675 |
+| 7 | 5.357 | 78.753 |
+| 15 | 28.720 | 517.718 |
+| 31 | 169.252 | 3713.573 |
+| 63 | 1110.296 | 6 capped trials |
+
+Both harness verdicts are **inconclusive**. Their reported slopes are −0.57246
+and −0.56848 for `log(T/n³)` against `log n`; these are residual slopes, not
+negative slopes of elapsed time. The comparison also carries the
+`truncated_at_cap` advisory. The cap includes preparation, environment capture
+and calibration as well as the timed body. Its failure does not establish a
+60-second lower bound for one comparison call.
+
+The original metadata records the harness revision but does not establish a
+clean package checkout at the beginning of collection. A separate
+[harness inspection](data/sign-det-joint-timing/1f55c4de9/harness-inspection.json)
+records a clean checkout matching the manifest during collection. A
+[post-collection inspection](data/sign-det-joint-timing/1f55c4de9/post-collection-verification.json)
+checks that source, clean git revision and executable still match the original
+metadata after failure. These observations retain their actual scope; they are
+not rewritten as start-of-run checks. The corrected collector checks harness
+provenance before and after collection and runs all arms before validation.
+
+This partial collection does not establish the joint-query performance gate.
+The corrected collection uses a 180-second operational cap to accommodate the
+largest input. All original observations remain available. No further unchanged
+rerun is permitted for this family after that collection.
