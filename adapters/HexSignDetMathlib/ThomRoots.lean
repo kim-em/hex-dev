@@ -143,6 +143,16 @@ theorem Descriptor.buildRoots_success (context : Ctx) (p : DensePoly E)
     rw [hrows] at hextract
     exact ⟨out, Descriptor.buildRoots_ofTable p a b domain hd t ht hp out hextract⟩
 
+include hz h1 ha hs hm hnat hn hi hsign in
+/-- The actual producer succeeds exactly on the original valid domains. -/
+theorem Descriptor.buildRoots_isSome (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) :
+    (∃ out, Descriptor.buildRoots sign context p a b = .ok (some out)) ↔
+      HexSturmMathlib.Domain f hz p a b := by
+  constructor
+  · rintro ⟨out, hout⟩
+    exact Descriptor.buildRoots_domain f hz h1 ha hs hm hnat hsign hn hi hout
+  · exact Descriptor.buildRoots_success f hz h1 ha hs hm hnat hsign hn hi context p a b
 
 include h1 ha hs hm hnat hsign in
 /-- Every successful actual root list is strictly sorted by the mathematical
@@ -178,6 +188,5 @@ theorem Descriptor.buildRoots_roots (context : Ctx) (p : DensePoly E)
     hn hi context p a b hdom
   obtain ⟨hcover, hnd⟩ := Descriptor.buildRoots_coverage f hz h1 ha hs hm hnat hsign hout
   exact ⟨out, hout, hcover, hnd, Descriptor.buildRoots_ordered f hz h1 ha hs hm hnat hsign hout⟩
-
 
 end Hex.SignDet

@@ -83,6 +83,9 @@ end Noncanonical
 /-- info: 'Hex.SignDet.Descriptor.buildRoots_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.buildRoots_success
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.buildRoots_isSome
 /-- info: 'Hex.SignDet.Descriptor.buildRoots_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.buildRoots_ordered

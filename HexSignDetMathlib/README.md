@@ -226,9 +226,9 @@ uses the common full derivative word and count-one descriptors.
 the original selected roots, using their root-preserving re-encodings and the
 actual full-word comparator theorem.
 The executable API retains its internal diagnostics for arbitrary coefficient
-operations. The companion rules out selected-sign and completion errors under
-lawful coefficients. The domain-exact total table wrappers are available; root
-common-product comparison production retains its separate proof obligation.
+operations. The companion rules out selected-sign, completion and enumeration
+errors under lawful coefficients. The domain-exact total table wrappers are
+available; common-product comparison production remains a separate obligation.
 
 `Descriptor.buildSigns_success` proves that the actual selected-sign producer
 succeeds for every validated descriptor and finite ordered query list under
@@ -291,7 +291,10 @@ discharges every actual comparison guard. `Thom.insert_success` and
 as strict mathematical order. `Descriptor.buildRoots_roots` combines actual
 success, exact coverage, no duplicates and strict ordering. Constants and
 finite/infinite endpoints are included. The generic interpretation admits
-noninjective coefficient storage and non-Archimedean fields.
+noninjective coefficient storage and any real closed target field, including
+non-Archimedean ones. `Descriptor.buildRoots_isSome` states actual success iff
+the original domain is valid, supplying the SPEC’s `roots_isSome` contract;
+`buildRoots_roots` supplies its `roots_correct` contract.
 Conformance exercises whole-line and bounded domains, empty results for
 constants and root-free heads, negative leading coefficients, noncanonical
 coefficients, and the actual cubic field ℚ(∛2). It also enumerates 0 and ε

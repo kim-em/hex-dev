@@ -67,7 +67,7 @@ theorem Thom.insert_perm {sign : E → Int} {context : Ctx}
           exact (List.Perm.cons e (ih hi)).trans (List.Perm.swap _ _ _)
 
 /-- Finite insertion preserves strict sortedness by the proved comparator
-laws. Correspondence with the ordering of real roots remains separate. -/
+laws. The companion's `buildRoots_ordered` identifies the mathematical order. -/
 theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
     (d : Descriptor E Ctx sign context) {ds out : List (Descriptor E Ctx sign context)}
     (hs : ds.Pairwise (fun a b => a.fullOrder b = some .lt))
@@ -323,8 +323,9 @@ variable [Neg E] [Inv E]
 
 /-- Enumerate all full encodings and order them by Thom's rule. Only invalid
 root domains return `none`; arbitrary coefficient operations retain internal
-diagnostics. The companion proves actual success under lawful interpretations. Constants admit no well-formed full encoding; their
-branch retains the literal per-descriptor checking path. -/
+diagnostics. The companion proves actual success under lawful interpretations.
+Constants admit no well-formed full encoding; their branch retains the literal
+per-descriptor checking path. -/
 def Descriptor.buildRoots (sign : E → Int) (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E) : Except BuildError (Option (List (Descriptor E Ctx sign context))) :=
   match hd : Sturm.prepare sign p a b with
@@ -491,7 +492,8 @@ theorem Descriptor.buildRoots_perm {sign : E → Int} {context : Ctx} {p : Dense
   exact ⟨domain, hd, t, ht, rootsFrom_perm sign context _ _ hs⟩
 
 /-- The public entry point is strictly sorted by its actual finite comparator,
-without caller-supplied order laws. Real-root order needs Thom semantics. -/
+without caller-supplied order laws. The companion's `buildRoots_ordered`
+identifies this order with the mathematical root order. -/
 theorem Descriptor.buildRoots_sorted {sign : E → Int} {context : Ctx}
     {p : DensePoly E} {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
     (h : buildRoots sign context p a b = .ok (some out)) :
