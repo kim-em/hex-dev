@@ -43,6 +43,70 @@ theorem packQAdjoin_complex {context : Nat} {d : Root context} (h : Root.Handle 
       (Complex.ofRealHom h.canonical.toReal)
   exact (Polynomial.eval_map_apply _ _).symm
 
+/-- Coordinates transported along an equality of generators retain their
+selected value. -/
+theorem packQAdjoinOf_complex {context : Nat} {d : Root context}
+    {a : Hex.AlgebraicNumber} (h : Root.Handle d)
+    (ha : a = h.canonical.toAlgebraic) (c : Hex.QAdjoin a) :
+    (h.packQAdjoinOf ha c).value.toAlgebraic.toComplex =
+      c.toAlgebraicNumber.toComplex := by
+  cases ha
+  exact h.packQAdjoin_complex c
+
+/-- Check that externally held fixed-field coordinates use this handle's
+selected generator before packing them. -/
+@[expose] def packQAdjoin? {context : Nat} {d : Root context}
+    {a : Hex.AlgebraicNumber} (h : Root.Handle d) (c : Hex.QAdjoin a) :
+    Option (Element d) :=
+  if hsame : a == h.canonical.toAlgebraic then
+    some (h.packQAdjoinOf
+      (Hex.AlgebraicNumber.toComplex_injective
+        ((Hex.AlgebraicNumber.beq_iff a h.canonical.toAlgebraic).mp hsame)) c)
+  else none
+
+/-- The checked reader accepts exactly the selected generator. -/
+theorem packQAdjoin?_isSome_iff {context : Nat} {d : Root context}
+    {a : Hex.AlgebraicNumber} (h : Root.Handle d) (c : Hex.QAdjoin a) :
+    (h.packQAdjoin? c).isSome = true ↔ a = h.canonical.toAlgebraic := by
+  unfold packQAdjoin?
+  split
+  · case isTrue hsame =>
+      constructor
+      · intro _
+        exact Hex.AlgebraicNumber.toComplex_injective
+          ((Hex.AlgebraicNumber.beq_iff a h.canonical.toAlgebraic).mp hsame)
+      · intro _
+        rfl
+  · case isFalse hsame =>
+      constructor
+      · intro hf
+        cases hf
+      · intro ha
+        exact False.elim (hsame
+          ((Hex.AlgebraicNumber.beq_iff a h.canonical.toAlgebraic).mpr
+            (congrArg Hex.AlgebraicNumber.toComplex ha)))
+
+/-- Accepted coordinates preserve their canonical algebraic value. -/
+theorem packQAdjoin?_sound {context : Nat} {d : Root context}
+    {a : Hex.AlgebraicNumber} (h : Root.Handle d) (c : Hex.QAdjoin a)
+    {e : Element d} (he : h.packQAdjoin? c = some e) :
+    e.value.toAlgebraic.toComplex = c.toAlgebraicNumber.toComplex := by
+  unfold packQAdjoin? at he
+  split at he
+  · case isTrue hsame =>
+      cases he
+      exact h.packQAdjoinOf_complex _ c
+  · simp at he
+
+/-- Accepted coordinates also pass the independent real-algebraic check. -/
+theorem packQAdjoin?_checked {context : Nat} {d : Root context}
+    {a : Hex.AlgebraicNumber} (h : Root.Handle d) (c : Hex.QAdjoin a)
+    {e : Element d} (he : h.packQAdjoin? c = some e) :
+    Hex.RealAlgebraicNumber.ofAlgebraic? c.toAlgebraicNumber = some e.value := by
+  apply (Hex.RealAlgebraicNumber.ofAlgebraic?_eq_some _ _).2
+  apply Hex.AlgebraicNumber.toComplex_injective
+  exact (h.packQAdjoin?_sound c he).symm
+
 /-- The checked real conversion of the exact fixed-field result returns the
 same real-algebraic value as the packed Hex element. -/
 theorem packQAdjoin_checked {context : Nat} {d : Root context} (h : Root.Handle d)
@@ -103,3 +167,15 @@ end Hex.RealClosure.Root.Handle
 /-- info: 'Hex.RealClosure.Root.Handle.packQAdjoin_mul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Root.Handle.packQAdjoin_mul
+/-- info: 'Hex.RealClosure.Root.Handle.packQAdjoinOf_complex' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Root.Handle.packQAdjoinOf_complex
+/-- info: 'Hex.RealClosure.Root.Handle.packQAdjoin?_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Root.Handle.packQAdjoin?_sound
+/-- info: 'Hex.RealClosure.Root.Handle.packQAdjoin?_isSome_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Root.Handle.packQAdjoin?_isSome_iff
+/-- info: 'Hex.RealClosure.Root.Handle.packQAdjoin?_checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Root.Handle.packQAdjoin?_checked

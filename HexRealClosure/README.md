@@ -125,11 +125,15 @@ at each call repeats the search.
 `h.packQAdjoin` accepts exact `QAdjoin h.canonical.toAlgebraic` coordinates
 and packs them using the cached selected root. The generator in the input type
 prevents coordinates for a different algebraic root from being used with this
-handle. The companion proves that packing preserves the selected complex
-value, agrees with the checked real conversion of the exact field result,
-and preserves addition and multiplication at the represented value. A
-runnable example checks the generator and its square against a reducible
-rational descriptor selecting √2.
+handle. `h.packQAdjoinOf` accepts coordinates for a generator proved equal
+to the selected one. In the companion, `h.packQAdjoin?` checks generator
+identity before packing externally held coordinates and proves that accepted
+results preserve the selected value. The companion also proves agreement with
+the checked real conversion of the exact field result and preservation of
+addition and multiplication at the represented value. A runnable example
+checks the signs distinguishing the selected √2 from the other roots of a
+reducible descriptor and compares field and packed multiplication with
+different stored polynomials.
 
 `Yun.decompose` runs the specified finite recurrence over an executable
 ordered field. `Yun.decomposeRaw` runs the same recurrence on packed tower

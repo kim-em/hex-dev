@@ -36,11 +36,12 @@ The division of responsibility is:
 | [hex-sign-det](hex-sign-det.md) | Complete BKR tables and single-polynomial descriptors: validation, root identity/order, sign at a root and re-encoding. |
 | [hex-ordered-fn](hex-ordered-fn.md) | Exact rational-function fields, caller-supplied certified real-constant approximations, infinitesimal orders and proof-founded total coefficient search. |
 | [hex-real-algebraic](hex-real-algebraic.md) | Independent rational-base fast path; exact comparison and sorted roots with multiplicities. |
+| [hex-number-field](../../HexNumberField/SPEC/hex-number-field.md) | Exact `QAdjoin` coordinates and canonical algebraic-number conversion for the rational selected-root bridge. |
 | This library | Generic characteristic-zero Yun decomposition, staged contexts, executable ordered-field carriers, selected-root arithmetic, splitting/transport, root isolation, tower sampling and exploration. |
 
-The [number-field SPEC](../../HexNumberField/SPEC/hex-number-field.md)
-provides precedent for lazy selected roots, but its fixed irreducible,
-complex-embedded fields are not the generic tower representation.
+The number-field fixed irreducible, complex-embedded fields also provide
+precedent for lazy selected roots. Generic towers use the staged contexts
+specified below.
 [`SimpleRealRoot`](../../HexRealRoots/SimpleRealRoot.lean) uses integer
 polynomials and a rational separation bound; interval overlap there cannot
 be transplanted to infinitesimal towers.

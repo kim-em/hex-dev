@@ -432,18 +432,22 @@ private def cachedNonmonic : Option (Nat × Bool × Int) := do
 #eval cachedNonmonic
 #guard cachedNonmonic == some (3, true, -1)
 
-/-- Exact fixed-field coordinates use the same selected generator as the
-cached real-closure handle, including after field multiplication. -/
-private def qadjoinPack : Option (Bool × Bool × Int) := do
+/-- Fixed-field and packed multiplication agree at the selected √2 even
+when their stored polynomials differ; the two signs distinguish √2 from the
+other roots of the reducible descriptor. -/
+private def qadjoinPack : Option (Int × Int × Bool × Bool) := do
   let d ← Root.validate 7 raw
   let h := d.handle
   let generator := h.canonical.toAlgebraic.toQAdjoin
-  let square := generator * generator
-  return (h.equal (h.packQAdjoin generator) (h.pack x),
-    h.equal (h.packQAdjoin square) (h.pack 2),
-    h.sign (h.packQAdjoin (square - 2)))
+  let c := 1 + generator
+  let packed := h.packQAdjoin c
+  let fieldSquare := h.packQAdjoin (c * c)
+  let packedSquare := h.mul packed packed
+  return (h.sign (h.packQAdjoin generator),
+    h.sign (h.packQAdjoin (generator - 2)),
+    h.equal fieldSquare packedSquare, fieldSquare == packedSquare)
 
-#guard qadjoinPack == some (true, true, 0)
+#guard qadjoinPack == some (1, -1, true, false)
 
 /-- Ordinary polynomial division uses the same handle for every coefficient
 operation, including the semantic zero tests on leading coefficients. -/
