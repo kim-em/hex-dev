@@ -361,8 +361,7 @@ domain. The FLINT/SymPy oracle recomputes the first accepted bound, checks the
 selected route, and verifies actual head/endpoints and root counts. It also
 checks that the accepted bound contains every real root. Its rejection
 tests detect wrong routes, later bounds, stale heads, finite whole-line endpoints,
-wrong counts and failure on valid input. The existing count-soundness dependency
-#10389 remains in native root-count correspondence, not these dispatch proofs.
+wrong counts and failure on valid input. Native root-count correspondence consumes the proved root-sum theorem.
 
 ### Exact deflation provenance
 
@@ -381,3 +380,34 @@ one, subtraction and multiplication. They need no root-count theorem, root
 ordering, squarefreeness or sign interpretation, and their axiom guards use only
 the standard three axioms. They provide factor provenance for descriptor
 completion and multiplicity restoration, rather than a complete root set.
+
+### Descriptor completion of capped isolation
+
+`Isolation.complete? sign context p` runs the actual finite bound search,
+capped bisection and shared descriptor enumeration. It returns a checked
+`Completion` containing the search trace, every emitted cut point and the
+actual descriptor list from each retained cell. Whole-line fallback enumerates
+its stored domain. Absent search domains stay `none`; internal producer
+failures remain explicit errors and cannot become empty root sets.
+
+`Completion.coverage` proves that these actual output values are exactly all
+roots of the original input. `Completion.nodup` proves each root appears once,
+using distinct emitted points, their exclusion from the remaining head,
+disjoint retained cells and the shared enumeration's coverage theorem. The
+proofs apply to raw coefficients through a zero-reflecting interpretation in
+an ordered real closed field, and use only the standard three axioms.
+
+This intermediate output does not claim globally sorted root values or full
+producer success. It is for nonzero squarefree input; Yun multiplicities and
+the separate all-roots result for the zero polynomial must still be assembled.
+Enumeration currently prepares the retained domains again; the requested
+upstream prepared-root enumeration API remains a subsequent integration.
+
+`hexrealclosure_isolation_conformance` emits ten actual executions. The pinned
+Z3 RCF oracle independently checks inputs, finite-bound policy, node caps,
+scalar-preserving deflation, cell counts, selected derivative words, complete
+root coverage and absence of duplicates. Cases include nonmonic input,
+negative leading scalar with an emitted zero, a nonquadratic generator,
+four real roots, a whole-line inverse infinitesimal, close infinitesimal roots
+requiring completion after the rational bisection cap, and invalid domains.
+The oracle does not replay descriptor proof graphs or prove producer totality.

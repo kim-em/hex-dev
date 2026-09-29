@@ -610,7 +610,8 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.Deflation, `HexRealClosureMathlib.Bisection,
     `HexRealClosureMathlib.BisectionRoots, `HexRealClosureMathlib.BisectionFrontier,
     `HexRealClosureMathlib.BisectionCounts, `HexRealClosureMathlib.Isolation,
-    `HexRealClosureMathlib.BisectionFactor, `HexRealClosureMathlib.IsolationFactor]
+    `HexRealClosureMathlib.BisectionFactor, `HexRealClosureMathlib.IsolationFactor,
+    `HexRealClosureMathlib.IsolationRoots]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
@@ -1588,6 +1589,10 @@ lean_exe hexrealclosure_bench where
 lean_exe hexrealclosure_bounds_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.BoundsConformance
+
+lean_exe hexrealclosure_isolation_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.IsolationConformance
 
 lean_exe hexrealclosure_deflation_conformance where
   srcDir := "conformance"
