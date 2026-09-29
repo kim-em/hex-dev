@@ -15,11 +15,17 @@ solve and returns the ordered table hash. The check callback checks the supplied
 system using the existing checker. Neither supplies polynomial coefficients or
 implements a new query kernel.
 
-Untimed input inspection additionally compares the entire system, including its
-integer inverse and denominator, with the polynomial reference producer on the
+Untimed input inspection compares the entire system with the polynomial
+reference producer on the
 existing maximal-support interpolation family for `s=1,2,3`. No polynomial
 comparison is claimed at `s=4,5`; their larger matrices represent the same complete
-finite moment problem. Output hashes are correctness guards, not proofs.
+finite moment problem. The independent part of this comparison is that the
+Tarski-query moments equal the finite observation sums, in the same row and column
+order. Both paths use `solveSystem`, so matching inverse witnesses are a consistency
+check rather than an independent inverse oracle. Output hashes are correctness
+guards, not proofs. They are bound to deterministic prepared inputs through the
+recorded source revision, executable hash and parameter; the child protocol does
+not export a separate input digest.
 
 ## Cost model derived before measurement
 
@@ -78,8 +84,9 @@ the timed callbacks; child resident-set observations include preparation and run
 startup, and must not be described as isolated matrix allocation or peak live heap.
 Neither operation has an allocated-byte counter.
 
-The harness drops the first parameter for its fixed 20% warmup trim. The retained
-parameter range is `s=2,…,5`, whose logarithmic span `log(5/2)` is less than the
+The harness omits parameters below 2 when forming normalized ratios. Its fixed
+20% warmup setting drops zero of the four remaining ratios, as recorded in both
+exports. The retained parameter range is `s=2,…,5`, whose logarithmic span `log(5/2)` is less than the
 pinned fitter's minimum span 1. Consequently it reports no slope and uses its
 unchanged multiplicative range check. The normalized median constants vary by
 3.70 for solve and 8.36 for check, exceeding its 1.5 narrow-range allowance.
@@ -88,7 +95,27 @@ an outstanding performance gate. It is not evidence of a passing upper bound;
 these registrations did not qualify for that mode.
 
 The source-derived cubic scalar-operation count is separate from the unresolved
-wall-time scaling. The current input sizes can expose lower-order overhead and
+wall-time scaling. In particular, the rational elimination skips zero multipliers.
+The existing [one-column elimination inventory](data/sign-det-compare/6f07e03db/inventory-full.jsonl)
+uses this identical moment matrix and visits 6, 54, 378, 2430 and 15066 nonzero
+multipliers. Re-running `inspect-full` with the measured executable reproduces
+that inventory exactly. These finite counts equal `2(6^s - 3^s)`. Since each
+elimination updates two rows of length `3^s`, it executes
+`4(18^s - 9^s)` rational multiply/add pairs in those row additions, alongside
+the cubic integer check. The rational and integer operations need not have equal
+wall-time costs. The separate size-243 check median is about 3.6% of the solve
+median; this is a comparison of separate timings, not profile attribution of
+3.6% inside a solve call. The cubic scalar-operation bound alone does not predict
+which part dominates at these finite sizes.
+
+The `inverseIdentityScalarPairs` inventory field is computed from the dense-loop
+model (`r^3`), not a sampled operation counter. The elimination counts above come
+from the existing one-column inspection of the actual row-reduction states.
+At the largest solve inputs and largest check input, the harness uses one inner
+call per sample; smaller inputs use repeated calls. All six completed trials at
+each size are retained.
+
+The current input sizes can expose lower-order overhead and
 unequal costs of scalar operations; these possibilities are not established by
 these timings. A representative profile and a wider independently planned schedule
 are needed before deciding whether the wall-time declaration or implementation

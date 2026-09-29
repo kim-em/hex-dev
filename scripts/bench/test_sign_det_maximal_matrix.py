@@ -100,6 +100,30 @@ class MatrixEvidenceTests(unittest.TestCase):
             with self.subTest(key=key), self.assertRaises(ValueError):
                 self.result_check(result)
 
+    def test_wrong_export_identity_or_verdict(self):
+        for key, value in (("function", bench.PREFIX+"runCheck"), ("kind", "fixed"),
+                           ("hashable", False), ("verdict", "passed")):
+            result = copy.deepcopy(self.result)
+            result[key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                self.result_check(result)
+        with TemporaryDirectory() as d:
+            path = Path(d)/"export.json"
+            for export in ({"export_schema_version": 2, "results": [self.result]},
+                           {"export_schema_version": 1, "results": []},
+                           {"export_schema_version": 1, "results": [self.result, self.result]}):
+                path.write_text(json.dumps(export))
+                with self.subTest(export=export), self.assertRaises(ValueError):
+                    bench.validate_export(path, "runSolve", self.expected, "source")
+
+    def test_retained_model_ratios_follow_harness_filter(self):
+        root = bench.ROOT/"reports/data/sign-det-maximal-matrices/a7c9b34fb"
+        for name in bench.KEYS:
+            result = json.loads((root/(name+".json")).read_text())["results"][0]
+            self.assertEqual([p for p, _ in result["ratios"]], [2, 3, 4, 5])
+            self.assertEqual(result["verdict_dropped_leading"], 0)
+            self.assertIsNone(result["slope"])
+
     def test_source_or_schedule_changes(self):
         for mutate in (lambda r: r["env"].update(git_commit="other"),
                        lambda r: r["env"].update(git_dirty=True),
