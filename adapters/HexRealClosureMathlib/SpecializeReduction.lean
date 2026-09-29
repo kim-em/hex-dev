@@ -135,3 +135,258 @@ theorem specialize_near (embedding : F →+* ℝ) (ordered : StrictMono embeddin
 #print axioms Hex.SignDet.ReductionStep.specialize_near
 
 end Hex.SignDet.ReductionStep
+
+namespace Hex.RealClosure.Specialize
+variable {F : Type} [Field F] [DecidableEq F]
+attribute [local instance 2000] Field.toGrindField
+
+/-- Literal polynomial one specializes unconditionally. -/
+theorem polynomial_one (embedding : F →+* ℝ) (t : ℝ) :
+    polynomial embedding (1 : Hex.DensePoly (Hex.RationalFn F)) t = 1 := by
+  classical
+  apply Hex.DensePoly.ext_coeff
+  intro i
+  rw [polynomial_coeff]
+  change evalMapped embedding ((Hex.DensePoly.C (1 : Hex.RationalFn F)).coeff i) t =
+    (Hex.DensePoly.C (1 : ℝ)).coeff i
+  rw [Hex.DensePoly.coeff_C, Hex.DensePoly.coeff_C]
+  split_ifs
+  · exact evalMapped_one embedding t
+  · change evalMapped embedding (0 : Hex.RationalFn F) t = 0
+    exact evalMapped_zero embedding t
+
+end Hex.RealClosure.Specialize
+
+namespace Hex.SignDet.Reduction
+open RealClosure.Specialize
+attribute [local instance 2000] Field.toGrindField
+variable {F : Type} [Field F] [DecidableEq F]
+
+/-- Substitute the supplied steps and result, preserving the factor order. -/
+@[expose] noncomputable def specialize (embedding : F →+* ℝ) (t : ℝ)
+    (r : Reduction (RationalFn F)) : Reduction ℝ := by
+  classical
+  exact ⟨r.steps.map (ReductionStep.specialize embedding t), polynomial embedding r.result t⟩
+
+/-- The finite obligations of each actual matched factor/step in a replay.
+A final zero-difference equality needs no additional evaluation guard. -/
+@[expose] noncomputable def fractionsFrom (p : DensePoly (RationalFn F)) :
+    DensePoly (RationalFn F) → List (Nat × DensePoly (RationalFn F)) →
+      List (ReductionStep (RationalFn F)) → Finset (RationalFn F)
+  | prev, (_, q) :: fs, s :: ss =>
+      s.fractions p prev q ∪ fractionsFrom p s.next fs ss
+  | _, _, _ => ∅
+
+/-- Finite guards for the positive-degree head and the complete reduction. -/
+@[expose] noncomputable def fractions (r : Reduction (RationalFn F))
+    (p : DensePoly (RationalFn F)) (qs : List (DensePoly (RationalFn F)))
+    (es : List Nat) : Finset (RationalFn F) := by
+  classical
+  exact p.toArray.toList.toFinset ∪ fractionsFrom p 1 (factors qs es) r.steps
+
+/-- Each matched factor/step and the final actual polynomial equality survive
+finite guarded substitution. Missing or reordered steps cannot be accepted. -/
+theorem checkFrom_specialize (embedding : F →+* ℝ) (t : ℝ)
+    (sign : RationalFn F → Int) (p prev : DensePoly (RationalFn F))
+    (fs : List (Nat × DensePoly (RationalFn F)))
+    (ss : List (ReductionStep (RationalFn F))) (result : DensePoly (RationalFn F))
+    (data : ∀ x ∈ fractionsFrom p prev fs ss,
+      Regular embedding t x ∧ (evalMapped embedding x t = 0 ↔ x = 0) ∧
+      (SignType.sign (evalMapped embedding x t) : Int) = sign x)
+    (accepted : checkFrom sign p prev fs ss result = true) :
+    checkFrom (fun x : ℝ => (SignType.sign x : Int)) (polynomial embedding p t)
+      (polynomial embedding prev t) (fs.map (fun (i, q) => (i, polynomial embedding q t)))
+      (ss.map (ReductionStep.specialize embedding t)) (polynomial embedding result t) = true := by
+  classical
+  induction fs generalizing prev ss with
+  | nil =>
+    cases ss with
+    | nil =>
+      simp only [checkFrom] at accepted
+      have equal : prev = result := (HexPolyMathlib.equiv (R := RationalFn F)).injective
+        ((ReductionStep.subIsZero_eq _ _).mp accepted)
+      subst result
+      exact (ReductionStep.subIsZero_eq _ _).mpr rfl
+    | cons s ss => simp [checkFrom] at accepted
+  | cons pair fs ih =>
+    obtain ⟨i, q⟩ := pair
+    cases ss with
+    | nil => simp [checkFrom] at accepted
+    | cons s ss =>
+      simp only [checkFrom, Bool.and_eq_true] at accepted
+      simp only [List.map_cons, checkFrom, Bool.and_eq_true]
+      constructor
+      · exact s.check_specialize embedding t sign p prev q i
+          (fun x hx => data x (Finset.mem_union_left _ hx)) accepted.1
+      · exact ih s.next ss (fun x hx => data x (Finset.mem_union_right _ hx)) accepted.2
+
+/-- Factor substitution retains duplicate positions and exponent repetitions. -/
+theorem factors_specialize (embedding : F →+* ℝ) (t : ℝ)
+    (qs : List (DensePoly (RationalFn F))) (es : List Nat) :
+    factors (qs.map (fun q => polynomial embedding q t)) es =
+      (factors qs es).map (fun (i, q) => (i, polynomial embedding q t)) := by
+  simp only [factors, List.zip_map_left, List.zipIdx_map, List.flatMap_map,
+    List.map_flatMap, List.map_replicate, Prod.map, id_eq]
+
+/-- Preserve the complete reduced-moment checker, including the positive head
+and exponent guards and the final declared query polynomial. -/
+theorem check_specialize (embedding : F →+* ℝ) (t : ℝ)
+    (sign : RationalFn F → Int) (p : DensePoly (RationalFn F))
+    (qs : List (DensePoly (RationalFn F))) (es : List Nat) (r : Reduction (RationalFn F))
+    (data : ∀ x ∈ r.fractions p qs es,
+      Regular embedding t x ∧ (evalMapped embedding x t = 0 ↔ x = 0) ∧
+      (SignType.sign (evalMapped embedding x t) : Int) = sign x)
+    (accepted : r.check sign p qs es = true) :
+    (r.specialize embedding t).check (fun x : ℝ => (SignType.sign x : Int))
+      (polynomial embedding p t) (qs.map (fun q => polynomial embedding q t)) es = true := by
+  classical
+  have p_data i (hi : i < p.size) := data (p.coeff i)
+    (Finset.mem_union_left _ (List.mem_toFinset.mpr (coefficient_mem p i hi)))
+  have source := accepted
+  simp only [check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at source
+  simp only [check, specialize, polynomial_degree embedding p t (fun i hi => (p_data i hi).2.1),
+    List.length_map, Bool.and_eq_true, decide_eq_true_eq, and_assoc]
+  refine ⟨source.1, source.2.1, source.2.2.1, ?_⟩
+  rw [factors_specialize, ← polynomial_one embedding t]
+  exact checkFrom_specialize embedding t sign p 1 (factors qs es) r.steps r.result
+    (fun x hx => data x (Finset.mem_union_right _ hx)) source.2.2.2
+
+variable [LinearOrder F] [IsStrictOrderedRing F]
+
+/-- One common neighborhood preserves the complete supplied reduction. -/
+theorem specialize_near (embedding : F →+* ℝ) (ordered : StrictMono embedding)
+    (p : DensePoly (RationalFn F)) (qs : List (DensePoly (RationalFn F)))
+    (es : List Nat) (r : Reduction (RationalFn F))
+    (accepted : r.check (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) p qs es = true) :
+    ∃ η > (0 : ℝ), ∀ t, 0 < t → t < η →
+      (r.specialize embedding t).check (fun x : ℝ => (SignType.sign x : Int))
+        (polynomial embedding p t) (qs.map (fun q => polynomial embedding q t)) es = true := by
+  classical
+  obtain ⟨η, positive, signs⟩ := finite_fractions_map embedding ordered (r.fractions p qs es)
+  refine ⟨η, positive, fun t ht small => ?_⟩
+  apply check_specialize embedding t _ p qs es r _ accepted
+  intro x hx
+  have preserved := signs t ht small x hx
+  exact ⟨preserved.1, fraction_zero embedding x t preserved.2, preserved.2⟩
+
+/-- info: 'Hex.SignDet.Reduction.check_specialize' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Reduction.check_specialize
+
+/-- info: 'Hex.SignDet.Reduction.specialize_near' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Reduction.specialize_near
+
+end Hex.SignDet.Reduction
+
+namespace Hex.SignDet.QueryReduction
+open RealClosure.Specialize
+attribute [local instance 2000] Field.toGrindField
+variable {F : Type} [Field F] [DecidableEq F]
+
+/-- Substitute shared query witnesses without changing their positions. -/
+@[expose] noncomputable def specialize (embedding : F →+* ℝ) (t : ℝ)
+    (r : QueryReduction (RationalFn F)) : QueryReduction ℝ := by
+  classical
+  exact ⟨r.steps.map (ReductionStep.specialize embedding t)⟩
+
+/-- Finite input/witness obligations for the actually matched query slots. -/
+@[expose] noncomputable def fractionsFrom (p : DensePoly (RationalFn F)) :
+    List (DensePoly (RationalFn F)) → List (ReductionStep (RationalFn F)) → Finset (RationalFn F)
+  | q :: qs, s :: ss => s.fractions p 1 q ∪ fractionsFrom p qs ss
+  | _, _ => ∅
+
+/-- Finite data for the positive-degree head and all shared query reductions. -/
+@[expose] noncomputable def fractions (r : QueryReduction (RationalFn F))
+    (p : DensePoly (RationalFn F)) (qs : List (DensePoly (RationalFn F))) :
+    Finset (RationalFn F) := by
+  classical
+  exact p.toArray.toList.toFinset ∪ fractionsFrom p qs r.steps
+
+/-- Every shared query witness preserves its exact slot and acceptance. -/
+theorem checkFrom_specialize (embedding : F →+* ℝ) (t : ℝ)
+    (sign : RationalFn F → Int) (p : DensePoly (RationalFn F)) (i : Nat)
+    (qs : List (DensePoly (RationalFn F))) (ss : List (ReductionStep (RationalFn F)))
+    (data : ∀ x ∈ fractionsFrom p qs ss,
+      Regular embedding t x ∧ (evalMapped embedding x t = 0 ↔ x = 0) ∧
+      (SignType.sign (evalMapped embedding x t) : Int) = sign x)
+    (accepted : checkFrom sign p i qs ss = true) :
+    checkFrom (fun x : ℝ => (SignType.sign x : Int)) (polynomial embedding p t) i
+      (qs.map (fun q => polynomial embedding q t))
+      (ss.map (ReductionStep.specialize embedding t)) = true := by
+  classical
+  induction qs generalizing ss i with
+  | nil => cases ss <;> simp_all only [checkFrom, List.map_nil, Bool.false_eq_true]
+  | cons q qs ih =>
+    cases ss with
+    | nil => simp [checkFrom] at accepted
+    | cons s ss =>
+      simp only [checkFrom, Bool.and_eq_true] at accepted
+      simp only [List.map_cons, checkFrom, Bool.and_eq_true]
+      constructor
+      · have step := s.check_specialize embedding t sign p 1 q i
+          (fun x hx => data x (Finset.mem_union_left _ hx)) accepted.1
+        simpa only [polynomial_one] using step
+      · exact ih (i + 1) ss (fun x hx => data x (Finset.mem_union_right _ hx)) accepted.2
+
+/-- Preserve the complete preprocessing check on the original ordered list. -/
+theorem check_specialize (embedding : F →+* ℝ) (t : ℝ)
+    (sign : RationalFn F → Int) (p : DensePoly (RationalFn F))
+    (qs : List (DensePoly (RationalFn F))) (r : QueryReduction (RationalFn F))
+    (data : ∀ x ∈ r.fractions p qs,
+      Regular embedding t x ∧ (evalMapped embedding x t = 0 ↔ x = 0) ∧
+      (SignType.sign (evalMapped embedding x t) : Int) = sign x)
+    (accepted : r.check sign p qs = true) :
+    (r.specialize embedding t).check (fun x : ℝ => (SignType.sign x : Int))
+      (polynomial embedding p t) (qs.map (fun q => polynomial embedding q t)) = true := by
+  classical
+  have p_data i (hi : i < p.size) := data (p.coeff i)
+    (Finset.mem_union_left _ (List.mem_toFinset.mpr (coefficient_mem p i hi)))
+  simp only [check, Bool.and_eq_true, decide_eq_true_eq] at accepted ⊢
+  refine ⟨?_, ?_⟩
+  · simpa only [polynomial_degree embedding p t (fun i hi => (p_data i hi).2.1)] using accepted.1
+  · exact checkFrom_specialize embedding t sign p 0 qs r.steps
+      (fun x hx => data x (Finset.mem_union_right _ hx)) accepted.2
+
+/-- The reduced operands stay in their original order. -/
+theorem queries_specialize (embedding : F →+* ℝ) (t : ℝ)
+    (r : QueryReduction (RationalFn F)) :
+    (r.specialize embedding t).queries = r.queries.map (fun q => polynomial embedding q t) := by
+  simp only [queries, specialize, List.map_map, Function.comp_def, ReductionStep.specialize]
+
+/-- Optional preprocessing chooses the corresponding specialized operands. -/
+theorem operands_specialize (embedding : F →+* ℝ) (t : ℝ)
+    (qs : List (DensePoly (RationalFn F))) (r : Option (QueryReduction (RationalFn F))) :
+    operands (qs.map (fun q => polynomial embedding q t)) (r.map (specialize embedding t)) =
+      (operands qs r).map (fun q => polynomial embedding q t) := by
+  cases r with
+  | none => rfl
+  | some r => exact queries_specialize embedding t r
+
+variable [LinearOrder F] [IsStrictOrderedRing F]
+
+/-- One neighborhood preserves all supplied shared query reductions. -/
+theorem specialize_near (embedding : F →+* ℝ) (ordered : StrictMono embedding)
+    (p : DensePoly (RationalFn F)) (qs : List (DensePoly (RationalFn F)))
+    (r : QueryReduction (RationalFn F))
+    (accepted : r.check (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) p qs = true) :
+    ∃ η > (0 : ℝ), ∀ t, 0 < t → t < η →
+      (r.specialize embedding t).check (fun x : ℝ => (SignType.sign x : Int))
+        (polynomial embedding p t) (qs.map (fun q => polynomial embedding q t)) = true := by
+  classical
+  obtain ⟨η, positive, signs⟩ := finite_fractions_map embedding ordered (r.fractions p qs)
+  refine ⟨η, positive, fun t ht small => ?_⟩
+  apply check_specialize embedding t _ p qs r _ accepted
+  intro x hx
+  have preserved := signs t ht small x hx
+  exact ⟨preserved.1, fraction_zero embedding x t preserved.2, preserved.2⟩
+
+/-- info: 'Hex.SignDet.QueryReduction.check_specialize' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.QueryReduction.check_specialize
+
+/-- info: 'Hex.SignDet.QueryReduction.specialize_near' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.QueryReduction.specialize_near
+
+end Hex.SignDet.QueryReduction

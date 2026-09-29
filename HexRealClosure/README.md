@@ -510,6 +510,26 @@ reduction's stored remainder, scales and quotient. Its finite inventory covers
 the input head, previous representative, factor, next representative and
 witness. `check_specialize` preserves the actual factor index, both positive
 scales, the zero/degree bound and the product identity without guarding
-intermediate products. `specialize_near` supplies one positive neighborhood
-for the complete step check. Full reduction-chain, moment, node and BKR table
-transport remain separate obligations.
+intermediate products. `Reduction.check_specialize` preserves every matched
+factor and step, the positive-degree/exponent guards and the final declared
+query polynomial. `QueryReduction.check_specialize` preserves the original
+ordered preprocessing slots, including duplicates. Each complete reduction
+has one common positive specialization neighborhood.
+
+`Specialize.polynomial_natPow` and `moment_specialize` preserve actual binary
+powers and the moment product fold from only the input coefficient guards.
+The regular ring contains every intermediate accumulator. `checkMoment_specialize`
+preserves the actual direct or reduced query, complete Tarski evidence and
+integer value.
+
+`SignDet.Node.specialize` maps literal coefficients and endpoints while
+retaining its integer system, rank evidence and moment positions.
+`Node.check_specialize` preserves all bindings, matrix checks, shared
+preprocessing and complete moment checks. `Replay.check_specialize` preserves
+the entire supplied BKR tree with its exact child query slices, including
+empty supports. Its extracted sparse rows and every condition's count stay
+unchanged. `Replay.table_near` provides one positive neighborhood whose real
+parameters all admit that same checked table. These theorems require the
+prescribed ordered coefficient embedding into ℝ. DAG sharing, joint selected-root
+realization, recursive algebraic replay and successive infinitesimal
+specialization remain separate obligations.

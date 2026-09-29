@@ -178,7 +178,8 @@ def check() -> None:
              "HexRealClosure.DeflationConformance", "HexRealClosureMathlib.Specialize",
              "HexRealClosureMathlib.SpecializeTests", "HexRealClosureMathlib.SpecializePolynomial",
              "HexRealClosureMathlib.SpecializeRegular", "HexRealClosureMathlib.SpecializeQuery", "HexRealClosureMathlib.SpecializeTarski",
-             "HexRealClosureMathlib.SpecializeReduction"] + [
+             "HexRealClosureMathlib.SpecializeReduction", "HexRealClosureMathlib.SpecializeMoment",
+             "HexRealClosureMathlib.SpecializeReplay"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
         "HexSignDetMathlib." + ".".join(path.relative_to(
