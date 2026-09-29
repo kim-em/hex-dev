@@ -104,6 +104,16 @@ class IsolationTests(unittest.TestCase):
         self.rejects(lambda rows: rows[13]["output"]["entries"][1].update(multiplicity=4),
                      "wrong assembled root multiplicity")
 
+    def test_nonzero_cut_point_value(self):
+        self.rejects(lambda rows: next(entry for entry in rows[18]["output"]["entries"]
+                                      if entry["root"]["kind"] == "point")["root"].update(
+            value=[3, 2]), "nonzero cut point")
+
+    def test_nonzero_cut_point_multiplicity(self):
+        self.rejects(lambda rows: next(entry for entry in rows[18]["output"]["entries"]
+                                      if entry["root"]["kind"] == "point").update(
+            multiplicity=1), "wrong assembled root multiplicity")
+
     def test_assembly_missing_zero(self):
         self.rejects(lambda rows: rows[12]["output"]["entries"].clear())
 
