@@ -147,12 +147,24 @@ Median per-call times, excluding preparation and calibration, in milliseconds:
 | 31 | 169.252 | 3713.573 |
 | 63 | 1110.296 | 6 capped trials |
 
-Both harness verdicts are **inconclusive**. Their reported slopes are −0.57246
-and −0.56848 for `log(T/n³)` against `log n`; these are residual slopes, not
-negative slopes of elapsed time. The comparison also carries the
-`truncated_at_cap` advisory. The cap includes preparation, environment capture
-and calibration as well as the timed body. Its failure does not establish a
-60-second lower bound for one comparison call.
+Both harness verdicts are **inconclusive**. Completion's residual slope
+−0.57246 uses degrees 7–63 after the harness drops degree 3. Comparison's
+−0.56848 uses degrees 3–31 and carries the `truncated_at_cap` advisory. These
+slopes describe `log(T/n³)` against `log n`, not negative growth of elapsed time,
+and they cover different ranges.
+
+The consecutive-interval exponents computed from the retained medians are
+1.93, 2.20, 2.44 and 2.65 for completion, and 2.16, 2.47 and 2.71 for comparison.
+They increase with degree but remain below three. This finite range does not
+show the cubic leaf-square lower-bound term dominating elapsed time. It does
+not identify the relative costs of coefficient arithmetic, dense zero slots,
+query bookkeeping and replay; representative attribution is still required.
+
+The cap includes startup, preparation and hashing the prepared input as well
+as the timed body. The parent supplies environment metadata to the child.
+For a body taking at least 50 ms, the autotuner returns its first call, so
+there is no additional calibration batch. A killed child does not establish
+a 60-second lower bound for one comparison call.
 
 The original metadata records the harness revision but does not establish a
 clean package checkout at the beginning of collection. A separate
@@ -165,6 +177,29 @@ not rewritten as start-of-run checks. The corrected collector checks harness
 provenance before and after collection and runs all arms before validation.
 
 This partial collection does not establish the joint-query performance gate.
-The corrected collection uses a 180-second operational cap to accommodate the
-largest input. All original observations remain available. No further unchanged
-rerun is permitted for this family after that collection.
+The recorded untimed `callbacks` command took 143.5 seconds on the same leased
+CPU for preparation and all six callbacks at all five degrees. This observation
+motivates a 180-second child-process cap; it is not a guarantee about future
+host activity. Raising the cap leaves the 100 ms inner target unchanged and
+does not change how a completed point is timed.
+
+The corrected collection can supply the previously missing degree-63
+comparison and production/replay arms. Completion's timed implementation is
+unchanged and was not capped: collecting it again consumes its one allowed
+unchanged rerun, and there is no evidence that its verdict will change.
+All original observations remain available. No further unchanged rerun is
+permitted for this family after that collection.
+
+The measured commit need not remain reachable after rebasing the PR. Its
+[committed source patch](data/sign-det-joint-timing/1f55c4de9/committed-source.patch)
+reconstructs the recorded source from `d279b9ffa`; the metadata records its
+hash and the reconstruction check. The corrected revision changes the cap,
+inventory guard and collection/reporting code, while preserving every timed
+operation body. The old inventory's exponent bound covers reduced nodes only;
+the corrected guard checks both production modes.
+
+Replay returns a Boolean, whose successful digest is 11 for every degree.
+That digest certifies successful acceptance, rather than identifying the input
+size. Parameter and arm identity also rely on the registration, schedule and
+retained source. Both table-production modes deliberately share an expected
+answer hash because their tables must agree.
