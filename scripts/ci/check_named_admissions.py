@@ -194,18 +194,6 @@ def check() -> None:
              "HexRealClosureMathlib.AlgebraicClean", "HexRealClosureMathlib.AlgebraicValue",
              "HexRealClosureMathlib.AlgebraicTransport", "HexRealClosureMathlib.AlgebraicYun",
              "HexRealClosureMathlib.BaseClean", "HexRealClosureMathlib.AlgebraicTower",
-             "HexRealClosureMathlib.TransportPolynomial", "HexRealClosureMathlib.TransportProduct",
-             "HexRealClosureMathlib.TransportArithmetic", "HexRealClosureMathlib.TransportQuery", "HexRealClosureMathlib.TransportTests",
-             "HexRealClosureMathlib.TransportRing", "HexRealClosureMathlib.TransportPower",
-             "HexRealClosureMathlib.TransportTarski", "HexRealClosureMathlib.TransportClosed",
-             "HexRealClosureMathlib.TransportClosedQuery", "HexRealClosureMathlib.TransportClosedReduction",
-             "HexRealClosureMathlib.TransportPreparation", "HexRealClosureMathlib.TransportMoment",
-             "HexRealClosureMathlib.TransportReplay", "HexRealClosureMathlib.TransportSample", "HexRealClosureMathlib.TransportDescriptor",
-             "HexRealClosureMathlib.TransportSelected", "HexRealClosureMathlib.TransportRegular",
-             "HexRealClosureMathlib.TransportReduction",
-             "HexRealClosureMathlib.SpecializeTests", "HexRealClosureMathlib.Algebraic",
-             "HexRealClosureMathlib.AlgebraicClean", "HexRealClosureMathlib.AlgebraicValue",
-             "HexRealClosureMathlib.BaseClean", "HexRealClosureMathlib.AlgebraicTower",
              "HexRealClosureMathlib.Union", "HexRealClosureMathlib.UnionTests",
              "HexRealClosureMathlib.QAdjoin"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)

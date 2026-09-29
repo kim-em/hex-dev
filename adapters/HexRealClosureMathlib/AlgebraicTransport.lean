@@ -355,27 +355,36 @@ noncomputable def Context.interpretDescriptor {NextCtx : Type z} [DecidableEq Ne
 
 
 include hn hi in
-/-- The selected next-level root realizes every original additional query sign
-in the ambient field, in the exact query order. -/
+/-- The root used by the next algebraic level realizes every additional query
+sign in the ambient field, in the exact query order. -/
 theorem Context.selectedSigns {NextCtx : Type z} [DecidableEq NextCtx]
     {key : NextCtx} (context : Context E Ctx coeffSign parent)
     (d : Hex.SignDet.Descriptor (Element context) NextCtx Element.sign key)
     (qs : List (DensePoly (Element context)))
     (s : Hex.SignDet.SelectedSigns d qs) :
-    Hex.SignDet.signsAt (fun x : K => x) (fun _ => Iff.rfl)
-      (qs.map (Transport.polynomial
-        (fun x : Element context => x.denote f hz h1 ha hs hm hnat hsign)))
-      ((context.interpretDescriptor f hz h1 ha hs hm hnat hsign hn hi d).root
-        (fun x : K => x) (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl)
-        (fun _ _ => rfl) (fun _ => rfl) (fun _ => rfl)) = s.values.toList := by
-  exact Transport.selected_signs
+    Hex.SignDet.signsAt
+      (fun x : Element context => x.denote f hz h1 ha hs hm hnat hsign)
+      (Element.denote_eq_zero f hz h1 ha hs hm hnat hsign hn hi)
+      qs
+      (d.root
+        (fun x : Element context => x.denote f hz h1 ha hs hm hnat hsign)
+        (Element.denote_eq_zero f hz h1 ha hs hm hnat hsign hn hi)
+        (Element.denote_one f hz h1 ha hs hm hnat hsign hn hi)
+        (Element.denote_add f hz h1 ha hs hm hnat hsign hn hi)
+        (Element.denote_sub f hz h1 ha hs hm hnat hsign hn hi)
+        (Element.denote_mul f hz h1 ha hs hm hnat hsign hn hi)
+        (Element.denote_nat f hz h1 ha hs hm hnat hsign hn hi)
+        (Element.sign_spec f hz h1 ha hs hm hnat hsign hn hi)) =
+      s.values.toList := by
+  exact (s.values_at_root
     (fun x : Element context => x.denote f hz h1 ha hs hm hnat hsign)
-    (fun _ => True)
-    (context.closed f hz h1 ha hs hm hnat hsign hn hi)
-    (fun x : NextCtx => x) Element.sign key d
-    (context.descriptorData f hz h1 ha hs hm hnat hsign hn hi d) qs s
-    (context.replayData f hz h1 ha hs hm hnat hsign hn hi
-      d.raw.head d.raw.lower d.raw.upper (d.raw.queries ++ qs) s.evidence)
+    (Element.denote_eq_zero f hz h1 ha hs hm hnat hsign hn hi)
+    (Element.denote_one f hz h1 ha hs hm hnat hsign hn hi)
+    (Element.denote_add f hz h1 ha hs hm hnat hsign hn hi)
+    (Element.denote_sub f hz h1 ha hs hm hnat hsign hn hi)
+    (Element.denote_mul f hz h1 ha hs hm hnat hsign hn hi)
+    (Element.denote_nat f hz h1 ha hs hm hnat hsign hn hi)
+    (Element.sign_spec f hz h1 ha hs hm hnat hsign hn hi)).symm
 
 end Hex.RealClosure.Algebraic
 
