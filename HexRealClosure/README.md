@@ -635,6 +635,14 @@ coefficients; arithmetic preservation alone does not supply these signs.
 retaining literal factor indices, scales, quotients and final result. A result
 may shrink or become zero; only the original head requires degree preservation.
 `preparation_check` transports shared query preprocessing, keeping original
-query positions and duplicate operands. BKR moments, joint algebraic-root
-realization, recursive sample replay and successive infinitesimal levels remain
-separate obligations.
+query positions and duplicate operands. `Closed.coeff_natPow` and
+`PowerData.of_closed` follow the actual binary-power recursion. `moment_polynomial`
+interprets its powers and product fold from finite query memberships, and
+`moment_check` retains every direct or reduced moment clause.
+
+`node_check` retains literal context and input bindings, shared preprocessing,
+all indexed moments, the integer system, rank certificate and left-inverse
+check. `replay_check` transports the supplied finite tree, both child checks and
+their original positional query slices, product supports and retained rows.
+Joint algebraic-root realization, sample reconstruction, graph sharing and
+successive infinitesimal levels remain separate obligations.
