@@ -18,6 +18,56 @@ attribute [local instance 2000] Field.toGrindField
 variable {F : Type} [Field F] [DecidableEq F] [LinearOrder F] [IsStrictOrderedRing F]
 variable {Ctx : Type u} [DecidableEq Ctx]
 
+/-- One positive neighborhood preserves the actual number of ordinary real
+roots for every ordered sign condition, including zero and nonsingleton counts. -/
+theorem counts_near (embedding : F →+* ℝ) (ordered : StrictMono embedding)
+    (context : Ctx) (p : Hex.DensePoly (Hex.RationalFn F))
+    (a b : Hex.Endpoint (Hex.RationalFn F)) (qs : List (Hex.DensePoly (Hex.RationalFn F)))
+    (r : Replay (Hex.RationalFn F) Ctx)
+    (accepted : r.check (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign)
+      context p a b qs = true) :
+    ∃ η > (0 : ℝ), ∀ t, 0 < t → t < η → ∀ condition : List Int,
+      ((Tarski.rootsIn
+        (interpret (fun x : ℝ => x) (fun _ => Iff.rfl) (polynomial embedding p t))
+        ((a.specialize embedding t).map (fun x : ℝ => x))
+        ((b.specialize embedding t).map (fun x : ℝ => x))).filter
+        (fun x => signsAt (fun x : ℝ => x) (fun _ => Iff.rfl)
+          (qs.map (fun q => polynomial embedding q t)) x = condition)).card =
+        (r.table accepted).count condition := by
+  classical
+  obtain ⟨η, positive, tables⟩ := r.table_near embedding ordered context p a b qs accepted
+  refine ⟨η, positive, fun t ht small condition => ?_⟩
+  obtain ⟨checked, counts⟩ := tables t ht small
+  have counted := (r.specialize embedding t).count_roots (fun x : ℝ => x)
+    (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl)
+    (fun _ => rfl) (fun x : ℝ => (SignType.sign x : Int)) (fun _ => rfl) context
+    (polynomial embedding p t) (a.specialize embedding t) (b.specialize embedding t)
+    (qs.map (fun q => polynomial embedding q t)) checked condition
+  rw [← counted, ← Replay.table_lookup _ checked condition, counts condition]
+
+/-- Every condition of positive source count has one ordinary real root
+realizing all its signs together, throughout the same neighborhood. -/
+theorem exists_near (embedding : F →+* ℝ) (ordered : StrictMono embedding)
+    (context : Ctx) (p : Hex.DensePoly (Hex.RationalFn F))
+    (a b : Hex.Endpoint (Hex.RationalFn F)) (qs : List (Hex.DensePoly (Hex.RationalFn F)))
+    (r : Replay (Hex.RationalFn F) Ctx)
+    (accepted : r.check (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign)
+      context p a b qs = true) :
+    ∃ η > (0 : ℝ), ∀ t, 0 < t → t < η → ∀ condition : List Int,
+      0 < (r.table accepted).count condition →
+      ∃ x, x ∈ Tarski.rootsIn
+        (interpret (fun x : ℝ => x) (fun _ => Iff.rfl) (polynomial embedding p t))
+        ((a.specialize embedding t).map (fun x : ℝ => x))
+        ((b.specialize embedding t).map (fun x : ℝ => x)) ∧
+        signsAt (fun x : ℝ => x) (fun _ => Iff.rfl)
+          (qs.map (fun q => polynomial embedding q t)) x = condition := by
+  classical
+  obtain ⟨η, positive, counts⟩ := counts_near embedding ordered context p a b qs r accepted
+  refine ⟨η, positive, fun t ht small condition nonzero => ?_⟩
+  have cardinal := counts t ht small condition
+  obtain ⟨x, member⟩ := Finset.card_pos.mp (lt_of_lt_of_eq nonzero cardinal.symm)
+  exact ⟨x, Finset.mem_filter.mp member⟩
+
 /-- An accepted count-one infinitesimal replay has one ordinary real root
 realizing its entire ordered sign condition, throughout one common positive
 parameter neighborhood. No embedding of the infinitesimal field into ℝ is used. -/
@@ -36,21 +86,9 @@ theorem realizeReplay (embedding : F →+* ℝ) (ordered : StrictMono embedding)
         signsAt (fun x : ℝ => x) (fun _ => Iff.rfl)
           (qs.map (fun q => polynomial embedding q t)) x = condition := by
   classical
-  obtain ⟨η, positive, tables⟩ := r.table_near embedding ordered context p a b qs accepted
+  obtain ⟨η, positive, counts⟩ := counts_near embedding ordered context p a b qs r accepted
   refine ⟨η, positive, fun t ht small => ?_⟩
-  obtain ⟨checked, counts⟩ := tables t ht small
-  have counted := (r.specialize embedding t).count_roots (fun x : ℝ => x)
-    (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl)
-    (fun _ => rfl) (fun x : ℝ => (SignType.sign x : Int)) (fun _ => rfl) context
-    (polynomial embedding p t) (a.specialize embedding t) (b.specialize embedding t)
-    (qs.map (fun q => polynomial embedding q t)) checked condition
-  have cardinal : ((Tarski.rootsIn
-      (interpret (fun x : ℝ => x) (fun _ => Iff.rfl) (polynomial embedding p t))
-      ((a.specialize embedding t).map (fun x : ℝ => x))
-      ((b.specialize embedding t).map (fun x : ℝ => x))).filter
-      (fun x => signsAt (fun x : ℝ => x) (fun _ => Iff.rfl)
-        (qs.map (fun q => polynomial embedding q t)) x = condition)).card = 1 := by
-    rw [← counted, ← Replay.table_lookup _ checked condition, counts condition, one]
+  have cardinal := (counts t ht small condition).trans one
   obtain ⟨x, singleton⟩ := Finset.card_eq_one.mp cardinal
   have member : x ∈ (Tarski.rootsIn
       (interpret (fun x : ℝ => x) (fun _ => Iff.rfl) (polynomial embedding p t))
@@ -71,9 +109,9 @@ theorem realizeReplay (embedding : F →+* ℝ) (ordered : StrictMono embedding)
   rw [singleton] at member
   exact Finset.mem_singleton.mp member
 
-
 /-- The realizing parameter can be chosen below any prescribed positive cap.
-This exposes the parameter choice used when adding a finite sign constraint. -/
+This chooses a parameter below an earlier bound; neighborhood composition
+uses `realizeReplay`. -/
 theorem realizeBelow (embedding : F →+* ℝ) (ordered : StrictMono embedding)
     (context : Ctx) (p : Hex.DensePoly (Hex.RationalFn F))
     (a b : Hex.Endpoint (Hex.RationalFn F)) (qs : List (Hex.DensePoly (Hex.RationalFn F)))
@@ -102,5 +140,14 @@ theorem realizeBelow (embedding : F →+* ℝ) (ordered : StrictMono embedding)
 /-- info: 'Hex.RealClosure.Specialize.realizeBelow' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.realizeBelow
+
+
+/-- info: 'Hex.RealClosure.Specialize.counts_near' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.counts_near
+
+/-- info: 'Hex.RealClosure.Specialize.exists_near' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.exists_near
 
 end Hex.RealClosure.Specialize

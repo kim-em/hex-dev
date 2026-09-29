@@ -456,8 +456,9 @@ its stored fraction through the existing proof of equality of the complete
 native and semantic coefficient dictionaries, and preserves that element's
 actual stored sign at an ordinary real parameter.
 
-Recursive algebraic replay specialization and successive infinitesimal
-parameter choices remain required finite-sign realization work. These helpers
+Descriptor selected-sign transport, recursive algebraic replay specialization
+and successive infinitesimal parameter choices remain required finite-sign
+realization work. These helpers
 operate on coefficient data with a supplied ordered embedding into ℝ in the
 companion; they add no native constructor or runtime field instance for formal
 real expressions.
@@ -528,16 +529,18 @@ the entire supplied BKR tree with its exact child query slices, including
 empty supports. Its extracted sparse rows and every condition's count stay
 unchanged. `Replay.table_near` provides one positive neighborhood whose real
 parameters all admit that same checked table. These theorems require the
-prescribed ordered coefficient embedding into ℝ. DAG sharing, recursive
-algebraic replay and successive infinitesimal specialization remain separate
-obligations.
+prescribed ordered coefficient embedding into ℝ. Descriptor selected-sign
+transport, DAG sharing, recursive algebraic replay and successive infinitesimal
+specialization remain separate obligations.
 
-`Specialize.realizeReplay` uses the proved root-count meaning of the specialized
-BKR replay over ℝ. If its source table counts exactly one root for a sign
-condition, every sufficiently small positive parameter has exactly one real
-root in the specialized interval satisfying all the ordered query signs
-together. `realizeBelow` chooses that parameter below any prescribed positive
-cap. Both use the same parameter for every polynomial and endpoint.
-It requires a prescribed ordered embedding of the coefficient field into ℝ;
-it does not construct recursive algebraic samples or specialize an
+`Specialize.counts_near` uses the proved root-count meaning of the specialized
+BKR replay over ℝ. One positive neighborhood preserves the actual real-root
+counts for every ordered sign condition. `exists_near` realizes each condition
+of positive source count at one real root, with all its signs together.
+`realizeReplay` gives uniqueness when the source table has count one for that
+full condition. `realizeBelow` chooses a realizing parameter below any
+prescribed positive cap. These theorems use the same parameter for every
+polynomial and endpoint and require a prescribed ordered embedding of the
+coefficient field into ℝ. They do not establish uniqueness for a descriptor's
+sign prefix, construct recursive algebraic samples or specialize an
 infinitesimal predecessor field.
