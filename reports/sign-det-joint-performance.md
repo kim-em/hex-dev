@@ -203,3 +203,44 @@ That digest certifies successful acceptance, rather than identifying the input
 size. Parameter and arm identity also rely on the registration, schedule and
 retained source. Both table-production modes deliberately share an expected
 answer hash because their tables must agree.
+
+## Representative operation attribution
+
+The [profile manifest](data/sign-det-joint-timing/profile-394c3c548/metadata.json)
+records one cold degree-31 comparison at source `394c3c548`, automatically
+leased CPU 52, with the same executable hash before and after capture. Perf
+sampled user-space cycles at 199 Hz. The shared harness emitted one operation
+region using `CLOCK_MONOTONIC`; its result had the expected comparison digest.
+This is profiling evidence, not a scientific timing observation or a scaling
+verdict.
+
+There are 716 samples within that region and 1,232 outside it. All retained
+operation samples belong to the recorded benchmark process. The
+[direct-IP summary](data/sign-det-joint-timing/profile-394c3c548/ip-summary.json)
+attributes the operation's sampled instruction pointers as follows:
+
+| Sampled function | Samples | Share |
+| --- | ---: | ---: |
+| `cfree@GLIBC_2.2.5` | 111 | 15.5% |
+| `malloc` | 104 | 14.5% |
+| `__gmpz_add` | 74 | 10.3% |
+| `__gmpz_init_set_ui` | 54 | 7.5% |
+| `realloc` | 39 | 5.4% |
+| `__gmpz_mul_2exp` | 36 | 5.0% |
+| `l_Rat_mul` | 35 | 4.9% |
+| `lean_nat_gcd` | 28 | 3.9% |
+| `__gmpz_gcd` | 27 | 3.8% |
+| `__gmpz_realloc` | 27 | 3.8% |
+
+Allocation/freeing functions, GMP integer operations, rational multiplication
+and gcd work occupy most sampled leaves. Matrix dimensions in this family are
+at most four; this profile supplies no useful estimate of general matrix-solve
+scaling. Coefficient-sign checks are similarly too small here to attribute
+reliably. The wider support and nested-field families remain necessary.
+
+The first call-stack extraction had 461 samples with no unwound frame. Perf's
+recorded instruction pointers recover their leaf symbols without another
+capture. Both derived summaries and the raw capture are retained; the direct-IP
+summary is the basis for this table. Caller-stack attribution is limited by
+incomplete unwinding. Allocation-function sample shares are CPU costs, not
+allocation counts, allocated bytes or peak live memory.
