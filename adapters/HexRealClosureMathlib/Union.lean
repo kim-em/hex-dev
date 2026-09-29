@@ -162,7 +162,7 @@ variable {B : Type u} [Field B] [LinearOrder B]
 
 /-- Restrict a supplied real closed field to its relative algebraic union.
 The prescribed base embedding must preserve the source order. This produces
-the algebraic ambient needed by the existing enlargement interface. -/
+the algebraic ambient needed by the planned base enlargement. -/
 @[expose] noncomputable def ofUnion (R : Type u) [Field R] [LinearOrder R]
     [IsStrictOrderedRing R] [IsRealClosed R] [Algebra B R]
     (ordered : StrictMono (algebraMap B R)) : Ambient B where
@@ -182,6 +182,30 @@ theorem ofUnion_inclusion (R : Type u) [Field R] [LinearOrder R]
     [IsStrictOrderedRing R] [IsRealClosed R] [Algebra B R]
     (ordered : StrictMono (algebraMap B R)) (a : B) :
     Union.inclusion ((ofUnion R ordered).inclusion a) = algebraMap B R a := rfl
+
+namespace ofUnion
+variable (R : Type u) [Field R] [LinearOrder R] [IsStrictOrderedRing R]
+    [IsRealClosed R] [Algebra B R] (ordered : StrictMono (algebraMap B R))
+
+/-- Include the restricted ambient in the original supplied field. -/
+@[expose] noncomputable def val : (ofUnion R ordered).Carrier →+* R :=
+  (Union.inclusion (B := B) (R := R)).toRingHom
+
+/-- The packaged inclusion preserves the inherited order. -/
+theorem val_strictMono : StrictMono (val R ordered) := fun _ _ less => less
+
+/-- Lift an ambient element algebraic over the prescribed base. -/
+@[expose] noncomputable def lift (x : R) (algebraic : IsAlgebraic B x) :
+    (ofUnion R ordered).Carrier := ⟨x, (Union.mem_iff x).mpr algebraic⟩
+
+/-- Lifting and including recovers the original ambient element. -/
+theorem val_lift (x : R) (algebraic : IsAlgebraic B x) :
+    val R ordered (lift R ordered x algebraic) = x := rfl
+
+/-- The packaged inclusion commutes with the prescribed base map. -/
+theorem val_inclusion (a : B) :
+    val R ordered ((ofUnion R ordered).inclusion a) = algebraMap B R a := rfl
+end ofUnion
 
 /-- The proved algebraic ambient is its own relative algebraic union, using
 its actual selected inclusion to give the base algebra structure. -/
@@ -215,3 +239,10 @@ end Hex.RealClosure.Ambient
 /-- info: 'Hex.RealClosure.Ambient.ofUnion' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Ambient.ofUnion
+
+/-- info: 'Hex.RealClosure.Ambient.ofUnion.val_strictMono' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.ofUnion.val_strictMono
+/-- info: 'Hex.RealClosure.Ambient.ofUnion.val_lift' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.ofUnion.val_lift

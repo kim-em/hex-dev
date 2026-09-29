@@ -476,11 +476,14 @@ The inclusions inherit arithmetic and order from the ambient field.
 nonnegative elements and roots of odd-degree polynomials.
 `Union.realClosed` combines those conclusions into real-closedness when the
 supplied ambient is real closed. `Ambient.ofUnion` restricts a supplied real closed ambient to its algebraic
-union using a required strictly monotone base embedding, so it can feed the
-existing enlargement interface. `Ambient.union_eq_top` applies to the actual
+union using a required strictly monotone base embedding for the planned base
+enlargement. Its packaged `val` preserves order, and `lift` admits every supplied
+ambient element algebraic over the base. `Ambient.union_eq_top` applies to the actual
 base map of the proved algebraic ambient. Ordinary-kernel examples instantiate
 the construction for the usual rational embedding into the real numbers and
-place `sqrt(2)` and `sqrt(3)` in one finite compatible extension.
+place `sqrt(2)` and `sqrt(3)` in one finite compatible extension. A two-level
+infinitesimal ambient is restricted over the first rational-function base;
+its square root of the first infinitesimal is included back into that ambient.
 
 Presenting every algebraic generator by a native selected-root descriptor and
 identifying all compatible native presentations with this semantic union remain

@@ -6,16 +6,21 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.Union
-public import TauCeti.FieldTheory.IsRealClosed.Real
+public import HexRealRootsMathlib.RealClosed
 
 public section
 
 noncomputable section
 namespace Hex.RealClosure.Union.Tests
+
+attribute [local instance 2000] Field.toGrindField
 open Polynomial
 
 /-- The usual rational embedding in the real numbers satisfies the union theorem. -/
 example : IsRealClosed (Carrier Rat ℝ) := realClosed
+
+/-- The restriction constructor applies to the actual nonalgebraic real ambient. -/
+example : Ambient Rat := Ambient.ofUnion ℝ Rat.cast_strictMono
 
 private theorem sqrt_member (n : Nat) : Real.sqrt n ∈ field Rat ℝ := by
   apply root_mem (X ^ 2 - C (n : Carrier Rat ℝ))
@@ -56,5 +61,32 @@ example (a : Base) :
       ambient.inclusion a := by
   let _ : Algebra Base ambient.Carrier := ambient.inclusion.toAlgebra
   exact Ambient.ofUnion_inclusion _ _ a
+
+private noncomputable def wide : Ambient (Hex.RationalFn Base) := Ambient.infinitesimal Base
+
+private noncomputable def embedding : Base →+* wide.Carrier :=
+  wide.inclusion.comp HexRationalFnMathlib.constantHom
+
+private theorem embedding_monotone : StrictMono embedding := by
+  intro a b less
+  exact wide.monotone ((Hex.OrderedFn.Infinitesimal.C_lt a b).mpr less)
+
+/-- Restrict a second infinitesimal ambient over the first rational-function
+base, then carry its square root of the first infinitesimal back into that ambient. -/
+example :
+    let _ : Algebra Base wide.Carrier := embedding.toAlgebra
+    ∃ s : (Ambient.ofUnion wide.Carrier embedding_monotone).Carrier,
+      0 < s ∧
+      (Ambient.ofUnion.val wide.Carrier embedding_monotone s) ^ 2 =
+        embedding (Hex.RationalFn.X : Base) := by
+  let _ : Algebra Base wide.Carrier := embedding.toAlgebra
+  let restricted := Ambient.ofUnion wide.Carrier embedding_monotone
+  obtain ⟨s, positive, square, _, _⟩ := restricted.exists_sqrt
+    (Hex.RationalFn.X : Base) Hex.OrderedFn.Infinitesimal.X_pos
+    (by simpa only [Hex.RationalFn.C_one] using
+      Hex.OrderedFn.Infinitesimal.X_lt_C (1 : Rat) zero_lt_one)
+  refine ⟨s, positive, ?_⟩
+  rw [← map_pow, square, Ambient.ofUnion.val_inclusion]
+  rfl
 
 end Hex.RealClosure.Union.Tests
