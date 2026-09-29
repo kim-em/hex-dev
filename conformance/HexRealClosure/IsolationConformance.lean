@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.RootFactors
+public import HexRealClosure.AlgebraicContext
 public import HexSignDet.Codec
 public import HexOrderedFn.Infinitesimal
 public import Lean.Data.Json.Printer
@@ -94,3 +95,13 @@ def main : IO Unit := do
   emitAssembly "assembly repeated factors" repeated
   emitAssembly "assembly root-free factor" ((x * x + 1) * (x * x + 1) * (x - 1))
   emitAssembly "assembly simple zero" (x * (x - 1) * (x - 1))
+  let firstHead := (x * x - 2) * (x - 3)
+  let some firstRoot := SignDet.Descriptor.validate Sturm.orderSign (10378 : Nat)
+      { context := 10378, head := firstHead, lower := .finite 1,
+        upper := .finite 2, indices := [], signs := [] }
+    | throw (IO.userError "nested isolation: first descriptor failed")
+  let first := Algebraic.Context.adjoin firstRoot (fun q : Rat => q.den == 1)
+  let alpha := Algebraic.Element.ofPoly (context := first) x
+  let nested : DensePoly (Algebraic.Element first) := DensePoly.ofCoeffs #[-alpha, 0, 1]
+  emit "nested algebraic coefficients" 1 Algebraic.Element.sign
+    (fun a => .arr (a.polynomial.toArray.map rational)) nested

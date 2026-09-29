@@ -122,6 +122,18 @@ class IsolationTests(unittest.TestCase):
     def test_assembly_false_all(self):
         self.rejects(lambda rows: rows[11].update(output={"kind": "all"}))
 
+    def test_nested_wrong_predecessor_value(self):
+        self.rejects(lambda rows: rows[16]["head"][0].__setitem__(1, [1, 1]),
+                     "wrong nested algebraic input")
+
+    def test_nested_missing_root(self):
+        self.rejects(lambda rows: rows[16]["output"]["descriptors"].pop(),
+                     "nested roots missing or duplicated")
+
+    def test_nested_stale_descriptor(self):
+        self.rejects(lambda rows: rows[16]["output"]["descriptors"][0].update(context=10377),
+                     "stale nested descriptor")
+
 
 if __name__ == "__main__":
     unittest.main()

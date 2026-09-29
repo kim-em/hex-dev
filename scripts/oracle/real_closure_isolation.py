@@ -19,7 +19,8 @@ CASES = ["zero", "constant", "repeated", "nonmonic linear", "quadratic",
          "negative cubic with removed zero", "nonquadratic", "four roots",
          "whole-line inverse infinitesimal", "inseparable by rational bisection",
          "assembly zero", "assembly constant", "assembly pure power",
-         "assembly repeated factors", "assembly root-free factor", "assembly simple zero"]
+         "assembly repeated factors", "assembly root-free factor", "assembly simple zero",
+         "nested algebraic coefficients"]
 RATIONAL_HEADS = [[], [5], [1, -2, 1], [-3, 2], [-2, 0, 1],
                   [0, 6, 0, -3], [-2, 0, 0, 1], [6, 0, -5, 0, 1]]
 
@@ -135,6 +136,94 @@ def verify_assembly(row, index):
     require(sorted(selected) == sorted(roots), "assembled root coverage differs from exact RCF")
 
 
+def verify_nested(row):
+    """Check roots over the value selected by an earlier reducible definition."""
+    require(set(row) == {"case", "depth", "head", "output"} and
+            type(row["depth"]) is int and row["depth"] == 1,
+            "malformed nested algebraic row")
+    rcf = RCF({"id": 10377, "levels": ["epsilon1"],
+               "order": "each-new-level-smaller-than-positive-base-elements"})
+    base = multiply(rcf, [-2 * rcf.one, rcf.zero, rcf.one],
+                    [-3 * rcf.one, rcf.one])
+    base_roots = [root for root in rcf.api.MkRoots(base, rcf.context)
+                  if rcf.one < root < 2 * rcf.one]
+    require(len(base_roots) == 1, "base descriptor does not select one root")
+    alpha = base_roots[0]
+
+    def coefficient(raw):
+        require(isinstance(raw, list), "malformed nested coefficient")
+        poly = [rcf.coeff(q, 0) for q in raw]
+        require(not poly or poly[-1] != 0, "trailing nested coefficient zero")
+        value = rcf.eval(poly, alpha) if poly else rcf.zero
+        require(value != 0 or not poly, "noncanonical nested zero")
+        return value
+
+    def polynomial(raw):
+        require(isinstance(raw, list), "malformed nested polynomial")
+        p = [coefficient(q) for q in raw]
+        require(not p or p[-1] != 0, "trailing nested polynomial zero")
+        return p
+
+    def endpoint(raw):
+        require(isinstance(raw, list) and raw and type(raw[0]) is int,
+                "malformed nested endpoint")
+        if raw == [0]:
+            return None, -1
+        if raw == [2]:
+            return None, 1
+        require(len(raw) == 2 and raw[0] == 1, "malformed finite nested endpoint")
+        return coefficient(raw[1]), 0
+
+    p = polynomial(row["head"])
+    require(p == [-alpha, rcf.zero, rcf.one], "wrong nested algebraic input")
+    roots = list(rcf.api.MkRoots(p, rcf.context))
+    require(len(roots) == 2, "wrong independent nested root count")
+    output = row["output"]
+    require(isinstance(output, dict) and set(output) == {"route", "points", "descriptors"},
+            "nested producer failed or malformed completion")
+    require(output["points"] == [], "unexpected nested cut point")
+    route = output["route"]
+    require(isinstance(route, dict) and
+            set(route) == {"kind", "bound", "nodes", "head", "cells"} and
+            route["kind"] == "bounded" and polynomial(route["head"]) == p and
+            coefficient(route["bound"]) == 4 and
+            type(route["nodes"]) is int and 0 <= route["nodes"] <= 2 * len(p),
+            "incorrect nested bounded route")
+    cells = route["cells"]
+    require(isinstance(cells, list), "malformed nested cells")
+    intervals = []
+    for cell in cells:
+        require(isinstance(cell, dict) and set(cell) == {"lower", "upper", "count"},
+                "malformed nested cell")
+        lower, upper = coefficient(cell["lower"]), coefficient(cell["upper"])
+        require(lower < upper and rcf.eval(p, lower) != 0 and rcf.eval(p, upper) != 0,
+                "invalid nested cell")
+        count = sum(lower < root < upper for root in roots)
+        require(type(cell["count"]) is int and cell["count"] == count,
+                "wrong nested cell count")
+        intervals.append((lower, upper, count))
+    require(all(hi <= lo2 or hi2 <= lo for i, (lo, hi, _) in enumerate(intervals)
+                for lo2, hi2, _ in intervals[i+1:]), "overlapping nested cells")
+    selected = []
+    for descriptor in output["descriptors"]:
+        require(isinstance(descriptor, dict) and
+                set(descriptor) == {"context", "head", "lower", "upper", "indices", "signs"}
+                and type(descriptor["context"]) is int and descriptor["context"] == 10378
+                and polynomial(descriptor["head"]) == p,
+                "stale nested descriptor")
+        lower, lower_kind = endpoint(descriptor["lower"])
+        upper, upper_kind = endpoint(descriptor["upper"])
+        require(lower_kind == upper_kind == 0 and
+                any(lower == lo and upper == hi and count == 1 for lo, hi, count in intervals)
+                and descriptor["indices"] == [] and descriptor["signs"] == [],
+                "incorrect singleton nested descriptor")
+        candidates = [root for root in roots if lower < root < upper]
+        require(len(candidates) == 1, "nested descriptor does not select one root")
+        selected.append(candidates[0])
+    require(len(selected) == 2 and selected[0] != selected[1] and
+            sorted(selected) == sorted(roots), "nested roots missing or duplicated")
+
+
 def verify(rows):
     check_version()
     require([r.get("case") for r in rows] == CASES, "missing, repeated or reordered cases")
@@ -246,8 +335,9 @@ def verify(rows):
         require(all(a != b for i, a in enumerate(selected) for b in selected[i+1:]),
                 "root emitted twice")
         require(sorted(selected) == sorted(roots(p)), "completion lost or added a root")
-    for index, row in enumerate(rows[10:], start=10):
+    for index, row in enumerate(rows[10:16], start=10):
         verify_assembly(row, index)
+    verify_nested(rows[16])
 
 
 def main():
