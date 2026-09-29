@@ -24,6 +24,8 @@ from scripts.bench.sign_det_sparse import source_hashes
 from scripts.bench.structural_tactic_sweep import acquire_cpu
 
 PARAMS = [1, 2, 3, 4, 5]
+DIMENSION_ARITIES = [1, 2, 3, 4, 5, 6]
+DIMENSION_PARAMS = [3**s for s in DIMENSION_ARITIES]
 TRIALS = 6
 PREFIX = "Hex.SignDetBench.MaximalMatrix."
 KEYS = {"runSolve": "solveResultHash", "runCheck": "checkResultHash"}
@@ -35,11 +37,21 @@ CONFIG = {"param_floor": 1, "param_ceiling": 5, "outer_trials": TRIALS,
           "narrow_range_noise_floor": 1.5}
 
 
-def validate_inventory(path):
+def sweep_settings(by_dimension):
+    if not by_dimension:
+        return PARAMS, KEYS, CONFIG, "27^s"
+    config = {**CONFIG, "param_floor": 3, "param_ceiling": 729,
+              "param_schedule": {"kind": "custom", "params": DIMENSION_PARAMS}}
+    keys = {"runSolveDimension": "solveResultHash", "runCheckDimension": "checkResultHash"}
+    return DIMENSION_PARAMS, keys, config, "r^3"
+
+
+def validate_inventory(path, *, by_dimension=False):
     rows = [json.loads(line) for line in path.read_text().splitlines()]
-    if [r.get("queries") for r in rows] != PARAMS:
+    arities = DIMENSION_ARITIES if by_dimension else PARAMS
+    if [r.get("queries") for r in rows] != arities:
         raise ValueError("missing, extra or reordered input")
-    for row, s in zip(rows, PARAMS, strict=True):
+    for row, s in zip(rows, arities, strict=True):
         n = 3**s
         expected = {"queries": s, "matrixSize": n, "supportSize": n,
                     "countSum": n, "inverseIdentityScalarPairs": n**3,
@@ -52,10 +64,11 @@ def validate_inventory(path):
         for key in ("inputHash", *KEYS.values()):
             if type(row.get(key)) is not int or not 0 <= row[key] < 2**64:
                 raise ValueError("invalid input or result hash")
-    return {r["queries"]: r for r in rows}
+    return {r["matrixSize"] if by_dimension else r["queries"]: r for r in rows}
 
 
-def validate_export(path, name, expected, revision):
+def validate_export(path, name, expected, revision, *, by_dimension=False):
+    params, keys, config, formula = sweep_settings(by_dimension)
     export = json.loads(path.read_text())
     if export["export_schema_version"] != 1 or len(export["results"]) != 1:
         raise ValueError("wrong export schema or result count")
@@ -66,18 +79,18 @@ def validate_export(path, name, expected, revision):
     if r["env"]["git_commit"] != revision or r["env"]["git_dirty"] is not False:
         raise ValueError("child source revision differs")
     if any(type(r["config"].get(k)) is not type(v) or r["config"].get(k) != v
-           for k, v in CONFIG.items()):
+           for k, v in config.items()):
         raise ValueError("registered configuration differs")
-    if r["complexity_formula"].replace(" ", "") != "27^s":
+    if r["complexity_formula"].replace(" ", "") != formula:
         raise ValueError("declared cost model differs")
     points = r["points"]
     if [(p["trial_index"], p["param"]) for p in points] != [
-            (trial, s) for trial in range(TRIALS) for s in PARAMS]:
+            (trial, s) for trial in range(TRIALS) for s in params]:
         raise ValueError("missing, duplicate or reordered sample")
     for p in points:
         if type(p["trial_index"]) is not int or type(p["param"]) is not int:
             raise ValueError("non-integer schedule index")
-        if (p["status"] != "ok" or p["result_hash"] != hex(expected[p["param"]][KEYS[name]]) or
+        if (p["status"] != "ok" or p["result_hash"] != hex(expected[p["param"]][keys[name]]) or
                 p["part_of_verdict"] is not True or p["below_signal_floor"] is not False):
             raise ValueError("failed, incorrect or substituted sample")
         nanos = p["per_call_nanos"]
@@ -92,15 +105,16 @@ def validate_export(path, name, expected, revision):
     return {k: r[k] for k in ("verdict", "complexity_formula", "slope", "c_min", "c_max", "advisories")}
 
 
-def collect(run, out, expected, revision):
+def collect(run, out, expected, revision, *, by_dimension=False):
+    _, keys, _, _ = sweep_settings(by_dimension)
     records = [(name, run(name, ["run", PREFIX+name, "--export-file", str(out/(name+".json"))]))
-               for name in KEYS]
+               for name in keys]
     summary = {"observations": {}, "validation_errors": []}
     for name, code in records:
         if code not in (0, 1):
             summary["validation_errors"].append({"name": name, "exit_code": code})
         try:
-            summary["observations"][name] = validate_export(out/(name+".json"), name, expected, revision)
+            summary["observations"][name] = validate_export(out/(name+".json"), name, expected, revision, by_dimension=by_dimension)
         except (ValueError, KeyError, TypeError, IndexError, OSError) as error:
             summary["validation_errors"].append({"name": name, "error": str(error)})
     (out/"summary.json").write_text(json.dumps(summary, indent=2)+"\n")
@@ -121,7 +135,9 @@ def harness_binding():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--parameter", choices=("queries", "matrix-size"), default="queries")
     args = parser.parse_args()
+    by_dimension = args.parameter == "matrix-size"
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True):
         raise ValueError("commit sources before measurement")
@@ -140,7 +156,9 @@ def main():
     for name in ("scripts/bench/sign_det_maximal_matrix.py", "scripts/bench/test_sign_det_maximal_matrix.py",
                  "scripts/bench/sign_det_compare.py", "reports/sign-det-maximal-matrices.md"):
         sources[name] = hashlib.sha256((ROOT/name).read_bytes()).hexdigest()
-    metadata = {"schema": "hex-sign-det-maximal-matrix-timing-v1", "revision": revision,
+    metadata = {"schema": ("hex-sign-det-maximal-matrix-timing-v2" if by_dimension else
+                           "hex-sign-det-maximal-matrix-timing-v1"),
+                "parameter": args.parameter, "revision": revision,
                 "source_sha256": sources, "binary_sha256": hashlib.sha256(exe.read_bytes()).hexdigest(),
                 "executable": str(exe.resolve()), "host": platform.node(), "platform": platform.platform(),
                 "cpu": cpu, "affinity": sorted(os.sched_getaffinity(0)), "load_before": os.getloadavg(),
@@ -165,10 +183,11 @@ def main():
         save()
         archive_sources(out, metadata)
         save()
-        if run("inventory", ["inspect-maximal-matrices"]):
+        if run("inventory", ["inspect-maximal-matrix-dimensions" if by_dimension else
+                             "inspect-maximal-matrices"]):
             raise ValueError("input verification failed")
-        expected = validate_inventory(out/"inventory.log")
-        summary = collect(run, out, expected, revision)
+        expected = validate_inventory(out/"inventory.log", by_dimension=by_dimension)
+        summary = collect(run, out, expected, revision, by_dimension=by_dimension)
         metadata["source_sha256_after"] = {p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in sources}
         metadata["binary_sha256_after"] = hashlib.sha256(exe.read_bytes()).hexdigest()
         metadata["revision_after"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
@@ -179,7 +198,7 @@ def main():
             raise ValueError("measurement sources, harness or binary changed")
         if summary["validation_errors"]:
             raise ValueError("scientific validation failed; all scheduled arms retained")
-        metadata.update(state="complete", scientific_samples=2*TRIALS*len(PARAMS))
+        metadata.update(state="complete", scientific_samples=2*TRIALS*len(sweep_settings(by_dimension)[0]))
         return int(any(o["verdict"] == "inconclusive" for o in summary["observations"].values()))
     except BaseException as error:
         metadata.update(state="failed", error=str(error), exception=type(error).__name__)

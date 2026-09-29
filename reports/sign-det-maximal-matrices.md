@@ -51,6 +51,39 @@ own verdict. The timeout is not a scientific absolute performance budget.
 An inconclusive observation remains an outstanding gate; it is never promoted
 by compilation, fixture equality or a successful smoke check.
 
+## Matrix dimension as the parameter
+
+The `runSolveDimension` and `runCheckDimension` registrations call the same
+solver and checker, preparing the same complete ternary systems. Their
+parameter is the literal matrix dimension `r`, with schedule
+`3,9,27,81,243,729` and corresponding query counts `1,…,6`. The declared
+law is the same `Θ(r³)` arithmetic-operation bound. Each registration retains
+six trial-major rounds, a 100 ms repeat target and a 180 s operational timeout.
+Preparation and untimed validation remain outside each callback.
+
+This parameter gives the fitter a substantial logarithmic range, including
+after its fixed warmup fraction. It does not make integer/rational bit costs
+constant, establish general Tarski-query complexity or guarantee a conclusive
+verdict. The original query-count registrations and archived observations
+remain separate. No original sample is relabelled or removed.
+
+Use `inspect-maximal-matrix-dimensions` to verify all six inputs. Literal
+inverse identities, multiplicities, moment values and sizes are checked for
+every dimension; the independent polynomial-moment comparison remains limited
+to query counts one through three. The dimension-parameter collector validates
+72 expected samples and the actual row/column dimension associated with every
+raw parameter:
+
+```sh
+python3 scripts/bench/sign_det_maximal_matrix.py --parameter matrix-size \
+  --output /absolute/path/outside/the/repository/matrix-dimensions
+```
+
+The collector's default `--parameter queries` preserves validation of the
+original schedule and its `27^s` declaration. The dimension mode records schema
+v2, its parameter choice and the `r^3` declaration. It introduces no new
+matrix implementation, query primitive or CI job.
+
 ## Collection
 
 Build with `lake build hexsigndet_bench`, commit the measured sources, then run

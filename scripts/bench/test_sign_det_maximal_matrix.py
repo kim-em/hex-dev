@@ -222,5 +222,76 @@ class MatrixEvidenceTests(unittest.TestCase):
             self.assertEqual(json.loads((out/"summary.json").read_text()), summary)
 
 
+class DimensionEvidenceTests(unittest.TestCase):
+    def setUp(self):
+        self.rows = [{"queries": s, "matrixSize": 3**s, "supportSize": 3**s,
+                      "countSum": 3**s, "inverseIdentityScalarPairs": 27**s,
+                      "inverseBits": s+1, "denominatorBits": s+1,
+                      "valuesBits": (3**s).bit_length(),
+                      "matchesPolynomialSystem": True if s <= 3 else None,
+                      "inputHash": s, "solveResultHash": 100+s, "checkResultHash": 11}
+                     for s in range(1, 7)]
+        self.expected = {r["matrixSize"]: r for r in self.rows}
+        params, _, config, formula = bench.sweep_settings(True)
+        self.result = {"function": bench.PREFIX+"runSolveDimension", "kind": "parametric",
+                       "hashable": True, "budget_truncated": False,
+                       "env": {"git_commit": "source", "git_dirty": False},
+                       "config": copy.deepcopy(config), "complexity_formula": formula,
+                       "verdict": "inconclusive", "slope": 0.3, "c_min": 1, "c_max": 2,
+                       "advisories": [], "points": [
+                           {"trial_index": t, "param": r, "status": "ok",
+                            "result_hash": hex(self.expected[r]["solveResultHash"]),
+                            "part_of_verdict": True, "below_signal_floor": False,
+                            "per_call_nanos": 1000+r, "inner_repeats": 100,
+                            "peak_rss_kb": 1024, "alloc_bytes": None}
+                           for t in range(6) for r in params]}
+
+    def inventory(self, rows):
+        with TemporaryDirectory() as d:
+            p = Path(d)/"inventory.jsonl"
+            p.write_text("".join(json.dumps(r)+"\n" for r in rows))
+            return bench.validate_inventory(p, by_dimension=True)
+
+    def export(self, result):
+        with TemporaryDirectory() as d:
+            p = Path(d)/"result.json"
+            p.write_text(json.dumps({"export_schema_version": 1, "results": [result]}))
+            return bench.validate_export(p, "runSolveDimension", self.expected, "source",
+                                         by_dimension=True)
+
+    def test_natural_dimension_records(self):
+        self.assertEqual(self.inventory(self.rows), self.expected)
+        self.assertEqual(self.export(self.result)["verdict"], "inconclusive")
+        self.assertEqual(sorted(self.expected), [3, 9, 27, 81, 243, 729])
+
+    def test_query_counts_cannot_replace_dimensions(self):
+        result = copy.deepcopy(self.result)
+        for p in result["points"]:
+            p["param"] = self.expected[p["param"]]["queries"]
+        with self.assertRaises(ValueError):
+            self.export(result)
+        rows = copy.deepcopy(self.rows)
+        rows[0]["queries"] = rows[0]["matrixSize"]
+        with self.assertRaises(ValueError):
+            self.inventory(rows)
+
+    def test_missing_largest_system(self):
+        with self.assertRaises(ValueError):
+            self.inventory(self.rows[:-1])
+        result = copy.deepcopy(self.result)
+        result["points"] = [p for p in result["points"] if p["param"] != 729]
+        with self.assertRaises(ValueError):
+            self.export(result)
+
+    def test_legacy_model_or_registration_rejected(self):
+        for key, value in (("complexity_formula", "27^s"),
+                           ("function", bench.PREFIX+"runSolve"),
+                           ("config", bench.CONFIG)):
+            result = copy.deepcopy(self.result)
+            result[key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                self.export(result)
+
+
 if __name__ == "__main__":
     unittest.main()
