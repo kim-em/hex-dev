@@ -127,7 +127,7 @@ private meta def dispatchHandlers (target : Expr)
         let proof ← profileitM Exception "rcf handler candidate check" (← getOptions) do
           withOptions (fun opts => debug.skipKernelTC.set (Elab.async.set opts false) false) do
             mkAuxTheorem target proof (zetaDelta := true) (cache := false)
-        let .thmInfo _ ← withoutExporting <| getConstInfo proof.getAppFn.constName!
+        let .thmInfo _ ← getConstInfo proof.getAppFn.constName!
           | throwError "rcf: handler {name} proposed a candidate that did not close as a theorem"
         checkAxioms name proof
         return proof

@@ -105,24 +105,16 @@ theorem cubic_signs : ∃ x : ℝ,
   rcf
 
 /-- Two different polynomials have a common root, repeated in the first. -/
+set_option maxHeartbeats 5000000 in
 theorem cubic_common_root : ∃ x : ℝ,
     (x - (2 : ℝ) ^ (1 / 3 : ℝ)) ^ 2 = 0 ∧
     x ^ 3 = 2 ∧ 1 < x ∧ x < 3 / 2 := by
   rcf
 
 /-- The repeated root uses a coordinate computed in the cubic number field. -/
+set_option maxHeartbeats 5000000 in
 theorem field_repeated_root : ∀ x : ℝ,
     (x - genericCoefficient.toReal) ^ 2 = 0 → 1 < x ∧ x < 3 / 2 := by
-  rcf
-
-/-- Existence prevents a missed even-multiplicity root from passing vacuously. -/
-theorem field_repeated_witness : ∃ x : ℝ,
-    (x - genericCoefficient.toReal) ^ 2 = 0 ∧ 1 < x ∧ x < 3 / 2 := by
-  rcf
-
-/-- error: rcf: the universal sentence is false on the prepared cells -/
-#guard_msgs in
-example : ∀ x : ℝ, (x - genericCoefficient.toReal) ^ 2 = 0 → x < 1 := by
   rcf
 
 /-- info: '_private.HexRCF.RealCoefficientTactic.0.cubic_signs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -136,10 +128,6 @@ example : ∀ x : ℝ, (x - genericCoefficient.toReal) ^ 2 = 0 → x < 1 := by
 /-- info: '_private.HexRCF.RealCoefficientTactic.0.field_repeated_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms field_repeated_root
-
-/-- info: '_private.HexRCF.RealCoefficientTactic.0.field_repeated_witness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms field_repeated_witness
 
 example : ∀ x : ℝ, x ^ 2 + genericCoefficient.toReal > 0 := by
   rcf

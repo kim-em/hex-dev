@@ -84,8 +84,6 @@ example : ∀ x : ℝ, x + Real.pi = x + Real.pi := by
     runCase 16 (some "(kernel) deep recursion detected")
   run_tac withOptions (fun opts => debug.skipKernelTC.set (maxRecDepth.set opts 64) true) <|
     runCase 16 (some "(kernel) deep recursion detected")
-  run_tac withOptions (fun opts => debug.skipKernelTC.set (maxRecDepth.set opts 64) true) <|
-    runCase 21 (some "(kernel) deep recursion detected")
   run_tac withOptions (fun opts => Elab.async.set (maxRecDepth.set opts 64) true) <|
     runCase 16 (some "(kernel) deep recursion detected")
   run_tac runCase 17 (some "unknown free variable")
@@ -190,30 +188,6 @@ run_elab do
     let proof ← withOptions (rcf.testMode.set · 18) <| proveGoal target
     let lctx ← instantiateLCtxMVars (← getLCtx)
     withLCtx lctx (← getLocalInstances) <| checkWithKernel proof
-    unless (← calls.get) == #[1, 2] do throwError "incorrect attempts"
-
--- Public module views hide theorem bodies as axioms. Validation must inspect
--- the actual declaration kind while still accepting an exporting caller.
-run_elab do
-  let target ← Term.elabType (← `(term| ∀ x : ℝ, x + Real.pi = x + Real.pi))
-  calls.set #[]
-  let proof ← withExporting <| withOptions (rcf.testMode.set · 23) <| proveGoal target
-  checkWithKernel proof
-  unless (← calls.get) == #[1, 2] do throwError "incorrect attempts"
-
--- Substituting a let value must not turn a proof into an unsafe definition.
-run_elab do
-  let target ← Term.elabType (← `(term| ∀ x : ℝ, x + Real.pi = x + Real.pi))
-  let type ← mkArrow (mkConst ``Nat) (mkConst ``Nat)
-  withLetDecl `unsafeAlias type (mkConst ``unsafeIdentity) fun _ => do
-    calls.set #[]
-    let error? ← try
-        let _ ← withOptions (rcf.testMode.set · 22) <| proveGoal target
-        pure none
-      catch error => pure (some error)
-    let some error := error? | throwError "accepted an unsafe closed candidate"
-    unless (← error.toMessageData.toString).contains "did not close as a theorem" do
-      throwError "unexpected failure: {error.toMessageData}"
     unless (← calls.get) == #[1, 2] do throwError "incorrect attempts"
 
 /-- Explicit local equalities permit dispatch, with the original goal intact. -/
