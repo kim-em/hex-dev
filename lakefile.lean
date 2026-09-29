@@ -1062,6 +1062,12 @@ lean_lib HexSignDetMathlibProofProbe where
   srcDir := "bench"
   globs := #[.submodules `HexSignDetMathlib.ProofProbe]
 
+-- Depth-three kernel reductions run manually to keep their large memory demand
+-- out of the shared hosted build. Depth-one/two probes remain in the CI target above.
+lean_lib HexSignDetMathlibNestedProofProbe where
+  srcDir := "bench"
+  globs := #[.submodules `HexSignDetMathlib.NestedProofProbe]
+
 lean_lib HexRealFormulaProofProbe where
   srcDir := "bench"
   globs := #[`HexRealFormulaMathlib.ProofProbe.Support,

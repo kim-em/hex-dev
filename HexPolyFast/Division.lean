@@ -580,7 +580,7 @@ theorem divModMonicWith_eq (mul : MulPlan R) (p q : DensePoly R)
       exact hplan.trans hmonic.symm
 
 /-- One-shot reciprocal division over a field. -/
-def divModWith {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+def divModNewton {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
     (mul : MulPlan F) (p q : DensePoly F) : DensePoly F × DensePoly F :=
   if hqne : q = 0 then
     (0, p)
@@ -593,10 +593,10 @@ def divModWith {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
 
 /-- One-shot field reciprocal division is extensionally the existing verified
 long-division operation. -/
-theorem divModWith_eq {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+theorem divModNewton_eq {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
     (mul : MulPlan F) (p q : DensePoly F) :
-    divModWith mul p q = _root_.Hex.DensePoly.divMod p q := by
-  unfold divModWith
+    divModNewton mul p q = _root_.Hex.DensePoly.divMod p q := by
+  unfold divModNewton
   split
   · rename_i hq
     have hqsize : q.size = 0 := (size_eq_zero_iff q).mpr hq
@@ -628,20 +628,40 @@ theorem divModWith_eq {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
       exact ha hz'
 
 /-- Fast field division leaves fewer stored coefficients than its nonzero divisor. -/
-theorem divModWith_size_lt {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+theorem divModNewton_size_lt {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
     (plan : MulPlan F) (p q : DensePoly F) (hq : q ≠ 0) :
-    (divModWith plan p q).2.size < q.size := by
+    (divModNewton plan p q).2.size < q.size := by
   let d := DivPlan.ofNonzero plan q hq (quotientLength p q)
   have hcap : quotientLength p d.divisor ≤ d.capacity := Nat.le_refl _
   have h := d.remainder_size_le p hcap
   have hpos : 0 < q.size := Nat.pos_of_ne_zero (fun h => hq ((size_eq_zero_iff q).mp h))
-  have he : divModWith plan p q = d.divMod p hcap := by
-    simp only [divModWith, hq, ↓reduceDIte]
+  have he : divModNewton plan p q = d.divMod p hcap := by
+    simp only [divModNewton, hq, ↓reduceDIte]
     rfl
   rw [he]
   change (p - mulWith d.mul (d.quotient p hcap) d.divisor).size < q.size
   change (p - mulWith d.mul (d.quotient p hcap) d.divisor).size ≤ q.size - 1 at h
   omega
+
+/-- Kernel-visible reference division. Compiled code uses the proved
+short-operand/Newton dispatch below, with the supplied multiplication plan. -/
+@[expose]
+def divModWith {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+    (mul : MulPlan F) (p q : DensePoly F) : DensePoly F × DensePoly F :=
+  let _ := mul
+  divMod p q
+
+/-- Planned division has the exact reference quotient and remainder. -/
+theorem divModWith_eq {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+    (mul : MulPlan F) (p q : DensePoly F) :
+    divModWith mul p q = divMod p q := rfl
+
+/-- Planned division retains the strict reference remainder bound. -/
+theorem divModWith_size_lt {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+    (plan : MulPlan F) (p q : DensePoly F) (hq : q ≠ 0) :
+    (divModWith plan p q).2.size < q.size := by
+  rw [divModWith_eq, ← divModNewton_eq plan p q]
+  exact divModNewton_size_lt plan p q hq
 
 /-- Maximum short operand length for direct one-shot polynomial division. -/
 def divisionCutoff : Nat := 8
@@ -665,6 +685,6 @@ def divModWithImpl {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
   unfold divModWithImpl
   split
   · exact divModWith_eq mul p q
-  · rfl
+  · exact (divModNewton_eq mul p q).symm
 
 end Hex.DensePoly
