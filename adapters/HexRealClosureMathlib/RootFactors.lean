@@ -71,6 +71,7 @@ theorem factorEntries_spec {context : Ctx} (factors : List (DensePoly E × Nat))
       · obtain ⟨entry, member, value, multiplicity⟩ := (ih remaining).mpr ⟨other, present, root, same⟩
         exact ⟨entry, Or.inr member, value, multiplicity⟩
 
+
 include hz h1 ha hs hm hnat hsign hn hi in
 /-- Labels attached to roots of actual Yun factors equal the input's root
 multiplicity. The raw coefficient type needs no field instance. -/

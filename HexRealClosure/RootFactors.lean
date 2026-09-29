@@ -14,7 +14,7 @@ public section
 namespace Hex.RealClosure.Roots
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
-variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E] [Div E]
+variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E]
 variable [DecidableEq Ctx]
 
 /-- One selected output value with its original positive multiplicity. -/
@@ -70,6 +70,8 @@ theorem factorEntries_cons {sign : E → Int} {context : Ctx}
           exact ⟨positive, completion, entries, rfl, rfl, by
             simpa [factorEntries, positive, produced, remaining] using accepted.symm⟩
   · simp [factorEntries, positive] at accepted
+
+variable [Div E]
 
 /-- Execute zero extraction, the raw Yun recurrence and every actual factor
 completion. The extracted zero is restored once with its original label.

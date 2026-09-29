@@ -43,17 +43,60 @@ private def run : IO Unit := do
     linear * linear * linear * linear * linear)
   let .ok (.finite entries) := Roots.assemble Sturm.orderSign (10378 : Nat) p
     | throw (IO.userError "repeated-factor root assembly failed")
-  require (entries.map (·.multiplicity) == [2, 3, 3, 5]) "wrong original multiplicities"
-  match entries with
-  | [zero, negative, positive, three] =>
-    match zero.root with
-    | .point value => require (value == 0) "restored zero is not zero"
-    | _ => throw (IO.userError "zero was not restored as a coefficient point")
-    match negative.root.compare (.point (-1)), positive.root.compare (.point 1),
-        three.root.compare (.point 3) with
-    | .ok .lt, .ok .gt, .ok .eq => pure ()
-    | _, _, _ => throw (IO.userError "labels belong to incorrect root values")
-  | _ => throw (IO.userError "wrong root count after Yun and zero extraction")
+  require (entries.length == 4) "wrong root count after Yun and zero extraction"
+  let mut counts := #[0, 0, 0, 0]
+  for entry in entries do
+    match entry.root.compare (.point 0), entry.root.compare (.point 3) with
+    | .ok .eq, _ =>
+      require (entry.multiplicity == 2) "wrong restored zero label"
+      match entry.root with
+      | .point value => require (value == 0) "restored zero is not zero"
+      | _ => throw (IO.userError "zero was not restored as a coefficient point")
+      counts := counts.modify 0 (· + 1)
+    | _, .ok .eq =>
+      require (entry.multiplicity == 5) "wrong root-three label"
+      counts := counts.modify 3 (· + 1)
+    | .ok .lt, _ =>
+      require (entry.multiplicity == 3) "wrong negative root label"
+      require ((entry.root.compare (.point (-1))).toOption == some .lt) "incorrect negative root"
+      counts := counts.modify 1 (· + 1)
+    | .ok .gt, _ =>
+      require (entry.multiplicity == 3) "wrong positive root label"
+      require ((entry.root.compare (.point 1)).toOption == some .gt) "incorrect positive root"
+      counts := counts.modify 2 (· + 1)
+    | _, _ => throw (IO.userError "root classification failed")
+  require (counts == #[1, 1, 1, 1]) "incorrect root multiset"
+  let noRoots : DensePoly Rat := x * x + 1
+  match Roots.assemble Sturm.orderSign (10378 : Nat) noRoots with
+  | .ok (.finite []) => pure ()
+  | _ => throw (IO.userError "positive-degree root-free polynomial failed")
+  let mixed : DensePoly Rat := noRoots * noRoots * (x - 1)
+  match Roots.assemble Sturm.orderSign (10378 : Nat) mixed with
+  | .ok (.finite [entry]) =>
+    require (entry.multiplicity == 1) "root-free factor changed real-root multiplicity"
+    require ((entry.root.compare (.point 1)).toOption == some .eq) "root-free factor changed real root"
+  | _ => throw (IO.userError "mixed real and root-free factors failed")
+  let simpleZero : DensePoly Rat := x * (x - 1) * (x - 1)
+  match Roots.assemble Sturm.orderSign (10378 : Nat) simpleZero with
+  | .ok (.finite entries) =>
+    require (entries.length == 2) "simple zero was duplicated or lost"
+    require (entries.any fun entry => entry.multiplicity == 1 &&
+      (entry.root.compare (.point 0)).toOption == some .eq) "simple zero label was lost"
+    require (entries.any fun entry => entry.multiplicity == 2 &&
+      (entry.root.compare (.point 1)).toOption == some .eq) "double nonzero label was lost"
+  | _ => throw (IO.userError "simple zero and repeated nonzero assembly failed")
+  let .some selected := Root.validate 7
+      { context := 7, head := DensePoly.ofCoeffs #[-2, 0, 1],
+        lower := .finite 1, upper := .finite 2, indices := [], signs := [] }
+    | throw (IO.userError "selected coefficient root validation failed")
+  let handle := selected.handle
+  let alpha : Root.Handle.Value handle := Root.Handle.Value.ofPoly handle x
+  let y : DensePoly (Root.Handle.Value handle) := DensePoly.ofCoeffs #[0, 1]
+  match Roots.assemble Root.Handle.Value.sign (10378 : Nat) (y - DensePoly.C alpha) with
+  | .ok (.finite [entry]) =>
+    require (entry.multiplicity == 1) "wrong selected-coefficient root multiplicity"
+    require ((entry.root.compare (.point alpha)).toOption == some .eq) "wrong selected-coefficient root"
+  | _ => throw (IO.userError "selected-coefficient root assembly failed")
   IO.println "zero, constants and original root multiplicity assembly checks passed"
 
 #eval run

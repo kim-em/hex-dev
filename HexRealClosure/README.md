@@ -461,7 +461,6 @@ fractional and negative scalars, and one and two infinitesimal levels. Its
 independent SymPy oracle determines the zero multiplicity from the first
 nonzero coefficient and checks the entire returned quotient.
 
-
 `Roots.assemble` composes literal zero extraction, the actual raw Yun
 recurrence and complete isolation of each returned factor. Its intermediate
 `Output` retains `all` for the zero polynomial and positive multiplicities
@@ -471,13 +470,17 @@ completion and absent factor domains remain explicit internal errors.
 actual recursive output for all remaining factors. No companion theorem is a
 constructor argument. The default native tests exercise zero, positive and
 negative constants, a pure power and mixed roots with multiplicity gaps and a
-negative leading scalar.
+negative leading scalar. They also exercise positive-degree root-free factors,
+a simple zero mixed with a repeated nonzero root, and a polynomial over cached
+selected-root values without field laws. Root checks do not depend on the
+intermediate emission order.
 
 The companion's `factorEntries_spec` ties every emitted root and label to the
 actual factor input. `factorEntries_multiplicity` and `factorEntries_complete`
 transport the actual raw Yun result into a characteristic-zero field and prove
-exact labels and coverage. They require coefficient-operation preservation
-and zero reflection; the executable coefficient type needs no field instance.
+exact labels and coverage. They require coefficient-operation preservation, zero reflection and agreement
+of the computed signs with a common ordered real-closed field; the executable
+coefficient type needs no field instance.
 `assemble_spec` composes these results with zero extraction: a successful finite
 output represents exactly the original polynomial's roots with their original
 positive multiplicities. `assemble_all` proves the separate all-roots result

@@ -13,3 +13,4 @@ public import HexRealClosure.Isolation
 public import HexRealClosure.IsolationRoots
 public import HexRealClosure.RootOrder
 public import HexRealClosure.ZeroFactor
+public import HexRealClosure.RootFactors
