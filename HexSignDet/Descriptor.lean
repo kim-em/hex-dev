@@ -71,6 +71,17 @@ theorem Descriptor.ofTable_raw {sign : E → Int} {context : Ctx}
   unfold ofTable
   rfl
 
+/-- Constructing a descriptor from a checked table preserves its replay evidence
+literally. -/
+theorem Descriptor.ofTable_evidence {sign : E → Int} {context : Ctx}
+    (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
+    (hw : raw.wellFormed = true) (hctx : raw.context = context)
+    (hc : evidence.check sign context raw.head raw.lower raw.upper raw.queries = true)
+    (hone : (evidence.table hc).count raw.signs = 1) :
+    (ofTable raw evidence hw hctx hc hone).evidence = evidence := by
+  unfold ofTable
+  rfl
+
 /-- Reusing a checked table produces exactly the descriptor obtained by
 checking that same evidence again. -/
 theorem Descriptor.ofReplay_ofTable {sign : E → Int} {context : Ctx}
@@ -103,6 +114,17 @@ theorem Descriptor.ofReplay_raw {sign : E → Int} {context : Ctx}
     {raw : RawDescriptor E Ctx} {evidence : Replay E Ctx}
     {d : Descriptor E Ctx sign context}
     (h : ofReplay? sign context raw evidence = some d) : d.raw = raw := by
+  unfold ofReplay? at h
+  split at h
+  · cases h
+    rfl
+  · contradiction
+
+/-- Successful validation preserves the supplied replay evidence literally. -/
+theorem Descriptor.ofReplay_evidence {sign : E → Int} {context : Ctx}
+    {raw : RawDescriptor E Ctx} {evidence : Replay E Ctx}
+    {d : Descriptor E Ctx sign context}
+    (h : ofReplay? sign context raw evidence = some d) : d.evidence = evidence := by
   unfold ofReplay? at h
   split at h
   · cases h

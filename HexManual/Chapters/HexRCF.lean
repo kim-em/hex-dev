@@ -727,6 +727,47 @@ and chosen-root identifications use only Lean's standard logical axioms.
 See {ref "hex-number-field"}[HexNumberField] and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
 
+# Simultaneous signs and repeated roots over a cubic field
+%%%
+tag := "hex-rcf-cubic-signs"
+%%%
+
+Mathlib writes the nonnegative real cube root of two as
+`(2 : ℝ) ^ (1 / 3 : ℝ)`, using {name}`Real.rpow`. It is a closed algebraic
+coefficient here; powers of the quantified variable still have natural-number
+exponents. The first example finds a positive square root of this coefficient
+and checks two inequalities at the same root, without a supplied witness.
+The second finds a common root of two different polynomials. That root has
+multiplicity two in the first polynomial and multiplicity one in the second.
+
+```lean
+example : ∃ x : ℝ,
+    x ^ 2 = (2 : ℝ) ^ (1 / 3 : ℝ) ∧
+    1 < x ∧ x < (2 : ℝ) ^ (1 / 3 : ℝ) := by
+  rcf
+
+example : ∃ x : ℝ,
+    (x - (2 : ℝ) ^ (1 / 3 : ℝ)) ^ 2 = 0 ∧
+    x ^ 3 = 2 ∧ 1 < x ∧ x < 3 / 2 := by
+  rcf
+
+example : ∀ x : ℝ,
+    (x - computedCoefficient.toReal) ^ 2 = 0 → 1 < x ∧ x < 3 / 2 := by
+  rcf
+
+example : ∃ x : ℝ,
+    (x - computedCoefficient.toReal) ^ 2 = 0 ∧ 1 < x ∧ x < 3 / 2 := by
+  rcf
+```
+
+The last two examples use the actual `QAdjoin` coordinate `(a² + 1) / 2`
+constructed above, where `a` is the selected cube root of two. They check both
+the location and existence of a repeated root over this nonquadratic field.
+Repeated factors are allowed in the user's polynomials; the internal root
+domain used for sign determination is squarefree. These examples use the
+proved fixed-field replay and root-sum results, and their proofs depend only
+on Lean's standard logical axioms.
+
 # Arithmetic at a selected algebraic root
 %%%
 tag := "hex-rcf-selected-root"
@@ -1083,8 +1124,12 @@ polynomial containing that root. Its hypotheses describe the input interval;
 they do not assume a successful computation. The proof uses the old validated
 selection's uniqueness and the proved shared Sturm–Tarski theorem. It applies to
 generic lawful coefficients, including non-Archimedean interpretations, without
-assuming rational isolating bounds. General success after changing the defining
-polynomial still requires the separate Thom foundations.
+assuming rational isolating bounds.
+{name}`Hex.SignDet.Descriptor.buildReencoding_congr` also covers different stored
+coefficients representing the same polynomial, tested by a zero difference;
+the producer builds fresh evidence bound to the new representation.
+General success for a different mathematical defining polynomial requires the
+separate Thom foundations.
 A coefficient conversion lets a selected root participate in queries over a
 larger coefficient field. Here the source selects √2 over the rationals. Moving
 its descriptor into the existing field ℚ(∛2) allows a query comparing it with ∛2:

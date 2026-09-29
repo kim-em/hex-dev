@@ -1,0 +1,34 @@
+{
+  "build.log.gz": {
+    "uncompressed_sha256": "bfb8825b9ea6a7b21f77fbcda0b3a0230055a4781cd8c67e63eccf88d5faa200",
+    "uncompressed_bytes": 30674
+  },
+  "diagnostics/first-build.log.gz": {
+    "uncompressed_sha256": "ecca77e7476eb504ab3e2e0f82ba984f9d07d9ecfb552aecc29bc4811ad163cd",
+    "uncompressed_bytes": 35926
+  },
+  "diagnostics/second-build.log.gz": {
+    "uncompressed_sha256": "9c74b64a365739d7c828d2b6be219b68699fd64073c0453dc0352d58d5e3644a",
+    "uncompressed_bytes": 35244
+  },
+  "diagnostics/focused-profile.log.gz": {
+    "uncompressed_sha256": "97cb7110736d0ac74ac7dba09761d9ea2b8870ebd8e8be3c51489a4fb14d1af1",
+    "uncompressed_bytes": 34265
+  },
+  "diagnostics/transport-profile.log.gz": {
+    "uncompressed_sha256": "683866139ea0ca9dbf6fee87c42bbb0da2336acf262a46bf5ee1751fdecab0c6",
+    "uncompressed_bytes": 34279
+  },
+  "diagnostics/base-profile.log.gz": {
+    "uncompressed_sha256": "baec77235f918607a7cc86ccc641f3947fd850049a7e957459d8dcc68c2b566b",
+    "uncompressed_bytes": 34365
+  },
+  "diagnostics/kernel-profile.log.gz": {
+    "uncompressed_sha256": "3e70da8b89cbcc57f688d0c50e7529f4072d063649c0c1dd29109601b39f579d",
+    "uncompressed_bytes": 31585
+  },
+  "source.patch.gz": {
+    "uncompressed_sha256": "a50aeb38311ac182cc50a2a16f422fdc6a74281f800e04c75b8e37800b5699e3",
+    "uncompressed_bytes": 6252
+  }
+}

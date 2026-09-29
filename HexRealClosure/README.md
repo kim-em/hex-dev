@@ -489,7 +489,7 @@ and the native infinitesimal sign; the separate caller test uses the actual
 core rational dictionary without changing caller instance priorities. The two-level
 construction examples use the semantic coefficient dictionaries.
 
-Compatible algebraic unions, native descriptor construction and simultaneous
+Identifying native towers with the compatible algebraic union, descriptor construction and simultaneous
 realization of finite sign conditions at one ordinary real point remain
 separate obligations.
 
@@ -545,3 +545,29 @@ parameter choices remain required finite-sign realization work. These helpers
 operate on coefficient data with a supplied ordered embedding into ℝ in the
 companion; they add no native constructor or runtime field instance for formal
 real expressions.
+
+### Relative algebraic union
+
+The companion's `Union.field B R` uses the prescribed base algebra map into a
+supplied ambient field and consists of all its elements algebraic over `B`.
+`inclusion_range` identifies that image exactly. Every element belongs to a
+finite algebraic adjunction, and `common_extension` places two finite sets of
+algebraic generators in one common finite extension inside the same ambient.
+The inclusions inherit arithmetic and order from the ambient field.
+
+`Union.square` and `Union.odd_root` prove closure under square roots of
+nonnegative elements and roots of odd-degree polynomials.
+`Union.realClosed` combines those conclusions into real-closedness when the
+supplied ambient is real closed. `Ambient.ofUnion` restricts a supplied real closed ambient to its algebraic
+union using a required strictly monotone base embedding for the planned base
+enlargement. Its packaged `val` preserves order, and `lift` admits every supplied
+ambient element algebraic over the base. `Ambient.union_eq_top` applies to the actual
+base map of the proved algebraic ambient. Ordinary-kernel examples instantiate
+the construction for the usual rational embedding into the real numbers and
+place `sqrt(2)` and `sqrt(3)` in one finite compatible extension. A two-level
+infinitesimal ambient is restricted over the first rational-function base;
+its square root of the first infinitesimal is included back into that ambient.
+
+Presenting every algebraic generator by a native selected-root descriptor and
+identifying all compatible native presentations with this semantic union remain
+required tower integration work.
