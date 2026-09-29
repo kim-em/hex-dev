@@ -25,7 +25,8 @@ namespace Hex.SignedRemainderChain
 variable {E : Type u} [Zero E] [DecidableEq E]
 
 /-- A finite inventory of the coefficient signs used by literal chain replay.
-Zero covers the default step in malformed arrays. The inventory may include
+Zero is a conservative extra operand for the default-step branch of the proof.
+The checker itself ranges only over existing step indices. The inventory may include
 unused scales; it is independent of the sign function and of acceptance. -/
 @[expose] def signOperands (cert : SignedRemainderChain E) : List E :=
   [0, cert.initial.leftScale, cert.initial.rightScale] ++
@@ -46,7 +47,7 @@ theorem checkStep_congr (sign sign' : E → Int) (a b c : DensePoly E)
 omit [One E] in
 /-- Agreement on the finite inventory preserves both acceptance and rejection
 of the actual checker, including malformed and truncated supplied chains. -/
-theorem check_congr [NatCast E] (sign sign' : E → Int)
+theorem check_sign_congr [NatCast E] (sign sign' : E → Int)
     (p f : DensePoly E) (cert : SignedRemainderChain E)
     (h : ∀ x ∈ cert.signOperands, sign x = sign' x) :
     check sign p f cert = check sign' p f cert := by
@@ -83,7 +84,7 @@ end Hex.SignedRemainderChain
 
 namespace Hex
 
-variable {E : Type u} [Zero E] [DecidableEq E] [Add E] [Sub E] [Mul E]
+variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] [Add E] [Sub E] [Mul E]
 
 namespace Endpoint
 
@@ -154,17 +155,18 @@ theorem signs_congr (sign sign' : E → Int) (chain : Array (DensePoly E)) (a : 
 variable [One E] [NatCast E] [DecidableEq Ctx]
 
 /-- Finite sign agreement preserves complete literal query replay, including
-all domain guards, endpoint signs, identities and rejection paths. Context and
+all domain guards, endpoint signs, identities and rejection paths, for endpoints
+in the coefficient domain with `EndpointSigns.ofSign`. Context and
 integer equality and literal binding checks are unchanged. No producer is run. -/
-theorem check_congr (sign sign' : E → Int) (context : Ctx)
+theorem check_sign_congr (sign sign' : E → Int) (context : Ctx)
     (p f : DensePoly E) (a b : Endpoint E) (value : Int)
     (cert : TarskiCertificate E E Ctx)
     (h : ∀ x ∈ signOperands p a b cert, sign x = sign' x) :
     check sign (EndpointSigns.ofSign sign) context p f a b value cert =
       check sign' (EndpointSigns.ofSign sign') context p f a b value cert := by
-  have hsf := SignedRemainderChain.check_congr sign sign' p 1 cert.squarefree
+  have hsf := SignedRemainderChain.check_sign_congr sign sign' p 1 cert.squarefree
     (fun x hx => h x (by simp [signOperands, hx]))
-  have hrem := SignedRemainderChain.check_congr sign sign' p f cert.remainders
+  have hrem := SignedRemainderChain.check_sign_congr sign sign' p f cert.remainders
     (fun x hx => h x (by simp [signOperands, hx]))
   have ho := Endpoint.lt_congr sign sign' a b
     (fun x hx => h x (by simp [signOperands, hx]))

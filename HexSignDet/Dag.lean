@@ -146,7 +146,9 @@ assert root-count semantics, which still require the companion query bridge. -/
     Option { t : Replay E Ctx // t.check sign context p a b qs = true } := do
   let shared := dag.entries[0]?.bind fun entry =>
     entry.node.moments.toArray[0]?.bind fun cert =>
-      TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
+      if cert.domain.binds context p a b cert.squarefree then
+        TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
+      else none
   let memo ← dag.entries.foldlM (init := #[]) fun memo entry => do
     let next ← step sign context p a b memo entry shared
     pure (memo.push next)

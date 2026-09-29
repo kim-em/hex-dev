@@ -78,7 +78,8 @@ inductive Replay (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E]
 
 /-- Prefer a matching graph domain. Otherwise validate the node's own first
-domain only when several moments can reuse it. A single moment uses full
+domain only after it binds the caller's context, head and interval, and only
+when several moments can reuse it. A single moment uses full
 replay directly instead of constructing a cache for one use. -/
 @[expose] def Node.cache [DecidableEq Ctx] (sign : E → Int)
     (context : Ctx) (p : DensePoly E) (a b : Endpoint E) (n : Node E Ctx)
@@ -86,10 +87,12 @@ replay directly instead of constructing a cache for one use. -/
       (EndpointSigns.ofSign sign))) :
     Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign (EndpointSigns.ofSign sign)) :=
   n.moments.toArray[0]?.bind fun cert =>
-    match shared.filter (fun d => d.data.binds context p a b cert.squarefree) with
-    | some d => some d
-    | none => if n.size ≤ 1 then none else
-        TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
+    if cert.domain.binds context p a b cert.squarefree then
+      match shared.filter (fun d => d.data.binds context p a b cert.squarefree) with
+      | some d => some d
+      | none => if n.size ≤ 1 then none else
+          TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
+    else none
 
 /-- Check all local facts without query production, gcd search or row search.
 The rank certificate's columns must preserve the retained support order.

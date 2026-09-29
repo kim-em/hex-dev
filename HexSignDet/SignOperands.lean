@@ -37,7 +37,7 @@ variable [One E] [Add E] [Sub E] [Mul E]
 
 omit [One E] in
 /-- Reduction replay depends only on the supplied scale signs. -/
-theorem ReductionStep.check_congr (sign sign' : E → Int)
+theorem ReductionStep.check_sign_congr (sign sign' : E → Int)
     (p prev factor : DensePoly E) (i : Nat) (s : ReductionStep E)
     (h : ∀ x ∈ s.signOperands, sign x = sign' x) :
     s.check sign p prev factor i = s.check sign' p prev factor i := by
@@ -48,7 +48,7 @@ theorem ReductionStep.check_congr (sign sign' : E → Int)
 omit [One E] in
 /-- Agreement on the literal scales preserves full reduction replay,
 including missing or extra factors and witnesses. -/
-theorem Reduction.checkFrom_congr (sign sign' : E → Int)
+theorem Reduction.checkFrom_sign_congr (sign sign' : E → Int)
     (p prev : DensePoly E) (fs : List (Nat × DensePoly E))
     (ss : List (ReductionStep E)) (result : DensePoly E)
     (h : ∀ x ∈ reductionOperands ss, sign x = sign' x) :
@@ -59,13 +59,13 @@ theorem Reduction.checkFrom_congr (sign sign' : E → Int)
     cases fs with
     | nil => rfl
     | cons factor fs =>
-      have hs := s.check_congr sign sign' p prev factor.2 factor.1
+      have hs := s.check_sign_congr sign sign' p prev factor.2 factor.1
         (fun x hx => h x (by simp [reductionOperands, hx]))
       have ht := ih s.next fs (fun x hx => h x (by simpa [reductionOperands] using Or.inr hx))
       simp only [checkFrom, hs, ht]
 
 /-- Preprocessing every query uses the same finite scale dependency rule. -/
-theorem QueryReduction.checkFrom_congr (sign sign' : E → Int)
+theorem QueryReduction.checkFrom_sign_congr (sign sign' : E → Int)
     (p : DensePoly E) (i : Nat) (qs : List (DensePoly E)) (ss : List (ReductionStep E))
     (h : ∀ x ∈ reductionOperands ss, sign x = sign' x) :
     checkFrom sign p i qs ss = checkFrom sign' p i qs ss := by
@@ -75,7 +75,7 @@ theorem QueryReduction.checkFrom_congr (sign sign' : E → Int)
     cases qs with
     | nil => rfl
     | cons q qs =>
-      have hs := s.check_congr sign sign' p 1 q i
+      have hs := s.check_sign_congr sign sign' p 1 q i
         (fun x hx => h x (by simp [reductionOperands, hx]))
       have ht := ih (i + 1) qs (fun x hx => h x (by simpa [reductionOperands] using Or.inr hx))
       simp only [checkFrom, hs, ht]
@@ -92,19 +92,19 @@ actual shared Tarski certificate's sign operands. -/
 
 /-- Finite agreement preserves the existing moment checker. Arithmetic
 identities, integer values and literal bindings retain their existing checks. -/
-theorem checkMoment_congr [DecidableEq Ctx] (sign sign' : E → Int) (context : Ctx)
+theorem checkMoment_sign_congr [DecidableEq Ctx] (sign sign' : E → Int) (context : Ctx)
     (p : DensePoly E) (a b : Endpoint E) (qs : List (DensePoly E)) (es : List Nat)
     (value : Int) (cert : TarskiCertificate E E Ctx) (reduction : Option (Reduction E))
     (h : ∀ x ∈ momentSignOperands p a b cert reduction, sign x = sign' x) :
     checkMoment sign context p a b qs es value cert reduction =
       checkMoment sign' context p a b qs es value cert reduction := by
-  have hc := TarskiCertificate.check_congr sign sign' context p (queryPoly qs es reduction)
+  have hc := TarskiCertificate.check_sign_congr sign sign' context p (queryPoly qs es reduction)
     a b value cert (fun x hx => h x (by simp [momentSignOperands, hx]))
   simp only [checkMoment_eq, Sturm.check, hc]
   cases reduction with
   | none => rfl
   | some r =>
-    have hr := Reduction.checkFrom_congr sign sign' p 1 (factors qs es) r.steps r.result
+    have hr := Reduction.checkFrom_sign_congr sign sign' p 1 (factors qs es) r.steps r.result
       (fun x hx => h x (by simp [momentSignOperands, hx]))
     simp only [Reduction.check, hr]
 
@@ -118,11 +118,11 @@ covers full domain replay even when a checked domain cache saves native work. -/
 /-- A BKR node's result is preserved by finite sign agreement, for arbitrary
 supplied matrices and witnesses. Literal rank/support/context checks remain
 exact; a cached domain cannot justify omitting a dependency from this rule. -/
-theorem Node.check_congr [DecidableEq Ctx] (sign sign' : E → Int) (context : Ctx)
+theorem Node.check_sign_congr [DecidableEq Ctx] (sign sign' : E → Int) (context : Ctx)
     (p : DensePoly E) (a b : Endpoint E) (qs : List (DensePoly E)) (n : Node E Ctx)
     (h : ∀ x ∈ n.signOperands p a b, sign x = sign' x) :
     n.check sign context p a b qs = n.check sign' context p a b qs := by
-  have hm (i : Fin n.size) := checkMoment_congr sign sign' context p a b
+  have hm (i : Fin n.size) := checkMoment_sign_congr sign sign' context p a b
     (QueryReduction.operands qs n.preparation) n.system.rows[i] n.system.values[i]
     n.moments[i] n.reductions[i] (fun x hx => h x (by
       simp only [signOperands, List.mem_append]
@@ -132,7 +132,7 @@ theorem Node.check_congr [DecidableEq Ctx] (sign sign' : E → Int) (context : C
     cases hd : n.preparation with
     | none => rfl
     | some r =>
-      have hr := QueryReduction.checkFrom_congr sign sign' p 0 qs r.steps
+      have hr := QueryReduction.checkFrom_sign_congr sign sign' p 0 qs r.steps
         (fun x hx => h x (by simp [signOperands, hd, hx]))
       simp only [QueryReduction.check, hr]
   simp only [check_eq, hm]
@@ -146,16 +146,16 @@ subtrees remain occurrences here; a dependency graph may share their facts. -/
 
 /-- Finite coefficient-sign agreement preserves the complete recursive BKR
 checker, including child support completeness and all rejection paths. -/
-theorem Replay.check_congr [DecidableEq Ctx] (sign sign' : E → Int) (context : Ctx)
+theorem Replay.check_sign_congr [DecidableEq Ctx] (sign sign' : E → Int) (context : Ctx)
     (p : DensePoly E) (a b : Endpoint E) (qs : List (DensePoly E)) (t : Replay E Ctx)
     (h : ∀ x ∈ t.signOperands p a b, sign x = sign' x) :
     t.check sign context p a b qs = t.check sign' context p a b qs := by
   induction t generalizing qs with
   | leaf n =>
-    have hn := n.check_congr sign sign' context p a b qs h
+    have hn := n.check_sign_congr sign sign' context p a b qs h
     simp only [check, hn]
   | split n l r ihl ihr =>
-    have hn := n.check_congr sign sign' context p a b qs
+    have hn := n.check_sign_congr sign sign' context p a b qs
       (fun x hx => h x (by simp [signOperands, hx]))
     have hl := ihl (qs.take (qs.length / 2))
       (fun x hx => h x (by simp [signOperands, hx]))
