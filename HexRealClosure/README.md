@@ -421,16 +421,22 @@ four real roots, a whole-line inverse infinitesimal, close infinitesimal roots
 requiring completion after the rational bisection cap, and invalid domains.
 The oracle does not replay descriptor proof graphs or prove producer totality.
 
-
 `Isolation.Root` retains both emitted coefficient points and selected-root
 descriptors in one context. `Root.compare` uses coefficient differences for
 points, the shared selected-sign query for mixed pairs, and the checked
 common-product comparison for descriptor pairs. Comparison failures propagate;
-invalid sign codes and duplicate roots are internal errors. Finite insertion
+invalid sign codes and encountered equal roots are internal errors. Finite insertion
 sorting preserves the actual input roots and their mathematical values.
 The companion proves point comparisons and successful selected-root/point
-comparisons in the ambient ordered real closed field. General strict order for
+comparisons in the ambient ordered real closed field, using the upstream
+producer-success proof for unconditional mixed comparisons. Equality returned
+by any successful comparison is equivalent to equality of the root values.
+The sort relies on
+completion’s distinctness proof; it does not certify arbitrary input lists
+as distinct without the missing general comparison-order laws. General strict order for
 descriptor pairs still requires the upstream Thom theorem, so this intermediate
 sort does not establish the complete ordered `RootSet` contract or multiplicities.
-`hexrealclosure_root_order_tests` exercises actual rational descriptors, mixed
-comparisons, sorted finite output, duplicate rejection and invalid signs.
+`hexrealclosure_root_order_tests` also belongs to the default
+`HexRealClosureTests` build. It exercises distinct roots on one head and on
+different heads, exact mixed output, actual completion with both points and
+descriptors, duplicate rejection and comparison-error propagation.

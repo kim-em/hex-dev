@@ -32,7 +32,7 @@ remain an internal diagnostic. -/
   else .error .system
 
 /-- The polynomial whose sign at a selected root compares it to a point. -/
-@[expose] def difference (x : E) : DensePoly E :=
+@[expose] def pointQuery (x : E) : DensePoly E :=
   DensePoly.monomial 1 1 - DensePoly.C x
 
 variable [Div E]
@@ -46,11 +46,11 @@ order theorem. -/
     Root sign context → Root sign context → Except SignDet.BuildError Ordering
   | .point a, .point b => signOrder (sign (a - b))
   | .selected d, .point x =>
-      match d.buildSigns [difference x] with
+      match d.buildSigns [pointQuery x] with
       | .error error => .error error
       | .ok signs => signOrder signs.value
   | .point x, .selected d =>
-      match d.buildSigns [difference x] with
+      match d.buildSigns [pointQuery x] with
       | .error error => .error error
       | .ok signs =>
         match signOrder signs.value with
@@ -129,5 +129,11 @@ theorem Root.sort_perm {sign : E → Int} {context : Ctx}
 @[expose] def Output.entries {sign : E → Int} {context : Ctx}
     (output : Output sign context) : List (Root sign context) :=
   output.points.map Root.point ++ output.descriptors.map Root.selected
+
+/-- Sort the actual completed output, retaining comparison diagnostics. -/
+@[expose] def Completion.sort {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    (completion : Completion sign context p) :
+    Except SignDet.BuildError (List (Root sign context)) :=
+  Root.sort completion.roots.entries
 
 end Hex.RealClosure.Isolation

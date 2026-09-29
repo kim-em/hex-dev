@@ -7,6 +7,7 @@ module
 
 public import HexRealClosure.RootOrder
 public import HexRealClosureMathlib.IsolationRoots
+public import HexSignDetMathlib.SelectedProducer
 
 public section
 
@@ -31,8 +32,8 @@ variable {sign : E → Int} (hsign : ∀ a, sign a = (SignType.sign (φ a) : Int
 
 include hz h1 hs in
 /-- The actual mixed-comparison query evaluates to root minus point. -/
-theorem difference_eval (point : E) (x : K) :
-    (interpret φ hz (difference point)).eval x = x - φ point := by
+theorem pointQuery_eval (point : E) (x : K) :
+    (interpret φ hz (pointQuery point)).eval x = x - φ point := by
   have mono : interpret φ hz (DensePoly.monomial 1 (1 : E)) = Polynomial.X := by
     ext i
     by_cases h : i = 1
@@ -40,10 +41,10 @@ theorem difference_eval (point : E) (x : K) :
     · simp [coeff_interpret, DensePoly.coeff_monomial, Polynomial.coeff_X, h,
         (hz (Zero.zero : E)).mpr rfl, eq_comm]
 
-  rw [difference, interpret_sub φ hz hs, mono, interpret_C]
+  rw [pointQuery, interpret_sub φ hz hs, mono, interpret_C]
   simp
 
-/-- A semantic difference sign has the ordinary field comparison. -/
+/-- A semantic pointQuery sign has the ordinary field comparison. -/
 theorem signOrder_sub (x y : K) :
     signOrder (SignType.sign (x - y) : Int) = .ok (Ord.compare x y) := by
   rcases lt_trichotomy x y with less | same | greater
@@ -54,7 +55,7 @@ theorem signOrder_sub (x y : K) :
   · simp [signOrder, sign_eq_one_iff.mpr (sub_pos.mpr greater),
       compare_gt_iff_gt.mpr greater]
 
-include hz h1 ha hs hm hnat hsign in
+include hs hsign in
 /-- Point comparisons denote the order in the common ambient field. -/
 theorem Root.compare_points {context : Ctx} (a b : E) :
     (Root.point a : Root sign context).compare (.point b) = .ok (Ord.compare (φ a) (φ b)) := by
@@ -67,17 +68,18 @@ theorem Root.compare_selected_point {context : Ctx}
     (d : SignDet.Descriptor E Ctx sign context) (point : E) {order : Ordering}
     (accepted : (Root.selected d).compare (.point point) = .ok order) :
     order = Ord.compare (d.root φ hz h1 ha hs hm hnat hsign) (φ point) := by
-  cases built : d.buildSigns [difference point] with
+  cases built : d.buildSigns [pointQuery point] with
   | error error => simp [Root.compare, built] at accepted
   | ok signs =>
     have value := signs.value_at_root φ hz h1 ha hs hm hnat hsign
-    rw [difference_eval φ hz h1 hs] at value
+    rw [pointQuery_eval φ hz h1 hs] at value
     have same : (Except.ok (Ord.compare (d.root φ hz h1 ha hs hm hnat hsign) (φ point)) :
         Except SignDet.BuildError Ordering) =
         Except.ok order := by
       simpa only [Root.compare, built, value, signOrder_sub] using accepted
     exact (Except.ok.inj same).symm
 
+omit [Field K] [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
 private theorem compare_swap (x y : K) : (Ord.compare x y).swap = Ord.compare y x := by
   rcases lt_trichotomy x y with less | same | greater
   · simp [compare_lt_iff_lt.mpr less, compare_gt_iff_gt.mpr less]
@@ -91,15 +93,70 @@ theorem Root.compare_point_selected {context : Ctx}
     (point : E) (d : SignDet.Descriptor E Ctx sign context) {order : Ordering}
     (accepted : (Root.point point).compare (.selected d) = .ok order) :
     order = Ord.compare (φ point) (d.root φ hz h1 ha hs hm hnat hsign) := by
-  cases built : d.buildSigns [difference point] with
+  cases built : d.buildSigns [pointQuery point] with
   | error error => simp [Root.compare, built] at accepted
   | ok signs =>
     have value := signs.value_at_root φ hz h1 ha hs hm hnat hsign
-    rw [difference_eval φ hz h1 hs] at value
+    rw [pointQuery_eval φ hz h1 hs] at value
     have same : (Except.ok (Ord.compare (φ point) (d.root φ hz h1 ha hs hm hnat hsign)) :
         Except SignDet.BuildError Ordering) = Except.ok order := by
       simpa only [Root.compare, built, value, signOrder_sub, compare_swap] using accepted
     exact (Except.ok.inj same).symm
+
+include hz h1 ha hs hm hnat hsign in
+/-- The upstream selected-sign success theorem discharges every mixed guard. -/
+theorem Root.compare_selected (hn : ∀ a, φ (-a) = -φ a)
+    (hi : ∀ a, φ a⁻¹ = (φ a)⁻¹) {context : Ctx}
+    (d : SignDet.Descriptor E Ctx sign context) (point : E) :
+    (Root.selected d).compare (.point point) =
+      .ok (Ord.compare (d.root φ hz h1 ha hs hm hnat hsign) (φ point)) := by
+  obtain ⟨signs, built⟩ := d.buildSigns_success φ hz h1 ha hs hm hnat hsign hn hi [pointQuery point]
+  have value := signs.value_at_root φ hz h1 ha hs hm hnat hsign
+  rw [pointQuery_eval φ hz h1 hs] at value
+  simp only [Root.compare, built, value, signOrder_sub]
+
+include hz h1 ha hs hm hnat hsign in
+/-- Point/selected-root comparison also succeeds unconditionally under the
+actual coefficient interpretation laws. -/
+theorem Root.compare_point (hn : ∀ a, φ (-a) = -φ a)
+    (hi : ∀ a, φ a⁻¹ = (φ a)⁻¹) {context : Ctx}
+    (point : E) (d : SignDet.Descriptor E Ctx sign context) :
+    (Root.point point).compare (.selected d) =
+      .ok (Ord.compare (φ point) (d.root φ hz h1 ha hs hm hnat hsign)) := by
+  obtain ⟨signs, built⟩ := d.buildSigns_success φ hz h1 ha hs hm hnat hsign hn hi [pointQuery point]
+  have value := signs.value_at_root φ hz h1 ha hs hm hnat hsign
+  rw [pointQuery_eval φ hz h1 hs] at value
+  simp only [Root.compare, built, value, signOrder_sub, compare_swap]
+
+include hz h1 ha hs hm hnat hsign in
+/-- Equality returned by any successful comparison identifies exactly equal
+mathematical root values, including two different defining polynomials. -/
+theorem Root.compare_eq {context : Ctx} (left right : Root sign context) {order : Ordering}
+    (accepted : left.compare right = .ok order) :
+    order = .eq ↔ left.value φ hz h1 ha hs hm hnat hsign =
+      right.value φ hz h1 ha hs hm hnat hsign := by
+  cases left with
+  | point a =>
+    cases right with
+    | point b =>
+      rw [Root.compare_points φ hs hsign] at accepted
+      rw [← Except.ok.inj accepted]
+      exact compare_eq_iff_eq
+    | selected d =>
+      rw [Root.compare_point_selected φ hz h1 ha hs hm hnat hsign a d accepted]
+      exact compare_eq_iff_eq
+  | selected a =>
+    cases right with
+    | point b =>
+      rw [Root.compare_selected_point φ hz h1 ha hs hm hnat hsign a b accepted]
+      exact compare_eq_iff_eq
+    | selected b =>
+      cases built : a.buildComparison b with
+      | error error => simp [Root.compare, built] at accepted
+      | ok comparison =>
+        have same : comparison.order = order := by simpa only [Root.compare, built, Except.ok.injEq] using accepted
+        rw [← same]
+        exact comparison.eq_iff_root_eq φ hz h1 ha hs hm hnat hsign
 
 include hz h1 ha hs hm hnat hsign in
 /-- Sorting cannot omit or introduce any mathematical root value. This theorem
@@ -122,7 +179,7 @@ distinctness for the original polynomial. Strict order is a separate gate. -/
 theorem Completion.sort_spec (hn : ∀ a, φ (-a) = -φ a)
     (hi : ∀ a, φ a⁻¹ = (φ a)⁻¹) {context : Ctx} {p : DensePoly E}
     (completion : Completion sign context p) {out : List (Root sign context)}
-    (accepted : Root.sort completion.roots.entries = .ok out) :
+    (accepted : completion.sort = .ok out) :
     (∀ x, x ∈ out.map (Root.value φ hz h1 ha hs hm hnat hsign) ↔
       (interpret φ hz p).IsRoot x) ∧
       (out.map (Root.value φ hz h1 ha hs hm hnat hsign)).Nodup := by
@@ -144,3 +201,13 @@ end Hex.RealClosure.Isolation
 /-- info: 'Hex.RealClosure.Isolation.Root.compare_point_selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Isolation.Root.compare_point_selected
+
+/-- info: 'Hex.RealClosure.Isolation.Root.compare_selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Isolation.Root.compare_selected
+/-- info: 'Hex.RealClosure.Isolation.Root.compare_point' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Isolation.Root.compare_point
+/-- info: 'Hex.RealClosure.Isolation.Root.compare_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Isolation.Root.compare_eq
