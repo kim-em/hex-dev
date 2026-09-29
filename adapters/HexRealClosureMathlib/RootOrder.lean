@@ -175,7 +175,7 @@ theorem Output.entries_values {context : Ctx} (output : Output sign context) :
 
 include hz h1 ha hs hm hnat hsign in
 /-- A successful sort of completed isolation retains exact coverage and
-distinctness for the original polynomial. Strict order is a separate gate. -/
+distinctness for the original polynomial. Strict order remains a separate proof. -/
 theorem Completion.sort_values (hn : ∀ a, φ (-a) = -φ a)
     (hi : ∀ a, φ a⁻¹ = (φ a)⁻¹) {context : Ctx} {p : DensePoly E}
     (completion : Completion sign context p) {out : List (Root sign context)}

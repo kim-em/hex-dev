@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.IsolationRoots
+public import HexRealClosure.RootFactors
 public import HexSignDet.Codec
 public import HexOrderedFn.Infinitesimal
 public import Lean.Data.Json.Printer
@@ -50,6 +50,26 @@ private def emit {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E]
 
 private def emitRat := emit (depth := 0) (sign := Sturm.orderSign) (encode := rational)
 
+private def emitAssembly (name : String) (p : DensePoly Rat) : IO Unit := do
+  let output := match Roots.assemble Sturm.orderSign (10378 : Nat) p with
+    | .error error => Json.mkObj [("error", .str (reprStr error))]
+    | .ok .all => Json.mkObj [("kind", .str "all")]
+    | .ok (.finite entries) => Json.mkObj [("kind", .str "finite"),
+        ("entries", .arr (entries.toArray.map fun entry =>
+          let root := match entry.root with
+            | .point value => Json.mkObj [("kind", .str "point"), ("value", rational value)]
+            | .selected d => Json.mkObj [("kind", .str "selected"),
+                ("context", toJson d.raw.context),
+                ("head", .arr (d.raw.head.toArray.map rational)),
+                ("lower", SignDet.Codec.endpoint
+                  ⟨rational, fun _ => .error "encode only"⟩ d.raw.lower),
+                ("upper", SignDet.Codec.endpoint
+                  ⟨rational, fun _ => .error "encode only"⟩ d.raw.upper),
+                ("indices", toJson d.raw.indices), ("signs", toJson d.raw.signs)]
+          Json.mkObj [("root", root), ("multiplicity", toJson entry.multiplicity)]))]
+  IO.println (Json.mkObj [("case", .str name), ("mode", .str "assembly"),
+    ("head", .arr (p.toArray.map rational)), ("output", output)]).compress
+
 def main : IO Unit := do
   let x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
   emitRat "zero" 0
@@ -65,3 +85,12 @@ def main : IO Unit := do
   emit "whole-line inverse infinitesimal" 1 sign fraction (DensePoly.ofCoeffs #[-epsilon⁻¹, 1])
   emit "inseparable by rational bisection" 1 sign fraction
     (DensePoly.ofCoeffs #[-epsilon, 1] * DensePoly.ofCoeffs #[-(2 * epsilon), 1])
+  emitAssembly "assembly zero" 0
+  emitAssembly "assembly constant" (DensePoly.C 5)
+  emitAssembly "assembly pure power" (DensePoly.ofCoeffs #[0, 0, 0, 0, 0, 0, -5])
+  let quadratic := x * x - 2
+  let repeated := DensePoly.scale (-3) (x * x * quadratic * quadratic * quadratic *
+    (x - 3) * (x - 3) * (x - 3) * (x - 3) * (x - 3))
+  emitAssembly "assembly repeated factors" repeated
+  emitAssembly "assembly root-free factor" ((x * x + 1) * (x * x + 1) * (x - 1))
+  emitAssembly "assembly simple zero" (x * (x - 1) * (x - 1))

@@ -17,7 +17,9 @@ from scripts.oracle.sign_det_common import require
 
 CASES = ["zero", "constant", "repeated", "nonmonic linear", "quadratic",
          "negative cubic with removed zero", "nonquadratic", "four roots",
-         "whole-line inverse infinitesimal", "inseparable by rational bisection"]
+         "whole-line inverse infinitesimal", "inseparable by rational bisection",
+         "assembly zero", "assembly constant", "assembly pure power",
+         "assembly repeated factors", "assembly root-free factor", "assembly simple zero"]
 RATIONAL_HEADS = [[], [5], [1, -2, 1], [-3, 2], [-2, 0, 1],
                   [0, 6, 0, -3], [-2, 0, 0, 1], [6, 0, -5, 0, 1]]
 
@@ -36,10 +38,104 @@ def multiply(rcf, p, q):
     return rcf.trim(out)
 
 
+def expected_assembly(rcf, index):
+    x = [rcf.zero, rcf.one]
+    if index == 10:
+        return []
+    if index == 11:
+        return [5 * rcf.one]
+    if index == 12:
+        return [rcf.zero] * 6 + [-5 * rcf.one]
+    if index == 13:
+        factors = [[-3 * rcf.one], x, x] + [[-2 * rcf.one, rcf.zero, rcf.one]] * 3 + \
+                  [[-3 * rcf.one, rcf.one]] * 5
+    elif index == 14:
+        factors = [[rcf.one, rcf.zero, rcf.one]] * 2 + [[-rcf.one, rcf.one]]
+    else:
+        factors = [x, [-rcf.one, rcf.one], [-rcf.one, rcf.one]]
+    product = [rcf.one]
+    for factor in factors:
+        product = multiply(rcf, product, factor)
+    return product
+
+
+def verify_assembly(row, index):
+    require(set(row) == {"case", "mode", "head", "output"} and row["mode"] == "assembly",
+            "malformed assembly row")
+    rcf = RCF({"id": 10377, "levels": ["epsilon1"],
+               "order": "each-new-level-smaller-than-positive-base-elements"})
+    def polynomial(raw):
+        require(isinstance(raw, list), "malformed assembly polynomial")
+        p = [rcf.coeff(c, 0) for c in raw]
+        require(not p or p[-1] != 0, "trailing assembly zero coefficient")
+        return p
+    p = polynomial(row["head"])
+    require(p == expected_assembly(rcf, index), "wrong assembly input")
+    output = row["output"]
+    require(isinstance(output, dict), "assembly producer failed")
+    if not p:
+        require(output == {"kind": "all"}, "zero polynomial lost all-roots result")
+        return
+    require(set(output) == {"kind", "entries"} and output["kind"] == "finite" and
+            isinstance(output["entries"], list), "malformed finite assembly")
+    roots = list(rcf.api.MkRoots(p, rcf.context)) if len(p) > 1 else []
+    selected = []
+    for entry in output["entries"]:
+        require(set(entry) == {"root", "multiplicity"} and
+                type(entry["multiplicity"]) is int and entry["multiplicity"] > 0,
+                "malformed positive multiplicity")
+        raw = entry["root"]
+        require(isinstance(raw, dict), "malformed assembled root")
+        if raw.get("kind") == "point":
+            require(set(raw) == {"kind", "value"}, "malformed coefficient point")
+            value = rcf.coeff(raw["value"], 0)
+        else:
+            require(set(raw) == {"kind", "context", "head", "lower", "upper",
+                                 "indices", "signs"} and raw["kind"] == "selected" and
+                    type(raw["context"]) is int and raw["context"] == 10378,
+                    "malformed selected root")
+            head = polynomial(raw["head"])
+            lower, upper = raw["lower"], raw["upper"]
+            def endpoint(endpoint):
+                require(isinstance(endpoint, list) and endpoint and type(endpoint[0]) is int,
+                        "malformed selected endpoint")
+                if endpoint == [0]:
+                    return None, -1
+                if endpoint == [2]:
+                    return None, 1
+                require(len(endpoint) == 2 and endpoint[0] == 1,
+                        "malformed finite selected endpoint")
+                return rcf.coeff(endpoint[1], 0), 0
+            lo, lt = endpoint(lower)
+            hi, ht = endpoint(upper)
+            derivatives = rcf.derivatives(head)
+            indices = raw["indices"]
+            require(indices == [] or indices == list(range(1, len(head))),
+                    "wrong assembled derivative slots")
+            queried = [] if not indices else derivatives
+            signs = raw["signs"]
+            require(isinstance(signs, list) and len(signs) == len(queried) and
+                    all(type(s) is int and s in (-1, 0, 1) for s in signs),
+                    "malformed assembled signs")
+            candidates = [root for root in rcf.api.MkRoots(head, rcf.context)
+                          if (lt == -1 or lo < root) and (ht == 1 or root < hi) and
+                          [sign(rcf.eval(q, root)) for q in queried] == signs]
+            require(len(candidates) == 1, "assembled descriptor does not select one root")
+            value = candidates[0]
+        require(rcf.eval(p, value) == 0, "assembled value is not an input root")
+        derivatives = [p] + rcf.derivatives(p)
+        actual = next((i for i, q in enumerate(derivatives) if rcf.eval(q, value) != 0), None)
+        require(actual == entry["multiplicity"], "wrong assembled root multiplicity")
+        selected.append(value)
+    require(all(a != b for i, a in enumerate(selected) for b in selected[i+1:]),
+            "assembled root duplicated")
+    require(sorted(selected) == sorted(roots), "assembled root coverage differs from exact RCF")
+
+
 def verify(rows):
     check_version()
     require([r.get("case") for r in rows] == CASES, "missing, repeated or reordered cases")
-    for index, row in enumerate(rows):
+    for index, row in enumerate(rows[:10]):
         require(set(row) == {"case", "depth", "head", "output"}, "foreign fixture fields")
         depth = row["depth"]
         require(type(depth) is int and depth == (0 if index < 8 else 1), "wrong coefficient depth")
@@ -147,12 +243,14 @@ def verify(rows):
         require(all(a != b for i, a in enumerate(selected) for b in selected[i+1:]),
                 "root emitted twice")
         require(sorted(selected) == sorted(roots(p)), "completion lost or added a root")
+    for index, row in enumerate(rows[10:], start=10):
+        verify_assembly(row, index)
 
 
 def main():
     rows = [json.loads(line) for line in sys.stdin if line.strip()]
     verify(rows)
-    print(f"verified {len(rows)} capped isolation fixtures with exact Z3 RCF")
+    print(f"verified {len(rows)} capped isolation and root-assembly fixtures with exact Z3 RCF")
 
 
 if __name__ == "__main__":

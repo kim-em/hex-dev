@@ -93,6 +93,27 @@ class IsolationTests(unittest.TestCase):
     def test_repeated_accepted(self):
         self.rejects(lambda rows: rows[2].update(output=rows[4]["output"]))
 
+    def test_assembly_missing_root(self):
+        self.rejects(lambda rows: rows[13]["output"]["entries"].pop())
+
+    def test_assembly_duplicate_root(self):
+        self.rejects(lambda rows: rows[13]["output"]["entries"].append(
+            rows[13]["output"]["entries"][1]))
+
+    def test_assembly_wrong_multiplicity(self):
+        self.rejects(lambda rows: rows[13]["output"]["entries"][1].update(multiplicity=4),
+                     "wrong assembled root multiplicity")
+
+    def test_assembly_missing_zero(self):
+        self.rejects(lambda rows: rows[12]["output"]["entries"].clear())
+
+    def test_assembly_false_selected_interval(self):
+        self.rejects(lambda rows: rows[13]["output"]["entries"][1]["root"].update(
+            lower=[1, [0, 1]]), "assembled descriptor does not select one root")
+
+    def test_assembly_false_all(self):
+        self.rejects(lambda rows: rows[11].update(output={"kind": "all"}))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -527,8 +527,11 @@ Count-one cells use their stored prepared domain with no derivative queries;
 only unresolved cells invoke all-derivative enumeration. The shared singleton
 query still constructs a query-one remainder certificate and checks its replay;
 this does not claim elimination of all chain or replay work. Whole-line fallback enumerates
-its stored domain. Absent search domains stay `none`; internal producer
-failures remain explicit errors and cannot become empty root sets.
+its stored domain. A rejected initial search domain stays `none`; if an
+accepted finite bound and prepared initial domain fail during capped
+refinement, the result is an explicit internal error. Other producer failures
+also remain errors and cannot become empty root sets. The companion proves an
+absent completed domain implies a zero or non-squarefree interpreted input.
 
 `Completion.coverage` proves that these actual output values are exactly all
 roots of the original input. `Completion.nodup` proves each root appears once,
@@ -547,13 +550,16 @@ that these retained valid domains cannot return the absent-domain result. That
 branch remains a diagnostic guard, using the internal system error rather than
 a descriptor-replay error.
 
-`hexrealclosure_isolation_conformance` emits ten actual executions. The pinned
+`hexrealclosure_isolation_conformance` emits sixteen actual executions. The pinned
 Z3 RCF oracle independently checks inputs, finite-bound policy, node caps,
 scalar-preserving deflation, cell counts, selected derivative words, literal descriptor contexts, complete
 root coverage and absence of duplicates. Cases include nonmonic input,
 negative leading scalar with an emitted zero, a nonquadratic generator,
 four real roots, a whole-line inverse infinitesimal, close infinitesimal roots
 requiring completion after the rational bisection cap, and invalid domains.
+Six further cases independently check Yun assembly against exact Z3 roots and
+derivative-derived multiplicities, including zero, constants, a pure power,
+distinct multiplicity labels, a root-free factor and a simple restored zero.
 The oracle does not replay descriptor proof graphs or prove producer totality.
 
 `Isolation.Root` retains both emitted coefficient points and selected-root

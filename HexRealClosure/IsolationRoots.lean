@@ -115,6 +115,16 @@ def complete? (sign : E → Int) (context : Ctx) (p : DensePoly E) :
     | .error error => .error error
     | .ok roots => .ok (some ⟨search, roots, h⟩)
 
+/-- An absent completed domain came from a failed search. -/
+theorem complete?_none_search {sign : E → Int} {context : Ctx}
+    {p : DensePoly E} (absent : complete? sign context p = .ok none) :
+    search? sign p = none := by
+  cases searched : search? sign p with
+  | none => rfl
+  | some search =>
+    simp only [complete?, searched] at absent
+    split at absent <;> cases absent
+
 /-- A missing completed domain after an accepted finite bound means the
 initial domain itself was rejected. Failure after that point is diagnostic. -/
 theorem complete?_none_unprepared {sign : E → Int} {context : Ctx}

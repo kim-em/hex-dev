@@ -17,7 +17,7 @@ open HexPolyMathlib.Interpret HexRealRootsMathlib.Tarski
 
 variable {E : Type u} {K : Type v} {Ctx : Type w} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E] [DecidableEq Ctx]
-variable [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K] [IsRealClosed K]
+variable [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K]
 variable (φ : E → K) (hz : ∀ a, φ a = 0 ↔ a = 0)
 variable (h1 : φ 1 = 1) (ha : ∀ a b, φ (a + b) = φ a + φ b)
 variable (hs : ∀ a b, φ (a - b) = φ a - φ b)
@@ -25,6 +25,27 @@ variable (hm : ∀ a b, φ (a * b) = φ a * φ b)
 variable (hnat : ∀ n : Nat, φ (n : E) = (n : K))
 variable {sign : E → Int} (hsign : ∀ a, sign a = (SignType.sign (φ a) : Int))
 variable (hn : ∀ a, φ (-a) = -φ a) (hi : ∀ a, φ a⁻¹ = (φ a)⁻¹)
+
+include hz h1 ha hs hm hnat hsign hn hi in
+/-- A completed absent domain cannot have a nonzero squarefree mathematical
+head. In particular, a failed capped refinement on a valid domain is never
+silently reported as absent. -/
+theorem complete?_none_invalid {context : Ctx} (p : DensePoly E)
+    (absent : complete? sign context p = .ok none) :
+    interpret φ hz p = 0 ∨ ¬ Squarefree (interpret φ hz p) := by
+  by_contra invalid
+  have nonzero : interpret φ hz p ≠ 0 := by
+    intro zero
+    exact invalid (Or.inl zero)
+  have squarefree : Squarefree (interpret φ hz p) := by
+    by_contra notSimple
+    exact invalid (Or.inr notSimple)
+  have total := search?_success φ hz h1 ha hs hm sign hsign hn hi hnat p
+    nonzero squarefree
+  rw [complete?_none_search absent] at total
+  cases total
+
+variable [IsRealClosed K]
 
 /-- Mathematical values of the actual emitted points and root descriptors. -/
 @[expose] noncomputable def Output.values {context : Ctx} (roots : Output sign context) : List K :=
@@ -283,6 +304,10 @@ theorem Completion.nodup {context : Ctx} {p : DensePoly E}
           (SignDet.Descriptor.buildRoots_coverage φ hz h1 ha hs hm hnat hsign produced).2
 
 end Hex.RealClosure.Isolation
+
+/-- info: 'Hex.RealClosure.Isolation.complete?_none_invalid' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Isolation.complete?_none_invalid
 
 /-- info: 'Hex.RealClosure.Isolation.completeCells_coverage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
