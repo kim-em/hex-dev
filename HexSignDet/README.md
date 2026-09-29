@@ -407,17 +407,22 @@ source root, including a different head or an enlarged root domain.
 whole line, then applies the guarded full Thom rule. It retains both joint
 replays and the common-product witness. This handles shared roots, different
 old intervals and equivalent noncanonical coefficient expressions without
-comparing unrelated derivative vectors. `Descriptor.compare` exposes the resulting `Ordering` directly, including for
-partial source descriptors. Its diagnostic fallback returns `eq`; the
+comparing unrelated derivative vectors. `Descriptor.compare` returns the order
+directly. For identical stored heads it uses two completions and compares their
+full encodings directly, even across distinct intervals; it runs no common-head
+gcd or joint re-encoding on that path. Distinct representations, including
+representations of the same mathematical polynomial, retain the joint path. Its diagnostic fallback returns `eq`; the
 companion's `buildComparison_success` and `compare_success` prove that branch
 unreachable under lawful coefficient interpretations, including preservation
-of ordinary division. `compare_correct` and the three order equivalences relate
+of ordinary division, including division by zero with value zero.
+`compare_ofError` fixes the fallback value exactly. `buildOrder_roots` proves
+actual success and mathematical order for both paths. `compare_correct` and the three order equivalences relate
 the total result to the original selected roots. The computational operation
 requires no companion proof package. `CommonProduct.build_success` proves
 acceptance of the actual gcd/division record even for zero inputs;
 `build_squarefree` proves squarefreeness of the actual head for squarefree inputs.
 Arbitrary accepted records still require their separate prepared-domain check.
-A comparison currently constructs
+A cross-polynomial comparison currently constructs
 four BKR tables and four prepared domains: joint re-encoding evidence and a
 separate target descriptor for each side. Sharing this work and accounting
 for its cost against the required comparison bounds remain required.
@@ -430,9 +435,11 @@ the executable diagnostic interface is retained for arbitrary operations.
 Completion and re-encoding have producer success proofs under lawful
 coefficients. `Comparison.order_root` identifies every accepted comparison
 with the mathematical order of the original roots. `Descriptor.compare_success`
-proves success of the actual common-product construction and total comparison.
+proves that the total operation uses an actual successful order constructor;
+`buildComparison_success` separately proves common-product comparison production.
 Universal root-list production and mathematical sorting are also proved. The
-remaining total public interfaces, the consumer sample-point interface, serialization and
+remaining total public interfaces, the consumer sample-point interface,
+serialization and
 nested evidence sharing remain required. The semantic proofs interpret the
 actual query replays through the shared proved root-sum theorem; the specified BKR/Thom foundations are a
 separate completion gate. No performance milestone is claimed here. See the [specification](SPEC/hex-sign-det.md)

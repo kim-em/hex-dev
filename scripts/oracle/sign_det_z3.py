@@ -228,8 +228,12 @@ class RCF:
         require(self.squarefree(head) and not self.remainder(product, head) and
                 not self.remainder(head, left) and not self.remainder(head, right),
                 "common head is not a squarefree root union")
-        require(out.get("order") == ("lt" if a < b else "gt" if a > b else "eq"),
+        expected = "lt" if a < b else "gt" if a > b else "eq"
+        require(out.get("order") == expected,
                 "comparison differs from exact Z3 root order")
+        reverse = {"lt": "gt", "gt": "lt", "eq": "eq"}[expected]
+        require(out.get("totalOrder") == expected and out.get("reverseOrder") == reverse,
+                "total comparison differs from exact Z3 root order")
         derivatives = self.derivatives(head)
         require(sign_vector(out.get("leftSigns"), len(derivatives)) and
                 sign_vector(out.get("rightSigns"), len(derivatives)), "malformed common-root encodings")

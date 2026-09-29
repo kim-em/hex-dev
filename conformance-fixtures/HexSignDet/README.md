@@ -40,7 +40,9 @@ from different linear heads, common irrational roots, negative/scaled heads,
 overlapping/disjoint intervals, foreign root endpoints, invalid targets and
 absent selected roots. The oracle checks the common head's squarefreeness and
 three polynomial divisibilities with FLINT, then compares selected roots by
-their exact numerical positions. It also verifies both common-head encodings.
+their exact numerical positions. It also verifies both common-head encodings and the total comparison in both
+argument orders. Every comparison case has adversarial missing, malformed and
+wrong-order total-result tests.
 It does not assume that the producer's Thom comparison is correct.
 The oracle requires every case name; a truncated nonempty stream does not pass.
 The repository's `lean-toolchain` and `lake-manifest.json` pin Lean-side inputs.
@@ -55,7 +57,9 @@ python3 -m unittest scripts.oracle.test_sign_det_flint
 `infinitesimal.jsonl` contains 30 cases emitted by `hexsigndet_emit_infinitesimal`
 using the existing rational-function fields over one and two positive
 infinitesimals. The independent Z3 RCF oracle requires `z3-solver==4.15.4.0`
-and numeric runtime version `(4, 15, 4, 0)`. Each record creates a fresh context
+and numeric runtime version `(4, 15, 4, 0)`. Its comparison checks include the
+total operation in both argument orders, with adversarial missing, malformed
+and wrong-order result tests. Each record creates a fresh context
 and reconstructs the serialized coefficients with exact arithmetic. The oracle
 enforces the coefficient depth of each case and the corrected Passmore
 polynomial `(εx²−1)(εx³−1)`, then computes roots, signs and order independently.

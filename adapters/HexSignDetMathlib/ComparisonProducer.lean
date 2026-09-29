@@ -7,6 +7,7 @@ module
 
 public import HexSignDetMathlib.ThomReencoding
 public import HexSignDetMathlib.CommonProduct
+public import HexSignDetMathlib.CompletionProducer
 
 public section
 
@@ -72,14 +73,44 @@ theorem Descriptor.buildComparison_success {context : Ctx}
     left.buildComparison_of_success right common hc l r hl hr _ ho⟩
 
 include hz h1 ha hs hm hnat hsign hn hi hd in
-/-- The total comparison uses an actual successful checked construction;
+/-- The actual order constructor succeeds and agrees with the original roots.
+Equal stored heads use two completions directly, even across distinct intervals;
+other heads use the checked common-polynomial construction. -/
+theorem Descriptor.buildOrder_roots {context : Ctx}
+    (left right : Descriptor E Ctx sign context) :
+    ∃ order, left.buildOrder right = .ok order ∧ order =
+      (if left.root f hz h1 ha hs hm hnat hsign < right.root f hz h1 ha hs hm hnat hsign then .lt
+       else if right.root f hz h1 ha hs hm hnat hsign < left.root f hz h1 ha hs hm hnat hsign
+         then .gt else .eq) := by
+  by_cases hh : left.raw.head = right.raw.head
+  · obtain ⟨l, hl⟩ := left.buildCompletion_success f hz h1 ha hs hm hnat hsign hn hi
+    obtain ⟨r, hr⟩ := right.buildCompletion_success f hz h1 ha hs hm hnat hsign hn hi
+    have hhead := l.bindings.2.1.trans (hh.trans r.bindings.2.1.symm)
+    have hlfull : l.descriptor.raw.indices =
+        (List.range l.descriptor.raw.head.natDegree).map (· + 1) := by
+      rw [l.bindings.2.1]
+      exact l.bindings.2.2.2.2.1
+    have hrfull : r.descriptor.raw.indices =
+        (List.range r.descriptor.raw.head.natDegree).map (· + 1) := by
+      rw [r.bindings.2.1]
+      exact r.bindings.2.2.2.2.1
+    have ho := l.descriptor.fullOrder_root f hz h1 ha hs hm hnat hsign
+      r.descriptor hhead hlfull hrfull
+    rw [l.root_eq_source f hz h1 ha hs hm hnat hsign,
+      r.root_eq_source f hz h1 ha hs hm hnat hsign] at ho
+    exact ⟨_, left.buildOrder_ofCompletion right hh l r hl hr _ ho, rfl⟩
+  · obtain ⟨c, hc⟩ := left.buildComparison_success f hz h1 ha hs hm hnat hsign hn hi hd right
+    exact ⟨c.order, left.buildOrder_ofComparison right hh c hc,
+      c.order_root f hz h1 ha hs hm hnat hsign⟩
+
+include hz h1 ha hs hm hnat hsign hn hi hd in
+/-- The total comparison uses an actual successful order construction;
 its internal diagnostic fallback is unreachable under lawful coefficients. -/
 theorem Descriptor.compare_success {context : Ctx}
     (left right : Descriptor E Ctx sign context) :
-    ∃ c : Comparison left right, left.buildComparison right = .ok c ∧
-      left.compare right = c.order := by
-  obtain ⟨c, hc⟩ := left.buildComparison_success f hz h1 ha hs hm hnat hsign hn hi hd right
-  exact ⟨c, hc, left.compare_ofBuild right c hc⟩
+    ∃ order, left.buildOrder right = .ok order ∧ left.compare right = order := by
+  obtain ⟨order, ho, _⟩ := left.buildOrder_roots f hz h1 ha hs hm hnat hsign hn hi hd right
+  exact ⟨order, ho, left.compare_ofBuild right order ho⟩
 
 include hz h1 ha hs hm hnat hsign hn hi hd in
 /-- The ordinary total comparison returns precisely the mathematical order
@@ -90,9 +121,8 @@ theorem Descriptor.compare_correct {context : Ctx}
       (if left.root f hz h1 ha hs hm hnat hsign < right.root f hz h1 ha hs hm hnat hsign then .lt
        else if right.root f hz h1 ha hs hm hnat hsign < left.root f hz h1 ha hs hm hnat hsign
          then .gt else .eq) := by
-  obtain ⟨c, _, hc⟩ := left.compare_success f hz h1 ha hs hm hnat hsign hn hi hd right
-  rw [hc]
-  exact c.order_root f hz h1 ha hs hm hnat hsign
+  obtain ⟨order, ho, hr⟩ := left.buildOrder_roots f hz h1 ha hs hm hnat hsign hn hi hd right
+  exact (left.compare_ofBuild right order ho).trans hr
 
 include hz h1 ha hs hm hnat hsign hn hi hd in
 /-- Equality returned by the total comparison means equality of the selected

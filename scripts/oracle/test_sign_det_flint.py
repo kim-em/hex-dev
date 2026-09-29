@@ -173,9 +173,11 @@ class ExactSigns(unittest.TestCase):
             oracle.check_record(record)
 
     def test_total_comparison_against_independent_roots(self):
-        for name in ("equal-linear-vectors", "reverse-linear", "shared-irrational",
-                     "distinct-irrational", "negative-head", "disjoint-intervals"):
-            record = self.fixture_record("compare/" + name)
+        for case_name in sorted(oracle.REQUIRED_CASES):
+            if not case_name.startswith("compare/"):
+                continue
+            name = case_name.removeprefix("compare/")
+            record = self.fixture_record(case_name)
             oracle.check_record(record)
             for field in ("totalOrder", "reverseOrder"):
                 for replacement in (None, True, "unknown", "lt", "eq", "gt"):

@@ -172,6 +172,25 @@ class InfinitesimalOracle(unittest.TestCase):
             record["value"]["data"]["result"]["signs"][0] *= -1
             self.reject(record)
 
+    def test_total_comparison_in_both_directions(self):
+        for name in sorted(self.records):
+            if not name.startswith("compare/"):
+                continue
+            record = self.record(name)
+            oracle.check_record(record)
+            for field in ("totalOrder", "reverseOrder"):
+                for replacement in (None, True, "unknown", "lt", "eq", "gt"):
+                    if replacement == record["value"]["data"]["result"][field]:
+                        continue
+                    bad = copy.deepcopy(record)
+                    if replacement is None:
+                        del bad["value"]["data"]["result"][field]
+                    else:
+                        bad["value"]["data"]["result"][field] = replacement
+                    with self.subTest(name=name, field=field, replacement=replacement), \
+                            self.assertRaisesRegex(OracleMismatch, "total comparison"):
+                        oracle.check_record(bad)
+
     def test_refinement_bindings_and_old_interval_replay(self):
         original = self.record("reencode/nested/refinement")
         for key in ("targetLower", "targetUpper"):

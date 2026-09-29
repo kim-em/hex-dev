@@ -72,21 +72,66 @@ theorem Descriptor.buildComparison_of_success {sign : E → Int} {context : Ctx}
     subst order'
     rfl
 
-/-- The order of two validated roots, using their actual checked common-head
-comparison. An internal failure emits a diagnostic and returns `eq`; the
-companion proves this fallback unreachable under lawful coefficients. -/
+/-- Compare completed encodings directly when their stored heads agree.
+Different heads retain the checked common-product path. Literal equality is
+only a sufficient shortcut: distinct representations of equal polynomials
+continue through joint re-encoding. -/
+@[expose] def Descriptor.buildOrder {sign : E → Int} {context : Ctx}
+    (left right : Descriptor E Ctx sign context) : Except BuildError Ordering :=
+  if left.raw.head = right.raw.head then
+    match left.buildCompletion with
+    | .error err => .error err
+    | .ok l =>
+      match right.buildCompletion with
+      | .error err => .error err
+      | .ok r =>
+        match l.descriptor.fullOrder r.descriptor with
+        | some order => .ok order
+        | none => .error .system
+  else
+    match left.buildComparison right with
+    | .error err => .error err
+    | .ok c => .ok c.order
+
+/-- The direct path uses only the two actual completions and Thom order. -/
+theorem Descriptor.buildOrder_ofCompletion {sign : E → Int} {context : Ctx}
+    (left right : Descriptor E Ctx sign context) (hh : left.raw.head = right.raw.head)
+    (l : Completion left) (r : Completion right)
+    (hl : left.buildCompletion = .ok l) (hr : right.buildCompletion = .ok r)
+    (order : Ordering) (ho : l.descriptor.fullOrder r.descriptor = some order) :
+    left.buildOrder right = .ok order := by
+  simp [Descriptor.buildOrder, hh, hl, hr, ho]
+
+/-- Different literal heads use the actual common-head comparison record. -/
+theorem Descriptor.buildOrder_ofComparison {sign : E → Int} {context : Ctx}
+    (left right : Descriptor E Ctx sign context) (hh : left.raw.head ≠ right.raw.head)
+    (c : Comparison left right) (hc : left.buildComparison right = .ok c) :
+    left.buildOrder right = .ok c.order := by
+  simp [Descriptor.buildOrder, hh, hc]
+
+/-- The order of two validated roots, using completion for equal stored
+heads and checked common-head comparison otherwise. An internal failure
+emits a diagnostic and returns `eq`; the companion proves this fallback
+unreachable under lawful coefficients. -/
 @[expose] def Descriptor.compare {sign : E → Int} {context : Ctx}
     (left right : Descriptor E Ctx sign context) : Ordering :=
-  match left.buildComparison right with
-  | .ok c => c.order
+  match left.buildOrder right with
+  | .ok order => order
   | .error err =>
     letI : Inhabited Ordering := ⟨.eq⟩
     panic! s!"Descriptor.compare: internal error {repr err}"
 
 /-- The total operation returns the order from its successful construction. -/
 theorem Descriptor.compare_ofBuild {sign : E → Int} {context : Ctx}
-    (left right : Descriptor E Ctx sign context) (c : Comparison left right)
-    (h : left.buildComparison right = .ok c) : left.compare right = c.order := by
+    (left right : Descriptor E Ctx sign context) (order : Ordering)
+    (h : left.buildOrder right = .ok order) : left.compare right = order := by
   simp only [Descriptor.compare, h]
+
+/-- The diagnostic fallback is exactly `eq`, independently of the global
+inhabited instance for `Ordering`. Lawful interpretations exclude this case. -/
+theorem Descriptor.compare_ofError {sign : E → Int} {context : Ctx}
+    (left right : Descriptor E Ctx sign context) (err : BuildError)
+    (h : left.buildOrder right = .error err) : left.compare right = .eq := by
+  simp [Descriptor.compare, h]
 
 end Hex.SignDet

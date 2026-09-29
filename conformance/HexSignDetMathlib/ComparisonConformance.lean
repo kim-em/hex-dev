@@ -30,7 +30,9 @@ def compares {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E] [Mul E]
   | some l, some r =>
     match l.buildComparison r with
     | .ok c =>
-      c.order == expected && l.compare r == expected && r.compare l == expected.swap &&
+      c.order == expected && (l.buildOrder r).toOption == some expected &&
+        (r.buildOrder l).toOption == some expected.swap &&
+        l.compare r == expected && r.compare l == expected.swap &&
         c.common.check 7 left.head right.head &&
         !c.common.check 8 left.head right.head &&
         c.common.left == left.head && c.common.right == right.head &&
@@ -63,18 +65,18 @@ private def negative : RawDescriptor Rat Nat :=
 -- Bad source bindings must fail, not count as successful absence or equality.
 #guard !compares Sturm.orderSign {positive with context := 8} linear .eq
 
-private def commonPasses (p q : DensePoly Rat) (degree : Nat) : Bool :=
+private def commonPasses (p q : DensePoly Rat) (degree : Nat) (zero : Bool) : Bool :=
   match CommonProduct.build 7 p q with
-  | .ok c => c.val.check 7 p q && c.val.head.natDegree == degree && !c.val.check 8 p q
+  | .ok c => c.val.check 7 p q && c.val.head.natDegree == degree && c.val.head.isZero == zero && !c.val.check 8 p q
   | _ => false
 
 -- Constants and zero inputs use the ordinary total division kernel.
-#guard commonPasses 0 0 0
-#guard commonPasses 0 (x - 1) 0
-#guard commonPasses (x - 1) 0 0
-#guard commonPasses 2 3 0
+#guard commonPasses 0 0 0 true
+#guard commonPasses 0 (x - 1) 0 true
+#guard commonPasses (x - 1) 0 0 true
+#guard commonPasses 2 3 0 false
 -- Removing a common factor produces a squarefree quadratic, not a cubic.
-#guard commonPasses (x * x - 1) (x - 1) 2
+#guard commonPasses (x * x - 1) (x - 1) 2 false
 
 open Hex.SignDetMathlib.SelectedProducerConformance
 
@@ -148,6 +150,13 @@ set_option maxHeartbeats 1000000 in
 /-- info: 'Hex.SignDet.Descriptor.buildComparison_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.buildComparison_success
+/-- info: 'Hex.SignDet.Descriptor.buildOrder_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.buildOrder_roots
+/-- info: 'Hex.SignDet.Descriptor.compare_ofError' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.compare_ofError
+
 /-- info: 'Hex.SignDet.Descriptor.compare_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.compare_success

@@ -240,7 +240,9 @@ but cannot justify a wrong selected sign or a different query/context. -/
 def compared (left right : RawDescriptor Rat Nat) (expected : Ordering) : Bool :=
   match Descriptor.build sign 7 left, Descriptor.build sign 7 right with
   | .ok (.ok l), .ok (.ok r) => match l.buildComparison r with
-    | .ok c => c.order == expected && c.common.check 7 left.head right.head &&
+    | .ok c => c.order == expected && (l.buildOrder r).toOption == some expected &&
+      l.compare r == expected && r.compare l == expected.swap &&
+      c.common.check 7 left.head right.head &&
       l.checkReencoding c.leftEncoding.target c.common.head .negInf .posInf c.leftEncoding.evidence &&
       r.checkReencoding c.rightEncoding.target c.common.head .negInf .posInf c.rightEncoding.evidence
     | _ => false

@@ -122,6 +122,8 @@ private def emitComparison (coeff : E → Json) (sign : E → Int) (depth : Nat)
       | .error err => failure err
       | .ok c => Json.mkObj [("status", toJson "ok"), ("commonHead", poly coeff c.common.head),
           ("order", toJson (match c.order with | .lt => "lt" | .eq => "eq" | .gt => "gt")),
+          ("totalOrder", toJson (match l.compare r with | .lt => "lt" | .eq => "eq" | .gt => "gt")),
+          ("reverseOrder", toJson (match r.compare l with | .lt => "lt" | .eq => "eq" | .gt => "gt")),
           ("leftSigns", toJson c.leftEncoding.target.raw.signs),
           ("rightSigns", toJson c.rightEncoding.target.raw.signs),
           ("commonReplay", toJson (c.common.check 10377 left.head right.head)),

@@ -1311,14 +1311,21 @@ private def commonRootPass : Bool :=
   match Descriptor.build Sturm.orderSign 7 sqrtTwoRoot,
       Descriptor.build Sturm.orderSign 7 sharedRoot with
   | .ok (.ok left), .ok (.ok right) =>
-    left.compare right == .eq
+    match left.buildComparison right with
+    | .ok result =>
+      result.common.check 7 sqrtTwoRoot.head sharedRoot.head &&
+        (left.buildOrder right).toOption == some .eq &&
+        left.compare right == .eq
+    | _ => false
   | _, _ => false
 
 #guard commonRootPass
 ```
 
 {name}`Hex.SignDet.Descriptor.compare` is the total root-order operation.
-It accepts partial descriptors and retains the original root selections when
+It completes partial descriptors and compares their encodings directly when the
+stored defining polynomials agree, even across different intervals. For different
+heads it retains the original root selections when
 changing their defining polynomial. Import `HexSignDetMathlib.ComparisonProducer`
 for {name}`Hex.SignDet.Descriptor.compare_correct` and the equality and strict-order
 equivalences {name}`Hex.SignDet.Descriptor.compare_eq_iff`,
@@ -1327,10 +1334,13 @@ equivalences {name}`Hex.SignDet.Descriptor.compare_eq_iff`,
 {name}`Hex.SignDet.Descriptor.buildComparison_success` proves that the actual
 common-polynomial constructor, both joint re-encodings and the full-word
 comparison succeed under lawful coefficient interpretations. The total operation's
-internal error branch emits a diagnostic and returns `eq`; the success theorem
-proves that branch unreachable under those laws. The executable operation requires
+internal error branch emits a diagnostic and returns `eq`.
+{name}`Hex.SignDet.Descriptor.compare_ofError` proves that exact fallback value;
+{name}`Hex.SignDet.Descriptor.buildOrder_roots` proves actual success and excludes
+that branch under the coefficient laws. The executable operation requires
 ordinary coefficient operations and signs, without a companion proof package.
-The proofs support noninjective stored coefficients and arbitrary ordered real
+The proofs require canonical zero, allow other stored values to have multiple
+representations, and apply to arbitrary ordered real
 closed fields, including fields with infinitesimals. They use the proved shared
 root-sum semantics and Tau Ceti Thom identity/order foundations.
 
