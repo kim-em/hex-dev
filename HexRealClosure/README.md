@@ -432,6 +432,13 @@ level and can be checked over the ambient field with its literal replay. Its
 selected root realizes additional query signs in their original order;
 certificate acceptance remains an explicit premise.
 
+`AlgebraicYun.lean` specializes the coefficient interpretation to Yun's
+actual raw recurrence over an algebraic level. Mapping its factors into the
+ambient field gives the same Yun recurrence there, and the mapped result
+passes Yun's exact factorization replay. The proof uses the level's verified
+division and inverse, which require the predecessor interpretation to preserve
+division. It assumes no field laws on stored representatives.
+
 `AlgebraicValue.lean` defines the image subfield `Value ctx`, with lawful field
 and order instances inherited from the ambient field. `Element.toValue`
 preserves arithmetic and sign, is surjective, and identifies exactly the
