@@ -65,10 +65,14 @@ theorem cachedCheck_eq (dag : Dag Rat Nat) (qs : List (DensePoly Rat)) :
 /-- Both an ordinary full graph and a graph sharing a child accept in the kernel
 with signs supplied by a finite cache. -/
 theorem cached_kernel :
-    cachedCheck full (singletonRaw.full []).queries = true ∧
+    cachedCheck full fullNode.queries = true ∧
     cachedCheck shared sharedParent.queries = true := by
   simp only [cachedCheck_eq]
-  exact ⟨full_kernel, shared_kernel⟩
+  constructor
+  · have hq : (singletonRaw.full []).queries = fullNode.queries := by decide +kernel
+    rw [← hq]
+    exact full_kernel
+  · exact shared_kernel
 
 #guard cachedCheck full fullNode.queries
 #guard cachedCheck shared sharedParent.queries
@@ -110,11 +114,25 @@ theorem cached_rejections :
   7 singletonRaw.head singletonRaw.lower singletonRaw.upper fullNode.queries
 
 set_option maxRecDepth 32768 in
-/-- An unreachable entry is still replayed. Its extra sign facts are necessary,
-and the full inventory suffices without a cache law outside its keys. -/
+/-- Transfer to lawful replay proves acceptance with the full finite inventory
+without a cache law outside its keys. -/
 theorem extra_kernel : cachedCheck extraGraph fullNode.queries = true := by
   rw [cachedCheck_eq]
   simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq, extraGraph, full,
+    ← Array.foldlM_toList, Array.toList_push,
+    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+set_option maxRecDepth 32768 in
+/-- Direct kernel reduction rejects omission of sign facts for an accepted
+unreachable entry; no finite-cache congruence theorem applies to these keys. -/
+theorem missing_signs_kernel :
+    extraGraph.check
+      (cachedSign (full.signOperands singletonRaw.head singletonRaw.lower singletonRaw.upper))
+      7 singletonRaw.head singletonRaw.lower singletonRaw.upper fullNode.queries = false := by
+  simp only [Dag.check, Dag.replay_eq, Dag.step_eq, extraGraph, full,
     ← Array.foldlM_toList, Array.toList_push,
     Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
     TarskiCertificate.check_eq, SignedRemainderChain.check,
@@ -131,6 +149,24 @@ theorem descriptor_kernel :
     TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
+
+/-- Finite graph agreement transfers the existing kernel-checked count-one
+descriptor result without assuming signs outside the cache keys are lawful. -/
+theorem cached_descriptor_kernel :
+    (full.descriptor?
+      (cachedSign (full.signOperands singletonRaw.head singletonRaw.lower singletonRaw.upper))
+      7 (singletonRaw.full [1, 1])).isSome = true := by
+  have he := Dag.descriptor_sign_congr
+    (cachedSign (full.signOperands singletonRaw.head singletonRaw.lower singletonRaw.upper))
+    Sturm.orderSign 7 (singletonRaw.full [1, 1]) full (cachedSign_agrees _)
+  have hs := congrArg Option.isSome he
+  simp only [Option.isSome_map] at hs
+  rw [hs]
+  exact descriptor_kernel
+
+#guard (full.descriptor?
+  (cachedSign (full.signOperands singletonRaw.head singletonRaw.lower singletonRaw.upper))
+  7 (singletonRaw.full [1, 1])).isSome
 
 -- The first query supplies a valid shared domain. Later queries with distinct
 -- valid witnesses fall back to full replay; invalid witnesses are rejected.
@@ -473,9 +509,6 @@ end Hex.SignDet.CrossCheck
 /-- info: 'Hex.SignDet.Dag.step_sign_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Dag.step_sign_congr
-/-- info: 'Hex.SignDet.Dag.fold_sign_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.SignDet.Dag.fold_sign_congr
 /-- info: 'Hex.SignDet.Dag.replay_sign_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Dag.replay_sign_congr
@@ -491,6 +524,25 @@ end Hex.SignDet.CrossCheck
 /-- info: 'Hex.SignDet.CrossCheck.extra_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.CrossCheck.extra_kernel
+
+/-- info: 'Hex.SignDet.CrossCheck.missing_signs_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.CrossCheck.missing_signs_kernel
+/-- info: 'Hex.SignDet.CrossCheck.cached_descriptor_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.CrossCheck.cached_descriptor_kernel
+/-- info: 'Hex.SignDet.Descriptor.ofReplay_data' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.ofReplay_data
+/-- info: 'Hex.SignDet.Dag.descriptor_sign_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Dag.descriptor_sign_congr
+/-- info: 'Hex.SignDet.Dag.decodeBytes_sign_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Dag.decodeBytes_sign_congr
+/-- info: 'Hex.SignDet.Dag.decodeDescriptor_sign_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Dag.decodeDescriptor_sign_congr
 
 /-- info: 'Hex.SignDet.Dag.descriptor_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

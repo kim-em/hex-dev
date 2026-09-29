@@ -40,6 +40,14 @@ tree under finite sign agreement; `Dag.check_sign_congr` preserves the Boolean
 result. These proofs follow the actual memoized prefix fold without expanding
 and rechecking a recursive tree. A cache law for the selected root's reachable
 entries alone does not suffice, since graph replay checks all stored entries.
+`Dag.descriptor_sign_congr` preserves the raw descriptor and literal evidence.
+`Dag.decodeBytes_sign_congr` and `Dag.decodeDescriptor_sign_congr` preserve
+exact errors and successful data under agreement on the actual decoded graph;
+they do not prove parser/printer byte roundtrips. Callers holding a decoded graph
+can use its `replay?` or `descriptor?` interface and the corresponding congruence
+to reuse that graph without parsing the same bytes again.
+Inventories retain repeated occurrences, so consumers may deduplicate
+keys while proving membership covers the whole inventory.
 
 `Dag.replay?` accepts a topologically ordered array of same-level BKR entries
 and a root index. References address earlier accepted entries only. Each entry

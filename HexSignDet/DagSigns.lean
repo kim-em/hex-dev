@@ -76,7 +76,7 @@ theorem step_sign_congr (sign sign' : E → Int) (context : Ctx) (p : DensePoly 
 
 /-- Finite sign agreement preserves every prefix of the actual checked fold,
 including rejections and the literal values kept in its memo array. -/
-theorem fold_sign_congr (sign sign' : E → Int) (context : Ctx) (p : DensePoly E)
+private theorem fold_sign_congr (sign sign' : E → Int) (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E) (entries : List (Entry E Ctx))
     (memo : Array (Checked sign context p a b))
     (memo' : Array (Checked sign' context p a b))
@@ -179,5 +179,32 @@ theorem check_sign_congr (sign sign' : E → Int) (context : Ctx) (p : DensePoly
     check sign context p a b qs dag = check sign' context p a b qs dag := by
   have he := replay_sign_congr sign sign' context p a b qs dag h
   simpa only [Option.isSome_map, check] using congrArg Option.isSome he
+
+/-- Descriptor extraction preserves the exact raw identity and evidence under
+the graph's finite sign agreement, including all rejection branches. -/
+theorem descriptor_sign_congr (sign sign' : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (dag : Dag E Ctx)
+    (h : ∀ x ∈ dag.signOperands raw.head raw.lower raw.upper, sign x = sign' x) :
+    (descriptor? sign context raw dag).map (fun d => (d.raw, d.evidence)) =
+      (descriptor? sign' context raw dag).map (fun d => (d.raw, d.evidence)) := by
+  have he := replay_sign_congr sign sign' context raw.head raw.lower raw.upper raw.queries dag h
+  cases ht : replay? sign context raw.head raw.lower raw.upper raw.queries dag with
+  | none =>
+    have ht' : replay? sign' context raw.head raw.lower raw.upper raw.queries dag = none := by
+      simpa only [ht, Option.map_none, Option.map_eq_none_iff] using he.symm
+    simp only [descriptor?, ht, ht', bind, Option.bind]
+    split <;> (try rfl)
+    split <;> rfl
+  | some tree =>
+    cases ht' : replay? sign' context raw.head raw.lower raw.upper raw.queries dag with
+    | none => simp [ht, ht'] at he
+    | some tree' =>
+      have hv : tree.val = tree'.val := by simpa [ht, ht'] using he
+      rw [descriptor_replay ht, descriptor_replay ht']
+      rcases tree with ⟨value, accepted⟩
+      rcases tree' with ⟨value', accepted'⟩
+      change value = value' at hv
+      subst value'
+      simp only [Descriptor.ofReplay_data, RawDescriptor.check, accepted, accepted']
 
 end Hex.SignDet.Dag
