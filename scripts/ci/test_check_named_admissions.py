@@ -74,10 +74,20 @@ class AdmissionScannerTests(unittest.TestCase):
             deflation = root / "conformance/HexRealClosure/DeflationConformance.lean"
             specialize = root / "adapters/HexRealClosureMathlib/Specialize.lean"
             specialize_tests = root / "adapters/HexRealClosureMathlib/SpecializeTests.lean"
+            specialize_polynomial = root / "adapters/HexRealClosureMathlib/SpecializePolynomial.lean"
+            specialize_regular = root / "adapters/HexRealClosureMathlib/SpecializeRegular.lean"
+            specialize_query = root / "adapters/HexRealClosureMathlib/SpecializeQuery.lean"
+            specialize_tarski = root / "adapters/HexRealClosureMathlib/SpecializeTarski.lean"
+            specialize_reduction = root / "adapters/HexRealClosureMathlib/SpecializeReduction.lean"
+            specialize_moment = root / "adapters/HexRealClosureMathlib/SpecializeMoment.lean"
+            specialize_replay = root / "adapters/HexRealClosureMathlib/SpecializeReplay.lean"
+            specialize_sample = root / "adapters/HexRealClosureMathlib/SpecializeSample.lean"
+            specialize_selected = root / "adapters/HexRealClosureMathlib/SpecializeSelected.lean"
+            specialize_descriptor = root / "adapters/HexRealClosureMathlib/SpecializeDescriptor.lean"
             union = root / "adapters/HexRealClosureMathlib/Union.lean"
             union_tests = root / "adapters/HexRealClosureMathlib/UnionTests.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, specialize, specialize_tests, union, union_tests, dependency):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor, union, union_tests, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
@@ -96,6 +106,16 @@ class AdmissionScannerTests(unittest.TestCase):
             deflation.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             specialize.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             specialize_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_polynomial.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_regular.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_query.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_tarski.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_reduction.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_moment.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_replay.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_sample.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_selected.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_descriptor.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             union.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             union_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
@@ -123,7 +143,7 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/ConvertConformance"):
                     audit.check()
                 conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-                for probe in (specialize, specialize_tests):
+                for probe in (specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor):
                     probe.unlink()
                     with self.assertRaisesRegex(ValueError, "missing local import"):
                         audit.check()

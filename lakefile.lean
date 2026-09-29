@@ -608,13 +608,20 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.ReencodingProducer, `HexSignDetMathlib.RootList,
     `HexSignDetMathlib.ReencodingRefinement,
     `HexRealClosureMathlib.Specialize, `HexRealClosureMathlib.SpecializeTests,
+    `HexRealClosureMathlib.SpecializePolynomial, `HexRealClosureMathlib.SpecializeRegular, `HexRealClosureMathlib.SpecializeQuery, `HexRealClosureMathlib.SpecializeTarski,
+    `HexRealClosureMathlib.SpecializeReduction,
+    `HexRealClosureMathlib.SpecializeMoment,
+    `HexRealClosureMathlib.SpecializeReplay,
+    `HexRealClosureMathlib.SpecializeSample,
+    `HexRealClosureMathlib.SpecializeSelected,
+    `HexRealClosureMathlib.SpecializeDescriptor,
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
     `HexRealClosureMathlib.YunInvariant, `HexRealClosureMathlib.Bounds,
     `HexRealClosureMathlib.Deflation, `HexRealClosureMathlib.ZeroFactor,
     `HexRealClosureMathlib.Ambient, `HexRealClosureMathlib.AmbientTests,
-    `HexRealClosureMathlib.Union, `HexRealClosureMathlib.UnionTests]
+    `HexRealClosureMathlib.Union, `HexRealClosureMathlib.UnionTests].map Glob.one
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
