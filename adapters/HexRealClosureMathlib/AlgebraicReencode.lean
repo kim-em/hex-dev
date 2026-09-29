@@ -33,7 +33,7 @@ theorem Context.rootValue_reencode (context : Context E Ctx coeffSign parent)
     (r : SignDet.Reencoding context.root head lower upper) :
     (context.reencode r).rootValue f hz h1 ha hs hm hnat hsign =
       context.rootValue f hz h1 ha hs hm hnat hsign := by
-  simpa only [Context.rootValue, Context.reencode, Context.root_adjoin] using
+  simpa only [Context.rootValue, context.root_reencode r] using
     r.root_eq_source f hz h1 ha hs hm hnat hsign
 
 /-- Every predecessor-coefficient polynomial has the same selected value
@@ -62,6 +62,16 @@ theorem denote_reencode {context : Context E Ctx coeffSign parent}
     _ = context.evalPoly f hz h1 ha hs hm hnat hsign a.polynomial :=
       context.evalPoly_reencode f hz h1 ha hs hm hnat hsign r a.polynomial
     _ = a.denote f hz h1 ha hs hm hnat hsign := rfl
+
+include f hz h1 ha hs hm hnat hsign hn hi in
+/-- The packed sign cache is preserved by checked re-encoding. -/
+theorem sign_reencode {context : Context E Ctx coeffSign parent}
+    {head : DensePoly E} {lower upper : Hex.Endpoint E}
+    (r : SignDet.Reencoding context.root head lower upper) (a : Element context) :
+    (a.reencode r).sign = a.sign := by
+  rw [sign_spec f hz h1 ha hs hm hnat hsign hn hi (a.reencode r),
+    sign_spec f hz h1 ha hs hm hnat hsign hn hi a,
+    denote_reencode f hz h1 ha hs hm hnat hsign hn hi r a]
 
 include f hz h1 ha hs hm hnat hsign hn hi in
 /-- The checked conversion cannot turn a nonzero value into the canonical zero. -/
@@ -118,6 +128,9 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Element.denote_reencode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Algebraic.Element.denote_reencode
+/-- info: 'Hex.RealClosure.Algebraic.Element.sign_reencode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Algebraic.Element.sign_reencode
 /-- info: 'Hex.RealClosure.Algebraic.Element.reencodePoly_interpret' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Algebraic.Element.reencodePoly_interpret

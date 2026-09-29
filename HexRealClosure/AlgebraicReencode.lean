@@ -25,6 +25,13 @@ selected root. The predecessor and its cleanliness predicate remain fixed. -/
     Context E Ctx coeffSign parent :=
   Context.adjoin r.target context.cleanCoeff
 
+/-- The new context uses the checked target descriptor literally. -/
+theorem Context.root_reencode (context : Context E Ctx coeffSign parent)
+    {head : DensePoly E} {lower upper : Hex.Endpoint E}
+    (r : SignDet.Reencoding context.root head lower upper) :
+    (context.reencode r).root = r.target :=
+  Context.root_adjoin r.target context.cleanCoeff
+
 namespace Element
 
 variable {context : Context E Ctx coeffSign parent}
