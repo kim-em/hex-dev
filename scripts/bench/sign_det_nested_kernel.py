@@ -27,7 +27,7 @@ def prefix(depth: int) -> str:
 
 def pair(depth: int, operation: str) -> ProbePair:
     fraction = operation in ("AcceptFraction", "RejectProduct", "FieldArithmetic", "Certificates")
-    scalar = operation in ("FieldArithmetic", "Certificates")
+    scalar = operation in ("FieldArithmetic", "Certificates", "ArithmeticCause")
     stem = prefix(depth)
     candidate = f"{stem}.{operation}"
     baseline = f"{stem}.{'FractionBaseline' if fraction else 'Baseline'}"
@@ -40,7 +40,8 @@ def pair(depth: int, operation: str) -> ProbePair:
     return ProbePair(
         f"depth-{depth}-{operation}", ProbeModule(baseline),
         ProbeModule(candidate, AXIOMS, f"Hex.SignDetMathlib.{candidate.split('.', 1)[1]}"),
-        {"family": ("literal-fraction-normalization" if operation == "Certificates" else
+        {"family": ("literal-chain-rejection-cause" if operation == "ArithmeticCause" else
+                    "literal-fraction-normalization" if operation == "Certificates" else
                     "literal-fraction-field-arithmetic" if scalar else
                     "literal-fraction-replay" if fraction else
                     "literal-nested-coefficient-replay"),
@@ -65,7 +66,7 @@ SPEC = SweepSpec(
     description=__doc__ or "Nested coefficient kernel replay costs",
     pairs=PAIRS,
     probe_target="HexSignDetMathlibProofProbe",
-    schema="hex-sign-det-nested-kernel-v2",
+    schema="hex-sign-det-nested-kernel-v3",
     measurement="paired-fresh-module-olean-wall",
     output_stem="hex-sign-det-nested-kernel",
     required_samples=6,

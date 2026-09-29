@@ -1,0 +1,182 @@
+[
+  {
+    "pair": "depth-1-Accept",
+    "depth": 1,
+    "operation": "Accept",
+    "reference_seconds": 2.384393329,
+    "candidate_seconds": 3.198491216,
+    "paired_delta_seconds": 0.803158995,
+    "candidate_peak_rss_gib": 1.7627391815185547
+  },
+  {
+    "pair": "depth-1-AcceptFraction",
+    "depth": 1,
+    "operation": "AcceptFraction",
+    "reference_seconds": 2.428340958,
+    "candidate_seconds": 3.447787056,
+    "paired_delta_seconds": 1.017810895,
+    "candidate_peak_rss_gib": 1.8068828582763672
+  },
+  {
+    "pair": "depth-1-ArithmeticCause",
+    "depth": 1,
+    "operation": "ArithmeticCause",
+    "reference_seconds": 2.385685929,
+    "candidate_seconds": 2.562352212,
+    "paired_delta_seconds": 0.172652235,
+    "candidate_peak_rss_gib": 1.6479301452636719
+  },
+  {
+    "pair": "depth-1-Certificates",
+    "depth": 1,
+    "operation": "Certificates",
+    "reference_seconds": 2.428194135,
+    "candidate_seconds": 2.467638396,
+    "paired_delta_seconds": 0.075572459,
+    "candidate_peak_rss_gib": 1.625600814819336
+  },
+  {
+    "pair": "depth-1-FieldArithmetic",
+    "depth": 1,
+    "operation": "FieldArithmetic",
+    "reference_seconds": 2.394483499,
+    "candidate_seconds": 2.480613231,
+    "paired_delta_seconds": 0.080012426,
+    "candidate_peak_rss_gib": 1.6326179504394531
+  },
+  {
+    "pair": "depth-1-RejectArithmetic",
+    "depth": 1,
+    "operation": "RejectArithmetic",
+    "reference_seconds": 2.391662015,
+    "candidate_seconds": 2.963576222,
+    "paired_delta_seconds": 0.537162097,
+    "candidate_peak_rss_gib": 1.6934661865234375
+  },
+  {
+    "pair": "depth-1-RejectProduct",
+    "depth": 1,
+    "operation": "RejectProduct",
+    "reference_seconds": 2.462068169,
+    "candidate_seconds": 3.076869137,
+    "paired_delta_seconds": 0.678277023,
+    "candidate_peak_rss_gib": 1.7348289489746094
+  },
+  {
+    "pair": "depth-1-RejectStale",
+    "depth": 1,
+    "operation": "RejectStale",
+    "reference_seconds": 2.424304887,
+    "candidate_seconds": 2.683398184,
+    "paired_delta_seconds": 0.29206921,
+    "candidate_peak_rss_gib": 1.6409664154052734
+  },
+  {
+    "pair": "depth-2-Accept",
+    "depth": 2,
+    "operation": "Accept",
+    "reference_seconds": 2.389421866,
+    "candidate_seconds": 9.565307458,
+    "paired_delta_seconds": 7.153469762,
+    "candidate_peak_rss_gib": 2.938962936401367
+  },
+  {
+    "pair": "depth-2-AcceptFraction",
+    "depth": 2,
+    "operation": "AcceptFraction",
+    "reference_seconds": 2.394077261,
+    "candidate_seconds": 13.680566516,
+    "paired_delta_seconds": 11.293182841,
+    "candidate_peak_rss_gib": 3.714506149291992
+  },
+  {
+    "pair": "depth-2-ArithmeticCause",
+    "depth": 2,
+    "operation": "ArithmeticCause",
+    "reference_seconds": 2.392722956,
+    "candidate_seconds": 4.176503228,
+    "paired_delta_seconds": 1.780230952,
+    "candidate_peak_rss_gib": 1.977334976196289
+  },
+  {
+    "pair": "depth-2-Certificates",
+    "depth": 2,
+    "operation": "Certificates",
+    "reference_seconds": 2.393174112,
+    "candidate_seconds": 5.469361544,
+    "paired_delta_seconds": 3.087644429,
+    "candidate_peak_rss_gib": 2.3295440673828125
+  },
+  {
+    "pair": "depth-2-FieldArithmetic",
+    "depth": 2,
+    "operation": "FieldArithmetic",
+    "reference_seconds": 2.459940301,
+    "candidate_seconds": 3.959804835,
+    "paired_delta_seconds": 1.502795469,
+    "candidate_peak_rss_gib": 1.9478340148925781
+  },
+  {
+    "pair": "depth-2-RejectArithmetic",
+    "depth": 2,
+    "operation": "RejectArithmetic",
+    "reference_seconds": 2.390963622,
+    "candidate_seconds": 5.469878136,
+    "paired_delta_seconds": 3.082868792,
+    "candidate_peak_rss_gib": 2.190450668334961
+  },
+  {
+    "pair": "depth-2-RejectProduct",
+    "depth": 2,
+    "operation": "RejectProduct",
+    "reference_seconds": 2.396553806,
+    "candidate_seconds": 8.525444451,
+    "paired_delta_seconds": 6.100891858,
+    "candidate_peak_rss_gib": 2.753368377685547
+  },
+  {
+    "pair": "depth-2-RejectStale",
+    "depth": 2,
+    "operation": "RejectStale",
+    "reference_seconds": 2.389348256,
+    "candidate_seconds": 2.684122724,
+    "paired_delta_seconds": 0.300147917,
+    "candidate_peak_rss_gib": 1.6420459747314453
+  },
+  {
+    "pair": "depth-3-Accept",
+    "depth": 3,
+    "operation": "Accept",
+    "reference_seconds": 2.465838681,
+    "candidate_seconds": 107.797541528,
+    "paired_delta_seconds": 105.377412274,
+    "candidate_peak_rss_gib": 17.49787139892578
+  },
+  {
+    "pair": "depth-3-ArithmeticCause",
+    "depth": 3,
+    "operation": "ArithmeticCause",
+    "reference_seconds": 2.455539041,
+    "candidate_seconds": 29.597578442,
+    "paired_delta_seconds": 27.132676826,
+    "candidate_peak_rss_gib": 5.935707092285156
+  },
+  {
+    "pair": "depth-3-RejectArithmetic",
+    "depth": 3,
+    "operation": "RejectArithmetic",
+    "reference_seconds": 2.393455439,
+    "candidate_seconds": 52.302376069,
+    "paired_delta_seconds": 49.893517016,
+    "candidate_peak_rss_gib": 8.449256896972656
+  },
+  {
+    "pair": "depth-3-RejectStale",
+    "depth": 3,
+    "operation": "RejectStale",
+    "reference_seconds": 2.389199055,
+    "candidate_seconds": 2.685776986,
+    "paired_delta_seconds": 0.294623134,
+    "candidate_peak_rss_gib": 1.641317367553711
+  }
+]

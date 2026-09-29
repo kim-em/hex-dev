@@ -17,7 +17,8 @@ theorems preserve the exact quotient, remainder, gcd scaling and Bezout
 coefficients. Exposed default plans let the kernel reach those logical bodies
 inside rational-function arithmetic.
 
-This supplies the schoolbook logical closure required by
+This supplies schoolbook logical bodies for planned multiplication, squaring,
+one-shot division and (extended) gcd, as required by
 [hex-poly-fast](../HexPolyFast/SPEC/hex-poly-fast.md#kernel-exposure-and-trust).
 It introduces no new arithmetic algorithm or coefficient instance. The clipped
 Karatsuba interface is outside this change.
@@ -62,11 +63,12 @@ exercised by self-division.
 Acceptance verifies the literal field identities, endpoint signs, query
 bindings, matrix identities and child support evidence. Arithmetic rejection
 changes one positive initial scale from `1` to `2`; context, endpoints, queries,
-matrices and reported signs remain unchanged. Separate `ArithmeticCause` modules read the actual forged moment, prove every
-chain guard before its initial identity passes, and prove that identity and
+matrices and reported signs remain unchanged. Separate `ArithmeticCause`
+modules read the actual forged moment, prove every chain guard before its
+initial identity passes, and prove that identity and
 the chain replay fail while the original chain passes. Their costs are separate
-from the graph rejection modules. The separate stale-context probe changes the leaf's
-context and exercises early rejection.
+from the graph rejection modules. The separate stale-context probe changes
+the leaf's context and exercises early rejection.
 
 The proof scripts use proved checker equalities to compute the uncached
 query-chain specification. Child-entry sharing is retained, but the squarefree
@@ -79,11 +81,12 @@ short-circuits. Arithmetic adds further predecessor work. There is no additive
 bound in depth or shared coefficient-sign evidence in these probes.
 
 The ordinary CI target `HexSignDetMathlibProofProbe` includes acceptance,
-arithmetic rejection and stale-context rejection at depths one and two, plus
-the fraction probes. The explicit manual target
+arithmetic rejection, stale-context rejection and chain-cause proofs at depths
+one and two, plus the fraction probes and repeated normalization-certificate
+checks. The explicit manual target
 `HexSignDetMathlibNestedProofProbe` contains the more memory-intensive
-depth-three proofs, including stale-context rejection. The full default
-`lake build` does not include that manual target. Run
+depth-three proofs, including stale-context rejection and the chain-cause
+proof. The full default `lake build` does not include that manual target. Run
 `lake build HexSignDetMathlibNestedProofProbe` after changing the nested inputs
 or their arithmetic dependencies; allow roughly 18 GiB resident memory for
 the observed depth-three acceptance module.
@@ -110,6 +113,9 @@ failed arms. These are fresh-module observations: they include elaboration,
 checker reduction, kernel verification and artifact writing. The paired delta
 is not an isolated kernel timer or an asymptotic complexity result. This
 protocol has no scientific acceptance budget inferred from its timeout.
+Observed fresh-module wall times cluster in roughly 0.1-second steps. Small
+paired differences within one such step should not be ranked as replay costs;
+these observations include variable process/build overhead.
 
 ## Recorded costs
 
@@ -143,9 +149,12 @@ stale-context probes, and the additional proofs identifying the arithmetic
 rejection cause. Those additions are not measured by this collection. Raw
 records retain schema v1 and its original metadata. The archived v1 source
 names the manual library as its primary target; the recorded stale-context
-summary omits some fixed graph sizes. All measured modules and source hashes are present. The current
-schema v2 identifies each pair's actual build target, gives consistent graph
-sizes, and includes this report in source provenance.
+summary omits some fixed graph sizes. All measured modules and source hashes
+are present. The expanded schema-v2 source identifies each pair's actual build target,
+gives consistent graph sizes, and includes this report in source provenance.
+Current schema v3 additionally labels chain-cause proofs separately from graph
+replay and sets their graph counters to zero. Schema-v2 records retain their
+original input-graph counters; the chain-cause proof does not replay that graph.
 
 - [Complete collection](data/sign-det-nested-kernel/6f332afb8/nested-kernel.json)
   and [incremental arm records](data/sign-det-nested-kernel/6f332afb8/nested-kernel.json.samples.jsonl).
@@ -159,6 +168,68 @@ ancestor `f53917bfc7f96a68491441222e7128ffee3bd916` and the exact patch.
 All 212 source hashes were verified against that checkout before archiving.
 The measurement commit need not remain in the merged branch's history.
 
+## Expanded kernel collection
+
+The [expanded collection](data/sign-det-nested-kernel/6d3801053/nested-kernel.json)
+contains 120 adjacent pairs (240 completed arms), six rounds for each of the
+twenty registered probes. Clean source
+`6d38010537c4a1267e123c235189698842607b1a` ran on `chungus2`, leased
+CPU 7, with the same Lean/Mathlib/Tau Ceti pins as above. All candidate axiom
+inventories contain only the three standard axioms; every arm completed.
+The [sidecar](data/sign-det-nested-kernel/6d3801053/nested-kernel.json.samples.jsonl)
+matches the final arm records and has a successful completion marker.
+The final report additionally contains the harness's derived aggregate-core
+accounting field; the original sidecar observations remain unchanged.
+
+| Depth | Probe | Import-only median (s) | Proof median (s) | Median paired difference (s) | Proof peak RSS median (GiB) |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 1 | `Accept` | 2.384 | 3.198 | 0.803 | 1.763 |
+| 1 | `AcceptFraction` | 2.428 | 3.448 | 1.018 | 1.807 |
+| 1 | `ArithmeticCause` | 2.386 | 2.562 | 0.173 | 1.648 |
+| 1 | `Certificates` | 2.428 | 2.468 | 0.076 | 1.626 |
+| 1 | `FieldArithmetic` | 2.394 | 2.481 | 0.080 | 1.633 |
+| 1 | `RejectArithmetic` | 2.392 | 2.964 | 0.537 | 1.693 |
+| 1 | `RejectProduct` | 2.462 | 3.077 | 0.678 | 1.735 |
+| 1 | `RejectStale` | 2.424 | 2.683 | 0.292 | 1.641 |
+| 2 | `Accept` | 2.389 | 9.565 | 7.153 | 2.939 |
+| 2 | `AcceptFraction` | 2.394 | 13.681 | 11.293 | 3.715 |
+| 2 | `ArithmeticCause` | 2.393 | 4.177 | 1.780 | 1.977 |
+| 2 | `Certificates` | 2.393 | 5.469 | 3.088 | 2.330 |
+| 2 | `FieldArithmetic` | 2.460 | 3.960 | 1.503 | 1.948 |
+| 2 | `RejectArithmetic` | 2.391 | 5.470 | 3.083 | 2.190 |
+| 2 | `RejectProduct` | 2.397 | 8.525 | 6.101 | 2.753 |
+| 2 | `RejectStale` | 2.389 | 2.684 | 0.300 | 1.642 |
+| 3 | `Accept` | 2.466 | 107.798 | 105.377 | 17.498 |
+| 3 | `ArithmeticCause` | 2.456 | 29.598 | 27.133 | 5.936 |
+| 3 | `RejectArithmetic` | 2.393 | 52.302 | 49.894 | 8.449 |
+| 3 | `RejectStale` | 2.389 | 2.686 | 0.295 | 1.641 |
+
+These are complete fresh-module observations, including elaboration, checker
+reduction, kernel verification and output writing. The small depth-one
+certificate/arithmetic differences are within the observed 0.1-second wall
+step and should not be ranked as isolated replay costs. Depth-two fraction
+acceptance has a 13.681-second median and 3.715 GiB median peak RSS; it is
+included in the ordinary CI target. Depth-three polynomial acceptance has
+a 107.798-second median and 17.498 GiB peak, supporting the separate manual
+target. Chain-cause proofs and full graph rejection remain different probes.
+
+All 231 source hashes and the six-round rotated/alternating schedule were
+verified. The [archive manifest](data/sign-det-nested-kernel/6d3801053/archive.json)
+retains checksums and reconstruction from main ancestor
+`69c2c363f9789e497f5106cf65756253b420809b` using the exact source patch.
+The [table data](data/sign-det-nested-kernel/6d3801053/summary.json) preserves
+the unrounded reported medians. The recorded schema-v2 chain-cause metadata
+retains its original graph counters, as explained above; current schema v3
+separates that family. No sample was relabelled or omitted, and no rerun was
+used for this collection. The older seven-pair observations remain archived
+as a separate source snapshot, not a controlled before/after comparison.
+
+This supplies costs for nonunit-denominator arithmetic, normalization
+certificate replay, rejection causes and stale bindings in addition to the
+polynomial-generator graph family. It does not establish an asymptotic
+bound, count allocated bytes, or implement shared coefficient-sign proofs
+across field levels. The remaining Phase-4 gates are unchanged.
+
 ## Rational-function compatibility
 
 The existing rational-function certificate probes were remeasured at clean
@@ -167,10 +238,17 @@ six-round schedule and the shared retained-arm wrapper. All 72 completed arms
 remain in the [collection](data/sign-det-nested-kernel/2616e53b0-rationalfn/rationalfn-compatibility.json)
 and [sidecar](data/sign-det-nested-kernel/2616e53b0-rationalfn/rationalfn-compatibility.json.samples.jsonl),
 with [source reconstruction](data/sign-det-nested-kernel/2616e53b0-rationalfn/archive.json).
-The existing five-second fresh-module budgets passed. Replay and rejection
-medians ranged from 0.756 to 0.858 seconds, with approximately 0.817 GiB
-peak resident sets. This is a compatibility observation on this host, not a
+The existing five-second fresh-module budgets passed. Absolute replay and
+rejection medians ranged from 0.756 to 0.858 seconds, with approximately
+0.817 GiB peak resident sets. The full paired collection, including its
+existing null pairs, has median differences of about −1 to 104 ms; the observed
+0.1-second step precludes ranking these small differences as normalization
+costs. This is a compatibility observation on this host, not a
 controlled before/after comparison or evidence for general normalization cost.
+The source is an archived pre-rebase snapshot reconstructed from ancestor
+`f53917bfc7f96a68491441222e7128ffee3bd916` and its exact patch; the measured
+commit need not remain in merged history. Subsequent main changes added
+rational-function embedding lemmas, so it is not the final merged source.
 
 ## Scope
 

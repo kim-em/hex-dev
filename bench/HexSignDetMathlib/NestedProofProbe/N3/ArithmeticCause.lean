@@ -16,7 +16,7 @@ open Hex.SignDet Hex.SignDetMathlib.ProofProbe
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 4000000 in
-/-- The forged certificate fails its initial identity after all preceding guards pass. -/
+/-- The forged certificate fails its initial identity after all preceding chain guards pass. -/
 theorem checked : Nested.scaleFailure 3 = true := by
   simp only [Nested.scaleFailure, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
