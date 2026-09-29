@@ -293,7 +293,7 @@ lean_lib HexRealClosure where
 
 @[default_target]
 lean_lib HexRealClosureTests where
-  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests]
+  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests, .one `HexRealClosure.RootFactorsTests]
 
 @[default_target]
 lean_lib HexRealClosureMathlib where

@@ -180,7 +180,7 @@ def check() -> None:
              "HexRealClosureMathlib.Isolation", "HexRealClosure.IsolationTests",
              "HexRealClosureMathlib.BisectionFactor", "HexRealClosureMathlib.IsolationFactor",
              "HexRealClosureMathlib.IsolationRoots", "HexRealClosure.IsolationConformance",
-             "HexRealClosureMathlib.RootOrder", "HexRealClosure.RootOrderTests"] + [
+             "HexRealClosureMathlib.RootOrder", "HexRealClosure.RootOrderTests", "HexRealClosure.RootFactorsTests"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
         "HexSignDetMathlib." + ".".join(path.relative_to(

@@ -460,3 +460,16 @@ fixture driver also covers constants, a pure power, mixed nonzero roots,
 fractional and negative scalars, and one and two infinitesimal levels. Its
 independent SymPy oracle determines the zero multiplicity from the first
 nonzero coefficient and checks the entire returned quotient.
+
+
+`Roots.assemble` composes literal zero extraction, the actual raw Yun
+recurrence and complete isolation of each returned factor. Its intermediate
+`Output` retains `all` for the zero polynomial and positive multiplicities
+for finite entries. It restores an extracted zero exactly once. Failed factor
+completion and absent factor domains remain explicit internal errors.
+`factorEntries_cons` exposes the actual completion of the first factor and the
+actual recursive output for all remaining factors. No companion theorem is a
+constructor argument. The default native tests exercise zero, positive and
+negative constants, a pure power and mixed roots with multiplicity gaps and a
+negative leading scalar. This stage has not yet proved original multiplicity
+correspondence or assembled a globally ordered, total `RootSet`.
