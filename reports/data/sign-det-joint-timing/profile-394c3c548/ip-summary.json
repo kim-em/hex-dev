@@ -1,0 +1,5796 @@
+{
+  "operation_samples": 716,
+  "outside_operation_samples": 1232,
+  "foreign_pid_samples_in_region": 0,
+  "regions": [
+    [
+      56498984744150,
+      56502588553220
+    ]
+  ],
+  "pid": 2626161,
+  "thread_ids": [
+    2626164
+  ],
+  "leaf_counts": {
+    "cfree@GLIBC_2.2.5": 111,
+    "malloc": 104,
+    "__gmpz_add": 74,
+    "__gmpz_init_set_ui": 54,
+    "realloc": 39,
+    "__gmpz_mul_2exp": 36,
+    "l_Rat_mul": 35,
+    "lean_nat_gcd": 28,
+    "__gmpz_gcd": 27,
+    "__gmpz_realloc": 27,
+    "__gmp_default_allocate": 21,
+    "_ZN4lean3mpzC1Em": 21,
+    "l_Rat_add": 19,
+    "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0": 13,
+    "_ZN4lean3mpzD1Ev": 12,
+    "realloc@plt": 9,
+    "lean_alloc_small_object_core": 9,
+    "_ZNK4lean3mpz10get_size_tEv": 7,
+    "__gmp_default_reallocate": 6,
+    "mi_free": 6,
+    "lean_dec_ref_cold": 6,
+    "free@plt": 5,
+    "__gmpn_copyi_x86_64": 4,
+    "__gmpz_clear": 4,
+    "__gmpn_gcd_1": 3,
+    "lean_array_push": 3,
+    "lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_DensePoly_scaleImpl___at___00Hex_Sturm_normalize___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__7_spec__12_spec__17": 3,
+    "l_Rat_sub": 3,
+    "lean_free_object": 3,
+    "lp_Hex_Hex_DensePoly_coeff___at___00Hex_DensePoly_derivativeImpl___at___00Hex_ZPoly_primitiveSquareFreeDecomposition_spec__1_spec__2": 2,
+    "__gmpn_gcd_11_x86_64": 2,
+    "lean_apply_1": 2,
+    "_ZNK4lean3mpz9is_size_tEv": 2,
+    "__gmpz_init": 2,
+    "l_List_range_loop": 2,
+    "lp_Hex_Hex_Matrix_scale___at___00Hex_SignDet_System_check_spec__5___lam__0___boxed": 1,
+    "mi_malloc": 1,
+    "_ZN4lean3mpzC2Ev": 1,
+    "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_": 1,
+    "lp_Hex___private_Init_Data_List_Impl_0__List_flatMapTR_go___at___00Hex_SignDet_factors___at___00Hex_SignDet_Reduction_check___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__58_spec__78_spec__105": 1,
+    "_ZN4lean3mpzC2Ej": 1,
+    "lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_SignedRemainderChain_build___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__9_spec__15_spec__21_spec__27_spec__42": 1,
+    "lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_SignedRemainderChain_build___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__9_spec__15_spec__21_spec__27_spec__40": 1,
+    "_ZN4lean3gcdERNS_3mpzERKS0_S3_": 1,
+    "lp_Hex_Array_isEqvAux___at___00Array_instDecidableEqImpl___at___00__private_HexPoly_Dense_0__Hex_DensePoly_decEqRuntime___at___00Hex_SignDet_Dag_replay_x3f___at___00Hex_SignDet_Dag_check___at___00Hex_SignDetBench_input_spec__6_spec__16_spec__30_spec__49_spec__72___redArg": 1,
+    "l_List_lengthTR___redArg": 1,
+    "[unknown]": 1
+  },
+  "samples": [
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56498989318965,
+      "ip": "5c22c17c4710",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56498994303437,
+      "ip": "5c22c17c4729",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56498999309522,
+      "ip": "7ed4308aef16",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499004333022,
+      "ip": "5c22c17e2916",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499009363773,
+      "ip": "7ed4308ae8de",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499014376838,
+      "ip": "5c22c17c47b2",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499019395681,
+      "ip": "5c22bd99340b",
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499024419662,
+      "ip": "7ed4308ae92d",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499029442311,
+      "ip": "5c22c16af271",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499034464499,
+      "ip": "7ed4308aef70",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499039560236,
+      "ip": "5c22c17c4729",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499044562434,
+      "ip": "5c22c17c4746",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499049573086,
+      "ip": "5c22bd9639d5",
+      "symbol": "lp_Hex_Hex_Matrix_scale___at___00Hex_SignDet_System_check_spec__5___lam__0___boxed",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499054593271,
+      "ip": "5c22c17c4746",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499059612444,
+      "ip": "5c22c17db910",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499064634973,
+      "ip": "5c22c17c4748",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499069659405,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499074684047,
+      "ip": "5c22c1792706",
+      "symbol": "__gmpn_copyi_x86_64",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499079708107,
+      "ip": "5c22c17c4737",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499084754742,
+      "ip": "5c22c1825ad1",
+      "symbol": "mi_malloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499089782328,
+      "ip": "7ed4308aef57",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499094799529,
+      "ip": "7ed4308ae946",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499099820445,
+      "ip": "7ed4308ae943",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499104851687,
+      "ip": "7ed4308af396",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499109871161,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499114894331,
+      "ip": "5c22c17c4711",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499119917741,
+      "ip": "5c22c178fa2d",
+      "symbol": "_ZNK4lean3mpz10get_size_tEv",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499124942413,
+      "ip": "5c22c17ade7f",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499129967705,
+      "ip": "5c22c17ade1f",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499134994190,
+      "ip": "7ed4308aef16",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499140164377,
+      "ip": "5c22c17adec4",
+      "symbol": "__gmp_default_reallocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499145117253,
+      "ip": "5c22c17c4857",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499150103959,
+      "ip": "5c22c1792751",
+      "symbol": "__gmpn_copyi_x86_64",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499155111175,
+      "ip": "5c22c17c48ef",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499160124440,
+      "ip": "5c22c17dbc5b",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499165142001,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499170165381,
+      "ip": "7ed4308aef5a",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499175188801,
+      "ip": "7ed4308aef47",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499180214655,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499185238906,
+      "ip": "7ed4308ae92d",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499190262716,
+      "ip": "5c22c17c4bb2",
+      "symbol": "__gmpz_clear",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499195333316,
+      "ip": "7ed4308aef57",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499200347282,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499205358724,
+      "ip": "5c22c17db920",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499210379090,
+      "ip": "5c22c16ae0c7",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499215415990,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499220433041,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499225454137,
+      "ip": "5c22c17db911",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499230480141,
+      "ip": "5c22c17ade7f",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499235505053,
+      "ip": "7ed4308af324",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499240528453,
+      "ip": "7ed4308ae943",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499245555018,
+      "ip": "5c22c17ade71",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499250579590,
+      "ip": "5c22c17c4ae0",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499255606765,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499260632749,
+      "ip": "7ed4308af324",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499265659664,
+      "ip": "5c22c17addf8",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499270684426,
+      "ip": "5c22c17e2803",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499275709769,
+      "ip": "5c22c17c48a8",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499280736604,
+      "ip": "7ed4308ae943",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499285764120,
+      "ip": "5c22c17dc508",
+      "symbol": "__gmpn_gcd_1",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499290786959,
+      "ip": "5c22c17e7165",
+      "symbol": "lean_array_push",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499295812503,
+      "ip": "7ed4308af396",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499300835041,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499305860625,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499310885647,
+      "ip": "7ed4308aef16",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499315913734,
+      "ip": "7ed4308aef1a",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499320937004,
+      "ip": "5c22c18256a5",
+      "symbol": "mi_free",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499325961155,
+      "ip": "7ed4308af324",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499330985726,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499336013853,
+      "ip": "7ed4308ae911",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499341052867,
+      "ip": "5c22c17c47b2",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499346067884,
+      "ip": "5c22c17db910",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499351087859,
+      "ip": "7ed4308aef27",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499356169746,
+      "ip": "5c22c17e7165",
+      "symbol": "lean_array_push",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499361174328,
+      "ip": "5c22c17c4845",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499366189796,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499371207928,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499376230597,
+      "ip": "5c22c17c484a",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499381253907,
+      "ip": "7ed4308aeee1",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499386279580,
+      "ip": "5c22c18256bc",
+      "symbol": "mi_free",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499391304433,
+      "ip": "5c22c17c47bc",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499396331438,
+      "ip": "5c22c17e27ec",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499401356670,
+      "ip": "7ed4308aef47",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499406394352,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499411415238,
+      "ip": "5c22c16af24c",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499416443495,
+      "ip": "5c22c1895d90",
+      "symbol": "free@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499421464812,
+      "ip": "5c22c17de3f0",
+      "symbol": "lean_dec_ref_cold",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499426486550,
+      "ip": "7ed4308af324",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499431509689,
+      "ip": "5c22c178f849",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499436533229,
+      "ip": "5c22c17c48ef",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499441556249,
+      "ip": "7ed4308ae911",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499446584206,
+      "ip": "7ed4308aef1a",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499451608687,
+      "ip": "5c22c17adec4",
+      "symbol": "__gmp_default_reallocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499456638056,
+      "ip": "5c22c17c489b",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499461663329,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499466687260,
+      "ip": "5c22c178f7d0",
+      "symbol": "_ZN4lean3mpzC2Ev",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499471712372,
+      "ip": "5c22c16ae11d",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499476739918,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499481762357,
+      "ip": "7ed4308ae928",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499486787810,
+      "ip": "5c22c17c47b2",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499491812832,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499496841049,
+      "ip": "5c22bd96ce53",
+      "symbol": "lp_Hex_Hex_DensePoly_coeff___at___00Hex_DensePoly_derivativeImpl___at___00Hex_ZPoly_primitiveSquareFreeDecomposition_spec__1_spec__2",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499501866232,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499506892446,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499511964268,
+      "ip": "7ed4308ae913",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499516973487,
+      "ip": "5c22c17c4723",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499521989816,
+      "ip": "5c22c17e81e1",
+      "symbol": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499527012916,
+      "ip": "5c22c17ade70",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499532036075,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499537059986,
+      "ip": "7ed4308aef16",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499542084688,
+      "ip": "7ed4308ae928",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499547109530,
+      "ip": "5c22c1895d90",
+      "symbol": "free@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499552134442,
+      "ip": "5c22c18950e0",
+      "symbol": "realloc@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499557160426,
+      "ip": "5c22c1792706",
+      "symbol": "__gmpn_copyi_x86_64",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499562184567,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499567210401,
+      "ip": "5c22c178f830",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499572237636,
+      "ip": "5c22c17c4955",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499577264231,
+      "ip": "5c22c16ae196",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499582289124,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499587313265,
+      "ip": "5c22c17ade70",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499592337115,
+      "ip": "5c22bd993485",
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499597365453,
+      "ip": "5c22bd99332b",
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499602390345,
+      "ip": "5c22c17db910",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499607414616,
+      "ip": "5c22c16af27f",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499612440880,
+      "ip": "5c22c17db910",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499617466514,
+      "ip": "5c22c16adf47",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499622491576,
+      "ip": "5c22c17c4ae5",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499627517680,
+      "ip": "7ed4308aef16",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499632543444,
+      "ip": "7ed4308aeee1",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499637568546,
+      "ip": "5c22c17e27ec",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499642599026,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499647624880,
+      "ip": "5c22c17c4737",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499652659907,
+      "ip": "5c22c1793087",
+      "symbol": "__gmpn_gcd_11_x86_64",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499657682196,
+      "ip": "5c22c17adeb1",
+      "symbol": "__gmp_default_reallocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499662743031,
+      "ip": "5c22c17ade70",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499667791809,
+      "ip": "7ed4308aeeff",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499672789621,
+      "ip": "5c22bd9946cf",
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_DensePoly_scaleImpl___at___00Hex_Sturm_normalize___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__7_spec__12_spec__17",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499677802004,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499682820808,
+      "ip": "5c22c18479fd",
+      "symbol": "lean_alloc_small_object_core",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499687842746,
+      "ip": "5c22c1792706",
+      "symbol": "__gmpn_copyi_x86_64",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499692867417,
+      "ip": "5c22c18479f5",
+      "symbol": "lean_alloc_small_object_core",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499697888744,
+      "ip": "7ed4308ae935",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499702918954,
+      "ip": "5c22c178f830",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499707941303,
+      "ip": "5c22c17db911",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499712965003,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499717991708,
+      "ip": "5c22c17c4734",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499723037381,
+      "ip": "7ed4308af379",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499728065128,
+      "ip": "5c22c16ae2bf",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499733083029,
+      "ip": "7ed4308ae913",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499738112729,
+      "ip": "5c22c178f830",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499743129238,
+      "ip": "5c22c17c4711",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499748150445,
+      "ip": "5c22c17c485b",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499753172693,
+      "ip": "5c22c17c4723",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499758198908,
+      "ip": "7ed4308ae935",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499763225082,
+      "ip": "7ed4308aef6a",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499768250445,
+      "ip": "5c22bd9932e5",
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499773282588,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499778303894,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499783326774,
+      "ip": "5c22c17e2665",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499788400238,
+      "ip": "5c22c178fa2d",
+      "symbol": "_ZNK4lean3mpz10get_size_tEv",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499793428565,
+      "ip": "5c22c17c48ef",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499798437093,
+      "ip": "5c22c17c48a4",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499803452982,
+      "ip": "5c22c17c4bb2",
+      "symbol": "__gmpz_clear",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499808480368,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499813499862,
+      "ip": "5c22c17c4746",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499818519096,
+      "ip": "5c22c178f830",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499823587793,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499828595169,
+      "ip": "7ed4308af324",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499833612721,
+      "ip": "5c22c17db937",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499838633286,
+      "ip": "7ed4308aeee1",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499843665199,
+      "ip": "7ed4308ae8c4",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499848685004,
+      "ip": "5c22c17ea634",
+      "symbol": "lean_apply_1",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499853706751,
+      "ip": "5c22c1895d90",
+      "symbol": "free@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499858733196,
+      "ip": "5c22c17c47c4",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499863758669,
+      "ip": "5c22c17de3e3",
+      "symbol": "lean_dec_ref_cold",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499868783411,
+      "ip": "5c22c17de408",
+      "symbol": "lean_dec_ref_cold",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499873805890,
+      "ip": "7ed4308ae928",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499878836911,
+      "ip": "5c22c17c4729",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499883863315,
+      "ip": "5c22c17ade70",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499888886064,
+      "ip": "5c22c17e27d8",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499893910245,
+      "ip": "5c22c178f860",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499898937601,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499903962664,
+      "ip": "5c22c17c4711",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499908993695,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499914017716,
+      "ip": "5c22c178fa2d",
+      "symbol": "_ZNK4lean3mpz10get_size_tEv",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499919055738,
+      "ip": "5c22c16af803",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499924075512,
+      "ip": "5c22c178fa04",
+      "symbol": "_ZNK4lean3mpz9is_size_tEv",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499929110359,
+      "ip": "5c22c17c4734",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499934129243,
+      "ip": "7ed4308af353",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499939149918,
+      "ip": "7ed4308ae8e9",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499944182743,
+      "ip": "5c22c17c4748",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499949200815,
+      "ip": "7ed4308aef47",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499954223834,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499959249918,
+      "ip": "5c22c17c4734",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499964273889,
+      "ip": "7ed4308aeee1",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499969311490,
+      "ip": "5c22bd96ce7a",
+      "symbol": "lp_Hex_Hex_DensePoly_coeff___at___00Hex_DensePoly_derivativeImpl___at___00Hex_ZPoly_primitiveSquareFreeDecomposition_spec__1_spec__2",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499974336532,
+      "ip": "7ed4308ae92d",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499979431629,
+      "ip": "5c22bd99332e",
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499984436050,
+      "ip": "5c22c17e7165",
+      "symbol": "lean_array_push",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499989450467,
+      "ip": "5c22c17c495c",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499994462530,
+      "ip": "5c22c17e2663",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56499999488504,
+      "ip": "5c22c17c4ae0",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500004505895,
+      "ip": "5c22c17ade71",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500009527172,
+      "ip": "5c22c16ae303",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500014556230,
+      "ip": "5c22c178f863",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500019573311,
+      "ip": "5c22c17ade1f",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500024596421,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500029620121,
+      "ip": "5c22c17dbdc3",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500034650742,
+      "ip": "5c22c16ae25e",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500039672329,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500044697181,
+      "ip": "5c22c17adeb1",
+      "symbol": "__gmp_default_reallocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500049720581,
+      "ip": "5c22c178f840",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500054744922,
+      "ip": "7ed4308ae8b0",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500059773280,
+      "ip": "5c22c17e2904",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500064905962,
+      "ip": "7ed4308af327",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500069874691,
+      "ip": "5c22c18256bc",
+      "symbol": "mi_free",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500074868287,
+      "ip": "5c22c17c48ec",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500079875503,
+      "ip": "5c22c17addd9",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500084892433,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500089914771,
+      "ip": "5c22c16ae11d",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500094939013,
+      "ip": "5c22c18950e0",
+      "symbol": "realloc@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500099964175,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500104988587,
+      "ip": "7ed4308aef70",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500110015542,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500115042387,
+      "ip": "5c22c18256cb",
+      "symbol": "mi_free",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500120068742,
+      "ip": "5c22c17c48ef",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500125093123,
+      "ip": "7ed4308af324",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500130117895,
+      "ip": "7ed4308aef16",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500135184719,
+      "ip": "7ed4308aeeff",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500140196382,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500145213553,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500150234469,
+      "ip": "5c22bd9933ab",
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500155258270,
+      "ip": "7ed4308ae935",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500160283803,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500165307734,
+      "ip": "5c22c17c47b2",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500170333567,
+      "ip": "5c22c17e27d8",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500175359721,
+      "ip": "5c22c16afa5c",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500180386486,
+      "ip": "5c22c18950e0",
+      "symbol": "realloc@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500185411108,
+      "ip": "7ed4308af353",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500190434428,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500195460872,
+      "ip": "5c22c17c47d5",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500200488499,
+      "ip": "5c22c178f860",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500205513541,
+      "ip": "5c22c17addce",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500210539044,
+      "ip": "7ed4308ae8e9",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500215563826,
+      "ip": "5c22c17dc498",
+      "symbol": "__gmpn_gcd_1",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500220587647,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500225612179,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500230638713,
+      "ip": "5c22c17c4710",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500235664026,
+      "ip": "5c22c17c4917",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500240705703,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500245724406,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500250745944,
+      "ip": "5c22c1847a15",
+      "symbol": "lean_alloc_small_object_core",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500255769033,
+      "ip": "5c22c17c48a0",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500260796569,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500265820800,
+      "ip": "7ed4308af324",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500270846384,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500275871326,
+      "ip": "7ed4308ae935",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500280896468,
+      "ip": "5c22c17c4853",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500285922242,
+      "ip": "5c22c17c471c",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500290988936,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500296003533,
+      "ip": "5c22c17addc1",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500301025211,
+      "ip": "7ed4308ae913",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500306048791,
+      "ip": "5c22c178f878",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500311073763,
+      "ip": "5c22c178f878",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500316096742,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500321120894,
+      "ip": "5c22c17c4723",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500326144454,
+      "ip": "7ed4308ae8c4",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500331167303,
+      "ip": "7ed4308af379",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500336192696,
+      "ip": "5c22c16ae150",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500341218990,
+      "ip": "5c22c16af829",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500346244584,
+      "ip": "5c22c17ade04",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500351269596,
+      "ip": "7ed4308ae92d",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500356295970,
+      "ip": "5c22c17c4917",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500361323917,
+      "ip": "7ed4308aef70",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500366349590,
+      "ip": "7ed4308af379",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500371371488,
+      "ip": "5c22c17c4734",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500376395910,
+      "ip": "5c22c17c47b2",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500381424758,
+      "ip": "7ed4308aef62",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500386450852,
+      "ip": "7ed4308aef0a",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500391476395,
+      "ip": "7ed4308ae92d",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500396510250,
+      "ip": "5c22c17de408",
+      "symbol": "lean_dec_ref_cold",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500401533310,
+      "ip": "5c22c17addc1",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500406557731,
+      "ip": "7ed4308ae949",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500411582433,
+      "ip": "5c22c17c47b2",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500416606785,
+      "ip": "5c22c17c47b2",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500421631737,
+      "ip": "5c22c17c47c4",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500426655427,
+      "ip": "7ed4308ae911",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500431682463,
+      "ip": "5c22c17c4734",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500436707565,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500441730795,
+      "ip": "5c22c1790517",
+      "symbol": "__gmpz_init",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500446820954,
+      "ip": "5c22c17ade0f",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500451820438,
+      "ip": "5c22c17e27ec",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500456832301,
+      "ip": "7ed4308aef16",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500461854269,
+      "ip": "7ed4308aef16",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500466874765,
+      "ip": "5c22c178f886",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500471898896,
+      "ip": "5c22c17e27ec",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500476923147,
+      "ip": "7ed4308ae8c4",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500481947939,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500486970919,
+      "ip": "7ed4308ae8e9",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500491995460,
+      "ip": "5c22c17c48ef",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500497025821,
+      "ip": "5c22c17c48a8",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500502052596,
+      "ip": "5c22c17e27ec",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500507076887,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500512102881,
+      "ip": "5c22c16af826",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500517127553,
+      "ip": "5c22c178f886",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500522151163,
+      "ip": "5c22c17c4ae5",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500527177708,
+      "ip": "5c22c17adde1",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500532202760,
+      "ip": "7ed4308aef0a",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500537229065,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500542257542,
+      "ip": "5c22bd99b2df",
+      "symbol": "lp_Hex___private_Init_Data_List_Impl_0__List_flatMapTR_go___at___00Hex_SignDet_factors___at___00Hex_SignDet_Reduction_check___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__58_spec__78_spec__105",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500547284978,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500552307296,
+      "ip": "7ed4308ae8e9",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500557333130,
+      "ip": "5c22c17c485b",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500562360746,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500567387131,
+      "ip": "5c22c17c48e0",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500572410701,
+      "ip": "5c22c17c4747",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500577437356,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500582462739,
+      "ip": "5c22c1847a15",
+      "symbol": "lean_alloc_small_object_core",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500587487561,
+      "ip": "5c22c178f840",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500592512874,
+      "ip": "5c22c16ae2b8",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500597541111,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500602609087,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500607617855,
+      "ip": "5c22c17ade1f",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500612636778,
+      "ip": "7ed4308af324",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500617657485,
+      "ip": "5c22c16ae254",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500622695005,
+      "ip": "5c22c17ade71",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500627711355,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500632732942,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500637755932,
+      "ip": "5c22c17c4bb2",
+      "symbol": "__gmpz_clear",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500642781585,
+      "ip": "5c22c1895d90",
+      "symbol": "free@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500647805726,
+      "ip": "5c22c16b023e",
+      "symbol": "l_Rat_sub",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500652829517,
+      "ip": "5c22c17db984",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500657854038,
+      "ip": "7ed4308ae8c4",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500662881344,
+      "ip": "7ed4308aef47",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500667907458,
+      "ip": "5c22c17c4737",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500672932621,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500677958845,
+      "ip": "5c22c18256bc",
+      "symbol": "mi_free",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500682982856,
+      "ip": "5c22c17ade71",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500688009450,
+      "ip": "5c22c178f8c0",
+      "symbol": "_ZN4lean3mpzD1Ev",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500693036516,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500698062720,
+      "ip": "5c22c178f8c1",
+      "symbol": "_ZN4lean3mpzD1Ev",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500703088554,
+      "ip": "5c22c17ade71",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500708113726,
+      "ip": "5c22c17ade0f",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500713139620,
+      "ip": "5c22c17db977",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500718165794,
+      "ip": "5c22c178f856",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500723193911,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500728217051,
+      "ip": "7ed4308ae8c4",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500733243555,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500738268107,
+      "ip": "5c22c17c47c9",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500743291036,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500748315398,
+      "ip": "5c22c18950e0",
+      "symbol": "realloc@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500753341291,
+      "ip": "7ed4308aef47",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500758368597,
+      "ip": "5c22c17e2661",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500763436603,
+      "ip": "5c22c178f820",
+      "symbol": "_ZN4lean3mpzC2Ej",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500768448717,
+      "ip": "5c22c17dbe60",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500773463934,
+      "ip": "5c22c17c47b2",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500778484110,
+      "ip": "5c22c17ade0f",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500783508101,
+      "ip": "5c22c17addf8",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500788536608,
+      "ip": "5c22c16ae196",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500793583473,
+      "ip": "5c22c17c4923",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500798600684,
+      "ip": "7ed4308aef1a",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500803621300,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500808645601,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500813704954,
+      "ip": "5c22c178f878",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500818705831,
+      "ip": "5c22c16adf7a",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500823721159,
+      "ip": "7ed4308ae8e9",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500828742055,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500833761800,
+      "ip": "5c22c17addd2",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500838787143,
+      "ip": "5c22c17c471c",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500843810763,
+      "ip": "7ed4308ae93b",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500848833462,
+      "ip": "7ed4308aef1a",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500853858965,
+      "ip": "7ed4308ae928",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500858887993,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500863914198,
+      "ip": "5c22c17ade0f",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500868936216,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500873961899,
+      "ip": "5c22c17dbc66",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500878988995,
+      "ip": "5c22c17c4734",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500884017172,
+      "ip": "5c22bd9a53ff",
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_SignedRemainderChain_build___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__9_spec__15_spec__21_spec__27_spec__42",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500889043085,
+      "ip": "5c22c17de3e3",
+      "symbol": "lean_dec_ref_cold",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500894067957,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500899095704,
+      "ip": "5c22c17c4940",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500904119985,
+      "ip": "5c22c178f8c1",
+      "symbol": "_ZN4lean3mpzD1Ev",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500909154341,
+      "ip": "5c22c17ade70",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500914181627,
+      "ip": "5c22c17db910",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500919261871,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500924264320,
+      "ip": "5c22c17ade7f",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500929289573,
+      "ip": "5c22c17e27c1",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500934305061,
+      "ip": "5c22c17c4748",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500939324125,
+      "ip": "5c22c17c48ef",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500944349057,
+      "ip": "5c22c17c48ef",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500949374009,
+      "ip": "7ed4308ae911",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500954397850,
+      "ip": "5c22c17c48ac",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500959531794,
+      "ip": "5c22c18950e0",
+      "symbol": "realloc@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500964494524,
+      "ip": "7ed4308ae935",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500969487790,
+      "ip": "5c22c16af7ef",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500974496738,
+      "ip": "5c22c1793087",
+      "symbol": "__gmpn_gcd_11_x86_64",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500979514329,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500984534835,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500989561049,
+      "ip": "5c22c17c4ae0",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500994585952,
+      "ip": "5c22bd993413",
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56500999612026,
+      "ip": "7ed4308ae92d",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501004635766,
+      "ip": "7ed4308aef32",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501009659476,
+      "ip": "5c22c178f886",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501014687243,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501019711504,
+      "ip": "5c22c17adeb1",
+      "symbol": "__gmp_default_reallocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501024740483,
+      "ip": "7ed4308ae928",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501029763772,
+      "ip": "5c22c17c4737",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501034788414,
+      "ip": "5c22c17c48b6",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501039813216,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501044840482,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501049863692,
+      "ip": "5c22c16ae119",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501054888134,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501059917933,
+      "ip": "5c22c178f8c0",
+      "symbol": "_ZN4lean3mpzD1Ev",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501064942154,
+      "ip": "5c22c178fa04",
+      "symbol": "_ZNK4lean3mpz9is_size_tEv",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501069978093,
+      "ip": "5c22c17c47d5",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501075046770,
+      "ip": "5c22c16ade90",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501080416312,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501085620370,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501090737999,
+      "ip": "5c22c1847a23",
+      "symbol": "lean_alloc_small_object_core",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501095810002,
+      "ip": "5c22bd9a4b60",
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_SignedRemainderChain_build___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__9_spec__15_spec__21_spec__27_spec__40",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501100860692,
+      "ip": "5c22c17c4748",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501105897001,
+      "ip": "5c22c17ade71",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501110928213,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501115956300,
+      "ip": "7ed4308ae92d",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501120985057,
+      "ip": "7ed4308ae92d",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501126014486,
+      "ip": "5c22c17c47b2",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501131143383,
+      "ip": "5c22c17c4723",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501136115817,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501141104896,
+      "ip": "7ed4308aef32",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501146109539,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501151125648,
+      "ip": "7ed4308aef5a",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501156146384,
+      "ip": "5c22c17e2904",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501161171897,
+      "ip": "5c22c17c4734",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501166194636,
+      "ip": "5c22c16ae193",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501171218136,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501176241636,
+      "ip": "5c22c17ade0f",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501181268271,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501186292783,
+      "ip": "5c22c17e27ec",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501191318827,
+      "ip": "5c22c17e27f3",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501196357539,
+      "ip": "5c22c17dc59b",
+      "symbol": "__gmpn_gcd_1",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501201375772,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501206397089,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501211420188,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501216444610,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501221472046,
+      "ip": "5c22c178f830",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501226495886,
+      "ip": "5c22c16ae1e3",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501231563362,
+      "ip": "5c22c17c47b0",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501236574894,
+      "ip": "5c22c16af236",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501241590773,
+      "ip": "5c22c16ae119",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501246613212,
+      "ip": "5c22c17ade79",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501251636461,
+      "ip": "7ed4308aef5a",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501256660172,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501261689000,
+      "ip": "5c22c17dbc5b",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501266713491,
+      "ip": "5c22c17addc1",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501271739235,
+      "ip": "5c22c17c47b6",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501276762835,
+      "ip": "5c22c178f8c0",
+      "symbol": "_ZN4lean3mpzD1Ev",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501281786916,
+      "ip": "5c22c17c4729",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501286810677,
+      "ip": "7ed4308ae8e9",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501291834828,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501296862284,
+      "ip": "5c22c16af279",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501301887647,
+      "ip": "7ed4308aef47",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501306912339,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501311939274,
+      "ip": "5c22c17c48ef",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501316963495,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501321987997,
+      "ip": "7ed4308aeeff",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501327030365,
+      "ip": "5c22c17db911",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501332049178,
+      "ip": "5c22c17c47bd",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501337072068,
+      "ip": "7ed4308aef47",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501342095107,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501347119058,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501352145863,
+      "ip": "5c22c17ade70",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501357173129,
+      "ip": "5c22c178f8c1",
+      "symbol": "_ZN4lean3mpzD1Ev",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501362199503,
+      "ip": "5c22c17c47b2",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501367223654,
+      "ip": "5c22c17c4723",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501372249077,
+      "ip": "5c22c1790230",
+      "symbol": "_ZN4lean3gcdERNS_3mpzERKS0_S3_",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501377274660,
+      "ip": "7ed4308af353",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501382299112,
+      "ip": "7ed4308ae8e9",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501387365686,
+      "ip": "5c22bd9933ab",
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501392378220,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501397395941,
+      "ip": "5c22c17db937",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501402417539,
+      "ip": "5c22c17c4bb2",
+      "symbol": "__gmpz_clear",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501407439997,
+      "ip": "5c22c178fa2d",
+      "symbol": "_ZNK4lean3mpz10get_size_tEv",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501412466402,
+      "ip": "5c22c17ade71",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501417490853,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501422517208,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501427539987,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501432565790,
+      "ip": "7ed4308ae92d",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501437595800,
+      "ip": "5c22c17db910",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501442623546,
+      "ip": "5c22bd993beb",
+      "symbol": "lp_Hex_Array_isEqvAux___at___00Array_instDecidableEqImpl___at___00__private_HexPoly_Dense_0__Hex_DensePoly_decEqRuntime___at___00Hex_SignDet_Dag_replay_x3f___at___00Hex_SignDet_Dag_check___at___00Hex_SignDetBench_input_spec__6_spec__16_spec__30_spec__49_spec__72___redArg",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501447660577,
+      "ip": "5c22c17de293",
+      "symbol": "lean_free_object",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501452680031,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501457704813,
+      "ip": "5c22c17e27d8",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501462730086,
+      "ip": "5c22c17de293",
+      "symbol": "lean_free_object",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501467754868,
+      "ip": "5c22c18950e0",
+      "symbol": "realloc@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501472778358,
+      "ip": "5c22c178f8c0",
+      "symbol": "_ZN4lean3mpzD1Ev",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501477802349,
+      "ip": "5c22c17c495e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501482827502,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501487851933,
+      "ip": "5c22c162cdba",
+      "symbol": "l_List_lengthTR___redArg",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501492877426,
+      "ip": "5c22c16adea3",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501497908768,
+      "ip": "5c22c17c4940",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501502929834,
+      "ip": "5c22c17e2674",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501507952934,
+      "ip": "5c22bd99347d",
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501512976704,
+      "ip": "5c22c17ade0f",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501518005162,
+      "ip": "5c22c17c47b2",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501523029644,
+      "ip": "5c22c17c48a0",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501528053965,
+      "ip": "7ed4308ae92d",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501533077755,
+      "ip": "5c22c16af27d",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501538103679,
+      "ip": "5c22c178f8c0",
+      "symbol": "_ZN4lean3mpzD1Ev",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501543174740,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501548188245,
+      "ip": "5c22c1645445",
+      "symbol": "l_List_range_loop",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501553210413,
+      "ip": "5c22bd993318",
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501558237479,
+      "ip": "5c22c17addd2",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501563262321,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501568284699,
+      "ip": "5c22c178fa2d",
+      "symbol": "_ZNK4lean3mpz10get_size_tEv",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501573312837,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501578332992,
+      "ip": "5c22c17c4710",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501583355580,
+      "ip": "5c22c17c47b4",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501588382816,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501593405295,
+      "ip": "5c22c17c4729",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501598429686,
+      "ip": "5c22c1847a11",
+      "symbol": "lean_alloc_small_object_core",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501603472155,
+      "ip": "5c22c16af81c",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501608495785,
+      "ip": "5c22c17c4845",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501613512545,
+      "ip": "5c22c17c48ef",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501618531849,
+      "ip": "5c22c17c4729",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501623556511,
+      "ip": "5c22c16adf09",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501628582144,
+      "ip": "5c22c17e27ec",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501633609610,
+      "ip": "7ed4308aef1a",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501638634933,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501643664903,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501648717957,
+      "ip": "5c22c17ade71",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501653729429,
+      "ip": "5c22c1847a18",
+      "symbol": "lean_alloc_small_object_core",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501658748533,
+      "ip": "5c22c178f8c0",
+      "symbol": "_ZN4lean3mpzD1Ev",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501663771753,
+      "ip": "5c22c17e27d8",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501668794772,
+      "ip": "7ed4308af379",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501673819284,
+      "ip": "5c22c18950e0",
+      "symbol": "realloc@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501678851366,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501683875227,
+      "ip": "5c22c17ade04",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501688897576,
+      "ip": "5c22c16ae043",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501693920835,
+      "ip": "7ed4308ae928",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501698990624,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501704001436,
+      "ip": "ffffffffa85b8264",
+      "symbol": "[unknown]",
+      "dso": "[unknown]"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501709049071,
+      "ip": "7ed4308ae8c4",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501714065471,
+      "ip": "5c22c178f85b",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501719076352,
+      "ip": "5c22c17ade71",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501724093333,
+      "ip": "5c22c18950e0",
+      "symbol": "realloc@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501729113859,
+      "ip": "5c22c16ae2bf",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501734136848,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501739163473,
+      "ip": "5c22c17ade1f",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501744189026,
+      "ip": "5c22c17c4747",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501749319114,
+      "ip": "5c22c16af8bb",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501754359179,
+      "ip": "5c22c16ae0b9",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501759341207,
+      "ip": "5c22c16ae158",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501764339570,
+      "ip": "5c22c17ade0f",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501769353026,
+      "ip": "5c22c16af88f",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501774375534,
+      "ip": "5c22c17c492d",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501779397302,
+      "ip": "5c22c16af8bb",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501784423156,
+      "ip": "5c22c17e27ec",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501789445214,
+      "ip": "5c22c17e2661",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501794468083,
+      "ip": "5c22c17c4853",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501799491263,
+      "ip": "5c22c17c4710",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501804518438,
+      "ip": "5c22c17eaf8e",
+      "symbol": "lean_apply_1",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501809547827,
+      "ip": "5c22c17c4734",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501814579189,
+      "ip": "5c22c17ade71",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501819603751,
+      "ip": "5c22c17ade70",
+      "symbol": "__gmp_default_allocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501824625108,
+      "ip": "5c22c17c48a0",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501829648538,
+      "ip": "5c22c178f85b",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501834674311,
+      "ip": "5c22c16aded3",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501839746053,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501844751466,
+      "ip": "7ed4308af324",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501849771842,
+      "ip": "5c22c17c484a",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501854833298,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501859838201,
+      "ip": "7ed4308ae8e9",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501864850815,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501869871000,
+      "ip": "7ed4308aeed4",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501874891225,
+      "ip": "5c22c17db9af",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501879915206,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501884950514,
+      "ip": "7ed4308ae8c4",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501889974775,
+      "ip": "5c22c178f8c0",
+      "symbol": "_ZN4lean3mpzD1Ev",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501894995361,
+      "ip": "7ed4308aeef9",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501900033954,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501905052797,
+      "ip": "5c22c17c48ef",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501910075065,
+      "ip": "5c22c178f8c1",
+      "symbol": "_ZN4lean3mpzD1Ev",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501915097744,
+      "ip": "5c22c17c4711",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501920122326,
+      "ip": "7ed4308aeed4",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501925144504,
+      "ip": "5c22c16ae1ba",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501930168805,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501935195540,
+      "ip": "5c22c17c4917",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501940220322,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501945246036,
+      "ip": "5c22c18950e0",
+      "symbol": "realloc@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501950271248,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501955298745,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501960325950,
+      "ip": "7ed4308aef62",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501965349771,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501970374863,
+      "ip": "5c22c16ae008",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501975398764,
+      "ip": "5c22c182569a",
+      "symbol": "mi_free",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501980425319,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501985451603,
+      "ip": "5c22c178f840",
+      "symbol": "_ZN4lean3mpzC1Em",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501990476045,
+      "ip": "5c22c17c48bf",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56501995501678,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502000526180,
+      "ip": "5c22c178fa20",
+      "symbol": "_ZNK4lean3mpz10get_size_tEv",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502005552123,
+      "ip": "5c22c16afa5a",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502010577476,
+      "ip": "5c22c17de419",
+      "symbol": "lean_dec_ref_cold",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502015653164,
+      "ip": "5c22c178f8c1",
+      "symbol": "_ZN4lean3mpzD1Ev",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502020659298,
+      "ip": "7ed4308af379",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502025675928,
+      "ip": "5c22c16ae008",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502030697245,
+      "ip": "5c22c17c485b",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502035718422,
+      "ip": "5c22c17c485d",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502040740790,
+      "ip": "5c22bd993413",
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502045764941,
+      "ip": "5c22c1895d90",
+      "symbol": "free@plt",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502050790795,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502055818301,
+      "ip": "5c22c17c4711",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502060843824,
+      "ip": "5c22c1645459",
+      "symbol": "l_List_range_loop",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502065868897,
+      "ip": "5c22c17c47b2",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502070895171,
+      "ip": "5c22c17c4940",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502075919913,
+      "ip": "5c22c17c4ae0",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502080945687,
+      "ip": "5c22c17db910",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502085970639,
+      "ip": "5c22c16ae0f1",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502090995491,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502096033623,
+      "ip": "5c22c17de293",
+      "symbol": "lean_free_object",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502101056442,
+      "ip": "5c22c16b08ce",
+      "symbol": "l_Rat_sub",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502106081274,
+      "ip": "5c22c17c4723",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502111106677,
+      "ip": "5c22c17e2904",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502116131339,
+      "ip": "5c22c17db920",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502121157623,
+      "ip": "5c22c17db910",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502126181244,
+      "ip": "5c22c17db910",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502131208049,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502136230037,
+      "ip": "5c22c16af8d6",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502141255610,
+      "ip": "7ed4308ae93b",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502146281033,
+      "ip": "5c22c17addc0",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502151308379,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502156333381,
+      "ip": "5c22c17e28f5",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502161361298,
+      "ip": "5c22c18479f3",
+      "symbol": "lean_alloc_small_object_core",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502166383476,
+      "ip": "5c22c17ade0f",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502171450971,
+      "ip": "7ed4308aef57",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502176462233,
+      "ip": "7ed4308aef66",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502181478663,
+      "ip": "5c22c17c485d",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502186501593,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502191540736,
+      "ip": "5c22c17c4747",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502196558688,
+      "ip": "7ed4308af396",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502201578683,
+      "ip": "5c22c17c48b6",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502206599639,
+      "ip": "7ed4308aef16",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502211622348,
+      "ip": "7ed4308aef4b",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502216646760,
+      "ip": "5c22c17c47bd",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502221673184,
+      "ip": "7ed4308ae8c4",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502226699308,
+      "ip": "5c22bd99340b",
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502231722268,
+      "ip": "5c22c1790517",
+      "symbol": "__gmpz_init",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502236745697,
+      "ip": "5c22c17c4734",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502241772232,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502246799718,
+      "ip": "5c22c17db910",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502251825863,
+      "ip": "5c22c17c4723",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502256853829,
+      "ip": "5c22c178fa2a",
+      "symbol": "_ZNK4lean3mpz10get_size_tEv",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502261881135,
+      "ip": "5c22c16ae1ef",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502266904375,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502271929748,
+      "ip": "5c22c16af87c",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502276957184,
+      "ip": "5c22c17addcb",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502281983909,
+      "ip": "7ed4308ae8e9",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502287027488,
+      "ip": "5c22c16ae1c1",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502292046712,
+      "ip": "5c22c17e27ec",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502297067058,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502302088745,
+      "ip": "5c22bd9946ab",
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_DensePoly_scaleImpl___at___00Hex_Sturm_normalize___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__7_spec__12_spec__17",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502307110813,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502312135575,
+      "ip": "5c22c17c4734",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502317162280,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502322188404,
+      "ip": "7ed4308ae911",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502327254538,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502332265099,
+      "ip": "5c22bd993413",
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502337281709,
+      "ip": "7ed4308aeef9",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502342303055,
+      "ip": "7ed4308aef27",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502347325093,
+      "ip": "7ed4308aeee1",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502352351809,
+      "ip": "7ed4308ae913",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502357378003,
+      "ip": "7ed4308af314",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502362405959,
+      "ip": "5c22c17c4892",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502367431633,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502372459559,
+      "ip": "7ed4308aef1a",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502377483711,
+      "ip": "5c22c17c4729",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502382509634,
+      "ip": "5c22c16af927",
+      "symbol": "l_Rat_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502387535738,
+      "ip": "7ed4308aeef9",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502392559970,
+      "ip": "7ed4308ae923",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502397582919,
+      "ip": "5c22c17c4897",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502402608793,
+      "ip": "5c22c17c4956",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502407633665,
+      "ip": "5c22bd994748",
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_DensePoly_scaleImpl___at___00Hex_Sturm_normalize___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__7_spec__12_spec__17",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502412666909,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502417695137,
+      "ip": "5c22c17c4734",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502422718557,
+      "ip": "5c22c17c4729",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502427744871,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502432766338,
+      "ip": "5c22c17c4ae0",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502437789838,
+      "ip": "5c22c17e27ec",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502442813729,
+      "ip": "5c22c17c491e",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502447839082,
+      "ip": "5c22c17adeb0",
+      "symbol": "__gmp_default_reallocate",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502452865056,
+      "ip": "5c22c17c473f",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502457892642,
+      "ip": "5c22c16ae3e6",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502462921150,
+      "ip": "5c22c16ae031",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502467946553,
+      "ip": "5c22c17c4734",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502472970904,
+      "ip": "5c22c16b0910",
+      "symbol": "l_Rat_sub",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502477994264,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502483066006,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502488445072,
+      "ip": "5c22c17e27ec",
+      "symbol": "lean_nat_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502493652254,
+      "ip": "5c22c17c4737",
+      "symbol": "__gmpz_init_set_ui",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502498770775,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502503841556,
+      "ip": "5c22c17ade0f",
+      "symbol": "__gmpz_realloc",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502508888941,
+      "ip": "7ed4308aeef9",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502513927464,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502518959176,
+      "ip": "5c22c17c47b2",
+      "symbol": "__gmpz_mul_2exp",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502523990538,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502529019226,
+      "ip": "7ed4308ae90c",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502534044228,
+      "ip": "7ed4308ae937",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502539070763,
+      "ip": "7ed4308af359",
+      "symbol": "realloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502544097788,
+      "ip": "5c22c17c495c",
+      "symbol": "__gmpz_add",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502549127157,
+      "ip": "5c22c17db911",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502554152310,
+      "ip": "7ed4308aef7c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502559182319,
+      "ip": "7ed4308ae8c4",
+      "symbol": "malloc",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502564205960,
+      "ip": "5c22c16ae2b2",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502569229219,
+      "ip": "5c22c16ae1c4",
+      "symbol": "l_Rat_mul",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502574251037,
+      "ip": "5c22c1847a11",
+      "symbol": "lean_alloc_small_object_core",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502579273255,
+      "ip": "5c22c17db910",
+      "symbol": "__gmpz_gcd",
+      "dso": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench"
+    },
+    {
+      "pid": 2626161,
+      "tid": 2626164,
+      "mono_ns": 56502584299269,
+      "ip": "7ed4308aef3c",
+      "symbol": "cfree@GLIBC_2.2.5",
+      "dso": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+    }
+  ],
+  "scope": "direct sampled instruction pointers within the one cold comparison operation; not allocated bytes or scientific timing",
+  "postprocessor_sha256": "b6cd8815e1ea9cbe5753addf5bf55a10c051661c7e6e7c62878bdd847ac86265"
+}

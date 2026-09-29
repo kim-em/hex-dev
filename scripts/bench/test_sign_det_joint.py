@@ -44,6 +44,20 @@ class JointValidation(unittest.TestCase):
                 rows[0][field] += 1
                 self.check(rows)
 
+    def test_cost_model_fields(self):
+        rows = [r | {"maxExponentSum": 2, "maxDirectChainLength": 3,
+                     "maxReducedChainLength": 3} for r in self.rows]
+        self.assertEqual(self.check(rows), 2)
+        for key, value in (("maxExponentSum", True), ("maxExponentSum", 3),
+                           ("maxDirectChainLength", 9), ("maxReducedChainLength", 0)):
+            with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                changed = copy.deepcopy(rows)
+                changed[0][key] = value
+                self.check(changed)
+        del rows[0]["maxReducedChainLength"]
+        with self.assertRaisesRegex(ValueError, "changed joint observation fields"):
+            self.check(rows)
+
     def test_retained_hash_binding(self):
         self.check(self.rows)
         patch = self.path.parent / "committed-source.patch"

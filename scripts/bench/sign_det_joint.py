@@ -74,6 +74,7 @@ def expected(n, side):
 
 RECORDED = {"maxInverseBits", "maxDenominatorBits",
             "reducedGraphBytes", "directGraphBytes"}
+COST_FIELDS = {"maxExponentSum", "maxDirectChainLength", "maxReducedChainLength"}
 
 
 def validate(path, degrees=DEGREES, retained=False):
@@ -99,13 +100,20 @@ def validate(path, degrees=DEGREES, retained=False):
         raise ValueError("missing joint observations")
     for row, (n, side) in zip(rows, schedule, strict=True):
         oracle = expected(n, side)
-        if set(row) != set(oracle) | RECORDED:
+        legacy = set(oracle) | RECORDED
+        if set(row) not in (legacy, legacy | COST_FIELDS):
             raise ValueError("changed joint observation fields")
         for key, value in oracle.items():
             if json.dumps(row[key]) != json.dumps(value):
                 raise ValueError(f"joint literal or dimension differs: {key}")
         if any(type(row[k]) is not int or row[k] <= 0 for k in RECORDED):
             raise ValueError("invalid recorded bit or byte count")
+        if COST_FIELDS <= set(row):
+            if type(row["maxExponentSum"]) is not int or row["maxExponentSum"] != 2:
+                raise ValueError("joint moments violate the exponent-sum model")
+            for key in ("maxDirectChainLength", "maxReducedChainLength"):
+                if type(row[key]) is not int or not 2 <= row[key] <= 8:
+                    raise ValueError("joint remainder chains violate the bounded-chain model")
     return len(rows)
 
 
