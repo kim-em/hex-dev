@@ -362,19 +362,19 @@ theorem Context.quotient_compare (context : Context E Ctx coeffSign parent)
   rw [Element.compare_spec f hz h1 ha hs hm hnat hsign hn hi]
   simp only [heq, hlt]
 
-/-- info: 'Hex.RealClosure.Algebraic.Context.quotientEquiv' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Context.quotientEquiv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Algebraic.Context.quotientEquiv
-/-- info: 'Hex.RealClosure.Algebraic.Element.toValue_inv' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Element.toValue_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Algebraic.Element.toValue_inv
-/-- info: 'Hex.RealClosure.Algebraic.Context.quotientOrdered' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Context.quotientOrdered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Algebraic.Context.quotientOrdered
-/-- info: 'Hex.RealClosure.Algebraic.Context.quotient_inv' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Context.quotient_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Algebraic.Context.quotient_inv
-/-- info: 'Hex.RealClosure.Algebraic.Context.quotient_compare' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Context.quotient_compare' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Algebraic.Context.quotient_compare
 end Hex.RealClosure.Algebraic

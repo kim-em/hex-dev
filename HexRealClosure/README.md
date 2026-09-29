@@ -453,9 +453,9 @@ the existing CI job. The Mathlib-free `hexrealclosure_bench` includes a function
 `runGeneral` timing anchor for validation, packing, cancellation and inversion;
 it makes no scaling claim.
 
-The semantic sign, inverse and quotient proofs inherit only the existing named
-`HexRealRootsMathlib.Tarski.check_rootSum` admission owned by #10389. Constructors,
-cleanliness and the core introduce no admission. These interpretations are
+The semantic sign, inverse and quotient proofs consume the proved shared
+Tarski foundation. Their axiom guards contain only the three standard kernel
+axioms, and the audited import cones contain no admissions. These interpretations are
 conditional on an ambient ordered real closed field, not an existence proof.
 
 The remaining tower work includes the recursive algebraic dependency catalog,
