@@ -1452,6 +1452,10 @@ lean_exe hexsigndet_emit_fixtures where
   srcDir := "conformance"
   root := `HexSignDet.EmitFixtures
 
+lean_exe hexsigndet_emit_nested_fields where
+  srcDir := "conformance"
+  root := `HexSignDet.EmitNestedFields
+
 lean_exe hexsigndet_emit_infinitesimal where
   srcDir := "conformance"
   root := `HexSignDet.EmitInfinitesimal

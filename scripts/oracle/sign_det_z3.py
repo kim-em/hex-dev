@@ -45,14 +45,14 @@ def check_version() -> None:
 class RCF:
     """An independent exact root oracle for one serialized coefficient context."""
 
-    def __init__(self, context: Any):
+    def __init__(self, context: Any, *, maximum_depth: int = 2):
         import z3
         from z3 import z3rcf
         require(isinstance(context, dict) and set(context) == {"id", "levels", "order"},
                 "malformed coefficient context")
         levels = context["levels"]
         require(type(context["id"]) is int and context["id"] == 10377 and
-                isinstance(levels, list) and 1 <= len(levels) <= 2 and
+                isinstance(levels, list) and 1 <= len(levels) <= maximum_depth and
                 levels == [f"epsilon{i + 1}" for i in range(len(levels))] and
                 context["order"] == "each-new-level-smaller-than-positive-base-elements",
                 "foreign, reordered or incomplete coefficient context")
