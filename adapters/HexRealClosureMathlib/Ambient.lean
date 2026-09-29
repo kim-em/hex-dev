@@ -7,10 +7,14 @@ module
 
 public import TauCeti.FieldTheory.RealClosure.Basic
 public import HexOrderedFnMathlib.Infinitesimal
+public import HexPolyMathlib.GrindTransport
 public import Mathlib.Tactic.Linarith
 public import Mathlib.Tactic.NormNum
 
 public section
+
+-- The two field dictionaries are explicitly related by `compatible`.
+set_option linter.overlappingInstances false
 
 namespace Hex.RealClosure
 
@@ -33,12 +37,14 @@ structure Ambient (K : Type u) [Field K] [LinearOrder K] where
 
 namespace Ambient
 
-variable {K : Type u} [Field K] [LinearOrder K] [IsStrictOrderedRing K]
+variable {K : Type u} [Field K] [LinearOrder K]
 
 instance (ambient : Ambient K) : Field ambient.Carrier := ambient.field
 instance (ambient : Ambient K) : LinearOrder ambient.Carrier := ambient.order
 instance (ambient : Ambient K) : IsStrictOrderedRing ambient.Carrier := ambient.ordered
 instance (ambient : Ambient K) : IsRealClosed ambient.Carrier := ambient.closed
+
+variable [IsStrictOrderedRing K]
 
 /-- Tau Ceti supplies the ordered real closure, including algebraicity over
 the actual inclusion rather than a separately chosen base embedding. -/
@@ -61,12 +67,15 @@ noncomputable def ofField (K : Type u) [Field K] [LinearOrder K]
 
 variable (ambient : Ambient K)
 
+omit [IsStrictOrderedRing K] in
 theorem inclusion_lt (a b : K) : ambient.inclusion a < ambient.inclusion b ↔ a < b :=
   ambient.monotone.lt_iff_lt
 
+omit [IsStrictOrderedRing K] in
 theorem inclusion_zero (a : K) : ambient.inclusion a = 0 ↔ a = 0 :=
   ambient.inclusion.map_eq_zero_iff
 
+omit [IsStrictOrderedRing K] in
 /-- The ambient inclusion preserves the prescribed coefficient signs. -/
 theorem inclusion_sign (a : K) :
     SignType.sign (ambient.inclusion a) = SignType.sign a := by
@@ -79,6 +88,7 @@ theorem inclusion_sign (a : K) :
     rw [map_zero] at h
     simp [sign_apply, positive, h]
 
+omit [IsStrictOrderedRing K] in
 /-- A positive coefficient below one has a positive square root strictly
 between it and one in the actual ambient algebraic real closure. -/
 theorem exists_sqrt (a : K) (ha : 0 < a) (hsmall : a < 1) :
@@ -106,6 +116,46 @@ variable {L : Type u} [Field L] [LinearOrder L] [IsStrictOrderedRing L] [Decidab
 noncomputable def infinitesimal (L : Type u) [Field L] [LinearOrder L]
     [IsStrictOrderedRing L] [DecidableEq L] : Ambient (Hex.RationalFn L) :=
   ofField (Hex.RationalFn L)
+
+/-- Interpret native fractions through their proved field-dictionary equality.
+The source field retains the executable arithmetic through `fieldOfGrind`. -/
+noncomputable def nativeHom [g : Lean.Grind.Field L]
+    (compatible : Field.toGrindField (K := L) = g)
+    (model : Ambient (@Hex.RationalFn L (Field.toGrindField (K := L)) inferInstance)) :
+    letI : Field (@Hex.RationalFn L g inferInstance) := HexPolyMathlib.fieldOfGrind
+    @Hex.RationalFn L g inferInstance →+* model.Carrier := by
+  letI : Field (@Hex.RationalFn L g inferInstance) := HexPolyMathlib.fieldOfGrind
+  exact
+    { toFun := fun f => model.inclusion
+        (cast (congrArg (fun G => @Hex.RationalFn L G inferInstance) compatible.symm) f)
+      map_zero' := by subst g; exact model.inclusion.map_zero
+      map_one' := by subst g; exact model.inclusion.map_one
+      map_add' := by intro f h; subst g; exact model.inclusion.map_add f h
+      map_mul' := by intro f h; subst g; exact model.inclusion.map_mul f h }
+
+/-- The native indeterminate maps to the same infinitesimal in the ambient model. -/
+theorem nativeHom_X [g : Lean.Grind.Field L]
+    (compatible : Field.toGrindField (K := L) = g)
+    (model : Ambient (@Hex.RationalFn L (Field.toGrindField (K := L)) inferInstance)) :
+    nativeHom compatible model (@Hex.RationalFn.X L g inferInstance) =
+      model.inclusion (@Hex.RationalFn.X L (Field.toGrindField (K := L)) inferInstance) := by
+  subst g
+  rfl
+
+/-- Native coefficient signs agree with the actual ordered ambient interpretation. -/
+theorem nativeHom_sign [g : Lean.Grind.Field L]
+    (compatible : Field.toGrindField (K := L) = g)
+    (model : Ambient (@Hex.RationalFn L (Field.toGrindField (K := L)) inferInstance))
+    (f : @Hex.RationalFn L g inferInstance) :
+    Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign f =
+      (SignType.sign (nativeHom compatible model f) : Int) := by
+  subst g
+  change Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign f =
+    (SignType.sign (model.inclusion f) : Int)
+  rw [model.inclusion_sign]
+  rw [Hex.OrderedFn.Infinitesimal.sign_orderSign]
+  exact congrArg (fun s : SignType => (s : Int))
+    (Hex.OrderedFn.Infinitesimal.embed_strictMono.sign_comp f)
 
 /-- The positive square root of the represented infinitesimal lies above it. -/
 theorem exists_sqrt_X (model : Ambient (Hex.RationalFn L)) :
@@ -188,3 +238,11 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.Ambient.sqrt_X_lt_C' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Ambient.sqrt_X_lt_C
+
+/-- info: 'Hex.RealClosure.Ambient.nativeHom' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.nativeHom
+
+/-- info: 'Hex.RealClosure.Ambient.nativeHom_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.nativeHom_sign

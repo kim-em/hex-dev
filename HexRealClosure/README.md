@@ -400,6 +400,10 @@ embedded predecessor coefficient. Its reciprocal exceeds every embedded
 integer. The checked construction examples use one and two infinitesimal
 levels, including a square root of the second infinitesimal below every power
 of the first. All these statements consume the actual chosen ambient model.
+`Ambient.nativeHom compatible model` interprets the executable fraction carrier
+through its proved field-dictionary equality. It preserves arithmetic, zero
+and the native infinitesimal sign; the separate caller test uses the actual
+core rational dictionary without changing caller instance priorities.
 
 Compatible algebraic unions, native descriptor construction and simultaneous
 realization of finite sign conditions at one ordinary real point remain

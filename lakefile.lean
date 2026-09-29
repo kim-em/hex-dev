@@ -611,7 +611,8 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
     `HexRealClosureMathlib.YunInvariant, `HexRealClosureMathlib.Bounds,
-    `HexRealClosureMathlib.Deflation, `HexRealClosureMathlib.ZeroFactor, `HexRealClosureMathlib.Ambient]
+    `HexRealClosureMathlib.Deflation, `HexRealClosureMathlib.ZeroFactor,
+    `HexRealClosureMathlib.Ambient, `HexRealClosureMathlib.AmbientTests]
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
