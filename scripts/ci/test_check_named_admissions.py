@@ -109,11 +109,25 @@ class AdmissionScannerTests(unittest.TestCase):
             transport_selected = root / "adapters/HexRealClosureMathlib/TransportSelected.lean"
             union = root / "adapters/HexRealClosureMathlib/Union.lean"
             union_tests = root / "adapters/HexRealClosureMathlib/UnionTests.lean"
+            qadjoin = root / "adapters/HexRealClosureMathlib/QAdjoin.lean"
+            qadjoin_tests = root / "HexRealClosure/QAdjoinTests.lean"
             dependency = root / "HexExtra/SelectedField.lean"
             arithmetic = [root / f"adapters/HexRealClosureMathlib/{name}.lean"
                           for name in ("Algebraic", "AlgebraicClean", "AlgebraicValue",
                                        "BaseClean", "AlgebraicTower")]
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor, transport_polynomial, transport_product, transport_arithmetic, transport_query, transport_tests, transport_ring, transport_power, transport_tarski, transport_closed, transport_closed_query, transport_regular, transport_reduction, transport_closed_reduction, transport_preparation, transport_moment, transport_replay, transport_sample, transport_descriptor, transport_selected, union, union_tests, dependency, *arithmetic):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables,
+                         reencoding, roots, refinement, conversion, base, model, catalog,
+                         deflation, specialize, specialize_tests, specialize_polynomial,
+                         specialize_regular, specialize_query, specialize_tarski,
+                         specialize_reduction, specialize_moment, specialize_replay,
+                         specialize_sample, specialize_selected, specialize_descriptor,
+                         transport_polynomial, transport_product, transport_arithmetic,
+                         transport_query, transport_tests, transport_ring, transport_power,
+                         transport_tarski, transport_closed, transport_closed_query,
+                         transport_regular, transport_reduction, transport_closed_reduction,
+                         transport_preparation, transport_moment, transport_replay,
+                         transport_sample, transport_descriptor, transport_selected,
+                         union, union_tests, qadjoin, qadjoin_tests, dependency, *arithmetic):
                 path.parent.mkdir(parents=True, exist_ok=True)
             for path in arithmetic:
                 path.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
@@ -150,15 +164,17 @@ class AdmissionScannerTests(unittest.TestCase):
                 path.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             union.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             union_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            qadjoin.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            qadjoin_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
-                for probe in (union, union_tests):
+                for probe in (union, union_tests, qadjoin, qadjoin_tests):
                     probe.unlink()
                     with self.assertRaisesRegex(ValueError, "missing local import"):
                         audit.check()
                     probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*Union"):
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*" + probe.stem):
                         audit.check()
                     probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 refinement.unlink()
