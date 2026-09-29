@@ -12,6 +12,7 @@ public import HexSturm.Fixtures
 public import HexRealRoots.TarskiTests
 
 public meta import HexSignDet.Replay
+public meta import HexSignDet.Dag
 public meta import HexSignDet.SignOperands
 public meta import HexSturm.Fixtures
 public meta import HexSignDet.Matrix
@@ -1089,6 +1090,33 @@ theorem foreign_cache_kernel :
       true := by
   decide +kernel
 
+/-- Graph entry zero has the same foreign-domain protection as node caching. -/
+theorem foreign_graph_cache_kernel :
+    ((⟨#[⟨foreignNode, none⟩], 0⟩ : Dag Rat Nat).cache Sturm.orderSign 7 Sturm.Fixtures.p
+      (.finite 0) (.finite 2)).isNone = true := by
+  decide +kernel
+
+/-- Only the context changes; the head and interval still match the caller. -/
+@[expose] def foreignContext : Node Rat Nat :=
+  {selectedNode with moments := #v[{singletonQuery with context := 8},
+    singletonQuery, singletonQuery]}
+
+#guard (({singletonQuery with context := 8} : TarskiCertificate Rat Rat Nat).domain.replay?
+  Sturm.orderSign (EndpointSigns.ofSign Sturm.orderSign)).isSome
+
+theorem context_cache_kernel :
+    (foreignContext.cache Sturm.orderSign 7 Sturm.Fixtures.p (.finite 0) (.finite 2)
+      none).isNone = true := by
+  decide +kernel
+
+theorem context_graph_cache_kernel :
+    ((⟨#[⟨foreignContext, none⟩], 0⟩ : Dag Rat Nat).cache Sturm.orderSign 7 Sturm.Fixtures.p
+      (.finite 0) (.finite 2)).isNone = true := by
+  decide +kernel
+
+#guard ((⟨#[⟨selectedNode, none⟩], 0⟩ : Dag Rat Nat).cache Sturm.orderSign 7 Sturm.Fixtures.p
+  (.finite 0) (.finite 2)).isSome
+
 /-- Extract the unique full row using the shared literal replay proof. -/
 def sharedDescriptor : Descriptor Rat Nat Sturm.orderSign 7 :=
   Descriptor.ofFullRow singletonRaw fullReplay (by decide +kernel) rfl full_kernel ([1, 1], 1)
@@ -1225,6 +1253,18 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Conformance.foreign_cache_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms foreign_cache_kernel
+
+/-- info: 'Hex.SignDet.Conformance.foreign_graph_cache_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms foreign_graph_cache_kernel
+
+/-- info: 'Hex.SignDet.Conformance.context_cache_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms context_cache_kernel
+
+/-- info: 'Hex.SignDet.Conformance.context_graph_cache_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms context_graph_cache_kernel
 
 /-- info: 'Hex.SignDet.Descriptor.rootsFromTable_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

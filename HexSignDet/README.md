@@ -33,7 +33,9 @@ result dependencies, not an ordered trace of runtime sign calls, and retain
 repeated occurrences. A finite cache need not be lawful outside its keys, but
 callers must prove agreement at every required operand before transferring the
 original checker's soundness. A dependency graph across coefficient-field levels
-and its exact context/operand bindings remain separate requirements.
+and its exact context/operand bindings remain separate requirements. A `Dag`
+inventory must cover every serialized entry, including entries unreachable
+from the root; that graph agreement interface remains required.
 
 `Dag.replay?` accepts a topologically ordered array of same-level BKR entries
 and a root index. References address earlier accepted entries only. Each entry
@@ -88,7 +90,8 @@ same converted values, including noninjective representations. They assume no
 Archimedean property and apply to any lawful interpretation into a real closed field.
 The nested-infinitesimal fixture tests executable context changes; it does not
 supply such an interpretation or a semantic proof for that coefficient type.
-Those semantic results consume the shared proved root-sum and replay bridge.
+Those semantic results use the proved
+`HexRealRootsMathlib.Tarski.check_rootSum` theorem in the development adapter.
 
 Context, head, interval and query-list bindings use literal equality. Tarski
 polynomial identities use the shared zero-difference checks. Context values
@@ -96,9 +99,9 @@ must contain the caller's full immutable context data, including any refinement;
 a hash or reused numeric identifier is insufficient. The current certificate
 tree retains the head squarefree evidence in each moment. Graph replay offers
 the first entry's validated domain to every node. A node reuses that domain when
-it matches the node's first witness; otherwise a node with several moments
-validates its own first domain once, after checking its exact caller bindings. A single moment without a matching shared
-domain uses full replay directly. Later matching witnesses reuse the selected
+it matches the node's first witness. Otherwise a node with several moments
+checks its first domain's caller bindings before validating that domain once.
+A single moment without a matching shared domain uses full replay directly. Later matching witnesses reuse the selected
 domain; different witnesses fall back to complete replay. `Node.check_eq` proves
 unconditional equality with the original result for every node and cache.
 `TarskiCertificate.checkCached_eq` proves the underlying shared-kernel agreement
@@ -108,7 +111,7 @@ prefix replay, including returned trees and all rejections. Each node selects
 one domain witness for reuse; other witnesses within that node still incur full
 replay at each occurrence. Domain replay and literal binding costs require
 performance measurements, including heterogeneous witnesses and one-moment nodes.
-The graph checks its first domain's caller bindings before creating the initial
+`Dag.cache` checks its first domain's caller bindings before creating the initial
 cache, even if only one moment will use it.
 Node selection considers the first witness, so a different shared witness used
 only by later moments can miss. Every moment checks literal cache bindings,

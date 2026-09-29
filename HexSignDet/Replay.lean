@@ -87,12 +87,12 @@ replay directly instead of constructing a cache for one use. -/
       (EndpointSigns.ofSign sign))) :
     Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign (EndpointSigns.ofSign sign)) :=
   n.moments.toArray[0]?.bind fun cert =>
-    if cert.domain.binds context p a b cert.squarefree then
-      match shared.filter (fun d => d.data.binds context p a b cert.squarefree) with
-      | some d => some d
-      | none => if n.size ≤ 1 then none else
+    match shared.filter (fun d => d.data.binds context p a b cert.squarefree) with
+    | some d => some d
+    | none => if n.size ≤ 1 then none else
+        if decide (cert.context = context ∧ cert.head = p ∧ cert.lower = a ∧ cert.upper = b) then
           TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
-    else none
+        else none
 
 /-- Check all local facts without query production, gcd search or row search.
 The rank certificate's columns must preserve the retained support order.

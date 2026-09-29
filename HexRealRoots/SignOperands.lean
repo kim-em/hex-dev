@@ -88,6 +88,7 @@ variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] [Add E] [Sub E] [M
 
 namespace Endpoint
 
+omit [Sub E] in
 /-- The coefficient passed to the sign operation at this endpoint. -/
 @[expose] def signOperand (endpoint : Endpoint E) (p : DensePoly E) : E :=
   match endpoint with
@@ -100,6 +101,7 @@ namespace Endpoint
   | .finite a, .finite b => [a - b]
   | _, _ => []
 
+omit [Sub E] in
 /-- Only finite endpoints require a polynomial nonvanishing sign. -/
 @[expose] def nonvanishingOperands (a : Endpoint E) (p : DensePoly E) : List E :=
   match a with

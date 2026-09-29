@@ -137,6 +137,18 @@ theorem step_cache (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : E
     step sign context p a b memo entry shared = step sign context p a b memo entry := by
   simp only [step_eq]
 
+/-- Select the first domain only after its exact caller input bindings pass.
+Foreign inputs do not trigger coefficient-sign replay. The witness itself is
+validated by the shared domain checker rather than compared with itself. -/
+@[expose] def cache (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
+    (dag : Dag E Ctx) :
+    Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign (EndpointSigns.ofSign sign)) :=
+  dag.entries[0]?.bind fun entry =>
+    entry.node.moments.toArray[0]?.bind fun cert =>
+      if decide (cert.context = context ∧ cert.head = p ∧ cert.lower = a ∧ cert.upper = b) then
+        TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
+      else none
+
 /-- Validate all references and nodes once, then bind the selected root's exact
 query list. The returned evidence proves acceptance by the literal tree checker;
 no recursive replay is rerun on cache hits or on the final root. This does not
@@ -144,11 +156,7 @@ assert root-count semantics, which still require the companion query bridge. -/
 @[expose] def replay? (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
     (qs : List (DensePoly E)) (dag : Dag E Ctx) :
     Option { t : Replay E Ctx // t.check sign context p a b qs = true } := do
-  let shared := dag.entries[0]?.bind fun entry =>
-    entry.node.moments.toArray[0]?.bind fun cert =>
-      if cert.domain.binds context p a b cert.squarefree then
-        TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
-      else none
+  let shared := dag.cache sign context p a b
   let memo ← dag.entries.foldlM (init := #[]) fun memo entry => do
     let next ← step sign context p a b memo entry shared
     pure (memo.push next)

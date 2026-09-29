@@ -25,7 +25,7 @@ variable {D : Type u} [Zero D] [DecidableEq D]
   cert.signOperands
 
 /-- The coefficient passed to `sign` at one finite or infinite endpoint. -/
-@[expose] def endpoint [Add D] [Mul D] [Sub D]
+@[expose] def endpoint [Add D] [Mul D]
     (q : DensePoly D) (bound : Endpoint D) : List D :=
   [bound.signOperand q]
 
