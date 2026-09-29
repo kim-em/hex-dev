@@ -112,6 +112,24 @@ class MatrixEvidenceTests(unittest.TestCase):
             with self.subTest(mutate=mutate), self.assertRaises(ValueError):
                 self.result_check(result)
 
+    def test_retained_collection_checks_all_sixty_samples(self):
+        root = bench.ROOT/"reports/data/sign-det-maximal-matrices/a7c9b34fb"
+        metadata = json.loads((root/"metadata.json").read_text())
+        self.assertEqual(metadata["state"], "complete")
+        self.assertEqual(metadata["scientific_samples"], 60)
+        for before, after in (("revision", "revision_after"),
+                              ("binary_sha256", "binary_sha256_after"),
+                              ("source_sha256", "source_sha256_after"),
+                              ("harness_binding", "harness_binding_after")):
+            self.assertEqual(metadata[before], metadata[after])
+        self.assertEqual(metadata["status_after"], "")
+        expected = bench.validate_inventory(root/"inventory.log")
+        summary = json.loads((root/"summary.json").read_text())
+        self.assertEqual(summary["validation_errors"], [])
+        for name in bench.KEYS:
+            observation = bench.validate_export(root/(name+".json"), name, expected, metadata["revision"])
+            self.assertEqual(observation, summary["observations"][name])
+
     def test_collect_keeps_second_arm_after_first_failure(self):
         calls = []
         with TemporaryDirectory() as d:

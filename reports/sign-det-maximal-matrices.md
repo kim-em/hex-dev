@@ -38,7 +38,8 @@ arithmetic operations; they are not constant-bit asymptotic claims. The inventor
 records actual inverse, denominator and moment bits. The chosen schedule
 `s=1,2,3,4,5` gives matrix sizes `3,9,27,81,243` and samples a finite range.
 
-Both registrations use six fixed trial-major rounds, a 100 ms repeat target and
+Both registrations use mode 1 (two-sided parametric), with the source-derived
+coefficient-operation law above. Both use six fixed trial-major rounds, a 100 ms repeat target and
 an operational 180 s child timeout. The shared harness gives each operation its
 own verdict. The timeout is not a scientific absolute performance budget.
 An inconclusive observation remains an outstanding gate; it is never promoted
@@ -54,4 +55,47 @@ archives reconstructible sources and retains both scheduled arms before judging
 results. It checks source, executable and harness bindings again afterward.
 There is no idle-core preflight, sample filtering or automatic rerun.
 
-No scientific observations are recorded in this initial declaration.
+## Retained collection
+
+The [a7c9b34fb collection](data/sign-det-maximal-matrices/a7c9b34fb/metadata.json)
+records all 60 successful scientific samples in six rounds on `chungus2`, leased
+CPU 83. The source revision, executable and clean pinned harness match before
+and after collection. The archived patch reconstructs every recorded source hash.
+Both result sets pass the exact-result, schedule, timing and provenance checks.
+The collector exits 1 because both harness verdicts are **inconclusive**; there
+are no scientific validation errors. Every completed sample remains unchanged.
+
+| Queries | Matrix size | Solve median (ms) | Check median (ms) |
+| ---: | ---: | ---: | ---: |
+| 1 | 3 | 0.016488 | 0.002248 |
+| 2 | 9 | 0.269938 | 0.021710 |
+| 3 | 27 | 4.604734 | 0.250973 |
+| 4 | 81 | 79.824321 | 3.207957 |
+| 5 | 243 | 1435.856224 | 51.128041 |
+
+These are complete-solve and supplied-system-check timings. Preparation is outside
+the timed callbacks; child resident-set observations include preparation and runtime
+startup, and must not be described as isolated matrix allocation or peak live heap.
+Neither operation has an allocated-byte counter.
+
+The harness drops the first parameter for its fixed 20% warmup trim. The retained
+parameter range is `s=2,…,5`, whose logarithmic span `log(5/2)` is less than the
+pinned fitter's minimum span 1. Consequently it reports no slope and uses its
+unchanged multiplicative range check. The normalized median constants vary by
+3.70 for solve and 8.36 for check, exceeding its 1.5 narrow-range allowance.
+This is the faster-than-declared direction over these finite inputs, and remains
+an outstanding performance gate. It is not evidence of a passing upper bound;
+these registrations did not qualify for that mode.
+
+The source-derived cubic scalar-operation count is separate from the unresolved
+wall-time scaling. The current input sizes can expose lower-order overhead and
+unequal costs of scalar operations; these possibilities are not established by
+these timings. A representative profile and a wider independently planned schedule
+are needed before deciding whether the wall-time declaration or implementation
+needs correction. No fit setting or complexity law has been changed to obtain a
+passing result. No unchanged rerun has been collected.
+
+This matrix-phase evidence does not establish the growing-degree polynomial query
+track, maximal-support end-to-end production, ordinary-kernel matrix replay costs,
+allocation accounting, or full #10377 Phase-4 completion. The existing interpolation
+fixtures and earlier untimed inventories remain unchanged.
