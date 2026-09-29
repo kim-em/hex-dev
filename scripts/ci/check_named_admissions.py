@@ -183,6 +183,8 @@ def check() -> None:
              "HexRealClosureMathlib.SpecializeReplay", "HexRealClosureMathlib.SpecializeSample", "HexRealClosureMathlib.SpecializeSelected", "HexRealClosureMathlib.SpecializeDescriptor",
              "HexRealClosureMathlib.SpecializeTests", "HexRealClosureMathlib.Algebraic",
              "HexRealClosureMathlib.AlgebraicClean", "HexRealClosureMathlib.AlgebraicValue",
+             "HexRealClosureMathlib.AlgebraicReencode",
+             "HexRealClosure.AlgebraicReencodeTests",
              "HexRealClosureMathlib.AlgebraicTransport", "HexRealClosureMathlib.AlgebraicYun",
              "HexRealClosureMathlib.BaseClean", "HexRealClosureMathlib.AlgebraicTower",
              "HexRealClosureMathlib.TransportPolynomial", "HexRealClosureMathlib.TransportProduct",

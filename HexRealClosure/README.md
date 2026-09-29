@@ -461,6 +461,15 @@ multiplicity in the original polynomial. The proof uses the level's verified
 division and inverse, which require the predecessor interpretation to preserve
 division. It assumes no field laws on stored representatives.
 
+`AlgebraicReencode.lean` changes one level's defining polynomial through a
+checked `SignDet.Reencoding` of the same selected root. `Element.reencode`
+repacks an old value under the new immutable context, and
+`Element.reencodePoly` converts the coefficients of a dependent polynomial.
+The companion proves preservation of the selected root, value and interpreted
+dependent polynomial, with zero reflection for converted values. Old values
+remain typed by their original context. This conversion keeps the predecessor
+fixed; recursively converting a tower's later descriptors remains separate.
+
 `AlgebraicValue.lean` defines the image subfield `Value ctx`, with lawful field
 and order instances inherited from the ambient field. `Element.toValue`
 preserves arithmetic and sign, is surjective, and identifies exactly the
