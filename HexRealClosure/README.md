@@ -409,3 +409,26 @@ construction examples use the semantic coefficient dictionaries.
 Compatible algebraic unions, native descriptor construction and simultaneous
 realization of finite sign conditions at one ordinary real point remain
 separate obligations.
+
+### Finite signs at an ordinary real parameter
+
+`Specialize.polynomial_sign` proves that a real polynomial near zero on the
+positive side has the sign of its lowest nonzero coefficient. The zero
+polynomial retains zero sign. `finite_signs` supplies one positive neighborhood
+for any finite family, and `exists_parameter` chooses one ordinary parameter
+below a prescribed positive cap satisfying all those signs together.
+
+For semantic fraction data with real coefficients, `fraction_sign` connects
+evaluation of the actual native numerator and denominator to
+`Hex.OrderedFn.Infinitesimal.sign`. It also preserves the nonzero denominator.
+`finite_fractions` collects all these signs and denominator guards into one
+neighborhood. `exists_fraction_parameter` chooses one ordinary real parameter
+for the whole finite collection. The external square-root example uses that
+same parameter for a positive square root whose square is the parameter and
+which lies strictly between it and one.
+
+Transport of complete query tables and joint selected-root constraints,
+recursive algebraic replay specialization and successive infinitesimal
+parameter choices remain required finite-sign realization work. These helpers
+operate on fixed real coefficient data in the companion; they add no native
+constructor or runtime field instance for formal real expressions.
