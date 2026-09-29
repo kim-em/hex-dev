@@ -55,10 +55,33 @@ class IsolationTests(unittest.TestCase):
         self.rejects(lambda rows: rows[4]["output"]["descriptors"][0].update(signs=[0, 0]))
 
     def test_boolean_slot(self):
-        self.rejects(lambda rows: rows[3]["output"]["descriptors"][0].update(indices=[True]))
+        self.rejects(lambda rows: rows[8]["output"]["descriptors"][0].update(indices=[True]))
 
     def test_stale_interval(self):
         self.rejects(lambda rows: rows[4]["output"]["descriptors"][0].update(lower=[1, [-100, 1]]))
+
+    def test_null_valid_output(self):
+        self.rejects(lambda rows: rows[4].update(output=None))
+
+    def test_diagnostic_valid_output(self):
+        self.rejects(lambda rows: rows[4].update(output={"error": "system"}))
+
+    def test_empty_valid_output(self):
+        def empty(rows):
+            rows[4]["output"]["points"].clear()
+            rows[4]["output"]["descriptors"].clear()
+        self.rejects(empty)
+
+    def test_overlapping_cells(self):
+        self.rejects(lambda rows: rows[4]["output"]["route"]["cells"].append(
+            rows[4]["output"]["route"]["cells"][0]))
+
+    def test_root_at_cell_endpoint(self):
+        self.rejects(lambda rows: rows[9]["output"]["route"]["cells"][0].update(lower={
+            "num": [[0, 1], [1, 1]], "den": [[1, 1]]}))
+
+    def test_foreign_descriptor_context(self):
+        self.rejects(lambda rows: rows[4]["output"]["descriptors"][0].update(context=10377))
 
     def test_zero_accepted(self):
         self.rejects(lambda rows: rows[0].update(output=rows[1]["output"]))

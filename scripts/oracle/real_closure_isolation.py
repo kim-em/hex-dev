@@ -118,23 +118,30 @@ def verify(rows):
         selected = points.copy()
         require(isinstance(output["descriptors"], list), "malformed descriptor list")
         for d in output["descriptors"]:
-            require(set(d) == {"head", "lower", "upper", "indices", "signs"}, "foreign descriptor fields")
+            require(set(d) == {"context", "head", "lower", "upper", "indices", "signs"}, "foreign descriptor fields")
+            require(type(d["context"]) is int and d["context"] == 10378, "foreign descriptor context")
             head = polynomial(d["head"])
             require(head == active, "descriptor retains a different head")
-            require(d["indices"] == list(range(1, len(head))) and
-                    all(type(i) is int for i in d["indices"]), "wrong full derivative slots")
+            derivatives = rcf.derivatives(head)
             if route["kind"] == "bounded":
                 lo, lt = endpoint(d["lower"])
                 hi, ht = endpoint(d["upper"])
                 require(lt == 0 and ht == 0 and (lo, hi) in intervals,
                         "descriptor retains a stale cell")
+                count = next(c["count"] for c in cells if decode(c["lower"]) == lo and decode(c["upper"]) == hi)
+                require(count > 0, "descriptor emitted for empty cell")
+                singleton = count == 1
             else:
                 require(d["lower"] == [0] and d["upper"] == [2], "wrong whole-line endpoints")
-            derivatives = rcf.derivatives(head)
-            require(isinstance(d["signs"], list) and len(d["signs"]) == len(derivatives) and
+                singleton = False
+            expected_slots = [] if singleton else list(range(1, len(head)))
+            require(d["indices"] == expected_slots and all(type(i) is int for i in d["indices"]),
+                    "wrong derivative slots for actual cell count")
+            queried = [] if singleton else derivatives
+            require(isinstance(d["signs"], list) and len(d["signs"]) == len(queried) and
                     all(type(s) is int and s in (-1, 0, 1) for s in d["signs"]), "malformed derivative signs")
             actual = [r for r in roots(head) if inside(r, d["lower"], d["upper"]) and
-                      [sign(rcf.eval(q, r)) for q in derivatives] == d["signs"]]
+                      [sign(rcf.eval(q, r)) for q in queried] == d["signs"]]
             require(len(actual) == 1, "descriptor does not select exactly one root")
             selected.append(actual[0])
         require(all(a != b for i, a in enumerate(selected) for b in selected[i+1:]),

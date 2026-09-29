@@ -40,6 +40,7 @@ private def emit {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E]
               ("count", toJson cell.count)]))]
       Json.mkObj [("route", route), ("points", .arr (completion.roots.points.toArray.map encode)),
         ("descriptors", .arr (completion.roots.descriptors.toArray.map fun d => Json.mkObj [
+          ("context", toJson d.raw.context),
           ("head", .arr (d.raw.head.toArray.map encode)),
           ("lower", SignDet.Codec.endpoint ⟨encode, fun _ => .error "encode only"⟩ d.raw.lower),
           ("upper", SignDet.Codec.endpoint ⟨encode, fun _ => .error "encode only"⟩ d.raw.upper),

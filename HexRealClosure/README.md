@@ -361,7 +361,8 @@ domain. The FLINT/SymPy oracle recomputes the first accepted bound, checks the
 selected route, and verifies actual head/endpoints and root counts. It also
 checks that the accepted bound contains every real root. Its rejection
 tests detect wrong routes, later bounds, stale heads, finite whole-line endpoints,
-wrong counts and failure on valid input. Native root-count correspondence consumes the proved root-sum theorem.
+wrong counts and failure on valid input. Native root-count correspondence consumes the proved
+root-sum theorem.
 
 ### Exact deflation provenance
 
@@ -386,7 +387,9 @@ completion and multiplicity restoration, rather than a complete root set.
 `Isolation.complete? sign context p` runs the actual finite bound search,
 capped bisection and shared descriptor enumeration. It returns a checked
 `Completion` containing the search trace, every emitted cut point and the
-actual descriptor list from each retained cell. Whole-line fallback enumerates
+actual descriptor list from each retained cell. Count-zero cells emit nothing.
+Count-one cells use their stored prepared domain with no derivative queries;
+only unresolved cells invoke all-derivative enumeration. Whole-line fallback enumerates
 its stored domain. Absent search domains stay `none`; internal producer
 failures remain explicit errors and cannot become empty root sets.
 
@@ -400,12 +403,16 @@ an ordered real closed field, and use only the standard three axioms.
 This intermediate output does not claim globally sorted root values or full
 producer success. It is for nonzero squarefree input; Yun multiplicities and
 the separate all-roots result for the zero polynomial must still be assembled.
-Enumeration currently prepares the retained domains again; the requested
-upstream prepared-root enumeration API remains a subsequent integration.
+Unresolved and whole-line enumeration currently prepare the retained domains
+again; the requested upstream prepared-root enumeration API remains a subsequent
+integration. `cell_enumeration_present` and `Whole.enumeration_present` prove
+that these retained valid domains cannot return the absent-domain result. That
+branch remains a diagnostic guard, using the internal system error rather than
+a descriptor-replay error.
 
 `hexrealclosure_isolation_conformance` emits ten actual executions. The pinned
 Z3 RCF oracle independently checks inputs, finite-bound policy, node caps,
-scalar-preserving deflation, cell counts, selected derivative words, complete
+scalar-preserving deflation, cell counts, selected derivative words, literal descriptor contexts, complete
 root coverage and absence of duplicates. Cases include nonmonic input,
 negative leading scalar with an emitted zero, a nonquadratic generator,
 four real roots, a whole-line inverse infinitesimal, close infinitesimal roots
