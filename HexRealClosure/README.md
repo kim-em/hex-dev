@@ -456,8 +456,7 @@ its stored fraction through the existing proof of equality of the complete
 native and semantic coefficient dictionaries, and preserves that element's
 actual stored sign at an ordinary real parameter.
 
-Transport of complete query tables and joint selected-root constraints,
-recursive algebraic replay specialization and successive infinitesimal
+Recursive algebraic replay specialization and successive infinitesimal
 parameter choices remain required finite-sign realization work. These helpers
 operate on coefficient data with a supplied ordered embedding into ℝ in the
 companion; they add no native constructor or runtime field instance for formal
@@ -471,7 +470,7 @@ that finite array. `polynomial_signs` derives these conditions from one common
 neighborhood preserving its coefficient signs and denominator guards.
 The signed-chain and Tarski-query transport theorems obtain their guards from
 `finite_fractions_map` applied to each certificate's own finite inventory.
-Joint sign-table transport also needs its checker evidence.
+The complete replay transport below preserves its checker evidence.
 
 `Specialize.regularRing` contains the native fractions whose canonical
 denominators remain nonzero under one prescribed coefficient embedding and
@@ -504,7 +503,6 @@ throughout one positive neighborhood. These theorems use a prescribed ordered
 embedding of the predecessor coefficient field; recursive algebraic replay and
 successive infinitesimal specialization remain separate obligations.
 
-
 `SignDet.ReductionStep.specialize` substitutes an indexed positive product
 reduction's stored remainder, scales and quotient. Its finite inventory covers
 the input head, previous representative, factor, next representative and
@@ -530,6 +528,16 @@ the entire supplied BKR tree with its exact child query slices, including
 empty supports. Its extracted sparse rows and every condition's count stay
 unchanged. `Replay.table_near` provides one positive neighborhood whose real
 parameters all admit that same checked table. These theorems require the
-prescribed ordered coefficient embedding into ℝ. DAG sharing, joint selected-root
-realization, recursive algebraic replay and successive infinitesimal
-specialization remain separate obligations.
+prescribed ordered coefficient embedding into ℝ. DAG sharing, recursive
+algebraic replay and successive infinitesimal specialization remain separate
+obligations.
+
+`Specialize.realizeReplay` uses the proved root-count meaning of the specialized
+BKR replay over ℝ. If its source table counts exactly one root for a sign
+condition, every sufficiently small positive parameter has exactly one real
+root in the specialized interval satisfying all the ordered query signs
+together. `realizeBelow` chooses that parameter below any prescribed positive
+cap. Both use the same parameter for every polynomial and endpoint.
+It requires a prescribed ordered embedding of the coefficient field into ℝ;
+it does not construct recursive algebraic samples or specialize an
+infinitesimal predecessor field.
