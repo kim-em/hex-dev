@@ -155,6 +155,7 @@ jobs:
           python3 -m unittest scripts/bench/test_sign_det_compare.py
           python3 -m unittest scripts/bench/test_sign_det_maximal.py
           python3 -m unittest scripts/bench/test_sign_det_joint.py
+          python3 -m unittest scripts/bench/test_sign_det_joint_timing.py
           python3 scripts/bench/sign_det_joint.py reports/data/sign-det-joint/9651d8947/inventory.jsonl --retained
           python3 -m unittest scripts/bench/test_real_roots_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_bz_mathlib_sweep.py
