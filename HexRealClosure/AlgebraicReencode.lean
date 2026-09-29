@@ -41,7 +41,15 @@ its original context type. -/
 @[expose] def reencode {head : DensePoly E} {lower upper : Hex.Endpoint E}
     (r : SignDet.Reencoding context.root head lower upper)
     (a : Element context) : Element (context.reencode r) :=
-  ofPoly a.polynomial
+  match a.stored with
+  | none => 0
+  | some _ => ofPoly a.polynomial
+
+/-- The canonical zero remains canonical without a coefficient-sign query. -/
+theorem reencode_zero {head : DensePoly E} {lower upper : Hex.Endpoint E}
+    (r : SignDet.Reencoding context.root head lower upper) :
+    reencode r (0 : Element context) = 0 := by
+  simp only [reencode, stored_zero]
 
 /-- Convert every coefficient of a dependent polynomial to the new context. -/
 @[expose] def reencodePoly {head : DensePoly E} {lower upper : Hex.Endpoint E}
@@ -49,7 +57,7 @@ its original context type. -/
     (p : DensePoly (Element context)) : DensePoly (Element (context.reencode r)) :=
   DensePoly.ofCoeffs (p.toArray.map (reencode r))
 
-/-- A value-preserving re-encoding that reflects zero converts every stored
+/-- A re-encoding that reflects zero converts every stored
 coefficient, including implicit trailing zeros. -/
 theorem reencodePoly_coeff {head : DensePoly E} {lower upper : Hex.Endpoint E}
     (r : SignDet.Reencoding context.root head lower upper)

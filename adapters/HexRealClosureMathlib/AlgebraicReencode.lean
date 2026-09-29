@@ -56,12 +56,22 @@ theorem denote_reencode {context : Context E Ctx coeffSign parent}
     (r : SignDet.Reencoding context.root head lower upper) (a : Element context) :
     (a.reencode r).denote f hz h1 ha hs hm hnat hsign =
       a.denote f hz h1 ha hs hm hnat hsign := by
-  calc
-    _ = (context.reencode r).evalPoly f hz h1 ha hs hm hnat hsign a.polynomial :=
-      denote_ofPoly f hz h1 ha hs hm hnat hsign hn hi a.polynomial
-    _ = context.evalPoly f hz h1 ha hs hm hnat hsign a.polynomial :=
-      context.evalPoly_reencode f hz h1 ha hs hm hnat hsign r a.polynomial
-    _ = a.denote f hz h1 ha hs hm hnat hsign := rfl
+  cases hstored : a.stored with
+  | none =>
+    have ha : a = 0 := Element.ext (by simpa only [stored_zero] using hstored)
+    subst a
+    rw [reencode_zero]
+    simp only [denote_zero]
+  | some value =>
+    have hpack : a.reencode r = ofPoly a.polynomial := by
+      simp only [reencode, hstored]
+    rw [hpack]
+    calc
+      _ = (context.reencode r).evalPoly f hz h1 ha hs hm hnat hsign a.polynomial :=
+        denote_ofPoly f hz h1 ha hs hm hnat hsign hn hi a.polynomial
+      _ = context.evalPoly f hz h1 ha hs hm hnat hsign a.polynomial :=
+        context.evalPoly_reencode f hz h1 ha hs hm hnat hsign r a.polynomial
+      _ = a.denote f hz h1 ha hs hm hnat hsign := rfl
 
 include f hz h1 ha hs hm hnat hsign hn hi in
 /-- The packed sign cache is preserved by checked re-encoding. -/

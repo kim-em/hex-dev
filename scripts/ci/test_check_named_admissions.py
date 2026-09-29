@@ -197,12 +197,12 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/ConvertConformance"):
                     audit.check()
                 conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-                for probe in (specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor, transport_polynomial, transport_product, transport_arithmetic, transport_query, transport_tests, transport_ring, transport_power, transport_tarski, transport_closed, transport_closed_query, transport_regular, transport_reduction, transport_closed_reduction, transport_preparation, transport_moment, transport_replay, transport_sample, transport_descriptor, transport_selected, algebraic_transport, algebraic_yun):
+                for probe in (specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor, transport_polynomial, transport_product, transport_arithmetic, transport_query, transport_tests, transport_ring, transport_power, transport_tarski, transport_closed, transport_closed_query, transport_regular, transport_reduction, transport_closed_reduction, transport_preparation, transport_moment, transport_replay, transport_sample, transport_descriptor, transport_selected, algebraic_transport, algebraic_yun, algebraic_reencode, algebraic_reencode_tests):
                     probe.unlink()
                     with self.assertRaisesRegex(ValueError, "missing local import"):
                         audit.check()
                     probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*(Specialize|Transport|AlgebraicYun)"):
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*(Specialize|Transport|AlgebraicYun|AlgebraicReencode)"):
                         audit.check()
                     probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 for probe in (base, model, catalog):
