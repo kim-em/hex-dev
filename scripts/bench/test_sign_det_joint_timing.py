@@ -129,6 +129,17 @@ class JointTimingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             timing.validate_single(self.path, "runCompletion", self.expected, "measured")
 
+    def test_retained_completion_rejects_comparison_hash_binding(self):
+        directory = timing.ROOT/"reports/data/sign-det-joint-timing/1f55c4de9"
+        expected = timing.validate_hashes(directory/"callbacks.log")
+        revision = json.loads((directory/"metadata.json").read_text())["revision"]
+        config = dict(timing.CONFIG, max_seconds_per_call=60)
+        with patch.object(timing, "CONFIG", config):
+            timing.validate_single(directory/"runCompletion.json", "runCompletion", expected, revision)
+            with patch.dict(timing.RESULT_KEYS, runCompletion="comparisonResultHash"):
+                with self.assertRaisesRegex(ValueError, "scientific observation"):
+                    timing.validate_single(directory/"runCompletion.json", "runCompletion", expected, revision)
+
     def test_pair_header_and_summary_environment_rejected(self):
         names, rows = self.pair()
         for change in (lambda r: r[0].update(params=[3]),
