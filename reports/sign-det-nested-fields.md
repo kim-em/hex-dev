@@ -1,66 +1,77 @@
 # Sign determination over nested infinitesimal fields
 
-The executable `hexsigndet_emit_nested_fields` checks one family at extension
-depths one through four. Its fields are obtained by iterating the existing
-canonical rational-function field over the rationals. Each new indeterminate is
-positive and smaller than every positive element of the preceding field. The
-sign function uses the existing lowest-coefficient sign at each level; the field
-operations and field laws are the existing `HexRationalFn` instances.
+The executable `hexsigndet_emit_nested_fields` checks an ordered-field family
+at extension depths one through four. Its fields iterate the existing canonical
+rational-function field over the rationals. Each new indeterminate is positive
+and smaller than every positive element of the preceding field. The sign
+function uses the existing lowest-coefficient sign at each level; arithmetic
+and field laws are the existing `HexRationalFn` instances.
 
-Let g = ε₁ − ε₁² − ε₂ − ⋯ − ε_d at depth d. This is positive under
-the specified order. Reversing the order at depth at least two, or interpreting
-the first generator as infinitely large, makes g negative and changes the sign
-table. The head and queries are
+At depth d let g = ε₁ − ε₁² − ε₂ − ⋯ − ε_d. Let a = ε₁ at depth one,
+and let a be the preceding depth's generator at higher depths. Then g > 0,
+and g − a is −ε₁² at depth one and −ε_d at every higher depth. The inputs are
 
 ```
-P = X² − g²,       Q = [X, X − g],       interval = (−∞, +∞).
+P = X² − g²,       Q = [X − g, X − a],       interval = (−∞, +∞).
 ```
 
-The two roots are −g and g. Their sign patterns are (−,−) and (+,0), each with
-count one. All other patterns have count zero. Depth zero is excluded because
-g is zero there and the head is not squarefree. The executable checks this
-using the actual prepared-domain operation.
+The two roots −g and g have sign patterns (−,−) and (0,−), each with count
+one; all other patterns have count zero. The second query at g forces the
+newest level's sign past its zero constant coefficient. The emitted value of
+`sign (g − a)` checks the same cancellation directly. Thus treating the newest
+infinitesimal as zero or negative cannot pass. The independent tests also
+reverse the field order or make the first generator infinitely large; each
+changes the computed table. Depth zero exercises actual rejection of the
+nonsquarefree head X² by the prepared-domain operation.
 
-For each positive depth the native executable emits the actual results of reduced and unreduced BKR construction, the full
-ternary reference, and
-replay of the shared same-level graph. It also checks rejection with a foreign
-context and with a stale child context. It checks the graph leaf layout before
-splicing a valid same-context child built for the different head X² − (2g)²,
-and checks rejection when the root is presented without its support children. The emitted inputs retain the actual
-stored coefficient arrays, recursively encoding each numerator and denominator.
-The same input constructor is used for execution and emission.
+For every positive depth the emitter returns the actual reduced, unreduced and
+full-reference tables and replay decisions. It checks graph leaf layout,
+foreign contexts and stale child contexts. It splices a valid same-context
+child built for X² − (2g)², and also changes that child's top-level head binding
+back to P while retaining its foreign moment evidence. Both copies must fail.
+Presenting the root without its children must also fail the leaf-arity check;
+that case alone does not prove general support completeness. The emitted
+coefficient arrays recursively encode actual numerators and denominators, using
+the same input constructor as execution.
 
-The independent pinned Z3 RCF oracle introduces the same sequence of
-infinitesimals, reads those coefficients, verifies the defining polynomials,
-computes their exact roots and evaluates the queries. It checks the complete
-sign table. Its adversarial tests reject omitted support even when the total
-count is preserved, wrong signs, substituted inputs, malformed counts and
-foreign or reordered coefficient contexts. Those JSON-table mutations test the
-oracle, while the emitted replay decisions test the native checker. Additional
-tests actually reverse the independent field order and substitute an infinitely
-large first generator; each changes the independently computed table. This uses the existing oracle
-pipeline and its existing Z3 dependency.
+The pinned Z3 RCF oracle independently reads those coefficients, verifies P
+and Q, computes exact roots and signs, and checks every returned table. Its
+JSON mutation tests reject omitted patterns with preserved total counts, wrong
+signs, substituted inputs, malformed counts and foreign contexts. Those
+mutations test the oracle; the native replay decisions test the certificate
+checker. The existing two-level oracle keeps its original default depth limit.
 
-Run the native cases and independent oracle with:
+Routine CI runs depths one and two; the local profile retains all four depths.
+The existing classifier runs these checks for HexSignDet changes and on main,
+not automatically for every change in its dependencies. Run both profiles with:
 
 ```sh
 lake build hexsigndet_emit_nested_fields
 .lake/build/bin/hexsigndet_emit_nested_fields > nested-fields.jsonl
 python3 scripts/oracle/sign_det_nested_z3.py nested-fields.jsonl
+.lake/build/bin/hexsigndet_emit_nested_fields --profile local > nested-fields-local.jsonl
+python3 scripts/oracle/sign_det_nested_z3.py nested-fields-local.jsonl --profile local
 ```
 
-The four-level native conformance run took 336.587 seconds on the shared
-host `chungus2` (source SHA-256
-`cddfb03eec41f057eec31313190d1550cbdbbf7027d852f22865ba9dbe35f4e8`,
-executable SHA-256
-`cf6c75e85bb88dcaea7de43ebeb5748a931e8100a4cc1a21742f049e8a49af43`). That observation includes all three construction modes and
-replay checks. It is not a fixed-schedule complexity measurement, nor a timing
-of coefficient signs alone. Depth-dependent measurements need to account for the actual nested arithmetic
-and witnesses. This single execution does not establish a complexity law.
+A single native local run took 441.941 seconds on shared host `chungus2`.
+The per-depth observations include construction, replay, coefficient encoding
+and output; they are not fixed-schedule complexity measurements:
+
+| Depth | Elapsed seconds |
+| --- | ---: |
+| 1 | 0.034893 |
+| 2 | 0.814919 |
+| 3 | 18.912842 |
+| 4 | 422.155960 |
+
+The [execution record](data/sign-det-nested-fields/anchor-fields/execution.json)
+retains source/executable hashes and host load, and the stderr record retains
+the per-depth timings. These observations are host-specific, not CI runner
+measurements or a complexity law.
 
 These are executable conformance cases, not ordinary-kernel semantic proofs or
 cross-level coefficient-proof certificates. Same-level BKR graph sharing does
-not discharge the separate requirement to share and validate lower-level sign
-proofs. Nested proof probes, dependency counts, allocation scaling and the full
-Phase-4 evidence remain separate obligations. This test imports no real-closure
-tower implementation and changes no field arithmetic.
+not discharge sharing and validation of lower-level sign proofs. Nested kernel
+probes, dependency counts, allocation scaling and full Phase-4 evidence remain
+requirements. This test imports no tower implementation and changes no field
+arithmetic.

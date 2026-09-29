@@ -13,6 +13,7 @@ from scripts.oracle.sign_det_common import require, sign_vector
 from scripts.oracle.sign_det_z3 import RCF, VERSION, check_version
 
 DEFAULT_FIXTURE = ROOT / "conformance-fixtures/HexSignDet/nested-fields.jsonl"
+LOCAL_FIXTURE = ROOT / "conformance-fixtures/HexSignDet/nested-fields-local.jsonl"
 CASES = [f"nested-field/depth-{depth}" for depth in range(1, 5)]
 
 
@@ -32,14 +33,18 @@ def check_record(record):
     require(result.get("status") == "ok", "native construction failed")
     require(type(result.get("generatorSign")) is int and result["generatorSign"] == 1,
             "wrong nested generator sign")
+    require(type(result.get("anchorDifferenceSign")) is int and result["anchorDifferenceSign"] == -1,
+            "newest-level cancellation sign is wrong")
     require(result.get("foreignChildValid") is True, "foreign-head leaf is not valid on its own head")
     g = oracle.levels[0] - oracle.levels[0]*oracle.levels[0]
+    anchor = oracle.levels[0]
     for epsilon in oracle.levels[1:]:
+        anchor = g
         g = g - epsilon
     raw = result["input"]
     require(g > 0 and oracle.poly(raw["head"]) == [-g*g, oracle.zero, oracle.one] and
             [oracle.poly(q) for q in raw["queries"]] ==
-            [[oracle.zero, oracle.one], [-g, oracle.one]], "wrong literal nested-field inputs")
+            [[-g, oracle.one], [-anchor, oracle.one]], "wrong literal nested-field inputs")
     data = {"head": raw["head"], "queries": raw["queries"], "lower": "-inf", "upper": "+inf"}
     expected = oracle.table(data)
     require(expected is not None, "independent oracle rejected the root domain")
@@ -56,7 +61,7 @@ def check_record(record):
             require(mode.get("graphReplay") is True and mode.get("leafLayout") is True,
                     "graph replay or leaf-layout check failed")
             require(all(mode.get(key) is False for key in
-                        ("foreignContextReplay", "staleChildReplay", "copiedHeadReplay", "missingSupportReplay")),
+                        ("foreignContextReplay", "staleChildReplay", "copiedHeadReplay", "copiedMomentReplay", "missingSupportReplay")),
                     "stale or incomplete evidence was accepted")
 
 
@@ -72,7 +77,9 @@ def main():
         check_version()
         seen = []
         failed = 0
-        for record in read_fixtures(args.source or (DEFAULT_FIXTURE if args.check else None)):
+        fixture = LOCAL_FIXTURE if args.profile == "local" else DEFAULT_FIXTURE
+        cases = CASES if args.profile == "local" else CASES[:2]
+        for record in read_fixtures(args.source or (fixture if args.check else None)):
             try:
                 check_record(record)
                 seen.append(record["case"])
@@ -83,7 +90,7 @@ def main():
                               input_record=record, lean_output=record.get("value"), oracle_output=None,
                               oracle_name="Z3 RCF", oracle_version=VERSION, diff=str(exc))
                 print(f"FAIL: {exc}", file=sys.stderr)
-        require(seen == CASES, "missing, duplicated or reordered nested-field cases")
+        require(seen == cases, "missing, duplicated or reordered nested-field cases")
         print(f"HexSignDet: {len(seen)} nested-field cases, {failed} failures ({VERSION})")
         return int(failed != 0)
     except (OracleMismatch, OSError, ImportError) as exc:

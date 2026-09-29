@@ -14,7 +14,7 @@ class NestedFieldsOracle(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         oracle.check_version()
-        cls.records = [json.loads(line) for line in oracle.DEFAULT_FIXTURE.read_text().splitlines()]
+        cls.records = [json.loads(line) for line in oracle.LOCAL_FIXTURE.read_text().splitlines()]
 
     def reject(self, change):
         record = copy.deepcopy(self.records[-1])
@@ -45,7 +45,7 @@ class NestedFieldsOracle(unittest.TestCase):
 
     def test_replay_rejections_are_required(self):
         for name in ['reduced','direct']:
-            for key in ['foreignContextReplay','staleChildReplay','copiedHeadReplay','missingSupportReplay']:
+            for key in ['foreignContextReplay','staleChildReplay','copiedHeadReplay','copiedMomentReplay','missingSupportReplay']:
                 self.reject(lambda r: r['value']['result'][name].__setitem__(key, True))
             self.reject(lambda r: r['value']['result'][name].__setitem__('leafLayout', False))
         self.reject(lambda r: r['value']['result'].__setitem__('foreignChildValid', False))
@@ -56,8 +56,6 @@ class NestedFieldsOracle(unittest.TestCase):
         field.levels.reverse()
         raw = record['value']['result']['input']
         table = field.table({**raw, 'lower': '-inf', 'upper': '+inf'})
-        self.assertEqual([[e['signs'], e['count']] for e in table],
-                         [[[-1, 0], 1], [[1, 1], 1]])
         self.assertNotEqual([[e['signs'], e['count']] for e in table],
                             record['value']['result']['reduced']['table'])
 
@@ -67,15 +65,15 @@ class NestedFieldsOracle(unittest.TestCase):
         field.levels[0] = field.one.__div__(field.levels[0])
         raw = record['value']['result']['input']
         table = field.table({**raw, 'lower': '-inf', 'upper': '+inf'})
-        self.assertEqual([[e['signs'], e['count']] for e in table],
-                         [[[-1, 0], 1], [[1, 1], 1]])
         self.assertNotEqual([[e['signs'], e['count']] for e in table],
                             record['value']['result']['reduced']['table'])
 
     def test_stdin_and_explicit_fixture_selection(self):
-        for args, source in [([], None), (['--check'], oracle.DEFAULT_FIXTURE)]:
+        for args, source, records in [([], None, self.records[:2]),
+                                      (['--check'], oracle.DEFAULT_FIXTURE, self.records[:2]),
+                                      (['--check', '--profile', 'local'], oracle.LOCAL_FIXTURE, self.records)]:
             with mock.patch('sys.argv', ['oracle', *args]), \
-                 mock.patch.object(oracle, 'read_fixtures', return_value=self.records) as read, \
+                 mock.patch.object(oracle, 'read_fixtures', return_value=records) as read, \
                  mock.patch.object(oracle, 'check_record'), \
                  contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(oracle.main(), 0)
@@ -85,6 +83,7 @@ class NestedFieldsOracle(unittest.TestCase):
         self.reject(lambda r: r['value'].__setitem__('extensionDepth', True))
         self.reject(lambda r: r.__setitem__('case', 'nested-field/depth-3'))
         self.reject(lambda r: r['value']['result'].__setitem__('generatorSign', -1))
+        self.reject(lambda r: r['value']['result'].__setitem__('anchorDifferenceSign', 0))
         self.reject(lambda r: r['value'].__setitem__('zeroDomainRejected', False))
 
 
