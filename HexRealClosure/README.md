@@ -435,9 +435,15 @@ that field. All signs and denominator guards hold at one common parameter.
 The rational-base consumer uses the actual rational cast and combines those
 same guards with the positive-square-root equation and strict inequalities.
 `evalMapped_add` and `evalMapped_mul` preserve actual native sums and products
-under the recorded denominator guards. A finite-family consumer collects the
-operands and both results before choosing its parameter, so their arithmetic
-identities and all recorded signs hold at the same point.
+under the recorded denominator guards. `evalMapped_neg`, `evalMapped_sub`,
+`evalMapped_inv` and `evalMapped_div` cover the remaining field operations,
+including the native zero-input inverse. Polynomial fractions, coefficient
+constants, the indeterminate, zero, one and natural/integer casts specialize
+through their actual native definitions. `evalMapped_pow` uses a finite
+inventory of denominator guards for the powers through the requested exponent.
+Finite-family consumers collect operands and results before choosing their
+parameter, so arithmetic identities, all recorded signs and all denominator
+guards hold at the same point.
 
 `fraction_sign_with`, `finite_fractions_with` and `exists_parameter_with` use
 the actual predecessor sign function, given its agreement with the prescribed

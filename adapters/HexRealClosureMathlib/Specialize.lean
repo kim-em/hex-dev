@@ -219,6 +219,128 @@ theorem evalMapped_mul (embedding : F →+* ℝ) (first second : Hex.RationalFn 
   field_simp [left, right, result]
   nlinarith only [identity]
 
+/-- An actual polynomial fraction evaluates as its mapped polynomial. -/
+theorem evalMapped_ofPoly (embedding : F →+* ℝ) (p : Hex.DensePoly F) (t : ℝ) :
+    evalMapped embedding (Hex.RationalFn.ofPoly p) t =
+      ((HexPolyMathlib.toPolynomial p).map embedding).eval t := by
+  change ((HexPolyMathlib.toPolynomial p).map embedding).eval t /
+    ((HexPolyMathlib.toPolynomial (1 : Hex.DensePoly F)).map embedding).eval t = _
+  rw [HexPolyMathlib.toPolynomial_one, Polynomial.map_one, Polynomial.eval_one, div_one]
+
+/-- Stored coefficient constants specialize through the prescribed embedding. -/
+theorem evalMapped_C (embedding : F →+* ℝ) (a : F) (t : ℝ) :
+    evalMapped embedding (Hex.RationalFn.C a) t = embedding a := by
+  rw [Hex.RationalFn.C, evalMapped_ofPoly, HexPolyMathlib.toPolynomial_C,
+    Polynomial.map_C, Polynomial.eval_C]
+
+/-- The stored indeterminate specializes to the chosen ordinary parameter. -/
+theorem evalMapped_X (embedding : F →+* ℝ) (t : ℝ) :
+    evalMapped embedding (Hex.RationalFn.X : Hex.RationalFn F) t = t := by
+  rw [Hex.RationalFn.X, evalMapped_ofPoly, HexPolyMathlib.toPolynomial_monomial,
+    Polynomial.map_monomial, Polynomial.eval_monomial]
+  simp
+
+/-- Canonical zero specializes to ordinary real zero. -/
+theorem evalMapped_zero (embedding : F →+* ℝ) (t : ℝ) :
+    evalMapped embedding (0 : Hex.RationalFn F) t = 0 := by
+  rw [← Hex.RationalFn.ofPoly_zero, evalMapped_ofPoly, HexPolyMathlib.toPolynomial_zero,
+    Polynomial.map_zero, Polynomial.eval_zero]
+
+/-- Canonical one specializes to ordinary real one. -/
+theorem evalMapped_one (embedding : F →+* ℝ) (t : ℝ) :
+    evalMapped embedding (1 : Hex.RationalFn F) t = 1 := by
+  rw [← Hex.RationalFn.ofPoly_one, evalMapped_ofPoly, HexPolyMathlib.toPolynomial_one,
+    Polynomial.map_one, Polynomial.eval_one]
+
+/-- Native natural casts retain their exact ordinary real value. -/
+theorem evalMapped_nat (embedding : F →+* ℝ) (n : Nat) (t : ℝ) :
+    evalMapped embedding (n : Hex.RationalFn F) t = (n : ℝ) := by
+  change evalMapped embedding (Hex.RationalFn.ofPoly (n : Hex.DensePoly F)) t = _
+  have polynomial : HexPolyMathlib.toPolynomial (n : Hex.DensePoly F) = (n : Polynomial F) := by
+    apply Polynomial.ext
+    intro i
+    simp only [HexPolyMathlib.coeff_toPolynomial, Hex.DensePoly.coeff_natCast, Polynomial.coeff_natCast_ite,
+      Nat.cast_ite, Nat.cast_zero]
+  rw [evalMapped_ofPoly, polynomial, Polynomial.map_natCast, Polynomial.eval_natCast]
+
+/-- Negation changes only the stored numerator and commutes with specialization. -/
+theorem evalMapped_neg (embedding : F →+* ℝ) (fraction : Hex.RationalFn F) (t : ℝ) :
+    evalMapped embedding (-fraction) t = -evalMapped embedding fraction t := by
+  change ((HexPolyMathlib.toPolynomial (-fraction.num)).map embedding).eval t /
+    ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t =
+      -(((HexPolyMathlib.toPolynomial fraction.num).map embedding).eval t /
+        ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t)
+  rw [HexPolyMathlib.toPolynomial_neg, Polynomial.map_neg, Polynomial.eval_neg, neg_div]
+
+/-- Native integer casts retain their exact ordinary real value. -/
+theorem evalMapped_int (embedding : F →+* ℝ) (n : Int) (t : ℝ) :
+    evalMapped embedding (n : Hex.RationalFn F) t = (n : ℝ) := by
+  cases n with
+  | ofNat n => simpa only [Int.ofNat_eq_natCast, Int.cast_natCast] using evalMapped_nat embedding n t
+  | negSucc n => rw [Int.cast_negSucc, evalMapped_neg, evalMapped_nat, Int.cast_negSucc]
+
+/-- Native subtraction specializes under the recorded operand and result guards. -/
+theorem evalMapped_sub (embedding : F →+* ℝ) (first second : Hex.RationalFn F) (t : ℝ)
+    (left : ((HexPolyMathlib.toPolynomial first.den).map embedding).eval t ≠ 0)
+    (right : ((HexPolyMathlib.toPolynomial second.den).map embedding).eval t ≠ 0)
+    (result : ((HexPolyMathlib.toPolynomial (first - second).den).map embedding).eval t ≠ 0) :
+    evalMapped embedding (first - second) t =
+      evalMapped embedding first t - evalMapped embedding second t := by
+  have negative : ((HexPolyMathlib.toPolynomial (-second).den).map embedding).eval t ≠ 0 := right
+  have output : ((HexPolyMathlib.toPolynomial (first + -second).den).map embedding).eval t ≠ 0 := result
+  simpa only [sub_eq_add_neg, evalMapped_neg] using
+    evalMapped_add embedding first (-second) t left negative output
+
+/-- Native inversion specializes wherever the operand and its inverse are
+both regular. The actual zero-input branch is included. -/
+theorem evalMapped_inv (embedding : F →+* ℝ) (fraction : Hex.RationalFn F) (t : ℝ)
+    (guard : ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t ≠ 0)
+    (result : ((HexPolyMathlib.toPolynomial fraction⁻¹.den).map embedding).eval t ≠ 0) :
+    evalMapped embedding fraction⁻¹ t = (evalMapped embedding fraction t)⁻¹ := by
+  by_cases zero : fraction.num = 0
+  · have zero := (Hex.RationalFn.num_eq_zero fraction).mp zero
+    subst fraction
+    simp [evalMapped, zero, HexPolyMathlib.toPolynomial_zero]
+  · have identity := congrArg (fun p : Hex.DensePoly F =>
+      ((HexPolyMathlib.toPolynomial p).map embedding).eval t) (Hex.RationalFn.inv_spec fraction zero)
+    simp only [HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul, Polynomial.eval_mul] at identity
+    have numerator : ((HexPolyMathlib.toPolynomial fraction.num).map embedding).eval t ≠ 0 := by
+      intro h
+      rw [h, mul_zero] at identity
+      exact (mul_ne_zero guard result) identity.symm
+    unfold evalMapped
+    rw [inv_div]
+    exact (div_eq_div_iff result numerator).mpr identity
+
+/-- Native division specializes under the operand, inverse and result guards
+recorded by the finite arithmetic computation. -/
+theorem evalMapped_div (embedding : F →+* ℝ) (first second : Hex.RationalFn F) (t : ℝ)
+    (left : ((HexPolyMathlib.toPolynomial first.den).map embedding).eval t ≠ 0)
+    (right : ((HexPolyMathlib.toPolynomial second.den).map embedding).eval t ≠ 0)
+    (inverse : ((HexPolyMathlib.toPolynomial second⁻¹.den).map embedding).eval t ≠ 0)
+    (result : ((HexPolyMathlib.toPolynomial (first / second).den).map embedding).eval t ≠ 0) :
+    evalMapped embedding (first / second) t =
+      evalMapped embedding first t / evalMapped embedding second t := by
+  have output : ((HexPolyMathlib.toPolynomial (first * second⁻¹).den).map embedding).eval t ≠ 0 := result
+  rw [div_eq_mul_inv, evalMapped_mul embedding first second⁻¹ t left inverse output,
+    evalMapped_inv embedding second t right inverse, div_eq_mul_inv]
+
+/-- A finite collection of power denominator guards preserves the actual
+native power at the same ordinary parameter. -/
+theorem evalMapped_pow (embedding : F →+* ℝ) (fraction : Hex.RationalFn F) (t : ℝ) (n : Nat)
+    (guards : ∀ i ≤ n, ((HexPolyMathlib.toPolynomial (fraction ^ i).den).map embedding).eval t ≠ 0) :
+    evalMapped embedding (fraction ^ n) t = (evalMapped embedding fraction t) ^ n := by
+  induction n with
+  | zero => simp only [pow_zero, evalMapped_one]
+  | succ n ih =>
+    have left := guards n (Nat.le_succ n)
+    have right : ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t ≠ 0 := by
+      simpa only [pow_one] using guards 1 (by omega)
+    have result : ((HexPolyMathlib.toPolynomial (fraction ^ n * fraction).den).map embedding).eval t ≠ 0 := by
+      simpa only [pow_succ] using guards (n + 1) le_rfl
+    rw [pow_succ, evalMapped_mul embedding (fraction ^ n) fraction t left right result,
+      ih (fun i hi => guards i (hi.trans (Nat.le_succ n))), pow_succ]
+
 variable [LinearOrder F]
 
 /-- Ordered coefficient embeddings preserve each native fraction's infinitesimal
@@ -383,3 +505,51 @@ end Hex.RealClosure.Specialize
 /-- info: 'Hex.RealClosure.Specialize.exists_parameter_with' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.exists_parameter_with
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_ofPoly' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_ofPoly
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_C' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_C
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_X' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_X
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_zero
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_one' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_one
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_nat' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_nat
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_neg' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_neg
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_sub' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_sub
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_inv
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_div' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_div
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_int' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_int
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_pow' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_pow
