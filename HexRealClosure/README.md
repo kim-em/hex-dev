@@ -591,10 +591,10 @@ even when nonzero source coefficients denote zero. Nonvanishing of only the
 interpreted top coefficient preserves stored size, degree, leading coefficient
 and executable zero tests; interior noncanonical zeros are allowed.
 
-The operation-only lemmas retain input sizes under these leading guards.
+The `Transport.Guarded` operation lemmas retain input sizes under these leading guards.
 `Transport.Ring` instead assumes ring laws on the target coefficients and allows
 input and intermediate arrays to shrink or become zero. Its addition,
-subtraction, scaling, differentiation and multiplication proofs need finite
+subtraction, scaling, differentiation, multiplication and Horner proofs need finite
 scalar equations only at actual coefficient positions and reached native
 schoolbook accumulators. `productPrefix` and `hornerPrefix` record the precise
 multiplication and descending Horner order. `PowerData` follows the native
@@ -610,18 +610,27 @@ and stored chain entries, where nonzero and degree checks need them.
 binding, serialized degrees, strict descent, every recurrence and the terminal
 pair. No division or chain producer runs during transport.
 
-`Closed` describes a domain containing zero and closed under addition and
-multiplication where interpretation preserves those operations.
-`Product.of_closed` and `Evaluation.of_closed` derive every accumulator
-obligation from finite stored coefficient membership in that domain.
+`Closed` describes a domain containing zero, one and natural casts and closed
+under addition, subtraction and multiplication, where interpretation preserves
+those operations. Its coefficient membership lemmas and `ChainData.of_closed`
+and `QueryData.of_closed` derive all intermediate and accumulator equations
+from finite stored coefficient membership. `regular_closed` instantiates this
+domain with `Specialize.Regular embedding t`; a full chain consumer and Horner
+example use that partial specialization domain.
 Interpretation need not preserve arithmetic outside it. Kernel-checked examples
 include an interior raw representative of zero and a complete accepted
 three-entry chain whose query and initial quotient lose their leading
-coefficients at the selected root.
+coefficients under evaluation at two.
 
 `query_check` transports the full Tarski certificate with an explicit context
 map: all literal bindings, endpoint order and nonroot guards, both chain checks,
 endpoint signs, stored variations and the integer value are retained. Each
 endpoint uses its actual finite Horner arithmetic or leading coefficient sign.
-BKR reductions and moments, joint algebraic-root realization, recursive sample
+Scalar sign agreement remains an explicit hypothesis at the literal scales,
+finite Horner results and endpoint differences, and infinite endpoint leading
+coefficients; arithmetic preservation alone does not supply these signs.
+`reduction_check` also transports the complete native product reduction,
+retaining literal factor indices, scales, quotients and final result. A result
+may shrink or become zero; only the original head requires degree preservation.
+BKR query preprocessing and moments, joint algebraic-root realization, recursive sample
 replay and successive infinitesimal levels remain separate obligations.

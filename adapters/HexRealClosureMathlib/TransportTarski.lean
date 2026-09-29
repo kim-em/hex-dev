@@ -24,7 +24,6 @@ variable [Add E] [Sub E] [Mul E]
 
 /-- Finite products and sums at the actual descending Horner accumulators. -/
 structure Evaluation (read : E → K) (p : Hex.DensePoly E) (x : E) : Prop where
-  leading : Leading read p
   products : ∀ i < p.size,
     read (hornerPrefix p x i * x) = read (hornerPrefix p x i) * read x
   sums : ∀ i < p.size,
@@ -55,7 +54,7 @@ theorem endpoint_sign (read : E → K) (zero : read 0 = 0)
     exact data.2
   | finite x =>
     simp only [endpoint, Hex.Endpoint.signAt, Hex.EndpointSigns.ofSign]
-    rw [← polynomial_eval read zero p x data.2.1.leading data.2.1.products data.2.1.sums]
+    rw [← Ring.polynomial_eval read zero p x data.2.1.products data.2.1.sums]
     exact data.2.2
 
 /-- The same finite evaluation sign retains endpoint nonvanishing guards. -/

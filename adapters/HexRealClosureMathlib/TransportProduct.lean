@@ -43,6 +43,8 @@ multiplication processes the pair `(i,j)`. It uses the native coefficient step. 
     (((List.range p.size).take i).foldl
       (fun acc row => (List.range q.size).foldl (Hex.DensePoly.mulCoeffStep p q n row) acc) 0)
 
+namespace Guarded
+
 /-- The actual schoolbook coefficient fold transports from finitely many
 products and additions at the accumulators reached by the native loop. -/
 theorem product_coeff (read : E → K) (zero : read 0 = 0) (p q : Hex.DensePoly E)
@@ -97,10 +99,14 @@ theorem polynomial_mul (read : E → K) (zero : read 0 = 0) (p q : Hex.DensePoly
   rw [polynomial_coeff read zero, Hex.DensePoly.coeff_mul, Hex.DensePoly.coeff_mul]
   exact product_coeff read zero p q first second products sums n
 
+end Guarded
+
 /-- The accumulator reached after the first `i` steps of native Horner
 evaluation, in the executable's descending coefficient order. -/
 @[expose] def hornerPrefix (p : Hex.DensePoly E) (x : E) (i : Nat) : E :=
   (p.toArray.toList.reverse.take i).foldl (fun acc coeff => acc * x + coeff) 0
+
+namespace Guarded
 
 /-- Horner evaluation transports from scalar identities at the finite sequence
 of accumulators actually reached by the executable. -/
@@ -134,19 +140,21 @@ theorem polynomial_eval (read : E → K) (zero : read 0 = 0) (p : Hex.DensePoly 
   rw [initial] at mapped
   exact mapped
 
+end Guarded
+
 end Hex.RealClosure.Transport
 
-/-- info: 'Hex.RealClosure.Transport.product_coeff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Transport.Guarded.product_coeff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Transport.product_coeff
+#print axioms Hex.RealClosure.Transport.Guarded.product_coeff
 
-/-- info: 'Hex.RealClosure.Transport.polynomial_mul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Transport.Guarded.polynomial_mul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Transport.polynomial_mul
+#print axioms Hex.RealClosure.Transport.Guarded.polynomial_mul
 
-/-- info: 'Hex.RealClosure.Transport.polynomial_eval' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Transport.Guarded.polynomial_eval' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Transport.polynomial_eval
+#print axioms Hex.RealClosure.Transport.Guarded.polynomial_eval
 
 /-- info: 'Hex.RealClosure.Transport.foldl_read' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

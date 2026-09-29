@@ -121,8 +121,9 @@ theorem polynomial_isZero (read : E → K) (zero : read 0 = 0) (p : Hex.DensePol
   change ((polynomial read p).size == 0) = (p.size == 0)
   rw [polynomial_size read zero p leading]
 
-/-- Addition uses only the recorded scalar sums and input coefficient zero
-leading guards. No source ring laws or global arithmetic-preservation law is assumed. -/
+namespace Guarded
+
+/-- Addition uses only the recorded scalar sums and input leading guards. No source ring laws or global arithmetic-preservation law is assumed. -/
 theorem polynomial_add [Add E] [Add K] (read : E → K) (zero : read 0 = 0)
     (p q : Hex.DensePoly E)
     (first : 0 < p.size → read (p.coeff (p.size - 1)) ≠ 0)
@@ -205,6 +206,8 @@ theorem polynomial_derivative [NatCast E] [Mul E] [NatCast K] [Mul K]
     simp only [Array.getElem_map, Array.getElem_ofFn, polynomial_coeff read zero]
     exact products i (by simpa only [Array.size_map, Array.size_ofFn] using hi)
 
+end Guarded
+
 end Hex.RealClosure.Transport
 
 /-- info: 'Hex.RealClosure.Transport.polynomial_coeff' depends on axioms: [propext, Quot.sound] -/
@@ -231,25 +234,25 @@ end Hex.RealClosure.Transport
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Transport.polynomial_isZero
 
-/-- info: 'Hex.RealClosure.Transport.polynomial_add' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Transport.Guarded.polynomial_add' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Transport.polynomial_add
+#print axioms Hex.RealClosure.Transport.Guarded.polynomial_add
 
-/-- info: 'Hex.RealClosure.Transport.polynomial_sub' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Transport.Guarded.polynomial_sub' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Transport.polynomial_sub
+#print axioms Hex.RealClosure.Transport.Guarded.polynomial_sub
 
 /-- info: 'Hex.RealClosure.Transport.polynomial_leading' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Transport.polynomial_leading
 
-/-- info: 'Hex.RealClosure.Transport.polynomial_scale' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Transport.Guarded.polynomial_scale' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Transport.polynomial_scale
+#print axioms Hex.RealClosure.Transport.Guarded.polynomial_scale
 
-/-- info: 'Hex.RealClosure.Transport.polynomial_derivative' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Transport.Guarded.polynomial_derivative' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Transport.polynomial_derivative
+#print axioms Hex.RealClosure.Transport.Guarded.polynomial_derivative
 
 /-- info: 'Hex.RealClosure.Transport.polynomial_array' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

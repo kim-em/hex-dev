@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.TransportClosed
+public import HexRealClosureMathlib.TransportRegular
 public meta import HexPoly.Dense
 public meta import HexPoly.Operations
 public meta import HexPoly.Instances
@@ -45,7 +46,7 @@ example : polynomial read p = Hex.DensePoly.ofCoeffs #[1, 0, 1] := by decide +ke
 /-- Horner uses the finite reached accumulators, with no interior reflection. -/
 example : read (p.eval (Hex.DensePoly.C 3)) =
     (polynomial read p).eval (read (Hex.DensePoly.C 3)) := by
-  apply polynomial_eval read zero p (Hex.DensePoly.C 3) leading
+  apply Ring.polynomial_eval read zero p (Hex.DensePoly.C 3)
   · intro i hi
     change i < 3 at hi
     have cases : i = 0 ∨ i = 1 ∨ i = 2 := by omega
@@ -65,8 +66,24 @@ private theorem read_sub (a b : Hex.DensePoly Rat) : read (a - b) = read a - rea
   Hex.DensePoly.eval_sub_ring a b 2
 
 private theorem closed : Closed read (fun _ => True) :=
-  ⟨trivial, fun _ _ _ _ => trivial, fun _ _ _ _ => trivial, zero,
-    fun a b _ _ => read_add a b, fun a b _ _ => read_mul a b⟩
+  { zero := trivial
+    add := fun _ _ _ _ => trivial
+    mul := fun _ _ _ _ => trivial
+    sub := fun _ _ _ _ => trivial
+    one := trivial
+    natCast := fun _ => trivial
+    read_zero := zero
+    read_add := fun a b _ _ => read_add a b
+    read_mul := fun a b _ _ => read_mul a b
+    read_sub := fun a b _ _ => read_sub a b
+    read_one := by decide +kernel
+    read_natCast := fun n => by
+      cases n with
+      | zero => exact zero
+      | succ n =>
+        cases n with
+        | zero => exact Hex.DensePoly.eval_C_semiring _ _
+        | succ n => exact Hex.DensePoly.eval_C_semiring _ _ }
 
 private theorem products (a b : Hex.DensePoly (Hex.DensePoly Rat)) : Product read a b :=
   Product.of_closed read (fun _ => True) closed a b (fun _ _ => trivial) (fun _ _ => trivial)
@@ -151,5 +168,25 @@ initial quotient lose their leading coefficients at the selected root. -/
 example : Hex.SignedRemainderChain.check sign
     (polynomial read head) (polynomial read query) (chain read certificate) = true :=
   chain_check read zero (fun a => sign (read a)) sign head query certificate data accepted
+
+section Regular
+attribute [local instance 2000] Field.toGrindField
+
+/-- The Horner consumer works on the regular fractions at a fixed parameter.
+Neither its polynomial nor intermediate results need a leading guard. -/
+example {F : Type} [Field F] [DecidableEq F] (embedding : F →+* ℝ) (t : ℝ)
+    (p : Hex.DensePoly (Hex.RationalFn F)) (x : Hex.RationalFn F)
+    (coefficients : ∀ i < p.size, Hex.RealClosure.Specialize.Regular embedding t (p.coeff i))
+    (argument : Hex.RealClosure.Specialize.Regular embedding t x) :
+    Hex.RealClosure.Specialize.evalMapped embedding (p.eval x) t =
+      (polynomial (fun a => Hex.RealClosure.Specialize.evalMapped embedding a t) p).eval
+        (Hex.RealClosure.Specialize.evalMapped embedding x t) := by
+  classical
+  have data := Evaluation.of_closed _ _ (regular_closed embedding t) p x argument coefficients
+  exact Ring.polynomial_eval (fun a => Hex.RealClosure.Specialize.evalMapped embedding a t)
+    (Hex.RealClosure.Specialize.evalMapped_zero embedding t)
+    p x data.products data.sums
+
+end Regular
 
 end Hex.RealClosure.Transport.Tests
