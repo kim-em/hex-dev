@@ -158,10 +158,10 @@ The optional `Yun.check` recomputes the product and degree, checks positive
 ordered multiplicities and nonconstant monic factors, and checks squarefree and
 pairwise gcd conditions. Core lemmas extract those accepted conditions; the
 Mathlib companion transports the product to mathematical polynomials and
-proves that accepted rational factors are squarefree and pairwise coprime.
-For every field embedding of ℚ, accepted factors cover exactly the roots of
-the input, and each factor label is the multiplicity of its roots in the
-input. This includes irrational real roots after mapping to ℝ.
+proves that accepted factors over an ordered field are squarefree and pairwise
+coprime. After any field map, accepted factors cover exactly the roots of the
+input, and each factor label is the multiplicity of its roots in the input.
+This includes irrational real roots of rational inputs after mapping to ℝ.
 `Yun.map_decomposeRaw` transports the raw recurrence through a zero-reflecting
 coefficient map that preserves its arithmetic. The companion instantiates
 this theorem for cached rational selected-root coefficients; their inverse
@@ -439,6 +439,28 @@ gcd properties of the actual computation. `AlgebraicTower.lean` instantiates the
 second level's interpretation using the first level's proved operations,
 including zero reflection, sign and gcd/cofactor inversion.
 
+`AlgebraicTransport.lean` connects the actual `Element.denote` interpretation
+to finite Tarski queries and full BKR replay. For an accepted native replay over
+one algebraic level, its count for each ordered sign condition equals the
+cardinality of the corresponding ambient root set. The proof supplies all
+coefficient, sign, preprocessing, reduction, and moment interpretation facts
+from the level’s existing semantic theorems. Positive and count-one results
+supply existence and uniqueness in the ambient field. The replay context-key
+type can differ from the current level’s key type. A validated next-level
+descriptor obtains its finite interpretation package directly from the current
+level and can be checked over the ambient field with its literal replay. The
+root used by the next level realizes additional query signs in their original order;
+certificate acceptance remains an explicit premise.
+
+`AlgebraicYun.lean` specializes the coefficient interpretation to Yun's
+actual raw recurrence over an algebraic level. Mapping its factors into the
+ambient field gives the same Yun recurrence there, and the mapped result
+passes Yun's exact factorization replay. For nonzero output, its emitted
+factors cover exactly the ambient roots of the input, and each root has the factor's labelled
+multiplicity in the original polynomial. The proof uses the level's verified
+division and inverse, which require the predecessor interpretation to preserve
+division. It assumes no field laws on stored representatives.
+
 `AlgebraicValue.lean` defines the image subfield `Value ctx`, with lawful field
 and order instances inherited from the ambient field. `Element.toValue`
 preserves arithmetic and sign, is surjective, and identifies exactly the
@@ -472,6 +494,11 @@ checks the positive selected infinitesimal root in Laurent germs. It runs in
 the existing CI job. The Mathlib-free `hexrealclosure_bench` includes a functional
 `runGeneral` timing anchor for validation, packing, cancellation and inversion;
 it makes no scaling claim.
+
+`HexRealClosureMathlib.BaseTests` also executes all three stages together: a
+registered Liouville real constant, a positive infinitesimal, and a selected
+root of `Y²−(τ−5/4+ε+2)` in `(1,2)`. It checks the root's equation, interval
+signs and inverse in the constructed context.
 
 The semantic sign, inverse and quotient proofs consume the proved shared
 Tarski foundation. Their axiom guards contain only the three standard kernel

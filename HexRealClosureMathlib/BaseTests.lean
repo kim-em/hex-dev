@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.BaseContext
+public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
 public import HexOrderedFnMathlib.LiouvilleTests
@@ -64,6 +65,23 @@ private abbrev realContext (version : Nat) := Context.real
 private def positive : Element (realContext 1) := ⟨OrderedFn.LiouvilleCoreTests.positive.val⟩
 private abbrev mixed := (realContext 1).infinitesimal
 private def epsilon : Element mixed := Element.infinitesimal (realContext 1)
+
+/-- The complete stage order supports a selected algebraic root whose
+coefficient uses both a registered real constant and an infinitesimal. -/
+private def stagedRoot : Option (Array Int) := do
+  let coefficient : Element mixed := positive.embed + epsilon + 2
+  let y : DensePoly (Element mixed) := DensePoly.ofCoeffs #[0, 1]
+  let p := y * y - DensePoly.C coefficient
+  let d ← SignDet.Descriptor.validate Element.sign mixed.signature
+    { context := mixed.signature, head := p, lower := .finite 1,
+      upper := .finite 2, indices := [], signs := [] }
+  let context := mixed.adjoin d
+  let root := Algebraic.Element.ofPoly (context := context) y
+  let target := Algebraic.Element.ofCoeff (context := context) coefficient
+  return #[root.sign, (root * root - target).sign, (root - 1).sign,
+    (root - 2).sign, (root⁻¹).sign, (root * root⁻¹ - 1).sign]
+
+#guard stagedRoot == some #[1, 0, 1, -1, 1, 0]
 
 private theorem source_correct (version : Nat) :
     ApproximationCorrect (Rat.castHom ℝ) (liouvilleNumber 2)
