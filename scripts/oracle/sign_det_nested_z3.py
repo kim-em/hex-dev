@@ -23,34 +23,46 @@ def check_record(record):
     depth = row["extensionDepth"]
     require(type(depth) is int and 1 <= depth <= 4 and
             record.get("case") == f"nested-field/depth-{depth}", "wrong field depth")
-    for key, expected in (("headDegree", 2), ("queries", 2), ("realizedSupport", 2)):
-        require(type(row.get(key)) is int and row[key] == expected, "wrong input dimensions")
     require(row.get("family") == "nested-infinitesimal-coefficients", "wrong field family")
-    require(all(row.get(key) is True for key in
-                ("reduced", "unreduced", "fullReference", "foreignContextRejected", "staleChildRejected")),
-            "native conformance or stale-evidence rejection failed")
-    raw = row["input"]
-    require(len(raw["coefficientContext"]["levels"]) == depth, "coefficient depth differs")
-    oracle = RCF(raw["coefficientContext"], maximum_depth=4)
-    g = oracle.zero
-    for epsilon in oracle.levels:
-        g = g + epsilon
+    require(row.get("zeroDomainRejected") is True, "depth-zero domain was accepted")
+    context = row["coefficientContext"]
+    require(len(context["levels"]) == depth, "coefficient depth differs")
+    oracle = RCF(context, maximum_depth=4)
+    result = row["result"]
+    require(result.get("status") == "ok", "native construction failed")
+    require(type(result.get("generatorSign")) is int and result["generatorSign"] == 1,
+            "wrong nested generator sign")
+    require(result.get("foreignChildValid") is True, "foreign-head leaf is not valid on its own head")
+    g = oracle.levels[0] - oracle.levels[0]*oracle.levels[0]
+    for epsilon in oracle.levels[1:]:
+        g = g - epsilon
+    raw = result["input"]
     require(g > 0 and oracle.poly(raw["head"]) == [-g*g, oracle.zero, oracle.one] and
             [oracle.poly(q) for q in raw["queries"]] ==
             [[oracle.zero, oracle.one], [-g, oracle.one]], "wrong literal nested-field inputs")
-    require(isinstance(row["table"], list) and all(
-        isinstance(pair, list) and len(pair) == 2 and sign_vector(pair[0], 2) and
-        type(pair[1]) is int and pair[1] > 0 for pair in row["table"]), "malformed sign table")
     data = {"head": raw["head"], "queries": raw["queries"], "lower": "-inf", "upper": "+inf"}
     expected = oracle.table(data)
-    require(expected is not None and row["table"] ==
-            [[entry["signs"], entry["count"]] for entry in expected],
-            "table differs from independent exact roots and signs")
+    require(expected is not None, "independent oracle rejected the root domain")
+    expected = [[entry["signs"], entry["count"]] for entry in expected]
+    for name in ("reduced", "direct", "reference"):
+        mode = result[name]
+        require(mode.get("status") == "ok" and mode.get("replay") is True,
+                "native table construction or replay failed")
+        require(isinstance(mode["table"], list) and all(
+            isinstance(pair, list) and len(pair) == 2 and sign_vector(pair[0], 2) and
+            type(pair[1]) is int and pair[1] > 0 for pair in mode["table"]), "malformed sign table")
+        require(mode["table"] == expected, "table differs from independent exact roots and signs")
+        if name != "reference":
+            require(mode.get("graphReplay") is True and mode.get("leafLayout") is True,
+                    "graph replay or leaf-layout check failed")
+            require(all(mode.get(key) is False for key in
+                        ("foreignContextReplay", "staleChildReplay", "copiedHeadReplay", "missingSupportReplay")),
+                    "stale or incomplete evidence was accepted")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("source", nargs="?", type=Path, default=DEFAULT_FIXTURE)
+    parser.add_argument("source", nargs="?", type=Path)
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--profile", choices=("ci", "local"), default="ci")
     parser.add_argument("--seed", type=int, default=10377)
@@ -60,7 +72,7 @@ def main():
         check_version()
         seen = []
         failed = 0
-        for record in read_fixtures(args.source):
+        for record in read_fixtures(args.source or (DEFAULT_FIXTURE if args.check else None)):
             try:
                 check_record(record)
                 seen.append(record["case"])

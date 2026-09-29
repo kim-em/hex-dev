@@ -1101,7 +1101,7 @@ lean_lib HexConformance where
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
-    ++ #[`HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.FastCheck, `HexSignDet.Infinitesimal, `HexSignDetMathlib.Conformance, `HexSignDetMathlib.RootSemantics,
+    ++ #[`HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.FastCheck, `HexSignDet.Infinitesimal, `HexSignDet.EmitNestedFields, `HexSignDetMathlib.Conformance, `HexSignDetMathlib.RootSemantics,
       `HexSignDetMathlib.SelectedProducerConformance,
       `HexSignDetMathlib.CompletionConformance,
       `HexSignDetMathlib.QueryHandleConformance,
@@ -1451,6 +1451,10 @@ lean_exe hexsigndet_emit_fixtures where
   srcDir := "conformance"
   root := `HexSignDet.EmitFixtures
 
+lean_exe hexsigndet_emit_nested_fields where
+  srcDir := "conformance"
+  root := `HexSignDet.EmitNestedFields
+
 lean_exe hexsigndet_emit_infinitesimal where
   srcDir := "conformance"
   root := `HexSignDet.EmitInfinitesimal
@@ -1728,12 +1732,7 @@ lean_exe hexsigndet_bench where
 lean_lib HexSignDetBenchSupport where
   srcDir := "bench"
   globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
-    .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint,
-    .one `HexSignDet.Nested]
-
-lean_exe hexsigndet_nested_conformance where
-  srcDir := "bench"
-  root := `HexSignDet.Nested
+    .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint]
 
 lean_exe hexsturm_bench where
   srcDir := "bench"

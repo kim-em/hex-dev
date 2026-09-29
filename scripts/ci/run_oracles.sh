@@ -61,7 +61,7 @@ ORACLES=(
   "HexRealAlgebraic|hexrealalgebraic_emit_fixtures|scripts/oracle/real_algebraic_flint.py|conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl"
   # Pinned Z3 RCF, exact nested-infinitesimal roots
   "HexSignDet|hexsigndet_emit_infinitesimal|scripts/oracle/sign_det_z3.py|conformance-fixtures/HexSignDet/infinitesimal.jsonl"
-  "HexSignDet|hexsigndet_nested_conformance|scripts/oracle/sign_det_nested_z3.py|conformance-fixtures/HexSignDet/nested-fields.jsonl"
+  "HexSignDet|hexsigndet_emit_nested_fields|scripts/oracle/sign_det_nested_z3.py|conformance-fixtures/HexSignDet/nested-fields.jsonl"
   "HexOrderedFn|hexorderedfn_emit_fixtures|scripts/oracle/ordered_fn_z3.py|conformance-fixtures/HexOrderedFn/infinitesimal.jsonl"
   "HexOrderedFn|hexorderedfn_emit_real_fixtures|scripts/oracle/ordered_fn_real.py|conformance-fixtures/HexOrderedFn/real.jsonl"
   # SymPy backed
