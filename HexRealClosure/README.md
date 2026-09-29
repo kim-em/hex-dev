@@ -471,5 +471,15 @@ completion and absent factor domains remain explicit internal errors.
 actual recursive output for all remaining factors. No companion theorem is a
 constructor argument. The default native tests exercise zero, positive and
 negative constants, a pure power and mixed roots with multiplicity gaps and a
-negative leading scalar. This stage has not yet proved original multiplicity
-correspondence or assembled a globally ordered, total `RootSet`.
+negative leading scalar.
+
+The companion's `factorEntries_spec` ties every emitted root and label to the
+actual factor input. `factorEntries_multiplicity` and `factorEntries_complete`
+transport the actual raw Yun result into a characteristic-zero field and prove
+exact labels and coverage. They require coefficient-operation preservation
+and zero reflection; the executable coefficient type needs no field instance.
+`assemble_spec` composes these results with zero extraction: a successful finite
+output represents exactly the original polynomial's roots with their original
+positive multiplicities. `assemble_all` proves the separate all-roots result
+occurs exactly for semantic zero. Duplicate-free output, global ordering and
+producer totality remain separate obligations before a complete `RootSet`.

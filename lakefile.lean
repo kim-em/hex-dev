@@ -611,7 +611,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.BisectionRoots, `HexRealClosureMathlib.BisectionFrontier,
     `HexRealClosureMathlib.BisectionCounts, `HexRealClosureMathlib.Isolation,
     `HexRealClosureMathlib.BisectionFactor, `HexRealClosureMathlib.IsolationFactor,
-    `HexRealClosureMathlib.ZeroFactor, `HexRealClosureMathlib.IsolationRoots, `HexRealClosureMathlib.RootOrder].map Glob.one
+    `HexRealClosureMathlib.ZeroFactor, `HexRealClosureMathlib.IsolationRoots, `HexRealClosureMathlib.RootOrder, `HexRealClosureMathlib.RootFactors].map Glob.one
 
 lean_exe hexrealclosure_root_order_tests where
   root := `HexRealClosure.RootOrderTests
