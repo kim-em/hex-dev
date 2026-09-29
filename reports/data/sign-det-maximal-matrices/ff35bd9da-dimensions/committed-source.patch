@@ -1,0 +1,251 @@
+diff --git a/bench/HexSignDet/Bench.lean b/bench/HexSignDet/Bench.lean
+index 61058dc6b..5f203610f 100644
+--- a/bench/HexSignDet/Bench.lean
++++ b/bench/HexSignDet/Bench.lean
+@@ -330,0 +331 @@ def main (args : List String) : IO UInt32 :=
++  else if args == ["inspect-maximal-matrix-dimensions"] then Hex.SignDetBench.MaximalMatrix.inspectDimension
+diff --git a/bench/HexSignDet/MaximalMatrix.lean b/bench/HexSignDet/MaximalMatrix.lean
+index 2a61320f3..bff639339 100644
+--- a/bench/HexSignDet/MaximalMatrix.lean
++++ b/bench/HexSignDet/MaximalMatrix.lean
+@@ -89,0 +90,38 @@ setup_benchmark runCheck s => 27^s
++/-- Prepare the same full system by its literal matrix dimension. Unsupported
++sizes return `none`; scientific inspection validates every scheduled input. -/
++def dimensionInput (r : Nat) : Option Input := do
++  let s ← #[1, 2, 3, 4, 5, 6].find? (fun s => 3^s == r)
++  input s
++
++/-- The existing complete solver, with matrix dimension as the parameter. -/
++@[noinline] def runSolveDimension (i : Option Input) : Option UInt64 := runSolve i
++
++/-- The existing literal checker, with matrix dimension as the parameter. -/
++@[noinline] def runCheckDimension (i : Option Input) : Bool := runCheck i
++
++-- Declared cost-model: Θ(r^3) coefficient operations, the same dense inverse identity plus Gauss-Jordan solve.
++setup_benchmark runSolveDimension r => r^3
++  with prep := dimensionInput
++  where {
++    paramSchedule := .custom #[3, 9, 27, 81, 243, 729]
++    paramFloor := 3
++    paramCeiling := 729
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 180
++  }
++
++-- Declared cost-model: Θ(r^3) integer coefficient operations, the same dense scaled-inverse identity check.
++setup_benchmark runCheckDimension r => r^3
++  with prep := dimensionInput
++  where {
++    paramSchedule := .custom #[3, 9, 27, 81, 243, 729]
++    paramFloor := 3
++    paramCeiling := 729
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 180
++  }
++
+@@ -95,2 +133,2 @@ reference producer on the existing maximal-support interpolation family. -/
+-def inspect : IO UInt32 := do
+-  for s in #[1, 2, 3, 4, 5] do
++private def inspectFor (arities : Array Nat) : IO UInt32 := do
++  for s in arities do
+@@ -130,0 +169,6 @@ def inspect : IO UInt32 := do
++/-- Inspect the original query-count schedule. -/
++def inspect : IO UInt32 := inspectFor #[1, 2, 3, 4, 5]
++
++/-- Inspect every matrix-dimension input, including the 729-column system. -/
++def inspectDimension : IO UInt32 := inspectFor #[1, 2, 3, 4, 5, 6]
++
+diff --git a/reports/sign-det-maximal-matrices.md b/reports/sign-det-maximal-matrices.md
+index d3738d773..11285d1f4 100644
+--- a/reports/sign-det-maximal-matrices.md
++++ b/reports/sign-det-maximal-matrices.md
+@@ -53,0 +54,33 @@ by compilation, fixture equality or a successful smoke check.
++## Matrix dimension as the parameter
++
++The `runSolveDimension` and `runCheckDimension` registrations call the same
++solver and checker, preparing the same complete ternary systems. Their
++parameter is the literal matrix dimension `r`, with schedule
++`3,9,27,81,243,729` and corresponding query counts `1,…,6`. The declared
++law is the same `Θ(r³)` arithmetic-operation bound. Each registration retains
++six trial-major rounds, a 100 ms repeat target and a 180 s operational timeout.
++Preparation and untimed validation remain outside each callback.
++
++This parameter gives the fitter a substantial logarithmic range, including
++after its fixed warmup fraction. It does not make integer/rational bit costs
++constant, establish general Tarski-query complexity or guarantee a conclusive
++verdict. The original query-count registrations and archived observations
++remain separate. No original sample is relabelled or removed.
++
++Use `inspect-maximal-matrix-dimensions` to verify all six inputs. Literal
++inverse identities, multiplicities, moment values and sizes are checked for
++every dimension; the independent polynomial-moment comparison remains limited
++to query counts one through three. The dimension-parameter collector validates
++72 expected samples and the actual row/column dimension associated with every
++raw parameter:
++
++```sh
++python3 scripts/bench/sign_det_maximal_matrix.py --parameter matrix-size \
++  --output /absolute/path/outside/the/repository/matrix-dimensions
++```
++
++The collector's default `--parameter queries` preserves validation of the
++original schedule and its `27^s` declaration. The dimension mode records schema
++v2, its parameter choice and the `r^3` declaration. It introduces no new
++matrix implementation, query primitive or CI job.
++
+diff --git a/scripts/bench/sign_det_maximal_matrix.py b/scripts/bench/sign_det_maximal_matrix.py
+index 4b4e01c74..213260416 100644
+--- a/scripts/bench/sign_det_maximal_matrix.py
++++ b/scripts/bench/sign_det_maximal_matrix.py
+@@ -26,0 +27,2 @@ PARAMS = [1, 2, 3, 4, 5]
++DIMENSION_ARITIES = [1, 2, 3, 4, 5, 6]
++DIMENSION_PARAMS = [3**s for s in DIMENSION_ARITIES]
+@@ -38 +40,10 @@ CONFIG = {"param_floor": 1, "param_ceiling": 5, "outer_trials": TRIALS,
+-def validate_inventory(path):
++def sweep_settings(by_dimension):
++    if not by_dimension:
++        return PARAMS, KEYS, CONFIG, "27^s"
++    config = {**CONFIG, "param_floor": 3, "param_ceiling": 729,
++              "param_schedule": {"kind": "custom", "params": DIMENSION_PARAMS}}
++    keys = {"runSolveDimension": "solveResultHash", "runCheckDimension": "checkResultHash"}
++    return DIMENSION_PARAMS, keys, config, "r^3"
++
++
++def validate_inventory(path, *, by_dimension=False):
+@@ -40 +51,2 @@ def validate_inventory(path):
+-    if [r.get("queries") for r in rows] != PARAMS:
++    arities = DIMENSION_ARITIES if by_dimension else PARAMS
++    if [r.get("queries") for r in rows] != arities:
+@@ -42 +54 @@ def validate_inventory(path):
+-    for row, s in zip(rows, PARAMS, strict=True):
++    for row, s in zip(rows, arities, strict=True):
+@@ -55 +67 @@ def validate_inventory(path):
+-    return {r["queries"]: r for r in rows}
++    return {r["matrixSize"] if by_dimension else r["queries"]: r for r in rows}
+@@ -58 +70,2 @@ def validate_inventory(path):
+-def validate_export(path, name, expected, revision):
++def validate_export(path, name, expected, revision, *, by_dimension=False):
++    params, keys, config, formula = sweep_settings(by_dimension)
+@@ -69 +82 @@ def validate_export(path, name, expected, revision):
+-           for k, v in CONFIG.items()):
++           for k, v in config.items()):
+@@ -71 +84 @@ def validate_export(path, name, expected, revision):
+-    if r["complexity_formula"].replace(" ", "") != "27^s":
++    if r["complexity_formula"].replace(" ", "") != formula:
+@@ -75 +88 @@ def validate_export(path, name, expected, revision):
+-            (trial, s) for trial in range(TRIALS) for s in PARAMS]:
++            (trial, s) for trial in range(TRIALS) for s in params]:
+@@ -80 +93 @@ def validate_export(path, name, expected, revision):
+-        if (p["status"] != "ok" or p["result_hash"] != hex(expected[p["param"]][KEYS[name]]) or
++        if (p["status"] != "ok" or p["result_hash"] != hex(expected[p["param"]][keys[name]]) or
+@@ -95 +108,2 @@ def validate_export(path, name, expected, revision):
+-def collect(run, out, expected, revision):
++def collect(run, out, expected, revision, *, by_dimension=False):
++    _, keys, _, _ = sweep_settings(by_dimension)
+@@ -97 +111 @@ def collect(run, out, expected, revision):
+-               for name in KEYS]
++               for name in keys]
+@@ -103 +117 @@ def collect(run, out, expected, revision):
+-            summary["observations"][name] = validate_export(out/(name+".json"), name, expected, revision)
++            summary["observations"][name] = validate_export(out/(name+".json"), name, expected, revision, by_dimension=by_dimension)
+@@ -123,0 +138 @@ def main():
++    parser.add_argument("--parameter", choices=("queries", "matrix-size"), default="queries")
+@@ -124,0 +140 @@ def main():
++    by_dimension = args.parameter == "matrix-size"
+@@ -143 +159,3 @@ def main():
+-    metadata = {"schema": "hex-sign-det-maximal-matrix-timing-v1", "revision": revision,
++    metadata = {"schema": ("hex-sign-det-maximal-matrix-timing-v2" if by_dimension else
++                           "hex-sign-det-maximal-matrix-timing-v1"),
++                "parameter": args.parameter, "revision": revision,
+@@ -168 +186,2 @@ def main():
+-        if run("inventory", ["inspect-maximal-matrices"]):
++        if run("inventory", ["inspect-maximal-matrix-dimensions" if by_dimension else
++                             "inspect-maximal-matrices"]):
+@@ -170,2 +189,2 @@ def main():
+-        expected = validate_inventory(out/"inventory.log")
+-        summary = collect(run, out, expected, revision)
++        expected = validate_inventory(out/"inventory.log", by_dimension=by_dimension)
++        summary = collect(run, out, expected, revision, by_dimension=by_dimension)
+@@ -182 +201 @@ def main():
+-        metadata.update(state="complete", scientific_samples=2*TRIALS*len(PARAMS))
++        metadata.update(state="complete", scientific_samples=2*TRIALS*len(sweep_settings(by_dimension)[0]))
+diff --git a/scripts/bench/test_sign_det_maximal_matrix.py b/scripts/bench/test_sign_det_maximal_matrix.py
+index 61a1f6bc2..66e2f45e6 100644
+--- a/scripts/bench/test_sign_det_maximal_matrix.py
++++ b/scripts/bench/test_sign_det_maximal_matrix.py
+@@ -224,0 +225,71 @@ class MatrixEvidenceTests(unittest.TestCase):
++class DimensionEvidenceTests(unittest.TestCase):
++    def setUp(self):
++        self.rows = [{"queries": s, "matrixSize": 3**s, "supportSize": 3**s,
++                      "countSum": 3**s, "inverseIdentityScalarPairs": 27**s,
++                      "inverseBits": s+1, "denominatorBits": s+1,
++                      "valuesBits": (3**s).bit_length(),
++                      "matchesPolynomialSystem": True if s <= 3 else None,
++                      "inputHash": s, "solveResultHash": 100+s, "checkResultHash": 11}
++                     for s in range(1, 7)]
++        self.expected = {r["matrixSize"]: r for r in self.rows}
++        params, _, config, formula = bench.sweep_settings(True)
++        self.result = {"function": bench.PREFIX+"runSolveDimension", "kind": "parametric",
++                       "hashable": True, "budget_truncated": False,
++                       "env": {"git_commit": "source", "git_dirty": False},
++                       "config": copy.deepcopy(config), "complexity_formula": formula,
++                       "verdict": "inconclusive", "slope": 0.3, "c_min": 1, "c_max": 2,
++                       "advisories": [], "points": [
++                           {"trial_index": t, "param": r, "status": "ok",
++                            "result_hash": hex(self.expected[r]["solveResultHash"]),
++                            "part_of_verdict": True, "below_signal_floor": False,
++                            "per_call_nanos": 1000+r, "inner_repeats": 100,
++                            "peak_rss_kb": 1024, "alloc_bytes": None}
++                           for t in range(6) for r in params]}
++
++    def inventory(self, rows):
++        with TemporaryDirectory() as d:
++            p = Path(d)/"inventory.jsonl"
++            p.write_text("".join(json.dumps(r)+"\n" for r in rows))
++            return bench.validate_inventory(p, by_dimension=True)
++
++    def export(self, result):
++        with TemporaryDirectory() as d:
++            p = Path(d)/"result.json"
++            p.write_text(json.dumps({"export_schema_version": 1, "results": [result]}))
++            return bench.validate_export(p, "runSolveDimension", self.expected, "source",
++                                         by_dimension=True)
++
++    def test_natural_dimension_records(self):
++        self.assertEqual(self.inventory(self.rows), self.expected)
++        self.assertEqual(self.export(self.result)["verdict"], "inconclusive")
++        self.assertEqual(sorted(self.expected), [3, 9, 27, 81, 243, 729])
++
++    def test_query_counts_cannot_replace_dimensions(self):
++        result = copy.deepcopy(self.result)
++        for p in result["points"]:
++            p["param"] = self.expected[p["param"]]["queries"]
++        with self.assertRaises(ValueError):
++            self.export(result)
++        rows = copy.deepcopy(self.rows)
++        rows[0]["queries"] = rows[0]["matrixSize"]
++        with self.assertRaises(ValueError):
++            self.inventory(rows)
++
++    def test_missing_largest_system(self):
++        with self.assertRaises(ValueError):
++            self.inventory(self.rows[:-1])
++        result = copy.deepcopy(self.result)
++        result["points"] = [p for p in result["points"] if p["param"] != 729]
++        with self.assertRaises(ValueError):
++            self.export(result)
++
++    def test_legacy_model_or_registration_rejected(self):
++        for key, value in (("complexity_formula", "27^s"),
++                           ("function", bench.PREFIX+"runSolve"),
++                           ("config", bench.CONFIG)):
++            result = copy.deepcopy(self.result)
++            result[key] = value
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                self.export(result)
++
++

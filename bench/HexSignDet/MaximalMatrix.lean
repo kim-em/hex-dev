@@ -87,13 +87,51 @@ setup_benchmark runCheck s => 27^s
     maxSecondsPerCall := 180
   }
 
+/-- Prepare the same full system by its literal matrix dimension. Unsupported
+sizes return `none`; scientific inspection validates every scheduled input. -/
+def dimensionInput (r : Nat) : Option Input := do
+  let s ← #[1, 2, 3, 4, 5, 6].find? (fun s => 3^s == r)
+  input s
+
+/-- The existing complete solver, with matrix dimension as the parameter. -/
+@[noinline] def runSolveDimension (i : Option Input) : Option UInt64 := runSolve i
+
+/-- The existing literal checker, with matrix dimension as the parameter. -/
+@[noinline] def runCheckDimension (i : Option Input) : Bool := runCheck i
+
+-- Declared cost-model: Θ(r^3) coefficient operations, the same dense inverse identity plus Gauss-Jordan solve.
+setup_benchmark runSolveDimension r => r^3
+  with prep := dimensionInput
+  where {
+    paramSchedule := .custom #[3, 9, 27, 81, 243, 729]
+    paramFloor := 3
+    paramCeiling := 729
+    outerTrials := 6
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 180
+  }
+
+-- Declared cost-model: Θ(r^3) integer coefficient operations, the same dense scaled-inverse identity check.
+setup_benchmark runCheckDimension r => r^3
+  with prep := dimensionInput
+  where {
+    paramSchedule := .custom #[3, 9, 27, 81, 243, 729]
+    paramFloor := 3
+    paramCeiling := 729
+    outerTrials := 6
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 180
+  }
+
 private def bits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
 
 /-- Untimed dimensions, output checks and literal witness sizes. For the
 first three inputs, compare the complete system with the actual polynomial
 reference producer on the existing maximal-support interpolation family. -/
-def inspect : IO UInt32 := do
-  for s in #[1, 2, 3, 4, 5] do
+private def inspectFor (arities : Array Nat) : IO UInt32 := do
+  for s in arities do
     let .ok i := build s | throw (IO.userError s!"invalid maximal matrix input {s}")
     let expected := (words [-1, 0, 1] s).map fun word => (word, (1 : Int))
     unless runSolve (some i) == some (hash expected) && runCheck (some i) do
@@ -127,5 +165,11 @@ def inspect : IO UInt32 := do
       ("checkResultHash", Lean.toJson (hash true).toNat)]).compress
     (← IO.getStdout).flush
   return 0
+
+/-- Inspect the original query-count schedule. -/
+def inspect : IO UInt32 := inspectFor #[1, 2, 3, 4, 5]
+
+/-- Inspect every matrix-dimension input, including the 729-column system. -/
+def inspectDimension : IO UInt32 := inspectFor #[1, 2, 3, 4, 5, 6]
 
 end Hex.SignDetBench.MaximalMatrix

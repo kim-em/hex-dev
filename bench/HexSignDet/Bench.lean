@@ -328,6 +328,7 @@ def main (args : List String) : IO UInt32 :=
   else if args == ["inspect-height-phases"] then Hex.SignDetBench.Height.inspectPhases
   else if args == ["inspect-maximal"] then Hex.SignDetBench.inspectMaximal
   else if args == ["inspect-maximal-matrices"] then Hex.SignDetBench.MaximalMatrix.inspect
+  else if args == ["inspect-maximal-matrix-dimensions"] then Hex.SignDetBench.MaximalMatrix.inspectDimension
   else if args == ["inspect-joint"] then Hex.SignDetBench.Joint.inspect #[3, 7, 15, 31, 63]
   else if let ["inspect-joint", degree] := args then
     match degree.toNat? with
@@ -339,6 +340,12 @@ def main (args : List String) : IO UInt32 :=
     | some n => Hex.SignDetBench.Joint.inspectTimings #[n]
     | none => throw (IO.userError "expected an odd integer degree at least three")
   else if args == ["inspect-full"] then Hex.SignDetBench.inspectFull
+  else if let ["inspect-full", arity] := args then
+    match arity.toNat? with
+    | some s =>
+      if 1 ≤ s && s ≤ 6 then Hex.SignDetBench.inspectFullFor #[s]
+      else throw (IO.userError "expected a query count from one through six")
+    | none => throw (IO.userError "expected a query count from one through six")
   else if let ["paired-small", path] := args then
     Hex.SignDetBench.paired ``Hex.SignDetBench.runSmallReduced ``Hex.SignDetBench.runSmallFull path
   else if let ["paired-joint-production", path] := args then

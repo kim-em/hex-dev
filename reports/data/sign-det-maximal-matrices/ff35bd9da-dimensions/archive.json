@@ -1,0 +1,27 @@
+{
+  "cpu": 41,
+  "files": {
+    "committed-source.patch": "4d9e48b2ccfddb4e280e5d54ee479cb6dc515d5dbd1672024d8e264cd329d2f7",
+    "inventory.log": "2606ee5f772c55efcfaf9ac561a7034ab3426800ba11f001e80b3e7e7b9898c0",
+    "inventory.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "metadata.json": "8c0b01b124c68e966d7a01ba20bcd820a92f3e5189d69bd2aa8cc24ad37f3bb2",
+    "runCheckDimension.json": "65dcca1de03be95d887fd1049b653c806b17de3d5c0f6febc348844eb04705ee",
+    "runCheckDimension.log": "f70cab87a2c75ab34e2a71d2ce0a608844c733aaeaf46ef6923a14b18045ef40",
+    "runCheckDimension.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runSolveDimension.json": "203c05c2f7fbfba72120cdcaafda661b2261e0bc5586740c782899e7a28a430d",
+    "runSolveDimension.log": "510ca749ebb697bd0592733d87b2ee4c5273cc9673e8e0bc8590e3a10edec2bf",
+    "runSolveDimension.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "summary.json": "ef8184591c5473a7706f462ea0555e46403ff0ce56114112056cb7001d1b7221",
+    "table.json": "40d80ae6bac99a24d0ad6ee22f073fa02fc9008cacbba47c4993aeb4b880b32c"
+  },
+  "reconstruction": [
+    "git checkout 69c2c363f9789e497f5106cf65756253b420809b",
+    "git apply --unidiff-zero committed-source.patch"
+  ],
+  "reconstruction_scope": "All 257 paths recorded in metadata.json source_sha256; not the entire measured repository tree.",
+  "revision": "ff35bd9daacfca51b62f931d5b6d7afd9e143614",
+  "schema": "hex-sign-det-maximal-matrix-dimension-archive-v1",
+  "scientific_samples": 72,
+  "source_base": "69c2c363f9789e497f5106cf65756253b420809b",
+  "source_hashes_verified": 257
+}

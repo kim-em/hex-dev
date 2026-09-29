@@ -18,7 +18,7 @@ implements a new query kernel.
 Untimed input inspection compares the entire system with the polynomial
 reference producer on the
 existing maximal-support interpolation family for `s=1,2,3`. No polynomial
-comparison is claimed at `s=4,5`; their larger matrices represent the same complete
+comparison is claimed at `s=4,5,6`; their larger matrices represent the same complete
 finite moment problem. The independent part of this comparison is that the
 Tarski-query moments equal the finite observation sums, in the same row and column
 order. Both paths use `solveSystem`, so matching inverse witnesses are a consistency
@@ -50,6 +50,115 @@ an operational 180 s child timeout. The shared harness gives each operation its
 own verdict. The timeout is not a scientific absolute performance budget.
 An inconclusive observation remains an outstanding gate; it is never promoted
 by compilation, fixture equality or a successful smoke check.
+
+## Matrix dimension as the parameter
+
+The `runSolveDimension` and `runCheckDimension` registrations call the same
+solver and checker, preparing the same complete ternary systems. Their
+parameter is the literal matrix dimension `r`, with schedule
+`3,9,27,81,243,729` and corresponding query counts `1,…,6`. The declared
+law is the same `Θ(r³)` arithmetic-operation bound. Each registration retains
+six trial-major rounds, a 100 ms repeat target and a 180 s operational timeout.
+Preparation and untimed validation remain outside each callback.
+
+This parameter gives the fitter a substantial logarithmic range, including
+after its fixed warmup fraction. It does not make integer/rational bit costs
+constant, establish general Tarski-query complexity or guarantee a conclusive
+verdict. The original query-count registrations and archived observations
+remain separate. No original sample is relabelled or removed.
+
+Use `inspect-maximal-matrix-dimensions` to verify all six inputs. Literal
+inverse identities, multiplicities, moment values and sizes are checked for
+every dimension; the independent polynomial-moment comparison remains limited
+to query counts one through three. The dimension-parameter collector validates
+72 expected samples, the fixed raw parameter schedule and the corresponding
+untimed row/column dimensions:
+
+```sh
+python3 scripts/bench/sign_det_maximal_matrix.py --parameter matrix-size \
+  --output /absolute/path/outside/the/repository/matrix-dimensions
+```
+
+The collector's default `--parameter queries` preserves validation of the
+original schedule and its `27^s` declaration. The dimension mode records schema
+v2, its parameter choice and the `r^3` declaration. It introduces no new
+matrix implementation, query primitive or CI job.
+
+## Retained dimension-parameter collection
+
+The [dimension collection](data/sign-det-maximal-matrices/ff35bd9da-dimensions/metadata.json)
+contains all 72 completed samples from clean source
+`ff35bd9daacfca51b62f931d5b6d7afd9e143614` on `chungus2`, leased CPU 41.
+Both arms pass schedule, exact-result, timing and provenance validation.
+Source, executable and pinned harness bindings agree before and after
+collection. All 257 recorded source hashes were checked against the measured
+revision. The [source archive](data/sign-det-maximal-matrices/ff35bd9da-dimensions/archive.json)
+reconstructs all 257 recorded source files from main ancestor
+`69c2c363f9789e497f5106cf65756253b420809b`; the measured commit need not
+survive the squash merge. The archive retains every export and child log,
+including the untimed inventory.
+
+| Matrix size | Queries | Solve median (ms) | Check median (ms) |
+| ---: | ---: | ---: | ---: |
+| 3 | 1 | 0.016546 | 0.002246 |
+| 9 | 2 | 0.270661 | 0.021804 |
+| 27 | 3 | 4.627596 | 0.253301 |
+| 81 | 4 | 80.826140 | 3.252235 |
+| 243 | 5 | 1449.698225 | 51.440856 |
+| 729 | 6 | 26580.263278 | 991.465444 |
+
+The fitter drops one leading parameter under its unchanged warmup setting.
+It fits the normalized ratios `time/r³` over `r=9,…,729`, with sufficient
+logarithmic span. Both verdicts remain **inconclusive**: solve has normalized
+slope `−0.384273` and ratio range `68.608306…371.276430` ns; check has slope
+`−0.563903` and range `2.559146…29.910025` ns. These slopes describe the
+normalized ratios, not the unnormalized timing exponent. Both exceed the
+fixed `0.15` tolerance in the faster-than-declared direction. Parameterizing
+by `r` allows the slope fit to run; size 729 is the only additional system.
+This does not establish the cubic wall-time gate or show that the checker
+has reached its asymptotic timing regime. The [summary](data/sign-det-maximal-matrices/ff35bd9da-dimensions/summary.json)
+reports no validation errors. The collector returned exit status 1 for the
+inconclusive verdicts; the archived metadata records only the child exit
+statuses, which are all zero. Once metadata exists, current collectors retain their own returned exit
+code: 2 for failures, 1 for inconclusive observations and 130 for interrupts. No samples failed or were omitted.
+
+At size 729, median process peak RSS is 119.785 MiB for solve and 119.406 MiB
+for check. These observations include input preparation and process startup;
+they are not allocation counts or isolated callback memory. All allocation
+counters remain absent. Smaller sizes use repeated inner calls; solve uses
+one call per sample at sizes 81 and above, while check uses one at sizes 243
+and 729. The [table data](data/sign-det-maximal-matrices/ff35bd9da-dimensions/table.json)
+retains timing and resident-set medians for all six sizes.
+
+The earlier one-column elimination inventory already identifies a more
+specific count: `4(18^s−9^s)` rational multiply/add pairs in row additions,
+alongside the `27^s` integer pairs in the dense check. The [size-729 one-column inspection](data/sign-det-maximal-matrices/elimination-3042b0016/metadata.json)
+counts 91,854 nonzero multipliers. The source structure implies 183,708
+row additions and 133,923,132 rational multiply/add pairs. The inspection verifies each pivot and the final literal
+inverse against `inverse?`, using the existing inspection algorithm. The
+[source archive](data/sign-det-maximal-matrices/elimination-3042b0016/archive.json)
+retains the recorded sources and output; this is untimed evidence, separate from
+the scientific collection. The row-addition term
+alone has growth `r^(log₃ 18)`, approximately `r^2.631`. Its dominant `18^s`
+term would give normalized slope `log₃ 18−3 ≈ −0.369`, close to the observed
+solve slope. Thus the known operation mix predicts a substantial downward
+trend in `time/r³` while rational elimination dominates. A wider range alone
+is not a justified remedy for the complete-solve fit.
+
+Subtracting the separately timed check medians from the solve medians gives
+about 197, 191 and 191 ns per source-derived rational row-addition pair at query
+counts four, five and six. This comparison is not a direct phase timer: the
+processes differ and the residual includes other solve work. The profile at
+size 243 independently identifies elimination as the dominant phase there;
+it does not establish attribution at every size or an exact timing law.
+
+No model, fit setting or completed sample was changed after this observation,
+and no unchanged rerun was used. The complete operation still executes its
+cubic integer check. A phase-specific registration would need its own source
+derivation and collection; the existing two-sided cubic timing gate remains
+outstanding. The check also needs evidence for its asymptotic timing regime,
+not merely sufficient logarithmic span for a fit. General bit-cost analysis
+and the remaining Phase-4 obligations are still outstanding.
 
 ## Collection
 
