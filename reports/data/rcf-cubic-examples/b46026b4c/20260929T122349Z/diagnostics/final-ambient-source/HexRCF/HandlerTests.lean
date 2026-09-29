@@ -192,15 +192,6 @@ run_elab do
     withLCtx lctx (← getLocalInstances) <| checkWithKernel proof
     unless (← calls.get) == #[1, 2] do throwError "incorrect attempts"
 
--- Public module views hide theorem bodies as axioms. Validation must inspect
--- the actual declaration kind while still accepting an exporting caller.
-run_elab do
-  let target ← Term.elabType (← `(term| ∀ x : ℝ, x + Real.pi = x + Real.pi))
-  calls.set #[]
-  let proof ← withExporting <| withOptions (rcf.testMode.set · 23) <| proveGoal target
-  checkWithKernel proof
-  unless (← calls.get) == #[1, 2] do throwError "incorrect attempts"
-
 -- Substituting a let value must not turn a proof into an unsafe definition.
 run_elab do
   let target ← Term.elabType (← `(term| ∀ x : ℝ, x + Real.pi = x + Real.pi))

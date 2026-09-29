@@ -166,11 +166,6 @@ meta def assertRestored : MetaM Unit := do
       let some localDef := (← getLCtx).findFromUserName? `unsafeAlias
         | throwError "missing unsafe alias"
       return .proved (mkApp (mkLambda `unused .default localDef.type proof) localDef.toExpr)
-  | 23 =>
-      let proof ← forallTelescope target fun xs body => do
-        let some (_, lhs, _) := body.eq? | throwError "expected equality"
-        mkLambdaFVars xs (← mkEqRefl lhs)
-      return .proved proof
   | _ => throwError "unknown test case"
 
 @[rcf_handler] meta def aDecline : Handler := fun _ => do

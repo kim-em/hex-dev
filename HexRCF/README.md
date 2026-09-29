@@ -57,18 +57,21 @@ failure, or returns a proof checked against the original goal. Rational solver
 failures never dispatch to another handler. This interface does not itself
 provide real algebraic or named-constant coefficient support.
 
-Before accepting a handler result, the base checks its type against the
-original goal without assigning the goal's metavariables and audits its axiom
-dependencies. It shares repeated expression nodes and closes the candidate
-over its local variables as a fresh auxiliary theorem. Lean's ordinary kernel
-checks this theorem synchronously with the configured heartbeat and recursion
-limits and cancellation token. The resulting theorem is also audited, then
-used in the final proof. Malformed terms, unresolved proofs, different goals
-admitted dependencies and unsafe declarations are rejected. Elaboration has
-its own heartbeat budget; the auxiliary theorem receives a separate kernel
-budget. Closing substitutes let-bound locals without evaluating certificate
-checks in the elaborator. The synchronous check can wait for
-earlier background declaration checks to finish.
+Handlers run with the debug kernel bypass disabled. Before accepting a result,
+the base shares repeated expression nodes, checks its type against the original
+goal without assigning the goal's metavariables, and audits axiom dependencies.
+It closes the candidate over its local variables as a fresh auxiliary theorem,
+substituting let-bound locals without evaluating certificate checks in the
+elaborator. Lean's ordinary kernel checks it synchronously with the configured
+limits and cancellation token. The base requires a theorem, audits it and uses
+it in the final proof. Malformed terms, unresolved proofs, different goals,
+admitted dependencies and unsafe declarations are rejected.
+
+Elaboration and kernel checking have separate heartbeat counters. Synchronous
+kernel checks share their counter within an elaboration task; each call applies
+the configured limit without resetting that counter. The check can wait for
+earlier background declaration checks. These guarantees assume an ordinarily
+checked environment and handlers using normal declaration APIs.
 
 # Verification
 

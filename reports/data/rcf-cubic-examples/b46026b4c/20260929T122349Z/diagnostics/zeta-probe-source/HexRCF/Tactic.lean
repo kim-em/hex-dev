@@ -94,7 +94,7 @@ private meta def dispatchHandlers (target : Expr)
         unless info.levelParams.isEmpty && (← isDefEq info.type (mkConst ``Handler)) do
           throwError "rcf: invalid handler signature for {name}"
         let handler ← evalHandler name
-        match ← withOptions (debug.skipKernelTC.set · false) <| handler target with
+        match ← handler target with
         | .proved proof => pure (HandlerResult.proved (← instantiateMVars proof))
         | .failed message => pure (.failed (← addMessageContext message))
         | .declined => pure .declined)
@@ -127,8 +127,6 @@ private meta def dispatchHandlers (target : Expr)
         let proof ← profileitM Exception "rcf handler candidate check" (← getOptions) do
           withOptions (fun opts => debug.skipKernelTC.set (Elab.async.set opts false) false) do
             mkAuxTheorem target proof (zetaDelta := true) (cache := false)
-        let .thmInfo _ ← withoutExporting <| getConstInfo proof.getAppFn.constName!
-          | throwError "rcf: handler {name} proposed a candidate that did not close as a theorem"
         checkAxioms name proof
         return proof
   throwError reason.message
