@@ -808,6 +808,49 @@ theorem literal_accepts : (Replay.leaf literalNode).check Sturm.orderSign 7
     SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
+/-- A finite cache deliberately returns a non-sign outside its supplied keys.
+Replay may use it only after agreement on every required operand is proved. -/
+@[expose] def cachedSign (operands : List Rat) (x : Rat) : Int :=
+  if x ∈ operands then Sturm.orderSign x else 42
+
+theorem cachedSign_agrees (operands : List Rat) (x : Rat) (hx : x ∈ operands) :
+    cachedSign operands x = Sturm.orderSign x := by
+  simp only [cachedSign, ite_eq_left hx]
+
+@[expose] def literalOperands : List Rat :=
+  (Replay.leaf literalNode).signOperands Sturm.Fixtures.p (.finite (-2)) (.finite 2)
+
+/-- Finite agreement transfers actual literal acceptance without a global
+lawfulness claim about the cache or another execution of a producer. -/
+theorem cached_literal : (Replay.leaf literalNode).check (cachedSign literalOperands) 7
+    Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] = true := by
+  rw [Replay.check_congr (cachedSign literalOperands) Sturm.orderSign 7
+    Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] (.leaf literalNode)
+    (cachedSign_agrees literalOperands)]
+  exact literal_accepts
+
+set_option maxRecDepth 16384 in
+/-- Literal context binding survives finite caching. The endpoint difference
+is essential: returning the wrong sign for it rejects otherwise valid replay.
+The cache is demonstrably not a lawful sign function on all rationals. -/
+theorem cached_rejections :
+    (Replay.leaf literalNode).check (cachedSign literalOperands) 8
+      Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] = false ∧
+    (Replay.leaf literalNode).check
+      (fun x => if x = -4 then 1 else cachedSign literalOperands x) 7
+      Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] = false ∧
+    cachedSign literalOperands 100 = 42 := by
+  constructor
+  · rw [Replay.check_congr (cachedSign literalOperands) Sturm.orderSign 8
+      Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] (.leaf literalNode)
+      (cachedSign_agrees literalOperands)]
+    decide +kernel
+  · simp only [Replay.check, EndpointSigns.ofSign,
+      literalOperands, cachedSign, Replay.signOperands, Node.signOperands,
+      momentSignOperands, TarskiCertificate.signOperands, SignedRemainderChain.signOperands,
+      Endpoint.signOperand, Endpoint.orderOperands, Endpoint.nonvanishingOperands]
+    decide +kernel
+
 /-- Restrict the literal root-count certificate to the positive root. -/
 @[expose] def singletonQuery : TarskiCertificate Rat Rat Nat :=
   {Sturm.Fixtures.literal with
@@ -929,6 +972,18 @@ theorem full_kernel : fullReplay.check Sturm.orderSign 7 singletonRaw.head
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
+/-- The inventory includes both children of the actual full Thom tree. -/
+theorem cached_full :
+    fullReplay.check (cachedSign (fullReplay.signOperands Sturm.Fixtures.p
+      (.finite 0) (.finite 2))) 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
+      (singletonRaw.full []).queries = true := by
+  have h := Replay.check_congr
+    (cachedSign (fullReplay.signOperands Sturm.Fixtures.p (.finite 0) (.finite 2)))
+    Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
+    (singletonRaw.full []).queries fullReplay
+    (fun x hx => cachedSign_agrees _ x (by simpa only [singletonRaw] using hx))
+  exact h.trans full_kernel
+
 /-- Extract the unique full row using the shared literal replay proof. -/
 def sharedDescriptor : Descriptor Rat Nat Sturm.orderSign 7 :=
   Descriptor.ofFullRow singletonRaw fullReplay (by decide +kernel) rfl full_kernel ([1, 1], 1)
@@ -1037,6 +1092,25 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Descriptor.rootsFrom_sorted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Descriptor.rootsFrom_sorted
+/-- info: 'Hex.SignedRemainderChain.check_congr' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms SignedRemainderChain.check_congr
+/-- info: 'Hex.TarskiCertificate.check_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms TarskiCertificate.check_congr
+/-- info: 'Hex.SignDet.Replay.check_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Replay.check_congr
+/-- info: 'Hex.SignDet.Conformance.cached_literal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms cached_literal
+/-- info: 'Hex.SignDet.Conformance.cached_rejections' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms cached_rejections
+/-- info: 'Hex.SignDet.Conformance.cached_full' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms cached_full
+
 /-- info: 'Hex.SignDet.Descriptor.rootsFromTable_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Descriptor.rootsFromTable_eq
