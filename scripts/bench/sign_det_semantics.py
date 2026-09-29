@@ -57,8 +57,6 @@ def main() -> int:
         env = environment()
         output = args.output or (Path.home() / ".local/state/hex/proof-probes" /
                                  default_output(env, SPEC.output_stem).name)
-        if not output.is_absolute():
-            output = ROOT / output
         output = output.resolve()
         if output.is_relative_to(ROOT.resolve()):
             raise RuntimeError("choose a measurement output path outside the repository")

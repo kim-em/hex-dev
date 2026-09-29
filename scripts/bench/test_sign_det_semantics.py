@@ -1,4 +1,5 @@
 """Regression tests for semantic measurement output and failure retention."""
+from contextlib import chdir
 import json
 from pathlib import Path
 import tempfile
@@ -48,6 +49,14 @@ class OutputTests(unittest.TestCase):
             self.assertEqual(records[-2]["state"], "failed")
             self.assertEqual(records[-1]["type"], "failure")
             self.assertEqual(records[-1]["error"], "injected measurement failure")
+
+    def test_relative_output_resolves_from_current_directory(self):
+        with tempfile.TemporaryDirectory() as tmp, chdir(tmp):
+            code, run = self.run_mocked(["--output", "relative.json"], lambda *a, **k: 0)
+            output = Path(tmp) / "relative.json"
+            self.assertEqual(code, 0)
+            self.assertIn(str(output), run.call_args.args[2])
+            self.assertTrue(Path(str(output) + ".samples.jsonl").exists())
 
 
 if __name__ == "__main__":
