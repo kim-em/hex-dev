@@ -59,8 +59,9 @@ class AdmissionScannerTests(unittest.TestCase):
             reencoding = root / "conformance/HexSignDetMathlib/ReencodingConformance.lean"
             roots = root / "conformance/HexSignDetMathlib/RootListConformance.lean"
             refinement = root / "conformance/HexSignDetMathlib/RefinementConformance.lean"
+            conversion = root / "conformance/HexSignDetMathlib/ConvertConformance.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, dependency):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
@@ -72,6 +73,7 @@ class AdmissionScannerTests(unittest.TestCase):
             reencoding.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             roots.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             refinement.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
@@ -82,6 +84,13 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/RefinementConformance"):
                     audit.check()
                 refinement.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                conversion.unlink()
+                with self.assertRaisesRegex(ValueError, "missing local import"):
+                    audit.check()
+                conversion.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/ConvertConformance"):
+                    audit.check()
+                conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 handle.unlink()
                 with self.assertRaisesRegex(ValueError, "missing local import"):
                     audit.check()

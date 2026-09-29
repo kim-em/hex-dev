@@ -21,6 +21,7 @@ public import HexSignDet.Table
 public import HexSignDet.TableProducer
 public import HexSignDet.Thom
 public import HexSignDet.Descriptor
+public import HexSignDet.Convert
 public import HexSignDet.Complete
 public import HexSignDet.ThomOrder
 public import HexSignDet.SelectedSigns

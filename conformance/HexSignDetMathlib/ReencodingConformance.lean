@@ -164,7 +164,7 @@ namespace Noncanonical
 
 open HexPoly.InterpretTests
 
-def realValue (a : Rep) : ℝ := (value a : ℝ)
+@[expose] def realValue (a : Rep) : ℝ := (value a : ℝ)
 theorem zero (a : Rep) : realValue a = 0 ↔ a = 0 := by
   simp only [realValue, Rat.cast_eq_zero, value_eq_zero]
 theorem one : realValue 1 = 1 := by simp [realValue, value_one]
