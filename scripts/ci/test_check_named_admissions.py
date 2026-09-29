@@ -35,6 +35,14 @@ class AdmissionScannerTests(unittest.TestCase):
                 self.assertIsNotNone(ADMISSION.search(code_only(token)))
         self.assertIsNone(ADMISSION.search(code_only("rw [Array.foldl_push_eq_append (stop := n) rfl]")))
 
+    def test_constant_record_fields(self):
+        source = "structure Settings where\n  constant : Nat\ndef settings : Settings where\n  constant := 1\n"
+        self.assertIsNone(ADMISSION.search(code_only(source)))
+        for declaration in ("constant bad : False", "  constant bad : False",
+                            "private constant bad : False", "constant\n  bad : False"):
+            with self.subTest(declaration=declaration):
+                self.assertIsNotNone(ADMISSION.search(code_only(declaration)))
+
     def test_interpolated_admission_fails_closed(self):
         for prefix in ("s!", "m!", "f!"):
             with self.subTest(prefix=prefix), self.assertRaises(ValueError):
@@ -60,8 +68,10 @@ class AdmissionScannerTests(unittest.TestCase):
             roots = root / "conformance/HexSignDetMathlib/RootListConformance.lean"
             refinement = root / "conformance/HexSignDetMathlib/RefinementConformance.lean"
             conversion = root / "conformance/HexSignDetMathlib/ConvertConformance.lean"
+            base = root / "HexRealClosure/BaseTests.lean"
+            model = root / "HexRealClosureMathlib/BaseTests.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, dependency):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
@@ -74,6 +84,8 @@ class AdmissionScannerTests(unittest.TestCase):
             roots.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             refinement.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            base.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            model.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
@@ -91,6 +103,11 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/ConvertConformance"):
                     audit.check()
                 conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                for probe in (base, model):
+                    probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*BaseTests"):
+                        audit.check()
+                    probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 handle.unlink()
                 with self.assertRaisesRegex(ValueError, "missing local import"):
                     audit.check()

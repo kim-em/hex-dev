@@ -299,6 +299,10 @@ lean_lib HexRealClosureTests where
 lean_lib HexRealClosureMathlib where
 
 @[default_target]
+lean_lib HexRealClosureMathlibTests where
+  globs := #[.one `HexRealClosureMathlib.BaseTests]
+
+@[default_target]
 lean_lib HexSturmMathlib where
 
 lean_lib HexInterval where
