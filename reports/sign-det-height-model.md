@@ -138,16 +138,16 @@ original validator. The additional model-formula and relative-size validation pa
 same retained data; it does not replace or remove measurements. Later report
 and validator edits do not change the measured normalization or checking
 functions. Reproduction uses the base and patch recorded in each metadata file.
-Measurement revision identifiers need not remain in the published branch
-history; the archived patches and file hashes preserve the measured sources. Revision
-`640bf10bd` is not in the published branch history; its archived patch over
-base `18eb65686` reconstructs that source. Its build directory was shared
+None of the three measurement revisions is in the published branch history.
+Each is reconstructed from the base and patch recorded in its metadata, with
+file hashes preserving the measured sources. The recorded bases `18eb65686`
+and `f08b8e9e8` are ancestors of main. The `640bf10bd` build directory was shared
 with another worktree, as recorded by the resolved binary path. Hash and
 freshness checks passed at collection time. New collections require the
 executable to resolve inside their own source worktree.
 
 The [Lean 4.35.0-rc3 collection](data/sign-det-height/ad5e59e5a/metadata.json)
-uses committed source `ad5e59e5aee5f8a0ae3003f86658f6de2dfa42a5` on the same
+uses recorded source `ad5e59e5aee5f8a0ae3003f86658f6de2dfa42a5` on the same
 shared host, automatically leased CPU 89. All 84 scientific samples passed
 output and schedule validation, with sources and executable unchanged. Both
 mode-1 verdicts are **consistent with declared complexity**, with normalized
@@ -196,6 +196,9 @@ additional logarithmic factor across this ladder. The three highest doublings in
 approximately 1.87, 2.12, 1.97 for construction and 1.91, 1.97, 2.00
 for replay. These observations distinguish
 linear from quadratic growth on this range, while the model itself comes
-from the stated primitive-operation analysis. General coefficient-height propagation, allocation, nested fields,
-maximal support, joint comparisons and the remaining Phase-4 requirements
-remain open under #10377.
+from the stated primitive-operation analysis. General coefficient-height propagation and the remaining Phase-4 requirements
+remain open under #10377. Separate reports cover the partial
+[maximal-support evidence](sign-det-maximal-matrices.md),
+[joint-query and allocation evidence](sign-det-joint-performance.md), and
+[nested-field conformance](sign-det-nested-fields.md). None establishes the
+remaining gates on its own.
