@@ -468,9 +468,10 @@ actual stored native fraction coefficients. `polynomial_coeff` includes
 implicit zero coefficients outside the stored array. `polynomial_zero`,
 `polynomial_degree` and `polynomial_leading` require zero reflection only on
 that finite array. `polynomial_signs` derives these conditions from one common
-neighborhood preserving its coefficient signs and denominator guards. These
-supply the coefficient guards for accepted signed-chain and Tarski-query
-transport. Joint sign-table transport also needs its checker evidence.
+neighborhood preserving its coefficient signs and denominator guards.
+The signed-chain and Tarski-query transport theorems obtain their guards from
+`finite_fractions_map` applied to each certificate's own finite inventory.
+Joint sign-table transport also needs its checker evidence.
 
 `Specialize.regularRing` contains the native fractions whose canonical
 denominators remain nonzero under one prescribed coefficient embedding and
@@ -502,3 +503,13 @@ variations. `specialize_near` preserves the complete accepted certificate
 throughout one positive neighborhood. These theorems use a prescribed ordered
 embedding of the predecessor coefficient field; recursive algebraic replay and
 successive infinitesimal specialization remain separate obligations.
+
+
+`SignDet.ReductionStep.specialize` substitutes an indexed positive product
+reduction's stored remainder, scales and quotient. Its finite inventory covers
+the input head, previous representative, factor, next representative and
+witness. `check_specialize` preserves the actual factor index, both positive
+scales, the zero/degree bound and the product identity without guarding
+intermediate products. `specialize_near` supplies one positive neighborhood
+for the complete step check. Full reduction-chain, moment, node and BKR table
+transport remain separate obligations.
