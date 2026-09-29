@@ -495,6 +495,11 @@ the existing CI job. The Mathlib-free `hexrealclosure_bench` includes a function
 `runGeneral` timing anchor for validation, packing, cancellation and inversion;
 it makes no scaling claim.
 
+`HexRealClosureMathlib.BaseTests` also executes all three stages together: a
+registered Liouville real constant, a positive infinitesimal, and a selected
+root of `Y²−(τ−5/4+ε+2)` in `(1,2)`. It checks the root's equation, interval
+signs and inverse in the constructed context.
+
 The semantic sign, inverse and quotient proofs consume the proved shared
 Tarski foundation. Their axiom guards contain only the three standard kernel
 axioms, and the audited import cones contain no admissions. These interpretations are
