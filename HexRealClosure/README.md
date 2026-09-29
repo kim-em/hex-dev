@@ -456,7 +456,7 @@ its stored fraction through the existing proof of equality of the complete
 native and semantic coefficient dictionaries, and preserves that element's
 actual stored sign at an ordinary real parameter.
 
-Checked descriptor reconstruction, recursive algebraic replay specialization
+Algebraic representative transport, recursive algebraic replay specialization
 and successive infinitesimal parameter choices remain required finite-sign
 realization work. These helpers
 operate on coefficient data with a supplied ordered embedding into ℝ in the
@@ -529,8 +529,8 @@ the entire supplied BKR tree with its exact child query slices, including
 empty supports. Its extracted sparse rows and every condition's count stay
 unchanged. `Replay.table_near` provides one positive neighborhood whose real
 parameters all admit that same checked table. These theorems require the
-prescribed ordered coefficient embedding into ℝ. Checked descriptor
-reconstruction, DAG sharing, recursive algebraic replay and successive
+prescribed ordered coefficient embedding into ℝ. Algebraic representative
+transport, DAG sharing, recursive algebraic replay and successive
 infinitesimal specialization remain separate obligations.
 
 `Specialize.counts_near` uses the proved root-count meaning of the specialized
@@ -550,5 +550,25 @@ evidence. All requested query signs hold at one ordinary real root, which is
 unique among roots matching the descriptor's entire specialized query prefix.
 The proof excludes other roots with that prefix even when their remaining
 signs differ. It specializes the literal ordered query polynomials; it does
-not rebuild a checked descriptor with newly computed formal-derivative
-bindings.
+not rebuild the formal-derivative bindings itself; the descriptor construction
+below supplies that step.
+
+`derivativesFrom_specialize` and `derivatives_specialize` commute with the
+actual native formal derivative sequence. Original head coefficient guards
+suffice: every iterated derivative stays in the regular coefficient ring.
+`RawDescriptor.specialize` retains context, derivative indices and signs while
+substituting its head and endpoints. The recomputed queries match the mapped
+original queries, including default zero reads at malformed indices.
+`check_specialize` preserves the complete descriptor checker.
+
+`Descriptor.specialize` constructs a validated real descriptor through the
+existing `ofTable` API. `specialize_checked` proves that checking the exact
+mapped raw descriptor and original replay returns this result. One positive
+neighborhood supplies these validated descriptors and their actual recomputed
+formal-derivative queries. `selected_root_near` proves that all signs returned
+by source `SelectedSigns` hold at the root of the validated specialized
+descriptor, using the same parameter for both evidence tables. These are
+companion constructions over a prescribed ordered coefficient embedding into
+ℝ; they do not rebuild a native tower context or specialize successive levels.
+A literal equality between the returned descriptor's evidence field and the
+mapped original replay still needs the constructor's public evidence getter.

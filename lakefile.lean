@@ -614,6 +614,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SpecializeReplay,
     `HexRealClosureMathlib.SpecializeSample,
     `HexRealClosureMathlib.SpecializeSelected,
+    `HexRealClosureMathlib.SpecializeDescriptor,
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
