@@ -1,13 +1,4 @@
 {
-  "schema": "hex-sign-det-maximal-matrix-dimension-archive-v1",
-  "revision": "ff35bd9daacfca51b62f931d5b6d7afd9e143614",
-  "source_base": "69c2c363f9789e497f5106cf65756253b420809b",
-  "reconstruction": [
-    "git checkout 69c2c363f9789e497f5106cf65756253b420809b",
-    "git apply --unidiff-zero committed-source.patch"
-  ],
-  "source_hashes_verified": 257,
-  "scientific_samples": 72,
   "cpu": 41,
   "files": {
     "committed-source.patch": "4d9e48b2ccfddb4e280e5d54ee479cb6dc515d5dbd1672024d8e264cd329d2f7",
@@ -22,5 +13,15 @@
     "runSolveDimension.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "summary.json": "ef8184591c5473a7706f462ea0555e46403ff0ce56114112056cb7001d1b7221",
     "table.json": "40d80ae6bac99a24d0ad6ee22f073fa02fc9008cacbba47c4993aeb4b880b32c"
-  }
+  },
+  "reconstruction": [
+    "git checkout 69c2c363f9789e497f5106cf65756253b420809b",
+    "git apply --unidiff-zero committed-source.patch"
+  ],
+  "reconstruction_scope": "All 257 paths recorded in metadata.json source_sha256; not the entire measured repository tree.",
+  "revision": "ff35bd9daacfca51b62f931d5b6d7afd9e143614",
+  "schema": "hex-sign-det-maximal-matrix-dimension-archive-v1",
+  "scientific_samples": 72,
+  "source_base": "69c2c363f9789e497f5106cf65756253b420809b",
+  "source_hashes_verified": 257
 }

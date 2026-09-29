@@ -93,7 +93,7 @@ Both arms pass schedule, exact-result, timing and provenance validation.
 Source, executable and pinned harness bindings agree before and after
 collection. All 257 recorded source hashes were checked against the measured
 revision. The [source archive](data/sign-det-maximal-matrices/ff35bd9da-dimensions/archive.json)
-reconstructs that checkout from main ancestor
+reconstructs all 257 recorded source files from main ancestor
 `69c2c363f9789e497f5106cf65756253b420809b`; the measured commit need not
 survive the squash merge. The archive retains every export and child log,
 including the untimed inventory.
@@ -119,8 +119,8 @@ This does not establish the cubic wall-time gate or show that the checker
 has reached its asymptotic timing regime. The [summary](data/sign-det-maximal-matrices/ff35bd9da-dimensions/summary.json)
 reports no validation errors. The collector returned exit status 1 for the
 inconclusive verdicts; the archived metadata records only the child exit
-statuses, which are all zero. Current collectors also retain their own
-returned exit code, using 2 for failures and 1 for inconclusive observations. No samples failed or were omitted.
+statuses, which are all zero. Once metadata exists, current collectors retain their own returned exit
+code: 2 for failures, 1 for inconclusive observations and 130 for interrupts. No samples failed or were omitted.
 
 At size 729, median process peak RSS is 119.785 MiB for solve and 119.406 MiB
 for check. These observations include input preparation and process startup;
@@ -134,10 +134,10 @@ The earlier one-column elimination inventory already identifies a more
 specific count: `4(18^s−9^s)` rational multiply/add pairs in row additions,
 alongside the `27^s` integer pairs in the dense check. The [size-729 one-column inspection](data/sign-det-maximal-matrices/elimination-3042b0016/metadata.json)
 counts 91,854 nonzero multipliers. The source structure implies 183,708
-row additions and 133,923,132 rational multiply/add pairs. It verifies each pivot and the final literal
+row additions and 133,923,132 rational multiply/add pairs. The inspection verifies each pivot and the final literal
 inverse against `inverse?`, using the existing inspection algorithm. The
 [source archive](data/sign-det-maximal-matrices/elimination-3042b0016/archive.json)
-retains the clean checkout and output; this is untimed evidence, separate from
+retains the recorded sources and output; this is untimed evidence, separate from
 the scientific collection. The row-addition term
 alone has growth `r^(log₃ 18)`, approximately `r^2.631`. Its dominant `18^s`
 term would give normalized slope `log₃ 18−3 ≈ −0.369`, close to the observed
@@ -146,7 +146,7 @@ trend in `time/r³` while rational elimination dominates. A wider range alone
 is not a justified remedy for the complete-solve fit.
 
 Subtracting the separately timed check medians from the solve medians gives
-about 197, 191 and 191 ns per counted rational row-addition pair at query
+about 197, 191 and 191 ns per source-derived rational row-addition pair at query
 counts four, five and six. This comparison is not a direct phase timer: the
 processes differ and the residual includes other solve work. The profile at
 size 243 independently identifies elimination as the dominant phase there;

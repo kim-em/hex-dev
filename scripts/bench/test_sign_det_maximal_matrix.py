@@ -7,6 +7,9 @@ import os
 import statistics
 import subprocess
 import sys
+import runpy
+import io
+from contextlib import redirect_stderr
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -337,7 +340,8 @@ class DimensionEvidenceTests(unittest.TestCase):
         self.assertEqual(row["inverseIdentityScalarPairs"], 729**3)
         timing = json.loads((bench.ROOT/"reports/data/sign-det-maximal-matrices/ff35bd9da-dimensions/metadata.json").read_text())
         for name,digest in metadata["source_sha256"].items():
-            if not name.startswith("bench/"):
+            if name not in {"bench/HexSignDet/Bench.lean", "bench/HexSignDet/Small.lean",
+                            "bench/HexSignDet/MaximalMatrix.lean"}:
                 self.assertEqual(digest, timing["source_sha256"][name], name)
         source = metadata["source_archive"]
         patch_bytes = (root/source["file"]).read_bytes()
@@ -369,6 +373,16 @@ class DimensionEvidenceTests(unittest.TestCase):
             self.assertEqual(calls, ["runSolveDimension", "runCheckDimension"])
             self.assertEqual(summary["validation_errors"], [])
             self.assertEqual(len(summary["observations"]), 2)
+
+    def test_script_failure_exit_is_distinct_from_inconclusive(self):
+        script = bench.ROOT/"scripts/bench/sign_det_maximal_matrix.py"
+        with patch.object(sys, "argv", [str(script), "--output", "/unused-test-output"]), \
+             patch.object(subprocess, "check_output", side_effect=RuntimeError("forced early failure")), \
+             redirect_stderr(io.StringIO()) as stderr:
+            with self.assertRaises(SystemExit) as exit_error:
+                runpy.run_path(str(script), run_name="__main__")
+        self.assertEqual(exit_error.exception.code, 2)
+        self.assertIn("forced early failure", stderr.getvalue())
 
     def test_main_dispatches_dimension_inventory_and_retains_exit_status(self):
         with TemporaryDirectory() as d:
