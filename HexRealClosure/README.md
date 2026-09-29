@@ -456,7 +456,7 @@ its stored fraction through the existing proof of equality of the complete
 native and semantic coefficient dictionaries, and preserves that element's
 actual stored sign at an ordinary real parameter.
 
-Descriptor selected-sign transport, recursive algebraic replay specialization
+Checked descriptor reconstruction, recursive algebraic replay specialization
 and successive infinitesimal parameter choices remain required finite-sign
 realization work. These helpers
 operate on coefficient data with a supplied ordered embedding into ℝ in the
@@ -529,8 +529,8 @@ the entire supplied BKR tree with its exact child query slices, including
 empty supports. Its extracted sparse rows and every condition's count stay
 unchanged. `Replay.table_near` provides one positive neighborhood whose real
 parameters all admit that same checked table. These theorems require the
-prescribed ordered coefficient embedding into ℝ. Descriptor selected-sign
-transport, DAG sharing, recursive algebraic replay and successive infinitesimal
+prescribed ordered coefficient embedding into ℝ. Checked descriptor
+reconstruction, DAG sharing, recursive algebraic replay and successive infinitesimal
 specialization remain separate obligations.
 
 `Specialize.counts_near` uses the proved root-count meaning of the specialized
@@ -541,6 +541,13 @@ of positive source count at one real root, with all its signs together.
 full condition. `realizeBelow` chooses a realizing parameter below any
 prescribed positive cap. These theorems use the same parameter for every
 polynomial and endpoint and require a prescribed ordered embedding of the
-coefficient field into ℝ. They do not establish uniqueness for a descriptor's
-sign prefix, construct recursive algebraic samples or specialize an
+coefficient field into ℝ. They do not construct recursive algebraic samples or specialize an
 infinitesimal predecessor field.
+
+`Specialize.selected_near` consumes the existing checked `SelectedSigns`
+evidence. All requested query signs hold at one ordinary real root, which is
+unique among roots matching the descriptor's entire specialized query prefix.
+The proof excludes other roots with that prefix even when their remaining
+signs differ. It specializes the literal ordered query polynomials; it does
+not rebuild a checked descriptor with newly computed formal-derivative
+bindings.

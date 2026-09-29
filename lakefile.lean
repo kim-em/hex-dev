@@ -613,6 +613,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SpecializeMoment,
     `HexRealClosureMathlib.SpecializeReplay,
     `HexRealClosureMathlib.SpecializeSample,
+    `HexRealClosureMathlib.SpecializeSelected,
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
