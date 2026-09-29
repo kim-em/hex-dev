@@ -469,8 +469,8 @@ implicit zero coefficients outside the stored array. `polynomial_zero`,
 `polynomial_degree` and `polynomial_leading` require zero reflection only on
 that finite array. `polynomial_signs` derives these conditions from one common
 neighborhood preserving its coefficient signs and denominator guards. These
-are polynomial specialization helpers; accepted query and joint sign-table
-transport still require the finite arithmetic evidence used by their checkers.
+supply the coefficient guards for accepted signed-chain and Tarski-query
+transport. Joint sign-table transport also needs its checker evidence.
 
 `Specialize.regularRing` contains the native fractions whose canonical
 denominators remain nonzero under one prescribed coefficient embedding and
@@ -487,6 +487,18 @@ also guards its endpoint. Closure handles accumulations of ring operations.
 when its finite coefficients and scales are regular and both scale signs are
 preserved. `SignedRemainderChain.specialize` substitutes the stored entries
 while retaining degree data for validation; its `fractions` family collects
-the literal coefficients and scales. Full chain acceptance, initial/terminal
-identities, endpoint signs and complete Tarski-query transport still need their
-specialization proofs.
+the literal coefficients and scales. Its `check_specialize` preserves the
+complete checker, including initial and terminal identities, nonzero entries,
+degrees and strict descent. `specialize_near` supplies one common positive
+neighborhood for all these conditions.
+
+`TarskiCertificate.specialize` maps literal polynomial and endpoint data while
+retaining context, sign arrays, variations and the integer query value.
+Its `fractions` includes the two chain inventories, endpoint differences,
+endpoint polynomial evaluations and infinite-endpoint leading coefficients.
+`check_specialize` preserves all literal bindings, endpoint nonroot/order
+guards, the squarefree check, both chain replays and recorded signs and
+variations. `specialize_near` preserves the complete accepted certificate
+throughout one positive neighborhood. These theorems use a prescribed ordered
+embedding of the predecessor coefficient field; recursive algebraic replay and
+successive infinitesimal specialization remain separate obligations.

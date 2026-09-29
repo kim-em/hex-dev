@@ -77,8 +77,9 @@ class AdmissionScannerTests(unittest.TestCase):
             specialize_polynomial = root / "adapters/HexRealClosureMathlib/SpecializePolynomial.lean"
             specialize_regular = root / "adapters/HexRealClosureMathlib/SpecializeRegular.lean"
             specialize_query = root / "adapters/HexRealClosureMathlib/SpecializeQuery.lean"
+            specialize_tarski = root / "adapters/HexRealClosureMathlib/SpecializeTarski.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, dependency):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
@@ -100,6 +101,7 @@ class AdmissionScannerTests(unittest.TestCase):
             specialize_polynomial.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             specialize_regular.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             specialize_query.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_tarski.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
@@ -117,7 +119,7 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/ConvertConformance"):
                     audit.check()
                 conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-                for probe in (specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query):
+                for probe in (specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski):
                     probe.unlink()
                     with self.assertRaisesRegex(ValueError, "missing local import"):
                         audit.check()
