@@ -1,5 +1,6 @@
 """Adversarial validation of the full-support matrix measurement records."""
 import copy
+import hashlib
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -99,6 +100,28 @@ class MatrixEvidenceTests(unittest.TestCase):
             result["points"][0][key] = value
             with self.subTest(key=key), self.assertRaises(ValueError):
                 self.result_check(result)
+
+    def test_profile_artifacts_and_scope(self):
+        root = bench.ROOT/"reports/data/sign-det-maximal-matrices/profile-4540051d3"
+        analysis = json.loads((root/"analysis.json").read_text())
+        for name, expected in analysis["committed_files_sha256"].items():
+            self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected)
+        metadata = json.loads((root/"metadata.json").read_text())
+        self.assertTrue(metadata["provenance_unchanged"])
+        self.assertEqual(metadata["profile_row"]["inner_repeats"], 1)
+        self.assertTrue(metadata["profile_row"]["profile_kernel"])
+        conversion = json.loads((root/"clock-conversion.json").read_text())
+        self.assertEqual(conversion["sample_count"], 577)
+        self.assertEqual(conversion["residual_ns"], 0)
+        summary = json.loads((root/"inclusive-summary.json").read_text())
+        self.assertEqual(summary["samples"], 281)
+        self.assertEqual(summary["diagnostics"]["confidence"], "passed")
+        self.assertEqual(summary["diagnostics"]["sensitivity"]["verdict"], "passed")
+        paths = json.loads((root/"stack-plausibility.json").read_text())
+        self.assertEqual(paths["status"], "checked-paths-consistent")
+        self.assertEqual(paths["unexpected_frames_below_gcd"], 0)
+        self.assertEqual(paths["gmp_add_or_shift_without_uint64_constructor"], 0)
+        self.assertEqual(paths["samples"], summary["samples"])
 
     def test_wrong_export_identity_or_verdict(self):
         for key, value in (("function", bench.PREFIX+"runCheck"), ("kind", "fixed"),

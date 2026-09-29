@@ -117,12 +117,59 @@ each size are retained.
 
 The current input sizes can expose lower-order overhead and
 unequal costs of scalar operations; these possibilities are not established by
-these timings. A representative profile and a wider independently planned schedule
-are needed before deciding whether the wall-time declaration or implementation
-needs correction. No fit setting or complexity law has been changed to obtain a
+these timings. The profile below establishes the dominant phase for solve; a wider independently
+planned schedule or a separately derived model for that phase is still needed
+before correcting its wall-time declaration. The check schedule also needs a
+wider range before its cubic term can be assessed. No fit setting or complexity law has been changed to obtain a
 passing result. No unchanged rerun has been collected.
 
 This matrix-phase evidence does not establish the growing-degree polynomial query
 track, maximal-support end-to-end production, ordinary-kernel matrix replay costs,
 allocation accounting, or full #10377 Phase-4 completion. The existing interpolation
 fixtures and earlier untimed inventories remain unchanged.
+
+## Representative solve profile
+
+The [retained size-243 capture](data/sign-det-maximal-matrices/profile-4540051d3/metadata.json)
+profiles one actual cold solve from clean source `4540051d3`, with the same
+executable hash as the scientific collection. It has one operation region and
+the expected result hash. Profiling duration is not a scientific timing baseline.
+Preparation, result consumption and process startup are outside the filtered
+operation region. Raw perf data, recovered profiles, symbol information and an
+unchanging copy of the debuggee are retained in the durable directory named by
+[the analysis manifest](data/sign-det-maximal-matrices/profile-4540051d3/analysis.json).
+The source archive, collector, region sidecar, tool bindings and analysis commands
+are committed alongside the smaller summaries.
+
+All 577 raw/imported timestamps agree with one common origin and zero residual.
+The parent wall/monotonic anchor was captured immediately before launch. Filtering
+retains 281 operation samples, rejects 290 bench-thread samples outside the
+region, and reports zero other-thread samples inside. The timing-window confidence
+and ±5 ms leaf-distribution sensitivity checks pass. The timing-window calibration
+residual is 0.841 ms against its 20.1005 ms effective limit.
+
+| Inclusive caller | Operation samples (%) |
+| --- | ---: |
+| Matrix inversion / row reduction | 93.59 |
+| Row addition | 92.53 |
+| Integer system checker | 3.56 |
+| Natural-number gcd | 81.14 |
+
+These are overlapping caller shares, so they must not be added. This profile
+supports rational elimination as the dominant phase at this size; the source's
+cubic integer check is a small part of the complete solve here. It does not
+establish the dominant phase at every size or justify an optimization by itself.
+
+The shared leaf classifier reports 43.77% GMP, 29.89% allocator, 21.35% Lean
+runtime, 0.36% Hex code and 4.63% other samples. Allocator CPU samples are not
+allocated-byte measurements. The classifier groups Rat/Fin helpers under runtime,
+so these categories must not be confused with the inclusive phase table.
+
+A separate [caller-path check](data/sign-det-maximal-matrices/profile-4540051d3/stack-plausibility.json)
+finds no unexpected callee beneath gcd, and every recovered GMP add/shift path
+there has the uint64 constructor as its immediate caller. Disassemblies from
+the retained executable confirm that constructor calls GMP add and shift.
+This checks specific stack concerns; timing-window confidence does not prove
+unwind edges, and the path check does not validate every edge of every stack.
+The captured runtime behavior is consistent with the pinned Lean implementation
+of `mpz(uint64)`; no duplicated arithmetic implementation is introduced here.
