@@ -113,8 +113,9 @@ failed arms. These are fresh-module observations: they include elaboration,
 checker reduction, kernel verification and artifact writing. The paired delta
 is not an isolated kernel timer or an asymptotic complexity result. This
 protocol has no scientific acceptance budget inferred from its timeout.
-Observed fresh-module wall times cluster in roughly 0.1-second steps. Small
-paired differences within one such step should not be ranked as replay costs;
+On this host, the observed fresh-module wall times cluster in roughly
+0.1-second steps. Small paired differences on that scale should not be
+ranked as replay costs;
 these observations include variable process/build overhead.
 
 ## Recorded costs
@@ -206,16 +207,16 @@ accounting field; the original sidecar observations remain unchanged.
 
 These are complete fresh-module observations, including elaboration, checker
 reduction, kernel verification and output writing. The small depth-one
-certificate/arithmetic differences are within the observed 0.1-second wall
-step and should not be ranked as isolated replay costs. Depth-two fraction
+`Certificates` and `FieldArithmetic` differences are on the scale of the
+observed 0.1-second wall step and should not be ranked as isolated replay costs. Depth-two fraction
 acceptance has a 13.681-second median and 3.715 GiB median peak RSS; it is
 included in the ordinary CI target. Depth-three polynomial acceptance has
-a 107.798-second median and 17.498 GiB peak, supporting the separate manual
+a 107.798-second median and 17.498 GiB median peak RSS, supporting the separate manual
 target. Chain-cause proofs and full graph rejection remain different probes.
 
 All 231 source hashes and the six-round rotated/alternating schedule were
 verified. The [archive manifest](data/sign-det-nested-kernel/6d3801053/archive.json)
-retains checksums and reconstruction from main ancestor
+retains checksums and reconstruction of all 231 hashed sources from main ancestor
 `69c2c363f9789e497f5106cf65756253b420809b` using the exact source patch.
 The [table data](data/sign-det-nested-kernel/6d3801053/summary.json) preserves
 the unrounded reported medians. The recorded schema-v2 chain-cause metadata
@@ -242,7 +243,7 @@ The existing five-second fresh-module budgets passed. Absolute replay and
 rejection medians ranged from 0.756 to 0.858 seconds, with approximately
 0.817 GiB peak resident sets. The full paired collection, including its
 existing null pairs, has median differences of about −1 to 104 ms; the observed
-0.1-second step precludes ranking these small differences as normalization
+0.1-second step precludes ranking differences on this scale as normalization
 costs. This is a compatibility observation on this host, not a
 controlled before/after comparison or evidence for general normalization cost.
 The source is an archived pre-rebase snapshot reconstructed from ancestor

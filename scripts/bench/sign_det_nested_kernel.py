@@ -27,7 +27,8 @@ def prefix(depth: int) -> str:
 
 def pair(depth: int, operation: str) -> ProbePair:
     fraction = operation in ("AcceptFraction", "RejectProduct", "FieldArithmetic", "Certificates")
-    scalar = operation in ("FieldArithmetic", "Certificates", "ArithmeticCause")
+    scalar = operation in ("FieldArithmetic", "Certificates")
+    chain = operation == "ArithmeticCause"
     stem = prefix(depth)
     candidate = f"{stem}.{operation}"
     baseline = f"{stem}.{'FractionBaseline' if fraction else 'Baseline'}"
@@ -36,7 +37,7 @@ def pair(depth: int, operation: str) -> ProbePair:
              "actual forged chain guards and initial identity" if operation == "ArithmeticCause" else
              "early literal context rejection" if operation == "RejectStale" else
              "fresh-module proof of the actual graph checker result")
-    has_graph = not scalar
+    has_graph = not (scalar or chain)
     return ProbePair(
         f"depth-{depth}-{operation}", ProbeModule(baseline),
         ProbeModule(candidate, AXIOMS, f"Hex.SignDetMathlib.{candidate.split('.', 1)[1]}"),
@@ -48,7 +49,7 @@ def pair(depth: int, operation: str) -> ProbePair:
          "extension_depth": depth, "operation": operation,
          "build_target": ("HexSignDetMathlibProofProbe" if depth < 3 else
                           "HexSignDetMathlibNestedProofProbe"),
-         "degree": 1 if has_graph else None, "query_arity": 2 if has_graph else 0,
+         "degree": 1 if not scalar else None, "query_arity": 2 if has_graph else 0,
          "graph_nodes": 2 if has_graph else 0, "graph_edges": 2 if has_graph else 0,
          "distinct_leaf_references": 1 if has_graph else 0,
          "measurement_scope": scope,

@@ -1,18 +1,9 @@
 {
-  "schema": "hex-sign-det-nested-kernel-v2",
-  "measured_revision": "6d38010537c4a1267e123c235189698842607b1a",
-  "source_base": "69c2c363f9789e497f5106cf65756253b420809b",
-  "reconstruction": [
-    "git checkout 69c2c363f9789e497f5106cf65756253b420809b",
-    "git apply --unidiff-zero committed-source.patch"
-  ],
-  "source_hashes_verified": 231,
-  "completed_pairs": 120,
   "completed_arms": 240,
+  "completed_pairs": 120,
   "cpu": [
     7
   ],
-  "toolchain": "leanprover/lean4:v4.35.0-rc3",
   "dependency_checkouts": {
     "AINTLIB": {
       "dirty": false,
@@ -157,5 +148,15 @@
     "nested-kernel.json": "3be075b7103db6bde182a82c8a9316af6f2d2482eef36e11ccb666b5d7e27e99",
     "nested-kernel.json.samples.jsonl": "863498b86d270d315e30635da93339fd04a64a68b5ea3ae48e4e870ee081eed8",
     "summary.json": "acc993e4b541b5d07930d5d94a11f957a890d886c2dc3e60d8eaa4b542ee7eaf"
-  }
+  },
+  "measured_revision": "6d38010537c4a1267e123c235189698842607b1a",
+  "reconstruction": [
+    "git checkout 69c2c363f9789e497f5106cf65756253b420809b",
+    "git apply --unidiff-zero committed-source.patch"
+  ],
+  "reconstruction_scope": "All 231 paths recorded in nested-kernel.json source_sha256; not the entire measured repository tree.",
+  "schema": "hex-sign-det-nested-kernel-v2",
+  "source_base": "69c2c363f9789e497f5106cf65756253b420809b",
+  "source_hashes_verified": 231,
+  "toolchain": "leanprover/lean4:v4.35.0-rc3"
 }

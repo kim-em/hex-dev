@@ -29,16 +29,21 @@ class ProbeInventoryTests(unittest.TestCase):
         self.assertEqual(report["validity"]["exceptions"], [])
         self.assertFalse(report["environment"]["git_dirty"])
         self.assertIsNone(report["partial_samples"])
+        self.assertEqual(archive["measured_revision"], report["environment"]["git_commit"])
+        self.assertEqual(archive["schema"], report["schema"])
         self.assertEqual(archive["completed_pairs"], 120)
         self.assertEqual(archive["completed_arms"], 240)
         self.assertEqual(archive["source_hashes_verified"], len(report["source_sha256"]))
         self.assertEqual(set(report["results"]), {p.name for p in runner.PAIRS})
         table = {r["pair"]: r for r in json.loads((root/"summary.json").read_text())}
+        self.assertEqual(set(table), set(report["results"]))
         samples = []
         for name, result in report["results"].items():
             self.assertEqual(len(result["samples"]), 6)
             self.assertEqual({s["round"] for s in result["samples"]}, set(range(1,7)))
             for s in result["samples"]:
+                self.assertEqual(s["build_order"], (["reference", "candidate"] if s["round"] % 2
+                                                     else ["candidate", "reference"]))
                 self.assertEqual(set(s["candidate"]["axioms"]),
                                  {"propext", "Classical.choice", "Quot.sound"})
                 self.assertIsNone(s["reference"]["axioms"])
@@ -51,8 +56,10 @@ class ProbeInventoryTests(unittest.TestCase):
                     ("candidate_peak_rss_gib", "peak_rss_kb", "candidate", 1048576)):
                 expected = int(statistics.median(s[side][field] for s in result["samples"]))
                 self.assertEqual(table[name][key], expected/divisor)
+                self.assertEqual(result["median_"+side+"_"+field], expected)
             delta = int(statistics.median(s["signed_wall_delta_nanos"] for s in result["samples"]))
             self.assertEqual(table[name]["paired_delta_seconds"], delta/1e9)
+            self.assertEqual(result["median_signed_wall_delta_nanos"], delta)
         samples.sort(key=lambda x:(x[2]["round"],x[2]["slot_index"]))
         order = report["config"]["order"]
         for i in range(6):
@@ -83,6 +90,22 @@ class ProbeInventoryTests(unittest.TestCase):
             for name,digest in report["source_sha256"].items():
                 contents = subprocess.check_output(["git", "show", ":"+name], cwd=runner.ROOT, env=env)
                 self.assertEqual(hashlib.sha256(contents).hexdigest(), digest, name)
+
+    def test_chain_cause_scope_differs_from_fraction_arithmetic(self):
+        for depth in (1, 2, 3):
+            cause = runner.pair(depth, "ArithmeticCause").metadata
+            self.assertEqual(cause["family"], "literal-chain-rejection-cause")
+            self.assertEqual(cause["measurement_scope"], "actual forged chain guards and initial identity")
+            self.assertEqual(cause["degree"], 1)
+            for field in ("graph_nodes", "graph_edges", "distinct_leaf_references", "query_arity"):
+                self.assertEqual(cause[field], 0)
+        arithmetic = runner.pair(1, "FieldArithmetic").metadata
+        self.assertEqual(arithmetic["measurement_scope"], "fraction addition and division")
+        self.assertEqual(arithmetic["family"], "literal-fraction-field-arithmetic")
+        self.assertIsNone(arithmetic["degree"])
+        certificates = runner.pair(1, "Certificates").metadata
+        self.assertEqual(certificates["measurement_scope"], "supplied fraction normalization checker proofs")
+        self.assertEqual(certificates["family"], "literal-fraction-normalization")
 
     def test_spec_and_metadata(self):
         validate_spec(runner.SPEC)
