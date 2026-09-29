@@ -1,0 +1,6 @@
+tree ad2fc997eeb173e5ce250296f047b340b95abead
+parent a99cd60c681e8fdefa043995179c6438df0fd388
+author Kim Morrison <kim@lean-fro.org> 1790682643 +0000
+committer Kim Morrison <kim@lean-fro.org> 1790682643 +0000
+
+Retain cubic rcf example runtime and proof-check diagnostics

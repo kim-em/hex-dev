@@ -43,6 +43,18 @@ theorem RawDescriptor.full_at (raw : RawDescriptor E Ctx) (x : K) :
   rw [List.getElem?_eq_getElem hindex, Option.getD_some]
   rw [derivativesFrom_get f hz hnat hm raw.head raw.head.natDegree j hlt]
 
+omit [One E] [Add E] [Sub E] [DecidableEq Ctx]
+    [IsStrictOrderedRing K] [IsRealClosed K] in
+include hm hnat in
+/-- Full derivative signs depend on the mathematical defining polynomial,
+not on its stored coefficient representation or descriptor bindings. -/
+theorem RawDescriptor.full_congr (raw other : RawDescriptor E Ctx)
+    (hhead : interpret f hz raw.head = interpret f hz other.head) (x : K) :
+    signsAt f hz (raw.full []).queries x = signsAt f hz (other.full []).queries x := by
+  have hdegree : raw.head.natDegree = other.head.natDegree := by
+    rw [← natDegree_interpret f hz raw.head, hhead, natDegree_interpret]
+  rw [raw.full_at f hz hm hnat x, other.full_at f hz hm hnat x, hdegree, hhead]
+
 omit [IsStrictOrderedRing K] [IsRealClosed K] in
 include hm hnat in
 /-- Restricting the full word at any point gives the descriptor's indexed

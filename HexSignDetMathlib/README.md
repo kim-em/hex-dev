@@ -189,13 +189,19 @@ use the shared proved root-sum theorem.
 invalid mathematical target domains, even if their open-interval root set
 contains the source root. It uses shared preparation correspondence and has
 no root-sum theorem dependency.
-`Descriptor.buildReencoding_refinement` proves success for a valid same-head
-target domain containing the source root whose root set is contained in the
-original domain. It establishes preparation and both actual producers, using
-the original partial selection's uniqueness, and preserves the selected root.
-This needs neither general Thom injectivity nor rational isolating bounds.
-It uses the shared proved Sturm–Tarski theorem.
-General success after changing the defining head remains open.
+`Descriptor.buildReencoding_congr` proves success when a target defining
+polynomial has a zero difference from the source polynomial, even if their
+stored coefficients differ. Its valid target domain must contain the selected
+root and have its roots contained in the original domain. The proof establishes
+preparation and both actual producers and preserves that root using the source
+partial selection's uniqueness. `RawDescriptor.full_congr` supplies agreement
+of the freshly reconstructed derivative signs under mathematical polynomial
+equality. Literal head, context and endpoint checks still require fresh evidence.
+`Descriptor.buildReencoding_refinement` specializes this result to the same
+stored head. Neither result needs general Thom injectivity or rational isolating
+bounds; both use the shared proved Sturm–Tarski theorem.
+General success for a different mathematical defining polynomial still requires
+the Thom foundation.
 `Descriptor.convert_success` and `Descriptor.convert_root` in
 `HexSignDetMathlib.Convert` prove that rebuilding a descriptor after a
 value-preserving coefficient and context change succeeds and preserves its
