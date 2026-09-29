@@ -203,7 +203,8 @@ def main():
         metadata["collector_exit_code"] = code
         return code
     except BaseException as error:
-        metadata.update(state="failed", error=str(error), exception=type(error).__name__)
+        metadata.update(state="failed", error=str(error), exception=type(error).__name__,
+                        collector_exit_code=(130 if isinstance(error, KeyboardInterrupt) else 2))
         raise
     finally:
         metadata["load_after"] = os.getloadavg()
@@ -212,4 +213,10 @@ def main():
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        exit_code = main()
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        exit_code = 2
+    raise SystemExit(exit_code)

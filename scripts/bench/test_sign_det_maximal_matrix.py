@@ -335,6 +335,22 @@ class DimensionEvidenceTests(unittest.TestCase):
         self.assertEqual(row["rowAddScalarPairs"], 4*(18**6-9**6))
         self.assertEqual(row["rowScaleScalarProducts"], 2*729**2)
         self.assertEqual(row["inverseIdentityScalarPairs"], 729**3)
+        timing = json.loads((bench.ROOT/"reports/data/sign-det-maximal-matrices/ff35bd9da-dimensions/metadata.json").read_text())
+        for name,digest in metadata["source_sha256"].items():
+            if not name.startswith("bench/"):
+                self.assertEqual(digest, timing["source_sha256"][name], name)
+        source = metadata["source_archive"]
+        patch_bytes = (root/source["file"]).read_bytes()
+        self.assertEqual(hashlib.sha256(patch_bytes).hexdigest(), source["sha256"])
+        with TemporaryDirectory() as d:
+            env = dict(os.environ, GIT_INDEX_FILE=str(Path(d)/"index"))
+            subprocess.run(["git", "read-tree", source["base_revision"]],
+                           cwd=bench.ROOT, env=env, check=True)
+            subprocess.run(["git", "apply", "--cached", "--unidiff-zero"], input=patch_bytes,
+                           cwd=bench.ROOT, env=env, check=True)
+            for name,digest in metadata["source_sha256"].items():
+                contents = subprocess.check_output(["git", "show", ":"+name], cwd=bench.ROOT, env=env)
+                self.assertEqual(hashlib.sha256(contents).hexdigest(), digest, name)
 
     def test_collect_dimension_mode_retains_both_arms(self):
         calls = []
@@ -367,6 +383,7 @@ class DimensionEvidenceTests(unittest.TestCase):
                 p.parent.mkdir(parents=True, exist_ok=True)
                 p.write_text("test source")
             commands = []
+            fail = [False]
             def run(command, **kwargs):
                 commands.append(command)
                 if command[0] == str(exe):
@@ -375,6 +392,8 @@ class DimensionEvidenceTests(unittest.TestCase):
                     else:
                         result = copy.deepcopy(self.result)
                         result["function"] = command[2]
+                        if fail[0]:
+                            result["points"][0]["status"] = "error"
                         if command[2].endswith("runCheckDimension"):
                             for point in result["points"]:
                                 point["result_hash"] = hex(11)
@@ -393,8 +412,21 @@ class DimensionEvidenceTests(unittest.TestCase):
                  patch.object(bench.os, "sched_setaffinity"), \
                  patch.object(bench.os, "sched_getaffinity", return_value={0}):
                 self.assertEqual(bench.main(), 1)
+                fail[0] = True
+                failed_out = Path(d)/"failed-records"
+                sys.argv[-1] = str(failed_out)
+                with self.assertRaisesRegex(ValueError, "scientific validation failed"):
+                    bench.main()
             self.assertIn([str(exe), "inspect-maximal-matrix-dimensions"], commands)
-            self.assertEqual(json.loads((out/"metadata.json").read_text())["collector_exit_code"], 1)
+            metadata = json.loads((out/"metadata.json").read_text())
+            self.assertEqual(metadata["collector_exit_code"], 1)
+            self.assertEqual(metadata["schema"], "hex-sign-det-maximal-matrix-timing-v2")
+            self.assertEqual(metadata["parameter"], "matrix-size")
+            failure = json.loads((failed_out/"metadata.json").read_text())
+            self.assertEqual(failure["collector_exit_code"], 2)
+            self.assertEqual(failure["state"], "failed")
+            self.assertTrue((failed_out/"runSolveDimension.json").exists())
+            self.assertTrue((failed_out/"runCheckDimension.json").exists())
 
     def test_natural_dimension_records(self):
         self.assertEqual(self.inventory(self.rows), self.expected)

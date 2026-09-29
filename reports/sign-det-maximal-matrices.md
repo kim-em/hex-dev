@@ -120,7 +120,7 @@ has reached its asymptotic timing regime. The [summary](data/sign-det-maximal-ma
 reports no validation errors. The collector returned exit status 1 for the
 inconclusive verdicts; the archived metadata records only the child exit
 statuses, which are all zero. Current collectors also retain their own
-returned exit code. No samples failed or were omitted.
+returned exit code, using 2 for failures and 1 for inconclusive observations. No samples failed or were omitted.
 
 At size 729, median process peak RSS is 119.785 MiB for solve and 119.406 MiB
 for check. These observations include input preparation and process startup;
@@ -133,8 +133,8 @@ retains timing and resident-set medians for all six sizes.
 The earlier one-column elimination inventory already identifies a more
 specific count: `4(18^s−9^s)` rational multiply/add pairs in row additions,
 alongside the `27^s` integer pairs in the dense check. The [size-729 one-column inspection](data/sign-det-maximal-matrices/elimination-3042b0016/metadata.json)
-confirms 91,854 nonzero multipliers, 183,708 row additions and 133,923,132
-rational multiply/add pairs. It verifies each pivot and the final literal
+counts 91,854 nonzero multipliers. The source structure implies 183,708
+row additions and 133,923,132 rational multiply/add pairs. It verifies each pivot and the final literal
 inverse against `inverse?`, using the existing inspection algorithm. The
 [source archive](data/sign-det-maximal-matrices/elimination-3042b0016/archive.json)
 retains the clean checkout and output; this is untimed evidence, separate from

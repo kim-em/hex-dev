@@ -59,9 +59,6 @@ multiply/add pairs, including zero entries. All other checker work is
 O(r^2 s): constructing entries and checking distinct columns. Gauss-Jordan
 solve takes O(r^3) rational coefficient operations, and finishes with the same
 r^3 integer check. Thus both are Θ(r^3)=Θ(27^s) coefficient operations.
-The solve skips zero rational multipliers; the dense integer check supplies
-the cubic lower bound on scalar-operation count. These differently weighted
-operations need not give cubic wall time over the sampled range.
 This is not a constant-bit or general Tarski-query wall-time claim. -/
 
 -- Declared cost-model: Θ(27^s) coefficient operations, dense exact inverse identity plus Gauss-Jordan solve.
