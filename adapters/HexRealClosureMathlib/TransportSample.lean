@@ -21,11 +21,22 @@ variable [DecidableEq C]
 
 /-- Distinct target roots realizing the entire ordered sign condition after
 interpreting the source coefficient arrays. -/
-noncomputable def roots (read : E → K) (p : Hex.DensePoly E) (a b : Hex.Endpoint E)
+@[expose] noncomputable def roots (read : E → K) (p : Hex.DensePoly E) (a b : Hex.Endpoint E)
     (qs : List (Hex.DensePoly E)) (condition : List Int) : Finset K :=
   (Tarski.rootsIn (interpret (fun x : K => x) (fun _ => Iff.rfl) (polynomial read p))
     ((endpoint read a).map (fun x : K => x)) ((endpoint read b).map (fun x : K => x))).filter
     (fun x => signsAt (fun x : K => x) (fun _ => Iff.rfl) (qs.map (polynomial read)) x = condition)
+
+omit [One E] [Add E] [Sub E] [Mul E] [NatCast E] [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- Membership exposes both the interpreted root domain and the full sign
+condition to consumers in other modules. -/
+@[simp] theorem mem_roots (read : E → K) (p : Hex.DensePoly E) (a b : Hex.Endpoint E)
+    (qs : List (Hex.DensePoly E)) (condition : List Int) (x : K) :
+    x ∈ roots read p a b qs condition ↔
+      x ∈ Tarski.rootsIn (interpret (fun y : K => y) (fun _ => Iff.rfl) (polynomial read p))
+        ((endpoint read a).map (fun y : K => y)) ((endpoint read b).map (fun y : K => y)) ∧
+      signsAt (fun y : K => y) (fun _ => Iff.rfl) (qs.map (polynomial read)) x = condition := by
+  exact Finset.mem_filter
 
 /-- Finite interpretation data turns the original accepted table's sparse
 lookup into an exact root cardinality, including omitted conditions. -/
@@ -80,6 +91,10 @@ theorem unique_root (read : E → K) (S : E → Prop) (closed : Closed read S)
     exact Finset.mem_singleton.mp member
 
 end Hex.RealClosure.Transport
+
+/-- info: 'Hex.RealClosure.Transport.mem_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.mem_roots
 
 /-- info: 'Hex.RealClosure.Transport.count_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
