@@ -17,13 +17,15 @@ public section
 /-!
 # Mathematical interpretation of Yun replay
 
-Accepted replay gives the rational polynomial product, separable and pairwise
-coprime factors, and complete root and multiplicity labels after any rational
+Accepted replay gives the ordered-field polynomial product, separable and
+pairwise coprime factors, and complete root and multiplicity labels after any
 field map. `YunInvariant` proves that every public ordered-field decomposition
 passes replay, including inputs with repeated factors.
 -/
 
 namespace Hex.RealClosure.Yun
+
+attribute [local instance 2000] Field.toGrindField
 
 /-- A cached selected-root coefficient stream runs Yun's raw recurrence with
 the same result as its exact real-algebraic values. This theorem transports
@@ -116,8 +118,10 @@ theorem check_product_polynomial (f : DensePoly Rat) (unit : Rat)
     (check_reconstruct f unit entries h).1.symm
 
 /-- An accepted product can be written as an ordinary polynomial list product. -/
-theorem check_product_prod (f : DensePoly Rat) (unit : Rat)
-    (entries : Array (DensePoly Rat × Nat))
+theorem check_product_prod {F : Type*} [Field F] [DecidableEq F]
+    [LinearOrder F] [IsStrictOrderedRing F]
+    (f : DensePoly F) (unit : F)
+    (entries : Array (DensePoly F × Nat))
     (h : check f (.factors unit entries) = true) :
     HexPolyMathlib.toPolynomial f = Polynomial.C unit *
       (entries.toList.map fun entry =>
@@ -126,11 +130,11 @@ theorem check_product_prod (f : DensePoly Rat) (unit : Rat)
   simpa only [reconstruct] using congrArg HexPolyMathlib.toPolynomial
     (check_reconstruct f unit entries h).1.symm
 
-/-- Accepted rational replay has the same factorization over any field
-containing the rationals. -/
-theorem check_product_map {K : Type*} [Field K] (φ : Rat →+* K)
-    (f : DensePoly Rat) (unit : Rat)
-    (entries : Array (DensePoly Rat × Nat))
+/-- Accepted replay has the same factorization after a field map. -/
+theorem check_product_map {F K : Type*} [Field F] [DecidableEq F]
+    [LinearOrder F] [IsStrictOrderedRing F] [Field K]
+    (φ : F →+* K) (f : DensePoly F) (unit : F)
+    (entries : Array (DensePoly F × Nat))
     (h : check f (.factors unit entries) = true) :
     (HexPolyMathlib.toPolynomial f).map φ =
       Polynomial.C (φ unit) *
@@ -272,8 +276,9 @@ private theorem rootMultiplicity_label {K : Type*} [Field K]
         rw [Polynomial.rootMultiplicity_eq_zero hnot]
         simpa using ih htail hsepTail hmemTail hroot
 
-/-- A constant executable gcd maps to a unit gcd over `Rat`. -/
-private theorem gcd_isUnit (p q : DensePoly Rat)
+/-- A constant executable gcd maps to a unit polynomial gcd. -/
+private theorem gcd_isUnit {F : Type*} [Field F] [DecidableEq F]
+    (p q : DensePoly F)
     (hp : p ≠ 0) (hdegree : (DensePoly.gcd p q).natDegree = 0) :
     IsUnit (EuclideanDomain.gcd (HexPolyMathlib.toPolynomial p)
       (HexPolyMathlib.toPolynomial q)) := by
@@ -301,10 +306,12 @@ private theorem gcd_isUnit (p q : DensePoly Rat)
     Polynomial.degree_eq_natDegree hGzero]
   exact_mod_cast hdegreeG
 
-/-- A rational factor accepted by replay is separable. -/
-theorem check_factor_separable (f : DensePoly Rat) (unit : Rat)
-    (entries : Array (DensePoly Rat × Nat))
-    (entry : DensePoly Rat × Nat) (hmem : entry ∈ entries)
+/-- A factor accepted by ordered-field replay is separable. -/
+theorem check_factor_separable {F : Type*} [Field F] [DecidableEq F]
+    [LinearOrder F] [IsStrictOrderedRing F]
+    (f : DensePoly F) (unit : F)
+    (entries : Array (DensePoly F × Nat))
+    (entry : DensePoly F × Nat) (hmem : entry ∈ entries)
     (h : check f (.factors unit entries) = true) :
     (HexPolyMathlib.toPolynomial entry.1).Separable := by
   obtain ⟨_, hdegree, _, hgcd⟩ :=
@@ -320,17 +327,21 @@ theorem check_factor_separable (f : DensePoly Rat) (unit : Rat)
       simpa [← DensePoly.derivative_eq_derivativeImpl,
         HexPolyMathlib.toPolynomial_derivative] using hGunit))
 
-/-- Every accepted rational factor is squarefree. -/
-theorem check_factor_squarefree (f : DensePoly Rat) (unit : Rat)
-    (entries : Array (DensePoly Rat × Nat))
-    (entry : DensePoly Rat × Nat) (hmem : entry ∈ entries)
+/-- Every accepted factor is squarefree. -/
+theorem check_factor_squarefree {F : Type*} [Field F] [DecidableEq F]
+    [LinearOrder F] [IsStrictOrderedRing F]
+    (f : DensePoly F) (unit : F)
+    (entries : Array (DensePoly F × Nat))
+    (entry : DensePoly F × Nat) (hmem : entry ∈ entries)
     (h : check f (.factors unit entries) = true) :
     Squarefree (HexPolyMathlib.toPolynomial entry.1) :=
   (check_factor_separable f unit entries entry hmem h).squarefree
 
 /-- Accepted replay factors are pairwise coprime as mathematical polynomials. -/
-theorem check_pairwise_coprime (f : DensePoly Rat) (unit : Rat)
-    (entries : Array (DensePoly Rat × Nat))
+theorem check_pairwise_coprime {F : Type*} [Field F] [DecidableEq F]
+    [LinearOrder F] [IsStrictOrderedRing F]
+    (f : DensePoly F) (unit : F)
+    (entries : Array (DensePoly F × Nat))
     (h : check f (.factors unit entries) = true) :
     entries.toList.Pairwise (fun a b =>
       IsCoprime (HexPolyMathlib.toPolynomial a.1)
@@ -346,12 +357,13 @@ theorem check_pairwise_coprime (f : DensePoly Rat) (unit : Rat)
   exact EuclideanDomain.gcd_isUnit_iff.mp
     (gcd_isUnit a.1 b.1 hnonzero hab)
 
-/-- A root of an accepted rational factor has its labelled multiplicity after
-mapping into any field containing the rationals. -/
-theorem check_map_rootMultiplicity {K : Type*} [Field K]
-    (φ : Rat →+* K) (f : DensePoly Rat) (unit : Rat)
-    (entries : Array (DensePoly Rat × Nat))
-    (entry : DensePoly Rat × Nat) (hmem : entry ∈ entries)
+/-- A root of an accepted factor has its labelled multiplicity after a
+field map. -/
+theorem check_map_rootMultiplicity {F K : Type*} [Field F] [DecidableEq F]
+    [LinearOrder F] [IsStrictOrderedRing F] [Field K]
+    (φ : F →+* K) (f : DensePoly F) (unit : F)
+    (entries : Array (DensePoly F × Nat))
+    (entry : DensePoly F × Nat) (hmem : entry ∈ entries)
     (h : check f (.factors unit entries) = true) (x : K)
     (hroot : Polynomial.IsRoot
       ((HexPolyMathlib.toPolynomial entry.1).map φ) x) :
@@ -400,10 +412,26 @@ theorem check_map_rootMultiplicity {K : Type*} [Field K]
     ((HexPolyMathlib.toPolynomial entry.1).map φ, entry.2)
     x hpair hsep hmapped hroot
 
+/-- A checked Yun factor labels the multiplicity of each of its roots
+in the original polynomial over the same ordered field. -/
+theorem check_rootMultiplicity {K : Type*} [Field K] [DecidableEq K]
+    [LinearOrder K] [IsStrictOrderedRing K]
+    (f : DensePoly K) (unit : K)
+    (entries : Array (DensePoly K × Nat))
+    (entry : DensePoly K × Nat) (hmem : entry ∈ entries)
+    (h : check f (.factors unit entries) = true) (x : K)
+    (hroot : Polynomial.IsRoot
+      (HexPolyMathlib.toPolynomial entry.1) x) :
+    Polynomial.rootMultiplicity x (HexPolyMathlib.toPolynomial f) =
+      entry.2 := by
+  simpa using check_map_rootMultiplicity (RingHom.id K)
+    f unit entries entry hmem h x (by simpa using hroot)
+
 /-- Replay identifies exactly the roots after mapping into a field. -/
-theorem check_map_roots_iff {K : Type*} [Field K]
-    (φ : Rat →+* K) (f : DensePoly Rat) (unit : Rat)
-    (entries : Array (DensePoly Rat × Nat))
+theorem check_map_roots_iff {F K : Type*} [Field F] [DecidableEq F]
+    [LinearOrder F] [IsStrictOrderedRing F] [Field K]
+    (φ : F →+* K) (f : DensePoly F) (unit : F)
+    (entries : Array (DensePoly F × Nat))
     (h : check f (.factors unit entries) = true) (x : K) :
     Polynomial.IsRoot ((HexPolyMathlib.toPolynomial f).map φ) x ↔
       ∃ entry ∈ entries,
@@ -450,11 +478,23 @@ theorem check_map_roots_iff {K : Type*} [Field K]
     · simp [Polynomial.eval_pow, hroot.eq_zero,
         Nat.ne_of_gt hpositive]
 
+/-- Checked Yun factors cover exactly the roots over the coefficient field. -/
+theorem check_roots_iff {K : Type*} [Field K] [DecidableEq K]
+    [LinearOrder K] [IsStrictOrderedRing K]
+    (f : DensePoly K) (unit : K)
+    (entries : Array (DensePoly K × Nat))
+    (h : check f (.factors unit entries) = true) (x : K) :
+    Polynomial.IsRoot (HexPolyMathlib.toPolynomial f) x ↔
+      ∃ entry ∈ entries,
+        Polynomial.IsRoot (HexPolyMathlib.toPolynomial entry.1) x := by
+  simpa using check_map_roots_iff (RingHom.id K) f unit entries h x
+
 /-- Replay identifies exactly the roots with a given multiplicity after
 mapping into a field. -/
-theorem check_map_roots_label {K : Type*} [Field K]
-    (φ : Rat →+* K) (f : DensePoly Rat) (unit : Rat)
-    (entries : Array (DensePoly Rat × Nat))
+theorem check_map_roots_label {F K : Type*} [Field F] [DecidableEq F]
+    [LinearOrder F] [IsStrictOrderedRing F] [Field K]
+    (φ : F →+* K) (f : DensePoly F) (unit : F)
+    (entries : Array (DensePoly F × Nat))
     (h : check f (.factors unit entries) = true) (x : K) (m : Nat) :
     (Polynomial.IsRoot ((HexPolyMathlib.toPolynomial f).map φ) x ∧
       Polynomial.rootMultiplicity x

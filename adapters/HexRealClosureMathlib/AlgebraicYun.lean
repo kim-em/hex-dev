@@ -63,6 +63,84 @@ theorem Context.checkYun (context : Context E Ctx coeffSign parent)
   rw [context.mapYun f hz h1 ha hs hm hnat hsign hn hi hd p]
   exact Yun.decompose_sound _
 
+include hd in
+/-- Each selected root of an emitted tower factor has exactly that factor's
+multiplicity in the interpreted input polynomial. -/
+theorem Context.yun_rootMultiplicity
+    (context : Context E Ctx coeffSign parent)
+    (p : DensePoly (Element context))
+    (unit : Element context)
+    (entries : Array (DensePoly (Element context) × Nat))
+    (hdecomp : Yun.decomposeRaw p = .factors unit entries)
+    (entry : DensePoly (Element context) × Nat) (hmem : entry ∈ entries)
+    (x : K)
+    (hroot : Polynomial.IsRoot
+      (HexPolyMathlib.toPolynomial
+        (DensePoly.Interpret.map
+          (fun a : Element context => a.denote f hz h1 ha hs hm hnat hsign)
+          (Element.denote_eq_zero f hz h1 ha hs hm hnat hsign hn hi)
+          entry.1)) x) :
+    Polynomial.rootMultiplicity x
+      (HexPolyMathlib.toPolynomial
+        (DensePoly.Interpret.map
+          (fun a : Element context => a.denote f hz h1 ha hs hm hnat hsign)
+          (Element.denote_eq_zero f hz h1 ha hs hm hnat hsign hn hi) p)) =
+      entry.2 := by
+  have hcheck := context.checkYun f hz h1 ha hs hm hnat hsign hn hi hd p
+  rw [hdecomp] at hcheck
+  simp only [Yun.Decomposition.map] at hcheck
+  have hmem' :
+      (DensePoly.Interpret.map
+        (fun a : Element context => a.denote f hz h1 ha hs hm hnat hsign)
+        (Element.denote_eq_zero f hz h1 ha hs hm hnat hsign hn hi)
+        entry.1, entry.2) ∈
+      entries.map (fun item =>
+        (DensePoly.Interpret.map
+          (fun a : Element context => a.denote f hz h1 ha hs hm hnat hsign)
+          (Element.denote_eq_zero f hz h1 ha hs hm hnat hsign hn hi)
+          item.1, item.2)) := by
+    exact Array.mem_map.mpr ⟨entry, hmem, rfl⟩
+  exact Yun.check_rootMultiplicity _ _ _ _ hmem' hcheck x hroot
+
+include hd in
+/-- The emitted tower factors cover exactly the roots of the interpreted
+input polynomial in the ambient real closed field. -/
+theorem Context.yun_roots_iff
+    (context : Context E Ctx coeffSign parent)
+    (p : DensePoly (Element context))
+    (unit : Element context)
+    (entries : Array (DensePoly (Element context) × Nat))
+    (hdecomp : Yun.decomposeRaw p = .factors unit entries)
+    (x : K) :
+    Polynomial.IsRoot
+      (HexPolyMathlib.toPolynomial
+        (DensePoly.Interpret.map
+          (fun a : Element context => a.denote f hz h1 ha hs hm hnat hsign)
+          (Element.denote_eq_zero f hz h1 ha hs hm hnat hsign hn hi) p)) x ↔
+      ∃ entry ∈ entries,
+        Polynomial.IsRoot
+          (HexPolyMathlib.toPolynomial
+            (DensePoly.Interpret.map
+              (fun a : Element context => a.denote f hz h1 ha hs hm hnat hsign)
+              (Element.denote_eq_zero f hz h1 ha hs hm hnat hsign hn hi)
+              entry.1)) x := by
+  have hcheck := context.checkYun f hz h1 ha hs hm hnat hsign hn hi hd p
+  rw [hdecomp] at hcheck
+  simp only [Yun.Decomposition.map] at hcheck
+  have hroots := Yun.check_roots_iff _ _ _ hcheck x
+  constructor
+  · intro hroot
+    obtain ⟨mapped, hmem, hselected⟩ := hroots.mp hroot
+    obtain ⟨entry, hentry, rfl⟩ := Array.mem_map.mp hmem
+    exact ⟨entry, hentry, hselected⟩
+  · rintro ⟨entry, hentry, hselected⟩
+    apply hroots.mpr
+    refine ⟨(DensePoly.Interpret.map
+      (fun a : Element context => a.denote f hz h1 ha hs hm hnat hsign)
+      (Element.denote_eq_zero f hz h1 ha hs hm hnat hsign hn hi)
+      entry.1, entry.2), ?_, hselected⟩
+    exact Array.mem_map.mpr ⟨entry, hentry, rfl⟩
+
 end Hex.RealClosure.Algebraic
 
 /-- info: 'Hex.RealClosure.Algebraic.Context.mapYun' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -71,3 +149,9 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Context.checkYun' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Context.checkYun
+/-- info: 'Hex.RealClosure.Algebraic.Context.yun_rootMultiplicity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.yun_rootMultiplicity
+/-- info: 'Hex.RealClosure.Algebraic.Context.yun_roots_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.yun_roots_iff
