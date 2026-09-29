@@ -581,3 +581,16 @@ ordered queries and checked selected-sign certificate with their sources.
 descriptor and proves its root signs. A consumer example uses the actual
 native rational dictionary, its proved compatibility equation and
 `Rat.castHom ℝ`, covering the first rational infinitesimal level.
+
+### Finite coefficient interpretation
+
+`Transport.polynomial` interprets a stored coefficient array without field laws
+on its source expressions. Zero preservation handles implicit coefficients;
+zero reflection is required only on the finite input arrays. The actual
+normalized size, degree and zero test are preserved. Interpreting `ofCoeffs`
+commutes with normalization even when nonzero source coefficients map to zero.
+Addition and subtraction use only the finite recorded scalar operations at
+coefficient positions, together with the input zero patterns. These lemmas
+apply to raw algebraic representatives as well as infinitesimal fractions.
+Full query transport additionally requires the remaining polynomial operations,
+query identities, signs and guards at the jointly realized algebraic root.

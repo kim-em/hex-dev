@@ -608,7 +608,7 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.ReencodingProducer, `HexSignDetMathlib.RootList,
     `HexSignDetMathlib.ReencodingRefinement,
     `HexRealClosureMathlib.Specialize, `HexRealClosureMathlib.SpecializeTests,
-    `HexRealClosureMathlib.SpecializePolynomial, `HexRealClosureMathlib.SpecializeRegular, `HexRealClosureMathlib.SpecializeQuery, `HexRealClosureMathlib.SpecializeTarski,
+    `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.SpecializePolynomial, `HexRealClosureMathlib.SpecializeRegular, `HexRealClosureMathlib.SpecializeQuery, `HexRealClosureMathlib.SpecializeTarski,
     `HexRealClosureMathlib.SpecializeReduction,
     `HexRealClosureMathlib.SpecializeMoment,
     `HexRealClosureMathlib.SpecializeReplay,
