@@ -35,4 +35,21 @@ example (polynomials : Finset (Polynomial ℝ)) (cap : ℝ) (positive : 0 < cap)
   obtain ⟨t, ht, hc, signs⟩ := exists_parameter polynomials cap positive
   exact ⟨t, ht, hc, by simp, signs⟩
 
+/-- Rational coefficient data is embedded through its actual cast, and every
+sign and denominator guard uses the same parameter as the selected square root. -/
+example (fractions : Finset (Hex.RationalFn Rat)) :
+    ∃ t s : ℝ, 0 < t ∧ t < 1 ∧ 0 < s ∧ s ^ 2 = t ∧ t < s ∧ s < 1 ∧
+      ∀ fraction ∈ fractions,
+        ((HexPolyMathlib.toPolynomial fraction.den).map (Rat.castHom ℝ)).eval t ≠ 0 ∧
+        (SignType.sign (evalMapped (Rat.castHom ℝ) fraction t) : Int) =
+          Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign fraction := by
+  obtain ⟨t, positive, small, signs⟩ := exists_mapped_parameter
+    (Rat.castHom ℝ) Rat.cast_strictMono fractions 1 zero_lt_one
+  have square : (Real.sqrt t) ^ 2 = t := Real.sq_sqrt positive.le
+  have nonnegative : 0 ≤ Real.sqrt t := Real.sqrt_nonneg t
+  have root_positive : 0 < Real.sqrt t := Real.sqrt_pos.mpr positive
+  refine ⟨t, Real.sqrt t, positive, small, root_positive, square, ?_, ?_, signs⟩
+  · nlinarith
+  · nlinarith
+
 end Hex.RealClosure.Specialize.Tests

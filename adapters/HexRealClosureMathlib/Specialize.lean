@@ -61,6 +61,45 @@ theorem exists_parameter (polynomials : Finset (Polynomial ℝ)) (cap : ℝ) (po
   have ht : 0 < t := by dsimp [t]; positivity
   exact ⟨t, ht, belowcap, signs t ht belowη⟩
 
+section Embedded
+variable {F : Type u} [Field F]
+
+private theorem trailing_map (embedding : F →+* ℝ) (p : Polynomial F) :
+    (p.map embedding).trailingCoeff = embedding p.trailingCoeff := by
+  by_cases zero : p = 0
+  · simp [zero]
+  have mapped : p.map embedding ≠ 0 := by
+    intro h
+    apply zero
+    apply Polynomial.ext
+    intro i
+    have coefficient := congrArg (fun q : Polynomial ℝ => q.coeff i) h
+    exact embedding.injective (by simpa using coefficient)
+  have degree : (p.map embedding).natTrailingDegree = p.natTrailingDegree := by
+    apply Nat.le_antisymm
+    · apply natTrailingDegree_le_of_ne_zero
+      rw [Polynomial.coeff_map]
+      exact fun h => (coeff_natTrailingDegree_ne_zero.mpr zero)
+        (embedding.injective (h.trans embedding.map_zero.symm))
+    · apply natTrailingDegree_le_of_ne_zero
+      intro h
+      have coefficient := coeff_natTrailingDegree_ne_zero.mpr mapped
+      apply coefficient
+      rw [Polynomial.coeff_map, h, embedding.map_zero]
+  simp only [Polynomial.trailingCoeff, degree, Polynomial.coeff_map]
+
+variable [LinearOrder F]
+
+/-- An ordered coefficient embedding preserves the actual near-zero sign. -/
+theorem polynomial_sign_map (embedding : F →+* ℝ) (ordered : StrictMono embedding)
+    (p : Polynomial F) :
+    ∀ᶠ t in 𝓝[>] (0 : ℝ),
+      SignType.sign ((p.map embedding).eval t) = SignType.sign p.trailingCoeff := by
+  have stable := polynomial_sign (p.map embedding)
+  simpa only [trailing_map, ordered.sign_comp] using stable
+
+end Embedded
+
 section Fractions
 attribute [local instance 2000] Field.toGrindField
 
@@ -140,6 +179,79 @@ theorem exists_fraction_parameter (fractions : Finset (Hex.RationalFn ℝ))
   have ht : 0 < t := by dsimp [t]; positivity
   exact ⟨t, ht, belowcap, signs t ht belowη⟩
 
+section EmbeddedFractions
+variable {F : Type} [Field F] [DecidableEq F] [LinearOrder F]
+
+/-- Evaluate actual native fraction coefficients through the prescribed embedding. -/
+@[expose] noncomputable def evalMapped (embedding : F →+* ℝ)
+    (fraction : Hex.RationalFn F) (t : ℝ) : ℝ :=
+  ((HexPolyMathlib.toPolynomial fraction.num).map embedding).eval t /
+    ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t
+
+/-- Ordered coefficient embeddings preserve each native fraction's infinitesimal
+sign on one positive neighborhood, including its actual denominator guard. -/
+theorem fraction_sign_map (embedding : F →+* ℝ) (ordered : StrictMono embedding)
+    (fraction : Hex.RationalFn F) :
+    ∀ᶠ t in 𝓝[>] (0 : ℝ),
+      ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t ≠ 0 ∧
+      (SignType.sign (evalMapped embedding fraction t) : Int) =
+        Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign fraction := by
+  have nonzero : HexPolyMathlib.toPolynomial fraction.den ≠ 0 := by
+    intro zero
+    apply fraction.den_ne_zero
+    apply Hex.DensePoly.ext_coeff
+    intro i
+    have equal := congrArg (fun p : Polynomial F => p.coeff i) zero
+    simpa only [HexPolyMathlib.coeff_toPolynomial, Polynomial.coeff_zero,
+      Hex.DensePoly.coeff_zero] using equal
+  have lowest : (HexPolyMathlib.toPolynomial fraction.den).trailingCoeff ≠ 0 :=
+    trailingCoeff_nonzero_iff_nonzero.mpr nonzero
+  filter_upwards [polynomial_sign_map embedding ordered (HexPolyMathlib.toPolynomial fraction.num),
+    polynomial_sign_map embedding ordered (HexPolyMathlib.toPolynomial fraction.den)] with t numerator denominator
+  have guard : ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t ≠ 0 := by
+    intro zero
+    rw [zero, sign_zero] at denominator
+    exact lowest (sign_eq_zero_iff.mp denominator.symm)
+  refine ⟨guard, ?_⟩
+  by_cases zero : fraction.num = 0
+  · simp [evalMapped, zero, HexPolyMathlib.toPolynomial_zero, Hex.OrderedFn.Infinitesimal.sign]
+  · rw [Hex.OrderedFn.Infinitesimal.sign, ite_eq_right zero,
+      Hex.OrderedFn.Infinitesimal.orderSign_eq, Hex.OrderedFn.Infinitesimal.orderSign_eq,
+      Hex.OrderedFn.Infinitesimal.lowestCoeff_eq, Hex.OrderedFn.Infinitesimal.lowestCoeff_eq]
+    have inverse (x : ℝ) : SignType.sign x⁻¹ = SignType.sign x := by
+      simp only [sign_apply, inv_pos, inv_lt_zero]
+    simp only [evalMapped, div_eq_mul_inv, sign_mul, inverse, numerator,
+      denominator, SignType.coe_mul]
+
+/-- One neighborhood preserves every sign and denominator guard in finite native
+fraction data over the same ordered embedded coefficient field. -/
+theorem finite_fractions_map (embedding : F →+* ℝ) (ordered : StrictMono embedding)
+    (fractions : Finset (Hex.RationalFn F)) :
+    ∃ η > (0 : ℝ), ∀ t, 0 < t → t < η → ∀ fraction ∈ fractions,
+      ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t ≠ 0 ∧
+      (SignType.sign (evalMapped embedding fraction t) : Int) =
+        Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign fraction := by
+  have stable := (eventually_all_finset fractions).mpr
+    fun fraction _ => fraction_sign_map embedding ordered fraction
+  obtain ⟨η, positive, holds⟩ := Metric.mem_nhdsWithin_iff.mp stable
+  refine ⟨η, positive, fun t ht hη => holds ?_⟩
+  exact ⟨by simpa [Metric.mem_ball, Real.dist_eq, abs_of_pos ht] using hη, ht⟩
+
+/-- One ordinary real parameter below a positive cap realizes the whole finite
+collection over a prescribed ordered coefficient embedding. -/
+theorem exists_mapped_parameter (embedding : F →+* ℝ) (ordered : StrictMono embedding)
+    (fractions : Finset (Hex.RationalFn F)) (cap : ℝ) (positive : 0 < cap) :
+    ∃ t : ℝ, 0 < t ∧ t < cap ∧ ∀ fraction ∈ fractions,
+      ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t ≠ 0 ∧
+      (SignType.sign (evalMapped embedding fraction t) : Int) =
+        Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign fraction := by
+  have stable := (eventually_all_finset fractions).mpr
+    fun fraction _ => fraction_sign_map embedding ordered fraction
+  obtain ⟨t, signs, small⟩ := (stable.and (Ioo_mem_nhdsGT positive)).exists
+  exact ⟨t, small.1, small.2, signs⟩
+
+end EmbeddedFractions
+
 end Fractions
 
 end Hex.RealClosure.Specialize
@@ -159,3 +271,19 @@ end Hex.RealClosure.Specialize
 /-- info: 'Hex.RealClosure.Specialize.exists_fraction_parameter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.exists_fraction_parameter
+
+/-- info: 'Hex.RealClosure.Specialize.polynomial_sign_map' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.polynomial_sign_map
+
+/-- info: 'Hex.RealClosure.Specialize.fraction_sign_map' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.fraction_sign_map
+
+/-- info: 'Hex.RealClosure.Specialize.finite_fractions_map' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.finite_fractions_map
+
+/-- info: 'Hex.RealClosure.Specialize.exists_mapped_parameter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.exists_mapped_parameter

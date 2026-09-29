@@ -427,8 +427,17 @@ for the whole finite collection. The external square-root example uses that
 same parameter for a positive square root whose square is the parameter and
 which lies strictly between it and one.
 
+For any coefficient field with a prescribed strictly increasing embedding into
+ℝ, `polynomial_sign_map` preserves the lowest-coefficient sign after mapping
+the polynomial's coefficients. `fraction_sign_map`, `finite_fractions_map` and
+`exists_mapped_parameter` apply this to the actual native fraction data over
+that field. All signs and denominator guards hold at one common parameter.
+The rational-base consumer uses the actual rational cast and combines those
+same guards with the positive-square-root equation and strict inequalities.
+
 Transport of complete query tables and joint selected-root constraints,
 recursive algebraic replay specialization and successive infinitesimal
 parameter choices remain required finite-sign realization work. These helpers
-operate on fixed real coefficient data in the companion; they add no native
-constructor or runtime field instance for formal real expressions.
+operate on coefficient data with a supplied ordered embedding into ℝ in the
+companion; they add no native constructor or runtime field instance for formal
+real expressions.
