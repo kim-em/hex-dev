@@ -58,6 +58,31 @@ theorem PowerData.of_closed (read : E → K) (S : E → Prop) (data : Closed rea
         exact Product.of_closed read S data _ p
           (fun i _ => data.coeff_natPow read S (p * p) (n / 2) square i) coefficients
 
+omit [DecidableEq K] in
+/-- All coefficients of the actual moment product belong to the closed domain. -/
+theorem Closed.coeff_moment (read : E → K) (S : E → Prop) (data : Closed read S)
+    (qs : List (Hex.DensePoly E)) (es : List Nat)
+    (members : ∀ q ∈ qs, ∀ i < q.size, S (q.coeff i)) (i : Nat) :
+    S ((Hex.SignDet.moment qs es).coeff i) := by
+  have fold : ∀ (xs : List (Hex.DensePoly E)) (initial : Hex.DensePoly E),
+      (∀ p ∈ xs, ∀ j < p.size, S (p.coeff j)) →
+      (∀ j < initial.size, S (initial.coeff j)) →
+      ∀ j, S ((xs.foldl (· * ·) initial).coeff j) := by
+    intro xs
+    induction xs with
+    | nil =>
+      intro initial _ start j
+      exact data.coefficient read S initial start j
+    | cons p xs ih =>
+      intro initial coefficients start j
+      exact ih (initial * p)
+        (fun q member => coefficients q (List.mem_cons_of_mem _ member))
+        (fun k _ => data.coeff_mul read S initial p start (coefficients p (by simp)) k) j
+  apply fold _ 1 _ (fun j _ => data.coeff_one read S j) i
+  intro p member j _
+  obtain ⟨⟨q, k⟩, paired, rfl⟩ := List.mem_map.mp member
+  exact data.coeff_natPow read S q k (members q (List.of_mem_zip paired).1) j
+
 private theorem fold_polynomial (read : E → K) (S : E → Prop) (data : Closed read S)
     (xs : List (Hex.DensePoly E)) (members : ∀ p ∈ xs, ∀ i < p.size, S (p.coeff i))
     (initial : Hex.DensePoly E) (start : ∀ i < initial.size, S (initial.coeff i)) :
@@ -133,6 +158,9 @@ end Hex.RealClosure.Transport
 /-- info: 'Hex.RealClosure.Transport.Closed.coeff_natPow' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Transport.Closed.coeff_natPow
+/-- info: 'Hex.RealClosure.Transport.Closed.coeff_moment' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.Closed.coeff_moment
 /-- info: 'Hex.RealClosure.Transport.PowerData.of_closed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Transport.PowerData.of_closed
