@@ -25,3 +25,16 @@ example (f : Hex.RationalFn Rat) :
       (SignType.sign (Ambient.nativeHom HexRationalFnMathlib.ratField_eq
         (Ambient.infinitesimal Rat) f) : Int) :=
   Ambient.nativeHom_sign HexRationalFnMathlib.ratField_eq (Ambient.infinitesimal Rat) f
+
+example (a : Rat) :
+    Ambient.nativeHom HexRationalFnMathlib.ratField_eq (Ambient.infinitesimal Rat)
+      (Hex.RationalFn.C a : Hex.RationalFn Rat) =
+      (Ambient.infinitesimal Rat).inclusion
+        (@Hex.RationalFn.C Rat (Field.toGrindField (K := Rat)) inferInstance a) :=
+  Ambient.nativeHom_C HexRationalFnMathlib.ratField_eq (Ambient.infinitesimal Rat) a
+
+example (f h : Hex.RationalFn Rat) :
+    Ambient.nativeHom HexRationalFnMathlib.ratField_eq (Ambient.infinitesimal Rat) (f + h) =
+      Ambient.nativeHom HexRationalFnMathlib.ratField_eq (Ambient.infinitesimal Rat) f +
+        Ambient.nativeHom HexRationalFnMathlib.ratField_eq (Ambient.infinitesimal Rat) h :=
+  (Ambient.nativeHom HexRationalFnMathlib.ratField_eq (Ambient.infinitesimal Rat)).map_add f h

@@ -142,6 +142,16 @@ theorem nativeHom_X [g : Lean.Grind.Field L]
   subst g
   rfl
 
+/-- Native coefficients use the same inclusion as the semantic fraction field. -/
+theorem nativeHom_C [g : Lean.Grind.Field L]
+    (compatible : Field.toGrindField (K := L) = g)
+    (model : Ambient (@Hex.RationalFn L (Field.toGrindField (K := L)) inferInstance))
+    (a : L) :
+    nativeHom compatible model (@Hex.RationalFn.C L g inferInstance a) =
+      model.inclusion (@Hex.RationalFn.C L (Field.toGrindField (K := L)) inferInstance a) := by
+  subst g
+  rfl
+
 /-- Native coefficient signs agree with the actual ordered ambient interpretation. -/
 theorem nativeHom_sign [g : Lean.Grind.Field L]
     (compatible : Field.toGrindField (K := L) = g)
