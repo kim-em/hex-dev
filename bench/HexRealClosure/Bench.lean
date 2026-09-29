@@ -276,6 +276,35 @@ setup_fixed_benchmark runAssembly where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 
+/-- Functional timing anchor for a second selected root over the first root's
+stored algebraic values. Both descriptor validations and the nested sign and
+zero queries occur inside the timed call. -/
+def runNested : Unit → IO UInt64 := fun _ => do
+  let some input ← rawRef.get
+    | throw (IO.userError "nested benchmark: missing first descriptor")
+  let some firstRoot := SignDet.Descriptor.validate Sturm.orderSign 7 input
+    | throw (IO.userError "nested benchmark: first descriptor rejected")
+  let first := Algebraic.Context.adjoin firstRoot (fun q : Rat => q.den == 1)
+  let alpha := Algebraic.Element.ofPoly (context := first) x
+  let y : DensePoly (Algebraic.Element first) := DensePoly.ofCoeffs #[0, 1]
+  let raw : SignDet.RawDescriptor (Algebraic.Element first) Nat :=
+    { context := 8, head := y * y - DensePoly.C alpha,
+      lower := .finite 1, upper := .finite 2, indices := [], signs := [] }
+  let some secondRoot := SignDet.Descriptor.validate Algebraic.Element.sign 8 raw
+    | throw (IO.userError "nested benchmark: second descriptor rejected")
+  let second := first.extend secondRoot
+  let beta := Algebraic.Element.ofPoly (context := second) y
+  let target := Algebraic.Element.ofCoeff (context := second) alpha
+  if beta.sign == 1 && (beta * beta - target).sign == 0 &&
+      (beta * beta⁻¹ - 1).sign == 0 then
+    return 1
+  else
+    throw (IO.userError "nested benchmark: selected-value checks failed")
+
+setup_fixed_benchmark runNested where {
+  repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
+}
+
 end Hex.RealClosure.Bench
 
 def main (args : List String) : IO UInt32 :=
