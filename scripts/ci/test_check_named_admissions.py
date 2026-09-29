@@ -115,6 +115,13 @@ class AdmissionScannerTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "unapproved admission in .*Base(Catalog)?Tests"):
                         audit.check()
                     probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                deflation.unlink()
+                with self.assertRaisesRegex(ValueError, "missing local import"):
+                    audit.check()
+                deflation.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexRealClosure/DeflationConformance"):
+                    audit.check()
+                deflation.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 handle.unlink()
                 with self.assertRaisesRegex(ValueError, "missing local import"):
                     audit.check()
