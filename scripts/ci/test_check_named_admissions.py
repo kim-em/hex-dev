@@ -111,12 +111,32 @@ class AdmissionScannerTests(unittest.TestCase):
             algebraic_yun = root / "adapters/HexRealClosureMathlib/AlgebraicYun.lean"
             union = root / "adapters/HexRealClosureMathlib/Union.lean"
             union_tests = root / "adapters/HexRealClosureMathlib/UnionTests.lean"
+            root_probes = [root / name for name in (
+                "HexRealClosure/BisectionTests.lean",
+                "adapters/HexRealClosureMathlib/Bisection.lean",
+                "adapters/HexRealClosureMathlib/BisectionRoots.lean",
+                "conformance/HexRealClosure/BisectionFrontierTests.lean",
+                "adapters/HexRealClosureMathlib/BisectionFrontier.lean",
+                "adapters/HexRealClosureMathlib/BisectionCounts.lean",
+                "adapters/HexRealClosureMathlib/Isolation.lean",
+                "conformance/HexRealClosure/IsolationTests.lean",
+                "adapters/HexRealClosureMathlib/BisectionFactor.lean",
+                "adapters/HexRealClosureMathlib/IsolationFactor.lean",
+                "adapters/HexRealClosureMathlib/IsolationRoots.lean",
+                "conformance/HexRealClosure/IsolationConformance.lean",
+                "adapters/HexRealClosureMathlib/RootOrder.lean",
+                "HexRealClosure/RootOrderTests.lean",
+                "HexRealClosure/RootFactorsTests.lean",
+                "adapters/HexRealClosureMathlib/RootFactors.lean")]
             qadjoin = root / "adapters/HexRealClosureMathlib/QAdjoin.lean"
             qadjoin_tests = root / "HexRealClosure/QAdjoinTests.lean"
             dependency = root / "HexExtra/SelectedField.lean"
             arithmetic = [root / f"adapters/HexRealClosureMathlib/{name}.lean"
                           for name in ("Algebraic", "AlgebraicClean", "AlgebraicValue",
                                        "BaseClean", "AlgebraicTower")]
+            for path in root_probes:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             for path in (entry, bridge, sign, conformance, completion, handle, tables,
                          reencoding, roots, refinement, conversion, base, model, catalog,
                          deflation, specialize, specialize_tests, specialize_polynomial,
@@ -178,6 +198,14 @@ class AdmissionScannerTests(unittest.TestCase):
                         audit.check()
                     probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
                     with self.assertRaisesRegex(ValueError, "unapproved admission in .*" + probe.stem):
+                        audit.check()
+                    probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                for probe in root_probes:
+                    probe.unlink()
+                    with self.assertRaisesRegex(ValueError, "missing local import"):
+                        audit.check()
+                    probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "unapproved admission"):
                         audit.check()
                     probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 refinement.unlink()

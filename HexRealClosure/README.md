@@ -384,6 +384,232 @@ readers cover the real and
 infinitesimal base stages. Algebraic descriptors, dependency transport and
 complete algebraic context reconstruction remain part of the tower work.
 
+## Capped isolation and root assembly
+
+### Finite bisection nodes
+
+`Bisection.bisect? sign p lower upper` uses the deterministic arithmetic
+midpoint of a finite interval. A nonroot cut retains the original polynomial.
+A root cut performs checked exact linear deflation and retains its computed
+quotient. Both open subintervals are freshly prepared
+against that active head. Cuts at or beyond an endpoint are rejected by
+`Bisection.split?`.
+
+The companion proves native midpoint interpretation, success for every
+admissible finite interval and validity of both returned prepared domains. These results
+use only the standard three axioms and ordinary coefficient interpretations;
+no field instance on raw syntax is required. Native examples exercise regular
+and root cuts, nonmonic and fractional heads, root-free deflated endpoints,
+root counts and invalid inputs.
+
+The capped frontier below composes these finite nodes and recomputes pending
+evidence after deflation. Descriptor completion and factor assembly are described below.
+
+`Mode.removed` returns the emitted coefficient point or `none`. The companion
+`BisectionRoots` proves that roots in the original interval are exactly the
+removed point and roots in the two actual returned open intervals. Neither
+interval includes the cut. It also proves equality of the interpreted leading
+coefficients, without asserting raw equality of noncanonical representatives.
+The RationalFn fixtures use normalized coefficients; packed deflation tests
+separately exercise structurally different representatives.
+
+The existing deflation conformance driver also emits 21 bisection cases,
+including nonmonic and fractional rational heads, zero/repeated inputs,
+constants, roots on both sides of regular and root cuts, negative lower
+endpoints, a linear root cut with constant quotient, close infinitesimal roots,
+inverse infinitesimals and two successive
+infinitesimal levels. FLINT exact algebraic roots independently check rational
+counts. SymPy factorization over `QQ(epsilon, delta)` and the successive positive
+infinitesimal order check the linear-factor cases. The oracle checks the
+midpoint, exact removed value, active and returned heads, returned endpoints
+and independently computed counts; their sum also satisfies root coverage. Its rejection tests detect stale heads, scalar loss, missing or
+invented cut roots, incorrect nested ordering and invalid input acceptance.
+These cases exercise one bisection node; complete isolation and simultaneous
+ordinary-real realization remain separate requirements.
+
+### Capped bisection frontier
+
+`Bisection.Frontier.prepare?` checks a finite input interval.
+`Frontier.refine?` then spends at most `2 * (degree p + 1)` nodes, choosing the
+first retained cell whose checked count exceeds one. The policy is depth-first:
+new halves precede pending cells, so an inseparable cluster can spend the
+allowance before another cluster is refined. Call `refine?` once after
+`prepare?`; repeating it grants a new allowance. It returns the current
+head, emitted coefficient roots and every remaining open cell. Count-zero and
+count-one cells remain available; unresolved cells request BKR completion.
+This frontier is an intermediate result, not a complete `RootSet`.
+
+Each cell retains a count computed once from its actual prepared domain, with
+an equality proof tying that count to the shared query. A regular cut retains
+unchanged pending cells. A root cut recomputes every pending domain and count
+against the quotient, including previously retained count-one cells. All cells
+are bound to one current head. `Cell.bisect?` uses `splitPrepared?` on the
+selected cell's actual domain. A regular cut retains its validated derivative
+chain in both halves and checks their new endpoints through the shared
+`PreparedDomain.withEndpoints?` API. A root cut prepares the changed quotient
+head afresh. `splitPrepared?_eq` and `Cell.bisect_eq` prove equality with the
+complete results of fresh splitting, including the returned domains.
+
+The companion proves construction success under coefficient interpretation,
+the node bound, exact root coverage, disjoint retained intervals, distinct
+emitted values and exclusion of emitted roots from every later active head.
+The capped entry theorem also proves that traversal stops only when every
+cell has count at most one or the node allowance has been spent. These
+structural proofs use only the standard three axioms.
+`BisectionCounts` proves that retained counts plus emitted roots equal the
+original interval's root count, under an exact three-valued sign interpretation.
+This count theorem uses the proved shared query-soundness theorem and only
+the standard three axioms.
+
+Fifty-eight native checks cover later root cuts with earlier count-one and
+count-zero and multi-root cells, two emitted roots,
+positive/negative/fractional scalars,
+early stopping and close infinitesimal roots retained after the node allowance.
+Fifteen additional exact conformance rows check whole frontiers. The existing
+FLINT/SymPy oracle verifies scalar-preserving deflation, actual pending heads,
+root counts, emitted roots, the internal node allowance and the retained
+intervals' lack of gaps or overlaps. It independently reproduces the prescribed
+cell selection and cuts. Rejection tests cover stale heads, missing cells,
+wrong counts, gaps, overlaps, duplicated or invented roots, premature stopping
+and spending the allowance on the wrong cell.
+
+Regular cuts avoid fresh derivative-chain preparations for both halves and
+compute their root counts using `countPrepared` on those retained chains.
+`countPrepared_eq` ties every stored count to the ordinary query-one result.
+Root cuts
+still prepare both quotient domains and recompute every pending domain and
+count, including count-zero cells. No timing improvement is claimed.
+
+The frontier feeds descriptor completion and factor assembly below. The
+complete ordered `RootSet` still needs general descriptor comparison laws and
+producer totality. Automatic dependency transport, compatible real-closed
+union semantics and simultaneous ordinary-real realization remain separate
+requirements of the full tower.
+
+### Bound selection and whole-line dispatch
+
+`Isolation.search? sign p` follows the fixed finite dyadic bound policy. On an
+accepted bound it prepares `(-B, B)` and calls capped refinement once. If every
+bound candidate fails, it prepares the shared Sturm producer on the whole line.
+The private `Search` constructor retains the actual dispatch trace; its bounded
+route contains the accepted bound and actual returned frontier, and its whole
+route contains a domain bound to the exact input head, sign and infinite
+endpoints. Domain failure remains explicit and never means an empty root set.
+
+Under a zero-reflecting coefficient interpretation preserving arithmetic and
+three-valued signs, every nonzero squarefree input has a successful search.
+The returned route retains exactly all original roots, and whole-line domains
+are admissible for their exact input. Coverage is stated using the actual stored
+whole-line head and endpoints. `Search.bounded_spec` exposes bound selection,
+node allowance, disjoint cells, distinct emitted values excluded from the active
+head and the stopping condition. These proofs use only the standard three
+axioms. The result is prepared input for descriptor completion, rather than an
+executable complete root set; it does not assert mathematical root ordering,
+general descriptor-producer success or restoration of multiplicities.
+
+Native checks cover positive, negative and fractional scalar inputs,
+a large rational root beyond every bound candidate, inverse infinitesimal roots
+at two levels, root-free whole-line input and rejection of zero or repeated
+roots on both routes. Independent exact fixtures check dispatch and the full
+bounded frontier or whole-line
+domain. The FLINT/SymPy oracle recomputes the first accepted bound, checks the
+selected route, and verifies actual head/endpoints and root counts. It also
+checks that the accepted bound contains every real root. Its rejection
+tests detect wrong routes, later bounds, stale heads, finite whole-line endpoints,
+wrong counts and failure on valid input. Native root-count correspondence consumes the proved
+root-sum theorem.
+
+### Exact deflation provenance
+
+`BisectionFactor` proves that the original polynomial is exactly the product
+of the emitted linear factors and the actual returned active head. The proof
+uses each actual cut's stored quotient and the traversal's returned-head and
+emitted-list equations. It preserves the original leading coefficient without
+monicizing the input or asserting equality of coefficient representations.
+`IsolationFactor` exposes this identity for a checked bounded search, together
+with leading-coefficient preservation and the degree identity: original degree
+is active-head degree plus emitted-root count. The degree identity requires a
+nonzero active head, supplied by the existing domain companion.
+
+These algebraic proofs need a zero-reflecting field interpretation preserving
+one, subtraction and multiplication. They need no root-count theorem, root
+ordering, squarefreeness or sign interpretation, and their axiom guards use only
+the standard three axioms. They provide factor provenance for descriptor
+completion and multiplicity restoration, rather than a complete root set.
+
+### Descriptor completion of capped isolation
+
+`Isolation.complete? sign context p` runs the actual finite bound search,
+capped bisection and shared descriptor enumeration. It returns a checked
+`Completion` containing the search trace, every emitted cut point and the
+actual descriptor list from each retained cell. Count-zero cells emit nothing.
+Count-one cells use their stored prepared domain with no derivative queries;
+only unresolved cells invoke all-derivative enumeration. The shared singleton
+query still constructs a query-one remainder certificate and checks its replay;
+this does not claim elimination of all chain or replay work. Whole-line fallback enumerates
+its stored domain. A rejected initial search domain stays `none`; if an
+accepted finite bound and prepared initial domain fail during capped
+refinement, the result is an explicit internal error. Other producer failures
+also remain errors and cannot become empty root sets. The companion proves an
+absent completed domain implies a zero or non-squarefree interpreted input.
+
+`Completion.coverage` proves that these actual output values are exactly all
+roots of the original input. `Completion.nodup` proves each root appears once,
+using distinct emitted points, their exclusion from the remaining head,
+disjoint retained cells and the shared enumeration's coverage theorem. The
+proofs apply to raw coefficients through a zero-reflecting interpretation in
+an ordered real closed field, and use only the standard three axioms.
+
+This intermediate output does not claim globally sorted root values or full
+producer success. It is for nonzero squarefree input; the factor assembly below
+restores Yun multiplicities and handles the zero-polynomial case.
+Unresolved and whole-line enumeration currently prepare the retained domains
+again; the requested upstream prepared-root enumeration API remains a subsequent
+integration. `cell_enumeration_present` and `Whole.enumeration_present` prove
+that these retained valid domains cannot return the absent-domain result. That
+branch remains a diagnostic guard, using the internal system error rather than
+a descriptor-replay error.
+
+`hexrealclosure_isolation_conformance` emits eighteen actual executions. The pinned
+Z3 RCF oracle independently checks inputs, finite-bound policy, node caps,
+scalar-preserving deflation, cell counts, selected derivative words, literal
+descriptor contexts, complete root coverage and absence of duplicates. Cases include nonmonic input,
+negative leading scalar with an emitted zero, a nonquadratic generator,
+four real roots, a whole-line inverse infinitesimal, close infinitesimal roots
+requiring completion after the rational bisection cap, and invalid domains.
+The nested isolation case finds both roots of `Y²−√2` using a coefficient selected
+from the reducible definition `(X²−2)(X−3)`. The fixture includes that first
+descriptor; the oracle checks its head, interval and context before evaluating
+stored coefficient polynomials at its selected root. The nested isolation cells
+are singletons, while the other fixtures exercise derivative-sign descriptors.
+The nested assembly case
+checks all three roots and their multiplicities in `(Y²−√2)²(Y−1)`, including
+noncanonical stored coefficient polynomials in the expanded input.
+Six further cases independently check Yun assembly against exact Z3 roots and
+derivative-derived multiplicities, including zero, constants, a pure power,
+distinct multiplicity labels, a root-free factor and a simple restored zero.
+The oracle does not replay descriptor proof graphs or prove producer totality.
+
+`Isolation.Root` retains both emitted coefficient points and selected-root
+descriptors in one context. `Root.compare` uses coefficient differences for
+points, the shared selected-sign query for mixed pairs, and the checked
+common-product comparison for descriptor pairs. Comparison failures propagate;
+invalid sign codes and encountered equal roots are internal errors. Finite insertion
+sorting preserves the actual input roots and their mathematical values.
+The companion proves point comparisons and successful selected-root/point
+comparisons in the ambient ordered real closed field, using the upstream
+producer-success proof for unconditional mixed comparisons. Equality returned
+by any successful comparison is equivalent to equality of the root values.
+The sort relies on
+completion’s distinctness proof; it does not certify arbitrary input lists
+as distinct without the missing general comparison-order laws. General strict order for
+descriptor pairs still requires the upstream Thom theorem, so this intermediate
+sort does not establish the complete ordered `RootSet` contract. Factor assembly
+restores multiplicities separately.
+`hexrealclosure_root_order_tests` also belongs to the default
+`HexRealClosureTests` build. It exercises distinct roots on one head and on
+different heads, exact mixed output, actual completion with both points and
+descriptors, duplicate rejection and comparison-error propagation.
 ## Zero-root multiplicity
 
 `ZeroFactor.remove p` removes the complete power of `X` by scanning the literal
@@ -397,13 +623,39 @@ zero-root multiplicity. Every nonzero root retains its exact multiplicity.
 These proofs require only a zero-reflecting coefficient interpretation; they
 impose no field laws on raw storage and use no root-count admission.
 
-A zero polynomial returns `(0, 0)`. This transformation does not construct a
-root set: a complete roots API must still return `all` for zero and restore
-the extracted multiplicity when merging its other roots. The exact deflation
+A zero polynomial returns `(0, 0)`. `Roots.assemble` below returns `all`
+for that case and restores the extracted multiplicity when merging other roots. The exact deflation
 fixture driver also covers constants, a pure power, mixed nonzero roots,
 fractional and negative scalars, and one and two infinitesimal levels. Its
 independent SymPy oracle determines the zero multiplicity from the first
 nonzero coefficient and checks the entire returned quotient.
+`Roots.assemble` composes literal zero extraction, the actual raw Yun
+recurrence and complete isolation of each returned factor. Its intermediate
+`Output` retains `all` for the zero polynomial and positive multiplicities
+for finite entries. It restores an extracted zero exactly once. Failed factor
+completion and absent factor domains remain explicit internal errors.
+`factorEntries_cons` exposes the actual completion of the first factor and the
+actual recursive output for all remaining factors. No companion theorem is a
+constructor argument. The default native tests exercise zero, positive and
+negative constants, a pure power and mixed roots with multiplicity gaps and a
+negative leading scalar. They also exercise positive-degree root-free factors,
+a simple zero mixed with a repeated nonzero root, and a polynomial over cached
+selected-root values without field laws. Root checks do not depend on the
+intermediate emission order.
+
+The companion's `factorEntries_spec` ties every emitted root and label to the
+actual factor input. `factorEntries_multiplicity` and `factorEntries_complete`
+transport the actual raw Yun result into a characteristic-zero field and prove
+exact labels and coverage. They require coefficient-operation preservation, zero reflection and agreement
+of the computed signs with a common ordered real-closed field; the executable
+coefficient type needs no field instance.
+`assemble_spec` composes these results with zero extraction: a successful finite
+output represents exactly the original polynomial's roots with their original
+positive multiplicities. `assemble_nodup` proves each mathematical value occurs
+once. `assemble_all` proves the separate all-roots result occurs exactly for
+semantic zero. Global ordering and producer totality remain separate
+obligations before a complete `RootSet`.
+
 ### Arithmetic over general selected-root predecessors
 
 `BaseContext.Context.adjoin descriptor` adjoins a root over an exact immutable
