@@ -1005,9 +1005,11 @@ theorem squareKaratsubaImpl_eq (cutoff : Nat) (a : DensePoly R) :
   let _ := cutoff
   a * a
 
+/-- Planned squaring retains the exact reference product. -/
 theorem squareKaratsuba_eq (cutoff : Nat) (a : DensePoly R) :
     squareKaratsuba cutoff a = a * a := rfl
 
+/-- Compile the reference square through the existing Karatsuba engine. -/
 @[csimp] theorem squareKaratsuba_csimp : @squareKaratsuba = @squareKaratsubaImpl := by
   funext R instEq instRing cutoff a
   exact (squareKaratsubaImpl_eq cutoff a).symm
@@ -1095,9 +1097,11 @@ Karatsuba dispatch with the supplied cutoff. -/
   let _ := cutoff
   a * b
 
+/-- Planned multiplication retains the exact reference product. -/
 theorem mulKaratsuba_eq (cutoff : Nat) (a b : DensePoly R) :
     mulKaratsuba cutoff a b = a * b := rfl
 
+/-- Compile the reference product through the existing Karatsuba dispatch. -/
 @[csimp] theorem mulKaratsuba_csimp : @mulKaratsuba = @mulKaratsubaImpl := by
   funext R instEq instRing cutoff a b
   exact (mulKaratsubaImpl_eq cutoff a b).symm

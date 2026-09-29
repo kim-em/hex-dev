@@ -236,9 +236,11 @@ exactly on the image of `ofPoly`.
 
 ## Certificates and kernel replay
 
-Ordinary executable arithmetic uses its proved algorithms and does not carry
-certificates in every value. A separate certificate permits replay of a
-proposed normalization without reducing a Euclidean search in the kernel.
+Ordinary arithmetic uses its proved algorithms and does not carry certificates
+in every value. Its logical definitions reduce through the reference polynomial
+operations; compiled code may use proved optimized replacements. A separate
+certificate permits replay of a proposed normalization without reducing a
+Euclidean search in the kernel.
 
 `Cert K` contains four raw dense polynomials `num`, `den`, `s`, `t`.
 `check p q cert : Bool` checks precisely:
@@ -264,10 +266,12 @@ witnesses do not change the resulting rational function. In the zero case
 `num = 0`, `den = 1`, `s = 0`, `t = 1` is a valid certificate.
 
 Expose the checker and its polynomial equality operations for kernel replay.
-Proof-producing consumers run certificate generation as untrusted compiled
-search, then apply `check_sound` to a kernel-checked Boolean equality on
-literals. They must budget certificate generation, payload size and replay
-separately. `native_decide`, new axioms and new trusted extern boundaries are
+Consumers of supplied normalization candidates run certificate generation as
+untrusted compiled search, then apply `check_sound` to a kernel-checked Boolean
+equality on literals. They must budget certificate generation, payload size and
+replay separately. A closed arithmetic calculation may also be proved by
+ordinary kernel reduction; all normalization work on that path counts as
+replay cost. `native_decide`, new axioms and new trusted extern boundaries are
 not allowed. This SPEC introduces no external candidate provider or shared
 certificate cache. An external oracle is a testing tool, not part of execution.
 

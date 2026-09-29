@@ -115,4 +115,15 @@ endpoint, context or reported sign. -/
   evidence.check c.sign 7 head .negInf .posInf
     [DensePoly.C c.generator, DensePoly.C c.generator]
 
+/-- Pin the positive-scale guard and the unequal polynomial values used by
+our arithmetic forgery. This tests the rejection cause separately from replay. -/
+@[expose] def scaleFailure (depth : Nat) : Bool :=
+  let c := coefficients depth
+  letI := c.field
+  letI := c.equality
+  letI : NatCast c.Carrier := Lean.Grind.Semiring.natCast
+  decide (c.sign 2 = 1) &&
+    !SignedRemainderChain.subIsZero (DensePoly.scale 2 (DensePoly.C c.generator))
+      (DensePoly.C c.generator)
+
 end Hex.SignDetMathlib.ProofProbe.Nested

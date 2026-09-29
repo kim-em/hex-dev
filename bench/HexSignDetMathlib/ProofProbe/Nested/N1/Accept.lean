@@ -28,5 +28,6 @@ theorem checked : Nested.check 1 = true := by
 #guard_msgs (whitespace := lax) in
 #print axioms checked
 
+-- The external runner reads this unguarded inventory.
 #print axioms checked
 end Hex.SignDetMathlib.ProofProbe.Nested.N1.Accept

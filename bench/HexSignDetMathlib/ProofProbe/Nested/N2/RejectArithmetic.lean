@@ -28,5 +28,12 @@ theorem checked : Nested.check 2 false true = false := by
 #guard_msgs (whitespace := lax) in
 #print axioms checked
 
+/-- Positive scale 2 passes its sign guard, but changes the initial value. -/
+theorem cause : Nested.scaleFailure 2 = true := by
+  decide +kernel
+
+#print axioms cause
+
+-- The external runner reads this unguarded inventory.
 #print axioms checked
 end Hex.SignDetMathlib.ProofProbe.Nested.N2.RejectArithmetic

@@ -5,29 +5,29 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSignDetMathlib.ProofProbe.Nested.Inputs
+public import HexSignDetMathlib.ProofProbe.Nested.Fractions2
 public meta import HexSignDet.Dag
 public meta import HexSignDet.Replay
 
 public section
 
-namespace Hex.SignDetMathlib.ProofProbe.Nested.N1.RejectStale
+namespace Hex.SignDetMathlib.ProofProbe.Nested.N2.AcceptFraction
 open Hex.SignDet
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 4000000 in
-/-- A copied leaf bound to another context is rejected. -/
-theorem checked : Nested.check 1 true = false := by
-  simp only [Nested.check, Dag.check, Dag.replay_eq, Dag.step_eq,
+/-- Kernel replay with a nonunit fraction denominator. -/
+theorem checked : Fractions2.check = true := by
+  simp only [Fractions2.check, Dag.check, Dag.replay_eq, Dag.step_eq,
     Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
     TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
-/-- info: 'Hex.SignDetMathlib.ProofProbe.Nested.N1.RejectStale.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.ProofProbe.Nested.N2.AcceptFraction.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms checked
 
 -- The external runner reads this unguarded inventory.
 #print axioms checked
-end Hex.SignDetMathlib.ProofProbe.Nested.N1.RejectStale
+end Hex.SignDetMathlib.ProofProbe.Nested.N2.AcceptFraction

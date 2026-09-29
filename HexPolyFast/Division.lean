@@ -644,7 +644,7 @@ theorem divModNewton_size_lt {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
   omega
 
 /-- Kernel-visible reference division. Compiled code uses the proved
-short-operand/Newton dispatch below, with the supplied multiplication plan. -/
+short-operand/Newton dispatch with the supplied multiplication plan. -/
 @[expose]
 def divModWith {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
     (mul : MulPlan F) (p q : DensePoly F) : DensePoly F × DensePoly F :=
@@ -673,11 +673,7 @@ def divModWithImpl {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
     (mul : MulPlan F) (p q : DensePoly F) : DensePoly F × DensePoly F :=
   if q.size ≤ divisionCutoff || quotientLength p q ≤ divisionCutoff then
     divMod p q
-  else
-    if hq : q = 0 then (0, p) else
-      let k := quotientLength p q
-      let plan := DivPlan.ofNonzero mul q hq k
-      plan.divMod p (Nat.le_refl k)
+  else divModNewton mul p q
 
 /-- The short-operand division dispatch preserves both quotient and remainder. -/
 @[csimp] theorem divModWith_csimp : @divModWith = @divModWithImpl := by
