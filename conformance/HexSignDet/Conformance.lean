@@ -258,6 +258,15 @@ def reencoded (source : RawDescriptor Rat Nat) (head : DensePoly Rat) (a b : End
     | _, _ => false
   | _ => false
 
+-- Equal stored heads and overlapping but different intervals select one root.
+#guard compared {descriptor [] [] with
+    head := x * x - 2
+    lower := .finite 0
+    upper := .finite 2}
+  {descriptor [] [] with
+    head := x * x - 2
+    lower := .finite 1
+    upper := .finite 3} .eq
 #guard compared {descriptor [1] [1] with head := x - 1}
   {descriptor [1] [1] with head := x - 2} .lt
 #guard compared (descriptor [1] [-1]) (descriptor [2, 1] [1, -1]) .eq

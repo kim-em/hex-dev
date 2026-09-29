@@ -160,7 +160,7 @@ class InfinitesimalOracle(unittest.TestCase):
 
     def test_comparison_and_reencoding(self):
         for name in ("compare/passmore/order", "compare/square/scaled-equal",
-                     "compare/passmore/shared-cubic"):
+                     "compare/passmore/shared-cubic", "compare/square/same-head-overlap"):
             record = self.record(name)
             oracle.check_record(record)
             record["value"]["data"]["result"]["order"] = "gt"

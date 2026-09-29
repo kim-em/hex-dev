@@ -54,6 +54,9 @@ private def negative : RawDescriptor Rat Nat :=
 
 -- The same mathematical root selected by different-degree polynomials.
 #guard compares Sturm.orderSign positive linear .eq
+-- Overlapping distinct intervals with the same head select the same root.
+#guard compares Sturm.orderSign positive
+  {positive with lower := .finite (1/2), upper := .finite 3} .eq
 -- Two empty partial words distinguish roots by their original intervals.
 #guard compares Sturm.orderSign negative positive .lt
 -- Negative leading coefficients require the reversed Thom sign rule.

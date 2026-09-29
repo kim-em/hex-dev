@@ -1,6 +1,6 @@
 # Exact sign-table and descriptor fixtures
 
-`sign_det.jsonl` contains 101 cases emitted by `hexsigndet_emit_fixtures`.
+`sign_det.jsonl` contains 102 cases emitted by `hexsigndet_emit_fixtures`.
 The 59 table records include ascending rational polynomial coefficients as exact
 `[numerator, denominator]` pairs, open finite/infinite endpoints, and the
 complete sparse tables from reduced and unreduced BKR. Lists of at most four
@@ -35,7 +35,7 @@ order is wrong, negative heads, irrational roots, absent/ambiguous/unrealized
 encodings, malformed slots, invalid domains and stale contexts. FLINT evaluates
 formal derivatives and queries at roots sorted by exact numerical comparison;
 it never uses the producer's Thom rule to establish expected root order.
-Ten comparison and five re-encoding records cover equal derivative vectors
+Eleven comparison and five re-encoding records cover equal derivative vectors
 from different linear heads, common irrational roots, negative/scaled heads,
 overlapping/disjoint intervals, foreign root endpoints, invalid targets and
 absent selected roots. The oracle checks the common head's squarefreeness and
@@ -54,7 +54,7 @@ python3 scripts/oracle/sign_det_flint.py --check
 python3 -m unittest scripts.oracle.test_sign_det_flint
 ```
 
-`infinitesimal.jsonl` contains 30 cases emitted by `hexsigndet_emit_infinitesimal`
+`infinitesimal.jsonl` contains 31 cases emitted by `hexsigndet_emit_infinitesimal`
 using the existing rational-function fields over one and two positive
 infinitesimals. The independent Z3 RCF oracle requires `z3-solver==4.15.4.0`
 and numeric runtime version `(4, 15, 4, 0)`. Its comparison checks include the

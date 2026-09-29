@@ -30,7 +30,8 @@ REQUIRED_CASES = {"infinitesimal/" + name for name in (
     "square/repeated", "square/root-endpoint", "square/cancelled", "nested/whole",
     "nested/singleton", "descriptor/nested/singleton", "descriptor/nested/stale-context",
     "reencode/nested/reencode", "reencode/nested/refinement", "descriptor/square/negative-head", "compare/square/scaled-equal",
-    "compare/passmore/shared-cubic", "square/zero-root", "square/constant", "square/root-free",
+    "compare/passmore/shared-cubic", "compare/square/same-head-overlap",
+    "square/zero-root", "square/constant", "square/root-free",
     "nested/reversed", "nested/root-endpoint", "descriptor/passmore/absent",
     "descriptor/passmore/malformed", "descriptor/nested/reversed",
 )}

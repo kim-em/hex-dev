@@ -44,7 +44,8 @@ REQUIRED_CASES = {
         "zero-head", "repeated-head", "root-endpoint", "reversed-interval")),
     *(f"compare/{name}" for name in ("equal-linear-vectors", "reverse-linear", "permuted-slots",
         "shared-irrational", "distinct-irrational", "negative-head", "scaled-head",
-        "foreign-endpoint", "disjoint-intervals", "overlapping-equal")),
+        "foreign-endpoint", "disjoint-intervals", "overlapping-equal",
+        "same-head-overlap")),
     *(f"reencode/{name}" for name in ("shared-irrational", "outside-target", "missing-root",
         "invalid-target", "foreign-endpoints")),
 }

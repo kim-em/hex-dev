@@ -1322,6 +1322,28 @@ private def commonRootPass : Bool :=
 #guard commonRootPass
 ```
 
+The same defining polynomial can name one root through different intervals.
+Both `(0,2)` and `(1,2)` contain only the positive root of `x² − 2`.
+The comparison completes these two descriptions and returns equality directly.
+It checks that construction succeeded before inspecting the total result.
+
+```lean
+private def sameHeadPass : Bool :=
+  match Descriptor.validate Sturm.orderSign 7 sqrtTwoRoot,
+      Descriptor.validate Sturm.orderSign 7
+        {sqrtTwoRoot with
+          lower := .finite 1
+          upper := .finite 2
+          indices := []
+          signs := []} with
+  | some left, some right =>
+    (left.buildOrder right).toOption == some .eq &&
+      left.compare right == .eq
+  | _, _ => false
+
+#guard sameHeadPass
+```
+
 {name}`Hex.SignDet.Descriptor.compare` is the total root-order operation.
 It completes partial descriptors and compares their encodings directly when the
 stored defining polynomials agree, even across different intervals. For different

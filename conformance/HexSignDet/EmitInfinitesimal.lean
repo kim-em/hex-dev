@@ -199,6 +199,12 @@ def run : IO Unit := do
   let qr : RawDescriptor First Nat := ⟨10377, q, .negInf, .posInf, [1], [1]⟩
   emitDescriptor first firstSign 1 "square/negative-head"
     {qr with head := -q, signs := [-1]} [x, q]
+  emitComparison first firstSign 1 "square/same-head-overlap" qr
+    {qr with
+      lower := .finite epsilon
+      upper := .posInf
+      indices := []
+      signs := []}
   emitComparison first firstSign 1 "square/scaled-equal" qr
     {qr with head := DensePoly.C (-epsilon) * q, signs := [-1]}
   emitComparison first firstSign 1 "passmore/shared-cubic" raw

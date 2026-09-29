@@ -422,8 +422,9 @@ requires no companion proof package. `CommonProduct.build_success` proves
 acceptance of the actual gcd/division record even for zero inputs;
 `build_squarefree` proves squarefreeness of the actual head for squarefree inputs.
 Arbitrary accepted records still require their separate prepared-domain check.
-A cross-polynomial comparison currently constructs
-four BKR tables and four prepared domains: joint re-encoding evidence and a
+A comparison of different stored heads currently constructs four BKR tables
+and four prepared domains; the equal-head path constructs two completion
+tables: joint re-encoding evidence and a
 separate target descriptor for each side. Sharing this work and accounting
 for its cost against the required comparison bounds remain required.
 

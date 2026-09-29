@@ -263,6 +263,12 @@ def run : IO Unit := do
       lower := .finite (-2)
       upper := .finite 0}
     {left with indices := [], signs := [], lower := .finite 0, upper := .finite 2}
+  emitComparison "same-head-overlap" left
+    {left with
+      lower := .finite (1 / 2)
+      upper := .finite 3
+      indices := []
+      signs := []}
   emitComparison "overlapping-equal" {left with lower := .finite 0, upper := .finite 2}
     {left with head := x - 1, lower := .finite (-2), upper := .finite 2}
   emitReencoding "shared-irrational" irrational shared.head .negInf .posInf
