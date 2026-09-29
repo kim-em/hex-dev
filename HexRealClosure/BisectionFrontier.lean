@@ -32,7 +32,7 @@ def Cell.prepare? (sign : E → Int) (p : DensePoly E) (lower upper : E) :
   match h : Sturm.prepare sign p (.finite lower) (.finite upper) with
   | none => none
   | some domain => some ⟨lower, upper, domain, Sturm.prepare_eq_some _ _ _ _ _ h,
-      Sturm.queryPrepared domain 1, rfl⟩
+      Sturm.countPrepared domain, Sturm.countPrepared_eq domain⟩
 
 /-- A successful cell retains the supplied finite endpoints literally. -/
 theorem Cell.prepare?_endpoints {sign : E → Int} {p : DensePoly E} {lower upper : E}
@@ -247,9 +247,9 @@ def Frontier.advance? {sign : E → Int} (frontier : Frontier sign)
   let split ← selected.bisect?
   let point := midpoint selected.lower selected.upper
   let left : Cell sign split.mode.head :=
-    ⟨selected.lower, point, split.left, split.left_bound, Sturm.queryPrepared split.left 1, rfl⟩
+    ⟨selected.lower, point, split.left, split.left_bound, Sturm.countPrepared split.left, Sturm.countPrepared_eq split.left⟩
   let right : Cell sign split.mode.head :=
-    ⟨point, selected.upper, split.right, split.right_bound, Sturm.queryPrepared split.right 1, rfl⟩
+    ⟨point, selected.upper, split.right, split.right_bound, Sturm.countPrepared split.right, Sturm.countPrepared_eq split.right⟩
   let pending ← split.mode.reprepare? rest
   return ⟨split.mode.head, left :: right :: pending,
     frontier.removed ++ split.mode.removed.toList, frontier.nodes + 1, by simp⟩

@@ -45,8 +45,9 @@ theorem Mode.mem_removed {sign : E → Int} {p : DensePoly E} {point : E}
 
 variable [NatCast E] [Neg E] [Inv E]
 
-/-- Two freshly checked open domains, bound to one active polynomial.
-A root cut uses the deflated polynomial on both sides; old evidence is not reused. -/
+/-- Two open domains with freshly checked endpoints, bound to one active polynomial.
+A root cut uses the deflated polynomial on both sides. Regular prepared cuts
+may retain the unchanged head's validated derivative chain. -/
 structure Split (sign : E → Int) (p : DensePoly E) (lower upper : Endpoint E) (point : E) where
   private mk ::
   mode : Mode sign p point

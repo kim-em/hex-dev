@@ -318,8 +318,10 @@ cell selection and cuts. Rejection tests cover stale heads, missing cells,
 wrong counts, gaps, overlaps, duplicated or invented roots, premature stopping
 and spending the allowance on the wrong cell.
 
-Regular cuts avoid the two fresh preparations for their new halves. Each
-half still computes its own root count through `queryPrepared`. Root cuts
+Regular cuts avoid fresh derivative-chain preparations for both halves and
+compute their root counts using `countPrepared` on those retained chains.
+`countPrepared_eq` ties every stored count to the ordinary query-one result.
+Root cuts
 still prepare both quotient domains and recompute every pending domain and
 count, including count-zero cells. No timing improvement is claimed.
 
