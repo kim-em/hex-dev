@@ -33,9 +33,13 @@ result dependencies, not an ordered trace of runtime sign calls, and retain
 repeated occurrences. A finite cache need not be lawful outside its keys, but
 callers must prove agreement at every required operand before transferring the
 original checker's soundness. A dependency graph across coefficient-field levels
-and its exact context/operand bindings remain separate requirements. A `Dag`
-inventory must cover every serialized entry, including entries unreachable
-from the root; that graph agreement interface remains required.
+and its exact context/operand bindings remain separate requirements.
+`Dag.signOperands` covers every serialized entry, including entries unreachable
+from the root. `Dag.replay_sign_congr` preserves failure and the exact returned
+tree under finite sign agreement; `Dag.check_sign_congr` preserves the Boolean
+result. These proofs follow the actual memoized prefix fold without expanding
+and rechecking a recursive tree. A cache law for the selected root's reachable
+entries alone does not suffice, since graph replay checks all stored entries.
 
 `Dag.replay?` accepts a topologically ordered array of same-level BKR entries
 and a root index. References address earlier accepted entries only. Each entry
