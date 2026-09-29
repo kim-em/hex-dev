@@ -63,7 +63,7 @@ theorem Descriptor.ofTable_raw {sign : E → Int} {context : Ctx}
   rfl
 
 /-- Constructing a descriptor from a checked table preserves its replay evidence
-literally, including all child certificates and context bindings. -/
+literally. -/
 theorem Descriptor.ofTable_evidence {sign : E → Int} {context : Ctx}
     (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
     (hw : raw.wellFormed = true) (hctx : raw.context = context)
@@ -105,6 +105,17 @@ theorem Descriptor.ofReplay_raw {sign : E → Int} {context : Ctx}
     {raw : RawDescriptor E Ctx} {evidence : Replay E Ctx}
     {d : Descriptor E Ctx sign context}
     (h : ofReplay? sign context raw evidence = some d) : d.raw = raw := by
+  unfold ofReplay? at h
+  split at h
+  · cases h
+    rfl
+  · contradiction
+
+/-- Successful validation preserves the supplied replay evidence literally. -/
+theorem Descriptor.ofReplay_evidence {sign : E → Int} {context : Ctx}
+    {raw : RawDescriptor E Ctx} {evidence : Replay E Ctx}
+    {d : Descriptor E Ctx sign context}
+    (h : ofReplay? sign context raw evidence = some d) : d.evidence = evidence := by
   unfold ofReplay? at h
   split at h
   · cases h
