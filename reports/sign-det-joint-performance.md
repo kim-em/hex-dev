@@ -158,7 +158,7 @@ The consecutive-interval exponents computed from the retained medians are
 They increase with degree but remain below three. This finite range does not
 show the cubic leaf-square lower-bound term dominating elapsed time. It does
 not identify the relative costs of coefficient arithmetic, dense zero slots,
-query bookkeeping and replay; representative attribution is still required.
+query bookkeeping and replay. The captures below supply partial attribution.
 
 The cap includes startup, preparation and hashing the prepared input as well
 as the timed body. The parent supplies environment metadata to the child.
@@ -203,6 +203,48 @@ That digest certifies successful acceptance, rather than identifying the input
 size. Parameter and arm identity also rely on the registration, schedule and
 retained source. Both table-production modes deliberately share an expected
 answer hash because their tables must agree.
+
+## Complete retained collection at 394c3c548
+
+The [complete records](data/sign-det-joint-timing/394c3c548/metadata.json) contain
+180 successful scientific points: thirty each for completion and comparison,
+and sixty each for paired production and replay. They bind source
+`394c3c54802ee1fe8e251098323b02c603536454`, the unchanged executable and clean
+pinned harness before and after collection, on automatically leased CPU 28.
+All input, callback, schedule and result validators pass. The separate archive
+manifest hashes files after collection; it does not add retrospective metadata
+to the original records.
+
+Median per-call times in milliseconds, excluding preparation and calibration:
+
+| Source degree | Completion | Comparison | Reduced production | Direct production | Reduced replay | Direct replay |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 3 | 1.049 | 12.729 | 5.886 | 6.538 | 3.151 | 3.299 |
+| 7 | 5.718 | 79.456 | 36.668 | 44.356 | 19.155 | 22.505 |
+| 15 | 29.234 | 522.338 | 238.360 | 318.613 | 118.679 | 156.176 |
+| 31 | 170.706 | 3725.910 | 1695.884 | 2436.691 | 828.731 | 1145.641 |
+| 63 | 1134.454 | 28283.769 | 12849.552 | 19097.066 | 6132.309 | 8985.939 |
+
+All six scaling verdicts remain **inconclusive**, with residual slopes against
+the declared cubic model of −0.592, −0.324, −0.331, −0.237, −0.371 and −0.273,
+respectively. The harness's warmup exclusion leaves degrees 7–63 for these fits.
+The completed collection removes the cap truncation; it still does not establish
+that the cubic term dominates elapsed time over this range. Its exit status one
+reports inconclusive verdicts, with no failed scientific points or validation
+errors. This collection uses the permitted unchanged rerun; no further
+unchanged rerun is planned.
+
+Adjacent paired direct/reduced production ratios have medians 1.108, 1.223,
+1.329, 1.441 and 1.478 over increasing degrees. Replay ratios are 1.047, 1.174,
+1.313, 1.371 and 1.463. These are medians of six adjacent ratios at each degree,
+not ratios of separately aggregated medians. They show a finite-range benefit
+for the complete reduced implementation on these exact inputs, including the
+extra direct powers described above. They do not isolate modulo-head reduction
+or establish a general speedup.
+
+Both the original capped collection and this complete collection are retained.
+The CPU and allocation captures below supply partial attribution, rather than
+turning the inconclusive scaling verdicts into successful performance gates.
 
 ## Representative operation attribution
 

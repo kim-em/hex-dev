@@ -140,6 +140,32 @@ class JointTimingTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "scientific observation"):
                     timing.validate_single(directory/"runCompletion.json", "runCompletion", expected, revision)
 
+    def test_complete_retained_collection_and_archive_binding(self):
+        import hashlib
+        directory = timing.ROOT/"reports/data/sign-det-joint-timing/394c3c548"
+        metadata = json.loads((directory/"metadata.json").read_text())
+        archive = json.loads((directory/"archive.json").read_text())
+        self.assertEqual(archive["source_revision"], metadata["revision"])
+        self.assertEqual(metadata["state"], "complete")
+        self.assertEqual(metadata["scientific_samples"], 180)
+        for name, digest in archive["files_sha256"].items():
+            self.assertEqual(Path(name).name, name)
+            self.assertEqual(hashlib.sha256((directory/name).read_bytes()).hexdigest(), digest)
+        self.assertEqual(set(archive["files_sha256"]),
+                         {p.name for p in directory.iterdir() if p.is_file()}-{"archive.json"})
+        self.assertEqual(metadata["source_sha256_after"], metadata["source_sha256"])
+        self.assertEqual(metadata["binary_sha256_after"], metadata["binary_sha256"])
+        self.assertEqual(metadata["revision_after"], metadata["revision"])
+        self.assertEqual(metadata["status_after"], "")
+        self.assertEqual(metadata["harness_binding_after"], metadata["harness_binding"])
+        expected = timing.validate_hashes(directory/"callbacks.log")
+        for name in ("runCompletion", "runComparison"):
+            timing.validate_single(directory/(name+".json"), name, expected, metadata["revision"])
+        for label, names in (("production", ("runReduced", "runDirect")),
+                             ("replay", ("runCheckReduced", "runCheckDirect"))):
+            timing.validate_pair(directory/(label+".jsonl"), names, expected, metadata["revision"])
+        self.assertEqual(json.loads((directory/"summary.json").read_text())["validation_errors"], [])
+
     def test_pair_header_and_summary_environment_rejected(self):
         names, rows = self.pair()
         for change in (lambda r: r[0].update(params=[3]),
