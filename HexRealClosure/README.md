@@ -471,3 +471,13 @@ that finite array. `polynomial_signs` derives these conditions from one common
 neighborhood preserving its coefficient signs and denominator guards. These
 are polynomial specialization helpers; accepted query and joint sign-table
 transport still require the finite arithmetic evidence used by their checkers.
+
+`Specialize.regularRing` contains the native fractions whose canonical
+denominators remain nonzero under one prescribed coefficient embedding and
+parameter. `evaluation` is a proved ring homomorphism on that ring. The ring
+can contain nonzero fractions whose evaluation is zero. Using the actual
+native-to-polynomial correspondence, `polynomial_add`, `polynomial_mul`,
+`polynomial_sub`, `polynomial_scale`, `polynomial_derivative` and
+`polynomial_eval` specialize those operations under the finite input
+coefficient guards; scaling also guards its scalar and endpoint evaluation
+also guards its endpoint. Closure handles all arithmetic accumulations.
