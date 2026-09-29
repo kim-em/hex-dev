@@ -88,6 +88,25 @@ class AdmissionScannerTests(unittest.TestCase):
             specialize_sample = root / "adapters/HexRealClosureMathlib/SpecializeSample.lean"
             specialize_selected = root / "adapters/HexRealClosureMathlib/SpecializeSelected.lean"
             specialize_descriptor = root / "adapters/HexRealClosureMathlib/SpecializeDescriptor.lean"
+            transport_polynomial = root / "adapters/HexRealClosureMathlib/TransportPolynomial.lean"
+            transport_product = root / "adapters/HexRealClosureMathlib/TransportProduct.lean"
+            transport_arithmetic = root / "adapters/HexRealClosureMathlib/TransportArithmetic.lean"
+            transport_query = root / "adapters/HexRealClosureMathlib/TransportQuery.lean"
+            transport_tests = root / "adapters/HexRealClosureMathlib/TransportTests.lean"
+            transport_ring = root / "adapters/HexRealClosureMathlib/TransportRing.lean"
+            transport_power = root / "adapters/HexRealClosureMathlib/TransportPower.lean"
+            transport_tarski = root / "adapters/HexRealClosureMathlib/TransportTarski.lean"
+            transport_closed = root / "adapters/HexRealClosureMathlib/TransportClosed.lean"
+            transport_closed_query = root / "adapters/HexRealClosureMathlib/TransportClosedQuery.lean"
+            transport_regular = root / "adapters/HexRealClosureMathlib/TransportRegular.lean"
+            transport_reduction = root / "adapters/HexRealClosureMathlib/TransportReduction.lean"
+            transport_closed_reduction = root / "adapters/HexRealClosureMathlib/TransportClosedReduction.lean"
+            transport_preparation = root / "adapters/HexRealClosureMathlib/TransportPreparation.lean"
+            transport_moment = root / "adapters/HexRealClosureMathlib/TransportMoment.lean"
+            transport_replay = root / "adapters/HexRealClosureMathlib/TransportReplay.lean"
+            transport_sample = root / "adapters/HexRealClosureMathlib/TransportSample.lean"
+            transport_descriptor = root / "adapters/HexRealClosureMathlib/TransportDescriptor.lean"
+            transport_selected = root / "adapters/HexRealClosureMathlib/TransportSelected.lean"
             union = root / "adapters/HexRealClosureMathlib/Union.lean"
             union_tests = root / "adapters/HexRealClosureMathlib/UnionTests.lean"
             qadjoin = root / "adapters/HexRealClosureMathlib/QAdjoin.lean"
@@ -96,7 +115,19 @@ class AdmissionScannerTests(unittest.TestCase):
             arithmetic = [root / f"adapters/HexRealClosureMathlib/{name}.lean"
                           for name in ("Algebraic", "AlgebraicClean", "AlgebraicValue",
                                        "BaseClean", "AlgebraicTower")]
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor, union, union_tests, qadjoin, qadjoin_tests, dependency, *arithmetic):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables,
+                         reencoding, roots, refinement, conversion, base, model, catalog,
+                         deflation, specialize, specialize_tests, specialize_polynomial,
+                         specialize_regular, specialize_query, specialize_tarski,
+                         specialize_reduction, specialize_moment, specialize_replay,
+                         specialize_sample, specialize_selected, specialize_descriptor,
+                         transport_polynomial, transport_product, transport_arithmetic,
+                         transport_query, transport_tests, transport_ring, transport_power,
+                         transport_tarski, transport_closed, transport_closed_query,
+                         transport_regular, transport_reduction, transport_closed_reduction,
+                         transport_preparation, transport_moment, transport_replay,
+                         transport_sample, transport_descriptor, transport_selected,
+                         union, union_tests, qadjoin, qadjoin_tests, dependency, *arithmetic):
                 path.parent.mkdir(parents=True, exist_ok=True)
             for path in arithmetic:
                 path.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
@@ -127,6 +158,10 @@ class AdmissionScannerTests(unittest.TestCase):
             specialize_sample.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             specialize_selected.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             specialize_descriptor.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            transport_polynomial.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            transport_product.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            for path in (transport_arithmetic, transport_query, transport_tests, transport_ring, transport_power, transport_tarski, transport_closed, transport_closed_query, transport_regular, transport_reduction, transport_closed_reduction, transport_preparation, transport_moment, transport_replay, transport_sample, transport_descriptor, transport_selected):
+                path.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             union.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             union_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             qadjoin.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
@@ -156,12 +191,12 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/ConvertConformance"):
                     audit.check()
                 conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-                for probe in (specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor):
+                for probe in (specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor, transport_polynomial, transport_product, transport_arithmetic, transport_query, transport_tests, transport_ring, transport_power, transport_tarski, transport_closed, transport_closed_query, transport_regular, transport_reduction, transport_closed_reduction, transport_preparation, transport_moment, transport_replay, transport_sample, transport_descriptor, transport_selected):
                     probe.unlink()
                     with self.assertRaisesRegex(ValueError, "missing local import"):
                         audit.check()
                     probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*Specialize"):
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*(Specialize|Transport)"):
                         audit.check()
                     probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 for probe in (base, model, catalog):

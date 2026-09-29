@@ -685,6 +685,86 @@ descriptor and proves its root signs. A consumer example uses the actual
 native rational dictionary, its proved compatibility equation and
 `Rat.castHom ℝ`, covering the first rational infinitesimal level.
 
+### Finite coefficient interpretation
+
+`Transport.polynomial` interprets and normalizes the literal coefficient array
+without field or ring laws on its source expressions. Zero preservation handles
+implicit coefficients, and interpreting `ofCoeffs` commutes with normalization
+even when nonzero source coefficients denote zero. Nonvanishing of only the
+interpreted top coefficient preserves stored size, degree, leading coefficient
+and executable zero tests; interior noncanonical zeros are allowed.
+
+The `Transport.Guarded` operation lemmas retain input sizes under these leading guards.
+`Transport.Ring` instead assumes ring laws on the target coefficients and allows
+input and intermediate arrays to shrink or become zero. Its addition,
+subtraction, scaling, differentiation, multiplication and Horner proofs need finite
+scalar equations only at actual coefficient positions and reached native
+schoolbook accumulators. `productPrefix` and `hornerPrefix` record the precise
+multiplication and descending Horner order. `PowerData` follows the native
+binary-power recursion, recording each actual square and odd-exponent product.
+Constants and the unit polynomial are also transported.
+
+`Difference`, `Scaling`, `Product`, `Sum` and `Differentiation` package finite
+arithmetic obligations without source or intermediate leading guards.
+`Initial.zero`, `Recurrence.zero` and `Terminal.zero` transport the checker's
+actual zero differences. `ChainData` requires leading guards only on the head
+and stored chain entries, where nonzero and degree checks need them.
+`chain_check` transports the complete signed-chain replay, including head
+binding, serialized degrees, strict descent, every recurrence and the terminal
+pair. No division or chain producer runs during transport.
+
+`Closed` describes a domain containing zero, one and natural casts and closed
+under addition, subtraction and multiplication, where interpretation preserves
+those operations. Its coefficient membership lemmas and `ChainData.of_closed`
+and `QueryData.of_closed` derive all intermediate and accumulator equations
+from finite stored coefficient membership. `regular_closed` instantiates this
+domain with `Specialize.Regular embedding t`; a full chain consumer and Horner
+example use that partial specialization domain. `ReductionData.of_closed`
+similarly derives every product reduction equation, and `reduction_check_regular`
+applies it to regular fractions.
+Interpretation need not preserve arithmetic outside it. Kernel-checked examples
+include an interior raw representative of zero and a complete accepted
+three-entry chain whose query and initial quotient lose their leading
+coefficients under evaluation at two.
+
+`query_check` transports the full Tarski certificate with an explicit context
+map: all literal bindings, endpoint order and nonroot guards, both chain checks,
+endpoint signs, stored variations and the integer value are retained. Each
+endpoint uses its actual finite Horner arithmetic or leading coefficient sign.
+Scalar sign agreement remains an explicit hypothesis at the literal scales,
+finite Horner results and endpoint differences, and infinite endpoint leading
+coefficients; arithmetic preservation alone does not supply these signs.
+`reduction_check` also transports the complete native product reduction,
+retaining literal factor indices, scales, quotients and final result. A result
+may shrink or become zero; only the original head requires degree preservation.
+`preparation_check` transports shared query preprocessing, keeping original
+query positions and duplicate operands. `Closed.coeff_natPow` and
+`PowerData.of_closed` follow the actual binary-power recursion. `moment_polynomial`
+interprets its powers and product fold from finite query memberships, and
+`moment_check` retains every direct or reduced moment clause.
+
+`node_check` retains literal context and input bindings, shared preprocessing,
+all indexed moments, the integer system, rank certificate and left-inverse
+check. `replay_check` transports the supplied finite tree, both child checks and
+their original positional query slices, product supports and retained rows.
+`Transport.count_roots` composes this transport with the root model over a
+real closed target field: the original sparse table count equals the number
+of distinct roots of the interpreted head in the interpreted interval realizing
+the entire ordered sign condition, including
+conditions omitted from the table. Positive counts give existence through
+`exists_root`, and count one gives uniqueness through `unique_root`. These
+theorems consume a coefficient reader, its closed domain and the finite
+`ReplayData` obligations; they do not construct an algebraic tower reader.
+`derivatives_polynomial` derives the complete formal derivative sequence from
+head coefficient membership, retaining its degree under the leading guard.
+`checkedDescriptor` constructs a validated target descriptor with queries
+recomputed from its interpreted head, the mapped immutable context, and the
+entire mapped replay. Its public projection and validation equations retain
+the literal raw input and evidence. `selected` transports checked joint signs
+to this descriptor, retaining the sign vector and joint replay; `selected_signs`
+proves all those signs at its selected root over a real closed target field.
+Joint algebraic-root interpretation, recursive sample reconstruction, graph
+sharing and successive infinitesimal levels remain separate obligations.
 ### Relative algebraic union
 
 The companion's `Union.field B R` uses the prescribed base algebra map into a
