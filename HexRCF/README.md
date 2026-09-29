@@ -57,6 +57,12 @@ failure, or returns a proof checked against the original goal. Rational solver
 failures never dispatch to another handler. This interface does not itself
 provide real algebraic or named-constant coefficient support.
 
+Before accepting a handler result, the base shares repeated expression nodes
+and checks the complete proof with Lean's ordinary kernel. It then checks its
+type against the original goal without assigning the goal's metavariables,
+and audits its transitive axiom dependencies. Malformed terms, unresolved
+proofs, different goals and admitted dependencies are rejected.
+
 # Verification
 
 Every `true` verdict is kernel-checked. The headline theorem

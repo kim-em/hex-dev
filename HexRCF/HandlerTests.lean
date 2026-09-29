@@ -76,7 +76,7 @@ example : ∀ x : ℝ, x + Real.pi = x + Real.pi := by
   run_tac runCase 6 (some "unexpected handler exception")
   run_tac runCase 7 (some "")
   run_tac runCase 8 (some "symbolic or non-rational coefficient")
-  run_tac runCase 9 (some "Application type mismatch")
+  run_tac runCase 9 (some "(kernel) application type mismatch")
   run_tac runCase 11 (some "forbidden axiom sorryAx")
   run_tac runCase 14 (some "forbidden axiom sorryAx")
   run_tac runCase 15 (some "forbidden axiom sorryAx")

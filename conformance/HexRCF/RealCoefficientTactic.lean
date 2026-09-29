@@ -98,6 +98,35 @@ theorem cubicIntervalDemo : ∃ x : ℝ,
 #guard_msgs (whitespace := lax) in
 #print axioms cubicIntervalDemo
 
+/-- Simultaneous signs at the positive square root of a cubic coefficient. -/
+theorem cubic_signs : ∃ x : ℝ,
+    x ^ 2 = (2 : ℝ) ^ (1 / 3 : ℝ) ∧
+    1 < x ∧ x < (2 : ℝ) ^ (1 / 3 : ℝ) := by
+  rcf
+
+/-- Two different polynomials have a common root, repeated in the first. -/
+theorem cubic_common_root : ∃ x : ℝ,
+    (x - (2 : ℝ) ^ (1 / 3 : ℝ)) ^ 2 = 0 ∧
+    x ^ 3 = 2 ∧ 1 < x ∧ x < 3 / 2 := by
+  rcf
+
+/-- The repeated root uses a coordinate computed in the cubic number field. -/
+theorem field_repeated_root : ∀ x : ℝ,
+    (x - genericCoefficient.toReal) ^ 2 = 0 → 1 < x ∧ x < 3 / 2 := by
+  rcf
+
+/-- info: '_private.HexRCF.RealCoefficientTactic.0.cubic_signs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms cubic_signs
+
+/-- info: '_private.HexRCF.RealCoefficientTactic.0.cubic_common_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms cubic_common_root
+
+/-- info: '_private.HexRCF.RealCoefficientTactic.0.field_repeated_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms field_repeated_root
+
 example : ∀ x : ℝ, x ^ 2 + genericCoefficient.toReal > 0 := by
   rcf
 

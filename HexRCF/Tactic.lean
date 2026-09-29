@@ -112,8 +112,14 @@ private meta def dispatchHandlers (target : Expr)
     | .proved proof =>
         if proof.hasMVar then
           throwError "rcf: handler {name} returned an unresolved proof"
-        check proof
-        unless ← withNewMCtxDepth <| isDefEq (← inferType proof) target do
+        -- Share repeated literals so the ordinary kernel can reuse its
+        -- expression cache while validating the complete candidate.
+        let proof := ShareCommon.shareCommon proof
+        profileitM Exception "rcf handler candidate check" (← getOptions) do
+          checkWithKernel proof
+        let agrees ← profileitM Exception "rcf handler goal agreement" (← getOptions) do
+          withNewMCtxDepth <| isDefEq (← inferType proof) target
+        unless agrees do
           throwError "rcf: handler {name} proposed a proof of a different goal"
         checkAxioms name proof
         return proof

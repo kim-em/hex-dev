@@ -727,6 +727,43 @@ and chosen-root identifications use only Lean's standard logical axioms.
 See {ref "hex-number-field"}[HexNumberField] and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
 
+# Simultaneous signs and repeated roots over a cubic field
+%%%
+tag := "hex-rcf-cubic-signs"
+%%%
+
+Mathlib writes the nonnegative real cube root of two as
+`(2 : ℝ) ^ (1 / 3 : ℝ)`, using {name}`Real.rpow`. It is a closed algebraic
+coefficient here; powers of the quantified variable still have natural-number
+exponents. The first example finds a positive square root of this coefficient
+and checks two inequalities at the same root, without a supplied witness.
+The second finds a common root of two different polynomials. That root has
+multiplicity two in the first polynomial and multiplicity one in the second.
+
+```lean
+example : ∃ x : ℝ,
+    x ^ 2 = (2 : ℝ) ^ (1 / 3 : ℝ) ∧
+    1 < x ∧ x < (2 : ℝ) ^ (1 / 3 : ℝ) := by
+  rcf
+
+example : ∃ x : ℝ,
+    (x - (2 : ℝ) ^ (1 / 3 : ℝ)) ^ 2 = 0 ∧
+    x ^ 3 = 2 ∧ 1 < x ∧ x < 3 / 2 := by
+  rcf
+
+example : ∀ x : ℝ,
+    (x - computedCoefficient.toReal) ^ 2 = 0 → 1 < x ∧ x < 3 / 2 := by
+  rcf
+```
+
+The last example uses the actual `QAdjoin` coordinate `(a² + 1) / 2`
+constructed above, where `a` is the selected cube root of two. It checks the
+location of a repeated root over this nonquadratic coefficient field.
+Repeated factors are allowed in the user's polynomials; the internal root
+domain used for sign determination is squarefree. These examples use the
+proved fixed-field replay and root-sum results, and their proofs depend only
+on Lean's standard logical axioms.
+
 # Arithmetic at a selected algebraic root
 %%%
 tag := "hex-rcf-selected-root"
