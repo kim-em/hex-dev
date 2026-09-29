@@ -419,6 +419,19 @@ gcd properties of the actual computation. `AlgebraicTower.lean` instantiates the
 second level's interpretation using the first level's proved operations,
 including zero reflection, sign and gcd/cofactor inversion.
 
+`AlgebraicTransport.lean` connects the actual `Element.denote` interpretation
+to finite Tarski queries and full BKR replay. For an accepted native replay over
+one algebraic level, its count for each ordered sign condition equals the
+cardinality of the corresponding ambient root set. The proof supplies all
+coefficient, sign, preprocessing, reduction, and moment interpretation facts
+from the level’s existing semantic theorems. Positive and count-one results
+supply existence and uniqueness in the ambient field. The replay context-key
+type can differ from the current level’s key type. A validated next-level
+descriptor obtains its finite interpretation package directly from the current
+level and can be checked over the ambient field with its literal replay. Its
+selected root realizes additional query signs in their original order;
+certificate acceptance remains an explicit premise.
+
 `AlgebraicValue.lean` defines the image subfield `Value ctx`, with lawful field
 and order instances inherited from the ambient field. `Element.toValue`
 preserves arithmetic and sign, is surjective, and identifies exactly the
