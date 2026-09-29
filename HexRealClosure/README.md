@@ -122,6 +122,15 @@ context version without a checked conversion. Bind it once as
 `let h := d.handle` and pass `h` to cached values; writing `d.handle` afresh
 at each call repeats the search.
 
+`h.packQAdjoin` accepts exact `QAdjoin h.canonical.toAlgebraic` coordinates
+and packs them using the cached selected root. The generator in the input type
+prevents coordinates for a different algebraic root from being used with this
+handle. The companion proves that packing preserves the selected complex
+value, agrees with the checked real conversion of the exact field result,
+and preserves addition and multiplication at the represented value. A
+runnable example checks the generator and its square against a reducible
+rational descriptor selecting √2.
+
 `Yun.decompose` runs the specified finite recurrence over an executable
 ordered field. `Yun.decomposeRaw` runs the same recurrence on packed tower
 coefficients, where stored equality need not be value equality. The zero and

@@ -80,11 +80,12 @@ class AdmissionScannerTests(unittest.TestCase):
             specialize_tests = root / "adapters/HexRealClosureMathlib/SpecializeTests.lean"
             union = root / "adapters/HexRealClosureMathlib/Union.lean"
             union_tests = root / "adapters/HexRealClosureMathlib/UnionTests.lean"
+            qadjoin = root / "adapters/HexRealClosureMathlib/QAdjoin.lean"
             dependency = root / "HexExtra/SelectedField.lean"
             arithmetic = [root / f"adapters/HexRealClosureMathlib/{name}.lean"
                           for name in ("Algebraic", "AlgebraicClean", "AlgebraicValue",
                                        "BaseClean", "AlgebraicTower")]
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, specialize, specialize_tests, union, union_tests, dependency, *arithmetic):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, specialize, specialize_tests, union, union_tests, qadjoin, dependency, *arithmetic):
                 path.parent.mkdir(parents=True, exist_ok=True)
             for path in arithmetic:
                 path.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
@@ -107,15 +108,16 @@ class AdmissionScannerTests(unittest.TestCase):
             specialize_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             union.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             union_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            qadjoin.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
-                for probe in (union, union_tests):
+                for probe in (union, union_tests, qadjoin):
                     probe.unlink()
                     with self.assertRaisesRegex(ValueError, "missing local import"):
                         audit.check()
                     probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*Union"):
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*" + probe.stem):
                         audit.check()
                     probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 refinement.unlink()
