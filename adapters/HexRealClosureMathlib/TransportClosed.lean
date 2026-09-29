@@ -63,6 +63,16 @@ private theorem array_closed (read : E → K) (S : E → Prop) (data : Closed re
     exact data.zero
 
 omit [DecidableEq K] in
+/-- The stored unit polynomial has coefficients in every closed domain. -/
+theorem Closed.coeff_one (read : E → K) (S : E → Prop) (data : Closed read S) (i : Nat) :
+    S ((1 : Hex.DensePoly E).coeff i) := by
+  change S ((Hex.DensePoly.C (1 : E)).coeff i)
+  rw [Hex.DensePoly.coeff_C]
+  split
+  · exact data.one
+  · exact data.zero
+
+omit [DecidableEq K] in
 /-- Membership of every product coefficient follows the native nested folds. -/
 theorem Closed.coeff_mul (read : E → K) (S : E → Prop) (data : Closed read S)
     (p q : Hex.DensePoly E) (first : ∀ i < p.size, S (p.coeff i))
@@ -313,3 +323,7 @@ end Hex.RealClosure.Transport
 /-- info: 'Hex.RealClosure.Transport.Terminal.of_closed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Transport.Terminal.of_closed
+
+/-- info: 'Hex.RealClosure.Transport.Closed.coeff_one' depends on axioms: [propext] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.Closed.coeff_one

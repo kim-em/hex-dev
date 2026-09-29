@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.TransportTarski
-public import HexSignDet.QueryReduction
+public import HexSignDet.Reduction
 
 public section
 

@@ -128,13 +128,7 @@ theorem QueryData.of_closed {C : Type w} (read : E → K) (S : E → Prop) (data
     (lowerRows : ∀ r ∈ cert.remainders.chain, EndpointAgreement read sourceSign targetSign r a)
     (upperRows : ∀ r ∈ cert.remainders.chain, EndpointAgreement read sourceSign targetSign r b) :
     QueryData read sourceSign targetSign p f a b cert := by
-  have unit : ∀ i < (1 : Hex.DensePoly E).size, S ((1 : Hex.DensePoly E).coeff i) := by
-    intro i _
-    change S ((Hex.DensePoly.C (1 : E)).coeff i)
-    rw [Hex.DensePoly.coeff_C]
-    split
-    · exact data.one
-    · exact data.zero
+  have unit := fun i (_ : i < (1 : Hex.DensePoly E).size) => data.coeff_one read S i
   refine ⟨ChainData.of_closed read S data sourceSign targetSign p 1 cert.squarefree hp unit
     squarefree head squarefreeEntries squarefreeSigns,
     ChainData.of_closed read S data sourceSign targetSign p f cert.remainders hp hf

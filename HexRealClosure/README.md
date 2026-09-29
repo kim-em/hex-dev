@@ -616,7 +616,9 @@ those operations. Its coefficient membership lemmas and `ChainData.of_closed`
 and `QueryData.of_closed` derive all intermediate and accumulator equations
 from finite stored coefficient membership. `regular_closed` instantiates this
 domain with `Specialize.Regular embedding t`; a full chain consumer and Horner
-example use that partial specialization domain.
+example use that partial specialization domain. `ReductionData.of_closed`
+similarly derives every product reduction equation, and `reduction_check_regular`
+applies it to regular fractions.
 Interpretation need not preserve arithmetic outside it. Kernel-checked examples
 include an interior raw representative of zero and a complete accepted
 three-entry chain whose query and initial quotient lose their leading
@@ -632,5 +634,7 @@ coefficients; arithmetic preservation alone does not supply these signs.
 `reduction_check` also transports the complete native product reduction,
 retaining literal factor indices, scales, quotients and final result. A result
 may shrink or become zero; only the original head requires degree preservation.
-BKR query preprocessing and moments, joint algebraic-root realization, recursive sample
-replay and successive infinitesimal levels remain separate obligations.
+`preparation_check` transports shared query preprocessing, keeping original
+query positions and duplicate operands. BKR moments, joint algebraic-root
+realization, recursive sample replay and successive infinitesimal levels remain
+separate obligations.

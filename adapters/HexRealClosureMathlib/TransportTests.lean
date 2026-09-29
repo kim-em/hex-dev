@@ -85,18 +85,6 @@ private theorem closed : Closed read (fun _ => True) :=
         | zero => exact Hex.DensePoly.eval_C_semiring _ _
         | succ n => exact Hex.DensePoly.eval_C_semiring _ _ }
 
-private theorem products (a b : Hex.DensePoly (Hex.DensePoly Rat)) : Product read a b :=
-  Product.of_closed read (fun _ => True) closed a b (fun _ _ => trivial) (fun _ _ => trivial)
-
-private theorem scaling (c : Hex.DensePoly Rat) (a : Hex.DensePoly (Hex.DensePoly Rat)) :
-    Scaling read c a := ⟨fun i _ => read_mul c (a.coeff i)⟩
-
-private theorem difference (a b : Hex.DensePoly (Hex.DensePoly Rat)) : Difference read a b :=
-  ⟨fun i _ => read_sub (a.coeff i) (b.coeff i)⟩
-
-private theorem sums (a b : Hex.DensePoly (Hex.DensePoly Rat)) : Sum read a b :=
-  ⟨fun i _ => read_add (a.coeff i) (b.coeff i)⟩
-
 private def sign (a : Rat) : Int := if a < 0 then -1 else if a = 0 then 0 else 1
 private def head : Hex.DensePoly (Hex.DensePoly Rat) :=
   Hex.DensePoly.ofCoeffs #[Hex.DensePoly.C (-1 : Rat), 0, 1]
@@ -124,23 +112,24 @@ private theorem accepted : Hex.SignedRemainderChain.check (fun a => sign (read a
 example : certificate.chain.size = 3 := by
   decide +kernel
 
-private theorem recurrence (a b c : Hex.DensePoly (Hex.DensePoly Rat))
-    (left : Hex.DensePoly Rat) (q : Hex.DensePoly (Hex.DensePoly Rat)) (right : Hex.DensePoly Rat) :
-    Recurrence read a b c left q right :=
-  ⟨scaling _ _, products _ _, scaling _ _, difference _ _, difference _ _⟩
-
 private theorem data : ChainData read (fun a => sign (read a)) sign head query certificate := by
-  refine {
-    head := ?_
-    entries := ?_
-    initial := ?_
-    initialLeft := rfl
-    initialRight := rfl
-    recurrences := fun _ _ => recurrence _ _ _ _ _ _
-    stepLeft := fun _ _ => rfl
-    stepRight := fun _ _ => rfl
-    terminal := fun _ _ _ => ⟨scaling _ _, products _ _, difference _ _⟩
-    terminalSign := fun _ _ _ => rfl }
+  apply ChainData.of_closed read (fun _ => True) closed (fun a => sign (read a)) sign
+    head query certificate (fun _ _ => trivial) (fun _ _ => trivial)
+    { entries := fun _ _ _ _ => trivial
+      initialLeft := trivial
+      initialRight := trivial
+      initialQuotient := fun _ _ => trivial
+      stepLeft := fun _ _ => trivial
+      stepRight := fun _ _ => trivial
+      stepQuotient := fun _ _ _ _ => trivial
+      terminalScale := fun _ _ _ => trivial
+      terminalQuotient := fun _ _ _ _ _ => trivial }
+    ?_ ?_
+    { initialLeft := rfl
+      initialRight := rfl
+      stepLeft := fun _ _ => rfl
+      stepRight := fun _ _ => rfl
+      terminal := fun _ _ _ => rfl }
   · intro _
     change read (1 : Hex.DensePoly Rat) ≠ 0
     decide +kernel
@@ -157,17 +146,39 @@ private theorem data : ChainData read (fun a => sign (read a)) sign head query c
     · intro _
       change read last ≠ 0
       decide +kernel
-  · refine ⟨⟨?_⟩, products _ _, scaling _ _, products _ _, scaling _ _, sums _ _, difference _ _⟩
-    intro i hi
-    change i < 2 at hi
-    have cases : i = 0 ∨ i = 1 := by omega
-    rcases cases with rfl | rfl <;> decide +kernel
-
 /-- The complete accepted source chain transports even though its query and
-initial quotient lose their leading coefficients at the selected root. -/
+initial quotient lose their leading coefficients under evaluation at two. -/
 example : Hex.SignedRemainderChain.check sign
     (polynomial read head) (polynomial read query) (chain read certificate) = true :=
   chain_check read zero (fun a => sign (read a)) sign head query certificate data accepted
+
+private def reduced : Hex.DensePoly (Hex.DensePoly Rat) :=
+  Hex.DensePoly.ofCoeffs #[1 + coefficient * coefficient, coefficient + coefficient]
+
+private def productReduction : Hex.SignDet.Reduction (Hex.DensePoly Rat) :=
+  { steps := [⟨0, query, ⟨1, 0, 1⟩⟩,
+      ⟨0, reduced, ⟨1, Hex.DensePoly.C (coefficient * coefficient), 1⟩⟩]
+    result := reduced }
+
+private theorem reduction_accepted :
+    productReduction.check (fun a => sign (read a)) head [query] [2] = true := by
+  decide +kernel
+
+/-- Product reduction uses the same closed-domain constructor, including
+its final difference. The interpreted next representative loses degree. -/
+example : (reduction read productReduction).check sign
+    (polynomial read head) [polynomial read query] [2] = true := by
+  apply reduction_check read zero closed.read_one (fun a => sign (read a)) sign
+    head [query] [2] productReduction data.head
+  · exact ReductionData.of_closed read (fun _ => True) closed _ _ head 1 _ _ _ data.head
+      (fun _ _ => trivial) (fun i _ => closed.coeff_one read (fun _ => True) i)
+      (fun _ _ _ _ => trivial)
+      (fun _ _ => ⟨fun _ _ => trivial, trivial, trivial, fun _ _ => trivial⟩)
+      (fun _ _ => ⟨rfl, rfl⟩) (fun _ _ => trivial)
+  · exact reduction_accepted
+
+example : (polynomial read reduced).natDegree = 0 ∧ reduced.natDegree = 1 := by
+  decide +kernel
 
 section Regular
 attribute [local instance 2000] Field.toGrindField

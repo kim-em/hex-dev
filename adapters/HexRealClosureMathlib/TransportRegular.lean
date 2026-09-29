@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.TransportClosedQuery
+public import HexRealClosureMathlib.TransportClosedReduction
 public import HexRealClosureMathlib.SpecializeRegular
 
 public section
@@ -57,6 +57,30 @@ theorem chain_check_regular (embedding : F →+* ℝ) (t : ℝ)
     (ChainData.of_closed _ _ (regular_closed embedding t) sourceSign targetSign p f cert hp hf
       domain head entries signs) accepted
 
+/-- Regularity of finite stored reduction data supplies all arithmetic
+premises at one parameter; only the exact head guard and scale signs remain. -/
+theorem reduction_check_regular (embedding : F →+* ℝ) (t : ℝ)
+    (sourceSign : Hex.RationalFn F → Int) (targetSign : ℝ → Int)
+    (p : Hex.DensePoly (Hex.RationalFn F)) (qs : List (Hex.DensePoly (Hex.RationalFn F)))
+    (es : List Nat) (r : Hex.SignDet.Reduction (Hex.RationalFn F))
+    (hp : ∀ i < p.size, Specialize.Regular embedding t (p.coeff i))
+    (hqs : ∀ q ∈ qs, ∀ i < q.size, Specialize.Regular embedding t (q.coeff i))
+    (domain : ∀ s ∈ r.steps, ReductionDomain (Specialize.Regular embedding t) s)
+    (signs : ∀ s ∈ r.steps,
+      ReductionSigns (fun a => Specialize.evalMapped embedding a t) sourceSign targetSign s)
+    (result : ∀ i < r.result.size, Specialize.Regular embedding t (r.result.coeff i))
+    (head : Leading (fun a => Specialize.evalMapped embedding a t) p)
+    (accepted : r.check sourceSign p qs es = true) :
+    (reduction (fun a => Specialize.evalMapped embedding a t) r).check targetSign
+      (polynomial (fun a => Specialize.evalMapped embedding a t) p)
+      (qs.map (polynomial (fun a => Specialize.evalMapped embedding a t))) es = true := by
+  classical
+  have closed := regular_closed embedding t
+  exact reduction_check _ closed.read_zero closed.read_one sourceSign targetSign p qs es r head
+    (ReductionData.of_closed _ _ closed sourceSign targetSign p 1 (Hex.SignDet.factors qs es)
+      r.steps r.result head hp (fun i _ => closed.coeff_one _ _ i)
+      (factors_closed _ qs es hqs) domain signs result) accepted
+
 end Hex.RealClosure.Transport
 
 /-- info: 'Hex.RealClosure.Transport.regular_closed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -65,3 +89,7 @@ end Hex.RealClosure.Transport
 /-- info: 'Hex.RealClosure.Transport.chain_check_regular' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Transport.chain_check_regular
+
+/-- info: 'Hex.RealClosure.Transport.reduction_check_regular' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.reduction_check_regular
