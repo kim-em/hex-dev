@@ -283,6 +283,49 @@ theorem exists_mapped_parameter (embedding : F →+* ℝ) (ordered : StrictMono 
   obtain ⟨t, signs, small⟩ := (stable.and (Ioo_mem_nhdsGT positive)).exists
   exact ⟨t, small.1, small.2, signs⟩
 
+/-- A caller-supplied predecessor sign can be used directly when it agrees
+with the prescribed coefficient embedding. -/
+theorem fraction_sign_with (embedding : F →+* ℝ) (ordered : StrictMono embedding)
+    (baseSign : F → Int) (correct : ∀ a, baseSign a = (SignType.sign (embedding a) : Int))
+    (fraction : Hex.RationalFn F) :
+    ∀ᶠ t in 𝓝[>] (0 : ℝ),
+      ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t ≠ 0 ∧
+      (SignType.sign (evalMapped embedding fraction t) : Int) =
+        Hex.OrderedFn.Infinitesimal.sign baseSign fraction := by
+  have same : baseSign = Hex.OrderedFn.orderSign := by
+    funext a
+    simpa only [ordered.sign_comp, Hex.OrderedFn.Infinitesimal.orderSign_eq] using correct a
+  simpa only [same] using fraction_sign_map embedding ordered fraction
+
+/-- The actual predecessor sign is preserved on one common neighborhood for
+all finitely recorded fractions and denominator guards. -/
+theorem finite_fractions_with (embedding : F →+* ℝ) (ordered : StrictMono embedding)
+    (baseSign : F → Int) (correct : ∀ a, baseSign a = (SignType.sign (embedding a) : Int))
+    (fractions : Finset (Hex.RationalFn F)) :
+    ∃ η > (0 : ℝ), ∀ t, 0 < t → t < η → ∀ fraction ∈ fractions,
+      ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t ≠ 0 ∧
+      (SignType.sign (evalMapped embedding fraction t) : Int) =
+        Hex.OrderedFn.Infinitesimal.sign baseSign fraction := by
+  have stable := (eventually_all_finset fractions).mpr
+    fun fraction _ => fraction_sign_with embedding ordered baseSign correct fraction
+  obtain ⟨η, positive, holds⟩ := Metric.mem_nhdsWithin_iff.mp stable
+  refine ⟨η, positive, fun t ht hη => holds ?_⟩
+  exact ⟨by simpa [Metric.mem_ball, Real.dist_eq, abs_of_pos ht] using hη, ht⟩
+
+/-- One ordinary parameter realizes all signs from the actual predecessor
+sign function, with all denominator guards, below a positive cap. -/
+theorem exists_parameter_with (embedding : F →+* ℝ) (ordered : StrictMono embedding)
+    (baseSign : F → Int) (correct : ∀ a, baseSign a = (SignType.sign (embedding a) : Int))
+    (fractions : Finset (Hex.RationalFn F)) (cap : ℝ) (positive : 0 < cap) :
+    ∃ t : ℝ, 0 < t ∧ t < cap ∧ ∀ fraction ∈ fractions,
+      ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t ≠ 0 ∧
+      (SignType.sign (evalMapped embedding fraction t) : Int) =
+        Hex.OrderedFn.Infinitesimal.sign baseSign fraction := by
+  have stable := (eventually_all_finset fractions).mpr
+    fun fraction _ => fraction_sign_with embedding ordered baseSign correct fraction
+  obtain ⟨t, signs, small⟩ := (stable.and (Ioo_mem_nhdsGT positive)).exists
+  exact ⟨t, small.1, small.2, signs⟩
+
 end EmbeddedFractions
 
 end Fractions
@@ -328,3 +371,15 @@ end Hex.RealClosure.Specialize
 /-- info: 'Hex.RealClosure.Specialize.evalMapped_mul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.evalMapped_mul
+
+/-- info: 'Hex.RealClosure.Specialize.fraction_sign_with' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.fraction_sign_with
+
+/-- info: 'Hex.RealClosure.Specialize.finite_fractions_with' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.finite_fractions_with
+
+/-- info: 'Hex.RealClosure.Specialize.exists_parameter_with' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.exists_parameter_with

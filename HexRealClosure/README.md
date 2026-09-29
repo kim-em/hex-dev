@@ -439,6 +439,13 @@ under the recorded denominator guards. A finite-family consumer collects the
 operands and both results before choosing its parameter, so their arithmetic
 identities and all recorded signs hold at the same point.
 
+`fraction_sign_with`, `finite_fractions_with` and `exists_parameter_with` use
+the actual predecessor sign function, given its agreement with the prescribed
+coefficient embedding. A native rational infinitesimal-context consumer reads
+its stored fraction through the existing proof of equality of the complete
+native and semantic coefficient dictionaries, and preserves that element's
+actual stored sign at an ordinary real parameter.
+
 Transport of complete query tables and joint selected-root constraints,
 recursive algebraic replay specialization and successive infinitesimal
 parameter choices remain required finite-sign realization work. These helpers

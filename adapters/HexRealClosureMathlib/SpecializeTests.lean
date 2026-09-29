@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.Specialize
+public import HexRealClosureMathlib.BaseContext
 public import Mathlib.Analysis.Real.Sqrt
 
 public section
@@ -73,5 +74,54 @@ example {F : Type} [Field F] [DecidableEq F] [LinearOrder F]
       (signs first (by simp)).1 (signs second (by simp)).1 (signs (first + second) (by simp)).1
   · exact evalMapped_mul embedding first second t
       (signs first (by simp)).1 (signs second (by simp)).1 (signs (first * second) (by simp)).1
+
+section Native
+local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat
+
+private theorem transported_sign {F : Type} [Field F] [DecidableEq F]
+    (g : Lean.Grind.Field F) (compatible : Field.toGrindField (K := F) = g)
+    (sign : F → Int) (fraction : @Hex.RationalFn F g inferInstance) :
+    @Hex.OrderedFn.Infinitesimal.sign F Field.toGrindField inferInstance sign
+      (@BaseContext.modelFraction F inferInstance g inferInstance compatible fraction) =
+      @Hex.OrderedFn.Infinitesimal.sign F g inferInstance sign fraction := by
+  cases compatible
+  rfl
+
+private def nativeSign (registry : BaseContext.Registry)
+    (a : BaseContext.Element (BaseContext.rational registry).infinitesimal) : Int := a.sign
+
+private def storedFraction (registry : BaseContext.Registry)
+    (a : BaseContext.Element (BaseContext.rational registry).infinitesimal) :
+    @Hex.RationalFn Rat Field.toGrindField inferInstance :=
+  BaseContext.modelFraction HexRationalFnMathlib.ratField_eq a.stored
+
+private theorem stored_sign (registry : BaseContext.Registry)
+    (a : BaseContext.Element (BaseContext.rational registry).infinitesimal) :
+    @Hex.OrderedFn.Infinitesimal.sign Rat Field.toGrindField inferInstance Hex.OrderedFn.orderSign
+      (storedFraction registry a) = nativeSign registry a :=
+  transported_sign Lean.Grind.instFieldRat HexRationalFnMathlib.ratField_eq Hex.OrderedFn.orderSign a.stored
+
+/-- A value stored by the actual native rational infinitesimal context enters
+specialization through the proved equality of the whole coefficient dictionary. -/
+example (registry : BaseContext.Registry)
+    (a : BaseContext.Element (BaseContext.rational registry).infinitesimal) :
+    letI : Lean.Grind.Field Rat := Field.toGrindField
+    ∃ t : ℝ, 0 < t ∧ t < 1 ∧
+      ((HexPolyMathlib.toPolynomial
+        (storedFraction registry a).den).map
+          (Rat.castHom ℝ)).eval t ≠ 0 ∧
+      (SignType.sign (evalMapped (Rat.castHom ℝ)
+        (storedFraction registry a) t) : Int) = nativeSign registry a := by
+  let : Lean.Grind.Field Rat := Field.toGrindField
+  let fraction := storedFraction registry a
+  have correct (x : Rat) : Hex.OrderedFn.orderSign x = (SignType.sign ((Rat.castHom ℝ) x) : Int) := by
+    rw [Rat.cast_strictMono.sign_comp, Hex.OrderedFn.Infinitesimal.orderSign_eq]
+  obtain ⟨t, positive, small, signs⟩ := exists_parameter_with (Rat.castHom ℝ)
+    Rat.cast_strictMono Hex.OrderedFn.orderSign correct {fraction} 1 zero_lt_one
+  obtain ⟨guard, sign⟩ := signs fraction (by simp)
+  refine ⟨t, positive, small, guard, ?_⟩
+  exact sign.trans (stored_sign registry a)
+
+end Native
 
 end Hex.RealClosure.Specialize.Tests
