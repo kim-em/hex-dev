@@ -462,3 +462,12 @@ parameter choices remain required finite-sign realization work. These helpers
 operate on coefficient data with a supplied ordered embedding into ℝ in the
 companion; they add no native constructor or runtime field instance for formal
 real expressions.
+
+`Specialize.polynomial` substitutes one parameter into an outer polynomial's
+actual stored native fraction coefficients. `polynomial_coeff` includes
+implicit zero coefficients outside the stored array. `polynomial_zero`,
+`polynomial_degree` and `polynomial_leading` require zero reflection only on
+that finite array. `polynomial_signs` derives these conditions from one common
+neighborhood preserving its coefficient signs and denominator guards. These
+are polynomial specialization helpers; accepted query and joint sign-table
+transport still require the finite arithmetic evidence used by their checkers.
