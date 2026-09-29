@@ -312,9 +312,10 @@ uses a different explicit grouping.
 | `DensePoly.positivePseudoDiv` | 23.88% |
 
 The [call-path check](data/sign-det-joint-timing/profile-394c3c548/stack-plausibility.json)
-finds no compiled Lean frame beneath `lean_nat_gcd`. All 182 samples with GMP
-addition or shifting beneath it also contain the unsigned 64-bit `mpz`
-constructor. Those calls are valid: [Lean’s pinned runtime source](https://github.com/leanprover/lean4/blob/v4.35.0-rc3/src/runtime/mpz.cpp#L39)
+checks every recovered frame beneath `lean_nat_gcd` against the runtime
+call-path allowlist and finds no unexpected name. All 182 samples with GMP
+addition or shifting beneath it have the unsigned 64-bit `mpz` constructor as the immediate caller of
+the addition/shift frame. Those calls are valid: [Lean’s pinned runtime source](https://github.com/leanprover/lean4/blob/v4.35.0-rc3/src/runtime/mpz.cpp#L39)
 constructs the value by shifting and adding its two halves. The captured
 binary’s gcd and constructor disassemblies retain the corresponding calls.
 The 83.24% inclusive gcd share therefore includes integer promotion and
@@ -329,6 +330,8 @@ same arithmetic hot path. The degree-31 comparison registers the complete
 production/checking composition, so those costs are attributable to the measured
 callback. This narrow-support case still supplies no general matrix or nested
 coefficient-sign attribution.
+
+Window diagnostics (these do not validate caller stacks):
 
 ```text
 calibration residual: 4.254 ms (effective limit 20.1005 ms)
@@ -347,7 +350,7 @@ allocation counts, allocated bytes or peak live memory.
 A separate heaptrack capture runs one cold degree-31 comparison at source
 `394c3c54802ee1fe8e251098323b02c603536454`, on automatically leased CPU 34. The
 executable hash is unchanged before and after the capture. The manifest, commands,
-summaries and original analysis outputs are in [data/sign-det-joint- timing/allocation-394c3c548](data/sign-det-joint-timing/allocation-394c3c548). Raw
+summaries and original analysis outputs are in [data/sign-det-joint-timing/allocation-394c3c548](data/sign-det-joint-timing/allocation-394c3c548). Raw
 compressed events and folded stacks are retained under
 `/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548`. The original `/tmp` path is a symlink to this durable directory.
 The [analysis addendum](data/sign-det-joint-timing/allocation-394c3c548/analysis-addendum.json) records corrected analysis commands and binary-path bindings; original

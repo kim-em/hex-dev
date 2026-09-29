@@ -3,6 +3,7 @@ import argparse
 import collections
 import gzip
 import json
+import re
 from pathlib import Path
 import sys
 
@@ -21,16 +22,23 @@ thread = main_thread(profile, "hexsigndet_benc")
 resolved = frame_names(profile, thread, Symbolicator(args.symbols))
 by_leaf = collections.Counter()
 examples = []
-gcd = compiled = gmp = unexplained_gmp = 0
+gcd = compiled = gmp = unexplained_gmp = unexpected = 0
+unexpected_names = collections.Counter()
+allowed = re.compile(r"^(?:__gmp.*|_ZNK?4lean3mpz.*|_ZN4lean3gcd.*|(?:malloc|calloc|free|cfree|realloc)(?:@.*)?|mi_.*|lean_alloc_small_object_core|0x[0-9a-f]+|_Unwind_Resume)$")
 for stack in thread["samples"]["stack"]:
     names = [resolved[index][0] for index in stack_chain(thread, stack)]
     if "lean_nat_gcd" not in names:
         continue
     gcd += 1
     below = names[:names.index("lean_nat_gcd")]
-    has_compiled = any(name.startswith(("Hex.", "Rat.", "List.")) for name in below)
+    bad = [name for name in below if not allowed.fullmatch(name)]
+    has_compiled = bool(bad)
+    unexpected += bool(bad)
+    unexpected_names.update(set(bad))
     has_gmp = any(name in ("__gmpz_add", "__gmpz_mul_2exp") for name in below)
-    via_constructor = any(name in ("_ZN4lean3mpzC1Em", "_ZN4lean3mpzC2Em") for name in below)
+    via_constructor = all(index + 1 < len(below) and
+        below[index + 1] in ("_ZN4lean3mpzC1Em", "_ZN4lean3mpzC2Em")
+        for index, name in enumerate(below) if name in ("__gmpz_add", "__gmpz_mul_2exp"))
     compiled += has_compiled
     gmp += has_gmp
     unexplained_gmp += has_gmp and not via_constructor
@@ -38,12 +46,13 @@ for stack in thread["samples"]["stack"]:
         by_leaf[names[0]] += 1
         if len(examples) < 12:
             examples.append({"leaf": names[0], "frames_below_gcd": below,
-                             "compiled_callee": has_compiled, "gmp_callee": has_gmp,
-                             "uint64_constructor": via_constructor})
+                             "unexpected_callee": has_compiled, "gmp_callee": has_gmp,
+                             "uint64_constructor_immediate_caller": via_constructor})
 document = {"scope": "Caller-stack plausibility; timing-window confidence is a separate check",
             "status": "checked-paths-consistent" if compiled == 0 and unexplained_gmp == 0 else "needs-investigation",
             "samples": thread["samples"]["length"], "gcd_ancestor_samples": gcd,
-            "compiled_frames_below_gcd": compiled, "gmp_add_or_shift_below_gcd": gmp,
+            "unexpected_frames_below_gcd": unexpected,
+            "unexpected_frame_names": dict(unexpected_names), "allowed_frame_pattern": allowed.pattern, "gmp_add_or_shift_below_gcd": gmp,
             "gmp_add_or_shift_without_uint64_constructor": unexplained_gmp,
             "inspected_paths_by_leaf": dict(by_leaf),
             "examples": examples,

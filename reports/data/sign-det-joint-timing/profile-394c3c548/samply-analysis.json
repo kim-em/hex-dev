@@ -143,5 +143,15 @@
       ],
       "stdout": "reports/data/sign-det-joint-timing/profile-394c3c548/constructor-disassembly.txt"
     }
-  ]
+  ],
+  "filter_checkout_verification": {
+    "command": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "clean": true,
+    "output": ""
+  },
+  "objdump_version": "GNU objdump (GNU Binutils) 2.46"
 }

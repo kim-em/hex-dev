@@ -231,7 +231,7 @@ class JointTimingTests(unittest.TestCase):
         directory = timing.ROOT/"reports/data/sign-det-joint-timing/profile-394c3c548"
         paths = json.loads((directory/"stack-plausibility.json").read_text())
         self.assertEqual(paths["status"], "checked-paths-consistent")
-        self.assertEqual(paths["compiled_frames_below_gcd"], 0)
+        self.assertEqual(paths["unexpected_frames_below_gcd"], 0)
         self.assertEqual(paths["gmp_add_or_shift_without_uint64_constructor"], 0)
         summary = json.loads((directory/"inclusive-summary.json").read_text())
         share = next(row["percent"] for row in summary["top_inclusive"]

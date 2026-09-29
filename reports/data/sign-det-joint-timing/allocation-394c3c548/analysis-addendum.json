@@ -84,5 +84,7 @@
     ],
     "output_requirement": "Use a fresh directory; do not direct heaptrack_print outputs into the retained raw directory."
   },
-  "analysis_commands_scope": "Earlier analysis_commands substitute durable input paths and are reconstructions, not verbatim original commands. Original command arguments and stdout destinations are recorded separately. For a replay substitute a fresh output directory for every -H/-F/stdout destination."
+  "analysis_commands_scope": "Earlier analysis_commands substitute durable input paths and are reconstructions, not verbatim original commands. Original command arguments and stdout destinations are recorded separately. For a replay substitute a fresh output directory for every -H/-F/stdout destination.",
+  "reanalysis_output_producer_revision": "1680ac401d1e73bf0791273d988b09fde86c1ff0",
+  "reanalysis_script_followup": "The subsequent exist_ok=False change rejects an existing destination; it does not affect emitted content. Original reanalysis commands that target an existing directory are recorded history, not safe replay instructions."
 }
