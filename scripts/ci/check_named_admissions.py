@@ -193,6 +193,9 @@ def check() -> None:
              "HexRealClosureMathlib.TransportReplay", "HexRealClosureMathlib.TransportSample", "HexRealClosureMathlib.TransportDescriptor",
              "HexRealClosureMathlib.TransportSelected", "HexRealClosureMathlib.TransportRegular",
              "HexRealClosureMathlib.TransportReduction",
+             "HexRealClosureMathlib.SpecializeTests", "HexRealClosureMathlib.Algebraic",
+             "HexRealClosureMathlib.AlgebraicClean", "HexRealClosureMathlib.AlgebraicValue",
+             "HexRealClosureMathlib.BaseClean", "HexRealClosureMathlib.AlgebraicTower",
              "HexRealClosureMathlib.Union", "HexRealClosureMathlib.UnionTests"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
