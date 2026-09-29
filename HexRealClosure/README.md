@@ -587,10 +587,16 @@ native rational dictionary, its proved compatibility equation and
 `Transport.polynomial` interprets a stored coefficient array without field laws
 on its source expressions. Zero preservation handles implicit coefficients;
 zero reflection is required only on the finite input arrays. The actual
-normalized size, degree and zero test are preserved. Interpreting `ofCoeffs`
+normalized size, degree, leading coefficient and zero test are preserved. Interpreting `ofCoeffs`
 commutes with normalization even when nonzero source coefficients map to zero.
-Addition and subtraction use only the finite recorded scalar operations at
-coefficient positions, together with the input zero patterns. These lemmas
-apply to raw algebraic representatives as well as infinitesimal fractions.
-Full query transport additionally requires the remaining polynomial operations,
-query identities, signs and guards at the jointly realized algebraic root.
+Addition, subtraction, scaling and differentiation use only the finite scalar
+operations at coefficient positions, together with the input zero patterns.
+Multiplication follows the native schoolbook loop: `productPrefix` records the
+accumulator immediately before each coefficient product is added. Horner
+evaluation uses `hornerPrefix` to record the actual descending evaluation order.
+Their transport proofs require arithmetic identities only at these reached
+accumulators. No ring laws on the source expressions or arithmetic preservation
+at unrelated expressions are required. These lemmas apply to raw algebraic
+representatives as well as infinitesimal fractions.
+Full query transport additionally requires the query identities, signs and
+guards at the jointly realized algebraic root.
