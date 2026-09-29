@@ -571,4 +571,11 @@ descriptor, using the same parameter for both evidence tables. These are
 companion constructions over a prescribed ordered coefficient embedding into
 ℝ; they do not rebuild a native tower context or specialize successive levels.
 A literal equality between the returned descriptor's evidence field and the
-mapped original replay still needs the constructor's public evidence getter.
+mapped original replay still needs a public equation for `ofTable` or `ofReplay?`'s evidence field.
+
+`Specialize.Native.evidence` transports the whole descriptor, query list and
+checked selected-sign replay through equality of the predecessor coefficient
+dictionaries. `Native.selected_root_near` then constructs the checked real
+descriptor and proves its root signs. A consumer example uses the actual
+native rational dictionary, its proved compatibility equation and
+`Rat.castHom ℝ`, covering the first rational infinitesimal level.

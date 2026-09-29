@@ -284,6 +284,54 @@ theorem selected_root_near (embedding : F →+* ℝ) (ordered : StrictMono embed
 
 end Hex.RealClosure.Specialize
 
+namespace Hex.RealClosure.Specialize.Native
+open Hex.SignDet HexRealRootsMathlib HexPolyMathlib.Interpret
+variable {F : Type} [Field F] [DecidableEq F] [LinearOrder F] [IsStrictOrderedRing F]
+variable {Ctx : Type u} [DecidableEq Ctx] {context : Ctx}
+
+/-- Transport the entire checked descriptor, query list and selected-sign
+certificate through equality of the native coefficient dictionary. -/
+def evidence (g : Lean.Grind.Field F) (compatible : Field.toGrindField (K := F) = g) :
+    letI : Lean.Grind.Field F := g
+    (d : Descriptor (Hex.RationalFn F) Ctx
+      (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) context) →
+    (qs : List (Hex.DensePoly (Hex.RationalFn F))) → SelectedSigns d qs →
+    letI : Lean.Grind.Field F := Field.toGrindField
+    Σ d : Descriptor (Hex.RationalFn F) Ctx
+      (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) context,
+      Σ qs : List (Hex.DensePoly (Hex.RationalFn F)), SelectedSigns d qs := by
+  cases compatible
+  exact fun d qs s => ⟨d, qs, s⟩
+
+/-- Native evidence specialized after whole-dictionary transport has the same
+checked real descriptor and selected-root signs as canonical evidence. -/
+theorem selected_root_near (g : Lean.Grind.Field F)
+    (compatible : Field.toGrindField (K := F) = g)
+    (embedding : F →+* ℝ) (ordered : StrictMono embedding) :
+    letI : Lean.Grind.Field F := g
+    ∀ (d : Descriptor (Hex.RationalFn F) Ctx
+      (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) context)
+      (qs : List (Hex.DensePoly (Hex.RationalFn F))) (s : SelectedSigns d qs),
+    letI : Lean.Grind.Field F := Field.toGrindField
+    let data := evidence g compatible d qs s
+    ∃ η > (0 : ℝ), ∀ t, 0 < t → t < η →
+      ∃ target : Descriptor ℝ Ctx (fun x : ℝ => (SignType.sign x : Int)) context,
+        target.raw = data.1.raw.specialize embedding t ∧
+        Descriptor.ofReplay? (fun x : ℝ => (SignType.sign x : Int)) context
+          (data.1.raw.specialize embedding t) (data.1.evidence.specialize embedding t) =
+          some target ∧
+        signsAt (fun x : ℝ => x) (fun _ => Iff.rfl)
+          (data.2.1.map (fun q => polynomial embedding q t))
+          (target.root (fun x : ℝ => x) (fun _ => Iff.rfl) rfl
+            (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl)
+            (fun _ => rfl) (fun _ => rfl)) = data.2.2.values.toList := by
+  intro d qs s
+  exact Hex.RealClosure.Specialize.selected_root_near embedding ordered
+    (evidence g compatible d qs s).1 (evidence g compatible d qs s).2.1
+    (evidence g compatible d qs s).2.2
+
+end Hex.RealClosure.Specialize.Native
+
 /-- info: 'Hex.RealClosure.Specialize.derivativesFrom_specialize' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.derivativesFrom_specialize
@@ -315,3 +363,7 @@ end Hex.RealClosure.Specialize
 /-- info: 'Hex.RealClosure.Specialize.selected_root_near' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.selected_root_near
+
+/-- info: 'Hex.RealClosure.Specialize.Native.selected_root_near' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.Native.selected_root_near
