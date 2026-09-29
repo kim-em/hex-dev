@@ -617,9 +617,10 @@ of the computed signs with a common ordered real-closed field; the executable
 coefficient type needs no field instance.
 `assemble_spec` composes these results with zero extraction: a successful finite
 output represents exactly the original polynomial's roots with their original
-positive multiplicities. `assemble_all` proves the separate all-roots result
-occurs exactly for semantic zero. Duplicate-free output, global ordering and
-producer totality remain separate obligations before a complete `RootSet`.
+positive multiplicities. `assemble_nodup` proves each mathematical value occurs
+once. `assemble_all` proves the separate all-roots result occurs exactly for
+semantic zero. Global ordering and producer totality remain separate
+obligations before a complete `RootSet`.
 
 ### Arithmetic over general selected-root predecessors
 

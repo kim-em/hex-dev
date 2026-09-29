@@ -27,13 +27,6 @@ variable (hnat : ∀ n : Nat, φ (n : E) = (n : K))
 variable {sign : E → Int} (hsign : ∀ a, sign a = (SignType.sign (φ a) : Int))
 variable (hn : ∀ a, φ (-a) = -φ a) (hi : ∀ a, φ a⁻¹ = (φ a)⁻¹)
 
-omit [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E] [Div E]
-  [LinearOrder K] [IsStrictOrderedRing K] [IsRealClosed K] in
-private theorem interpret_polynomial (p : DensePoly E) :
-    interpret φ hz p = HexPolyMathlib.toPolynomial (DensePoly.Interpret.map φ hz p) := by
-  ext i
-  simp only [coeff_interpret, HexPolyMathlib.coeff_toPolynomial, DensePoly.Interpret.map_coeff]
-
 /-- Interpret a completed root while retaining its emitted multiplicity. -/
 @[expose] noncomputable def Entry.value {context : Ctx} (entry : Entry sign context) : K :=
   entry.root.value φ hz h1 ha hs hm hnat hsign
@@ -109,8 +102,68 @@ theorem factorEntries_multiplicity
         ⟨entry, member, rfl, rfl⟩
   have component := components (DensePoly.Interpret.map φ hz factor.1, factor.2)
     (Array.mem_map.mpr ⟨factor, Array.mem_toList_iff.mp present, rfl⟩)
-  rw [interpret_polynomial] at root ⊢
+  rw [interpret_map] at root ⊢
   exact ((component.roots _).mp root).trans label
+
+include hz h1 ha hs hm hnat hsign hn hi in
+/-- Completed factors list every mathematical root at most once when their
+labels are distinct and each label is the original multiplicity. -/
+private theorem factorEntries_nodup
+    (p : DensePoly E) (factors : List (DensePoly E × Nat))
+    (hlabels : factors.Pairwise (fun a b => a.2 < b.2))
+    {context : Ctx} {out : List (Entry sign context)}
+    (accepted : factorEntries sign context factors = .ok out)
+    (hvalues : ∀ entry ∈ out,
+      (interpret φ hz p).rootMultiplicity
+        (entry.value φ hz h1 ha hs hm hnat hsign) = entry.multiplicity) :
+    (out.map (Entry.value φ hz h1 ha hs hm hnat hsign)).Nodup := by
+  induction factors generalizing out with
+  | nil =>
+    have empty : out = [] := by simpa [factorEntries] using accepted.symm
+    simp [empty]
+  | cons factor rest ih =>
+    obtain ⟨positive, completion, entries, _, remaining, output⟩ :=
+      factorEntries_cons accepted
+    obtain ⟨hhead, htail⟩ := List.pairwise_cons.mp hlabels
+    have hvaluesTail : ∀ entry ∈ entries,
+        (interpret φ hz p).rootMultiplicity
+          (entry.value φ hz h1 ha hs hm hnat hsign) = entry.multiplicity := by
+      intro entry member
+      apply hvalues
+      rw [output]
+      exact List.mem_append.mpr (Or.inr member)
+    have htailNo := ih htail remaining hvaluesTail
+    have hheadNo :
+        ((completion.roots.entries.map fun root =>
+          (⟨root, factor.2, positive⟩ : Entry sign context)).map
+          (Entry.value φ hz h1 ha hs hm hnat hsign)).Nodup := by
+      simpa only [List.map_map, Function.comp_def, Entry.value,
+        Isolation.Output.entries_values] using
+        completion.nodup φ hz h1 ha hs hm hnat hsign hn hi
+    rw [output, List.map_append, List.nodup_append]
+    refine ⟨hheadNo, htailNo, ?_⟩
+    intro x hx y hy same
+    have hx' : x ∈ completion.roots.entries.map
+        (Isolation.Root.value φ hz h1 ha hs hm hnat hsign) := by
+      simpa only [List.map_map, Function.comp_def, Entry.value] using hx
+    obtain ⟨root, hroot, rfl⟩ := List.mem_map.mp hx'
+    obtain ⟨entry, hentry, rfl⟩ := List.mem_map.mp hy
+    have hrootEntry : (⟨root, factor.2, positive⟩ : Entry sign context) ∈ out := by
+      rw [output]
+      apply List.mem_append.mpr
+      exact Or.inl (List.mem_map.mpr ⟨root, hroot, rfl⟩)
+    have hrootMult := hvalues _ hrootEntry
+    change (interpret φ hz p).rootMultiplicity
+      (root.value φ hz h1 ha hs hm hnat hsign) = factor.2 at hrootMult
+    have hentryMult := hvaluesTail entry hentry
+    have heq : factor.2 = entry.multiplicity := by
+      rw [same] at hrootMult
+      exact hrootMult.symm.trans hentryMult
+    obtain ⟨other, hother, _, hlabel⟩ :=
+      (factorEntries_spec φ hz h1 ha hs hm hnat hsign hn hi
+        rest remaining (entry.value φ hz h1 ha hs hm hnat hsign)
+        entry.multiplicity).mp ⟨entry, hentry, rfl, rfl⟩
+    exact (Nat.ne_of_lt (hhead other hother)) (heq.trans hlabel.symm)
 
 include hz h1 ha hs hm hnat hsign hn hi in
 /-- Every input root occurs among the completed actual Yun factors with its
@@ -133,14 +186,14 @@ theorem factorEntries_complete
   have rawNonzero : DensePoly.Interpret.map φ hz p ≠ 0 := by
     intro zero
     apply nonzero
-    rw [interpret_polynomial, zero, HexPolyMathlib.toPolynomial_zero]
-  rw [interpret_polynomial] at root
+    rw [interpret_map, zero, HexPolyMathlib.toPolynomial_zero]
+  rw [interpret_map] at root
   obtain ⟨scalar, components, computed, component, member, label, root⟩ :=
     Yun.decompose_root (DensePoly.Interpret.map φ hz p) x rawNonzero root
   rw [produced] at computed
   cases (Yun.Decomposition.factors.inj computed).2
   obtain ⟨factor, present, rfl⟩ := Array.mem_map.mp member
-  rw [← interpret_polynomial] at root label
+  rw [← interpret_map] at root label
   exact (factorEntries_spec φ hz h1 ha hs hm hnat hsign hn hi factors.toList accepted
     x ((interpret φ hz p).rootMultiplicity x)).mpr
       ⟨factor, Array.mem_toList_iff.mpr present, root, label⟩
@@ -251,6 +304,46 @@ theorem assemble_spec (hd : ∀ a b, φ (a / b) = φ a / φ b)
         exact ⟨entry, Or.inr member, value, label⟩
     · simpa only [positive, ↓reduceDIte] using coverage
 
+include hz h1 ha hs hm hnat hsign hn hi in
+/-- Successful finite assembly lists each original mathematical root once. -/
+theorem assemble_nodup (hd : ∀ a b, φ (a / b) = φ a / φ b)
+    {context : Ctx} (p : DensePoly E) {out : List (Entry sign context)}
+    (accepted : assemble sign context p = .ok (.finite out)) :
+    (out.map (Entry.value φ hz h1 ha hs hm hnat hsign)).Nodup := by
+  obtain ⟨notZero, unit, factors, entries, decomposed, completed, output⟩ :=
+    assemble_result p accepted
+  have nonzero : interpret φ hz p ≠ 0 := by
+    intro zero
+    have rawZero := (interpret_eq_zero φ hz p).mp zero
+    subst p
+    have isZero : (0 : DensePoly E).isZero = true :=
+      (DensePoly.isZero_eq_true_iff _).mpr DensePoly.size_zero
+    simp [isZero] at notZero
+  have removed := ZeroFactor.remove_spec φ hz p nonzero
+  have hlabels := Yun.decompose_labels (ZeroFactor.remove p).1 unit factors decomposed
+  have hvalues : ∀ entry ∈ entries,
+      (interpret φ hz (ZeroFactor.remove p).1).rootMultiplicity
+        (entry.value φ hz h1 ha hs hm hnat hsign) = entry.multiplicity := by
+    intro entry member
+    exact factorEntries_multiplicity φ hz h1 ha hs hm hnat hsign hn hi
+      hd (ZeroFactor.remove p).1 decomposed completed member
+  have hfactorNo := factorEntries_nodup φ hz h1 ha hs hm hnat hsign hn hi
+    (ZeroFactor.remove p).1 factors.toList hlabels completed hvalues
+  rw [output]
+  by_cases positive : 0 < (ZeroFactor.remove p).2
+  · have noZero : 0 ∉ entries.map (Entry.value φ hz h1 ha hs hm hnat hsign) := by
+      intro member
+      obtain ⟨entry, present, value⟩ := List.mem_map.mp member
+      have root := ((factorEntries_roots φ hz h1 ha hs hm hnat hsign hn hi
+        hd (ZeroFactor.remove p).1 removed.1 decomposed completed
+        0 entry.multiplicity).mp ⟨entry, present, value, rfl⟩).1
+      exact removed.2.1 root
+    have zeroValue : (⟨.point 0, (ZeroFactor.remove p).2, positive⟩ :
+        Entry sign context).value φ hz h1 ha hs hm hnat hsign = 0 :=
+      (hz 0).mpr rfl
+    simpa [positive, zeroValue, noZero] using hfactorNo
+  · simpa [positive] using hfactorNo
+
 omit [LinearOrder K] [IsStrictOrderedRing K] [IsRealClosed K] in
 /-- The separate all-roots result is returned exactly for semantic zero. -/
 theorem assemble_all {sign : E → Int} (context : Ctx) (p : DensePoly E) :
@@ -292,3 +385,6 @@ end Hex.RealClosure.Roots
 /-- info: 'Hex.RealClosure.Roots.assemble_all' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Roots.assemble_all
+/-- info: 'Hex.RealClosure.Roots.assemble_nodup' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Roots.assemble_nodup
