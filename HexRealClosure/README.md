@@ -134,7 +134,11 @@ proves preservation of addition and multiplication at the represented value.
 A runnable example distinguishes the selected √2 from the other roots of a
 reducible descriptor, compares field and packed multiplication with different
 stored polynomials, checks the field result through its own isolation, and
-checks acceptance and rejection of two conjugate generators.
+checks acceptance and rejection of two conjugate generators. A separate
+cubic regression constructs `∛2` from its own isolation, checks that its
+fixed-field coordinate is accepted by the independently validated real-closure
+handle, and compares exact division and multiplication with the selected
+real-algebraic value.
 
 `Yun.decompose` runs the specified finite recurrence over an executable
 ordered field. `Yun.decomposeRaw` runs the same recurrence on packed tower

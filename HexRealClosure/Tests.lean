@@ -6,7 +6,6 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Yun
-public import HexRealClosure.QAdjoin
 public import HexRealClosure.Bounds
 public import HexRealClosure.Deflation
 public import HexRealClosure.BaseTests
@@ -18,7 +17,6 @@ public meta import HexSturm.Basic
 public meta import HexRealClosure.Bounds
 public meta import HexRealClosure.Deflation
 public meta import HexRealClosure.ZeroFactor
-public meta import HexRealClosure.QAdjoin
 
 public section
 
@@ -431,29 +429,6 @@ private def cachedNonmonic : Option (Nat × Bool × Int) := do
 
 #eval cachedNonmonic
 #guard cachedNonmonic == some (3, true, -1)
-
-/-- Fixed-field and packed multiplication agree at the selected √2 even
-when their stored polynomials differ; the two signs distinguish √2 from the
-other roots of the reducible descriptor. -/
-private def qadjoinPack : Option (Int × Int × Bool × Bool × Bool × Bool × Bool) := do
-  let d ← Root.validate 7 raw
-  let h := d.handle
-  let generator := h.canonical.toAlgebraic.toQAdjoin
-  let c := 1 + generator
-  let packed := h.packQAdjoin c
-  let fieldSquare := h.packQAdjoin (c * c)
-  let packedSquare := h.mul packed packed
-  let fieldValue := Hex.RealAlgebraicNumber.ofAlgebraic?
-    (c * c).toAlgebraicNumber
-  let negative := (-h.canonical).toAlgebraic.toQAdjoin
-  return (h.sign (h.packQAdjoin generator),
-    h.sign (h.packQAdjoin (generator - 2)),
-    h.equal fieldSquare packedSquare, fieldSquare == packedSquare,
-    fieldValue == some (h.value fieldSquare),
-    (h.packQAdjoin? generator).isSome,
-    (h.packQAdjoin? negative).isNone)
-
-#guard qadjoinPack == some (1, -1, true, false, true, true, true)
 
 /-- Ordinary polynomial division uses the same handle for every coefficient
 operation, including the semantic zero tests on leading coefficients. -/
