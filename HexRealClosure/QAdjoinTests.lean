@@ -22,7 +22,7 @@ private def squareRaw : SignDet.RawDescriptor Rat Nat :=
 /-- Fixed-field and packed multiplication agree at the selected √2 even
 when their stored polynomials differ. The independent field conversion checks
 that the generator has the same selected embedding. -/
-private def squarePack : Option (Int × Int × Bool × Bool × Bool × Bool × Bool) := do
+private def squarePack : Option (Int × Int × Bool × Bool × Bool × Bool × Bool × Bool × Bool) := do
   let d ← Root.validate 7 squareRaw
   let h := d.handle
   let generator := h.canonical.toAlgebraic.toQAdjoin
@@ -33,14 +33,30 @@ private def squarePack : Option (Int × Int × Bool × Bool × Bool × Bool × B
   let fieldValue := Hex.RealAlgebraicNumber.ofAlgebraic?
     (c * c).toAlgebraicNumber
   let negative := (-h.canonical).toAlgebraic.toQAdjoin
+  let shifted := (h.canonical.toAlgebraic + 1).toQAdjoin
   return (h.sign (h.packQAdjoin generator),
     h.sign (h.packQAdjoin (generator - 2)),
     h.equal fieldSquare packedSquare, fieldSquare == packedSquare,
     fieldValue == some (h.value fieldSquare),
     (h.packQAdjoin? generator).isSome,
-    (h.packQAdjoin? negative).isNone)
+    (h.packQAdjoin? negative).isNone,
+    (h.packQAdjoin? shifted).isNone,
+    h.packQAdjoin (generator * generator - 2) == none)
 
-#guard squarePack == some (1, -1, true, false, true, true, true)
+#guard squarePack == some (1, -1, true, false, true, true, true, true, true)
+
+private def rationalRaw : SignDet.RawDescriptor Rat Nat :=
+  { context := 7, head := squareHead, lower := .finite 2, upper := .finite 4,
+    indices := [], signs := [] }
+
+/-- The degree-one selected generator at the rational root 3 also packs. -/
+private def rationalPack : Option Bool := do
+  let d ← Root.validate 7 rationalRaw
+  let h := d.handle
+  let generator := h.canonical.toAlgebraic.toQAdjoin
+  return h.sign (h.sub (h.packQAdjoin generator) (h.pack 3)) == 0
+
+#guard rationalPack == some true
 
 private def cubicPoly : ZPoly := DensePoly.ofList [-2, 0, 0, 1]
 private def cubicSquare : DyadicSquare :=

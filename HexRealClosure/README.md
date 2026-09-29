@@ -128,13 +128,15 @@ prevents coordinates for a different algebraic root from being used with this
 handle. `h.packQAdjoinOf` accepts coordinates for a generator proved equal
 to the selected one. The Mathlib-free `h.packQAdjoin?` checks generator
 identity before packing externally held coordinates. The companion proves
-that it accepts exactly the selected generator and that accepted results
-preserve the selected value and pass the checked real conversion. It also
+that it accepts exactly the selected generator and returns the same packed
+result as `packQAdjoinOf` with the corresponding equality proof. Accepted
+results preserve the selected value and pass the checked real conversion. It also
 proves preservation of addition and multiplication at the represented value.
 A runnable example distinguishes the selected √2 from the other roots of a
 reducible descriptor, compares field and packed multiplication with different
 stored polynomials, checks the field result through its own isolation, and
-checks acceptance and rejection of two conjugate generators. A separate
+checks rejection of a conjugate and a shifted generator, zero packing, and
+the rational selected root. A separate
 cubic regression constructs `∛2` from its own isolation, checks that its
 fixed-field coordinate is accepted by the independently validated real-closure
 handle, and compares exact division and multiplication with the selected

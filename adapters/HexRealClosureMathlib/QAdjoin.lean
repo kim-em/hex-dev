@@ -75,21 +75,37 @@ theorem packQAdjoin?_isSome_iff {context : Nat} {d : Root context}
           ((Hex.AlgebraicNumber.beq_iff a h.canonical.toAlgebraic).mpr
             (congrArg Hex.AlgebraicNumber.toComplex ha)))
 
-/-- Accepted coordinates preserve their canonical algebraic value. -/
-theorem packQAdjoin?_sound {context : Nat} {d : Root context}
+/-- The checked packer returns exactly the proof-carrying result when the
+external generator equals this handle's selected root. -/
+theorem packQAdjoin?_eq_some_iff {context : Nat} {d : Root context}
     {a : Hex.AlgebraicNumber} (h : Root.Handle d) (c : Hex.QAdjoin a)
-    {e : Element d} (he : h.packQAdjoin? c = some e) :
-    e.value.toAlgebraic.toComplex = c.toAlgebraicNumber.toComplex := by
-  unfold packQAdjoin? at he
-  split at he
+    {e : Element d} :
+    h.packQAdjoin? c = some e ↔
+      ∃ ha : a = h.canonical.toAlgebraic, e = h.packQAdjoinOf ha c := by
+  unfold packQAdjoin?
+  split
   · case isTrue hsame =>
       have ha : a = h.canonical.toAlgebraic :=
         Hex.AlgebraicNumber.toComplex_injective
           ((Hex.AlgebraicNumber.beq_iff a h.canonical.toAlgebraic).mp hsame)
       cases ha
-      cases he
-      exact h.packQAdjoin_complex c
-  · simp at he
+      simp [packQAdjoinOf, packQAdjoin, Hex.RealClosure.Element.ofPolyWith_eq, h.pack_eq, eq_comm]
+  · case isFalse hsame =>
+      constructor
+      · intro he
+        cases he
+      · rintro ⟨ha, _⟩
+        exact False.elim (hsame
+          ((Hex.AlgebraicNumber.beq_iff a h.canonical.toAlgebraic).mpr
+            (congrArg Hex.AlgebraicNumber.toComplex ha)))
+
+/-- Accepted coordinates preserve their canonical algebraic value. -/
+theorem packQAdjoin?_sound {context : Nat} {d : Root context}
+    {a : Hex.AlgebraicNumber} (h : Root.Handle d) (c : Hex.QAdjoin a)
+    {e : Element d} (he : h.packQAdjoin? c = some e) :
+    e.value.toAlgebraic.toComplex = c.toAlgebraicNumber.toComplex := by
+  obtain ⟨ha, rfl⟩ := (h.packQAdjoin?_eq_some_iff c).mp he
+  exact h.packQAdjoinOf_complex ha c
 
 /-- Accepted coordinates also pass the independent real-algebraic check. -/
 theorem packQAdjoin?_checked {context : Nat} {d : Root context}
@@ -169,6 +185,9 @@ end Hex.RealClosure.Root.Handle
 /-- info: 'Hex.RealClosure.Root.Handle.packQAdjoin?_isSome_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Root.Handle.packQAdjoin?_isSome_iff
+/-- info: 'Hex.RealClosure.Root.Handle.packQAdjoin?_eq_some_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Root.Handle.packQAdjoin?_eq_some_iff
 /-- info: 'Hex.RealClosure.Root.Handle.packQAdjoin?_checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Root.Handle.packQAdjoin?_checked

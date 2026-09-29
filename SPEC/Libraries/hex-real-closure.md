@@ -39,9 +39,8 @@ The division of responsibility is:
 | [hex-number-field](../../HexNumberField/SPEC/hex-number-field.md) | Exact `QAdjoin` coordinates and canonical algebraic-number conversion for packing at a rational selected-root handle. |
 | This library | Generic characteristic-zero Yun decomposition, staged contexts, executable ordered-field carriers, selected-root arithmetic, splitting/transport, root isolation, tower sampling and exploration. |
 
-The number-field fixed irreducible, complex-embedded fields also provide
-precedent for lazy selected roots. Generic towers use the staged contexts
-specified below.
+Fixed irreducible number fields with complex embeddings provide a precedent
+for lazy selected roots. The staged contexts below represent generic towers.
 [`SimpleRealRoot`](../../HexRealRoots/SimpleRealRoot.lean) uses integer
 polynomials and a rational separation bound; interval overlap there cannot
 be transplanted to infinitesimal towers.
@@ -516,7 +515,7 @@ Required theorem shapes, with the semantic parameters and coefficient laws above
 | `Element.eval_add`, `eval_mul`, `sign_sound` | Executable arithmetic/sign agrees with selected-root interpretation for every valid operand. |
 | `Element.eq_iff` | Executable zero sign of `a-b` iff denotations agree; lifted equality iff equality in `Value ctx`. |
 | `Element.inv_sound` | Selected squarefree root and nonzero `q(α)` give `eval(inv q)*eval(q)=1`; total inversion maps zero to zero. |
-| `Root.Handle.packQAdjoin_checked`, `packQAdjoin?_sound` | Fixed-field coordinates at the selected rational root pack to the same canonical real value; checked external generators are accepted exactly when equal to the selected generator. |
+| `Root.Handle.packQAdjoin_checked`, `packQAdjoin?_isSome_iff`, `packQAdjoin?_eq_some_iff` | Fixed-field coordinates at the selected rational root pack to the same canonical real value; checked external generators are accepted exactly when equal to the selected generator, returning the proof-carrying packed result. |
 | `Context.transport_sound` | Refinement/enlargement preserves interpretations, selected roots, order and compositional transport for all live handles. |
 | `Yun.decompose_sound` | Exact zero case or the stated product, unit, degree, squarefree and coprime properties. |
 | `roots_sound` | `all` iff `F=0`; finite results are strictly increasing, contain exactly all real roots in `R` and carry each root's exact positive multiplicity. |
