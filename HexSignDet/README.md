@@ -407,7 +407,17 @@ source root, including a different head or an enlarged root domain.
 whole line, then applies the guarded full Thom rule. It retains both joint
 replays and the common-product witness. This handles shared roots, different
 old intervals and equivalent noncanonical coefficient expressions without
-comparing unrelated derivative vectors. A comparison currently constructs
+comparing unrelated derivative vectors. `Descriptor.compare` exposes the resulting `Ordering` directly, including for
+partial source descriptors. Its diagnostic fallback returns `eq`; the
+companion's `buildComparison_success` and `compare_success` prove that branch
+unreachable under lawful coefficient interpretations, including preservation
+of ordinary division. `compare_correct` and the three order equivalences relate
+the total result to the original selected roots. The computational operation
+requires no companion proof package. `CommonProduct.build_success` proves
+acceptance of the actual gcd/division record even for zero inputs;
+`build_squarefree` proves squarefreeness of the actual head for squarefree inputs.
+Arbitrary accepted records still require their separate prepared-domain check.
+A comparison currently constructs
 four BKR tables and four prepared domains: joint re-encoding evidence and a
 separate target descriptor for each side. Sharing this work and accounting
 for its cost against the required comparison bounds remain required.

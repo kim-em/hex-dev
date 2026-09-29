@@ -132,13 +132,18 @@ private def rawJson (raw : RawDescriptor Rat Nat) : Json :=
   Json.mkObj [("head", poly raw.head), ("lower", endpoint raw.lower), ("upper", endpoint raw.upper),
     ("context", toJson raw.context), ("indices", toJson raw.indices), ("signs", toJson raw.signs)]
 
+private def ordering (o : Ordering) : Json :=
+  toJson (match o with | .lt => "lt" | .eq => "eq" | .gt => "gt")
+
 private def emitComparison (name : String) (left right : RawDescriptor Rat Nat) : IO Unit := do
   let output := match Descriptor.build Sturm.orderSign 10377 left,
       Descriptor.build Sturm.orderSign 10377 right with
     | .ok (.ok l), .ok (.ok r) => match l.buildComparison r with
       | .error err => failure err
       | .ok c => Json.mkObj [("status", toJson "ok"), ("commonHead", poly c.common.head),
-          ("order", toJson (match c.order with | .lt => "lt" | .eq => "eq" | .gt => "gt")),
+          ("order", ordering c.order),
+          ("totalOrder", ordering (l.compare r)),
+          ("reverseOrder", ordering (r.compare l)),
           ("leftSigns", toJson c.leftEncoding.target.raw.signs),
           ("rightSigns", toJson c.rightEncoding.target.raw.signs),
           ("commonReplay", toJson (c.common.check 10377 left.head right.head)),

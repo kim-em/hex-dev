@@ -19,6 +19,7 @@ import HexSignDetMathlib.ThomReencoding
 import HexSignDetMathlib.ThomRoots
 import HexRationalFn
 import HexOrderedFn.Infinitesimal
+import HexSignDetMathlib.ComparisonProducer
 import HexSignDetMathlib.Convert
 
 import HexSignDetMathlib.QueryHandle
@@ -1288,10 +1289,7 @@ private def orderedRootsPass : Bool :=
   match Descriptor.build Sturm.orderSign 7 positiveRoot,
       Descriptor.build Sturm.orderSign 7 rootTwo with
   | .ok (.ok one), .ok (.ok two) =>
-    match one.buildComparison two with
-    | .ok result => result.order == .lt &&
-        result.common.check 7 positiveRoot.head rootTwo.head
-    | _ => false
+    one.compare two == .lt && two.compare one == .gt
   | _, _ => false
 
 #guard orderedRootsPass
@@ -1313,15 +1311,28 @@ private def commonRootPass : Bool :=
   match Descriptor.build Sturm.orderSign 7 sqrtTwoRoot,
       Descriptor.build Sturm.orderSign 7 sharedRoot with
   | .ok (.ok left), .ok (.ok right) =>
-    match left.buildComparison right with
-    | .ok result => result.order == .eq &&
-        result.common.check 7
-          sqrtTwoRoot.head sharedRoot.head
-    | _ => false
+    left.compare right == .eq
   | _, _ => false
 
 #guard commonRootPass
 ```
+
+{name}`Hex.SignDet.Descriptor.compare` is the total root-order operation.
+It accepts partial descriptors and retains the original root selections when
+changing their defining polynomial. Import `HexSignDetMathlib.ComparisonProducer`
+for {name}`Hex.SignDet.Descriptor.compare_correct` and the equality and strict-order
+equivalences {name}`Hex.SignDet.Descriptor.compare_eq_iff`,
+{name}`Hex.SignDet.Descriptor.compare_lt_iff` and
+{name}`Hex.SignDet.Descriptor.compare_gt_iff`.
+{name}`Hex.SignDet.Descriptor.buildComparison_success` proves that the actual
+common-polynomial constructor, both joint re-encodings and the full-word
+comparison succeed under lawful coefficient interpretations. The total operation's
+internal error branch emits a diagnostic and returns `eq`; the success theorem
+proves that branch unreachable under those laws. The executable operation requires
+ordinary coefficient operations and signs, without a companion proof package.
+The proofs support noninjective stored coefficients and arbitrary ordered real
+closed fields, including fields with infinitesimals. They use the proved shared
+root-sum semantics and Tau Ceti Thom identity/order foundations.
 
 For two independently selected coefficients, the existing number-field
 constructor finds one coordinate field. Here √2 and √3 start as roots of

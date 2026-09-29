@@ -145,4 +145,20 @@ theorem Descriptor.buildReencoding_ofTable {sign : E → Int} {context : Ctx}
   simp only [Descriptor.buildReencoding, hd, ht, Replay.table_rows, hr, hbuild]
   simp only [hcheck, ↓reduceDIte]
 
+/-- Successful re-encoding by the actual producer always constructs a full
+Thom word, even when its source descriptor is partial. Arbitrary accepted
+re-encoding certificates need not have this property. -/
+theorem Descriptor.buildReencoding_full {sign : E → Int} {context : Ctx}
+    (source : Descriptor E Ctx sign context) (head : DensePoly E) (a b : Endpoint E)
+    (r : Reencoding source head a b)
+    (h : source.buildReencoding head a b = .ok (some r)) :
+    r.target.raw.indices = (List.range r.target.raw.head.natDegree).map (· + 1) := by
+  unfold Descriptor.buildReencoding at h
+  repeat' (split at h <;> try simp at h)
+  all_goals
+    rename_i target hbuild hcheck
+    have hraw := Descriptor.build_raw hbuild
+    cases h
+    simp only [hraw, RawDescriptor.full]
+
 end Hex.SignDet

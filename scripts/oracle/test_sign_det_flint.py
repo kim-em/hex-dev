@@ -172,6 +172,24 @@ class ExactSigns(unittest.TestCase):
         with self.assertRaisesRegex(OracleMismatch, "root union"):
             oracle.check_record(record)
 
+    def test_total_comparison_against_independent_roots(self):
+        for name in ("equal-linear-vectors", "reverse-linear", "shared-irrational",
+                     "distinct-irrational", "negative-head", "disjoint-intervals"):
+            record = self.fixture_record("compare/" + name)
+            oracle.check_record(record)
+            for field in ("totalOrder", "reverseOrder"):
+                for replacement in (None, True, "unknown", "lt", "eq", "gt"):
+                    if replacement == record["value"]["result"][field]:
+                        continue
+                    bad = copy.deepcopy(record)
+                    if replacement is None:
+                        del bad["value"]["result"][field]
+                    else:
+                        bad["value"]["result"][field] = replacement
+                    with self.subTest(name=name, field=field, replacement=replacement), \
+                            self.assertRaisesRegex(OracleMismatch, "total comparison"):
+                        oracle.check_record(bad)
+
     def test_comparison_encodings_and_replay(self):
         for field in ("leftSigns", "rightSigns", "commonReplay", "leftReplay", "rightReplay"):
             record = self.fixture_record("compare/foreign-endpoint")

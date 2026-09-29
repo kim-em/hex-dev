@@ -31,9 +31,8 @@ variable [Neg E] [Inv E] [Div E]
 /-- Compare roots through a squarefree common product on the whole line.
 The re-encoding queries retain each original open interval, so a root of one
 head at the other's endpoint cannot invalidate the common domain. Internal
-failures remain diagnostic; the companion proves the guarded full-word
-comparison total on full descriptors of one head; totality of the actual
-common-product comparison producer remains required. -/
+failures remain diagnostic; the companion proves that this producer succeeds
+and preserves the mathematical order of both selected roots. -/
 def Descriptor.buildComparison {sign : E → Int} {context : Ctx}
     (left right : Descriptor E Ctx sign context) : Except BuildError (Comparison left right) :=
   match CommonProduct.build context left.raw.head right.raw.head with
@@ -50,5 +49,44 @@ def Descriptor.buildComparison {sign : E → Int} {context : Ctx}
         match ho : l.target.fullOrder r.target with
         | none => .error .system
         | some order => .ok ⟨common.val, common.property, l, r, order, ho⟩
+
+/-- Successful shared construction, both actual re-encodings and the
+full-word comparison give the result of the actual comparison producer. -/
+theorem Descriptor.buildComparison_of_success {sign : E → Int} {context : Ctx}
+    (left right : Descriptor E Ctx sign context)
+    (common : {c : CommonProduct E Ctx // c.check context left.raw.head right.raw.head = true})
+    (hc : CommonProduct.build context left.raw.head right.raw.head = .ok common)
+    (l : Reencoding left common.val.head .negInf .posInf)
+    (r : Reencoding right common.val.head .negInf .posInf)
+    (hl : left.buildReencoding common.val.head .negInf .posInf = .ok (some l))
+    (hr : right.buildReencoding common.val.head .negInf .posInf = .ok (some r))
+    (order : Ordering) (ho : l.target.fullOrder r.target = some order) :
+    left.buildComparison right = .ok ⟨common.val, common.property, l, r, order, ho⟩ := by
+  simp only [Descriptor.buildComparison, hc, hl, hr]
+  split
+  · rename_i hnone
+    simp only [ho] at hnone
+    cases hnone
+  · rename_i order' ho'
+    have he : order' = order := Option.some.inj (ho'.symm.trans ho)
+    subst order'
+    rfl
+
+/-- The order of two validated roots, using their actual checked common-head
+comparison. An internal failure emits a diagnostic and returns `eq`; the
+companion proves this fallback unreachable under lawful coefficients. -/
+@[expose] def Descriptor.compare {sign : E → Int} {context : Ctx}
+    (left right : Descriptor E Ctx sign context) : Ordering :=
+  match left.buildComparison right with
+  | .ok c => c.order
+  | .error err =>
+    letI : Inhabited Ordering := ⟨.eq⟩
+    panic! s!"Descriptor.compare: internal error {repr err}"
+
+/-- The total operation returns the order from its successful construction. -/
+theorem Descriptor.compare_ofBuild {sign : E → Int} {context : Ctx}
+    (left right : Descriptor E Ctx sign context) (c : Comparison left right)
+    (h : left.buildComparison right = .ok c) : left.compare right = c.order := by
+  simp only [Descriptor.compare, h]
 
 end Hex.SignDet
