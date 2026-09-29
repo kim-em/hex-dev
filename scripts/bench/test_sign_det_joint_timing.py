@@ -226,6 +226,39 @@ class JointTimingTests(unittest.TestCase):
         self.assertEqual(diagnostics["confidence"], "passed")
         self.assertEqual(diagnostics["sensitivity"]["verdict"], "passed")
 
+    def test_profile_call_paths_and_report_format(self):
+        import re
+        directory = timing.ROOT/"reports/data/sign-det-joint-timing/profile-394c3c548"
+        paths = json.loads((directory/"stack-plausibility.json").read_text())
+        self.assertEqual(paths["status"], "checked-paths-consistent")
+        self.assertEqual(paths["compiled_frames_below_gcd"], 0)
+        self.assertEqual(paths["gmp_add_or_shift_without_uint64_constructor"], 0)
+        summary = json.loads((directory/"inclusive-summary.json").read_text())
+        share = next(row["percent"] for row in summary["top_inclusive"]
+                     if row["function"] == "lean_nat_gcd")
+        self.assertEqual(round(100*paths["gcd_ancestor_samples"]/paths["samples"], 2), share)
+        self.assertIn("<__gmpz_add>", (directory/"constructor-disassembly.txt").read_text())
+        self.assertIn("<__gmpz_mul_2exp>", (directory/"constructor-disassembly.txt").read_text())
+        self.assertIn("<_ZN4lean3mpzC1Em>", (directory/"gcd-disassembly.txt").read_text())
+        analysis = json.loads((directory/"samply-analysis.json").read_text())
+        clock = json.loads((directory/"analysis-clock-anchor.json").read_text())
+        conversion = analysis["clock_conversion"]
+        self.assertEqual(conversion["residual_ns"], 0)
+        self.assertEqual(conversion["sample_count"], paths["samples"] + 1232)
+        self.assertAlmostEqual(conversion["corrected_start_time_ms"],
+                               (clock["wall_ns_at_spawn"] - clock["mono_ns_at_spawn"]
+                                + conversion["origin_ns"])/1e6, places=3)
+        report = (timing.ROOT/"reports/sign-det-joint-performance.md").read_text()
+        for destination in re.findall(r"\]\(([^)]*)\)", report):
+            self.assertNotIn("\n", destination)
+        opened = False
+        for line in report.splitlines():
+            if line.startswith("```"):
+                if opened:
+                    self.assertRegex(line, r"^```+$")
+                opened = not opened
+        self.assertFalse(opened)
+
     def test_pair_header_and_summary_environment_rejected(self):
         names, rows = self.pair()
         for change in (lambda r: r[0].update(params=[3]),

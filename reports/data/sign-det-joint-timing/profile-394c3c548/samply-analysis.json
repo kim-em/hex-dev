@@ -104,5 +104,44 @@
     "symbols.json": "4d0d623a244ba8ed89ba80d31999c19c3b6edd83123ca0e6fb0336d77652569c",
     "diagnostics.json": "d95b298e6a080c5e825ce5f2a4d8725aca64fdced92a48e0a08200f2c6a86499",
     "inclusive-summary.json": "c6d5f22eb598f5212cef6cbc7ff4ecbc1e3a97fe8c5ff1e42c8ddbf7b28a729f"
-  }
+  },
+  "hex_dev_revision_for_analysis_tools": "262536f856dc16aa87462403e36227ddfe93ae72",
+  "analysis_tools_sha256": {
+    "scripts/profile/normalize_perf.py": "fbe80a6081d4c952ccbf0e0c7d34096b7aab8b4ca3baa1850c3015cf2e6ca8c2",
+    "scripts/profile/elf_symbols.py": "5b1293b476d7e3df82ad8f93212000a5efc11603d49d50d43821c5013d111207",
+    "scripts/profile/summarize_profile.py": "ba36b14948d7986bb8c349f2655323b24d33cc05ad0349d492e9929e00ab24fe",
+    "scripts/profile/factor_sampling_profile.py": "3dce3d0975f811be1210b2c97bd7faf244e50b97db55b5d57eadae2fd407b1eb"
+  },
+  "filter_checkout_status_verified": "",
+  "commands_scope": "Commands that produced the recorded outputs. Replaying them verbatim would overwrite those outputs: substitute a fresh output directory for all generated artifacts, preserving the raw perf.data and sidecar inputs.",
+  "reproducibility_scope": "Hashes identify retained files. Intermediate Samply metadata can depend on file timestamps; bit-for-bit reproduction is not claimed. Verify raw/imported event alignment, window samples and analysis quantities.",
+  "archived_binary": "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/archived-debuggee",
+  "archived_binary_sha256": "fcf1ddbab177d9ec61d0347b4cbbd9f57ceec94f418c1e961f40fa5ba5deb8c8",
+  "stack_check_command": [
+    "python3",
+    "reports/data/sign-det-joint-timing/profile-394c3c548/stack_plausibility.py",
+    "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/filtered.json.gz",
+    "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/symbols.json",
+    "reports/data/sign-det-joint-timing/profile-394c3c548/stack-plausibility.json"
+  ],
+  "disassembly_commands": [
+    {
+      "argv": [
+        "objdump",
+        "-d",
+        "--disassemble=lean_nat_gcd",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/archived-debuggee"
+      ],
+      "stdout": "reports/data/sign-det-joint-timing/profile-394c3c548/gcd-disassembly.txt"
+    },
+    {
+      "argv": [
+        "objdump",
+        "-d",
+        "--disassemble=_ZN4lean3mpzC1Em",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/archived-debuggee"
+      ],
+      "stdout": "reports/data/sign-det-joint-timing/profile-394c3c548/constructor-disassembly.txt"
+    }
+  ]
 }

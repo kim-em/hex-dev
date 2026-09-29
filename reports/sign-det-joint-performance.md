@@ -2,8 +2,7 @@
 
 This family compares the roots 1 and −1 of Xⁿ−1 and Xⁿ+1 for odd n. The actual common
 head is −(X²ⁿ−1)/2. Each re-encoding has 3n+1 queries: the 2n target derivatives
-followed by the source equation and its n derivatives. The [input inventory](sign-det-
-joint-inputs.md) describes the exact polynomial and sign bindings and their independent
+followed by the source equation and its n derivatives. The [input inventory](sign-det-joint-inputs.md) describes the exact polynomial and sign bindings and their independent
 rational-root oracle.
 
 The timed bodies in `bench/HexSignDet/Joint.lean` exercise:
@@ -161,10 +160,8 @@ batch. A killed child does not establish a 60-second lower bound for one compari
 call.
 
 The original metadata records the harness revision but does not establish a clean
-package checkout at the beginning of collection. A separate [harness
-inspection](data/sign-det-joint-timing/1f55c4de9/harness-inspection.json) records a
-clean checkout matching the manifest during collection. A [post-collection
-inspection](data/sign-det-joint-timing/1f55c4de9/post-collection-verification.json)
+package checkout at the beginning of collection. A separate [harness inspection](data/sign-det-joint-timing/1f55c4de9/harness-inspection.json) records a
+clean checkout matching the manifest during collection. A [post-collection inspection](data/sign-det-joint-timing/1f55c4de9/post-collection-verification.json)
 checks that source, clean git revision and executable still match the original metadata
 after failure. These observations retain their actual scope; they are not rewritten as
 start-of-run checks. The corrected collector checks harness provenance before and after
@@ -183,8 +180,7 @@ capped: collecting it again consumes its one allowed unchanged rerun, and there 
 evidence that its verdict will change. All original observations remain available. No
 further unchanged rerun is permitted for this family after that collection.
 
-The measured commit need not remain reachable after rebasing the PR. Its [committed
-source patch](data/sign-det-joint-timing/1f55c4de9/committed-source.patch) reconstructs
+The measured commit need not remain reachable after rebasing the PR. Its [committed source patch](data/sign-det-joint-timing/1f55c4de9/committed-source.patch) reconstructs
 the recorded source from `d279b9ffa`; the metadata records its hash and the
 reconstruction check. The corrected revision changes the cap, inventory guard and
 collection/reporting code, while preserving every timed operation body. The old
@@ -229,9 +225,7 @@ verdicts, with no failed scientific points or validation errors. The outer log c
 Lake freshness output, not an independently recorded collector exit status. This
 collection uses the permitted unchanged rerun; no further unchanged rerun is permitted.
 This is family-level accounting: the production and replay arms also use up that rerun,
-even though the original collector stopped before scheduling them. The [benchmark
-finding on #10377](https://github.com/kim-em/hex-
-dev/issues/10377#issuecomment-5882834592) records the required disposition: inclusive
+even though the original collector stopped before scheduling them. The [benchmark finding on #10377](https://github.com/kim-em/hex-dev/issues/10377#issuecomment-5882834592) records the required disposition: inclusive
 attribution followed by a changed schedule or an independently demonstrated declaration
 error and fresh validation. Fitting a declaration to the observed slopes cannot satisfy
 the gate.
@@ -253,16 +247,14 @@ The [profile manifest](data/sign-det-joint-timing/profile-394c3c548/metadata.jso
 records one cold degree-31 comparison at source `394c3c548`, automatically leased CPU
 52, with the same executable hash before and after capture. That hash equals the
 scientific collection’s binary hash. Both worktree paths use the same physical `.lake`
-cache; the [analysis addendum](data/sign-det-joint-timing/profile-394c3c548/analysis-
-addendum.json) records their post-capture realpaths and inode identity. Original
+cache; the [analysis addendum](data/sign-det-joint-timing/profile-394c3c548/analysis-addendum.json) records their post-capture realpaths and inode identity. Original
 metadata did not record those identities. Future measurements require an isolated build
 cache. Perf sampled user-space cycles at 199 Hz. The shared harness emitted one
 operation region using `CLOCK_MONOTONIC`; its result had the expected comparison digest.
 This is profiling evidence, not a scientific timing observation or a scaling verdict.
 
 There are 716 samples within that region and 1,232 outside it. All retained operation
-samples belong to the recorded benchmark process. The [direct-IP summary](data/sign-det-
-joint-timing/profile-394c3c548/ip-summary.json) attributes the operation's sampled
+samples belong to the recorded benchmark process. The [direct-IP summary](data/sign-det-joint-timing/profile-394c3c548/ip-summary.json) attributes the operation's sampled
 instruction pointers as follows:
 
 | Sampled function | Samples | Share |
@@ -278,8 +270,7 @@ instruction pointers as follows:
 | `__gmpz_gcd` | 27 | 3.8% |
 | `__gmpz_realloc` | 27 | 3.8% |
 
-The [leaf categorisation](data/sign-det-joint-timing/profile-394c3c548/leaf-
-categories.json) classifies 715 of 716 samples: allocation/free 47.6%, GMP arithmetic
+The [leaf categorisation](data/sign-det-joint-timing/profile-394c3c548/leaf-categories.json) classifies 715 of 716 samples: allocation/free 47.6%, GMP arithmetic
 28.8%, Lean runtime 11.9%, Hex code 3.2%, and other Lean library code (Rat/List) 8.4%.
 `cfree` is glibc’s alias for `free`. GMP allocation wrappers are counted in
 allocation/free, rather than arithmetic. Initialization and mpz constructor routines
@@ -298,14 +289,11 @@ samples recovered only a leaf. No operation sample has a caller stack. Perf's re
 instruction pointers recover their leaf symbols without another capture. Both derived
 summaries and the raw capture are retained; the direct-IP summary is the basis for this
 table. Samply’s framehop unwinder recovers caller stacks from the same unchanged
-capture. The [inclusive summary](data/sign-det-joint-timing/profile-394c3c548/inclusive-
-summary.json) and [diagnostics](data/sign-det-joint-
-timing/profile-394c3c548/diagnostics.json) use the existing pinned
+capture. The [inclusive summary](data/sign-det-joint-timing/profile-394c3c548/inclusive-summary.json) and [diagnostics](data/sign-det-joint-timing/profile-394c3c548/diagnostics.json) use the existing pinned
 filtering/symbolication tools. All 1,948 imported samples match the raw monotonic
 timestamps with one common offset and zero residual. The analysis-time clock anchor
 supplies only a common coordinate conversion; it was not recorded at spawn, and no wall-
-clock claim relies on it. The postprocessing commands and raw hashes are in the [Samply
-analysis manifest](data/sign-det-joint-timing/profile-394c3c548/samply-analysis.json).
+clock claim relies on it. The postprocessing commands and raw hashes are in the [Samply analysis manifest](data/sign-det-joint-timing/profile-394c3c548/samply-analysis.json).
 
 The filtered profile classifies 91.48% of leaves: allocation/free 38.13%, GMP 36.31%,
 Lean runtime 16.62%, Hex own code 0.42%, and other 8.52%. This uses the shared
@@ -323,6 +311,17 @@ uses a different explicit grouping.
 | `Sturm.certifyPrepared` | 34.92% |
 | `DensePoly.positivePseudoDiv` | 23.88% |
 
+The [call-path check](data/sign-det-joint-timing/profile-394c3c548/stack-plausibility.json)
+finds no compiled Lean frame beneath `lean_nat_gcd`. All 182 samples with GMP
+addition or shifting beneath it also contain the unsigned 64-bit `mpz`
+constructor. Those calls are valid: [Lean’s pinned runtime source](https://github.com/leanprover/lean4/blob/v4.35.0-rc3/src/runtime/mpz.cpp#L39)
+constructs the value by shifting and adding its two halves. The captured
+binary’s gcd and constructor disassemblies retain the corresponding calls.
+The 83.24% inclusive gcd share therefore includes integer promotion and
+normalization, not only the GMP gcd algorithm. This plausibility check addresses
+those specific call paths; timestamp/window confidence alone does not validate
+caller stacks, and the check does not prove every unwind edge.
+
 These shares overlap. Dense multiplication includes rational normalization and gcd work
 under its coefficient operations. Replay validates polynomial identities in the signed
 remainder chains as well as building their evidence; it therefore contributes to the
@@ -338,7 +337,9 @@ retained operation samples: 716
 samples from other threads within the window: 0
 sensitivity under ±5 ms window shifts: passed
 confidence: passed
-``` Allocation-function sample shares are CPU costs, not
+```
+
+Allocation-function sample shares are CPU costs, not
 allocation counts, allocated bytes or peak live memory.
 
 ## Intercepted allocation observations
@@ -346,13 +347,10 @@ allocation counts, allocated bytes or peak live memory.
 A separate heaptrack capture runs one cold degree-31 comparison at source
 `394c3c54802ee1fe8e251098323b02c603536454`, on automatically leased CPU 34. The
 executable hash is unchanged before and after the capture. The manifest, commands,
-summaries and original analysis outputs are in [data/sign-det-joint-
-timing/allocation-394c3c548](data/sign-det-joint-timing/allocation-394c3c548). Raw
+summaries and original analysis outputs are in [data/sign-det-joint- timing/allocation-394c3c548](data/sign-det-joint-timing/allocation-394c3c548). Raw
 compressed events and folded stacks are retained under
-`/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-
-allocation-394c3c548`. The original `/tmp` path is a symlink to this durable directory.
-The [analysis addendum](data/sign-det-joint-timing/allocation-394c3c548/analysis-
-addendum.json) records corrected analysis commands and binary-path bindings; original
+`/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548`. The original `/tmp` path is a symlink to this durable directory.
+The [analysis addendum](data/sign-det-joint-timing/allocation-394c3c548/analysis-addendum.json) records corrected analysis commands and binary-path bindings; original
 records are unchanged. The CPU capture is retained in the corresponding durable
 `issue-10377-joint-profile-394c3c548` directory.
 
@@ -372,9 +370,7 @@ Exact matching of the comparison callback frame in the folded stacks attributes
 unwinding can omit the frame. A broader substring filter also matches specialized
 helpers used during preparation, and would incorrectly include another 386,197,862
 calls. Of these, 386,040,114 have an explicit preparation frame, while 157,748 have
-neither the preparation nor exact callback frame. The [callback-only
-aggregate](data/sign-det-joint-timing/allocation-394c3c548/callback-frame-allocation-
-counts.json) separates these scopes. The lower bound does not count stacks whose
+neither the preparation nor exact callback frame. The [callback-only aggregate](data/sign-det-joint-timing/allocation-394c3c548/callback-frame-allocation-counts.json) separates these scopes. The lower bound does not count stacks whose
 callback frame failed to unwind, including any outside the substring filter. The
 original shorter symbol filter matched no reported allocators; its unchanged output is
 retained. Importantly, heaptrack's summary and size-histogram totals remain whole-

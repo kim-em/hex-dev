@@ -1,0 +1,159 @@
+{
+  "scope": "Caller-stack plausibility; timing-window confidence is a separate check",
+  "status": "checked-paths-consistent",
+  "samples": 716,
+  "gcd_ancestor_samples": 596,
+  "compiled_frames_below_gcd": 0,
+  "gmp_add_or_shift_below_gcd": 182,
+  "gmp_add_or_shift_without_uint64_constructor": 0,
+  "inspected_paths_by_leaf": {
+    "__gmpz_mul_2exp": 35,
+    "realloc@@GLIBC_2.2.5": 39,
+    "__gmpz_realloc": 20,
+    "__gmp_default_reallocate": 6,
+    "__gmpz_add": 73,
+    "0x4acf0e0": 9
+  },
+  "examples": [
+    {
+      "leaf": "__gmpz_mul_2exp",
+      "frames_below_gcd": [
+        "__gmpz_mul_2exp",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "compiled_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor": true
+    },
+    {
+      "leaf": "realloc@@GLIBC_2.2.5",
+      "frames_below_gcd": [
+        "realloc@@GLIBC_2.2.5",
+        "__gmp_default_reallocate",
+        "__gmpz_realloc",
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "compiled_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor": true
+    },
+    {
+      "leaf": "realloc@@GLIBC_2.2.5",
+      "frames_below_gcd": [
+        "realloc@@GLIBC_2.2.5",
+        "__gmp_default_reallocate",
+        "__gmpz_realloc",
+        "__gmpz_mul_2exp",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "compiled_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor": true
+    },
+    {
+      "leaf": "__gmpz_realloc",
+      "frames_below_gcd": [
+        "__gmpz_realloc",
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "compiled_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor": true
+    },
+    {
+      "leaf": "__gmp_default_reallocate",
+      "frames_below_gcd": [
+        "__gmp_default_reallocate",
+        "__gmpz_realloc",
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "compiled_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor": true
+    },
+    {
+      "leaf": "__gmpz_mul_2exp",
+      "frames_below_gcd": [
+        "__gmpz_mul_2exp",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "compiled_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor": true
+    },
+    {
+      "leaf": "__gmpz_add",
+      "frames_below_gcd": [
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "compiled_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor": true
+    },
+    {
+      "leaf": "realloc@@GLIBC_2.2.5",
+      "frames_below_gcd": [
+        "realloc@@GLIBC_2.2.5",
+        "__gmp_default_reallocate",
+        "__gmpz_realloc",
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "compiled_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor": true
+    },
+    {
+      "leaf": "realloc@@GLIBC_2.2.5",
+      "frames_below_gcd": [
+        "realloc@@GLIBC_2.2.5",
+        "__gmp_default_reallocate",
+        "__gmpz_realloc",
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "compiled_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor": true
+    },
+    {
+      "leaf": "__gmpz_add",
+      "frames_below_gcd": [
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "compiled_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor": true
+    },
+    {
+      "leaf": "realloc@@GLIBC_2.2.5",
+      "frames_below_gcd": [
+        "realloc@@GLIBC_2.2.5",
+        "__gmp_default_reallocate",
+        "__gmpz_realloc",
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "compiled_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor": true
+    },
+    {
+      "leaf": "__gmpz_realloc",
+      "frames_below_gcd": [
+        "__gmpz_realloc",
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "compiled_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor": true
+    }
+  ],
+  "limitation": "This checks specific call-path concerns, not every unwind edge. Lean mpz(uint64) calls GMP add and shift; those descendants are valid."
+}
