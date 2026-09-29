@@ -1,0 +1,11 @@
+lean-bench profile: heaptrack --record-only -o /tmp/issue-10377-joint-allocation-394c3c548/heaptrack -- /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.Joint.runComparison --param 31 --target-nanos 100000000 --cache-mode cold
+heaptrack output will be written to "/tmp/issue-10377-joint-allocation-394c3c548/heaptrack.zst"
+starting application, this might take some time...
+{"schema_version":1,"kind":"parametric","function":"Hex.SignDetBench.Joint.runComparison","param":31,"inner_repeats":1,"total_nanos":214446847330,"per_call_nanos":214446847330.000000,"cache_mode":"cold","result_hash":"0x312e63490197b6f4","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":1340740,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexsigndet_bench","git_commit":"394c3c54802ee1fe8e251098323b02c603536454","git_dirty":false,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.35.0-rc3","lean_version":"4.35.0-rc3","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-09-29T02:03:11Z","timestamp_unix_ms":1790647391734},"profile_kernel":true}
+heaptrack stats:
+	allocations:          	1039653778
+	leaked allocations:   	237
+	temporary allocations:	258293218
+Heaptrack finished! Now run the following to investigate the data:
+
+  heaptrack --analyze "/tmp/issue-10377-joint-allocation-394c3c548/heaptrack.zst"

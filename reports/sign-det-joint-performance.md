@@ -244,3 +244,37 @@ capture. Both derived summaries and the raw capture are retained; the direct-IP
 summary is the basis for this table. Caller-stack attribution is limited by
 incomplete unwinding. Allocation-function sample shares are CPU costs, not
 allocation counts, allocated bytes or peak live memory.
+
+## Intercepted allocation observations
+
+A separate heaptrack capture runs one cold degree-31 comparison at source
+`394c3c54802ee1fe8e251098323b02c603536454`, on automatically leased CPU 34.
+The executable hash is unchanged before and after the capture. The manifest,
+commands, summaries and original analysis outputs are in
+[data/sign-det-joint-timing/allocation-394c3c548](data/sign-det-joint-timing/allocation-394c3c548).
+Raw compressed events and folded stacks remain in the manifest's local directory.
+
+Across the whole child process, including preparation, heaptrack reports
+1,039,653,778 intercepted allocation calls. Its allocation-size histogram has
+exactly the same count, with 10,237,421,113 cumulative requested bytes.
+These count requests to the intercepted allocation functions, including
+reallocations. They are neither peak live bytes nor a count of every Lean object
+allocation. The reported peak tracked heap is approximately 196.34 KB;
+instrumented RSS is approximately 1.37 GB and includes profiler overhead.
+Instrumentation took about 564 seconds, so its elapsed time is excluded from
+the scientific timing observations.
+
+Exact matching of the comparison callback frame in the folded stacks attributes
+385,922,080 calls to that callback. This is an attributable lower bound:
+incomplete unwinding can omit the frame. A broader substring filter also matches
+specialized helpers used during preparation, and would incorrectly include
+another 386,197,862 calls. The original shorter symbol filter matched no reported
+allocators; its unchanged output is retained. Importantly, heaptrack's summary
+and size-histogram totals remain whole-process totals even with a backtrace
+filter. Consequently the cumulative requested-byte figure cannot be assigned to
+the comparison alone. The supplied postprocessor distinguishes exact callback
+frames from helper names; it does not rerun the capture.
+
+This supplies an allocation observation for the representative comparison.
+Allocation scaling, complete operation-specific byte counters, wider matrices
+and nested coefficient evidence remain separate requirements.
