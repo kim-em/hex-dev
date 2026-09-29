@@ -163,3 +163,35 @@ theorem checkedDescriptor_evidence (read : E → K) (S : E → Prop) (closed : C
   exact (Prod.mk.inj (Option.some.inj fields)).2
 
 end Hex.RealClosure.Transport
+
+/-- info: 'Hex.RealClosure.Transport.derivativesFrom_polynomial' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.derivativesFrom_polynomial
+
+/-- info: 'Hex.RealClosure.Transport.derivatives_polynomial' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.derivatives_polynomial
+
+/-- info: 'Hex.RealClosure.Transport.descriptor_wellFormed' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.descriptor_wellFormed
+
+/-- info: 'Hex.RealClosure.Transport.descriptor_queries' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.descriptor_queries
+
+/-- info: 'Hex.RealClosure.Transport.descriptor_check' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.descriptor_check
+
+/-- info: 'Hex.RealClosure.Transport.checkedDescriptor_raw' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.checkedDescriptor_raw
+
+/-- info: 'Hex.RealClosure.Transport.checkedDescriptor_checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.checkedDescriptor_checked
+
+/-- info: 'Hex.RealClosure.Transport.checkedDescriptor_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.checkedDescriptor_evidence

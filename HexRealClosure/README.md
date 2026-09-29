@@ -652,5 +652,13 @@ conditions omitted from the table. Positive counts give existence through
 `exists_root`, and count one gives uniqueness through `unique_root`. These
 theorems consume a coefficient reader, its closed domain and the finite
 `ReplayData` obligations; they do not construct an algebraic tower reader.
+`derivatives_polynomial` derives the complete formal derivative sequence from
+head coefficient membership, retaining its degree under the leading guard.
+`checkedDescriptor` constructs a validated target descriptor with queries
+recomputed from its interpreted head, the mapped immutable context, and the
+entire mapped replay. Its public projection and validation equations retain
+the literal raw input and evidence. `selected` transports checked joint signs
+to this descriptor, retaining the sign vector and joint replay; `selected_signs`
+proves all those signs at its selected root over a real closed target field.
 Joint algebraic-root interpretation, recursive sample reconstruction, graph
 sharing and successive infinitesimal levels remain separate obligations.
