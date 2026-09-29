@@ -176,7 +176,8 @@ def check() -> None:
              "HexSignDetMathlib.ConvertConformance", "HexRealClosure.BaseTests",
              "HexRealClosureMathlib.BaseTests", "HexRealClosure.BaseCatalogTests",
              "HexRealClosure.DeflationConformance", "HexRealClosureMathlib.Specialize",
-             "HexRealClosureMathlib.SpecializeTests"] + [
+             "HexRealClosureMathlib.SpecializeTests", "HexRealClosureMathlib.Union",
+             "HexRealClosureMathlib.UnionTests"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
         "HexSignDetMathlib." + ".".join(path.relative_to(

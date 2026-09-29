@@ -74,8 +74,10 @@ class AdmissionScannerTests(unittest.TestCase):
             deflation = root / "conformance/HexRealClosure/DeflationConformance.lean"
             specialize = root / "adapters/HexRealClosureMathlib/Specialize.lean"
             specialize_tests = root / "adapters/HexRealClosureMathlib/SpecializeTests.lean"
+            union = root / "adapters/HexRealClosureMathlib/Union.lean"
+            union_tests = root / "adapters/HexRealClosureMathlib/UnionTests.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, specialize, specialize_tests, dependency):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, specialize, specialize_tests, union, union_tests, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
@@ -94,9 +96,19 @@ class AdmissionScannerTests(unittest.TestCase):
             deflation.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             specialize.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             specialize_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            union.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            union_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
+                for probe in (union, union_tests):
+                    probe.unlink()
+                    with self.assertRaisesRegex(ValueError, "missing local import"):
+                        audit.check()
+                    probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*Union"):
+                        audit.check()
+                    probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 refinement.unlink()
                 with self.assertRaisesRegex(ValueError, "missing local import"):
                     audit.check()
