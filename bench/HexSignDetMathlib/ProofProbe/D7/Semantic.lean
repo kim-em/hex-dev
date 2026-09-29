@@ -15,14 +15,14 @@ open Hex Hex.SignDet Hex.SignDet.Conformance Hex.SignDetMathlib.ProofProbe
 
 /-- Apply the proved root semantics to the accepted literal graph. The
 Boolean acceptance module is a warm dependency, not recomputed in this probe. -/
-theorem counts_roots : ∃ t : Replay Rat Nat,
-    t.check Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
-      (List.replicate (2 ^ 7) (DensePoly.C (2 : Rat))) = true ∧
-    ∀ condition, t.node.system.count condition =
-      (Semantics.roots.filter (fun x => Semantics.word 7 x = condition)).card := by
-  obtain ⟨t, _, checked⟩ := Dag.check_replay (by
+theorem counts_roots : ∃ t,
+    Dag.replay? Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
+      (List.replicate (2 ^ 7) (DensePoly.C (2 : Rat))) Accept.evidence = some t ∧
+    ∀ condition, t.val.node.system.count condition =
+      (Semantics.roots.filter (fun x => Semantics.signCondition 7 x = condition)).card := by
+  obtain ⟨t, replayed, checked⟩ := Dag.check_replay (by
     simpa only [Inputs.check, Accept.evidence] using Accept.checked)
-  refine ⟨t.val, checked, fun condition => ?_⟩
+  refine ⟨t, replayed, fun condition => ?_⟩
   exact t.val.count_roots (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero)
     (by simp) (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
     (fun _ _ => Rat.cast_mul _ _) (fun _ => by simp) Sturm.orderSign Semantics.rational_sign

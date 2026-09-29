@@ -9,9 +9,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-import shutil
 import sys
-import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -27,8 +25,10 @@ SPEC = SweepSpec(
     description=__doc__ or "BKR semantic proof diagnostics",
     pairs=tuple(ProbePair(
         f"depth-{depth}",
-        ProbeModule(f"HexSignDetMathlib.ProofProbe.D{depth}.SemanticBaseline", AXIOMS),
-        ProbeModule(f"HexSignDetMathlib.ProofProbe.D{depth}.Semantic", AXIOMS),
+        ProbeModule(f"HexSignDetMathlib.ProofProbe.D{depth}.SemanticBaseline", None,
+                    f"Hex.SignDetMathlib.ProofProbe.D{depth}.SemanticBaseline"),
+        ProbeModule(f"HexSignDetMathlib.ProofProbe.D{depth}.Semantic", AXIOMS,
+                    f"Hex.SignDetMathlib.ProofProbe.D{depth}.Semantic"),
         {"family": "same-level-graph-semantics", "depth": depth,
          "query_arity": 2**depth, "graph_nodes": depth + 1,
          "graph_edges": 2*depth, "degree": 2, "support_size": 1,
@@ -61,10 +61,9 @@ def main() -> int:
         if output.exists() or sidecar.exists():
             raise RuntimeError("measurement output exists; choose a fresh path")
         # Flush every completed arm before validation, including failed arms.
-        with tempfile.NamedTemporaryFile(mode="w", prefix="hex-sign-det-semantics-",
-                                         suffix=".jsonl", delete=False) as log:
-            retained = Path(log.name)
-            print(f"Incremental samples: {retained}", flush=True)
+        sidecar.parent.mkdir(parents=True, exist_ok=True)
+        with sidecar.open("x") as log:
+            print(f"Incremental samples: {sidecar}", flush=True)
             log.write(json.dumps({"type": "metadata", "environment": env,
                                   "source_sha256": source_hashes(SPEC, Path(__file__))}) + "\n")
             log.flush()
@@ -77,11 +76,12 @@ def main() -> int:
                 code = run_cli(SPEC, Path(__file__),
                                [*sys.argv[1:], "--shared-host", "--cpu", str(cpu),
                                 "--output", str(output)], sample_observer=observe)
-            except BaseException:
-                print(f"Retained partial samples: {retained}", file=sys.stderr)
+            except BaseException as exc:
+                log.write(json.dumps({"type": "failure", "exception": type(exc).__name__,
+                                      "error": str(exc)}) + "\n")
+                log.flush()
+                print(f"Retained partial samples: {sidecar}", file=sys.stderr)
                 raise
-        sidecar.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(retained, sidecar)
         return code
     finally:
         lease.close()

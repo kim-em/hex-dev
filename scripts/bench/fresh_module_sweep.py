@@ -59,6 +59,8 @@ class ProbeModule:
 
     module: str
     expected_axioms: tuple[str, ...] | None = None
+    # Restrict inventory to declarations in this namespace, excluding import logs.
+    axiom_namespace: str | None = None
 
 
 @dataclass(frozen=True)
@@ -838,7 +840,21 @@ def terminate_process_group(child: subprocess.Popen[str], grace: float = 5.0) ->
     child.communicate()
 
 
-def parse_axioms(output: str) -> list[str] | None:
+def parse_axioms(output: str, namespace: str | None = None) -> list[str] | None:
+    if namespace is not None:
+        inventories = []
+        for match in re.finditer(
+            r"'([^']+)' (?:depends on axioms: \[([^]]*)\]|does not depend on any axioms)",
+            output,
+        ):
+            if match.group(1).startswith(namespace + "."):
+                inventories.append([
+                    item.strip() for item in (match.group(2) or "").split(",")
+                    if item.strip()
+                ])
+        if not inventories:
+            return None
+        return list(dict.fromkeys(axiom for inventory in inventories for axiom in inventory))
     match = re.search(r"depends on axioms: \[([^]]*)\]", output)
     if match:
         return [item.strip() for item in match.group(1).split(",") if item.strip()]
@@ -854,6 +870,7 @@ def build_sample(
     monitored_cpus: Sequence[int] = (),
     sample_observer: SampleObserver | None = None,
     retain_compiler_output: bool = False,
+    axiom_namespace: str | None = None,
 ) -> dict[str, object]:
     remove_module_outputs(module)
     host_before = sampled_host_state(host_state())
@@ -942,7 +959,7 @@ def build_sample(
     result = {
         "wall_nanos": elapsed,
         **metrics,
-        "axioms": parse_axioms(output),
+        "axioms": parse_axioms(output, axiom_namespace),
         "host_before": host_before,
         "host_after": host_after,
         "cpu_accounting": {
@@ -967,6 +984,8 @@ def build_sample(
             ),
         },
     }
+    if axiom_namespace is not None:
+        result["axiom_namespace"] = axiom_namespace
     if retain_compiler_output:
         result["compiler_output"] = output
     if sample_observer is not None:
@@ -1051,6 +1070,7 @@ def build_shared_host_pair(
             monitored_cpus=monitored_cpus,
             sample_observer=sample_observer,
             retain_compiler_output=retain_compiler_output,
+            axiom_namespace=module.axiom_namespace,
         )
         if cpu_affinity() != [measurement_cpu]:
             raise RuntimeError("shared-host CPU affinity changed during the sweep")
@@ -1933,6 +1953,7 @@ def run_cli(
                         monitored_cpus=monitored_cpus,
                         sample_observer=sample_observer,
                         retain_compiler_output=spec.retain_compiler_output,
+                        axiom_namespace=module.axiom_namespace,
                     )
                     validate_axioms(pair.name, role, module, sample)
                     built[role] = sample

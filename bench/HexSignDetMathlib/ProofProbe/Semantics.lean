@@ -20,15 +20,15 @@ theorem rational_sign (x : Rat) :
   congr 1
   exact (StrictMono.sign_comp (f := Rat.castHom ℝ) Rat.cast_strictMono x).symm
 
-/-- The actual finite root set bound by the literal graph, independent of
+/-- The actual finite root set specified by the literal descriptor, independent of
 its proposed sign counts. -/
 @[expose] noncomputable def roots : Finset ℝ :=
   Tarski.rootsIn (interpret (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero) singletonRaw.head)
     (singletonRaw.lower.map fun r : Rat => (r : ℝ))
     (singletonRaw.upper.map fun r : Rat => (r : ℝ))
 
-/-- Original query positions at each mathematical root. -/
-@[expose] noncomputable def word (depth : Nat) (x : ℝ) : List Int :=
+/-- Ordered query sign condition at a mathematical root. -/
+@[expose] noncomputable def signCondition (depth : Nat) (x : ℝ) : List Int :=
   signsAt (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero)
     (List.replicate (2 ^ depth) (DensePoly.C (2 : Rat))) x
 

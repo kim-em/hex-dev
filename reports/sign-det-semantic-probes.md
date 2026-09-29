@@ -2,7 +2,8 @@
 
 The semantic probes apply `Replay.count_roots` to literal accepted graphs at
 depths 1, 3, 5 and 7. Acceptance is proved in the existing `Accept` modules.
-`Dag.check_replay` extracts a checked tree; the semantic theorem identifies
+`Dag.check_replay` extracts a checked tree; the semantic theorem explicitly
+binds that tree to the supplied graph's replay result and identifies
 every returned count with the cardinality of the corresponding subset of the
 actual roots of X²−1 in (0,2). The root set is defined independently of the
 proposed counts. The proof uses the shared Sturm–Tarski semantics and the
@@ -26,7 +27,8 @@ retains compiler output, source and dependency identities, artifact sizes,
 wall time, process resource observations and axiom inventories.
 
 The paired difference includes theorem elaboration, ordinary kernel checking,
-serialization, axiom inspection and variable Lake/process overhead. It is
+serialization, two axiom traversals (guarded and diagnostic), and variable
+Lake/process overhead. It is
 not a measurement of kernel checking alone. Acceptance and the foundation
 proofs are warm dependencies; their initial compilation and literal checker
 reduction are excluded. The existing [graph replay probes](sign-det-proof-model.md)
@@ -37,7 +39,7 @@ These are diagnostic observations, with no complexity verdict or absolute
 performance budget. They do not establish all Phase-4 requirements. The
 ordinary CI proof-probe target builds the examples; timing runs are external.
 
-## Observations
+## Original observations
 
 Source `8ba814887079ddf45e9682371d4565c49d3d2171` supplies 16 adjacent pairs
 (32 fresh builds) on `chungus2`, automatically leased CPU 68, with one Lean
@@ -61,7 +63,15 @@ and 96 bytes respectively. Median semantic-arm maximum resident sets are
 process and imports; they do not isolate the theorem's memory usage or
 measure allocated bytes.
 
-All semantic guards and axiom inventories passed. The observed paired
+All semantic guards passed. In these original records, the `axioms` field
+contains the imported `Accept.checked` inventory: the runner selected the
+first printed inventory. Candidate compiler outputs separately retain the
+semantic theorem's inventory. The original theorem asserted the existence
+of a checked tree with correct root counts; it did not state the equation
+binding that tree to the supplied graph. These records therefore describe
+that earlier theorem and runner, not the strengthened graph-bound probes.
+The current runner selects only inventories from each measured namespace,
+checks every inventory there, and expects none for import-only baselines. The observed paired
 differences do not establish asymptotic behavior or a speedup. The imported
 acceptance proofs already bind the full certificates, so these applications
 need not unfold those certificates again as query count grows. No rerun or
