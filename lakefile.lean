@@ -611,7 +611,10 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.BisectionRoots, `HexRealClosureMathlib.BisectionFrontier,
     `HexRealClosureMathlib.BisectionCounts, `HexRealClosureMathlib.Isolation,
     `HexRealClosureMathlib.BisectionFactor, `HexRealClosureMathlib.IsolationFactor,
-    `HexRealClosureMathlib.IsolationRoots]
+    `HexRealClosureMathlib.IsolationRoots, `HexRealClosureMathlib.RootOrder]
+
+lean_exe hexrealclosure_root_order_tests where
+  root := `HexRealClosure.RootOrderTests
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction

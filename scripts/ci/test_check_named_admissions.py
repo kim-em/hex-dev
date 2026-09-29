@@ -72,8 +72,10 @@ class AdmissionScannerTests(unittest.TestCase):
             isolation_factor = root / "adapters/HexRealClosureMathlib/IsolationFactor.lean"
             isolation_roots = root / "adapters/HexRealClosureMathlib/IsolationRoots.lean"
             isolation_conformance = root / "conformance/HexRealClosure/IsolationConformance.lean"
+            root_order = root / "adapters/HexRealClosureMathlib/RootOrder.lean"
+            root_order_tests = root / "HexRealClosure/RootOrderTests.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, bisection, model, partition, deflation, frontier, traversal, counts, isolation, isolation_tests, factor, isolation_factor, isolation_roots, isolation_conformance, dependency):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, bisection, model, partition, deflation, frontier, traversal, counts, isolation, isolation_tests, factor, isolation_factor, isolation_roots, isolation_conformance, root_order, root_order_tests, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
@@ -98,6 +100,8 @@ class AdmissionScannerTests(unittest.TestCase):
             isolation_factor.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             isolation_roots.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             isolation_conformance.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            root_order.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            root_order_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
@@ -114,6 +118,14 @@ class AdmissionScannerTests(unittest.TestCase):
                         audit.check()
                     probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
                     with self.assertRaisesRegex(ValueError, "unapproved admission in .*Isolation"):
+                        audit.check()
+                    probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                for probe in (root_order, root_order_tests):
+                    probe.unlink()
+                    with self.assertRaisesRegex(ValueError, "missing local import"):
+                        audit.check()
+                    probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*RootOrder"):
                         audit.check()
                     probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 handle.unlink()

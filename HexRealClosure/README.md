@@ -420,3 +420,17 @@ negative leading scalar with an emitted zero, a nonquadratic generator,
 four real roots, a whole-line inverse infinitesimal, close infinitesimal roots
 requiring completion after the rational bisection cap, and invalid domains.
 The oracle does not replay descriptor proof graphs or prove producer totality.
+
+
+`Isolation.Root` retains both emitted coefficient points and selected-root
+descriptors in one context. `Root.compare` uses coefficient differences for
+points, the shared selected-sign query for mixed pairs, and the checked
+common-product comparison for descriptor pairs. Comparison failures propagate;
+invalid sign codes and duplicate roots are internal errors. Finite insertion
+sorting preserves the actual input roots and their mathematical values.
+The companion proves point comparisons and successful selected-root/point
+comparisons in the ambient ordered real closed field. General strict order for
+descriptor pairs still requires the upstream Thom theorem, so this intermediate
+sort does not establish the complete ordered `RootSet` contract or multiplicities.
+`hexrealclosure_root_order_tests` exercises actual rational descriptors, mixed
+comparisons, sorted finite output, duplicate rejection and invalid signs.
