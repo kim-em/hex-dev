@@ -75,6 +75,58 @@ def split? (sign : E → Int) (p : DensePoly E) (lower upper : Endpoint E) (poin
             Sturm.prepare_eq_some _ _ _ _ _ hl, Sturm.prepare_eq_some _ _ _ _ _ hr⟩
   else none
 
+/-- Reuse the unchanged head's chain for a regular cut. Deflation changes the
+head and therefore prepares its derivative chain afresh. -/
+def Mode.prepare? (domain : Sturm.PreparedDomain E) {point : E}
+    (mode : Mode domain.sign domain.head point) (lower upper : Endpoint E) :
+    Option (Sturm.PreparedDomain E) :=
+  match mode with
+  | .regular _ => domain.withEndpoints? lower upper
+  | .root d => Sturm.prepare domain.sign d.quotient lower upper
+
+/-- Cached preparation returns exactly the same whole domain as fresh work. -/
+theorem Mode.prepare?_eq (domain : Sturm.PreparedDomain E) {point : E}
+    (mode : Mode domain.sign domain.head point) (lower upper : Endpoint E) :
+    mode.prepare? domain lower upper = Sturm.prepare domain.sign mode.head lower upper := by
+  cases mode with
+  | regular nonroot => exact domain.withEndpoints_eq lower upper
+  | root d => rfl
+
+/-- Split an existing validated domain. Regular cuts retain its derivative
+chain while checking both new endpoints; root cuts prepare the deflated head. -/
+def splitPrepared? (domain : Sturm.PreparedDomain E) (point : E) :
+    Option (Split domain.sign domain.head domain.lower domain.upper point) :=
+  if domain.lower.lt (EndpointSigns.ofSign domain.sign) (.finite point) &&
+      (Endpoint.finite point).lt (EndpointSigns.ofSign domain.sign) domain.upper then
+    match Mode.read? domain.sign domain.head point with
+    | none => none
+    | some mode =>
+      match hl : mode.prepare? domain domain.lower (.finite point) with
+      | none => none
+      | some left =>
+        match hr : mode.prepare? domain (.finite point) domain.upper with
+        | none => none
+        | some right => some ⟨mode, left, right,
+            Sturm.prepare_eq_some _ _ _ _ _ ((mode.prepare?_eq _ _ _).symm.trans hl),
+            Sturm.prepare_eq_some _ _ _ _ _ ((mode.prepare?_eq _ _ _).symm.trans hr)⟩
+  else none
+
+/-- Prepared splitting changes no output, including its mode and whole domains. -/
+theorem splitPrepared?_eq (domain : Sturm.PreparedDomain E) (point : E) :
+    splitPrepared? domain point =
+      split? domain.sign domain.head domain.lower domain.upper point := by
+  unfold splitPrepared? split?
+  split
+  · cases hm : Mode.read? domain.sign domain.head point with
+    | none => rfl
+    | some mode =>
+      repeat' first | rfl | split
+      all_goals have hl := mode.prepare?_eq domain domain.lower (.finite point)
+      all_goals have hr := mode.prepare?_eq domain (.finite point) domain.upper
+      all_goals grind
+
+  · rfl
+
 /-- Success means both actual preparations passed for the classified cut. -/
 theorem split?_isSome (sign : E → Int) (p : DensePoly E) (lower upper : Endpoint E) (point : E) :
     (split? sign p lower upper point).isSome = true ↔
@@ -124,3 +176,7 @@ end Hex.RealClosure.Bisection
 /-- info: 'Hex.RealClosure.Bisection.split?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Bisection.split?_isSome
+
+/-- info: 'Hex.RealClosure.Bisection.splitPrepared?_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Bisection.splitPrepared?_eq

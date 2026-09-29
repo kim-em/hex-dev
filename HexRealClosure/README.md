@@ -288,8 +288,12 @@ Each cell retains a count computed once from its actual prepared domain, with
 an equality proof tying that count to the shared query. A regular cut retains
 unchanged pending cells. A root cut recomputes every pending domain and count
 against the quotient, including previously retained count-one cells. All cells
-are bound to one current head. The implementation uses shared Sturm preparation;
-reuse of its head-only chain across endpoints remains an upstream API request.
+are bound to one current head. `Cell.bisect?` uses `splitPrepared?` on the
+selected cell's actual domain. A regular cut retains its validated derivative
+chain in both halves and checks their new endpoints through the shared
+`PreparedDomain.withEndpoints?` API. A root cut prepares the changed quotient
+head afresh. `splitPrepared?_eq` and `Cell.bisect_eq` prove equality with the
+complete results of fresh splitting, including the returned domains.
 
 The companion proves construction success under coefficient interpretation,
 the node bound, exact root coverage, disjoint retained intervals, distinct
@@ -314,11 +318,10 @@ cell selection and cuts. Rejection tests cover stale heads, missing cells,
 wrong counts, gaps, overlaps, duplicated or invented roots, premature stopping
 and spending the allowance on the wrong cell.
 
-The current shared API rebuilds the same Sturm chain four times per node:
-twice for preparation and twice for counts. A root cut also rebuilds it twice
-for each pending cell, including count-zero cells. Reusing its head-only chain
-across endpoints remains an upstream API request. No timing improvement is
-claimed by these correctness checks.
+Regular cuts avoid the two fresh preparations for their new halves. Each
+half still computes its own root count through `queryPrepared`. Root cuts
+still prepare both quotient domains and recompute every pending domain and
+count, including count-zero cells. No timing improvement is claimed.
 
 Descriptor construction, BKR completion, multiplicity restoration and
 factor-list merging remain required for complete isolation. Automatic dependency

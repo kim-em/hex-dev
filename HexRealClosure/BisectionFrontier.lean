@@ -51,6 +51,27 @@ theorem Cell.prepare?_isSome (sign : E → Int) (p : DensePoly E) (lower upper :
   unfold Cell.prepare?
   split <;> simp_all
 
+/-- Bisect the actual stored domain, reusing its unchanged derivative chain. -/
+def Cell.bisect? {sign : E → Int} {p : DensePoly E} (cell : Cell sign p) :
+    Option (Split sign p (.finite cell.lower) (.finite cell.upper)
+      (midpoint cell.lower cell.upper)) := by
+  let output := splitPrepared? cell.domain (midpoint cell.lower cell.upper)
+  simpa only [cell.bound.1, cell.bound.2.1, cell.bound.2.2.1, cell.bound.2.2.2] using output
+
+/-- Stored-domain bisection returns exactly the fresh split, including its data. -/
+@[simp] theorem Cell.bisect_eq {sign : E → Int} {p : DensePoly E} (cell : Cell sign p) :
+    cell.bisect? = Bisection.bisect? sign p cell.lower cell.upper := by
+  unfold Cell.bisect?
+  rw [splitPrepared?_eq]
+  rcases cell with ⟨lower, upper, domain, bound, count, count_eq⟩
+  rcases bound with ⟨hs, hp, hl, hu⟩
+  cases domain
+  cases hs
+  cases hp
+  cases hl
+  cases hu
+  rfl
+
 /-- Replace the head by preparing the same endpoints again. In particular,
 no count or endpoint certificate for an old head is retained after deflation. -/
 @[expose] def Cell.reprepare? {sign : E → Int} {p : DensePoly E}
@@ -223,7 +244,7 @@ def Frontier.advance? {sign : E → Int} (frontier : Frontier sign)
     (selected : Cell sign frontier.head) (rest : List (Cell sign frontier.head))
     (_chosen : select frontier.cells = some (selected, rest)) :
     Option (Frontier sign) := do
-  let split ← bisect? sign frontier.head selected.lower selected.upper
+  let split ← selected.bisect?
   let point := midpoint selected.lower selected.upper
   let left : Cell sign split.mode.head :=
     ⟨selected.lower, point, split.left, split.left_bound, Sturm.queryPrepared split.left 1, rfl⟩
@@ -375,3 +396,7 @@ end Hex.RealClosure.Bisection
 /-- info: 'Hex.RealClosure.Bisection.traverse?_stopped' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Bisection.traverse?_stopped
+
+/-- info: 'Hex.RealClosure.Bisection.Cell.bisect_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Bisection.Cell.bisect_eq
