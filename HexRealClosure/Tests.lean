@@ -9,9 +9,11 @@ public import HexRealClosure.Yun
 public import HexRealClosure.Bounds
 public import HexRealClosure.Deflation
 public import HexRealClosure.BisectionTests
+public import HexRealClosure.ZeroFactor
 public meta import HexSturm.Basic
 public meta import HexRealClosure.Bounds
 public meta import HexRealClosure.Deflation
+public meta import HexRealClosure.ZeroFactor
 
 public section
 
@@ -648,5 +650,18 @@ private def packedDeflation : Option Bool := do
     q.coeff 1 == 1 && (q.eval alpha).value == (2 * alpha).value
 
 #guard packedDeflation == some true
+
+/-- Zero extraction also uses canonical zero for packed selected-root coefficients. -/
+private def packedZeroFactor : Option Bool := do
+  let d ← Root.validate 7 raw
+  let h := d.handle
+  let alpha : Root.Handle.Value h := Root.Handle.Value.ofPoly h x
+  let equation := Root.Handle.Value.ofPoly h (x * x - DensePoly.C 2)
+  let p := DensePoly.ofCoeffs #[equation, alpha - alpha, (-2 : Root.Handle.Value h), 0, 1]
+  let result := ZeroFactor.remove p
+  return result.2 == 2 && result.1.size == 3 &&
+    (result.1.coeff 0).value == -2 && result.1.coeff 1 == 0 && result.1.coeff 2 == 1
+
+#guard packedZeroFactor == some true
 
 end Hex.RealClosure.Tests

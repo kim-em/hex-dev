@@ -23,6 +23,71 @@ structure Case where
   rightDirect : Replay Rat Nat
   order : Ordering
 
+private def rootHash (d : Root) : UInt64 :=
+  let input : Input := ⟨d.raw.head, d.raw.queries, none, some d.evidence, none⟩
+  hash (hash input, d.raw.indices, d.raw.signs)
+
+instance : Hashable Case where
+  hash i :=
+    let leftDirect : Input := { i.left with tree := some i.leftDirect, graph := none }
+    let rightDirect : Input := { i.right with tree := some i.rightDirect, graph := none }
+    hash (rootHash i.leftPartial, rootHash i.rightPartial,
+      rootHash i.leftFull, rootHash i.rightFull, hash i.left, hash i.right,
+      hash leftDirect, hash rightDirect)
+
+/-- Complete both original partial descriptors, including their actual table
+production and derivative-word selection. Preparation is outside this body. -/
+@[noinline] def runCompletion (input : Option Case) : Option (UInt64 × UInt64) := do
+  let i ← input
+  let .ok l := i.leftPartial.buildCompletion | none
+  let .ok r := i.rightPartial.buildCompletion | none
+  return (hash l.descriptor.raw.signs, hash r.descriptor.raw.signs)
+
+/-- Compare the already completed sources through the actual common-product
+and re-encoding producers. Keep the returned head and both root identities. -/
+@[noinline] def runComparison (input : Option Case) : Option UInt64 := do
+  let i ← input
+  let .ok c := i.leftFull.buildComparison i.rightFull | none
+  let order : Nat := match c.order with | .lt => 0 | .eq => 1 | .gt => 2
+  return hash (order, polyHash c.common.head,
+    c.leftEncoding.target.raw.signs, c.rightEncoding.target.raw.signs)
+
+private def runTables (input : Option Case) (reduced : Bool) : Option (UInt64 × UInt64) := do
+  let i ← input
+  let ld ← i.left.domain
+  let rd ← i.right.domain
+  let .ok l := buildPrepared (10377 : Nat) ld i.left.queries reduced | none
+  let .ok r := buildPrepared (10377 : Nat) rd i.right.queries reduced | none
+  return (hash (entries l.val.node.system), hash (entries r.val.node.system))
+
+/-- Construct both original ordered joint tables with modulo-head products. -/
+@[noinline] def runReduced (input : Option Case) : Option (UInt64 × UInt64) :=
+  runTables input true
+
+/-- Construct the same two tables with unreduced moment products. -/
+@[noinline] def runDirect (input : Option Case) : Option (UInt64 × UInt64) :=
+  runTables input false
+
+/-- Check both supplied reduced evidence trees, including their literal
+polynomial, interval, context, support and exact matrix witnesses. -/
+@[noinline] def runCheckReduced (input : Option Case) : Bool :=
+  match input with
+  | none => false
+  | some i =>
+    match i.left.tree, i.right.tree with
+    | some l, some r =>
+      l.check Sturm.orderSign 10377 i.left.head .negInf .posInf i.left.queries &&
+      r.check Sturm.orderSign 10377 i.right.head .negInf .posInf i.right.queries
+    | _, _ => false
+
+/-- Check the supplied direct evidence against the same caller bindings. -/
+@[noinline] def runCheckDirect (input : Option Case) : Bool :=
+  match input with
+  | none => false
+  | some i =>
+    i.leftDirect.check Sturm.orderSign 10377 i.left.head .negInf .posInf i.left.queries &&
+    i.rightDirect.check Sturm.orderSign 10377 i.right.head .negInf .posInf i.right.queries
+
 private def signs (qs : List (DensePoly Rat)) (x : Rat) : List Int :=
   qs.map fun q => Sturm.orderSign (q.eval x)
 
@@ -115,6 +180,12 @@ private def record (n : Nat) (side : String) (source : Root) (i : Input)
     ("querySlots", Lean.toJson (ns.foldl (fun k node => k + node.size) 0)),
     ("maxColumns", Lean.toJson (ns.foldl (fun k node => max k node.size) 0)),
     ("maxSupport", Lean.toJson (ns.foldl (fun k node => max k node.system.support.length) 0)),
+    ("maxExponentSum", Lean.toJson ((ns ++ nodes direct).foldl (fun k node =>
+      node.system.rows.toList.foldl (fun k es => max k es.sum) k) 0)),
+    ("maxDirectChainLength", Lean.toJson ((nodes direct).foldl (fun k node =>
+      node.moments.toList.foldl (fun k c => max k c.remainders.chain.size) k) 0)),
+    ("maxReducedChainLength", Lean.toJson (ns.foldl (fun k node =>
+      node.moments.toList.foldl (fun k c => max k c.remainders.chain.size) k) 0)),
     ("maxInverseBits", Lean.toJson (ns.foldl (fun k node =>
       node.system.inverse.rows.toArray.foldl (fun k row =>
         row.toArray.foldl (fun k z => max k (bits z)) k) k) 0)),
@@ -135,6 +206,32 @@ def inspect (ns : Array Nat) : IO UInt32 := do
         [("left", i.leftFull, i.left, i.leftDirect), ("right", i.rightFull, i.right, i.rightDirect)] do
       IO.println (← record n side source joint direct i.order).compress
       (← IO.getStdout).flush
+  return 0
+
+/-- Untimed result bindings for the timed callbacks. Expected words and tables
+come from exact evaluation at the known roots, not from the timed functions. -/
+def inspectTimings (ns : Array Nat) : IO UInt32 := do
+  for n in ns do
+    let some i := input n | throw (IO.userError s!"invalid joint input at {n}")
+    let target : RawDescriptor Rat Nat := ⟨10377, i.left.head, .negInf, .posInf, [], []⟩
+    let leftTable := [(signs i.left.queries 1, (1 : Int)), (signs i.left.queries (-1), 1)]
+    let rightTable := [(signs i.right.queries 1, (1 : Int)), (signs i.right.queries (-1), 1)]
+    let completion := some (hash (signs i.leftFull.raw.queries 1),
+      hash (signs i.rightFull.raw.queries (-1)))
+    let comparison := some (hash ((2 : Nat), polyHash i.left.head,
+      signs (target.full []).queries 1, signs (target.full []).queries (-1)))
+    let tables := some (hash leftTable, hash rightTable)
+    unless runCompletion (some i) == completion && runComparison (some i) == comparison &&
+        runReduced (some i) == tables && runDirect (some i) == tables &&
+        runCheckReduced (some i) && runCheckDirect (some i) do
+      throw (IO.userError s!"joint callback differs from the independent root answers at {n}")
+    IO.println <| (Lean.Json.mkObj [
+      ("degree", Lean.toJson n), ("queries", Lean.toJson (3*n+1)),
+      ("completionResultHash", Lean.toJson (hash completion).toNat),
+      ("comparisonResultHash", Lean.toJson (hash comparison).toNat),
+      ("tableResultHash", Lean.toJson (hash tables).toNat),
+      ("replayResultHash", Lean.toJson (hash true).toNat)]).compress
+    (← IO.getStdout).flush
   return 0
 
 /-- The degree-three CI input includes both graph and byte replay paths. -/

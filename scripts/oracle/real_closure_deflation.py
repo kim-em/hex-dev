@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact deflation, bisection, frontier and dispatch checks using FLINT and QQ(epsilon, delta)."""
+"""Exact deflation, zero extraction, bisection, frontier and dispatch checks."""
 
 from fractions import Fraction
 from pathlib import Path
@@ -278,7 +278,7 @@ def verify(fixtures: list[dict]) -> None:
     for row in fixtures:
         depth = row["depth"]
         require(depth in (0, 1, 2), "unsupported coefficient depth")
-        require(row.get("kind", "deflation") in ("deflation", "bisection", "frontier", "dispatch"), "unknown fixture kind")
+        require(row.get("kind", "deflation") in ("deflation", "zero-factor", "bisection", "frontier", "dispatch"), "unknown fixture kind")
         if row.get("kind") == "dispatch":
             verify_dispatch(row, decode, coefficient_field)
             continue
@@ -289,8 +289,21 @@ def verify(fixtures: list[dict]) -> None:
             verify_bisection(row, decode, coefficient_field)
             continue
         coefficients = [decode(a, depth) for a in row["coefficients"]]
-        root = decode(row["root"], depth)
         require(not coefficients or bool(coefficients[-1]), "zero leading coefficient")
+        if row.get("kind") == "zero-factor":
+            require(set(row) == {"kind", "name", "depth", "coefficients", "cofactor", "multiplicity"},
+                    "invalid zero-factor fields")
+            # The order of the first nonzero coefficient determines the exact
+            # power of X, independently of the executable division recurrence.
+            multiplicity = next((i for i, a in enumerate(coefficients) if a), 0)
+            require(type(row["multiplicity"]) is int and row["multiplicity"] == multiplicity,
+                    f"{row['name']}: wrong zero multiplicity")
+            actual = [decode(a, depth) for a in row["cofactor"]]
+            require(actual == coefficients[multiplicity:],
+                    f"{row['name']}: wrong zero quotient or scalar")
+            continue
+        require(row.get("kind") is None, "unsupported fixture kind")
+        root = decode(row["root"], depth)
         # Independent Horner recurrence, not the executable long-division kernel.
         quotient, remainder = divide_linear(coefficients, root, coefficient_field.zero)
         succeeds = bool(coefficients) and not remainder
@@ -310,7 +323,7 @@ def verify(fixtures: list[dict]) -> None:
 def main() -> None:
     fixtures = [json.loads(line) for line in sys.stdin if line.strip()]
     verify(fixtures)
-    print(f"verified {len(fixtures)} exact deflation/bisection/frontier/dispatch fixtures")
+    print(f"verified {len(fixtures)} exact deflation/zero-factor/bisection/frontier/dispatch fixtures")
 
 
 if __name__ == "__main__":

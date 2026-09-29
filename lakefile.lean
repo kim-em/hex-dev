@@ -599,7 +599,7 @@ lean_lib HexQuerySemantics where
     `HexSturmMathlib.Soundness,
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
-    `HexSignDetMathlib.CompletionProducer,
+    `HexSignDetMathlib.CompletionProducer, `HexSignDetMathlib.Convert,
     `HexSignDetMathlib.QueryHandle, `HexSignDetMathlib.TableProducer,
     `HexSignDetMathlib.ReencodingProducer, `HexSignDetMathlib.RootList,
     `HexSignDetMathlib.ReencodingRefinement,
@@ -611,7 +611,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.BisectionRoots, `HexRealClosureMathlib.BisectionFrontier,
     `HexRealClosureMathlib.BisectionCounts, `HexRealClosureMathlib.Isolation,
     `HexRealClosureMathlib.BisectionFactor, `HexRealClosureMathlib.IsolationFactor,
-    `HexRealClosureMathlib.IsolationRoots, `HexRealClosureMathlib.RootOrder]
+    `HexRealClosureMathlib.ZeroFactor, `HexRealClosureMathlib.IsolationRoots, `HexRealClosureMathlib.RootOrder].map Glob.one
 
 lean_exe hexrealclosure_root_order_tests where
   root := `HexRealClosure.RootOrderTests
@@ -1113,7 +1113,8 @@ lean_lib HexConformance where
       `HexSignDetMathlib.CompletionConformance,
       `HexSignDetMathlib.QueryHandleConformance,
       `HexSignDetMathlib.TableConformance, `HexSignDetMathlib.ReencodingConformance,
-      `HexSignDetMathlib.RootListConformance, `HexSignDetMathlib.RefinementConformance].map Glob.one
+      `HexSignDetMathlib.RootListConformance, `HexSignDetMathlib.RefinementConformance,
+      `HexSignDetMathlib.ConvertConformance].map Glob.one
 
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests].map Glob.one
 
@@ -1459,6 +1460,10 @@ lean_exe hexrealroots_emit_fixtures where
 lean_exe hexsigndet_emit_fixtures where
   srcDir := "conformance"
   root := `HexSignDet.EmitFixtures
+
+lean_exe hexsigndet_emit_nested_fields where
+  srcDir := "conformance"
+  root := `HexSignDet.EmitNestedFields
 
 lean_exe hexsigndet_emit_infinitesimal where
   srcDir := "conformance"

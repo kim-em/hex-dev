@@ -137,6 +137,96 @@ setup_benchmark runGraph s => s
     maxSecondsPerCall := 10
   }
 
+/- Joint Thom-query family: n is the odd source degree, the target degree is
+2n, and each joint list has 3n+1 entries. The model counts coefficient
+operations: leaf squares give Ω(n³); moment/head-derivative products and
+pseudo-division contribute O(n²) per row over O(n) rows. The actual direct
+power algorithm also computes unused squares. Production includes replay.
+Candidate dimensions stay at most four; every
+moment row has exponent sum at most two. The sparse binomial/monomial PRS
+has bounded chain length. Remaining query-slot scans sum to O(n² log n).
+The inventory checks these structural hypotheses. Rational bit sizes grow;
+this is not a unit-bit model or a general-head complexity claim. See
+reports/sign-det-joint-performance.md for the scope and derivation. -/
+
+-- Declared cost-model: Θ(n³) coefficient operations for two source completion tables; see the joint derivation above.
+setup_benchmark Joint.runCompletion n => n^3
+  with prep := Joint.input
+  where {
+    paramSchedule := .custom #[3, 7, 15, 31, 63]
+    paramFloor := 3
+    paramCeiling := 63
+    outerTrials := 6
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 180
+  }
+
+-- Declared cost-model: Θ(n³) coefficient operations for four common-head re-encoding/descriptor tables; see the joint derivation above.
+setup_benchmark Joint.runComparison n => n^3
+  with prep := Joint.input
+  where {
+    paramSchedule := .custom #[3, 7, 15, 31, 63]
+    paramFloor := 3
+    paramCeiling := 63
+    outerTrials := 6
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 180
+  }
+
+-- Declared cost-model: Θ(n³) coefficient operations for both joint tables with reduced products; see the joint derivation above.
+setup_benchmark Joint.runReduced n => n^3
+  with prep := Joint.input
+  where {
+    paramSchedule := .custom #[3, 7, 15, 31, 63]
+    paramFloor := 3
+    paramCeiling := 63
+    outerTrials := 6
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 180
+  }
+
+-- Declared cost-model: Θ(n³) coefficient operations for both joint tables with direct products; see the joint derivation above.
+setup_benchmark Joint.runDirect n => n^3
+  with prep := Joint.input
+  where {
+    paramSchedule := .custom #[3, 7, 15, 31, 63]
+    paramFloor := 3
+    paramCeiling := 63
+    outerTrials := 6
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 180
+  }
+
+-- Declared cost-model: Θ(n³) coefficient operations for literal reduced evidence checks; see the joint derivation above.
+setup_benchmark Joint.runCheckReduced n => n^3
+  with prep := Joint.input
+  where {
+    paramSchedule := .custom #[3, 7, 15, 31, 63]
+    paramFloor := 3
+    paramCeiling := 63
+    outerTrials := 6
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 180
+  }
+
+-- Declared cost-model: Θ(n³) coefficient operations for literal direct evidence checks; see the joint derivation above.
+setup_benchmark Joint.runCheckDirect n => n^3
+  with prep := Joint.input
+  where {
+    paramSchedule := .custom #[3, 7, 15, 31, 63]
+    paramFloor := 3
+    paramCeiling := 63
+    outerTrials := 6
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 180
+  }
+
 private def intBits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
 private def ratBits (q : Rat) : Nat := max (intBits q.num) (q.den.log2 + 1)
 
@@ -197,13 +287,23 @@ def main (args : List String) : IO UInt32 :=
     match degree.toNat? with
     | some n => Hex.SignDetBench.Joint.inspect #[n]
     | none => throw (IO.userError "expected an odd integer degree at least three")
+  else if args == ["inspect-joint-timings"] then Hex.SignDetBench.Joint.inspectTimings #[3, 7, 15, 31, 63]
+  else if let ["inspect-joint-timings", degree] := args then
+    match degree.toNat? with
+    | some n => Hex.SignDetBench.Joint.inspectTimings #[n]
+    | none => throw (IO.userError "expected an odd integer degree at least three")
   else if args == ["inspect-full"] then Hex.SignDetBench.inspectFull
   else if let ["paired-small", path] := args then
     Hex.SignDetBench.paired ``Hex.SignDetBench.runSmallReduced ``Hex.SignDetBench.runSmallFull path
+  else if let ["paired-joint-production", path] := args then
+    Hex.SignDetBench.paired ``Hex.SignDetBench.Joint.runReduced ``Hex.SignDetBench.Joint.runDirect path
+  else if let ["paired-joint-replay", path] := args then
+    Hex.SignDetBench.paired ``Hex.SignDetBench.Joint.runCheckReduced ``Hex.SignDetBench.Joint.runCheckDirect path
   else if args.head? == some "verify" then do
     match Hex.SignDetBench.buildMaximal 2 with
     | .ok _ => pure ()
     | .error message => throw (IO.userError s!"maximal-support fixture failed: {message}")
     Hex.SignDetBench.Joint.verify
+    discard <| Hex.SignDetBench.Joint.inspectTimings #[3]
     LeanBench.Cli.dispatch args
   else LeanBench.Cli.dispatch args

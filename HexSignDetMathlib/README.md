@@ -194,8 +194,18 @@ target domain containing the source root whose root set is contained in the
 original domain. It establishes preparation and both actual producers, using
 the original partial selection's uniqueness, and preserves the selected root.
 This needs neither general Thom injectivity nor rational isolating bounds.
-It inherits the named #10389 root-sum admission.
+It uses the shared proved Sturm–Tarski theorem.
 General success after changing the defining head remains open.
+`Descriptor.convert_success` and `Descriptor.convert_root` in
+`HexSignDetMathlib.Convert` prove that rebuilding a descriptor after a
+value-preserving coefficient and context change succeeds and preserves its
+selected root. The source's count-one condition transfers through the two
+lawful interpretations; target derivatives are freshly reconstructed, not
+copied. The coefficient converter need not preserve arithmetic as literal
+representations. Both carriers may be noninjective, and finite/infinite bounds
+are included. No general Thom injectivity, Archimedean assumption or field
+instance on representation coefficients is required. These results use
+the proved shared Sturm–Tarski theorem.
 `Comparison.eq_iff_root_eq` proves that a successful common-product comparison
 returns equality exactly when the original selected real roots coincide. It
 uses the common full derivative word and count-one descriptors; strict `<` and

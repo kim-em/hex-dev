@@ -12,3 +12,4 @@ public import HexRealClosure.BisectionFrontier
 public import HexRealClosure.Isolation
 public import HexRealClosure.IsolationRoots
 public import HexRealClosure.RootOrder
+public import HexRealClosure.ZeroFactor

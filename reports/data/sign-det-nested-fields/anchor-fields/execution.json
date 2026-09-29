@@ -1,0 +1,19 @@
+{
+  "scope": "full local conformance execution; not a scientific timing collection",
+  "source_sha256": "0e4441af90e0235c05614a4241dd2d5602730b8a3221507e1d5caee3fd6de920",
+  "executable_sha256": "1c75a527206a083205754c3b3aee47fa0eb5da9abc15541092cb6a21bc195bcb",
+  "host": "chungus2",
+  "load_before": [
+    4.337890625,
+    4.3330078125,
+    4.60693359375
+  ],
+  "state": "complete",
+  "exit_code": 0,
+  "elapsed_seconds": 441.94123398599913,
+  "load_after": [
+    4.1513671875,
+    4.271484375,
+    4.45947265625
+  ]
+}

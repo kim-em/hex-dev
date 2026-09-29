@@ -59,6 +59,7 @@ class AdmissionScannerTests(unittest.TestCase):
             reencoding = root / "conformance/HexSignDetMathlib/ReencodingConformance.lean"
             roots = root / "conformance/HexSignDetMathlib/RootListConformance.lean"
             refinement = root / "conformance/HexSignDetMathlib/RefinementConformance.lean"
+            conversion = root / "conformance/HexSignDetMathlib/ConvertConformance.lean"
             bisection = root / "HexRealClosure/BisectionTests.lean"
             model = root / "adapters/HexRealClosureMathlib/Bisection.lean"
             partition = root / "adapters/HexRealClosureMathlib/BisectionRoots.lean"
@@ -75,7 +76,7 @@ class AdmissionScannerTests(unittest.TestCase):
             root_order = root / "adapters/HexRealClosureMathlib/RootOrder.lean"
             root_order_tests = root / "HexRealClosure/RootOrderTests.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, bisection, model, partition, deflation, frontier, traversal, counts, isolation, isolation_tests, factor, isolation_factor, isolation_roots, isolation_conformance, root_order, root_order_tests, dependency):
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, bisection, model, partition, deflation, frontier, traversal, counts, isolation, isolation_tests, factor, isolation_factor, isolation_roots, isolation_conformance, root_order, root_order_tests, dependency):
                 path.parent.mkdir(parents=True, exist_ok=True)
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
@@ -87,6 +88,7 @@ class AdmissionScannerTests(unittest.TestCase):
             reencoding.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             roots.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             refinement.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             bisection.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             model.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             partition.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
@@ -128,6 +130,20 @@ class AdmissionScannerTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "unapproved admission in .*RootOrder"):
                         audit.check()
                     probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                conversion.unlink()
+                with self.assertRaisesRegex(ValueError, "missing local import"):
+                    audit.check()
+                conversion.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/ConvertConformance"):
+                    audit.check()
+                conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                deflation.unlink()
+                with self.assertRaisesRegex(ValueError, "missing local import"):
+                    audit.check()
+                deflation.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexRealClosure/DeflationConformance"):
+                    audit.check()
+                deflation.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 handle.unlink()
                 with self.assertRaisesRegex(ValueError, "missing local import"):
                     audit.check()

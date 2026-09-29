@@ -173,7 +173,7 @@ def check() -> None:
              "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance",
              "HexSignDetMathlib.TableConformance", "HexSignDetMathlib.ReencodingConformance",
              "HexSignDetMathlib.RootListConformance", "HexSignDetMathlib.RefinementConformance",
-             "HexRealClosure.BisectionTests",
+             "HexSignDetMathlib.ConvertConformance", "HexRealClosure.BisectionTests",
              "HexRealClosureMathlib.Bisection", "HexRealClosureMathlib.BisectionRoots",
              "HexRealClosure.DeflationConformance", "HexRealClosure.BisectionFrontierTests",
              "HexRealClosureMathlib.BisectionFrontier", "HexRealClosureMathlib.BisectionCounts",
