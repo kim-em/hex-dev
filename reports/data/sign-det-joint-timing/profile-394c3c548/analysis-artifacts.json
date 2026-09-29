@@ -1,0 +1,7 @@
+{
+  "scope": "Additional committed analysis files; original manifest retained",
+  "sha256": {
+    "analysis-addendum.json": "925ecdbffe49b84da55ad6fde8f4235a13cfcfd1c3f6169fb831f601b168ef05",
+    "leaf-categories.json": "deb0751de5311a77e7580fb05d45fb0592ad4955b820132b713d9ef283f3ba6f"
+  }
+}

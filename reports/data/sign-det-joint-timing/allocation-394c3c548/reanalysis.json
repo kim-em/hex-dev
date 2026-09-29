@@ -1,0 +1,13 @@
+{
+  "whole_process_intercepted_calls": 1039653778,
+  "whole_process_requested_bytes": 10237421113,
+  "filtered_stack_calls": 772119942,
+  "exact_callback_stack_calls": 385922080,
+  "other_filtered_stack_calls": 386197862,
+  "folded_stack_rows": 3982647,
+  "callback_frame_pattern": "^lp_Hex_Hex_SignDetBench_Joint_runComparison(?:___redArg|___boxed)?$",
+  "callback_frame_variants": {
+    "lp_Hex_Hex_SignDetBench_Joint_runComparison": 385922080
+  },
+  "scope": "GMP/glibc allocation traffic; Lean object allocation is unmeasured"
+}

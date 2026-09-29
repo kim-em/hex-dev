@@ -229,10 +229,15 @@ All six scaling verdicts remain **inconclusive**, with residual slopes against
 the declared cubic model of −0.592, −0.324, −0.331, −0.237, −0.371 and −0.273,
 respectively. The harness's warmup exclusion leaves degrees 7–63 for these fits.
 The completed collection removes the cap truncation; it still does not establish
-that the cubic term dominates elapsed time over this range. Its exit status one
-reports inconclusive verdicts, with no failed scientific points or validation
-errors. This collection uses the permitted unchanged rerun; no further
-unchanged rerun is planned.
+that the cubic term dominates elapsed time over this range. The retained summaries report inconclusive verdicts, with no failed scientific
+points or validation errors. The outer log contains Lake freshness output,
+not an independently recorded collector exit status. This collection uses the permitted unchanged rerun; no further
+unchanged rerun is permitted. This is family-level accounting: the production
+and replay arms also use up that rerun, even though the original collector
+stopped before scheduling them. The [benchmark finding on #10377](https://github.com/kim-em/hex-dev/issues/10377#issuecomment-5882834592)
+records the required disposition: inclusive attribution followed by a changed
+schedule or an independently demonstrated declaration error and fresh validation.
+Fitting a declaration to the observed slopes cannot satisfy the gate.
 
 Adjacent paired direct/reduced production ratios have medians 1.108, 1.223,
 1.329, 1.441 and 1.478 over increasing degrees. Replay ratios are 1.047, 1.174,
@@ -250,7 +255,12 @@ turning the inconclusive scaling verdicts into successful performance gates.
 
 The [profile manifest](data/sign-det-joint-timing/profile-394c3c548/metadata.json)
 records one cold degree-31 comparison at source `394c3c548`, automatically
-leased CPU 52, with the same executable hash before and after capture. Perf
+leased CPU 52, with the same executable hash before and after capture. That hash equals the
+scientific collection’s binary hash. Both worktree paths use the same physical
+`.lake` cache; the [analysis addendum](data/sign-det-joint-timing/profile-394c3c548/analysis-addendum.json)
+records their post-capture realpaths and inode identity. Original metadata did
+not record those identities. Future measurements require an isolated build
+cache. Perf
 sampled user-space cycles at 199 Hz. The shared harness emitted one operation
 region using `CLOCK_MONOTONIC`; its result had the expected comparison digest.
 This is profiling evidence, not a scientific timing observation or a scaling
@@ -274,17 +284,27 @@ attributes the operation's sampled instruction pointers as follows:
 | `__gmpz_gcd` | 27 | 3.8% |
 | `__gmpz_realloc` | 27 | 3.8% |
 
+The [leaf categorisation](data/sign-det-joint-timing/profile-394c3c548/leaf-categories.json)
+classifies 715 of 716 samples: allocation/free 47.6%, GMP arithmetic 28.8%,
+Lean runtime 11.9%, Hex code 3.2%, and other Lean library code (Rat/List) 8.4%.
+`cfree` is glibc’s alias for `free`. GMP allocation wrappers are counted in
+allocation/free, rather than arithmetic. These are user-mode samples;
+`cycles:u` excludes kernel work such as page faults. Specialisation names
+containing `input_spec` can belong to helpers reused by the timed body;
+they do not establish that preparation leaked into the operation region.
 Allocation/freeing functions, GMP integer operations, rational multiplication
 and gcd work occupy most sampled leaves. Matrix dimensions in this family are
 at most four; this profile supplies no useful estimate of general matrix-solve
 scaling. Coefficient-sign checks are similarly too small here to attribute
 reliably. The wider support and nested-field families remain necessary.
 
-The first call-stack extraction had 461 samples with no unwound frame. Perf's
+The call-stack extraction had 461 binary samples with no unwound frame;
+the other samples recovered only a leaf. No operation sample has a caller
+stack. Perf's
 recorded instruction pointers recover their leaf symbols without another
 capture. Both derived summaries and the raw capture are retained; the direct-IP
-summary is the basis for this table. Caller-stack attribution is limited by
-incomplete unwinding. Allocation-function sample shares are CPU costs, not
+summary is the basis for this table. Inclusive caller attribution and the required filtering diagnostics are
+unavailable. A profile with a working unwinder remains a completion gate. Allocation-function sample shares are CPU costs, not
 allocation counts, allocated bytes or peak live memory.
 
 ## Intercepted allocation observations
@@ -294,14 +314,23 @@ A separate heaptrack capture runs one cold degree-31 comparison at source
 The executable hash is unchanged before and after the capture. The manifest,
 commands, summaries and original analysis outputs are in
 [data/sign-det-joint-timing/allocation-394c3c548](data/sign-det-joint-timing/allocation-394c3c548).
-Raw compressed events and folded stacks remain in the manifest's local directory.
+Raw compressed events and folded stacks are retained under
+`/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548`.
+The original `/tmp` path is a symlink to this durable directory. The
+[analysis addendum](data/sign-det-joint-timing/allocation-394c3c548/analysis-addendum.json)
+records corrected analysis commands and binary-path bindings; original records
+are unchanged. The CPU capture is retained in the corresponding durable
+`issue-10377-joint-profile-394c3c548` directory.
 
 Across the whole child process, including preparation, heaptrack reports
 1,039,653,778 intercepted allocation calls. Its allocation-size histogram has
 exactly the same count, with 10,237,421,113 cumulative requested bytes.
 These count requests to the intercepted allocation functions, including
-reallocations. They are neither peak live bytes nor a count of every Lean object
-allocation. The reported peak tracked heap is approximately 196.34 KB;
+reallocations. They measure GMP/glibc allocation traffic: 810,295,561 calls are from
+`__gmp_default_allocate` and 229,341,127 from `__gmp_default_reallocate`,
+99.998% of the total. Lean object allocation and live heap are unmeasured.
+They are neither peak live bytes nor Lean allocation counts. The reported
+peak tracked GMP/glibc heap is approximately 196.34 KB;
 instrumented RSS is approximately 1.37 GB and includes profiler overhead.
 Instrumentation took about 564 seconds, so its elapsed time is excluded from
 the scientific timing observations.
@@ -317,6 +346,16 @@ filter. Consequently the cumulative requested-byte figure cannot be assigned to
 the comparison alone. The supplied postprocessor distinguishes exact callback
 frames from helper names; it does not rerun the capture.
 
-This supplies an allocation observation for the representative comparison.
-Allocation scaling, complete operation-specific byte counters, wider matrices
-and nested coefficient evidence remain separate requirements.
+The [streaming reanalysis](data/sign-det-joint-timing/allocation-394c3c548/reanalyse.py)
+parses the whole-process total from the retained output and commits per-frame
+aggregates. The original postprocessor is preserved as part of the capture
+record. `comparison-histogram.tsv` contains whole-process data despite its
+name. Its one- and two-limb requests, together with gcd/Rat multiplication
+stacks, suggest small-operand rational-normalisation temporaries are a major
+source of this intercepted traffic; this is an inference, not inclusive CPU
+attribution.
+
+This supplies a GMP allocation observation. Lean object allocation/live heap,
+allocation scaling, complete operation-specific byte counters, a working
+inclusive profile, disposition of all six inconclusive verdicts, wider matrices
+and nested coefficient evidence remain completion requirements.

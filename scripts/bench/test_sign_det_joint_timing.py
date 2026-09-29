@@ -159,12 +159,53 @@ class JointTimingTests(unittest.TestCase):
         self.assertEqual(metadata["status_after"], "")
         self.assertEqual(metadata["harness_binding_after"], metadata["harness_binding"])
         expected = timing.validate_hashes(directory/"callbacks.log")
+        observations = {}
+        pairs = {}
         for name in ("runCompletion", "runComparison"):
-            timing.validate_single(directory/(name+".json"), name, expected, metadata["revision"])
+            observations[name] = timing.validate_single(
+                directory/(name+".json"), name, expected, metadata["revision"])
         for label, names in (("production", ("runReduced", "runDirect")),
                              ("replay", ("runCheckReduced", "runCheckDirect"))):
-            timing.validate_pair(directory/(label+".jsonl"), names, expected, metadata["revision"])
-        self.assertEqual(json.loads((directory/"summary.json").read_text())["validation_errors"], [])
+            computed = timing.validate_pair(directory/(label+".jsonl"), names, expected, metadata["revision"])
+            observations.update(computed["observations"])
+            pairs[label] = computed["paired"]
+        summary = json.loads((directory/"summary.json").read_text())
+        self.assertEqual(summary["observations"], observations)
+        self.assertEqual(summary["pairs"], pairs)
+        self.assertEqual(summary["validation_errors"], [])
+
+    def test_retained_profile_and_allocation_analysis(self):
+        import hashlib
+        base = timing.ROOT/"reports/data/sign-det-joint-timing"
+        for label in ("profile", "allocation"):
+            directory = base/(label+"-394c3c548")
+            original = json.loads((directory/"artifacts.json").read_text())
+            hashes = original.get("sha256", original.get("artifacts", {}))
+            additional = json.loads((directory/"analysis-artifacts.json").read_text())["sha256"]
+            for name, digest in {**hashes, **additional}.items():
+                target = directory/name
+                self.assertEqual(Path(name).name, name)
+                if target.exists():
+                    self.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest)
+            self.assertEqual(set(hashes) | set(additional) | {"artifacts.json", "analysis-artifacts.json"},
+                             set(hashes) | {p.name for p in directory.iterdir() if p.is_file()})
+        profile = base/"profile-394c3c548"
+        leaves = json.loads((profile/"leaf-categories.json").read_text())
+        ips = json.loads((profile/"ip-summary.json").read_text())
+        categories = {}
+        for symbol, count in ips["leaf_counts"].items():
+            category = leaves["assignments"][symbol]
+            categories[category] = categories.get(category, 0) + count
+        self.assertEqual(leaves["categories"], categories)
+        self.assertEqual(sum(categories.values()), leaves["samples"])
+        allocation = base/"allocation-394c3c548"
+        original = json.loads((allocation/"summary.json").read_text())
+        derived = json.loads((allocation/"reanalysis.json").read_text())
+        self.assertEqual(derived["exact_callback_stack_calls"], original["exact_callback_stack_allocation_calls"])
+        self.assertEqual(derived["other_filtered_stack_calls"], original["other_filtered_stack_allocation_calls"])
+        frames = json.loads((allocation/"frame-allocation-counts.json").read_text())["frames"]
+        for frame, count in derived["callback_frame_variants"].items():
+            self.assertEqual(frames[frame], count)
 
     def test_pair_header_and_summary_environment_rejected(self):
         names, rows = self.pair()

@@ -1,0 +1,50 @@
+{
+  "scope": "Post-capture provenance and analysis addendum; original records are unmodified",
+  "durable_raw_directory": "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548",
+  "original_raw_alias": "/tmp/issue-10377-joint-allocation-394c3c548",
+  "executable_binding_checked_after_capture": [
+    {
+      "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-joint-evidence/.lake/build/bin/hexsigndet_bench",
+      "realpath": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench",
+      "device": 2431,
+      "inode": 2425195628,
+      "sha256": "fcf1ddbab177d9ec61d0347b4cbbd9f57ceec94f418c1e961f40fa5ba5deb8c8"
+    },
+    {
+      "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench",
+      "realpath": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench",
+      "device": 2431,
+      "inode": 2425195628,
+      "sha256": "fcf1ddbab177d9ec61d0347b4cbbd9f57ceec94f418c1e961f40fa5ba5deb8c8"
+    }
+  ],
+  "timing_collection_binary_sha256": "fcf1ddbab177d9ec61d0347b4cbbd9f57ceec94f418c1e961f40fa5ba5deb8c8",
+  "cache_limitation": "Both worktree paths use the same physical .lake cache. The original captures did not record inode/realpath. Before/after hashes match the scientific timing binary. Future measurements must isolate their build cache.",
+  "analysis_commands": [
+    [
+      "heaptrack_print",
+      "-f",
+      "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548/heaptrack.zst",
+      "--print-peaks",
+      "0",
+      "--print-temporary",
+      "0",
+      "--peak-limit",
+      "8",
+      "--filter-bt-function",
+      "SignDetBench_Joint_runComparison",
+      "-H",
+      "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548/comparison-histogram.tsv",
+      "-F",
+      "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548/comparison-allocations.stacks",
+      "--flamegraph-cost-type",
+      "allocations"
+    ],
+    [
+      "python3",
+      "reports/data/sign-det-joint-timing/allocation-394c3c548/reanalyse.py",
+      "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548",
+      "reports/data/sign-det-joint-timing/allocation-394c3c548"
+    ]
+  ]
+}
