@@ -20,6 +20,11 @@ private abbrev second := first.infinitesimal
 private def epsilon : Element first := Element.infinitesimal q
 private def delta : Element second := Element.infinitesimal first
 
+#guard (0 : Element q).isClean
+#guard (1 : Element q).isClean
+#guard ((1 : Element q) / 2).isClean = false
+#guard (epsilon.embed + delta).isClean
+#guard (epsilon.embed / delta).isClean = false
 #guard epsilon.sign = 1
 #guard (epsilon - 1).sign = -1
 #guard (epsilon - epsilon).sign = 0
