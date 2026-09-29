@@ -137,7 +137,8 @@ def verify_assembly(row, index):
         require(actual == entry["multiplicity"], "wrong assembled root multiplicity")
         selected.append(value)
     if index == 18:
-        require((rcf.one, 2) in points, "nonzero cut point or its multiplicity was lost")
+        require((rcf.one, 2) in points,
+                "nonzero cut-point fixture did not exercise a bisection point")
     require(all(a != b for i, a in enumerate(selected) for b in selected[i+1:]),
             "assembled root duplicated")
     require(sorted(selected) == sorted(roots), "assembled root coverage differs from exact RCF")
