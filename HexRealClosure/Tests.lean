@@ -8,10 +8,11 @@ module
 public import HexRealClosure.Yun
 public import HexRealClosure.Bounds
 public import HexRealClosure.Deflation
+public import HexRealClosure.BisectionTests
+public import HexRealClosure.ZeroFactor
 public import HexRealClosure.BaseTests
 public import HexRealClosure.BasePolynomialTests
 public import HexRealClosure.BaseCatalogTests
-public import HexRealClosure.ZeroFactor
 public import HexRealClosure.AlgebraicTests
 public import HexRealClosure.AlgebraicReencodeTests
 public import HexRealClosure.QAdjoinTests

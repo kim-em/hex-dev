@@ -293,7 +293,7 @@ lean_lib HexRealClosure where
 
 @[default_target]
 lean_lib HexRealClosureTests where
-  globs := #[.one `HexRealClosure.Tests]
+  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests, .one `HexRealClosure.RootFactorsTests]
 
 @[default_target]
 lean_lib HexRealClosureMathlib where
@@ -629,9 +629,17 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element, `HexRealClosureMathlib.QAdjoin,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
     `HexRealClosureMathlib.YunInvariant, `HexRealClosureMathlib.Bounds,
-    `HexRealClosureMathlib.Deflation, `HexRealClosureMathlib.ZeroFactor,
+    `HexRealClosureMathlib.Deflation, `HexRealClosureMathlib.Bisection,
+    `HexRealClosureMathlib.BisectionRoots, `HexRealClosureMathlib.BisectionFrontier,
+    `HexRealClosureMathlib.BisectionCounts, `HexRealClosureMathlib.Isolation,
+    `HexRealClosureMathlib.BisectionFactor, `HexRealClosureMathlib.IsolationFactor,
+    `HexRealClosureMathlib.ZeroFactor, `HexRealClosureMathlib.IsolationRoots,
+    `HexRealClosureMathlib.RootOrder, `HexRealClosureMathlib.RootFactors,
     `HexRealClosureMathlib.Ambient, `HexRealClosureMathlib.AmbientTests,
     `HexRealClosureMathlib.Union, `HexRealClosureMathlib.UnionTests].map Glob.one
+
+lean_exe hexrealclosure_root_order_tests where
+  root := `HexRealClosure.RootOrderTests
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
@@ -1139,6 +1147,8 @@ lean_lib HexConformance where
       `HexSignDetMathlib.RootListConformance, `HexSignDetMathlib.RefinementConformance,
       `HexSignDetMathlib.ConvertConformance].map Glob.one
 
+    ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests].map Glob.one
+
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]
 
@@ -1618,6 +1628,10 @@ lean_exe hexrealclosure_bench where
 lean_exe hexrealclosure_bounds_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.BoundsConformance
+
+lean_exe hexrealclosure_isolation_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.IsolationConformance
 
 lean_exe hexrealclosure_deflation_conformance where
   srcDir := "conformance"
