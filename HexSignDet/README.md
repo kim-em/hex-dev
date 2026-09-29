@@ -375,7 +375,9 @@ set is contained in the original domain. The output preserves that root and
 has fresh evidence bound to the new interval. The old validated partial word
 supplies uniqueness, so this proof applies to noninjective representations
 and non-Archimedean coefficient interpretations without a general Thom
-injectivity theorem. `Descriptor.reencoding_rows` proves the unique joint row
+injectivity theorem. `Descriptor.buildReencoding_congr` also permits a differently
+stored head with a zero difference from the original polynomial. Fresh evidence
+retains the new literal head binding. `Descriptor.reencoding_rows` proves the unique joint row
 whenever any target contains the source root; establishing uniqueness from a
 new head's derivative word alone remains a separate foundation requirement.
 `Descriptor.buildComparison` re-encodes both roots on the common head over the

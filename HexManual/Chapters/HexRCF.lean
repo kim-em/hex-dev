@@ -1083,8 +1083,12 @@ polynomial containing that root. Its hypotheses describe the input interval;
 they do not assume a successful computation. The proof uses the old validated
 selection's uniqueness and the proved shared Sturm–Tarski theorem. It applies to
 generic lawful coefficients, including non-Archimedean interpretations, without
-assuming rational isolating bounds. General success after changing the defining
-polynomial still requires the separate Thom foundations.
+assuming rational isolating bounds.
+{name}`Hex.SignDet.Descriptor.buildReencoding_congr` also covers different stored
+coefficients representing the same polynomial, tested by a zero difference;
+the producer builds fresh evidence bound to the new representation.
+General success for a different mathematical defining polynomial requires the
+separate Thom foundations.
 A coefficient conversion lets a selected root participate in queries over a
 larger coefficient field. Here the source selects √2 over the rationals. Moving
 its descriptor into the existing field ℚ(∛2) allows a query comparing it with ∛2:

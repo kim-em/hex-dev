@@ -176,7 +176,8 @@ def changedHeadPasses : Bool :=
   match Descriptor.validate sign 7 source with
   | none => false
   | some d =>
-    decide (target ≠ source.head) && (target - source.head).isZero &&
+    source.check sign 7 d.evidence &&
+      decide (target ≠ source.head) && (target - source.head).isZero &&
       !({source with head := target}).check sign 7 d.evidence &&
       match d.buildReencoding target source.lower source.upper with
       | .ok (some r) =>
@@ -185,7 +186,8 @@ def changedHeadPasses : Bool :=
           r.target.raw.signs == [1, 1] &&
           r.target.signAt (HexPoly.InterpretTests.x - DensePoly.C 1) == 0 &&
           r.target.raw.check sign 7 r.target.evidence &&
-          !r.target.raw.check sign 7 d.evidence &&
+          !r.target.evidence.check sign 7 source.head source.lower source.upper
+            r.target.raw.queries &&
           d.checkReencoding r.target target source.lower source.upper r.evidence
       | _ => false
 
