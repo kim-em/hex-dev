@@ -1,9 +1,10 @@
 {
-  "scope": "Additional committed analysis files; original manifest retained",
+  "scope": "Additional committed analyses; original manifest retained",
   "sha256": {
-    "reanalyse.py": "75f59c3a4c46bb76b31f6ce627e3c73438f8ffbedf742f78a435c777a421d44b",
-    "reanalysis.json": "80e40da5bbcfbf8e2645ac6a2166b80e61d026add077a65fd168fd39666004f9",
-    "frame-allocation-counts.json": "1a2c0a900522c3be1623c47a96906c65be3ec00bb9e4b6b6471d3d9162317bd3",
-    "analysis-addendum.json": "6b6a8c72453d486dd34f1ec4e22426186b05905ef8e8b6e029112246a662e741"
+    "reanalyse.py": "e6fe247ad6207711ac81ec4cbad5e83ccef1d3033badc3663fcd60d3ae764c41",
+    "reanalysis.json": "79fbcb7d3329802b6383f1e4a68f106f4800d3120a6b86977b26cd52189adaab",
+    "frame-allocation-counts.json": "67c79ab125db6324b81a77fd65ee6c2fa2974e73eaac76bef02a4df3ffa81f3c",
+    "analysis-addendum.json": "9cb3cefc084fb9b28a847f329bc1e5306656dd26dae4b0362886fc1825f4c392",
+    "callback-frame-allocation-counts.json": "9b31393b117d73ebad047031c3de627d718a504c31fe41082b2b8340b4457ac5"
   }
 }

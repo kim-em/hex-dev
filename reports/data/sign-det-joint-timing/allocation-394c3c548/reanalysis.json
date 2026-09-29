@@ -4,6 +4,9 @@
   "filtered_stack_calls": 772119942,
   "exact_callback_stack_calls": 385922080,
   "other_filtered_stack_calls": 386197862,
+  "other_stacks_with_preparation_frame": 386040114,
+  "other_stacks_without_preparation_or_callback": 157748,
+  "callback_calls_upper_bound_within_filtered_stacks": 386079828,
   "folded_stack_rows": 3982647,
   "callback_frame_pattern": "^lp_Hex_Hex_SignDetBench_Joint_runComparison(?:___redArg|___boxed)?$",
   "callback_frame_variants": {

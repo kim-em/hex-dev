@@ -182,13 +182,16 @@ class JointTimingTests(unittest.TestCase):
             original = json.loads((directory/"artifacts.json").read_text())
             hashes = original.get("sha256", original.get("artifacts", {}))
             additional = json.loads((directory/"analysis-artifacts.json").read_text())["sha256"]
+            raw_only = ({"heaptrack.zst", "comparison-allocations.stacks"} if label == "allocation"
+                        else {"perf.data", "perf-script.txt", "summary.json", "perf-ip.txt", "perf-ip-pids.txt"})
             for name, digest in {**hashes, **additional}.items():
                 target = directory/name
                 self.assertEqual(Path(name).name, name)
-                if target.exists():
+                if name not in raw_only:
+                    self.assertTrue(target.is_file(), name)
                     self.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest)
-            self.assertEqual(set(hashes) | set(additional) | {"artifacts.json", "analysis-artifacts.json"},
-                             set(hashes) | {p.name for p in directory.iterdir() if p.is_file()})
+            self.assertEqual((set(hashes)-raw_only) | set(additional) | {"artifacts.json", "analysis-artifacts.json"},
+                             {p.name for p in directory.iterdir() if p.is_file()})
         profile = base/"profile-394c3c548"
         leaves = json.loads((profile/"leaf-categories.json").read_text())
         ips = json.loads((profile/"ip-summary.json").read_text())
@@ -204,8 +207,24 @@ class JointTimingTests(unittest.TestCase):
         self.assertEqual(derived["exact_callback_stack_calls"], original["exact_callback_stack_allocation_calls"])
         self.assertEqual(derived["other_filtered_stack_calls"], original["other_filtered_stack_allocation_calls"])
         frames = json.loads((allocation/"frame-allocation-counts.json").read_text())["frames"]
+        self.assertNotIn("", frames)
         for frame, count in derived["callback_frame_variants"].items():
             self.assertEqual(frames[frame], count)
+        self.assertEqual(frames["__gmp_default_allocate"] + frames["__gmp_default_reallocate"],
+                         derived["filtered_stack_calls"])
+        histogram = [tuple(map(int, row.split())) for row in
+                     (allocation/"comparison-histogram.tsv").read_text().splitlines()]
+        self.assertEqual(sum(count for _, count in histogram), derived["whole_process_intercepted_calls"])
+        self.assertEqual(sum(size*count for size, count in histogram), derived["whole_process_requested_bytes"])
+        self.assertEqual(derived["whole_process_intercepted_calls"], original["whole_process_allocation_calls"])
+        self.assertEqual(derived["whole_process_requested_bytes"], original["whole_process_requested_bytes"])
+        inclusive = json.loads((profile/"inclusive-summary.json").read_text())
+        diagnostics = json.loads((profile/"diagnostics.json").read_text())
+        self.assertEqual(inclusive["diagnostics"], diagnostics)
+        self.assertEqual(inclusive["samples"], ips["operation_samples"])
+        self.assertGreaterEqual(inclusive["classified_percent"], 90)
+        self.assertEqual(diagnostics["confidence"], "passed")
+        self.assertEqual(diagnostics["sensitivity"]["verdict"], "passed")
 
     def test_pair_header_and_summary_environment_rejected(self):
         names, rows = self.pair()
