@@ -112,15 +112,21 @@ private meta def dispatchHandlers (target : Expr)
     | .proved proof =>
         if proof.hasMVar then
           throwError "rcf: handler {name} returned an unresolved proof"
-        -- Share repeated literals so the ordinary kernel can reuse its
-        -- expression cache while validating the complete candidate.
-        let proof := ShareCommon.shareCommon proof
-        profileitM Exception "rcf handler candidate check" (← getOptions) do
-          checkWithKernel proof
+        -- Sharing is also needed by type inference for certificate literals.
+        let proof := ShareCommon.shareCommon' proof
         let agrees ← profileitM Exception "rcf handler goal agreement" (← getOptions) do
           withNewMCtxDepth <| isDefEq (← inferType proof) target
         unless agrees do
           throwError "rcf: handler {name} proposed a proof of a different goal"
+        checkAxioms name proof
+        if (← getEnv).hasUnsafe proof then
+          throwError "rcf: handler {name} proposed a proof using an unsafe declaration"
+        -- A fresh auxiliary theorem checks the complete candidate once with
+        -- the ordinary kernel's resource limits and cancellation token.
+        -- Disable caching: another proof of this type cannot validate this one.
+        let proof ← profileitM Exception "rcf handler candidate check" (← getOptions) do
+          withOptions (fun opts => debug.skipKernelTC.set (Elab.async.set opts false) false) do
+            mkAuxTheorem target proof (zetaDelta := true) (cache := false)
         checkAxioms name proof
         return proof
   throwError reason.message

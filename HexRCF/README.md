@@ -57,11 +57,18 @@ failure, or returns a proof checked against the original goal. Rational solver
 failures never dispatch to another handler. This interface does not itself
 provide real algebraic or named-constant coefficient support.
 
-Before accepting a handler result, the base shares repeated expression nodes
-and checks the complete proof with Lean's ordinary kernel. It then checks its
-type against the original goal without assigning the goal's metavariables,
-and audits its transitive axiom dependencies. Malformed terms, unresolved
-proofs, different goals and admitted dependencies are rejected.
+Before accepting a handler result, the base checks its type against the
+original goal without assigning the goal's metavariables and audits its axiom
+dependencies. It shares repeated expression nodes and closes the candidate
+over its local variables as a fresh auxiliary theorem. Lean's ordinary kernel
+checks this theorem synchronously with the configured heartbeat and recursion
+limits and cancellation token. The resulting theorem is also audited, then
+used in the final proof. Malformed terms, unresolved proofs, different goals
+admitted dependencies and unsafe declarations are rejected. Elaboration has
+its own heartbeat budget; the auxiliary theorem receives a separate kernel
+budget. Closing substitutes let-bound locals without evaluating certificate
+checks in the elaborator. The synchronous check can wait for
+earlier background declaration checks to finish.
 
 # Verification
 

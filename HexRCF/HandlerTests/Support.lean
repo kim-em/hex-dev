@@ -35,6 +35,8 @@ end
 meta initialize calls : IO.Ref (Array Nat) ← IO.mkRef #[]
 meta initialize probes : IO.Ref (Array MVarId) ← IO.mkRef #[]
 
+unsafe def unsafeIdentity (n : Nat) : Nat := n
+
 private meta def record (n : Nat) : MetaM Unit := do
   calls.modify (·.push n)
 
@@ -119,6 +121,39 @@ meta def assertRestored : MetaM Unit := do
       -- though beta reduction would erase it from the candidate proof.
       let forbidden := mkConst ``sorryAx [.zero]
       return .proved (mkApp (mkLambda `unused .default (← inferType forbidden) proof) forbidden)
+  | 16 =>
+      let proof ← forallTelescope target fun xs body => do
+        let some (_, lhs, _) := body.eq? | throwError "expected equality"
+        mkLambdaFVars xs (← mkEqRefl lhs)
+      -- The result type agrees immediately. Validating its unused argument
+      -- requires reducing a recursor, and must obey the kernel's depth limit.
+      let nat := mkConst ``Nat
+      let motive := mkLambda `n .default nat nat
+      let step := mkLambda `n .default nat (mkLambda `a .default nat (mkBVar 0))
+      let reduced := mkAppN (mkConst ``Nat.rec [.succ .zero])
+        #[motive, mkNatLit 0, step, mkNatLit 10000]
+      let argumentType ← mkEq reduced (mkNatLit 0)
+      return .proved (mkApp (mkLambda `unused .default argumentType proof)
+        (← mkEqRefl (mkNatLit 0)))
+  | 17 =>
+      -- A free variable created inside the handler cannot escape its scope.
+      withLocalDeclD `escaped target fun escaped => return .proved escaped
+  | 18 =>
+      let some hypothesis := (← getLCtx).findFromUserName? `assigned
+        | throwError "missing assigned hypothesis"
+      return .proved hypothesis.toExpr
+  | 19 =>
+      let proof ← forallTelescope target fun xs body => do
+        let some (_, lhs, _) := body.eq? | throwError "expected equality"
+        mkLambdaFVars xs (← mkEqRefl lhs)
+      withLocalDeclD `escaped (mkConst ``True) fun escaped =>
+        return .proved (mkApp (mkLambda `unused .default (mkConst ``True) proof) escaped)
+  | 20 =>
+      let proof ← forallTelescope target fun xs body => do
+        let some (_, lhs, _) := body.eq? | throwError "expected equality"
+        mkLambdaFVars xs (← mkEqRefl lhs)
+      return .proved (mkApp (mkLambda `unused .default
+        (← mkArrow (mkConst ``Nat) (mkConst ``Nat)) proof) (mkConst ``unsafeIdentity))
   | _ => throwError "unknown test case"
 
 @[rcf_handler] meta def aDecline : Handler := fun _ => do

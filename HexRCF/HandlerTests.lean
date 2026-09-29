@@ -80,6 +80,15 @@ example : ∀ x : ℝ, x + Real.pi = x + Real.pi := by
   run_tac runCase 11 (some "forbidden axiom sorryAx")
   run_tac runCase 14 (some "forbidden axiom sorryAx")
   run_tac runCase 15 (some "forbidden axiom sorryAx")
+  run_tac withOptions (maxRecDepth.set · 64) <|
+    runCase 16 (some "(kernel) deep recursion detected")
+  run_tac withOptions (fun opts => debug.skipKernelTC.set (maxRecDepth.set opts 64) true) <|
+    runCase 16 (some "(kernel) deep recursion detected")
+  run_tac withOptions (fun opts => Elab.async.set (maxRecDepth.set opts 64) true) <|
+    runCase 16 (some "(kernel) deep recursion detected")
+  run_tac runCase 17 (some "unknown free variable")
+  run_tac runCase 19 (some "unknown free variable")
+  run_tac runCase 20 (some "unsafe declaration")
   exact fun _ => rfl
 
 example : ∃ x : ℝ, x + Real.pi = x + Real.pi := by
@@ -167,6 +176,19 @@ run_elab do
     throwError "unexpected failure: {error.toMessageData}"
   if ← unknown.mvarId!.isAssigned then throwError "changed target leaked"
   unless (← calls.get) == #[1, 2] do throwError "incorrect attempts"
+
+-- Assigned metavariables in local hypothesis types are instantiated when
+-- the candidate is closed for kernel checking.
+run_elab do
+  let target ← Term.elabType (← `(term| ∀ x : ℝ, x + Real.pi = x + Real.pi))
+  let hypothesisType ← mkFreshExprMVar (mkSort .zero)
+  withLocalDeclD `assigned hypothesisType fun _ => do
+    hypothesisType.mvarId!.assign target
+    calls.set #[]
+    let proof ← withOptions (rcf.testMode.set · 18) <| proveGoal target
+    let lctx ← instantiateLCtxMVars (← getLCtx)
+    withLCtx lctx (← getLocalInstances) <| checkWithKernel proof
+    unless (← calls.get) == #[1, 2] do throwError "incorrect attempts"
 
 /-- Explicit local equalities permit dispatch, with the original goal intact. -/
 theorem aliasForward (a : ℝ) (h : a = Real.pi) : ∀ x : ℝ, x + a = x + Real.pi := by

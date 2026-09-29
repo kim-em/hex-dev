@@ -754,11 +754,15 @@ example : ∃ x : ℝ,
 example : ∀ x : ℝ,
     (x - computedCoefficient.toReal) ^ 2 = 0 → 1 < x ∧ x < 3 / 2 := by
   rcf
+
+example : ∃ x : ℝ,
+    (x - computedCoefficient.toReal) ^ 2 = 0 ∧ 1 < x ∧ x < 3 / 2 := by
+  rcf
 ```
 
-The last example uses the actual `QAdjoin` coordinate `(a² + 1) / 2`
-constructed above, where `a` is the selected cube root of two. It checks the
-location of a repeated root over this nonquadratic coefficient field.
+The last two examples use the actual `QAdjoin` coordinate `(a² + 1) / 2`
+constructed above, where `a` is the selected cube root of two. They check both
+the location and existence of a repeated root over this nonquadratic field.
 Repeated factors are allowed in the user's polynomials; the internal root
 domain used for sign determination is squarefree. These examples use the
 proved fixed-field replay and root-sum results, and their proofs depend only
