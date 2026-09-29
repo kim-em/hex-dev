@@ -456,9 +456,9 @@ its stored fraction through the existing proof of equality of the complete
 native and semantic coefficient dictionaries, and preserves that element's
 actual stored sign at an ordinary real parameter.
 
-Algebraic representative transport, recursive algebraic replay specialization
-and successive infinitesimal parameter choices remain required finite-sign
-realization work. These helpers
+Evaluation of polynomial representatives at an algebraic root, recursive
+algebraic replay specialization and successive infinitesimal parameter choices
+remain required finite-sign realization work. These helpers
 operate on coefficient data with a supplied ordered embedding into ℝ in the
 companion; they add no native constructor or runtime field instance for formal
 real expressions.
@@ -529,9 +529,9 @@ the entire supplied BKR tree with its exact child query slices, including
 empty supports. Its extracted sparse rows and every condition's count stay
 unchanged. `Replay.table_near` provides one positive neighborhood whose real
 parameters all admit that same checked table. These theorems require the
-prescribed ordered coefficient embedding into ℝ. Algebraic representative
-transport, DAG sharing, recursive algebraic replay and successive
-infinitesimal specialization remain separate obligations.
+prescribed ordered coefficient embedding into ℝ. Evaluation of polynomial
+representatives at an algebraic root, DAG sharing, recursive algebraic replay
+and successive infinitesimal specialization remain separate obligations.
 
 `Specialize.counts_near` uses the proved root-count meaning of the specialized
 BKR replay over ℝ. At every parameter in one positive neighborhood, the
@@ -563,7 +563,7 @@ original queries, including default zero reads at malformed indices.
 
 `Descriptor.specialize` constructs a validated real descriptor through the
 existing `ofTable` API. `specialize_checked` proves that checking the exact
-mapped raw descriptor and original replay returns this result. One positive
+mapped raw descriptor and mapped replay returns this result. One positive
 neighborhood supplies these validated descriptors and their actual recomputed
 formal-derivative queries. `selected_root_near` proves that all signs returned
 by source `SelectedSigns` hold at the root of the validated specialized
