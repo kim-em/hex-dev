@@ -30,7 +30,7 @@ RESULT_KEYS = {
 }
 CONFIG = {"param_floor": 3, "param_ceiling": 63, "outer_trials": TRIALS,
           "param_schedule": {"kind": "custom", "params": DEGREES},
-          "target_inner_nanos": 100000000, "max_seconds_per_call": 60,
+          "target_inner_nanos": 100000000, "max_seconds_per_call": 180,
           "signal_floor_multiplier": 1, "cache_mode": "warm",
           "verdict_warmup_fraction": 0.2, "slope_tolerance": 0.15,
           "narrow_range_noise_floor": 1.5}

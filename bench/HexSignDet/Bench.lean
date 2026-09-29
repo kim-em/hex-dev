@@ -141,7 +141,8 @@ setup_benchmark runGraph s => s
 2n, and each joint list has 3n+1 entries. The model counts coefficient
 operations: leaf squares give Ω(n³); moment/head-derivative products and
 pseudo-division contribute O(n²) per row over O(n) rows. The actual direct
-power algorithm also computes unused squares. Production includes replay. Candidate dimensions stay at most four; every
+power algorithm also computes unused squares. Production includes replay.
+Candidate dimensions stay at most four; every
 moment row has exponent sum at most two. The sparse binomial/monomial PRS
 has bounded chain length. Remaining query-slot scans sum to O(n² log n).
 The inventory checks these structural hypotheses. Rational bit sizes grow;
@@ -158,7 +159,7 @@ setup_benchmark Joint.runCompletion n => n^3
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 60
+    maxSecondsPerCall := 180
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for four common-head re-encoding/descriptor tables; see the joint derivation above.
@@ -171,7 +172,7 @@ setup_benchmark Joint.runComparison n => n^3
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 60
+    maxSecondsPerCall := 180
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for both joint tables with reduced products; see the joint derivation above.
@@ -184,7 +185,7 @@ setup_benchmark Joint.runReduced n => n^3
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 60
+    maxSecondsPerCall := 180
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for both joint tables with direct products; see the joint derivation above.
@@ -197,7 +198,7 @@ setup_benchmark Joint.runDirect n => n^3
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 60
+    maxSecondsPerCall := 180
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for literal reduced evidence checks; see the joint derivation above.
@@ -210,7 +211,7 @@ setup_benchmark Joint.runCheckReduced n => n^3
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 60
+    maxSecondsPerCall := 180
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for literal direct evidence checks; see the joint derivation above.
@@ -223,7 +224,7 @@ setup_benchmark Joint.runCheckDirect n => n^3
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 60
+    maxSecondsPerCall := 180
   }
 
 private def intBits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1

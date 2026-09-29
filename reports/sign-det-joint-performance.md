@@ -101,8 +101,9 @@ retained and investigated rather than hidden by changing the model afterward.
 The explicit degree schedule is 3, 7, 15, 31 and 63, with six trial-major
 rounds. Reduced/direct production and replay use adjacent alternating AB/BA
 arms. Completion and comparison each use the ordinary shared LeanBench
-schedule. The target inner duration is 100 ms; a 60-second per-call cap is an
-operational safeguard. Every completed observation is retained. One CPU is
+schedule. The target inner duration is 100 ms; a 180-second child-process cap is an
+operational safeguard that includes preparation and calibration, although the
+reported per-call timing excludes them. Every completed observation is retained. One CPU is
 automatically leased, and host activity is recorded without an idleness test
 or sample filtering.
 
