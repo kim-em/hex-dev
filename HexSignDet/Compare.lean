@@ -32,7 +32,8 @@ variable [Neg E] [Inv E] [Div E]
 The re-encoding queries retain each original open interval, so a root of one
 head at the other's endpoint cannot invalidate the common domain. Internal
 failures remain diagnostic; the companion proves the guarded full-word
-comparison total, while common-product producer totality remains required. -/
+comparison total on full descriptors of one head; totality of the actual
+common-product comparison producer remains required. -/
 def Descriptor.buildComparison {sign : E → Int} {context : Ctx}
     (left right : Descriptor E Ctx sign context) : Except BuildError (Comparison left right) :=
   match CommonProduct.build context left.raw.head right.raw.head with
