@@ -93,6 +93,14 @@ variable {E : Type} [Lean.Grind.Field E] [DecidableEq E]
 @[expose] def graph (q square : E) : Dag E Nat :=
   ⟨#[⟨leaf q square, none⟩, ⟨parent q, some (0, 0)⟩], 1⟩
 
+/-- Mutate the first leaf's second moment, retaining every other literal. -/
+@[expose] def forge (g : Dag E Nat) : Dag E Nat :=
+  {g with entries := g.entries.modify 0 fun e =>
+    let moments := e.node.moments.modify 1 fun t =>
+      let initial := {t.remainders.initial with leftScale := 2}
+      {t with remainders := {t.remainders with initial := initial}}
+    {e with node := {e.node with moments := moments}}}
+
 /-- The ordinary graph checker on supplied coefficient values. The optional
 forgery changes a positive initial scale without changing any matrix, query,
 endpoint, context or reported sign. -/
@@ -105,25 +113,41 @@ endpoint, context or reported sign. -/
   let g := graph c.generator c.square
   let g := if stale then {g with entries := g.entries.modify 0 fun e =>
     {e with node := {e.node with context := 8}}} else g
-  let evidence := if forged then
-    {g with entries := g.entries.modify 0 fun e =>
-      let moments := e.node.moments.modify 1 fun t =>
-        let initial := {t.remainders.initial with leftScale := 2}
-        {t with remainders := {t.remainders with initial := initial}}
-      {e with node := {e.node with moments := moments}}}
-    else g
+  let evidence := if forged then forge g else g
   evidence.check c.sign 7 head .negInf .posInf
     [DensePoly.C c.generator, DensePoly.C c.generator]
 
-/-- Pin the positive-scale guard and the unequal polynomial values used by
-our arithmetic forgery. This tests the rejection cause separately from replay. -/
+/-- The actual forged moment passes every chain guard before the initial
+identity, fails that identity and chain replay, while the original chain passes. -/
 @[expose] def scaleFailure (depth : Nat) : Bool :=
   let c := coefficients depth
   letI := c.field
   letI := c.equality
   letI : NatCast c.Carrier := Lean.Grind.Semiring.natCast
-  decide (c.sign 2 = 1) &&
-    !SignedRemainderChain.subIsZero (DensePoly.scale 2 (DensePoly.C c.generator))
-      (DensePoly.C c.generator)
+  let g := forge (graph c.generator c.square)
+  match g.entries[0]? with
+  | none => false
+  | some entry =>
+    match entry.node.moments.toArray[1]? with
+    | none => false
+    | some moment =>
+      let cert := moment.remainders
+      let p := moment.head
+      let f := moment.queryPoly
+      let n := cert.chain.size
+      let passedGuards := !p.isZero && decide (0 < n) && decide (n ≤ p.size) &&
+        decide (cert.chain[0]? = some p) &&
+        decide (cert.degrees = Hex.Array.map' DensePoly.natDegree cert.chain) &&
+        cert.chain.all (fun r => !r.isZero) &&
+        (Array.range (n - 1)).all (fun i =>
+          (cert.chain.getD (i + 1) 0).size < (cert.chain.getD i 0).size) &&
+        decide (c.sign cert.initial.leftScale = 1) &&
+        decide (c.sign cert.initial.rightScale = 1)
+      let identity := SignedRemainderChain.subIsZero
+        (DensePoly.scale cert.initial.leftScale (f * p.derivative))
+        (cert.initial.quotient * p +
+          DensePoly.scale cert.initial.rightScale (cert.chain.getD 1 0))
+      passedGuards && !identity && !cert.check c.sign p f &&
+        (query c.generator).remainders.check c.sign head (DensePoly.C c.generator)
 
 end Hex.SignDetMathlib.ProofProbe.Nested

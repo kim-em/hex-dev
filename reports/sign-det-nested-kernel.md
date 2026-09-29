@@ -51,14 +51,21 @@ the first fraction's square through literal normalization certificates, where
 checked by the kernel. Graph acceptance and rejection of a positive but wrong
 square exercise nonunit-denominator multiplication. Separate arithmetic proofs
 compute addition with distinct denominators and self-division with a nonunit
-polynomial cancellation factor. The seven-pair sweep described below measures
-the polynomial-generator family, not these additional fraction probes.
+polynomial cancellation factor. The archived v1 seven-pair collection measures
+the polynomial-generator family, not these additional fraction probes. The current
+twenty-pair sweep also includes fraction arithmetic, graph acceptance/rejection,
+and separate replay of all eight supplied normalization certificates. The
+original `ofCert` declarations remain warm imports for those probes. Addition
+uses distinct coprime denominators; nonconstant polynomial cancellation is
+exercised by self-division.
 
 Acceptance verifies the literal field identities, endpoint signs, query
 bindings, matrix identities and child support evidence. Arithmetic rejection
 changes one positive initial scale from `1` to `2`; context, endpoints, queries,
-matrices and reported signs remain unchanged. Rejection therefore needs the
-polynomial identity check. The separate stale-context probe changes the leaf's
+matrices and reported signs remain unchanged. Separate `ArithmeticCause` modules read the actual forged moment, prove every
+chain guard before its initial identity passes, and prove that identity and
+the chain replay fail while the original chain passes. Their costs are separate
+from the graph rejection modules. The separate stale-context probe changes the leaf's
 context and exercises early rejection.
 
 The proof scripts use proved checker equalities to compute the uncached
@@ -76,14 +83,17 @@ arithmetic rejection and stale-context rejection at depths one and two, plus
 the fraction probes. The explicit manual target
 `HexSignDetMathlibNestedProofProbe` contains the more memory-intensive
 depth-three proofs, including stale-context rejection. The full default
-`lake build` does not include that manual target.
+`lake build` does not include that manual target. Run
+`lake build HexSignDetMathlibNestedProofProbe` after changing the nested inputs
+or their arithmetic dependencies; allow roughly 18 GiB resident memory for
+the observed depth-three acceptance module.
 
 ## Measurement protocol
 
 `scripts/bench/sign_det_nested_kernel.py` uses the shared fresh-module harness.
 It compares each proof module with a module having the same imports and no
 proof body. Imports are warm; only that module's generated outputs are removed
-before each measured build. Six trial-major rounds rotate the seven pairs and
+before each measured build. Six trial-major rounds rotate the twenty pairs and
 alternate adjacent `AB`/`BA` order. The automatically selected CPU is leased,
 not required to be idle. Raw wall times, child CPU times, peak RSS, compiler
 output, axiom inventories, source hashes and host context are retained.
@@ -110,7 +120,7 @@ CPU 1, with one Lean thread. Lean is 4.35.0-rc3, Mathlib is
 `ff72a2e86930d5268476ee33d55ab054ed1c3ea5`. The collection used a separate
 owned build directory with warm dependencies. Repository and dependency
 checkouts were clean. Every candidate inventory contained only the three
-standard axioms, and every baseline inventory was empty.
+standard axioms. Baselines declare nothing and print no inventory.
 
 | Depth | Operation | Import-only median (s) | Proof median (s) | Median paired difference (s) | Proof peak RSS median (GiB) |
 |---|---|---:|---:|---:|---:|
@@ -131,9 +141,9 @@ gates. No rerun was used, and host activity was retained with every arm.
 The recorded source predates the separate fraction probes, the depth-two/three
 stale-context probes, and the additional proofs identifying the arithmetic
 rejection cause. Those additions are not measured by this collection. Raw
-records retain schema v1 and its original metadata: its primary target names
-the manual library, and the stale-context summary omits some fixed graph
-sizes. All measured modules and source hashes are present. The current
+records retain schema v1 and its original metadata. The archived v1 source
+names the manual library as its primary target; the recorded stale-context
+summary omits some fixed graph sizes. All measured modules and source hashes are present. The current
 schema v2 identifies each pair's actual build target, gives consistent graph
 sizes, and includes this report in source provenance.
 
@@ -148,6 +158,19 @@ The archive reconstructs the measured checkout from the retained main
 ancestor `f53917bfc7f96a68491441222e7128ffee3bd916` and the exact patch.
 All 212 source hashes were verified against that checkout before archiving.
 The measurement commit need not remain in the merged branch's history.
+
+## Rational-function compatibility
+
+The existing rational-function certificate probes were remeasured at clean
+source `2616e53b0bd7de1d52896d06b9a968f270d5c76d`, using their unchanged
+six-round schedule and the shared retained-arm wrapper. All 72 completed arms
+remain in the [collection](data/sign-det-nested-kernel/2616e53b0-rationalfn/rationalfn-compatibility.json)
+and [sidecar](data/sign-det-nested-kernel/2616e53b0-rationalfn/rationalfn-compatibility.json.samples.jsonl),
+with [source reconstruction](data/sign-det-nested-kernel/2616e53b0-rationalfn/archive.json).
+The existing five-second fresh-module budgets passed. Replay and rejection
+medians ranged from 0.756 to 0.858 seconds, with approximately 0.817 GiB
+peak resident sets. This is a compatibility observation on this host, not a
+controlled before/after comparison or evidence for general normalization cost.
 
 ## Scope
 

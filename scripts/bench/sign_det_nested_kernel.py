@@ -25,36 +25,42 @@ def prefix(depth: int) -> str:
             "HexSignDetMathlib.NestedProofProbe.N3")
 
 
-PAIRS = tuple(
-    ProbePair(
-        f"depth-{depth}-{operation}",
-        ProbeModule(f"{prefix(depth)}.Baseline"),
-        ProbeModule(f"{prefix(depth)}.{operation}", AXIOMS,
-                    f"Hex.SignDetMathlib.{prefix(depth).split('.', 1)[1]}.{operation}"),
-        {"family": "literal-nested-coefficient-replay", "extension_depth": depth,
-         "operation": operation,
+def pair(depth: int, operation: str) -> ProbePair:
+    fraction = operation in ("AcceptFraction", "RejectProduct", "FieldArithmetic", "Certificates")
+    scalar = operation in ("FieldArithmetic", "Certificates")
+    stem = prefix(depth)
+    candidate = f"{stem}.{operation}"
+    baseline = f"{stem}.{'FractionBaseline' if fraction else 'Baseline'}"
+    scope = ("supplied fraction normalization checker proofs" if operation == "Certificates" else
+             "fraction addition and division" if scalar else
+             "actual forged chain guards and initial identity" if operation == "ArithmeticCause" else
+             "early literal context rejection" if operation == "RejectStale" else
+             "fresh-module proof of the actual graph checker result")
+    has_graph = not scalar
+    return ProbePair(
+        f"depth-{depth}-{operation}", ProbeModule(baseline),
+        ProbeModule(candidate, AXIOMS, f"Hex.SignDetMathlib.{candidate.split('.', 1)[1]}"),
+        {"family": ("literal-fraction-normalization" if operation == "Certificates" else
+                    "literal-fraction-field-arithmetic" if scalar else
+                    "literal-fraction-replay" if fraction else
+                    "literal-nested-coefficient-replay"),
+         "extension_depth": depth, "operation": operation,
          "build_target": ("HexSignDetMathlibProofProbe" if depth < 3 else
-                          "HexSignDetMathlibNestedProofProbe"), "degree": 1, "query_arity": 2,
-         "graph_nodes": 2, "graph_edges": 2, "distinct_leaf_references": 1,
-         "measurement_scope": "fresh-module proof of the actual graph checker result",
-         "excluded_costs": ["initial import build", "certificate production",
-                            "JSON parsing", "native execution", "semantic theorem application",
+                          "HexSignDetMathlibNestedProofProbe"),
+         "degree": 1 if has_graph else None, "query_arity": 2 if has_graph else 0,
+         "graph_nodes": 2 if has_graph else 0, "graph_edges": 2 if has_graph else 0,
+         "distinct_leaf_references": 1 if has_graph else 0,
+         "measurement_scope": scope,
+         "excluded_costs": ["initial import build", "certificate production", "JSON parsing",
+                            "native execution", "semantic theorem application",
                             "cross-level coefficient-sign proof DAG"]},
-    ) for depth in (1, 2, 3) for operation in ("Accept", "RejectArithmetic")
-) + (ProbePair(
-    "depth-1-RejectStale",
-    ProbeModule(f"{prefix(1)}.Baseline"),
-    ProbeModule(f"{prefix(1)}.RejectStale", AXIOMS,
-                "Hex.SignDetMathlib.ProofProbe.Nested.N1.RejectStale"),
-    {"family": "literal-nested-coefficient-replay", "extension_depth": 1,
-     "operation": "RejectStale", "degree": 1, "query_arity": 2,
-     "graph_nodes": 2, "graph_edges": 2, "distinct_leaf_references": 1,
-     "build_target": "HexSignDetMathlibProofProbe",
-     "measurement_scope": "early literal context rejection",
-     "excluded_costs": ["initial import build", "certificate production", "JSON parsing",
-                        "native execution", "semantic theorem application",
-                        "cross-level coefficient-sign proof DAG"]},
-),)
+    )
+
+
+PAIRS = tuple(pair(depth, operation) for depth in (1, 2, 3)
+              for operation in ("Accept", "RejectArithmetic", "RejectStale", "ArithmeticCause")) + \
+        tuple(pair(depth, operation) for depth in (1, 2)
+              for operation in ("AcceptFraction", "RejectProduct", "FieldArithmetic", "Certificates"))
 SPEC = SweepSpec(
     description=__doc__ or "Nested coefficient kernel replay costs",
     pairs=PAIRS,
@@ -66,6 +72,7 @@ SPEC = SweepSpec(
     retain_compiler_output=True,
     extra_sources=(Path("libraries.yml"), Path("SPEC/benchmarking.md"),
                    Path("reports/sign-det-nested-kernel.md"),
+                   Path("scripts/bench/test_sign_det_nested_kernel.py"),
                    Path("HexPolyFast/Division.lean"), Path("HexPolyFast/HalfGcd.lean"),
                    Path("HexPolyFast/Karatsuba.lean"), Path("HexRationalFn/Normalize.lean"),
                    Path("scripts/bench/structural_tactic_sweep.py")),

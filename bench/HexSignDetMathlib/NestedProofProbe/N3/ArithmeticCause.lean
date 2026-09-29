@@ -11,23 +11,21 @@ public meta import HexSignDet.Replay
 
 public section
 
-namespace Hex.SignDetMathlib.NestedProofProbe.N3.RejectArithmetic
+namespace Hex.SignDetMathlib.NestedProofProbe.N3.ArithmeticCause
 open Hex.SignDet Hex.SignDetMathlib.ProofProbe
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 4000000 in
-/-- A positive forged initial scale fails the actual polynomial identity check. -/
-theorem checked : Nested.check 3 false true = false := by
-  simp only [Nested.check, Dag.check, Dag.replay_eq, Dag.step_eq,
-    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
-    TarskiCertificate.check_eq, SignedRemainderChain.check,
+/-- The forged certificate fails its initial identity after all preceding guards pass. -/
+theorem checked : Nested.scaleFailure 3 = true := by
+  simp only [Nested.scaleFailure, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
-/-- info: 'Hex.SignDetMathlib.NestedProofProbe.N3.RejectArithmetic.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.NestedProofProbe.N3.ArithmeticCause.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms checked
 
 -- The external runner reads this unguarded inventory.
 #print axioms checked
-end Hex.SignDetMathlib.NestedProofProbe.N3.RejectArithmetic
+end Hex.SignDetMathlib.NestedProofProbe.N3.ArithmeticCause
