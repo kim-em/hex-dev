@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 import HexSignDet.Phases
 import HexSignDet.Small
+import HexSignDet.Joint
 import HexSignDet.Paired
 import HexSignDet.Maximal
 import LeanBench
@@ -191,6 +192,11 @@ def main (args : List String) : IO UInt32 :=
   else if args == ["inspect-phases"] then Hex.SignDetBench.inspectPhases
   else if args == ["inspect-small"] then Hex.SignDetBench.inspectSmall
   else if args == ["inspect-maximal"] then Hex.SignDetBench.inspectMaximal
+  else if args == ["inspect-joint"] then Hex.SignDetBench.Joint.inspect #[3, 7, 15, 31, 63]
+  else if let ["inspect-joint", degree] := args then
+    match degree.toNat? with
+    | some n => Hex.SignDetBench.Joint.inspect #[n]
+    | none => throw (IO.userError "expected an odd integer degree at least three")
   else if args == ["inspect-full"] then Hex.SignDetBench.inspectFull
   else if let ["paired-small", path] := args then
     Hex.SignDetBench.paired ``Hex.SignDetBench.runSmallReduced ``Hex.SignDetBench.runSmallFull path
@@ -198,5 +204,6 @@ def main (args : List String) : IO UInt32 :=
     match Hex.SignDetBench.buildMaximal 2 with
     | .ok _ => pure ()
     | .error message => throw (IO.userError s!"maximal-support fixture failed: {message}")
+    Hex.SignDetBench.Joint.verify
     LeanBench.Cli.dispatch args
   else LeanBench.Cli.dispatch args
