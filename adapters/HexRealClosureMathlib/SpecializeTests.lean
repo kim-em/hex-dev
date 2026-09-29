@@ -169,12 +169,13 @@ example (registry : BaseContext.Registry)
 and selected-query replay into ordinary real-root specialization. -/
 example {Ctx : Type} [DecidableEq Ctx] {context : Ctx}
     (d : Hex.SignDet.Descriptor (Hex.RationalFn Rat) Ctx
-      (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) context)
+      (Hex.OrderedFn.Infinitesimal.sign Hex.Sturm.orderSign) context)
     (qs : List (Hex.DensePoly (Hex.RationalFn Rat))) (s : Hex.SignDet.SelectedSigns d qs) :
     let values := s.values.toList
     letI : Lean.Grind.Field Rat := Field.toGrindField
     let data := Hex.RealClosure.Specialize.Native.evidence Lean.Grind.instFieldRat
       HexRationalFnMathlib.ratField_eq d qs s
+    HEq data.1 d ∧ HEq data.2.1 qs ∧ HEq data.2.2 s ∧
     ∃ η > (0 : ℝ), ∀ t, 0 < t → t < η →
       ∃ target : Hex.SignDet.Descriptor ℝ Ctx (fun x : ℝ => (SignType.sign x : Int)) context,
         target.raw = data.1.raw.specialize (Rat.castHom ℝ) t ∧
@@ -186,8 +187,11 @@ example {Ctx : Type} [DecidableEq Ctx] {context : Ctx}
           (data.2.1.map (fun q => polynomial (Rat.castHom ℝ) q t))
           (target.root (fun x : ℝ => x) (fun _ => Iff.rfl) rfl
             (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl)
-            (fun _ => rfl) (fun _ => rfl)) = values :=
-  Hex.RealClosure.Specialize.Native.selected_root_near Lean.Grind.instFieldRat
+            (fun _ => rfl) (fun _ => rfl)) = values := by
+  refine ⟨Hex.RealClosure.Specialize.Native.evidence_descriptor _ _ _ _ _,
+    Hex.RealClosure.Specialize.Native.evidence_queries _ _ _ _ _,
+    Hex.RealClosure.Specialize.Native.evidence_selected _ _ _ _ _, ?_⟩
+  exact Hex.RealClosure.Specialize.Native.selected_root_near Lean.Grind.instFieldRat
     HexRationalFnMathlib.ratField_eq (Rat.castHom ℝ) Rat.cast_strictMono d qs s
 
 end Native

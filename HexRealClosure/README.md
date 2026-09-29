@@ -575,7 +575,9 @@ the entire mapped original replay, using the public `ofReplay_data` equation.
 
 `Specialize.Native.evidence` transports the whole descriptor, query list and
 checked selected-sign replay through equality of the predecessor coefficient
-dictionaries. `Native.selected_root_near` then constructs the checked real
+dictionaries. Public heterogeneous-equality equations identify its descriptor,
+ordered queries and checked selected-sign certificate with their sources.
+`Native.selected_root_near` then constructs the checked real
 descriptor and proves its root signs. A consumer example uses the actual
 native rational dictionary, its proved compatibility equation and
 `Rat.castHom ℝ`, covering the first rational infinitesimal level.

@@ -319,6 +319,48 @@ def evidence (g : Lean.Grind.Field F) (compatible : Field.toGrindField (K := F) 
   exact fun d qs s => ⟨d, qs, s⟩
 
 omit [IsStrictOrderedRing F] in
+/-- Dictionary transport retains the source descriptor and its raw data and replay. -/
+theorem evidence_descriptor (g : Lean.Grind.Field F)
+    (compatible : Field.toGrindField (K := F) = g) :
+    letI : Lean.Grind.Field F := g
+    ∀ (d : Descriptor (Hex.RationalFn F) Ctx
+      (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) context)
+      (qs : List (Hex.DensePoly (Hex.RationalFn F))) (s : SelectedSigns d qs),
+    letI : Lean.Grind.Field F := Field.toGrindField
+    HEq (evidence g compatible d qs s).1 d := by
+  cases compatible
+  intros
+  rfl
+
+omit [IsStrictOrderedRing F] in
+/-- Dictionary transport retains the source ordered query polynomials. -/
+theorem evidence_queries (g : Lean.Grind.Field F)
+    (compatible : Field.toGrindField (K := F) = g) :
+    letI : Lean.Grind.Field F := g
+    ∀ (d : Descriptor (Hex.RationalFn F) Ctx
+      (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) context)
+      (qs : List (Hex.DensePoly (Hex.RationalFn F))) (s : SelectedSigns d qs),
+    letI : Lean.Grind.Field F := Field.toGrindField
+    HEq (evidence g compatible d qs s).2.1 qs := by
+  cases compatible
+  intros
+  rfl
+
+omit [IsStrictOrderedRing F] in
+/-- Dictionary transport retains the source checked selected-sign certificate. -/
+theorem evidence_selected (g : Lean.Grind.Field F)
+    (compatible : Field.toGrindField (K := F) = g) :
+    letI : Lean.Grind.Field F := g
+    ∀ (d : Descriptor (Hex.RationalFn F) Ctx
+      (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) context)
+      (qs : List (Hex.DensePoly (Hex.RationalFn F))) (s : SelectedSigns d qs),
+    letI : Lean.Grind.Field F := Field.toGrindField
+    HEq (evidence g compatible d qs s).2.2 s := by
+  cases compatible
+  intros
+  rfl
+
+omit [IsStrictOrderedRing F] in
 /-- Whole-dictionary transport preserves the recorded integer signs literally. -/
 theorem evidence_values (g : Lean.Grind.Field F)
     (compatible : Field.toGrindField (K := F) = g) :
@@ -404,3 +446,15 @@ end Hex.RealClosure.Specialize.Native
 /-- info: 'Hex.SignDet.Descriptor.specialize_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.specialize_evidence
+
+/-- info: 'Hex.RealClosure.Specialize.Native.evidence_descriptor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.Native.evidence_descriptor
+
+/-- info: 'Hex.RealClosure.Specialize.Native.evidence_queries' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.Native.evidence_queries
+
+/-- info: 'Hex.RealClosure.Specialize.Native.evidence_selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.Native.evidence_selected
