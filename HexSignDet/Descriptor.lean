@@ -41,6 +41,15 @@ def Descriptor.ofReplay? (sign : E → Int) (context : Ctx)
     Option (Descriptor E Ctx sign context) :=
   if h : raw.check sign context evidence = true then some ⟨raw, evidence, h⟩ else none
 
+/-- Validation changes only proof fields; this projection exposes its exact
+data and rejection result while keeping the descriptor constructor private. -/
+theorem Descriptor.ofReplay_data (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx) :
+    (ofReplay? sign context raw evidence).map (fun d => (d.raw, d.evidence)) =
+      if raw.check sign context evidence = true then some (raw, evidence) else none := by
+  unfold ofReplay?
+  split <;> rfl
+
 /-- Reuse an already checked table with exact input bindings and count one.
 The proof arguments avoid rerunning the same replay during row extraction. -/
 def Descriptor.ofTable {sign : E → Int} {context : Ctx}
