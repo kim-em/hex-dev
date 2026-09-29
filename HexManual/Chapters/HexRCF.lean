@@ -15,6 +15,7 @@ import HexSignDetMathlib.CompletionProducer
 import HexSignDetMathlib.TableProducer
 import HexSignDetMathlib.ReencodingProducer
 import HexSignDetMathlib.ReencodingRefinement
+import HexSignDetMathlib.ThomReencoding
 import HexSignDetMathlib.Convert
 
 import HexSignDetMathlib.QueryHandle
@@ -1089,8 +1090,12 @@ for every lawful coefficient interpretation when the selected root is absent
 from the target domain. Preparation and joint table construction are proved
 from the input; successful output is not assumed. The proof uses the shared
 proved root-sum theorem. It needs neither a root-separating interval nor a
-Thom ordering theorem. General success for a different defining polynomial
-when the root is present is a separate proof requirement. For an accepted re-encoding,
+Thom ordering theorem. Import `HexSignDetMathlib.ThomReencoding` for
+{name}`Hex.SignDet.Descriptor.buildReencoding_success`, which proves actual
+success for any valid target polynomial and interval containing the source root.
+It uses Tau Ceti Thom injectivity to establish a count-one target word; neither
+equality of defining polynomials nor a smaller interval is required.
+For an accepted re-encoding,
 {name}`Hex.SignDet.Reencoding.root_eq_source` proves that the new descriptor
 retains the source root.
 
@@ -1128,8 +1133,34 @@ assuming rational isolating bounds.
 {name}`Hex.SignDet.Descriptor.buildReencoding_congr` also covers different stored
 coefficients representing the same polynomial, tested by a zero difference;
 the producer builds fresh evidence bound to the new representation.
-General success for a different mathematical defining polynomial requires the
-separate Thom foundations.
+The general
+{name}`Hex.SignDet.Descriptor.buildReencoding_success` theorem also covers
+changing the mathematical defining polynomial and enlarging the interval.
+A different head can include additional roots. Here the source selects +α in
+`(0, 2)` with an empty partial word. The target `(x − α)(x + 1)` on the whole
+line also contains −1, which was neither a root of the source head nor in its
+interval. Re-encoding retains +α and builds fresh evidence for the target.
+
+```lean
+private def changedCubicHeadPasses : Bool :=
+  let bounded : RawDescriptor signsField Nat :=
+    ⟨7, signsHead, .finite 0, .finite 2, [], []⟩
+  let target := (signsX - DensePoly.C signsAlpha) * (signsX + 1)
+  match Descriptor.validate signsFieldSign 7 bounded with
+  | none => false
+  | some root =>
+    match root.buildReencoding target .negInf .posInf with
+    | .ok (some r) =>
+      r.target.raw.head == target && r.target.raw.signs == [1, 1] &&
+        r.target.signAt (signsX - DensePoly.C signsAlpha) == 0 &&
+        r.target.raw.check signsFieldSign 7 r.target.evidence &&
+        !r.target.evidence.check signsFieldSign 7 signsHead
+          .negInf .posInf r.target.raw.queries
+    | _ => false
+
+#guard changedCubicHeadPasses
+```
+
 A coefficient conversion lets a selected root participate in queries over a
 larger coefficient field. Here the source selects √2 over the rationals. Moving
 its descriptor into the existing field ℚ(∛2) allows a query comparing it with ∛2:
@@ -1213,7 +1244,8 @@ heads and isolating intervals, without a Thom-order assumption.
 exactly without using the root-sum theorem. The success and coverage results use
 the shared proved root-sum theorem. A general proof that
 enumeration succeeds on every valid domain and returns roots in mathematical
-order still requires the separate Thom foundation. This example checks the
+order remains required. The applicable full-word comparator is proved correct by
+{name}`Hex.SignDet.Descriptor.fullOrder_root`. This example checks the
 actual output; it does not discharge those general proof obligations.
 
 Two roots can be compared even if their defining polynomials differ. The
@@ -1299,8 +1331,11 @@ The sign-table and descriptor examples run checked producers and finite
 certificate checks; the changed sign vector above is rejected. The companion
 proves complete real-root counts, selected-root identity and signs using the
 proved root-sum theorem `HexRealRootsMathlib.Tarski.check_rootSum`.
-Strict root ordering still requires the Thom foundation from Tau Ceti, and the
-full library assignment retains its separate BKR/Thom foundation gate. The
+The full-word comparison uses Tau Ceti’s delivered Thom identity and order
+theorems through the companion. {name}`Hex.SignDet.Comparison.order_root`
+proves that all three orders returned by an accepted comparison agree with the
+original selected roots. Universal root-list and common-product comparison
+production remain separate proof requirements. The
 separate common-field conversion preserves the selected algebraic values by
 the proved `QAdjoin.common_get` theorem.
 

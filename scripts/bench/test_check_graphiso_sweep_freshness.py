@@ -59,6 +59,27 @@ class NativeDependencyTests(unittest.TestCase):
             self.assertTrue(check.lakefile_texts_differ(self.BASE,
                 self.BASE + requirement))
 
+    def test_exact_independent_thom_pin(self):
+        requirement = ('\nrequire TauCeti from git\n'
+                       '  "https://github.com/TauCetiProject/TauCeti.git" @\n'
+                       '    "ff72a2e86930d5268476ee33d55ab054ed1c3ea5"\n')
+        before = self.BASE + requirement
+        after = before.replace('ff72a2e86930d5268476ee33d55ab054ed1c3ea5',
+                               '0dbbe255a4f418084b30a3ffe6763d824a6b4250')
+        with patch.object(check, "graph_import_prefixes",
+                          return_value={"HexGraphIso", "HexBasic"}):
+            self.assertFalse(check.lakefile_texts_differ(before, after))
+            self.assertTrue(check.lakefile_texts_differ(before,
+                after.replace('0dbbe255a4f418084b30a3ffe6763d824a6b4250', 'b' * 40)))
+            self.assertTrue(check.lakefile_texts_differ(before,
+                after.replace('TauCetiProject', 'other')))
+            self.assertTrue(check.lakefile_texts_differ(before,
+                after.replace('lean_lib HexBasic where',
+                              'lean_lib HexBasic where\n  moreLeancArgs := #["-O1"]')))
+        for prefixes in (None, {"HexGraphIso", "TauCeti"}):
+            with patch.object(check, "graph_import_prefixes", return_value=prefixes):
+                self.assertTrue(check.lakefile_texts_differ(before, after))
+
 
 class IndependentTargetTests(unittest.TestCase):
     def allowed(self, before, after):

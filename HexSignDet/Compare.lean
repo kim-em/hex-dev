@@ -31,7 +31,8 @@ variable [Neg E] [Inv E] [Div E]
 /-- Compare roots through a squarefree common product on the whole line.
 The re-encoding queries retain each original open interval, so a root of one
 head at the other's endpoint cannot invalidate the common domain. Internal
-failures remain diagnostic until producer and Thom totality are proved. -/
+failures remain diagnostic; the companion proves the guarded full-word
+comparison total, while common-product producer totality remains required. -/
 def Descriptor.buildComparison {sign : E → Int} {context : Ctx}
     (left right : Descriptor E Ctx sign context) : Except BuildError (Comparison left right) :=
   match CommonProduct.build context left.raw.head right.raw.head with

@@ -327,11 +327,11 @@ the common head and canonical full derivative slots before comparing.
 `ThomOrder` proves transitivity and reversal directly for `compareFrom`, lifts
 them through sign-shape validation and literal descriptor guards, and supplies
 the laws used by `insert_sorted` and `rootsFrom_sorted`. These finite strict
-sortedness proofs require no caller-supplied comparator laws. Relating the
-comparator to strict real-root order still requires the companion's Thom
-foundation. An impossible
-order, duplicate word or non-unit count remains an internal error pending the
-Thom foundation; no default order or omitted row conceals such a failure.
+sortedness proofs require no caller-supplied comparator laws. The companion's
+`Descriptor.fullOrder_root` relates applicable full comparisons to strict
+mathematical root order using Tau Ceti's Thom theorems. Ruling out insertion
+and extraction errors for every valid root-list input remains required;
+no default order or omitted row conceals such a failure.
 For positive-degree heads, `rootsFromTable` extracts every descriptor from the
 same accepted full table. Its proof-backed row constructor reuses the literal
 query/context bindings, derives sign shape from the table, and establishes
@@ -378,8 +378,11 @@ and non-Archimedean coefficient interpretations without a general Thom
 injectivity theorem. `Descriptor.buildReencoding_congr` also permits a differently
 stored head with a zero difference from the original polynomial. Fresh evidence
 retains the new literal head binding. `Descriptor.reencoding_rows` proves the unique joint row
-whenever any target contains the source root; establishing uniqueness from a
-new head's derivative word alone remains a separate foundation requirement.
+whenever any target contains the source root. `RawDescriptor.full_unique` and
+`full_fiber` use Tau Ceti Thom injectivity to prove target full-word uniqueness.
+`Descriptor.buildReencoding_success` establishes actual producer success and
+root preservation for any valid target polynomial and interval containing the
+source root, including a different head or an enlarged root domain.
 `Descriptor.buildComparison` re-encodes both roots on the common head over the
 whole line, then applies the guarded full Thom rule. It retains both joint
 replays and the common-product witness. This handles shared roots, different
@@ -394,11 +397,12 @@ relative to the shared proved root-sum theorem. Other selected-root wrappers
 retain their separate obligations. `Descriptor.buildSigns_success` rules out every
 internal selected-sign error on validated descriptors with lawful coefficients;
 the executable diagnostic interface is retained for arbitrary operations.
-Completion and root lists still require their totality proofs.
-Strict-order comparison correspondence,
-re-encoding success characterization and domain-exact totality, the consumer
-sample-point interface, serialization and
-nested evidence sharing also remain required. The semantic proofs interpret the
+Completion and re-encoding have producer success proofs under lawful
+coefficients. `Comparison.order_root` identifies every accepted comparison
+with the mathematical order of the original roots. Universal root-list
+production, common-product comparison production and the remaining total
+public interfaces, the consumer sample-point interface, serialization and
+nested evidence sharing remain required. The semantic proofs interpret the
 actual query replays through the shared proved root-sum theorem; the specified BKR/Thom foundations are a
 separate completion gate. No performance milestone is claimed here. See the [specification](SPEC/hex-sign-det.md)
 for the complete contract and [#10377](https://github.com/kim-em/hex-dev/issues/10377)

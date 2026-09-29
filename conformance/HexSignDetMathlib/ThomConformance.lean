@@ -23,7 +23,8 @@ open Hex.RCF.RealCoefficients HexPolyMathlib.Interpret HexRealRootsMathlib
 
 /-- The target includes the selected cubic value and may also include roots
 outside the original interval. Both evidence layers retain the target head. -/
-def reencoded (target : DensePoly CubicField) (signs : List Int) : Bool :=
+def reencoded (target : DensePoly CubicField) (signs : List Int)
+    (differentHead : Bool := true) : Bool :=
   let source : RawDescriptor CubicField Nat :=
     {raw with lower := .finite 0, upper := .finite 2, indices := [], signs := []}
   match Descriptor.validate fieldSign 7 source with
@@ -36,7 +37,11 @@ def reencoded (target : DensePoly CubicField) (signs : List Int) : Bool :=
         r.target.signAt (xPoly - DensePoly.C alpha) == 0 &&
         r.target.raw.check fieldSign 7 r.target.evidence &&
         r.target.evidence.check fieldSign 7 target .negInf .posInf r.target.raw.queries &&
-        !r.target.evidence.check fieldSign 7 source.head .negInf .posInf r.target.raw.queries &&
+        (decide (target ≠ source.head) == differentHead) &&
+        (if differentHead then
+          !r.target.evidence.check fieldSign 7 source.head .negInf .posInf r.target.raw.queries
+         else true) &&
+        !r.target.evidence.check fieldSign 7 target source.lower source.upper r.target.raw.queries &&
         d.checkReencoding r.target target .negInf .posInf r.evidence
     | _ => false
 
@@ -49,6 +54,16 @@ set_option maxHeartbeats 1000000 in
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
 #guard reencoded ((xPoly - DensePoly.C alpha) * (xPoly + 1)) [1, 1]
+
+-- Only the source equation rejects the extra root 1 inside the old interval.
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard reencoded ((xPoly - DensePoly.C alpha) * (xPoly - 1)) [1, 1]
+
+-- Only the old interval constraints reject the source head's other root −α.
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard reencoded head [1, 1] false
 
 namespace Noncanonical
 

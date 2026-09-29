@@ -1,0 +1,6 @@
+{
+  "path": "lake-manifest.json",
+  "baseline_blob": "60a00fff506e825068a077b409c59636f483d4ef",
+  "current_blob": "30db00b2a65d7236a7b49480a563b1a3944e3963",
+  "reason": "Relative to the measured baseline, adds only TauCeti for the development companion proof adapters, pinned to its delivered Thom theorems. Every pre-existing dependency entry and compiler pin is unchanged. The computational libraries and benchmark executables do not import TauCeti; the upstream revision adds only two proof modules. This changes neither the measured factorization implementation nor its native link inputs."
+}

@@ -133,6 +133,12 @@ The companion consumes Tau Ceti foundations through the shared interpretation
 interface; it must not import a concrete real-closure tower implementation.
 The required Thom identity/order statements below are Tau Ceti completion
 requirements tracked by [#10300](https://github.com/kim-em/hex-dev/issues/10300).
+The root-identity and order bridge consumes `Polynomial.thomEncoding_injOn`,
+`Polynomial.exists_derivativeSign_ne` and `Polynomial.lt_iff_derivativeSign`
+from `TauCeti.Algebra.Polynomial.Thom`. The polynomial Rolle premise is discharged
+by `TauCeti.RealClosure.polynomialRolle_of_isRealClosed` from
+`TauCeti.FieldTheory.RealClosure.AbstractRolle`, using the interpreted field's
+real-closedness. These foundations apply without an Archimedean assumption.
 Their absence from a dependency pin leaves the corresponding proofs unfinished;
 it permits neither axioms nor a claim that executable availability supplies them.
 

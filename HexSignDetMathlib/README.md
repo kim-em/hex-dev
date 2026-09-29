@@ -283,7 +283,7 @@ none of these success proofs needs a Thom theorem.
 `buildRoots_none_iff` characterizes invalid mathematical domains exactly,
 and `buildRoots_domain` proves validity of the original input without using the root-sum theorem.
 Universal producer success and correspondence with strict mathematical
-root order remain separate obligations requiring the Thom foundations.
+root order remain separate proof obligations.
 Conformance exercises whole-line and bounded domains, empty results for
 constants and root-free heads, negative leading coefficients, noncanonical
 coefficients, and the actual cubic field ℚ(∛2).
