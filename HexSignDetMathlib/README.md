@@ -180,7 +180,7 @@ target domain containing the source root whose root set is contained in the
 original domain. It establishes preparation and both actual producers, using
 the original partial selection's uniqueness, and preserves the selected root.
 This needs neither general Thom injectivity nor rational isolating bounds.
-It inherits the named #10389 root-sum admission.
+It uses the shared proved Sturm–Tarski theorem.
 General success after changing the defining head remains open.
 `Descriptor.convert_success` and `Descriptor.convert_root` in
 `HexSignDetMathlib.Convert` prove that rebuilding a descriptor after a
