@@ -192,6 +192,19 @@ theorem specialize_checked (embedding : F →+* ℝ) (t : ℝ)
   simp only [specialize]
   apply ofReplay_ofTable
 
+/-- The validated descriptor retains the entire literal mapped replay. -/
+theorem specialize_evidence (embedding : F →+* ℝ) (t : ℝ)
+    (d : Descriptor (RationalFn F) Ctx sign context)
+    (data : ∀ x ∈ d.raw.fractions d.evidence,
+      Regular embedding t x ∧ (evalMapped embedding x t = 0 ↔ x = 0) ∧
+      (SignType.sign (evalMapped embedding x t) : Int) = sign x) :
+    (d.specialize embedding t data).evidence = d.evidence.specialize embedding t := by
+  have accepted := d.raw.check_specialize embedding t sign context d.evidence data d.accepted
+  have fields := ofReplay_data (fun x : ℝ => (SignType.sign x : Int)) context
+    (d.raw.specialize embedding t) (d.evidence.specialize embedding t)
+  rw [specialize_checked embedding t d data, Option.map_some, ite_eq_left accepted] at fields
+  exact (Prod.mk.inj (Option.some.inj fields)).2
+
 variable [LinearOrder F] [IsStrictOrderedRing F]
 
 /-- Every parameter in one positive neighborhood gives a validated ordinary
@@ -203,6 +216,7 @@ theorem specialize_near (embedding : F →+* ℝ) (ordered : StrictMono embeddin
     ∃ η > (0 : ℝ), ∀ t, 0 < t → t < η →
       ∃ target : Descriptor ℝ Ctx (fun x : ℝ => (SignType.sign x : Int)) context,
         target.raw = d.raw.specialize embedding t ∧
+        target.evidence = d.evidence.specialize embedding t ∧
         ofReplay? (fun x : ℝ => (SignType.sign x : Int)) context
           (d.raw.specialize embedding t) (d.evidence.specialize embedding t) = some target ∧
         target.raw.queries = d.raw.queries.map (fun q => polynomial embedding q t) := by
@@ -217,7 +231,7 @@ theorem specialize_near (embedding : F →+* ℝ) (ordered : StrictMono embeddin
     have preserved := signs t ht small x hx
     exact ⟨preserved.1, fraction_zero embedding x t preserved.2, preserved.2⟩
   refine ⟨d.specialize embedding t data, specialize_raw embedding t d data,
-    specialize_checked embedding t d data, ?_⟩
+    specialize_evidence embedding t d data, specialize_checked embedding t d data, ?_⟩
   rw [specialize_raw]
   apply RawDescriptor.queries_specialize
   · intro i hi
@@ -245,6 +259,7 @@ theorem selected_root_near (embedding : F →+* ℝ) (ordered : StrictMono embed
     ∃ η > (0 : ℝ), ∀ t, 0 < t → t < η →
       ∃ target : Descriptor ℝ Ctx (fun x : ℝ => (SignType.sign x : Int)) context,
         target.raw = d.raw.specialize embedding t ∧
+        target.evidence = d.evidence.specialize embedding t ∧
         Descriptor.ofReplay? (fun x : ℝ => (SignType.sign x : Int)) context
           (d.raw.specialize embedding t) (d.evidence.specialize embedding t) = some target ∧
         signsAt (fun x : ℝ => x) (fun _ => Iff.rfl)
@@ -256,7 +271,7 @@ theorem selected_root_near (embedding : F →+* ℝ) (ordered : StrictMono embed
   obtain ⟨η₁, positive₁, descriptors⟩ := d.specialize_near embedding ordered
   obtain ⟨η₂, positive₂, realize⟩ := selected_near embedding ordered d qs s
   refine ⟨min η₁ η₂, lt_min positive₁ positive₂, fun t ht small => ?_⟩
-  obtain ⟨target, raw, checked, queries⟩ := descriptors t ht
+  obtain ⟨target, raw, evidence, checked, queries⟩ := descriptors t ht
     (lt_of_lt_of_le small (min_le_left _ _))
   obtain ⟨x, member, first, rest, unique⟩ := realize t ht
     (lt_of_lt_of_le small (min_le_right _ _))
@@ -276,7 +291,7 @@ theorem selected_root_near (embedding : F →+* ℝ) (ordered : StrictMono embed
     rw [← queries]
     simpa only [raw, RawDescriptor.specialize, y] using spec.2
   have equal : y = x := unique y root_member selected
-  refine ⟨target, raw, checked, ?_⟩
+  refine ⟨target, raw, evidence, checked, ?_⟩
   change signsAt (fun x : ℝ => x) (fun _ => Iff.rfl)
     (qs.map (fun q => polynomial embedding q t)) y = s.values.toList
   rw [equal]
@@ -303,6 +318,21 @@ def evidence (g : Lean.Grind.Field F) (compatible : Field.toGrindField (K := F) 
   cases compatible
   exact fun d qs s => ⟨d, qs, s⟩
 
+omit [IsStrictOrderedRing F] in
+/-- Whole-dictionary transport preserves the recorded integer signs literally. -/
+theorem evidence_values (g : Lean.Grind.Field F)
+    (compatible : Field.toGrindField (K := F) = g) :
+    letI : Lean.Grind.Field F := g
+    ∀ (d : Descriptor (Hex.RationalFn F) Ctx
+      (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) context)
+      (qs : List (Hex.DensePoly (Hex.RationalFn F))) (s : SelectedSigns d qs),
+    let values := s.values.toList
+    letI : Lean.Grind.Field F := Field.toGrindField
+    (evidence g compatible d qs s).2.2.values.toList = values := by
+  cases compatible
+  intros
+  rfl
+
 /-- Native evidence specialized after whole-dictionary transport has the same
 checked real descriptor and selected-root signs as canonical evidence. -/
 theorem selected_root_near (g : Lean.Grind.Field F)
@@ -312,11 +342,13 @@ theorem selected_root_near (g : Lean.Grind.Field F)
     ∀ (d : Descriptor (Hex.RationalFn F) Ctx
       (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) context)
       (qs : List (Hex.DensePoly (Hex.RationalFn F))) (s : SelectedSigns d qs),
+    let values := s.values.toList
     letI : Lean.Grind.Field F := Field.toGrindField
     let data := evidence g compatible d qs s
     ∃ η > (0 : ℝ), ∀ t, 0 < t → t < η →
       ∃ target : Descriptor ℝ Ctx (fun x : ℝ => (SignType.sign x : Int)) context,
         target.raw = data.1.raw.specialize embedding t ∧
+        target.evidence = data.1.evidence.specialize embedding t ∧
         Descriptor.ofReplay? (fun x : ℝ => (SignType.sign x : Int)) context
           (data.1.raw.specialize embedding t) (data.1.evidence.specialize embedding t) =
           some target ∧
@@ -324,11 +356,12 @@ theorem selected_root_near (g : Lean.Grind.Field F)
           (data.2.1.map (fun q => polynomial embedding q t))
           (target.root (fun x : ℝ => x) (fun _ => Iff.rfl) rfl
             (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl)
-            (fun _ => rfl) (fun _ => rfl)) = data.2.2.values.toList := by
+            (fun _ => rfl) (fun _ => rfl)) = values := by
   intro d qs s
-  exact Hex.RealClosure.Specialize.selected_root_near embedding ordered
+  have realized := Hex.RealClosure.Specialize.selected_root_near embedding ordered
     (evidence g compatible d qs s).1 (evidence g compatible d qs s).2.1
     (evidence g compatible d qs s).2.2
+  simpa only [evidence_values] using realized
 
 end Hex.RealClosure.Specialize.Native
 
@@ -367,3 +400,7 @@ end Hex.RealClosure.Specialize.Native
 /-- info: 'Hex.RealClosure.Specialize.Native.selected_root_near' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.Native.selected_root_near
+
+/-- info: 'Hex.SignDet.Descriptor.specialize_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.specialize_evidence

@@ -570,8 +570,8 @@ by source `SelectedSigns` hold at the root of the validated specialized
 descriptor, using the same parameter for both evidence tables. These are
 companion constructions over a prescribed ordered coefficient embedding into
 ℝ; they do not rebuild a native tower context or specialize successive levels.
-A literal equality between the returned descriptor's evidence field and the
-mapped original replay still needs a public equation for `ofTable` or `ofReplay?`'s evidence field.
+`specialize_evidence` proves that the returned descriptor's evidence field is
+the entire mapped original replay, using the public `ofReplay_data` equation.
 
 `Specialize.Native.evidence` transports the whole descriptor, query list and
 checked selected-sign replay through equality of the predecessor coefficient

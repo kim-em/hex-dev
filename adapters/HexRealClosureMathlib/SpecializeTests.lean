@@ -171,12 +171,14 @@ example {Ctx : Type} [DecidableEq Ctx] {context : Ctx}
     (d : Hex.SignDet.Descriptor (Hex.RationalFn Rat) Ctx
       (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign) context)
     (qs : List (Hex.DensePoly (Hex.RationalFn Rat))) (s : Hex.SignDet.SelectedSigns d qs) :
+    let values := s.values.toList
     letI : Lean.Grind.Field Rat := Field.toGrindField
     let data := Hex.RealClosure.Specialize.Native.evidence Lean.Grind.instFieldRat
       HexRationalFnMathlib.ratField_eq d qs s
     ∃ η > (0 : ℝ), ∀ t, 0 < t → t < η →
       ∃ target : Hex.SignDet.Descriptor ℝ Ctx (fun x : ℝ => (SignType.sign x : Int)) context,
         target.raw = data.1.raw.specialize (Rat.castHom ℝ) t ∧
+        target.evidence = data.1.evidence.specialize (Rat.castHom ℝ) t ∧
         Hex.SignDet.Descriptor.ofReplay? (fun x : ℝ => (SignType.sign x : Int)) context
           (data.1.raw.specialize (Rat.castHom ℝ) t)
           (data.1.evidence.specialize (Rat.castHom ℝ) t) = some target ∧
@@ -184,7 +186,7 @@ example {Ctx : Type} [DecidableEq Ctx] {context : Ctx}
           (data.2.1.map (fun q => polynomial (Rat.castHom ℝ) q t))
           (target.root (fun x : ℝ => x) (fun _ => Iff.rfl) rfl
             (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl)
-            (fun _ => rfl) (fun _ => rfl)) = data.2.2.values.toList :=
+            (fun _ => rfl) (fun _ => rfl)) = values :=
   Hex.RealClosure.Specialize.Native.selected_root_near Lean.Grind.instFieldRat
     HexRationalFnMathlib.ratField_eq (Rat.castHom ℝ) Rat.cast_strictMono d qs s
 
