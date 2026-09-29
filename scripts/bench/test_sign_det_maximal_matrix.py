@@ -313,6 +313,29 @@ class DimensionEvidenceTests(unittest.TestCase):
                 contents = subprocess.check_output(["git", "show", ":"+name], cwd=bench.ROOT, env=env)
                 self.assertEqual(hashlib.sha256(contents).hexdigest(), digest, name)
 
+    def test_size_729_actual_elimination_inventory(self):
+        root = bench.ROOT/"reports/data/sign-det-maximal-matrices/elimination-3042b0016"
+        archive = json.loads((root/"archive.json").read_text())
+        for name, digest in archive["files"].items():
+            self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), digest)
+        metadata = json.loads((root/"metadata.json").read_text())
+        self.assertEqual(metadata["exit_code"], 0)
+        self.assertFalse(metadata["scientific_timing"])
+        self.assertEqual(metadata["source_sha256"], metadata["source_sha256_after"])
+        self.assertEqual(metadata["binary_sha256"], metadata["binary_sha256_after"])
+        self.assertEqual(metadata["status_after"], "")
+        row = json.loads((root/"inventory.jsonl").read_text())
+        self.assertEqual(row["queries"], 6)
+        self.assertEqual(row["matrixSize"], 729)
+        self.assertTrue(row["matchesInverse"])
+        self.assertEqual(len(row["updatesPerColumn"]), 729)
+        self.assertEqual(sum(row["updatesPerColumn"]), row["eliminatedRows"])
+        self.assertEqual(row["eliminatedRows"], 2*(6**6-3**6))
+        self.assertEqual(row["rowAddCalls"], 2*row["eliminatedRows"])
+        self.assertEqual(row["rowAddScalarPairs"], 4*(18**6-9**6))
+        self.assertEqual(row["rowScaleScalarProducts"], 2*729**2)
+        self.assertEqual(row["inverseIdentityScalarPairs"], 729**3)
+
     def test_collect_dimension_mode_retains_both_arms(self):
         calls = []
         with TemporaryDirectory() as d:

@@ -132,7 +132,13 @@ retains timing and resident-set medians for all six sizes.
 
 The earlier one-column elimination inventory already identifies a more
 specific count: `4(18^s−9^s)` rational multiply/add pairs in row additions,
-alongside the `27^s` integer pairs in the dense check. The row-addition term
+alongside the `27^s` integer pairs in the dense check. The [size-729 one-column inspection](data/sign-det-maximal-matrices/elimination-3042b0016/metadata.json)
+confirms 91,854 nonzero multipliers, 183,708 row additions and 133,923,132
+rational multiply/add pairs. It verifies each pivot and the final literal
+inverse against `inverse?`, using the existing inspection algorithm. The
+[source archive](data/sign-det-maximal-matrices/elimination-3042b0016/archive.json)
+retains the clean checkout and output; this is untimed evidence, separate from
+the scientific collection. The row-addition term
 alone has growth `r^(log₃ 18)`, approximately `r^2.631`. Its dominant `18^s`
 term would give normalized slope `log₃ 18−3 ≈ −0.369`, close to the observed
 solve slope. Thus the known operation mix predicts a substantial downward
