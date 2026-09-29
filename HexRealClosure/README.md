@@ -644,5 +644,12 @@ interprets its powers and product fold from finite query memberships, and
 all indexed moments, the integer system, rank certificate and left-inverse
 check. `replay_check` transports the supplied finite tree, both child checks and
 their original positional query slices, product supports and retained rows.
-Joint algebraic-root realization, sample reconstruction, graph sharing and
-successive infinitesimal levels remain separate obligations.
+`Transport.count_roots` composes this transport with the root model over a
+real closed target field: the original sparse table count equals the number
+of distinct roots realizing the entire ordered sign condition, including
+conditions omitted from the table. Positive counts give existence through
+`exists_root`, and count one gives uniqueness through `unique_root`. These
+theorems consume a coefficient reader, its closed domain and the finite
+`ReplayData` obligations; they do not construct an algebraic tower reader.
+Joint algebraic-root interpretation, recursive sample reconstruction, graph
+sharing and successive infinitesimal levels remain separate obligations.
