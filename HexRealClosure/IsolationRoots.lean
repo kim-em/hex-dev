@@ -104,25 +104,31 @@ def complete? (sign : E → Int) (context : Ctx) (p : DensePoly E) :
     Except SignDet.BuildError (Option (Completion sign context p)) :=
   match search? sign p with
   | none =>
-    if (Bounds.find? sign p).isSome then .error .system else .ok none
+    match Bounds.find? sign p with
+    | none => .ok none
+    | some bound =>
+      if (Bisection.Frontier.prepare? sign p (-bound.value) bound.value).isSome then
+        .error .system
+      else .ok none
   | some search =>
     match h : search.route.complete context with
     | .error error => .error error
     | .ok roots => .ok (some ⟨search, roots, h⟩)
 
-/-- An absent completed domain can only come from the whole-line preparation
-route; a failed refinement after an accepted finite bound is an error. -/
-theorem complete?_none_no_bound {sign : E → Int} {context : Ctx}
-    {p : DensePoly E}
-    (accepted : complete? sign context p = .ok none) :
-    Bounds.find? sign p = none := by
-  cases searched : search? sign p with
-  | none =>
-    cases bounded : Bounds.find? sign p with
-    | none => rfl
-    | some bound => simp [complete?, searched, bounded] at accepted
-  | some search =>
-    simp only [complete?, searched] at accepted
-    split at accepted <;> cases accepted
+/-- A missing completed domain after an accepted finite bound means the
+initial domain itself was rejected. Failure after that point is diagnostic. -/
+theorem complete?_none_unprepared {sign : E → Int} {context : Ctx}
+    {p : DensePoly E} {bound : Bounds.Bound sign p}
+    (accepted : complete? sign context p = .ok none)
+    (bounded : Bounds.find? sign p = some bound) :
+    Bisection.Frontier.prepare? sign p (-bound.value) bound.value = none := by
+  cases prepared : Bisection.Frontier.prepare? sign p (-bound.value) bound.value with
+  | none => rfl
+  | some initial =>
+    cases searched : search? sign p with
+    | none => simp [complete?, searched, bounded, prepared] at accepted
+    | some search =>
+      simp only [complete?, searched] at accepted
+      split at accepted <;> cases accepted
 
 end Hex.RealClosure.Isolation
