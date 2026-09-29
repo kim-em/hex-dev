@@ -536,7 +536,7 @@ has a name in a SPEC.
 | --- | --- |
 | Tau Ceti, consumed by this companion | **Additional requested foundation:** every linearly ordered field `K` has an ordered real closed field `R` and an order-preserving field embedding `ι : K →+* R`, with `R` algebraic over `ι(K)`. Existence is missing on the pin and is explicit work alongside [#10300](https://github.com/kim-em/hex-dev/issues/10300). |
 | Tau Ceti through real-roots/sturm companions | Polynomial IVT and Rolle; signed-remainder/Cauchy-index identity with common factors and infinite endpoints. Consume the shared kernel's soundness; do not reprove a second Sturm–Tarski foundation here. |
-| Tau Ceti through sign-det companion | Thom injectivity/order, sign-count moment identity and correctness of support-preserving BKR reduction. Consume complete descriptor and sign-table correspondence. |
+| Tau Ceti through sign-det companion | Thom injectivity/order, finite sign-count moment identities and count recovery with independently complete candidate support. The sign-det companion applies these within its support-preserving recursion; consume its complete descriptor and sign-table correspondence. |
 | hex-ordered-fn-mathlib | Real evaluation under relative transcendence, sign soundness/progress conditional on caller approximation laws, Hahn-series infinitesimal embedding and ordered-field laws. An integer-exponent Hahn field is not real closed. |
 | hex-real-roots-mathlib | Reuse the implemented `Real.instIsRealClosed` from `HexRealRootsMathlib.RealClosed`; the shared companion supplies the instance missing from the pinned Mathlib. |
 | hex-real-algebraic-mathlib | Existing rational-base real closed carrier; compose its arithmetic/order/root correspondence for the trivial path. |

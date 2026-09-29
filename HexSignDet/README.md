@@ -158,6 +158,10 @@ positive conditions. The companion establishes this explicit moment contract
 from query/root semantics through the proved shared root-sum theorem; the executable
 checker does not assume it, and the finite induction is not a root-sum
 soundness theorem.
+`Replay.support_counts` factors that same induction through a proved finite
+count-recovery theorem. The companion supplies its Tau Ceti bridge at every
+node; the Mathlib-free specialization uses `System.counts_eq`. Neither
+specialization changes the executable tree or its candidate order.
 
 The conformance target includes recursive rational examples with supplied exact
 roots, malformed matrices and tree mutations, and ordinary-kernel literal
@@ -186,6 +190,10 @@ recursive replay. Its total `count` returns zero for omitted conditions.
 under the same explicit `Replay.Interprets` contract. Structural table validity
 alone does not prove root completeness. `buildTablePrepared` exposes sparse
 construction while retaining the internal diagnostics of `buildPrepared`.
+`Replay.count_table` is the representation adapter from independently proved
+support coverage and exact integer counts to this same sparse lookup.
+`SelectedSigns.signs_of_count` similarly shares the selected-sign lookup
+argument with the companion, while `signs_eq` keeps its Mathlib-free contract.
 
 `Descriptor.prepareQueries` constructs a `QueryHandle` for successive queries
 at the same validated root. It retains the exact prepared squarefree domain.
