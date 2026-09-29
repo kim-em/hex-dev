@@ -389,7 +389,9 @@ capped bisection and shared descriptor enumeration. It returns a checked
 `Completion` containing the search trace, every emitted cut point and the
 actual descriptor list from each retained cell. Count-zero cells emit nothing.
 Count-one cells use their stored prepared domain with no derivative queries;
-only unresolved cells invoke all-derivative enumeration. Whole-line fallback enumerates
+only unresolved cells invoke all-derivative enumeration. The shared singleton
+query still constructs a query-one remainder certificate and checks its replay;
+this does not claim elimination of all chain or replay work. Whole-line fallback enumerates
 its stored domain. Absent search domains stay `none`; internal producer
 failures remain explicit errors and cannot become empty root sets.
 

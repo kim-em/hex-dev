@@ -12,10 +12,12 @@ class IsolationTests(unittest.TestCase):
     def setUp(self):
         self.rows = [json.loads(line) for line in FIXTURE.read_text().splitlines()]
 
-    def rejects(self, mutate):
+    def rejects(self, mutate, message=None):
         rows = copy.deepcopy(self.rows)
         mutate(rows)
-        with self.assertRaises((ValueError, AssertionError)):
+        context = (self.assertRaisesRegex((ValueError, AssertionError), message)
+                   if message else self.assertRaises((ValueError, AssertionError)))
+        with context:
             verify(rows)
 
     def test_valid(self):
@@ -52,7 +54,8 @@ class IsolationTests(unittest.TestCase):
         self.rejects(lambda rows: rows[4]["output"]["descriptors"][0].update(head=[[-3, 1], [0, 1], [1, 1]]))
 
     def test_false_thom_word(self):
-        self.rejects(lambda rows: rows[4]["output"]["descriptors"][0].update(signs=[0, 0]))
+        self.rejects(lambda rows: rows[9]["output"]["descriptors"][0].update(signs=[-1, -1]),
+                     "descriptor does not select exactly one root")
 
     def test_boolean_slot(self):
         self.rejects(lambda rows: rows[8]["output"]["descriptors"][0].update(indices=[True]))
@@ -78,7 +81,8 @@ class IsolationTests(unittest.TestCase):
 
     def test_root_at_cell_endpoint(self):
         self.rejects(lambda rows: rows[9]["output"]["route"]["cells"][0].update(lower={
-            "num": [[0, 1], [1, 1]], "den": [[1, 1]]}))
+            "num": [[0, 1], [1, 1]], "den": [[1, 1]]}, count=1),
+                     "invalid retained cell")
 
     def test_foreign_descriptor_context(self):
         self.rejects(lambda rows: rows[4]["output"]["descriptors"][0].update(context=10377))
