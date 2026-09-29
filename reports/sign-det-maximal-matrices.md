@@ -71,8 +71,8 @@ Use `inspect-maximal-matrix-dimensions` to verify all six inputs. Literal
 inverse identities, multiplicities, moment values and sizes are checked for
 every dimension; the independent polynomial-moment comparison remains limited
 to query counts one through three. The dimension-parameter collector validates
-72 expected samples and the actual row/column dimension associated with every
-raw parameter:
+72 expected samples, the fixed raw parameter schedule and the corresponding
+untimed row/column dimensions:
 
 ```sh
 python3 scripts/bench/sign_det_maximal_matrix.py --parameter matrix-size \
@@ -113,11 +113,14 @@ logarithmic span. Both verdicts remain **inconclusive**: solve has normalized
 slope `−0.384273` and ratio range `68.608306…371.276430` ns; check has slope
 `−0.563903` and range `2.559146…29.910025` ns. These slopes describe the
 normalized ratios, not the unnormalized timing exponent. Both exceed the
-fixed `0.15` tolerance in the faster-than-declared direction. This resolves
-the previous insufficient-range limitation without establishing the cubic
-wall-time gate. The [summary](data/sign-det-maximal-matrices/ff35bd9da-dimensions/summary.json)
-reports no validation errors. The collector's exit status 1 records these
-inconclusive verdicts, rather than lost or failed samples.
+fixed `0.15` tolerance in the faster-than-declared direction. Parameterizing
+by `r` allows the slope fit to run; size 729 is the only additional system.
+This does not establish the cubic wall-time gate or show that the checker
+has reached its asymptotic timing regime. The [summary](data/sign-det-maximal-matrices/ff35bd9da-dimensions/summary.json)
+reports no validation errors. The collector returned exit status 1 for the
+inconclusive verdicts; the archived metadata records only the child exit
+statuses, which are all zero. Current collectors also retain their own
+returned exit code. No samples failed or were omitted.
 
 At size 729, median process peak RSS is 119.785 MiB for solve and 119.406 MiB
 for check. These observations include input preparation and process startup;
@@ -127,12 +130,29 @@ one call per sample at sizes 81 and above, while check uses one at sizes 243
 and 729. The [table data](data/sign-det-maximal-matrices/ff35bd9da-dimensions/table.json)
 retains timing and resident-set medians for all six sizes.
 
+The earlier one-column elimination inventory already identifies a more
+specific count: `4(18^s−9^s)` rational multiply/add pairs in row additions,
+alongside the `27^s` integer pairs in the dense check. The row-addition term
+alone has growth `r^(log₃ 18)`, approximately `r^2.631`. Its dominant `18^s`
+term would give normalized slope `log₃ 18−3 ≈ −0.369`, close to the observed
+solve slope. Thus the known operation mix predicts a substantial downward
+trend in `time/r³` while rational elimination dominates. A wider range alone
+is not a justified remedy for the complete-solve fit.
+
+Subtracting the separately timed check medians from the solve medians gives
+about 197, 191 and 191 ns per counted rational row-addition pair at query
+counts four, five and six. This comparison is not a direct phase timer: the
+processes differ and the residual includes other solve work. The profile at
+size 243 independently identifies elimination as the dominant phase there;
+it does not establish attribution at every size or an exact timing law.
+
 No model, fit setting or completed sample was changed after this observation,
-and no unchanged rerun was used. The declared law counts scalar operations;
-unequal scalar costs and lower-order terms remain possible explanations of
-the finite timing behavior, not established conclusions. The earlier profile
-at size 243 supplies attribution for that input only. General bit-cost
-analysis and the remaining Phase-4 obligations are still outstanding.
+and no unchanged rerun was used. The complete operation still executes its
+cubic integer check. A phase-specific registration would need its own source
+derivation and collection; the existing two-sided cubic timing gate remains
+outstanding. The check also needs evidence for its asymptotic timing regime,
+not merely sufficient logarithmic span for a fit. General bit-cost analysis
+and the remaining Phase-4 obligations are still outstanding.
 
 ## Collection
 

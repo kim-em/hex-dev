@@ -340,6 +340,12 @@ def main (args : List String) : IO UInt32 :=
     | some n => Hex.SignDetBench.Joint.inspectTimings #[n]
     | none => throw (IO.userError "expected an odd integer degree at least three")
   else if args == ["inspect-full"] then Hex.SignDetBench.inspectFull
+  else if let ["inspect-full", arity] := args then
+    match arity.toNat? with
+    | some s =>
+      if 1 ≤ s && s ≤ 6 then Hex.SignDetBench.inspectFullFor #[s]
+      else throw (IO.userError "expected a query count from one through six")
+    | none => throw (IO.userError "expected a query count from one through six")
   else if let ["paired-small", path] := args then
     Hex.SignDetBench.paired ``Hex.SignDetBench.runSmallReduced ``Hex.SignDetBench.runSmallFull path
   else if let ["paired-joint-production", path] := args then

@@ -199,7 +199,9 @@ def main():
         if summary["validation_errors"]:
             raise ValueError("scientific validation failed; all scheduled arms retained")
         metadata.update(state="complete", scientific_samples=2*TRIALS*len(sweep_settings(by_dimension)[0]))
-        return int(any(o["verdict"] == "inconclusive" for o in summary["observations"].values()))
+        code = int(any(o["verdict"] == "inconclusive" for o in summary["observations"].values()))
+        metadata["collector_exit_code"] = code
+        return code
     except BaseException as error:
         metadata.update(state="failed", error=str(error), exception=type(error).__name__)
         raise
