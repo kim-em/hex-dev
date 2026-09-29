@@ -6,8 +6,10 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.BaseContext
+public import HexRealClosure.BasePolynomial
 public import HexOrderedFnMathlib.LiouvilleTests
 public meta import HexRealClosure.BaseCodec
+public meta import HexRealClosure.BasePolynomial
 public meta import HexOrderedFnMathlib.LiouvilleTests
 
 public section
@@ -175,6 +177,24 @@ private def included : Element (realContext 1) :=
   Element.embedConstant prefixContext (key 1) (present 1)
     (signProgress 1) (approxProgress 1) rationalValue
 
+private def rationalPolynomial : Polynomial (.real prefixContext) :=
+  Polynomial.ofCoeffs #[rationalValue, 1, 2]
+
+private def realPolynomial : Polynomial (realContext 1) :=
+  rationalPolynomial.embedConstant prefixContext (key 1) (present 1)
+    (signProgress 1) (approxProgress 1)
+
+private def namedPolynomial : Polynomial (realContext 1) :=
+  Polynomial.ofCoeffs #[positive, 1]
+
+example (p : Polynomial (.real prefixContext)) (a : Element (.real prefixContext)) :
+    (p.embedConstant prefixContext (key 1) (present 1) (signProgress 1) (approxProgress 1)).eval
+      (Element.embedConstant prefixContext (key 1) (present 1) (signProgress 1) (approxProgress 1) a) =
+    Element.embedConstant prefixContext (key 1) (present 1) (signProgress 1) (approxProgress 1)
+      (p.eval a) :=
+  Polynomial.embedConstant_eval prefixContext (key 1) (present 1)
+    (signProgress 1) (approxProgress 1) p a
+
 private theorem rational_sign (a : Rat) : orderSign a = sgn ((Rat.castHom ℝ) a) := by
   rw [Infinitesimal.orderSign_eq]
   change (SignType.sign a : Int) = (SignType.sign (a : ℝ) : Int)
@@ -199,11 +219,25 @@ example (a b : Element (.real prefixContext)) :
 #guard (positive - positive).sign = 0
 #guard (epsilon - positive.embed).sign = -1
 #guard epsilon.sign = 1
+#guard (Element.infinitesimal mixed - epsilon.embed).sign = -1
+#guard (realPolynomial.eval included).equal 24
+#guard (namedPolynomial.eval positive).equal (positive + positive)
+#guard ((Polynomial.ofCoeffs #[-positive, 1]).eval positive).sign = 0
+#guard (Polynomial.read (realContext 1) namedPolynomial.write).map Polynomial.stored =
+  some namedPolynomial.stored
+#guard (Polynomial.read (realContext 2) namedPolynomial.write).isNone
+#guard (Polynomial.read (realContext 1) realPolynomial.write).map Polynomial.stored =
+  some realPolynomial.stored
+#guard (Polynomial.read (realContext 2) realPolynomial.write).isNone
 #guard (Element.read (realContext 1) positive.write).map Element.stored = some positive.stored
 #guard (Element.read (realContext 2) positive.write).isNone
 #guard (Element.read mixed positive.write).isNone
 #guard (Element.read mixed epsilon.write).map Element.stored = some epsilon.stored
 #check_failure (fun (a : Element (realContext 1)) => (a : Element (realContext 2)))
+#check_failure (fun (p : Polynomial (realContext 1)) => (p : Polynomial (realContext 2)))
+#check_failure (fun (p : Polynomial (realContext 1)) (q : Polynomial (realContext 2)) => p + q)
+
+example (p : Polynomial (realContext 1)) : Polynomial derived := p
 
 example : (registry ⟨"unknown", 1⟩).isSome = false := by decide +kernel
 
