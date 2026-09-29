@@ -18,3 +18,4 @@ public import HexRealClosure.BaseCodec
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
 public import HexRealClosure.AlgebraicContext
+public import HexRealClosure.QAdjoin

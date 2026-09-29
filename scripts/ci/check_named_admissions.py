@@ -174,6 +174,7 @@ def check() -> None:
              "HexSignDetMathlib.TableConformance", "HexSignDetMathlib.ReencodingConformance",
              "HexSignDetMathlib.RootListConformance", "HexSignDetMathlib.RefinementConformance",
              "HexSignDetMathlib.ConvertConformance", "HexRealClosure.BaseTests",
+             "HexRealClosure.QAdjoinTests",
              "HexRealClosureMathlib.BaseTests", "HexRealClosure.BaseCatalogTests",
              "HexRealClosure.BisectionTests", "HexRealClosure.DeflationConformance",
              "HexRealClosure.BisectionFrontierTests", "HexRealClosure.IsolationTests",
@@ -192,8 +193,9 @@ def check() -> None:
              "HexRealClosureMathlib.SpecializeDescriptor", "HexRealClosureMathlib.SpecializeTests",
              "HexRealClosureMathlib.Algebraic", "HexRealClosureMathlib.AlgebraicClean",
              "HexRealClosureMathlib.AlgebraicValue", "HexRealClosureMathlib.BaseClean",
-             "HexRealClosureMathlib.AlgebraicTower", "HexRealClosureMathlib.Union",
-             "HexRealClosureMathlib.UnionTests"] + [
+             "HexRealClosureMathlib.AlgebraicTower",
+             "HexRealClosureMathlib.Union", "HexRealClosureMathlib.UnionTests",
+             "HexRealClosureMathlib.QAdjoin"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
         "HexSignDetMathlib." + ".".join(path.relative_to(
