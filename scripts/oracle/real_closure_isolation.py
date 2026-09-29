@@ -95,6 +95,7 @@ def verify_assembly(row, index):
                     type(raw["context"]) is int and raw["context"] == 10378,
                     "malformed selected root")
             head = polynomial(raw["head"])
+            require(bool(head), "zero selected head")
             lower, upper = raw["lower"], raw["upper"]
             def endpoint(endpoint):
                 require(isinstance(endpoint, list) and endpoint and type(endpoint[0]) is int,
@@ -110,7 +111,8 @@ def verify_assembly(row, index):
             hi, ht = endpoint(upper)
             derivatives = rcf.derivatives(head)
             indices = raw["indices"]
-            require(indices == [] or indices == list(range(1, len(head))),
+            require(isinstance(indices, list) and all(type(i) is int for i in indices) and
+                    (indices == [] or indices == list(range(1, len(head)))),
                     "wrong assembled derivative slots")
             queried = [] if not indices else derivatives
             signs = raw["signs"]
@@ -118,7 +120,8 @@ def verify_assembly(row, index):
                     all(type(s) is int and s in (-1, 0, 1) for s in signs),
                     "malformed assembled signs")
             candidates = [root for root in rcf.api.MkRoots(head, rcf.context)
-                          if (lt == -1 or lo < root) and (ht == 1 or root < hi) and
+                          if (lt == -1 or lt == 0 and lo < root) and
+                          (ht == 1 or ht == 0 and root < hi) and
                           [sign(rcf.eval(q, root)) for q in queried] == signs]
             require(len(candidates) == 1, "assembled descriptor does not select one root")
             value = candidates[0]

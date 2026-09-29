@@ -111,6 +111,14 @@ class IsolationTests(unittest.TestCase):
         self.rejects(lambda rows: rows[13]["output"]["entries"][1]["root"].update(
             lower=[1, [0, 1]]), "assembled descriptor does not select one root")
 
+    def test_assembly_impossible_infinite_endpoint(self):
+        self.rejects(lambda rows: rows[13]["output"]["entries"][2]["root"].update(
+            lower=[2]), "assembled descriptor does not select one root")
+
+    def test_assembly_boolean_derivative_slot(self):
+        self.rejects(lambda rows: rows[13]["output"]["entries"][1]["root"].update(
+            indices=[True, 2]), "wrong assembled derivative slots")
+
     def test_assembly_false_all(self):
         self.rejects(lambda rows: rows[11].update(output={"kind": "all"}))
 
