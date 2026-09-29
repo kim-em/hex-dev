@@ -180,13 +180,46 @@ theorem exists_fraction_parameter (fractions : Finset (Hex.RationalFn ℝ))
   exact ⟨t, ht, belowcap, signs t ht belowη⟩
 
 section EmbeddedFractions
-variable {F : Type} [Field F] [DecidableEq F] [LinearOrder F]
+variable {F : Type} [Field F] [DecidableEq F]
 
 /-- Evaluate actual native fraction coefficients through the prescribed embedding. -/
 @[expose] noncomputable def evalMapped (embedding : F →+* ℝ)
     (fraction : Hex.RationalFn F) (t : ℝ) : ℝ :=
   ((HexPolyMathlib.toPolynomial fraction.num).map embedding).eval t /
     ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t
+
+/-- Specialization preserves an actual native sum wherever the finitely
+recorded denominators of both operands and their result are nonzero. -/
+theorem evalMapped_add (embedding : F →+* ℝ) (first second : Hex.RationalFn F) (t : ℝ)
+    (left : ((HexPolyMathlib.toPolynomial first.den).map embedding).eval t ≠ 0)
+    (right : ((HexPolyMathlib.toPolynomial second.den).map embedding).eval t ≠ 0)
+    (result : ((HexPolyMathlib.toPolynomial (first + second).den).map embedding).eval t ≠ 0) :
+    evalMapped embedding (first + second) t =
+      evalMapped embedding first t + evalMapped embedding second t := by
+  have identity := congrArg (fun p : Hex.DensePoly F =>
+    ((HexPolyMathlib.toPolynomial p).map embedding).eval t) (Hex.RationalFn.add_spec first second)
+  simp only [HexPolyMathlib.toPolynomial_mul, HexPolyMathlib.toPolynomial_add,
+    Polynomial.map_mul, Polynomial.map_add, Polynomial.eval_mul, Polynomial.eval_add] at identity
+  unfold evalMapped
+  field_simp [left, right, result]
+  nlinarith only [identity]
+
+/-- Specialization preserves an actual native product on its recorded
+nonzero denominator guards, without a global field-hom assumption. -/
+theorem evalMapped_mul (embedding : F →+* ℝ) (first second : Hex.RationalFn F) (t : ℝ)
+    (left : ((HexPolyMathlib.toPolynomial first.den).map embedding).eval t ≠ 0)
+    (right : ((HexPolyMathlib.toPolynomial second.den).map embedding).eval t ≠ 0)
+    (result : ((HexPolyMathlib.toPolynomial (first * second).den).map embedding).eval t ≠ 0) :
+    evalMapped embedding (first * second) t =
+      evalMapped embedding first t * evalMapped embedding second t := by
+  have identity := congrArg (fun p : Hex.DensePoly F =>
+    ((HexPolyMathlib.toPolynomial p).map embedding).eval t) (Hex.RationalFn.mul_spec first second)
+  simp only [HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul, Polynomial.eval_mul] at identity
+  unfold evalMapped
+  field_simp [left, right, result]
+  nlinarith only [identity]
+
+variable [LinearOrder F]
 
 /-- Ordered coefficient embeddings preserve each native fraction's infinitesimal
 sign on one positive neighborhood, including its actual denominator guard. -/
@@ -287,3 +320,11 @@ end Hex.RealClosure.Specialize
 /-- info: 'Hex.RealClosure.Specialize.exists_mapped_parameter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.exists_mapped_parameter
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_add' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_add
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_mul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_mul

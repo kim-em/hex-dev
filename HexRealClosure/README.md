@@ -434,6 +434,10 @@ the polynomial's coefficients. `fraction_sign_map`, `finite_fractions_map` and
 that field. All signs and denominator guards hold at one common parameter.
 The rational-base consumer uses the actual rational cast and combines those
 same guards with the positive-square-root equation and strict inequalities.
+`evalMapped_add` and `evalMapped_mul` preserve actual native sums and products
+under the recorded denominator guards. A finite-family consumer collects the
+operands and both results before choosing its parameter, so their arithmetic
+identities and all recorded signs hold at the same point.
 
 Transport of complete query tables and joint selected-root constraints,
 recursive algebraic replay specialization and successive infinitesimal

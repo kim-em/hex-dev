@@ -52,4 +52,26 @@ example (fractions : Finset (Hex.RationalFn Rat)) :
   · nlinarith
   · nlinarith
 
+/-- All operands, results, signs and arithmetic identities use one ordinary
+parameter for actual native addition and multiplication over an embedded field. -/
+example {F : Type} [Field F] [DecidableEq F] [LinearOrder F]
+    (embedding : F →+* ℝ) (ordered : StrictMono embedding)
+    (first second : Hex.RationalFn F) (cap : ℝ) (positive : 0 < cap) :
+    ∃ t : ℝ, 0 < t ∧ t < cap ∧
+      evalMapped embedding (first + second) t =
+        evalMapped embedding first t + evalMapped embedding second t ∧
+      evalMapped embedding (first * second) t =
+        evalMapped embedding first t * evalMapped embedding second t ∧
+      ∀ fraction ∈ ({first, second, first + second, first * second} : Finset (Hex.RationalFn F)),
+        ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t ≠ 0 ∧
+        (SignType.sign (evalMapped embedding fraction t) : Int) =
+          Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign fraction := by
+  obtain ⟨t, ht, small, signs⟩ := exists_mapped_parameter embedding ordered
+    {first, second, first + second, first * second} cap positive
+  refine ⟨t, ht, small, ?_, ?_, signs⟩
+  · exact evalMapped_add embedding first second t
+      (signs first (by simp)).1 (signs second (by simp)).1 (signs (first + second) (by simp)).1
+  · exact evalMapped_mul embedding first second t
+      (signs first (by simp)).1 (signs second (by simp)).1 (signs (first * second) (by simp)).1
+
 end Hex.RealClosure.Specialize.Tests
