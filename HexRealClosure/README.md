@@ -481,3 +481,12 @@ native-to-polynomial correspondence, `polynomial_add`, `polynomial_mul`,
 `polynomial_eval` specialize those operations under the finite input
 coefficient guards; scaling also guards its scalar and endpoint evaluation
 also guards its endpoint. Closure handles accumulations of ring operations.
+
+`RemainderStep.specialize` substitutes the literal stored scales and quotient.
+`check_specialize` proves that an accepted signed recurrence remains accepted
+when its finite coefficients and scales are regular and both scale signs are
+preserved. `SignedRemainderChain.specialize` substitutes the stored entries
+while retaining degree data for validation; its `fractions` family collects
+the literal coefficients and scales. Full chain acceptance, initial/terminal
+identities, endpoint signs and complete Tarski-query transport still need their
+specialization proofs.
