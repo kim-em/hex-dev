@@ -39,10 +39,30 @@ before its input moved through `IO.Ref`; it is invalid as isolation timing
 evidence. The corrected development and unpinned runs are context, not
 additional trials of the pinned clean-commit measurement.
 
+## Nested selected-root call
+
+`runNested` validates a descriptor selecting `√2` from the reducible
+`(X²−2)(X−3)`, then validates the positive root `β` of `Y²−√2` over the
+first level's stored values. It checks `β > 0`, `β² = √2`, and
+`ββ⁻¹ = 1` through the actual selected-root sign queries. The first raw
+descriptor is read from `IO.Ref` inside the timed call. This measures both
+validations and the nested arithmetic; its duration is not directly
+comparable to the three stage-specific rational anchors above.
+
+On `chungus2`, CPU 10 was selected by the shared-host CPU lease. The ten
+measured calls all returned the expected hash `0x1`. The median was
+**144.388 ms**, with an observed range of **143.541–146.707 ms**. Peak RSS
+across the measured child processes was 68,376–69,164 kB. The
+[export](nested-anchor.json), [log](nested-anchor.log), and
+[context](nested-anchor-context.json) retain all samples, the command,
+host conditions, and source and executable hashes. The source commit was
+`04f7262`; the runner marked it dirty because it wrote the untracked
+measurement files during the run.
+
 Run `lake build hexrealclosure_bench`, then
-`.lake/build/bin/hexrealclosure_bench run Hex.RealClosure.Bench.runYun Hex.RealClosure.Bench.runIsolation Hex.RealClosure.Bench.runAssembly`.
+`.lake/build/bin/hexrealclosure_bench run Hex.RealClosure.Bench.runYun Hex.RealClosure.Bench.runIsolation Hex.RealClosure.Bench.runAssembly Hex.RealClosure.Bench.runNested`.
 
 The formal #10378 performance evaluation still requires the specified depth
-and coefficient families, nested sign and zero queries, BKR counts, splitting
+and coefficient families, systematic nested sign and zero counts, BKR counts, splitting
 and transport, clean/eager comparisons on identical semantic inputs, tower8
 and MetiTarski workloads, and representative attribution.
