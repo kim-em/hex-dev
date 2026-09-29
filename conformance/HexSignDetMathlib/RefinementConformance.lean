@@ -164,6 +164,35 @@ set_option maxRecDepth 4096 in
 set_option maxHeartbeats 1000000 in
 #guard infinitesimalPasses
 
+/-- Rebuild the same mathematical polynomial with different nonzero stored
+coefficients. A zero difference permits re-encoding, while copied evidence
+still fails the exact defining-polynomial binding, even on the same interval. -/
+def changedHeadPasses : Bool :=
+  let root := HexPoly.InterpretTests.root
+  let source : RawDescriptor HexPoly.InterpretTests.Rep Nat :=
+    ⟨7, DensePoly.ofCoeffs #[-root, 0, 1], .finite 0, .finite 2, [], []⟩
+  let target : DensePoly HexPoly.InterpretTests.Rep := DensePoly.ofCoeffs #[-1, 0, root]
+  let sign := Hex.TarskiTests.Noncanonical.sign
+  match Descriptor.validate sign 7 source with
+  | none => false
+  | some d =>
+    decide (target ≠ source.head) && (target - source.head).isZero &&
+      !({source with head := target}).check sign 7 d.evidence &&
+      match d.buildReencoding target source.lower source.upper with
+      | .ok (some r) =>
+        r.target.raw.head == target && r.target.raw.lower == source.lower &&
+          r.target.raw.upper == source.upper && r.target.raw.context == 7 &&
+          r.target.raw.signs == [1, 1] &&
+          r.target.signAt (HexPoly.InterpretTests.x - DensePoly.C 1) == 0 &&
+          r.target.raw.check sign 7 r.target.evidence &&
+          !r.target.raw.check sign 7 d.evidence &&
+          d.checkReencoding r.target target source.lower source.upper r.evidence
+      | _ => false
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard changedHeadPasses
+
 namespace Noncanonical
 
 open HexPoly.InterpretTests Hex.SignDetMathlib.ReencodingConformance.Noncanonical
@@ -184,6 +213,25 @@ theorem refinement (d : Descriptor Rep Nat Hex.TarskiTests.Noncanonical.sign 7)
         d.root realValue zero one add sub mul natCast sign := by
   exact d.buildReencoding_refinement realValue zero one add sub mul natCast sign neg inv
     a b hdom hmem hsubset
+
+/-- The changed-head producer theorem applies to the actual noninjective
+carrier without a ring or field instance on its stored values. -/
+theorem reencoding_congr (d : Descriptor Rep Nat Hex.TarskiTests.Noncanonical.sign 7)
+    (target : DensePoly Rep) (a b : Endpoint Rep)
+    (hzero : (target - d.raw.head).isZero = true)
+    (hdom : HexSturmMathlib.Domain realValue zero target a b)
+    (hmem : d.root realValue zero one add sub mul natCast sign ∈
+      Tarski.rootsIn (interpret realValue zero target) (a.map realValue) (b.map realValue))
+    (hsubset : Tarski.rootsIn (interpret realValue zero target)
+      (a.map realValue) (b.map realValue) ⊆
+      Tarski.rootsIn (interpret realValue zero d.raw.head)
+        (d.raw.lower.map realValue) (d.raw.upper.map realValue)) :
+    ∃ r : Reencoding d target a b,
+      d.buildReencoding target a b = .ok (some r) ∧
+      r.target.root realValue zero one add sub mul natCast sign =
+        d.root realValue zero one add sub mul natCast sign := by
+  exact d.buildReencoding_congr realValue zero one add sub mul natCast sign neg inv
+    target a b hzero hdom hmem hsubset
 
 end Noncanonical
 
@@ -206,5 +254,18 @@ end Noncanonical
 /-- info: 'Hex.SignDetMathlib.RefinementConformance.Noncanonical.refinement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Noncanonical.refinement
+
+/-- info: 'Hex.SignDet.RawDescriptor.full_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.RawDescriptor.full_congr
+/-- info: 'Hex.SignDet.Descriptor.reencoding_fiber' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.reencoding_fiber
+/-- info: 'Hex.SignDet.Descriptor.buildReencoding_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.buildReencoding_congr
+/-- info: 'Hex.SignDetMathlib.RefinementConformance.Noncanonical.reencoding_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Noncanonical.reencoding_congr
 
 end Hex.SignDetMathlib.RefinementConformance
