@@ -28,13 +28,22 @@ private def splitSample : Option (Array Int) := do
   let a := Element.ofPoly (context := context) x
   let b := Element.ofPoly (context := context) (x - DensePoly.C 3)
   let newer := context.reencode r
-  let mapped := Element.reencodePoly r (DensePoly.ofCoeffs #[a, b])
+  let square := Element.ofPoly (context := context) (x * x)
+  let cube := Element.ofPoly (context := context) (DensePoly.natPow x 3)
+  let zero := Element.ofPoly (context := context) (x * x - 2)
+  let mapped := Element.reencodePoly r (DensePoly.ofCoeffs #[a, zero, b])
   return #[a.sign, (a.reencode r).sign, b.sign, (b.reencode r).sign,
     ((a.reencode r) * (a.reencode r) - 2).sign,
     ((b.reencode r) * (b.reencode r)⁻¹ - 1).sign,
-    (mapped.coeff 0).sign, (mapped.coeff 1).sign,
-    (Element.ofPoly (context := newer) x).sign]
+    (mapped.coeff 0).sign, (mapped.coeff 2).sign,
+    (Element.ofPoly (context := newer) x).sign,
+    if newer.root.raw.head == factor then 1 else 0,
+    if square.polynomial.toArray == #[0, 0, 1] then 1 else 0,
+    if (square.reencode r).polynomial.toArray == #[2] then 1 else 0,
+    if cube.polynomial.toArray != #[0, 2] then 1 else 0,
+    if (cube.reencode r).polynomial.toArray == #[0, 2] then 1 else 0,
+    if zero == 0 && mapped.coeff 1 == 0 && mapped.coeff 3 == 0 then 1 else 0]
 
-#guard splitSample == some #[1, 1, -1, -1, 0, 0, 1, -1, 1]
+#guard splitSample == some #[1, 1, -1, -1, 0, 0, 1, -1, 1, 1, 1, 1, 1, 1, 1]
 
 end Hex.RealClosure.Algebraic.ReencodeTests
