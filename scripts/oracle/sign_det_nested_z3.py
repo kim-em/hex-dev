@@ -45,10 +45,6 @@ def check_record(record):
     require(g > 0 and oracle.poly(raw["head"]) == [-g*g, oracle.zero, oracle.one] and
             [oracle.poly(q) for q in raw["queries"]] ==
             [[-g, oracle.one], [-anchor, oracle.one]], "wrong literal nested-field inputs")
-    data = {"head": raw["head"], "queries": raw["queries"], "lower": "-inf", "upper": "+inf"}
-    expected = oracle.table(data)
-    require(expected is not None, "independent oracle rejected the root domain")
-    expected = [[entry["signs"], entry["count"]] for entry in expected]
     for name in ("reduced", "direct", "reference"):
         mode = result[name]
         require(mode.get("status") == "ok" and mode.get("replay") is True,
@@ -56,13 +52,18 @@ def check_record(record):
         require(isinstance(mode["table"], list) and all(
             isinstance(pair, list) and len(pair) == 2 and sign_vector(pair[0], 2) and
             type(pair[1]) is int and pair[1] > 0 for pair in mode["table"]), "malformed sign table")
-        require(mode["table"] == expected, "table differs from independent exact roots and signs")
         if name != "reference":
             require(mode.get("graphReplay") is True and mode.get("leafLayout") is True,
                     "graph replay or leaf-layout check failed")
             require(all(mode.get(key) is False for key in
                         ("foreignContextReplay", "staleChildReplay", "copiedHeadReplay", "copiedMomentReplay", "missingSupportReplay")),
                     "stale or incomplete evidence was accepted")
+    data = {"head": raw["head"], "queries": raw["queries"], "lower": "-inf", "upper": "+inf"}
+    expected = oracle.table(data)
+    require(expected is not None, "independent oracle rejected the root domain")
+    expected = [[entry["signs"], entry["count"]] for entry in expected]
+    for name in ("reduced", "direct", "reference"):
+        require(result[name]["table"] == expected, "table differs from independent exact roots and signs")
 
 
 def main():

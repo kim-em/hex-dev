@@ -22,6 +22,10 @@ class NestedFieldsOracle(unittest.TestCase):
         with self.assertRaises(OracleMismatch):
             oracle.check_record(record)
 
+    def test_ci_fixture_matches_local_prefix(self):
+        self.assertEqual(oracle.DEFAULT_FIXTURE.read_bytes(),
+                         b"".join(oracle.LOCAL_FIXTURE.read_bytes().splitlines(keepends=True)[:2]))
+
     def test_actual_four_levels(self):
         self.assertEqual([r['case'] for r in self.records], oracle.CASES)
         for record in self.records:

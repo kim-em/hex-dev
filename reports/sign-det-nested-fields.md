@@ -42,8 +42,8 @@ mutations test the oracle; the native replay decisions test the certificate
 checker. The existing two-level oracle keeps its original default depth limit.
 
 Routine CI runs depths one and two; the local profile retains all four depths.
-The existing classifier runs these checks for HexSignDet changes and on main,
-not automatically for every change in its dependencies. Run both profiles with:
+The existing classifier runs these checks for HexSignDet and HexOrderedFn
+changes, and on main. HexRationalFn changes alone do not select these checks. Run both profiles with:
 
 ```sh
 lake build hexsigndet_emit_nested_fields
@@ -67,7 +67,10 @@ and output; they are not fixed-schedule complexity measurements:
 The [execution record](data/sign-det-nested-fields/anchor-fields/execution.json)
 retains source/executable hashes and host load, and the stderr record retains
 the per-depth timings. These observations are host-specific, not CI runner
-measurements or a complexity law.
+measurements or a complexity law. The eleven Python oracle regression tests,
+including checks on the four-depth fixture, took 0.179 seconds in a separate
+local execution; its [record](data/sign-det-nested-fields/anchor-fields/oracle-tests.json)
+retains the command and successful result.
 
 These are executable conformance cases, not ordinary-kernel semantic proofs or
 cross-level coefficient-proof certificates. Same-level BKR graph sharing does
