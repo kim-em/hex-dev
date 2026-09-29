@@ -299,6 +299,10 @@ lean_lib HexRealClosureTests where
 lean_lib HexRealClosureMathlib where
 
 @[default_target]
+lean_lib HexRealClosureMathlibTests where
+  globs := #[.one `HexRealClosureMathlib.BaseTests]
+
+@[default_target]
 lean_lib HexSturmMathlib where
 
 lean_lib HexInterval where
@@ -603,6 +607,16 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.QueryHandle, `HexSignDetMathlib.TableProducer,
     `HexSignDetMathlib.ReencodingProducer, `HexSignDetMathlib.RootList,
     `HexSignDetMathlib.ReencodingRefinement,
+    `HexRealClosureMathlib.Specialize, `HexRealClosureMathlib.SpecializeTests,
+    `HexRealClosureMathlib.SpecializePolynomial, `HexRealClosureMathlib.SpecializeRegular, `HexRealClosureMathlib.SpecializeQuery, `HexRealClosureMathlib.SpecializeTarski,
+    `HexRealClosureMathlib.SpecializeReduction,
+    `HexRealClosureMathlib.SpecializeMoment,
+    `HexRealClosureMathlib.SpecializeReplay,
+    `HexRealClosureMathlib.SpecializeSample,
+    `HexRealClosureMathlib.SpecializeSelected,
+    `HexRealClosureMathlib.SpecializeDescriptor,
+    `HexRealClosureMathlib.Algebraic, `HexRealClosureMathlib.AlgebraicClean,
+    `HexRealClosureMathlib.AlgebraicValue, `HexRealClosureMathlib.BaseClean, `HexRealClosureMathlib.AlgebraicTower,
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
@@ -611,7 +625,10 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.BisectionRoots, `HexRealClosureMathlib.BisectionFrontier,
     `HexRealClosureMathlib.BisectionCounts, `HexRealClosureMathlib.Isolation,
     `HexRealClosureMathlib.BisectionFactor, `HexRealClosureMathlib.IsolationFactor,
-    `HexRealClosureMathlib.ZeroFactor, `HexRealClosureMathlib.IsolationRoots, `HexRealClosureMathlib.RootOrder, `HexRealClosureMathlib.RootFactors].map Glob.one
+    `HexRealClosureMathlib.ZeroFactor, `HexRealClosureMathlib.IsolationRoots,
+    `HexRealClosureMathlib.RootOrder, `HexRealClosureMathlib.RootFactors,
+    `HexRealClosureMathlib.Ambient, `HexRealClosureMathlib.AmbientTests,
+    `HexRealClosureMathlib.Union, `HexRealClosureMathlib.UnionTests].map Glob.one
 
 lean_exe hexrealclosure_root_order_tests where
   root := `HexRealClosure.RootOrderTests
@@ -1064,6 +1081,12 @@ lean_lib HexBerlekampMathlibProofProbeScientific where
 lean_lib HexSignDetMathlibProofProbe where
   srcDir := "bench"
   globs := #[.submodules `HexSignDetMathlib.ProofProbe]
+
+-- Depth-three kernel reductions run manually to keep their large memory demand
+-- out of the shared hosted build. Depth-one/two probes remain in the CI target above.
+lean_lib HexSignDetMathlibNestedProofProbe where
+  srcDir := "bench"
+  globs := #[.submodules `HexSignDetMathlib.NestedProofProbe]
 
 lean_lib HexRealFormulaProofProbe where
   srcDir := "bench"
@@ -1746,7 +1769,8 @@ lean_exe hexsigndet_bench where
 lean_lib HexSignDetBenchSupport where
   srcDir := "bench"
   globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
-    .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint]
+    .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint,
+    .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height]
 
 lean_exe hexsturm_bench where
   srcDir := "bench"

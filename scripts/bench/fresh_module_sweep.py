@@ -2081,3 +2081,51 @@ def run_cli(
         display = output
     print(display)
     return 0 if release_quality else 2
+
+
+def run_retained_cli(
+    spec: SweepSpec, caller_file: Path, argv: Sequence[str] | None = None,
+) -> int:
+    """Retain every completed arm in an external, incrementally flushed sidecar."""
+    from scripts.bench.structural_tactic_sweep import acquire_cpu
+
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    args = parse_args(spec.description, arguments, default_samples=spec.required_samples or 4)
+    cpu, lease = acquire_cpu(args.cpu)
+    try:
+        env = environment()
+        output = args.output or (Path.home() / ".local/state/hex/proof-probes" /
+                                 default_output(env, spec.output_stem).name)
+        output = output.resolve()
+        if output.is_relative_to(ROOT.resolve()):
+            raise RuntimeError("choose a measurement output path outside the repository")
+        sidecar = Path(str(output) + ".samples.jsonl")
+        if output.exists() or sidecar.exists():
+            raise RuntimeError("measurement output exists; choose a fresh path")
+        # Flush every completed arm before validation, including failed arms.
+        sidecar.parent.mkdir(parents=True, exist_ok=True)
+        with sidecar.open("x") as log:
+            print(f"Incremental samples: {sidecar}", flush=True)
+            log.write(json.dumps({"type": "metadata", "environment": env,
+                                  "source_sha256": source_hashes(spec, caller_file)}) + "\n")
+            log.flush()
+
+            def observe(module, sample):
+                log.write(json.dumps({"type": "sample", "module": module, **sample}) + "\n")
+                log.flush()
+
+            try:
+                code = run_cli(spec, caller_file,
+                               [*arguments, "--shared-host", "--cpu", str(cpu),
+                                "--output", str(output)], sample_observer=observe)
+                log.write(json.dumps({"type": "complete", "code": code}) + "\n")
+                log.flush()
+            except BaseException as exc:
+                log.write(json.dumps({"type": "failure", "exception": type(exc).__name__,
+                                      "error": str(exc)}) + "\n")
+                log.flush()
+                print(f"Retained partial samples: {sidecar}", file=sys.stderr)
+                raise
+        return code
+    finally:
+        lease.close()

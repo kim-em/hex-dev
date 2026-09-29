@@ -8,6 +8,7 @@ module
 public import HexSignDet.Matrix
 public import HexSignDet.Support
 public import HexSignDet.Replay
+public import HexSignDet.SignOperands
 public import HexSignDet.Counts
 public import HexSignDet.Induction
 public import HexSignDet.Produce
@@ -32,6 +33,7 @@ public import HexSignDet.Reencode
 public import HexSignDet.Compare
 
 public import HexSignDet.Dag
+public import HexSignDet.DagSigns
 public import HexSignDet.DagEncode
 public import HexSignDet.DagReplay
 public import HexSignDet.DagExpand

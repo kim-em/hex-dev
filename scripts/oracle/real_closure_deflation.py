@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact deflation, zero extraction, bisection, frontier and dispatch checks."""
+"""Exact deflation, zero multiplicities, bisection, frontier and dispatch checks."""
 
 from fractions import Fraction
 from pathlib import Path

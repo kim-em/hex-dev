@@ -1,4 +1,4 @@
-# Rational selected-root expressions
+# Selected-root arithmetic and immutable bases
 
 `Root.validate` checks a `Hex.SignDet.RawDescriptor Rat Nat` against its exact
 version tag. The tag is a `Nat` and does not yet own a defining polynomial or
@@ -12,8 +12,9 @@ inverse has a proof of its real value in
 The companion also proves that the selected root lies in the computed cofactor
 for a nonzero value, that squarefreeness makes this cofactor coprime to the
 operand, and that the scaled Bézout candidate has product one. Once both sign queries
-return, `inverse?` cannot fail its candidate check. Total sign-query producer
-success remains an upstream requirement.
+return, `inverse?` cannot fail its candidate check. The shared selected-sign producer
+now has a success theorem under a lawful predecessor interpretation;
+the generic arithmetic interface below uses it for total scalar sign.
 
 ```lean
 let d ← Root.validate 7 raw
@@ -196,9 +197,8 @@ Run `lake build hexrealclosure_bounds_conformance`, then
 `.lake/build/bin/hexrealclosure_bounds_conformance | python3 scripts/oracle/real_closure_bounds.py`.
 
 A failed bound search is a request for whole-line BKR completion. It never
-means that the polynomial has no roots. Capped bounded bisection is implemented
-below. Complete isolation and automatic dependency transport remain required;
-general contexts and explicit recursive transport have separate APIs above.
+means that the polynomial has no roots. The bounded bisection and complete
+isolation driver, general contexts and recursive transport remain unimplemented.
 
 `deflate? p a` removes the factor `X-a` with the shared monic polynomial division.
 `linearFactor a` stores the literal leading coefficient one, and the constructor
@@ -213,9 +213,8 @@ input, exact factorization, a degree drop of one, and preservation of all other
 roots. For squarefree inputs the quotient is squarefree and no longer vanishes
 at `a`. `Deflation.domains` then supplies the two open Sturm domains after an
 interior split; previous root-free endpoints remain valid. It does not reuse
-old descriptors or counts. The frontier below recomputes every pending domain
-and count after deflation. Complete isolation still needs descriptor construction
-and restoration of the original multiplicities.
+old descriptors or counts. The driver still needs their checked transport or
+recomputation and must retain the original multiplicities.
 
 The generic deflation proofs use zero-reflecting coefficient interpretation
 into a field and introduce no admissions. Packed selected-root execution tests
@@ -223,12 +222,149 @@ check cancellation of structurally different coefficient values. Thirteen
 independent exact fixtures include nonmonic and repeated inputs, nonroot
 rejection, inverse infinitesimals and removal at either of two infinitesimal
 levels. Their SymPy oracle uses synthetic division in `QQ(epsilon, delta)`.
-With SymPy and python-flint installed, run `lake build hexrealclosure_deflation_conformance`, then
+Run `lake build hexrealclosure_deflation_conformance`, then
 `.lake/build/bin/hexrealclosure_deflation_conformance | python3 scripts/oracle/real_closure_deflation.py`.
 
 For existing canonical number-field arithmetic and conversions, see the
 [number-field chapter](../HexManual/Chapters/HexNumberField.lean) and
 [real-algebraic chapter](../HexManual/Chapters/HexRealAlgebraic.lean).
+
+## Ordered bases and checked value readers
+
+`BaseContext.RealContext` constructs a real-constant prefix, starting at ℚ.
+`RealContext.constant` looks up a name/version key in one fixed immutable
+`Registry`. It requires the key's presence and erased progress for the exact
+source returned by `parent.source key present`: coefficient bounds come from
+the predecessor and constant bounds come from that registry entry. The
+Mathlib companion's `RealContext.register` derives this progress from the
+existing containment, width and relative-transcendence hypotheses. Its sign,
+containment and zero-reflection theorems concern the actual constructed child.
+The companion explicitly relates the executable and Mathlib field dictionaries:
+use `HexRationalFnMathlib.ratField_eq` at ℚ and
+`HexPolyMathlib.toGrind_fieldOfGrind` for subsequent native fraction fields.
+In Mathlib-side code, select the executable rational dictionary before naming
+the rational context or its fraction carrier:
+
+```lean
+local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat
+```
+
+`RealModel.evalHom` embeds the native canonical carrier into ℝ;
+`RealModel.linearOrder` and `strictOrderedRing` give its induced order and
+ordered-ring laws. The resulting order supports infinitesimals after real levels.
+`InfinitesimalModel.embed`, `linearOrder` and `strictOrderedRing` provide the
+corresponding native Hahn model. `Element.infinitesimal_orderSign` gives sign
+agreement for the next step, so it can be repeated at arbitrary finite depth.
+The new infinitesimal is positive and below every positive predecessor element.
+
+`BaseContext.Context.real` finishes that prefix. `Context.infinitesimal` then
+adds any number of successive positive infinitesimals. The types prevent
+adding another real constant after this step. These carriers use the existing
+canonical rational-function fields; no coefficient-operation record or field
+instance on selected-root syntax is introduced. The companion ties the child's
+actual infinitesimal sign to the shared Hahn-series interpretation under the
+predecessor sign hypothesis.
+
+`BaseContext.Element ctx` is a nominal wrapper indexed by the entire immutable
+context. Equal carrier types do not permit implicit context changes. Ordinary
+arithmetic stays in one context; `a.embed` includes a predecessor value in its
+new infinitesimal child, and `Element.embedConstant` includes a real-prefix
+value in its registered child. Both embeddings preserve zero, one, addition,
+subtraction, multiplication, total inversion and canonical equality. Their
+companion theorems preserve signs and every `compare` result, including strict
+inequalities. `a.equal b` tests canonical equality, while `a.inv?` rejects zero.
+
+`a.write` produces finite recursive rational/fraction syntax with the full
+base signature: the real keys in predecessor order and the infinitesimal
+count. `Element.read ctx raw` first checks that literal signature, then checks
+every level and denominator before canonical fraction construction. Round-trip
+preservation and stale-binding rejection have kernel proofs. Readers are
+relative to the application's fixed registry; identical keys in unrelated
+registries do not establish provider identity. This is a value reader in a
+supplied context. The catalog below reconstructs base contexts before reading
+values or polynomials.
+
+Run `lake build HexRealClosure.BaseTests HexRealClosureMathlib.BaseTests`.
+The compiled examples exercise successive infinitesimals, explicit embeddings,
+inverse infinitesimals, fraction normalization, round trips, incompatible
+bindings, malformed level shapes and zero denominators. Companion tests apply
+the semantic theorems to an executable named constant and two successive
+infinitesimals, including positivity and comparison with every positive
+predecessor element. A conditional two-constant construction verifies progress
+from the exact first-level bounds, relative transcendence over that whole field,
+second-level sign/zero/order correspondence, embedding comparisons, key order
+and reader round trips. These base contexts do not yet contain algebraic levels.
+Integrating general selected-root storage,
+full dependency transport, algebraic context reconstruction, isolation and
+exploration remains part of the tower implementation.
+
+### Polynomials in a base context
+
+`BaseContext.Polynomial ctx` owns all its coefficients in one immutable base
+context. `Polynomial.ofCoeffs` accepts only values of that context; `coeff` and
+`eval` return values in it. Ordinary polynomial arithmetic delegates to
+`DensePoly` on the existing canonical coefficient carrier.
+
+`p.embed` and `p.embedConstant` include every coefficient in the corresponding
+infinitesimal or real child. Kernel proofs preserve coefficients, evaluation,
+zero, one, addition, subtraction, negation, multiplication, stored array length
+and degree. The shared coefficient-map implementation retains normalization
+without scanning again for trailing zero coefficients.
+
+`p.write` records a full base signature and a finite coefficient list.
+`Polynomial.read ctx raw` checks that signature and every coefficient using
+the context's scalar reader before constructing the polynomial. Round trips
+and rejection of stale signatures have kernel proofs. Malformed fractions and
+level shapes are rejected; valid trailing zero coefficients are normalized.
+These are polynomials over the real/infinitesimal base, before algebraic levels.
+
+Run `lake build HexRealClosure.BasePolynomialTests HexRealClosureMathlibTests`.
+The tests include two infinitesimal levels, inverse-infinitesimal coefficients,
+evaluation and coefficient transport, incompatible operand types, stale data,
+malformed coefficients and a polynomial embedded into a named real context.
+
+### Reconstructing base contexts
+
+`BaseContext.Catalog registry` is an immutable catalog of real prefixes already
+constructed against that fixed registry. Wrap a prefix with `RealPrefix.pack`
+and install it using `Catalog.insert`. Insertion returns a new catalog and
+rejects a path already installed; the rational prefix is always present.
+Existing catalogs and their values remain valid. Kernel proofs show that
+insertion preserves every other lookup.
+
+`Catalog.read signature` resolves the complete ordered list of provider names
+and versions, reuses the installed prefix, and constructs the specified number
+of infinitesimal stages. It retrieves the progress premises already stored in
+the prefix, rather than deciding convergence or relative transcendence from
+serialized data. A provider present in the underlying registry is insufficient
+until its full prefix has been installed. No lookup uses a shortened name or a
+hash, and reconstruction stays relative to the same immutable registry.
+
+`Catalog.readElement raw` and `Catalog.readPolynomial raw` reconstruct the
+context first, then use its checked scalar or polynomial reader.
+`PackedContext.readElement` also checks bindings when reusing a supplied packed
+context; `readPayload` explicitly accepts unbound coefficient syntax. Their packed
+results retain that context and a value indexed by it. `PackedElement.sign`
+uses its own context's native sign. Malformed recursive coefficients, missing
+paths and changed provider versions are rejected. Kernel round-trip proofs
+return the original context and value whenever that exact prefix is installed.
+`PackedContext.reconstruct` decomposes every ordinary native context into its
+actual real prefix and depth. `Catalog.read_self` therefore needs only the
+installed-prefix lookup, without a caller-provided reconstruction equality.
+`insert_isSome_iff` and `lookup_of_insert` describe the concrete catalog returned
+by insertion. The compiled stage constructor uses a proved tail-recursive loop.
+Proofs are not serialized.
+
+Run `lake build HexRealClosure.BaseCatalogTests HexRealClosureMathlibTests`.
+The examples exercise rational reconstruction, two infinitesimal levels, an
+actual named real followed by two infinitesimals, immutable catalog extension,
+duplicate paths, changed versions, missing registrations, malformed fractions,
+and kernel round trips for a concrete installed named-real catalog. These
+readers cover the real and
+infinitesimal base stages. Algebraic descriptors, dependency transport and
+complete algebraic context reconstruction remain part of the tower work.
+
+## Capped isolation and root assembly
 
 ### Finite bisection nodes
 
@@ -247,8 +383,7 @@ and root cuts, nonmonic and fractional heads, root-free deflated endpoints,
 root counts and invalid inputs.
 
 The capped frontier below composes these finite nodes and recomputes pending
-evidence after deflation. Complete BKR fallback, factor merging and the
-complete root-set API remain to be assembled and proved.
+evidence after deflation. Descriptor completion and factor assembly are described below.
 
 `Mode.removed` returns the emitted coefficient point or `none`. The companion
 `BisectionRoots` proves that roots in the original interval are exactly the
@@ -325,11 +460,11 @@ Root cuts
 still prepare both quotient domains and recompute every pending domain and
 count, including count-zero cells. No timing improvement is claimed.
 
-Descriptor construction, BKR completion, multiplicity restoration and
-factor-list merging remain required for complete isolation. Automatic dependency
-transport, compatible
-real-closed union semantics and simultaneous ordinary-real realization remain
-separate requirements of the full tower.
+The frontier feeds descriptor completion and factor assembly below. The
+complete ordered `RootSet` still needs general descriptor comparison laws and
+producer totality. Automatic dependency transport, compatible real-closed
+union semantics and simultaneous ordinary-real realization remain separate
+requirements of the full tower.
 
 ### Bound selection and whole-line dispatch
 
@@ -403,8 +538,8 @@ proofs apply to raw coefficients through a zero-reflecting interpretation in
 an ordered real closed field, and use only the standard three axioms.
 
 This intermediate output does not claim globally sorted root values or full
-producer success. It is for nonzero squarefree input; Yun multiplicities and
-the separate all-roots result for the zero polynomial must still be assembled.
+producer success. It is for nonzero squarefree input; the factor assembly below
+restores Yun multiplicities and handles the zero-polynomial case.
 Unresolved and whole-line enumeration currently prepare the retained domains
 again; the requested upstream prepared-root enumeration API remains a subsequent
 integration. `cell_enumeration_present` and `Whole.enumeration_present` prove
@@ -435,7 +570,8 @@ The sort relies on
 completion’s distinctness proof; it does not certify arbitrary input lists
 as distinct without the missing general comparison-order laws. General strict order for
 descriptor pairs still requires the upstream Thom theorem, so this intermediate
-sort does not establish the complete ordered `RootSet` contract or multiplicities.
+sort does not establish the complete ordered `RootSet` contract. Factor assembly
+restores multiplicities separately.
 `hexrealclosure_root_order_tests` also belongs to the default
 `HexRealClosureTests` build. It exercises distinct roots on one head and on
 different heads, exact mixed output, actual completion with both points and
@@ -453,14 +589,12 @@ zero-root multiplicity. Every nonzero root retains its exact multiplicity.
 These proofs require only a zero-reflecting coefficient interpretation; they
 impose no field laws on raw storage and use no root-count admission.
 
-A zero polynomial returns `(0, 0)`. This transformation does not construct a
-root set: a complete roots API must still return `all` for zero and restore
-the extracted multiplicity when merging its other roots. The exact deflation
+A zero polynomial returns `(0, 0)`. `Roots.assemble` below returns `all`
+for that case and restores the extracted multiplicity when merging other roots. The exact deflation
 fixture driver also covers constants, a pure power, mixed nonzero roots,
 fractional and negative scalars, and one and two infinitesimal levels. Its
 independent SymPy oracle determines the zero multiplicity from the first
 nonzero coefficient and checks the entire returned quotient.
-
 `Roots.assemble` composes literal zero extraction, the actual raw Yun
 recurrence and complete isolation of each returned factor. Its intermediate
 `Output` retains `all` for the zero polynomial and positive multiplicities
@@ -486,3 +620,310 @@ output represents exactly the original polynomial's roots with their original
 positive multiplicities. `assemble_all` proves the separate all-roots result
 occurs exactly for semantic zero. Duplicate-free output, global ordering and
 producer totality remain separate obligations before a complete `RootSet`.
+
+### Arithmetic over general selected-root predecessors
+
+`BaseContext.Context.adjoin descriptor` adjoins a root over an exact immutable
+real/infinitesimal base. `Algebraic.Context.extend descriptor` adjoins another
+root over the preceding algebraic context. Both derive the storage predicate
+from their predecessor. The general backend
+`Algebraic.Context.adjoin descriptor cleanCoeff` also supports ordinary
+coefficient carriers with an explicit storage predicate.
+
+`Algebraic.Element ctx` owns its complete extension context and stores a unique
+zero or a nonzero polynomial with its checked sign. The context computes its
+literal-monic/clean reduction decision once. Packing retains the actual monic
+remainder when eligible, then performs one shared selected-root sign query for
+nonconstant polynomials; constants use the predecessor sign directly. Reading
+a stored sign reuses its result. Nonmonic or unclean definitions retain the raw
+representative. A leading coefficient that denotes one but differs structurally
+from literal one does not enable monic storage.
+
+Ordinary addition, subtraction, negation, multiplication, inversion and
+division operate on these values. Inversion computes the defining polynomial's
+local gcd with the operand, takes the complementary factor, and scales the
+actual one-sided Bézout coefficient. `ofCoeff` explicitly includes a predecessor
+value. `equal` and `compare` use the selected value; structural equality compares
+stored forms. `inv?` rejects canonical zero.
+
+The companion `adapters/HexRealClosureMathlib/Algebraic.lean` proves zero
+reflection, sign, comparison and arithmetic preservation for a zero-reflecting
+predecessor interpretation into an ordered real closed field that preserves
+the relevant ordinary operations. Injectivity is unnecessary. Producer success
+proves the scalar adapter's explicit internal-error branch unreachable under
+these hypotheses. Inverse correctness derives the cofactor root and constant
+gcd properties of the actual computation. `AlgebraicTower.lean` instantiates the
+second level's interpretation using the first level's proved operations,
+including zero reflection, sign and gcd/cofactor inversion.
+
+`AlgebraicValue.lean` defines the image subfield `Value ctx`, with lawful field
+and order instances inherited from the ambient field. `Element.toValue`
+preserves arithmetic and sign, is surjective, and identifies exactly the
+representatives accepted by executable `equal`. `Context.quotientEquiv`
+identifies the semantic quotient of storage with this field.
+`quotientField`, `quotientOrder` and `quotientOrdered` transfer lawful field and
+order structures to that quotient; `quotient_compare` ties the executable
+comparison to its order. The `quotient_add`, `quotient_mul`,
+`quotient_inv` and related equations prove descent of the actual packed operations. Stored
+representatives have no asserted field instance.
+
+`BaseContext.Element.isClean` checks integral rational coefficients and
+recursively denominator-one polynomials through every real and infinitesimal
+stage. `Algebraic.Element.isClean` checks its stored polynomial's predecessor
+coefficients. `BaseClean.lean` proves closure of the actual recursive base
+predicate under zero, one, addition, subtraction and multiplication, and derives
+clean packing for the native base constructor. `AlgebraicClean.lean` proves that
+these closure properties preserve coefficients through actual polynomial
+arithmetic and monic division, retained reduction and packed arithmetic. `Context.extend_clean`
+proves clean packing at the next algebraic level from those preceding-operation
+closure theorems; `extend_closed` retains all five closure facts for further levels. They
+need no field laws on stored syntax and have no admitted dependencies.
+
+Run `lake build HexRealClosure.AlgebraicTests HexQuerySemantics` and
+`python3 HexRealClosure/verify_algebraic.py`. Executable examples cover reducible
+monic and nonmonic definitions, noncanonical equal values, local splitting
+inversion and cancellation, square roots of infinitesimals, and two reducible
+algebraic levels with ordinary coefficient operations. The independent exact
+oracle computes arithmetic and polynomial remainders in a quartic field and
+checks the positive selected infinitesimal root in Laurent germs. It runs in
+the existing CI job. The Mathlib-free `hexrealclosure_bench` includes a functional
+`runGeneral` timing anchor for validation, packing, cancellation and inversion;
+it makes no scaling claim.
+
+The semantic sign, inverse and quotient proofs consume the proved shared
+Tarski foundation. Their axiom guards contain only the three standard kernel
+axioms, and the audited import cones contain no admissions. These interpretations are
+conditional on an ambient ordered real closed field, not an existence proof.
+
+The remaining tower work includes the recursive algebraic dependency catalog,
+context enlargement and transport, general root isolation and multiplicities,
+rational delegation agreement and a compatible real-closed union construction.
+Repeated nonconstant queries still rebuild the shared prepared domain and BKR
+table; a reusable selected-sign handle is requested from #10377. Formal tower
+performance evaluation, including nested sign/zero counts and coefficient
+growth, remains open.
+
+## Ordered algebraic ambient models
+
+`Ambient.ofField K` in the companion consumes Tau Ceti's proved ordered
+real-closure existence theorem. Its carrier is real closed and algebraic over
+the actual strictly monotone inclusion of `K`. Every ambient element comes
+with a nonzero polynomial over that embedded base that vanishes at the element.
+The inclusion preserves zero, arithmetic, order and signs. This is a semantic
+construction and supplies no executable field instance on raw selected-root
+representations.
+
+`Ambient.infinitesimal K` applies this construction to the canonical ordered
+rational-function field. The companion proves existence of a positive square
+root of the new infinitesimal strictly above it and below every positive
+embedded predecessor coefficient. Its reciprocal exceeds every embedded
+integer. The checked construction examples use one and two infinitesimal
+levels, including a square root of the second infinitesimal below every power
+of the first. All these statements consume the actual chosen ambient model.
+`Ambient.nativeHom compatible model` interprets one executable fraction level
+through its proved field-dictionary equality. It preserves arithmetic, zero
+and the native infinitesimal sign; the separate caller test uses the actual
+core rational dictionary without changing caller instance priorities. The two-level
+construction examples use the semantic coefficient dictionaries.
+
+Identifying native towers with the compatible algebraic union, descriptor construction and simultaneous
+realization of finite sign conditions at one ordinary real point remain
+separate obligations.
+
+### Finite signs at an ordinary real parameter
+
+`Specialize.polynomial_sign` proves that a real polynomial near zero on the
+positive side has the sign of its lowest nonzero coefficient. The zero
+polynomial retains zero sign. `finite_signs` supplies one positive neighborhood
+for any finite family, and `exists_parameter` chooses one ordinary parameter
+below a prescribed positive cap satisfying all those signs together.
+
+For semantic fraction data with real coefficients, `fraction_sign` connects
+evaluation of the actual native numerator and denominator to
+`Hex.OrderedFn.Infinitesimal.sign`. It also preserves the nonzero denominator.
+`finite_fractions` collects all these signs and denominator guards into one
+neighborhood. `exists_fraction_parameter` chooses one ordinary real parameter
+for the whole finite collection. The external square-root example uses that
+same parameter for a positive square root whose square is the parameter and
+which lies strictly between it and one.
+
+For any coefficient field with a prescribed strictly increasing embedding into
+ℝ, `polynomial_sign_map` preserves the lowest-coefficient sign after mapping
+the polynomial's coefficients. `fraction_sign_map`, `finite_fractions_map` and
+`exists_mapped_parameter` apply this to the actual native fraction data over
+that field. All signs and denominator guards hold at one common parameter.
+The rational-base consumer uses the actual rational cast and combines those
+same guards with the positive-square-root equation and strict inequalities.
+`evalMapped_add` and `evalMapped_mul` preserve actual native sums and products
+under the two operand denominator guards. `evalMapped_eq_eval` identifies
+the helper with Mathlib’s rational-function evaluation. `evalMapped_neg`, `evalMapped_sub`,
+`evalMapped_inv` and `evalMapped_div` cover the remaining field operations,
+including the native zero-input inverse. Polynomial fractions, coefficient
+constants, the indeterminate, zero, one and natural/integer casts specialize
+through their actual native definitions. Inversion and powers commute with
+evaluation at every parameter, including poles; their identities need no
+denominator guards. Division needs guards for its first operand and the
+inverse of its second operand.
+Finite-family consumers collect operands and results before choosing their
+parameter, so arithmetic identities, all recorded signs and all denominator
+guards hold at the same point.
+
+`fraction_sign_with`, `finite_fractions_with` and `exists_parameter_with` use
+the actual predecessor sign function, given its agreement with the prescribed
+coefficient embedding into ℝ; this does not provide an embedding for an
+infinitesimal predecessor field. A native rational infinitesimal-context consumer reads
+its stored fraction through the existing proof of equality of the complete
+native and semantic coefficient dictionaries, and preserves that element's
+actual stored sign at an ordinary real parameter.
+
+Evaluation of polynomial representatives at an algebraic root, recursive
+algebraic replay specialization and successive infinitesimal parameter choices
+remain required finite-sign realization work. These helpers
+operate on coefficient data with a supplied ordered embedding into ℝ in the
+companion; they add no native constructor or runtime field instance for formal
+real expressions.
+
+`Specialize.polynomial` substitutes one parameter into an outer polynomial's
+actual stored native fraction coefficients. `polynomial_coeff` includes
+implicit zero coefficients outside the stored array. `polynomial_zero`,
+`polynomial_degree` and `polynomial_leading` require zero reflection only on
+that finite array. `polynomial_signs` derives these conditions from one common
+neighborhood preserving its coefficient signs and denominator guards.
+The signed-chain and Tarski-query transport theorems obtain their guards from
+`finite_fractions_map` applied to each certificate's own finite inventory.
+The complete replay transport below preserves its checker evidence.
+
+`Specialize.regularRing` contains the native fractions whose canonical
+denominators remain nonzero under one prescribed coefficient embedding and
+parameter. `evaluation` is a proved ring homomorphism on that ring. The ring
+can contain nonzero fractions whose evaluation is zero. Using the actual
+native-to-polynomial correspondence, `polynomial_add`, `polynomial_mul`,
+`polynomial_sub`, `polynomial_scale`, `polynomial_derivative` and
+`polynomial_eval` specialize those operations under the finite input
+coefficient guards; scaling also guards its scalar and endpoint evaluation
+also guards its endpoint. Closure handles accumulations of ring operations.
+
+`RemainderStep.specialize` substitutes the literal stored scales and quotient.
+`check_specialize` proves that an accepted signed recurrence remains accepted
+when its finite coefficients and scales are regular and both scale signs are
+preserved. `SignedRemainderChain.specialize` substitutes the stored entries
+while retaining degree data for validation; its `fractions` family collects
+the literal coefficients and scales. Its `check_specialize` preserves the
+complete checker, including initial and terminal identities, nonzero entries,
+degrees and strict descent. `specialize_near` supplies one common positive
+neighborhood for all these conditions.
+
+`TarskiCertificate.specialize` maps literal polynomial and endpoint data while
+retaining context, sign arrays, variations and the integer query value.
+Its `fractions` includes the two chain inventories, endpoint differences,
+endpoint polynomial evaluations and infinite-endpoint leading coefficients.
+`check_specialize` preserves all literal bindings, endpoint nonroot/order
+guards, the squarefree check, both chain replays and recorded signs and
+variations. `specialize_near` preserves the complete accepted certificate
+throughout one positive neighborhood. These theorems use a prescribed ordered
+embedding of the predecessor coefficient field; recursive algebraic replay and
+successive infinitesimal specialization remain separate obligations.
+
+`SignDet.ReductionStep.specialize` substitutes an indexed positive product
+reduction's stored remainder, scales and quotient. Its finite inventory covers
+the input head, previous representative, factor, next representative and
+witness. `check_specialize` preserves the actual factor index, both positive
+scales, the zero/degree bound and the product identity without guarding
+intermediate products. `Reduction.check_specialize` preserves every matched
+factor and step, the positive-degree/exponent guards and the final declared
+query polynomial. `QueryReduction.check_specialize` preserves the original
+ordered preprocessing slots, including duplicates. Each complete reduction
+has one common positive specialization neighborhood.
+
+`Specialize.polynomial_natPow` and `moment_specialize` preserve actual binary
+powers and the moment product fold from only the input coefficient guards.
+The regular ring contains every intermediate accumulator. `checkMoment_specialize`
+preserves the actual direct or reduced query, complete Tarski evidence and
+integer value.
+
+`SignDet.Node.specialize` maps literal coefficients and endpoints while
+retaining its integer system, rank evidence and moment positions.
+`Node.check_specialize` preserves all bindings, matrix checks, shared
+preprocessing and complete moment checks. `Replay.check_specialize` preserves
+the entire supplied BKR tree with its exact child query slices, including
+empty supports. Its extracted sparse rows and every condition's count stay
+unchanged. `Replay.table_near` provides one positive neighborhood whose real
+parameters all admit that same checked table. These theorems require the
+prescribed ordered coefficient embedding into ℝ. Evaluation of polynomial
+representatives at an algebraic root, DAG sharing, recursive algebraic replay
+and successive infinitesimal specialization remain separate obligations.
+
+`Specialize.counts_near` uses the proved root-count meaning of the specialized
+BKR replay over ℝ. At every parameter in one positive neighborhood, the
+actual real-root count equals the source table count for every ordered sign
+condition. `exists_near` realizes each condition of positive source count at
+some real root, with all its signs together.
+`realizeReplay` gives uniqueness when the source table has count one for that
+full condition. `realizeBelow` chooses a realizing parameter below any
+prescribed positive cap. These theorems use the same parameter for every
+polynomial and endpoint and require a prescribed ordered embedding of the
+coefficient field into ℝ. They do not construct recursive algebraic samples or specialize an
+infinitesimal predecessor field.
+
+`Specialize.selected_near` consumes the existing checked `SelectedSigns`
+evidence. All requested query signs hold at one ordinary real root, which is
+unique among roots matching the descriptor's entire specialized query prefix.
+The proof excludes other roots with that prefix even when their remaining
+signs differ. It specializes the literal ordered query polynomials; it does
+not rebuild the formal-derivative bindings itself; the descriptor construction
+below supplies that step.
+
+`derivativesFrom_specialize` and `derivatives_specialize` commute with the
+actual native formal derivative sequence. Original head coefficient guards
+suffice: every iterated derivative stays in the regular coefficient ring.
+`RawDescriptor.specialize` retains context, derivative indices and signs while
+substituting its head and endpoints. The recomputed queries match the mapped
+original queries, including default zero reads at malformed indices.
+`check_specialize` preserves the complete descriptor checker.
+
+`Descriptor.specialize` constructs a validated real descriptor through the
+existing `ofTable` API. `specialize_checked` proves that checking the exact
+mapped raw descriptor and mapped replay returns this result. One positive
+neighborhood supplies these validated descriptors and their actual recomputed
+formal-derivative queries. `selected_root_near` proves that all signs returned
+by source `SelectedSigns` hold at the root of the validated specialized
+descriptor, using the same parameter for both evidence tables. These are
+companion constructions over a prescribed ordered coefficient embedding into
+ℝ; they do not rebuild a native tower context or specialize successive levels.
+`specialize_evidence` proves that the returned descriptor's evidence field is
+the entire mapped original replay, using the public `ofReplay_data` equation.
+
+`Specialize.Native.evidence` transports the whole descriptor, query list and
+checked selected-sign replay through equality of the predecessor coefficient
+dictionaries. Public heterogeneous-equality equations identify its descriptor,
+ordered queries and checked selected-sign certificate with their sources.
+`Native.selected_root_near` then constructs the checked real
+descriptor and proves its root signs. A consumer example uses the actual
+native rational dictionary, its proved compatibility equation and
+`Rat.castHom ℝ`, covering the first rational infinitesimal level.
+
+### Relative algebraic union
+
+The companion's `Union.field B R` uses the prescribed base algebra map into a
+supplied ambient field and consists of all its elements algebraic over `B`.
+`inclusion_range` identifies that image exactly. Every element belongs to a
+finite algebraic adjunction, and `common_extension` places two finite sets of
+algebraic generators in one common finite extension inside the same ambient.
+The inclusions inherit arithmetic and order from the ambient field.
+
+`Union.square` and `Union.odd_root` prove closure under square roots of
+nonnegative elements and roots of odd-degree polynomials.
+`Union.realClosed` combines those conclusions into real-closedness when the
+supplied ambient is real closed. `Ambient.ofUnion` restricts a supplied real closed ambient to its algebraic
+union using a required strictly monotone base embedding for the planned base
+enlargement. Its packaged `val` preserves order, and `lift` admits every supplied
+ambient element algebraic over the base. `Ambient.union_eq_top` applies to the actual
+base map of the proved algebraic ambient. Ordinary-kernel examples instantiate
+the construction for the usual rational embedding into the real numbers and
+place `sqrt(2)` and `sqrt(3)` in one finite compatible extension. A two-level
+infinitesimal ambient is restricted over the first rational-function base;
+its square root of the first infinitesimal is included back into that ambient.
+
+Presenting every algebraic generator by a native selected-root descriptor and
+identifying all compatible native presentations with this semantic union remain
+required tower integration work.

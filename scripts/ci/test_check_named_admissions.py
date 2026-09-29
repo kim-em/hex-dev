@@ -35,6 +35,18 @@ class AdmissionScannerTests(unittest.TestCase):
                 self.assertIsNotNone(ADMISSION.search(code_only(token)))
         self.assertIsNone(ADMISSION.search(code_only("rw [Array.foldl_push_eq_append (stop := n) rfl]")))
 
+    def test_constant_record_fields(self):
+        source = "structure Settings where\n  constant : Nat\ndef settings : Settings where\n  constant := 1\n"
+        self.assertIsNone(ADMISSION.search(code_only(source)))
+        for declaration in ("constant bad : False", "  constant bad : False",
+                            "private constant bad : False", "constant\n  bad : False"):
+            with self.subTest(declaration=declaration):
+                self.assertIsNotNone(ADMISSION.search(code_only(declaration)))
+    def test_constant_field_assignment(self):
+        self.assertIsNone(ADMISSION.search(code_only("theorem width : Bounds where\n  constant := h\n")))
+        self.assertIsNone(ADMISSION.search(code_only("structure Approximation where\n  constant : Rat → Bounds\n")))
+        self.assertIsNotNone(ADMISSION.search(code_only("private constant hidden : False\n")))
+
     def test_interpolated_admission_fails_closed(self):
         for prefix in ("s!", "m!", "f!"):
             with self.subTest(prefix=prefix), self.assertRaises(ValueError):
@@ -60,26 +72,52 @@ class AdmissionScannerTests(unittest.TestCase):
             roots = root / "conformance/HexSignDetMathlib/RootListConformance.lean"
             refinement = root / "conformance/HexSignDetMathlib/RefinementConformance.lean"
             conversion = root / "conformance/HexSignDetMathlib/ConvertConformance.lean"
-            bisection = root / "HexRealClosure/BisectionTests.lean"
-            model = root / "adapters/HexRealClosureMathlib/Bisection.lean"
-            partition = root / "adapters/HexRealClosureMathlib/BisectionRoots.lean"
+            base = root / "HexRealClosure/BaseTests.lean"
+            model = root / "HexRealClosureMathlib/BaseTests.lean"
+            catalog = root / "HexRealClosure/BaseCatalogTests.lean"
             deflation = root / "conformance/HexRealClosure/DeflationConformance.lean"
-            frontier = root / "conformance/HexRealClosure/BisectionFrontierTests.lean"
-            traversal = root / "adapters/HexRealClosureMathlib/BisectionFrontier.lean"
-            counts = root / "adapters/HexRealClosureMathlib/BisectionCounts.lean"
-            isolation = root / "adapters/HexRealClosureMathlib/Isolation.lean"
-            isolation_tests = root / "conformance/HexRealClosure/IsolationTests.lean"
-            factor = root / "adapters/HexRealClosureMathlib/BisectionFactor.lean"
-            isolation_factor = root / "adapters/HexRealClosureMathlib/IsolationFactor.lean"
-            isolation_roots = root / "adapters/HexRealClosureMathlib/IsolationRoots.lean"
-            isolation_conformance = root / "conformance/HexRealClosure/IsolationConformance.lean"
-            root_order = root / "adapters/HexRealClosureMathlib/RootOrder.lean"
-            root_order_tests = root / "HexRealClosure/RootOrderTests.lean"
-            root_factors = root / "HexRealClosure/RootFactorsTests.lean"
-            factor_model = root / "adapters/HexRealClosureMathlib/RootFactors.lean"
+            specialize = root / "adapters/HexRealClosureMathlib/Specialize.lean"
+            specialize_tests = root / "adapters/HexRealClosureMathlib/SpecializeTests.lean"
+            specialize_polynomial = root / "adapters/HexRealClosureMathlib/SpecializePolynomial.lean"
+            specialize_regular = root / "adapters/HexRealClosureMathlib/SpecializeRegular.lean"
+            specialize_query = root / "adapters/HexRealClosureMathlib/SpecializeQuery.lean"
+            specialize_tarski = root / "adapters/HexRealClosureMathlib/SpecializeTarski.lean"
+            specialize_reduction = root / "adapters/HexRealClosureMathlib/SpecializeReduction.lean"
+            specialize_moment = root / "adapters/HexRealClosureMathlib/SpecializeMoment.lean"
+            specialize_replay = root / "adapters/HexRealClosureMathlib/SpecializeReplay.lean"
+            specialize_sample = root / "adapters/HexRealClosureMathlib/SpecializeSample.lean"
+            specialize_selected = root / "adapters/HexRealClosureMathlib/SpecializeSelected.lean"
+            specialize_descriptor = root / "adapters/HexRealClosureMathlib/SpecializeDescriptor.lean"
+            union = root / "adapters/HexRealClosureMathlib/Union.lean"
+            union_tests = root / "adapters/HexRealClosureMathlib/UnionTests.lean"
+            root_probes = [root / name for name in (
+                "HexRealClosure/BisectionTests.lean",
+                "adapters/HexRealClosureMathlib/Bisection.lean",
+                "adapters/HexRealClosureMathlib/BisectionRoots.lean",
+                "conformance/HexRealClosure/BisectionFrontierTests.lean",
+                "adapters/HexRealClosureMathlib/BisectionFrontier.lean",
+                "adapters/HexRealClosureMathlib/BisectionCounts.lean",
+                "adapters/HexRealClosureMathlib/Isolation.lean",
+                "conformance/HexRealClosure/IsolationTests.lean",
+                "adapters/HexRealClosureMathlib/BisectionFactor.lean",
+                "adapters/HexRealClosureMathlib/IsolationFactor.lean",
+                "adapters/HexRealClosureMathlib/IsolationRoots.lean",
+                "conformance/HexRealClosure/IsolationConformance.lean",
+                "adapters/HexRealClosureMathlib/RootOrder.lean",
+                "HexRealClosure/RootOrderTests.lean",
+                "HexRealClosure/RootFactorsTests.lean",
+                "adapters/HexRealClosureMathlib/RootFactors.lean")]
             dependency = root / "HexExtra/SelectedField.lean"
-            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, bisection, model, partition, deflation, frontier, traversal, counts, isolation, isolation_tests, factor, isolation_factor, isolation_roots, isolation_conformance, root_order, root_order_tests, root_factors, factor_model, dependency):
+            arithmetic = [root / f"adapters/HexRealClosureMathlib/{name}.lean"
+                          for name in ("Algebraic", "AlgebraicClean", "AlgebraicValue",
+                                       "BaseClean", "AlgebraicTower")]
+            for path in root_probes:
                 path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            for path in (entry, bridge, sign, conformance, completion, handle, tables, reencoding, roots, refinement, conversion, base, model, catalog, deflation, specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor, union, union_tests, dependency, *arithmetic):
+                path.parent.mkdir(parents=True, exist_ok=True)
+            for path in arithmetic:
+                path.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
             sign.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
@@ -91,26 +129,43 @@ class AdmissionScannerTests(unittest.TestCase):
             roots.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             refinement.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            bisection.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            base.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             model.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            partition.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            catalog.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             deflation.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            frontier.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            traversal.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            counts.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            isolation.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            isolation_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            factor.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            isolation_factor.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            isolation_roots.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            isolation_conformance.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            root_order.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            root_order_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            root_factors.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            factor_model.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_polynomial.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_regular.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_query.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_tarski.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_reduction.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_moment.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_replay.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_sample.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_selected.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            specialize_descriptor.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            union.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            union_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
+                for probe in (union, union_tests):
+                    probe.unlink()
+                    with self.assertRaisesRegex(ValueError, "missing local import"):
+                        audit.check()
+                    probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*Union"):
+                        audit.check()
+                    probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                for probe in root_probes:
+                    probe.unlink()
+                    with self.assertRaisesRegex(ValueError, "missing local import"):
+                        audit.check()
+                    probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "unapproved admission"):
+                        audit.check()
+                    probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 refinement.unlink()
                 with self.assertRaisesRegex(ValueError, "missing local import"):
                     audit.check()
@@ -118,22 +173,6 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/RefinementConformance"):
                     audit.check()
                 refinement.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-                for probe in (isolation_roots, isolation_conformance):
-                    probe.unlink()
-                    with self.assertRaisesRegex(ValueError, "missing local import"):
-                        audit.check()
-                    probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*Isolation"):
-                        audit.check()
-                    probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-                for probe in (root_order, root_order_tests, root_factors, factor_model):
-                    probe.unlink()
-                    with self.assertRaisesRegex(ValueError, "missing local import"):
-                        audit.check()
-                    probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*Root(Order|Factors)"):
-                        audit.check()
-                    probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 conversion.unlink()
                 with self.assertRaisesRegex(ValueError, "missing local import"):
                     audit.check()
@@ -141,6 +180,22 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/ConvertConformance"):
                     audit.check()
                 conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                for probe in (specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor):
+                    probe.unlink()
+                    with self.assertRaisesRegex(ValueError, "missing local import"):
+                        audit.check()
+                    probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*Specialize"):
+                        audit.check()
+                    probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                for probe in (base, model, catalog):
+                    probe.unlink()
+                    with self.assertRaisesRegex(ValueError, "missing local import"):
+                        audit.check()
+                    probe.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in .*Base(Catalog)?Tests"):
+                        audit.check()
+                    probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 deflation.unlink()
                 with self.assertRaisesRegex(ValueError, "missing local import"):
                     audit.check()

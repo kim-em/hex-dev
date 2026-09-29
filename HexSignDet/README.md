@@ -21,6 +21,34 @@ zero counts, and the row basis preserves their order. The scaled left-inverse
 identity is checked directly; no conversion from a differently ordered rank
 witness is assumed.
 
+`Replay.signOperands` gives a conservative finite list of coefficient values
+whose signs determine the tree checker's result. `Replay.check_sign_congr`
+proves that agreement on those signs preserves both acceptance and rejection,
+including malformed supplied witnesses. The shared Tarski and chain APIs expose
+`signOperands` and `check_sign_congr` too; the existing `rcf` coefficient adapter
+uses these same inventories and proofs. Finite endpoints require their order
+difference and polynomial evaluations; infinite endpoints require leading
+coefficients. Zero is an extra conservative chain operand. These lists describe
+result dependencies, not an ordered trace of runtime sign calls, and retain
+repeated occurrences. A finite cache need not be lawful outside its keys, but
+callers must prove agreement at every required operand before transferring the
+original checker's soundness. A dependency graph across coefficient-field levels
+and its exact context/operand bindings remain separate requirements.
+`Dag.signOperands` covers every serialized entry, including entries unreachable
+from the root. `Dag.replay_sign_congr` preserves failure and the exact returned
+tree under finite sign agreement; `Dag.check_sign_congr` preserves the Boolean
+result. These proofs follow the actual memoized prefix fold without expanding
+and rechecking a recursive tree. A cache law for the selected root's reachable
+entries alone does not suffice, since graph replay checks all stored entries.
+`Dag.descriptor_sign_congr` preserves the raw descriptor and literal evidence.
+`Dag.decodeBytes_sign_congr` and `Dag.decodeDescriptor_sign_congr` preserve
+exact errors and successful data under agreement on the actual decoded graph;
+they do not prove parser/printer byte roundtrips. Callers holding a decoded graph
+can use its `replay?` or `descriptor?` interface and the corresponding congruence
+to reuse that graph without parsing the same bytes again.
+Inventories retain repeated occurrences, so consumers may deduplicate
+keys while proving membership covers the whole inventory.
+
 `Dag.replay?` accepts a topologically ordered array of same-level BKR entries
 and a root index. References address earlier accepted entries only. Each entry
 checks its own query/matrix certificates once; both child edges still bind the
@@ -74,7 +102,8 @@ same converted values, including noninjective representations. They assume no
 Archimedean property and apply to any lawful interpretation into a real closed field.
 The nested-infinitesimal fixture tests executable context changes; it does not
 supply such an interpretation or a semantic proof for that coefficient type.
-Those semantic results inherit the named #10389 root-sum admission.
+Those semantic results use the proved
+`HexRealRootsMathlib.Tarski.check_rootSum` theorem in the development adapter.
 
 Context, head, interval and query-list bindings use literal equality. Tarski
 polynomial identities use the shared zero-difference checks. Context values
@@ -82,9 +111,9 @@ must contain the caller's full immutable context data, including any refinement;
 a hash or reused numeric identifier is insufficient. The current certificate
 tree retains the head squarefree evidence in each moment. Graph replay offers
 the first entry's validated domain to every node. A node reuses that domain when
-it matches the node's first witness; otherwise a node with several moments
-validates its own first domain once. A single moment without a matching shared
-domain uses full replay directly. Later matching witnesses reuse the selected
+it matches the node's first witness. Otherwise a node with several moments
+checks its first domain's caller bindings before validating that domain once.
+A single moment without a matching shared domain uses full replay directly. Later matching witnesses reuse the selected
 domain; different witnesses fall back to complete replay. `Node.check_eq` proves
 unconditional equality with the original result for every node and cache.
 `TarskiCertificate.checkCached_eq` proves the underlying shared-kernel agreement
@@ -94,7 +123,8 @@ prefix replay, including returned trees and all rejections. Each node selects
 one domain witness for reuse; other witnesses within that node still incur full
 replay at each occurrence. Domain replay and literal binding costs require
 performance measurements, including heterogeneous witnesses and one-moment nodes.
-The graph creates its initial domain even if only one moment will use it.
+`Dag.cache` checks its first domain's caller bindings before creating the initial
+cache, even if only one moment will use it.
 Node selection considers the first witness, so a different shared witness used
 only by later moments can miss. Every moment checks literal cache bindings,
 including the first moment used for selection. These costs belong in that
@@ -345,7 +375,9 @@ set is contained in the original domain. The output preserves that root and
 has fresh evidence bound to the new interval. The old validated partial word
 supplies uniqueness, so this proof applies to noninjective representations
 and non-Archimedean coefficient interpretations without a general Thom
-injectivity theorem. `Descriptor.reencoding_rows` proves the unique joint row
+injectivity theorem. `Descriptor.buildReencoding_congr` also permits a differently
+stored head with a zero difference from the original polynomial. Fresh evidence
+retains the new literal head binding. `Descriptor.reencoding_rows` proves the unique joint row
 whenever any target contains the source root; establishing uniqueness from a
 new head's derivative word alone remains a separate foundation requirement.
 `Descriptor.buildComparison` re-encodes both roots on the common head over the

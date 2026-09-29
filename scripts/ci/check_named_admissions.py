@@ -14,7 +14,7 @@ import re
 ROOT = Path(__file__).resolve().parents[2]
 BRIDGE = Path("adapters/HexRealRootsMathlib/TarskiSoundness.lean")
 ADMISSION = re.compile(
-    r"\b[A-Za-z_]*[sS]orry[A-Za-z_]*\b|\b(?:admit|admitGoal|axiom)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*constant\b|(?<!\.)\bstop\b(?!\s*:=)",
+    r"\b[A-Za-z_]*[sS]orry[A-Za-z_]*\b|\b(?:admit|admitGoal|axiom)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*constant\b(?!\s*:)|(?<!\.)\bstop\b(?!\s*:=)",
     re.MULTILINE,
 )
 IMPORT = re.compile(r"\bimport\s+(?:all\s+)?(\S+)")
@@ -173,15 +173,27 @@ def check() -> None:
              "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance",
              "HexSignDetMathlib.TableConformance", "HexSignDetMathlib.ReencodingConformance",
              "HexSignDetMathlib.RootListConformance", "HexSignDetMathlib.RefinementConformance",
-             "HexSignDetMathlib.ConvertConformance", "HexRealClosure.BisectionTests",
-             "HexRealClosureMathlib.Bisection", "HexRealClosureMathlib.BisectionRoots",
-             "HexRealClosure.DeflationConformance", "HexRealClosure.BisectionFrontierTests",
-             "HexRealClosureMathlib.BisectionFrontier", "HexRealClosureMathlib.BisectionCounts",
-             "HexRealClosureMathlib.Isolation", "HexRealClosure.IsolationTests",
+             "HexSignDetMathlib.ConvertConformance", "HexRealClosure.BaseTests",
+             "HexRealClosureMathlib.BaseTests", "HexRealClosure.BaseCatalogTests",
+             "HexRealClosure.BisectionTests", "HexRealClosure.DeflationConformance",
+             "HexRealClosure.BisectionFrontierTests", "HexRealClosure.IsolationTests",
+             "HexRealClosure.IsolationConformance", "HexRealClosure.RootOrderTests",
+             "HexRealClosure.RootFactorsTests", "HexRealClosureMathlib.Bisection",
+             "HexRealClosureMathlib.BisectionRoots", "HexRealClosureMathlib.BisectionFrontier",
+             "HexRealClosureMathlib.BisectionCounts", "HexRealClosureMathlib.Isolation",
              "HexRealClosureMathlib.BisectionFactor", "HexRealClosureMathlib.IsolationFactor",
-             "HexRealClosureMathlib.IsolationRoots", "HexRealClosure.IsolationConformance",
-             "HexRealClosureMathlib.RootOrder", "HexRealClosure.RootOrderTests",
-             "HexRealClosureMathlib.RootFactors", "HexRealClosure.RootFactorsTests"] + [
+             "HexRealClosureMathlib.IsolationRoots", "HexRealClosureMathlib.RootOrder",
+             "HexRealClosureMathlib.RootFactors", "HexRealClosureMathlib.Specialize",
+             "HexRealClosureMathlib.SpecializePolynomial",
+             "HexRealClosureMathlib.SpecializeRegular", "HexRealClosureMathlib.SpecializeQuery",
+             "HexRealClosureMathlib.SpecializeTarski", "HexRealClosureMathlib.SpecializeReduction",
+             "HexRealClosureMathlib.SpecializeMoment", "HexRealClosureMathlib.SpecializeReplay",
+             "HexRealClosureMathlib.SpecializeSample", "HexRealClosureMathlib.SpecializeSelected",
+             "HexRealClosureMathlib.SpecializeDescriptor", "HexRealClosureMathlib.SpecializeTests",
+             "HexRealClosureMathlib.Algebraic", "HexRealClosureMathlib.AlgebraicClean",
+             "HexRealClosureMathlib.AlgebraicValue", "HexRealClosureMathlib.BaseClean",
+             "HexRealClosureMathlib.AlgebraicTower", "HexRealClosureMathlib.Union",
+             "HexRealClosureMathlib.UnionTests"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
         "HexSignDetMathlib." + ".".join(path.relative_to(

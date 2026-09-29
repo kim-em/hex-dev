@@ -31,6 +31,14 @@ variable (f : E → K) (hz : ∀ x, f x = 0 ↔ x = 0)
 noncomputable def interpret (p : DensePoly E) : Polynomial K :=
   toPolynomial (DensePoly.Interpret.map f hz p)
 
+private theorem interpret_map_proof (p : DensePoly E) :
+    interpret f hz p = toPolynomial (DensePoly.Interpret.map f hz p) := rfl
+
+/-- Expose the polynomial correspondence without unfolding its implementation. -/
+theorem interpret_map (p : DensePoly E) :
+    interpret f hz p = toPolynomial (DensePoly.Interpret.map f hz p) :=
+  interpret_map_proof f hz p
+
 @[simp] theorem coeff_interpret (p : DensePoly E) (i : Nat) :
     (interpret f hz p).coeff i = f (p.coeff i) := by
   simp [interpret]

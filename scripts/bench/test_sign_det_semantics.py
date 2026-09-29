@@ -7,27 +7,31 @@ import unittest
 from unittest.mock import patch
 
 from scripts.bench import sign_det_semantics as runner
+from scripts.bench import fresh_module_sweep as harness
+from scripts.bench import structural_tactic_sweep as cpu_lease
 
 
 class OutputTests(unittest.TestCase):
+    runner = runner
+
     def run_mocked(self, argv, action):
-        with patch.object(runner.sys, "argv", ["runner", *argv]), \
-             patch.object(runner, "acquire_cpu", return_value=(0, open("/dev/null"))), \
-             patch.object(runner, "environment", return_value={}), \
-             patch.object(runner, "source_hashes", return_value={}), \
-             patch.object(runner, "run_cli", side_effect=action) as run:
-            return runner.main(), run
+        with patch.object(harness.sys, "argv", ["runner", *argv]), \
+             patch.object(cpu_lease, "acquire_cpu", return_value=(0, open("/dev/null"))), \
+             patch.object(harness, "environment", return_value={}), \
+             patch.object(harness, "source_hashes", return_value={}), \
+             patch.object(harness, "run_cli", side_effect=action) as run:
+            return self.runner.main(), run
 
     def test_in_repo_output_rejected_before_creating_sidecar(self):
-        path = runner.ROOT / "semantic-probe-test-output.json"
+        path = self.runner.ROOT / "semantic-probe-test-output.json"
         with self.assertRaisesRegex(RuntimeError, "outside the repository"):
             self.run_mocked(["--output", str(path)], AssertionError("must not measure"))
         self.assertFalse(Path(str(path) + ".samples.jsonl").exists())
 
     def test_default_output_is_external_and_marks_completion(self):
         with tempfile.TemporaryDirectory() as tmp, \
-             patch.object(runner.Path, "home", return_value=Path(tmp)), \
-             patch.object(runner, "default_output", return_value=Path("reports/default.json")):
+             patch.object(harness.Path, "home", return_value=Path(tmp)), \
+             patch.object(harness, "default_output", return_value=Path("reports/default.json")):
             code, run = self.run_mocked([], lambda *a, **k: 0)
             output = Path(tmp) / ".local/state/hex/proof-probes/default.json"
             self.assertEqual(code, 0)

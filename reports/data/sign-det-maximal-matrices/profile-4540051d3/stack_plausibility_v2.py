@@ -1,0 +1,80 @@
+"""Detect impossible callees below lean_nat_gcd in the recovered caller stacks."""
+import argparse
+import collections
+import gzip
+import json
+import re
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(ROOT / "scripts/profile"))
+from factor_sampling_profile import Symbolicator, frame_names, main_thread, stack_chain
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("profile", type=Path)
+parser.add_argument("symbols", type=Path)
+parser.add_argument("output", type=Path)
+args = parser.parse_args()
+with gzip.open(args.profile, "rt") as stream:
+    profile = json.load(stream)
+thread = main_thread(profile, "hexsigndet_benc")
+resolved = frame_names(profile, thread, Symbolicator(args.symbols))
+by_leaf = collections.Counter()
+examples = []
+gcd = compiled = gmp = unexplained_gmp = unexpected = 0
+unexpected_names = collections.Counter()
+unresolved_names = collections.Counter()
+unresolved_samples = row_gcd = constructor_gcd = constructor_row_gcd = 0
+all_frames = collections.Counter()
+allowed = re.compile(r"^(?:__gmp.*|_ZNK?4lean3mpz.*|_ZN4lean3gcd.*|(?:malloc|calloc|free|cfree|realloc)(?:@.*)?|mi_.*|lean_alloc_small_object_core|0x[0-9a-f]+|_Unwind_Resume)$")
+for stack in thread["samples"]["stack"]:
+    names = [resolved[index][0] for index in stack_chain(thread, stack)]
+    all_frames.update(set(names))
+    if "lean_nat_gcd" not in names:
+        continue
+    gcd += 1
+    below = names[:names.index("lean_nat_gcd")]
+    unknown = [name for name in below if re.fullmatch(r"0x[0-9a-f]+", name)]
+    unresolved_samples += bool(unknown)
+    unresolved_names.update(unknown)
+    in_row = "Hex.Matrix.rowAdd" in names
+    in_constructor = any(name in ("_ZN4lean3mpzC1Em", "_ZN4lean3mpzC2Em") for name in below)
+    row_gcd += in_row
+    constructor_gcd += in_constructor
+    constructor_row_gcd += in_row and in_constructor
+    bad = [name for name in below if not allowed.fullmatch(name)]
+    has_compiled = bool(bad)
+    unexpected += bool(bad)
+    unexpected_names.update(set(bad))
+    has_gmp = any(name in ("__gmpz_add", "__gmpz_mul_2exp") for name in below)
+    via_constructor = all(index + 1 < len(below) and
+        below[index + 1] in ("_ZN4lean3mpzC1Em", "_ZN4lean3mpzC2Em")
+        for index, name in enumerate(below) if name in ("__gmpz_add", "__gmpz_mul_2exp"))
+    compiled += has_compiled
+    gmp += has_gmp
+    unexplained_gmp += has_gmp and not via_constructor
+    if has_compiled or has_gmp:
+        by_leaf[names[0]] += 1
+        if len(examples) < 12:
+            examples.append({"leaf": names[0], "frames_below_gcd": below,
+                             "unexpected_callee": has_compiled, "gmp_callee": has_gmp,
+                             "uint64_constructor_immediate_caller": via_constructor})
+document = {"scope": "Caller-stack plausibility; timing-window confidence is a separate check",
+            "status": "checked-paths-consistent" if compiled == 0 and unexplained_gmp == 0 and unresolved_samples == 0 else "needs-investigation",
+            "samples": thread["samples"]["length"], "gcd_ancestor_samples": gcd,
+            "unexpected_frames_below_gcd": unexpected,
+            "unresolved_samples_below_gcd": unresolved_samples,
+            "unresolved_frames_below_gcd": sum(unresolved_names.values()),
+            "unresolved_frame_names": dict(unresolved_names),
+            "row_add_and_gcd_samples": row_gcd,
+            "uint64_constructor_under_gcd_samples": constructor_gcd,
+            "uint64_constructor_row_add_and_gcd_samples": constructor_row_gcd,
+            "inclusive_function_samples": dict(all_frames),
+            "unexpected_frame_names": dict(unexpected_names), "allowed_frame_pattern": allowed.pattern, "gmp_add_or_shift_below_gcd": gmp,
+            "gmp_add_or_shift_without_uint64_constructor": unexplained_gmp,
+            "inspected_paths_by_leaf": dict(by_leaf),
+            "examples": examples,
+            "limitation": "This checks specific call-path concerns, not every unwind edge. Lean mpz(uint64) calls GMP add and shift; those descendants are valid."}
+args.output.write_text(json.dumps(document, indent=2) + "\n")
+print(json.dumps({k: v for k, v in document.items() if k != "examples"}, indent=2))

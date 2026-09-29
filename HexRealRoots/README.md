@@ -57,6 +57,18 @@ the complete checker and falls back to full replay on a literal mismatch.
 full checker for every certificate and cache, including invalid certificates.
 These are finite replay guarantees, independent of the root-sum theorem.
 
+`HexRealRoots.SignOperands` exposes conservative finite coefficient-sign
+inventories for chain and Tarski replay. `SignedRemainderChain.signOperands`
+and `TarskiCertificate.signOperands` retain every result dependency, including
+unused supplied scales and an extra zero operand. Their `check_sign_congr`
+theorems preserve exact Boolean results under agreement on the listed signs,
+including rejection of malformed certificates. The Tarski theorem uses
+`EndpointSigns.ofSign`, with endpoints in the coefficient domain; finite
+endpoints contribute differences/evaluations and infinite endpoints contribute
+leading coefficients. `Endpoint` also exposes the corresponding sign, order
+and nonvanishing congruences. These are finite replay facts, independent of
+root-sum semantics or a sign-cache law outside its keys.
+
 `ZPoly.isolateRealRoots?` rejects the zero polynomial and, at the core level, expects a
 squarefree positive-degree input. Nonzero constants produce an empty result.
 The Mathlib bridge's `isolate_roots` elaborator automatically passes through

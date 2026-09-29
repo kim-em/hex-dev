@@ -21,6 +21,7 @@ KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck", "HexGraph"}
 BUILD_ONLY_LIBS = {
     "HexOrderedFnTests",
     "HexRealClosureTests",
+    "HexRealClosureMathlibTests",
     "CadSampleCostsExperiment",  # Manual experiments; no released library or CI target.
     "HexPolyFastKernels",
     "HexGraphIsoProofProbe",
@@ -34,6 +35,7 @@ BUILD_ONLY_LIBS = {
     "HexRankBenchSupport",
     "HexSignDetBenchSupport",
     "HexSignDetMathlibProofProbe",
+    "HexSignDetMathlibNestedProofProbe",
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
     "HexPrimalityElabProbe",
