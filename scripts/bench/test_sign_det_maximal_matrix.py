@@ -2,6 +2,8 @@
 import copy
 import hashlib
 import json
+import subprocess
+import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -117,11 +119,33 @@ class MatrixEvidenceTests(unittest.TestCase):
         self.assertEqual(summary["samples"], 281)
         self.assertEqual(summary["diagnostics"]["confidence"], "passed")
         self.assertEqual(summary["diagnostics"]["sensitivity"]["verdict"], "passed")
-        paths = json.loads((root/"stack-plausibility.json").read_text())
+        scientific = json.loads((bench.ROOT/"reports/data/sign-det-maximal-matrices/a7c9b34fb/metadata.json").read_text())
+        self.assertEqual(metadata["binary_sha256"], scientific["binary_sha256"])
+        self.assertEqual(metadata["binary_sha256"], analysis["raw_sha256"]["archived-debuggee"])
+        region = metadata["operation_region"]
+        self.assertEqual(region["mono_t1_ns"]-region["mono_t0_ns"], metadata["profile_row"]["total_nanos"])
+        paths = json.loads((root/"stack-plausibility-v2.json").read_text())
         self.assertEqual(paths["status"], "checked-paths-consistent")
         self.assertEqual(paths["unexpected_frames_below_gcd"], 0)
         self.assertEqual(paths["gmp_add_or_shift_without_uint64_constructor"], 0)
         self.assertEqual(paths["samples"], summary["samples"])
+        self.assertEqual(paths["unresolved_frames_below_gcd"], 0)
+        self.assertEqual(paths["unresolved_samples_below_gcd"], 0)
+        self.assertEqual(paths["row_add_and_gcd_samples"], 224)
+        self.assertEqual(paths["uint64_constructor_under_gcd_samples"], 168)
+        symbols = json.loads((root/"constructor-symbols.json").read_text())["symbols"]
+        self.assertEqual(len(symbols), 2)
+        self.assertEqual(symbols[0]["address"], symbols[1]["address"])
+        self.assertEqual(symbols[0]["size"], symbols[1]["size"])
+
+    def test_caller_analysis_replays_from_committed_profile(self):
+        root = bench.ROOT/"reports/data/sign-det-maximal-matrices/profile-4540051d3"
+        with TemporaryDirectory() as d:
+            output = Path(d)/"replayed.json"
+            subprocess.run([sys.executable, str(root/"stack_plausibility_v2.py"),
+                            str(root/"filtered.json.gz"), str(root/"symbols.json"), str(output)],
+                           check=True, stdout=subprocess.DEVNULL)
+            self.assertEqual(json.loads(output.read_text()), json.loads((root/"stack-plausibility-v2.json").read_text()))
 
     def test_wrong_export_identity_or_verdict(self):
         for key, value in (("function", bench.PREFIX+"runCheck"), ("kind", "fixed"),

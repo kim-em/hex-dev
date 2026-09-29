@@ -117,7 +117,7 @@ each size are retained.
 
 The current input sizes can expose lower-order overhead and
 unequal costs of scalar operations; these possibilities are not established by
-these timings. The profile below establishes the dominant phase for solve; a wider independently
+these timings. The profile below identifies the dominant phase for solve at `s=5`; a wider independently
 planned schedule or a separately derived model for that phase is still needed
 before correcting its wall-time declaration. The check schedule also needs a
 wider range before its cubic term can be assessed. No fit setting or complexity law has been changed to obtain a
@@ -139,24 +139,30 @@ operation region. Raw perf data, recovered profiles, symbol information and an
 unchanging copy of the debuggee are retained in the durable directory named by
 [the analysis manifest](data/sign-det-maximal-matrices/profile-4540051d3/analysis.json).
 The source archive, collector, region sidecar, tool bindings and analysis commands
-are committed alongside the smaller summaries.
+are committed alongside the summaries. The filtered profile and symbol table are
+also committed, so the caller analysis can be replayed without the host archive;
+re-importing the original perf capture still requires that archive.
 
 All 577 raw/imported timestamps agree with one common origin and zero residual.
 The parent wall/monotonic anchor was captured immediately before launch. Filtering
 retains 281 operation samples, rejects 290 bench-thread samples outside the
-region, and reports zero other-thread samples inside. The timing-window confidence
+region, and reports zero other-thread samples inside. Six other-thread samples
+are outside the region. The timing-window confidence
 and ±5 ms leaf-distribution sensitivity checks pass. The timing-window calibration
 residual is 0.841 ms against its 20.1005 ms effective limit.
 
-| Inclusive caller | Operation samples (%) |
-| --- | ---: |
-| Matrix inversion / row reduction | 93.59 |
-| Row addition | 92.53 |
-| Integer system checker | 3.56 |
-| Natural-number gcd | 81.14 |
+| Function with inclusive samples | Samples / 281 | Share (%) |
+| --- | ---: | ---: |
+| Matrix inversion / row reduction | 263 | 93.6 |
+| Row addition | 260 | 92.5 |
+| Integer system checker | 10 | 3.6 |
+| Natural-number gcd | 228 | 81.1 |
+| `mpz(uint64)` construction | 170 | 60.5 |
 
-These are overlapping caller shares, so they must not be added. This profile
-supports rational elimination as the dominant phase at this size; the source's
+These are overlapping inclusive shares, so they must not be added. The ten
+checker samples give limited precision; their agreement with a separately timed
+check/solve ratio is not evidence beyond the individual observations. This profile
+supports rational elimination as the dominant phase at `s=5`; the source's
 cubic integer check is a small part of the complete solve here. It does not
 establish the dominant phase at every size or justify an optimization by itself.
 
@@ -165,10 +171,22 @@ runtime, 0.36% Hex code and 4.63% other samples. Allocator CPU samples are not
 allocated-byte measurements. The classifier groups Rat/Fin helpers under runtime,
 so these categories must not be confused with the inclusive phase table.
 
-A separate [caller-path check](data/sign-det-maximal-matrices/profile-4540051d3/stack-plausibility.json)
-finds no unexpected callee beneath gcd, and every recovered GMP add/shift path
-there has the uint64 constructor as its immediate caller. Disassemblies from
+A separate [caller-path check](data/sign-det-maximal-matrices/profile-4540051d3/stack-plausibility-v2.json)
+finds no unexpected or unresolved callee beneath gcd, and every recovered GMP add/shift path
+there has the uint64 constructor as its immediate caller. Of the 228 gcd samples,
+224 also contain row addition. Of the 170 constructor samples, 168 are under gcd,
+and 165 contain both gcd and row addition. These are sampled caller partitions,
+not counts of executed gcd calls.
+
+The linked runtime promotes machine-word natural operands into GMP values on
+these constructor paths. This identifies runtime conversion overhead; it does
+not establish that every other gcd operand is small or exclude operand-size work
+elsewhere. The [pinned Lean constructor source](https://github.com/leanprover/lean4/blob/v4.35.0-rc3/src/runtime/mpz.cpp#L40)
+constructs the value from two 32-bit portions. Disassemblies from
 the retained executable confirm that constructor calls GMP add and shift.
+The [symbol record](data/sign-det-maximal-matrices/profile-4540051d3/constructor-symbols.json)
+shows that the `C1Em` disassembly and `C2Em` profile symbol are aliases at the same
+address, with the same size (132 bytes).
 This checks specific stack concerns; timing-window confidence does not prove
 unwind edges, and the path check does not validate every edge of every stack.
 The captured runtime behavior is consistent with the pinned Lean implementation

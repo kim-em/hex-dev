@@ -131,11 +131,29 @@
     "regions-3050727.jsonl": "30558aed6e3cbaf97793266f95d18cbff6460ce2b863d36a0ee90b47fa45ee1f",
     "spawn-anchor.json": "3a24a66a4b83d27d0323b1548f6d120b684013c8c95f3d9e6400ee3902f7653b",
     "stack-plausibility.json": "396e046a8865b30f5aab1e6739b8c047be24fbf8a750f4bc746753a65d8a6bf9",
-    "stack_plausibility.py": "d2fc4e621e26652f7fd9182d50d2814bb838e7a479c2276b7e11946726f87d8d"
+    "stack_plausibility.py": "d2fc4e621e26652f7fd9182d50d2814bb838e7a479c2276b7e11946726f87d8d",
+    "filtered.json.gz": "50ee53a1e6b98c284d2c05db3934b8a714be04a5c784d2456e80456a59e81397",
+    "symbols.json": "c506ec436ebb631e56adf62b78a74dc8941ba1ff55c95364f2acc1ea10f2a48e",
+    "stack_plausibility_v2.py": "c99cfb08d5b67b07992f095fe214c5b857f58c4cde90c1a8f2631d114a437e35",
+    "stack-plausibility-v2.json": "5903abaca61298f7c0d0e0398f2a9a0bb43c1597ba0866f10c3398c0bec525c8",
+    "constructor-symbols.json": "49229aee022d270de352571d4a823b9069266d81ff8d35477311f8d0eaca3227"
   },
   "replay": "Use fresh output paths; retain the original raw artifacts unchanged. Recorded argv describe the executed commands, not permission to overwrite archived output.",
   "committed_copy_transformations": {
     "lean_nat_gcd.disassembly": "Strip trailing horizontal whitespace in committed text copy only; unchanged raw bytes and their SHA256 remain in raw_directory/raw_sha256.",
     "mpz_uint64.disassembly": "Strip trailing horizontal whitespace in committed text copy only; unchanged raw bytes and their SHA256 remain in raw_directory/raw_sha256."
+  },
+  "additional_analysis": {
+    "scope": "Explicit unresolved-frame and caller partitions on unchanged retained samples",
+    "command": [
+      "python3",
+      "reports/data/sign-det-maximal-matrices/profile-4540051d3/stack_plausibility_v2.py",
+      "reports/data/sign-det-maximal-matrices/profile-4540051d3/filtered.json.gz",
+      "reports/data/sign-det-maximal-matrices/profile-4540051d3/symbols.json",
+      "reports/data/sign-det-maximal-matrices/profile-4540051d3/stack-plausibility-v2.json"
+    ],
+    "script_sha256": "c99cfb08d5b67b07992f095fe214c5b857f58c4cde90c1a8f2631d114a437e35",
+    "result_sha256": "5903abaca61298f7c0d0e0398f2a9a0bb43c1597ba0866f10c3398c0bec525c8",
+    "offline_replay": "The committed filtered profile and symbols suffice for this caller check; original raw capture and first analysis remain unchanged."
   }
 }
