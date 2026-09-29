@@ -409,3 +409,56 @@ construction examples use the semantic coefficient dictionaries.
 Compatible algebraic unions, native descriptor construction and simultaneous
 realization of finite sign conditions at one ordinary real point remain
 separate obligations.
+
+### Finite signs at an ordinary real parameter
+
+`Specialize.polynomial_sign` proves that a real polynomial near zero on the
+positive side has the sign of its lowest nonzero coefficient. The zero
+polynomial retains zero sign. `finite_signs` supplies one positive neighborhood
+for any finite family, and `exists_parameter` chooses one ordinary parameter
+below a prescribed positive cap satisfying all those signs together.
+
+For semantic fraction data with real coefficients, `fraction_sign` connects
+evaluation of the actual native numerator and denominator to
+`Hex.OrderedFn.Infinitesimal.sign`. It also preserves the nonzero denominator.
+`finite_fractions` collects all these signs and denominator guards into one
+neighborhood. `exists_fraction_parameter` chooses one ordinary real parameter
+for the whole finite collection. The external square-root example uses that
+same parameter for a positive square root whose square is the parameter and
+which lies strictly between it and one.
+
+For any coefficient field with a prescribed strictly increasing embedding into
+ℝ, `polynomial_sign_map` preserves the lowest-coefficient sign after mapping
+the polynomial's coefficients. `fraction_sign_map`, `finite_fractions_map` and
+`exists_mapped_parameter` apply this to the actual native fraction data over
+that field. All signs and denominator guards hold at one common parameter.
+The rational-base consumer uses the actual rational cast and combines those
+same guards with the positive-square-root equation and strict inequalities.
+`evalMapped_add` and `evalMapped_mul` preserve actual native sums and products
+under the two operand denominator guards. `evalMapped_eq_eval` identifies
+the helper with Mathlib’s rational-function evaluation. `evalMapped_neg`, `evalMapped_sub`,
+`evalMapped_inv` and `evalMapped_div` cover the remaining field operations,
+including the native zero-input inverse. Polynomial fractions, coefficient
+constants, the indeterminate, zero, one and natural/integer casts specialize
+through their actual native definitions. Inversion and powers commute with
+evaluation at every parameter, including poles; their identities need no
+denominator guards. Division needs guards for its first operand and the
+inverse of its second operand.
+Finite-family consumers collect operands and results before choosing their
+parameter, so arithmetic identities, all recorded signs and all denominator
+guards hold at the same point.
+
+`fraction_sign_with`, `finite_fractions_with` and `exists_parameter_with` use
+the actual predecessor sign function, given its agreement with the prescribed
+coefficient embedding into ℝ; this does not provide an embedding for an
+infinitesimal predecessor field. A native rational infinitesimal-context consumer reads
+its stored fraction through the existing proof of equality of the complete
+native and semantic coefficient dictionaries, and preserves that element's
+actual stored sign at an ordinary real parameter.
+
+Transport of complete query tables and joint selected-root constraints,
+recursive algebraic replay specialization and successive infinitesimal
+parameter choices remain required finite-sign realization work. These helpers
+operate on coefficient data with a supplied ordered embedding into ℝ in the
+companion; they add no native constructor or runtime field instance for formal
+real expressions.
