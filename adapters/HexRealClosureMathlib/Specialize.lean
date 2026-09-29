@@ -188,36 +188,37 @@ variable {F : Type} [Field F] [DecidableEq F]
   ((HexPolyMathlib.toPolynomial fraction.num).map embedding).eval t /
     ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t
 
-/-- Specialization preserves an actual native sum wherever the finitely
-recorded denominators of both operands and their result are nonzero. -/
+/-- Stored canonical numerator/denominator evaluation agrees with Mathlib's
+rational-function evaluation through the proved native correspondence. -/
+theorem evalMapped_eq_eval (embedding : F →+* ℝ) (fraction : Hex.RationalFn F) (t : ℝ) :
+    evalMapped embedding fraction t = RatFunc.eval embedding t (HexRationalFnMathlib.toRatFunc fraction) := by
+  unfold evalMapped RatFunc.eval
+  rw [← HexRationalFnMathlib.num_toRatFunc, ← HexRationalFnMathlib.den_toRatFunc,
+    Polynomial.eval_map, Polynomial.eval_map]
+
+/-- Specialization preserves an actual native sum whenever the two operand
+denominators are nonzero. Canonical reduction supplies the result guard. -/
 theorem evalMapped_add (embedding : F →+* ℝ) (first second : Hex.RationalFn F) (t : ℝ)
     (left : ((HexPolyMathlib.toPolynomial first.den).map embedding).eval t ≠ 0)
-    (right : ((HexPolyMathlib.toPolynomial second.den).map embedding).eval t ≠ 0)
-    (result : ((HexPolyMathlib.toPolynomial (first + second).den).map embedding).eval t ≠ 0) :
+    (right : ((HexPolyMathlib.toPolynomial second.den).map embedding).eval t ≠ 0) :
     evalMapped embedding (first + second) t =
       evalMapped embedding first t + evalMapped embedding second t := by
-  have identity := congrArg (fun p : Hex.DensePoly F =>
-    ((HexPolyMathlib.toPolynomial p).map embedding).eval t) (Hex.RationalFn.add_spec first second)
-  simp only [HexPolyMathlib.toPolynomial_mul, HexPolyMathlib.toPolynomial_add,
-    Polynomial.map_mul, Polynomial.map_add, Polynomial.eval_mul, Polynomial.eval_add] at identity
-  unfold evalMapped
-  field_simp [left, right, result]
-  nlinarith only [identity]
+  simp only [evalMapped_eq_eval, HexRationalFnMathlib.toRatFunc_add]
+  exact RatFunc.eval_add embedding t
+    (by simpa only [← HexRationalFnMathlib.den_toRatFunc, Polynomial.eval_map] using left)
+    (by simpa only [← HexRationalFnMathlib.den_toRatFunc, Polynomial.eval_map] using right)
 
-/-- Specialization preserves an actual native product on its recorded
-nonzero denominator guards, without a global field-hom assumption. -/
+/-- Specialization preserves an actual native product whenever the two operand
+denominators are nonzero. Canonical reduction supplies the result guard. -/
 theorem evalMapped_mul (embedding : F →+* ℝ) (first second : Hex.RationalFn F) (t : ℝ)
     (left : ((HexPolyMathlib.toPolynomial first.den).map embedding).eval t ≠ 0)
-    (right : ((HexPolyMathlib.toPolynomial second.den).map embedding).eval t ≠ 0)
-    (result : ((HexPolyMathlib.toPolynomial (first * second).den).map embedding).eval t ≠ 0) :
+    (right : ((HexPolyMathlib.toPolynomial second.den).map embedding).eval t ≠ 0) :
     evalMapped embedding (first * second) t =
       evalMapped embedding first t * evalMapped embedding second t := by
-  have identity := congrArg (fun p : Hex.DensePoly F =>
-    ((HexPolyMathlib.toPolynomial p).map embedding).eval t) (Hex.RationalFn.mul_spec first second)
-  simp only [HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul, Polynomial.eval_mul] at identity
-  unfold evalMapped
-  field_simp [left, right, result]
-  nlinarith only [identity]
+  simp only [evalMapped_eq_eval, HexRationalFnMathlib.toRatFunc_mul]
+  exact RatFunc.eval_mul embedding t
+    (by simpa only [← HexRationalFnMathlib.den_toRatFunc, Polynomial.eval_map] using left)
+    (by simpa only [← HexRationalFnMathlib.den_toRatFunc, Polynomial.eval_map] using right)
 
 /-- An actual polynomial fraction evaluates as its mapped polynomial. -/
 theorem evalMapped_ofPoly (embedding : F →+* ℝ) (p : Hex.DensePoly F) (t : ℝ) :
@@ -279,67 +280,59 @@ theorem evalMapped_int (embedding : F →+* ℝ) (n : Int) (t : ℝ) :
   | ofNat n => simpa only [Int.ofNat_eq_natCast, Int.cast_natCast] using evalMapped_nat embedding n t
   | negSucc n => rw [Int.cast_negSucc, evalMapped_neg, evalMapped_nat, Int.cast_negSucc]
 
-/-- Native subtraction specializes under the recorded operand and result guards. -/
+/-- Native subtraction specializes under the two operand guards. -/
 theorem evalMapped_sub (embedding : F →+* ℝ) (first second : Hex.RationalFn F) (t : ℝ)
     (left : ((HexPolyMathlib.toPolynomial first.den).map embedding).eval t ≠ 0)
-    (right : ((HexPolyMathlib.toPolynomial second.den).map embedding).eval t ≠ 0)
-    (result : ((HexPolyMathlib.toPolynomial (first - second).den).map embedding).eval t ≠ 0) :
+    (right : ((HexPolyMathlib.toPolynomial second.den).map embedding).eval t ≠ 0) :
     evalMapped embedding (first - second) t =
       evalMapped embedding first t - evalMapped embedding second t := by
   have negative : ((HexPolyMathlib.toPolynomial (-second).den).map embedding).eval t ≠ 0 := right
-  have output : ((HexPolyMathlib.toPolynomial (first + -second).den).map embedding).eval t ≠ 0 := result
   simpa only [sub_eq_add_neg, evalMapped_neg] using
-    evalMapped_add embedding first (-second) t left negative output
+    evalMapped_add embedding first (-second) t left negative
 
-/-- Native inversion specializes wherever the operand and its inverse are
-both regular. The actual zero-input branch is included. -/
-theorem evalMapped_inv (embedding : F →+* ℝ) (fraction : Hex.RationalFn F) (t : ℝ)
-    (guard : ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t ≠ 0)
-    (result : ((HexPolyMathlib.toPolynomial fraction⁻¹.den).map embedding).eval t ≠ 0) :
+/-- Native inversion swaps the canonical numerator and denominator up to
+one nonzero coefficient scale, so evaluation commutes with total inversion
+at every parameter, including zeros and poles. -/
+theorem evalMapped_inv (embedding : F →+* ℝ) (fraction : Hex.RationalFn F) (t : ℝ) :
     evalMapped embedding fraction⁻¹ t = (evalMapped embedding fraction t)⁻¹ := by
-  by_cases zero : fraction.num = 0
-  · have zero := (Hex.RationalFn.num_eq_zero fraction).mp zero
+  by_cases hn : fraction.num = 0
+  · have hf := (Hex.RationalFn.num_eq_zero fraction).mp hn
     subst fraction
-    simp [evalMapped, zero, HexPolyMathlib.toPolynomial_zero]
-  · have identity := congrArg (fun p : Hex.DensePoly F =>
-      ((HexPolyMathlib.toPolynomial p).map embedding).eval t) (Hex.RationalFn.inv_spec fraction zero)
-    simp only [HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul, Polynomial.eval_mul] at identity
-    have numerator : ((HexPolyMathlib.toPolynomial fraction.num).map embedding).eval t ≠ 0 := by
-      intro h
-      rw [h, mul_zero] at identity
-      exact (mul_ne_zero guard result) identity.symm
-    unfold evalMapped
-    rw [inv_div]
-    exact (div_eq_div_iff result numerator).mpr identity
+    simp only [inv_zero, evalMapped_zero]
+  · change evalMapped embedding (Hex.RationalFn.inv fraction) t = _
+    simp only [Hex.RationalFn.inv, hn, ↓reduceDIte]
+    split
+    · change ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t /
+        ((HexPolyMathlib.toPolynomial fraction.num).map embedding).eval t = _
+      exact (inv_div _ _).symm
+    · have scale : embedding fraction.num.leadingCoeff⁻¹ ≠ 0 :=
+        (_root_.map_ne_zero embedding).mpr (inv_ne_zero (Hex.DensePoly.leadingCoeff_ne_zero hn))
+      simp only [evalMapped, Hex.RationalFn.ofCoprime, HexPolyMathlib.toPolynomial_scale,
+        Polynomial.map_mul, Polynomial.map_C, Polynomial.eval_mul, Polynomial.eval_C]
+      rw [mul_div_mul_left _ _ scale, inv_div]
 
-/-- Native division specializes under the operand, inverse and result guards
-recorded by the finite arithmetic computation. -/
+/-- Native division specializes when its first operand and the inverse of
+its second operand have nonzero denominators. -/
 theorem evalMapped_div (embedding : F →+* ℝ) (first second : Hex.RationalFn F) (t : ℝ)
     (left : ((HexPolyMathlib.toPolynomial first.den).map embedding).eval t ≠ 0)
-    (right : ((HexPolyMathlib.toPolynomial second.den).map embedding).eval t ≠ 0)
-    (inverse : ((HexPolyMathlib.toPolynomial second⁻¹.den).map embedding).eval t ≠ 0)
-    (result : ((HexPolyMathlib.toPolynomial (first / second).den).map embedding).eval t ≠ 0) :
+    (inverse : ((HexPolyMathlib.toPolynomial second⁻¹.den).map embedding).eval t ≠ 0) :
     evalMapped embedding (first / second) t =
       evalMapped embedding first t / evalMapped embedding second t := by
-  have output : ((HexPolyMathlib.toPolynomial (first * second⁻¹).den).map embedding).eval t ≠ 0 := result
-  rw [div_eq_mul_inv, evalMapped_mul embedding first second⁻¹ t left inverse output,
-    evalMapped_inv embedding second t right inverse, div_eq_mul_inv]
+  rw [div_eq_mul_inv, evalMapped_mul embedding first second⁻¹ t left inverse,
+    evalMapped_inv embedding second t, div_eq_mul_inv]
 
-/-- A finite collection of power denominator guards preserves the actual
-native power at the same ordinary parameter. -/
-theorem evalMapped_pow (embedding : F →+* ℝ) (fraction : Hex.RationalFn F) (t : ℝ) (n : Nat)
-    (guards : ∀ i ≤ n, ((HexPolyMathlib.toPolynomial (fraction ^ i).den).map embedding).eval t ≠ 0) :
-    evalMapped embedding (fraction ^ n) t = (evalMapped embedding fraction t) ^ n := by
+private theorem polynomial_pow (p : Hex.DensePoly F) (n : Nat) :
+    HexPolyMathlib.toPolynomial (p ^ n) = (HexPolyMathlib.toPolynomial p) ^ n := by
   induction n with
-  | zero => simp only [pow_zero, evalMapped_one]
-  | succ n ih =>
-    have left := guards n (Nat.le_succ n)
-    have right : ((HexPolyMathlib.toPolynomial fraction.den).map embedding).eval t ≠ 0 := by
-      simpa only [pow_one] using guards 1 (by omega)
-    have result : ((HexPolyMathlib.toPolynomial (fraction ^ n * fraction).den).map embedding).eval t ≠ 0 := by
-      simpa only [pow_succ] using guards (n + 1) le_rfl
-    rw [pow_succ, evalMapped_mul embedding (fraction ^ n) fraction t left right result,
-      ih (fun i hi => guards i (hi.trans (Nat.le_succ n))), pow_succ]
+  | zero => rw [Lean.Grind.Semiring.pow_zero, HexPolyMathlib.toPolynomial_one, pow_zero]
+  | succ n ih => rw [Lean.Grind.Semiring.pow_succ, HexPolyMathlib.toPolynomial_mul, ih, pow_succ]
+
+/-- Canonical native powers raise the stored numerator and denominator
+separately. Evaluation therefore commutes with powers even at poles. -/
+theorem evalMapped_pow (embedding : F →+* ℝ) (fraction : Hex.RationalFn F) (t : ℝ) (n : Nat) :
+    evalMapped embedding (fraction ^ n) t = (evalMapped embedding fraction t) ^ n := by
+  simp only [evalMapped, Hex.RationalFn.num_pow, Hex.RationalFn.den_pow,
+    polynomial_pow, Polynomial.map_pow, Polynomial.eval_pow, div_pow]
 
 variable [LinearOrder F]
 
@@ -485,6 +478,10 @@ end Hex.RealClosure.Specialize
 /-- info: 'Hex.RealClosure.Specialize.exists_mapped_parameter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.exists_mapped_parameter
+
+/-- info: 'Hex.RealClosure.Specialize.evalMapped_eq_eval' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Specialize.evalMapped_eq_eval
 
 /-- info: 'Hex.RealClosure.Specialize.evalMapped_add' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

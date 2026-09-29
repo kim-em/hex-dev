@@ -71,9 +71,9 @@ example {F : Type} [Field F] [DecidableEq F] [LinearOrder F]
     {first, second, first + second, first * second} cap positive
   refine ⟨t, ht, small, ?_, ?_, signs⟩
   · exact evalMapped_add embedding first second t
-      (signs first (by simp)).1 (signs second (by simp)).1 (signs (first + second) (by simp)).1
+      (signs first (by simp)).1 (signs second (by simp)).1
   · exact evalMapped_mul embedding first second t
-      (signs first (by simp)).1 (signs second (by simp)).1 (signs (first * second) (by simp)).1
+      (signs first (by simp)).1 (signs second (by simp)).1
 
 /-- All four remaining field operations, including the native zero inverse,
 use the same parameter as the recorded signs and denominator guards. -/
@@ -97,29 +97,26 @@ example {F : Type} [Field F] [DecidableEq F] [LinearOrder F]
     {first, second, -first, first - second, second⁻¹, first / second, 0} cap positive
   refine ⟨t, ht, small, evalMapped_neg embedding first t, ?_, ?_, ?_, ?_, signs⟩
   · exact evalMapped_sub embedding first second t (signs first (by simp)).1
-      (signs second (by simp)).1 (signs (first - second) (by simp)).1
-  · exact evalMapped_inv embedding second t (signs second (by simp)).1
-      (signs second⁻¹ (by simp)).1
+      (signs second (by simp)).1
+  · exact evalMapped_inv embedding second t
   · exact evalMapped_div embedding first second t (signs first (by simp)).1
-      (signs second (by simp)).1 (signs second⁻¹ (by simp)).1
-      (signs (first / second) (by simp)).1
-  · simp only [inv_zero, evalMapped_zero]
+      (signs second⁻¹ (by simp)).1
+  · rw [evalMapped_inv, evalMapped_zero, inv_zero]
 
-/-- A finite power inventory is fixed before choosing its common parameter;
-all power guards, signs and the native power identity hold there together. -/
+/-- One parameter preserves the recorded operand/result signs. The actual
+power identity holds at every parameter and needs no denominator inventory. -/
 example {F : Type} [Field F] [DecidableEq F] [LinearOrder F]
     (embedding : F →+* ℝ) (ordered : StrictMono embedding)
     (fraction : Hex.RationalFn F) (n : Nat) (cap : ℝ) (positive : 0 < cap) :
     ∃ t : ℝ, 0 < t ∧ t < cap ∧
       evalMapped embedding (fraction ^ n) t = (evalMapped embedding fraction t) ^ n ∧
-      ∀ i ≤ n, ((HexPolyMathlib.toPolynomial (fraction ^ i).den).map embedding).eval t ≠ 0 ∧
-        (SignType.sign (evalMapped embedding (fraction ^ i) t) : Int) =
-          Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign (fraction ^ i) := by
-  let powers := (Finset.range (n + 1)).image fun i => fraction ^ i
-  obtain ⟨t, ht, small, signs⟩ := exists_mapped_parameter embedding ordered powers cap positive
-  have guarded (i : Nat) (hi : i ≤ n) := signs (fraction ^ i)
-    (Finset.mem_image.mpr ⟨i, Finset.mem_range.mpr (by omega), rfl⟩)
-  exact ⟨t, ht, small, evalMapped_pow embedding fraction t n (fun i hi => (guarded i hi).1), guarded⟩
+      ∀ value ∈ ({fraction, fraction ^ n} : Finset (Hex.RationalFn F)),
+        ((HexPolyMathlib.toPolynomial value.den).map embedding).eval t ≠ 0 ∧
+        (SignType.sign (evalMapped embedding value t) : Int) =
+          Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign value := by
+  obtain ⟨t, ht, small, signs⟩ := exists_mapped_parameter embedding ordered
+    {fraction, fraction ^ n} cap positive
+  exact ⟨t, ht, small, evalMapped_pow embedding fraction t n, signs⟩
 
 section Native
 local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat

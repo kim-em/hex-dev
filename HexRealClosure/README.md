@@ -435,19 +435,23 @@ that field. All signs and denominator guards hold at one common parameter.
 The rational-base consumer uses the actual rational cast and combines those
 same guards with the positive-square-root equation and strict inequalities.
 `evalMapped_add` and `evalMapped_mul` preserve actual native sums and products
-under the recorded denominator guards. `evalMapped_neg`, `evalMapped_sub`,
+under the two operand denominator guards. `evalMapped_eq_eval` identifies
+the helper with Mathlib’s rational-function evaluation. `evalMapped_neg`, `evalMapped_sub`,
 `evalMapped_inv` and `evalMapped_div` cover the remaining field operations,
 including the native zero-input inverse. Polynomial fractions, coefficient
 constants, the indeterminate, zero, one and natural/integer casts specialize
-through their actual native definitions. `evalMapped_pow` uses a finite
-inventory of denominator guards for the powers through the requested exponent.
+through their actual native definitions. Inversion and powers commute with
+evaluation at every parameter, including poles; their identities need no
+denominator guards. Division needs guards for its first operand and the
+inverse of its second operand.
 Finite-family consumers collect operands and results before choosing their
 parameter, so arithmetic identities, all recorded signs and all denominator
 guards hold at the same point.
 
 `fraction_sign_with`, `finite_fractions_with` and `exists_parameter_with` use
 the actual predecessor sign function, given its agreement with the prescribed
-coefficient embedding. A native rational infinitesimal-context consumer reads
+coefficient embedding into ℝ; this does not provide an embedding for an
+infinitesimal predecessor field. A native rational infinitesimal-context consumer reads
 its stored fraction through the existing proof of equality of the complete
 native and semantic coefficient dictionaries, and preserves that element's
 actual stored sign at an ordinary real parameter.
