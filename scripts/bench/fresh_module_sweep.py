@@ -844,8 +844,8 @@ def parse_axioms(output: str, namespace: str | None = None) -> list[str] | None:
     if namespace is not None:
         inventories = []
         for match in re.finditer(
-            r"'([^']+)' (?:depends on axioms: \[([^]]*)\]|does not depend on any axioms)",
-            output,
+            r"(?:^|:\s+)'([^\n]+?)' (?:depends on axioms: \[([^]]*)\]|does not depend on any axioms)",
+            output, re.MULTILINE,
         ):
             if match.group(1).startswith(namespace + "."):
                 inventories.append([
@@ -1140,7 +1140,11 @@ def validate_axioms(
     expected = (
         None if module.expected_axioms is None else list(module.expected_axioms)
     )
-    if sample["axioms"] != expected:
+    actual = sample["axioms"]
+    if module.axiom_namespace is not None:
+        actual = None if actual is None else sorted(actual)
+        expected = None if expected is None else sorted(expected)
+    if actual != expected:
         raise RuntimeError(
             f"{pair_name} {role} axiom set mismatch: "
             f"expected {expected}, got {sample['axioms']}"
@@ -1289,6 +1293,8 @@ def summarize(
             "reference": {
                 "module": pair.reference.module,
                 "expected_axioms": pair.reference.expected_axioms,
+                **({"axiom_namespace": pair.reference.axiom_namespace}
+                   if pair.reference.axiom_namespace is not None else {}),
                 "artifacts": artifact_sizes(
                     pair.reference.module, spec.src_dir
                 ),
@@ -1296,6 +1302,8 @@ def summarize(
             "candidate": {
                 "module": pair.candidate.module,
                 "expected_axioms": pair.candidate.expected_axioms,
+                **({"axiom_namespace": pair.candidate.axiom_namespace}
+                   if pair.candidate.axiom_namespace is not None else {}),
                 "artifacts": artifact_sizes(
                     pair.candidate.module, spec.src_dir
                 ),

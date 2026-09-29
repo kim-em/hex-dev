@@ -65,7 +65,11 @@ contain 16,752–16,792 bytes. Median semantic-arm maximum resident sets are
 not isolated theorem memory or allocated-byte measurements. The paired
 observations do not establish a complexity bound, speedup or full Phase-4
 coverage. This collection measures changed theorem statements and inventory
-selection; it is not an unchanged rerun of the original collection.
+selection; it is not an unchanged rerun of the original collection. The
+two sources are not a controlled before/after comparison: they change both
+the theorem and the runner and use different CPUs. Both recorded sources
+use schema v1; the current runner uses v2 to identify namespace-based
+axiom selection explicitly in pair summaries.
 
 - [Complete graph-bound measurement](bench-results/hex-sign-det-semantics-0acfbaf3f-chungus2.json).
 - [Incremental graph-bound arm records](bench-results/hex-sign-det-semantics-0acfbaf3f-chungus2.json.samples.jsonl).
@@ -114,7 +118,9 @@ Run the diagnostic with:
 python3 scripts/bench/sign_det_semantics.py --output /tmp/bkr-semantic-probes.json
 ```
 
-The output path must be fresh. The runner automatically selects and leases
+The output path must be fresh and outside the checkout, so the growing
+sidecar cannot alter source provenance. Without `--output`, records go to
+`~/.local/state/hex/proof-probes/`. The runner automatically selects and leases
 its CPU. Raw records retain all completed observations, compiler output,
 artifact sizes, source hashes, dependency identities and host context:
 

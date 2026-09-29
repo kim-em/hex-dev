@@ -38,14 +38,15 @@ SPEC = SweepSpec(
                             "compiled execution", "nested coefficient arithmetic"]},
     ) for depth in (1, 3, 5, 7)),
     probe_target="HexSignDetMathlibProofProbe",
-    schema="hex-sign-det-semantic-probes-v1",
+    schema="hex-sign-det-semantic-probes-v2",
     measurement="paired-fresh-module-olean-wall",
     output_stem="hex-sign-det-semantics",
     required_samples=4,
     retain_compiler_output=True,
     extra_sources=(Path("libraries.yml"), Path("SPEC/benchmarking.md"),
                    Path("reports/sign-det-semantic-probes.md"),
-                   Path("scripts/bench/structural_tactic_sweep.py")),
+                   Path("scripts/bench/structural_tactic_sweep.py"),
+                   Path("scripts/bench/test_sign_det_semantics.py")),
 )
 
 
@@ -54,9 +55,13 @@ def main() -> int:
     cpu, lease = acquire_cpu(args.cpu)
     try:
         env = environment()
-        output = args.output or default_output(env, SPEC.output_stem)
+        output = args.output or (Path.home() / ".local/state/hex/proof-probes" /
+                                 default_output(env, SPEC.output_stem).name)
         if not output.is_absolute():
             output = ROOT / output
+        output = output.resolve()
+        if output.is_relative_to(ROOT.resolve()):
+            raise RuntimeError("choose a measurement output path outside the repository")
         sidecar = Path(str(output) + ".samples.jsonl")
         if output.exists() or sidecar.exists():
             raise RuntimeError("measurement output exists; choose a fresh path")
@@ -76,6 +81,8 @@ def main() -> int:
                 code = run_cli(SPEC, Path(__file__),
                                [*sys.argv[1:], "--shared-host", "--cpu", str(cpu),
                                 "--output", str(output)], sample_observer=observe)
+                log.write(json.dumps({"type": "complete", "code": code}) + "\n")
+                log.flush()
             except BaseException as exc:
                 log.write(json.dumps({"type": "failure", "exception": type(exc).__name__,
                                       "error": str(exc)}) + "\n")

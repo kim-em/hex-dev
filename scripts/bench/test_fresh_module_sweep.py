@@ -398,6 +398,16 @@ class PairingTests(unittest.TestCase):
         self.assertEqual(sweep.parse_axioms(
             "'Probe.Semantic.clean' does not depend on any axioms", "Probe.Semantic"), [])
 
+    def test_axiom_namespace_handles_primed_names(self) -> None:
+        self.assertEqual(sweep.parse_axioms(
+            "info: /tmp/other's/probe.lean:1:0: 'Probe.Semantic.checked'extra' depends on axioms: [sorryAx]",
+            "Probe.Semantic"), ["sorryAx"])
+
+    def test_namespace_axiom_validation_is_order_independent(self) -> None:
+        sweep.validate_axioms("case", "candidate", sweep.ProbeModule(
+            "Probe", EXPECTED_AXIOMS, "Probe.Semantic"),
+            {"axioms": list(reversed(EXPECTED_AXIOMS))})
+
     def test_rotation_is_stable(self) -> None:
         self.assertEqual(sweep.rotate(["a", "b", "c"], 1), ["b", "c", "a"])
         self.assertEqual(sweep.rotate(["a", "b", "c"], 4), ["b", "c", "a"])
