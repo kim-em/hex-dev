@@ -124,7 +124,7 @@
     "diagnostics.json": "959bb8d9ca1f959c6d47f94cc5a361dcc678b353a5313f6b153bb6c1a418c41a",
     "filter-command.json": "c28c0ad8c649adc4c78b9f00ec3aff864d6c450386fe08e2cd7b8cb4f5b73207",
     "inclusive-summary.json": "4f10fea2c4f2173e15b032da2d0c8fe34e2d5c5b777211cb01a9cae3fb872e01",
-    "lean_nat_gcd.disassembly": "e9a36316c08cd2a70fcb120e6dbc2d776e30611207d2bc481e8fe279d6cf2ad8",
+    "lean_nat_gcd.disassembly": "4b5d7a4a68c2733e81010a724e33cd5ba6c00e62db36a57d1ed1eead6f8d2ac2",
     "metadata.json": "dabc4e2c3eddf093dacf7f254a3cb8014a72dddc80b17fa204910b4da722ea2d",
     "mpz_uint64.disassembly": "bb5b296ec942724abc0c8f545073aedd9aa243095155ee44dbd897a61cc9c07c",
     "profile.log": "c1c72669137da7b88957ba64292084127ce0ed92492f93f06a76d493223524b8",
@@ -133,5 +133,9 @@
     "stack-plausibility.json": "396e046a8865b30f5aab1e6739b8c047be24fbf8a750f4bc746753a65d8a6bf9",
     "stack_plausibility.py": "d2fc4e621e26652f7fd9182d50d2814bb838e7a479c2276b7e11946726f87d8d"
   },
-  "replay": "Use fresh output paths; retain the original raw artifacts unchanged. Recorded argv describe the executed commands, not permission to overwrite archived output."
+  "replay": "Use fresh output paths; retain the original raw artifacts unchanged. Recorded argv describe the executed commands, not permission to overwrite archived output.",
+  "committed_copy_transformations": {
+    "lean_nat_gcd.disassembly": "Strip trailing horizontal whitespace in committed text copy only; unchanged raw bytes and their SHA256 remain in raw_directory/raw_sha256.",
+    "mpz_uint64.disassembly": "Strip trailing horizontal whitespace in committed text copy only; unchanged raw bytes and their SHA256 remain in raw_directory/raw_sha256."
+  }
 }

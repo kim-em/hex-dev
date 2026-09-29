@@ -36,7 +36,7 @@ Disassembly of section .text:
  4a0c687:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
  4a0c68c:	e8 2f d3 fa ff       	call   49b99c0 <_ZNK4lean3mpz10get_size_tEv>
  4a0c691:	48 8d 1c 45 01 00 00 	lea    0x1(,%rax,2),%rbx
- 4a0c698:	00 
+ 4a0c698:	00
  4a0c699:	e9 76 01 00 00       	jmp    4a0c814 <lean_nat_gcd+0x1f4>
  4a0c69e:	49 d1 ee             	shr    $1,%r14
  4a0c6a1:	48 8d 7c 24 18       	lea    0x18(%rsp),%rdi
@@ -84,7 +84,7 @@ Disassembly of section .text:
  4a0c75d:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
  4a0c762:	e8 59 d2 fa ff       	call   49b99c0 <_ZNK4lean3mpz10get_size_tEv>
  4a0c767:	48 8d 1c 45 01 00 00 	lea    0x1(,%rax,2),%rbx
- 4a0c76e:	00 
+ 4a0c76e:	00
  4a0c76f:	e9 ff 00 00 00       	jmp    4a0c873 <lean_nat_gcd+0x253>
  4a0c774:	e8 57 d0 fa ff       	call   49b97d0 <_ZN4lean3mpzC1Em>
  4a0c779:	48 d1 eb             	shr    $1,%rbx
@@ -108,7 +108,7 @@ Disassembly of section .text:
  4a0c7cc:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
  4a0c7d1:	e8 ea d1 fa ff       	call   49b99c0 <_ZNK4lean3mpz10get_size_tEv>
  4a0c7d6:	48 8d 1c 45 01 00 00 	lea    0x1(,%rax,2),%rbx
- 4a0c7dd:	00 
+ 4a0c7dd:	00
  4a0c7de:	e9 c8 00 00 00       	jmp    4a0c8ab <lean_nat_gcd+0x28b>
  4a0c7e3:	bf 18 00 00 00       	mov    $0x18,%edi
  4a0c7e8:	e8 b3 51 06 00       	call   4a719a0 <lean_alloc_small_object_core>
