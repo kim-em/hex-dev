@@ -25,8 +25,6 @@ passes replay, including inputs with repeated factors.
 
 namespace Hex.RealClosure.Yun
 
-attribute [local instance 2000] Field.toGrindField
-
 /-- A cached selected-root coefficient stream runs Yun's raw recurrence with
 the same result as its exact real-algebraic values. This theorem transports
 the computation; `decompose_packed` in `YunInvariant` combines it with the

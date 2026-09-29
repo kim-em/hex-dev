@@ -64,7 +64,7 @@ theorem Context.checkYun (context : Context E Ctx coeffSign parent)
   exact Yun.decompose_sound _
 
 include hd in
-/-- Each selected root of an emitted tower factor has exactly that factor's
+/-- Each ambient root of an emitted factor has that factor's label as its
 multiplicity in the interpreted input polynomial. -/
 theorem Context.yun_rootMultiplicity
     (context : Context E Ctx coeffSign parent)

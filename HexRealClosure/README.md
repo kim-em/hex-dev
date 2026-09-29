@@ -138,10 +138,10 @@ The optional `Yun.check` recomputes the product and degree, checks positive
 ordered multiplicities and nonconstant monic factors, and checks squarefree and
 pairwise gcd conditions. Core lemmas extract those accepted conditions; the
 Mathlib companion transports the product to mathematical polynomials and
-proves that accepted rational factors are squarefree and pairwise coprime.
-For every field embedding of ℚ, accepted factors cover exactly the roots of
-the input, and each factor label is the multiplicity of its roots in the
-input. This includes irrational real roots after mapping to ℝ.
+proves that accepted factors over an ordered field are squarefree and pairwise
+coprime. After any field map, accepted factors cover exactly the roots of the
+input, and each factor label is the multiplicity of its roots in the input.
+This includes irrational real roots of rational inputs after mapping to ℝ.
 `Yun.map_decomposeRaw` transports the raw recurrence through a zero-reflecting
 coefficient map that preserves its arithmetic. The companion instantiates
 this theorem for cached rational selected-root coefficients; their inverse
@@ -435,7 +435,9 @@ certificate acceptance remains an explicit premise.
 `AlgebraicYun.lean` specializes the coefficient interpretation to Yun's
 actual raw recurrence over an algebraic level. Mapping its factors into the
 ambient field gives the same Yun recurrence there, and the mapped result
-passes Yun's exact factorization replay. The proof uses the level's verified
+passes Yun's exact factorization replay. For nonzero output, its emitted
+factors cover exactly the ambient roots of the input, and each root has the factor's labelled
+multiplicity in the original polynomial. The proof uses the level's verified
 division and inverse, which require the predecessor interpretation to preserve
 division. It assumes no field laws on stored representatives.
 
