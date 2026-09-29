@@ -53,17 +53,6 @@ theorem packQAdjoinOf_complex {context : Nat} {d : Root context}
   cases ha
   exact h.packQAdjoin_complex c
 
-/-- Check that externally held fixed-field coordinates use this handle's
-selected generator before packing them. -/
-@[expose] def packQAdjoin? {context : Nat} {d : Root context}
-    {a : Hex.AlgebraicNumber} (h : Root.Handle d) (c : Hex.QAdjoin a) :
-    Option (Element d) :=
-  if hsame : a == h.canonical.toAlgebraic then
-    some (h.packQAdjoinOf
-      (Hex.AlgebraicNumber.toComplex_injective
-        ((Hex.AlgebraicNumber.beq_iff a h.canonical.toAlgebraic).mp hsame)) c)
-  else none
-
 /-- The checked reader accepts exactly the selected generator. -/
 theorem packQAdjoin?_isSome_iff {context : Nat} {d : Root context}
     {a : Hex.AlgebraicNumber} (h : Root.Handle d) (c : Hex.QAdjoin a) :
@@ -94,8 +83,12 @@ theorem packQAdjoin?_sound {context : Nat} {d : Root context}
   unfold packQAdjoin? at he
   split at he
   · case isTrue hsame =>
+      have ha : a = h.canonical.toAlgebraic :=
+        Hex.AlgebraicNumber.toComplex_injective
+          ((Hex.AlgebraicNumber.beq_iff a h.canonical.toAlgebraic).mp hsame)
+      cases ha
       cases he
-      exact h.packQAdjoinOf_complex _ c
+      exact h.packQAdjoin_complex c
   · simp at he
 
 /-- Accepted coordinates also pass the independent real-algebraic check. -/

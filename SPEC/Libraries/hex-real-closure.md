@@ -36,7 +36,7 @@ The division of responsibility is:
 | [hex-sign-det](hex-sign-det.md) | Complete BKR tables and single-polynomial descriptors: validation, root identity/order, sign at a root and re-encoding. |
 | [hex-ordered-fn](hex-ordered-fn.md) | Exact rational-function fields, caller-supplied certified real-constant approximations, infinitesimal orders and proof-founded total coefficient search. |
 | [hex-real-algebraic](hex-real-algebraic.md) | Independent rational-base fast path; exact comparison and sorted roots with multiplicities. |
-| [hex-number-field](../../HexNumberField/SPEC/hex-number-field.md) | Exact `QAdjoin` coordinates and canonical algebraic-number conversion for the rational selected-root bridge. |
+| [hex-number-field](../../HexNumberField/SPEC/hex-number-field.md) | Exact `QAdjoin` coordinates and canonical algebraic-number conversion for packing at a rational selected-root handle. |
 | This library | Generic characteristic-zero Yun decomposition, staged contexts, executable ordered-field carriers, selected-root arithmetic, splitting/transport, root isolation, tower sampling and exploration. |
 
 The number-field fixed irreducible, complex-embedded fields also provide
@@ -516,6 +516,7 @@ Required theorem shapes, with the semantic parameters and coefficient laws above
 | `Element.eval_add`, `eval_mul`, `sign_sound` | Executable arithmetic/sign agrees with selected-root interpretation for every valid operand. |
 | `Element.eq_iff` | Executable zero sign of `a-b` iff denotations agree; lifted equality iff equality in `Value ctx`. |
 | `Element.inv_sound` | Selected squarefree root and nonzero `q(α)` give `eval(inv q)*eval(q)=1`; total inversion maps zero to zero. |
+| `Root.Handle.packQAdjoin_checked`, `packQAdjoin?_sound` | Fixed-field coordinates at the selected rational root pack to the same canonical real value; checked external generators are accepted exactly when equal to the selected generator. |
 | `Context.transport_sound` | Refinement/enlargement preserves interpretations, selected roots, order and compositional transport for all live handles. |
 | `Yun.decompose_sound` | Exact zero case or the stated product, unit, degree, squarefree and coprime properties. |
 | `roots_sound` | `all` iff `F=0`; finite results are strictly increasing, contain exactly all real roots in `R` and carry each root's exact positive multiplicity. |

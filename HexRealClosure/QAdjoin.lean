@@ -26,4 +26,11 @@ selected canonical root. -/
     (ha : a = h.canonical.toAlgebraic) (c : Hex.QAdjoin a) : Element d :=
   h.packQAdjoin (ha ▸ c)
 
+/-- Accept externally held coordinates only when their generator is the
+selected canonical root, then pack using the cached root. -/
+@[expose] def packQAdjoin? {context : Nat} {d : Root context}
+    {a : Hex.AlgebraicNumber} (h : Root.Handle d) (c : Hex.QAdjoin a) :
+    Option (Element d) :=
+  if a == h.canonical.toAlgebraic then some (h.pack c.coeffs) else none
+
 end Hex.RealClosure.Root.Handle
