@@ -26,7 +26,8 @@ Mathlib or Tau Ceti; no existing input, including hex-real-algebraic, gains
 an import of this family. Generic polynomial kernels consume ordinary total representation operations;
 they do not import selected-root implementations.
 
-Planned modules are `Model`, `Correspondence`, `Split`, `Roots`, `Union`,
+`Ambient` provides ordered algebraic real-closure existence and native fraction
+interpretation. Further planned modules are `Model`, `Correspondence`, `Split`, `Roots`, `Union`,
 `Specialize`, `Repr` and build-only `Tests`. The computational owner supplies
 executable total algorithms and result checkers. This companion proves
 representation-specific correspondence and discharges their semantic law
@@ -74,11 +75,11 @@ The audit baseline is Mathlib revision
 | [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md) | Planned real evaluation under relative transcendence, sign soundness/progress conditional on caller-supplied approximation laws, rational-function/Hahn embedding and lowest-coefficient sign correspondence. |
 | hex-real-roots-mathlib | Implemented `Real.instIsRealClosed`, proved from existing real square roots and polynomial order/IVT lemmas. Use this shared instance for real transcendental bases. |
 | [hex-real-algebraic-mathlib](../../HexRealAlgebraicMathlib/SPEC/hex-real-algebraic-mathlib.md) | Existing `RealAlgebraicNumber` ordered field and real-closed instance, comparison, root and Repr correspondence; use it for the rational base. |
-| Tau Ceti, consumed here | Additional ordered algebraic real-closure existence statement specified next; needed for unconditional algebraic infinitesimal models. |
+| Tau Ceti, consumed here | Implemented `TauCeti.RealClosure.exists_realClosure`, consumed by `Ambient.exists_ambient` and `Ambient.ofField`; supplies unconditional ordered algebraic infinitesimal ambient models. |
 | This companion | Selected-root quotient/descent, splitting and live-context transport, Yun/root correspondence and termination laws, compatible algebraic union, specialization and finite-sign realization, trivial-tower and Repr agreement. |
 
-The additional existence contract has the following exact mathematical shape,
-with universe levels chosen explicitly when it is implemented:
+The imported existence theorem has the following mathematical shape; the
+coefficient field and its real closure share the same universe:
 
 ```text
 For every ordered field K, there exist a field R with a linear order,
@@ -92,11 +93,13 @@ order on `R` must extend the given order on `K`; an abstract unordered
 algebraic extension is insufficient. This is an additional foundation beyond
 the univariate theorem list of
 [#10300](https://github.com/kim-em/hex-dev/issues/10300), not a theorem
-supplied by that list or by the pin. Foundation delivery belongs to Tau Ceti;
+supplied by that list. The Tau Ceti pin supplies it separately. Foundation delivery belongs to Tau Ceti;
 Hex must not undertake a second absolute Artin–Schreier construction or
 introduce an axiom to stand in for it.
 
-Until that import exists, statements with a supplied `R,ι` remain relative.
+`Ambient.ofField` constructs the prescribed `R,ι` from this imported theorem.
+Statements explicitly parameterized by another supplied `R,ι` remain relative
+to that choice.
 `Lex (HahnSeries ℤ K)` supplies an ordered field model of a positive
 infinitesimal, not its algebraic real closure: the exponent-one monomial has
 no square root in that integer-exponent field. Apply the existence contract
@@ -158,7 +161,10 @@ These instances are on the semantic quotient, not the raw representation.
 The total inverse has `0⁻¹=0`; the checked nonzero inverse returns `none` exactly on zero.
 Rational-base ambient existence is discharged by `RealAlgebraicNumber`;
 real-base existence uses the shared `IsRealClosed ℝ` instance. Infinitesimal
-field laws remain relative to a supplied model until Tau Ceti existence lands.
+ambient existence is supplied by `Ambient.infinitesimal`. Descent and
+compatibility for the complete native coefficient tower remain separate
+obligations; this ambient existence theorem does not install field instances
+on selected-root syntax.
 Executable totality uses predecessor representation operations and the
 structural/size bounds in the execution contract. Real-constant search alone
 retains its erased progress premise. Semantic maps may be noncomputable;

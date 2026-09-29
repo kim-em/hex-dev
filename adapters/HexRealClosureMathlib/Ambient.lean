@@ -13,9 +13,6 @@ public import Mathlib.Tactic.NormNum
 
 public section
 
--- The two field dictionaries are explicitly related by `compatible`.
-set_option linter.overlappingInstances false
-
 namespace Hex.RealClosure
 
 attribute [local instance 2000] Field.toGrindField
@@ -53,8 +50,8 @@ theorem exists_ambient : Nonempty (Ambient K) := by
     TauCeti.RealClosure.exists_realClosure K
   letI : Field R := field
   letI : LinearOrder R := order
-  letI : Algebra K R := inclusion.toAlgebra
-  letI : Algebra.IsAlgebraic K R := algebraic
+  let : Algebra K R := inclusion.toAlgebra
+  let : Algebra.IsAlgebraic K R := algebraic
   refine ⟨⟨R, field, order, ordered, closed, inclusion, monotone, ?_⟩⟩
   intro x
   obtain ⟨p, hp, root⟩ := Algebra.IsAlgebraic.isAlgebraic (R := K) x
@@ -82,11 +79,11 @@ theorem inclusion_sign (a : K) :
   rcases lt_trichotomy a 0 with negative | rfl | positive
   · have h := ambient.monotone negative
     rw [map_zero] at h
-    simp [sign_apply, negative, h, negative.not_gt, h.not_gt]
+    simp [negative, h]
   · simp
   · have h := ambient.monotone positive
     rw [map_zero] at h
-    simp [sign_apply, positive, h]
+    simp [positive, h]
 
 omit [IsStrictOrderedRing K] in
 /-- A positive coefficient below one has a positive square root strictly
@@ -117,6 +114,8 @@ noncomputable def infinitesimal (L : Type u) [Field L] [LinearOrder L]
     [IsStrictOrderedRing L] [DecidableEq L] : Ambient (Hex.RationalFn L) :=
   ofField (Hex.RationalFn L)
 
+-- The explicit compatibility premise identifies the two field dictionaries.
+set_option linter.overlappingInstances false in
 /-- Interpret native fractions through their proved field-dictionary equality.
 The source field retains the executable arithmetic through `fieldOfGrind`. -/
 noncomputable def nativeHom [g : Lean.Grind.Field L]
@@ -133,6 +132,8 @@ noncomputable def nativeHom [g : Lean.Grind.Field L]
       map_add' := by intro f h; subst g; exact model.inclusion.map_add f h
       map_mul' := by intro f h; subst g; exact model.inclusion.map_mul f h }
 
+-- The explicit compatibility premise identifies the two field dictionaries.
+set_option linter.overlappingInstances false in
 /-- The native indeterminate maps to the same infinitesimal in the ambient model. -/
 theorem nativeHom_X [g : Lean.Grind.Field L]
     (compatible : Field.toGrindField (K := L) = g)
@@ -142,6 +143,8 @@ theorem nativeHom_X [g : Lean.Grind.Field L]
   subst g
   rfl
 
+-- The explicit compatibility premise identifies the two field dictionaries.
+set_option linter.overlappingInstances false in
 /-- Native coefficients use the same inclusion as the semantic fraction field. -/
 theorem nativeHom_C [g : Lean.Grind.Field L]
     (compatible : Field.toGrindField (K := L) = g)
@@ -152,6 +155,8 @@ theorem nativeHom_C [g : Lean.Grind.Field L]
   subst g
   rfl
 
+-- The explicit compatibility premise identifies the two field dictionaries.
+set_option linter.overlappingInstances false in
 /-- Native coefficient signs agree with the actual ordered ambient interpretation. -/
 theorem nativeHom_sign [g : Lean.Grind.Field L]
     (compatible : Field.toGrindField (K := L) = g)
@@ -166,6 +171,36 @@ theorem nativeHom_sign [g : Lean.Grind.Field L]
   rw [Hex.OrderedFn.Infinitesimal.sign_orderSign]
   exact congrArg (fun s : SignType => (s : Int))
     (Hex.OrderedFn.Infinitesimal.embed_strictMono.sign_comp f)
+
+set_option linter.overlappingInstances false in
+/-- The native fraction interpretation preserves and reflects canonical zero. -/
+theorem nativeHom_zero [g : Lean.Grind.Field L]
+    (compatible : Field.toGrindField (K := L) = g)
+    (model : Ambient (@Hex.RationalFn L (Field.toGrindField (K := L)) inferInstance))
+    (f : @Hex.RationalFn L g inferInstance) : nativeHom compatible model f = 0 ↔ f = 0 := by
+  letI : Field (@Hex.RationalFn L g inferInstance) := HexPolyMathlib.fieldOfGrind
+  exact (nativeHom compatible model).map_eq_zero_iff
+
+set_option linter.overlappingInstances false in
+/-- The native total inverse is interpreted without replacing its operations. -/
+theorem nativeHom_inv [g : Lean.Grind.Field L]
+    (compatible : Field.toGrindField (K := L) = g)
+    (model : Ambient (@Hex.RationalFn L (Field.toGrindField (K := L)) inferInstance))
+    (f : @Hex.RationalFn L g inferInstance) :
+    nativeHom compatible model f⁻¹ = (nativeHom compatible model f)⁻¹ := by
+  letI : Field (@Hex.RationalFn L g inferInstance) := HexPolyMathlib.fieldOfGrind
+  exact map_inv₀ (nativeHom compatible model) f
+
+set_option linter.overlappingInstances false in
+/-- Native division uses the same interpreted field operations. -/
+theorem nativeHom_div [g : Lean.Grind.Field L]
+    (compatible : Field.toGrindField (K := L) = g)
+    (model : Ambient (@Hex.RationalFn L (Field.toGrindField (K := L)) inferInstance))
+    (f h : @Hex.RationalFn L g inferInstance) :
+    nativeHom compatible model (f / h) =
+      nativeHom compatible model f / nativeHom compatible model h := by
+  letI : Field (@Hex.RationalFn L g inferInstance) := HexPolyMathlib.fieldOfGrind
+  exact map_div₀ (nativeHom compatible model) f h
 
 /-- The positive square root of the represented infinitesimal lies above it. -/
 theorem exists_sqrt_X (model : Ambient (Hex.RationalFn L)) :
@@ -205,16 +240,16 @@ example : ∃ s : (infinitesimal ℚ).Carrier,
 
 /-- One chosen two-level ambient model realizes a square root of the second
 infinitesimal below every power of the embedded first infinitesimal. -/
-example (n : ℕ) :
+example :
     ∃ s : (infinitesimal (Hex.RationalFn ℚ)).Carrier,
       0 < s ∧ s ^ 2 = (infinitesimal (Hex.RationalFn ℚ)).inclusion Hex.RationalFn.X ∧
       (infinitesimal (Hex.RationalFn ℚ)).inclusion Hex.RationalFn.X < s ∧
-      s < (infinitesimal (Hex.RationalFn ℚ)).inclusion
+      ∀ n : ℕ, s < (infinitesimal (Hex.RationalFn ℚ)).inclusion
         (Hex.RationalFn.C ((Hex.RationalFn.X : Hex.RationalFn ℚ) ^ n)) := by
   let model := infinitesimal (Hex.RationalFn ℚ)
   obtain ⟨s, positive, square, above, _⟩ := exists_sqrt_X model
-  exact ⟨s, positive, square, above, sqrt_X_lt_C model s positive square _
-    (pow_pos Hex.OrderedFn.Infinitesimal.X_pos n)⟩
+  refine ⟨s, positive, square, above, fun n => ?_⟩
+  exact sqrt_X_lt_C model s positive square _ (pow_pos Hex.OrderedFn.Infinitesimal.X_pos n)
 
 end Infinitesimal
 
@@ -256,3 +291,7 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.Ambient.nativeHom_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Ambient.nativeHom_sign
+
+/-- info: 'Hex.RealClosure.Ambient.nativeHom_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.nativeHom_zero
