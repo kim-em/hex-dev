@@ -20,7 +20,7 @@ CASES = ["zero", "constant", "repeated", "nonmonic linear", "quadratic",
          "whole-line inverse infinitesimal", "inseparable by rational bisection",
          "assembly zero", "assembly constant", "assembly pure power",
          "assembly repeated factors", "assembly root-free factor", "assembly simple zero",
-         "nested algebraic coefficients"]
+         "nested algebraic coefficients", "nested algebraic multiplicities"]
 RATIONAL_HEADS = [[], [5], [1, -2, 1], [-3, 2], [-2, 0, 1],
                   [0, 6, 0, -3], [-2, 0, 0, 1], [6, 0, -5, 0, 1]]
 
@@ -136,8 +136,8 @@ def verify_assembly(row, index):
     require(sorted(selected) == sorted(roots), "assembled root coverage differs from exact RCF")
 
 
-def verify_nested(row):
-    """Check roots over the value selected by an earlier reducible definition."""
+def verify_nested(row, assembly_row):
+    """Check roots and multiplicities over an earlier selected algebraic value."""
     require(set(row) == {"case", "depth", "head", "output"} and
             type(row["depth"]) is int and row["depth"] == 1,
             "malformed nested algebraic row")
@@ -222,6 +222,60 @@ def verify_nested(row):
         selected.append(candidates[0])
     require(len(selected) == 2 and selected[0] != selected[1] and
             sorted(selected) == sorted(roots), "nested roots missing or duplicated")
+
+    require(set(assembly_row) == {"case", "mode", "head", "output"} and
+            assembly_row["mode"] == "assembly", "malformed nested assembly row")
+    assembled = polynomial(assembly_row["head"])
+    expected = multiply(rcf, multiply(rcf, p, p), [-rcf.one, rcf.one])
+    require(assembled == expected, "wrong nested assembly input")
+    result = assembly_row["output"]
+    require(isinstance(result, dict) and set(result) == {"kind", "entries"} and
+            result["kind"] == "finite" and isinstance(result["entries"], list),
+            "nested assembly failed")
+    expected_roots = list(rcf.api.MkRoots(assembled, rcf.context))
+    emitted = []
+    for entry in result["entries"]:
+        require(isinstance(entry, dict) and set(entry) == {"root", "multiplicity"} and
+                type(entry["multiplicity"]) is int and entry["multiplicity"] > 0,
+                "malformed nested multiplicity")
+        raw = entry["root"]
+        require(isinstance(raw, dict), "malformed nested root")
+        if raw.get("kind") == "point":
+            require(set(raw) == {"kind", "value"}, "malformed nested point")
+            value = coefficient(raw["value"])
+        else:
+            require(set(raw) == {"kind", "context", "head", "lower", "upper",
+                                 "indices", "signs"} and raw["kind"] == "selected" and
+                    type(raw["context"]) is int and raw["context"] == 10378,
+                    "malformed nested selected root")
+            factor = polynomial(raw["head"])
+            require(bool(factor), "empty nested selected head")
+            lower, lower_kind = endpoint(raw["lower"])
+            upper, upper_kind = endpoint(raw["upper"])
+            derivatives = rcf.derivatives(factor)
+            slots = raw["indices"]
+            require(isinstance(slots, list) and all(type(i) is int for i in slots) and
+                    (slots == [] or slots == list(range(1, len(factor)))) and
+                    isinstance(raw["signs"], list) and len(raw["signs"]) == len(slots) and
+                    all(type(s) is int and s in (-1, 0, 1) for s in raw["signs"]),
+                    "malformed nested selected signs")
+            queried = [] if not slots else derivatives
+            candidates = [root for root in rcf.api.MkRoots(factor, rcf.context)
+                          if (lower_kind == -1 or lower_kind == 0 and lower < root) and
+                          (upper_kind == 1 or upper_kind == 0 and root < upper) and
+                          [sign(rcf.eval(q, root)) for q in queried] == raw["signs"]]
+            require(len(candidates) == 1, "nested assembly descriptor is ambiguous")
+            value = candidates[0]
+        require(rcf.eval(assembled, value) == 0, "nested assembly emitted a foreign root")
+        derivatives = [assembled] + rcf.derivatives(assembled)
+        multiplicity = next((i for i, q in enumerate(derivatives)
+                             if rcf.eval(q, value) != 0), None)
+        require(multiplicity == entry["multiplicity"], "wrong nested root multiplicity")
+        emitted.append(value)
+    require(len(emitted) == 3 and all(a != b for i, a in enumerate(emitted)
+                                      for b in emitted[i+1:]) and
+            sorted(emitted) == sorted(expected_roots),
+            "nested assembly roots missing or duplicated")
 
 
 def verify(rows):
@@ -337,7 +391,7 @@ def verify(rows):
         require(sorted(selected) == sorted(roots(p)), "completion lost or added a root")
     for index, row in enumerate(rows[10:16], start=10):
         verify_assembly(row, index)
-    verify_nested(rows[16])
+    verify_nested(rows[16], rows[17])
 
 
 def main():

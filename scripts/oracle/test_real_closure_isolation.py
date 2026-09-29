@@ -134,6 +134,18 @@ class IsolationTests(unittest.TestCase):
         self.rejects(lambda rows: rows[16]["output"]["descriptors"][0].update(context=10377),
                      "stale nested descriptor")
 
+    def test_nested_assembly_wrong_multiplicity(self):
+        self.rejects(lambda rows: rows[17]["output"]["entries"][1].update(multiplicity=3),
+                     "wrong nested root multiplicity")
+
+    def test_nested_assembly_missing_root(self):
+        self.rejects(lambda rows: rows[17]["output"]["entries"].pop(),
+                     "nested assembly roots missing or duplicated")
+
+    def test_nested_assembly_foreign_coefficient(self):
+        self.rejects(lambda rows: rows[17]["head"][0].__setitem__(2, [-2, 1]),
+                     "wrong nested assembly input")
+
 
 if __name__ == "__main__":
     unittest.main()
