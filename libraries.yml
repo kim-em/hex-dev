@@ -1581,7 +1581,7 @@ libraries:
   HexSignDetMathlib:
     deps: [HexSignDet, HexSturmMathlib, HexPolyMathlib, HexMatrixMathlib, HexRankMathlib]
     mathlib: true
-    proof_probes: [bench/HexSignDetMathlib/ProofProbe]
+    proof_probes: [bench/HexSignDetMathlib/ProofProbe, bench/HexSignDetMathlib/NestedProofProbe]
     done_through: 0
     status: active
   HexRealClosure:
