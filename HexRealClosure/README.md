@@ -559,12 +559,131 @@ its stored fraction through the existing proof of equality of the complete
 native and semantic coefficient dictionaries, and preserves that element's
 actual stored sign at an ordinary real parameter.
 
-Transport of complete query tables and joint selected-root constraints,
-recursive algebraic replay specialization and successive infinitesimal
-parameter choices remain required finite-sign realization work. These helpers
+Evaluation of polynomial representatives at an algebraic root, recursive
+algebraic replay specialization and successive infinitesimal parameter choices
+remain required finite-sign realization work. These helpers
 operate on coefficient data with a supplied ordered embedding into ℝ in the
 companion; they add no native constructor or runtime field instance for formal
 real expressions.
+
+`Specialize.polynomial` substitutes one parameter into an outer polynomial's
+actual stored native fraction coefficients. `polynomial_coeff` includes
+implicit zero coefficients outside the stored array. `polynomial_zero`,
+`polynomial_degree` and `polynomial_leading` require zero reflection only on
+that finite array. `polynomial_signs` derives these conditions from one common
+neighborhood preserving its coefficient signs and denominator guards.
+The signed-chain and Tarski-query transport theorems obtain their guards from
+`finite_fractions_map` applied to each certificate's own finite inventory.
+The complete replay transport below preserves its checker evidence.
+
+`Specialize.regularRing` contains the native fractions whose canonical
+denominators remain nonzero under one prescribed coefficient embedding and
+parameter. `evaluation` is a proved ring homomorphism on that ring. The ring
+can contain nonzero fractions whose evaluation is zero. Using the actual
+native-to-polynomial correspondence, `polynomial_add`, `polynomial_mul`,
+`polynomial_sub`, `polynomial_scale`, `polynomial_derivative` and
+`polynomial_eval` specialize those operations under the finite input
+coefficient guards; scaling also guards its scalar and endpoint evaluation
+also guards its endpoint. Closure handles accumulations of ring operations.
+
+`RemainderStep.specialize` substitutes the literal stored scales and quotient.
+`check_specialize` proves that an accepted signed recurrence remains accepted
+when its finite coefficients and scales are regular and both scale signs are
+preserved. `SignedRemainderChain.specialize` substitutes the stored entries
+while retaining degree data for validation; its `fractions` family collects
+the literal coefficients and scales. Its `check_specialize` preserves the
+complete checker, including initial and terminal identities, nonzero entries,
+degrees and strict descent. `specialize_near` supplies one common positive
+neighborhood for all these conditions.
+
+`TarskiCertificate.specialize` maps literal polynomial and endpoint data while
+retaining context, sign arrays, variations and the integer query value.
+Its `fractions` includes the two chain inventories, endpoint differences,
+endpoint polynomial evaluations and infinite-endpoint leading coefficients.
+`check_specialize` preserves all literal bindings, endpoint nonroot/order
+guards, the squarefree check, both chain replays and recorded signs and
+variations. `specialize_near` preserves the complete accepted certificate
+throughout one positive neighborhood. These theorems use a prescribed ordered
+embedding of the predecessor coefficient field; recursive algebraic replay and
+successive infinitesimal specialization remain separate obligations.
+
+`SignDet.ReductionStep.specialize` substitutes an indexed positive product
+reduction's stored remainder, scales and quotient. Its finite inventory covers
+the input head, previous representative, factor, next representative and
+witness. `check_specialize` preserves the actual factor index, both positive
+scales, the zero/degree bound and the product identity without guarding
+intermediate products. `Reduction.check_specialize` preserves every matched
+factor and step, the positive-degree/exponent guards and the final declared
+query polynomial. `QueryReduction.check_specialize` preserves the original
+ordered preprocessing slots, including duplicates. Each complete reduction
+has one common positive specialization neighborhood.
+
+`Specialize.polynomial_natPow` and `moment_specialize` preserve actual binary
+powers and the moment product fold from only the input coefficient guards.
+The regular ring contains every intermediate accumulator. `checkMoment_specialize`
+preserves the actual direct or reduced query, complete Tarski evidence and
+integer value.
+
+`SignDet.Node.specialize` maps literal coefficients and endpoints while
+retaining its integer system, rank evidence and moment positions.
+`Node.check_specialize` preserves all bindings, matrix checks, shared
+preprocessing and complete moment checks. `Replay.check_specialize` preserves
+the entire supplied BKR tree with its exact child query slices, including
+empty supports. Its extracted sparse rows and every condition's count stay
+unchanged. `Replay.table_near` provides one positive neighborhood whose real
+parameters all admit that same checked table. These theorems require the
+prescribed ordered coefficient embedding into ℝ. Evaluation of polynomial
+representatives at an algebraic root, DAG sharing, recursive algebraic replay
+and successive infinitesimal specialization remain separate obligations.
+
+`Specialize.counts_near` uses the proved root-count meaning of the specialized
+BKR replay over ℝ. At every parameter in one positive neighborhood, the
+actual real-root count equals the source table count for every ordered sign
+condition. `exists_near` realizes each condition of positive source count at
+some real root, with all its signs together.
+`realizeReplay` gives uniqueness when the source table has count one for that
+full condition. `realizeBelow` chooses a realizing parameter below any
+prescribed positive cap. These theorems use the same parameter for every
+polynomial and endpoint and require a prescribed ordered embedding of the
+coefficient field into ℝ. They do not construct recursive algebraic samples or specialize an
+infinitesimal predecessor field.
+
+`Specialize.selected_near` consumes the existing checked `SelectedSigns`
+evidence. All requested query signs hold at one ordinary real root, which is
+unique among roots matching the descriptor's entire specialized query prefix.
+The proof excludes other roots with that prefix even when their remaining
+signs differ. It specializes the literal ordered query polynomials; it does
+not rebuild the formal-derivative bindings itself; the descriptor construction
+below supplies that step.
+
+`derivativesFrom_specialize` and `derivatives_specialize` commute with the
+actual native formal derivative sequence. Original head coefficient guards
+suffice: every iterated derivative stays in the regular coefficient ring.
+`RawDescriptor.specialize` retains context, derivative indices and signs while
+substituting its head and endpoints. The recomputed queries match the mapped
+original queries, including default zero reads at malformed indices.
+`check_specialize` preserves the complete descriptor checker.
+
+`Descriptor.specialize` constructs a validated real descriptor through the
+existing `ofTable` API. `specialize_checked` proves that checking the exact
+mapped raw descriptor and mapped replay returns this result. One positive
+neighborhood supplies these validated descriptors and their actual recomputed
+formal-derivative queries. `selected_root_near` proves that all signs returned
+by source `SelectedSigns` hold at the root of the validated specialized
+descriptor, using the same parameter for both evidence tables. These are
+companion constructions over a prescribed ordered coefficient embedding into
+ℝ; they do not rebuild a native tower context or specialize successive levels.
+`specialize_evidence` proves that the returned descriptor's evidence field is
+the entire mapped original replay, using the public `ofReplay_data` equation.
+
+`Specialize.Native.evidence` transports the whole descriptor, query list and
+checked selected-sign replay through equality of the predecessor coefficient
+dictionaries. Public heterogeneous-equality equations identify its descriptor,
+ordered queries and checked selected-sign certificate with their sources.
+`Native.selected_root_near` then constructs the checked real
+descriptor and proves its root signs. A consumer example uses the actual
+native rational dictionary, its proved compatibility equation and
+`Rat.castHom ℝ`, covering the first rational infinitesimal level.
 
 ### Relative algebraic union
 
