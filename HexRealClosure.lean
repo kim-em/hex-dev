@@ -12,3 +12,4 @@ public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
 public import HexRealClosure.ZeroFactor
 public import HexRealClosure.AlgebraicContext
+public import HexRealClosure.QAdjoin
