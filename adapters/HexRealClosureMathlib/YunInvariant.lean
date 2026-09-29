@@ -1248,6 +1248,32 @@ example (f : DensePoly Rat) (hf : f ≠ 0) (hd : 0 < f.natDegree) (extra : Nat) 
 
 example (f : DensePoly Rat) : check f (decompose f) = true := decompose_sound f
 
+-- The rational replay consumers use the executable field instance.
+example (f : DensePoly Rat) (unit : Rat)
+    (entries : Array (DensePoly Rat × Nat))
+    (hdecomp : decompose f = .factors unit entries) :
+    HexPolyMathlib.toPolynomial f =
+      entries.toList.foldl (fun product entry =>
+        product * (HexPolyMathlib.toPolynomial entry.1) ^ entry.2)
+        (Polynomial.C unit) := by
+  have hcheck := decompose_sound f
+  rw [hdecomp] at hcheck
+  exact check_product_polynomial f unit entries hcheck
+
+example (f : DensePoly Rat) (unit : Rat)
+    (entries : Array (DensePoly Rat × Nat))
+    (hdecomp : decompose f = .factors unit entries)
+    (entry : DensePoly Rat × Nat) (hmem : entry ∈ entries)
+    (x : ℝ)
+    (hroot : Polynomial.IsRoot
+      ((HexPolyMathlib.toPolynomial entry.1).map (Rat.castHom ℝ)) x) :
+    Polynomial.rootMultiplicity x
+      ((HexPolyMathlib.toPolynomial f).map (Rat.castHom ℝ)) =
+      entry.2 := by
+  have hcheck := decompose_sound f
+  rw [hdecomp] at hcheck
+  exact check_real_rootMultiplicity f unit entries entry hmem hcheck x hroot
+
 end Integration
 
 -- This semantic selected-root field inherits inverse soundness from
