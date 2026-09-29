@@ -24,8 +24,8 @@ private def fraction (a : RationalFn Rat) : Json := Json.mkObj [
 private def emit {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E]
     [Mul E] [NatCast E] [Neg E] [Inv E]
     (name : String) (depth : Nat) (sign : E → Int) (encode : E → Json)
-    (p : DensePoly E) : IO Unit := do
-  let result := complete? sign (10378 : Nat) p
+    (p : DensePoly E) (context : Nat := 10378) (base : Option Json := none) : IO Unit := do
+  let result := complete? sign context p
   let output := match result with
     | .error error => Json.mkObj [("error", .str (reprStr error))]
     | .ok none => .null
@@ -46,15 +46,20 @@ private def emit {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E]
           ("lower", SignDet.Codec.endpoint ⟨encode, fun _ => .error "encode only"⟩ d.raw.lower),
           ("upper", SignDet.Codec.endpoint ⟨encode, fun _ => .error "encode only"⟩ d.raw.upper),
           ("indices", toJson d.raw.indices), ("signs", toJson d.raw.signs)]))]
-  IO.println (Json.mkObj [("case", .str name), ("depth", toJson depth),
-    ("head", .arr (p.toArray.map encode)), ("output", output)]).compress
+  let fields := [("case", .str name), ("depth", toJson depth),
+    ("head", .arr (p.toArray.map encode)), ("output", output)]
+  let fields := match base with
+    | none => fields
+    | some descriptor => ("base", descriptor) :: fields
+  IO.println (Json.mkObj fields).compress
 
 private def emitRat := emit (depth := 0) (sign := Sturm.orderSign) (encode := rational)
 
 private def emitAssembly {E : Type} [Zero E] [DecidableEq E] [One E] [Add E]
     [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E] [Div E]
-    (name : String) (sign : E → Int) (encode : E → Json) (p : DensePoly E) : IO Unit := do
-  let output := match Roots.assemble sign (10378 : Nat) p with
+    (name : String) (sign : E → Int) (encode : E → Json) (p : DensePoly E)
+    (context : Nat := 10378) (base : Option Json := none) : IO Unit := do
+  let output := match Roots.assemble sign context p with
     | .error error => Json.mkObj [("error", .str (reprStr error))]
     | .ok .all => Json.mkObj [("kind", .str "all")]
     | .ok (.finite entries) => Json.mkObj [("kind", .str "finite"),
@@ -70,8 +75,12 @@ private def emitAssembly {E : Type} [Zero E] [DecidableEq E] [One E] [Add E]
                   ⟨encode, fun _ => .error "encode only"⟩ d.raw.upper),
                 ("indices", toJson d.raw.indices), ("signs", toJson d.raw.signs)]
           Json.mkObj [("root", root), ("multiplicity", toJson entry.multiplicity)]))]
-  IO.println (Json.mkObj [("case", .str name), ("mode", .str "assembly"),
-    ("head", .arr (p.toArray.map encode)), ("output", output)]).compress
+  let fields := [("case", .str name), ("mode", .str "assembly"),
+    ("head", .arr (p.toArray.map encode)), ("output", output)]
+  let fields := match base with
+    | none => fields
+    | some descriptor => ("base", descriptor) :: fields
+  IO.println (Json.mkObj fields).compress
 
 private def emitAssemblyRat (name : String) (p : DensePoly Rat) : IO Unit :=
   emitAssembly name Sturm.orderSign rational p
@@ -107,10 +116,18 @@ def main : IO Unit := do
     | throw (IO.userError "nested isolation: first descriptor failed")
   let first := Algebraic.Context.adjoin firstRoot (fun q : Rat => q.den == 1)
   let alpha := Algebraic.Element.ofPoly (context := first) x
+  let baseDescriptor := Json.mkObj [
+    ("context", toJson firstRoot.raw.context),
+    ("head", .arr (firstRoot.raw.head.toArray.map rational)),
+    ("lower", SignDet.Codec.endpoint
+      ⟨rational, fun _ => .error "encode only"⟩ firstRoot.raw.lower),
+    ("upper", SignDet.Codec.endpoint
+      ⟨rational, fun _ => .error "encode only"⟩ firstRoot.raw.upper),
+    ("indices", toJson firstRoot.raw.indices), ("signs", toJson firstRoot.raw.signs)]
   let nested : DensePoly (Algebraic.Element first) := DensePoly.ofCoeffs #[-alpha, 0, 1]
   emit "nested algebraic coefficients" 1 Algebraic.Element.sign
-    (fun a => .arr (a.polynomial.toArray.map rational)) nested
+    (fun a => .arr (a.polynomial.toArray.map rational)) nested 10379 (some baseDescriptor)
   let y : DensePoly (Algebraic.Element first) := DensePoly.ofCoeffs #[0, 1]
   emitAssembly "nested algebraic multiplicities" Algebraic.Element.sign
     (fun a => .arr (a.polynomial.toArray.map rational))
-    (nested * nested * (y - 1))
+    (nested * nested * (y - 1)) 10379 (some baseDescriptor)

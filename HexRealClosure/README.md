@@ -572,14 +572,17 @@ a descriptor-replay error.
 
 `hexrealclosure_isolation_conformance` emits eighteen actual executions. The pinned
 Z3 RCF oracle independently checks inputs, finite-bound policy, node caps,
-scalar-preserving deflation, cell counts, selected derivative words, literal descriptor contexts, complete
-root coverage and absence of duplicates. Cases include nonmonic input,
+scalar-preserving deflation, cell counts, selected derivative words, literal
+descriptor contexts, complete root coverage and absence of duplicates. Cases include nonmonic input,
 negative leading scalar with an emitted zero, a nonquadratic generator,
 four real roots, a whole-line inverse infinitesimal, close infinitesimal roots
 requiring completion after the rational bisection cap, and invalid domains.
 The nested isolation case finds both roots of `Y²−√2` using a coefficient selected
-from the reducible definition `(X²−2)(X−3)`; the oracle evaluates the stored
-coefficient polynomials at that selected first root. The nested assembly case
+from the reducible definition `(X²−2)(X−3)`. The fixture includes that first
+descriptor; the oracle checks its head, interval and context before evaluating
+stored coefficient polynomials at its selected root. The nested isolation cells
+are singletons, while the other fixtures exercise derivative-sign descriptors.
+The nested assembly case
 checks all three roots and their multiplicities in `(Y²−√2)²(Y−1)`, including
 noncanonical stored coefficient polynomials in the expanded input.
 Six further cases independently check Yun assembly against exact Z3 roots and

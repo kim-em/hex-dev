@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact Z3 oracle for capped bisection followed by descriptor completion.
+"""Exact Z3 oracle for capped bisection and root assembly over nested values.
 
 Checks the actual inputs, scalar-preserving deflation, retained cell counts,
 selected roots, completeness and absence of duplicates. Proof graphs and
@@ -138,15 +138,32 @@ def verify_assembly(row, index):
 
 def verify_nested(row, assembly_row):
     """Check roots and multiplicities over an earlier selected algebraic value."""
-    require(set(row) == {"case", "depth", "head", "output"} and
+    require(set(row) == {"base", "case", "depth", "head", "output"} and
             type(row["depth"]) is int and row["depth"] == 1,
             "malformed nested algebraic row")
     rcf = RCF({"id": 10377, "levels": ["epsilon1"],
                "order": "each-new-level-smaller-than-positive-base-elements"})
-    base = multiply(rcf, [-2 * rcf.one, rcf.zero, rcf.one],
-                    [-3 * rcf.one, rcf.one])
+    base_raw = row["base"]
+    require(isinstance(base_raw, dict) and
+            set(base_raw) == {"context", "head", "lower", "upper", "indices", "signs"} and
+            type(base_raw["context"]) is int and base_raw["context"] == 10378 and
+            base_raw["indices"] == [] and base_raw["signs"] == [],
+            "malformed first-level descriptor")
+    require(isinstance(base_raw["head"], list), "malformed first-level head")
+    base = [rcf.coeff(q, 0) for q in base_raw["head"]]
+    expected_base = multiply(rcf, [-2 * rcf.one, rcf.zero, rcf.one],
+                             [-3 * rcf.one, rcf.one])
+    require(base == expected_base, "wrong first-level definition")
+    require(isinstance(base_raw["lower"], list) and len(base_raw["lower"]) == 2 and
+            base_raw["lower"][0] == 1 and
+            isinstance(base_raw["upper"], list) and len(base_raw["upper"]) == 2 and
+            base_raw["upper"][0] == 1, "malformed first-level interval")
+    base_lower = rcf.coeff(base_raw["lower"][1], 0)
+    base_upper = rcf.coeff(base_raw["upper"][1], 0)
+    require(base_lower == rcf.one and base_upper == 2 * rcf.one,
+            "wrong first-level interval")
     base_roots = [root for root in rcf.api.MkRoots(base, rcf.context)
-                  if rcf.one < root < 2 * rcf.one]
+                  if base_lower < root < base_upper]
     require(len(base_roots) == 1, "base descriptor does not select one root")
     alpha = base_roots[0]
 
@@ -183,10 +200,16 @@ def verify_nested(row, assembly_row):
             "nested producer failed or malformed completion")
     require(output["points"] == [], "unexpected nested cut point")
     route = output["route"]
+    def absolute(value):
+        return -value if value < 0 else value
+    bounds = [2 ** i for i in range(1, 2 * len(p) + 1)]
+    accepted_bounds = [b for b in bounds if all(
+        absolute(a) < (b - 1) * absolute(p[-1]) for a in p[:-1])]
+    require(bool(accepted_bounds), "nested input lacks a finite bound")
     require(isinstance(route, dict) and
             set(route) == {"kind", "bound", "nodes", "head", "cells"} and
             route["kind"] == "bounded" and polynomial(route["head"]) == p and
-            coefficient(route["bound"]) == 4 and
+            coefficient(route["bound"]) == accepted_bounds[0] and
             type(route["nodes"]) is int and 0 <= route["nodes"] <= 2 * len(p),
             "incorrect nested bounded route")
     cells = route["cells"]
@@ -208,7 +231,7 @@ def verify_nested(row, assembly_row):
     for descriptor in output["descriptors"]:
         require(isinstance(descriptor, dict) and
                 set(descriptor) == {"context", "head", "lower", "upper", "indices", "signs"}
-                and type(descriptor["context"]) is int and descriptor["context"] == 10378
+                and type(descriptor["context"]) is int and descriptor["context"] == 10379
                 and polynomial(descriptor["head"]) == p,
                 "stale nested descriptor")
         lower, lower_kind = endpoint(descriptor["lower"])
@@ -223,8 +246,9 @@ def verify_nested(row, assembly_row):
     require(len(selected) == 2 and selected[0] != selected[1] and
             sorted(selected) == sorted(roots), "nested roots missing or duplicated")
 
-    require(set(assembly_row) == {"case", "mode", "head", "output"} and
-            assembly_row["mode"] == "assembly", "malformed nested assembly row")
+    require(set(assembly_row) == {"base", "case", "mode", "head", "output"} and
+            assembly_row["mode"] == "assembly" and assembly_row["base"] == base_raw,
+            "malformed nested assembly row")
     assembled = polynomial(assembly_row["head"])
     expected = multiply(rcf, multiply(rcf, p, p), [-rcf.one, rcf.one])
     require(assembled == expected, "wrong nested assembly input")
@@ -246,7 +270,7 @@ def verify_nested(row, assembly_row):
         else:
             require(set(raw) == {"kind", "context", "head", "lower", "upper",
                                  "indices", "signs"} and raw["kind"] == "selected" and
-                    type(raw["context"]) is int and raw["context"] == 10378,
+                    type(raw["context"]) is int and raw["context"] == 10379,
                     "malformed nested selected root")
             factor = polynomial(raw["head"])
             require(bool(factor), "empty nested selected head")

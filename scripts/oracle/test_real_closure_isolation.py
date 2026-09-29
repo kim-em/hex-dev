@@ -131,8 +131,29 @@ class IsolationTests(unittest.TestCase):
                      "nested roots missing or duplicated")
 
     def test_nested_stale_descriptor(self):
-        self.rejects(lambda rows: rows[16]["output"]["descriptors"][0].update(context=10377),
+        self.rejects(lambda rows: rows[16]["output"]["descriptors"][0].update(context=10378),
                      "stale nested descriptor")
+
+    def test_nested_wrong_first_definition(self):
+        self.rejects(lambda rows: rows[16]["base"].update(
+            head=[[9, 1], [-3, 1], [-3, 1], [1, 1]]),
+            "wrong first-level definition")
+
+    def test_nested_wrong_first_interval(self):
+        self.rejects(lambda rows: rows[16]["base"].update(lower=[1, [0, 1]]),
+                     "wrong first-level interval")
+
+    def test_nested_wrong_bound(self):
+        self.rejects(lambda rows: rows[16]["output"]["route"].update(bound=[[8, 1]]),
+                     "incorrect nested bounded route")
+
+    def test_nested_wrong_cell_count(self):
+        self.rejects(lambda rows: rows[16]["output"]["route"]["cells"][0].update(count=2),
+                     "wrong nested cell count")
+
+    def test_nested_noncanonical_zero(self):
+        self.rejects(lambda rows: rows[16]["head"].__setitem__(1,
+            [[-2, 1], [0, 1], [1, 1]]), "noncanonical nested zero")
 
     def test_nested_assembly_wrong_multiplicity(self):
         self.rejects(lambda rows: rows[17]["output"]["entries"][1].update(multiplicity=3),
@@ -145,6 +166,14 @@ class IsolationTests(unittest.TestCase):
     def test_nested_assembly_foreign_coefficient(self):
         self.rejects(lambda rows: rows[17]["head"][0].__setitem__(2, [-2, 1]),
                      "wrong nested assembly input")
+
+    def test_nested_assembly_stale_base(self):
+        self.rejects(lambda rows: rows[17]["base"].update(context=10379),
+                     "malformed nested assembly row")
+
+    def test_nested_assembly_ambiguous_descriptor(self):
+        self.rejects(lambda rows: rows[17]["output"]["entries"][1]["root"].update(
+            upper=[1, [[4, 1]]]), "nested assembly descriptor is ambiguous")
 
 
 if __name__ == "__main__":
