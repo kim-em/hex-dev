@@ -317,6 +317,15 @@ strict finite-endpoint queries. It retains joint count-one evidence and a
 validated target descriptor. Invalid target domains and absent selected roots
 return `none`; internal invariant failures remain diagnostic. The companion
 proves that each actual endpoint query expresses its strict bound.
+`Descriptor.buildReencoding_refinement` proves that the actual algorithm succeeds
+when a valid interval for the same head retains the selected root and its root
+set is contained in the original domain. The output preserves that root and
+has fresh evidence bound to the new interval. The old validated partial word
+supplies uniqueness, so this proof applies to noninjective representations
+and non-Archimedean coefficient interpretations without a general Thom
+injectivity theorem. `Descriptor.reencoding_rows` proves the unique joint row
+whenever any target contains the source root; establishing uniqueness from a
+new head's derivative word alone remains a separate foundation requirement.
 `Descriptor.buildComparison` re-encodes both roots on the common head over the
 whole line, then applies the guarded full Thom rule. It retains both joint
 replays and the common-product witness. This handles shared roots, different
@@ -350,7 +359,10 @@ coefficient levels and starts a fresh oracle context. The corrected
 `(εx²−1)(εx³−1)` example exercises the two positive partial descriptors,
 completion, root order, selected signs and cross-polynomial re-encoding without
 a rational separator. Two-level fixtures isolate `δ` from `ε` and `ε+δ` using
-an endpoint `2δ`. Both coefficient levels reject changed context, head and
+an endpoint `2δ`. Interval refinement narrows `(0,2δ)` to `(δ/2,3δ/2)`,
+retaining δ with the full word `(+,-,+)` even though no positive rational lies
+between those endpoints. The independent oracle checks the selected-root
+identity after refinement. Both coefficient levels reject changed context, head and
 derivative-query bindings, and reject a multi-query table presented as a leaf.
 These leaf-arity checks do not test an identity-preserving incomplete support
 forgery. The oracle enforces each case’s coefficient depth and the corrected
@@ -368,6 +380,22 @@ lake build HexSignDet +HexSignDet.Conformance hexsigndet_emit_infinitesimal
 python3 scripts/oracle/sign_det_z3.py --check
 python3 -m unittest scripts.oracle.test_sign_det_z3
 ```
+
+Run only the nested refinement API example with
+`.lake/build/bin/hexsigndet_emit_infinitesimal refinement`.
+
+The [retained representative observation](../reports/data/sign-det-refinement/f03d5daa3/metadata.json)
+records one complete `refinement` process at source revision `f03d5daa3`:
+3.967 seconds on chungus2, automatically selected CPU 5. It includes startup,
+preparation, re-encoding, interval-binding checks and JSON output. The record
+retains build freshness, clean source state, unchanged source/binary checks and
+oracle-checked output. Its executable resolved through the shared build directory
+of the original `hex-dev-issue-10377` worktree, as recorded in the metadata.
+The freshness and hash checks bind that observation to its archived source and
+binary; it is not a measurement of the current rebased implementation.
+The [earlier observation](../reports/data/sign-det-refinement/ef06438d2/metadata.json)
+is retained too; it predates the explicit returned-bound fields and lacks the
+later clean-tree/freshness metadata. Neither is a scaling or Phase-4 verdict.
 
 Structural expansion and checked graph replay deliberately treat unreachable
 entries differently: both reject invalid references, while only replay checks
