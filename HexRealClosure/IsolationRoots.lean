@@ -103,10 +103,26 @@ The absent search domain is separate from internal producer failures. -/
 def complete? (sign : E → Int) (context : Ctx) (p : DensePoly E) :
     Except SignDet.BuildError (Option (Completion sign context p)) :=
   match search? sign p with
-  | none => .ok none
+  | none =>
+    if (Bounds.find? sign p).isSome then .error .system else .ok none
   | some search =>
     match h : search.route.complete context with
     | .error error => .error error
     | .ok roots => .ok (some ⟨search, roots, h⟩)
+
+/-- An absent completed domain can only come from the whole-line preparation
+route; a failed refinement after an accepted finite bound is an error. -/
+theorem complete?_none_no_bound {sign : E → Int} {context : Ctx}
+    {p : DensePoly E}
+    (accepted : complete? sign context p = .ok none) :
+    Bounds.find? sign p = none := by
+  cases searched : search? sign p with
+  | none =>
+    cases bounded : Bounds.find? sign p with
+    | none => rfl
+    | some bound => simp [complete?, searched, bounded] at accepted
+  | some search =>
+    simp only [complete?, searched] at accepted
+    split at accepted <;> cases accepted
 
 end Hex.RealClosure.Isolation

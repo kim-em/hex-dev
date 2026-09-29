@@ -176,7 +176,7 @@ theorem Output.entries_values {context : Ctx} (output : Output sign context) :
 include hz h1 ha hs hm hnat hsign in
 /-- A successful sort of completed isolation retains exact coverage and
 distinctness for the original polynomial. Strict order is a separate gate. -/
-theorem Completion.sort_spec (hn : ∀ a, φ (-a) = -φ a)
+theorem Completion.sort_values (hn : ∀ a, φ (-a) = -φ a)
     (hi : ∀ a, φ a⁻¹ = (φ a)⁻¹) {context : Ctx} {p : DensePoly E}
     (completion : Completion sign context p) {out : List (Root sign context)}
     (accepted : completion.sort = .ok out) :
@@ -194,9 +194,9 @@ end Hex.RealClosure.Isolation
 /-- info: 'Hex.RealClosure.Isolation.Root.compare_selected_point' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Isolation.Root.compare_selected_point
-/-- info: 'Hex.RealClosure.Isolation.Completion.sort_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Isolation.Completion.sort_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Isolation.Completion.sort_spec
+#print axioms Hex.RealClosure.Isolation.Completion.sort_values
 
 /-- info: 'Hex.RealClosure.Isolation.Root.compare_point_selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

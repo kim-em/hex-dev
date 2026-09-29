@@ -42,7 +42,8 @@ inductive Route (sign : E → Int) (p : DensePoly E) where
 
 /-- Apply the fixed finite bound policy. If it rejects every candidate, prepare
 whole-line BKR input instead. A successful bound always uses capped refinement;
-producer failure is explicit and never interpreted as an empty root set. -/
+`complete?` classifies a failed refinement after an accepted bound as an
+internal error. -/
 @[expose] def dispatch? (sign : E → Int) (p : DensePoly E) : Option (Route sign p) :=
   match Bounds.find? sign p with
   | none => (Whole.prepare? sign p).map Route.whole
