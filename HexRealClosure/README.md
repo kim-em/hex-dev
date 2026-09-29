@@ -480,4 +480,4 @@ native-to-polynomial correspondence, `polynomial_add`, `polynomial_mul`,
 `polynomial_sub`, `polynomial_scale`, `polynomial_derivative` and
 `polynomial_eval` specialize those operations under the finite input
 coefficient guards; scaling also guards its scalar and endpoint evaluation
-also guards its endpoint. Closure handles all arithmetic accumulations.
+also guards its endpoint. Closure handles accumulations of ring operations.
