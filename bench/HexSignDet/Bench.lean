@@ -8,6 +8,7 @@ import HexSignDet.Small
 import HexSignDet.Joint
 import HexSignDet.Paired
 import HexSignDet.Maximal
+import HexSignDet.MaximalMatrix
 import LeanBench
 import Lean.Data.Json
 
@@ -282,6 +283,7 @@ def main (args : List String) : IO UInt32 :=
   else if args == ["inspect-phases"] then Hex.SignDetBench.inspectPhases
   else if args == ["inspect-small"] then Hex.SignDetBench.inspectSmall
   else if args == ["inspect-maximal"] then Hex.SignDetBench.inspectMaximal
+  else if args == ["inspect-maximal-matrices"] then Hex.SignDetBench.MaximalMatrix.inspect
   else if args == ["inspect-joint"] then Hex.SignDetBench.Joint.inspect #[3, 7, 15, 31, 63]
   else if let ["inspect-joint", degree] := args then
     match degree.toNat? with

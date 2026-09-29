@@ -1,0 +1,153 @@
+diff --git a/bench/HexSignDet/Bench.lean b/bench/HexSignDet/Bench.lean
+index 48721e989..285014e85 100644
+--- a/bench/HexSignDet/Bench.lean
++++ b/bench/HexSignDet/Bench.lean
+@@ -10,0 +11 @@ import HexSignDet.Maximal
++import HexSignDet.MaximalMatrix
+@@ -194,0 +196 @@ def main (args : List String) : IO UInt32 :=
++  else if args == ["inspect-maximal-matrices"] then Hex.SignDetBench.MaximalMatrix.inspect
+diff --git a/bench/HexSignDet/MaximalMatrix.lean b/bench/HexSignDet/MaximalMatrix.lean
+new file mode 100644
+index 000000000..2a61320f3
+--- /dev/null
++++ b/bench/HexSignDet/MaximalMatrix.lean
+@@ -0,0 +1,131 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import HexSignDet.Maximal
++import LeanBench
++
++namespace Hex.SignDetBench.MaximalMatrix
++open Hex.SignDet
++open scoped Hex
++
++/-- The complete finite moment system, with every ternary word occurring once.
++Preparation uses the actual solver and validates all counts before timing.
++No polynomial or Tarski-query work is included in these matrix callbacks. -/
++structure Input where
++  arity : Nat
++  size : Nat
++  system : System size
++
++instance : Hashable Input where
++  hash i := hash (i.arity, i.size, i.system.rows.toArray, i.system.columns.toArray,
++    i.system.counts.toArray, i.system.values.toArray,
++    matrixHash i.system.inverse, i.system.denominator)
++
++private def build (s : Nat) : Except String Input := do
++  let r := 3^s
++  let es := (words [0, 1, 2] s).toArray
++  let cs := (words [-1, 0, 1] s).toArray
++  if es.size != r || cs.size != r then throw "wrong full-system dimensions"
++  let rows : Vector (List Nat) r := Vector.ofFn fun i => es[i.val]!
++  let cols : Vector (List Int) r := Vector.ofFn fun i => cs[i.val]!
++  let values := moments rows cols.toList
++  let .ok system := solveSystem s rows cols values | throw "full-system solve failed"
++  if !system.counts.toList.all (· == 1) || !system.check s then
++    throw "wrong full-support counts or inverse"
++  return ⟨s, r, system⟩
++
++/-- The zero smoke input is the one-by-one empty-word system. Failure is
++retained as `none`, and scientific input inspection rejects it. -/
++def input (s : Nat) : Option Input := (build s).toOption
++
++/-- Re-run the library's rational solve, integer conversion and literal checks. -/
++@[noinline] def runSolve (i : Option Input) : Option UInt64 := do
++  let i ← i
++  match solveSystem i.arity i.system.rows i.system.columns i.system.values with
++  | .error _ => none
++  | .ok system => some (hash (entries system))
++
++/-- Check the supplied integer inverse and moment identities in their
++literal row/column order, using the actual `System.check`. -/
++@[noinline] def runCheck (i : Option Input) : Bool :=
++  match i with
++  | none => false
++  | some i => i.system.check i.arity
++
++/- Both operations execute the dense inverse identity check: r^3 integer
++multiply/add pairs, including zero entries. All other checker work is
++O(r^2 s): constructing entries and checking distinct columns. Gauss-Jordan
++solve takes O(r^3) rational coefficient operations, and finishes with the same
++r^3 integer check. Thus both are Θ(r^3)=Θ(27^s) coefficient operations.
++This is not a constant-bit or general Tarski-query wall-time claim. -/
++
++-- Declared cost-model: Θ(27^s) coefficient operations, dense exact inverse identity plus Gauss-Jordan solve.
++setup_benchmark runSolve s => 27^s
++  with prep := input
++  where {
++    paramSchedule := .custom #[1, 2, 3, 4, 5]
++    paramFloor := 1
++    paramCeiling := 5
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 180
++  }
++
++-- Declared cost-model: Θ(27^s) integer coefficient operations, dense scaled-inverse identity check.
++setup_benchmark runCheck s => 27^s
++  with prep := input
++  where {
++    paramSchedule := .custom #[1, 2, 3, 4, 5]
++    paramFloor := 1
++    paramCeiling := 5
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 180
++  }
++
++private def bits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
++
++/-- Untimed dimensions, output checks and literal witness sizes. For the
++first three inputs, compare the complete system with the actual polynomial
++reference producer on the existing maximal-support interpolation family. -/
++def inspect : IO UInt32 := do
++  for s in #[1, 2, 3, 4, 5] do
++    let .ok i := build s | throw (IO.userError s!"invalid maximal matrix input {s}")
++    let expected := (words [-1, 0, 1] s).map fun word => (word, (1 : Int))
++    unless runSolve (some i) == some (hash expected) && runCheck (some i) do
++      throw (IO.userError s!"incorrect maximal matrix callback {s}")
++    let mut matchesPolynomial : Option Bool := none
++    if s ≤ 3 then
++      let .ok p := buildMaximal s | throw (IO.userError "maximal polynomial input failed")
++      let some domain := p.domain | throw (IO.userError "missing polynomial domain")
++      let .ok full := referencePrepared (10377 : Nat) domain p.queries
++        | throw (IO.userError "polynomial reference failed")
++      -- Compare dimension-dependent systems after casting the separately
++      -- constructed reference size. The check also retains exact witnesses.
++      if h : full.size = i.size then
++        let system : System i.size := h ▸ full.system
++        unless system == i.system do throw (IO.userError "polynomial moment system differs")
++        matchesPolynomial := some true
++      else throw (IO.userError "polynomial matrix dimension differs")
++    let inverseBits := i.system.inverse.rows.toArray.foldl (fun n row =>
++      row.toArray.foldl (fun n z => max n (bits z)) n) 0
++    IO.println <| (Lean.Json.mkObj [
++      ("queries", Lean.toJson s), ("matrixSize", Lean.toJson i.size),
++      ("supportSize", Lean.toJson i.system.counts.toList.length),
++      ("countSum", Lean.toJson i.system.counts.toList.sum),
++      ("inverseIdentityScalarPairs", Lean.toJson (i.size^3)),
++      ("inverseBits", Lean.toJson inverseBits),
++      ("denominatorBits", Lean.toJson (bits i.system.denominator)),
++      ("valuesBits", Lean.toJson (i.system.values.toList.foldl (fun n z => max n (bits z)) 0)),
++      ("matchesPolynomialSystem", Lean.toJson matchesPolynomial),
++      ("inputHash", Lean.toJson (hash (some i)).toNat),
++      ("solveResultHash", Lean.toJson (hash (some (hash expected))).toNat),
++      ("checkResultHash", Lean.toJson (hash true).toNat)]).compress
++    (← IO.getStdout).flush
++  return 0
++
++end Hex.SignDetBench.MaximalMatrix
+diff --git a/lakefile.lean b/lakefile.lean
+index 7e3bc7c95..238d1beb9 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -1731 +1731,2 @@ lean_lib HexSignDetBenchSupport where
+-    .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint]
++    .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint,
++    .one `HexSignDet.MaximalMatrix]
