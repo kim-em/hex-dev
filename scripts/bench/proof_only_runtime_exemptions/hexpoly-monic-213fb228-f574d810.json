@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/Monic.lean",
+  "baseline_blob": "213fb228b9e8117db1ca6d777f1e98f675ade554",
+  "current_blob": "f574d8109262a2d6b4530a1bb52b5a01b7a46353",
+  "reason": "Generalizes only eq_C_leadingCoeff_of_size_one from a field coefficient carrier to ordinary Zero and DecidableEq. Its proof and erased conclusion are unchanged. No executable definition, instance, operation, or factor-service code changes."
+}

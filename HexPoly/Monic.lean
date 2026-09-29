@@ -73,7 +73,8 @@ theorem dvd_monicize (p : DensePoly F) : p ∣ monicize p := by
 
 /-- A size-one polynomial is the constant polynomial of its leading
 coefficient. -/
-theorem eq_C_leadingCoeff_of_size_one {p : DensePoly F} (hp : p.size = 1) :
+theorem eq_C_leadingCoeff_of_size_one {R : Type u} [Zero R] [DecidableEq R]
+    {p : DensePoly R} (hp : p.size = 1) :
     p = C p.leadingCoeff := by
   have hpPos : 0 < p.size := by omega
   apply ext_coeff

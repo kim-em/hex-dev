@@ -176,7 +176,7 @@ def check() -> None:
              "HexSignDetMathlib.ConvertConformance", "HexRealClosure.BaseTests",
              "HexRealClosureMathlib.BaseTests", "HexRealClosure.BaseCatalogTests",
              "HexRealClosure.DeflationConformance", "HexRealClosureMathlib.Specialize",
-             "HexRealClosureMathlib.SpecializeTests", "HexRealClosureMathlib.SpecializePolynomial",
+             "HexRealClosureMathlib.SpecializePolynomial",
              "HexRealClosureMathlib.SpecializeRegular", "HexRealClosureMathlib.SpecializeQuery", "HexRealClosureMathlib.SpecializeTarski",
              "HexRealClosureMathlib.SpecializeReduction", "HexRealClosureMathlib.SpecializeMoment",
              "HexRealClosureMathlib.SpecializeReplay", "HexRealClosureMathlib.SpecializeSample", "HexRealClosureMathlib.SpecializeSelected", "HexRealClosureMathlib.SpecializeDescriptor",
@@ -189,6 +189,9 @@ def check() -> None:
              "HexRealClosureMathlib.TransportReplay", "HexRealClosureMathlib.TransportSample", "HexRealClosureMathlib.TransportDescriptor",
              "HexRealClosureMathlib.TransportSelected", "HexRealClosureMathlib.TransportRegular",
              "HexRealClosureMathlib.TransportReduction",
+             "HexRealClosureMathlib.SpecializeTests", "HexRealClosureMathlib.Algebraic",
+             "HexRealClosureMathlib.AlgebraicClean", "HexRealClosureMathlib.AlgebraicValue",
+             "HexRealClosureMathlib.BaseClean", "HexRealClosureMathlib.AlgebraicTower",
              "HexRealClosureMathlib.Union", "HexRealClosureMathlib.UnionTests"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [

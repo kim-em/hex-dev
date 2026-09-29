@@ -356,6 +356,29 @@ theorem reconstruct {registry : Registry} (context : PackedContext registry) :
 
 end PackedContext
 
+/-- Integral rational coefficients, recursively denominator-one polynomials
+at real stages. This is a storage predicate, not a test of transcendence. -/
+@[expose] def RealChain.isClean {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {approx : K → Rat → Bounds} {sign : K → Int}
+    (context : RealChain registry K approx sign) : K → Bool := by
+  cases context with
+  | base => exact fun q => q.den == 1
+  | step parent _ _ _ _ =>
+    exact fun f => (f.den == 1) && f.num.toArray.all parent.isClean
+
+/-- Cleanliness descends through every real and infinitesimal predecessor. -/
+@[expose] def Chain.isClean {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (context : Chain registry K sign) : K → Bool := by
+  cases context with
+  | real parent => exact parent.isClean
+  | infinitesimal parent =>
+    exact fun f => (f.den == 1) && f.num.toArray.all parent.isClean
+
+@[expose] def Context.isClean {registry : Registry} {K : Type}
+    [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (context : Context registry K sign) : K → Bool := context.chain.isClean
+
 /-- Values are nominally bound to their entire immutable context, even when
 two contexts have definitionally equal carriers and sign operations. -/
 structure Element {registry : Registry} {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int} (context : Context registry K sign) where
@@ -387,6 +410,9 @@ instance : Div (Element context) := ⟨fun a b => ⟨a.stored / b.stored⟩⟩
 
 /-- Total sign belonging to this context. -/
 @[expose] def sign (a : Element context) : Int := baseSign a.stored
+
+/-- The recursively denominator-one storage predicate of the whole base. -/
+@[expose] def isClean (a : Element context) : Bool := context.isClean a.stored
 
 /-- Compare within one immutable context. -/
 @[expose] def compare (a b : Element context) : Ordering :=
