@@ -18,8 +18,8 @@ attribute [local instance 2000] Field.toGrindField
 variable {F : Type} [Field F] [DecidableEq F] [LinearOrder F] [IsStrictOrderedRing F]
 variable {Ctx : Type u} [DecidableEq Ctx]
 
-/-- One positive neighborhood preserves the actual number of ordinary real
-roots for every ordered sign condition, including zero and nonsingleton counts. -/
+/-- Throughout one positive neighborhood, the actual ordinary real-root count
+for every ordered sign condition equals its source table count. -/
 theorem counts_near (embedding : F →+* ℝ) (ordered : StrictMono embedding)
     (context : Ctx) (p : Hex.DensePoly (Hex.RationalFn F))
     (a b : Hex.Endpoint (Hex.RationalFn F)) (qs : List (Hex.DensePoly (Hex.RationalFn F)))
@@ -45,7 +45,7 @@ theorem counts_near (embedding : F →+* ℝ) (ordered : StrictMono embedding)
     (qs.map (fun q => polynomial embedding q t)) checked condition
   rw [← counted, ← Replay.table_lookup _ checked condition, counts condition]
 
-/-- Every condition of positive source count has one ordinary real root
+/-- Every condition of positive source count has an ordinary real root
 realizing all its signs together, throughout the same neighborhood. -/
 theorem exists_near (embedding : F →+* ℝ) (ordered : StrictMono embedding)
     (context : Ctx) (p : Hex.DensePoly (Hex.RationalFn F))
@@ -140,7 +140,6 @@ theorem realizeBelow (embedding : F →+* ℝ) (ordered : StrictMono embedding)
 /-- info: 'Hex.RealClosure.Specialize.realizeBelow' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Specialize.realizeBelow
-
 
 /-- info: 'Hex.RealClosure.Specialize.counts_near' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

@@ -530,13 +530,14 @@ empty supports. Its extracted sparse rows and every condition's count stay
 unchanged. `Replay.table_near` provides one positive neighborhood whose real
 parameters all admit that same checked table. These theorems require the
 prescribed ordered coefficient embedding into ℝ. Checked descriptor
-reconstruction, DAG sharing, recursive algebraic replay and successive infinitesimal
-specialization remain separate obligations.
+reconstruction, DAG sharing, recursive algebraic replay and successive
+infinitesimal specialization remain separate obligations.
 
 `Specialize.counts_near` uses the proved root-count meaning of the specialized
-BKR replay over ℝ. One positive neighborhood preserves the actual real-root
-counts for every ordered sign condition. `exists_near` realizes each condition
-of positive source count at one real root, with all its signs together.
+BKR replay over ℝ. At every parameter in one positive neighborhood, the
+actual real-root count equals the source table count for every ordered sign
+condition. `exists_near` realizes each condition of positive source count at
+some real root, with all its signs together.
 `realizeReplay` gives uniqueness when the source table has count one for that
 full condition. `realizeBelow` chooses a realizing parameter below any
 prescribed positive cap. These theorems use the same parameter for every
