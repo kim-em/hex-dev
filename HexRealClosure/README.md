@@ -1133,13 +1133,13 @@ rational case is an instance of this theorem.
 
 General `Context.enlarge` still requires:
 
-1. If the old model uses a merely real-closed ambient field, proving every
-   context value algebraic over the chosen `B`-algebra map, stating and proving
-   that map agrees with the model on base coefficients, and applying
-   `Tower.Model.restrictUnion` before lifting. The model does not yet expose
-   that base map. Packaging the union with `Ambient.ofUnion` also requires an
-   order-preserving base map and a real-closed old ambient; its current API
-   places both fields in the same universe.
+1. Relating an arbitrary old model to a chosen `B`-algebra map and proving
+   agreement on its base coefficients. For a canonical base model extended
+   through a validated finite suffix, `Tower.Model.extend_base_restrict`
+   already constructs the restriction and proves value and base-map agreement.
+   Packaging the union with `Ambient.ofUnion` also requires an order-preserving
+   base map and a real-closed old ambient; its current API places both fields
+   in the same universe.
 2. Constructing a coefficient map for the restricted old tower model and
    proving its `Tower.Model.liftInfinitesimal` interpretation agrees on base
    values with the base model supplied by `infinitesimalMapped`. Their later
@@ -1175,6 +1175,11 @@ algebraicity with actual ordered algebraic ambient models, including the native
 ℚ(ε) dictionary cast, and derive the bound inside a relative algebraic closure
 from inequalities known only over its base.
 The computational stage-order identification still remains.
+
+`Tower.Model.extend_base_restrict` combines finite-suffix algebraicity with
+the existing `restrictUnion` construction. It interprets the whole old suffix
+in the relative algebraic subfield, preserves each original value after
+inclusion, and agrees with the prescribed base map at every suffix depth.
 
 ## Ordered algebraic ambient models
 
