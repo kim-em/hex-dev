@@ -200,6 +200,20 @@ noncomputable def root : Model (.pack (.root chain descriptor frame encoded)) K 
   sign := Algebraic.Element.sign_spec model.value model.zero_iff model.one model.add
     model.sub model.mul model.nat model.sign model.neg model.inv
 
+private theorem root_value_proof
+    (a : Algebraic.Element (Algebraic.Context.adjoin descriptor clean)) :
+    (model.root chain descriptor frame encoded).value a =
+      Algebraic.Element.denote model.value model.zero_iff model.one model.add
+        model.sub model.mul model.nat model.sign a := rfl
+
+/-- Read the selected-root interpretation at a native root level. -/
+@[simp] theorem root_value
+    (a : Algebraic.Element (Algebraic.Context.adjoin descriptor clean)) :
+    (model.root chain descriptor frame encoded).value a =
+      Algebraic.Element.denote model.value model.zero_iff model.one model.add
+        model.sub model.mul model.nat model.sign a :=
+  root_value_proof chain model descriptor frame encoded a
+
 /-- The actual native constant-polynomial inclusion preserves every value. -/
 theorem root_embed (a : E) :
     (model.root chain descriptor frame encoded).value

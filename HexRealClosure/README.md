@@ -166,7 +166,8 @@ This includes irrational real roots of rational inputs after mapping to ℝ.
 coefficient map that preserves its arithmetic. The companion instantiates
 this theorem for cached rational selected-root coefficients; their inverse
 semantics use the proved `Tarski.check_rootSum` theorem.
-Arbitrary ordered coefficient towers still need their interpretation laws.
+`Tower.Model` below propagates these interpretation laws through finite native
+root towers over a supplied ordered real-closed ambient field.
 `Yun.Invariant.init`, `step` and `component` in the companion prove the
 repeated-factor recurrence's pointwise root invariant over characteristic-zero
 fields, including nonmonic inputs. Over an algebraically closed field, the
@@ -832,8 +833,8 @@ three actual algebraic levels, use their explicit embeddings, read old values
 after extensions, restore an unreduced noncanonical coefficient, and reject
 stale or unknown bindings, forged signs, zero claims, trailing zeros and
 malformed base payloads. The core roundtrip proofs introduce no admission.
-General persistent refinement, transport of later descriptors, interpretation
-of arbitrary towers, complete isolation and the real-closed union remain open.
+General persistent refinement, transport of later descriptors, complete
+isolation and identification with the real-closed union remain open.
 Reconstructing new validated algebraic levels from serialized frames remains
 open. Native frame-format totality is proved independently of graph decoding
 and byte-parser completeness.
