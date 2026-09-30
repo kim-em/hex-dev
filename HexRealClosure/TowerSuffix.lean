@@ -89,6 +89,17 @@ theorem Context.adjoin_cast {left right : Context registry}
   cases h
   rfl
 
+/-- Append an actual selected root to a packed origin. -/
+@[expose] def Origin.snoc {parent : Context registry} (origin : Origin parent)
+    (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature) :
+    Origin (parent.adjoin descriptor).context := by
+  cases origin with
+  | pack base suffix hparent =>
+    let mapped := Context.castDescriptor hparent descriptor
+    refine .pack base (suffix.snoc mapped) ?_
+    rw [Suffix.snoc_context]
+    exact Context.adjoin_cast hparent descriptor
+
 /-- Follow the exact predecessor chain to recover its staged base and
 validated descriptors without decoding serialized data. -/
 @[expose] def Chain.origin {E : Type} [Zero E] [DecidableEq E]
@@ -98,17 +109,8 @@ validated descriptors without decoding serialized data. -/
   cases chain with
   | base parentBase => exact .pack parentBase .nil rfl
   | root parent descriptor frame encoded =>
-    obtain ⟨base, suffix, hparent⟩ := Chain.origin parent
-    let native : SignDet.Descriptor (Context.pack parent).Value Signature
-        (Context.pack parent).sign (Context.pack parent).signature := descriptor
-    let mapped := Context.castDescriptor hparent native
-    refine .pack base (suffix.snoc mapped) ?_
-    rw [Suffix.snoc_context]
-    change (suffix.context.adjoin mapped).context = _
-    rw [show (suffix.context.adjoin mapped).context =
-      ((Context.pack parent).adjoin descriptor).context from
-      Context.adjoin_cast hparent native]
-    exact Context.adjoin_root_eq parent descriptor frame encoded
+    let extended := (Chain.origin parent).snoc descriptor
+    exact (Context.adjoin_root_eq parent descriptor frame encoded) ▸ extended
 
 /-- Every validated packed tower has a staged base and an exact finite suffix
 of its stored root extensions. No descriptor is reconstructed from a signature.

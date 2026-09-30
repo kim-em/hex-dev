@@ -54,6 +54,27 @@ theorem Context.enlarge?_exists {context : Context registry}
     Context.enlarge?_model base suffix target_eq origin_eq _ model
   exact ⟨result, hresult⟩
 
+/-- Checked enlargement succeeds at any finite algebraic depth over a staged
+base with a sign-compatible ordered-field interpretation. -/
+theorem Context.enlarge?_suffix
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    {R : Type u} [Field R] [LinearOrder R] [IsStrictOrderedRing R]
+    [DecidableEq R]
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* R)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int)) :
+    ∃ result : Conversion suffix.context,
+      suffix.context.enlarge? = some result := by
+  have hbase := Suffix.origin_base base suffix
+  cases horigin : suffix.context.origin with
+  | pack staged rest target_eq =>
+    rw [horigin] at hbase
+    change BaseContext.PackedContext.pack staged =
+      BaseContext.PackedContext.pack base at hbase
+    cases hbase
+    exact Context.enlarge?_exists base rest target_eq horigin f hsign
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.Context.enlarge?_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -63,3 +84,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.enlarge?_exists' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Context.enlarge?_exists
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_suffix' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_suffix

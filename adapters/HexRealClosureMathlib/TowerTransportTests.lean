@@ -92,6 +92,11 @@ example : ∃ result : Conversion (base.adjoin descriptor).context,
     (Context.origin_adjoin_base (BaseContext.rational registry) descriptor)
     (Rat.castHom ℝ) ratSign
 
+/-- Every validated rational-root suffix has a checked enlarged conversion. -/
+example (roots : Suffix base) :
+    ∃ result : Conversion roots.context, roots.context.enlarge? = some result :=
+  Context.enlarge?_suffix (BaseContext.rational registry) roots (Rat.castHom ℝ) ratSign
+
 /-- Complete reconstruction and interpretation at arbitrary finite depth. -/
 example : ∃ result, (Conversion.refine base encoding).extend? suffix = some result ∧
     Nonempty (Conversion.Model result ((rational.adjoin descriptor).extend suffix)) :=
