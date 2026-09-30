@@ -1095,10 +1095,10 @@ root equation, ordering, embedded noncanonical one and inverse values, and old
 and new packet ownership. Kernel examples cover arbitrary finite suffixes over
 a validated rational-root context. Generic coefficient and comparison transfer
 and root construction use the proved root-sum theorem and only the standard
-three axioms. Full base enlargement, automatic extraction of a suffix from requested
-expressions or a catalog, uncached reader completeness, and identification of
-native presentations with the real-closed algebraic union remain open. No
-performance result is claimed.
+three axioms. General base enlargement is itemized below. Automatic extraction
+of a suffix from requested expressions or a catalog, uncached reader
+completeness, and identification of native presentations with the real-closed
+algebraic union remain open. No performance result is claimed.
 
 ### Infinitesimal base conversion
 
@@ -1118,11 +1118,21 @@ rational-function homomorphisms. Under those premises, `rebuild_infinitesimal`
 proves that the checked descriptor-retaining traversal succeeds for every
 finite algebraic suffix. `rebuild_rational` supplies these premises for every
 finite suffix over ℚ using the ordered algebraic real closure of ℚ(ε), and a
-native check rebuilds a selected square root there. Constructing the common
-enlarged-base interpretation compatible with an arbitrary old algebraic
-interpretation, proving the native ε agrees with the semantic infinitesimal,
-showing mapped towers agree with re-extension through their selected roots,
-and providing a total `Context.enlarge` remain open.
+native check rebuilds a selected square root there.
+
+General `Context.enlarge` still requires:
+
+1. Interpreting the native `B(ε)` in the same enlarged ambient field as the
+   mapped old tower, compatibly on coefficients, with native `X` mapped to the
+   semantic infinitesimal and with the native sign law preserved.
+2. Proving selected-root mapping through ordered field embeddings and agreement
+   of mapped towers with descriptor-based re-extension at every root level.
+3. Proving the enlarged closure algebraic over `B(ε)` from algebraicity of the
+   old closure over `B` and transitivity.
+4. Proving the local algebraic bound and staged-order agreement required by the
+   SPEC for the computational `B(ε)` levels.
+5. Extracting the live suffix automatically and assembling the total checked
+   constructor with its value and order preservation statements.
 
 ## Ordered algebraic ambient models
 
@@ -1152,11 +1162,10 @@ increasing field homomorphism, preserving its values and sign law.
 `Ambient.coefficientHom` includes any ordered field as constants in a supplied
 ordered algebraic real closure of its infinitesimal extension.
 `Tower.Model.liftInfinitesimal` uses this map to interpret the whole old tower
-in the chosen closure of `R(ε)`. `liftInfinitesimal_X_lt` proves the semantic ε
-is below every positive interpreted old tower value. The native enlarged base
-still needs a compatible interpretation in this same ambient field, and the
-mapped tower must agree with re-extension through its selected roots, before
-general `Context.enlarge` can be assembled.
+in the chosen closure of `R(ε)`. `Ambient.X_pos` and `X_lt_coefficient` prove
+the semantic ε is positive and below every positive old coefficient, while
+`liftInfinitesimal_X_lt` applies that bound to interpreted tower values. The
+remaining native and staged-order obligations are listed above.
 
 Identifying native towers with the compatible algebraic union, descriptor construction and simultaneous
 realization of finite sign conditions at one ordinary real point remain

@@ -47,9 +47,8 @@ theorem liftInfinitesimal_X_lt {source : Context registry} {R : Type u}
     (model : Model source R) (a : source.Value) (positive : 0 < model.value a) :
     (Ambient.infinitesimal R).inclusion (Hex.RationalFn.X : Hex.RationalFn R) <
       model.liftInfinitesimal.value a := by
-  rw [liftInfinitesimal_value, Ambient.coefficientHom_apply]
-  exact (Ambient.infinitesimal R).monotone
-    (Hex.OrderedFn.Infinitesimal.X_lt_C _ positive)
+  rw [liftInfinitesimal_value]
+  exact Ambient.X_lt_coefficient (Ambient.infinitesimal R) _ positive
 
 end Hex.RealClosure.Tower.Model
 
