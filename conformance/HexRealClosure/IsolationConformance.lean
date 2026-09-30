@@ -131,3 +131,5 @@ def main : IO Unit := do
   emitAssembly "nested algebraic multiplicities" Algebraic.Element.sign
     (fun a => .arr (a.polynomial.toArray.map rational))
     (nested * nested * (y - 1)) 10379 (some baseDescriptor)
+  let cutFactor : DensePoly Rat := DensePoly.ofCoeffs #[3, -5, 2]
+  emitAssemblyRat "assembly nonzero cut point" (cutFactor * cutFactor)

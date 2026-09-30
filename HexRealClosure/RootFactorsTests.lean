@@ -76,6 +76,18 @@ private def run : IO Unit := do
     require (entry.multiplicity == 1) "root-free factor changed real-root multiplicity"
     require ((entry.root.compare (.point 1)).toOption == some .eq) "root-free factor changed real root"
   | _ => throw (IO.userError "mixed real and root-free factors failed")
+  let cutFactor : DensePoly Rat := DensePoly.ofCoeffs #[3, -5, 2]
+  match Roots.assemble Sturm.orderSign (10378 : Nat) (cutFactor * cutFactor) with
+  | .ok (.finite entries) =>
+    require (entries.length == 2) "nonzero cut point changed root count"
+    require (entries.any fun entry => entry.multiplicity == 2 &&
+      match entry.root with
+      | .point value => value == 1
+      | _ => false) "nonzero cut point or its multiplicity was lost"
+    require (entries.any fun entry => entry.multiplicity == 2 &&
+      (entry.root.compare (.point (3 / 2))).toOption == some .eq)
+      "second nonzero root or its multiplicity was lost"
+  | _ => throw (IO.userError "nonzero cut-point assembly failed")
   let simpleZero : DensePoly Rat := x * (x - 1) * (x - 1)
   match Roots.assemble Sturm.orderSign (10378 : Nat) simpleZero with
   | .ok (.finite entries) =>
