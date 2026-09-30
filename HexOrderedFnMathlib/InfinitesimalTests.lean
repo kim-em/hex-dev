@@ -114,6 +114,25 @@ example (f g : Second) : towerEmbed f < towerEmbed g ↔ f < g := towerEmbed_lt 
 example (a : First) :
     towerEmbed (RationalFn.C a) = toLex (HahnSeries.single 0 (embed a)) := towerEmbed_C a
 
+/-- The coefficient map from ℚ(ε) to ℝ(ε) preserves signs and order. -/
+noncomputable example (q : First) :
+    sign orderSign (HexRationalFnMathlib.mapHom (Rat.castHom ℝ) q) =
+      sign orderSign q := by
+  classical
+  exact mapHom_sign (Rat.castHom ℝ) Rat.cast_strictMono q
+
+noncomputable example (p q : First) (less : p < q) :
+    HexRationalFnMathlib.mapHom (Rat.castHom ℝ) p <
+      HexRationalFnMathlib.mapHom (Rat.castHom ℝ) q := by
+  classical
+  exact mapHom_strictMono (Rat.castHom ℝ) Rat.cast_strictMono less
+
+/-- A nested coefficient embedding uses the actual first infinitesimal field. -/
+example : StrictMono
+    (HexRationalFnMathlib.mapHom (HexRationalFnMathlib.constantHom (K := Rat))) := by
+  exact mapHom_strictMono (HexRationalFnMathlib.constantHom (K := Rat))
+    (fun a b less => (C_lt a b).mpr less)
+
 /-- info: 'Hex.OrderedFn.Infinitesimal.sign_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Infinitesimal.sign_eq
@@ -123,6 +142,12 @@ example (a : First) :
 /-- info: 'Hex.OrderedFn.Infinitesimal.strictOrderedRing' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Infinitesimal.strictOrderedRing
+/-- info: 'Hex.OrderedFn.Infinitesimal.mapHom_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Infinitesimal.mapHom_sign
+/-- info: 'Hex.OrderedFn.Infinitesimal.mapHom_strictMono' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Infinitesimal.mapHom_strictMono
 /-- info: 'Hex.OrderedFn.InfinitesimalProofs.delta_lt_power' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms delta_lt_power
