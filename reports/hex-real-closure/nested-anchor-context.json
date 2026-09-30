@@ -1,0 +1,35 @@
+{
+  "cpu": 10,
+  "load_start": [
+    0.20361328125,
+    0.21435546875,
+    0.6845703125
+  ],
+  "load_end": [
+    0.20361328125,
+    0.21435546875,
+    0.6845703125
+  ],
+  "started_at": "2026-09-29T22:17:51.460573+00:00",
+  "ended_at": "2026-09-29T22:17:53.613177+00:00",
+  "host": "chungus2",
+  "commit": "04f7262dbfa5b31688db451ac970aa65f58a3f97",
+  "command": [
+    ".lake/build/bin/hexrealclosure_bench",
+    "run",
+    "Hex.RealClosure.Bench.runNested",
+    "--export-file",
+    "reports/hex-real-closure/nested-anchor.json"
+  ],
+  "source_sha256": {
+    "bench/HexRealClosure/Bench.lean": "661706fe51df472c34774f42583d6b724710492acf123a3b68647c8a4d2c0d57",
+    "HexRealClosure/Algebraic.lean": "646f86997551e911e4c65519978e247720b24cf83f83c99d2323e7d1e56f81ee",
+    "HexRealClosure/AlgebraicContext.lean": "650d73132c07857b8830eaaeb03388708e3a5b08a9275ecd16b44ed527ec2637",
+    "HexSignDet/Descriptor.lean": "8ae1ca95f931a8189d1f782a4a886fc44034bd8efa2bb3b7b0adf22838972dd3",
+    "HexSignDet/SelectedSigns.lean": "c6b4d25060bff509f967c167ae0305ae7f7422c0f53985082b268a89fa1853ad",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "39f443e69a6206ee1785b4a832de8344af65eec1cb2ee4fc803c30c9ebb3122a",
+    ".lake/build/bin/hexrealclosure_bench": "90e260a2bc0180791d8a1db00c99db87124cc967e81db5ddbffdcd09c1001bc3"
+  },
+  "purpose": "fixed nested selected-root functional anchor; no tower scaling claim"
+}
