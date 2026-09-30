@@ -1149,8 +1149,8 @@ General `Context.enlarge` still requires:
    preserves order for an ordered coefficient-field embedding.
 3. Proving selected-root mapping through ordered field embeddings and agreement
    of mapped towers with descriptor-based re-extension at every root level.
-4. Proving the local algebraic bound and staged-order agreement required by the
-   SPEC for the computational `B(ε)` levels.
+4. Applying the local algebraic bound to the computational `B(ε)` levels and
+   proving their staged order agrees with the enlarged ambient interpretation.
 5. Extracting the live suffix automatically and assembling the total checked
    constructor with its value and order preservation statements.
 
@@ -1160,6 +1160,14 @@ mapped `B(ε)`. The proof combines Mathlib's algebraic polynomial-extension
 and fraction-field theorems, transports them through the executable equivalence,
 then uses transitivity of algebraicity. It applies after restricting a merely
 real-closed old ambient to its relative algebraic union.
+`exists_base_lower` proves that every positive element of an ordered algebraic
+extension has a smaller positive element from the base, using an ordered-field
+polynomial root bound without an Archimedean assumption.
+`infinitesimal_lt_algebraic` then shows that a positive parameter smaller than
+every positive base element stays below every positive element of the old
+algebraic field. Kernel examples instantiate both results with actual ordered
+algebraic ambient models. The computational stage-order identification still
+remains.
 
 ## Ordered algebraic ambient models
 

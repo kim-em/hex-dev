@@ -645,7 +645,8 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.ZeroFactor, `HexRealClosureMathlib.IsolationRoots,
     `HexRealClosureMathlib.RootOrder, `HexRealClosureMathlib.RootFactors,
     `HexRealClosureMathlib.Ambient, `HexRealClosureMathlib.AmbientTests,
-    `HexRealClosureMathlib.BaseAlgebraicity,
+    `HexRealClosureMathlib.BaseAlgebraicity, `HexRealClosureMathlib.BaseAlgebraicityTests,
+    `HexRealClosureMathlib.BaseBound,
     `HexRealClosureMathlib.Union, `HexRealClosureMathlib.TowerUnion,
     `HexRealClosureMathlib.UnionTests].map Glob.one
 
