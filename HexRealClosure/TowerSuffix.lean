@@ -45,11 +45,19 @@ inductive Origin (target : Context registry) : Type 1 where
       (suffix : Suffix (Context.base base))
       (target_eq : suffix.context = target) : Origin target
 
+/-- Number of selected-root levels retained by the extracted suffix. -/
 @[expose] def Origin.length {target : Context registry} (origin : Origin target) : Nat := by
   cases origin with
   | pack base suffix eq => exact suffix.length
 
-private theorem Context.adjoin_root_eq {E : Type} [Zero E] [DecidableEq E]
+/-- The staged base retained by a packed tower origin. -/
+@[expose] def Origin.base {target : Context registry} (origin : Origin target) :
+    BaseContext.PackedContext registry := by
+  cases origin with
+  | pack base suffix eq => exact .pack base
+
+/-- The stored frame is exactly the frame returned by total adjoin. -/
+theorem Context.adjoin_root_eq {E : Type} [Zero E] [DecidableEq E]
     [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
     {sign : E → Int} {clean : E → Bool} {codec : ValueCodec E} {binding : Signature}
     (chain : Chain registry E sign clean codec binding)
@@ -63,14 +71,17 @@ private theorem Context.adjoin_root_eq {E : Type} [Zero E] [DecidableEq E]
   cases hframe
   exact (Context.adjoin_native chain descriptor).1
 
-private def Context.castDescriptor {left right : Context registry}
+/-- Reindex one stored descriptor along literal equality of its parent
+contexts. This changes only its type, not its replay or selected root. -/
+@[expose] def Context.castDescriptor {left right : Context registry}
     (h : left = right)
     (descriptor : SignDet.Descriptor right.Value Signature right.sign right.signature) :
     SignDet.Descriptor left.Value Signature left.sign left.signature := by
   cases h
   exact descriptor
 
-private theorem Context.adjoin_cast {left right : Context registry}
+/-- Adjoining after a context cast returns the same child context. -/
+theorem Context.adjoin_cast {left right : Context registry}
     (h : left = right)
     (descriptor : SignDet.Descriptor right.Value Signature right.sign right.signature) :
     (left.adjoin (Context.castDescriptor h descriptor)).context =
@@ -78,7 +89,9 @@ private theorem Context.adjoin_cast {left right : Context registry}
   cases h
   rfl
 
-private def Chain.origin {E : Type} [Zero E] [DecidableEq E]
+/-- Follow the exact predecessor chain to recover its staged base and
+validated descriptors without decoding serialized data. -/
+@[expose] def Chain.origin {E : Type} [Zero E] [DecidableEq E]
     [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
     {sign : E → Int} {clean : E → Bool} {codec : ValueCodec E} {binding : Signature}
     (chain : Chain registry E sign clean codec binding) : Origin (.pack chain) := by
@@ -98,16 +111,24 @@ private def Chain.origin {E : Type} [Zero E] [DecidableEq E]
     exact Context.adjoin_root_eq parent descriptor frame encoded
 
 /-- Every validated packed tower has a staged base and an exact finite suffix
-of its stored root extensions. No descriptor is reconstructed from a signature. -/
-def Context.origin (context : Context registry) : Origin context := by
+of its stored root extensions. No descriptor is reconstructed from a signature.
+Consumers should use the original context for arithmetic and use the returned
+equality only to align types; computing `Suffix.context` rebuilds frames. -/
+@[expose] def Context.origin (context : Context registry) : Origin context := by
   cases context with
   | pack chain => exact chain.origin
 
-/-- Recover the number of validated root levels from the stored chain. -/
-@[expose] def Context.rootDepth (context : Context registry) : Nat := context.origin.length
+/-- A packed staged base has an empty algebraic suffix. -/
+theorem Context.origin_base {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign) :
+    (Context.base base).origin = Origin.pack base .nil rfl := rfl
 
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.Context.origin' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Context.origin
+
+/-- info: 'Hex.RealClosure.Tower.Context.origin_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.origin_base

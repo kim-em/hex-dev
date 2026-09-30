@@ -1137,7 +1137,9 @@ General `Context.enlarge` still requires:
    agreement on its base coefficients and algebraicity of every value. For a
    canonical base model extended through a validated finite suffix,
    `Tower.Model.baseRestrict` constructs the restriction and proves value and
-   base-map agreement once that suffix presentation is available.
+   base-map agreement. `Context.origin` supplies the suffix presentation of
+   each packed context up to equality with that context; identifying an
+   arbitrary old model with the canonical extension still remains.
    Packaging the union with `Ambient.ofUnion` also requires an order-preserving
    base map and a real-closed old ambient; its current API places both fields
    in the same universe.
@@ -1181,11 +1183,12 @@ The computational stage-order identification still remains.
 
 `Context.origin` recursively follows a packed tower's stored predecessor
 chain and returns its staged base, the ordered validated root suffix, and an
-equality with the original context. It uses the retained descriptors and
-checked frames; no signature or serialized payload is trusted as a root.
-`Context.rootDepth` counts these stored root levels, and executable guards
-check the base and a one-root context. A four-root transport fixture checks
-the deeper case when run explicitly.
+equality with the original context. The suffix retains the stored descriptors;
+the equality proof checks each frame against the original context. No
+signature or serialized payload is trusted as a root.
+Executable guards count the extracted levels in the base and a one-root
+context and rebuild the extracted one-root suffix. The existing four-root
+transport fixture includes a deeper count check and runs outside routine CI.
 
 ## Ordered algebraic ambient models
 

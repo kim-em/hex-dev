@@ -19,6 +19,11 @@ open SignDet
 
 private def registry : BaseContext.Registry := fun _ => none
 
+private def rebuildOrigin {target : Context registry} (origin : Origin target) : Bool := by
+  cases origin with
+  | pack base suffix eq =>
+    exact ((Conversion.infinitesimal base).rebuild? suffix).isSome
+
 private def sixteenth {E : Type} [Mul E] (x : E) : E :=
   let square := x * x
   let fourth := square * square
@@ -38,7 +43,7 @@ private def baseSample : Array Bool :=
     rw [(Conversion.infinitesimal_spec (BaseContext.rational registry)).1]
     exact BaseContext.Element.infinitesimal (BaseContext.rational registry)
   #[decide (old.signature.base.infinitesimals = 0),
-    decide (old.rootDepth = 0),
+    decide (old.origin.length = 0),
     decide (target.signature.base.infinitesimals = 1),
     target.equal moved (1 + 1),
     ((target.read (target.write moved)).toOption.map (target.equal moved)) == some true,
@@ -76,7 +81,8 @@ private def rootSample : Option (Array Bool) :=
         decide (next.context.compare (raised - epsRaised) 1 = .gt)]
     | _ => #[false, false]
   #[result.context.equal (root * root) (result.value (original.embed two)),
-    decide (original.context.rootDepth = 1),
+    decide (original.context.origin.length = 1),
+    rebuildOrigin original.context.origin,
     (original.context.write (suffix.embed two)).value ==
       (original.context.write (original.embed two)).value,
     decide (result.context.compare root 1 = .gt),
@@ -85,7 +91,7 @@ private def rootSample : Option (Array Bool) :=
     (result.context.read (result.context.write root)).toOption.isSome,
     (original.context.read (result.context.write root)).toOption.isNone] ++ mixed
 
-#guard rootSample == some #[true, true, true, true, true, true, true, true, true, true]
+#guard rootSample == some #[true, true, true, true, true, true, true, true, true, true, true]
 
 /-- Change the first root definition and rebuild three later square roots.
 An embedded noncanonical one and an inverse retain their original meaning. -/
@@ -132,7 +138,7 @@ private def sample : Option (Array Bool) :=
   let movedOne := conversion.value oldOne
   let packet := conversion.context.write movedOne
   #[decide (fourth.context.signature.roots.length = 4),
-    decide (fourth.context.rootDepth = 4),
+    decide (fourth.context.origin.length = 4),
     (fourth.context.write (suffix.embed (first.embed two))).value ==
       (fourth.context.write oldTwo).value,
     decide (conversion.context.signature.roots.length = 4),
