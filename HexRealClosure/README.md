@@ -714,11 +714,12 @@ division and inverse, which require the predecessor interpretation to preserve
 division. It assumes no field laws on stored representatives.
 
 `AlgebraicRoots.lean` applies the successful root-assembly theorems to actual
-`Algebraic.Element` coefficients. The selected-value interpretation supplies
-the required zero, arithmetic, sign and division facts together. A successful
-finite assembly therefore covers exactly the roots of the interpreted input
-with original multiplicities and no duplicate values; `all` is equivalent to
-semantic zero. Producer success and ordering remain separate obligations.
+`Algebraic.Element` coefficients. Given a zero-reflecting predecessor interpretation into an ordered real closed
+field that preserves arithmetic, negation, inverse, division and sign, the
+level's selected-value interpretation supplies every coefficient premise. A
+successful finite assembly therefore covers exactly the ambient roots of the
+interpreted input with original multiplicities and no duplicate values; `all`
+is equivalent to semantic zero. Producer success and ordering remain separate obligations.
 
 `AlgebraicValue.lean` defines the image subfield `Value ctx`, with lawful field
 and order instances inherited from the ambient field. `Element.toValue`
