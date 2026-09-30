@@ -279,6 +279,18 @@ noncomputable def nativeHom [g : Lean.Grind.Field L]
       map_add' := by intro f h; subst g; exact model.inclusion.map_add f h
       map_mul' := by intro f h; subst g; exact model.inclusion.map_mul f h }
 
+set_option linter.overlappingInstances false in
+/-- Native fraction interpretation is the original ambient inclusion after
+transporting across the proved field-dictionary equality. -/
+theorem nativeHom_apply [g : Lean.Grind.Field L]
+    (compatible : Field.toGrindField (K := L) = g)
+    (model : Ambient (@Hex.RationalFn L (Field.toGrindField (K := L)) inferInstance))
+    (q : @Hex.RationalFn L g inferInstance) :
+    nativeHom compatible model q =
+      model.inclusion
+        (cast (congrArg (fun G => @Hex.RationalFn L G inferInstance) compatible.symm) q) :=
+  by subst g; rfl
+
 -- The explicit compatibility premise identifies the two field dictionaries.
 set_option linter.overlappingInstances false in
 /-- The native indeterminate maps to the same infinitesimal in the ambient model. -/

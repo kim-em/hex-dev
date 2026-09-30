@@ -1149,12 +1149,32 @@ General `Context.enlarge` still requires:
    preserves order for an ordered coefficient-field embedding.
 3. Proving selected-root mapping through ordered field embeddings and agreement
    of mapped towers with descriptor-based re-extension at every root level.
-4. With the old ambient algebraic over `B`, proving the enlarged closure
-   algebraic over `B(ε)` by transitivity.
-5. Proving the local algebraic bound and staged-order agreement required by the
-   SPEC for the computational `B(ε)` levels.
-6. Extracting the live suffix automatically and assembling the total checked
+4. Applying the local algebraic bound to the computational `B(ε)` levels and
+   proving their staged order agrees with the enlarged ambient interpretation.
+5. Extracting the live suffix automatically and assembling the total checked
    constructor with its value and order preservation statements.
+
+When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
+proves that its ordered algebraic real closure of `R(ε)` is algebraic over the
+mapped `B(ε)`. The proof combines Mathlib's algebraic polynomial-extension
+and fraction-field theorems, transports them through the executable equivalence,
+then uses transitivity of algebraicity. It applies after restricting a merely
+real-closed old ambient to its relative algebraic union.
+`Ambient.mappedNative_algebraic` states the same result with the native field
+dictionaries used by checked tower conversion. `Ambient.nativeHom_algebraic`
+transports the old ambient's algebraicity across the native rational-function
+field-dictionary cast.
+`exists_base_lower` proves that every positive element of an ordered algebraic
+extension has a smaller positive element from the base, using an ordered-field
+polynomial root bound without an Archimedean assumption.
+`exists_mapped_lower` gives the corresponding conclusion when the coefficient
+field has no separate Mathlib order. `infinitesimal_lt_algebraic` then shows
+that a parameter smaller than every positive base image stays below every
+positive element of the old algebraic field. Kernel examples instantiate
+algebraicity with actual ordered algebraic ambient models, including the native
+ℚ(ε) dictionary cast, and derive the bound inside a relative algebraic closure
+from inequalities known only over its base.
+The computational stage-order identification still remains.
 
 ## Ordered algebraic ambient models
 
