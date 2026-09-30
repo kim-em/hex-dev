@@ -26,6 +26,41 @@ variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRe
   | .nil => original
   | .root descriptor rest => (original.adjoin descriptor).extend rest
 
+/-- The actual embeddings through a validated suffix preserve each original
+mathematical value. -/
+theorem extend_embed {source : Context registry} (model : Model source K)
+    (suffix : Suffix source) :
+    ∀ a : source.Value, (model.extend suffix).value (suffix.embed a) = model.value a := by
+  induction suffix with
+  | nil => intro a; rfl
+  | @root parent descriptor rest ih =>
+    intro a
+    exact (ih (model.adjoin descriptor) ((parent.adjoin descriptor).embed a)).trans
+      (model.adjoin_embed descriptor a)
+
+/-- Agreement with a coefficient-field map survives every selected-root
+extension in a validated suffix. -/
+theorem extend_base_agree {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* K)
+    (model : Model (Context.base base) K)
+    (agree : ∀ a : (Context.base base).Value, model.value a = f a.stored)
+    (suffix : Suffix (Context.base base)) (a : (Context.base base).Value) :
+    (model.extend suffix).value (suffix.embed a) = f a.stored := by
+  rw [model.extend_embed suffix a]
+  exact agree a
+
+/-- A canonical base embedding agrees with the model at every validated
+root depth. -/
+theorem extend_base_embed {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* K)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+    (suffix : Suffix (Context.base base)) (a : (Context.base base).Value) :
+    ((Model.base base f hsign).extend suffix).value (suffix.embed a) = f a.stored := by
+  exact extend_base_agree base f (Model.base base f hsign)
+    (Model.base_value base f hsign) suffix a
+
 /-- Algebraicity over a fixed base persists through every validated root in a
 finite suffix, with no irreducibility hypothesis on its defining polynomials. -/
 theorem extend_algebraic_over {B : Type v} [Field B] [Algebra B K]
@@ -776,3 +811,15 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.cast' depends on axioms: [propext,
 /-- info: 'Hex.RealClosure.Tower.Model.extend_base_field_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.extend_base_field_algebraic
+
+/-- info: 'Hex.RealClosure.Tower.Model.extend_embed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.extend_embed
+
+/-- info: 'Hex.RealClosure.Tower.Model.extend_base_agree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.extend_base_agree
+
+/-- info: 'Hex.RealClosure.Tower.Model.extend_base_embed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.extend_base_embed

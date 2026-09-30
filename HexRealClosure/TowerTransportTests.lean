@@ -73,13 +73,15 @@ private def rootSample : Option (Array Bool) :=
         decide (next.context.compare (raised - epsRaised) 1 = .gt)]
     | _ => #[false, false]
   #[result.context.equal (root * root) (result.value (original.embed two)),
+    (original.context.write (suffix.embed two)).value ==
+      (original.context.write (original.embed two)).value,
     decide (result.context.compare root 1 = .gt),
     decide (result.context.compare root (1 + 1) = .lt),
     decide (result.context.signature.base.infinitesimals = 1),
     (result.context.read (result.context.write root)).toOption.isSome,
     (original.context.read (result.context.write root)).toOption.isNone] ++ mixed
 
-#guard rootSample == some #[true, true, true, true, true, true, true, true]
+#guard rootSample == some #[true, true, true, true, true, true, true, true, true]
 
 /-- Change the first root definition and rebuild three later square roots.
 An embedded noncanonical one and an inverse retain their original meaning. -/
@@ -126,6 +128,8 @@ private def sample : Option (Array Bool) :=
   let movedOne := conversion.value oldOne
   let packet := conversion.context.write movedOne
   #[decide (fourth.context.signature.roots.length = 4),
+    (fourth.context.write (suffix.embed (first.embed two))).value ==
+      (fourth.context.write oldTwo).value,
     decide (conversion.context.signature.roots.length = 4),
     decide (fourth.context.signature ≠ conversion.context.signature),
     conversion.context.equal (sixteenth root) (conversion.value oldTwo),

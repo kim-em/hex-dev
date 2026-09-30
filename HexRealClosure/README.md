@@ -1046,9 +1046,15 @@ changes at the starting root before extending the suffix, without discarding
 the actual conversion closures.
 
 `Suffix` represents a finite sequence of validated later root levels. Its
-`context` is the original final context. `Conversion.extend?` rebuilds every
-level in order and returns the conversion into the new immutable final
-context. `Conversion.rebuild?` additionally returns a `Rebuilt` result with
+`context` is the original final context. `Suffix.embed` includes each original
+value through the actual root extensions while retaining its old owner;
+bind `let include := suffix.embed` to reuse the extension chain for many values.
+`Tower.Model.extend_embed` proves value preservation. `extend_base_agree`
+propagates agreement with any supplied base-field embedding, and
+`extend_base_embed` supplies it for the canonical base model.
+`Conversion.extend?` rebuilds every level in order and returns the conversion
+into the new immutable final context. `Conversion.rebuild?` additionally returns
+a `Rebuilt` result with
 the converted validated descriptors as a new `Suffix`. Its context equality
 binds that suffix to the final conversion, and `rebuild_result` proves it
 returns the same conversion as `extend?`. A caller can select the first descriptor
@@ -1085,13 +1091,15 @@ proved context reconciliation, equations and packet ownership. It also
 re-encodes a descriptor from the rebuilt suffix, composes that second native
 refinement, and checks its converted root equation.
 `TowerTransportTests` also executes its base and one-root `#guard` checks in
-routine CI. The explicit four-level native driver is built with
+routine CI, including literal serialized agreement of `Suffix.embed` with the
+native root inclusion. The explicit four-level native driver is built with
 `lake build hexrealclosure_transport_tests` and run with
 `.lake/build/bin/hexrealclosure_transport_tests`. Routine CI type-checks this
 fixture but does not execute the deep calculation.
 This deeper fixture changes a nonmonic reducible first definition and rebuilds
 three later square roots. It checks the sixteenth-power equation, the final
-root equation, ordering, embedded noncanonical one and inverse values, and old
+root equation, ordering, literal suffix inclusion across three roots, embedded
+noncanonical one and inverse values, and old
 and new packet ownership. Kernel examples cover arbitrary finite suffixes over
 a validated rational-root context. Generic coefficient and comparison transfer
 and root construction use the proved root-sum theorem and only the standard
@@ -1470,8 +1478,8 @@ with `Ambient.ofUnion` for any permitted ordered base embedding.
 validated finite root suffix; `extend_field_algebraic_over` applies it to the
 final image field. `extend_base_algebraic` and
 `extend_base_field_algebraic` supply both conclusions for a canonical base
-model. Stating base-map agreement and using the restriction in
-`Context.enlarge` remain open.
+model. An arbitrary old model must supply its agreement with the chosen base
+map; applying the restriction in `Context.enlarge` remains open.
 
 Presenting every algebraic generator by a native selected-root descriptor and
 identifying all compatible native presentations with this semantic union remain

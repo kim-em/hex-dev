@@ -280,6 +280,17 @@ inductive Suffix : Context registry → Type 1 where
   | .nil => source
   | .root _ rest => rest.context
 
+/-- Include a predecessor value through every actual root extension in a
+validated suffix. The original value retains its original context. -/
+@[expose] def Suffix.embed {source : Context registry} (suffix : Suffix source) :
+    source.Value → suffix.context.Value :=
+  match suffix with
+  | .nil => id
+  | .root descriptor rest =>
+      let extension := source.adjoin descriptor
+      let includeRest := rest.embed
+      fun a => includeRest (extension.embed a)
+
 /-- Rebuild every later level in order and return the final native conversion.
 Each rebuilt level retains its packing closure and fresh descriptor evidence. -/
 def Conversion.extend? {source : Context registry} (conversion : Conversion source)
