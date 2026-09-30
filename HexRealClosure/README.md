@@ -1136,11 +1136,15 @@ suffix, adds one positive infinitesimal to that base, and runs the checked
 suffix conversion. It returns a `Conversion` from the original context when
 every descriptor validates in its new predecessor. The core
 `Context.enlarge?_eq` theorem identifies the exact checked suffix traversal.
-In the Mathlib bridge, `Context.enlarge?_model` interprets every old value
-through the returned conversion and therefore preserves its equality and
-order. `Context.enlarge?_exists` supplies such a conversion when the extracted
-base admits a sign-compatible map into an ordered field. This is a conversion
-for one stored context; supplying the compatible base map is a premise.
+In the Mathlib bridge, `Context.enlarge?_model` preserves the interpretation
+`old.extend suffix` of every value through the returned conversion, and hence
+its equality and order. `Context.enlarge?_exists` proves conversion success
+when the extracted base admits a sign-compatible map into an ordered field.
+`Context.origin_adjoin_base` discharges the origin equality for one root over
+a staged base. A corresponding equation for longer stored suffixes is still
+needed to apply the theorem directly at arbitrary depth. Origin extraction
+currently appends suffixes and can reconstruct old frames; no depth-scaling
+cost is claimed for this constructor.
 
 General `Context.enlarge` still requires:
 

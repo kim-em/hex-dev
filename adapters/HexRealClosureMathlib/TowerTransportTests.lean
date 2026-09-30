@@ -84,10 +84,13 @@ variable {head : DensePoly base.Value} {lower upper : Endpoint base.Value}
 variable (encoding : SignDet.Reencoding descriptor head lower upper)
 variable (suffix : Suffix (base.adjoin descriptor).context)
 
-/-- The rational base origin discharges the checked-enlargement theorem. -/
-example : ∃ result : Conversion base, base.enlarge? = some result := by
-  exact Context.enlarge?_exists (BaseContext.rational registry) .nil rfl
-    (Context.origin_base (BaseContext.rational registry)) (Rat.castHom ℝ) ratSign
+/-- A stored root over ℚ discharges the checked-enlargement theorem. -/
+example : ∃ result : Conversion (base.adjoin descriptor).context,
+    (base.adjoin descriptor).context.enlarge? = some result := by
+  exact Context.enlarge?_exists (BaseContext.rational registry)
+    (.root descriptor .nil) rfl
+    (Context.origin_adjoin_base (BaseContext.rational registry) descriptor)
+    (Rat.castHom ℝ) ratSign
 
 /-- Complete reconstruction and interpretation at arbitrary finite depth. -/
 example : ∃ result, (Conversion.refine base encoding).extend? suffix = some result ∧

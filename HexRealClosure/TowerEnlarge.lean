@@ -41,6 +41,47 @@ theorem Context.enlarge?_eq {context : Context registry}
   rw [Context.enlarge?, origin_eq]
   rfl
 
+private theorem Context.origin_transport {left right : Context registry}
+    (h : left = right) : h ▸ left.origin = right.origin := by
+  cases h
+  rfl
+
+private theorem Origin.pack_transport {left right : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    (target_eq : suffix.context = left) (h : left = right) :
+    h ▸ (Origin.pack base suffix target_eq : Origin left) =
+      (Origin.pack base suffix (target_eq.trans h) : Origin right) := by
+  cases h
+  rfl
+
+private theorem Origin.transport_injective {left right : Context registry}
+    (h : left = right) {a b : Origin left}
+    (hab : h ▸ a = h ▸ b) : a = b := by
+  cases h
+  exact hab
+
+/-- The stored origin of one root over a staged base is its actual descriptor. -/
+theorem Context.origin_adjoin_base
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (descriptor : SignDet.Descriptor (Context.base base).Value Signature
+      (Context.base base).sign (Context.base base).signature) :
+    ((Context.base base).adjoin descriptor).context.origin =
+      Origin.pack base (.root descriptor .nil) rfl := by
+  let extension := (Context.base base).adjoin descriptor
+  have hnative : extension.context =
+      Context.pack (.root (.base base) descriptor extension.frame extension.encoded) :=
+    (Context.adjoin_native (.base base) descriptor).1
+  have hroot : (Context.pack
+      (.root (.base base) descriptor extension.frame extension.encoded)).origin =
+      Origin.pack base (.root descriptor .nil) hnative := by
+    rfl
+  apply Origin.transport_injective hnative
+  rw [Context.origin_transport hnative]
+  exact hroot.trans (Origin.pack_transport base (.root descriptor .nil) rfl hnative).symm
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.Context.enlarge?' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -50,3 +91,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.enlarge?_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Context.enlarge?_eq
+
+/-- info: 'Hex.RealClosure.Tower.Context.origin_adjoin_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.origin_adjoin_base
