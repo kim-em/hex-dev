@@ -53,6 +53,9 @@ private def sample : Option (Array Bool) :=
   ((Catalog.empty registry).insert first.context).bind fun catalog₁ =>
   (catalog₁.insert second.context).bind fun catalog₂ =>
   (catalog₂.insert third.context).bind fun catalog =>
+  let unreduced : Serialized := ⟨first.context.signature,
+    .arr #[Codec.poly base.codec (definition + DensePoly.C 1), toJson (1 : Int)]⟩
+  ((catalog.readElement unreduced).toOption).bind fun unreducedRead =>
   let old := first.context.write semanticOne
   ((catalog.readElement old).toOption).bind fun oldRead =>
   let newest := third.context.write c
@@ -86,6 +89,8 @@ private def sample : Option (Array Bool) :=
     decide (third.context.sign (c * c - third.embed b) = 0),
     decide (third.context.sign (third.embed (second.embed (a * a - first.embed two))) = 0),
     decide (first.context.sign (semanticOne - 1) = 0), decide (semanticOne ≠ 1),
+    samePayload unreduced unreducedRead.write,
+    decide (!samePayload unreduced (first.context.write (first.embed 1))),
     samePayload old oldRead.write, samePayload newest newestRead.write,
     decide (newestRead.sign = 1), samePayload printedPoly readPoly.write,
     rejected (catalog.readElement wrongSign), rejected (catalog.readElement zeroSign),
@@ -113,10 +118,18 @@ private def sample : Option (Array Bool) :=
 
 /--
 info: some #[true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-  true, true, true, true, true, true, true, true, true, true, true, true, true, true, true]
+  true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true]
 -/
 #guard_msgs in
 #eval sample
+
+/-- The parent has one relative encoding, so a full literal copy is rejected. -/
+private def duplicateParent : Bool :=
+  let parent := (Context.base (BaseContext.rational registry)).signature
+  rejected ((contextCodec parent).decode
+    (.arr #[.num ⟨1, 0⟩, parent.literal.toJson]))
+
+#guard duplicateParent
 
 /-- Base payload shape is checked independently of algebraic restoration. -/
 private def baseSample : Array Bool := Id.run do
