@@ -53,6 +53,7 @@ private def sample : Option (Array Bool) :=
   ((Catalog.empty registry).insert first.context).bind fun catalog₁ =>
   (catalog₁.insert second.context).bind fun catalog₂ =>
   (catalog₂.insert third.context).bind fun catalog =>
+  -- This monic clean head reduces `definition + 1` to `1` under arithmetic packing.
   let unreduced : Serialized := ⟨first.context.signature,
     .arr #[Codec.poly base.codec (definition + DensePoly.C 1), toJson (1 : Int)]⟩
   ((catalog.readElement unreduced).toOption).bind fun unreducedRead =>
@@ -91,6 +92,9 @@ private def sample : Option (Array Bool) :=
     decide (first.context.sign (semanticOne - 1) = 0), decide (semanticOne ≠ 1),
     samePayload unreduced unreducedRead.write,
     decide (!samePayload unreduced (first.context.write (first.embed 1))),
+    decide (unreducedRead.context.sign (unreducedRead.value - 1) = 0),
+    samePayload (unreducedRead.context.write (unreducedRead.value * 1))
+      (unreducedRead.context.write 1),
     samePayload old oldRead.write, samePayload newest newestRead.write,
     decide (newestRead.sign = 1), samePayload printedPoly readPoly.write,
     rejected (catalog.readElement wrongSign), rejected (catalog.readElement zeroSign),
@@ -118,7 +122,7 @@ private def sample : Option (Array Bool) :=
 
 /--
 info: some #[true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-  true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true]
+  true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true]
 -/
 #guard_msgs in
 #eval sample
@@ -126,8 +130,10 @@ info: some #[true, true, true, true, true, true, true, true, true, true, true, t
 /-- The parent has one relative encoding, so a full literal copy is rejected. -/
 private def duplicateParent : Bool :=
   let parent := (Context.base (BaseContext.rational registry)).signature
-  rejected ((contextCodec parent).decode
-    (.arr #[.num ⟨1, 0⟩, parent.literal.toJson]))
+  match (contextCodec parent).decode
+      (.arr #[.num ⟨1, 0⟩, parent.literal.toJson]) with
+  | .error message => message == "noncanonical context reference"
+  | .ok _ => false
 
 #guard duplicateParent
 
