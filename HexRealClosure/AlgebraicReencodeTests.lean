@@ -25,6 +25,10 @@ private def splitSample : Option (Array Int) := do
   let context := Context.adjoin d (fun q => q.den == 1)
   let candidate ← (context.root.buildReencoding factor (.finite 1) (.finite 2)).toOption
   let r ← candidate
+  let nonmonicCandidate ← (context.root.buildReencoding (DensePoly.scale 2 factor)
+    (.finite 1) (.finite 2)).toOption
+  let nonmonic ← nonmonicCandidate
+  let restored ← Element.restore? (context := context) (DensePoly.natPow x 4) 1
   let a := Element.ofPoly (context := context) x
   let b := Element.ofPoly (context := context) (x - DensePoly.C 3)
   let newer := context.reencode r
@@ -42,8 +46,11 @@ private def splitSample : Option (Array Int) := do
     if (square.reencode r).polynomial.toArray == #[2] then 1 else 0,
     if cube.polynomial.toArray != #[0, 2] then 1 else 0,
     if (cube.reencode r).polynomial.toArray == #[0, 2] then 1 else 0,
-    if zero == 0 && mapped.coeff 1 == 0 && mapped.coeff 3 == 0 then 1 else 0]
+    if zero == 0 && mapped.coeff 1 == 0 && mapped.coeff 3 == 0 then 1 else 0,
+    if restored.polynomial.toArray == #[0, 0, 0, 0, 1] then 1 else 0,
+    if (restored.reencode r).polynomial.toArray == #[4] then 1 else 0,
+    if (restored.reencode nonmonic).polynomial.toArray == #[0, 0, 0, 0, 1] then 1 else 0]
 
-#guard splitSample == some #[1, 1, -1, -1, 0, 0, 1, -1, 1, 1, 1, 1, 1, 1, 1]
+#guard splitSample == some #[1, 1, -1, -1, 0, 0, 1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
 end Hex.RealClosure.Algebraic.ReencodeTests

@@ -32,6 +32,14 @@ theorem Context.root_reencode (context : Context E Ctx coeffSign parent)
     (context.reencode r).root = r.target :=
   Context.root_adjoin r.target context.cleanCoeff
 
+/-- Re-encoding an adjoined root uses the same predecessor cleanliness rule as
+adjoining the checked target descriptor directly. -/
+theorem Context.reencode_adjoin (d : SignDet.Descriptor E Ctx coeffSign parent)
+    (clean : E → Bool) {head : DensePoly E} {lower upper : Hex.Endpoint E}
+    (r : SignDet.Reencoding (Context.adjoin d clean).root head lower upper) :
+    (Context.adjoin d clean).reencode r = Context.adjoin r.target clean := by
+  simp only [Context.reencode, Context.clean_adjoin]
+
 namespace Element
 
 variable {context : Context E Ctx coeffSign parent}
