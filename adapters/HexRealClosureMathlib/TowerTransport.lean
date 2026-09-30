@@ -249,6 +249,19 @@ theorem extend_exists (suffix : Suffix source) :
     rw [conversion.extend_root, hnext]
     exact hresult
 
+include model in
+/-- Rebuilding a validated suffix also returns all converted descriptors. -/
+theorem rebuild_exists (suffix : Suffix source) :
+    ∃ rebuilt : Rebuilt conversion suffix, conversion.rebuild? suffix = some rebuilt := by
+  obtain ⟨result, hresult, _⟩ := model.extend_exists suffix
+  have h := conversion.rebuild_result suffix
+  rw [hresult] at h
+  cases hr : conversion.rebuild? suffix with
+  | none =>
+    simp only [Option.map, hr] at h
+    cases h
+  | some rebuilt => exact ⟨rebuilt, rfl⟩
+
 /-- Interpret a particular result returned by recursive reconstruction. -/
 noncomputable def extend (suffix : Suffix source) (result : Conversion suffix.context)
     (h : conversion.extend? suffix = some result) : Model result (original.extend suffix) := by
@@ -257,6 +270,16 @@ noncomputable def extend (suffix : Suffix source) (result : Conversion suffix.co
   have output := (Classical.choose_spec spec).1
   have same : actual = result := Option.some.inj (output.symm.trans h)
   exact same ▸ Classical.choice (Classical.choose_spec spec).2
+
+/-- The retained rebuilt descriptors and final native conversion preserve
+every old value in the same ambient model as ordinary suffix traversal. -/
+noncomputable def rebuild (suffix : Suffix source)
+    (rebuilt : Rebuilt conversion suffix)
+    (h : conversion.rebuild? suffix = some rebuilt) :
+    Model rebuilt.result (original.extend suffix) := by
+  have he := congrArg (Option.map Rebuilt.result) h
+  rw [conversion.rebuild_result suffix] at he
+  exact model.extend suffix rebuilt.result (by simpa only [Option.map_some] using he)
 
 omit [IsStrictOrderedRing K] [IsRealClosed K] in
 include model in
@@ -359,6 +382,14 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.extend' depends on axioms: [propex
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.extend
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_exists' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuild_exists
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuild
 
 /--
 info: 'Hex.RealClosure.Tower.Conversion.Model.cast' depends on axioms: [propext, Classical.choice, Quot.sound]

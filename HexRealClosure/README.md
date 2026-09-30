@@ -981,9 +981,13 @@ the actual conversion closures.
 `Suffix` represents a finite sequence of validated later root levels. Its
 `context` is the original final context. `Conversion.extend?` rebuilds every
 level in order and returns the conversion into the new immutable final
-context. Every original context and value remains valid independently. The
-converted descriptors are not returned as a new `Suffix`; another refinement
-of the rebuilt tower requires that additional interface and model alignment.
+context. `Conversion.rebuild?` additionally returns a `Rebuilt` result with
+the converted validated descriptors as a new `Suffix`. Its context equality
+binds that suffix to the final conversion, and `rebuild_result` proves it
+returns the same conversion as `extend?`. A caller can select a descriptor in
+the rebuilt suffix for a further checked refinement; automatic selection and
+conversion of arbitrary dependent expressions remain separate work. Every
+original context and value remains valid independently.
 
 The companion `Conversion.Model` relates the native conversion to the original
 model and supplies the actual target model. `Model.identity` and `Model.comp`
@@ -993,7 +997,9 @@ relation for the starting refinement; `Model.adjoin` preserves it after every
 successful extension. `adjoin_exists` proves each revalidation and conversion
 succeeds. `extend_exists` proves success and interpretation preservation for an
 arbitrary finite suffix, without caller-supplied replay evidence. `Model.extend`
-interprets a particular result returned by the executable. The generic
+interprets a particular result returned by the executable. `rebuild_exists`
+proves the descriptor-retaining traversal succeeds, and `Model.rebuild`
+interprets its final conversion. The generic
 `zero`, `degree`, `polynomial`, `equal`, `compare` and `mono` results preserve
 canonical zero, dense-polynomial degree and interpretation, actual native
 comparison results, and inclusion of the whole original image field.
@@ -1001,7 +1007,9 @@ comparison results, and inclusion of the whole original image field.
 Run `lake build HexRealClosure.TowerConversionTests HexRealClosureMathlib.TowerTransportTests`.
 The routine native fixture checks a changed nonmonic reducible definition, a
 later linear root, identity, two successive definition changes composed with
-proved context reconciliation, equations and packet ownership.
+proved context reconciliation, equations and packet ownership. It also
+checks that the rebuilt suffix supplies a descriptor suitable for another
+checked re-encoding.
 The explicit four-level native driver is built with
 `lake build hexrealclosure_transport_tests` and run with
 `.lake/build/bin/hexrealclosure_transport_tests`. Routine CI type-checks this

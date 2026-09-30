@@ -17,6 +17,17 @@ open SignDet
 
 private def registry : BaseContext.Registry := fun _ => none
 
+private def canRefine {source : Context registry} (suffix : Suffix source) : Bool :=
+  match suffix with
+  | .nil => false
+  | .root current _ =>
+    match current.buildReencoding (DensePoly.scale (1 + 1) current.raw.head)
+        current.raw.lower current.raw.upper with
+    | .ok (some encoding) =>
+      let changed := Conversion.refine source encoding
+      decide (changed.context.signature ≠ (source.adjoin current).context.signature)
+    | _ => false
+
 /-- Refine a reducible nonmonic definition, reconstruct a later linear root,
 and compose two checked definition changes before rebuilding the later root. -/
 private def sample : Option (Array Bool) :=
@@ -48,11 +59,13 @@ private def sample : Option (Array Bool) :=
     (congrArg Extension.context (base.refine encoding).canonical)
   let next := (Conversion.refine base following).cast same.symm
   let successive := initial.comp next
+  (successive.rebuild? suffix).bind fun rebuilt =>
   (successive.extend? suffix).map fun composed =>
   let value := composed.value old.generator
   let movedOne := composed.value (old.embed one)
   let packet := composed.context.write movedOne
   let identity := Conversion.identity base
+  let nextRefinement := canRefine rebuilt.suffix
   #[decide (composed.context.signature.roots.length = 2),
     decide (old.context.signature ≠ composed.context.signature),
     composed.context.equal (value * value) (composed.value (old.embed (first.embed two))),
@@ -64,9 +77,12 @@ private def sample : Option (Array Bool) :=
     decide (successive.context.signature ≠ initial.context.signature),
     successive.context.equal (successive.value first.generator * successive.value first.generator)
       (successive.value (first.embed two)),
-    identity.context.equal (identity.value two) (1 + 1)]
+    identity.context.equal (identity.value two) (1 + 1),
+    decide (rebuilt.suffix.context.signature = rebuilt.result.context.signature),
+    decide (rebuilt.result.context.signature = composed.context.signature),
+    nextRefinement]
 
-/-- info: some #[true, true, true, true, true, true, true, true, true, true, true, true] -/
+/-- info: some #[true, true, true, true, true, true, true, true, true, true, true, true, true, true, true] -/
 #guard_msgs in
 #eval sample
 

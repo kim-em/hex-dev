@@ -236,6 +236,62 @@ theorem Conversion.extend_root {source : Context registry} (conversion : Convers
       | none => none
       | some next => next.extend? rest := Conversion.extend_root_proof conversion descriptor rest
 
+/-- Rebuilt later roots, retaining the new descriptors as well as the final
+conversion. The equality binds the returned suffix to that conversion's
+actual target context. -/
+structure Rebuilt {source : Context registry} (initial : Conversion source)
+    (original : Suffix source) : Type 1 where
+  result : Conversion original.context
+  suffix : Suffix initial.context
+  context_eq : suffix.context = result.context
+
+/-- Rebuild every later root and retain its validated descriptor. The returned
+suffix can be used as the input for another refinement in the new tower. -/
+def Conversion.rebuild? {source : Context registry} (conversion : Conversion source)
+    (suffix : Suffix source) : Option (Rebuilt conversion suffix) :=
+  match suffix with
+  | .nil => some ⟨conversion, .nil, rfl⟩
+  | .root descriptor rest =>
+    match h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
+        (source.mapDescriptor conversion.context conversion.value descriptor) with
+    | none => none
+    | some converted =>
+      let extension := conversion.context.adjoin converted
+      let pack := extension.pack
+      let next : Conversion (source.adjoin descriptor).context :=
+        ⟨extension.context,
+          fun x => pack
+            (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value)),
+          .adjoin conversion.checked descriptor converted
+            (SignDet.Descriptor.build_raw (SignDet.Descriptor.validate_eq_some.mp h))⟩
+      match next.rebuild? rest with
+      | none => none
+      | some rebuilt =>
+        some ⟨rebuilt.result, .root converted rebuilt.suffix, rebuilt.context_eq⟩
+
+/-- Retaining rebuilt descriptors does not change the final native conversion
+returned by the existing suffix traversal. -/
+theorem Conversion.rebuild_result {source : Context registry}
+    (conversion : Conversion source) (suffix : Suffix source) :
+    (conversion.rebuild? suffix).map Rebuilt.result = conversion.extend? suffix := by
+  induction suffix with
+  | nil => rfl
+  | root descriptor rest ih =>
+    rename_i current
+    simp only [Conversion.rebuild?, Conversion.extend?, Conversion.adjoin?]
+    split
+    · rfl
+    · rename_i converted h
+      let next : Conversion (current.adjoin descriptor).context :=
+        ⟨(conversion.context.adjoin converted).context,
+          fun x => (conversion.context.adjoin converted).pack
+            (DensePoly.ofCoeffs ((current.polynomial descriptor x).toArray.map conversion.value)),
+          .adjoin conversion.checked descriptor converted
+            (SignDet.Descriptor.build_raw (SignDet.Descriptor.validate_eq_some.mp h))⟩
+      cases hr : next.rebuild? rest with
+      | none => simpa only [hr, Option.map, next, Suffix.context] using ih next
+      | some rebuilt => simpa only [hr, Option.map, next, Suffix.context] using ih next
+
 end Hex.RealClosure.Tower
 
 /--
