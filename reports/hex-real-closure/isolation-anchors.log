@@ -1,0 +1,55 @@
+Hex.RealClosure.Bench.runYun    [fixed] repeats=10
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=0f3fe0b, 2026-09-29T21:38:15Z, host=chungus2
+  repeat 0  60.239 µs  (×2^5, total 1.928 ms)
+  repeat 1  60.387 µs  (×2^5, total 1.932 ms)
+  repeat 2  59.595 µs  (×2^5, total 1.907 ms)
+  repeat 3  60.797 µs  (×2^5, total 1.946 ms)
+  repeat 4  60.023 µs  (×2^5, total 1.921 ms)
+  repeat 5  60.245 µs  (×2^5, total 1.928 ms)
+  repeat 6  59.075 µs  (×2^5, total 1.890 ms)
+  repeat 7  59.393 µs  (×2^5, total 1.901 ms)
+  repeat 8  60.228 µs  (×2^5, total 1.927 ms)
+  repeat 9  60.037 µs  (×2^5, total 1.921 ms)
+  median: 60.228 µs    min: 59.075 µs    max: 60.797 µs
+  hash: all repeats agree
+  observed hash: 0x1
+  expected hash: matches
+  peak RSS: 68_360 kB..69_024 kB (across 10 ok repeat(s))
+
+Hex.RealClosure.Bench.runIsolation    [fixed] repeats=10
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=0f3fe0b, 2026-09-29T21:38:16Z, host=chungus2
+  repeat 0  272.299 µs  (×2^2, total 1.089 ms)
+  repeat 1  274.129 µs  (×2^2, total 1.097 ms)
+  repeat 2  272.176 µs  (×2^2, total 1.089 ms)
+  repeat 3  273.385 µs  (×2^2, total 1.094 ms)
+  repeat 4  272.106 µs  (×2^2, total 1.088 ms)
+  repeat 5  272.691 µs  (×2^2, total 1.091 ms)
+  repeat 6  271.082 µs  (×2^2, total 1.084 ms)
+  repeat 7  269.274 µs  (×2^2, total 1.077 ms)
+  repeat 8  272.311 µs  (×2^2, total 1.089 ms)
+  repeat 9  273.220 µs  (×2^2, total 1.093 ms)
+  median: 272.311 µs    min: 269.274 µs    max: 274.129 µs
+  hash: all repeats agree
+  observed hash: 0x1
+  expected hash: matches
+  peak RSS: 68_392 kB..69_028 kB (across 10 ok repeat(s))
+
+Hex.RealClosure.Bench.runAssembly    [fixed] repeats=10
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=0f3fe0b, 2026-09-29T21:38:16Z, host=chungus2
+  repeat 0  199.652 µs  (×2^3, total 1.597 ms)
+  repeat 1  198.885 µs  (×2^3, total 1.591 ms)
+  repeat 2  198.910 µs  (×2^3, total 1.591 ms)
+  repeat 3  195.448 µs  (×2^3, total 1.564 ms)
+  repeat 4  196.460 µs  (×2^3, total 1.572 ms)
+  repeat 5  198.364 µs  (×2^3, total 1.587 ms)
+  repeat 6  203.237 µs  (×2^3, total 1.626 ms)
+  repeat 7  196.403 µs  (×2^3, total 1.571 ms)
+  repeat 8  195.864 µs  (×2^3, total 1.567 ms)
+  repeat 9  197.206 µs  (×2^3, total 1.578 ms)
+  median: 198.364 µs    min: 195.448 µs    max: 203.237 µs
+  hash: all repeats agree
+  observed hash: 0x1
+  expected hash: matches
+  peak RSS: 68_452 kB..68_992 kB (across 10 ok repeat(s))
+
+exported to reports/hex-real-closure/isolation-anchors.json

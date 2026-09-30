@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexRealClosure.Element
 import HexRealClosure.AlgebraicContext
+import HexRealClosure.RootFactors
 import LeanBench
 
 namespace Hex.RealClosure.Bench
@@ -207,6 +208,100 @@ def runGeneral : Unit → IO UInt64 := fun _ => do
     throw (IO.userError "general arithmetic benchmark: arithmetic mismatch")
 
 setup_fixed_benchmark runGeneral where {
+  repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
+}
+
+private def repeated : DensePoly Rat :=
+  DensePoly.scale (-3) (x * x * (x * x - 2) * (x * x - 2) * (x * x - 2) *
+    (x - 3) * (x - 3) * (x - 3) * (x - 3) * (x - 3))
+
+initialize repeatedRef : IO.Ref (Option (DensePoly Rat)) ← IO.mkRef (some repeated)
+initialize isolationRef : IO.Ref (Option (DensePoly Rat)) ← IO.mkRef (some head)
+
+/-- Timed Yun recurrence on the nonzero quotient after exact zero extraction.
+The matching assembly anchor below includes both stages and factor isolation. -/
+def runYun : Unit → IO UInt64 := fun _ => do
+  let some p ← repeatedRef.get
+    | throw (IO.userError "Yun benchmark: missing input")
+  let (quotient, multiplicity) := ZeroFactor.remove p
+  match Yun.decomposeRaw quotient with
+  | .zero => throw (IO.userError "Yun benchmark: nonzero quotient rejected")
+  | .factors _ factors =>
+    if multiplicity == 2 && factors.size == 2 &&
+        factors.any (fun factor => factor.2 == 3) &&
+        factors.any (fun factor => factor.2 == 5) then
+      return 1
+    else
+      throw (IO.userError "Yun benchmark: incorrect multiplicity factors")
+
+setup_fixed_benchmark runYun where {
+  repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
+}
+
+/-- Timed capped isolation plus descriptor completion for three real roots.
+This includes production of the shared root certificates. -/
+def runIsolation : Unit → IO UInt64 := fun _ => do
+  let some input ← isolationRef.get
+    | throw (IO.userError "isolation benchmark: missing input")
+  match Isolation.complete? Sturm.orderSign (10378 : Nat) input with
+  | .ok (some completion) =>
+    if completion.roots.points.length + completion.roots.descriptors.length == 3 then
+      return 1
+    else
+      throw (IO.userError "isolation benchmark: incorrect root count")
+  | _ => throw (IO.userError "isolation benchmark: producer failed")
+
+setup_fixed_benchmark runIsolation where {
+  repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
+}
+
+/-- Timed zero extraction, Yun recurrence and isolation of every actual
+factor. The repeated rational input has four distinct real roots with labels
+2, 3, 3 and 5. -/
+def runAssembly : Unit → IO UInt64 := fun _ => do
+  let some p ← repeatedRef.get
+    | throw (IO.userError "assembly benchmark: missing input")
+  match Roots.assemble Sturm.orderSign (10378 : Nat) p with
+  | .ok (.finite entries) =>
+    if entries.length == 4 &&
+        (entries.filter (fun e => e.multiplicity == 2)).length == 1 &&
+        (entries.filter (fun e => e.multiplicity == 3)).length == 2 &&
+        (entries.filter (fun e => e.multiplicity == 5)).length == 1 then
+      return 1
+    else
+      throw (IO.userError "assembly benchmark: incorrect root labels")
+  | _ => throw (IO.userError "assembly benchmark: producer failed")
+
+setup_fixed_benchmark runAssembly where {
+  repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
+}
+
+/-- Functional timing anchor for a second selected root over the first root's
+stored algebraic values. Both descriptor validations and the nested sign and
+zero queries occur inside the timed call. -/
+def runNested : Unit → IO UInt64 := fun _ => do
+  let some input ← rawRef.get
+    | throw (IO.userError "nested benchmark: missing first descriptor")
+  let some firstRoot := SignDet.Descriptor.validate Sturm.orderSign 7 input
+    | throw (IO.userError "nested benchmark: first descriptor rejected")
+  let first := Algebraic.Context.adjoin firstRoot (fun q : Rat => q.den == 1)
+  let alpha := Algebraic.Element.ofPoly (context := first) x
+  let y : DensePoly (Algebraic.Element first) := DensePoly.ofCoeffs #[0, 1]
+  let raw : SignDet.RawDescriptor (Algebraic.Element first) Nat :=
+    { context := 8, head := y * y - DensePoly.C alpha,
+      lower := .finite 1, upper := .finite 2, indices := [], signs := [] }
+  let some secondRoot := SignDet.Descriptor.validate Algebraic.Element.sign 8 raw
+    | throw (IO.userError "nested benchmark: second descriptor rejected")
+  let second := first.extend secondRoot
+  let beta := Algebraic.Element.ofPoly (context := second) y
+  let target := Algebraic.Element.ofCoeff (context := second) alpha
+  if beta.sign == 1 && (beta * beta - target).sign == 0 &&
+      (beta * beta⁻¹ - 1).sign == 0 then
+    return 1
+  else
+    throw (IO.userError "nested benchmark: selected-value checks failed")
+
+setup_fixed_benchmark runNested where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 

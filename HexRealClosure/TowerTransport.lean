@@ -99,6 +99,70 @@ def Conversion.refine (parent : Context registry)
   ⟨(parent.refine encoding).extension.context, (parent.refine encoding).transport,
     .refine parent encoding⟩
 
+/-- One native conversion step after descriptor validation. Both suffix
+traversals use this exact converted descriptor and packing closure. -/
+def Conversion.adjoinChecked {source : Context registry} (conversion : Conversion source)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (converted : SignDet.Descriptor conversion.context.Value Signature
+      conversion.context.sign conversion.context.signature)
+    (h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
+      (source.mapDescriptor conversion.context conversion.value descriptor) = some converted) :
+    Conversion (source.adjoin descriptor).context :=
+  let extension := conversion.context.adjoin converted
+  let pack := extension.pack
+  ⟨extension.context,
+    fun x => pack
+      (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value)),
+    .adjoin conversion.checked descriptor converted
+      (SignDet.Descriptor.build_raw (SignDet.Descriptor.validate_eq_some.mp h))⟩
+
+private theorem Conversion.adjoinChecked_context_proof {source : Context registry}
+    (conversion : Conversion source)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (converted : SignDet.Descriptor conversion.context.Value Signature
+      conversion.context.sign conversion.context.signature)
+    (h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
+      (source.mapDescriptor conversion.context conversion.value descriptor) = some converted) :
+    (conversion.adjoinChecked descriptor converted h).context =
+      (conversion.context.adjoin converted).context := rfl
+
+/-- The validated step creates exactly the child of the converted descriptor. -/
+theorem Conversion.adjoinChecked_context {source : Context registry}
+    (conversion : Conversion source)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (converted : SignDet.Descriptor conversion.context.Value Signature
+      conversion.context.sign conversion.context.signature)
+    (h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
+      (source.mapDescriptor conversion.context conversion.value descriptor) = some converted) :
+    (conversion.adjoinChecked descriptor converted h).context =
+      (conversion.context.adjoin converted).context :=
+  conversion.adjoinChecked_context_proof descriptor converted h
+
+private theorem Conversion.adjoinChecked_value_proof {source : Context registry}
+    (conversion : Conversion source)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (converted : SignDet.Descriptor conversion.context.Value Signature
+      conversion.context.sign conversion.context.signature)
+    (h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
+      (source.mapDescriptor conversion.context conversion.value descriptor) = some converted) :
+    HEq (conversion.adjoinChecked descriptor converted h).value
+      (fun x => conversion.context.ofPoly converted
+        (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value))) :=
+  HEq.rfl
+
+/-- The validated step repacks the actual converted polynomial. -/
+theorem Conversion.adjoinChecked_value {source : Context registry}
+    (conversion : Conversion source)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (converted : SignDet.Descriptor conversion.context.Value Signature
+      conversion.context.sign conversion.context.signature)
+    (h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
+      (source.mapDescriptor conversion.context conversion.value descriptor) = some converted) :
+    HEq (conversion.adjoinChecked descriptor converted h).value
+      (fun x => conversion.context.ofPoly converted
+        (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value))) :=
+  conversion.adjoinChecked_value_proof descriptor converted h
+
 /-- Rebuild one more later root and convert all values at that level. Repeating
 this operation rebuilds any finite list of later levels without changing old contexts. -/
 def Conversion.adjoin? {source : Context registry} (conversion : Conversion source)
@@ -107,14 +171,7 @@ def Conversion.adjoin? {source : Context registry} (conversion : Conversion sour
   match h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
       (source.mapDescriptor conversion.context conversion.value descriptor) with
   | none => none
-  | some converted =>
-    let extension := conversion.context.adjoin converted
-    let pack := extension.pack
-    some ⟨extension.context,
-      fun x => pack
-        (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value)),
-      .adjoin conversion.checked descriptor converted
-        (SignDet.Descriptor.build_raw (SignDet.Descriptor.validate_eq_some.mp h))⟩
+  | some converted => some (conversion.adjoinChecked descriptor converted h)
 
 private theorem Conversion.refine_spec_proof (parent : Context registry)
     {source : SignDet.Descriptor parent.Value Signature parent.sign parent.signature}
@@ -235,6 +292,91 @@ theorem Conversion.extend_root {source : Context registry} (conversion : Convers
       match conversion.adjoin? descriptor with
       | none => none
       | some next => next.extend? rest := Conversion.extend_root_proof conversion descriptor rest
+
+/-- Native provenance for the exact descriptors returned by suffix rebuilding. -/
+inductive Rebuilds : {source : Context registry} → (initial : Conversion source) →
+    (original : Suffix source) → (result : Conversion original.context) →
+    (suffix : Suffix initial.context) → Prop where
+  | nil {source : Context registry} (initial : Conversion source) :
+      Rebuilds initial .nil initial .nil
+  | root {source : Context registry} (initial : Conversion source)
+      (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+      (rest : Suffix (source.adjoin descriptor).context)
+      (converted : SignDet.Descriptor initial.context.Value Signature
+        initial.context.sign initial.context.signature)
+      (h : SignDet.Descriptor.validate initial.context.sign initial.context.signature
+        (source.mapDescriptor initial.context initial.value descriptor) = some converted)
+      {result : Conversion rest.context}
+      {suffix : Suffix (initial.adjoinChecked descriptor converted h).context}
+      (tail : Rebuilds (initial.adjoinChecked descriptor converted h) rest result suffix) :
+      Rebuilds initial (.root descriptor rest) result
+        (.root converted (initial.adjoinChecked_context descriptor converted h ▸ suffix))
+
+/-- Rebuilt later roots, retaining the new descriptors as well as the final
+conversion. The equality binds the returned suffix to that conversion's
+actual target context; the erased trace pins each descriptor to its validated
+native step. -/
+structure Rebuilt {source : Context registry} (initial : Conversion source)
+    (original : Suffix source) : Type 1 where
+  private mk ::
+  result : Conversion original.context
+  suffix : Suffix initial.context
+  context_eq : suffix.context = result.context
+  checked : Rebuilds initial original result suffix
+
+/-- A rebuilt nonempty suffix starts with a validated converted root. -/
+theorem Rebuilt.root_shape {source : Context registry} {initial : Conversion source}
+    {descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature}
+    {rest : Suffix (source.adjoin descriptor).context}
+    (rebuilt : Rebuilt initial (.root descriptor rest)) :
+    ∃ converted : SignDet.Descriptor initial.context.Value Signature
+        initial.context.sign initial.context.signature,
+      ∃ tail : Suffix (initial.context.adjoin converted).context,
+        rebuilt.suffix = .root converted tail := by
+  rcases rebuilt with ⟨result, suffix, context_eq, checked⟩
+  cases checked with
+  | root _ _ _ converted h tail =>
+    exact ⟨converted, _, rfl⟩
+
+/-- Rebuild every later root and retain its validated descriptor. The returned
+suffix supplies checked executable inputs for another refinement. -/
+def Conversion.rebuild? {source : Context registry} (conversion : Conversion source)
+    (suffix : Suffix source) : Option (Rebuilt conversion suffix) :=
+  match suffix with
+  | .nil => some ⟨conversion, .nil, rfl, .nil conversion⟩
+  | .root descriptor rest =>
+    match h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
+        (source.mapDescriptor conversion.context conversion.value descriptor) with
+    | none => none
+    | some converted =>
+      let next : Conversion (source.adjoin descriptor).context :=
+        conversion.adjoinChecked descriptor converted h
+      match next.rebuild? rest with
+      | none => none
+      | some rebuilt =>
+        let same := conversion.adjoinChecked_context descriptor converted h
+        some ⟨rebuilt.result, .root converted (same ▸ rebuilt.suffix),
+          by cases same; exact rebuilt.context_eq,
+          .root conversion descriptor rest converted h rebuilt.checked⟩
+
+/-- Retaining rebuilt descriptors does not change the final native conversion
+returned by the existing suffix traversal. -/
+theorem Conversion.rebuild_result {source : Context registry}
+    (conversion : Conversion source) (suffix : Suffix source) :
+    (conversion.rebuild? suffix).map Rebuilt.result = conversion.extend? suffix := by
+  induction suffix with
+  | nil => rfl
+  | root descriptor rest ih =>
+    rename_i current
+    simp only [Conversion.rebuild?, Conversion.extend?, Conversion.adjoin?]
+    split
+    · rfl
+    · rename_i converted h
+      let next : Conversion (current.adjoin descriptor).context :=
+        conversion.adjoinChecked descriptor converted h
+      cases hr : next.rebuild? rest with
+      | none => simpa only [hr, Option.map, next, Suffix.context] using ih next
+      | some rebuilt => simpa only [hr, Option.map, next, Suffix.context] using ih next
 
 end Hex.RealClosure.Tower
 

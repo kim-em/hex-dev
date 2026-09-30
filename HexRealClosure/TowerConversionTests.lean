@@ -17,6 +17,16 @@ open SignDet
 
 private def registry : BaseContext.Registry := fun _ => none
 
+private def refineAgain? {source : Context registry} (suffix : Suffix source) :
+    Option (Conversion suffix.context) :=
+  match suffix with
+  | .nil => none
+  | .root current rest =>
+    match current.buildReencoding (DensePoly.scale (1 + 1) current.raw.head)
+        current.raw.lower current.raw.upper with
+    | .ok (some encoding) => (Conversion.refine source encoding).extend? rest
+    | _ => none
+
 /-- Refine a reducible nonmonic definition, reconstruct a later linear root,
 and compose two checked definition changes before rebuilding the later root. -/
 private def sample : Option (Array Bool) :=
@@ -48,7 +58,10 @@ private def sample : Option (Array Bool) :=
     (congrArg Extension.context (base.refine encoding).canonical)
   let next := (Conversion.refine base following).cast same.symm
   let successive := initial.comp next
-  (successive.extend? suffix).map fun composed =>
+  (successive.rebuild? suffix).bind fun rebuilt =>
+  (refineAgain? rebuilt.suffix).map fun second =>
+  let composed := rebuilt.result
+  let total := rebuilt.result.comp (second.cast rebuilt.context_eq)
   let value := composed.value old.generator
   let movedOne := composed.value (old.embed one)
   let packet := composed.context.write movedOne
@@ -64,9 +77,13 @@ private def sample : Option (Array Bool) :=
     decide (successive.context.signature ≠ initial.context.signature),
     successive.context.equal (successive.value first.generator * successive.value first.generator)
       (successive.value (first.embed two)),
-    identity.context.equal (identity.value two) (1 + 1)]
+    identity.context.equal (identity.value two) (1 + 1),
+    decide (total.context.signature.roots.length = 2),
+    decide (total.context.signature ≠ composed.context.signature),
+    total.context.equal (total.value old.generator * total.value old.generator)
+      (total.value (old.embed (first.embed two)))]
 
-/-- info: some #[true, true, true, true, true, true, true, true, true, true, true, true] -/
+/-- info: some #[true, true, true, true, true, true, true, true, true, true, true, true, true, true, true] -/
 #guard_msgs in
 #eval sample
 

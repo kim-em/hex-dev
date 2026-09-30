@@ -1,0 +1,18 @@
+Hex.RealClosure.Bench.runNested    [fixed] repeats=10
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=04f7262-dirty, 2026-09-29T22:17:51Z, host=chungus2
+  repeat 0  143.664 ms
+  repeat 1  145.117 ms
+  repeat 2  145.509 ms
+  repeat 3  144.388 ms
+  repeat 4  145.077 ms
+  repeat 5  143.900 ms
+  repeat 6  144.120 ms
+  repeat 7  146.707 ms
+  repeat 8  143.603 ms
+  repeat 9  143.541 ms
+  median: 144.388 ms    min: 143.541 ms    max: 146.707 ms
+  hash: all repeats agree
+  observed hash: 0x1
+  expected hash: matches
+  peak RSS: 68_376 kB..69_164 kB (across 10 ok repeat(s))
+exported to reports/hex-real-closure/nested-anchor.json
