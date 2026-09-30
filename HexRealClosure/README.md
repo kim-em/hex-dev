@@ -1161,7 +1161,9 @@ and fraction-field theorems, transports them through the executable equivalence,
 then uses transitivity of algebraicity. It applies after restricting a merely
 real-closed old ambient to its relative algebraic union.
 `Ambient.mappedNative_algebraic` states the same result with the native field
-dictionaries used by checked tower conversion.
+dictionaries used by checked tower conversion. `Ambient.nativeHom_algebraic`
+transports the old ambient's algebraicity across the native rational-function
+field-dictionary cast.
 `exists_base_lower` proves that every positive element of an ordered algebraic
 extension has a smaller positive element from the base, using an ordered-field
 polynomial root bound without an Archimedean assumption.
@@ -1169,8 +1171,9 @@ polynomial root bound without an Archimedean assumption.
 field has no separate Mathlib order. `infinitesimal_lt_algebraic` then shows
 that a parameter smaller than every positive base image stays below every
 positive element of the old algebraic field. Kernel examples instantiate
-algebraicity with actual ordered algebraic ambient models and derive the bound
-inside a relative algebraic closure from inequalities known only over its base.
+algebraicity with actual ordered algebraic ambient models, including the native
+ℚ(ε) dictionary cast, and derive the bound inside a relative algebraic closure
+from inequalities known only over its base.
 The computational stage-order identification still remains.
 
 ## Ordered algebraic ambient models

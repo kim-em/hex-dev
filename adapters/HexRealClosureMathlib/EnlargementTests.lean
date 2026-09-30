@@ -13,6 +13,8 @@ public section
 namespace Hex.RealClosure
 
 open scoped Hex.OrderedFn.Infinitesimal
+
+section Semantic
 attribute [local instance 2000] Field.toGrindField
 
 /-- The real closure of an old algebraic ambient remains algebraic over the
@@ -27,26 +29,29 @@ noncomputable example (old : Ambient Rat) [DecidableEq old.Carrier] :
   letI : Algebra.IsAlgebraic Rat old.Carrier := ⟨fun x => old.algebraic x⟩
   exact Ambient.mapped_algebraic Rat old.Carrier (Ambient.infinitesimal old.Carrier)
 
-/-- The same enlargement uses the native rational-function dictionaries of a
-validated infinitesimal coefficient base. -/
-noncomputable example (old : Ambient (Hex.RationalFn Rat))
-    [DecidableEq old.Carrier] :
+end Semantic
+
+/-- The actual native rational infinitesimal base retains algebraicity through
+both its dictionary cast and the next mapped infinitesimal extension. -/
+noncomputable example :
+    let old := Ambient.infinitesimal Rat
     letI : Field (Hex.RationalFn Rat) := HexPolyMathlib.fieldOfGrind
+    let f := Ambient.nativeHom HexRationalFnMathlib.ratField_eq old
     let next := Ambient.infinitesimal old.Carrier
     letI : Field (Hex.RationalFn (Hex.RationalFn Rat)) :=
       HexPolyMathlib.fieldOfGrind
     letI : Algebra (Hex.RationalFn (Hex.RationalFn Rat)) next.Carrier :=
-      (Ambient.mappedNativeHom HexPolyMathlib.toGrind_fieldOfGrind
-        old.inclusion next).toAlgebra
+      (Ambient.mappedNativeHom HexPolyMathlib.toGrind_fieldOfGrind f next).toAlgebra
     Algebra.IsAlgebraic (Hex.RationalFn (Hex.RationalFn Rat)) next.Carrier := by
+  classical
+  let old := Ambient.infinitesimal Rat
   letI : Field (Hex.RationalFn Rat) := HexPolyMathlib.fieldOfGrind
-  letI : Algebra (Hex.RationalFn Rat) old.Carrier := old.inclusion.toAlgebra
-  letI : Algebra.IsAlgebraic (Hex.RationalFn Rat) old.Carrier :=
-    ⟨fun x => old.algebraic x⟩
-  exact Ambient.mappedNative_algebraic HexPolyMathlib.toGrind_fieldOfGrind
-    old.inclusion inferInstance (Ambient.infinitesimal old.Carrier)
+  let f := Ambient.nativeHom HexRationalFnMathlib.ratField_eq old
+  exact Ambient.mappedNative_algebraic HexPolyMathlib.toGrind_fieldOfGrind f
+    (Ambient.nativeHom_algebraic HexRationalFnMathlib.ratField_eq old)
+    (Ambient.infinitesimal old.Carrier)
 
-/-- The parameter is known infinitesimal only over the rational base. The
+/-- The parameter is known infinitesimal only over the ordered base. The
 local algebraic bound extends this inequality to every positive element of
 the relative algebraic closure of that base inside the same ambient field. -/
 noncomputable example {B : Type} [Field B] [LinearOrder B]
@@ -67,7 +72,7 @@ noncomputable example {B : Type} [Field B] [LinearOrder B]
       (Union.base_lt (Ambient.coefficientHom_strictMono mid) 0 b).mp (by simpa using hb)
     exact Ambient.X_lt_coefficient mid b hb'
   have he : StrictMono e := fun a b h => (Union.inclusion_lt a b).mpr h
-  exact infinitesimal_lt_algebraic f Union.algebraic e he
-    (mid.inclusion Hex.RationalFn.X) hδ x hx
+  exact infinitesimal_lt_algebraic f e he
+    (mid.inclusion Hex.RationalFn.X) hδ x hx (Union.algebraic x)
 
 end Hex.RealClosure

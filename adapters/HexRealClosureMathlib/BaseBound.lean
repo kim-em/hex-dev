@@ -147,19 +147,19 @@ theorem exists_mapped_lower {B R : Type*} [Field B]
   rw [f.map_zero] at hb
   exact ⟨b, hb, hbx⟩
 
-/-- Infinitesimality relative to the base extends to every positive element
-of an ordered algebraic extension of that base. -/
+/-- Infinitesimality relative to the base extends to a positive element
+algebraic over that base. -/
 theorem infinitesimal_lt_algebraic {B R S : Type*}
     [Field B]
     [Field R] [LinearOrder R] [IsStrictOrderedRing R]
     [Field S] [LinearOrder S] [IsStrictOrderedRing S]
     (f : B →+* R)
-    (algebraic : letI : Algebra B R := f.toAlgebra;
-      ∀ x : R, IsAlgebraic B x)
     (e : R →+* S) (he : StrictMono e)
     (δ : S) (hδ : ∀ b : B, 0 < f b → δ < e (f b))
-    (x : R) (hx : 0 < x) : δ < e x := by
-  obtain ⟨b, hbpos, hbx⟩ := exists_mapped_lower f x hx (algebraic x)
+    (x : R) (hx : 0 < x)
+    (algebraic : letI : Algebra B R := f.toAlgebra; IsAlgebraic B x) :
+    δ < e x := by
+  obtain ⟨b, hbpos, hbx⟩ := exists_mapped_lower f x hx algebraic
   exact (hδ b hbpos).trans (he hbx)
 
 end Hex.RealClosure

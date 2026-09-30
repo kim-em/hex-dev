@@ -136,6 +136,32 @@ theorem mappedNative_algebraic {B R : Type*} [Field B]
   letI : Algebra.IsAlgebraic B R := halg
   exact mapped_algebraic B R ambient
 
+set_option linter.overlappingInstances false in
+/-- The native cast of an algebraic ambient retains algebraicity over its
+executable rational-function coefficient field. -/
+theorem nativeHom_algebraic {L : Type*} [Field L] [LinearOrder L]
+    [IsStrictOrderedRing L] [DecidableEq L]
+    [g : Lean.Grind.Field L]
+    (compatible : Field.toGrindField (K := L) = g)
+    (ambient : Ambient (@Hex.RationalFn L (Field.toGrindField (K := L)) inferInstance)) :
+    letI : Field (@Hex.RationalFn L g inferInstance) := HexPolyMathlib.fieldOfGrind
+    letI : Algebra (@Hex.RationalFn L g inferInstance) ambient.Carrier :=
+      (nativeHom compatible ambient).toAlgebra
+    Algebra.IsAlgebraic (@Hex.RationalFn L g inferInstance) ambient.Carrier := by
+  subst g
+  letI : Field (Hex.RationalFn L) := HexPolyMathlib.fieldOfGrind
+  letI : Algebra (Hex.RationalFn L) ambient.Carrier :=
+    (nativeHom rfl ambient).toAlgebra
+  refine ⟨fun x => ?_⟩
+  obtain ⟨p, hp, hr⟩ := ambient.algebraic x
+  refine ⟨p, hp, ?_⟩
+  change Polynomial.eval₂ (nativeHom rfl ambient) x p = 0
+  have hmap : nativeHom rfl ambient = ambient.inclusion := by
+    ext q
+    simpa using nativeHom_apply rfl ambient q
+  rw [hmap]
+  exact hr
+
 end Ambient
 
 end Hex.RealClosure
@@ -147,3 +173,7 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.Ambient.mappedNative_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Ambient.mappedNative_algebraic
+
+/-- info: 'Hex.RealClosure.Ambient.nativeHom_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Ambient.nativeHom_algebraic
