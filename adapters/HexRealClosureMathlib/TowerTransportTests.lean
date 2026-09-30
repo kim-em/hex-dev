@@ -7,7 +7,7 @@ module
 
 public import HexRealClosureMathlib.TowerTransport
 public import HexRealClosureMathlib.SelectedRoot
-public import HexRealClosureMathlib.TowerUnion
+public import HexRealClosureMathlib.TowerRestriction
 
 namespace Hex.RealClosure.Tower.Conversion.Tests
 
@@ -19,11 +19,16 @@ private noncomputable def rational : Tower.Model base ℝ :=
 /-- Every validated rational-root suffix restricts to the relative algebraic union. -/
 noncomputable example (suffix : Suffix base) :
     Tower.Model suffix.context (Union.Carrier Rat ℝ) :=
-  (rational.extend suffix).restrictUnion (by
-    intro a
-    simpa only [rational] using
-      (Tower.Model.extend_base_algebraic
-        (BaseContext.rational registry) (Rat.castHom ℝ) ratSign suffix a))
+  Tower.Model.baseRestrict (BaseContext.rational registry) (Rat.castHom ℝ)
+    ratSign suffix
+
+/-- Restriction retains the prescribed rational map through every root level. -/
+noncomputable example (suffix : Suffix base) (a : base.Value) :
+    (Tower.Model.baseRestrict (BaseContext.rational registry) (Rat.castHom ℝ)
+      ratSign suffix).value (suffix.embed a) =
+      algebraMap Rat (Union.Carrier Rat ℝ) a.stored :=
+  Tower.Model.baseRestrict_embed (BaseContext.rational registry)
+    (Rat.castHom ℝ) ratSign suffix a
 
 /-- Including an old rational value through any validated root suffix retains
 the same rational embedding. -/
