@@ -49,6 +49,39 @@ theorem Context.enlarge?_suffix_model
         Nonempty (Conversion.Model result (old.extend suffix)) := by
   exact Context.enlarge?_model base suffix rfl old model
 
+/-- The checked result uses the supplied enlarged base interpretation and
+the actual rebuilt descriptors at every later root. -/
+theorem Context.enlarge?_aligned
+    {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    (target_eq : suffix.context = context)
+    {K : Type u} [Field K] [LinearOrder K] [DecidableEq K]
+    [IsStrictOrderedRing K] [IsRealClosed K]
+    (old : Tower.Model (Context.base base) K)
+    (model : Conversion.Model (Conversion.infinitesimal base) old) :
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal base) suffix,
+      (Conversion.infinitesimal base).rebuild? suffix = some rebuilt ∧
+        context.enlarge? = some (rebuilt.result.cast target_eq) ∧
+        ∃ witness : Conversion.Model (rebuilt.result.cast target_eq)
+            (target_eq ▸ old.extend suffix),
+          HEq witness.target (model.target.extend rebuilt.suffix) := by
+  obtain ⟨rebuilt, hrebuilt⟩ := model.rebuild_exists suffix
+  have hresult : (Conversion.infinitesimal base).extend? suffix =
+      some rebuilt.result := by
+    rw [← Conversion.rebuild_result, hrebuilt]
+    rfl
+  have henlarge : context.enlarge? = some (rebuilt.result.cast target_eq) := by
+    rw [Context.enlarge?_eq base suffix target_eq, hresult]
+    rfl
+  let witness := (model.extend suffix rebuilt.result hresult).cast target_eq
+  have halign : HEq witness.target (model.target.extend rebuilt.suffix) :=
+    (model.extend suffix rebuilt.result hresult).cast_target target_eq |>.trans
+      (model.extend_target suffix rebuilt hrebuilt hresult)
+  exact ⟨rebuilt, hrebuilt, henlarge,
+    ⟨witness, halign⟩⟩
+
 /-- A sign-compatible interpretation of the extracted staged base makes
 checked enlargement succeed for its stored root suffix. -/
 theorem Context.enlarge?_exists {context : Context registry}
@@ -94,6 +127,10 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.enlarge?_suffix_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Context.enlarge?_suffix_model
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_aligned' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_aligned
 
 /-- info: 'Hex.RealClosure.Tower.Context.enlarge?_exists' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

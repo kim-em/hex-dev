@@ -1153,6 +1153,13 @@ with a caller's arbitrary old model remains separate. Computing suffix
 contexts during extraction can reconstruct old frames; no depth-scaling cost
 is claimed for this constructor.
 
+`Context.enlarge?_aligned` accepts a proved equality between a stored context
+and the suffix target, then identifies the returned target model with the
+extension of the supplied enlarged base model through the actual rebuilt
+descriptors. `Tower.Model.extend_embed` proves that this extended model agrees
+with the supplied enlarged base model on embedded base values; the theorem
+expresses the target alignment up to the context casts.
+
 General `Context.enlarge` still requires:
 
 1. Relating an arbitrary old model to a chosen `B`-algebra map, proving
@@ -1172,8 +1179,10 @@ General `Context.enlarge` still requires:
    `Ambient.mappedNativeHom` interprets `B(ε)` in the enlarged ambient field,
    preserving coefficients, `X` and signs. The semantic `mappedHom` also
    preserves order for an ordered coefficient-field embedding.
-3. Proving selected-root mapping through ordered field embeddings and agreement
-   of mapped towers with descriptor-based re-extension at every root level.
+3. Proving selected-root mapping through ordered field embeddings and
+   identifying the lifted old tower with the descriptor-based re-extension.
+   `Context.enlarge?_aligned` already identifies the executable re-extension
+   target with its supplied enlarged base model.
 4. Applying the local algebraic bound to the computational `B(ε)` levels and
    proving their staged order agrees with the enlarged ambient interpretation.
 5. Gathering a dependency-closed collection of live contexts and assembling
