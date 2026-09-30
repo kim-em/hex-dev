@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.TowerAlgebraic
+public import HexRealClosureMathlib.TowerUnion
 public import HexRealClosureMathlib.TowerYun
 public import HexRealClosureMathlib.TowerRefinement
 public import HexRealClosureMathlib.SelectedRoot
@@ -81,6 +82,25 @@ example (a : (third d₁ d₂ d₃).context.Value) :
 example (a : (model₃ d₁ d₂ d₃).field) :
     IsAlgebraic (model₂ d₁ d₂).field (a : ℝ) :=
   (model₂ d₁ d₂).field_algebraic d₃ a
+
+/-- Algebraicity over ℚ propagates through three actual selected-root levels. -/
+private theorem model₃_algebraic (a : (third d₁ d₂ d₃).context.Value) :
+    IsAlgebraic Rat ((model₃ d₁ d₂ d₃).value a) := by
+  have base_alg (x : base.Value) : IsAlgebraic Rat (rational.value x) := by
+    simpa only [rational] using
+      (Model.base_algebraic (BaseContext.rational registry) (Rat.castHom ℝ) ratSign x)
+  have first_alg (x : (first d₁).context.Value) :
+      IsAlgebraic Rat ((model₁ d₁).value x) :=
+    rational.adjoin_algebraic_over d₁ base_alg x
+  have second_alg (x : (second d₁ d₂).context.Value) :
+      IsAlgebraic Rat ((model₂ d₁ d₂).value x) :=
+    (model₁ d₁).adjoin_algebraic_over d₂ first_alg x
+  exact (model₂ d₁ d₂).adjoin_algebraic_over d₃ second_alg a
+
+/-- The three-level model therefore restricts to the relative algebraic union. -/
+noncomputable example : Model (third d₁ d₂ d₃).context (Union.Carrier Rat ℝ) :=
+  (model₃ d₁ d₂ d₃).restrictUnion (model₃_algebraic d₁ d₂ d₃)
+
 example (a b : (second d₁ d₂).context.Value) :
     (third d₁ d₂ d₃).context.equal
       ((third d₁ d₂ d₃).embed a) ((third d₁ d₂ d₃).embed b) =
