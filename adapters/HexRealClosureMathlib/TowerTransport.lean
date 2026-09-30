@@ -353,16 +353,14 @@ theorem rebuild_exists (suffix : Suffix source) :
 /-- Interpret the final conversion using the exact rebuilt suffix, while
 preserving every old value in the original ambient field. -/
 noncomputable def rebuild (suffix : Suffix source)
-    (rebuilt : Rebuilt conversion suffix)
-    (_h : conversion.rebuild? suffix = some rebuilt) :
+    (rebuilt : Rebuilt conversion suffix) :
     Model rebuilt.result (original.extend suffix) :=
   Classical.choose (model.align_exists rebuilt.checked)
 
 /-- The semantic target of the final conversion is the model obtained by
 interpreting its returned validated suffix from the starting target model. -/
-theorem rebuild_target (suffix : Suffix source) (rebuilt : Rebuilt conversion suffix)
-    (h : conversion.rebuild? suffix = some rebuilt) :
-    HEq (model.rebuild suffix rebuilt h).target
+theorem rebuild_target (suffix : Suffix source) (rebuilt : Rebuilt conversion suffix) :
+    HEq (model.rebuild suffix rebuilt).target
       (model.target.extend rebuilt.suffix) :=
   Classical.choose_spec (model.align_exists rebuilt.checked)
 
@@ -378,7 +376,7 @@ private theorem extend_aligned (suffix : Suffix source) (result : Conversion suf
     rw [conversion.rebuild_result suffix, h] at mapped
     exact Option.some.inj (by simpa only [Option.map_some] using mapped.symm)
   subst result
-  exact ⟨model.rebuild suffix rebuilt hr, rebuilt, hr, model.rebuild_target suffix rebuilt hr⟩
+  exact ⟨model.rebuild suffix rebuilt, rebuilt, hr, model.rebuild_target suffix rebuilt⟩
 
 /-- Interpret a particular result returned by recursive reconstruction using
 the same checked suffix model as `rebuild`. -/
@@ -404,33 +402,31 @@ theorem extend_target (suffix : Suffix source)
 equality and model alignment discharge the ownership change automatically. -/
 noncomputable def rebuildComp (suffix : Suffix source)
     (rebuilt : Rebuilt conversion suffix)
-    (h : conversion.rebuild? suffix = some rebuilt)
     (next : Conversion rebuilt.suffix.context)
     (following : Model next (model.target.extend rebuilt.suffix)) :
     Model (rebuilt.result.comp (next.cast rebuilt.context_eq))
       (original.extend suffix) := by
-  let first := model.rebuild suffix rebuilt h
+  let first := model.rebuild suffix rebuilt
   let right := following.cast rebuilt.context_eq
   have cast_target := (model.target.extend rebuilt.suffix).cast_heq rebuilt.context_eq
   have target_eq : first.target =
       (rebuilt.context_eq ▸ model.target.extend rebuilt.suffix) :=
-    eq_of_heq ((model.rebuild_target suffix rebuilt h).trans cast_target.symm)
+    eq_of_heq ((model.rebuild_target suffix rebuilt).trans cast_target.symm)
   exact first.comp (target_eq.symm ▸ right)
 
 /-- A composed later conversion retains the later target model, so further
 checked refinements can use it without recovering an arbitrary witness. -/
 theorem rebuildComp_target (suffix : Suffix source)
     (rebuilt : Rebuilt conversion suffix)
-    (h : conversion.rebuild? suffix = some rebuilt)
     (next : Conversion rebuilt.suffix.context)
     (following : Model next (model.target.extend rebuilt.suffix)) :
-    HEq (model.rebuildComp suffix rebuilt h next following).target following.target := by
-  let first := model.rebuild suffix rebuilt h
+    HEq (model.rebuildComp suffix rebuilt next following).target following.target := by
+  let first := model.rebuild suffix rebuilt
   let right := following.cast rebuilt.context_eq
   have cast_target := (model.target.extend rebuilt.suffix).cast_heq rebuilt.context_eq
   have target_eq : first.target =
       (rebuilt.context_eq ▸ model.target.extend rebuilt.suffix) :=
-    eq_of_heq ((model.rebuild_target suffix rebuilt h).trans cast_target.symm)
+    eq_of_heq ((model.rebuild_target suffix rebuilt).trans cast_target.symm)
   exact (first.comp_target (target_eq.symm ▸ right)).trans
     ((target_cast_original target_eq right).trans (following.cast_target rebuilt.context_eq))
 

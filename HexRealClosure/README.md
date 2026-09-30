@@ -219,7 +219,9 @@ Run `lake build hexrealclosure_bounds_conformance`, then
 
 A failed bound search is a request for whole-line BKR completion. It never
 means that the polynomial has no roots. The bounded bisection and complete
-isolation driver, general contexts and recursive transport remain unimplemented.
+isolation driver and automatic extraction of a tower suffix from requested
+expressions remain unimplemented. Checked conversion through an explicitly
+supplied finite suffix is described below.
 
 `deflate? p a` removes the factor `X-a` with the shared monic polynomial division.
 `linearFactor a` stores the literal leading coefficient one, and the constructor
@@ -727,8 +729,9 @@ from the old context cannot be reused in the new one. The native tests include
 a restored high-degree representative and a nonmonic target that keeps its
 unreduced polynomial. Each converted nonzero coefficient currently runs its
 own sign query; reusable sign handles are a later cost improvement. This
-conversion keeps the predecessor fixed; recursively converting a tower's
-later descriptors remains separate.
+conversion keeps the predecessor fixed. `Tower.Refinement` below converts an
+immediate later descriptor, and `Tower.Conversion` converts an explicitly
+supplied finite suffix. Automatic dependency-closure selection remains separate.
 
 `AlgebraicRoots.lean` applies the successful root-assembly theorems to actual
 `Algebraic.Element` coefficients. Given a zero-reflecting predecessor interpretation into an ordered real closed
@@ -943,8 +946,9 @@ model through three arbitrary validated root levels, including the algebraicity
 and image-field inclusions. The semantic root results use the proved
 `Tarski.check_rootSum` theorem and only the standard three axioms. They are
 relative to a supplied real-closed
-ambient field and base embedding. Compatibility across native refinements and
-identification with the real-closed algebraic union remain open. No tower
+ambient field and base embedding. The companions below prove compatibility for
+a checked final-root change and conversion through a validated finite suffix.
+Identification with the real-closed algebraic union remains open. No tower
 performance claim is made.
 
 ### Yun decomposition over native tower coefficients
@@ -1014,8 +1018,9 @@ polynomials and a retained representative of degree seven. Kernel examples
 apply the preservation results to arbitrary validated three-level towers.
 The companion proofs use the proved root-sum theorem and only the standard
 three axioms. This API covers a final root change and its immediate later
-level. Automatic recursive rebuilding of a dependency closure and base
-enlargement remain open. No performance result is claimed here.
+level. The recursive conversion below handles an explicitly supplied suffix;
+automatic dependency-closure selection and base enlargement remain open. No
+performance result is claimed here.
 
 ### Recursive conversion through later root levels
 
@@ -1045,13 +1050,13 @@ expressions remain open. Every original context and value remains valid
 independently.
 
 The companion `Conversion.Model` relates the native conversion to the original
-model and supplies the actual target model. `Model.identity` and `Model.comp`
-interpret identity and composition; `Model.cast` reconciles the source model
-with its proved context equality. `Model.refine` establishes this
-relation for the starting refinement; `Model.adjoin` preserves it after every
-successful extension. `adjoin_exists` proves each revalidation and conversion
-succeeds. `extend_exists` proves success and interpretation preservation for an
-arbitrary finite suffix, without caller-supplied replay evidence. `Model.extend`
+model and supplies the actual target model. Its `identity` and `comp` interpret
+identity and composition; `cast` reconciles the source model with its proved
+context equality. `refine` establishes this relation for the starting
+refinement; `adjoin` preserves it after every successful extension.
+`adjoin_exists` proves each revalidation and conversion succeeds.
+`extend_exists` proves success and interpretation preservation for an arbitrary
+finite suffix, without caller-supplied replay evidence. `Conversion.Model.extend`
 interprets a particular result returned by the executable and `extend_target`
 identifies its target with the checked rebuilt suffix. `rebuild_exists`
 proves the descriptor-retaining traversal succeeds, and `Model.rebuild`

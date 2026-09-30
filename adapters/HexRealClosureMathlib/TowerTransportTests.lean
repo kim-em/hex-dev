@@ -38,11 +38,10 @@ example (result : Conversion suffix.context)
 
 /-- The returned suffix has the same ambient interpretation as the final
 conversion, so a later semantic conversion can compose with it. -/
-example (rebuilt : Rebuilt (Conversion.refine base encoding) suffix)
-    (h : (Conversion.refine base encoding).rebuild? suffix = some rebuilt) :
-    HEq ((Conversion.Model.refine rational encoding).rebuild suffix rebuilt h).target
+example (rebuilt : Rebuilt (Conversion.refine base encoding) suffix) :
+    HEq ((Conversion.Model.refine rational encoding).rebuild suffix rebuilt).target
       ((Conversion.Model.refine rational encoding).target.extend rebuilt.suffix) :=
-  (Conversion.Model.refine rational encoding).rebuild_target suffix rebuilt h
+  (Conversion.Model.refine rational encoding).rebuild_target suffix rebuilt
 
 example (rebuilt : Rebuilt (Conversion.refine base encoding) suffix)
     (hr : (Conversion.refine base encoding).rebuild? suffix = some rebuilt)
@@ -52,13 +51,12 @@ example (rebuilt : Rebuilt (Conversion.refine base encoding) suffix)
   (Conversion.Model.refine rational encoding).extend_target suffix rebuilt hr h
 
 example (rebuilt : Rebuilt (Conversion.refine base encoding) suffix)
-    (h : (Conversion.refine base encoding).rebuild? suffix = some rebuilt)
     (next : Conversion rebuilt.suffix.context)
     (following : Conversion.Model next
       ((Conversion.Model.refine rational encoding).target.extend rebuilt.suffix)) :
     Nonempty (Conversion.Model (rebuilt.result.comp (next.cast rebuilt.context_eq))
       ((rational.adjoin descriptor).extend suffix)) :=
-  ⟨(Conversion.Model.refine rational encoding).rebuildComp suffix rebuilt h next following⟩
+  ⟨(Conversion.Model.refine rational encoding).rebuildComp suffix rebuilt next following⟩
 
 private theorem second_refine {source : Context registry} (ambient : Tower.Model source ℝ)
     {suffix' : Suffix source}
@@ -90,7 +88,6 @@ example {later : SignDet.Descriptor (base.adjoin descriptor).context.Value Signa
 /-- A checked change of the first rebuilt root extends through the remaining
 suffix, then composes with the original conversion. -/
 example (rebuilt : Rebuilt (Conversion.refine base encoding) suffix)
-    (h : (Conversion.refine base encoding).rebuild? suffix = some rebuilt)
     {converted : SignDet.Descriptor (Conversion.refine base encoding).context.Value Signature
       (Conversion.refine base encoding).context.sign
       (Conversion.refine base encoding).context.signature}
@@ -106,11 +103,11 @@ example (rebuilt : Rebuilt (Conversion.refine base encoding) suffix)
       (fun s : Suffix (Conversion.refine base encoding).context => s.context) shape.symm)
     ∃ following : Conversion.Model actual
           ((Conversion.Model.refine rational encoding).target.extend rebuilt.suffix),
-        HEq ((Conversion.Model.refine rational encoding).rebuildComp suffix rebuilt h actual following).target
+        HEq ((Conversion.Model.refine rational encoding).rebuildComp suffix rebuilt actual following).target
           following.target := by
   let first := Conversion.Model.refine rational encoding
   obtain ⟨following⟩ := second_refine first.target shape second next hn
-  exact ⟨following, first.rebuildComp_target suffix rebuilt h _ following⟩
+  exact ⟨following, first.rebuildComp_target suffix rebuilt _ following⟩
 
 example {first : Conversion base} (model : Conversion.Model first rational)
     {other : Context registry} (h : base = other) (x : other.Value) :
