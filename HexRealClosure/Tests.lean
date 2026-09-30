@@ -14,6 +14,7 @@ public import HexRealClosure.BaseTests
 public import HexRealClosure.BasePolynomialTests
 public import HexRealClosure.BaseCatalogTests
 public import HexRealClosure.AlgebraicTests
+public import HexRealClosure.TowerTests
 public import HexRealClosure.QAdjoinTests
 public meta import HexSturm.Basic
 public meta import HexRealClosure.Bounds
