@@ -90,10 +90,10 @@ theorem SelectedSigns.count {sign : E → Int} {context : Ctx}
 /-- Every observation matching the descriptor's constraints has exactly the
 returned query signs. Completeness, including omitted table rows, is essential
 here; a count-one row alone would not exclude another matching observation. -/
-theorem SelectedSigns.signs_eq {sign : E → Int} {context : Ctx}
+theorem SelectedSigns.signs_of_count {sign : E → Int} {context : Ctx}
     {d : Descriptor E Ctx sign context} {qs : List (DensePoly E)} (s : SelectedSigns d qs)
-    {xs : List (List Int)} (ho : Observations (d.raw.queries ++ qs).length xs)
-    (hm : s.evidence.Interprets (d.raw.queries ++ qs).length xs)
+    {xs : List (List Int)}
+    (counts : ∀ c, s.evidence.node.system.count c = xs.countP (fun y => decide (y = c)))
     {x : List Int} (hx : x ∈ xs) (hp : x.take d.raw.queries.length = d.raw.signs) :
     x = d.raw.signs ++ s.values.toList := by
   obtain ⟨hc, he⟩ := s.check_eq
@@ -104,12 +104,25 @@ theorem SelectedSigns.signs_eq {sign : E → Int} {context : Ctx}
       have hf := List.countP_eq_zero.mp hz x hx
       simp at hf
   obtain ⟨n, hn⟩ := (s.evidence.table hc).mem_of_count_pos
-    (by rw [s.evidence.table_count hc ho hm]; exact hpos)
+    (by rw [s.evidence.table_lookup hc, counts]; exact hpos)
   have hf : (x, n) ∈ (s.evidence.table hc).rows.toList.filter
       (fun row => decide (row.1.take d.raw.queries.length = d.raw.signs)) :=
     List.mem_filter.mpr ⟨hn, by simp only [hp, decide_true]⟩
   rw [he] at hf
   exact congrArg Prod.fst (List.mem_singleton.mp hf)
+
+/-- The Mathlib-free selected-sign theorem specializes the same lookup
+argument to the local finite observation proof. The companion supplies its
+Tau Ceti count interpretation instead. -/
+theorem SelectedSigns.signs_eq {sign : E → Int} {context : Ctx}
+    {d : Descriptor E Ctx sign context} {qs : List (DensePoly E)} (s : SelectedSigns d qs)
+    {xs : List (List Int)} (ho : Observations (d.raw.queries ++ qs).length xs)
+    (hm : s.evidence.Interprets (d.raw.queries ++ qs).length xs)
+    {x : List Int} (hx : x ∈ xs) (hp : x.take d.raw.queries.length = d.raw.signs) :
+    x = d.raw.signs ++ s.values.toList := by
+  obtain ⟨hc, _⟩ := s.check_eq
+  apply s.signs_of_count (fun c => ?_) hx hp
+  rw [← s.evidence.table_lookup hc, s.evidence.table_count hc ho hm]
 
 variable [Neg E] [Inv E]
 

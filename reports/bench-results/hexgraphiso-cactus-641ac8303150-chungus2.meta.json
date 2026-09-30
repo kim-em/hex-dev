@@ -1,0 +1,15 @@
+{
+  "fingerprint": "641ac8303150",
+  "host": "chungus2",
+  "date": "2026-09-28T14:33:16Z",
+  "describe": "d2b07f753932",
+  "label": "Lean 4.35.0-rc3 upgrade",
+  "cpu_affinity": [
+    10
+  ],
+  "loadavg_after": [
+    5.798828125,
+    13.9736328125,
+    11.47216796875
+  ]
+}

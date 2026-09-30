@@ -1,0 +1,85 @@
+diff --git a/bench/HexSignDet/Bench.lean b/bench/HexSignDet/Bench.lean
+index 61058dc6b..909f000fd 100644
+--- a/bench/HexSignDet/Bench.lean
++++ b/bench/HexSignDet/Bench.lean
+@@ -330,0 +331 @@ def main (args : List String) : IO UInt32 :=
++  else if args == ["inspect-maximal-matrix-dimensions"] then Hex.SignDetBench.MaximalMatrix.inspectDimension
+@@ -341,0 +343,6 @@ def main (args : List String) : IO UInt32 :=
++  else if let ["inspect-full", arity] := args then
++    match arity.toNat? with
++    | some s =>
++      if 1 ≤ s && s ≤ 6 then Hex.SignDetBench.inspectFullFor #[s]
++      else throw (IO.userError "expected a query count from one through six")
++    | none => throw (IO.userError "expected a query count from one through six")
+diff --git a/bench/HexSignDet/MaximalMatrix.lean b/bench/HexSignDet/MaximalMatrix.lean
+index 2a61320f3..ba7163641 100644
+--- a/bench/HexSignDet/MaximalMatrix.lean
++++ b/bench/HexSignDet/MaximalMatrix.lean
+@@ -61,0 +62,3 @@ r^3 integer check. Thus both are Θ(r^3)=Θ(27^s) coefficient operations.
++The solve skips zero rational multipliers; the dense integer check supplies
++the cubic lower bound on scalar-operation count. These differently weighted
++operations need not give cubic wall time over the sampled range.
+@@ -89,0 +93,38 @@ setup_benchmark runCheck s => 27^s
++/-- Prepare the same full system by its literal matrix dimension. Unsupported
++sizes return `none`; scientific inspection validates every scheduled input. -/
++def dimensionInput (r : Nat) : Option Input := do
++  let s ← #[1, 2, 3, 4, 5, 6].find? (fun s => 3^s == r)
++  input s
++
++/-- The existing complete solver, with matrix dimension as the parameter. -/
++@[noinline] def runSolveDimension (i : Option Input) : Option UInt64 := runSolve i
++
++/-- The existing literal checker, with matrix dimension as the parameter. -/
++@[noinline] def runCheckDimension (i : Option Input) : Bool := runCheck i
++
++-- Declared cost-model: Θ(r^3) coefficient operations, the same dense inverse identity plus Gauss-Jordan solve.
++setup_benchmark runSolveDimension r => r^3
++  with prep := dimensionInput
++  where {
++    paramSchedule := .custom #[3, 9, 27, 81, 243, 729]
++    paramFloor := 3
++    paramCeiling := 729
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 180
++  }
++
++-- Declared cost-model: Θ(r^3) integer coefficient operations, the same dense scaled-inverse identity check.
++setup_benchmark runCheckDimension r => r^3
++  with prep := dimensionInput
++  where {
++    paramSchedule := .custom #[3, 9, 27, 81, 243, 729]
++    paramFloor := 3
++    paramCeiling := 729
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 180
++  }
++
+@@ -95,2 +136,2 @@ reference producer on the existing maximal-support interpolation family. -/
+-def inspect : IO UInt32 := do
+-  for s in #[1, 2, 3, 4, 5] do
++private def inspectFor (arities : Array Nat) : IO UInt32 := do
++  for s in arities do
+@@ -130,0 +172,6 @@ def inspect : IO UInt32 := do
++/-- Inspect the original query-count schedule. -/
++def inspect : IO UInt32 := inspectFor #[1, 2, 3, 4, 5]
++
++/-- Inspect every matrix-dimension input, including the 729-column system. -/
++def inspectDimension : IO UInt32 := inspectFor #[1, 2, 3, 4, 5, 6]
++
+diff --git a/bench/HexSignDet/Small.lean b/bench/HexSignDet/Small.lean
+index 237ca19ba..9f064d279 100644
+--- a/bench/HexSignDet/Small.lean
++++ b/bench/HexSignDet/Small.lean
+@@ -89,2 +89,2 @@ untimed finite-input inventory, not a general operation-count theorem. -/
+-def inspectFull : IO UInt32 := do
+-  for s in #[1, 2, 3, 4, 5] do
++def inspectFullFor (arities : Array Nat) : IO UInt32 := do
++  for s in arities do
+@@ -121,0 +122,3 @@ def inspectFull : IO UInt32 := do
++/-- Inspect the original full-matrix schedule. -/
++def inspectFull : IO UInt32 := inspectFullFor #[1, 2, 3, 4, 5]
++

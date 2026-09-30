@@ -41,6 +41,15 @@ def Descriptor.ofReplay? (sign : E → Int) (context : Ctx)
     Option (Descriptor E Ctx sign context) :=
   if h : raw.check sign context evidence = true then some ⟨raw, evidence, h⟩ else none
 
+/-- Validation changes only proof fields; this projection exposes its exact
+data and rejection result while keeping the descriptor constructor private. -/
+theorem Descriptor.ofReplay_data (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx) :
+    (ofReplay? sign context raw evidence).map (fun d => (d.raw, d.evidence)) =
+      if raw.check sign context evidence = true then some (raw, evidence) else none := by
+  unfold ofReplay?
+  split <;> rfl
+
 /-- Reuse an already checked table with exact input bindings and count one.
 The proof arguments avoid rerunning the same replay during row extraction. -/
 def Descriptor.ofTable {sign : E → Int} {context : Ctx}
@@ -59,6 +68,17 @@ theorem Descriptor.ofTable_raw {sign : E → Int} {context : Ctx}
     (hc : evidence.check sign context raw.head raw.lower raw.upper raw.queries = true)
     (hone : (evidence.table hc).count raw.signs = 1) :
     (ofTable raw evidence hw hctx hc hone).raw = raw := by
+  unfold ofTable
+  rfl
+
+/-- Constructing a descriptor from a checked table preserves its replay evidence
+literally. -/
+theorem Descriptor.ofTable_evidence {sign : E → Int} {context : Ctx}
+    (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
+    (hw : raw.wellFormed = true) (hctx : raw.context = context)
+    (hc : evidence.check sign context raw.head raw.lower raw.upper raw.queries = true)
+    (hone : (evidence.table hc).count raw.signs = 1) :
+    (ofTable raw evidence hw hctx hc hone).evidence = evidence := by
   unfold ofTable
   rfl
 
@@ -94,6 +114,17 @@ theorem Descriptor.ofReplay_raw {sign : E → Int} {context : Ctx}
     {raw : RawDescriptor E Ctx} {evidence : Replay E Ctx}
     {d : Descriptor E Ctx sign context}
     (h : ofReplay? sign context raw evidence = some d) : d.raw = raw := by
+  unfold ofReplay? at h
+  split at h
+  · cases h
+    rfl
+  · contradiction
+
+/-- Successful validation preserves the supplied replay evidence literally. -/
+theorem Descriptor.ofReplay_evidence {sign : E → Int} {context : Ctx}
+    {raw : RawDescriptor E Ctx} {evidence : Replay E Ctx}
+    {d : Descriptor E Ctx sign context}
+    (h : ofReplay? sign context raw evidence = some d) : d.evidence = evidence := by
   unfold ofReplay? at h
   split at h
   · cases h

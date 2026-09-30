@@ -1,0 +1,714 @@
+diff --git a/bench/HexSignDet/Bench.lean b/bench/HexSignDet/Bench.lean
+index 48721e989..a6ea84cf8 100644
+--- a/bench/HexSignDet/Bench.lean
++++ b/bench/HexSignDet/Bench.lean
+@@ -139,0 +140,88 @@ setup_benchmark runGraph s => s
++/- Joint Thom-query family: n is the odd source degree, the target degree is
++2n, and each joint list has 3n+1 entries. The model counts coefficient
++operations: Θ(n³) from summing the schoolbook squares of Θ(n) derivative
++monomials of degrees Θ(n). Candidate dimensions stay at most four; every
++moment row has exponent sum at most two. The sparse binomial/monomial PRS
++has bounded chain length. Remaining query-slot scans sum to O(n² log n).
++The inventory checks these structural hypotheses. Rational bit sizes grow;
++this is not a unit-bit model or a general-head complexity claim. See
++reports/sign-det-joint-performance.md for the scope and derivation. -/
++
++-- Declared cost-model: Θ(n³) coefficient operations for two source completion tables; see the joint derivation above.
++setup_benchmark Joint.runCompletion n => n^3
++  with prep := Joint.input
++  where {
++    paramSchedule := .custom #[3, 7, 15, 31, 63]
++    paramFloor := 3
++    paramCeiling := 63
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 60
++  }
++
++-- Declared cost-model: Θ(n³) coefficient operations for four common-head re-encoding/descriptor tables; see the joint derivation above.
++setup_benchmark Joint.runComparison n => n^3
++  with prep := Joint.input
++  where {
++    paramSchedule := .custom #[3, 7, 15, 31, 63]
++    paramFloor := 3
++    paramCeiling := 63
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 60
++  }
++
++-- Declared cost-model: Θ(n³) coefficient operations for both joint tables with reduced products; see the joint derivation above.
++setup_benchmark Joint.runReduced n => n^3
++  with prep := Joint.input
++  where {
++    paramSchedule := .custom #[3, 7, 15, 31, 63]
++    paramFloor := 3
++    paramCeiling := 63
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 60
++  }
++
++-- Declared cost-model: Θ(n³) coefficient operations for both joint tables with direct products; see the joint derivation above.
++setup_benchmark Joint.runDirect n => n^3
++  with prep := Joint.input
++  where {
++    paramSchedule := .custom #[3, 7, 15, 31, 63]
++    paramFloor := 3
++    paramCeiling := 63
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 60
++  }
++
++-- Declared cost-model: Θ(n³) coefficient operations for literal reduced evidence checks; see the joint derivation above.
++setup_benchmark Joint.runCheckReduced n => n^3
++  with prep := Joint.input
++  where {
++    paramSchedule := .custom #[3, 7, 15, 31, 63]
++    paramFloor := 3
++    paramCeiling := 63
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 60
++  }
++
++-- Declared cost-model: Θ(n³) coefficient operations for literal direct evidence checks; see the joint derivation above.
++setup_benchmark Joint.runCheckDirect n => n^3
++  with prep := Joint.input
++  where {
++    paramSchedule := .custom #[3, 7, 15, 31, 63]
++    paramFloor := 3
++    paramCeiling := 63
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 60
++  }
++
+@@ -199,0 +288,5 @@ def main (args : List String) : IO UInt32 :=
++  else if args == ["inspect-joint-timings"] then Hex.SignDetBench.Joint.inspectTimings #[3, 7, 15, 31, 63]
++  else if let ["inspect-joint-timings", degree] := args then
++    match degree.toNat? with
++    | some n => Hex.SignDetBench.Joint.inspectTimings #[n]
++    | none => throw (IO.userError "expected an odd integer degree at least three")
+@@ -202,0 +296,4 @@ def main (args : List String) : IO UInt32 :=
++  else if let ["paired-joint-production", path] := args then
++    Hex.SignDetBench.paired ``Hex.SignDetBench.Joint.runReduced ``Hex.SignDetBench.Joint.runDirect path
++  else if let ["paired-joint-replay", path] := args then
++    Hex.SignDetBench.paired ``Hex.SignDetBench.Joint.runCheckReduced ``Hex.SignDetBench.Joint.runCheckDirect path
+@@ -207,0 +305 @@ def main (args : List String) : IO UInt32 :=
++    discard <| Hex.SignDetBench.Joint.inspectTimings #[3]
+diff --git a/bench/HexSignDet/Joint.lean b/bench/HexSignDet/Joint.lean
+index 44be5ee28..3fea83bdc 100644
+--- a/bench/HexSignDet/Joint.lean
++++ b/bench/HexSignDet/Joint.lean
+@@ -25,0 +26,65 @@ structure Case where
++private def rootHash (d : Root) : UInt64 :=
++  let input : Input := ⟨d.raw.head, d.raw.queries, none, some d.evidence, none⟩
++  hash (hash input, d.raw.indices, d.raw.signs)
++
++instance : Hashable Case where
++  hash i :=
++    let leftDirect : Input := { i.left with tree := some i.leftDirect, graph := none }
++    let rightDirect : Input := { i.right with tree := some i.rightDirect, graph := none }
++    hash (rootHash i.leftPartial, rootHash i.rightPartial,
++      rootHash i.leftFull, rootHash i.rightFull, hash i.left, hash i.right,
++      hash leftDirect, hash rightDirect)
++
++/-- Complete both original partial descriptors, including their actual table
++production and derivative-word selection. Preparation is outside this body. -/
++@[noinline] def runCompletion (input : Option Case) : Option (UInt64 × UInt64) := do
++  let i ← input
++  let .ok l := i.leftPartial.buildCompletion | none
++  let .ok r := i.rightPartial.buildCompletion | none
++  return (hash l.descriptor.raw.signs, hash r.descriptor.raw.signs)
++
++/-- Compare the already completed sources through the actual common-product
++and re-encoding producers. Keep the returned head and both root identities. -/
++@[noinline] def runComparison (input : Option Case) : Option UInt64 := do
++  let i ← input
++  let .ok c := i.leftFull.buildComparison i.rightFull | none
++  let order : Nat := match c.order with | .lt => 0 | .eq => 1 | .gt => 2
++  return hash (order, polyHash c.common.head,
++    c.leftEncoding.target.raw.signs, c.rightEncoding.target.raw.signs)
++
++private def runTables (input : Option Case) (reduced : Bool) : Option (UInt64 × UInt64) := do
++  let i ← input
++  let ld ← i.left.domain
++  let rd ← i.right.domain
++  let .ok l := buildPrepared (10377 : Nat) ld i.left.queries reduced | none
++  let .ok r := buildPrepared (10377 : Nat) rd i.right.queries reduced | none
++  return (hash (entries l.val.node.system), hash (entries r.val.node.system))
++
++/-- Construct both original ordered joint tables with modulo-head products. -/
++@[noinline] def runReduced (input : Option Case) : Option (UInt64 × UInt64) :=
++  runTables input true
++
++/-- Construct the same two tables with unreduced moment products. -/
++@[noinline] def runDirect (input : Option Case) : Option (UInt64 × UInt64) :=
++  runTables input false
++
++/-- Check both supplied reduced evidence trees, including their literal
++polynomial, interval, context, support and exact matrix witnesses. -/
++@[noinline] def runCheckReduced (input : Option Case) : Bool :=
++  match input with
++  | none => false
++  | some i =>
++    match i.left.tree, i.right.tree with
++    | some l, some r =>
++      l.check Sturm.orderSign 10377 i.left.head .negInf .posInf i.left.queries &&
++      r.check Sturm.orderSign 10377 i.right.head .negInf .posInf i.right.queries
++    | _, _ => false
++
++/-- Check the supplied direct evidence against the same caller bindings. -/
++@[noinline] def runCheckDirect (input : Option Case) : Bool :=
++  match input with
++  | none => false
++  | some i =>
++    i.leftDirect.check Sturm.orderSign 10377 i.left.head .negInf .posInf i.left.queries &&
++    i.rightDirect.check Sturm.orderSign 10377 i.right.head .negInf .posInf i.right.queries
++
+@@ -117,0 +183,6 @@ private def record (n : Nat) (side : String) (source : Root) (i : Input)
++    ("maxExponentSum", Lean.toJson (ns.foldl (fun k node =>
++      node.system.rows.toList.foldl (fun k es => max k es.sum) k) 0)),
++    ("maxDirectChainLength", Lean.toJson ((nodes direct).foldl (fun k node =>
++      node.moments.toList.foldl (fun k c => max k c.remainders.chain.size) k) 0)),
++    ("maxReducedChainLength", Lean.toJson (ns.foldl (fun k node =>
++      node.moments.toList.foldl (fun k c => max k c.remainders.chain.size) k) 0)),
+@@ -139,0 +211,26 @@ def inspect (ns : Array Nat) : IO UInt32 := do
++/-- Untimed result bindings for the timed callbacks. Expected words and tables
++come from exact evaluation at the known roots, not from the timed functions. -/
++def inspectTimings (ns : Array Nat) : IO UInt32 := do
++  for n in ns do
++    let some i := input n | throw (IO.userError s!"invalid joint input at {n}")
++    let target : RawDescriptor Rat Nat := ⟨10377, i.left.head, .negInf, .posInf, [], []⟩
++    let leftTable := [(signs i.left.queries 1, (1 : Int)), (signs i.left.queries (-1), 1)]
++    let rightTable := [(signs i.right.queries 1, (1 : Int)), (signs i.right.queries (-1), 1)]
++    let completion := some (hash (signs i.leftFull.raw.queries 1),
++      hash (signs i.rightFull.raw.queries (-1)))
++    let comparison := some (hash ((2 : Nat), polyHash i.left.head,
++      signs (target.full []).queries 1, signs (target.full []).queries (-1)))
++    let tables := some (hash leftTable, hash rightTable)
++    unless runCompletion (some i) == completion && runComparison (some i) == comparison &&
++        runReduced (some i) == tables && runDirect (some i) == tables &&
++        runCheckReduced (some i) && runCheckDirect (some i) do
++      throw (IO.userError s!"joint callback differs from the independent root answers at {n}")
++    IO.println <| (Lean.Json.mkObj [
++      ("degree", Lean.toJson n), ("queries", Lean.toJson (3*n+1)),
++      ("completionResultHash", Lean.toJson (hash completion).toNat),
++      ("comparisonResultHash", Lean.toJson (hash comparison).toNat),
++      ("tableResultHash", Lean.toJson (hash tables).toNat),
++      ("replayResultHash", Lean.toJson (hash true).toNat)]).compress
++    (← IO.getStdout).flush
++  return 0
++
+diff --git a/reports/sign-det-joint-performance.md b/reports/sign-det-joint-performance.md
+new file mode 100644
+index 000000000..c5ff90e64
+--- /dev/null
++++ b/reports/sign-det-joint-performance.md
+@@ -0,0 +1,101 @@
++# Joint Thom-query performance
++
++This family compares the roots 1 and −1 of Xⁿ−1 and Xⁿ+1 for odd n. The
++actual common head is −(X²ⁿ−1)/2. Each re-encoding has 3n+1 queries: the
++2n target derivatives followed by the source equation and its n derivatives.
++The [input inventory](sign-det-joint-inputs.md) describes the exact polynomial
++and sign bindings and their independent rational-root oracle.
++
++The timed bodies in `bench/HexSignDet/Joint.lean` exercise:
++
++- completion of both original partial descriptors;
++- cross-polynomial comparison of the completed sources, including the common
++  product and both checked re-encodings;
++- construction of both joint tables, separately with reduced and direct
++  moment products;
++- checking both supplied evidence trees in each production mode.
++
++The comparison constructs four tables: each joint table and its separate
++target descriptor. Table-construction bodies use prepared domains. Completion
++and comparison construct the domains required by their actual APIs. Result
++hashes include both returned derivative words or both table counts; the
++comparison hash also includes its common head and ordering.
++
++Preparation constructs and validates the source descriptors, completes them,
++computes a comparison and both direct tables, and retains the supplied trees
++and graphs. It is outside the timed loops. Untimed callback checks compare
++answers with exact evaluation at the known roots before any measurement.
++This family has realized support two, candidate matrices of width at most
++four, infinite endpoints and no shared source roots. It does not cover maximal
++support, finite endpoint constraints, common roots or nested coefficient fields.
++
++## Cost model
++
++The declared model is Θ(n³) polynomial coefficient operations for each timed
++body on this family. It is not a unit-bit cost model or a bound for arbitrary
++defining polynomials.
++
++The target derivative degrees are 0,…,2n−1, the source derivative degrees are
++0,…,n−1, and the source equation has degree n. Every leaf includes exponent
++two. `DensePoly.mulImpl` visits every pair of stored coefficients, including
++zeros. Consequently the sum of leaf square sizes is
++
++```
++(2n)(2n+1)(4n+1)/6 + n(n+1)(2n+1)/6 + (n+1)² = Θ(n³).
++```
++
++Positive preprocessing changes the scale of these monomials without changing
++their degrees. The leaf products therefore supply the cubic term in both
++production modes. Checking also reconstructs these products in the direct
++moment identities or the supplied reduction identities.
++
++The complete child restrictions have at most two sign conditions. The retained
++row basis starts with the constant row and, when two conditions occur, one
++separating query row. Their tensor products have exponent sum at most two.
++There are O(n) nodes and at most four moment rows per node. The inventory
++requires maximum exponent sum two and candidate width at most four.
++
++All moment operands have degree O(n). The head is a binomial, and the queries
++are monomials apart from the one source equation. Reducing the source equation
++or its square modulo the common head leaves a multiple of Xⁿ±1. After a
++monomial shift, division of X²ⁿ−1 leaves that same binomial, which divides the
++next remainder. Thus the remainder chains have bounded length rather than
++the degree-dependent length possible for general heads. The inventory records
++both modes' maximum chain lengths and rejects a length above eight. Dense
++query-kernel products and certificate identity products cost O(n²) per row,
++giving O(n³) over all rows. Balanced query/exponent/sign slot work contributes
++O(n² log n); the matrices have bounded dimensions and scalar sizes. Completion
++uses source degree n instead of target degree 2n; comparison invokes a fixed
++number of these tables and a binomial common-product calculation.
++
++Raw rational coefficients grow with derivative factorials. Reduced witnesses
++retain the scale (2n)!/2; the direct witness maximum includes n((2n)!/2)².
++The inventories record these exact bit sizes. Actual timings include rational
++arithmetic at those sizes, allocation and result hashing. Agreement with the
++coefficient-operation model does not establish a bit-complexity bound, and
++this family cannot separately identify degree and coefficient-height effects.
++The coefficient-height family has its own measurements. A model mismatch is
++retained and investigated rather than hidden by changing the model afterward.
++
++## Collection protocol
++
++The explicit degree schedule is 3, 7, 15, 31 and 63, with six trial-major
++rounds. Reduced/direct production and replay use adjacent alternating AB/BA
++arms. Completion and comparison each use the ordinary shared LeanBench
++schedule. The target inner duration is 100 ms; a 60-second per-call cap is an
++operational safeguard. Every completed observation is retained. One CPU is
++automatically leased, and host activity is recorded without an idleness test
++or sample filtering.
++
++The independent input validator checks literal polynomials, both exact sign
++tables and dimensions. Callback result hashes bind the measured answers to
++those checked inputs. The collector retains source reconstruction, executable
++identity, command output, exact schedules and the shared harness verdicts.
++Inconclusive verdicts remain observations, not successful performance gates.
++
++LeanBench records each child's peak resident set, including preparation,
++calibration and repeated timed calls. It does not isolate one operation's live
++memory. Its allocated-byte field is unavailable, so resident-set observations
++do not complete the separate allocated-byte requirement. Stored witness bits
++and serialized certificate sizes likewise do not measure temporary peak bits
++or allocation. This family alone does not complete Phase 4 or #10377.
+diff --git a/scripts/bench/sign_det_joint.py b/scripts/bench/sign_det_joint.py
+index c97d56704..6fdf6bf7d 100644
+--- a/scripts/bench/sign_det_joint.py
++++ b/scripts/bench/sign_det_joint.py
+@@ -76,0 +77 @@ RECORDED = {"maxInverseBits", "maxDenominatorBits",
++COST_FIELDS = {"maxExponentSum", "maxDirectChainLength", "maxReducedChainLength"}
+@@ -102 +103,2 @@ def validate(path, degrees=DEGREES, retained=False):
+-        if set(row) != set(oracle) | RECORDED:
++        legacy = set(oracle) | RECORDED
++        if set(row) not in (legacy, legacy | COST_FIELDS):
+@@ -108,0 +111,6 @@ def validate(path, degrees=DEGREES, retained=False):
++        if COST_FIELDS <= set(row):
++            if type(row["maxExponentSum"]) is not int or row["maxExponentSum"] != 2:
++                raise ValueError("joint moments violate the exponent-sum model")
++            for key in ("maxDirectChainLength", "maxReducedChainLength"):
++                if type(row[key]) is not int or not 2 <= row[key] <= 8:
++                    raise ValueError("joint remainder chains violate the bounded-chain model")
+diff --git a/scripts/bench/sign_det_joint_timing.py b/scripts/bench/sign_det_joint_timing.py
+new file mode 100644
+index 000000000..c96695a0a
+--- /dev/null
++++ b/scripts/bench/sign_det_joint_timing.py
+@@ -0,0 +1,230 @@
++#!/usr/bin/env python3
++"""Collect source-bound joint Thom-query timings with the shared fixed schedules."""
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++import math
++import os
++from pathlib import Path
++import platform
++import statistics
++import subprocess
++import sys
++import time
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(ROOT))
++from scripts.bench.sign_det_compare import archive_sources
++from scripts.bench.sign_det_joint import COST_FIELDS, DEGREES, validate as validate_inputs
++from scripts.bench.sign_det_sparse import source_hashes
++from scripts.bench.structural_tactic_sweep import acquire_cpu
++
++TRIALS = 6
++PREFIX = "Hex.SignDetBench.Joint."
++RESULT_KEYS = {
++    "runCompletion": "completionResultHash", "runComparison": "comparisonResultHash",
++    "runReduced": "tableResultHash", "runDirect": "tableResultHash",
++    "runCheckReduced": "replayResultHash", "runCheckDirect": "replayResultHash",
++}
++CONFIG = {"param_floor": 3, "param_ceiling": 63, "outer_trials": TRIALS,
++          "param_schedule": {"kind": "custom", "params": DEGREES},
++          "target_inner_nanos": 100000000, "max_seconds_per_call": 60,
++          "signal_floor_multiplier": 1, "cache_mode": "warm",
++          "verdict_warmup_fraction": 0.2, "slope_tolerance": 0.15,
++          "narrow_range_noise_floor": 1.5}
++
++
++def validate_hashes(path):
++    rows = [json.loads(line) for line in path.read_text().splitlines()]
++    if [r.get("degree") for r in rows] != DEGREES:
++        raise ValueError("missing, extra or reordered callback inputs")
++    for row, n in zip(rows, DEGREES, strict=True):
++        if type(row["degree"]) is not int or row.get("queries") != 3*n+1:
++            raise ValueError("wrong callback query count")
++        if set(row) != {"degree", "queries", *RESULT_KEYS.values()}:
++            raise ValueError("changed callback result fields")
++        for key in set(RESULT_KEYS.values()):
++            if type(row[key]) is not int or not 0 <= row[key] < 2**64:
++                raise ValueError("invalid callback result hash")
++    return {row["degree"]: row for row in rows}
++
++
++def validate_points(points, name, expected, schedule):
++    if [(p["trial_index"], p["param"]) for p in points] != schedule:
++        raise ValueError("missing, duplicated or reordered scientific observations")
++    for point in points:
++        if type(point["trial_index"]) is not int or type(point["param"]) is not int:
++            raise ValueError("non-integer scientific schedule index")
++        n = point["param"]
++        if (point["status"] != "ok" or point["result_hash"] != hex(expected[n][RESULT_KEYS[name]]) or
++                point["part_of_verdict"] is not True or point["below_signal_floor"] is not False):
++            raise ValueError("failed, incorrect or substituted scientific observation")
++        value = point["per_call_nanos"]
++        if (type(value) not in (int, float) or not math.isfinite(value) or value <= 0 or
++                type(point["inner_repeats"]) is not int or point["inner_repeats"] <= 0):
++            raise ValueError("invalid scientific timing or repeat count")
++        rss = point.get("peak_rss_kb")
++        if type(rss) is not int or rss <= 0:
++            raise ValueError("missing child peak resident-set observation")
++        if point.get("alloc_bytes") is not None:
++            raise ValueError("unexpected allocated-byte counter; check its interpretation")
++
++
++def validate_result(result, name, expected, revision, points=None):
++    if (result["function"] != PREFIX+name or result["kind"] != "parametric" or
++            result["hashable"] is not True or result["budget_truncated"] is not False):
++        raise ValueError("wrong benchmark result or truncated measurement")
++    if result["env"]["git_commit"] != revision or result["env"]["git_dirty"] is not False:
++        raise ValueError("measurement is not bound to the clean source revision")
++    if any(result["config"][k] != v for k, v in CONFIG.items()):
++        raise ValueError("measurement changed the registered schedule")
++    if result["complexity_formula"].replace(" ", "") != "n^3":
++        raise ValueError("measurement changed the declared cost model")
++    if points is not None and result["points"] != points:
++        raise ValueError("summary differs from the retained sample stream")
++    validate_points(result["points"], name, expected,
++                    [(trial, n) for trial in range(TRIALS) for n in DEGREES])
++    if result["verdict"] not in ("consistent_with_declared_complexity", "inconclusive"):
++        raise ValueError("unknown harness verdict")
++    return {k: result[k] for k in ("verdict", "complexity_formula", "slope", "c_min", "c_max", "advisories")}
++
++
++def validate_single(path, name, expected, revision):
++    export = json.loads(path.read_text())
++    if export["export_schema_version"] != 1 or len(export["results"]) != 1:
++        raise ValueError("wrong export schema or result count")
++    return validate_result(export["results"][0], name, expected, revision)
++
++
++def validate_pair(path, names, expected, revision):
++    rows = [json.loads(line) for line in path.read_text().splitlines()]
++    header = rows[0]
++    arms = [PREFIX+name for name in names]
++    if any(header.get(k) != v for k, v in {
++            "kind": "header", "schema": "hex-sign-det-paired-v1", "params": DEGREES,
++            "trials": TRIALS, "left": arms[0], "right": arms[1]}.items()):
++        raise ValueError("wrong paired header")
++    if header["env"]["git_commit"] != revision or header["env"]["git_dirty"] is not False:
++        raise ValueError("paired child source differs")
++    schedule = [(arm, trial, n) for trial in range(TRIALS) for n in DEGREES
++                for arm in (arms if trial % 2 == 0 else arms[::-1])]
++    if len(rows) != len(schedule)+3:
++        raise ValueError("missing or extra paired records")
++    points = {arm: [] for arm in arms}
++    for row, (arm, trial, n) in zip(rows[1:-2], schedule, strict=True):
++        p = row["point"]
++        if (row["kind"], row["arm"], p["trial_index"], p["param"]) != ("sample", arm, trial, n):
++            raise ValueError("paired arms are missing, duplicated or reordered")
++        points[arm].append(p)
++    observations = {}
++    for row, name, arm in zip(rows[-2:], names, arms, strict=True):
++        if row["kind"] != "summary" or row["result"]["env"] != header["env"]:
++            raise ValueError("paired summary environment differs")
++        observations[name] = validate_result(row["result"], name, expected, revision, points[arm])
++    paired = []
++    for n in DEGREES:
++        a, b = ([p["per_call_nanos"] for p in points[arm] if p["param"] == n] for arm in arms)
++        ratios = [y/x for x, y in zip(a, b, strict=True)]
++        deltas = [y-x for x, y in zip(a, b, strict=True)]
++        paired.append({"degree": n, "left_nanos": a, "right_nanos": b,
++                       "ratios": ratios, "deltas_nanos": deltas,
++                       "median_ratio": statistics.median(ratios),
++                       "median_delta_nanos": statistics.median(deltas)})
++    return {"observations": observations, "paired": paired}
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--output", type=Path, required=True)
++    args = parser.parse_args()
++    revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
++    if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True):
++        raise ValueError("commit the measurement sources first")
++    exe = ROOT / ".lake/build/bin/hexsigndet_bench"
++    subprocess.run(["lake", "build", "--no-build", "hexsigndet_bench"], cwd=ROOT, check=True)
++    out = args.output.resolve()
++    if out.is_relative_to(ROOT.resolve()):
++        raise ValueError("write measurement output outside the source checkout")
++    out.mkdir(parents=True, exist_ok=False)
++    cpu, lease = acquire_cpu()
++    os.sched_setaffinity(0, {cpu})
++    sources = source_hashes()
++    for name in ("scripts/bench/sign_det_joint.py", "scripts/bench/test_sign_det_joint.py",
++                 "scripts/bench/sign_det_joint_timing.py", "scripts/bench/test_sign_det_joint_timing.py",
++                 "scripts/bench/sign_det_compare.py", "reports/sign-det-joint-performance.md"):
++        sources[name] = hashlib.sha256((ROOT/name).read_bytes()).hexdigest()
++    metadata = {"schema": "hex-sign-det-joint-timing-v1", "revision": revision,
++                "source_sha256": sources, "binary_sha256": hashlib.sha256(exe.read_bytes()).hexdigest(),
++                "host": platform.node(), "platform": platform.platform(), "cpu": cpu,
++                "affinity": sorted(os.sched_getaffinity(0)), "load_before": os.getloadavg(),
++                "harness_revision": subprocess.check_output(["git", "rev-parse", "HEAD"],
++                    cwd=ROOT/".lake/packages/lean-bench", text=True).strip(),
++                "runs": [], "state": "running"}
++
++    def save():
++        (out/"metadata.json").write_text(json.dumps(metadata, indent=2)+"\n")
++
++    def run(label, arguments):
++        record = {"label": label, "command": [str(exe), *arguments], "state": "running"}
++        metadata["runs"].append(record)
++        save()
++        start = time.monotonic()
++        with (out/(label+".log")).open("w") as stdout, (out/(label+".stderr.log")).open("w") as stderr:
++            result = subprocess.run(record["command"], cwd=ROOT, stdout=stdout, stderr=stderr)
++        record.update(state="complete", exit_code=result.returncode,
++                      wall_seconds=time.monotonic()-start, load_after=os.getloadavg())
++        save()
++        return result.returncode
++
++    try:
++        archive_sources(out, metadata)
++        save()
++        if run("inputs", ["inspect-joint"]) or run("callbacks", ["inspect-joint-timings"]):
++            raise ValueError("untimed joint input or callback verification failed")
++        validate_inputs(out/"inputs.log")
++        if any(not COST_FIELDS <= set(json.loads(line)) for line in (out/"inputs.log").read_text().splitlines()):
++            raise ValueError("joint cost-model inventory is missing")
++        expected = validate_hashes(out/"callbacks.log")
++        summary = {"observations": {}, "pairs": {}}
++        for name in ("runCompletion", "runComparison"):
++            target = out/(name+".json")
++            if run(name, ["run", PREFIX+name, "--export-file", str(target)]) not in (0, 1):
++                raise ValueError("joint benchmark command failed")
++            summary["observations"][name] = validate_single(target, name, expected, revision)
++        for label, names, command in (
++                ("production", ("runReduced", "runDirect"), "paired-joint-production"),
++                ("replay", ("runCheckReduced", "runCheckDirect"), "paired-joint-replay")):
++            target = out/(label+".jsonl")
++            if run(label, [command, str(target)]) not in (0, 1):
++                raise ValueError("paired joint benchmark command failed")
++            pair = validate_pair(target, names, expected, revision)
++            summary["observations"].update(pair["observations"])
++            summary["pairs"][label] = pair["paired"]
++        (out/"summary.json").write_text(json.dumps(summary, indent=2)+"\n")
++        metadata["source_sha256_after"] = {
++            p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in sources}
++        metadata["binary_sha256_after"] = hashlib.sha256(exe.read_bytes()).hexdigest()
++        metadata["revision_after"] = subprocess.check_output(
++            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
++        metadata["status_after"] = subprocess.check_output(
++            ["git", "status", "--porcelain"], cwd=ROOT, text=True)
++        if (metadata["source_sha256_after"] != sources or
++                metadata["binary_sha256_after"] != metadata["binary_sha256"] or
++                metadata["revision_after"] != revision or metadata["status_after"]):
++            raise ValueError("measurement source or executable changed during collection")
++        metadata["state"] = "complete"
++        metadata["scientific_samples"] = 180
++        return int(any(v["verdict"] == "inconclusive" for v in summary["observations"].values()))
++    except BaseException as exc:
++        metadata.update(state="failed", error=str(exc), exception=type(exc).__name__)
++        raise
++    finally:
++        metadata["load_after"] = os.getloadavg()
++        save()
++        lease.close()
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/bench/test_sign_det_joint.py b/scripts/bench/test_sign_det_joint.py
+index 59c132ecc..82fd0318c 100644
+--- a/scripts/bench/test_sign_det_joint.py
++++ b/scripts/bench/test_sign_det_joint.py
+@@ -46,0 +47,14 @@ class JointValidation(unittest.TestCase):
++    def test_cost_model_fields(self):
++        rows = [r | {"maxExponentSum": 2, "maxDirectChainLength": 3,
++                     "maxReducedChainLength": 3} for r in self.rows]
++        self.assertEqual(self.check(rows), 2)
++        for key, value in (("maxExponentSum", True), ("maxExponentSum", 3),
++                           ("maxDirectChainLength", 9), ("maxReducedChainLength", 0)):
++            with self.subTest(key=key, value=value), self.assertRaises(ValueError):
++                changed = copy.deepcopy(rows)
++                changed[0][key] = value
++                self.check(changed)
++        del rows[0]["maxReducedChainLength"]
++        with self.assertRaisesRegex(ValueError, "changed joint observation fields"):
++            self.check(rows)
++
+diff --git a/scripts/bench/test_sign_det_joint_timing.py b/scripts/bench/test_sign_det_joint_timing.py
+new file mode 100644
+index 000000000..cc6dd78b2
+--- /dev/null
++++ b/scripts/bench/test_sign_det_joint_timing.py
+@@ -0,0 +1,119 @@
++"""Reject corrupted outputs and schedules in joint-query scientific records."""
++import copy
++import json
++from pathlib import Path
++import tempfile
++import unittest
++
++from scripts.bench import sign_det_joint_timing as timing
++
++
++class JointTimingTests(unittest.TestCase):
++    def setUp(self):
++        self.tmp = tempfile.TemporaryDirectory()
++        self.addCleanup(self.tmp.cleanup)
++        self.path = Path(self.tmp.name)/"records.json"
++        self.expected = {n: {key: 11 for key in set(timing.RESULT_KEYS.values())}
++                         for n in timing.DEGREES}
++        self.env = {"git_commit": "measured", "git_dirty": False}
++
++    def result(self, name):
++        return {"function": timing.PREFIX+name, "kind": "parametric", "hashable": True,
++                "budget_truncated": False, "env": self.env, "config": timing.CONFIG,
++                "complexity_formula": "n^3", "verdict": "inconclusive", "slope": 3,
++                "c_min": 1, "c_max": 2, "advisories": [], "points": [
++                    {"trial_index": trial, "param": n, "status": "ok", "result_hash": "0xb",
++                     "part_of_verdict": True, "below_signal_floor": False,
++                     "per_call_nanos": n**3, "inner_repeats": 1,
++                     "peak_rss_kb": 1000, "alloc_bytes": None}
++                    for trial in range(timing.TRIALS) for n in timing.DEGREES]}
++
++    def pair(self):
++        names = ("runReduced", "runDirect")
++        results = [self.result(name) for name in names]
++        rows = [{"kind": "header", "schema": "hex-sign-det-paired-v1", "params": timing.DEGREES,
++                 "trials": timing.TRIALS, "left": timing.PREFIX+names[0],
++                 "right": timing.PREFIX+names[1], "env": self.env}]
++        for trial in range(timing.TRIALS):
++            for slot, _n in enumerate(timing.DEGREES):
++                for arm in ((0, 1) if trial % 2 == 0 else (1, 0)):
++                    rows.append({"kind": "sample", "arm": timing.PREFIX+names[arm],
++                                 "point": results[arm]["points"][trial*len(timing.DEGREES)+slot]})
++        rows.extend({"kind": "summary", "result": r} for r in results)
++        return names, rows
++
++    def validate_pair(self, names, rows):
++        self.path.write_text("\n".join(map(json.dumps, rows)))
++        return timing.validate_pair(self.path, names, self.expected, "measured")
++
++    def test_complete_pairs_retain_inconclusive_verdicts(self):
++        names, rows = self.pair()
++        summary = self.validate_pair(names, rows)
++        self.assertEqual(len(rows), 63)
++        self.assertEqual(summary["observations"][names[0]]["verdict"], "inconclusive")
++        self.assertEqual(len(summary["paired"]), 5)
++        self.assertEqual(summary["paired"][0]["ratios"], [1]*6)
++
++    def test_missing_reordered_or_duplicated_arms_rejected(self):
++        names, rows = self.pair()
++        for alter in (lambda rs: rs.pop(1), lambda rs: rs.insert(1, rs[1]),
++                      lambda rs: rs.__setitem__(slice(1, 3), rs[1:3][::-1])):
++            with self.subTest(alter=alter), self.assertRaises(ValueError):
++                changed = copy.deepcopy(rows)
++                alter(changed)
++                self.validate_pair(names, changed)
++
++    def test_wrong_results_memory_and_probe_substitution_rejected(self):
++        for key, value in (("result_hash", "0xc"), ("status", "timed_out"),
++                           ("part_of_verdict", False), ("below_signal_floor", True),
++                           ("per_call_nanos", float("nan")), ("inner_repeats", True),
++                           ("param", 3.0), ("trial_index", False),
++                           ("peak_rss_kb", None), ("alloc_bytes", 100)):
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                result = self.result("runComparison")
++                result["points"][0][key] = value
++                timing.validate_result(result, "runComparison", self.expected, "measured")
++
++    def test_summary_binding_config_and_model_rejected(self):
++        for key, value in (("budget_truncated", True), ("function", "wrong"),
++                           ("complexity_formula", "n^2"), ("verdict", "unknown")):
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                result = self.result("runCompletion")
++                result[key] = value
++                timing.validate_result(result, "runCompletion", self.expected, "measured")
++        names, rows = self.pair()
++        rows[-1]["result"] = copy.deepcopy(rows[-1]["result"])
++        rows[-1]["result"]["points"][0]["per_call_nanos"] += 1
++        with self.assertRaisesRegex(ValueError, "summary differs"):
++            self.validate_pair(names, rows)
++        result = copy.deepcopy(self.result("runCompletion"))
++        result["config"]["outer_trials"] = 2
++        with self.assertRaisesRegex(ValueError, "registered schedule"):
++            timing.validate_result(result, "runCompletion", self.expected, "measured")
++
++    def test_dirty_or_different_source_rejected(self):
++        for env in ({"git_commit": "other", "git_dirty": False},
++                    {"git_commit": "measured", "git_dirty": True}):
++            with self.subTest(env=env), self.assertRaises(ValueError):
++                result = self.result("runCompletion")
++                result["env"] = env
++                timing.validate_result(result, "runCompletion", self.expected, "measured")
++
++    def test_callback_hash_schedule_and_types(self):
++        rows = [{"degree": n, "queries": 3*n+1, **self.expected[n]} for n in timing.DEGREES]
++        self.path.write_text("\n".join(map(json.dumps, rows)))
++        self.assertEqual(timing.validate_hashes(self.path), rows_to_expected(rows))
++        for key, value in (("queries", 0), ("tableResultHash", True), ("tableResultHash", 2**64)):
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                changed = copy.deepcopy(rows)
++                changed[0][key] = value
++                self.path.write_text("\n".join(map(json.dumps, changed)))
++                timing.validate_hashes(self.path)
++
++
++def rows_to_expected(rows):
++    return {row["degree"]: row for row in rows}
++
++
++if __name__ == "__main__":
++    unittest.main()

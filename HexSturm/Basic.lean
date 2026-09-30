@@ -41,6 +41,37 @@ structure PreparedDomain (E : Type u) [Zero E] [DecidableEq E] [One E] [Add E] [
   last_constant : SignedRemainderChain.lastIsConstant squarefree = true
   produced : squarefree = SignedRemainderChain.build sign (normalize sign) head 1
 
+/-- Reuse the same validated head and squarefree chain with new endpoints.
+Only the endpoint guards are recomputed; old endpoint evidence is not reused. -/
+def PreparedDomain.withEndpoints? [Neg E] [Inv E] (domain : PreparedDomain E)
+    (lower upper : Endpoint E) : Option (PreparedDomain E) :=
+  if h : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign domain.sign)
+      domain.head lower upper = true then
+    some { domain with lower := lower, upper := upper, endpoints_valid := h }
+  else none
+
+/-- Retargeting succeeds exactly when the new endpoints pass their guards. -/
+theorem PreparedDomain.withEndpoints_isSome [Neg E] [Inv E] (domain : PreparedDomain E)
+    (lower upper : Endpoint E) :
+    (domain.withEndpoints? lower upper).isSome =
+      TarskiCertificate.checkEndpoints (EndpointSigns.ofSign domain.sign)
+        domain.head lower upper := by
+  unfold withEndpoints?
+  split <;> simp_all
+
+/-- Successful retargeting retains the literal head, sign and chain, and binds
+the returned object to the newly checked endpoints. -/
+theorem PreparedDomain.withEndpoints_bindings [Neg E] [Inv E]
+    (domain next : PreparedDomain E) (lower upper : Endpoint E)
+    (h : domain.withEndpoints? lower upper = some next) :
+    next.sign = domain.sign ∧ next.head = domain.head ∧
+      next.squarefree = domain.squarefree ∧ next.lower = lower ∧ next.upper = upper := by
+  unfold withEndpoints? at h
+  split at h
+  · cases Option.some.inj h
+    exact ⟨rfl, rfl, rfl, rfl, rfl⟩
+  · simp at h
+
 /-- Validate nonzero head, endpoint guards and a nonzero constant derivative
 gcd using the shared chain producer. No query polynomial affects the domain. -/
 def prepare [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E) (a b : Endpoint E) :
@@ -51,6 +82,14 @@ def prepare [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E) (a b : Endpoint
       some ⟨sign, p, a, b, sf, hg, hc, rfl⟩
     else none
   else none
+
+/-- Retargeting has the same whole result as fresh preparation, but does not
+rebuild the unchanged head's squarefree chain. -/
+theorem PreparedDomain.withEndpoints_eq [Neg E] [Inv E] (domain : PreparedDomain E)
+    (lower upper : Endpoint E) :
+    domain.withEndpoints? lower upper = prepare domain.sign domain.head lower upper := by
+  simp only [PreparedDomain.withEndpoints?, prepare, ← domain.produced,
+    domain.last_constant, dite_true]
 
 /-- Successful preparation retains exactly the supplied operation and inputs. -/
 theorem prepare_eq_some [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E)
@@ -77,6 +116,31 @@ theorem prepare_eq_some [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E)
   TarskiCertificate.fromChains domain.sign (EndpointSigns.ofSign domain.sign) context domain.head f domain.lower domain.upper
     domain.squarefree (SignedRemainderChain.build domain.sign (normalize domain.sign) domain.head f)
 
+/-- A query-one certificate with fresh literal context and endpoint bindings,
+using the existing squarefree chain rather than building it a second time. -/
+@[expose] def certifyCountPrepared [Neg E] [Inv E] {Ctx : Type v} (context : Ctx)
+    (domain : PreparedDomain E) : TarskiCertificate E E Ctx :=
+  TarskiCertificate.fromChains domain.sign (EndpointSigns.ofSign domain.sign) context
+    domain.head 1 domain.lower domain.upper domain.squarefree domain.squarefree
+
+/-- Query one using the already stored chain in both certificate positions.
+Endpoint sign lists and the query value are recomputed for this domain.
+Compare the integer directly or prove nonnegativity before converting to `Nat`;
+do not clamp an unexpected negative result. -/
+@[expose] def countPrepared [Neg E] [Inv E] (domain : PreparedDomain E) : Int :=
+  (certifyCountPrepared () domain).value
+
+/-- Chain reuse preserves the ordinary prepared query-one result. -/
+theorem countPrepared_eq [Neg E] [Inv E] (domain : PreparedDomain E) :
+    countPrepared domain = queryPrepared domain 1 := by
+  simp only [countPrepared, certifyCountPrepared, queryPrepared, ← domain.produced]
+
+/-- Chain reuse preserves the full literal query-one certificate. -/
+theorem certifyCountPrepared_eq [Neg E] [Inv E] {Ctx : Type v} (context : Ctx)
+    (domain : PreparedDomain E) :
+    certifyCountPrepared context domain = certifyPrepared context domain 1 := by
+  simp only [certifyCountPrepared, certifyPrepared, ← domain.produced]
+
 /-- The literal context does not affect a prepared certificate's query value. -/
 theorem certifyPrepared_value [Neg E] [Inv E] {Ctx : Type v} (context : Ctx)
     (domain : PreparedDomain E) (f : DensePoly E) :
@@ -86,6 +150,13 @@ theorem certifyPrepared_value [Neg E] [Inv E] {Ctx : Type v} (context : Ctx)
 records mathematical domain failure; signs and arithmetic are total. -/
 @[expose] def query [Neg E] [Inv E] (sign : E → Int) (p f : DensePoly E) (a b : Endpoint E) : Option Int :=
   TarskiCertificate.query sign (EndpointSigns.ofSign sign) (normalize sign) p f a b
+
+/-- Count distinct roots on the same domain as a query. The companion
+theorems `query_nonneg` and `rootCount_query` prove that the conversion
+preserves every lawful query-one answer exactly. -/
+@[expose] def rootCount [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E)
+    (a b : Endpoint E) : Option Nat :=
+  (query sign p 1 a b).map Int.toNat
 
 /-- Produce a certificate with exact literal context and input bindings. -/
 @[expose] def certify [Neg E] [Inv E] {Ctx : Type v} (sign : E → Int) (context : Ctx)

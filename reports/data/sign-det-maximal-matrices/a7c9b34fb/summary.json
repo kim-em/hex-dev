@@ -1,0 +1,21 @@
+{
+  "observations": {
+    "runSolve": {
+      "verdict": "inconclusive",
+      "complexity_formula": "27^s",
+      "slope": null,
+      "c_min": 100.067289,
+      "c_max": 370.285154,
+      "advisories": []
+    },
+    "runCheck": {
+      "verdict": "inconclusive",
+      "complexity_formula": "27^s",
+      "slope": null,
+      "c_min": 3.563201,
+      "c_max": 29.780225,
+      "advisories": []
+    }
+  },
+  "validation_errors": []
+}

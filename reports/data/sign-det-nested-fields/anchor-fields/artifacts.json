@@ -1,0 +1,7 @@
+{
+  "execution_sha256": "949e1fd792beea41667a5263f93b65b5fae2cc97c6f62922283ffbbfe0c9cc33",
+  "stderr_sha256": "f374337252cddd4fdcde3500c07117f4eb3ad476f415fc1ec37e541e78affcd3",
+  "ci_fixture_sha256": "2c33a5bed8ed66c0357ef52845d3119c59d243ab500d898e430b0c2e690962ca",
+  "local_fixture_sha256": "a769d32d13fefe200e8c0343a49d4413179590dd2d0e89198dbd9e75f108f8fd",
+  "oracle_tests_sha256": "401663945ce8022366aca39e297efbd90d1ed49719bf7d9002a06dc713d1df6d"
+}

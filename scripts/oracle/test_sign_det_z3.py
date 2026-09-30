@@ -165,11 +165,30 @@ class InfinitesimalOracle(unittest.TestCase):
             oracle.check_record(record)
             record["value"]["data"]["result"]["order"] = "gt"
             self.reject(record)
-        for name in ("reencode/passmore/reencode", "reencode/nested/reencode"):
+        for name in ("reencode/passmore/reencode", "reencode/nested/reencode",
+                     "reencode/nested/refinement"):
             record = self.record(name)
             oracle.check_record(record)
             record["value"]["data"]["result"]["signs"][0] *= -1
             self.reject(record)
+
+    def test_refinement_bindings_and_old_interval_replay(self):
+        original = self.record("reencode/nested/refinement")
+        for key in ("targetLower", "targetUpper"):
+            record = copy.deepcopy(original)
+            record["value"]["data"]["result"][key] = record["value"]["data"]["source"][
+                {"targetLower": "lower", "targetUpper": "upper"}[key]]
+            self.assertNotEqual(record, original)
+            self.reject(record)
+        # This case changes the head, so copying it is a genuine mutation.
+        original_head = self.record("reencode/nested/reencode")
+        record = copy.deepcopy(original_head)
+        record["value"]["data"]["result"]["targetHead"] = record["value"]["data"]["source"]["head"]
+        self.assertNotEqual(record, original_head)
+        self.reject(record)
+        record = copy.deepcopy(original)
+        record["value"]["data"]["result"]["oldIntervalReplay"] = True
+        self.reject(record)
 
     def test_version_pin(self):
         with patch.object(oracle, "version", return_value="4.15.3.0"):

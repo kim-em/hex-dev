@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Audit admissions in the optional RCF and all sign adapters and conformance."""
+"""Audit all development adapters and sign-determination conformance import cones.
+
+RCF conformance (including intentional negative admission probes) and Sturm
+semantic replay conformance remain kernel-checked tests outside this source
+scan; the message below reports only the scanned cones.
+"""
 
 from __future__ import annotations
 
@@ -12,11 +17,8 @@ ADMISSION = re.compile(
     r"\b[A-Za-z_]*[sS]orry[A-Za-z_]*\b|\b(?:admit|admitGoal|axiom)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*constant\b(?!\s*:)|(?<!\.)\bstop\b(?!\s*:=)",
     re.MULTILINE,
 )
-DECLARATION = re.compile(
-    r"\b(?:theorem|lemma|axiom|def|example|instance|abbrev|opaque|structure)\s+([A-Za-z0-9_]+)"
-)
 IMPORT = re.compile(r"\bimport\s+(?:all\s+)?(\S+)")
-EXTERNAL = {"Batteries", "Mathlib", "Lean", "Init", "Std", "Lake", "Qq", "Verso"}
+EXTERNAL = {"Batteries", "Mathlib", "Lean", "Init", "Std", "Lake", "Qq", "Verso", "TauCeti"}
 
 
 def code_only(source: str) -> str:
@@ -168,29 +170,64 @@ def check() -> None:
     if module_file("HexRCF.RealCoefficients") is None:
         raise ValueError("the optional rcf adapter module is missing")
     roots = ["HexRCF.RealCoefficients", "HexSignDetMathlib.SelectedProducerConformance",
-             "HexRealClosureMathlib.Algebraic", "HexRealClosureMathlib.AlgebraicClean",
-             "HexRealClosureMathlib.AlgebraicValue", "HexRealClosureMathlib.BaseClean",
-             "HexRealClosureMathlib.AlgebraicTower", "HexRealClosure.TowerCatalog",
-             "HexRealClosure.TowerTests", "HexRealClosure.FrameFormat",
-             "HexRealClosure.FrameFormatTests", "HexRealClosure.TowerOrderTests",
-             "HexRealClosureMathlib.TowerModelTests", "HexRealClosureMathlib.TowerModel",
-             "HexRealClosureMathlib.TowerAlgebraic", "HexRealClosure.TowerOrder",
+             "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance",
+             "HexSignDetMathlib.TableConformance", "HexSignDetMathlib.ReencodingConformance",
+             "HexSignDetMathlib.RootListConformance", "HexSignDetMathlib.RefinementConformance",
+             "HexSignDetMathlib.ConvertConformance", "HexRealClosure.BaseTests",
+             "HexRealClosure.QAdjoinTests",
+             "HexRealClosure.TowerCatalog", "HexRealClosure.TowerTests",
+             "HexRealClosure.LiteralSupport", "HexRealClosure.CodecSupport",
+             "HexRealClosure.FrameFormat", "HexRealClosure.FrameFormatTests",
+             "HexRealClosure.TowerOrder", "HexRealClosure.TowerOrderTests",
+             "HexRealClosureMathlib.TowerModel", "HexRealClosureMathlib.TowerModelTests",
+             "HexRealClosureMathlib.TowerAlgebraic",
              "HexRealClosureMathlib.TowerYun", "HexRealClosure.TowerYunTests",
              "HexRealClosureMathlib.TowerRefinement", "HexRealClosure.TowerRefinement",
              "HexRealClosure.TowerPolynomial", "HexRealClosure.TowerRefinementTests",
              "HexRealClosure.TowerTransport", "HexRealClosure.TowerTransportTests",
              "HexRealClosure.TowerConversionTests",
              "HexRealClosureMathlib.TowerTransport", "HexRealClosureMathlib.TowerTransportTests",
-             "HexSignDetMathlib.CompletionConformance", "HexSignDetMathlib.QueryHandleConformance"] + [
-        "HexSignDetMathlib." + ".".join(path.relative_to(
-            ROOT / "adapters/HexSignDetMathlib").with_suffix("").parts)
-        for path in sorted((ROOT / "adapters/HexSignDetMathlib").rglob("*.lean"))] + [
+             "HexRealClosureMathlib.BaseTests", "HexRealClosure.BaseCatalogTests",
+             "HexRealClosure.BisectionTests", "HexRealClosure.DeflationConformance",
+             "HexRealClosure.BisectionFrontierTests", "HexRealClosure.IsolationTests",
+             "HexRealClosure.IsolationConformance", "HexRealClosure.RootOrderTests",
+             "HexRealClosure.RootFactorsTests", "HexRealClosureMathlib.Bisection",
+             "HexRealClosureMathlib.BisectionRoots", "HexRealClosureMathlib.BisectionFrontier",
+             "HexRealClosureMathlib.BisectionCounts", "HexRealClosureMathlib.Isolation",
+             "HexRealClosureMathlib.BisectionFactor", "HexRealClosureMathlib.IsolationFactor",
+             "HexRealClosureMathlib.IsolationRoots", "HexRealClosureMathlib.RootOrder",
+             "HexRealClosureMathlib.RootFactors", "HexRealClosureMathlib.Specialize",
+             "HexRealClosureMathlib.SpecializePolynomial",
+             "HexRealClosureMathlib.SpecializeRegular", "HexRealClosureMathlib.SpecializeQuery", "HexRealClosureMathlib.SpecializeTarski",
+             "HexRealClosureMathlib.SpecializeReduction", "HexRealClosureMathlib.SpecializeMoment",
+             "HexRealClosureMathlib.SpecializeReplay", "HexRealClosureMathlib.SpecializeSample", "HexRealClosureMathlib.SpecializeSelected", "HexRealClosureMathlib.SpecializeDescriptor",
+             "HexRealClosureMathlib.TransportPolynomial", "HexRealClosureMathlib.TransportProduct",
+             "HexRealClosureMathlib.TransportArithmetic", "HexRealClosureMathlib.TransportQuery", "HexRealClosureMathlib.TransportTests",
+             "HexRealClosureMathlib.TransportRing", "HexRealClosureMathlib.TransportPower",
+             "HexRealClosureMathlib.TransportTarski", "HexRealClosureMathlib.TransportClosed",
+             "HexRealClosureMathlib.TransportClosedQuery", "HexRealClosureMathlib.TransportClosedReduction",
+             "HexRealClosureMathlib.TransportPreparation", "HexRealClosureMathlib.TransportMoment",
+             "HexRealClosureMathlib.TransportReplay", "HexRealClosureMathlib.TransportSample", "HexRealClosureMathlib.TransportDescriptor",
+             "HexRealClosureMathlib.TransportSelected", "HexRealClosureMathlib.TransportRegular",
+             "HexRealClosureMathlib.TransportReduction",
+             "HexRealClosureMathlib.SpecializeTests", "HexRealClosureMathlib.Algebraic",
+             "HexRealClosureMathlib.AlgebraicClean", "HexRealClosureMathlib.AlgebraicValue",
+             "HexRealClosureMathlib.AlgebraicTransport", "HexRealClosureMathlib.AlgebraicYun",
+             "HexRealClosureMathlib.BaseClean", "HexRealClosureMathlib.AlgebraicTower",
+             "HexRealClosureMathlib.Union", "HexRealClosureMathlib.UnionTests",
+             "HexRealClosureMathlib.QAdjoin"] + [
+        ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
+        for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
         "HexSignDetMathlib." + ".".join(path.relative_to(
             ROOT / "conformance/HexSignDetMathlib").with_suffix("").parts)
         for path in sorted((ROOT / "conformance/HexSignDetMathlib").rglob("*.lean"))]
     # Named roots remain mandatory; the glob also audits unnamed conformance
     # modules, including their own declarations and imported dependencies.
     roots = list(dict.fromkeys(roots))
+    for path in sorted((ROOT / "adapters").rglob("*.lean")):
+        module = ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
+        if module_file(module) != path:
+            raise ValueError(f"adapter module {module} is shadowed by another source file")
     for path in sorted((ROOT / "conformance/HexSignDetMathlib").rglob("*.lean")):
         module = "HexSignDetMathlib." + ".".join(path.relative_to(
             ROOT / "conformance/HexSignDetMathlib").with_suffix("").parts)
@@ -210,26 +247,11 @@ def check() -> None:
                 "Term.withoutErrToSorry (elabArgument" in
                 source.splitlines()[source.count("\n", 0, match.start())]
             )]
-        if relative == Path("HexRCF/Tactic.lean"):
-            # Only these two checks may mention the bridge's admitted axiom.
-            approved = {"unless axioms.contains ``sorryAx do",
-                        "unless ordinaryAxiom dependency || dependency == ``sorryAx do"}
-            admissions = [match for match in admissions if not
-                          (match.group().strip() == "sorryAx" and
-                           source.splitlines()[source.count("\n", 0, match.start())].strip() in approved)]
-        if relative != BRIDGE:
-            if admissions:
-                line = source.count("\n", 0, admissions[0].start()) + 1
-                raise ValueError(f"unapproved admission in {relative}:{line}")
-            continue
-        if len(admissions) != 1 or admissions[0].group() != "sorry":
-            raise ValueError(f"expected one check_rootSum sorry in {BRIDGE}, got {len(admissions)}")
-        declarations = list(DECLARATION.finditer(source, 0, admissions[0].start()))
-        if not declarations or declarations[-1].group(1) != "check_rootSum":
-            raise ValueError(f"the {BRIDGE} sorry is not in check_rootSum")
-        if not re.search(r":=\s*by\s*$", source[declarations[-1].end() : admissions[0].start()]):
-            raise ValueError(f"the {BRIDGE} admission is no longer the direct theorem body")
-    print(f"{len(roots)} adapter/conformance import cones: {len(paths)} local modules, only check_rootSum is admitted")
+        if admissions:
+            line = source.count("\n", 0, admissions[0].start()) + 1
+            raise ValueError(f"unapproved admission in {relative}:{line}")
+    print(f"{len(roots)} scanned adapter/conformance import cones: "
+          f"{len(paths)} local modules, no admissions in these cones")
 
 
 if __name__ == "__main__":

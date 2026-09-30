@@ -137,11 +137,11 @@ theorem cubic_complete (d : Descriptor CubicField Nat fieldSign 7) :
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.complete_ofBuild
 
-/-- info: 'Hex.SignDet.Descriptor.buildCompletion_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.buildCompletion_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildCompletion_success
 
-/-- info: 'Hex.SignDet.Descriptor.complete_correct' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.complete_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.complete_correct
 
@@ -153,25 +153,24 @@ theorem cubic_complete (d : Descriptor CubicField Nat fieldSign 7) :
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.select_full_at
 
-/-- info: 'Hex.SignDet.Descriptor.completion_rows' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.completion_rows' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.completion_rows
 
-/-- info: 'Hex.SignDet.Descriptor.buildCompletion_roots' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.buildCompletion_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.buildCompletion_roots
 
-/-- info: 'Hex.SignDet.Descriptor.complete_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.complete_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Descriptor.complete_success
 
 /--
 info: 'Hex.SignDetMathlib.CompletionConformance.cubic_complete' depends on axioms: [propext,
- sorryAx,
  Classical.choice,
  Quot.sound]
 -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms cubic_complete
 
 end Hex.SignDetMathlib.CompletionConformance

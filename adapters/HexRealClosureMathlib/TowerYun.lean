@@ -21,6 +21,14 @@ Zero reflection suffices even when nonzero representatives are noncanonical. -/
 noncomputable def mapPoly (p : DensePoly context.Value) : DensePoly K :=
   DensePoly.Interpret.map model.value model.zero_iff p
 
+private theorem mapPoly_def_proof (p : DensePoly context.Value) :
+    model.mapPoly p = DensePoly.Interpret.map model.value model.zero_iff p := rfl
+
+/-- Connect the tower polynomial map to the shared coefficient interpretation. -/
+theorem mapPoly_def (p : DensePoly context.Value) :
+    model.mapPoly p = DensePoly.Interpret.map model.value model.zero_iff p :=
+  model.mapPoly_def_proof p
+
 @[simp] theorem coeff_mapPoly (p : DensePoly context.Value) (i : Nat) :
     (model.mapPoly p).coeff i = model.value (p.coeff i) :=
   DensePoly.Interpret.map_coeff model.value model.zero_iff p i
@@ -156,6 +164,9 @@ end Hex.RealClosure.Tower.Model
 /-- info: 'Hex.RealClosure.Tower.Model.decompose_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.decompose_sound
+/-- info: 'Hex.RealClosure.Tower.Model.decompose_factor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.decompose_factor
 /-- info: 'Hex.RealClosure.Tower.Model.decompose_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.decompose_complete

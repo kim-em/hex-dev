@@ -246,30 +246,30 @@ theorem refine_later (converted : Later (parent.refine encoding) descriptor)
 
 end Hex.RealClosure.Tower.Model
 
-/-- info: 'Hex.RealClosure.Tower.Model.refine_value' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.refine_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.refine_value
 
-/-- info: 'Hex.RealClosure.Tower.Model.refine_field' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.refine_field' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.refine_field
 
-/-- info: 'Hex.RealClosure.Tower.Model.refine_degree' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.refine_degree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.refine_degree
 
-/-- info: 'Hex.RealClosure.Tower.Model.refine_descriptor' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.refine_descriptor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.refine_descriptor
 
-/-- info: 'Hex.RealClosure.Tower.Model.refine_root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.refine_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.refine_root
 
-/-- info: 'Hex.RealClosure.Tower.Model.refine_later' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.refine_later' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.refine_later
 
-/-- info: 'Hex.RealClosure.Tower.Model.refine_heq' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.refine_heq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.refine_heq

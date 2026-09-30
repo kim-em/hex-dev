@@ -1,0 +1,1004 @@
+diff --git a/HexPolyFast/Division.lean b/HexPolyFast/Division.lean
+index bc8201f5e..c0dd890be 100644
+--- a/HexPolyFast/Division.lean
++++ b/HexPolyFast/Division.lean
+@@ -580,7 +580,7 @@ theorem divModMonicWith_eq (mul : MulPlan R) (p q : DensePoly R)
+       exact hplan.trans hmonic.symm
+ 
+ /-- One-shot reciprocal division over a field. -/
+-def divModWith {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
++def divModNewton {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+     (mul : MulPlan F) (p q : DensePoly F) : DensePoly F × DensePoly F :=
+   if hqne : q = 0 then
+     (0, p)
+@@ -593,10 +593,10 @@ def divModWith {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+ 
+ /-- One-shot field reciprocal division is extensionally the existing verified
+ long-division operation. -/
+-theorem divModWith_eq {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
++theorem divModNewton_eq {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+     (mul : MulPlan F) (p q : DensePoly F) :
+-    divModWith mul p q = _root_.Hex.DensePoly.divMod p q := by
+-  unfold divModWith
++    divModNewton mul p q = _root_.Hex.DensePoly.divMod p q := by
++  unfold divModNewton
+   split
+   · rename_i hq
+     have hqsize : q.size = 0 := (size_eq_zero_iff q).mpr hq
+@@ -628,21 +628,41 @@ theorem divModWith_eq {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+       exact ha hz'
+ 
+ /-- Fast field division leaves fewer stored coefficients than its nonzero divisor. -/
+-theorem divModWith_size_lt {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
++theorem divModNewton_size_lt {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+     (plan : MulPlan F) (p q : DensePoly F) (hq : q ≠ 0) :
+-    (divModWith plan p q).2.size < q.size := by
++    (divModNewton plan p q).2.size < q.size := by
+   let d := DivPlan.ofNonzero plan q hq (quotientLength p q)
+   have hcap : quotientLength p d.divisor ≤ d.capacity := Nat.le_refl _
+   have h := d.remainder_size_le p hcap
+   have hpos : 0 < q.size := Nat.pos_of_ne_zero (fun h => hq ((size_eq_zero_iff q).mp h))
+-  have he : divModWith plan p q = d.divMod p hcap := by
+-    simp only [divModWith, hq, ↓reduceDIte]
++  have he : divModNewton plan p q = d.divMod p hcap := by
++    simp only [divModNewton, hq, ↓reduceDIte]
+     rfl
+   rw [he]
+   change (p - mulWith d.mul (d.quotient p hcap) d.divisor).size < q.size
+   change (p - mulWith d.mul (d.quotient p hcap) d.divisor).size ≤ q.size - 1 at h
+   omega
+ 
++/-- Kernel-visible reference division. Compiled code uses the proved
++short-operand/Newton dispatch below, with the supplied multiplication plan. -/
++@[expose]
++def divModWith {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
++    (mul : MulPlan F) (p q : DensePoly F) : DensePoly F × DensePoly F :=
++  let _ := mul
++  divMod p q
++
++/-- Planned division has the exact reference quotient and remainder. -/
++theorem divModWith_eq {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
++    (mul : MulPlan F) (p q : DensePoly F) :
++    divModWith mul p q = divMod p q := rfl
++
++/-- Planned division retains the strict reference remainder bound. -/
++theorem divModWith_size_lt {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
++    (plan : MulPlan F) (p q : DensePoly F) (hq : q ≠ 0) :
++    (divModWith plan p q).2.size < q.size := by
++  rw [divModWith_eq, ← divModNewton_eq plan p q]
++  exact divModNewton_size_lt plan p q hq
++
+ /-- Maximum short operand length for direct one-shot polynomial division. -/
+ def divisionCutoff : Nat := 8
+ 
+@@ -665,6 +685,6 @@ def divModWithImpl {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+   unfold divModWithImpl
+   split
+   · exact divModWith_eq mul p q
+-  · rfl
++  · exact (divModNewton_eq mul p q).symm
+ 
+ end Hex.DensePoly
+diff --git a/HexPolyFast/HalfGcd.lean b/HexPolyFast/HalfGcd.lean
+index df489ea55..0982ecd34 100644
+--- a/HexPolyFast/HalfGcd.lean
++++ b/HexPolyFast/HalfGcd.lean
+@@ -1363,7 +1363,7 @@ private theorem reduceToMatrixResult_proper (plan : MulPlan F) (bound fuel : Nat
+             refine ⟨[qr.1], ProperQuotients.cons hqpos hbdegree hdiv
+               (ProperQuotients.nil b qr.2),
+               (quotientStep_singleton plan qr.1).symm, ?_⟩
+-            rw [GcdStep.apply_euclid, sub_mul_eq_remainder hdiv]
++            rw [GcdStep.apply_euclid, sub_mul_eq_remainder (q := qr.1) (r := qr.2) hdiv]
+           split
+           · exact hsingle
+           · rename_i hremBeyond
+@@ -1612,27 +1612,42 @@ private theorem quotientStep_a01 (plan : MulPlan F)
+   simpa only [GcdStep.apply, mul_one_right_poly, hmulzero,
+     zero_add] using h
+ 
++/-- Kernel-visible extended gcd; native code uses the proved half-gcd engine. -/
++@[expose] def xgcdWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
++  let _ := plan
++  xgcd p q
++
++/-- Kernel-visible gcd with exact reference scaling. -/
++@[expose] def gcdWith (plan : MulPlan F) (p q : DensePoly F) : DensePoly F :=
++  let _ := plan
++  gcd p q
++
++/-- Kernel-visible one-sided extended gcd. -/
++@[expose] def xgcdLeftWith (plan : MulPlan F) (p q : DensePoly F) : XGCDLeftResult F :=
++  let _ := plan
++  xgcdLeft p q
++
+ /-- Plan-driven half-gcd extended gcd. -/
+-def xgcdWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
++def xgcdWithImpl (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
+   let result := gcdMatrixResult plan (p.size + q.size + 1) p q
+   { gcd := result.gcd, left := result.matrix.a00, right := result.matrix.a01 }
+ 
+ /-- Gcd projection of the half-gcd engine. -/
+-def gcdWith (plan : MulPlan F) (p q : DensePoly F) : DensePoly F :=
+-  (xgcdWith plan p q).gcd
++def gcdWithImpl (plan : MulPlan F) (p q : DensePoly F) : DensePoly F :=
++  (xgcdWithImpl plan p q).gcd
+ 
+ /-- One-sided result projection of the half-gcd engine.  It shares the full
+-matrix computation with `xgcdWith`; this API omits the unused result field but
++matrix computation with `xgcdWithImpl`; this API omits the unused result field but
+ does not promise a cheaper algorithm. -/
+-def xgcdLeftWith (plan : MulPlan F) (p q : DensePoly F) : XGCDLeftResult F :=
+-  let r := xgcdWith plan p q
++def xgcdLeftWithImpl (plan : MulPlan F) (p q : DensePoly F) : XGCDLeftResult F :=
++  let r := xgcdWithImpl plan p q
+   { gcd := r.gcd, left := r.left }
+ 
+ /-- Half-gcd returns exactly the established extended-gcd result, including
+ the raw gcd scaling and both Bezout coefficients. -/
+-theorem xgcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
+-    xgcdWith plan p q = xgcd p q := by
+-  unfold xgcdWith xgcd
++theorem xgcdWithImpl_eq (plan : MulPlan F) (p q : DensePoly F) :
++    xgcdWithImpl plan p q = xgcd p q := by
++  unfold xgcdWithImpl xgcd
+   let fuel := p.size + q.size + 1
+   let result := gcdMatrixResult plan fuel p q
+   change XGCDResult.mk result.gcd result.matrix.a00 result.matrix.a01 =
+@@ -1649,16 +1664,16 @@ theorem xgcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
+   rw [hmatrix', quotientStep_a00, quotientStep_a01]
+ 
+ /-- Half-gcd returns exactly the established gcd. -/
+-theorem gcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
+-    gcdWith plan p q = gcd p q := by
+-  rw [gcdWith, xgcdWith_eq, xgcd_gcd_eq_gcd]
++theorem gcdWithImpl_eq (plan : MulPlan F) (p q : DensePoly F) :
++    gcdWithImpl plan p q = gcd p q := by
++  rw [gcdWithImpl, xgcdWithImpl_eq, xgcd_gcd_eq_gcd]
+ 
+ /-- The one-sided half-gcd projection agrees exactly with the established
+ one-sided extended gcd. -/
+-theorem xgcdLeftWith_eq (plan : MulPlan F) (p q : DensePoly F) :
+-    xgcdLeftWith plan p q = xgcdLeft p q := by
+-  unfold xgcdLeftWith
+-  rw [xgcdWith_eq]
++theorem xgcdLeftWithImpl_eq (plan : MulPlan F) (p q : DensePoly F) :
++    xgcdLeftWithImpl plan p q = xgcdLeft p q := by
++  unfold xgcdLeftWithImpl
++  rw [xgcdWithImpl_eq]
+   have hg := xgcdLeft_gcd_eq_xgcd (R := F) p q
+   have hl := xgcdLeft_left_eq_xgcd (R := F) p q
+   cases hleft : xgcdLeft p q with
+@@ -1671,4 +1686,31 @@ theorem xgcdLeftWith_eq (plan : MulPlan F) (p q : DensePoly F) :
+           subst l'
+           rfl
+ 
++/-- Planned extended gcd has the exact reference result. -/
++theorem xgcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
++    xgcdWith plan p q = xgcd p q := rfl
++
++/-- Planned gcd retains the exact reference scaling. -/
++theorem gcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
++    gcdWith plan p q = gcd p q := rfl
++
++/-- Planned one-sided extended gcd retains the exact reference result. -/
++theorem xgcdLeftWith_eq (plan : MulPlan F) (p q : DensePoly F) :
++    xgcdLeftWith plan p q = xgcdLeft p q := rfl
++
++/-- Compile the extended-gcd reference through the existing half-gcd engine. -/
++@[csimp] theorem xgcdWith_csimp : @xgcdWith = @xgcdWithImpl := by
++  funext F instEq instField plan p q
++  exact (xgcdWithImpl_eq plan p q).symm
++
++/-- Compile the gcd reference through the existing half-gcd projection. -/
++@[csimp] theorem gcdWith_csimp : @gcdWith = @gcdWithImpl := by
++  funext F instEq instField plan p q
++  exact (gcdWithImpl_eq plan p q).symm
++
++/-- Compile the one-sided reference through the existing half-gcd projection. -/
++@[csimp] theorem xgcdLeftWith_csimp : @xgcdLeftWith = @xgcdLeftWithImpl := by
++  funext F instEq instField plan p q
++  exact (xgcdLeftWithImpl_eq plan p q).symm
++
+ end Hex.DensePoly
+diff --git a/HexPolyFast/Karatsuba.lean b/HexPolyFast/Karatsuba.lean
+index 84501dfa0..7a7b35dbc 100644
+--- a/HexPolyFast/Karatsuba.lean
++++ b/HexPolyFast/Karatsuba.lean
+@@ -987,7 +987,7 @@ def mulKaratsubaBalanced (cutoff : Nat) (a b : DensePoly R) : DensePoly R :=
+   karatsubaAux cutoff (max a.size b.size) a b
+ 
+ /-- Specialized Karatsuba squaring with an explicit schoolbook cutoff. -/
+-def squareKaratsuba (cutoff : Nat) (a : DensePoly R) : DensePoly R :=
++def squareKaratsubaImpl (cutoff : Nat) (a : DensePoly R) : DensePoly R :=
+   karatsubaSquareAux cutoff a.size a
+ 
+ /-- Balanced Karatsuba multiplication agrees exactly with `DensePoly.mul`. -/
+@@ -996,10 +996,22 @@ theorem mulKaratsubaBalanced_eq (cutoff : Nat) (a b : DensePoly R) :
+   karatsubaAux_eq cutoff _ a b
+ 
+ /-- Specialized Karatsuba squaring agrees exactly with `DensePoly.mul`. -/
+-theorem squareKaratsuba_eq (cutoff : Nat) (a : DensePoly R) :
+-    squareKaratsuba cutoff a = a * a :=
++theorem squareKaratsubaImpl_eq (cutoff : Nat) (a : DensePoly R) :
++    squareKaratsubaImpl cutoff a = a * a :=
+   karatsubaSquareAux_eq cutoff _ a
+ 
++/-- Kernel-visible square; compiled code uses the existing Karatsuba square. -/
++@[expose] def squareKaratsuba (cutoff : Nat) (a : DensePoly R) : DensePoly R :=
++  let _ := cutoff
++  a * a
++
++theorem squareKaratsuba_eq (cutoff : Nat) (a : DensePoly R) :
++    squareKaratsuba cutoff a = a * a := rfl
++
++@[csimp] theorem squareKaratsuba_csimp : @squareKaratsuba = @squareKaratsubaImpl := by
++  funext R instEq instRing cutoff a
++  exact (squareKaratsubaImpl_eq cutoff a).symm
++
+ /-- Multiply a long operand by blocks of `blockSize` coefficients.  Each block
+ uses balanced Karatsuba; the shifted block products are accumulated without
+ padding the short operand to the long size. -/
+@@ -1054,7 +1066,7 @@ theorem karatsubaBlocks_csimp : @karatsubaBlocks = @karatsubaBlocksImpl := by
+ 
+ /-- Full Karatsuba multiplication.  Strongly skewed operands are processed in
+ blocks near the shorter size rather than padded to the longer size. -/
+-def mulKaratsuba (cutoff : Nat) (a b : DensePoly R) : DensePoly R :=
++def mulKaratsubaImpl (cutoff : Nat) (a b : DensePoly R) : DensePoly R :=
+   if a.size ≤ max 1 cutoff || b.size ≤ max 1 cutoff then
+     mulImpl a b
+   else if 2 * b.size < a.size then
+@@ -1066,9 +1078,9 @@ def mulKaratsuba (cutoff : Nat) (a b : DensePoly R) : DensePoly R :=
+ 
+ /-- Full balanced-or-blocked Karatsuba multiplication agrees exactly with
+ `DensePoly.mul`. -/
+-theorem mulKaratsuba_eq (cutoff : Nat) (a b : DensePoly R) :
+-    mulKaratsuba cutoff a b = a * b := by
+-  unfold mulKaratsuba
++theorem mulKaratsubaImpl_eq (cutoff : Nat) (a b : DensePoly R) :
++    mulKaratsubaImpl cutoff a b = a * b := by
++  unfold mulKaratsubaImpl
+   split
+   · exact (mul_eq_mulImpl a b).symm
+   · split
+@@ -1077,6 +1089,19 @@ theorem mulKaratsuba_eq (cutoff : Nat) (a b : DensePoly R) :
+       · rw [karatsubaBlocks_eq, mul_comm_poly]
+       · exact mulKaratsubaBalanced_eq cutoff a b
+ 
++/-- Kernel-visible product; compiled code uses the existing balanced-or-blocked
++Karatsuba dispatch with the supplied cutoff. -/
++@[expose] def mulKaratsuba (cutoff : Nat) (a b : DensePoly R) : DensePoly R :=
++  let _ := cutoff
++  a * b
++
++theorem mulKaratsuba_eq (cutoff : Nat) (a b : DensePoly R) :
++    mulKaratsuba cutoff a b = a * b := rfl
++
++@[csimp] theorem mulKaratsuba_csimp : @mulKaratsuba = @mulKaratsubaImpl := by
++  funext R instEq instRing cutoff a b
++  exact (mulKaratsubaImpl_eq cutoff a b).symm
++
+ /-- Extract `len` coefficients beginning at `lo` from an already-computed
+ polynomial, shifting them down to degree zero. -/
+ @[expose]
+@@ -1502,6 +1527,7 @@ theorem coeff_karatsubaSlice (cutoff lo len : Nat) (a b : DensePoly R)
+   coeff_karatsubaSliceAux cutoff _ lo len a b i
+ 
+ /-- A lawful Karatsuba plan. -/
++@[expose]
+ def karatsubaPlan (cutoff : Nat) : MulPlan R where
+   mul := mulKaratsuba cutoff
+   square := squareKaratsuba cutoff
+diff --git a/HexRationalFn/Normalize.lean b/HexRationalFn/Normalize.lean
+index 0993f8993..db014da6b 100644
+--- a/HexRationalFn/Normalize.lean
++++ b/HexRationalFn/Normalize.lean
+@@ -27,9 +27,11 @@ theorem inv_ne_zero {a : K} (ha : a ≠ 0) : a⁻¹ ≠ 0 := by
+   exact Lean.Grind.Field.zero_ne_one h
+ 
+ /-- Schoolbook base-case length for the default Karatsuba plan. -/
++@[expose]
+ def defaultCutoff : Nat := 8
+ 
+ /-- The generic multiplication plan used by rational-function arithmetic. -/
++@[expose]
+ def defaultPlan : MulPlan K := karatsubaPlan defaultCutoff
+ 
+ /-- Exact division with a lawful multiplication plan and a divisibility witness. -/
+diff --git a/bench/HexSignDetMathlib/NestedProofProbe/N3/Accept.lean b/bench/HexSignDetMathlib/NestedProofProbe/N3/Accept.lean
+new file mode 100644
+index 000000000..6a9aa9f4f
+--- /dev/null
++++ b/bench/HexSignDetMathlib/NestedProofProbe/N3/Accept.lean
+@@ -0,0 +1,32 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Nested.Inputs
++public meta import HexSignDet.Dag
++public meta import HexSignDet.Replay
++
++public section
++
++namespace Hex.SignDetMathlib.NestedProofProbe.N3.Accept
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Ordinary-kernel replay of supplied values and complete literal query chains. -/
++theorem checked : Nested.check 3 = true := by
++  simp only [Nested.check, Dag.check, Dag.replay_eq, Dag.step_eq,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++/-- info: 'Hex.SignDetMathlib.NestedProofProbe.N3.Accept.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs (whitespace := lax) in
++#print axioms checked
++
++#print axioms checked
++end Hex.SignDetMathlib.NestedProofProbe.N3.Accept
+diff --git a/bench/HexSignDetMathlib/NestedProofProbe/N3/Baseline.lean b/bench/HexSignDetMathlib/NestedProofProbe/N3/Baseline.lean
+new file mode 100644
+index 000000000..b60a07891
+--- /dev/null
++++ b/bench/HexSignDetMathlib/NestedProofProbe/N3/Baseline.lean
+@@ -0,0 +1,12 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Nested.Inputs
++public meta import HexSignDet.Dag
++public meta import HexSignDet.Replay
++
++public section
+diff --git a/bench/HexSignDetMathlib/NestedProofProbe/N3/RejectArithmetic.lean b/bench/HexSignDetMathlib/NestedProofProbe/N3/RejectArithmetic.lean
+new file mode 100644
+index 000000000..ed94935cc
+--- /dev/null
++++ b/bench/HexSignDetMathlib/NestedProofProbe/N3/RejectArithmetic.lean
+@@ -0,0 +1,32 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Nested.Inputs
++public meta import HexSignDet.Dag
++public meta import HexSignDet.Replay
++
++public section
++
++namespace Hex.SignDetMathlib.NestedProofProbe.N3.RejectArithmetic
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- A positive forged initial scale fails the actual polynomial identity check. -/
++theorem checked : Nested.check 3 false true = false := by
++  simp only [Nested.check, Dag.check, Dag.replay_eq, Dag.step_eq,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++/-- info: 'Hex.SignDetMathlib.NestedProofProbe.N3.RejectArithmetic.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs (whitespace := lax) in
++#print axioms checked
++
++#print axioms checked
++end Hex.SignDetMathlib.NestedProofProbe.N3.RejectArithmetic
+diff --git a/bench/HexSignDetMathlib/ProofProbe/Nested/Inputs.lean b/bench/HexSignDetMathlib/ProofProbe/Nested/Inputs.lean
+new file mode 100644
+index 000000000..0b8552b41
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/Nested/Inputs.lean
+@@ -0,0 +1,118 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib
++public import HexRationalFn
++public import HexOrderedFn.Infinitesimal
++public import HexSignDet.Dag
++public import HexSignDet.Replay
++public meta import HexRationalFn.Basic
++public meta import HexRationalFn.Arithmetic
++public meta import HexRationalFn.Field
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.Nested
++open Hex.SignDet
++open scoped Hex
++
++/-- Literal coefficient values and the existing lawful field dictionaries. -/
++structure Coefficients where
++  Carrier : Type
++  field : Lean.Grind.Field Carrier
++  equality : DecidableEq Carrier
++  sign : Carrier → Int
++  generator : Carrier
++  square : Carrier
++  doubled : Carrier
++
++/-- At each level, supply ε·(g+ε), its square, and its double as literal
++polynomials. Preparing evidence performs no coefficient multiplication. -/
++@[expose] def coefficients : Nat → Coefficients
++  | 0 => ⟨Rat, inferInstance, inferInstance, Sturm.orderSign, 1, 1, 2⟩
++  | depth + 1 =>
++    let base := coefficients depth
++    letI := base.field
++    letI := base.equality
++    ⟨RationalFn base.Carrier, inferInstance, inferInstance,
++      OrderedFn.Infinitesimal.sign base.sign,
++      RationalFn.ofPoly (DensePoly.ofCoeffs #[0, base.generator, 1]),
++      RationalFn.ofPoly (DensePoly.ofCoeffs #[0, 0, base.square, base.doubled, 1]),
++      RationalFn.ofPoly (DensePoly.ofCoeffs #[0, base.doubled, 2])⟩
++
++variable {E : Type} [Lean.Grind.Field E] [DecidableEq E]
++
++@[expose] def head : DensePoly E := DensePoly.ofCoeffs #[0, 1]
++
++/-- Supplied linear chain: no query or remainder-chain producer is invoked. -/
++@[expose] def chain (q : E) : SignedRemainderChain E := {
++  chain := #[head, DensePoly.C q], degrees := #[1, 0]
++  initial := ⟨1, 0, 1⟩, steps := #[], terminal := some (q, head) }
++
++@[expose] def query (q : E) : TarskiCertificate E E Nat := {
++  context := 7, head := head, queryPoly := DensePoly.C q
++  lower := .negInf, upper := .posInf
++  squarefree := chain 1, remainders := chain q
++  lowerSigns := #[-1, 1], upperSigns := #[1, 1]
++  lowerVariations := 1, upperVariations := 0, value := 1 }
++
++@[expose] def leaf (q square : E) : Node E Nat := {
++  context := 7, head := head, lower := .negInf, upper := .posInf
++  queries := [DensePoly.C q], size := 3
++  system := {
++    rows := #v[[0], [1], [2]], columns := #v[[-1], [0], [1]]
++    counts := #v[0, 0, 1], values := #v[1, 1, 1], denominator := 2
++    inverse := Matrix.ofRows #v[#v[0, -1, 1], #v[2, 0, -2], #v[0, 1, 1]] }
++  moments := #v[query 1, query q, query square]
++  basis := {
++    rank := 1
++    rows := #v[0]
++    cols := #v[⟨0, by decide +kernel⟩]
++    denom := 1
++    adj := Matrix.identity 1 } }
++
++@[expose] def parent (q : E) : Node E Nat := {
++  context := 7, head := head, lower := .negInf, upper := .posInf
++  queries := [DensePoly.C q, DensePoly.C q], size := 1
++  system := {
++    rows := #v[[0, 0]], columns := #v[[1, 1]], counts := #v[1], values := #v[1]
++    denominator := 1, inverse := Matrix.identity 1 }
++  moments := #v[query 1]
++  basis := {
++    rank := 1
++    rows := #v[0]
++    cols := #v[⟨0, by decide +kernel⟩]
++    denom := 1
++    adj := Matrix.identity 1 } }
++
++/-- Two parent edges refer to the same accepted leaf at this coefficient level. -/
++@[expose] def graph (q square : E) : Dag E Nat :=
++  ⟨#[⟨leaf q square, none⟩, ⟨parent q, some (0, 0)⟩], 1⟩
++
++/-- The ordinary graph checker on supplied coefficient values. The optional
++forgery changes a positive initial scale without changing any matrix, query,
++endpoint, context or reported sign. -/
++@[expose] def check (depth : Nat) (stale : Bool := false)
++    (forged : Bool := false) : Bool :=
++  let c := coefficients depth
++  letI := c.field
++  letI := c.equality
++  letI : NatCast c.Carrier := Lean.Grind.Semiring.natCast
++  let g := graph c.generator c.square
++  let g := if stale then {g with entries := g.entries.modify 0 fun e =>
++    {e with node := {e.node with context := 8}}} else g
++  let evidence := if forged then
++    {g with entries := g.entries.modify 0 fun e =>
++      let moments := e.node.moments.modify 1 fun t =>
++        let initial := {t.remainders.initial with leftScale := 2}
++        {t with remainders := {t.remainders with initial := initial}}
++      {e with node := {e.node with moments := moments}}}
++    else g
++  evidence.check c.sign 7 head .negInf .posInf
++    [DensePoly.C c.generator, DensePoly.C c.generator]
++
++end Hex.SignDetMathlib.ProofProbe.Nested
+diff --git a/bench/HexSignDetMathlib/ProofProbe/Nested/N1/Accept.lean b/bench/HexSignDetMathlib/ProofProbe/Nested/N1/Accept.lean
+new file mode 100644
+index 000000000..7dd2f572e
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/Nested/N1/Accept.lean
+@@ -0,0 +1,32 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Nested.Inputs
++public meta import HexSignDet.Dag
++public meta import HexSignDet.Replay
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.Nested.N1.Accept
++open Hex.SignDet
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Ordinary-kernel replay of supplied values and complete literal query chains. -/
++theorem checked : Nested.check 1 = true := by
++  simp only [Nested.check, Dag.check, Dag.replay_eq, Dag.step_eq,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++/-- info: 'Hex.SignDetMathlib.ProofProbe.Nested.N1.Accept.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs (whitespace := lax) in
++#print axioms checked
++
++#print axioms checked
++end Hex.SignDetMathlib.ProofProbe.Nested.N1.Accept
+diff --git a/bench/HexSignDetMathlib/ProofProbe/Nested/N1/Baseline.lean b/bench/HexSignDetMathlib/ProofProbe/Nested/N1/Baseline.lean
+new file mode 100644
+index 000000000..b60a07891
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/Nested/N1/Baseline.lean
+@@ -0,0 +1,12 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Nested.Inputs
++public meta import HexSignDet.Dag
++public meta import HexSignDet.Replay
++
++public section
+diff --git a/bench/HexSignDetMathlib/ProofProbe/Nested/N1/RejectArithmetic.lean b/bench/HexSignDetMathlib/ProofProbe/Nested/N1/RejectArithmetic.lean
+new file mode 100644
+index 000000000..4bb0b00c6
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/Nested/N1/RejectArithmetic.lean
+@@ -0,0 +1,32 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Nested.Inputs
++public meta import HexSignDet.Dag
++public meta import HexSignDet.Replay
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.Nested.N1.RejectArithmetic
++open Hex.SignDet
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- A positive forged initial scale fails the actual polynomial identity check. -/
++theorem checked : Nested.check 1 false true = false := by
++  simp only [Nested.check, Dag.check, Dag.replay_eq, Dag.step_eq,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++/-- info: 'Hex.SignDetMathlib.ProofProbe.Nested.N1.RejectArithmetic.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs (whitespace := lax) in
++#print axioms checked
++
++#print axioms checked
++end Hex.SignDetMathlib.ProofProbe.Nested.N1.RejectArithmetic
+diff --git a/bench/HexSignDetMathlib/ProofProbe/Nested/N1/RejectStale.lean b/bench/HexSignDetMathlib/ProofProbe/Nested/N1/RejectStale.lean
+new file mode 100644
+index 000000000..d0bdeac78
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/Nested/N1/RejectStale.lean
+@@ -0,0 +1,32 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Nested.Inputs
++public meta import HexSignDet.Dag
++public meta import HexSignDet.Replay
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.Nested.N1.RejectStale
++open Hex.SignDet
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- A copied leaf bound to another context is rejected. -/
++theorem checked : Nested.check 1 true = false := by
++  simp only [Nested.check, Dag.check, Dag.replay_eq, Dag.step_eq,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++/-- info: 'Hex.SignDetMathlib.ProofProbe.Nested.N1.RejectStale.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs (whitespace := lax) in
++#print axioms checked
++
++#print axioms checked
++end Hex.SignDetMathlib.ProofProbe.Nested.N1.RejectStale
+diff --git a/bench/HexSignDetMathlib/ProofProbe/Nested/N2/Accept.lean b/bench/HexSignDetMathlib/ProofProbe/Nested/N2/Accept.lean
+new file mode 100644
+index 000000000..c74637e01
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/Nested/N2/Accept.lean
+@@ -0,0 +1,32 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Nested.Inputs
++public meta import HexSignDet.Dag
++public meta import HexSignDet.Replay
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.Nested.N2.Accept
++open Hex.SignDet
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Ordinary-kernel replay of supplied values and complete literal query chains. -/
++theorem checked : Nested.check 2 = true := by
++  simp only [Nested.check, Dag.check, Dag.replay_eq, Dag.step_eq,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++/-- info: 'Hex.SignDetMathlib.ProofProbe.Nested.N2.Accept.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs (whitespace := lax) in
++#print axioms checked
++
++#print axioms checked
++end Hex.SignDetMathlib.ProofProbe.Nested.N2.Accept
+diff --git a/bench/HexSignDetMathlib/ProofProbe/Nested/N2/Baseline.lean b/bench/HexSignDetMathlib/ProofProbe/Nested/N2/Baseline.lean
+new file mode 100644
+index 000000000..b60a07891
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/Nested/N2/Baseline.lean
+@@ -0,0 +1,12 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Nested.Inputs
++public meta import HexSignDet.Dag
++public meta import HexSignDet.Replay
++
++public section
+diff --git a/bench/HexSignDetMathlib/ProofProbe/Nested/N2/RejectArithmetic.lean b/bench/HexSignDetMathlib/ProofProbe/Nested/N2/RejectArithmetic.lean
+new file mode 100644
+index 000000000..1ee3b5c67
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/Nested/N2/RejectArithmetic.lean
+@@ -0,0 +1,32 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Nested.Inputs
++public meta import HexSignDet.Dag
++public meta import HexSignDet.Replay
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.Nested.N2.RejectArithmetic
++open Hex.SignDet
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- A positive forged initial scale fails the actual polynomial identity check. -/
++theorem checked : Nested.check 2 false true = false := by
++  simp only [Nested.check, Dag.check, Dag.replay_eq, Dag.step_eq,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++/-- info: 'Hex.SignDetMathlib.ProofProbe.Nested.N2.RejectArithmetic.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs (whitespace := lax) in
++#print axioms checked
++
++#print axioms checked
++end Hex.SignDetMathlib.ProofProbe.Nested.N2.RejectArithmetic
+diff --git a/lakefile.lean b/lakefile.lean
+index 9524f3a55..fb1ca3e6d 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -1058,6 +1058,12 @@ lean_lib HexSignDetMathlibProofProbe where
+   srcDir := "bench"
+   globs := #[.submodules `HexSignDetMathlib.ProofProbe]
+ 
++-- Depth-three kernel reductions run manually to keep their large memory demand
++-- out of the shared hosted build. Depth-one/two probes remain in the CI target above.
++lean_lib HexSignDetMathlibNestedProofProbe where
++  srcDir := "bench"
++  globs := #[.submodules `HexSignDetMathlib.NestedProofProbe]
++
+ lean_lib HexRealFormulaProofProbe where
+   srcDir := "bench"
+   globs := #[`HexRealFormulaMathlib.ProofProbe.Support,
+diff --git a/libraries.yml b/libraries.yml
+index 06ffd6316..2682c3e95 100644
+--- a/libraries.yml
++++ b/libraries.yml
+@@ -1581,7 +1581,7 @@ libraries:
+   HexSignDetMathlib:
+     deps: [HexSignDet, HexSturmMathlib, HexPolyMathlib, HexMatrixMathlib, HexRankMathlib]
+     mathlib: true
+-    proof_probes: [bench/HexSignDetMathlib/ProofProbe]
++    proof_probes: [bench/HexSignDetMathlib/ProofProbe, bench/HexSignDetMathlib/NestedProofProbe]
+     done_through: 0
+     status: active
+   HexRealClosure:
+diff --git a/reports/sign-det-nested-kernel.md b/reports/sign-det-nested-kernel.md
+new file mode 100644
+index 000000000..6311f9718
+--- /dev/null
++++ b/reports/sign-det-nested-kernel.md
+@@ -0,0 +1,89 @@
++# Ordinary-kernel replay with nested coefficients
++
++These probes check supplied BKR graph evidence over actual iterated
++`RationalFn` fields. They use the existing lawful field and equality instances,
++ordinary arithmetic, and the existing infinitesimal sign operation. Acceptance
++and rejection are proved by `decide +kernel` after unfolding the checker
++boundary. The axiom guards permit only `propext`, `Classical.choice` and
++`Quot.sound`.
++
++## Arithmetic boundary
++
++The logical definitions of planned multiplication, squaring, field division,
++gcd and extended gcd reduce to the existing reference polynomial operations.
++The native definitions retain the existing Karatsuba, Newton and half-gcd
++engines through generic, proved `@[csimp]` equalities. The public agreement
++theorems preserve the exact quotient, remainder, gcd scaling and Bezout
++coefficients. Exposed default plans let the kernel reach those logical bodies
++inside rational-function arithmetic.
++
++This supplies the schoolbook logical closure required by
++[hex-poly-fast](../HexPolyFast/SPEC/hex-poly-fast.md#kernel-exposure-and-trust).
++It introduces no new arithmetic algorithm or coefficient instance. The clipped
++Karatsuba interface is outside this change.
++
++## Supplied evidence
++
++At depth zero, the supplied generator, square and double are `1`, `1` and `2`.
++At depth `i`, the coefficient field is the rational-function field over the
++previous field, with positive infinitesimal variable `εᵢ`. Supply these literal
++polynomial numerators with denominator one:
++
++- `gᵢ = εᵢ(gᵢ₋₁ + εᵢ)`;
++- its square: coefficients `[0, 0, gᵢ₋₁², 2gᵢ₋₁, 1]`;
++- its double: coefficients `[0, 2gᵢ₋₁, 2]`.
++
++The fixture stores the square and double recursively as coefficients; it does
++not run multiplication or a certificate producer to prepare them. The newest
++variable and preceding field both occur in the data.
++
++The root polynomial is `P=X` on the whole line. One leaf contains all three
++sign candidates for the query `gᵢ`, with counts `[0,0,1]`, three supplied
++Tarski-query chains, and a literal scaled inverse. A parent for the two queries
++`[gᵢ,gᵢ]` has two edges referring to that same leaf. This exercises the existing
++same-level graph sharing over nested coefficient types.
++
++Acceptance verifies the literal field identities, endpoint signs, query
++bindings, matrix identities and child support evidence. Arithmetic rejection
++changes one positive initial scale from `1` to `2`; context, endpoints, queries,
++matrices and reported signs remain unchanged. Rejection therefore needs the
++polynomial identity check. The separate stale-context probe changes the leaf's
++context and exercises early rejection.
++
++The ordinary CI target `HexSignDetMathlibProofProbe` includes acceptance and
++arithmetic rejection at depths one and two, and stale-context rejection at
++depth one. The explicit manual target `HexSignDetMathlibNestedProofProbe`
++contains the more memory-intensive depth-three proofs.
++
++## Measurement protocol
++
++`scripts/bench/sign_det_nested_kernel.py` uses the shared fresh-module harness.
++It compares each proof module with a module having the same imports and no
++proof body. Imports are warm; only that module's generated outputs are removed
++before each measured build. Six trial-major rounds rotate the seven pairs and
++alternate adjacent `AB`/`BA` order. The automatically selected CPU is leased,
++not required to be idle. Raw wall times, child CPU times, peak RSS, compiler
++output, axiom inventories, source hashes and host context are retained.
++
++For example, from a clean checkout with warm dependencies:
++
++```sh
++python3 scripts/bench/sign_det_nested_kernel.py --samples 6 --timeout 300 \
++  --output /absolute/path/outside/the/repository/nested-kernel.json
++```
++
++Each completed arm is flushed to the accompanying `.samples.jsonl`, including
++failed arms. These are fresh-module observations: they include elaboration,
++checker reduction, kernel verification and artifact writing. The paired delta
++is not an isolated kernel timer or an asymptotic complexity result. This
++protocol has no scientific acceptance budget inferred from its timeout.
++
++## Scope
++
++These probes do not construct a shared graph of coefficient-sign proofs across
++field levels. They do not prove JSON byte roundtrips or apply the mathematical
++root-count theorem to an ambient real closed model. Those are separate
++obligations, as are the full Phase-4 gates and the required Tau Ceti Thom
++foundations. See also the
++[native nested-field conformance](sign-det-nested-fields.md) and
++[semantic theorem application probes](sign-det-semantic-probes.md).
+diff --git a/scripts/bench/sign_det_nested_kernel.py b/scripts/bench/sign_det_nested_kernel.py
+new file mode 100644
+index 000000000..0e6580bc1
+--- /dev/null
++++ b/scripts/bench/sign_det_nested_kernel.py
+@@ -0,0 +1,111 @@
++#!/usr/bin/env python3
++"""Fresh-module ordinary-kernel replay over one to three rational-function fields.
++
++Six trial-major rounds rotate adjacent import-baseline/proof pairs and alternate
++AB/BA order. Every completed arm is retained, including failures. These are
++finite input observations, not an asymptotic or pure-kernel timing claim.
++"""
++from __future__ import annotations
++
++import json
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(ROOT))
++
++from scripts.bench.fresh_module_sweep import (
++    ProbeModule, ProbePair, SweepSpec, default_output, environment, parse_args,
++    run_cli, source_hashes,
++)
++from scripts.bench.structural_tactic_sweep import acquire_cpu
++
++AXIOMS = ("propext", "Classical.choice", "Quot.sound")
++
++
++def prefix(depth: int) -> str:
++    return (f"HexSignDetMathlib.ProofProbe.Nested.N{depth}" if depth < 3 else
++            "HexSignDetMathlib.NestedProofProbe.N3")
++
++
++PAIRS = tuple(
++    ProbePair(
++        f"depth-{depth}-{operation}",
++        ProbeModule(f"{prefix(depth)}.Baseline"),
++        ProbeModule(f"{prefix(depth)}.{operation}", AXIOMS,
++                    f"Hex.SignDetMathlib.{prefix(depth).split('.', 1)[1]}.{operation}"),
++        {"family": "literal-nested-coefficient-replay", "extension_depth": depth,
++         "operation": operation, "degree": 1, "query_arity": 2,
++         "graph_nodes": 2, "graph_edges": 2, "distinct_leaf_references": 1,
++         "measurement_scope": "fresh-module proof of the actual graph checker result",
++         "excluded_costs": ["initial import build", "certificate production",
++                            "JSON parsing", "native execution", "semantic theorem application",
++                            "cross-level coefficient-sign proof DAG"]},
++    ) for depth in (1, 2, 3) for operation in ("Accept", "RejectArithmetic")
++) + (ProbePair(
++    "depth-1-RejectStale",
++    ProbeModule(f"{prefix(1)}.Baseline"),
++    ProbeModule(f"{prefix(1)}.RejectStale", AXIOMS,
++                "Hex.SignDetMathlib.ProofProbe.Nested.N1.RejectStale"),
++    {"family": "literal-nested-coefficient-replay", "extension_depth": 1,
++     "operation": "RejectStale", "measurement_scope": "early literal context rejection"},
++),)
++SPEC = SweepSpec(
++    description=__doc__ or "Nested coefficient kernel replay costs",
++    pairs=PAIRS,
++    probe_target="HexSignDetMathlibNestedProofProbe",
++    schema="hex-sign-det-nested-kernel-v1",
++    measurement="paired-fresh-module-olean-wall",
++    output_stem="hex-sign-det-nested-kernel",
++    required_samples=6,
++    retain_compiler_output=True,
++    extra_sources=(Path("libraries.yml"), Path("SPEC/benchmarking.md"),
++                   Path("HexPolyFast/Division.lean"), Path("HexPolyFast/HalfGcd.lean"),
++                   Path("HexPolyFast/Karatsuba.lean"), Path("HexRationalFn/Normalize.lean"),
++                   Path("scripts/bench/structural_tactic_sweep.py")),
++)
++
++def main() -> int:
++    args = parse_args(SPEC.description, default_samples=SPEC.required_samples or 4)
++    cpu, lease = acquire_cpu(args.cpu)
++    try:
++        env = environment()
++        output = args.output or (Path.home() / ".local/state/hex/proof-probes" /
++                                 default_output(env, SPEC.output_stem).name)
++        output = output.resolve()
++        if output.is_relative_to(ROOT.resolve()):
++            raise RuntimeError("choose a measurement output path outside the repository")
++        sidecar = Path(str(output) + ".samples.jsonl")
++        if output.exists() or sidecar.exists():
++            raise RuntimeError("measurement output exists; choose a fresh path")
++        # Flush every completed arm before validation, including failed arms.
++        sidecar.parent.mkdir(parents=True, exist_ok=True)
++        with sidecar.open("x") as log:
++            print(f"Incremental samples: {sidecar}", flush=True)
++            log.write(json.dumps({"type": "metadata", "environment": env,
++                                  "source_sha256": source_hashes(SPEC, Path(__file__))}) + "\n")
++            log.flush()
++
++            def observe(module, sample):
++                log.write(json.dumps({"type": "sample", "module": module, **sample}) + "\n")
++                log.flush()
++
++            try:
++                code = run_cli(SPEC, Path(__file__),
++                               [*sys.argv[1:], "--shared-host", "--cpu", str(cpu),
++                                "--output", str(output)], sample_observer=observe)
++                log.write(json.dumps({"type": "complete", "code": code}) + "\n")
++                log.flush()
++            except BaseException as exc:
++                log.write(json.dumps({"type": "failure", "exception": type(exc).__name__,
++                                      "error": str(exc)}) + "\n")
++                log.flush()
++                print(f"Retained partial samples: {sidecar}", file=sys.stderr)
++                raise
++        return code
++    finally:
++        lease.close()
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/libgraph.py b/scripts/libgraph.py
+index 6c11d7a76..ae1b530bb 100644
+--- a/scripts/libgraph.py
++++ b/scripts/libgraph.py
+@@ -34,6 +34,7 @@ BUILD_ONLY_LIBS = {
+     "HexRankBenchSupport",
+     "HexSignDetBenchSupport",
+     "HexSignDetMathlibProofProbe",
++    "HexSignDetMathlibNestedProofProbe",
+     "HexBerlekampKernelProbe",
+     "HexPrimalityKernelProbe",
+     "HexPrimalityElabProbe",

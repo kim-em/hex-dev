@@ -1,0 +1,44 @@
+Hex.SignDetBench.Joint.runCompletion    expected complexity: n^3    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=394c3c5, 2026-09-29T01:44:19Z, host=chungus2
+  param  per-call    repeats  C
+      3    1.041 ms  ×2^6     C=38850.249 [trial 1/6] †
+      7    5.540 ms  ×2^4     C=16670.456 [trial 1/6]
+     15   29.019 ms  ×2^1     C= 8661.782 [trial 1/6]
+     31  168.829 ms  ×2^0     C= 5730.132 [trial 1/6]
+     63    1.983 s   ×2^0     C= 4536.963 [trial 1/6]
+      3    1.854 ms  ×2^5     C=38850.249 [trial 2/6] †
+      7    9.515 ms  ×2^3     C=16670.456 [trial 2/6]
+     15   50.193 ms  ×2^1     C= 8661.782 [trial 2/6]
+     31  296.707 ms  ×2^0     C= 5730.132 [trial 2/6]
+     63    2.060 s   ×2^0     C= 4536.963 [trial 2/6]
+      3    1.842 ms  ×2^5     C=38850.249 [trial 3/6] †
+      7    9.480 ms  ×2^3     C=16670.456 [trial 3/6]
+     15   50.054 ms  ×2^1     C= 8661.782 [trial 3/6]
+     31  170.961 ms  ×2^0     C= 5730.132 [trial 3/6]
+     63    1.141 s   ×2^0     C= 4536.963 [trial 3/6]
+      3    1.045 ms  ×2^6     C=38850.249 [trial 4/6] †
+      7    5.355 ms  ×2^4     C=16670.456 [trial 4/6]
+     15   29.170 ms  ×2^1     C= 8661.782 [trial 4/6]
+     31  170.452 ms  ×2^0     C= 5730.132 [trial 4/6]
+     63    1.128 s   ×2^0     C= 4536.963 [trial 4/6]
+      3    1.051 ms  ×2^6     C=38850.249 [trial 5/6] †
+      7    5.361 ms  ×2^4     C=16670.456 [trial 5/6]
+     15   29.297 ms  ×2^1     C= 8661.782 [trial 5/6]
+     31  167.957 ms  ×2^0     C= 5730.132 [trial 5/6]
+     63    1.102 s   ×2^0     C= 4536.963 [trial 5/6]
+      3    1.047 ms  ×2^6     C=38850.249 [trial 6/6] †
+      7    5.896 ms  ×2^4     C=16670.456 [trial 6/6]
+     15   28.970 ms  ×2^1     C= 8661.782 [trial 6/6]
+     31  171.732 ms  ×2^0     C= 5730.132 [trial 6/6]
+     63    1.105 s   ×2^0     C= 4536.963 [trial 6/6]
+  verdict: inconclusive (cMin=4536.963, cMax=16670.456, β=-0.592, looks faster than declared by ~n^0.592)
+  per-spawn floor (harness self-measurement): 21.749 ms
+  peak RSS: 66_608 kB..156_096 kB (across 30 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread 
+        3  6/6       1.049 ms    1.041 ms    1.854 ms  77.518%
+        7  6/6       5.718 ms    5.355 ms    9.515 ms  72.754%
+       15  6/6      29.234 ms   28.970 ms   50.193 ms  72.595%
+       31  6/6     170.706 ms  167.957 ms  296.707 ms  75.422%
+       63  6/6       1.134 s     1.102 s     2.060 s   84.427%
+exported to /tmp/issue-10377-joint-timing-394c3c548/runCompletion.json

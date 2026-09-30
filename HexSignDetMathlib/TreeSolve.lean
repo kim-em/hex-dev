@@ -111,8 +111,9 @@ theorem buildNode_counted (context : Ctx) (domain : Sturm.PreparedDomain E)
   have covers : ∀ x ∈ xs, x ∈ n.system.columns.toList := by
     rw [spec.2.2.2.2.2.2.1]
     exact cover
+  have counts := n.system.foundation_counts hs xs covers values
   exact ⟨n, hn, ⟨hs, spec.2.2.2.2.2.2.2.2, values,
-    n.system.covers_support hs xs covers values, n.system.counts_eq hs xs covers values⟩⟩
+    n.system.covers_counts xs covers counts, counts⟩⟩
 
 /-- Ordered finite moments depend only on the literal row list, including
 when dimensions are transported between child bases and list products. -/

@@ -1,0 +1,44 @@
+Hex.SignDetBench.MaximalMatrix.runCheck    expected complexity: 27^s    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a7c9b34, 2026-09-29T04:09:21Z, host=chungus2
+  param  per-call    repeats  C
+      1    2.249 µs  ×2^15    C= —     [trial 1/6]
+      2   21.705 µs  ×2^12    C=29.780 [trial 1/6]
+      3  251.683 µs  ×2^8     C=12.751 [trial 1/6]
+      4    3.216 ms  ×2^5     C= 6.036 [trial 1/6]
+      5   51.222 ms  ×2^0     C= 3.563 [trial 1/6]
+      1    2.244 µs  ×2^15    C= —     [trial 2/6]
+      2   21.958 µs  ×2^12    C=29.780 [trial 2/6]
+      3  249.395 µs  ×2^8     C=12.751 [trial 2/6]
+      4    3.202 ms  ×2^5     C= 6.036 [trial 2/6]
+      5   50.887 ms  ×2^0     C= 3.563 [trial 2/6]
+      1    2.237 µs  ×2^15    C= —     [trial 3/6]
+      2   21.816 µs  ×2^12    C=29.780 [trial 3/6]
+      3  249.476 µs  ×2^8     C=12.751 [trial 3/6]
+      4    3.190 ms  ×2^5     C= 6.036 [trial 3/6]
+      5   51.322 ms  ×2^0     C= 3.563 [trial 3/6]
+      1    2.246 µs  ×2^15    C= —     [trial 4/6]
+      2   21.713 µs  ×2^12    C=29.780 [trial 4/6]
+      3  250.813 µs  ×2^8     C=12.751 [trial 4/6]
+      4    3.214 ms  ×2^5     C= 6.036 [trial 4/6]
+      5   51.126 ms  ×2^0     C= 3.563 [trial 4/6]
+      1    2.252 µs  ×2^15    C= —     [trial 5/6]
+      2   21.601 µs  ×2^12    C=29.780 [trial 5/6]
+      3  251.133 µs  ×2^8     C=12.751 [trial 5/6]
+      4    3.217 ms  ×2^5     C= 6.036 [trial 5/6]
+      5   51.130 ms  ×2^0     C= 3.563 [trial 5/6]
+      1    2.261 µs  ×2^15    C= —     [trial 6/6]
+      2   21.703 µs  ×2^12    C=29.780 [trial 6/6]
+      3  260.839 µs  ×2^8     C=12.751 [trial 6/6]
+      4    3.197 ms  ×2^5     C= 6.036 [trial 6/6]
+      5   51.025 ms  ×2^0     C= 3.563 [trial 6/6]
+  verdict: inconclusive (cMin=3.563, cMax=29.780, β=—)
+  per-spawn floor (harness self-measurement): 22.257 ms
+  peak RSS: 63_864 kB..71_704 kB (across 30 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+        1  6/6       2.248 µs    2.237 µs    2.261 µs  1.080%
+        2  6/6      21.709 µs   21.601 µs   21.958 µs  1.645%
+        3  6/6     250.973 µs  249.395 µs  260.839 µs  4.560%
+        4  6/6       3.208 ms    3.190 ms    3.217 ms  0.825%
+        5  6/6      51.128 ms   50.887 ms   51.322 ms  0.851%
+exported to /home/kim/.local/state/hex/issue-10377-maximal-matrices/a7c9b34fb/runCheck.json

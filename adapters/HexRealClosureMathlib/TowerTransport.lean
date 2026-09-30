@@ -300,31 +300,25 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.mono' depends on axioms: [propext,
 #print axioms Hex.RealClosure.Tower.Conversion.Model.mono
 
 /--
-info: 'Hex.RealClosure.Tower.Conversion.Model.refine' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: 'Hex.RealClosure.Tower.Conversion.Model.refine' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.refine
 
 /--
-info: 'Hex.RealClosure.Tower.Conversion.Model.adjoin_exists' depends on axioms: [propext,
- sorryAx,
- Classical.choice,
- Quot.sound]
+info: 'Hex.RealClosure.Tower.Conversion.Model.adjoin_exists' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.adjoin_exists
 
 /--
-info: 'Hex.RealClosure.Tower.Conversion.Model.adjoin' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: 'Hex.RealClosure.Tower.Conversion.Model.adjoin' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.adjoin
 
 /--
-info: 'Hex.RealClosure.Tower.Conversion.Model.extend_exists' depends on axioms: [propext,
- sorryAx,
- Classical.choice,
- Quot.sound]
+info: 'Hex.RealClosure.Tower.Conversion.Model.extend_exists' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.extend_exists
@@ -351,20 +345,17 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.equal' depends on axioms: [propext
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.equal
 /--
-info: 'Hex.RealClosure.Tower.Conversion.Model.root' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: 'Hex.RealClosure.Tower.Conversion.Model.root' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.root
 /--
-info: 'Hex.RealClosure.Tower.Conversion.Model.descriptor_exists' depends on axioms: [propext,
- sorryAx,
- Classical.choice,
- Quot.sound]
+info: 'Hex.RealClosure.Tower.Conversion.Model.descriptor_exists' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.descriptor_exists
 /--
-info: 'Hex.RealClosure.Tower.Conversion.Model.extend' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: 'Hex.RealClosure.Tower.Conversion.Model.extend' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.extend
@@ -375,6 +366,6 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.cast' depends on axioms: [propext,
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.cast
 
-/-- info: 'Hex.RealClosure.Tower.Conversion.Model.refine_heq' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.refine_heq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.refine_heq

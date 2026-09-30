@@ -987,7 +987,7 @@ def mulKaratsubaBalanced (cutoff : Nat) (a b : DensePoly R) : DensePoly R :=
   karatsubaAux cutoff (max a.size b.size) a b
 
 /-- Specialized Karatsuba squaring with an explicit schoolbook cutoff. -/
-def squareKaratsuba (cutoff : Nat) (a : DensePoly R) : DensePoly R :=
+def squareKaratsubaImpl (cutoff : Nat) (a : DensePoly R) : DensePoly R :=
   karatsubaSquareAux cutoff a.size a
 
 /-- Balanced Karatsuba multiplication agrees exactly with `DensePoly.mul`. -/
@@ -996,9 +996,23 @@ theorem mulKaratsubaBalanced_eq (cutoff : Nat) (a b : DensePoly R) :
   karatsubaAux_eq cutoff _ a b
 
 /-- Specialized Karatsuba squaring agrees exactly with `DensePoly.mul`. -/
-theorem squareKaratsuba_eq (cutoff : Nat) (a : DensePoly R) :
-    squareKaratsuba cutoff a = a * a :=
+theorem squareKaratsubaImpl_eq (cutoff : Nat) (a : DensePoly R) :
+    squareKaratsubaImpl cutoff a = a * a :=
   karatsubaSquareAux_eq cutoff _ a
+
+/-- Kernel-visible square; compiled code uses the existing Karatsuba square. -/
+@[expose] def squareKaratsuba (cutoff : Nat) (a : DensePoly R) : DensePoly R :=
+  let _ := cutoff
+  a * a
+
+/-- Planned squaring retains the exact reference product. -/
+theorem squareKaratsuba_eq (cutoff : Nat) (a : DensePoly R) :
+    squareKaratsuba cutoff a = a * a := rfl
+
+/-- Compile the reference square through the existing Karatsuba engine. -/
+@[csimp] theorem squareKaratsuba_csimp : @squareKaratsuba = @squareKaratsubaImpl := by
+  funext R instEq instRing cutoff a
+  exact (squareKaratsubaImpl_eq cutoff a).symm
 
 /-- Multiply a long operand by blocks of `blockSize` coefficients.  Each block
 uses balanced Karatsuba; the shifted block products are accumulated without
@@ -1054,7 +1068,7 @@ theorem karatsubaBlocks_csimp : @karatsubaBlocks = @karatsubaBlocksImpl := by
 
 /-- Full Karatsuba multiplication.  Strongly skewed operands are processed in
 blocks near the shorter size rather than padded to the longer size. -/
-def mulKaratsuba (cutoff : Nat) (a b : DensePoly R) : DensePoly R :=
+def mulKaratsubaImpl (cutoff : Nat) (a b : DensePoly R) : DensePoly R :=
   if a.size ≤ max 1 cutoff || b.size ≤ max 1 cutoff then
     mulImpl a b
   else if 2 * b.size < a.size then
@@ -1066,9 +1080,9 @@ def mulKaratsuba (cutoff : Nat) (a b : DensePoly R) : DensePoly R :=
 
 /-- Full balanced-or-blocked Karatsuba multiplication agrees exactly with
 `DensePoly.mul`. -/
-theorem mulKaratsuba_eq (cutoff : Nat) (a b : DensePoly R) :
-    mulKaratsuba cutoff a b = a * b := by
-  unfold mulKaratsuba
+theorem mulKaratsubaImpl_eq (cutoff : Nat) (a b : DensePoly R) :
+    mulKaratsubaImpl cutoff a b = a * b := by
+  unfold mulKaratsubaImpl
   split
   · exact (mul_eq_mulImpl a b).symm
   · split
@@ -1076,6 +1090,21 @@ theorem mulKaratsuba_eq (cutoff : Nat) (a b : DensePoly R) :
     · split
       · rw [karatsubaBlocks_eq, mul_comm_poly]
       · exact mulKaratsubaBalanced_eq cutoff a b
+
+/-- Kernel-visible product; compiled code uses the existing balanced-or-blocked
+Karatsuba dispatch with the supplied cutoff. -/
+@[expose] def mulKaratsuba (cutoff : Nat) (a b : DensePoly R) : DensePoly R :=
+  let _ := cutoff
+  a * b
+
+/-- Planned multiplication retains the exact reference product. -/
+theorem mulKaratsuba_eq (cutoff : Nat) (a b : DensePoly R) :
+    mulKaratsuba cutoff a b = a * b := rfl
+
+/-- Compile the reference product through the existing Karatsuba dispatch. -/
+@[csimp] theorem mulKaratsuba_csimp : @mulKaratsuba = @mulKaratsubaImpl := by
+  funext R instEq instRing cutoff a b
+  exact (mulKaratsubaImpl_eq cutoff a b).symm
 
 /-- Extract `len` coefficients beginning at `lo` from an already-computed
 polynomial, shifting them down to degree zero. -/
@@ -1502,6 +1531,7 @@ theorem coeff_karatsubaSlice (cutoff lo len : Nat) (a b : DensePoly R)
   coeff_karatsubaSliceAux cutoff _ lo len a b i
 
 /-- A lawful Karatsuba plan. -/
+@[expose]
 def karatsubaPlan (cutoff : Nat) : MulPlan R where
   mul := mulKaratsuba cutoff
   square := squareKaratsuba cutoff

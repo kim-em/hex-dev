@@ -1,0 +1,3021 @@
+diff --git a/HexRealRoots.lean b/HexRealRoots.lean
+index cf8f96f02..9319359e9 100644
+--- a/HexRealRoots.lean
++++ b/HexRealRoots.lean
+@@ -10,0 +11 @@ public import HexRealRoots.Tarski
++public import HexRealRoots.TarskiShared
+diff --git a/HexRealRoots/Map.lean b/HexRealRoots/Map.lean
+index afaed4ac8..ef223be13 100644
+--- a/HexRealRoots/Map.lean
++++ b/HexRealRoots/Map.lean
+@@ -197 +197 @@ theorem map_checks {Ctx : Type w''} [DecidableEq Ctx] [DecidableEq A] [Decidable
+-  simp only [check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
++  simp only [check_eq, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+@@ -202 +202 @@ theorem map_checks {Ctx : Type w''} [DecidableEq Ctx] [DecidableEq A] [Decidable
+-  simp only [check, map, hp, hg, hl, hu, hctx, hv, map_checkEndpoints f hz k ends ends' hcmp heval,
++  simp only [check_eq, map, hp, hg, hl, hu, hctx, hv, map_checkEndpoints f hz k ends ends' hcmp heval,
+diff --git a/HexRealRoots/SignedRemainderChain.lean b/HexRealRoots/SignedRemainderChain.lean
+index 0dc1e8f9f..afd54861a 100644
+--- a/HexRealRoots/SignedRemainderChain.lean
++++ b/HexRealRoots/SignedRemainderChain.lean
+@@ -37,0 +38,17 @@ structure SignedRemainderChain (D : Type u) [Zero D] [DecidableEq D] where
++instance {E : Type u} [Zero E] [DecidableEq E] : DecidableEq (RemainderStep E) := by
++  intro a b
++  cases a with
++  | mk al aq ar =>
++    cases b with
++    | mk bl bq br =>
++      exact decidable_of_iff (al = bl ∧ aq = bq ∧ ar = br) (by simp only [RemainderStep.mk.injEq])
++
++instance {E : Type u} [Zero E] [DecidableEq E] : DecidableEq (SignedRemainderChain E) := by
++  intro a b
++  cases a with
++  | mk ac ad ai ast atr =>
++    cases b with
++    | mk bc bd bi bst bt =>
++      exact decidable_of_iff (ac = bc ∧ ad = bd ∧ ai = bi ∧ ast = bst ∧ atr = bt)
++        (by simp only [SignedRemainderChain.mk.injEq])
++
+diff --git a/HexRealRoots/Tarski.lean b/HexRealRoots/Tarski.lean
+index 2c0d89ff8..72d65e974 100644
+--- a/HexRealRoots/Tarski.lean
++++ b/HexRealRoots/Tarski.lean
+@@ -83,0 +84,12 @@ structure TarskiCertificate (D : Type u) (E : Type v) (Ctx : Type w) [Zero D] [D
++instance {D : Type u} {E : Type v} {Ctx : Type w} [Zero D] [DecidableEq D]
++    [DecidableEq E] [DecidableEq Ctx] : DecidableEq (TarskiCertificate D E Ctx) := by
++  intro a b
++  cases a with
++  | mk ac ah aq al au asf ar als aus alv auv av =>
++    cases b with
++    | mk bc bh bq bl bu bsf br bls bus blv buv bv =>
++      exact decidable_of_iff
++        (ac = bc ∧ ah = bh ∧ aq = bq ∧ al = bl ∧ au = bu ∧ asf = bsf ∧ ar = br ∧
++          als = bls ∧ aus = bus ∧ alv = blv ∧ auv = buv ∧ av = bv)
++        (by simp only [TarskiCertificate.mk.injEq])
++
+@@ -143,0 +156,28 @@ use `SignedRemainderChain.normalizeId`. No root search or isolation is performed
++/-- Bind every literal query input and claimed value before checking evidence. -/
++@[expose] def checkBindings [DecidableEq E] [DecidableEq Ctx]
++    (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
++    (cert : TarskiCertificate D E Ctx) : Bool :=
++  decide (cert.context = context) && decide (cert.head = p) && decide (cert.queryPoly = f) &&
++    decide (cert.lower = a) && decide (cert.upper = b) && decide (cert.value = value)
++
++/-- The domain part of finite replay, independent of the query polynomial.
++This checks supplied witnesses and never invokes a producer or gcd search. -/
++@[expose] def checkDomain (sign : D → Int) (endpointSigns : EndpointSigns D E)
++    (p : DensePoly D) (a b : Endpoint E) (squarefree : SignedRemainderChain D) : Bool :=
++  checkEndpoints endpointSigns p a b && SignedRemainderChain.check sign p 1 squarefree &&
++    SignedRemainderChain.lastIsConstant squarefree
++
++/-- The query-dependent part of finite replay. Domain and literal input
++bindings are checked separately by the complete checker. -/
++@[expose] def checkQuery (sign : D → Int) (endpointSigns : EndpointSigns D E)
++    (p f : DensePoly D) (a b : Endpoint E) (value : Int)
++    (cert : TarskiCertificate D E Ctx) : Bool :=
++  SignedRemainderChain.check sign p f cert.remainders &&
++    decide (cert.lowerSigns = signs sign endpointSigns cert.remainders.chain a) &&
++    decide (cert.upperSigns = signs sign endpointSigns cert.remainders.chain b) &&
++    cert.lowerSigns.all (fun s => -1 ≤ s && s ≤ 1) &&
++    cert.upperSigns.all (fun s => -1 ≤ s && s ≤ 1) &&
++    decide (cert.lowerVariations = signVar cert.lowerSigns.toList) &&
++    decide (cert.upperVariations = signVar cert.upperSigns.toList) &&
++    decide (value = (cert.lowerVariations : Int) - cert.upperVariations)
++
+@@ -145,2 +185,2 @@ use `SignedRemainderChain.normalizeId`. No root search or isolation is performed
+-variations. All arithmetic equations are zero-difference checks; all input and
+-context bindings remain literal equalities. The checker never calls a producer. -/
++variations. Arithmetic equations use zero differences; input and context
++bindings use literal equality. The checker never calls a producer. -/
+@@ -149,0 +190,10 @@ context bindings remain literal equalities. The checker never calls a producer.
++  checkBindings context p f a b value cert &&
++    checkDomain sign endpointSigns p a b cert.squarefree &&
++    checkQuery sign endpointSigns p f a b value cert
++
++/-- Expanded finite replay contract. Factoring the domain and query checks
++preserves the Boolean result for every supplied certificate. -/
++theorem check_eq [DecidableEq E] [DecidableEq Ctx]
++    (sign : D → Int) (endpointSigns : EndpointSigns D E) (context : Ctx)
++    (p f : DensePoly D) (a b : Endpoint E) (value : Int) (cert : TarskiCertificate D E Ctx) :
++    check sign endpointSigns context p f a b value cert = (
+@@ -161 +211,2 @@ context bindings remain literal equalities. The checker never calls a producer.
+-    decide (value = (cert.lowerVariations : Int) - cert.upperVariations)
++    decide (value = (cert.lowerVariations : Int) - cert.upperVariations)) := by
++  simp only [check, checkBindings, checkDomain, checkQuery, Bool.and_assoc]
+diff --git a/HexRealRoots/TarskiProofs.lean b/HexRealRoots/TarskiProofs.lean
+index c37397927..97da6a09f 100644
+--- a/HexRealRoots/TarskiProofs.lean
++++ b/HexRealRoots/TarskiProofs.lean
+@@ -310 +310 @@ theorem certify_checks [Neg D] [DecidableEq E] [DecidableEq Ctx]
+-      simp only [check, fromChains]
++      simp only [check_eq, fromChains]
+diff --git a/HexRealRoots/TarskiShared.lean b/HexRealRoots/TarskiShared.lean
+new file mode 100644
+index 000000000..84ee30c63
+--- /dev/null
++++ b/HexRealRoots/TarskiShared.lean
+@@ -0,0 +1,151 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexRealRoots.Tarski
++
++public section
++
++namespace Hex.TarskiCertificate
++
++variable {D : Type u} {E : Type v} {Ctx : Type w} [Zero D] [DecidableEq D]
++
++/-- Literal domain evidence shared by queries on one head and interval. Context
++identity and the entire squarefree witness remain part of the stored data. -/
++structure Domain (D : Type u) (E : Type v) (Ctx : Type w) [Zero D] [DecidableEq D] where
++  context : Ctx
++  head : DensePoly D
++  lower : Endpoint E
++  upper : Endpoint E
++  squarefree : SignedRemainderChain D
++
++/-- Extract the supplied domain literals, without validating them. -/
++@[expose] def domain (cert : TarskiCertificate D E Ctx) : Domain D E Ctx :=
++  ⟨cert.context, cert.head, cert.lower, cert.upper, cert.squarefree⟩
++
++namespace Domain
++
++variable [One D] [Add D] [Sub D] [Mul D] [NatCast D]
++
++/-- A domain whose actual finite replay has succeeded under these fixed sign
++operations. This is independent of producer preparation or root-sum semantics. -/
++structure Checked (sign : D → Int) (endpointSigns : EndpointSigns D E) where
++  private mk ::
++  data : Domain D E Ctx
++  accepted : checkDomain sign endpointSigns data.head data.lower data.upper data.squarefree = true
++
++/-- Validate the supplied endpoint guards and squarefree chain once. Invalid
++certificate evidence returns `none`; this is not a root-nonexistence test. -/
++def replay? (sign : D → Int) (endpointSigns : EndpointSigns D E)
++    (raw : Domain D E Ctx) : Option (Checked (Ctx := Ctx) sign endpointSigns) :=
++  if h : checkDomain sign endpointSigns raw.head raw.lower raw.upper raw.squarefree = true then
++    some ⟨raw, h⟩
++  else none
++
++/-- Domain replay preserves every literal field, including context identity. -/
++theorem replay_data {sign : D → Int} {endpointSigns : EndpointSigns D E}
++    {raw : Domain D E Ctx} {d : Checked (Ctx := Ctx) sign endpointSigns}
++    (h : replay? sign endpointSigns raw = some d) : d.data = raw := by
++  unfold replay? at h
++  split at h
++  · cases Option.some.inj h
++    rfl
++  · simp at h
++
++/-- Reuse requires the caller's exact context, head, interval and squarefree
++witness. Equal interpretations never replace these literal bindings. -/
++@[expose] def binds [DecidableEq E] [DecidableEq Ctx] (d : Domain D E Ctx)
++    (context : Ctx) (p : DensePoly D) (a b : Endpoint E) (squarefree : SignedRemainderChain D) : Bool :=
++  decide (d.context = context ∧ d.head = p ∧ d.lower = a ∧ d.upper = b ∧ d.squarefree = squarefree)
++
++end Domain
++
++variable [One D] [Add D] [Sub D] [Mul D] [NatCast D] [DecidableEq E] [DecidableEq Ctx]
++
++/-- Check query evidence against an already replayed domain, retaining every
++literal binding and all query-dependent checks. No domain replay is repeated. -/
++@[expose] def checkShared (sign : D → Int) (endpointSigns : EndpointSigns D E)
++    (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
++    (d : Domain.Checked (Ctx := Ctx) sign endpointSigns) (cert : TarskiCertificate D E Ctx) : Bool :=
++  d.data.binds context p a b cert.squarefree && checkBindings context p f a b value cert &&
++    checkQuery sign endpointSigns p f a b value cert
++
++/-- Shared replay is precisely full replay with an additional literal-cache
++binding guard. The full certificate checker is neither weakened nor bypassed. -/
++theorem checkShared_eq (sign : D → Int) (endpointSigns : EndpointSigns D E)
++    (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
++    (d : Domain.Checked (Ctx := Ctx) sign endpointSigns) (cert : TarskiCertificate D E Ctx) :
++    checkShared sign endpointSigns context p f a b value d cert =
++      (d.data.binds context p a b cert.squarefree &&
++        check sign endpointSigns context p f a b value cert) := by
++  cases hb : d.data.binds context p a b cert.squarefree with
++  | false => simp only [checkShared, hb, Bool.false_and]
++  | true =>
++    have hd := d.accepted
++    have hfields := hb
++    simp only [Domain.binds, decide_eq_true_eq] at hfields
++    rcases hfields with ⟨_, hp, ha, hb', hs⟩
++    rw [hp, ha, hb', hs] at hd
++    simp only [checkShared, check, hb, hd, Bool.true_and, Bool.and_true]
++
++/-- Boolean elimination rule for the opaque validated-domain constructor.
++It exposes every check performed when a raw domain is replayed and then used. -/
++theorem checkShared_replay (sign : D → Int) (endpointSigns : EndpointSigns D E)
++    (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
++    (raw : Domain D E Ctx) (cert : TarskiCertificate D E Ctx) :
++    (Domain.replay? sign endpointSigns raw).elim false
++      (fun d => checkShared sign endpointSigns context p f a b value d cert) =
++    (checkDomain sign endpointSigns raw.head raw.lower raw.upper raw.squarefree &&
++      raw.binds context p a b cert.squarefree && checkBindings context p f a b value cert &&
++      checkQuery sign endpointSigns p f a b value cert) := by
++  by_cases h : checkDomain sign endpointSigns raw.head raw.lower raw.upper raw.squarefree = true
++  · simp only [Domain.replay?, h, dite_eq_left, Option.elim_some, checkShared, Bool.true_and]
++  · have hf := Bool.eq_false_iff.mpr h
++    simp [Domain.replay?, hf]
++
++/-- Use a validated domain when its literals match. A different squarefree
++witness is replayed in full, so a cache miss cannot reject otherwise valid
++certificate evidence. The query-dependent checks use the same shared kernel. -/
++@[expose] def checkCached (sign : D → Int) (endpointSigns : EndpointSigns D E)
++    (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
++    (cache : Option (Domain.Checked (Ctx := Ctx) sign endpointSigns))
++    (cert : TarskiCertificate D E Ctx) : Bool :=
++  match cache with
++  | none => check sign endpointSigns context p f a b value cert
++  | some d =>
++    if d.data.binds context p a b cert.squarefree then
++      checkBindings context p f a b value cert && checkQuery sign endpointSigns p f a b value cert
++    else check sign endpointSigns context p f a b value cert
++
++/-- Cached replay has exactly the original Boolean result for every supplied
++certificate and every validated cache, including cache misses and rejections. -/
++theorem checkCached_eq (sign : D → Int) (endpointSigns : EndpointSigns D E)
++    (context : Ctx) (p f : DensePoly D) (a b : Endpoint E) (value : Int)
++    (cache : Option (Domain.Checked (Ctx := Ctx) sign endpointSigns))
++    (cert : TarskiCertificate D E Ctx) :
++    checkCached sign endpointSigns context p f a b value cache cert =
++      check sign endpointSigns context p f a b value cert := by
++  cases cache with
++  | none => rfl
++  | some d =>
++    cases hb : d.data.binds context p a b cert.squarefree with
++    | false => simp only [checkCached, hb, Bool.false_eq_true, ↓reduceIte]
++    | true =>
++      have h := checkShared_eq sign endpointSigns context p f a b value d cert
++      simpa only [checkShared, checkCached, hb, Bool.true_and, ↓reduceIte] using h
++
++/-- Arbitrary supplied query evidence accepted using a shared domain also
++passes the complete shared-kernel checker, regardless of producer provenance. -/
++theorem checkShared_checks {sign : D → Int} {endpointSigns : EndpointSigns D E}
++    {context : Ctx} {p f : DensePoly D} {a b : Endpoint E} {value : Int}
++    {d : Domain.Checked (Ctx := Ctx) sign endpointSigns} {cert : TarskiCertificate D E Ctx}
++    (h : checkShared sign endpointSigns context p f a b value d cert = true) :
++    check sign endpointSigns context p f a b value cert = true := by
++  rw [checkShared_eq] at h
++  simp only [Bool.and_eq_true] at h
++  exact h.2
++
++end Hex.TarskiCertificate
+diff --git a/HexRealRoots/TarskiTests.lean b/HexRealRoots/TarskiTests.lean
+index ad9662456..dc9b5613c 100644
+--- a/HexRealRoots/TarskiTests.lean
++++ b/HexRealRoots/TarskiTests.lean
+@@ -8 +8 @@ module
+-public import HexRealRoots.Tarski
++public import HexRealRoots.TarskiShared
+@@ -11,0 +12 @@ public meta import HexRealRoots.Tarski
++public meta import HexRealRoots.TarskiShared
+@@ -106 +107 @@ theorem literal_checks : IntTarskiCertificate.check p 1 interval 2 literal = tru
+-  simp only [IntTarskiCertificate.check, TarskiCertificate.check, SignedRemainderChain.check,
++  simp only [IntTarskiCertificate.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
+@@ -120,0 +122,114 @@ theorem literal_checks : IntTarskiCertificate.check p 1 interval 2 literal = tru
++@[expose] def sharedDomain : TarskiCertificate.Domain Int Dyadic Nat :=
++  ⟨7, p, .finite interval.lower, .finite interval.upper, literalChain⟩
++
++@[expose] def sharedLiteral : TarskiCertificate Int Dyadic Nat :=
++  { context := 7, head := p, queryPoly := 1,
++    lower := .finite interval.lower, upper := .finite interval.upper,
++    squarefree := literalChain, remainders := literalChain,
++    lowerSigns := #[1, -1, 1], upperSigns := #[1, 1, 1],
++    lowerVariations := 2, upperVariations := 0, value := 2 }
++
++@[expose] def sharedProbe (raw : TarskiCertificate.Domain Int Dyadic Nat)
++    (cert : TarskiCertificate Int Dyadic Nat) : Bool :=
++  match raw.replay? Int.sign EndpointSigns.intDyadic with
++  | none => false
++  | some d => TarskiCertificate.checkShared Int.sign EndpointSigns.intDyadic
++      7 p 1 (.finite interval.lower) (.finite interval.upper) 2 d cert
++
++private theorem sharedProbe_eq (raw : TarskiCertificate.Domain Int Dyadic Nat)
++    (cert : TarskiCertificate Int Dyadic Nat) :
++    sharedProbe raw cert =
++      (TarskiCertificate.checkDomain Int.sign EndpointSigns.intDyadic
++        raw.head raw.lower raw.upper raw.squarefree &&
++       raw.binds 7 p (.finite interval.lower) (.finite interval.upper) cert.squarefree &&
++       TarskiCertificate.checkBindings 7 p 1 (.finite interval.lower) (.finite interval.upper) 2 cert &&
++       TarskiCertificate.checkQuery Int.sign EndpointSigns.intDyadic p 1
++        (.finite interval.lower) (.finite interval.upper) 2 cert) := by
++  have h := TarskiCertificate.checkShared_replay Int.sign EndpointSigns.intDyadic
++    (7 : Nat) p 1 (.finite interval.lower) (.finite interval.upper) 2 raw cert
++  cases hr : raw.replay? Int.sign EndpointSigns.intDyadic with
++  | none => simpa only [sharedProbe, hr, Option.elim_none] using h
++  | some d => simpa only [sharedProbe, hr, Option.elim_some] using h
++
++set_option maxRecDepth 32768 in
++/-- The ordinary kernel checks successful shared replay and rejects a foreign
++context and a changed squarefree witness despite an otherwise valid query. -/
++theorem shared_kernel :
++    sharedProbe sharedDomain sharedLiteral = true ∧
++    sharedProbe {sharedDomain with context := 8} sharedLiteral = false ∧
++    sharedProbe sharedDomain {sharedLiteral with squarefree :=
++      {literalChain with degrees := #[2, 1, 1]}} = false := by
++  simp only [sharedProbe_eq, TarskiCertificate.checkDomain,
++    TarskiCertificate.checkBindings, TarskiCertificate.checkQuery,
++    TarskiCertificate.Domain.binds, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#guard !sharedProbe sharedDomain {sharedLiteral with context := 8}
++#guard !sharedProbe {sharedDomain with head := -p} sharedLiteral
++#guard !sharedProbe {sharedDomain with lower := .finite interval.upper} sharedLiteral
++#guard !sharedProbe {sharedDomain with squarefree :=
++  {literalChain with terminal := none}} sharedLiteral
++#guard !sharedProbe sharedDomain {sharedLiteral with remainders :=
++  {literalChain with terminal := none}}
++#guard !sharedProbe sharedDomain {sharedLiteral with value := -2}
++#guard !sharedProbe sharedDomain {sharedLiteral with queryPoly := 0}
++
++-- A single validated domain is reused across both an accepted and a rejected
++-- query result, and each result agrees with the complete checker.
++#guard match sharedDomain.replay? Int.sign EndpointSigns.intDyadic with
++  | none => false
++  | some d =>
++    let checkShared := TarskiCertificate.checkShared Int.sign EndpointSigns.intDyadic
++      7 p 1 (.finite interval.lower) (.finite interval.upper) 2 d
++    let checkFull := TarskiCertificate.check Int.sign EndpointSigns.intDyadic
++      7 p 1 (.finite interval.lower) (.finite interval.upper) 2
++    let bad := {sharedLiteral with upperVariations := 1}
++    checkShared sharedLiteral && !checkShared bad &&
++      checkShared sharedLiteral == checkFull sharedLiteral && checkShared bad == checkFull bad
++
++-- A different valid squarefree witness passes full replay, but cannot reuse
++-- a cache bound to the original literal witness.
++#guard let alternate := {sharedLiteral with squarefree :=
++    {literalChain with initial := ⟨2, 0, 4⟩}}
++  TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 p 1
++    (.finite interval.lower) (.finite interval.upper) 2 alternate &&
++  !sharedProbe sharedDomain alternate &&
++  sharedProbe {sharedDomain with squarefree := alternate.squarefree} alternate
++
++-- Cache misses fall back to complete replay, while malformed evidence never
++-- inherits acceptance from another query's valid squarefree witness.
++#guard match sharedDomain.replay? Int.sign EndpointSigns.intDyadic with
++  | none => false
++  | some d =>
++    let check := TarskiCertificate.checkCached Int.sign EndpointSigns.intDyadic
++      7 p 1 (.finite interval.lower) (.finite interval.upper) 2 (some d)
++    let alternate := {sharedLiteral with squarefree :=
++      {literalChain with initial := ⟨2, 0, 4⟩}}
++    check sharedLiteral && check alternate &&
++      !check {alternate with squarefree := {alternate.squarefree with terminal := none}} &&
++      !check {sharedLiteral with context := 8}
++
++/-- info: 'Hex.TarskiCertificate.checkCached_eq' depends on axioms: [propext] -/
++#guard_msgs in
++#print axioms TarskiCertificate.checkCached_eq
++
++/-- info: 'Hex.TarskiCertificate.check_eq' depends on axioms: [propext] -/
++#guard_msgs in
++#print axioms TarskiCertificate.check_eq
++/-- info: 'Hex.TarskiCertificate.Domain.replay_data' depends on axioms: [propext] -/
++#guard_msgs in
++#print axioms TarskiCertificate.Domain.replay_data
++/-- info: 'Hex.TarskiCertificate.checkShared_eq' depends on axioms: [propext] -/
++#guard_msgs in
++#print axioms TarskiCertificate.checkShared_eq
++/-- info: 'Hex.TarskiCertificate.checkShared_replay' depends on axioms: [propext] -/
++#guard_msgs in
++#print axioms TarskiCertificate.checkShared_replay
++/-- info: 'Hex.TarskiCertificate.checkShared_checks' depends on axioms: [propext] -/
++#guard_msgs in
++#print axioms TarskiCertificate.checkShared_checks
++/-- info: 'Hex.TarskiTests.shared_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
++#guard_msgs in
++#print axioms shared_kernel
++
+diff --git a/HexSignDet.lean b/HexSignDet.lean
+index 9b3f49e24..e6bc83f52 100644
+--- a/HexSignDet.lean
++++ b/HexSignDet.lean
+@@ -29,0 +30,5 @@ public import HexSignDet.Compare
++
++public import HexSignDet.Dag
++public import HexSignDet.DagEncode
++public import HexSignDet.DagReplay
++public import HexSignDet.DagExpand
+diff --git a/HexSignDet/Dag.lean b/HexSignDet/Dag.lean
+new file mode 100644
+index 000000000..a90793e52
+--- /dev/null
++++ b/HexSignDet/Dag.lean
+@@ -0,0 +1,218 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDet.Descriptor
++
++public section
++
++namespace Hex.SignDet
++
++variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
++
++namespace Dag
++
++/-- A literal BKR node with optional references to its two children. References
++are checked against the already accepted prefix, so cycles and forward edges
++cannot be accepted. Ordered query slots remain part of each node. -/
++structure Entry (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
++  node : Node E Ctx
++  children : Option (Nat × Nat)
++
++end Dag
++
++/-- A topologically ordered graph of same-level BKR nodes. Every serialized
++entry is checked, including entries not reachable from the selected root.
++Coefficient-sign dependencies and their level ordering are separate inputs;
++this graph does not encode lower-level coefficient proofs. -/
++structure Dag (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
++  entries : Array (Dag.Entry E Ctx)
++  root : Nat
++
++namespace Dag
++
++variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
++
++/-- A memoized accepted subtree on the fixed caller context and root domain.
++Only the ordered query list varies within this graph. Proofs are erased at run
++time; tree values share the already accepted child values. -/
++structure Checked (sign : E → Int) (context : Ctx) (p : DensePoly E)
++    (a b : Endpoint E) where
++  value : Replay E Ctx
++  accepted : value.check sign context p a b value.node.queries = true
++
++/-- Check one node, reusing accepted children after exact list binding checks.
++The local node checker still validates every supplied query and matrix witness. -/
++@[expose] def step (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
++    (memo : Array (Checked sign context p a b)) (entry : Entry E Ctx)
++    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
++      (EndpointSigns.ofSign sign)) := none) :
++    Option (Checked sign context p a b) := do
++  let n := entry.node
++  match entry.children with
++  | none =>
++    if h : (decide (n.queries.length ≤ 1) &&
++        decide (n.system.columns.toList = leafColumns n.queries.length) &&
++        decide (n.system.rows.toList = leafRows n.queries.length) &&
++        n.check sign context p a b n.queries shared) = true then
++      return ⟨.leaf n, by
++        change (decide (n.queries.length ≤ 1) &&
++          decide (n.system.columns.toList = leafColumns n.queries.length) &&
++          decide (n.system.rows.toList = leafRows n.queries.length) &&
++          n.check sign context p a b n.queries) = true
++        rw [Node.check_cache] at h
++        exact h⟩
++    else none
++  | some (left, right) =>
++    let l ← memo[left]?
++    let r ← memo[right]?
++    if hl : l.value.node.queries = n.queries.take (n.queries.length / 2) then
++      if hr : r.value.node.queries = n.queries.drop (n.queries.length / 2) then
++        if h : (decide (1 < n.queries.length) &&
++            decide (n.system.columns.toList = product l.value.node.system.support
++              r.value.node.system.support) &&
++            decide (n.system.rows.toList = product l.value.node.rows r.value.node.rows) &&
++            n.check sign context p a b n.queries shared) = true then
++          return ⟨.split n l.value r.value, by
++            have hleft := l.accepted
++            have hright := r.accepted
++            rw [hl] at hleft
++            rw [hr] at hright
++            simp only [Node.check_cache, Bool.and_eq_true] at h
++            simp only [Replay.node, Replay.check, Bool.and_eq_true]
++            exact ⟨⟨⟨⟨⟨h.1.1.1, hleft⟩, hright⟩, h.1.1.2⟩, h.1.2⟩, h.2⟩⟩
++        else none
++      else none
++    else none
++
++/-- Sharing domain evidence preserves the exact checked step, including its
++returned literal tree and every rejection branch. -/
++theorem step_eq (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
++    (memo : Array (Checked sign context p a b)) (entry : Entry E Ctx)
++    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
++      (EndpointSigns.ofSign sign)) := none) :
++    step sign context p a b memo entry shared = (do
++  let n := entry.node
++  match entry.children with
++  | none =>
++    if h : (Replay.leaf n).check sign context p a b n.queries = true then
++      return ⟨.leaf n, h⟩
++    else none
++  | some (left, right) =>
++    let l ← memo[left]?
++    let r ← memo[right]?
++    if hl : l.value.node.queries = n.queries.take (n.queries.length / 2) then
++      if hr : r.value.node.queries = n.queries.drop (n.queries.length / 2) then
++        if h : (decide (1 < n.queries.length) &&
++            decide (n.system.columns.toList = product l.value.node.system.support
++              r.value.node.system.support) &&
++            decide (n.system.rows.toList = product l.value.node.rows r.value.node.rows) &&
++            n.check sign context p a b n.queries) = true then
++          return ⟨.split n l.value r.value, by
++            have hleft := l.accepted
++            have hright := r.accepted
++            rw [hl] at hleft
++            rw [hr] at hright
++            simp only [Bool.and_eq_true] at h
++            simp only [Replay.node, Replay.check, Bool.and_eq_true]
++            exact ⟨⟨⟨⟨⟨h.1.1.1, hleft⟩, hright⟩, h.1.1.2⟩, h.1.2⟩, h.2⟩⟩
++        else none
++      else none
++    else none) := by
++  simp only [step, Node.check_cache, Replay.check]
++  rfl
++
++/-- A supplied validated domain does not affect the checked graph step. -/
++theorem step_cache (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
++    (memo : Array (Checked sign context p a b)) (entry : Entry E Ctx)
++    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
++      (EndpointSigns.ofSign sign))) :
++    step sign context p a b memo entry shared = step sign context p a b memo entry := by
++  simp only [step_eq]
++
++/-- Validate all references and nodes once, then bind the selected root's exact
++query list. The returned evidence proves acceptance by the literal tree checker;
++no recursive replay is rerun on cache hits or on the final root. This does not
++assert root-count semantics, which still require the companion query bridge. -/
++@[expose] def replay? (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
++    (qs : List (DensePoly E)) (dag : Dag E Ctx) :
++    Option { t : Replay E Ctx // t.check sign context p a b qs = true } := do
++  let shared := dag.entries[0]?.bind fun entry =>
++    entry.node.moments.toArray[0]?.bind fun cert =>
++      TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
++  let memo ← dag.entries.foldlM (init := #[]) fun memo entry => do
++    let next ← step sign context p a b memo entry shared
++    pure (memo.push next)
++  let root ← memo[dag.root]?
++  if h : root.value.node.queries = qs then
++    return ⟨root.value, by simpa only [h] using root.accepted⟩
++  else none
++
++/-- Domain sharing across graph nodes preserves the original prefix replay,
++including the exact returned tree, literal bindings and every rejection. -/
++theorem replay_eq (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
++    (qs : List (DensePoly E)) (dag : Dag E Ctx) :
++    replay? sign context p a b qs dag = (do
++  let memo ← dag.entries.foldlM (init := #[]) fun memo entry => do
++    let next ← step sign context p a b memo entry
++    pure (memo.push next)
++  let root ← memo[dag.root]?
++  if h : root.value.node.queries = qs then
++    return ⟨root.value, by simpa only [h] using root.accepted⟩
++  else none) := by
++  simp only [replay?, step_cache]
++
++/-- Boolean acceptance for supplied graph literals. -/
++@[expose] def check (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
++    (qs : List (DensePoly E)) (dag : Dag E Ctx) : Bool :=
++  (replay? sign context p a b qs dag).isSome
++
++/-- Every accepted graph has an accepted literal-tree expansion on exactly the
++caller-supplied context, head, interval and ordered query list. -/
++theorem check_replay {sign : E → Int} {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
++    {qs : List (DensePoly E)} {dag : Dag E Ctx}
++    (h : check sign context p a b qs dag = true) :
++    ∃ t, replay? sign context p a b qs dag = some t ∧ t.val.check sign context p a b qs = true := by
++  unfold check at h
++  cases he : replay? sign context p a b qs dag with
++  | none => simp [he] at h
++  | some t => exact ⟨t, rfl, t.property⟩
++
++/-- Extract a selected root from graph evidence without a second whole-tree
++replay. Raw shape, immutable context and the exact count-one condition are
++still checked. Invalid supplied evidence does not decide root nonexistence. -/
++@[expose] def descriptor? (sign : E → Int) (context : Ctx) (raw : RawDescriptor E Ctx)
++    (dag : Dag E Ctx) : Option (Descriptor E Ctx sign context) := do
++  let t ← replay? sign context raw.head raw.lower raw.upper raw.queries dag
++  if hw : raw.wellFormed = true then
++    if hctx : raw.context = context then
++      if hone : (t.val.table t.property).count raw.signs = 1 then
++        return Descriptor.ofTable raw t.val hw hctx t.property hone
++      else none
++    else none
++  else none
++
++/-- Graph descriptor extraction preserves the entire supplied raw descriptor. -/
++theorem descriptor_raw {sign : E → Int} {context : Ctx} {raw : RawDescriptor E Ctx}
++    {dag : Dag E Ctx} {d : Descriptor E Ctx sign context}
++    (h : descriptor? sign context raw dag = some d) : d.raw = raw := by
++  unfold descriptor? at h
++  cases ht : replay? sign context raw.head raw.lower raw.upper raw.queries dag with
++  | none => simp [ht, bind, Option.bind] at h
++  | some t =>
++    simp only [ht, bind, Option.bind] at h
++    split at h
++    · split at h
++      · split at h
++        · simp only [pure, Option.some.injEq] at h
++          subst d
++          exact Descriptor.ofTable_raw _ _ _ _ _ _
++        · simp at h
++      · simp at h
++    · simp at h
++
++end Dag
++end Hex.SignDet
+diff --git a/HexSignDet/DagEncode.lean b/HexSignDet/DagEncode.lean
+new file mode 100644
+index 000000000..339af5070
+--- /dev/null
++++ b/HexSignDet/DagEncode.lean
+@@ -0,0 +1,110 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDet.Dag
++public import Std.Data.HashMap
++
++public section
++
++namespace Hex
++
++deriving instance DecidableEq for Matrix.RankCert
++deriving instance DecidableEq for SignDet.System
++
++instance {E : Type u} [Zero E] [DecidableEq E] : DecidableEq (SignDet.ReductionStep E) := by
++  intro a b
++  cases a
++  cases b
++  simp only [SignDet.ReductionStep.mk.injEq]
++  infer_instance
++
++instance {E : Type u} [Zero E] [DecidableEq E] : DecidableEq (SignDet.Reduction E) := by
++  intro a b
++  cases a
++  cases b
++  simp only [SignDet.Reduction.mk.injEq]
++  infer_instance
++
++instance {E : Type u} [Zero E] [DecidableEq E] : DecidableEq (SignDet.QueryReduction E) := by
++  intro a b
++  cases a
++  cases b
++  simp only [SignDet.QueryReduction.mk.injEq]
++  infer_instance
++
++instance {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] [DecidableEq Ctx] :
++    DecidableEq (SignDet.Node E Ctx) := by
++  intro a b
++  cases a with
++  | mk ca pa la ua qa na sa ma ra da ba =>
++    cases b with
++    | mk cb pb lb ub qb nb sb mb rb db bb =>
++      by_cases h : na = nb
++      · subst nb
++        by_cases hs : sa = sb
++        · subst sb
++          simp only [SignDet.Node.mk.injEq, heq_eq_eq]
++          infer_instance
++        · exact isFalse fun he => hs (by cases he; rfl)
++      · exact isFalse fun he => h (by cases he; rfl)
++
++instance {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] [DecidableEq Ctx] :
++    DecidableEq (SignDet.Dag.Entry E Ctx) := by
++  intro a b
++  cases a
++  cases b
++  simp only [SignDet.Dag.Entry.mk.injEq]
++  infer_instance
++
++namespace SignDet.Dag
++
++variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] [DecidableEq Ctx]
++    [Hashable E] [Hashable Ctx]
++
++/-- Hashing narrows the search; exact equality still compares every node field,
++including all witnesses and literal context bindings. A collision never licenses
++sharing. Child indices distinguish nodes with different descendants. -/
++instance : Hashable (Entry E Ctx) where
++  hash e := hash (e.node.context, e.node.queries.map (·.toArray), e.node.size,
++    e.node.system.columns.toArray, e.children)
++
++/-- Construction state for bottom-up hash consing. This is producer state, not
++trusted checker evidence. The graph checker validates its output independently. -/
++structure Encoder (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E]
++    [DecidableEq Ctx] [Hashable E] [Hashable Ctx] where
++  entries : Array (Entry E Ctx) := #[]
++  indices : Std.HashMap (Entry E Ctx) Nat := {}
++
++/-- Retain the first exact occurrence and its stable index. -/
++@[expose] def Encoder.insert (state : Encoder E Ctx) (entry : Entry E Ctx) : Encoder E Ctx × Nat :=
++  match state.indices[entry]? with
++  | some i => (state, i)
++  | none =>
++    let i := state.entries.size
++    (⟨state.entries.push entry, state.indices.insert entry i⟩, i)
++
++/-- Left-to-right postorder traversal. The parent is interned only after both
++children, so generated child references point into the preceding prefix. -/
++@[expose] def encodeFrom (state : Encoder E Ctx) : Replay E Ctx → Encoder E Ctx × Nat
++  | .leaf n => state.insert ⟨n, none⟩
++  | .split n l r =>
++    let (state, left) := encodeFrom state l
++    let (state, right) := encodeFrom state r
++    state.insert ⟨n, some (left, right)⟩
++
++/-- Encode an arbitrary supplied replay tree, sharing exactly repeated literal
++nodes with the same child references. This does not validate the input or attach
++an acceptance proof; use `replay?` to check the resulting graph. Hash consing
++visits every input occurrence and retains the first occurrence of each entry.
++It does not serialize coefficient values or lower-level coefficient proofs. -/
++@[expose] def encode (tree : Replay E Ctx) : Dag E Ctx :=
++  let (state, root) := encodeFrom {} tree
++  ⟨state.entries, root⟩
++
++end SignDet.Dag
++
++end Hex
+diff --git a/HexSignDet/DagExpand.lean b/HexSignDet/DagExpand.lean
+new file mode 100644
+index 000000000..cae057be7
+--- /dev/null
++++ b/HexSignDet/DagExpand.lean
+@@ -0,0 +1,253 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDet.DagReplay
++
++public section
++
++namespace Hex.SignDet.Dag
++
++variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
++
++namespace Expansion
++
++/-- Expand one entry using only earlier tree references. No mathematical or
++certificate validity decision is made here. -/
++@[expose] def step (memo : Array (Replay E Ctx)) (entry : Entry E Ctx) : Option (Replay E Ctx) := do
++  match entry.children with
++  | none => return .leaf entry.node
++  | some (left, right) =>
++    let l ← memo[left]?
++    let r ← memo[right]?
++    return .split entry.node l r
++
++/-- Expand every entry in order, rejecting missing, forward or cyclic references. -/
++@[expose] def run (entries : Array (Entry E Ctx)) : Option (Array (Replay E Ctx)) :=
++  entries.foldlM (init := #[]) fun memo entry => do
++    let tree ← step memo entry
++    pure (memo.push tree)
++
++/-- Existing tree lookups retain their literal value. -/
++def Prefix (before after : Array (Replay E Ctx)) : Prop :=
++  ∀ (i : Nat) t, before[i]? = some t → after[i]? = some t
++
++theorem Prefix.refl (memo : Array (Replay E Ctx)) : Prefix memo memo := fun _ _ h => h
++
++theorem Prefix.trans {x y z : Array (Replay E Ctx)} (hxy : Prefix x y) (hyz : Prefix y z) :
++    Prefix x z := fun i t h => hyz i t (hxy i t h)
++
++theorem Prefix.push (memo : Array (Replay E Ctx)) (t) : Prefix memo (memo.push t) := by
++  intro i v h
++  obtain ⟨hi, hv⟩ := Array.getElem?_eq_some_iff.mp h
++  simpa only [Array.getElem?_push_lt hi] using congrArg some hv
++
++theorem step_mono {before after : Array (Replay E Ctx)} (hm : Prefix before after)
++    {entry : Entry E Ctx} {t : Replay E Ctx} (h : step before entry = some t) :
++    step after entry = some t := by
++  unfold step at h ⊢
++  cases hc : entry.children with
++  | none => simpa only [hc] using h
++  | some children =>
++    obtain ⟨left, right⟩ := children
++    simp only [hc] at h ⊢
++    cases hl : before[left]? with
++    | none => simp [hl, bind, Option.bind] at h
++    | some l =>
++      cases hr : before[right]? with
++      | none => simp [hl, hr, bind, Option.bind] at h
++      | some r => simpa only [hl, hr, hm left l hl, hm right r hr] using h
++
++variable [DecidableEq Ctx] [Hashable E] [Hashable Ctx]
++
++/-- An encoder prefix expands, and its hash-map indices refer to the same
++literal expansion. This invariant allows invalid certificate contents. -/
++structure Valid (state : Encoder E Ctx) (memo : Array (Replay E Ctx)) : Prop where
++  expansion : run state.entries = some memo
++  size : state.entries.size = memo.size
++  indices : ∀ entry i, state.indices[entry]? = some i →
++    ∃ t, memo[i]? = some t ∧ step memo entry = some t
++
++theorem valid_empty : Valid ({} : Encoder E Ctx) #[] := by
++  constructor
++  · simp [run]
++  · rfl
++  · intro entry i h
++    simp at h
++
++theorem insert_valid {state : Encoder E Ctx} {memo : Array (Replay E Ctx)}
++    (hv : Valid state memo) {entry : Entry E Ctx} {t : Replay E Ctx}
++    (ht : step memo entry = some t) :
++    ∃ next, Valid (state.insert entry).1 next ∧ Prefix memo next ∧
++      next[(state.insert entry).2]? = some t := by
++  cases hi : state.indices[entry]? with
++  | some i =>
++    obtain ⟨u, hu, hs⟩ := hv.indices entry i hi
++    have he : u = t := Option.some.inj (hs.symm.trans ht)
++    subst u
++    exact ⟨memo, by simpa only [Encoder.insert, hi] using hv,
++      Prefix.refl memo, by simpa only [Encoder.insert, hi] using hu⟩
++  | none =>
++    refine ⟨memo.push t, ?_, Prefix.push memo t, ?_⟩
++    · constructor
++      · simp only [Encoder.insert, hi, run]
++        have hexp := hv.expansion
++        unfold run at hexp
++        rw [Array.foldlM_push, hexp]
++        simp only [bind, Option.bind, ht, pure]
++      · simp only [Encoder.insert, hi, Array.size_push, hv.size]
++      · intro e i h
++        simp only [Encoder.insert, hi, Std.HashMap.getElem?_insert] at h
++        split at h
++        · rename_i he
++          have heq : entry = e := eq_of_beq he
++          subst e
++          cases Option.some.inj h
++          exact ⟨t, by simpa only [hv.size] using
++            (Array.getElem?_push_size (xs := memo) (x := t)), step_mono (Prefix.push memo t) ht⟩
++        · obtain ⟨u, hu, hs⟩ := hv.indices e i h
++          exact ⟨u, Prefix.push memo t i u hu, step_mono (Prefix.push memo t) hs⟩
++    · simpa only [Encoder.insert, hi, hv.size] using
++        (Array.getElem?_push_size (xs := memo) (x := t))
++
++/-- Expansion follows the actual encoder even when the supplied tree fails
++replay. Every node and every child occurrence is retained literally. -/
++theorem encodeFrom_expands {state : Encoder E Ctx} {memo : Array (Replay E Ctx)}
++    (hv : Valid state memo) (tree : Replay E Ctx) :
++    ∃ next, Valid (encodeFrom state tree).1 next ∧ Prefix memo next ∧
++      next[(encodeFrom state tree).2]? = some tree := by
++  induction tree generalizing state memo with
++  | leaf n => exact insert_valid hv (by simp [step])
++  | split n l r ihl ihr =>
++    obtain ⟨lm, hvl, hel, hal⟩ := ihl hv
++    obtain ⟨rm, hvr, her, har⟩ := ihr hvl
++    have hs : step rm
++        ⟨n, some ((encodeFrom state l).2, (encodeFrom (encodeFrom state l).1 r).2)⟩ =
++        some (.split n l r) := by
++      simp only [step, her _ _ hal, har, bind, Option.bind, pure]
++    obtain ⟨next, hvn, hen, han⟩ := insert_valid hvr hs
++    exact ⟨next, hvn, hel.trans (her.trans hen), han⟩
++
++end Expansion
++
++/-- Expand the selected graph root without validating its certificates. Every
++entry must have valid earlier references, including unreachable entries. -/
++@[expose] def expand? (dag : Dag E Ctx) : Option (Replay E Ctx) := do
++  let memo ← Expansion.run dag.entries
++  memo[dag.root]?
++
++/-- Encoding and expanding any literal tree returns that exact tree, without
++assuming its mathematical claims or checked replay are valid. -/
++theorem expand_encode [DecidableEq Ctx] [Hashable E] [Hashable Ctx] (tree : Replay E Ctx) :
++    expand? (encode tree) = some tree := by
++  obtain ⟨memo, hv, _, hi⟩ := Expansion.encodeFrom_expands Expansion.valid_empty tree
++  simp only [expand?, encode, hv.expansion, bind, Option.bind, hi]
++
++variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
++    {sign : E → Int} {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
++
++/-- The checked local step returns the same tree as structural expansion. -/
++theorem step_expands {memo : Array (Checked sign context p a b)} {entry : Entry E Ctx}
++    {t : Checked sign context p a b} (h : step sign context p a b memo entry = some t) :
++    Expansion.step (memo.map Checked.value) entry = some t.value := by
++  rw [step_eq] at h
++  cases hc : entry.children with
++  | none =>
++    simp only [hc] at h
++    split at h
++    · simp only [pure, Option.some.injEq] at h
++      subst t
++      simp [Expansion.step, hc]
++    · simp at h
++  | some children =>
++    obtain ⟨left, right⟩ := children
++    simp only [hc] at h
++    cases hl : memo[left]? with
++    | none => simp [hl, bind, Option.bind] at h
++    | some l =>
++      cases hr : memo[right]? with
++      | none => simp [hl, hr, bind, Option.bind] at h
++      | some r =>
++        simp only [hl, hr, bind, Option.bind] at h
++        split at h
++        · split at h
++          · split at h
++            · simp only [pure, Option.some.injEq] at h
++              subst t
++              simp [Expansion.step, hc, hl, hr]
++            · simp at h
++          · simp at h
++        · simp at h
++
++private theorem fold_expands (entries : List (Entry E Ctx))
++    {memo result : Array (Checked sign context p a b)}
++    (h : entries.foldlM (fun memo entry => do
++      let t ← step sign context p a b memo entry
++      pure (memo.push t)) memo = some result) :
++    entries.foldlM (fun memo entry => do
++      let t ← Expansion.step memo entry
++      pure (memo.push t)) (memo.map Checked.value) = some (result.map Checked.value) := by
++  induction entries generalizing memo with
++  | nil =>
++    simp only [List.foldlM_nil, pure, Option.some.injEq] at h
++    subst result
++    rfl
++  | cons entry entries ih =>
++    simp only [List.foldlM_cons] at h ⊢
++    cases hs : step sign context p a b memo entry with
++    | none => simp [hs, bind, Option.bind] at h
++    | some t =>
++      simp only [hs, bind, Option.bind, pure] at h
++      rw [step_expands hs]
++      simpa only [bind, Option.bind, pure, Array.map_push] using ih h
++
++/-- An accepted graph expands to exactly the tree returned by checked replay.
++This applies to arbitrary supplied graph literals, including shared children. -/
++theorem replay_expands {dag : Dag E Ctx} {qs : List (DensePoly E)}
++    {t : {tree : Replay E Ctx // tree.check sign context p a b qs = true}}
++    (h : replay? sign context p a b qs dag = some t) : expand? dag = some t.val := by
++  rw [replay_eq] at h
++  cases hm : dag.entries.foldlM (init := #[]) (fun memo entry => do
++      let next ← step sign context p a b memo entry
++      pure (memo.push next)) with
++  | none =>
++    rw [hm] at h
++    simp [bind, Option.bind] at h
++  | some memo =>
++    have hexp : Expansion.run dag.entries = some (memo.map Checked.value) := by
++      unfold Expansion.run
++      rw [← Array.foldlM_toList] at hm ⊢
++      simpa using fold_expands dag.entries.toList hm
++    rw [hm] at h
++    simp only [bind, Option.bind] at h
++    cases hr : memo[dag.root]? with
++    | none => simp [hr] at h
++    | some root =>
++      simp only [hr] at h
++      split at h
++      · simp only [pure, Option.some.injEq] at h
++        subst t
++        simp [expand?, hexp, hr]
++      · simp at h
++
++/-- Exact graph encoding preserves acceptance and rejection of every supplied
++tree; the encoder cannot repair an invalid literal witness or binding. -/
++theorem check_encode_eq [Hashable E] [Hashable Ctx] (tree : Replay E Ctx)
++    (qs : List (DensePoly E)) :
++    check sign context p a b qs (encode tree) = tree.check sign context p a b qs := by
++  cases ht : tree.check sign context p a b qs with
++  | true => exact check_encode ht
++  | false =>
++    cases hg : check sign context p a b qs (encode tree) with
++    | false => rfl
++    | true =>
++      obtain ⟨t, hr, _⟩ := check_replay hg
++      have he : tree = t.val := Option.some.inj ((expand_encode tree).symm.trans (replay_expands hr))
++      have ha := t.property
++      rw [← he, ht] at ha
++      cases ha
++
++end Hex.SignDet.Dag
+diff --git a/HexSignDet/DagReplay.lean b/HexSignDet/DagReplay.lean
+new file mode 100644
+index 000000000..73fc5f75b
+--- /dev/null
++++ b/HexSignDet/DagReplay.lean
+@@ -0,0 +1,186 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDet.DagEncode
++public import Std.Data.HashMap.Lemmas
++
++public section
++
++namespace Hex.SignDet.Dag
++
++variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] [DecidableEq Ctx]
++    [One E] [Add E] [Sub E] [Mul E] [NatCast E]
++    {sign : E → Int} {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
++
++/-- Every successful lookup in the old memo retains the same literal tree and
++acceptance proof in the new memo. -/
++def Extends (before after : Array (Checked sign context p a b)) : Prop :=
++  ∀ (i : Nat) t, before[i]? = some t → after[i]? = some t
++
++theorem Extends.refl (memo : Array (Checked sign context p a b)) : Extends memo memo :=
++  fun _ _ h => h
++
++theorem Extends.trans {x y z : Array (Checked sign context p a b)}
++    (hxy : Extends x y) (hyz : Extends y z) : Extends x z :=
++  fun i t h => hyz i t (hxy i t h)
++
++theorem Extends.push (memo : Array (Checked sign context p a b)) (t) :
++    Extends memo (memo.push t) := by
++  intro i v h
++  obtain ⟨hi, hv⟩ := Array.getElem?_eq_some_iff.mp h
++  simpa only [Array.getElem?_push_lt hi] using congrArg some hv
++
++/-- Once a local replay step succeeds, appending accepted entries cannot change
++its exact result. Only successful earlier child references are consulted. -/
++theorem step_mono {before after : Array (Checked sign context p a b)}
++    (hm : Extends before after) {entry : Entry E Ctx} {t : Checked sign context p a b}
++    (h : step sign context p a b before entry = some t) :
++    step sign context p a b after entry = some t := by
++  rw [step_eq] at h ⊢
++  cases hc : entry.children with
++  | none => simpa only [hc] using h
++  | some children =>
++    obtain ⟨left, right⟩ := children
++    simp only [hc] at h ⊢
++    cases hl : before[left]? with
++    | none => simp [hl, bind, Option.bind] at h
++    | some l =>
++      cases hr : before[right]? with
++      | none => simp [hl, hr, bind, Option.bind] at h
++      | some r =>
++        simpa only [hl, hr, hm left l hl, hm right r hr] using h
++
++theorem step_leaf (memo : Array (Checked sign context p a b)) {n : Node E Ctx}
++    (h : (Replay.leaf n).check sign context p a b n.queries = true) :
++    step sign context p a b memo ⟨n, none⟩ = some ⟨.leaf n, h⟩ := by
++  simp only [step_eq, h, dite_eq_left, pure]
++
++theorem step_split {memo : Array (Checked sign context p a b)} {n : Node E Ctx}
++    {l r : Checked sign context p a b} {left right : Nat}
++    (hl : memo[left]? = some l) (hr : memo[right]? = some r)
++    (h : (Replay.split n l.value r.value).check sign context p a b n.queries = true) :
++    step sign context p a b memo ⟨n, some (left, right)⟩ =
++      some ⟨.split n l.value r.value, h⟩ := by
++  have hc := Replay.check_children h
++  have hlq := (Node.check_bindings (Replay.check_node hc.1)).1.2.2.2.2
++  have hrq := (Node.check_bindings (Replay.check_node hc.2.1)).1.2.2.2.2
++  have hn : (decide (1 < n.queries.length) &&
++      decide (n.system.columns.toList = product l.value.node.system.support r.value.node.system.support) &&
++      decide (n.system.rows.toList = product l.value.node.rows r.value.node.rows) &&
++      n.check sign context p a b n.queries) = true := by
++    simp only [Replay.check, Bool.and_eq_true] at h
++    simp only [Bool.and_eq_true]
++    exact ⟨⟨⟨h.1.1.1.1.1, h.1.1.2⟩, h.1.2⟩, h.2⟩
++  simp only [step_eq, hl, hr, bind, Option.bind, hlq, hrq, dite_eq_left, hn, pure]
++
++variable [Hashable E] [Hashable Ctx]
++
++/-- The executable graph fold has accepted every entry, and every cached index
++resolves to exactly the same accepted local replay. -/
++structure Encoder.Valid (state : Encoder E Ctx)
++    (memo : Array (Checked sign context p a b)) : Prop where
++  replay : state.entries.foldlM (init := #[]) (fun memo entry => do
++    let next ← step sign context p a b memo entry
++    pure (memo.push next)) = some memo
++  size : state.entries.size = memo.size
++  indices : ∀ entry (i : Nat), state.indices[entry]? = some i →
++    ∃ t, memo[i]? = some t ∧ step sign context p a b memo entry = some t
++
++/-- An empty encoder has no unvalidated entries or cache bindings. -/
++theorem Encoder.valid_empty : Encoder.Valid ({} : Encoder E Ctx)
++    (#[] : Array (Checked sign context p a b)) := by
++  constructor
++  · simp
++  · rfl
++  · intro entry i h
++    simp at h
++
++/-- Interning a locally accepted node preserves the full checked prefix and
++binds its returned index to that exact node, even when its hash collides. -/
++theorem Encoder.insert_valid {state : Encoder E Ctx}
++    {memo : Array (Checked sign context p a b)} (hv : state.Valid memo)
++    {entry : Entry E Ctx} {t : Checked sign context p a b}
++    (ht : step sign context p a b memo entry = some t) :
++    ∃ next : Array (Checked sign context p a b),
++      (state.insert entry).1.Valid next ∧ Extends memo next ∧
++      next[(state.insert entry).2]? = some t := by
++  cases hi : state.indices[entry]? with
++  | some i =>
++    obtain ⟨u, hu, hs⟩ := hv.indices entry i hi
++    have he : u = t := Option.some.inj (hs.symm.trans ht)
++    subst u
++    exact ⟨memo, by simpa only [Encoder.insert, hi] using hv,
++      Extends.refl memo, by simpa only [Encoder.insert, hi] using hu⟩
++  | none =>
++    refine ⟨memo.push t, ?_, Extends.push memo t, ?_⟩
++    · constructor
++      · simp only [Encoder.insert, hi]
++        rw [Array.foldlM_push, hv.replay]
++        simp only [bind, Option.bind, ht, pure]
++      · simp only [Encoder.insert, hi, Array.size_push, hv.size]
++      · intro e i h
++        simp only [Encoder.insert, hi, Std.HashMap.getElem?_insert] at h
++        split at h
++        · rename_i he
++          have heq : entry = e := eq_of_beq he
++          subst e
++          cases Option.some.inj h
++          exact ⟨t, by simpa only [hv.size] using (Array.getElem?_push_size (xs := memo) (x := t)), step_mono (Extends.push memo t) ht⟩
++        · obtain ⟨u, hu, hs⟩ := hv.indices e i h
++          exact ⟨u, Extends.push memo t i u hu, step_mono (Extends.push memo t) hs⟩
++    · simpa only [Encoder.insert, hi, hv.size] using (Array.getElem?_push_size (xs := memo) (x := t))
++
++/-- The actual recursive encoder preserves an accepted tree literally, extends
++all prior memo bindings, and leaves every generated graph entry checked. -/
++theorem encodeFrom_checks {state : Encoder E Ctx}
++    {memo : Array (Checked sign context p a b)} (hv : state.Valid memo)
++    (tree : Replay E Ctx) (h : tree.check sign context p a b tree.node.queries = true) :
++    ∃ next : Array (Checked sign context p a b),
++      (encodeFrom state tree).1.Valid next ∧ Extends memo next ∧
++      next[(encodeFrom state tree).2]? = some ⟨tree, h⟩ := by
++  induction tree generalizing state memo with
++  | leaf n =>
++    exact Encoder.insert_valid hv (step_leaf memo h)
++  | split n l r ihl ihr =>
++    have hc := Replay.check_children h
++    have hlq := (Node.check_bindings (Replay.check_node hc.1)).1.2.2.2.2
++    have hrq := (Node.check_bindings (Replay.check_node hc.2.1)).1.2.2.2.2
++    have hl : l.check sign context p a b l.node.queries = true := by
++      simpa only [hlq] using hc.1
++    have hr : r.check sign context p a b r.node.queries = true := by
++      simpa only [hrq] using hc.2.1
++    obtain ⟨lm, hvl, hel, hal⟩ := ihl hv hl
++    obtain ⟨rm, hvr, her, har⟩ := ihr hvl hr
++    have has : step sign context p a b rm
++        ⟨n, some ((encodeFrom state l).2, (encodeFrom (encodeFrom state l).1 r).2)⟩ =
++        some ⟨.split n l r, h⟩ :=
++      step_split (her _ _ hal) har h
++    obtain ⟨next, hvn, hen, han⟩ := Encoder.insert_valid hvr has
++    exact ⟨next, hvn, hel.trans (her.trans hen), han⟩
++
++/-- Encoding an accepted literal tree yields a graph whose checked replay
++returns that same tree, with the original caller's exact query binding. This
++uses no root-sum or semantic soundness premise. -/
++theorem replay_encode {tree : Replay E Ctx} {qs : List (DensePoly E)}
++    (h : tree.check sign context p a b qs = true) :
++    replay? sign context p a b qs (encode tree) = some ⟨tree, h⟩ := by
++  have hq := (Node.check_bindings (Replay.check_node h)).1.2.2.2.2
++  have ht : tree.check sign context p a b tree.node.queries = true := by
++    simpa only [hq] using h
++  obtain ⟨memo, hv, _, hi⟩ := encodeFrom_checks Encoder.valid_empty tree ht
++  rw [replay_eq]
++  unfold encode
++  rw [hv.replay]
++  simp only [bind, Option.bind, hi, hq, dite_eq_left, pure]
++
++/-- Graph encoding cannot fail checked replay for an accepted tree. -/
++theorem check_encode {tree : Replay E Ctx} {qs : List (DensePoly E)}
++    (h : tree.check sign context p a b qs = true) :
++    check sign context p a b qs (encode tree) = true := by
++  simp only [check, replay_encode h, Option.isSome_some]
++
++end Hex.SignDet.Dag
+diff --git a/HexSignDet/MomentReplay.lean b/HexSignDet/MomentReplay.lean
+index de61df10c..6b137e0d3 100644
+--- a/HexSignDet/MomentReplay.lean
++++ b/HexSignDet/MomentReplay.lean
+@@ -28 +28,3 @@ positive reduction chain. All query/domain/context bindings remain literal. -/
+-    (value : Int) (cert : TarskiCertificate E E Ctx) (reduction : Option (Reduction E)) : Bool :=
++    (value : Int) (cert : TarskiCertificate E E Ctx) (reduction : Option (Reduction E))
++    (cache : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
++      (EndpointSigns.ofSign sign)) := none) : Bool :=
+@@ -32 +34,16 @@ positive reduction chain. All query/domain/context bindings remain literal. -/
+-  Sturm.check sign context p (queryPoly qs es reduction) a b value cert
++  TarskiCertificate.checkCached sign (EndpointSigns.ofSign sign) context p
++    (queryPoly qs es reduction) a b value cache cert
++
++/-- Optional domain reuse preserves every moment result, independently of the
++cache contents and the validity or provenance of the supplied certificate. -/
++theorem checkMoment_eq [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
++    (p : DensePoly E) (a b : Endpoint E) (qs : List (DensePoly E)) (es : List Nat)
++    (value : Int) (cert : TarskiCertificate E E Ctx) (reduction : Option (Reduction E))
++    (cache : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
++      (EndpointSigns.ofSign sign))) :
++    checkMoment sign context p a b qs es value cert reduction cache =
++      ((match reduction with
++        | none => decide (qs.length = es.length) && es.all (· ≤ 2)
++        | some r => r.check sign p qs es) &&
++      Sturm.check sign context p (queryPoly qs es reduction) a b value cert) := by
++  simp only [checkMoment, TarskiCertificate.checkCached_eq, Sturm.check]
+@@ -41 +58 @@ theorem checkMoment_query [DecidableEq Ctx] {sign : E → Int} {context : Ctx}
+-  simp only [checkMoment, Bool.and_eq_true] at h
++  simp only [checkMoment_eq, Bool.and_eq_true] at h
+@@ -50 +67 @@ theorem checkMoment_reduction [DecidableEq Ctx] {sign : E → Int} {context : Ct
+-  simp only [checkMoment, Bool.and_eq_true] at h
++  simp only [checkMoment_eq, Bool.and_eq_true] at h
+diff --git a/HexSignDet/Replay.lean b/HexSignDet/Replay.lean
+index 59b281583..2ff9a687e 100644
+--- a/HexSignDet/Replay.lean
++++ b/HexSignDet/Replay.lean
+@@ -58 +58,30 @@ check avoids assuming an inverse-format or permutation adapter. -/
+-    (qs : List (DensePoly E)) (n : Node E Ctx) : Bool :=
++    (qs : List (DensePoly E)) (n : Node E Ctx)
++    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
++      (EndpointSigns.ofSign sign)) := none) : Bool :=
++  let k := n.system.positive.length
++  decide (n.context = context ∧ n.head = p ∧ n.lower = a ∧ n.upper = b ∧ n.queries = qs) &&
++  n.system.check qs.length &&
++  decide (n.basis.rank = k) &&
++  decide (n.basis.cols.toList.map Fin.val = List.range k) &&
++  (let retained := n.system.retainedMatrix
++   Matrix.checkRank retained n.basis &&
++   decide (n.basis.adj * Matrix.selectedSubmatrix retained n.basis.rows n.basis.cols =
++     Matrix.scale n.basis.denom (Matrix.identity n.basis.rank)) &&
++   (match n.preparation with | none => true | some r => r.check sign p qs) &&
++   (let cache := match shared with
++      | some d => some d
++      | none => n.moments.toArray[0]?.bind fun cert =>
++          TarskiCertificate.Domain.replay? sign (EndpointSigns.ofSign sign) cert.domain
++    (List.finRange n.size).all (fun i =>
++     checkMoment sign context p a b (QueryReduction.operands qs n.preparation)
++       n.system.rows[i] n.system.values[i]
++       n.moments[i] n.reductions[i] cache)))
++
++/-- Sharing a validated domain leaves the result unchanged
++for all supplied nodes, including empty systems and differing valid witnesses. -/
++theorem Node.check_eq [DecidableEq Ctx] (sign : E → Int)
++    (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
++    (qs : List (DensePoly E)) (n : Node E Ctx)
++    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
++      (EndpointSigns.ofSign sign)) := none) :
++    n.check sign context p a b qs shared = (
+@@ -72 +101,12 @@ check avoids assuming an inverse-format or permutation adapter. -/
+-       n.moments[i] n.reductions[i]))
++       n.moments[i] n.reductions[i]))) := by
++  simp only [Node.check, checkMoment_eq]
++
++/-- Passing a previously validated domain changes only replay work, never a
++node's acceptance or the tree evidence that its result can justify. -/
++theorem Node.check_cache [DecidableEq Ctx] (sign : E → Int)
++    (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
++    (qs : List (DensePoly E)) (n : Node E Ctx)
++    (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
++      (EndpointSigns.ofSign sign))) :
++    n.check sign context p a b qs shared = n.check sign context p a b qs := by
++  simp only [Node.check_eq]
+@@ -129 +169 @@ theorem Node.check_bindings [DecidableEq Ctx] {sign : E → Int}
+-  simp only [Node.check, Bool.and_eq_true, decide_eq_true_eq] at h
++  simp only [Node.check_eq, Bool.and_eq_true, decide_eq_true_eq] at h
+@@ -140 +180 @@ theorem Node.check_moment [DecidableEq Ctx] {sign : E → Int}
+-  simp only [Node.check, Bool.and_eq_true] at h
++  simp only [Node.check_eq, Bool.and_eq_true] at h
+@@ -150 +190 @@ theorem Node.check_preparation [DecidableEq Ctx] {sign : E → Int}
+-  simp only [Node.check, Bool.and_eq_true] at h
++  simp only [Node.check_eq, Bool.and_eq_true] at h
+diff --git a/HexSignDet/RootList.lean b/HexSignDet/RootList.lean
+index 4f531aaec..de31b2189 100644
+--- a/HexSignDet/RootList.lean
++++ b/HexSignDet/RootList.lean
+@@ -8 +8 @@ module
+-public import HexSignDet.Complete
++public import HexSignDet.ThomOrder
+@@ -55,3 +55,2 @@ theorem Thom.insert_perm {sign : E → Int} {context : Ctx}
+-/-- Finite insertion preserves strict sortedness under the stated comparator
+-laws. The companion must obtain those laws for realized encodings from Thom
+-order; this theorem does not assume or assert that foundation. -/
++/-- Finite insertion preserves strict sortedness by the proved comparator
++laws. Correspondence with the ordering of real roots remains separate. -/
+@@ -59,4 +57,0 @@ theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
+-    (htrans : ∀ a b c : Descriptor E Ctx sign context,
+-      a.fullOrder b = some .lt → b.fullOrder c = some .lt → a.fullOrder c = some .lt)
+-    (hreverse : ∀ a b : Descriptor E Ctx sign context,
+-      a.fullOrder b = some .gt → b.fullOrder a = some .lt)
+@@ -85 +80 @@ theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
+-        · exact htrans d e x hc (he x hx)
++        · exact Descriptor.fullOrder_trans hc (he x hx)
+@@ -97 +92 @@ theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
+-          · exact hreverse x e hc
++          · exact Descriptor.fullOrder_reverse hc
+@@ -241,2 +236,2 @@ theorem Descriptor.rootsFrom_raw (sign : E → Int) (context : Ctx)
+-/-- Successful enumeration is strictly sorted under the finite comparator
+-laws. Their correspondence with real-root order is a separate companion gate. -/
++/-- Successful enumeration is strictly sorted by the actual finite comparator.
++Correspondence with real-root order is a separate companion gate. -/
+@@ -244,4 +238,0 @@ theorem Descriptor.rootsFrom_sorted (sign : E → Int) (context : Ctx)
+-    (htrans : ∀ a b c : Descriptor E Ctx sign context,
+-      a.fullOrder b = some .lt → b.fullOrder c = some .lt → a.fullOrder c = some .lt)
+-    (hreverse : ∀ a b : Descriptor E Ctx sign context,
+-      a.fullOrder b = some .gt → b.fullOrder a = some .lt)
+@@ -267 +258 @@ theorem Descriptor.rootsFrom_sorted (sign : E → Int) (context : Ctx)
+-          exact Thom.insert_sorted htrans hreverse d (ih hr) hi
++          exact Thom.insert_sorted d (ih hr) hi
+@@ -283,4 +273,0 @@ theorem Descriptor.rootsFromTable_sorted {sign : E → Int} {context : Ctx}
+-    (htrans : ∀ a b c : Descriptor E Ctx sign context,
+-      a.fullOrder b = some .lt → b.fullOrder c = some .lt → a.fullOrder c = some .lt)
+-    (hreverse : ∀ a b : Descriptor E Ctx sign context,
+-      a.fullOrder b = some .gt → b.fullOrder a = some .lt)
+@@ -294 +281 @@ theorem Descriptor.rootsFromTable_sorted {sign : E → Int} {context : Ctx}
+-  rootsFrom_sorted sign context htrans hreverse raw t
++  rootsFrom_sorted sign context raw t
+@@ -382,2 +369,2 @@ theorem Descriptor.buildRoots_perm {sign : E → Int} {context : Ctx} {p : Dense
+-/-- The public entry point is strictly sorted under the same explicit finite
+-comparator laws as insertion. Thom semantics must still supply those laws. -/
++/-- The public entry point is strictly sorted by its actual finite comparator,
++without caller-supplied order laws. Real-root order needs Thom semantics. -/
+@@ -385,4 +371,0 @@ theorem Descriptor.buildRoots_sorted {sign : E → Int} {context : Ctx}
+-    (htrans : ∀ a b c : Descriptor E Ctx sign context,
+-      a.fullOrder b = some .lt → b.fullOrder c = some .lt → a.fullOrder c = some .lt)
+-    (hreverse : ∀ a b : Descriptor E Ctx sign context,
+-      a.fullOrder b = some .gt → b.fullOrder a = some .lt)
+@@ -393 +376 @@ theorem Descriptor.buildRoots_sorted {sign : E → Int} {context : Ctx}
+-  exact rootsFrom_sorted sign context htrans hreverse _ t.val hs
++  exact rootsFrom_sorted sign context _ t.val hs
+diff --git a/HexSignDet/ThomOrder.lean b/HexSignDet/ThomOrder.lean
+new file mode 100644
+index 000000000..90bd84304
+--- /dev/null
++++ b/HexSignDet/ThomOrder.lean
+@@ -0,0 +1,173 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDet.Complete
++
++public section
++
++namespace Hex.SignDet.Thom
++
++/-- The strict rule either compares the common tails first or compares the
++current entries in the orientation selected by their equal next sign. -/
++theorem compareFrom_cons_lt (a b : Int) (as bs : List Int) :
++    compareFrom (a :: as) (b :: bs) = some .lt ↔
++      compareFrom as bs = some .lt ∨
++      (as = bs ∧ ((as.head? = some 1 ∧ a < b) ∨ (as.head? = some (-1) ∧ b < a))) := by
++  cases ht : compareFrom as bs with
++  | none =>
++    have hne : as ≠ bs := by intro h; subst bs; simp [compareFrom_self] at ht
++    simp [compareFrom, ht, hne]
++  | some order =>
++    cases order with
++    | lt => simp [compareFrom, ht]
++    | gt =>
++      have hne : as ≠ bs := by intro h; subst bs; simp [compareFrom_self] at ht
++      simp [compareFrom, ht, hne]
++    | eq =>
++      have he := compareFrom_eq ht
++      subst bs
++      by_cases hab : a = b
++      · subst b; simp [compareFrom, compareFrom_self]
++      · cases as with
++        | nil => simp [compareFrom, hab]
++        | cons next rest =>
++          by_cases hp : next = 1
++          · simp [compareFrom, compareFrom_self, hab, hp, Int.compare_eq_lt]
++          · by_cases hn : next = -1
++            · simp [compareFrom, compareFrom_self, hab, hn, Int.compare_eq_lt]
++            · simp [compareFrom, compareFrom_self, hab, hp, hn]
++
++/-- The finite strict comparison is transitive even before assigning root
++semantics to the vectors. Unorderable pairs do not supply a premise. -/
++theorem compareFrom_trans {as bs cs : List Int}
++    (hab : compareFrom as bs = some .lt) (hbc : compareFrom bs cs = some .lt) :
++    compareFrom as cs = some .lt := by
++  induction as generalizing bs cs with
++  | nil => cases bs <;> simp [compareFrom] at hab
++  | cons a as ih =>
++    cases bs with
++    | nil => simp [compareFrom] at hab
++    | cons b bs =>
++      cases cs with
++      | nil => simp [compareFrom] at hbc
++      | cons c cs =>
++        obtain hab | ⟨he, hhead⟩ := (compareFrom_cons_lt a b as bs).mp hab
++        · obtain hbc | ⟨he, _⟩ := (compareFrom_cons_lt b c bs cs).mp hbc
++          · exact (compareFrom_cons_lt a c as cs).mpr (Or.inl (ih hab hbc))
++          · subst cs
++            exact (compareFrom_cons_lt a c as bs).mpr (Or.inl hab)
++        · subst bs
++          obtain hbc | ⟨he, hnext⟩ := (compareFrom_cons_lt b c as cs).mp hbc
++          · exact (compareFrom_cons_lt a c as cs).mpr (Or.inl hbc)
++          · subst cs
++            apply (compareFrom_cons_lt a c as as).mpr
++            right
++            refine ⟨rfl, ?_⟩
++            rcases hhead with ⟨hp, hab⟩ | ⟨hn, hba⟩
++            · rcases hnext with ⟨_, hbc⟩ | ⟨hn, _⟩
++              · exact Or.inl ⟨hp, by omega⟩
++              · simp [hp] at hn
++            · rcases hnext with ⟨hp, _⟩ | ⟨_, hcb⟩
++              · simp [hn] at hp
++              · exact Or.inr ⟨hn, by omega⟩
++
++/-- Swapping the vectors swaps the returned finite ordering, including
++failure. Equal tails choose the same orientation for both directions. -/
++theorem compareFrom_swap (as bs : List Int) :
++    (compareFrom as bs).map Ordering.swap = compareFrom bs as := by
++  induction as generalizing bs with
++  | nil => cases bs <;> simp [compareFrom]
++  | cons a as ih =>
++    cases bs with
++    | nil => simp [compareFrom]
++    | cons b bs =>
++      have hi := ih bs
++      cases ht : compareFrom as bs with
++      | none =>
++        simp only [ht, Option.map_none] at hi
++        simp [compareFrom, ht, ← hi]
++      | some order =>
++        cases order with
++        | lt =>
++          simp only [ht, Option.map_some, Ordering.swap] at hi
++          simp [compareFrom, ht, ← hi]
++        | gt =>
++          simp only [ht, Option.map_some, Ordering.swap] at hi
++          simp [compareFrom, ht, ← hi]
++        | eq =>
++          have he := compareFrom_eq ht
++          subst bs
++          by_cases hab : a = b
++          · subst b; simp [compareFrom_self]
++          · cases as with
++            | nil => simp [compareFrom, hab, Ne.symm hab]
++            | cons next rest =>
++              by_cases hp : next = 1
++              · simp [compareFrom, compareFrom_self, hab, Ne.symm hab, hp, Int.compare_swap]
++              · by_cases hn : next = -1
++                · simp [compareFrom, compareFrom_self, hab, Ne.symm hab, hn, Int.compare_swap]
++                · simp [compareFrom, compareFrom_self, hab, Ne.symm hab, hp, hn]
++
++/-- Shape validation is preserved when composing two strict comparisons. -/
++theorem compareSigns_trans {as bs cs : List Int}
++    (hab : compareSigns as bs = some .lt) (hbc : compareSigns bs cs = some .lt) :
++    compareSigns as cs = some .lt := by
++  unfold compareSigns at hab hbc ⊢
++  split at hab
++  · contradiction
++  · split at hbc
++    · contradiction
++    · split
++      · simp_all only [Bool.or_eq_true, not_or, Bool.not_eq_true, Bool.false_eq_true, or_self]
++      · exact compareFrom_trans hab hbc
++
++/-- Shape checking is symmetric and preserves reversal of the finite rule. -/
++theorem compareSigns_swap (as bs : List Int) :
++    (compareSigns as bs).map Ordering.swap = compareSigns bs as := by
++  have hg : (as.isEmpty || bs.isEmpty ||
++      !as.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1)) ||
++      !bs.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1))) =
++      (bs.isEmpty || as.isEmpty ||
++      !bs.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1)) ||
++      !as.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1))) := by
++    simp only [Bool.or_assoc, Bool.or_left_comm, Bool.or_comm]
++  simp only [compareSigns, ← hg]
++  split
++  · rfl
++  · exact compareFrom_swap as bs
++
++end Hex.SignDet.Thom
++
++namespace Hex.SignDet
++
++variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
++  [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
++
++/-- Literal head and full-slot bindings compose with the finite order. -/
++theorem Descriptor.fullOrder_trans {sign : E → Int} {context : Ctx}
++    {a b c : Descriptor E Ctx sign context}
++    (hab : a.fullOrder b = some .lt) (hbc : b.fullOrder c = some .lt) :
++    a.fullOrder c = some .lt := by
++  obtain ⟨hab, hsigns⟩ := fullOrder_eq hab
++  obtain ⟨hbc, hnext⟩ := fullOrder_eq hbc
++  unfold fullOrder
++  rw [ite_eq_left ⟨hab.1.trans hbc.1, hab.2.1, hbc.2.2⟩]
++  exact Thom.compareSigns_trans hsigns hnext
++
++/-- Reversing a successful strict comparison reverses its finite result. -/
++theorem Descriptor.fullOrder_reverse {sign : E → Int} {context : Ctx}
++    {a b : Descriptor E Ctx sign context} (h : a.fullOrder b = some .gt) :
++    b.fullOrder a = some .lt := by
++  obtain ⟨hab, hsigns⟩ := fullOrder_eq h
++  have hs := Thom.compareSigns_swap a.raw.signs b.raw.signs
++  rw [hsigns] at hs
++  simp only [Option.map_some, Ordering.swap] at hs
++  unfold fullOrder
++  rw [ite_eq_left ⟨hab.1.symm, hab.2.2, hab.2.1⟩]
++  exact hs.symm
++
++end Hex.SignDet
+diff --git a/HexSturm/Basic.lean b/HexSturm/Basic.lean
+index d94f769d4..b67145593 100644
+--- a/HexSturm/Basic.lean
++++ b/HexSturm/Basic.lean
+@@ -8 +8 @@ module
+-public import HexRealRoots.Tarski
++public import HexRealRoots.TarskiShared
+@@ -147 +147 @@ theorem check_bindings {Ctx : Type v} [DecidableEq Ctx] (sign : E → Int) (cont
+-  simp only [check, TarskiCertificate.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
++  simp only [check, TarskiCertificate.check_eq, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+diff --git a/bench/HexSignDet/Bench.lean b/bench/HexSignDet/Bench.lean
+new file mode 100644
+index 000000000..44916a22b
+--- /dev/null
++++ b/bench/HexSignDet/Bench.lean
+@@ -0,0 +1,211 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import HexSignDet.Phases
++import HexSignDet.Small
++import HexSignDet.Maximal
++import HexSignDet.Paired
++import LeanBench
++import Lean.Data.Json
++
++/-!
++Computational performance owner: `HexSignDet`.
++
++The sparse-support family fixes P=X²−1, uses s copies of X and takes s to be
++a power of two. There are exactly two realized words. Leaves have three
++columns; every internal candidate has four columns, of which two survive.
++All coefficient and matrix scalar sizes stay bounded independently of s.
++Every node of arity k scans/copies Θ(k) query, exponent and sign slots, with
++bounded matrix dimensions and at most two nonzero exponents per moment row.
++Summing across the balanced tree gives Θ(s log s) production and tree replay.
++Query-kernel work also contributes a linear term, so the asymptotic log term
++need not dominate at the measured finite sizes; the retained verdict must be
++interpreted with the measured phase attribution and input inventory.
++
++For these identical blocks only, the graph fixture retains one node per
++arity and binds both child edges to the same smaller accepted node. Its
++query/sign-slot volume is s+s/2+…+1, giving Θ(s) graph replay. Preparation
++checks the graph and both full-tree producer modes against the known table.
++It is outside the timed bodies. This is a sparse-support family, not coverage
++of maximal realized support, growing head/query degree, coefficient bits,
++extension levels or the other required Phase-4 tracks.
++-/
++namespace Hex.SignDetBench
++open Hex.SignDet
++
++@[noinline] def runProduce (i : Input) : Option UInt64 := do
++  let d ← i.domain
++  match buildPrepared (10377 : Nat) d i.queries with
++  | .error _ => none
++  | .ok t => some (hash (entries t.val.node.system))
++
++@[noinline] def runDirect (i : Input) : Option UInt64 := do
++  let d ← i.domain
++  match buildPrepared (10377 : Nat) d i.queries false with
++  | .error _ => none
++  | .ok t => some (hash (entries t.val.node.system))
++
++@[noinline] def runTree (i : Input) : Bool :=
++  match i.tree with
++  | none => false
++  | some t => t.check Sturm.orderSign 10377 i.head .negInf .posInf i.queries
++
++@[noinline] def runGraph (i : Input) : Bool :=
++  match i.graph with
++  | none => false
++  | some d => d.check Sturm.orderSign 10377 i.head .negInf .posInf i.queries
++
++/-- Encode the supplied tree and compare every resulting literal entry against
++the independently constructed graph fixture. Equality adds only linear graph
++volume to the encoder's traversal of the full tree. -/
++@[noinline] def runEncode (i : Input) : Bool :=
++  match i.tree, i.graph with
++  | some tree, some expected =>
++    let actual := Dag.encode tree
++    actual.root == expected.root && actual.entries == expected.entries
++  | _, _ => false
++
++-- Declared cost-model: Θ(s log s), direct moments and bounded-size systems on the two-root family.
++setup_benchmark runSmallReduced s => s * (Nat.log2 s + 1)
++  with prep := smallInput
++  where {
++    paramSchedule := .custom #[1, 2, 3, 4, 5]
++    paramFloor := 1
++    paramCeiling := 5
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 60
++  }
++
++-- Declared cost-model: Θ(27^s), dense cubic inverse-identity checking on the full 3^s square system.
++setup_benchmark runSmallFull s => 27^s
++  with prep := smallInput
++  where {
++    paramSchedule := .custom #[1, 2, 3, 4, 5]
++    paramFloor := 1
++    paramCeiling := 5
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 60
++  }
++
++-- Declared cost-model: Θ(s log s), bounded-size systems and Θ(k) slot work at every balanced node.
++setup_benchmark runProduce s => s * (Nat.log2 s + 1)
++  with prep := input
++  where {
++    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
++    paramFloor := 64
++    paramCeiling := 2048
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 10
++  }
++
++-- Declared cost-model: Θ(s log s), each direct row scans k factors but at most two exponents are nonzero.
++setup_benchmark runDirect s => s * (Nat.log2 s + 1)
++  with prep := input
++  where {
++    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
++    paramFloor := 64
++    paramCeiling := 2048
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 10
++  }
++
++-- Declared cost-model: Θ(s log s), full literal replay visits every balanced node and its k ordered slots.
++setup_benchmark runTree s => s * (Nat.log2 s + 1)
++  with prep := input
++  where {
++    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
++    paramFloor := 64
++    paramCeiling := 2048
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 10
++  }
++
++-- Declared cost-model: Θ(s), one node per arity has total query/sign-slot volume s+s/2+…+1.
++setup_benchmark runGraph s => s
++  with prep := input
++  where {
++    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
++    paramFloor := 64
++    paramCeiling := 2048
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 10
++  }
++
++-- Declared cost-model: Θ(s log s), hash consing visits all input nodes and their k ordered slots.
++setup_benchmark runEncode s => s * (Nat.log2 s + 1)
++  with prep := input
++  where {
++    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
++    paramFloor := 64
++    paramCeiling := 2048
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 10
++  }
++
++private def intBits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
++private def ratBits (q : Rat) : Nat := max (intBits q.num) (q.den.log2 + 1)
++
++/-- Untimed inventory validates the structural hypotheses used by the declared
++family model. It reports actual stored dimensions, exponents and slot counts. -/
++def inspect : IO UInt32 := do
++  for s in #[64, 128, 256, 512, 1024, 2048] do
++    let i := input s
++    let some tree := i.tree | throw (IO.userError "missing tree")
++    let some graph := i.graph | throw (IO.userError "missing graph")
++    let ns := nodes tree
++    let queries := ns.foldl (fun k n => k + n.size) 0
++    let maxColumns := ns.foldl (fun k n => max k n.size) 0
++    let maxSupport := ns.foldl (fun k n => max k n.system.support.length) 0
++    let maxExponentSum := ns.foldl (fun k n =>
++      n.system.rows.toList.foldl (fun k es => max k es.sum) k) 0
++    let storedCoefficientBits := ns.foldl (fun k n => n.moments.toList.foldl (fun k c =>
++      c.remainders.chain.foldl (fun k p => p.toArray.foldl (fun k q => max k (ratBits q)) k) k) k) 0
++    unless ns.length == 2 * s - 1 && queries == 7 * s - 4 && maxColumns == 4 &&
++        maxSupport == 2 && maxExponentSum == 2 && storedCoefficientBits ≤ 4 &&
++        graph.entries.size == s.log2 + 1 && runTree i && runGraph i &&
++        runProduce i == runDirect i && runEncode i do
++      throw (IO.userError s!"sparse model invariant failed at {s}")
++    IO.println <| (Lean.Json.mkObj [
++      ("family", Lean.toJson "repeated-query-sparse-support"), ("queries", Lean.toJson s),
++      ("headDegree", Lean.toJson i.head.natDegree), ("queryDegree", Lean.toJson (1 : Nat)),
++      ("treeNodes", Lean.toJson ns.length), ("treeEdges", Lean.toJson (ns.length - 1)),
++      ("querySlots", Lean.toJson queries), ("maxColumns", Lean.toJson maxColumns),
++      ("maxSupport", Lean.toJson maxSupport), ("maxExponentSum", Lean.toJson maxExponentSum),
++      ("remainderCoefficientBits", Lean.toJson storedCoefficientBits),
++      ("graphNodes", Lean.toJson graph.entries.size),
++      ("graphEdges", Lean.toJson (2 * (graph.entries.size - 1))),
++      ("treeArityVolume", Lean.toJson (ns.foldl (fun k n => k + n.queries.length) 0)),
++      ("graphArityVolume", Lean.toJson (graph.entries.foldl (fun k e => k + e.node.queries.length) 0)),
++      ("inputHash", Lean.toJson (hash i).toNat),
++      ("productionResultHash", Lean.toJson (hash (some (hash
++        [(List.replicate s (-1 : Int), (1 : Int)), (List.replicate s (1 : Int), (1 : Int))]))).toNat),
++      ("replayResultHash", Lean.toJson (hash true).toNat)]).compress
++  return 0
++
++end Hex.SignDetBench
++
++def main (args : List String) : IO UInt32 :=
++  if args == ["inspect"] then Hex.SignDetBench.inspect
++  else if args == ["inspect-phases"] then Hex.SignDetBench.inspectPhases
++  else if args == ["inspect-small"] then Hex.SignDetBench.inspectSmall
++  else if args == ["inspect-full"] then Hex.SignDetBench.inspectFull
++  else if args == ["inspect-maximal"] then Hex.SignDetBench.inspectMaximal
++  else if let ["paired-small", path] := args then
++    Hex.SignDetBench.paired ``Hex.SignDetBench.runSmallReduced ``Hex.SignDetBench.runSmallFull path
++  else LeanBench.Cli.dispatch args
+diff --git a/bench/HexSignDet/Input.lean b/bench/HexSignDet/Input.lean
+new file mode 100644
+index 000000000..602cc47ef
+--- /dev/null
++++ b/bench/HexSignDet/Input.lean
+@@ -0,0 +1,108 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import HexSignDet
++
++namespace Hex.SignDetBench
++open Hex.SignDet
++
++def polyHash (p : DensePoly Rat) : UInt64 := hash p.toArray
++private def endpointHash : Endpoint Rat → UInt64
++  | .negInf => hash (0 : Nat)
++  | .posInf => hash (2 : Nat)
++  | .finite q => hash ((1 : Nat), q)
++
++private def remainderHash (s : RemainderStep Rat) : UInt64 :=
++  hash (s.leftScale, polyHash s.quotient, s.rightScale)
++
++private def chainHash (c : SignedRemainderChain Rat) : UInt64 :=
++  hash (c.chain.map polyHash, c.degrees, remainderHash c.initial,
++    c.steps.map remainderHash, c.terminal.map fun (s, p) => (s, polyHash p))
++
++private def certHash (c : TarskiCertificate Rat Rat Nat) : UInt64 :=
++  hash (c.context, polyHash c.head, polyHash c.queryPoly,
++    endpointHash c.lower, endpointHash c.upper,
++    chainHash c.squarefree, chainHash c.remainders, c.lowerSigns, c.upperSigns,
++    c.lowerVariations, c.upperVariations, c.value)
++
++private def stepHash (s : ReductionStep Rat) : UInt64 :=
++  hash (s.index, polyHash s.next, remainderHash s.witness)
++
++private def reductionHash (r : Reduction Rat) : UInt64 :=
++  hash (r.steps.map stepHash, polyHash r.result)
++
++def matrixHash {n m : Nat} (a : Matrix Int n m) : UInt64 :=
++  hash (a.rows.toArray.map fun r => r.toArray)
++
++private def nodeHash (n : Node Rat Nat) : UInt64 :=
++  hash (n.context, polyHash n.head, endpointHash n.lower, endpointHash n.upper,
++    n.queries.map polyHash, n.size, n.system.rows.toArray, n.system.columns.toArray,
++    n.system.counts.toArray, n.system.values.toArray, n.system.denominator,
++    matrixHash n.system.inverse, n.moments.toArray.map certHash,
++    n.reductions.toArray.map fun r => r.map reductionHash,
++    n.preparation.map fun p => p.steps.map stepHash,
++    n.basis.rank, n.basis.rows.toArray.map Fin.val, n.basis.cols.toArray.map Fin.val,
++    n.basis.denom, matrixHash n.basis.adj)
++
++private def treeHash : Replay Rat Nat → UInt64
++  | .leaf n => hash ((0 : Nat), nodeHash n)
++  | .split n l r => hash ((1 : Nat), nodeHash n, treeHash l, treeHash r)
++
++private def graphHash (d : Dag Rat Nat) : UInt64 :=
++  hash (d.root, d.entries.map fun e => (nodeHash e.node, e.children))
++
++private def domainHash (d : Sturm.PreparedDomain Rat) : UInt64 :=
++  hash (polyHash d.head, endpointHash d.lower, endpointHash d.upper, chainHash d.squarefree)
++
++structure Input where
++  head : DensePoly Rat
++  queries : List (DensePoly Rat)
++  domain : Option (Sturm.PreparedDomain Rat)
++  tree : Option (Replay Rat Nat)
++  graph : Option (Dag Rat Nat)
++
++instance : Hashable Input where
++  hash i := hash (polyHash i.head, i.queries.map polyHash,
++    i.domain.map domainHash, i.tree.map treeHash, i.graph.map graphHash)
++
++def entries {r : Nat} (s : System r) : List (List Int × Int) :=
++  s.positive.map fun i => (s.columns[i], s.counts[i])
++
++/-- This fixture-specific graph uses equal left/right query blocks. Every
++result is independently checked before use; it is not a general encoder. -/
++private def sharedEntries : Replay Rat Nat → Array (Dag.Entry Rat Nat)
++  | .leaf n => #[⟨n, none⟩]
++  | .split n l _ =>
++    let nodes := sharedEntries l
++    nodes.push ⟨n, some (nodes.size - 1, nodes.size - 1)⟩
++
++private def x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
++
++/-- Preparation records no evidence on an invalid fixture. Inspection and
++export validation reject that result. Scientific parameters are positive powers
++of two; the harness's zero/one smoke inputs are handled explicitly. -/
++def input (s : Nat) : Input :=
++  let p := x * x - 1
++  let qs := List.replicate s x
++  match Sturm.prepare Sturm.orderSign p .negInf .posInf with
++  | none => ⟨p, qs, none, none, none⟩
++  | some domain =>
++    match buildPrepared (10377 : Nat) domain qs, buildPrepared (10377 : Nat) domain qs false with
++    | .ok reduced, .ok direct =>
++      let expected := if s == 0 then [([], (2 : Int))]
++        else [(List.replicate s (-1), (1 : Int)), (List.replicate s 1, 1)]
++      let nodes := sharedEntries reduced.val
++      let graph : Dag Rat Nat := ⟨nodes, nodes.size - 1⟩
++      if entries reduced.val.node.system != expected || entries direct.val.node.system != expected ||
++          !graph.check Sturm.orderSign 10377 p .negInf .posInf qs then
++        ⟨p, qs, none, none, none⟩
++      else ⟨p, qs, some domain, some reduced.val, some graph⟩
++    | _, _ => ⟨p, qs, none, none, none⟩
++
++def nodes : Replay Rat Nat → List (Node Rat Nat)
++  | .leaf n => [n]
++  | .split n l r => n :: nodes l ++ nodes r
++
++end Hex.SignDetBench
+diff --git a/bench/HexSignDet/Maximal.lean b/bench/HexSignDet/Maximal.lean
+new file mode 100644
+index 000000000..b31817c3d
+--- /dev/null
++++ b/bench/HexSignDet/Maximal.lean
+@@ -0,0 +1,79 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import HexSignDet.Input
++import HexPolyFast.Interpolation
++import HexPolyFast.Karatsuba
++import Lean.Data.Json
++
++namespace Hex.SignDetBench
++open Hex.SignDet Hex.DensePoly
++
++/-- Every ternary word is realized once at an integer root. The existing
++interpolation plan assigns the word's coordinates to the query polynomials.
++Direct evaluation checks those values independently of Tarski replay. This is
++an untimed fixture constructor, not a sign-determination implementation. -/
++def maximalInput (s : Nat) : Option Input := do
++  let conditions := (words [-1, 0, 1] s).toArray
++  if conditions.size != 3^s || !decide conditions.toList.Nodup ||
++      conditions.any (fun word => word.length != s || word.any (fun v => v < -1 || 1 < v)) then none else
++  let points : Array Rat := (Array.range conditions.size).map fun (i : Nat) => (i : Rat)
++  let plan ← InterpPlan.build? (karatsubaPlan 2) points
++  let built ← plan.evalPlan.cachedNode
++  let p := built.1
++  let qs ← (List.range s).mapM fun j =>
++    plan.interpolate? (conditions.map fun word => ((word[j]! : Int) : Rat))
++  if p.natDegree != 3^s || points.any (fun a => p.eval a != 0) then none else
++  if !(List.range conditions.size).all (fun i =>
++      (List.range s).all fun j => (qs.getD j 0).eval points[i]! == ((conditions[i]![j]! : Int) : Rat)) then none else
++  let domain ← Sturm.prepare Sturm.orderSign p .negInf .posInf
++  let .ok reduced := buildPrepared (10377 : Nat) domain qs | none
++  let .ok direct := buildPrepared (10377 : Nat) domain qs false | none
++  let .ok full := referencePrepared (10377 : Nat) domain qs | none
++  let expected := conditions.toList.map fun word => (word, (1 : Int))
++  let graph := Dag.encode reduced.val
++  if entries reduced.val.node.system == expected && entries direct.val.node.system == expected &&
++      entries full.system == expected && full.size == 3^s &&
++      full.check Sturm.orderSign 10377 p .negInf .posInf qs &&
++      graph.check Sturm.orderSign 10377 p .negInf .posInf qs then
++    some ⟨p, qs, some domain, some reduced.val, some graph⟩
++  else none
++
++private def intBits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
++private def ratBits (q : Rat) : Nat := max (intBits q.num) (q.den.log2 + 1)
++private def polyBits (p : DensePoly Rat) : Nat := p.toArray.foldl (fun n q => max n (ratBits q)) 0
++
++/-- Inspect maximal support using fixed small inputs. Sizes and stored bits
++are observations of the actual certificates, not peak allocation/bit counts or
++a complexity measurement. Every line is flushed before the next input starts. -/
++def inspectMaximal : IO UInt32 := do
++  for s in #[1, 2, 3] do
++    let some input := maximalInput s | throw (IO.userError s!"invalid maximal input at {s}")
++    let some tree := input.tree | throw (IO.userError "missing maximal tree")
++    let some graph := input.graph | throw (IO.userError "missing maximal graph")
++    let ns := nodes tree
++    let moments := ns.foldl (fun n node => n + node.size) 0
++    let maxColumns := ns.foldl (fun n node => max n node.size) 0
++    let witnessBits := ns.foldl (fun n node => node.moments.toList.foldl (fun n cert =>
++      cert.remainders.chain.foldl (fun n p => max n (polyBits p)) n) n) 0
++    unless tree.node.system.support.length == 3^s && maxColumns == 3^s do
++      throw (IO.userError s!"maximal support inventory failed at {s}")
++    IO.println <| (Lean.Json.mkObj [
++      ("family", Lean.toJson "maximal-ternary-support"), ("queries", Lean.toJson s),
++      ("rootCount", Lean.toJson (3^s)), ("realizedSupport", Lean.toJson tree.node.system.support.length),
++      ("headDegree", Lean.toJson input.head.natDegree),
++      ("queryDegree", Lean.toJson (input.queries.foldl (fun n p => max n p.natDegree) 0)),
++      ("headCoefficientBits", Lean.toJson (polyBits input.head)),
++      ("queryCoefficientBits", Lean.toJson (input.queries.foldl (fun n p => max n (polyBits p)) 0)),
++      ("remainderCoefficientBits", Lean.toJson witnessBits),
++      ("querySlots", Lean.toJson moments), ("maxColumns", Lean.toJson maxColumns),
++      ("treeNodes", Lean.toJson ns.length), ("graphNodes", Lean.toJson graph.entries.size),
++      ("graphEdges", Lean.toJson (graph.entries.foldl (fun n e => n + if e.children.isSome then 2 else 0) 0)),
++      ("inputHash", Lean.toJson (hash input).toNat),
++      ("tableHash", Lean.toJson (hash (entries tree.node.system)).toNat)]).compress
++    (← IO.getStdout).flush
++  return 0
++
++end Hex.SignDetBench
+diff --git a/bench/HexSignDet/Paired.lean b/bench/HexSignDet/Paired.lean
+new file mode 100644
+index 000000000..bed573269
+--- /dev/null
++++ b/bench/HexSignDet/Paired.lean
+@@ -0,0 +1,62 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import LeanBench
++import LeanBench.Export
++
++namespace Hex.SignDetBench
++open LeanBench
++
++/-- Run two registered custom schedules in adjacent, alternating arm order.
++Sampling, child execution and statistical summaries use the shared harness.
++Each completed arm is flushed before another child starts. -/
++def paired (left right : Lean.Name) (path : String) : IO UInt32 := do
++  let some l ← findRuntimeEntry left | throw (IO.userError "missing left registration")
++  let some r ← findRuntimeEntry right | throw (IO.userError "missing right registration")
++  let .custom params := l.spec.config.paramSchedule
++    | throw (IO.userError "paired schedule must be explicit")
++  let .custom rparams := r.spec.config.paramSchedule
++    | throw (IO.userError "paired schedule must be explicit")
++  let trials := l.spec.config.outerTrials
++  unless params == rparams && trials == r.spec.config.outerTrials && trials > 0 && trials % 2 == 0 do
++    throw (IO.userError "paired schedules must agree and have positive even round count")
++  for entry in #[l, r] do
++    match entry.spec.config.validate with
++    | .error msg => throw (IO.userError msg)
++    | .ok () => pure ()
++  let env ← RunEnv.capture
++  let floor ← measureSpawnFloor env
++  let out ← IO.FS.Handle.mk path .write
++  let emit (row : Lean.Json) : IO Unit := do
++    out.putStrLn row.compress
++    out.flush
++  emit <| Lean.Json.mkObj [
++    ("kind", Lean.toJson "header"), ("schema", Lean.toJson "hex-sign-det-paired-v1"),
++    ("params", Lean.toJson params), ("trials", Lean.toJson trials),
++    ("left", Lean.toJson left.toString), ("right", Lean.toJson right.toString),
++    ("env", RunEnv.toJson env), ("spawnFloorNanos", Lean.toJson floor)]
++  let mut lp : Array DataPoint := #[]
++  let mut rp : Array DataPoint := #[]
++  for trial in [:trials] do
++    for param in params do
++      let arms := if trial % 2 == 0 then #[false, true] else #[true, false]
++      for isRight in arms do
++        let entry := if isRight then r else l
++        let point := { (← runOneBatch entry.spec param (some env)) with trialIndex := trial }
++        emit <| Lean.Json.mkObj [
++          ("kind", Lean.toJson "sample"), ("arm", Lean.toJson entry.spec.name.toString),
++          ("point", Export.dataPointToJson point)]
++        if isRight then rp := rp.push point else lp := lp.push point
++  let mut ok := true
++  for (entry, points) in #[(l, lp), (r, rp)] do
++    let annotated := annotateBelowSignalFloor entry.spec.config.signalFloorMultiplier floor points
++    let summary := { Stats.summarize entry.spec entry.complexity annotated with
++      spawnFloorNanos? := floor, env? := some env }
++    emit <| Lean.Json.mkObj [
++      ("kind", Lean.toJson "summary"), ("result", Export.benchmarkResultToJson summary)]
++    ok := ok && points.all (fun p => p.status == .ok) && summary.verdict != .inconclusive
++  return if ok then 0 else 1
++
++end Hex.SignDetBench
+diff --git a/bench/HexSignDet/Phases.lean b/bench/HexSignDet/Phases.lean
+new file mode 100644
+index 000000000..956463bbf
+--- /dev/null
++++ b/bench/HexSignDet/Phases.lean
+@@ -0,0 +1,164 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import HexSignDet.Input
++import LeanBench
++import Lean.Data.Json
++
++namespace Hex.SignDetBench
++open Hex.SignDet
++
++/-- Actual nodes and coefficient operands retained outside the measured phases. -/
++structure PhaseInput where
++  base : Input
++  members : List (Node Rat Nat)
++  moments : List (TarskiCertificate Rat Rat Nat)
++  coefficients : List Rat
++
++instance : Hashable PhaseInput where
++  hash i := hash (hash i.base, i.coefficients)
++
++def phaseInput (s : Nat) : PhaseInput :=
++  let base := input s
++  let members := base.tree.map nodes |>.getD []
++  let moments := members.flatMap fun n => n.moments.toList
++  let coefficients := moments.flatMap fun c =>
++    c.remainders.chain.toList.flatMap fun p => p.toArray.toList
++  ⟨base, members, moments, coefficients⟩
++
++/-- Prepared-query calls on the exact representatives used in the tree. -/
++@[noinline] def runQueries (i : PhaseInput) : Option UInt64 := do
++  let domain ← i.base.domain
++  return hash (i.moments.map fun c =>
++    (Sturm.certifyPrepared (10377 : Nat) domain c.queryPoly).value)
++
++/-- Actual modulo-head moment construction from retained query preprocessing. -/
++@[noinline] def runProducts (i : PhaseInput) : Option UInt64 := do
++  let domain ← i.base.domain
++  return hash (i.members.map fun n =>
++    let operands := QueryReduction.operands n.queries n.preparation
++    n.system.rows.toList.map fun row =>
++      (nodeReduction true domain operands row).map fun r => polyHash r.result)
++
++/-- Integer moment matrices, including their ordered sign-word scans. -/
++@[noinline] def runMatrices (i : PhaseInput) : Option UInt64 := do
++  let _ ← i.base.domain
++  return hash (i.members.map fun n => matrixHash (momentMatrix n.system.rows n.system.columns))
++
++/-- Actual leaf/parent solvers, including their complete system checks.
++The matrix construction inside those checks remains part of this operation. -/
++@[noinline] def runSolvers (i : PhaseInput) : Option UInt64 := do
++  let _ ← i.base.domain
++  let result : Except BuildError (List UInt64) := i.members.mapM fun n => do
++    let s ←
++      if n.queries.length ≤ 1 then
++        solveSystem n.queries.length n.system.rows n.system.columns n.system.values
++      else
++        solveScaled n.queries.length n.system.rows n.system.columns n.system.values
++          n.system.denominator n.system.inverse
++    return hash s.counts.toList
++  match result with
++  | .error _ => none
++  | .ok counts => some (hash counts)
++
++/-- Rational coefficient-sign callbacks on the actual stored remainder
++coefficients. Mapping and result hashing are included, with linear cost. -/
++@[noinline] def runSigns (i : PhaseInput) : Option UInt64 := do
++  let _ ← i.base.domain
++  return hash (i.coefficients.map Sturm.orderSign)
++
++-- Declared cost-model: Θ(s), there are 7s−4 prepared queries of bounded degree and coefficient size.
++setup_benchmark runQueries s => s
++  with prep := phaseInput
++  where {
++    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
++    paramFloor := 64
++    paramCeiling := 2048
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 10
++  }
++
++-- Declared cost-model: Θ(s log s), each balanced node scans its k exponent slots; nonzero factors are bounded.
++setup_benchmark runProducts s => s * (Nat.log2 s + 1)
++  with prep := phaseInput
++  where {
++    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
++    paramFloor := 64
++    paramCeiling := 2048
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 10
++  }
++
++-- Declared cost-model: Θ(s log s), bounded matrix dimensions still require Θ(k) sign/exponent slot scans per node.
++setup_benchmark runMatrices s => s * (Nat.log2 s + 1)
++  with prep := phaseInput
++  where {
++    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
++    paramFloor := 64
++    paramCeiling := 2048
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 10
++  }
++
++-- Declared cost-model: Θ(s log s), bounded scalar solves include System.check with Θ(k) matrix slot scans per node.
++setup_benchmark runSolvers s => s * (Nat.log2 s + 1)
++  with prep := phaseInput
++  where {
++    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
++    paramFloor := 64
++    paramCeiling := 2048
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 10
++  }
++
++-- Declared cost-model: Θ(s), there are Θ(s) stored remainder coefficients of bounded size.
++setup_benchmark runSigns s => s
++  with prep := phaseInput
++  where {
++    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
++    paramFloor := 64
++    paramCeiling := 2048
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 10
++  }
++
++/-- Bind phase outputs to the already checked fixture's literal witnesses.
++This is output validation, not an independent semantics theorem. -/
++def inspectPhases : IO UInt32 := do
++  for s in #[64, 128, 256, 512, 1024, 2048] do
++    let i := phaseInput s
++    unless i.base.domain.isSome && i.base.tree.isSome && !i.members.isEmpty do
++      throw (IO.userError s!"missing checked phase input at {s}")
++    let expected : List (String × Option UInt64 × Option UInt64) := [
++      ("runQueries", runQueries i, some (hash (i.moments.map (·.value)))),
++      ("runProducts", runProducts i, some (hash (i.members.map fun n =>
++        n.reductions.toList.map fun r => r.map fun r => polyHash r.result))),
++      ("runMatrices", runMatrices i, some (hash (i.members.map fun n =>
++        matrixHash (momentMatrix n.system.rows n.system.columns)))),
++      ("runSolvers", runSolvers i, some (hash (i.members.map fun n => hash n.system.counts.toList))),
++      ("runSigns", runSigns i, some (hash (i.coefficients.map fun q =>
++        if q.num > 0 then (1 : Int) else if q.num < 0 then -1 else 0)))]
++    let mut fields := [("queries", Lean.toJson s),
++      ("inputHash", Lean.toJson (hash i).toNat),
++      ("nodes", Lean.toJson i.members.length),
++      ("preparedQueries", Lean.toJson i.moments.length),
++      ("coefficientSigns", Lean.toJson i.coefficients.length)]
++    for (name, actual, wanted) in expected do
++      unless actual == wanted do throw (IO.userError s!"phase output mismatch: {name} at {s}")
++      fields := fields ++ [(name, Lean.toJson (hash wanted).toNat)]
++    IO.println (Lean.Json.mkObj fields).compress
++  return 0
++
++end Hex.SignDetBench
+diff --git a/bench/HexSignDet/Small.lean b/bench/HexSignDet/Small.lean
+new file mode 100644
+index 000000000..24f4e5b89
+--- /dev/null
++++ b/bench/HexSignDet/Small.lean
+@@ -0,0 +1,115 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import HexSignDet.Input
++import Lean.Data.Json
++
++namespace Hex.SignDetBench
++open Hex.SignDet
++open scoped Hex
++
++/-- Both comparison arms receive the same prepared domain and ordered queries.
++Exact agreement with the known two-root table is checked outside timing. -/
++def smallInput (s : Nat) : Input :=
++  let x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
++  let p := x * x - 1
++  let qs := List.replicate s x
++  match Sturm.prepare Sturm.orderSign p .negInf .posInf with
++  | none => ⟨p, qs, none, none, none⟩
++  | some domain =>
++    match buildPrepared (10377 : Nat) domain qs false, referencePrepared (10377 : Nat) domain qs with
++    | .ok reduced, .ok full =>
++      let expected := if s == 0 then [([], (2 : Int))]
++        else [(List.replicate s (-1), (1 : Int)), (List.replicate s 1, 1)]
++      if entries reduced.val.node.system == expected && entries full.system == expected &&
++          full.check Sturm.orderSign 10377 p .negInf .posInf qs then
++        ⟨p, qs, some domain, some reduced.val, none⟩
++      else ⟨p, qs, none, none, none⟩
++    | _, _ => ⟨p, qs, none, none, none⟩
++
++@[noinline] def runSmallReduced (i : Input) : Option UInt64 := do
++  let domain ← i.domain
++  match buildPrepared (10377 : Nat) domain i.queries false with
++  | .error _ => none
++  | .ok tree => some (hash (entries tree.val.node.system))
++
++@[noinline] def runSmallFull (i : Input) : Option UInt64 := do
++  let domain ← i.domain
++  match referencePrepared (10377 : Nat) domain i.queries with
++  | .error _ => none
++  | .ok node => some (hash (entries node.system))
++
++private def bits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
++
++/-- Literal counts, dimensions and stored inverse bits are checked independently
++of the timed hashes. They do not measure peak intermediate arithmetic bits. -/
++def inspectSmall : IO UInt32 := do
++  for s in #[1, 2, 3, 4, 5] do
++    let i := smallInput s
++    let some domain := i.domain | throw (IO.userError "invalid comparison input")
++    let some tree := i.tree | throw (IO.userError "missing reduced tree")
++    let .ok full := referencePrepared (10377 : Nat) domain i.queries
++      | throw (IO.userError "full reference failed")
++    let expected := [(List.replicate s (-1 : Int), (1 : Int)), (List.replicate s (1 : Int), 1)]
++    let ns := nodes tree
++    let queryCount := ns.foldl (fun k n => k + n.size) 0
++    let maxSize := ns.foldl (fun k n => max k n.size) 0
++    let inverseBits := full.system.inverse.rows.toArray.foldl (fun k row =>
++      row.toArray.foldl (fun k z => max k (bits z)) k) 0
++    unless full.size == 3^s && queryCount == 7*s-4 && maxSize ≤ 4 &&
++        entries tree.node.system == expected && entries full.system == expected &&
++        full.system.denominator.natAbs == 2^s && inverseBits ≤ s+1 do
++      throw (IO.userError s!"comparison inventory failed at {s}")
++    IO.println <| (Lean.Json.mkObj [
++      ("queries", Lean.toJson s), ("headDegree", Lean.toJson i.head.natDegree),
++      ("queryDegree", Lean.toJson (1 : Nat)), ("rootCount", Lean.toJson (2 : Nat)),
++      ("reducedQueries", Lean.toJson queryCount), ("fullQueries", Lean.toJson full.size),
++      ("maxReducedMatrixSize", Lean.toJson maxSize),
++      ("fullMatrixSize", Lean.toJson full.size),
++      ("fullInverseBits", Lean.toJson inverseBits),
++      ("fullDenominatorBits", Lean.toJson (bits full.system.denominator)),
++      ("inputHash", Lean.toJson (hash i).toNat),
++      ("resultHash", Lean.toJson (hash (some (hash expected))).toNat)]).compress
++  return 0
++
++/-- Observe the actual full-system elimination one column at a time. The checked
++nonzero diagonal means pivot search selects the current row without swapping.
++Other rows retain their column entry until their own elimination, so counting
++those nonzero entries counts the actual `eliminateColumn` updates. This is an
++untimed finite-input inventory, not a general operation-count theorem. -/
++def inspectFull : IO UInt32 := do
++  for s in #[1, 2, 3, 4, 5] do
++    let r := 3^s
++    let rows := (words [0, 1, 2] s).toArray
++    let cols := (words [-1, 0, 1] s).toArray
++    unless rows.size == r && cols.size == r do
++      throw (IO.userError "incorrect full matrix dimensions")
++    let m : Matrix Rat r r := Matrix.ofFn fun i j => (entry rows[i.val]! cols[j.val]! : Rat)
++    let mut state : Matrix.RowReduceState Rat r r := ⟨0, m, Matrix.identity r, []⟩
++    let mut updates := 0
++    let mut columns : Array Nat := #[]
++    for col in List.finRange r do
++      unless state.row == col.val && state.echelon[(col, col)] != 0 do
++        throw (IO.userError s!"unexpected pivot at {s}/{col.val}")
++      let count := (List.finRange r).countP fun row =>
++        row != col && state.echelon[(row, col)] != 0
++      updates := updates + count
++      columns := columns.push count
++      state := Matrix.rowReduceLoop col.val 1 state
++    let some inv := Matrix.inverse? m | throw (IO.userError "full inverse failed")
++    unless state.row == r && state.pivots == List.finRange r &&
++        state.echelon == Matrix.identity r && state.transform == inv do
++      throw (IO.userError s!"one-column traversal differs from full inverse at {s}")
++    IO.println <| (Lean.Json.mkObj [
++      ("queries", Lean.toJson s), ("matrixSize", Lean.toJson r),
++      ("eliminatedRows", Lean.toJson updates), ("updatesPerColumn", Lean.toJson columns),
++      ("rowAddCalls", Lean.toJson (2 * updates)),
++      ("rowAddScalarPairs", Lean.toJson (2 * updates * r)),
++      ("rowScaleScalarProducts", Lean.toJson (2 * r * r)),
++      ("inverseIdentityScalarPairs", Lean.toJson (r * r * r)),
++      ("matchesInverse", Lean.toJson true)]).compress
++  return 0
++
++end Hex.SignDetBench
+diff --git a/lakefile.lean b/lakefile.lean
+index 5ff753bdb..2e37806b3 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -1008 +1008 @@ lean_lib HexConformance where
+-    ++ #[`HexSignDet.Conformance, `HexSignDetMathlib.Conformance].map Glob.one
++    ++ #[`HexSignDet.Conformance, `HexSignDet.DagConformance, `HexSignDet.Infinitesimal, `HexSignDetMathlib.Conformance].map Glob.one
+@@ -1352,0 +1353,4 @@ lean_exe hexsigndet_emit_fixtures where
++lean_exe hexsigndet_emit_infinitesimal where
++  srcDir := "conformance"
++  root := `HexSignDet.EmitInfinitesimal
++
+@@ -1602,0 +1607,13 @@ lean_exe hexgramschmidt_bench where
++lean_exe hexsigndet_bench where
++  srcDir := "bench"
++  root := `HexSignDet.Bench
++
++lean_lib HexSignDetMathlibProofProbe where
++  srcDir := "bench"
++  globs := #[.submodules `HexSignDetMathlib.ProofProbe]
++
++lean_lib HexSignDetBenchSupport where
++  srcDir := "bench"
++  globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
++    .one `HexSignDet.Paired, .one `HexSignDet.Maximal]
++
+diff --git a/libraries.yml b/libraries.yml
+index bf64c5c09..5e0ca1b0d 100644
+--- a/libraries.yml
++++ b/libraries.yml
+@@ -1585,0 +1586 @@ libraries:
++    proof_probes: [bench/HexSignDetMathlib/ProofProbe]
+diff --git a/reports/sign-det-encode-model.md b/reports/sign-det-encode-model.md
+new file mode 100644
+index 000000000..8da369877
+--- /dev/null
++++ b/reports/sign-det-encode-model.md
+@@ -0,0 +1,65 @@
++# Exact graph encoding
++
++`Hex.SignDetBench.runEncode` uses mode 1, a two-sided parametric registration.
++It encodes the same supplied rational replay tree as the sparse-support family:
++P=X²−1, s identical queries X, and s=64,128,256,512,1024,2048. Preparation builds
++and checks the tree and an independent fixture-specific graph outside timing.
++The timed body runs the general `Dag.encode` and compares its entire literal
++entry array and root index against that graph. The required result is `true`.
++
++The full tree has 2s−1 occurrences. Hash consing visits each occurrence;
++hashing an arity-k entry and comparing an exact repeat each scan Θ(k) slots
++of bounded-size coefficients, matrix entries and polynomial witnesses. Local
++indices fit one machine word throughout the schedule. The distinct nodes have
++arities 1,2,4,…,s and at most four columns. The sum of input arities
++over the balanced tree is s(log₂s+1), yielding the declared Θ(s log s) model
++under the hash table's expected constant bucket work. The final exact output
++comparison scans the graph's 2s−1 arity volume, adding Θ(s). Hash collisions
++still compare all literal fields, as tested by the conformance fixtures;
++the model does not promise constant-time adversarial collision handling.
++
++The six fixed trial-major rounds use the existing lean-bench registration,
++an automatically leased CPU and no host-idleness filter. Every completed
++sample and any inconclusive verdict are retained. The runner's `--encoding`
++option selects this schedule without rerunning the previously measured tree,
++graph, producer or component schedules. At most one unchanged rerun is allowed
++after an inconclusive result, with both runs retained.
++
++This measures general encoding plus exact output equality, not graph replay,
++query production, byte serialization or coefficient-proof graph construction.
++It makes no paired speedup claim against the fixture encoder or the tree
++checker. Peak RSS includes preparation and is not encoder allocation. Growing
++support, coefficient/witness bits, extension levels and nested evidence remain
++separate Phase-4 requirements. The generic forward round-trip proof is
++`Dag.replay_encode`; this benchmark is not a substitute for that proof or the
++root-level semantic foundations.
++
++## Recorded observations
++
++The clean source revision `5329cec59c5bfb4a50a72a2bcfa82bb7ffb07da7`
++completed all 36 declared samples on `chungus2`, using automatically leased
++logical CPU 88. Every sample returned the expected hash of `true`, confirming
++exact equality with the independently constructed graph. No completed sample
++was discarded and no rerun was used. The harness reports
++`consistent_with_declared_complexity`, normalized slope −0.027712, with no
++advisories. This is evidence for the declared family model, not a worst-case
++hash-table bound.
++
++| Queries | Median milliseconds | Sample range in milliseconds |
++| ---: | ---: | ---: |
++| 64 | 0.519 | 0.517–0.651 |
++| 128 | 1.097 | 1.091–1.109 |
++| 256 | 2.254 | 2.248–2.263 |
++| 512 | 4.627 | 4.385–4.738 |
++| 1024 | 9.775 | 9.536–10.503 |
++| 2048 | 25.397 | 23.998–29.518 |
++
++The [raw export](data/sign-det-encode/5329cec59/runEncode.json) retains all
++per-call times, inner repeat counts, result hashes and complete process RSS.
++`alloc_bytes` is unavailable; no encoder allocation measurement is claimed.
++The [metadata](data/sign-det-encode/5329cec59/metadata.json) records the exact
++commands, executable and source hashes, host context, harness revision and
++source archive. Reconstructing that archive against the recorded merged base
++verified every source hash before measurement. The inventory, logs and all
++completed observations are retained alongside the export. These timings are
++not paired with the earlier fixture-graph or replay measurements.
+diff --git a/reports/sign-det-phase-model.md b/reports/sign-det-phase-model.md
+new file mode 100644
+index 000000000..dc0d37d72
+--- /dev/null
++++ b/reports/sign-det-phase-model.md
+@@ -0,0 +1,65 @@
++# Sparse-support phase costs
++
++These mode-1 registrations in `bench/HexSignDet/Phases.lean` separate the
++actual operations identified by the sparse-support production profile. They
++use the same checked `P=X²−1`, repeated-`X` input family and six fixed trials
++at `s=64,128,256,512,1024,2048`. The [family derivation](sign-det-sparse-model.md)
++establishes `2s−1` nodes, `7s−4` query slots, bounded matrix dimensions and
++scalar sizes, and balanced-tree arity volume `s(log₂s+1)`.
++
++Fixture preparation retains actual nodes, prepared query representatives
++and remainder coefficients outside the timed bodies. Every operation returns
++an optional hash; missing prepared input or an internal solver failure has
++a different result from the expected successful output. Inspection binds
++query values, reduced representatives and solved counts to the checked
++literal tree. Matrix outputs reuse the already validated upstream matrix
++operation. Coefficient signs are checked against rational numerator signs.
++This validates benchmark outputs without claiming a new root-semantics proof.
++
++| Registration | Declared model | Timed operation and derivation |
++| --- | --- | --- |
++| `runQueries` | `s` | `Sturm.certifyPrepared` at each actual moment representative. All `7s−4` calls have bounded polynomial degree and coefficient size. |
++| `runProducts` | `s * (Nat.log2 s + 1)` | `nodeReduction` on each actual node row, using retained query preprocessing. A node of arity k scans Θ(k) exponent slots, with at most two nonzero factors per row. |
++| `runMatrices` | `s * (Nat.log2 s + 1)` | `momentMatrix` at every node. Matrix dimensions are bounded, but each integer entry scans its length-k sign/exponent words. |
++| `runSolvers` | `s * (Nat.log2 s + 1)` | The actual rational leaf solver and scaled parent solver, including `System.check`. Scalar solves have bounded dimensions and sizes; their checks construct matrices and scan length-k slots. |
++| `runSigns` | `s` | `Sturm.orderSign` on the actual stored remainder coefficients. There are Θ(s) bounded-size coefficients. Mapping and result hashing also cost Θ(s). |
++
++The operations are not disjoint buckets: solver checks include matrix
++construction, and prepared queries include coefficient-sign work. Their
++times must not be summed as a decomposition of production. In particular,
++`runSolvers` is not advertised as pure matrix inversion time, and this
++rational sign family does not measure extension-level sign search.
++
++The same runner retains all raw samples, validates the exact schedule and
++expected hashes, records the harness verdict without changing its model,
++and leases a CPU without any host-idleness test. Use
++`python3 scripts/bench/sign_det_sparse.py --components --output NEW_DIRECTORY`.
++No measurement or Phase-4 completion is claimed by the registrations alone.
++Maximal support, degree/bit/witness growth, nested evidence, comparisons,
++descriptor operations, allocation/serialization sizes and proof checking
++remain separate required coverage.
++
++## Retained measurements
++
++[Raw samples and provenance](data/sign-det-phases/95ef4e489/metadata.json)
++record clean source `95ef4e489`, the same pinned LeanBench revision as the
++end-to-end schedules, and the automatic CPU lease on shared host `chungus2`.
++All 180 timed samples completed with the expected hashes and exact schedule.
++Every mode-1 verdict is **consistent with declared complexity**; no sample
++was discarded and no rerun was used.
++
++| Registration | Median at s=64 | Median at s=2048 | Normalized slope |
++| --- | ---: | ---: | ---: |
++| `runQueries` | 2.301 ms | 75.806 ms | 0.013968 |
++| `runProducts` | 0.693 ms | 27.740 ms | -0.075676 |
++| `runMatrices` | 0.453 ms | 27.190 ms | 0.033356 |
++| `runSolvers` | 1.644 ms | 64.972 ms | -0.079357 |
++| `runSigns` | 0.031 ms | 1.293 ms | 0.082709 |
++
++The fixture inventory contains 444–14,332 prepared-query calls and
++2,284–73,708 stored coefficient-sign operands across this range. Query work
++tracks node count while matrix construction reflects sign-word lengths as
++well. The solver includes the matrix checks described above; the separate
++figures therefore overlap. These host-specific observations are not an AB/BA
++comparison and do not establish a speedup. Allocation bytes remain unavailable
++in these exports, and all additional coverage gates listed above remain open.
+diff --git a/reports/sign-det-sparse-model.md b/reports/sign-det-sparse-model.md
+new file mode 100644
+index 000000000..66a17670c
+--- /dev/null
++++ b/reports/sign-det-sparse-model.md
+@@ -0,0 +1,146 @@
++# Repeated-query sign-determination costs
++
++The registrations in `bench/HexSignDet/Bench.lean` use mode 1 (two-sided
++parametric), with six fixed trial-major repetitions at
++`s = 64,128,256,512,1024,2048`. The head is `X²−1`, the interval is the whole
++line and every query is `X`. This family exercises many unrealized conditions:
++only the all-negative and all-positive words occur, each once. It does not
++cover maximal realized support, increasing head/query degree, growing
++coefficient or witness bits, extension depth or nested coefficient evidence.
++
++Every singleton leaf has the three fixed columns. At an internal node the two
++child supports each have size two, so the Cartesian candidate has four
++columns and exactly two positive counts. The first independent rows are the
++constant row and an odd row; recursively each retained nonconstant row has
++one nonzero exponent. Each parent moment consequently has at most two
++nonzero exponents. The actual certificate inventory checks these bounds.
++All polynomial arithmetic operands and rational/integer matrix entries have
++bounded sizes in this family. Positional indices grow with `s`, but the
++registered range fits ordinary machine-word natural numbers.
++
++A node on a query sublist of length `k` scans or copies `Θ(k)` query,
++exponent and sign slots. `QueryReduction.checkFrom` and the factor builder
++walk corresponding lists together; they do not repeatedly index a linked
++list. Candidate matrices have at most four rows and columns, and their
++entries evaluate sign words of length `k`. Matrix solving/rank work has
++bounded dimensions. Initial preprocessing, child slices and moment
++construction also cost `O(k)` here. The balanced tree has `2s−1` nodes and
++`log₂s+1` levels, each with query-arity sum `s`. Its arity volume is exactly
++`s(log₂s+1)`. Thus production and full tree replay have family-specific
++`Θ(s log s)` cost; `runProduce`, `runDirect` and `runTree` register
++`s(log₂s+1)`.
++
++The query kernels contribute an additional linear term: there are three
++moment slots at each leaf and four at every internal node, giving `7s−4`
++slots. This term can dominate at finite sizes even though the slot-processing
++term is asymptotically larger. The harness verdict and eventual profile must
++be reported without turning this family into evidence for all BKR costs.
++
++The graph fixture retains one actual node per arity on the left branch and
++uses two references to the preceding node at every internal entry. For this
++family, both child query blocks are literally equal. The graph checker
++validates both references and all operand bindings, so construction of the
++fixture alone is not taken as evidence. The graph has `log₂s+1` entries,
++`2log₂s` edges and total arity `2s−1`. It checks each local node once and
++reuses accepted child values and proofs. `runGraph` therefore registers the
++family-specific model `s`. Input preparation and full certificate hashing
++are outside the timed operation; the timed production result hash includes
++the two complete retained sign words and counts and costs `O(s)`.
++
++`inspect` checks both producer modes against the known complete table and
++validates tree and graph replay. It records actual dimensions, moment slots,
++arity volumes, exponent sums and stored remainder-coefficient sizes. These
++observations are structural validation, not performance measurements or
++proofs of root semantics. The measurement runner retains the source hashes,
++binary hash, host/CPU context, commands and all raw LeanBench samples. It
++archives the recorded source closure as `committed-source.patch` against the
++merged base named in metadata. Applying it with `git apply --unidiff-zero`
++reconstructs the sources needed by `lake build hexsigndet_bench`, even if the
++original local commit is later rebased. A temporary-index reconstruction
++checks every archived file against its recorded SHA-256 before accepting it.
++The runner requires the exact six-trial schedule and checks every result hash against
++the known complete table or successful replay. Missing, duplicate or failed
++samples invalidate the measurement; their logs remain retained. Inconclusive
++complexity verdicts remain recorded and make the runner exit unsuccessfully,
++without discarding their samples or automatically repeating the run. The runner
++selects a CPU by an automatic nonblocking lease; it performs no quiet-core
++preflight and does not reject samples based on host activity. An inconclusive
++measurement permits at most one unchanged rerun, retaining both runs.
++
++## Retained measurements
++
++The [raw exports and provenance](data/sign-det-sparse/2327cca21/metadata.json)
++record source `2327cca216bf94d8b54d7f2ad561ab04d361366f`, a clean worktree,
++LeanBench `8a37daf1074c3bdbd0da479b55538bad4a0022db`, and shared host
++`chungus2`, CPU 50. All 144 timed samples completed, matched the known
++output hashes, and passed the exact schedule check. No samples were removed
++and no rerun was used. The four mode-1 verdicts are **consistent with
++declared complexity**.
++
++| Registration | Declared model | Median at s=64 | Median at s=2048 | Normalized slope |
++| --- | --- | ---: | ---: | ---: |
++| `runProduce` | `s * (Nat.log2 s + 1)` | 13.251 ms | 508.593 ms | -0.093729 |
++| `runDirect` | `s * (Nat.log2 s + 1)` | 14.290 ms | 547.933 ms | -0.092278 |
++| `runTree` | `s * (Nat.log2 s + 1)` | 7.580 ms | 291.376 ms | -0.093734 |
++| `runGraph` | `s` | 0.812 ms | 20.035 ms | -0.023883 |
++
++The slight negative normalized slopes for tree operations are consistent
++with the independently identified linear query-kernel term remaining
++substantial over this range; the profile below finds substantial query checking
++and construction work. These are
++separate complexity schedules, not adjacent AB/BA comparisons; the table
++does not establish a comparative speedup. Timings are host-specific.
++
++Exports retain whole-child peak RSS, which includes preparation and is not
++operation allocation. `alloc_bytes` is unavailable (`null`), so the allocation
++gate remains open. Stored remainder bits are not peak intermediate witness
++bits, and graph node/edge counts are not serialized certificate bytes.
++Additional input axes, paired solver/reduction comparisons,
++and fresh-module proof checking remain required. The complete performance
++contract remains [the library specification](../HexSignDet/SPEC/hex-sign-det.md);
++this family does not establish full Phase-4 completion.
++
++## Sparse-support profile
++
++The [profile summary](data/sign-det-sparse/profile-b8166e5f1/sparse-support.summary.json)
++and [manifest](data/sign-det-sparse/profile-b8166e5f1/sparse-support.manifest.json)
++retain the commands, tool revisions, binary hash, diagnostics and local raw
++artifact hashes. Source `b8166e5f1` adds the runner and observations without
++changing the measured binary. The case is `runProduce`, `s=2048`, on shared
++host `chungus2`, automatically leased CPU 72, at 999 Hz with a five-second
++target. Only the benchmark thread's timed regions are included; fixture
++preparation and process startup are excluded. Raw profiles remain local.
++
++Leaf self-time is 37.36% allocation/free, 21.34% GMP, 28.02% Lean runtime,
++5.81% Lean own code, and 7.47% other. The classifier accounts for 92.53%;
++0.64% of leaves have unresolved symbols. This is allocation **time**, not
++allocated-byte evidence.
++
++| Inclusive function | Share |
++| --- | ---: |
++| `SignDet.buildPrepared` | 95.45% |
++| `SignDet.Replay.check` | 56.74% |
++| `SignDet.buildTreeFrom` | 38.91% |
++| `SignDet.checkMoment` | 35.00% |
++| `TarskiCertificate.check` | 27.93% |
++| `SignDet.momentMatrix` | 17.83% |
++| `Sturm.certifyPrepared` | 14.56% |
++| `SignDet.solveSystem` | 6.56% |
++| `Sturm.orderSign` | 0.66% |
++
++Inclusive percentages overlap and must not be summed. Production includes
++its final literal replay, which accounts for more than half of the samples;
++`runTree` independently measures that operation. Query construction and
++checking consume substantial time even for the fixed quadratic head.
++Moment-matrix entries still scan long sign/exponent words despite the maximum
++matrix dimension being four. Rational scalar normalization, allocation and
++GMP operations dominate leaf time; the rational coefficient sign callback
++itself is cheap here. These findings call for separate query, product and
++matrix phase registrations, as the SPEC requires, and do not cover expensive
++extension-coefficient sign work.
++
++Filter diagnostics: **4.534347 s** total timed duration,
++**4,526 retained samples**, calibration residual
++**0.851 ms** (limit 5 ms), no off-thread samples in the selected windows,
++and **passed** confidence and boundary-shift sensitivity checks. No profile
++rerun was used.
+diff --git a/scripts/bench/sign_det_sparse.py b/scripts/bench/sign_det_sparse.py
+new file mode 100644
+index 000000000..bcee589ac
+--- /dev/null
++++ b/scripts/bench/sign_det_sparse.py
+@@ -0,0 +1,215 @@
++#!/usr/bin/env python3
++"""Run the declared sparse-support SignDet schedules without changing their models.
++
++Retain every completed sample and command, with an automatic CPU lease and
++recorded host activity. No quiet-core preflight, filtering or automatic rerun.
++"""
++from __future__ import annotations
++
++import argparse
++import datetime
++import hashlib
++import json
++import math
++import os
++from pathlib import Path
++import platform
++import subprocess
++import sys
++import tempfile
++import time
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(ROOT))
++from scripts.bench.structural_tactic_sweep import acquire_cpu
++from scripts.libgraph import load_libraries, reachable_dependencies
++
++PARAMS = [64, 128, 256, 512, 1024, 2048]
++TRIALS = 6
++FUNCTIONS = ("runProduce", "runDirect", "runTree", "runGraph")
++COMPONENTS = ("runQueries", "runProducts", "runMatrices", "runSolvers", "runSigns")
++
++
++def inventory_hashes(path, components=False):
++    """Require the complete independently checked inventory before timing."""
++    rows = [json.loads(line) for line in path.read_text().splitlines()]
++    if [row["queries"] for row in rows] != PARAMS:
++        raise ValueError("inventory does not match the declared parameter schedule")
++    expected = {}
++    for row in rows:
++        keys = COMPONENTS if components else ("productionResultHash", "replayResultHash")
++        for key in (*keys, "inputHash"):
++            if type(row[key]) is not int or not 0 <= row[key] < 2**64:
++                raise ValueError("invalid inventory hash: " + key)
++        expected[row["queries"]] = row
++    return expected
++
++
++def validate_export(path, name, expected):
++    """Validate outputs and scheduling, while retaining the harness verdict.
++
++    An inconclusive model is a valid observation needing investigation, not
++    an output error and never a reason to discard or silently repeat a run.
++    """
++    if name not in (*FUNCTIONS, *COMPONENTS, "runEncode"):
++        raise ValueError("unregistered benchmark: " + name)
++    data = json.loads(path.read_text())
++    if data["export_schema_version"] != 1 or len(data["results"]) != 1:
++        raise ValueError("unexpected export schema or result count")
++    result = data["results"][0]
++    if (result["function"] != "Hex.SignDetBench." + name or
++            result["kind"] != "parametric" or result["hashable"] is not True or
++            result["budget_truncated"] is not False):
++        raise ValueError("wrong benchmark or truncated measurement")
++    config = result["config"]
++    required = {"param_floor": PARAMS[0], "param_ceiling": PARAMS[-1],
++                "outer_trials": TRIALS, "target_inner_nanos": 100000000,
++                "max_seconds_per_call": 10, "signal_floor_multiplier": 1,
++                "cache_mode": "warm",
++                "param_schedule": {"kind": "custom", "params": PARAMS}}
++    if any(config[key] != value for key, value in required.items()):
++        raise ValueError("measurement configuration differs from the declared schedule")
++    points = result["points"]
++    if [(p["trial_index"], p["param"]) for p in points] != [
++            (trial, param) for trial in range(TRIALS) for param in PARAMS]:
++        raise ValueError("missing, duplicate, reordered or out-of-schedule samples")
++    key = name if name in COMPONENTS else (
++        "productionResultHash" if name in FUNCTIONS[:2] else "replayResultHash")
++    for point in points:
++        if point["status"] != "ok" or point["part_of_verdict"] is not True:
++            raise ValueError("non-ok sample or probe substituted for scientific sample")
++        actual = point["result_hash"]
++        if not isinstance(actual, str) or actual != hex(expected[point["param"]][key]):
++            raise ValueError("result differs from the known complete table or true replay")
++        nanos = point["per_call_nanos"]
++        if (type(nanos) not in (int, float) or not math.isfinite(nanos) or nanos <= 0 or
++                type(point["inner_repeats"]) is not int or point["inner_repeats"] <= 0):
++            raise ValueError("invalid timing or repeat count")
++    if result["verdict"] not in ("consistent_with_declared_complexity", "inconclusive"):
++        raise ValueError("unrecognized harness verdict")
++    return {key: result[key] for key in (
++        "verdict", "complexity_formula", "slope", "c_min", "c_max", "advisories")}
++
++
++def source_hashes():
++    libraries = load_libraries()
++    names = {"HexSignDet"} | reachable_dependencies(libraries)["HexSignDet"]
++    files = {ROOT / path for path in (
++        "bench/HexSignDet/Bench.lean", "reports/sign-det-sparse-model.md",
++        "reports/sign-det-phase-model.md",
++        "reports/sign-det-encode-model.md",
++        "scripts/bench/sign_det_sparse.py", "scripts/bench/structural_tactic_sweep.py",
++        "scripts/bench/test_sign_det_sparse.py",
++        "scripts/libgraph.py",
++        "lakefile.lean", "lake-manifest.json", "lean-toolchain", "libraries.yml")}
++    for name in names:
++        root = ROOT / (name + ".lean")
++        if root.exists():
++            files.add(root)
++        files.update((ROOT / name).rglob("*.lean"))
++    files.update((ROOT / "bench/HexSignDet").rglob("*.lean"))
++    return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
++            for path in sorted(files)}
++
++
++def archive_sources(out, metadata):
++    """Keep reconstructible source even after branch rebases and squash merges.
++
++    Validate the patch in a temporary Git index, leaving the shared worktree
++    and index untouched. Only the recorded source closure is archived.
++    """
++    revision = metadata["revision"]
++    paths = sorted(metadata["source_sha256"])
++    base = subprocess.check_output(["git", "merge-base", revision, "origin/main"],
++                                   cwd=ROOT, text=True).strip()
++    patch = subprocess.check_output(["git", "diff", "--binary", "--unified=0", base, revision, "--", *paths],
++                                    cwd=ROOT)
++    with tempfile.TemporaryDirectory(prefix="hex-sign-det-source-") as temporary:
++        env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary) / "index"))
++        subprocess.run(["git", "read-tree", base], cwd=ROOT, env=env, check=True)
++        if patch:
++            subprocess.run(["git", "apply", "--cached", "--unidiff-zero"], input=patch,
++                           cwd=ROOT, env=env, check=True)
++        for path, expected in metadata["source_sha256"].items():
++            contents = subprocess.check_output(["git", "show", ":" + path], cwd=ROOT, env=env)
++            if hashlib.sha256(contents).hexdigest() != expected:
++                raise ValueError("archived source does not match the measurement: " + path)
++    (out / "committed-source.patch").write_bytes(patch)
++    metadata["source_archive"] = {
++        "base_revision": base, "file": "committed-source.patch",
++        "sha256": hashlib.sha256(patch).hexdigest(),
++        "apply_option": "--unidiff-zero",
++        "scope": "all paths in source_sha256", "reconstruction_check": "passed"}
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--output", type=Path, required=True)
++    modes = parser.add_mutually_exclusive_group()
++    modes.add_argument("--components", action="store_true",
++                       help="Run the separately declared internal-phase schedules.")
++    modes.add_argument("--encoding", action="store_true",
++                       help="Run only the separately declared graph encoding schedule.")
++    args = parser.parse_args()
++    out = args.output.resolve()
++    out.mkdir(parents=True, exist_ok=False)
++    executable = ROOT / ".lake/build/bin/hexsigndet_bench"
++    cpu, lease = acquire_cpu()
++    os.sched_setaffinity(0, {cpu})
++    inventory = "inspect-phases" if args.components else "inspect"
++    schedule = [("inventory", [str(executable), inventory])] + [
++        (name, [str(executable), "run", "Hex.SignDetBench." + name,
++                "--export-file", str(out / (name + ".json"))])
++        for name in (("runEncode",) if args.encoding else COMPONENTS if args.components else FUNCTIONS)]
++    metadata = {
++        "started": datetime.datetime.now(datetime.timezone.utc).isoformat(),
++        "revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
++        "status": subprocess.check_output(["git", "status", "--short"], cwd=ROOT, text=True),
++        "source_sha256": source_hashes(),
++        "binary_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
++        "host": platform.node(), "platform": platform.platform(),
++        "cpu_description": subprocess.check_output(["lscpu"], text=True),
++        "cpu": cpu, "affinity": sorted(os.sched_getaffinity(0)),
++        "load_start": os.getloadavg(), "command": sys.argv, "schedule": schedule,
++        "harness_revision": subprocess.check_output(["git", "rev-parse", "HEAD"],
++            cwd=ROOT / ".lake/packages/lean-bench", text=True).strip(),
++    }
++    archive_sources(out, metadata)
++    (out / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
++    (out / "source.patch").write_bytes(subprocess.check_output(["git", "diff", "HEAD"], cwd=ROOT))
++    failed = []
++    observations = {}
++    expected = {}
++    try:
++        with (out / "commands.jsonl").open("w") as journal:
++            for name, command in schedule:
++                print(name, flush=True)
++                started = time.monotonic()
++                with (out / (name + ".log")).open("w") as log:
++                    result = subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
++                record = {"label": name, "command": command, "exit_code": result.returncode,
++                          "wall_seconds": time.monotonic() - started, "load_after": os.getloadavg()}
++                try:
++                    if name == "inventory":
++                        expected = inventory_hashes(out / "inventory.log", args.components)
++                    else:
++                        observations[name] = validate_export(out / (name + ".json"), name, expected)
++                        record["observation"] = observations[name]
++                except (OSError, ValueError, KeyError, TypeError) as error:
++                    record["validation_error"] = str(error)
++                journal.write(json.dumps(record) + "\n")
++                journal.flush()
++                if result.returncode or "validation_error" in record:
++                    failed.append(name)
++                    if name == "inventory":
++                        break
++    finally:
++        metadata.update(ended=datetime.datetime.now(datetime.timezone.utc).isoformat(),
++                        load_end=os.getloadavg(), failed_commands=failed, observations=observations)
++        (out / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
++        lease.close()
++    return bool(failed) or any(r["verdict"] == "inconclusive" for r in observations.values())
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/bench/test_sign_det_sparse.py b/scripts/bench/test_sign_det_sparse.py
+new file mode 100644
+index 000000000..5fc01c160
+--- /dev/null
++++ b/scripts/bench/test_sign_det_sparse.py
+@@ -0,0 +1,151 @@
++#!/usr/bin/env python3
++"""Reject incomplete schedules and silent failed benchmark outputs."""
++import copy
++import hashlib
++import json
++from pathlib import Path
++import tempfile
++import subprocess
++import unittest
++from unittest.mock import patch
++
++from scripts.bench.sign_det_sparse import inventory_hashes, validate_export
++from scripts.bench import sign_det_sparse
++
++
++class ExportValidation(unittest.TestCase):
++    def setUp(self):
++        self.temp = tempfile.TemporaryDirectory()
++        self.addCleanup(self.temp.cleanup)
++        self.path = Path(self.temp.name) / "export.json"
++        self.params = [64, 128, 256, 512, 1024, 2048]
++        self.expected = {p: {"productionResultHash": 123, "replayResultHash": 1}
++                         for p in self.params}
++        self.result = {
++            "function": "Hex.SignDetBench.runProduce", "kind": "parametric",
++            "hashable": True, "budget_truncated": False,
++            "config": {"param_floor": 64, "param_ceiling": 2048, "outer_trials": 6,
++                       "target_inner_nanos": 100000000, "max_seconds_per_call": 10,
++                       "signal_floor_multiplier": 1, "cache_mode": "warm",
++                       "param_schedule": {"kind": "custom", "params": self.params}},
++            "points": [{"trial_index": t, "param": p, "status": "ok",
++                        "part_of_verdict": True, "result_hash": "0x7b",
++                        "per_call_nanos": 1000000, "inner_repeats": 100}
++                       for t in range(6) for p in self.params],
++            "verdict": "consistent_with_declared_complexity",
++            "complexity_formula": "s * (Nat.log2 s + 1)", "slope": 0,
++            "c_min": 100, "c_max": 110, "advisories": []}
++
++    def validate(self, result, name="runProduce"):
++        self.path.write_text(json.dumps({"export_schema_version": 1, "results": [result]}))
++        return validate_export(self.path, name, self.expected)
++
++    def test_complete_and_inconclusive_are_retained(self):
++        self.validate(self.result)
++        self.result["verdict"] = "inconclusive"
++        self.assertEqual(self.validate(self.result)["verdict"], "inconclusive")
++
++    def test_replay_requires_true_output(self):
++        for name in ("runGraph", "runEncode"):
++            with self.subTest(name=name):
++                self.result["function"] = "Hex.SignDetBench." + name
++                for p in self.result["points"]:
++                    p["result_hash"] = "0x1"
++                self.validate(self.result, name)
++                self.result["points"][0]["result_hash"] = "0x0"
++                with self.assertRaises(ValueError):
++                    self.validate(self.result, name)
++
++    def test_unknown_function_is_not_a_replay(self):
++        self.result["function"] = "Hex.SignDetBench.runUnknown"
++        for point in self.result["points"]:
++            point["result_hash"] = "0x1"
++        with self.assertRaises(ValueError):
++            self.validate(self.result, "runUnknown")
++
++    def test_invalid_samples(self):
++        for key, value in (("result_hash", "0x0"), ("result_hash", None),
++                           ("status", "error"), ("status", "timed_out"),
++                           ("part_of_verdict", False), ("per_call_nanos", 0),
++                           ("per_call_nanos", float("nan")), ("inner_repeats", 0)):
++            with self.subTest(key=key, value=value):
++                result = copy.deepcopy(self.result)
++                result["points"][0][key] = value
++                with self.assertRaises(ValueError):
++                    self.validate(result)
++
++    def test_missing_duplicate_and_reordered_samples(self):
++        points = self.result["points"]
++        for changed in (points[:-1], points + [points[0]], list(reversed(points)),
++                        [points[1]] + points[1:]):
++            with self.subTest(points=changed):
++                result = dict(self.result, points=changed)
++                with self.assertRaises(ValueError):
++                    self.validate(result)
++
++    def test_wrong_schedule_and_truncation(self):
++        result = copy.deepcopy(self.result)
++        result["config"]["outer_trials"] = 1
++        with self.assertRaises(ValueError):
++            self.validate(result)
++        with self.assertRaises(ValueError):
++            self.validate(dict(self.result, budget_truncated=True))
++
++    def test_component_hashes_are_separate(self):
++        for name in ("runQueries", "runProducts", "runMatrices", "runSolvers", "runSigns"):
++            with self.subTest(name=name):
++                for row in self.expected.values():
++                    row[name] = 123
++                result = copy.deepcopy(self.result)
++                result["function"] = "Hex.SignDetBench." + name
++                self.validate(result, name)
++                result["points"][0]["result_hash"] = "0x1"
++                with self.assertRaises(ValueError):
++                    self.validate(result, name)
++
++    def test_inventory_rejects_missing_parameter_or_invalid_hash(self):
++        rows = [{"queries": p, "productionResultHash": 123,
++                 "replayResultHash": 1, "inputHash": 99} for p in self.params]
++        self.path.write_text("\n".join(map(json.dumps, rows)))
++        self.assertEqual(len(inventory_hashes(self.path)), 6)
++        self.path.write_text("\n".join(map(json.dumps, rows[:-1])))
++        with self.assertRaises(ValueError):
++            inventory_hashes(self.path)
++        rows[0]["productionResultHash"] = True
++        self.path.write_text("\n".join(map(json.dumps, rows)))
++        with self.assertRaises(ValueError):
++            inventory_hashes(self.path)
++
++
++class SourceArchive(unittest.TestCase):
++    def test_reconstructs_and_rejects_hash_mismatch_without_touching_index(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            root = Path(temporary)
++            def git(*args):
++                return subprocess.check_output(["git", *args], cwd=root)
++            git("init", "-q", "-b", "main")
++            git("config", "user.name", "Archive test")
++            git("config", "user.email", "archive@example.invalid")
++            (root / "input.txt").write_text("base\n")
++            git("add", "input.txt")
++            git("commit", "-qm", "base")
++            git("update-ref", "refs/remotes/origin/main", "HEAD")
++            (root / "input.txt").write_text("measured\n")
++            git("commit", "-qam", "measured")
++            metadata = {"revision": git("rev-parse", "HEAD").decode().strip(),
++                        "source_sha256": {"input.txt": hashlib.sha256(b"measured\n").hexdigest()}}
++            (root / "input.txt").write_text("user's staged change\n")
++            git("add", "input.txt")
++            before = git("diff", "--cached")
++            with patch.object(sign_det_sparse, "ROOT", root):
++                sign_det_sparse.archive_sources(root, metadata)
++                self.assertEqual(metadata["source_archive"]["reconstruction_check"], "passed")
++                metadata["source_sha256"]["input.txt"] = "0" * 64
++                with self.assertRaises(ValueError):
++                    sign_det_sparse.archive_sources(root, metadata)
++            self.assertEqual(git("diff", "--cached"), before)
++            self.assertEqual((root / "input.txt").read_text(), "user's staged change\n")
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/scripts/libgraph.py b/scripts/libgraph.py
+index 61bd0ab7f..922693c67 100644
+--- a/scripts/libgraph.py
++++ b/scripts/libgraph.py
+@@ -33,0 +34,2 @@ BUILD_ONLY_LIBS = {
++    "HexSignDetBenchSupport",
++    "HexSignDetMathlibProofProbe",
