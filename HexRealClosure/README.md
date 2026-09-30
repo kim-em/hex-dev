@@ -1094,10 +1094,27 @@ root equation, ordering, embedded noncanonical one and inverse values, and old
 and new packet ownership. Kernel examples cover arbitrary finite suffixes over
 a validated rational-root context. Generic coefficient and comparison transfer
 and root construction use the proved root-sum theorem and only the standard
-three axioms. Base enlargement, automatic extraction of a suffix from requested
+three axioms. Full base enlargement, automatic extraction of a suffix from requested
 expressions or a catalog, uncached reader completeness, and identification of
 native presentations with the real-closed algebraic union remain open. No
 performance result is claimed.
+
+### Infinitesimal base conversion
+
+`Conversion.infinitesimal` maps a completed native base into a new base with
+one positive infinitesimal, using the existing constant-rational-function
+embedding. The conversion keeps the old base and its values valid. A native
+check compares an embedded rational value and rejects a packet from the new
+base in the old context.
+
+`Conversion.Model.infinitesimal` relates the conversion to old and new models
+in one ambient field when their interpretations agree on the native embedding.
+`infinitesimalHom` obtains that agreement from compatible coefficient and
+rational-function homomorphisms. Under those premises, `rebuild_infinitesimal`
+proves that the checked descriptor-retaining traversal succeeds for every
+finite algebraic suffix. Constructing the required common enlarged ambient
+model, proving its infinitesimal is below every positive old algebraic value,
+and providing a total `Context.enlarge` remain open.
 
 ## Ordered algebraic ambient models
 

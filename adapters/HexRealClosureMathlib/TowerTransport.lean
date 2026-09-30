@@ -102,6 +102,45 @@ noncomputable def identity (original : Hex.RealClosure.Tower.Model source K) :
     rfl
 
 omit [DecidableEq K] in
+/-- An enlarged base model compatible with the native constant embedding
+interprets the checked base conversion. -/
+noncomputable def infinitesimal {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (context : BaseContext.Context registry B sign)
+    (old : Hex.RealClosure.Tower.Model (Context.base context) K)
+    (new : Hex.RealClosure.Tower.Model (Context.base context.infinitesimal) K)
+    (compatible : ∀ value : BaseContext.Element context,
+      new.value value.embed = old.value value) :
+    Model (Conversion.infinitesimal context) old := by
+  have spec := Conversion.infinitesimal_spec context
+  exact
+    { target := spec.1.symm ▸ new
+      value := by
+        intro value
+        rw [cast_value _ _ _ _ spec.2]
+        exact compatible value }
+
+omit [DecidableEq K] in
+/-- Compatible interpretations of the old field and its infinitesimal
+rational-function extension give the semantic base conversion. -/
+noncomputable def infinitesimalHom {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (context : BaseContext.Context registry B sign)
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* K)
+    (g : letI : Field (Hex.RationalFn B) := HexPolyMathlib.fieldOfGrind;
+      Hex.RationalFn B →+* K)
+    (hOld : ∀ a, sign a = (SignType.sign (f a) : Int))
+    (hNew : ∀ q, Hex.OrderedFn.Infinitesimal.sign sign q =
+      (SignType.sign (g q) : Int))
+    (hcomp : ∀ a, g (Hex.RationalFn.C a) = f a) :
+    Model (Conversion.infinitesimal context)
+      (Hex.RealClosure.Tower.Model.base context f hOld) :=
+  infinitesimal context (Hex.RealClosure.Tower.Model.base context f hOld)
+    (Hex.RealClosure.Tower.Model.base context.infinitesimal g hNew) (by
+      intro value
+      simp only [Hex.RealClosure.Tower.Model.base_value,
+        BaseContext.Element.stored_embed]
+      exact hcomp value.stored)
+
+omit [DecidableEq K] in
 /-- Reconcile both source ownership and its interpretation by context equality. -/
 noncomputable def cast {other : Context registry} (h : source = other) :
     Model (conversion.cast h) (h ▸ original) := by
@@ -350,6 +389,19 @@ theorem rebuild_exists (suffix : Suffix source) :
     cases h
   | some rebuilt => exact ⟨rebuilt, rfl⟩
 
+/-- A compatible enlarged base model makes rebuilding every validated
+algebraic suffix succeed, retaining the converted descriptors. -/
+theorem rebuild_infinitesimal {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (context : BaseContext.Context registry B sign)
+    (old : Hex.RealClosure.Tower.Model (Context.base context) K)
+    (new : Hex.RealClosure.Tower.Model (Context.base context.infinitesimal) K)
+    (compatible : ∀ value : BaseContext.Element context,
+      new.value value.embed = old.value value)
+    (suffix : Suffix (Context.base context)) :
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal context) suffix,
+      (Conversion.infinitesimal context).rebuild? suffix = some rebuilt :=
+  (infinitesimal context old new compatible).rebuild_exists suffix
+
 /-- Interpret the final conversion using the exact rebuilt suffix, while
 preserving every old value in the original ambient field. -/
 noncomputable def rebuild (suffix : Suffix source)
@@ -569,3 +621,15 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.cast' depends on axioms: [propext,
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.refine_heq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.refine_heq
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.infinitesimal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.infinitesimal
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_infinitesimal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuild_infinitesimal
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.infinitesimalHom' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.infinitesimalHom

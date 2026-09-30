@@ -23,6 +23,22 @@ private def sixteenth {E : Type} [Mul E] (x : E) : E :=
   let eighth := fourth * fourth
   eighth * eighth
 
+/-- Adding an infinitesimal preserves an old base value, gives the new base
+its own signature, and rejects its packet in the old context. -/
+private def baseSample : Array Bool :=
+  let old := Context.base (BaseContext.rational registry)
+  let conversion := Conversion.infinitesimal (BaseContext.rational registry)
+  let two : old.Value := 1 + 1
+  let moved := conversion.value two
+  let target := conversion.context
+  #[decide (old.signature.base.infinitesimals = 0),
+    decide (target.signature.base.infinitesimals = 1),
+    target.equal moved (1 + 1),
+    (target.read (target.write moved)).toOption.isSome,
+    (old.read (target.write moved)).toOption.isNone]
+
+#guard baseSample == #[true, true, true, true, true]
+
 /-- Change the first root definition and rebuild three later square roots.
 An embedded noncanonical one and an inverse retain their original meaning. -/
 private def sample : Option (Array Bool) :=
