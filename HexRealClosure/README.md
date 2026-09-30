@@ -1152,8 +1152,10 @@ General `Context.enlarge` still requires:
    of mapped towers with descriptor-based re-extension at every root level.
 4. Applying the local algebraic bound to the computational `B(ε)` levels and
    proving their staged order agrees with the enlarged ambient interpretation.
-5. Extracting the live suffix automatically and assembling the total checked
-   constructor with its value and order preservation statements.
+5. Gathering a dependency-closed collection of live contexts and assembling
+   the total checked constructor with its value and order preservation
+   statements. `Context.origin` extracts the exact base and validated root
+   suffix of one stored context; the cross-context dependency traversal remains.
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the
@@ -1176,6 +1178,14 @@ algebraicity with actual ordered algebraic ambient models, including the native
 ℚ(ε) dictionary cast, and derive the bound inside a relative algebraic closure
 from inequalities known only over its base.
 The computational stage-order identification still remains.
+
+`Context.origin` recursively follows a packed tower's stored predecessor
+chain and returns its staged base, the ordered validated root suffix, and an
+equality with the original context. It uses the retained descriptors and
+checked frames; no signature or serialized payload is trusted as a root.
+`Context.rootDepth` counts these stored root levels, and executable guards
+check the base and a one-root context. A four-root transport fixture checks
+the deeper case when run explicitly.
 
 ## Ordered algebraic ambient models
 
