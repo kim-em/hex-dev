@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.TowerModel
+public import Mathlib.FieldTheory.AlgebraicClosure
 public import Mathlib.RingTheory.Algebraic.Integral
 
 public section
@@ -40,6 +41,26 @@ theorem polynomial_eval (p : DensePoly context.Value) (a : K) :
       (interpret model.value model.zero_iff p).eval a := by
   rw [Polynomial.aeval_def, Polynomial.eval₂_eq_eval_map,
     Subfield.algebraMap_ofSubfield, model.polynomial_map]
+
+section Base
+variable {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+variable (base : BaseContext.Context registry B sign)
+variable (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* K)
+variable (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+
+omit [DecidableEq K] in
+/-- Every canonical base-model value is algebraic over that same base map. -/
+theorem base_algebraic :
+    letI : Field B := HexPolyMathlib.fieldOfGrind
+    letI : Algebra B K := f.toAlgebra
+    ∀ a : (Context.base base).Value, IsAlgebraic B ((Model.base base f hsign).value a) := by
+  let : Field B := HexPolyMathlib.fieldOfGrind
+  let : Algebra B K := f.toAlgebra
+  intro a
+  have hv := Model.base_value base f hsign a
+  rw [hv]
+  exact isAlgebraic_algebraMap a.stored
+end Base
 
 variable [IsStrictOrderedRing K] [IsRealClosed K]
 variable (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature)
@@ -82,11 +103,45 @@ theorem field_algebraic (a : (model.adjoin descriptor).field) :
   rw [← hx]
   exact model.adjoin_algebraic descriptor x
 
+/-- Adjoining a selected root preserves algebraicity over a fixed base when
+all predecessor values are algebraic over that base. -/
+theorem adjoin_algebraic_over {B : Type v} [Field B] [Algebra B K]
+    (halgebraic : ∀ a : context.Value, IsAlgebraic B (model.value a))
+    (a : (context.adjoin descriptor).context.Value) :
+    IsAlgebraic B ((model.adjoin descriptor).value a) := by
+  let U := algebraicClosure B K
+  have hle : model.field ≤ U.toSubfield := by
+    rintro x ⟨y, hy⟩
+    exact mem_algebraicClosure_iff.mpr (by rw [← hy]; exact halgebraic y)
+  have ha : IsAlgebraic U ((model.adjoin descriptor).value a) :=
+    letI : Algebra model.field U := (Subfield.inclusion hle).toAlgebra
+    letI : IsScalarTower model.field U K := .of_algebraMap_eq fun _ => rfl
+    (model.adjoin_algebraic descriptor a).extendScalars
+      (Subfield.inclusion hle).injective
+  exact ha.restrictScalars B
+
+/-- The whole child value field remains algebraic over the fixed base. -/
+theorem field_algebraic_over {B : Type v} [Field B] [Algebra B K]
+    (halgebraic : ∀ a : context.Value, IsAlgebraic B (model.value a))
+    (a : (model.adjoin descriptor).field) : IsAlgebraic B (a : K) := by
+  obtain ⟨x, hx⟩ := a.property
+  rw [← hx]
+  exact model.adjoin_algebraic_over descriptor halgebraic x
+
 end Hex.RealClosure.Tower.Model
 
 /-- info: 'Hex.RealClosure.Tower.Model.generator_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.generator_algebraic
+/-- info: 'Hex.RealClosure.Tower.Model.base_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.base_algebraic
 /-- info: 'Hex.RealClosure.Tower.Model.field_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.field_algebraic
+/-- info: 'Hex.RealClosure.Tower.Model.adjoin_algebraic_over' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.adjoin_algebraic_over
+/-- info: 'Hex.RealClosure.Tower.Model.field_algebraic_over' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.field_algebraic_over

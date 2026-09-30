@@ -1458,11 +1458,16 @@ its square root of the first infinitesimal is included back into that ambient.
 union when every context value is algebraic over the chosen `B`-algebra map;
 coercing the restricted values back gives the original interpretation exactly.
 The map must agree with the model's base coefficients when used for base
-enlargement. Kernel examples restrict the rational base model from ℝ, apply
-the constructor to any tower model in an algebraic `Ambient Rat`, and check
-that its codomain agrees with `Ambient.ofUnion` for any permitted ordered base
-embedding. Proving algebraicity for contexts with adjoined roots and using the
-restriction in `Context.enlarge` remain open.
+enlargement. `Tower.Model.base_algebraic` proves algebraicity of the canonical
+base model over the algebra map induced by its selected embedding.
+`Tower.Model.adjoin_algebraic_over` propagates algebraicity through an actual
+selected-root extension from algebraicity of every predecessor value; a
+kernel example checks three successive root levels over ℚ. Kernel examples
+also restrict the rational base model from ℝ, apply the constructor to any
+tower model in an algebraic `Ambient Rat`, and check that its codomain agrees
+with `Ambient.ofUnion` for any permitted ordered base embedding. Supplying
+the algebraicity premise along each validated prefix, stating base-map
+agreement, and using the restriction in `Context.enlarge` remain open.
 
 Presenting every algebraic generator by a native selected-root descriptor and
 identifying all compatible native presentations with this semantic union remain
