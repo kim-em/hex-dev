@@ -799,13 +799,14 @@ Literal arrays are emitted by an accumulator with `Array.push`.
 
 `Tower.Catalog` is an immutable catalog of caller-constructed validated prefixes.
 Insertion rejects rebinding. Its separate base catalog supplies real search
-progress and reconstructs infinitesimal stages. An algebraic signature is
-accepted only when that exact native context is installed; inserting a shorter
-prefix does not install its successors. Readers retrieve the full context first,
-then decode a scalar or polynomial in that context; returned packed values
-retain their owning context. A cached signature hash filters catalog entries,
-and exact equality confirms a match. The successful lookup supplies the binding
-proof, so the payload decoder does not compare that signature a second time.
+progress and reconstructs infinitesimal stages. The installed-prefix readers
+accept an algebraic signature only when that exact native context is installed;
+inserting a shorter prefix does not install its successors. Readers retrieve
+the full context first, then decode a scalar or polynomial in that context;
+returned packed values retain their owning context. A cached signature hash
+filters catalog entries, and exact equality confirms a match. The successful
+lookup supplies the binding proof, so the payload decoder does not compare
+that signature a second time.
 
 The structured codecs have proved literal write/read roundtrips. Nonzero
 algebraic payloads retain both the polynomial and cached sign; their reader
@@ -826,8 +827,9 @@ malformed base payloads. The core roundtrip proofs introduce no admission.
 General persistent refinement, transport of later descriptors, interpretation
 of arbitrary towers, complete isolation and the real-closed union remain open.
 Proving that native frame serialization always succeeds (so the optional
-adjoin facade can become total), and that every native tower can be reconstructed
-without an installed algebraic prefix, also remain open.
+adjoin facade can become total) remains open. The frame reader below checks
+missing prefixes; a universal roundtrip theorem for every freshly encoded
+tower without installed algebraic prefixes remains open.
 
 ### Reconstruction from algebraic frames
 
@@ -849,8 +851,8 @@ encoded frames produce errors. Catalog insertion remains an explicit operation.
 `Catalog.restoreElement` and `restorePolynomial` reconstruct the native context
 before decoding the payload; the returned packed value retains that context.
 The existing `readElement` and `readPolynomial` use only installed algebraic
-prefixes. Successful restoration has proved binding preservation, and cached
-scalar/polynomial write-read roundtrips are proved. `RestoredRoot.frame_data`
+prefixes. Successful restoration has proved binding preservation, and
+write-read roundtrips are proved for installed contexts. `RestoredRoot.frame_data`
 proves exact re-encoding of every successful root-frame reconstruction.
 
 Run `lake build HexRealClosure.RootFrameTests`. The examples reconstruct two

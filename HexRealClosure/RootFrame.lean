@@ -103,8 +103,8 @@ def Catalog.readFrames (catalog : Catalog registry) (parent : Context registry) 
           rw [result.property, child.property, Signature.append_cons]⟩
 
 /-- Recover a native tower from a supplied whole-context identity. The catalog
-supplies the exact validated real base and its erased search progress. Unknown
-algebraic levels are independently reconstructed from their replay frames. -/
+first supplies a validated real base and its erased search progress. Cached
+algebraic prefixes are reused; missing levels are checked from replay frames. -/
 def Catalog.reconstruct (catalog : Catalog registry) (binding : Signature) :
     Except String { context : Context registry // context.signature = binding } :=
   match hl : catalog.lookup binding with
@@ -138,7 +138,7 @@ def Catalog.restoreElement (catalog : Catalog registry) (raw : Serialized) :
     Except String (PackedElement registry) :=
   match catalog.reconstruct raw.binding with
   | .error message => .error message
-  | .ok context => match context.val.read raw with
+  | .ok context => match context.val.codec.decode raw.value with
     | .error message => .error message
     | .ok value => .ok ⟨context.val, value⟩
 
@@ -146,7 +146,7 @@ def Catalog.restorePolynomial (catalog : Catalog registry) (raw : Serialized) :
     Except String (PackedPolynomial registry) :=
   match catalog.reconstruct raw.binding with
   | .error message => .error message
-  | .ok context => match context.val.readPoly raw with
+  | .ok context => match Codec.readPoly context.val.codec raw.value with
     | .error message => .error message
     | .ok value => .ok ⟨context.val, value⟩
 
@@ -158,7 +158,7 @@ theorem Catalog.restoreElement_signature (catalog : Catalog registry) (raw : Ser
   | error message => simp [hc] at h
   | ok context =>
     simp only [hc] at h
-    cases hr : context.val.read raw with
+    cases hr : context.val.codec.decode raw.value with
     | error message => simp [hr] at h
     | ok value =>
       simp only [hr, Except.ok.injEq] at h
@@ -173,7 +173,7 @@ theorem Catalog.restorePolynomial_signature (catalog : Catalog registry) (raw : 
   | error message => simp [hc] at h
   | ok context =>
     simp only [hc] at h
-    cases hr : context.val.readPoly raw with
+    cases hr : Codec.readPoly context.val.codec raw.value with
     | error message => simp [hr] at h
     | ok value =>
       simp only [hr, Except.ok.injEq] at h
@@ -185,13 +185,13 @@ theorem Catalog.restoreElement_write (catalog : Catalog registry) (context : Con
     catalog.restoreElement (context.write a) = .ok ⟨context, a⟩ := by
   simp only [Catalog.restoreElement, Context.write]
   rw [catalog.reconstruct_lookup _ context h]
-  simp [Context.read, context.codec_lawful a]
+  simp [context.codec_lawful a]
 
 theorem Catalog.restorePolynomial_write (catalog : Catalog registry) (context : Context registry)
     (p : context.Poly) (h : catalog.lookup context.signature = some context) :
     catalog.restorePolynomial (context.writePoly p) = .ok ⟨context, p⟩ := by
   simp only [Catalog.restorePolynomial, Context.writePoly]
   rw [catalog.reconstruct_lookup _ context h]
-  simp [Context.readPoly, Codec.read_poly context.codec context.codec_lawful p]
+  simp [Codec.read_poly context.codec context.codec_lawful p]
 
 end Hex.RealClosure.Tower
