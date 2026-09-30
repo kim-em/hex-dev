@@ -103,10 +103,6 @@ theorem indexTuplesUpTo_eq (n r bound : Nat) :
     · funext i
       simp only [ih, List.map_map, Function.comp_def, Vector.toList_push, List.map_append,
         List.map_cons, List.map_nil]
-    · congr 1
-      funext i
-      apply Bool.eq_iff_iff.mpr
-      simp only [Function.comp_apply, Nat.blt_eq, decide_eq_true_eq]
 
 /-- The reference selections read as ordinary natural-number lists. -/
 theorem indexTuples_eq_selectedColumnTuples (r n : Nat) :

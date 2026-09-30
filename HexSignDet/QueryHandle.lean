@@ -63,7 +63,7 @@ def QueryHandle.checkSigns {sign : E → Int} {context : Ctx}
 
 /-- Total singleton sign with the same explicitly diagnostic zero fallback
 as `Descriptor.signAt`. The companion excludes failure under lawful
-coefficients using only the agreed #10389 root-sum bridge. -/
+coefficients using only the shared proved root-sum theorem. -/
 @[expose] def QueryHandle.signAt {sign : E → Int} {context : Ctx}
     {d : Descriptor E Ctx sign context} (h : QueryHandle d) (q : DensePoly E) : Int :=
   match h.buildSigns [q] with

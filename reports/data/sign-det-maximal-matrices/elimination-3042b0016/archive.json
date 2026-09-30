@@ -1,0 +1,9 @@
+{
+  "schema": "hex-sign-det-elimination-inventory-archive-v1",
+  "files": {
+    "committed-source.patch": "a219fa1fc31160eff6ddeba74d845d714bb4666497ec54cb5a08f8b4a4adf341",
+    "inventory.jsonl": "5b373102ebef3c28336bf2291c218ba5b8353768fb3a9be0f8128f90dc7ecacb",
+    "metadata.json": "0386cad78ca09a9c00105cbe55166feee65ccc4a37a60b94810fbe96b84bdb8d",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "hex-sign-det-joint-archive-v1",
+  "kind": "post-collection-archive-hashes",
+  "source_revision": "394c3c54802ee1fe8e251098323b02c603536454",
+  "files_sha256": {
+    "committed-source.patch": "726993918781905c9d2d4eab30d1e03aef9be0519d28d464264efcfbeace743a",
+    "metadata.json": "ae466471477d9fdcbca0b8d87934c14630dd2edbfa232b384e126f01ffc28a60",
+    "inputs.log": "b4ce2553447840f151b008411ba73bfe57b9773d5b89cf8ddcee9ab738c43286",
+    "inputs.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "callbacks.log": "8e4fa978bc3c7a634bbff72e05e8a6103ee0a86e338a62c7155034a0e978dcef",
+    "callbacks.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runCompletion.log": "313068fc7b79a6518d2addcf69264e9ddaea58822d8f8a40c6e79b3846b713cd",
+    "runCompletion.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runCompletion.json": "f0cce4ca6325bce66b178ec746c05982e2c76d2907d3f60e2f9d5a3ae667e9ee",
+    "runComparison.log": "8bd1217188961b64ea3a7f3bc4827501903b3bd57803948692ec9f0f08ea4e2a",
+    "runComparison.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runComparison.json": "af475ca3d70e6d4d0342db0d12364b550f229882bc2899da8a897c234a333b4b",
+    "production.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "production.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "production.jsonl": "5979552a613586ddc4387ebefa13b268d23cb6bf7b0ef36a90caa988e273df40",
+    "replay.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "replay.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "replay.jsonl": "4e3c41f13117964b95d6f6cf479e4a8369e2bdfc9c6a83f23598e4a1d8676b42",
+    "summary.json": "885f8952f508fe46923bdff2d48d1ad722beb00dce1e45d14892f1fbe2778783",
+    "collection-command.log": "23b95b3a9b69c5d0560dbe9d35c9c6f0caf2c4c956b5aa22349b2076e32b7d5e"
+  }
+}

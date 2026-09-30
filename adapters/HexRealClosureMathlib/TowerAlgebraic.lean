@@ -84,9 +84,9 @@ theorem field_algebraic (a : (model.adjoin descriptor).field) :
 
 end Hex.RealClosure.Tower.Model
 
-/-- info: 'Hex.RealClosure.Tower.Model.generator_algebraic' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.generator_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.generator_algebraic
-/-- info: 'Hex.RealClosure.Tower.Model.field_algebraic' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.field_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.field_algebraic

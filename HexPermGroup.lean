@@ -18,6 +18,9 @@ public import HexPermGroup.Group
 public import HexPermGroup.Normalize
 public import HexPermGroup.Build
 public import HexPermGroup.Build.Bounded
+public import HexPermGroup.Kernel.Pack
+public import HexPermGroup.Kernel.Check
+public import HexPermGroup.Kernel.Certify
 public import HexPermGroup.Subgroup
 public import HexPermGroup.Conjugate
 public import HexPermGroup.Predicates

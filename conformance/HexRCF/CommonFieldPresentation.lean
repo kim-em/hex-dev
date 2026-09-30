@@ -276,7 +276,7 @@ theorem smallReal : smallSquare.meetsRealAxis = true := by decide +kernel
 
 theorem small_re :
     smallSquare.re.toRat = (698931493666 : Rat) / 2199023255552 := by
-  decide_cbv
+  decide +kernel
 
 theorem small_radius :
     smallSquare.radiusHi.toRat = (1449 : Rat) / 140737488355328 := by
@@ -467,8 +467,8 @@ theorem paired_checked
     pairedCoordinates pairedSourcePolynomials hwSource hpSource hpolynomial
     pairedValues hselected accepted
 
-/-- info: 'Hex.RCF.CommonFieldPresentation.paired_checked' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RCF.CommonFieldPresentation.paired_checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms paired_checked
 
 private def flippedPresentationTable? := LiteralSign.Table.build (ZPoly.toRatPoly quartic)
@@ -532,15 +532,15 @@ theorem empty_presentation
   simp [CommonPresentation.checkPresentation]
 
 /-- info: 'Hex.RCF.CommonFieldPresentation.square_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms square_values
 
 /-- info: 'Hex.RCF.CommonFieldPresentation.source_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms source_values
 
 /-- info: 'Hex.RCF.CommonFieldPresentation.flipped_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms flipped_values
 
 end Hex.RCF.CommonFieldPresentation

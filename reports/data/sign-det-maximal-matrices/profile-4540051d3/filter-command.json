@@ -1,0 +1,16 @@
+[
+  "python3",
+  "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply/scripts/filter_samply.py",
+  "--samply-json",
+  "/home/kim/.local/state/hex/issue-10377-profiles/maximal-solve-4540051d3/normalized.json.gz",
+  "--sidecar",
+  "/home/kim/.local/state/hex/issue-10377-profiles/maximal-solve-4540051d3/regions-3050727.jsonl",
+  "--spawn-anchor",
+  "/home/kim/.local/state/hex/issue-10377-profiles/maximal-solve-4540051d3/spawn-anchor.json",
+  "--out",
+  "/home/kim/.local/state/hex/issue-10377-profiles/maximal-solve-4540051d3/filtered.json.gz",
+  "--diagnostics",
+  "/home/kim/.local/state/hex/issue-10377-profiles/maximal-solve-4540051d3/diagnostics.json",
+  "--label-filter",
+  "kernel"
+]

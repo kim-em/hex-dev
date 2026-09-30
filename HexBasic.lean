@@ -9,6 +9,7 @@ module
 public import HexBasic.ArrayDecEq
 public import HexBasic.ExactDiv
 public import HexBasic.ExtTreeMap
+public import HexBasic.Kernel
 public import HexBasic.Fold
 public import HexBasic.List
 public import HexBasic.ModuleBoundaryTests

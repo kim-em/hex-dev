@@ -21,8 +21,8 @@ agreement and whole-`Option` rational/integer agreement on finite ordered dyadic
 intervals after positive denominator clearing. It also proves whole-`Option`
 congruence across field representations, with finite or infinite endpoints,
 and acceptance of literal certificate translations by denominator clearing
-and integer-to-rational embedding. Root-sum/replay semantics, `rootCount`,
-singleton/sign bounds and remaining Phase-4 evidence are still required.
+and integer-to-rational embedding. The shared root-sum theorem supplies replay semantics, `rootCount` and
+singleton/sign bounds. Remaining Phase-4 evidence is required.
 No release or phase completion is claimed.
 
 `HexSturm` depends on `HexPoly` and `HexRealRoots`, with no Mathlib or
@@ -112,11 +112,14 @@ The required public operations use the same shared arithmetic kernel:
 | Operation | Result and responsibility |
 | --- | --- |
 | `prepare p a b` | Validate the mathematical domain and return `Option (PreparedDomain E)`. The prepared object binds the head and endpoints. |
+| `domain.withEndpoints? a b` | Retain the exact head, sign operation and squarefree chain, checking the new endpoints. Return the same whole result as fresh preparation of that head. A changed head requires fresh preparation. |
 | `query p f a b` | Return `Option Int`; `none` exactly when the domain fails. |
 | `queryPrepared domain f` | Return the query for an already validated domain. |
+| `countPrepared domain` | Return the query of `1` as `Int`, reusing the stored squarefree chain for both certificate positions and recomputing the current endpoint signs. Under the lawful interpretation this is the nonnegative root cardinality. Compare integer counts directly or prove nonnegativity before `Nat` conversion; never clamp an unexpected negative result. |
 | `rootCount p a b` | Query `f=1`, returning `Option Nat` with the same domain. Prove nonnegativity before conversion; never clamp an unexpected negative value. |
 | `certify p f a b` | Run the shared kernel while retaining its literal query certificate. Return `none` on the same invalid domain. |
 | `certifyPrepared context domain f` | Retain the literal query certificate while reusing the prepared squarefree chain and binding the supplied context. |
+| `certifyCountPrepared context domain` | Produce the query-one certificate with the stored chain, fresh endpoint signs and exact context bindings. It equals the ordinary prepared certificate for `1`; old interval counts or endpoint evidence are not reused. |
 | `check` | Check a supplied finite certificate; return `Bool`, false on malformed or incorrect data. |
 
 No operation takes a caller resource budget. Squarefreeness uses the existing
@@ -251,11 +254,11 @@ and `[IsRealClosed R]` on the Mathlib side.
 
 | Statement | Required conclusion / owner |
 | --- | --- |
-| `query_sound` | `query p f a b = some q` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; companion. |
-| `check_sound` | Accepted replay implies the same domain and query equality; companion via the shared replay theorem. |
+| `query_sound` | `query p f a b = some q` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; development `HexQuerySemantics` adapter. |
+| `check_sound` | Accepted replay implies the same domain and query equality; development `HexQuerySemantics` adapter via the shared replay theorem. |
 | `query_isSome` | `(query p f a b).isSome ↔ Domain p a b`; executable guard/termination proof here, interpretation in companion. |
 | `certify_checks` | Certificates produced on the domain pass replay and carry the same value as `query`. |
-| `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; companion. |
+| `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; proved in the development `HexQuerySemantics` adapters, for eventual companion publication. |
 | `query_congr` | Order-preserving field maps and transported endpoints preserve query results, including domain validity. |
 | `check_congr` | Checked positive-scaled chains have equal values; producer acceptance gives whole-`Option` rational/integer agreement with different normalizers. |
 | `query_rat_eq` | Positive denominator clearing at rational coefficients and dyadic endpoints agrees, including `none`, with `ZPoly.tarskiQuery`; companion. |
@@ -274,15 +277,12 @@ exact dyadic Horner optimizations; it does not acquire a `Field Int` instance.
 
 The foundation is imported once, through
 [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#sturm-tarski-correspondence).
-The family audit at Mathlib revision
-`1cf325a0cf67aca2b04d76b5380ff6a9e410aefa` does not supply the required generic
-real-closed-field foundation or `IsRealClosed ℝ`. Required Tau Ceti imports
-are polynomial IVT on `[a,b]`, Rolle between distinct roots, and the signed
-remainder/Cauchy-index identity equating variation drop to the above finite
-sum, including infinite endpoints, common factors and zero initial remainder;
-root counting is its `F=1` specialization. These are planned imports requested
-by [#10300](https://github.com/kim-em/hex-dev/issues/10300), not available
-Lean theorem names or assumptions silently installed as axioms.
+Tau Ceti supplies polynomial IVT and Rolle over abstract real closed fields
+and the signed-remainder identity equating variation drop to the finite root
+sum. The companion records the imported modules and declarations, including
+infinite endpoints, common factors and zero initial remainder; root counting
+is the query-one specialization. Hex proves the correspondence with the
+single shared executable checker.
 
 Hex locally proves ordinary polynomial correspondence, pseudo-division and
 positive-scaling correspondence, literal replay soundness and integer

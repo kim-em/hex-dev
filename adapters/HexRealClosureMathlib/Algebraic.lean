@@ -39,8 +39,7 @@ variable (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
 
 include hz h1 ha hs hm hnat hsign hn hi in
 /-- Native construction retains a prepared query domain whenever the actual
-coefficient operations have the supplied lawful interpretation. The proof
-inherits only the named #10389 root-sum bridge from the shared producer. -/
+coefficient operations have the supplied lawful interpretation. -/
 theorem Context.handle_success (context : Context E Ctx coeffSign parent) :
     ∃ handle : SignDet.QueryHandle context.root, context.handle = some handle := by
   rw [context.handle_checked]
@@ -460,19 +459,19 @@ end Element
 
 end Hex.RealClosure.Algebraic
 
-/-- info: 'Hex.RealClosure.Algebraic.Context.buildSigns_ne_error' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Context.buildSigns_ne_error' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Context.buildSigns_ne_error
-/-- info: 'Hex.RealClosure.Algebraic.Element.denote_eq_zero' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Element.denote_eq_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Element.denote_eq_zero
-/-- info: 'Hex.RealClosure.Algebraic.Element.denote_inv' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Element.denote_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Element.denote_inv
-/-- info: 'Hex.RealClosure.Algebraic.Element.compare_spec' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Element.compare_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Element.compare_spec
 
-/-- info: 'Hex.RealClosure.Algebraic.Context.handle_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Context.handle_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Context.handle_success

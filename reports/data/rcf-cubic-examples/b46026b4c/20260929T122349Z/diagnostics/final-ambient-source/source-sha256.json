@@ -1,0 +1,7 @@
+{
+  "HexRCF/Tactic.lean": "1b497a6bd2d64a07ec50178f178ccd747152c8ddf2188d423aabfce0b9ad136f",
+  "HexRCF/HandlerTests.lean": "a17ca210dd1c3ea74dfa160e93498e0470f0e55f58649875e8271c2a31c3f8b5",
+  "HexRCF/HandlerTests/Support.lean": "644b1eecdf3434ddb33527d28b5597028ac853b61e22a03c45e53e40ef194279",
+  "conformance/HexRCF/RealCoefficientTactic.lean": "85f0cd6f6be9dc5698a3ca2979a3be65cd7c7e3ff27cbbcd6bebc42a8e907f25",
+  "HexManual/Chapters/HexRCF.lean": "c8ed518848b074e6c50641fe4960ce8238a5c69a696c6709e7922d2809009038"
+}

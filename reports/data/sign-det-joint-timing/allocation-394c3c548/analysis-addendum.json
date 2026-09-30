@@ -1,0 +1,90 @@
+{
+  "scope": "Post-capture provenance and analysis addendum; original records are unmodified",
+  "durable_raw_directory": "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548",
+  "original_raw_alias": "/tmp/issue-10377-joint-allocation-394c3c548",
+  "executable_binding_checked_after_capture": [
+    {
+      "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-joint-evidence/.lake/build/bin/hexsigndet_bench",
+      "realpath": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench",
+      "device": 2431,
+      "inode": 2425195628,
+      "sha256": "fcf1ddbab177d9ec61d0347b4cbbd9f57ceec94f418c1e961f40fa5ba5deb8c8"
+    },
+    {
+      "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench",
+      "realpath": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench",
+      "device": 2431,
+      "inode": 2425195628,
+      "sha256": "fcf1ddbab177d9ec61d0347b4cbbd9f57ceec94f418c1e961f40fa5ba5deb8c8"
+    }
+  ],
+  "timing_collection_binary_sha256": "fcf1ddbab177d9ec61d0347b4cbbd9f57ceec94f418c1e961f40fa5ba5deb8c8",
+  "cache_limitation": "Both worktree paths use the same physical .lake cache. The original captures did not record inode/realpath. Before/after hashes match the scientific timing binary. Future measurements must isolate their build cache.",
+  "analysis_commands": [
+    [
+      "heaptrack_print",
+      "-f",
+      "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548/heaptrack.zst",
+      "--print-peaks",
+      "0",
+      "--print-temporary",
+      "0",
+      "--peak-limit",
+      "8",
+      "--filter-bt-function",
+      "SignDetBench_Joint_runComparison",
+      "-H",
+      "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548/comparison-histogram.tsv",
+      "-F",
+      "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548/comparison-allocations.stacks",
+      "--flamegraph-cost-type",
+      "allocations"
+    ],
+    [
+      "python3",
+      "reports/data/sign-det-joint-timing/allocation-394c3c548/reanalyse.py",
+      "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548",
+      "reports/data/sign-det-joint-timing/allocation-394c3c548"
+    ]
+  ],
+  "raw_hashes_reverified_after_move": true,
+  "binding_reverified_utc": "2026-09-29T03:21:24.668620+00:00",
+  "binding_verification_method": "Path.resolve, stat device/inode, and SHA-256 of both recorded executable paths; capture-time height path also appears in profile.log and whole-process.txt.",
+  "original_analysis_commands": [
+    {
+      "argv": [
+        "heaptrack_print",
+        "-f",
+        "/tmp/issue-10377-joint-allocation-394c3c548/heaptrack.zst",
+        "--print-peaks",
+        "0",
+        "--print-temporary",
+        "0",
+        "--peak-limit",
+        "8",
+        "--filter-bt-function",
+        "SignDetBench_Joint_runComparison",
+        "-H",
+        "/tmp/issue-10377-joint-allocation-394c3c548/comparison-histogram.tsv",
+        "-F",
+        "/tmp/issue-10377-joint-allocation-394c3c548/comparison-allocations.stacks",
+        "--flamegraph-cost-type",
+        "allocations"
+      ],
+      "stdout": "/tmp/issue-10377-joint-allocation-394c3c548/comparison-correct-symbol.txt",
+      "stderr": "same destination"
+    }
+  ],
+  "safe_replay": {
+    "argv": [
+      "python3",
+      "reports/data/sign-det-joint-timing/allocation-394c3c548/reanalyse.py",
+      "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-allocation-394c3c548",
+      "FRESH_OUTPUT_DIRECTORY"
+    ],
+    "output_requirement": "Use a fresh directory; do not direct heaptrack_print outputs into the retained raw directory."
+  },
+  "analysis_commands_scope": "Earlier analysis_commands substitute durable input paths and are reconstructions, not verbatim original commands. Original command arguments and stdout destinations are recorded separately. For a replay substitute a fresh output directory for every -H/-F/stdout destination.",
+  "reanalysis_output_producer_revision": "1680ac401d1e73bf0791273d988b09fde86c1ff0",
+  "reanalysis_script_followup": "The subsequent exist_ok=False change rejects an existing destination; it does not affect emitted content. Original reanalysis commands that target an existing directory are recorded history, not safe replay instructions."
+}

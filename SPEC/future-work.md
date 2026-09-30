@@ -1140,7 +1140,9 @@ gcd and extended gcd. Generic characteristic-zero Yun decomposition over
 multiplicities over lawful exact coefficient fields.
 [hex-real-roots](../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries) owns
 integer Sturm chains and the implemented `ZPoly.tarskiQuery` and `IntTarskiCertificate`.
-Their abstract root-sum and replay soundness proofs remain required. Its ordinary root counts and
+Their abstract root-sum and replay soundness theorems are proved in the
+development `HexQuerySemantics` adapters using the pinned Tau Ceti foundation;
+publication in the split companions remains separate. Its ordinary root counts and
 `hex-rcf`'s derivative-seeded `SturmReplay` cannot certify general Tarski
 queries. Transcendental sign refinement consumes a caller-supplied approximation
 procedure. `hex-ordered-fn` owns the small exact finite-bound representation and
@@ -1519,7 +1521,7 @@ preserves degree.
 | Owner/consumer | Imported statement from Tau Ceti | Correspondence proved in Hex |
 | --- | --- | --- |
 | Shared foundation in `hex-real-roots-mathlib`, consumed by `hex-sturm-mathlib` | Polynomial IVT on `[a,b]` and Rolle between distinct roots; signed-remainder/Cauchy-index identity equating variation drop to `∑ sign(f(α))` on root-free `(a,b)`, also at infinities and with a common gcd; root count as `f=1` | In real-roots: ordinary polynomial correspondence, positive pseudo-remainder/replay soundness, integer specialization and `IsRealClosed ℝ`. In sturm: field frontend, endpoint semantics and coefficient-certificate composition |
-| `hex-sign-det-mathlib` | Thom injectivity and root-order rule; for finite `Q`, the moment identity `t=M*c` for actual sign counts and correctness of the recursive support-preserving BKR reduction | Literal matrix/replay checks imply exact counts and complete support; validity and comparison of partial descriptors, including different polynomials |
+| `hex-sign-det-mathlib` | Thom injectivity and root-order rule; for finite `Q`, actual-count moment identities and count recovery from an inverse and independently complete candidate support | Split-tree induction applies the imported recovery at each solve before pruning; literal matrix/replay checks imply exact counts and complete support; validity and comparison of partial descriptors, including different polynomials |
 | `hex-ordered-fn-mathlib` | No additional abstract real-closed-field theorem: uses Mathlib rational functions, real analysis and Hahn series | Real evaluation under relative transcendence; enclosure soundness and eventual success; Hahn embedding, sign rule and ordered-field laws |
 | `hex-real-closure-mathlib` | Existence of an algebraic real closed ordered extension of every ordered field (an explicit additional foundation requested alongside #10300); polynomial IVT/Rolle and Thom/sign determination through the preceding companions | Selected-root arithmetic and splitting transport, termination, ordered complete root lists, compatible-tower semantics and real-closedness of their algebraic union, trivial-tower agreement, finite-sign sector realization |
 
