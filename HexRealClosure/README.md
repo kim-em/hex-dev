@@ -855,7 +855,7 @@ For a real-closed ambient field, `Model.adjoin` derives the child interpretation
 from the predecessor model and the validated descriptor. It uses the actual
 public extension: `adjoin_embed` preserves predecessor values and
 `adjoin_generator` identifies the selected generator with the descriptor's root.
-`root_value` and `adjoin_value` connect those models to the selected-root
+`root_value` and `adjoin_denote` connect those models to the selected-root
 interpretation of the actual stored algebraic representative. These steps can
 be repeated at arbitrary finite depth.
 
