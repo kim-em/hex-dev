@@ -1122,13 +1122,13 @@ native check rebuilds a selected square root there.
 
 General `Context.enlarge` still requires:
 
-1. Interpreting the native `B(ε)` in the same enlarged ambient field as the
+1. If the old model uses a merely real-closed ambient field, restricting its
+   values to the relative algebraic union over `B` before lifting.
+2. Interpreting the native `B(ε)` in the same enlarged ambient field as the
    mapped old tower, compatibly on coefficients, with native `X` mapped to the
    semantic infinitesimal and with the native sign law preserved.
-2. Proving selected-root mapping through ordered field embeddings and agreement
+3. Proving selected-root mapping through ordered field embeddings and agreement
    of mapped towers with descriptor-based re-extension at every root level.
-3. If the old model uses a merely real-closed ambient field, restricting its
-   values to the relative algebraic union over `B` before lifting.
 4. With the old ambient algebraic over `B`, proving the enlarged closure
    algebraic over `B(ε)` by transitivity.
 5. Proving the local algebraic bound and staged-order agreement required by the
@@ -1170,9 +1170,10 @@ the semantic ε is positive and below every positive old coefficient, while
 `liftInfinitesimal_X_lt` applies that bound to interpreted tower values. The
 remaining native and staged-order obligations are listed above.
 
-Identifying native towers with the compatible algebraic union, descriptor construction and simultaneous
-realization of finite sign conditions at one ordinary real point remain
-separate obligations.
+Identifying native tower presentations with the algebraic union remains
+separate from restricting a semantic ambient field in item 1 above.
+Descriptor construction and simultaneous realization of finite sign
+conditions at one ordinary real point also remain open.
 
 ### Finite signs at an ordinary real parameter
 

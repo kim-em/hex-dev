@@ -25,8 +25,8 @@ variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRe
   | .nil => original
   | .root descriptor rest => (original.adjoin descriptor).extend rest
 
-/-- Interpret the entire old tower in the ordered algebraic real closure of
-the old ambient field's infinitesimal rational-function extension. -/
+/-- Interpret the entire old tower in a supplied ordered algebraic real
+closure of the old ambient field's infinitesimal extension. -/
 @[expose] noncomputable def liftInfinitesimal {source : Context registry} {R : Type u}
     [Field R] [LinearOrder R] [IsStrictOrderedRing R] [DecidableEq R]
     (ambient : Ambient (Hex.RationalFn R))
