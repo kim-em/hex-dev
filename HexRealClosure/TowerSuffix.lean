@@ -23,6 +23,36 @@ variable {registry : BaseContext.Registry}
   | .nil => .root descriptor .nil
   | .root first rest => .root first (rest.snoc descriptor)
 
+/-- Concatenate two validated root suffixes in predecessor order. -/
+@[expose] def Suffix.append {source : Context registry} :
+    (first : Suffix source) → Suffix first.context → Suffix source
+  | .nil, later => later
+  | .root descriptor rest, later => .root descriptor (rest.append later)
+
+/-- Concatenation ends in the context of its second suffix. -/
+theorem Suffix.append_context {source : Context registry}
+    (first : Suffix source) (later : Suffix first.context) :
+    (first.append later).context = later.context := by
+  induction first with
+  | nil => rfl
+  | root descriptor rest ih => exact ih later
+
+/-- Concatenation respects an equality between the first suffix's target and
+the second suffix's source. -/
+theorem Suffix.append_cast_context {source other : Context registry}
+    (first : Suffix source) (h : first.context = other)
+    (later : Suffix other) :
+    (first.append (h.symm ▸ later)).context = later.context := by
+  cases h
+  exact first.append_context later
+
+/-- Appending no roots retains the original suffix. -/
+theorem Suffix.append_nil {source : Context registry} (first : Suffix source) :
+    first.append .nil = first := by
+  induction first with
+  | nil => rfl
+  | root descriptor rest ih => exact congrArg (Suffix.root descriptor) ih
+
 /-- Appending a root returns its actual native child context. -/
 theorem Suffix.snoc_context {source : Context registry} (suffix : Suffix source)
     (descriptor : SignDet.Descriptor suffix.context.Value Signature
@@ -31,6 +61,19 @@ theorem Suffix.snoc_context {source : Context registry} (suffix : Suffix source)
   induction suffix with
   | nil => rfl
   | root first rest ih => exact ih descriptor
+
+/-- Appending a nonempty suffix first appends its initial root. -/
+theorem Suffix.append_root {source : Context registry} (first : Suffix source)
+    (descriptor : SignDet.Descriptor first.context.Value Signature
+      first.context.sign first.context.signature)
+    (rest : Suffix (first.context.adjoin descriptor).context) :
+    first.append (.root descriptor rest) =
+      (first.snoc descriptor).append
+        ((Suffix.snoc_context first descriptor).symm ▸ rest) := by
+  induction first with
+  | nil => rfl
+  | root head tail ih =>
+    exact congrArg (Suffix.root head) (ih descriptor rest)
 
 /-- Number of validated algebraic root levels in the suffix. -/
 @[expose] def Suffix.length {source : Context registry} : Suffix source → Nat

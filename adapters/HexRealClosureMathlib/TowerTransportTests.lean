@@ -89,7 +89,6 @@ example : ∃ result : Conversion (base.adjoin descriptor).context,
     (base.adjoin descriptor).context.enlarge? = some result := by
   exact Context.enlarge?_exists (BaseContext.rational registry)
     (.root descriptor .nil) rfl
-    (Context.origin_adjoin_base (BaseContext.rational registry) descriptor)
     (Rat.castHom ℝ) ratSign
 
 /-- Every validated rational-root suffix has a checked enlarged conversion. -/

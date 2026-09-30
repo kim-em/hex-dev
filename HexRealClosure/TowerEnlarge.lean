@@ -28,19 +28,6 @@ The returned conversion retains the original context as its source. -/
 @[expose] def Context.enlarge? (context : Context registry) :
     Option (Conversion context) := context.origin.enlarge?
 
-/-- Checked enlargement is exactly the native conversion of the stored root
-suffix, with source ownership aligned to the original packed context. -/
-theorem Context.enlarge?_eq {context : Context registry}
-    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
-    (base : BaseContext.Context registry B sign)
-    (suffix : Suffix (Context.base base))
-    (target_eq : suffix.context = context)
-    (origin_eq : context.origin = Origin.pack base suffix target_eq) :
-    context.enlarge? = ((Conversion.infinitesimal base).extend? suffix).map
-      (fun conversion => conversion.cast target_eq) := by
-  rw [Context.enlarge?, origin_eq]
-  rfl
-
 private theorem Context.origin_transport {left right : Context registry}
     (h : left = right) : h ▸ left.origin = right.origin := by
   cases h
@@ -78,6 +65,27 @@ order. -/
   | .nil => origin
   | .root descriptor rest => (origin.snoc descriptor).extend rest
 
+/-- Appending roots to a packed origin concatenates its validated suffix. -/
+private theorem Origin.extend_pack
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    {source : Context registry}
+    (first : Suffix (Context.base base)) (hsource : first.context = source)
+    (later : Suffix source) :
+    (Origin.pack base first hsource).extend later =
+      Origin.pack base (first.append (hsource.symm ▸ later))
+        (first.append_cast_context hsource later) := by
+  induction later generalizing first with
+  | nil =>
+    cases hsource
+    simp only [Origin.extend, Suffix.append_nil]
+    rfl
+  | root descriptor rest ih =>
+    cases hsource
+    simp only [Origin.extend, Origin.snoc, Context.castDescriptor]
+    simpa only [Suffix.append_root, Suffix.context] using
+      (ih (first.snoc descriptor) (Suffix.snoc_context first descriptor))
+
 /-- Extracting the origin after a validated suffix gives the same successive
 root extensions as extracting first and appending that suffix. -/
 theorem Suffix.origin {source : Context registry} (suffix : Suffix source) :
@@ -89,20 +97,32 @@ theorem Suffix.origin {source : Context registry} (suffix : Suffix source) :
     rw [← Context.origin_adjoin]
     exact ih
 
-/-- Appending a root retains the original staged base. -/
-theorem Origin.snoc_base {parent : Context registry} (origin : Origin parent)
-    (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature) :
-    (origin.snoc descriptor).base = origin.base := by
-  cases origin
-  rfl
+/-- Extracting the origin of a suffix over a staged base recovers its exact
+validated descriptors in the original predecessor order. -/
+theorem Suffix.origin_exact
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base)) :
+    suffix.context.origin = Origin.pack base suffix rfl := by
+  rw [Suffix.origin, Context.origin_base]
+  have h := Origin.extend_pack base (Suffix.nil : Suffix (Context.base base)) rfl suffix
+  have hs : Origin.pack base ((Suffix.nil : Suffix (Context.base base)).append suffix)
+      (Suffix.append_cast_context (Suffix.nil : Suffix (Context.base base)) rfl suffix) =
+      Origin.pack base suffix rfl := by rfl
+  exact h.trans hs
 
-/-- Appending a validated suffix retains the original staged base. -/
-theorem Origin.extend_base {source : Context registry} (origin : Origin source)
-    (suffix : Suffix source) : (origin.extend suffix).base = origin.base := by
-  induction suffix with
-  | nil => rfl
-  | root descriptor rest ih =>
-    exact (ih (origin.snoc descriptor)).trans (origin.snoc_base descriptor)
+/-- Checked enlargement is exactly the native conversion of a validated
+suffix, with source ownership aligned to its original packed context. -/
+theorem Context.enlarge?_eq {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    (target_eq : suffix.context = context) :
+    context.enlarge? = ((Conversion.infinitesimal base).extend? suffix).map
+      (fun conversion => conversion.cast target_eq) := by
+  cases target_eq
+  rw [Context.enlarge?, Suffix.origin_exact base suffix]
+  rfl
 
 /-- The extracted base of a suffix over a staged base is that same base. -/
 theorem Suffix.origin_base
@@ -110,7 +130,7 @@ theorem Suffix.origin_base
     (base : BaseContext.Context registry B sign)
     (suffix : Suffix (Context.base base)) :
     suffix.context.origin.base = BaseContext.PackedContext.pack base := by
-  rw [Suffix.origin, Origin.extend_base, Context.origin_base]
+  rw [Suffix.origin_exact base suffix]
   rfl
 
 /-- The stored origin of one root over a staged base is its actual descriptor. -/
@@ -121,8 +141,7 @@ theorem Context.origin_adjoin_base
       (Context.base base).sign (Context.base base).signature) :
     ((Context.base base).adjoin descriptor).context.origin =
       Origin.pack base (.root descriptor .nil) rfl := by
-  rw [Context.origin_adjoin, Context.origin_base]
-  rfl
+  exact Suffix.origin_exact base (.root descriptor .nil)
 
 end Hex.RealClosure.Tower
 
@@ -145,3 +164,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Suffix.origin_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Suffix.origin_base
+
+/-- info: 'Hex.RealClosure.Tower.Suffix.origin_exact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Suffix.origin_exact
