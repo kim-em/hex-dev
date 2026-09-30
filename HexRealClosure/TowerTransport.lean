@@ -39,7 +39,7 @@ inductive Transport : (source target : Context registry) → (source.Value → t
       Transport source target (fun x => next (first x))
 
 /-- An immutable target context and its actual native conversion from a source.
-Checked provenance permits recursive later-level reconstruction. -/
+The erased proof records the native steps used to construct it. -/
 structure Conversion (source : Context registry) : Type 1 where
   private mk ::
   context : Context registry
