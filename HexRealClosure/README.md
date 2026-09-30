@@ -1149,12 +1149,17 @@ General `Context.enlarge` still requires:
    preserves order for an ordered coefficient-field embedding.
 3. Proving selected-root mapping through ordered field embeddings and agreement
    of mapped towers with descriptor-based re-extension at every root level.
-4. With the old ambient algebraic over `B`, proving the enlarged closure
-   algebraic over `B(ε)` by transitivity.
-5. Proving the local algebraic bound and staged-order agreement required by the
+4. Proving the local algebraic bound and staged-order agreement required by the
    SPEC for the computational `B(ε)` levels.
-6. Extracting the live suffix automatically and assembling the total checked
+5. Extracting the live suffix automatically and assembling the total checked
    constructor with its value and order preservation statements.
+
+When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
+proves that its ordered algebraic real closure of `R(ε)` is algebraic over the
+mapped `B(ε)`. The proof combines Mathlib's algebraic polynomial-extension
+and fraction-field theorems, transports them through the executable equivalence,
+then uses transitivity of algebraicity. It applies after restricting a merely
+real-closed old ambient to its relative algebraic union.
 
 ## Ordered algebraic ambient models
 
