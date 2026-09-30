@@ -315,9 +315,9 @@ predecessor element. A conditional two-constant construction verifies progress
 from the exact first-level bounds, relative transcendence over that whole field,
 second-level sign/zero/order correspondence, embedding comparisons, key order
 and reader round trips. These base contexts do not yet contain algebraic levels.
-Integrating general selected-root storage,
-full dependency transport, algebraic context reconstruction, isolation and
-exploration remains part of the tower implementation.
+Selected-root storage and checked reconstruction of algebraic prefixes are
+provided below. Full dependency transport, complete isolation and exploration
+remain part of the tower implementation.
 
 ### Polynomials in a base context
 
@@ -381,9 +381,9 @@ The examples exercise rational reconstruction, two infinitesimal levels, an
 actual named real followed by two infinitesimals, immutable catalog extension,
 duplicate paths, changed versions, missing registrations, malformed fractions,
 and kernel round trips for a concrete installed named-real catalog. These
-readers cover the real and
-infinitesimal base stages. Algebraic descriptors, dependency transport and
-complete algebraic context reconstruction remain part of the tower work.
+readers cover the real and infinitesimal base stages. The algebraic prefix
+reader below reconstructs validated root levels; transport across multiple
+live contexts remains part of the tower work.
 
 ## Capped isolation and root assembly
 
@@ -714,6 +714,30 @@ multiplicity in the original polynomial. The proof uses the level's verified
 division and inverse, which require the predecessor interpretation to preserve
 division. It assumes no field laws on stored representatives.
 
+`AlgebraicReencode.lean` changes one level's defining polynomial through a
+checked `SignDet.Reencoding` of the same selected root. `Element.reencode`
+repacks an old value under the new immutable context, and
+`Element.reencodePoly` converts the coefficients of a dependent polynomial.
+The companion proves preservation of the selected root, value and interpreted
+dependent polynomial, with zero reflection for converted values. Old values
+remain typed by their original context. `Context.reencode_adjoin` identifies
+the target context with adjoining the new descriptor under the same cleanliness
+rule. Repacking may canonicalize a literal representative because evidence
+from the old context cannot be reused in the new one. The native tests include
+a restored high-degree representative and a nonmonic target that keeps its
+unreduced polynomial. Each converted nonzero coefficient currently runs its
+own sign query; reusable sign handles are a later cost improvement. This
+conversion keeps the predecessor fixed; recursively converting a tower's
+later descriptors remains separate.
+
+`AlgebraicRoots.lean` applies the successful root-assembly theorems to actual
+`Algebraic.Element` coefficients. Given a zero-reflecting predecessor interpretation into an ordered real closed
+field that preserves arithmetic, negation, inverse, division and sign, the
+level's selected-value interpretation supplies every coefficient premise. A
+successful finite assembly therefore covers exactly the ambient roots of the
+interpreted input with original multiplicities and no duplicate values; `all`
+is equivalent to semantic zero. Producer success and ordering remain separate obligations.
+
 `AlgebraicValue.lean` defines the image subfield `Value ctx`, with lawful field
 and order instances inherited from the ambient field. `Element.toValue`
 preserves arithmetic and sign, is surjective, and identifies exactly the
@@ -758,13 +782,14 @@ Tarski foundation. Their axiom guards contain only the three standard kernel
 axioms, and the audited import cones contain no admissions. These interpretations are
 conditional on an ambient ordered real closed field, not an existence proof.
 
-The remaining tower work includes context enlargement and transport, complete
-general root isolation and multiplicities, rational delegation agreement and
-identification of native contexts with the compatible real-closed union.
-Construction of a native algebraic context eagerly prepares and retains its
-shared selected-root query domain. `Context.buildSigns` reuses it for singleton
-and caller-supplied joint queries; `buildSigns_eq` proves exact agreement with
-the original producer,
+The remaining tower work includes dependency closure across multiple live
+contexts, context enlargement and transport, complete ordered root isolation
+and multiplicities, rational delegation agreement, and identification of native
+presentations with the compatible real-closed union.
+Each native algebraic context prepares and retains the shared selected-root
+query domain once, eagerly during context construction. `Context.buildSigns`
+reuses it for singleton and joint queries; `buildSigns_eq` proves exact
+agreement with the original producer,
 including its certificates and errors. The BKR table and certificate replay
 still run for each query list. Under the companion coefficient interpretation,
 `Context.handle_success` proves that preparation succeeds using the
@@ -834,15 +859,48 @@ after extensions, restore an unreduced noncanonical coefficient, and reject
 stale or unknown bindings, forged signs, zero claims, trailing zeros and
 malformed base payloads. The core roundtrip proofs introduce no admission.
 General persistent refinement, transport of later descriptors, complete
-isolation and identification with the real-closed union remain open.
-Reconstructing new validated algebraic levels from serialized frames remains
-open. Native frame-format totality is proved independently of graph decoding
-and byte-parser completeness.
+isolation and the real-closed union remain open.
 
 Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
 non-monic reducible rational definition, followed by a definition with
 noncanonical predecessor coefficients. The frame-format axiom guards use only
-the standard three axioms.
+the standard three axioms. Native frame-format totality is independent of
+graph decoding and byte-parser completeness.
+
+### Reconstruction from algebraic frames
+
+`Context.readDescriptor` reads the exact seven-field descriptor frame and
+independently replays its supplied graph over the native predecessor. Its
+formal derivatives, count-one condition, context and root-domain bindings are
+checked by the shared descriptor checker. `Context.readFrame` then constructs
+the native extension and checks that it re-encodes to the exact requested
+frame. A replay with extra unused entries may be mathematically accepted but
+has a different full identity and is rejected by this last check.
+
+`Catalog.reconstruct` recovers an entire context from its structured signature.
+It retrieves the validated real base and its actual erased search progress,
+then visits algebraic frames in predecessor order. It can reuse installed
+prefixes and checks each missing one. Its returned context carries a proof of the
+requested full signature. Unknown validated bases and false or differently
+encoded frames produce errors. Catalog insertion remains an explicit operation.
+
+`Catalog.restoreElement` and `restorePolynomial` reconstruct the native context
+before decoding the payload; the returned packed value retains that context.
+The existing `readElement` and `readPolynomial` use only installed algebraic
+prefixes. Successful restoration has proved binding preservation, and
+write-read roundtrips are proved for installed contexts. `RestoredRoot.frame_data`
+proves exact re-encoding of every successful root-frame reconstruction.
+
+Run `lake build HexRealClosure.RootFrameTests`. The examples reconstruct two
+successive roots, restore generator payloads and polynomials, work with a cached
+prefix, and reject an explicit stale full predecessor reference, misplaced
+frames, false graph versions and matrix certificates, unknown real providers,
+malformed frames and extra unreachable graph entries. These are structured JSON
+APIs; byte-parser and pretty-printer laws, and a roundtrip theorem for every
+freshly encoded tower (which needs graph-shape completeness), remain open.
+Batch callers can reconstruct once, insert the returned context, and then use
+the installed-prefix readers to avoid replaying each missing frame per value.
+Refinement and transport retain the obligations above.
 
 ### Interpretation, algebraicity and order of native towers
 
@@ -891,34 +949,28 @@ performance claim is made.
 
 ### Yun decomposition over native tower coefficients
 
-`Model.decompose_map` identifies the result of `Yun.decomposeRaw` on the actual
+`Model.decompose_map` identifies the actual `Yun.decomposeRaw` result over
 native coefficients with the lawful field recurrence on their interpreted
-values. `Model.decompose_sound` proves full replay acceptance of that
-interpreted output. This works for any context model and requires no
-real-closedness hypothesis beyond the hypotheses used to construct the model.
-The raw coefficients have ordinary total operations and a canonical zero;
-several nonzero expressions can represent the same field value. The model
-supplies the arithmetic correspondence needed to apply the existing field
-proof, without assigning field laws to those stored expressions.
+values. `Model.decompose_sound` proves full replay acceptance of that mapped
+output. The raw coefficients keep ordinary operations and canonical zero;
+the model supplies the arithmetic correspondence without assigning field
+laws to stored expressions.
 
-For positive-degree inputs, `Model.decompose_factor` gives each interpreted output
-entry's monicity, positive label, positive degree, simple roots and exact root
+For positive-degree inputs, `Model.decompose_factor` gives each interpreted
+output factor's monicity, positive degree, simplicity, and exact root
 multiplicity. `decompose_root` covers every root of a nonzero input in the
 ambient field, with its original multiplicity and membership in the native
-output array, without a caller-supplied result premise. `decompose_complete`
-applies this coverage to a known computed result. `decompose_squarefree` and
-`decompose_coprime` establish the
-constant degrees of the gcds actually computed on native factors. These are
-producer results, with no caller-supplied replay acceptance premise.
+output array. `decompose_complete` applies this coverage to a known result.
+`decompose_squarefree` and `decompose_coprime` establish constant degrees for
+the gcds actually computed on native factors.
 
 Run `lake build HexRealClosure.TowerYunTests HexRealClosureMathlib.TowerModelTests`.
-The executable example decomposes a nonmonic cubic with one triply repeated
-root over two actual selected-root levels, including a noncanonical coefficient
-representing one. A second input has two multiplicity labels and checks the
-computed gcd between its two returned factors. Kernel examples apply replay, squarefreeness and completeness
-at three successive arbitrary validated root levels. The generic transfer and selected-root model proofs use only the standard
-three axioms. This supplies tower multiplicity semantics; complete root
-isolation and the remaining conformance and performance evaluation remain open.
+The executable examples decompose a repeated nonmonic cubic over two selected
+root levels, including a noncanonical coefficient representing one, and check
+two multiplicity labels and their computed gcd. Kernel examples apply replay,
+squarefreeness and completeness at three arbitrary validated root levels.
+The proofs use only the standard three axioms. Complete root isolation and
+the remaining conformance and performance evaluation remain open.
 
 ## Ordered algebraic ambient models
 

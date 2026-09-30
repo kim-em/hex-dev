@@ -20,7 +20,8 @@ CASES = ["zero", "constant", "repeated", "nonmonic linear", "quadratic",
          "whole-line inverse infinitesimal", "inseparable by rational bisection",
          "assembly zero", "assembly constant", "assembly pure power",
          "assembly repeated factors", "assembly root-free factor", "assembly simple zero",
-         "nested algebraic coefficients", "nested algebraic multiplicities"]
+         "nested algebraic coefficients", "nested algebraic multiplicities",
+         "assembly nonzero cut point"]
 RATIONAL_HEADS = [[], [5], [1, -2, 1], [-3, 2], [-2, 0, 1],
                   [0, 6, 0, -3], [-2, 0, 0, 1], [6, 0, -5, 0, 1]]
 
@@ -52,6 +53,8 @@ def expected_assembly(rcf, index):
                   [[-3 * rcf.one, rcf.one]] * 5
     elif index == 14:
         factors = [[rcf.one, rcf.zero, rcf.one]] * 2 + [[-rcf.one, rcf.one]]
+    elif index == 18:
+        factors = [[3 * rcf.one, -5 * rcf.one, 2 * rcf.one]] * 2
     else:
         factors = [x, [-rcf.one, rcf.one], [-rcf.one, rcf.one]]
     product = [rcf.one]
@@ -81,6 +84,7 @@ def verify_assembly(row, index):
             isinstance(output["entries"], list), "malformed finite assembly")
     roots = list(rcf.api.MkRoots(p, rcf.context)) if len(p) > 1 else []
     selected = []
+    points = []
     for entry in output["entries"]:
         require(set(entry) == {"root", "multiplicity"} and
                 type(entry["multiplicity"]) is int and entry["multiplicity"] > 0,
@@ -90,6 +94,7 @@ def verify_assembly(row, index):
         if raw.get("kind") == "point":
             require(set(raw) == {"kind", "value"}, "malformed coefficient point")
             value = rcf.coeff(raw["value"], 0)
+            points.append((value, entry["multiplicity"]))
         else:
             require(set(raw) == {"kind", "context", "head", "lower", "upper",
                                  "indices", "signs"} and raw["kind"] == "selected" and
@@ -134,6 +139,9 @@ def verify_assembly(row, index):
     require(all(a != b for i, a in enumerate(selected) for b in selected[i+1:]),
             "assembled root duplicated")
     require(sorted(selected) == sorted(roots), "assembled root coverage differs from exact RCF")
+    if index == 18:
+        require((rcf.one, 2) in points,
+                "nonzero cut-point fixture did not exercise a bisection point")
 
 
 def verify_nested(row, assembly_row):
@@ -416,6 +424,7 @@ def verify(rows):
     for index, row in enumerate(rows[10:16], start=10):
         verify_assembly(row, index)
     verify_nested(rows[16], rows[17])
+    verify_assembly(rows[18], 18)
 
 
 def main():
