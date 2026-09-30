@@ -45,6 +45,13 @@ example (rebuilt : Rebuilt (Conversion.refine base encoding) suffix)
   (Conversion.Model.refine rational encoding).rebuild_target suffix rebuilt h
 
 example (rebuilt : Rebuilt (Conversion.refine base encoding) suffix)
+    (hr : (Conversion.refine base encoding).rebuild? suffix = some rebuilt)
+    (h : (Conversion.refine base encoding).extend? suffix = some rebuilt.result) :
+    HEq ((Conversion.Model.refine rational encoding).extend suffix rebuilt.result h).target
+      ((Conversion.Model.refine rational encoding).target.extend rebuilt.suffix) :=
+  (Conversion.Model.refine rational encoding).extend_target suffix rebuilt hr h
+
+example (rebuilt : Rebuilt (Conversion.refine base encoding) suffix)
     (h : (Conversion.refine base encoding).rebuild? suffix = some rebuilt)
     (next : Conversion rebuilt.suffix.context)
     (following : Conversion.Model next

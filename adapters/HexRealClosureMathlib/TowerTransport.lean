@@ -350,15 +350,6 @@ theorem rebuild_exists (suffix : Suffix source) :
     cases h
   | some rebuilt => exact ⟨rebuilt, rfl⟩
 
-/-- Interpret a particular result returned by recursive reconstruction. -/
-noncomputable def extend (suffix : Suffix source) (result : Conversion suffix.context)
-    (h : conversion.extend? suffix = some result) : Model result (original.extend suffix) := by
-  let spec := model.extend_exists suffix
-  let actual := Classical.choose spec
-  have output := (Classical.choose_spec spec).1
-  have same : actual = result := Option.some.inj (output.symm.trans h)
-  exact same ▸ Classical.choice (Classical.choose_spec spec).2
-
 /-- Interpret the final conversion using the exact rebuilt suffix, while
 preserving every old value in the original ambient field. -/
 noncomputable def rebuild (suffix : Suffix source)
@@ -374,6 +365,40 @@ theorem rebuild_target (suffix : Suffix source) (rebuilt : Rebuilt conversion su
     HEq (model.rebuild suffix rebuilt h).target
       (model.target.extend rebuilt.suffix) :=
   Classical.choose_spec (model.align_exists rebuilt.checked)
+
+private theorem extend_aligned (suffix : Suffix source) (result : Conversion suffix.context)
+    (h : conversion.extend? suffix = some result) :
+    ∃ witness : Model result (original.extend suffix),
+      ∃ rebuilt : Rebuilt conversion suffix,
+        conversion.rebuild? suffix = some rebuilt ∧
+          HEq witness.target (model.target.extend rebuilt.suffix) := by
+  obtain ⟨rebuilt, hr⟩ := model.rebuild_exists suffix
+  have same : rebuilt.result = result := by
+    have mapped := congrArg (Option.map Rebuilt.result) hr
+    rw [conversion.rebuild_result suffix, h] at mapped
+    exact Option.some.inj (by simpa only [Option.map_some] using mapped.symm)
+  subst result
+  exact ⟨model.rebuild suffix rebuilt hr, rebuilt, hr, model.rebuild_target suffix rebuilt hr⟩
+
+/-- Interpret a particular result returned by recursive reconstruction using
+the same checked suffix model as `rebuild`. -/
+noncomputable def extend (suffix : Suffix source) (result : Conversion suffix.context)
+    (h : conversion.extend? suffix = some result) : Model result (original.extend suffix) :=
+  Classical.choose (model.extend_aligned suffix result h)
+
+/-- The ordinary traversal uses the target interpretation of the actual
+descriptor-retaining traversal. -/
+theorem extend_target (suffix : Suffix source)
+    (rebuilt : Rebuilt conversion suffix)
+    (hr : conversion.rebuild? suffix = some rebuilt)
+    (h : conversion.extend? suffix = some rebuilt.result) :
+    HEq (model.extend suffix rebuilt.result h).target
+      (model.target.extend rebuilt.suffix) := by
+  obtain ⟨actual, output, alignment⟩ :=
+    Classical.choose_spec (model.extend_aligned suffix rebuilt.result h)
+  have same : actual = rebuilt := Option.some.inj (output.symm.trans hr)
+  subst actual
+  exact alignment
 
 /-- Compose a later semantic conversion with the rebuilt tower. The context
 equality and model alignment discharge the ownership change automatically. -/
@@ -514,6 +539,10 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.extend' depends on axioms: [propex
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.extend
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.extend_target' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.extend_target
 
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_exists' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

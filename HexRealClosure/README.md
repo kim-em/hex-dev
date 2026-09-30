@@ -999,7 +999,8 @@ relation for the starting refinement; `Model.adjoin` preserves it after every
 successful extension. `adjoin_exists` proves each revalidation and conversion
 succeeds. `extend_exists` proves success and interpretation preservation for an
 arbitrary finite suffix, without caller-supplied replay evidence. `Model.extend`
-interprets a particular result returned by the executable. `rebuild_exists`
+interprets a particular result returned by the executable and `extend_target`
+identifies its target with the checked rebuilt suffix. `rebuild_exists`
 proves the descriptor-retaining traversal succeeds, and `Model.rebuild`
 interprets its final conversion. `rebuild_target` identifies its target model
 with the interpretation of the returned suffix, while `rebuildComp` composes
