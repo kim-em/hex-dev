@@ -1137,7 +1137,9 @@ General `Context.enlarge` still requires:
    agreement on its base coefficients and algebraicity of every value. For a
    canonical base model extended through a validated finite suffix,
    `Tower.Model.baseRestrict` constructs the restriction and proves value and
-   base-map agreement once that suffix presentation is available.
+   base-map agreement. `Context.origin` supplies the suffix presentation of
+   each packed context up to equality with that context; identifying an
+   arbitrary old model with the canonical extension still remains.
    Packaging the union with `Ambient.ofUnion` also requires an order-preserving
    base map and a real-closed old ambient; its current API places both fields
    in the same universe.
@@ -1152,8 +1154,10 @@ General `Context.enlarge` still requires:
    of mapped towers with descriptor-based re-extension at every root level.
 4. Applying the local algebraic bound to the computational `B(ε)` levels and
    proving their staged order agrees with the enlarged ambient interpretation.
-5. Extracting the live suffix automatically and assembling the total checked
-   constructor with its value and order preservation statements.
+5. Gathering a dependency-closed collection of live contexts and assembling
+   the total checked constructor with its value and order preservation
+   statements. `Context.origin` extracts the exact base and validated root
+   suffix of one stored context; the cross-context dependency traversal remains.
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the
@@ -1176,6 +1180,15 @@ algebraicity with actual ordered algebraic ambient models, including the native
 ℚ(ε) dictionary cast, and derive the bound inside a relative algebraic closure
 from inequalities known only over its base.
 The computational stage-order identification still remains.
+
+`Context.origin` recursively follows a packed tower's stored predecessor
+chain and returns its staged base, the ordered validated root suffix, and an
+equality with the original context. The suffix retains the stored descriptors;
+the equality proof checks each frame against the original context. No
+signature or serialized payload is trusted as a root.
+Executable guards count the extracted levels in the base and a one-root
+context and rebuild the extracted one-root suffix. The existing four-root
+transport fixture includes a deeper count check and runs outside routine CI.
 
 ## Ordered algebraic ambient models
 
