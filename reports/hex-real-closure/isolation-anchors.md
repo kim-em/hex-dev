@@ -8,7 +8,8 @@ not scaling evidence or measurements of a tower.
 
 `Hex.RealClosure.Bench.runYun` removes the zero factor from
 `-3X²(X²−2)³(X−3)⁵` and runs the raw-coefficient Yun recurrence on the
-nonzero quotient. It checks the two resulting multiplicities, 3 and 5.
+nonzero quotient. It checks the extracted zero multiplicity 2 and the two
+resulting nonzero multiplicities, 3 and 5.
 `runIsolation` applies capped Sturm isolation and descriptor completion to
 `(X²−2)(X−3)`, checking that it produces three real roots. `runAssembly`
 extracts zero, runs Yun, isolates the actual factors and checks four real
@@ -40,12 +41,13 @@ All earlier completed samples are also retained: the initial
 [development export](isolation-anchors-development.json), the
 [corrected development export](isolation-anchors-development-fixed.json),
 and the [unpinned export](isolation-anchors-unpinned.json). The initial
-development isolation result, about 32 ns, measured a constant-folded call
+development isolation result, 31 ns median, measured a constant-folded call
 before its input moved through `IO.Ref`; it is invalid as isolation timing
 evidence. The corrected development and unpinned runs are context, not
 additional trials of the pinned clean-commit measurement. The unpinned clean
 run omitted CPU pinning, so it was followed by one pinned run with unchanged
-source; both completed runs are retained. The rational `Bench.lean` hash in
+source; both completed runs are retained. The pinned run was slightly slower
+for all three registrations and is the reported measurement. The rational `Bench.lean` hash in
 its context file belongs to the version before `runNested` was added; the
 three rational benchmark bodies were unchanged by that addition.
 
@@ -71,14 +73,32 @@ record which paths caused that status. Source and executable hashes identify
 the recorded artifacts; the dirty flag is retained as a limitation.
 
 To remeasure the current registrations, run `lake build hexrealclosure_bench`
-and use an automatically selected CPU for each of these separate calls:
+and record the selected CPU from this command's output. Each call holds a CPU
+lease until its measurement finishes:
 
 ```sh
-taskset -c "$(python3 scripts/bench/idle_core.py)" .lake/build/bin/hexrealclosure_bench run Hex.RealClosure.Bench.runYun Hex.RealClosure.Bench.runIsolation Hex.RealClosure.Bench.runAssembly --export-file /tmp/hex-real-closure-rational-rerun.json
-taskset -c "$(python3 scripts/bench/idle_core.py)" .lake/build/bin/hexrealclosure_bench run Hex.RealClosure.Bench.runNested --export-file /tmp/hex-real-closure-nested-rerun.json
+python3 - <<'PY'
+import subprocess
+from scripts.bench.cpu_lease import cpu_lease
+
+for names, output in [
+    (["Hex.RealClosure.Bench.runYun", "Hex.RealClosure.Bench.runIsolation",
+      "Hex.RealClosure.Bench.runAssembly"], "/tmp/hex-real-closure-rational-rerun.json"),
+    (["Hex.RealClosure.Bench.runNested"], "/tmp/hex-real-closure-nested-rerun.json"),
+]:
+    cpu, lease = cpu_lease()
+    try:
+        print(f"selected CPU {cpu} for {output}", flush=True)
+        subprocess.run(["taskset", "-c", str(cpu),
+                        ".lake/build/bin/hexrealclosure_bench", "run", *names,
+                        "--export-file", output], check=True)
+    finally:
+        lease.close()
+PY
 ```
 
-The context files record the original source commits and selected CPUs; a
+The exports record the source commits, and the context files record the
+selected CPUs. The nested context file also records its source commit; a
 rerun on current source is a new observation, not an extension of those runs.
 
 The formal #10378 performance evaluation still requires the specified depth
