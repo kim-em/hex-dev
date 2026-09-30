@@ -219,7 +219,9 @@ Run `lake build hexrealclosure_bounds_conformance`, then
 
 A failed bound search is a request for whole-line BKR completion. It never
 means that the polynomial has no roots. The bounded bisection and complete
-isolation driver, general contexts and recursive transport remain unimplemented.
+isolation driver and automatic extraction of a tower suffix from requested
+expressions remain unimplemented. Checked conversion through an explicitly
+supplied finite suffix is described below.
 
 `deflate? p a` removes the factor `X-a` with the shared monic polynomial division.
 `linearFactor a` stores the literal leading coefficient one, and the constructor
@@ -728,8 +730,8 @@ a restored high-degree representative and a nonmonic target that keeps its
 unreduced polynomial. Each converted nonzero coefficient currently runs its
 own sign query; reusable sign handles are a later cost improvement. This
 conversion keeps the predecessor fixed. `Tower.Refinement` below converts an
-immediate later descriptor; automatic conversion of an arbitrary dependent
-suffix remains separate.
+immediate later descriptor, and `Tower.Conversion` converts an explicitly
+supplied finite suffix. Automatic dependency-closure selection remains separate.
 
 `AlgebraicRoots.lean` applies the successful root-assembly theorems to actual
 `Algebraic.Element` coefficients. Given a zero-reflecting predecessor interpretation into an ordered real closed
@@ -859,9 +861,9 @@ three actual algebraic levels, use their explicit embeddings, read old values
 after extensions, restore an unreduced noncanonical coefficient, and reject
 stale or unknown bindings, forged signs, zero claims, trailing zeros and
 malformed base payloads. The core roundtrip proofs introduce no admission.
-Automatic rebuilding of a dependent suffix, complete isolation and
-identification with the real-closed union remain open; checked one-level
-refinement and immediate later-root transport are described below.
+Automatic discovery of a dependent suffix, complete isolation and
+identification with the real-closed union remain open; checked refinement
+and conversion through an explicitly supplied suffix are described below.
 
 Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
 non-monic reducible rational definition, followed by a definition with
@@ -946,8 +948,8 @@ model through three arbitrary validated root levels, including the algebraicity
 and image-field inclusions. The semantic root results use the proved
 `Tarski.check_rootSum` theorem and only the standard three axioms. They are
 relative to a supplied real-closed
-ambient field and base embedding. The refinement companion below proves
-compatibility for a checked final-root change and one later level.
+ambient field and base embedding. The companions below prove compatibility for
+a checked final-root change and conversion through a validated finite suffix.
 Identification with the real-closed algebraic union remains open. No tower
 performance claim is made.
 
@@ -1018,8 +1020,77 @@ polynomials and a retained representative of degree seven. Kernel examples
 apply the preservation results to arbitrary validated three-level towers.
 The companion proofs use the proved root-sum theorem and only the standard
 three axioms. This API covers a final root change and its immediate later
-level. Automatic recursive rebuilding of a dependency closure and base
-enlargement remain open. No performance result is claimed here.
+level. The recursive conversion below handles an explicitly supplied suffix;
+automatic dependency-closure selection and base enlargement remain open. No
+performance result is claimed here.
+
+### Recursive conversion through later root levels
+
+`Conversion.identity` retains the original context and values.
+`Conversion.refine` starts at a checked final-root refinement.
+`Conversion.adjoin?` rebuilds a later descriptor with converted coefficients,
+endpoints and fresh context-bound evidence. It stores the new extension's
+packing closure for all subsequent value conversions. The private constructor
+retains an erased derivation of these native operations, with no semantic law
+record as an executable argument. `Conversion.comp` composes two actual
+conversions, retaining both closures. `Conversion.cast` reconciles source
+ownership using a proved context equality. Together these support consecutive
+changes at the starting root before extending the suffix, without discarding
+the actual conversion closures.
+
+`Suffix` represents a finite sequence of validated later root levels. Its
+`context` is the original final context. `Conversion.extend?` rebuilds every
+level in order and returns the conversion into the new immutable final
+context. `Conversion.rebuild?` additionally returns a `Rebuilt` result with
+the converted validated descriptors as a new `Suffix`. Its context equality
+binds that suffix to the final conversion, and `rebuild_result` proves it
+returns the same conversion as `extend?`. A caller can select the first descriptor
+in the rebuilt suffix for a further checked refinement and compose the resulting
+native conversions. Each returned `Rebuilt` value carries a derivation of the
+exact validated steps. Automatic selection and conversion of arbitrary dependent
+expressions remain open. Every original context and value remains valid
+independently.
+
+The companion `Conversion.Model` relates the native conversion to the original
+model and supplies the actual target model. Its `identity` and `comp` interpret
+identity and composition; `cast` reconciles the source model with its proved
+context equality. `refine` establishes this relation for the starting
+refinement; `adjoin` preserves it after every successful extension.
+`adjoin_exists` proves each revalidation and conversion succeeds.
+`extend_exists` proves success and interpretation preservation for an arbitrary
+finite suffix, without caller-supplied replay evidence. `Conversion.Model.extend`
+interprets a particular result returned by the executable and `extend_target`
+identifies its target with the checked rebuilt suffix. `rebuild_exists`
+proves the descriptor-retaining traversal succeeds, and `Model.rebuild`
+interprets its final conversion. `rebuild_target` identifies its target model
+with the interpretation of the returned suffix, while `rebuildComp` composes
+a subsequent semantic conversion and reconciles context ownership. Further
+refinement uses `rebuild?` and its aligned `Model.rebuild` witness.
+The generic
+`zero`, `degree`, `polynomial`, `equal`, `compare` and `mono` results preserve
+canonical zero, dense-polynomial degree and interpretation, actual native
+comparison results, and inclusion of the whole original image field.
+
+Run `lake build HexRealClosure.TowerConversionTests HexRealClosureMathlib.TowerTransportTests`.
+The routine native fixture checks a changed nonmonic reducible definition, a
+later linear root, identity, two successive definition changes composed with
+proved context reconciliation, equations and packet ownership. It also
+re-encodes a descriptor from the rebuilt suffix, composes that second native
+refinement, and checks its converted root equation.
+The explicit four-level native driver is built with
+`lake build hexrealclosure_transport_tests` and run with
+`.lake/build/bin/hexrealclosure_transport_tests`. Routine CI type-checks this
+fixture but does not execute the deep calculation.
+This deeper fixture changes a nonmonic reducible first definition and rebuilds
+three later square roots. It checks the sixteenth-power equation, the final
+root equation, ordering, embedded noncanonical one and inverse values, and old
+and new packet ownership. Kernel examples cover arbitrary finite suffixes over
+a validated rational-root context. Generic coefficient and comparison transfer
+and root construction use the proved root-sum theorem and only the standard
+three axioms. Base enlargement, automatic extraction of a suffix from requested
+expressions or a catalog, uncached reader completeness, and identification of
+native presentations with the real-closed algebraic union remain open. No
+performance result is claimed.
 
 ## Ordered algebraic ambient models
 

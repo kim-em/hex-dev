@@ -52,8 +52,9 @@ theorem Context.refine_transport (encoding : SignDet.Reencoding source head a b)
 variable {parent}
 variable {encoding : SignDet.Reencoding source head a b}
 
-/-- Transport every coefficient and normalize only trailing target zeros. -/
-@[expose] def Refinement.mapPoly (refinement : Refinement parent encoding)
+/-- Transport every coefficient and normalize only trailing target zeros.
+Reducibility exposes the shared coefficient map to the correspondence lemmas. -/
+@[expose, reducible] def Refinement.mapPoly (refinement : Refinement parent encoding)
     (p : DensePoly (parent.adjoin source).context.Value) : DensePoly refinement.extension.context.Value :=
   DensePoly.ofCoeffs (p.toArray.map refinement.transport)
 
@@ -69,12 +70,8 @@ Its selection slots stay fixed; its replay must be rebuilt in the new context. -
     (descriptor : SignDet.Descriptor (parent.adjoin source).context.Value Signature
       (parent.adjoin source).context.sign (parent.adjoin source).context.signature) :
     SignDet.RawDescriptor refinement.extension.context.Value Signature :=
-  { context := refinement.extension.context.signature
-    head := refinement.mapPoly descriptor.raw.head
-    lower := descriptor.raw.lower.map refinement.transport
-    upper := descriptor.raw.upper.map refinement.transport
-    indices := descriptor.raw.indices
-    signs := descriptor.raw.signs }
+  (parent.adjoin source).context.mapDescriptor refinement.extension.context
+    refinement.transport descriptor
 
 /-- Revalidate the converted later selection with fresh context-bound evidence. -/
 @[expose] def Refinement.mapDescriptor? (refinement : Refinement parent encoding)

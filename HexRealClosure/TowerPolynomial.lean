@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.FrameFormat
+public import HexRealRoots.Map
 
 public section
 
@@ -27,5 +28,18 @@ General representatives have no degree bound. -/
 extension itself and call its `pack` closure. -/
 @[expose] def Context.ofPoly : DensePoly parent.Value → (parent.adjoin descriptor).context.Value :=
   (parent.adjoin descriptor).pack
+
+/-- The operands of a later descriptor after native coefficient conversion.
+The target context owns the fresh evidence and endpoint bindings. -/
+@[expose] def Context.mapDescriptor (source target : Context registry)
+    (value : source.Value → target.Value)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature) :
+    SignDet.RawDescriptor target.Value Signature :=
+  { context := target.signature
+    head := DensePoly.ofCoeffs (descriptor.raw.head.toArray.map value)
+    lower := descriptor.raw.lower.map value
+    upper := descriptor.raw.upper.map value
+    indices := descriptor.raw.indices
+    signs := descriptor.raw.signs }
 
 end Hex.RealClosure.Tower

@@ -293,7 +293,12 @@ lean_lib HexRealClosure where
 
 @[default_target]
 lean_lib HexRealClosureTests where
-  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests, .one `HexRealClosure.RootFactorsTests]
+  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests,
+    .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerTransportTests]
+
+-- The deep fixture is type-checked above; only its execution is outside routine CI.
+lean_exe hexrealclosure_transport_tests where
+  root := `HexRealClosure.TowerTransportTests
 
 @[default_target]
 lean_lib HexRealClosureMathlib where
@@ -626,8 +631,8 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SpecializeDescriptor,
     `HexRealClosureMathlib.Algebraic, `HexRealClosureMathlib.AlgebraicClean,
     `HexRealClosureMathlib.TowerModel, `HexRealClosureMathlib.TowerModelTests,
-    `HexRealClosureMathlib.TowerAlgebraic, `HexRealClosureMathlib.TowerYun,
-    `HexRealClosureMathlib.TowerRefinement,
+    `HexRealClosureMathlib.TowerAlgebraic, `HexRealClosureMathlib.TowerRefinement, `HexRealClosureMathlib.TowerTransport, `HexRealClosureMathlib.TowerTransportTests,
+    `HexRealClosureMathlib.TowerYun,
     `HexRealClosureMathlib.AlgebraicValue, `HexRealClosureMathlib.BaseClean, `HexRealClosureMathlib.AlgebraicTower,
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element, `HexRealClosureMathlib.QAdjoin,

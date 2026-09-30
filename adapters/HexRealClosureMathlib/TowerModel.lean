@@ -41,6 +41,12 @@ namespace Model
 private noncomputable def cast {context other : Context registry} (model : Model context K)
     (h : context = other) : Model other K := h ▸ model
 
+/-- Context equality transports a model without changing its interpretation. -/
+theorem cast_heq {context other : Context registry} (model : Model context K)
+    (h : context = other) : HEq (h ▸ model) model := by
+  cases h
+  rfl
+
 private theorem cast_map {context other : Context registry} (model : Model context K)
     (h : context = other) {A : Type} (f : A → context.Value) (g : A → other.Value)
     (hg : HEq g f) (a : A) : (model.cast h).value (g a) = model.value (f a) := by
@@ -284,7 +290,7 @@ theorem adjoin_denote (chain : Chain registry E sign clean codec binding)
   have hc := (Context.adjoin_native chain descriptor).1
   let b := _root_.cast (congrArg Context.Value hc) a
   unfold adjoin
-  rw [cast_value _ _ b a (cast_heq _ _).symm]
+  rw [cast_value _ _ b a (_root_.cast_heq _ _).symm]
   exact model.root_value chain descriptor extension.frame extension.encoded b
 
 /-- The public extension's actual embedding preserves the old interpretation. -/
@@ -344,7 +350,7 @@ theorem adjoin_value (model : Model context K)
     let b := _root_.cast (congrArg Context.Value hc) a
     rw [model.adjoin_generator]
     unfold adjoin
-    rw [cast_value _ _ b a (cast_heq _ _).symm]
+    rw [cast_value _ _ b a (_root_.cast_heq _ _).symm]
     simp only [root, Context.polynomial, Algebraic.Element.denote, Algebraic.Context.evalPoly,
       Algebraic.Context.rootValue, Algebraic.Context.root_adjoin]
     rfl
@@ -399,3 +405,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Model.adjoin_embed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.adjoin_embed
+
+/-- info: 'Hex.RealClosure.Tower.Model.cast_heq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.cast_heq

@@ -26,6 +26,11 @@ variable (encoding : SignDet.Reencoding source head a b)
 noncomputable def refine : Model (parent.refine encoding).extension.context K :=
   (congrArg Extension.context (parent.refine encoding).canonical).symm ▸ model.adjoin encoding.target
 
+/-- The refined model is the canonical target-root model with context ownership reconciled. -/
+theorem refine_heq : HEq (model.refine encoding) (model.adjoin encoding.target) := by
+  unfold refine
+  exact (model.adjoin encoding.target).cast_heq _
+
 omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
 private theorem transport_value {context other : Context registry} (h : context = other)
     (m : Model context K) (x : context.Value) (y : other.Value) (hy : HEq y x) :
@@ -79,7 +84,7 @@ theorem refine_polynomial (value : (parent.refine encoding).extension.context.Va
         ((parent.refine encoding).polynomial value)).eval
           ((model.adjoin source).value (parent.adjoin source).generator) := by
   unfold refine
-  rw [transport_value _ _ _ _ (cast_heq _ _).symm,
+  rw [transport_value _ _ _ _ (_root_.cast_heq _ _).symm,
     model.adjoin_value encoding.target, model.adjoin_generator,
     model.adjoin_generator,
     encoding.root_eq_source model.value model.zero_iff model.one model.add model.sub
@@ -151,7 +156,7 @@ include model decK orderK closedK in
 private theorem refine_wellFormed :
     ((parent.refine encoding).mapRaw descriptor).wellFormed = true := by
   have hw := (SignDet.RawDescriptor.check_eq descriptor.accepted).1
-  unfold Refinement.mapRaw SignDet.RawDescriptor.wellFormed
+  unfold Refinement.mapRaw Context.mapDescriptor SignDet.RawDescriptor.wellFormed
   rw [model.refine_degree]
   exact hw
 
@@ -175,7 +180,7 @@ theorem refine_descriptor :
   refine ⟨rfl, model.refine_wellFormed encoding descriptor,
     (model.refine_domain encoding _ _ _).mpr hdom, ?_⟩
   dsimp only [next, old] at hcard ⊢
-  simp only [Refinement.mapRaw, model.refine_poly, model.refine_endpoint]
+  simp only [Refinement.mapRaw, Context.mapDescriptor, model.refine_poly, model.refine_endpoint]
   convert hcard using 2
   apply Finset.filter_congr
   intro x hx
@@ -204,12 +209,12 @@ theorem refine_root
     next.sub next.mul next.nat next.sign
   apply descriptor.root_unique old.value old.zero_iff old.one old.add old.sub old.mul old.nat old.sign
   · rw [hraw] at hx
-    dsimp only [Refinement.mapRaw, next] at hx
+    dsimp only [Refinement.mapRaw, Context.mapDescriptor, next] at hx
     simpa only [model.refine_poly, model.refine_endpoint] using hx
   · rw [descriptor.derivatives_at old.value old.zero_iff old.mul old.nat]
     rw [converted.derivatives_at next.value next.zero_iff next.mul next.nat] at hs
     rw [hraw] at hs
-    dsimp only [Refinement.mapRaw, next] at hs
+    dsimp only [Refinement.mapRaw, Context.mapDescriptor, next] at hs
     simpa only [model.refine_poly] using hs
 
 
@@ -264,3 +269,7 @@ end Hex.RealClosure.Tower.Model
 /-- info: 'Hex.RealClosure.Tower.Model.refine_later' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.refine_later
+
+/-- info: 'Hex.RealClosure.Tower.Model.refine_heq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.refine_heq
