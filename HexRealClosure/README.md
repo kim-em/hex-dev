@@ -671,10 +671,17 @@ coefficient carriers with an explicit storage predicate.
 `Algebraic.Element ctx` owns its complete extension context and stores a unique
 zero or a nonzero polynomial with its checked sign. The context computes its
 literal-monic/clean reduction decision once. Packing retains the actual monic
-remainder when eligible, then performs one shared selected-root sign query for
-nonconstant polynomials; constants use the predecessor sign directly. Reading
-a stored sign reuses its result. Nonmonic or unclean definitions retain the raw
-representative. A leading coefficient that denotes one but differs structurally
+remainder when eligible. Independently of storage, `Context.queryPoly` performs
+positive pseudo-reduction before submitting a scalar query to the shared
+selected-root sign producer. It skips the unused multiplier power and quotient
+sign correction. The producer already reduces its operands; this step moves
+the first reduction outside its replay certificate. The producer's matching
+reduction is then trivial, avoiding replay of the original
+high-degree identity. The actual remainder has smaller degree and the same
+sign at the selected root, including negative leading coefficients. Constants
+and smaller queries take a direct path. Reading a stored sign reuses its result.
+Nonmonic or unclean definitions retain the raw representative. A leading
+coefficient that denotes one but differs structurally
 from literal one does not enable monic storage.
 
 Ordinary addition, subtraction, negation, multiplication, inversion and
