@@ -680,7 +680,7 @@ noncomputable def infinitesimalMapped {B : Type} [Lean.Grind.Field B] [Decidable
         ((Ambient.coefficientHom ambient).comp f)
         (mapped_base_sign f hsign ambient)) := by
   letI : Field B := HexPolyMathlib.fieldOfGrind
-  let compatible : Field.toGrindField (K := B) = ‹Lean.Grind.Field B› :=
+  have compatible : Field.toGrindField (K := B) = ‹Lean.Grind.Field B› :=
     HexPolyMathlib.toGrind_fieldOfGrind
   let old := (Ambient.coefficientHom ambient).comp f
   let new := Ambient.mappedNativeHom compatible f ambient
@@ -700,11 +700,10 @@ theorem rebuild_mapped {B : Type} [Lean.Grind.Field B] [DecidableEq B]
     {sign : B → Int} (context : BaseContext.Context registry B sign)
     (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* R)
     (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
-    (ambient : Ambient (Hex.RationalFn R))
     (suffix : Suffix (Context.base context)) :
     ∃ rebuilt : Rebuilt (Conversion.infinitesimal context) suffix,
       (Conversion.infinitesimal context).rebuild? suffix = some rebuilt :=
-  (infinitesimalMapped context f hsign ambient).rebuild_exists suffix
+  (infinitesimalMapped context f hsign (Ambient.infinitesimal R)).rebuild_exists suffix
 
 end Hex.RealClosure.Tower.Conversion.Model
 

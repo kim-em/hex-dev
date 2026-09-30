@@ -1126,7 +1126,9 @@ rational-function homomorphisms. Under those premises, `rebuild_infinitesimal`
 proves that the checked descriptor-retaining traversal succeeds for every
 finite algebraic suffix. `rebuild_rational` supplies these premises for every
 finite suffix over ℚ using the ordered algebraic real closure of ℚ(ε), and a
-native check rebuilds a selected square root there.
+native check rebuilds a selected square root there. `rebuild_mapped` extends
+this success theorem to every sign-compatible native base map into an ordered
+field; it constructs the required enlarged ambient internally.
 
 General `Context.enlarge` still requires:
 
@@ -1139,9 +1141,9 @@ General `Context.enlarge` still requires:
    places both fields in the same universe.
 2. Applying `Conversion.Model.infinitesimalMapped` to the restricted old tower
    model, with an explicit coefficient map that agrees with its native base.
-   The mapped homomorphism and native field-dictionary bridge already interpret
-   `B(ε)` in the enlarged ambient field, preserving coefficients, `X`, signs
-   and order for an ordered coefficient-field embedding.
+   `Ambient.mappedNativeHom` interprets `B(ε)` in the enlarged ambient field,
+   preserving coefficients, `X` and signs. The semantic `mappedHom` also
+   preserves order for an ordered coefficient-field embedding.
 3. Proving selected-root mapping through ordered field embeddings and agreement
    of mapped towers with descriptor-based re-extension at every root level.
 4. With the old ambient algebraic over `B`, proving the enlarged closure
