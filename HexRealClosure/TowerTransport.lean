@@ -13,11 +13,15 @@ namespace Hex.RealClosure.Tower
 
 variable {registry : BaseContext.Registry}
 
-/-- A finite derivation of native conversion from identity, a checked root
-refinement, and rebuilding later levels with exact converted bindings.
+/-- A finite derivation of native conversion from identity, a new base
+infinitesimal, a checked root refinement, and rebuilt later levels.
 This is erased provenance, not a semantic arithmetic law record. -/
 inductive Transport : (source target : Context registry) → (source.Value → target.Value) → Prop
   | identity (context : Context registry) : Transport context context id
+  | infinitesimal {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+      (context : BaseContext.Context registry K sign) :
+      Transport (Context.base context) (Context.base context.infinitesimal)
+        BaseContext.Element.embed
   | refine (parent : Context registry)
       {source : SignDet.Descriptor parent.Value Signature parent.sign parent.signature}
       {head : DensePoly parent.Value} {lower upper : Endpoint parent.Value}
@@ -49,6 +53,24 @@ structure Conversion (source : Context registry) : Type 1 where
 /-- Start conversion without changing the context. -/
 def Conversion.identity (source : Context registry) : Conversion source :=
   ⟨source, id, .identity source⟩
+
+/-- Enlarge a completed base by one positive infinitesimal. Existing base
+values enter through the native constant-rational-function embedding. -/
+def Conversion.infinitesimal {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {sign : K → Int} (context : BaseContext.Context registry K sign) :
+    Conversion (Context.base context) :=
+  ⟨Context.base context.infinitesimal, BaseContext.Element.embed,
+    .infinitesimal context⟩
+
+/-- The base conversion retains the native next-base context and its actual
+constant-rational-function embedding. -/
+theorem Conversion.infinitesimal_spec {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {sign : K → Int} (context : BaseContext.Context registry K sign) :
+    (Conversion.infinitesimal context).context = Context.base context.infinitesimal ∧
+      HEq (Conversion.infinitesimal context).value
+        (BaseContext.Element.embed : (Context.base context).Value →
+          (Context.base context.infinitesimal).Value) :=
+  ⟨rfl, HEq.rfl⟩
 
 /-- Compose two actual native conversions, retaining both packing closures. -/
 def Conversion.comp {source : Context registry} (first : Conversion source)
@@ -401,3 +423,11 @@ info: 'Hex.RealClosure.Tower.Conversion.cast_spec' depends on axioms: [propext, 
 -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.cast_spec
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.infinitesimal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.infinitesimal
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.infinitesimal_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.infinitesimal_spec

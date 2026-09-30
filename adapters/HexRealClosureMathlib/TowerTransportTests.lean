@@ -15,6 +15,13 @@ private abbrev base := Context.base (BaseContext.rational registry)
 private noncomputable def rational : Tower.Model base ℝ :=
   Tower.Model.base (BaseContext.rational registry) (Rat.castHom ℝ) ratSign
 
+/-- The rational base and its infinitesimal extension have compatible models
+in the actual ordered algebraic real closure of rational functions. -/
+example (suffix : Suffix base) :
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal (BaseContext.rational registry)) suffix,
+      (Conversion.infinitesimal (BaseContext.rational registry)).rebuild? suffix =
+        some rebuilt := Conversion.Model.rebuild_rational registry suffix
+
 variable (descriptor : SignDet.Descriptor base.Value Signature base.sign base.signature)
 variable {head : DensePoly base.Value} {lower upper : Endpoint base.Value}
 variable (encoding : SignDet.Reencoding descriptor head lower upper)

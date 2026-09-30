@@ -23,6 +23,64 @@ private def sixteenth {E : Type} [Mul E] (x : E) : E :=
   let eighth := fourth * fourth
   eighth * eighth
 
+/-- Adding an infinitesimal preserves an old base value, gives the new base
+its own signature, and rejects its packet in the old context. -/
+private def baseSample : Array Bool :=
+  let old := Context.base (BaseContext.rational registry)
+  let conversion := Conversion.infinitesimal (BaseContext.rational registry)
+  let two : old.Value := 1 + 1
+  let moved := conversion.value two
+  let target := conversion.context
+  let eps : target.Value := by
+    change (Conversion.infinitesimal (BaseContext.rational registry)).context.Value
+    rw [(Conversion.infinitesimal_spec (BaseContext.rational registry)).1]
+    exact BaseContext.Element.infinitesimal (BaseContext.rational registry)
+  #[decide (old.signature.base.infinitesimals = 0),
+    decide (target.signature.base.infinitesimals = 1),
+    target.equal moved (1 + 1),
+    ((target.read (target.write moved)).toOption.map (target.equal moved)) == some true,
+    decide (target.compare 0 eps = .lt),
+    decide (target.compare eps (conversion.value 1) = .lt),
+    (old.read (target.write moved)).toOption.isNone]
+
+#guard baseSample == #[true, true, true, true, true, true, true]
+
+/-- Revalidate one selected square root over the new rational-function base. -/
+private def rootSample : Option (Array Bool) :=
+  let base := Context.base (BaseContext.rational registry)
+  let two : base.Value := 1 + 1
+  let x : DensePoly base.Value := DensePoly.ofCoeffs #[0, 1]
+  let raw : RawDescriptor base.Value Signature :=
+    { context := base.signature, head := x * x - DensePoly.C two,
+      lower := .finite 1, upper := .finite two, indices := [], signs := [] }
+  (Descriptor.validate base.sign base.signature raw).bind fun descriptor =>
+  let original := base.adjoin descriptor
+  let suffix : Suffix base := .root descriptor .nil
+  let conversion := Conversion.infinitesimal (BaseContext.rational registry)
+  (conversion.rebuild? suffix).map fun rebuilt =>
+  let result := rebuilt.result
+  let root := result.value original.generator
+  let eps : conversion.context.Value := by
+    change (Conversion.infinitesimal (BaseContext.rational registry)).context.Value
+    rw [(Conversion.infinitesimal_spec (BaseContext.rational registry)).1]
+    exact BaseContext.Element.infinitesimal (BaseContext.rational registry)
+  let mixed := match rebuilt.suffix with
+    | .root converted .nil =>
+      let next := conversion.context.adjoin converted
+      let raised := next.generator
+      let epsRaised := next.embed eps
+      #[decide (next.context.compare (raised + epsRaised) raised = .gt),
+        decide (next.context.compare (raised - epsRaised) 1 = .gt)]
+    | _ => #[false, false]
+  #[result.context.equal (root * root) (result.value (original.embed two)),
+    decide (result.context.compare root 1 = .gt),
+    decide (result.context.compare root (1 + 1) = .lt),
+    decide (result.context.signature.base.infinitesimals = 1),
+    (result.context.read (result.context.write root)).toOption.isSome,
+    (original.context.read (result.context.write root)).toOption.isNone] ++ mixed
+
+#guard rootSample == some #[true, true, true, true, true, true, true, true]
+
 /-- Change the first root definition and rebuild three later square roots.
 An embedded noncanonical one and an inverse retain their original meaning. -/
 private def sample : Option (Array Bool) :=
