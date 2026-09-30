@@ -79,7 +79,7 @@ theorem adjacent_of_check {cert : IsolationCert} (h : cert.checkOrder = true)
 private theorem dyadic_le_of_lt {a b : Dyadic} (h : a < b) : a ≤ b := by
   rcases Dyadic.le_total a b with hle | hle
   · exact hle
-  · exact absurd h (Dyadic.not_le.mpr hle)
+  · exact absurd h (Dyadic.not_lt.mpr hle)
 
 /-- Adjacent ordering implies the all-pairs ordering used by the semantic
 literal-isolation layer. -/

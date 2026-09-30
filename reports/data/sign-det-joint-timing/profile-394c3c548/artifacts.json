@@ -1,0 +1,18 @@
+{
+  "scope": "all raw and derived files retained locally; small summaries committed",
+  "raw_directory": "/tmp/issue-10377-joint-profile-394c3c548",
+  "sha256": {
+    "collector.py": "dae87f4c4e575dc7aa5b9c15627ada3f119f569ec53f7a537f29c50c74b8d340",
+    "metadata.json": "8883e8c60f330480aad7f13671371ecde681e37f0d94cac0f99d3a9cc413348e",
+    "profile.log": "790aeca402ae93f6ab162775f9f959d9fe2147401a55df44524a64eb665a9e41",
+    "perf.data": "6074471a92ce76416847f6bd5c9fe2e3b0c76580477056518b905f05490f5f36",
+    "regions-2626161.jsonl": "fbb50dd35e1052413a03730e9b8aa74d5670a5302ae5163763bae9eb1cafb4c9",
+    "perf-script.txt": "6bbe4ac213c5857981aa06e5241732b24da4b28aa5a83590c992868bad5989b9",
+    "summary.json": "3a938e444e3592856ff5f1814123e9d47b5e025992aa5ebf7f47e9aa9ec7c684",
+    "perf-ip.txt": "4a33b7d3d051a97c36b450996e3b7df8d0748d766af2bbb04bbe7c872e8c0bf2",
+    "perf-ip-pids.txt": "6e84e5b1564abe0667c46d3c3a0f97842454c6714593ff8b6c461484069ee1d2",
+    "unwind-summary.json": "3a938e444e3592856ff5f1814123e9d47b5e025992aa5ebf7f47e9aa9ec7c684",
+    "ip-summary.json": "c39cd7bbe6e17fce08d04baf09ae2d4057be2e81ffda36eded4f76b33199f57e",
+    "postprocessor.py": "b6cd8815e1ea9cbe5753addf5bf55a10c051661c7e6e7c62878bdd847ac86265"
+  }
+}

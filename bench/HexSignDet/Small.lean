@@ -86,8 +86,8 @@ nonzero diagonal means pivot search selects the current row without swapping.
 Other rows retain their column entry until their own elimination, so counting
 those nonzero entries counts the actual `eliminateColumn` updates. This is an
 untimed finite-input inventory, not a general operation-count theorem. -/
-def inspectFull : IO UInt32 := do
-  for s in #[1, 2, 3, 4, 5] do
+def inspectFullFor (arities : Array Nat) : IO UInt32 := do
+  for s in arities do
     let r := 3^s
     let rows := (words [0, 1, 2] s).toArray
     let cols := (words [-1, 0, 1] s).toArray
@@ -118,5 +118,8 @@ def inspectFull : IO UInt32 := do
       ("inverseIdentityScalarPairs", Lean.toJson (r * r * r)),
       ("matchesInverse", Lean.toJson true)]).compress
   return 0
+
+/-- Inspect the original full-matrix schedule. -/
+def inspectFull : IO UInt32 := inspectFullFor #[1, 2, 3, 4, 5]
 
 end Hex.SignDetBench

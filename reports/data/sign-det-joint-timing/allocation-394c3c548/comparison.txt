@@ -1,0 +1,12 @@
+reading file "/tmp/issue-10377-joint-allocation-394c3c548/heaptrack.zst" - please wait, this might take some time...
+Debuggee command was: /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.Joint.runComparison --param 31 --target-nanos 100000000 --cache-mode cold
+finished reading file, now analyzing data:
+
+MOST CALLS TO ALLOCATION FUNCTIONS
+
+total runtime: 563.605000s.
+calls to allocation functions: 1039653778 (1844649/s)
+temporary memory allocations: 258293219 (458287/s)
+peak heap memory consumption: 196.34K
+peak RSS (including heaptrack overhead): 1.37G
+total memory leaked: 24.90K

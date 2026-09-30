@@ -1248,16 +1248,42 @@ example (f : DensePoly Rat) (hf : f ≠ 0) (hd : 0 < f.natDegree) (extra : Nat) 
 
 example (f : DensePoly Rat) : check f (decompose f) = true := decompose_sound f
 
+-- The rational replay consumers use the executable field instance.
+example (f : DensePoly Rat) (unit : Rat)
+    (entries : Array (DensePoly Rat × Nat))
+    (hdecomp : decompose f = .factors unit entries) :
+    HexPolyMathlib.toPolynomial f =
+      entries.toList.foldl (fun product entry =>
+        product * (HexPolyMathlib.toPolynomial entry.1) ^ entry.2)
+        (Polynomial.C unit) := by
+  have hcheck := decompose_sound f
+  rw [hdecomp] at hcheck
+  exact check_product_polynomial f unit entries hcheck
+
+example (f : DensePoly Rat) (unit : Rat)
+    (entries : Array (DensePoly Rat × Nat))
+    (hdecomp : decompose f = .factors unit entries)
+    (entry : DensePoly Rat × Nat) (hmem : entry ∈ entries)
+    (x : ℝ)
+    (hroot : Polynomial.IsRoot
+      ((HexPolyMathlib.toPolynomial entry.1).map (Rat.castHom ℝ)) x) :
+    Polynomial.rootMultiplicity x
+      ((HexPolyMathlib.toPolynomial f).map (Rat.castHom ℝ)) =
+      entry.2 := by
+  have hcheck := decompose_sound f
+  rw [hdecomp] at hcheck
+  exact check_real_rootMultiplicity f unit entries entry hmem hcheck x hroot
+
 end Integration
 
 -- This semantic selected-root field inherits inverse soundness from
--- `Tarski.check_rootSum` (#10389); the generic producer theorem does not.
+-- the proved `Tarski.check_rootSum`; the generic producer theorem does not.
 example {context : Nat} (d : Root context) (f : DensePoly (Value d)) :
     check f (decompose f) = true := decompose_sound f
 
 /-- The actual cached packed recurrence passes full replay after interpreting
 its coefficients as canonical real algebraic numbers. This instantiation
-inherits the selected-root inverse dependency on #10389. -/
+inherits the selected-root inverse dependency on the proved root-sum theorem. -/
 theorem decompose_packed {context : Nat} {d : Root context}
     (h : Root.Handle d) (f : DensePoly (Root.Handle.Value h)) :
     check
@@ -1270,8 +1296,7 @@ theorem decompose_packed {context : Nat} {d : Root context}
   rw [map_packed]
   exact decompose_sound _
 
--- The inherited `sorryAx` is `Tarski.check_rootSum` (#10389).
-/-- info: 'Hex.RealClosure.Yun.decompose_packed' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Yun.decompose_packed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Yun.decompose_packed
 

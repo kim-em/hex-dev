@@ -114,18 +114,17 @@ theorem cubeZero (a : CubeField) :
     (Field.literalRep_real cubePoly cubeSquare cubeWitness cubePrecision cubeReal) a
 
 /-- info: 'Hex.RCF.LiteralSignConformance.cubeZero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms cubeZero
 
-/-- info: 'Hex.RCF.RealCoefficients.Field.checkSignTable_spec' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RCF.RealCoefficients.Field.checkSignTable_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Field.checkSignTable_spec
 
 /-- info: 'Hex.RCF.RealCoefficients.CommonPresentation.checkPresentation_sound' depends on axioms: [propext,
- sorryAx,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms CommonPresentation.checkPresentation_sound
 
 end Hex.RCF.LiteralSignConformance

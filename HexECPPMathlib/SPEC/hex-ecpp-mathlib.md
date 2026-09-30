@@ -207,3 +207,13 @@ progress.
 - [PARI `primecert` documentation](https://pari.math.u-bordeaux.fr/dochtml/html-stable/Arithmetic_functions.html#primecert): supplied certificate format and terminal prime conventions.
 - [PARI ECPP implementation](https://pari.math.u-bordeaux.fr/lcov-report/basemath/ecpp.c.gcov.html): exact integer size comparison and strong-nonzero check.
 - [Mathlib affine points](https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/AlgebraicGeometry/EllipticCurve/Affine/Point.lean): group-law interface; use the project's lockfile for the version built here.
+
+## Native search elaboration
+
+`HexECPPMathlib/Native.lean` provides the explicit
+`primality? (method := ecpp)` route and certificate export. Its executable
+producer is owned by the computational SPEC. It validates raw data and
+kernel-checks the unconditional proof before suggesting or exporting compact
+frozen data. It introduces no registration on ordinary `primality` and no
+CM proof dependency. The native search ceiling is admitted separately from
+the supplied-certificate replay ceiling.

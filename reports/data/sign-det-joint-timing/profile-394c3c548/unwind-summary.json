@@ -1,0 +1,3414 @@
+{
+  "operation_samples": 716,
+  "outside_operation_samples": 1232,
+  "regions": [
+    [
+      56498984744150,
+      56502588553220
+    ]
+  ],
+  "sidecars": [
+    {
+      "kind": "header",
+      "pid": 2626161,
+      "clock_source": "CLOCK_MONOTONIC",
+      "mono_anchor_ns": 56498984615659,
+      "schema_version": 1
+    },
+    {
+      "kind": "region",
+      "mono_t0_ns": 56498984744150,
+      "mono_t1_ns": 56502588553220,
+      "count": 1,
+      "label": "kernel"
+    }
+  ],
+  "leaf_counts": {
+    "unresolved": 461,
+    "cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)": 111,
+    "malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)": 104,
+    "realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)": 39,
+    "[unknown] ([unknown])": 1
+  },
+  "samples": [
+    {
+      "mono_ns": 56498989318965,
+      "frames": []
+    },
+    {
+      "mono_ns": 56498994303437,
+      "frames": []
+    },
+    {
+      "mono_ns": 56498999309522,
+      "frames": [
+        "7ed4308aef16 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499004333022,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499009363773,
+      "frames": [
+        "7ed4308ae8de malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499014376838,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499019395681,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499024419662,
+      "frames": [
+        "7ed4308ae92d malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499029442311,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499034464499,
+      "frames": [
+        "7ed4308aef70 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499039560236,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499044562434,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499049573086,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499054593271,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499059612444,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499064634973,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499069659405,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499074684047,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499079708107,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499084754742,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499089782328,
+      "frames": [
+        "7ed4308aef57 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499094799529,
+      "frames": [
+        "7ed4308ae946 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499099820445,
+      "frames": [
+        "7ed4308ae943 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499104851687,
+      "frames": [
+        "7ed4308af396 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499109871161,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499114894331,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499119917741,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499124942413,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499129967705,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499134994190,
+      "frames": [
+        "7ed4308aef16 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499140164377,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499145117253,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499150103959,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499155111175,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499160124440,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499165142001,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499170165381,
+      "frames": [
+        "7ed4308aef5a cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499175188801,
+      "frames": [
+        "7ed4308aef47 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499180214655,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499185238906,
+      "frames": [
+        "7ed4308ae92d malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499190262716,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499195333316,
+      "frames": [
+        "7ed4308aef57 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499200347282,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499205358724,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499210379090,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499215415990,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499220433041,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499225454137,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499230480141,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499235505053,
+      "frames": [
+        "7ed4308af324 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499240528453,
+      "frames": [
+        "7ed4308ae943 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499245555018,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499250579590,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499255606765,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499260632749,
+      "frames": [
+        "7ed4308af324 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499265659664,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499270684426,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499275709769,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499280736604,
+      "frames": [
+        "7ed4308ae943 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499285764120,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499290786959,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499295812503,
+      "frames": [
+        "7ed4308af396 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499300835041,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499305860625,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499310885647,
+      "frames": [
+        "7ed4308aef16 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499315913734,
+      "frames": [
+        "7ed4308aef1a cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499320937004,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499325961155,
+      "frames": [
+        "7ed4308af324 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499330985726,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499336013853,
+      "frames": [
+        "7ed4308ae911 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499341052867,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499346067884,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499351087859,
+      "frames": [
+        "7ed4308aef27 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499356169746,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499361174328,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499366189796,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499371207928,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499376230597,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499381253907,
+      "frames": [
+        "7ed4308aeee1 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499386279580,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499391304433,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499396331438,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499401356670,
+      "frames": [
+        "7ed4308aef47 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499406394352,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499411415238,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499416443495,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499421464812,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499426486550,
+      "frames": [
+        "7ed4308af324 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499431509689,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499436533229,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499441556249,
+      "frames": [
+        "7ed4308ae911 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499446584206,
+      "frames": [
+        "7ed4308aef1a cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499451608687,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499456638056,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499461663329,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499466687260,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499471712372,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499476739918,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499481762357,
+      "frames": [
+        "7ed4308ae928 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499486787810,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499491812832,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499496841049,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499501866232,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499506892446,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499511964268,
+      "frames": [
+        "7ed4308ae913 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499516973487,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499521989816,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499527012916,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499532036075,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499537059986,
+      "frames": [
+        "7ed4308aef16 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499542084688,
+      "frames": [
+        "7ed4308ae928 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499547109530,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499552134442,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499557160426,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499562184567,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499567210401,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499572237636,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499577264231,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499582289124,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499587313265,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499592337115,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499597365453,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499602390345,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499607414616,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499612440880,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499617466514,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499622491576,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499627517680,
+      "frames": [
+        "7ed4308aef16 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499632543444,
+      "frames": [
+        "7ed4308aeee1 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499637568546,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499642599026,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499647624880,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499652659907,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499657682196,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499662743031,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499667791809,
+      "frames": [
+        "7ed4308aeeff cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499672789621,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499677802004,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499682820808,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499687842746,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499692867417,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499697888744,
+      "frames": [
+        "7ed4308ae935 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499702918954,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499707941303,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499712965003,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499717991708,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499723037381,
+      "frames": [
+        "7ed4308af379 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499728065128,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499733083029,
+      "frames": [
+        "7ed4308ae913 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499738112729,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499743129238,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499748150445,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499753172693,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499758198908,
+      "frames": [
+        "7ed4308ae935 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499763225082,
+      "frames": [
+        "7ed4308aef6a cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499768250445,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499773282588,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499778303894,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499783326774,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499788400238,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499793428565,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499798437093,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499803452982,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499808480368,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499813499862,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499818519096,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499823587793,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499828595169,
+      "frames": [
+        "7ed4308af324 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499833612721,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499838633286,
+      "frames": [
+        "7ed4308aeee1 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499843665199,
+      "frames": [
+        "7ed4308ae8c4 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499848685004,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499853706751,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499858733196,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499863758669,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499868783411,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499873805890,
+      "frames": [
+        "7ed4308ae928 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499878836911,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499883863315,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499888886064,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499893910245,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499898937601,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499903962664,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499908993695,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499914017716,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499919055738,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499924075512,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499929110359,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499934129243,
+      "frames": [
+        "7ed4308af353 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499939149918,
+      "frames": [
+        "7ed4308ae8e9 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499944182743,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499949200815,
+      "frames": [
+        "7ed4308aef47 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499954223834,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499959249918,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499964273889,
+      "frames": [
+        "7ed4308aeee1 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499969311490,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499974336532,
+      "frames": [
+        "7ed4308ae92d malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56499979431629,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499984436050,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499989450467,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499994462530,
+      "frames": []
+    },
+    {
+      "mono_ns": 56499999488504,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500004505895,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500009527172,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500014556230,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500019573311,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500024596421,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500029620121,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500034650742,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500039672329,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500044697181,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500049720581,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500054744922,
+      "frames": [
+        "7ed4308ae8b0 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500059773280,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500064905962,
+      "frames": [
+        "7ed4308af327 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500069874691,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500074868287,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500079875503,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500084892433,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500089914771,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500094939013,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500099964175,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500104988587,
+      "frames": [
+        "7ed4308aef70 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500110015542,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500115042387,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500120068742,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500125093123,
+      "frames": [
+        "7ed4308af324 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500130117895,
+      "frames": [
+        "7ed4308aef16 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500135184719,
+      "frames": [
+        "7ed4308aeeff cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500140196382,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500145213553,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500150234469,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500155258270,
+      "frames": [
+        "7ed4308ae935 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500160283803,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500165307734,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500170333567,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500175359721,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500180386486,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500185411108,
+      "frames": [
+        "7ed4308af353 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500190434428,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500195460872,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500200488499,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500205513541,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500210539044,
+      "frames": [
+        "7ed4308ae8e9 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500215563826,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500220587647,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500225612179,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500230638713,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500235664026,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500240705703,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500245724406,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500250745944,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500255769033,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500260796569,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500265820800,
+      "frames": [
+        "7ed4308af324 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500270846384,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500275871326,
+      "frames": [
+        "7ed4308ae935 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500280896468,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500285922242,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500290988936,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500296003533,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500301025211,
+      "frames": [
+        "7ed4308ae913 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500306048791,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500311073763,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500316096742,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500321120894,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500326144454,
+      "frames": [
+        "7ed4308ae8c4 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500331167303,
+      "frames": [
+        "7ed4308af379 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500336192696,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500341218990,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500346244584,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500351269596,
+      "frames": [
+        "7ed4308ae92d malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500356295970,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500361323917,
+      "frames": [
+        "7ed4308aef70 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500366349590,
+      "frames": [
+        "7ed4308af379 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500371371488,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500376395910,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500381424758,
+      "frames": [
+        "7ed4308aef62 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500386450852,
+      "frames": [
+        "7ed4308aef0a cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500391476395,
+      "frames": [
+        "7ed4308ae92d malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500396510250,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500401533310,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500406557731,
+      "frames": [
+        "7ed4308ae949 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500411582433,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500416606785,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500421631737,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500426655427,
+      "frames": [
+        "7ed4308ae911 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500431682463,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500436707565,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500441730795,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500446820954,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500451820438,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500456832301,
+      "frames": [
+        "7ed4308aef16 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500461854269,
+      "frames": [
+        "7ed4308aef16 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500466874765,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500471898896,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500476923147,
+      "frames": [
+        "7ed4308ae8c4 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500481947939,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500486970919,
+      "frames": [
+        "7ed4308ae8e9 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500491995460,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500497025821,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500502052596,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500507076887,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500512102881,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500517127553,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500522151163,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500527177708,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500532202760,
+      "frames": [
+        "7ed4308aef0a cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500537229065,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500542257542,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500547284978,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500552307296,
+      "frames": [
+        "7ed4308ae8e9 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500557333130,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500562360746,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500567387131,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500572410701,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500577437356,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500582462739,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500587487561,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500592512874,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500597541111,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500602609087,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500607617855,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500612636778,
+      "frames": [
+        "7ed4308af324 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500617657485,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500622695005,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500627711355,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500632732942,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500637755932,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500642781585,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500647805726,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500652829517,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500657854038,
+      "frames": [
+        "7ed4308ae8c4 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500662881344,
+      "frames": [
+        "7ed4308aef47 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500667907458,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500672932621,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500677958845,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500682982856,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500688009450,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500693036516,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500698062720,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500703088554,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500708113726,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500713139620,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500718165794,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500723193911,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500728217051,
+      "frames": [
+        "7ed4308ae8c4 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500733243555,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500738268107,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500743291036,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500748315398,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500753341291,
+      "frames": [
+        "7ed4308aef47 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500758368597,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500763436603,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500768448717,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500773463934,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500778484110,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500783508101,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500788536608,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500793583473,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500798600684,
+      "frames": [
+        "7ed4308aef1a cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500803621300,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500808645601,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500813704954,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500818705831,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500823721159,
+      "frames": [
+        "7ed4308ae8e9 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500828742055,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500833761800,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500838787143,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500843810763,
+      "frames": [
+        "7ed4308ae93b malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500848833462,
+      "frames": [
+        "7ed4308aef1a cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500853858965,
+      "frames": [
+        "7ed4308ae928 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500858887993,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500863914198,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500868936216,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500873961899,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500878988995,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500884017172,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500889043085,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500894067957,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500899095704,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500904119985,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500909154341,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500914181627,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500919261871,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500924264320,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500929289573,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500934305061,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500939324125,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500944349057,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500949374009,
+      "frames": [
+        "7ed4308ae911 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500954397850,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500959531794,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500964494524,
+      "frames": [
+        "7ed4308ae935 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500969487790,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500974496738,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500979514329,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500984534835,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56500989561049,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500994585952,
+      "frames": []
+    },
+    {
+      "mono_ns": 56500999612026,
+      "frames": [
+        "7ed4308ae92d malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501004635766,
+      "frames": [
+        "7ed4308aef32 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501009659476,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501014687243,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501019711504,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501024740483,
+      "frames": [
+        "7ed4308ae928 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501029763772,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501034788414,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501039813216,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501044840482,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501049863692,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501054888134,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501059917933,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501064942154,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501069978093,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501075046770,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501080416312,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501085620370,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501090737999,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501095810002,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501100860692,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501105897001,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501110928213,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501115956300,
+      "frames": [
+        "7ed4308ae92d malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501120985057,
+      "frames": [
+        "7ed4308ae92d malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501126014486,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501131143383,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501136115817,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501141104896,
+      "frames": [
+        "7ed4308aef32 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501146109539,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501151125648,
+      "frames": [
+        "7ed4308aef5a cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501156146384,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501161171897,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501166194636,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501171218136,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501176241636,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501181268271,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501186292783,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501191318827,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501196357539,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501201375772,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501206397089,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501211420188,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501216444610,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501221472046,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501226495886,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501231563362,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501236574894,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501241590773,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501246613212,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501251636461,
+      "frames": [
+        "7ed4308aef5a cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501256660172,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501261689000,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501266713491,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501271739235,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501276762835,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501281786916,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501286810677,
+      "frames": [
+        "7ed4308ae8e9 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501291834828,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501296862284,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501301887647,
+      "frames": [
+        "7ed4308aef47 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501306912339,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501311939274,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501316963495,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501321987997,
+      "frames": [
+        "7ed4308aeeff cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501327030365,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501332049178,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501337072068,
+      "frames": [
+        "7ed4308aef47 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501342095107,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501347119058,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501352145863,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501357173129,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501362199503,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501367223654,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501372249077,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501377274660,
+      "frames": [
+        "7ed4308af353 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501382299112,
+      "frames": [
+        "7ed4308ae8e9 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501387365686,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501392378220,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501397395941,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501402417539,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501407439997,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501412466402,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501417490853,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501422517208,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501427539987,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501432565790,
+      "frames": [
+        "7ed4308ae92d malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501437595800,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501442623546,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501447660577,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501452680031,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501457704813,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501462730086,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501467754868,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501472778358,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501477802349,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501482827502,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501487851933,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501492877426,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501497908768,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501502929834,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501507952934,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501512976704,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501518005162,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501523029644,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501528053965,
+      "frames": [
+        "7ed4308ae92d malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501533077755,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501538103679,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501543174740,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501548188245,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501553210413,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501558237479,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501563262321,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501568284699,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501573312837,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501578332992,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501583355580,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501588382816,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501593405295,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501598429686,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501603472155,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501608495785,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501613512545,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501618531849,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501623556511,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501628582144,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501633609610,
+      "frames": [
+        "7ed4308aef1a cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501638634933,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501643664903,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501648717957,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501653729429,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501658748533,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501663771753,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501668794772,
+      "frames": [
+        "7ed4308af379 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501673819284,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501678851366,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501683875227,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501688897576,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501693920835,
+      "frames": [
+        "7ed4308ae928 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501698990624,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501704001436,
+      "frames": [
+        "ffffffffa85b8264 [unknown] ([unknown])",
+        "ffffffffa8484e85 [unknown] ([unknown])",
+        "ffffffffa91ce809 [unknown] ([unknown])",
+        "ffffffffa920160a [unknown] ([unknown])",
+        "7ed4308aeee1 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501709049071,
+      "frames": [
+        "7ed4308ae8c4 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501714065471,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501719076352,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501724093333,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501729113859,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501734136848,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501739163473,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501744189026,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501749319114,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501754359179,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501759341207,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501764339570,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501769353026,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501774375534,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501779397302,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501784423156,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501789445214,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501794468083,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501799491263,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501804518438,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501809547827,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501814579189,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501819603751,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501824625108,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501829648538,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501834674311,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501839746053,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501844751466,
+      "frames": [
+        "7ed4308af324 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501849771842,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501854833298,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501859838201,
+      "frames": [
+        "7ed4308ae8e9 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501864850815,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501869871000,
+      "frames": [
+        "7ed4308aeed4 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501874891225,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501879915206,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501884950514,
+      "frames": [
+        "7ed4308ae8c4 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501889974775,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501894995361,
+      "frames": [
+        "7ed4308aeef9 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501900033954,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501905052797,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501910075065,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501915097744,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501920122326,
+      "frames": [
+        "7ed4308aeed4 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501925144504,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501930168805,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501935195540,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501940220322,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501945246036,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501950271248,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501955298745,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501960325950,
+      "frames": [
+        "7ed4308aef62 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501965349771,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501970374863,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501975398764,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501980425319,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56501985451603,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501990476045,
+      "frames": []
+    },
+    {
+      "mono_ns": 56501995501678,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502000526180,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502005552123,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502010577476,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502015653164,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502020659298,
+      "frames": [
+        "7ed4308af379 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502025675928,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502030697245,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502035718422,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502040740790,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502045764941,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502050790795,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502055818301,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502060843824,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502065868897,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502070895171,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502075919913,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502080945687,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502085970639,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502090995491,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502096033623,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502101056442,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502106081274,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502111106677,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502116131339,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502121157623,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502126181244,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502131208049,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502136230037,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502141255610,
+      "frames": [
+        "7ed4308ae93b malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502146281033,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502151308379,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502156333381,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502161361298,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502166383476,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502171450971,
+      "frames": [
+        "7ed4308aef57 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502176462233,
+      "frames": [
+        "7ed4308aef66 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502181478663,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502186501593,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502191540736,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502196558688,
+      "frames": [
+        "7ed4308af396 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502201578683,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502206599639,
+      "frames": [
+        "7ed4308aef16 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502211622348,
+      "frames": [
+        "7ed4308aef4b cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502216646760,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502221673184,
+      "frames": [
+        "7ed4308ae8c4 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502226699308,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502231722268,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502236745697,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502241772232,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502246799718,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502251825863,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502256853829,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502261881135,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502266904375,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502271929748,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502276957184,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502281983909,
+      "frames": [
+        "7ed4308ae8e9 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502287027488,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502292046712,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502297067058,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502302088745,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502307110813,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502312135575,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502317162280,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502322188404,
+      "frames": [
+        "7ed4308ae911 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502327254538,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502332265099,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502337281709,
+      "frames": [
+        "7ed4308aeef9 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502342303055,
+      "frames": [
+        "7ed4308aef27 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502347325093,
+      "frames": [
+        "7ed4308aeee1 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502352351809,
+      "frames": [
+        "7ed4308ae913 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502357378003,
+      "frames": [
+        "7ed4308af314 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502362405959,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502367431633,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502372459559,
+      "frames": [
+        "7ed4308aef1a cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502377483711,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502382509634,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502387535738,
+      "frames": [
+        "7ed4308aeef9 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502392559970,
+      "frames": [
+        "7ed4308ae923 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502397582919,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502402608793,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502407633665,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502412666909,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502417695137,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502422718557,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502427744871,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502432766338,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502437789838,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502442813729,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502447839082,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502452865056,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502457892642,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502462921150,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502467946553,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502472970904,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502477994264,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502483066006,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502488445072,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502493652254,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502498770775,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502503841556,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502508888941,
+      "frames": [
+        "7ed4308aeef9 cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502513927464,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502518959176,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502523990538,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502529019226,
+      "frames": [
+        "7ed4308ae90c malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502534044228,
+      "frames": [
+        "7ed4308ae937 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502539070763,
+      "frames": [
+        "7ed4308af359 realloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502544097788,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502549127157,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502554152310,
+      "frames": [
+        "7ed4308aef7c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502559182319,
+      "frames": [
+        "7ed4308ae8c4 malloc (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    },
+    {
+      "mono_ns": 56502564205960,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502569229219,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502574251037,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502579273255,
+      "frames": []
+    },
+    {
+      "mono_ns": 56502584299269,
+      "frames": [
+        "7ed4308aef3c cfree@GLIBC_2.2.5 (/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6)"
+      ]
+    }
+  ],
+  "scope": "one operation-only cold comparison at degree 31; no scientific timing verdict or allocated-byte claim"
+}

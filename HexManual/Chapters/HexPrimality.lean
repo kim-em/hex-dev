@@ -116,6 +116,24 @@ example : Hex.Nat.Prime 561 := primality 561
 primality: 561 is not prime (Miller-Rabin witness 2)
 ```
 
+# Optional elliptic-curve certificates
+
+Import `HexECPPMathlib.Native` explicitly to use
+`primality? (method := ecpp)` for bounded native ECPP production through
+256 bits. An optional `(seed := 7)` makes proposal randomness reproducible.
+The producer takes no supplied curve, point, trace or factorization. It shares
+one finite allocation across recursive children and backtracking; exhaustion
+reports the unresolved subject and resource and is not a compositeness verdict.
+The complete allocation is defined by `Hex.ECPP.SearchBudget`.
+
+The suggestion freezes a compact certificate and its checked terminal Hex
+certificate. Replaying it imports `HexECPPMathlib.Compact` and uses `ecpp using`
+to obtain an unconditional kernel proof without rerunning CM search or PARI.
+In batch builds, `#ecpp_export (method := ecpp) Module.Name cert for n` writes
+that data to a new module. Existing destinations are preserved. Importing
+`HexECPPMathlib.Pari` also provides the explicit PARI production route.
+These optional imports do not change ordinary `primality`.
+
 # Reusable certificates with `primality?`
 %%%
 tag := "hex-primality-construction"

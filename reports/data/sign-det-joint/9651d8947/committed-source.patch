@@ -1,0 +1,452 @@
+diff --git a/bench/HexSignDet/Bench.lean b/bench/HexSignDet/Bench.lean
+index 867f552ec..2105a8a26 100644
+--- a/bench/HexSignDet/Bench.lean
++++ b/bench/HexSignDet/Bench.lean
+@@ -7,0 +8 @@ import HexSignDet.Small
++import HexSignDet.Joint
+@@ -191,0 +193,5 @@ def main (args : List String) : IO UInt32 :=
++  else if args == ["inspect-joint"] then Hex.SignDetBench.Joint.inspect #[3, 7, 15, 31, 63]
++  else if let ["inspect-joint", degree] := args then
++    match degree.toNat? with
++    | some n => Hex.SignDetBench.Joint.inspect #[n]
++    | none => throw (IO.userError "expected an odd integer degree at least three")
+@@ -194,0 +201,3 @@ def main (args : List String) : IO UInt32 :=
++  else if args.head? == some "verify" then do
++    Hex.SignDetBench.Joint.verify
++    LeanBench.Cli.dispatch args
+diff --git a/bench/HexSignDet/Joint.lean b/bench/HexSignDet/Joint.lean
+new file mode 100644
+index 000000000..7b086bed3
+--- /dev/null
++++ b/bench/HexSignDet/Joint.lean
+@@ -0,0 +1,140 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import HexSignDet.Small
++
++namespace Hex.SignDetBench.Joint
++open Hex.SignDet
++
++abbrev Root := Descriptor Rat Nat Sturm.orderSign 10377
++
++/-- Keep the actual source descriptors and both joint tables available for
++separate completion, comparison, construction and replay measurements. -/
++structure Case where
++  leftPartial : Root
++  rightPartial : Root
++  leftFull : Root
++  rightFull : Root
++  left : Input
++  right : Input
++  leftDirect : Replay Rat Nat
++  rightDirect : Replay Rat Nat
++
++private def signs (qs : List (DensePoly Rat)) (x : Rat) : List Int :=
++  qs.map fun q => Sturm.orderSign (q.eval x)
++
++/-- For odd n, the sources X^n-1 and X^n+1 have unique real roots 1 and -1.
++The actual gcd is -2, so the common head is -(X^(2n)-1)/2. Each re-encoding uses its own list of
++2n target derivatives followed by the n+1 source constraints: 3n+1 queries.
++The sources share derivative vectors but their defining equations differ. -/
++def input (n : Nat) : Option Case := do
++  if n < 3 || n % 2 != 1 then none else do
++    let x : DensePoly Rat := DensePoly.monomial n 1
++    let p := x - 1
++    let q := x + 1
++    let raw := fun head => (⟨10377, head, .negInf, .posInf, [n], [1]⟩ : RawDescriptor Rat Nat)
++    let .ok (.ok l) := Descriptor.build Sturm.orderSign 10377 (raw p) | none
++    let .ok (.ok r) := Descriptor.build Sturm.orderSign 10377 (raw q) | none
++    let .ok lc := l.buildCompletion | none
++    let .ok rc := r.buildCompletion | none
++    let lf := lc.descriptor
++    let rf := rc.descriptor
++    if lf.raw.signs != signs lf.raw.queries 1 || rf.raw.signs != signs rf.raw.queries (-1) then none else do
++      let .ok comparison := lf.buildComparison rf | none
++      let h := DensePoly.scale (-1/2 : Rat) (DensePoly.monomial (2*n) (1 : Rat) - 1)
++      if comparison.common.head != h || comparison.order != .gt ||
++          p.eval 1 != 0 || q.eval (-1) != 0 || h.eval 1 != 0 || h.eval (-1) != 0 then none else do
++        let domain ← Sturm.prepare Sturm.orderSign h .negInf .posInf
++        let target : RawDescriptor Rat Nat := ⟨10377, h, .negInf, .posInf, [], []⟩
++        let lqs := (target.full []).queries ++ lf.raw.constraints
++        let rqs := (target.full []).queries ++ rf.raw.constraints
++        let lt := comparison.leftEncoding.evidence
++        let rt := comparison.rightEncoding.evidence
++        let .ok ld := buildPrepared (10377 : Nat) domain lqs false | none
++        let .ok rd := buildPrepared (10377 : Nat) domain rqs false | none
++        let expected := fun qs => [(signs qs 1, (1 : Int)), (signs qs (-1), 1)]
++        if lqs.length != 3*n+1 || rqs.length != 3*n+1 ||
++            lt.node.queries != lqs || rt.node.queries != rqs ||
++            entries lt.node.system != expected lqs || entries rt.node.system != expected rqs ||
++            entries ld.val.node.system != expected lqs || entries rd.val.node.system != expected rqs ||
++            comparison.leftEncoding.target.raw.signs != signs (target.full []).queries 1 ||
++            comparison.rightEncoding.target.raw.signs != signs (target.full []).queries (-1) then none else
++          some ⟨l, r, lf, rf, ⟨h, lqs, some domain, some lt, some (Dag.encode lt)⟩,
++            ⟨h, rqs, some domain, some rt, some (Dag.encode rt)⟩, ld.val, rd.val⟩
++
++private def bits (z : Int) : Nat := if z == 0 then 0 else z.natAbs.log2 + 1
++
++private def ratBits (q : Rat) : Nat := max (bits q.num) (q.den.log2 + 1)
++private def polyBits (p : DensePoly Rat) : Nat :=
++  p.toArray.foldl (fun k q => max k (ratBits q)) 0
++private def stepBits (s : RemainderStep Rat) : Nat :=
++  max (polyBits s.quotient) (max (ratBits s.leftScale) (ratBits s.rightScale))
++private def chainBits (c : SignedRemainderChain Rat) : Nat :=
++  max (c.chain.foldl (fun k p => max k (polyBits p)) 0)
++    (max (c.steps.foldl (fun k s => max k (stepBits s)) (stepBits c.initial))
++      ((c.terminal.map (fun (s, q) => max (ratBits s) (polyBits q))).getD 0))
++private def witnessBits (tree : Replay Rat Nat) : Nat := (nodes tree).foldl (fun k n =>
++  let k := n.moments.toList.foldl (fun k c =>
++    max k (max (polyBits c.queryPoly) (max (chainBits c.squarefree) (chainBits c.remainders)))) k
++  let steps := (n.preparation.map (·.steps)).getD [] ++
++    n.reductions.toList.flatMap (fun r => (r.map (·.steps)).getD [])
++  steps.foldl (fun k s => max k (max (polyBits s.next) (stepBits s.witness))) k) 0
++
++
++private def record (n : Nat) (side : String) (source : Root) (i : Input)
++    (direct : Replay Rat Nat) : IO Lean.Json := do
++  let some tree := i.tree | throw (IO.userError "missing joint tree")
++  let some graph := i.graph | throw (IO.userError "missing joint graph")
++  let directGraph := Dag.encode direct
++  let ns := nodes tree
++  let treeBytes := graph.encodeBytes ValueCodec.rat ValueCodec.nat
++  let directBytes := directGraph.encodeBytes ValueCodec.rat ValueCodec.nat
++  for (g, bytes) in [(graph, treeBytes), (directGraph, directBytes)] do
++    unless g.check Sturm.orderSign 10377 i.head .negInf .posInf i.queries &&
++        (Dag.decodeBytes ValueCodec.rat ValueCodec.nat Sturm.orderSign 10377 i.head
++          .negInf .posInf i.queries bytes {bytes := max 16777216 bytes.size}).isOk do
++      throw (IO.userError "joint graph or byte replay failed")
++  return Lean.Json.mkObj [
++    ("degree", Lean.toJson n), ("side", Lean.toJson side),
++    ("context", Lean.toJson (10377 : Nat)), ("source", Codec.poly ValueCodec.rat source.raw.head),
++    ("sourceIndices", Lean.toJson source.raw.indices), ("sourceSigns", Lean.toJson source.raw.signs),
++    ("head", Codec.poly ValueCodec.rat i.head),
++    ("queries", Codec.list (Codec.poly ValueCodec.rat) i.queries),
++    ("table", Lean.toJson (entries tree.node.system)),
++    ("directTable", Lean.toJson (entries direct.node.system)),
++    ("order", Lean.toJson "gt"),
++    ("querySlots", Lean.toJson (ns.foldl (fun k node => k + node.size) 0)),
++    ("maxColumns", Lean.toJson (ns.foldl (fun k node => max k node.size) 0)),
++    ("maxSupport", Lean.toJson (ns.foldl (fun k node => max k node.system.support.length) 0)),
++    ("maxInverseBits", Lean.toJson (ns.foldl (fun k node =>
++      node.system.inverse.rows.toArray.foldl (fun k row =>
++        row.toArray.foldl (fun k z => max k (bits z)) k) k) 0)),
++    ("maxDenominatorBits", Lean.toJson (ns.foldl (fun k node => max k (bits node.system.denominator)) 0)),
++    ("treeNodes", Lean.toJson ns.length), ("graphNodes", Lean.toJson graph.entries.size),
++    ("graphEdges", Lean.toJson (graph.entries.foldl (fun k e => k + if e.children.isSome then 2 else 0) 0)),
++    ("reducedQueryWitnessBits", Lean.toJson (witnessBits tree)),
++    ("directQueryWitnessBits", Lean.toJson (witnessBits direct)),
++    ("reducedGraphBytes", Lean.toJson treeBytes.size), ("directGraphBytes", Lean.toJson directBytes.size)]
++
++/-- Untimed input inventory of actual completion and cross-polynomial comparison.
++The root/sign table is checked by direct rational evaluation at the known roots;
++no exponential reference enumeration is attempted for these joint lists. -/
++def inspect (ns : Array Nat) : IO UInt32 := do
++  for n in ns do
++    let some i := input n | throw (IO.userError s!"invalid joint input at {n}")
++    for (side, source, joint, direct) in
++        [("left", i.leftFull, i.left, i.leftDirect), ("right", i.rightFull, i.right, i.rightDirect)] do
++      IO.println (← record n side source joint direct).compress
++      (← IO.getStdout).flush
++  return 0
++
++/-- The CI smoke input includes both graph and byte replay paths. -/
++def verify : IO Unit := do
++  let some i := input 3 | throw (IO.userError "joint fixture failed at degree three")
++  for (side, source, joint, direct) in
++      [("left", i.leftFull, i.left, i.leftDirect), ("right", i.rightFull, i.right, i.rightDirect)] do
++    discard <| record 3 side source joint direct
++
++end Hex.SignDetBench.Joint
+diff --git a/lakefile.lean b/lakefile.lean
+index 798acfe84..943c7ff92 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -1704 +1704 @@ lean_lib HexSignDetBenchSupport where
+-    .one `HexSignDet.Paired]
++    .one `HexSignDet.Paired, .one `HexSignDet.Joint]
+diff --git a/reports/sign-det-joint-inputs.md b/reports/sign-det-joint-inputs.md
+new file mode 100644
+index 000000000..ffd5e4c32
+--- /dev/null
++++ b/reports/sign-det-joint-inputs.md
+@@ -0,0 +1,47 @@
++# Joint re-encoding inputs
++
++For odd n at least three, use the source heads `X^n-1` and `X^n+1`, whose
++unique real roots are 1 and -1. The shared gcd producer returns the literal constant -2, so the actual
++common head is `-(X^(2n)-1)/2`, with exactly those two real roots. The fixture
++retains that scaling and its reversed target derivative signs; it does not
++substitute a monic normalization. The fixture in `bench/HexSignDet/Joint.lean`
++constructs actual partial descriptors using the highest derivative's positive
++sign, completes both through `Descriptor.buildCompletion`, and invokes the
++actual cross-polynomial `Descriptor.buildComparison`. It checks the common
++head literally and requires the result `gt`.
++
++The implementation constructs two separate re-encoding tables. Each query list
++contains the 2n target derivatives, the source defining equation, and its n
++source derivatives, in exactly that order. Thus each has `s=3n+1` queries;
++this is neither a combined list of both sources nor just the common head's
++derivatives. The total query degree is `D=n(5n-1)/2`. The two source derivative
++polynomial lists agree, but their defining equations and selected-root sign
++vectors differ. They must retain separate bindings.
++
++The reduced tables come directly from the two re-encoding evidence trees
++returned by the comparison producer. The unreduced producer receives precisely
++the same prepared domain and ordered query list. Both complete tables must
++match direct rational evaluation at the known roots -1 and 1, each with count
++one. The target descriptor words are checked at their selected roots. The
++fixture checks actual graph replay and byte-decoded replay in both modes.
++A full ternary reference would have `3^(3n+1)` columns and is not enumerated;
++small-input reduced/full agreement has its separate existing evidence.
++
++The independent Python validator reconstructs every literal polynomial,
++source slot/sign vector and both complete tables using integer factorials
++and evaluation, including the actual negative half-scale of the common head. It computes candidate dimensions recursively from the two
++known-root restrictions before solving: leaf dimensions are three, and each
++parent dimension is the product of the distinct child supports. Each query
++polynomial is distinct, so exact DAG encoding cannot identify two nodes with
++different query lists. It checks all tree/graph dimensions and edge counts.
++The matrix inverse/denominator bits, query-witness bits and certificate bytes
++are recorded positive integers without a claimed closed formula. Witness
++bits scan stored query/reduction certificates, including quotient and scaling
++fields; they are not peak intermediate values, allocated bytes or live memory.
++
++`inspect-joint` selects degrees 3, 7, 15, 31 and 63; `inspect-joint N` selects
++one development input. This is an untimed correctness and input inventory.
++No timing registration, cost-model verdict or performance gate follows from
++it. Separate completion, comparison/re-encoding, reduced/direct construction
++and checking measurements, intermediate coefficient observations and allocation
++coverage remain required before the joint-encoding Phase-4 gate can pass.
+diff --git a/scripts/bench/sign_det_joint.py b/scripts/bench/sign_det_joint.py
+new file mode 100644
+index 000000000..5519ecb9f
+--- /dev/null
++++ b/scripts/bench/sign_det_joint.py
+@@ -0,0 +1,158 @@
++#!/usr/bin/env python3
++"""Validate literal inputs and finite dimensions of actual joint re-encoding tables."""
++import argparse
++import hashlib
++import json
++import math
++import os
++from pathlib import Path
++import platform
++import subprocess
++import sys
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(ROOT))
++from scripts.bench.sign_det_compare import archive_sources
++from scripts.bench.sign_det_sparse import source_hashes
++from scripts.bench.structural_tactic_sweep import acquire_cpu
++
++DEGREES = [3, 7, 15, 31, 63]
++
++
++def monomial(degree, coefficient):
++    return [[0, 1]]*degree + [[coefficient, 1]]
++
++
++def derivatives(degree):
++    return [monomial(k, math.factorial(degree)//math.factorial(k))
++            for k in reversed(range(degree))]
++
++
++def inventory(words):
++    """Candidate sizes follow complete child restrictions before solving."""
++    arity = len(words[0])
++    if arity <= 1:
++        return 3, 3
++    mid = arity//2
++    left = [w[:mid] for w in words]
++    right = [w[mid:] for w in words]
++    size = len(set(map(tuple, left))) * len(set(map(tuple, right)))
++    lslots, lmax = inventory(left)
++    rslots, rmax = inventory(right)
++    return size + lslots + rslots, max(size, lmax, rmax)
++
++
++def expected(n, side):
++    if type(n) is not int or n < 3 or n % 2 != 1 or side not in ("left", "right"):
++        raise ValueError("invalid joint family parameter")
++    source = monomial(n, 1)
++    source[0] = [-1 if side == "left" else 1, 1]
++    head = monomial(2*n, 1)
++    head[0], head[-1] = [1, 2], [-1, 2]
++    target = [monomial(k, -math.factorial(2*n)//(2*math.factorial(k)))
++              for k in reversed(range(2*n))]
++    queries = target + [source] + derivatives(n)
++    assert len({json.dumps(q) for q in queries}) == len(queries)
++    # Exact evaluation at both known real roots of X^(2n)-1. No Tarski query.
++    words = [[(v > 0)-(v < 0) for q in queries
++              for v in [sum(c[0]*(x**k) for k, c in enumerate(q))]] for x in (1, -1)]
++    table = [[w, 1] for w in words]
++    slots, max_columns = inventory(words)
++    s = 3*n+1
++    return {"degree": n, "side": side, "context": 10377, "source": source,
++            "sourceIndices": list(range(1, n+1)),
++            "sourceSigns": [1]*n if side == "left" else [(-1)**(n-i) for i in range(1, n+1)],
++            "head": head, "queries": queries, "table": table, "directTable": table,
++            "order": "gt", "querySlots": slots, "maxColumns": max_columns, "maxSupport": 2,
++            "treeNodes": 2*s-1, "graphNodes": 2*s-1, "graphEdges": 2*s-2}
++
++
++RECORDED = {"maxInverseBits", "maxDenominatorBits", "reducedQueryWitnessBits",
++            "directQueryWitnessBits", "reducedGraphBytes", "directGraphBytes"}
++
++
++def validate(path, degrees=DEGREES):
++    rows = [json.loads(line) for line in path.read_text().splitlines()]
++    schedule = [(n, side) for n in degrees for side in ("left", "right")]
++    if len(rows) != len(schedule):
++        raise ValueError("missing joint observations")
++    for row, (n, side) in zip(rows, schedule, strict=True):
++        oracle = expected(n, side)
++        if set(row) != set(oracle) | RECORDED:
++            raise ValueError("changed joint observation fields")
++        for key, value in oracle.items():
++            if json.dumps(row[key]) != json.dumps(value):
++                raise ValueError(f"joint literal or dimension differs: {key}")
++        if any(type(row[k]) is not int or row[k] <= 0 for k in RECORDED):
++            raise ValueError("invalid recorded bit or byte count")
++    return len(rows)
++
++
++def collect(output):
++    """Retain the complete untimed inventory and its verified source closure."""
++    revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
++    if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True):
++        raise ValueError("commit source changes before collecting the joint inventory")
++    subprocess.run(["lake", "build", "--no-build", "hexsigndet_bench"], cwd=ROOT, check=True)
++    executable = ROOT / ".lake/build/bin/hexsigndet_bench"
++    output = output.resolve()
++    output.mkdir(parents=True, exist_ok=False)
++    cpu, lease = acquire_cpu()
++    os.sched_setaffinity(0, {cpu})
++    sources = source_hashes()
++    for relative in ("scripts/bench/sign_det_joint.py", "scripts/bench/test_sign_det_joint.py",
++                     "scripts/bench/sign_det_compare.py", "reports/sign-det-joint-inputs.md"):
++        sources[relative] = hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
++    metadata = {"schema": "hex-sign-det-joint-inventory-v1", "kind": "untimed-input-inventory",
++                "scientific_timing_samples": 0, "revision": revision, "source_sha256": sources,
++                "binary_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
++                "host": platform.node(), "platform": platform.platform(), "cpu": cpu,
++                "affinity": sorted(os.sched_getaffinity(0)), "load_before": os.getloadavg(),
++                "command": [str(executable), "inspect-joint"], "state": "running"}
++    try:
++        archive_sources(output, metadata)
++        (output / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
++        with (output / "inventory.jsonl").open("w") as stdout, (output / "stderr.log").open("w") as stderr:
++            result = subprocess.run(metadata["command"], cwd=ROOT, stdout=stdout, stderr=stderr)
++        metadata["exit_code"] = result.returncode
++        metadata["load_after"] = os.getloadavg()
++        metadata["inventory_sha256"] = hashlib.sha256((output / "inventory.jsonl").read_bytes()).hexdigest()
++        result.check_returncode()
++        metadata["validated_rows"] = validate(output / "inventory.jsonl")
++        for relative, expected_hash in sources.items():
++            if hashlib.sha256((ROOT / relative).read_bytes()).hexdigest() != expected_hash:
++                raise ValueError("source changed during collection: " + relative)
++        metadata["revision_after"] = subprocess.check_output(
++            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
++        metadata["binary_sha256_after"] = hashlib.sha256(executable.read_bytes()).hexdigest()
++        if (metadata["revision_after"] != revision or
++                metadata["binary_sha256_after"] != metadata["binary_sha256"]):
++            raise ValueError("source revision or executable changed during collection")
++        metadata["state"] = "complete"
++    except Exception as error:
++        metadata["state"] = "failed"
++        metadata["error"] = str(error)
++        raise
++    finally:
++        (output / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
++        lease.close()
++    return metadata["validated_rows"]
++
++
++if __name__ == "__main__":
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("inventory", type=Path, nargs="?")
++    parser.add_argument("--collect", type=Path, help="collect the complete untimed inventory outside the source tree")
++    parser.add_argument("--degree", type=int, action="append", help="validate an explicit development subset")
++    args = parser.parse_args()
++    if args.collect is not None:
++        if args.inventory is not None or args.degree is not None:
++            parser.error("--collect cannot be combined with an inventory or development subset")
++        if args.collect.resolve().is_relative_to(ROOT):
++            parser.error("collect outside the source tree")
++        count = collect(args.collect)
++    else:
++        if args.inventory is None:
++            parser.error("provide an inventory or --collect")
++        count = validate(args.inventory, args.degree or DEGREES)
++    print(f"{count} joint rows validated")
+diff --git a/scripts/bench/test_sign_det_joint.py b/scripts/bench/test_sign_det_joint.py
+new file mode 100644
+index 000000000..ed9a9edbb
+--- /dev/null
++++ b/scripts/bench/test_sign_det_joint.py
+@@ -0,0 +1,60 @@
++#!/usr/bin/env python3
++"""Check literal identity, both roots and actual joint-list dimensions."""
++import copy
++import json
++from pathlib import Path
++import tempfile
++import unittest
++
++from scripts.bench.sign_det_joint import RECORDED, expected, validate
++
++
++class JointValidation(unittest.TestCase):
++    def setUp(self):
++        self.temp = tempfile.TemporaryDirectory()
++        self.addCleanup(self.temp.cleanup)
++        self.path = Path(self.temp.name) / "inventory.jsonl"
++        self.rows = [expected(3, side) | dict.fromkeys(RECORDED, 1) for side in ("left", "right")]
++
++    def check(self, rows):
++        self.path.write_text("\n".join(map(json.dumps, rows)))
++        return validate(self.path, [3])
++
++    def test_complete(self):
++        self.assertEqual(self.check(self.rows), 2)
++        self.assertEqual(len(self.rows[0]["queries"]), 10)
++        self.assertEqual(self.rows[0]["table"][1][0][6], -1)
++        self.assertEqual(self.rows[1]["table"][1][0][6], 0)
++
++    def test_copied_binding_and_missing_root(self):
++        for key in ("source", "queries", "sourceSigns", "table"):
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                rows = copy.deepcopy(self.rows)
++                rows[0][key] = rows[1][key]
++                self.check(rows)
++        self.rows[0]["table"] = self.rows[0]["table"][1:]
++        with self.assertRaises(ValueError):
++            self.check(self.rows)
++
++    def test_dimensions(self):
++        for field in ("querySlots", "treeNodes", "graphNodes", "graphEdges", "maxColumns"):
++            with self.subTest(field=field), self.assertRaises(ValueError):
++                rows = copy.deepcopy(self.rows)
++                rows[0][field] += 1
++                self.check(rows)
++
++    def test_shape_and_integer_spoof(self):
++        for key, value in (("degree", 3.0), ("context", True), ("order", "lt"),
++                           ("maxInverseBits", True), ("reducedGraphBytes", 0)):
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                rows = copy.deepcopy(self.rows)
++                rows[0][key] = value
++                self.check(rows)
++        with self.assertRaises(ValueError):
++            self.check(self.rows[::-1])
++        with self.assertRaises(ValueError):
++            self.check(self.rows[:1])
++
++
++if __name__ == "__main__":
++    unittest.main()

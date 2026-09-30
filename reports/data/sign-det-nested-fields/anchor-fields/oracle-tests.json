@@ -1,0 +1,13 @@
+{
+  "scope": "single Python oracle-regression execution, not a scaling measurement",
+  "command": [
+    "/tmp/issue-10377-refinement-z3-venv/bin/python",
+    "-m",
+    "unittest",
+    "scripts.oracle.test_sign_det_nested_z3"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.17917956399469404,
+  "stdout": "",
+  "stderr": "...........\n----------------------------------------------------------------------\nRan 11 tests in 0.107s\n\nOK\n"
+}

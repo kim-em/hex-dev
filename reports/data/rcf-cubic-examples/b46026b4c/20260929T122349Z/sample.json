@@ -1,0 +1,41 @@
+{
+  "schema": "hex-rcf-user-example-observation-v1",
+  "source_commit": "b46026b4caec0f26cba2c2a4ee18712816cef2fa",
+  "source_parent": "9dca11cee2f2b85f4c33bbab00a6875da21ef47d",
+  "source_tree": "12d168dc694357cf1e89dadea40ea2147c48305c",
+  "source_sha256": {
+    "conformance/HexRCF/RealCoefficientTactic.lean": "85f0cd6f6be9dc5698a3ca2979a3be65cd7c7e3ff27cbbcd6bebc42a8e907f25",
+    "HexRCF/Tactic.lean": "08c0f294dcbf2b5fe5b8868cc51a148e0aa5bcf55202c3294eb6647d7fb8f514",
+    "lake-manifest.json": "39f443e69a6206ee1785b4a832de8344af65eec1cb2ee4fc803c30c9ebb3122a",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "command": [
+    "taskset",
+    "-c",
+    "26",
+    "lake",
+    "build",
+    "HexRCF.RealCoefficientTactic"
+  ],
+  "started_utc": "20260929T122349Z",
+  "host": "chungus2",
+  "kernel": "6.12.111",
+  "cpu": 26,
+  "load_before": [
+    1.7529296875,
+    3.552734375,
+    7.376953125
+  ],
+  "load_after": [
+    2.0712890625,
+    2.62548828125,
+    5.9306640625
+  ],
+  "exit_code": 0,
+  "wall_seconds": 288.997956888,
+  "user_seconds": 284.209679,
+  "system_seconds": 3.6818020000000002,
+  "largest_child_peak_rss_kib": 5532708,
+  "allocated_bytes": null,
+  "scope": "one fresh complete conformance-module build after dependencies were built; includes existing and four new rcf theorem examples, the repeated-root false-verdict guard and axiom guards, imports, elaboration, search, kernel checks and artifact writing; not an isolated theorem timer, scaling result or Phase-4 pass"
+}

@@ -13,5 +13,6 @@ import HexECPPMathlib.Soundness
 import HexECPPMathlib.Elab
 import HexECPPMathlib.Compact
 import HexECPPMathlib.Pari
+import HexECPPMathlib.Native
 
 /-! Prime-field semantics, Hasse bound, and unconditional ECPP soundness. -/

@@ -1,0 +1,21 @@
+[warm] lake build +HexSturmMathlib.Replay.Semantics:deps +HexSturmMathlib.Replay.SemanticsBaseline:deps
+[pair] semantics reference (HexSturmMathlib.Replay.SemanticsBaseline)
+[pair] semantics candidate (HexSturmMathlib.Replay.Semantics)
+Traceback (most recent call last):
+  File "/home/kim/worktrees/hex-dev/hex-dev-issue-10389/scripts/bench/sturm_semantics_sweep.py", line 41, in <module>
+    sys.exit(run_cli(SPEC, Path(__file__)))
+             ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kim/worktrees/hex-dev/hex-dev-issue-10389/scripts/bench/fresh_module_sweep.py", line 1907, in run_cli
+    row = build_shared_host_pair(
+        pair.name,
+    ...<8 lines>...
+        retain_compiler_output=spec.retain_compiler_output,
+    )
+  File "/home/kim/worktrees/hex-dev/hex-dev-issue-10389/scripts/bench/fresh_module_sweep.py", line 1058, in build_shared_host_pair
+    validate_axioms(pair_name, role, module, built[role])
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kim/worktrees/hex-dev/hex-dev-issue-10389/scripts/bench/fresh_module_sweep.py", line 1124, in validate_axioms
+    raise RuntimeError(
+    ...<2 lines>...
+    )
+RuntimeError: semantics reference axiom set mismatch: expected None, got ['propext', 'Classical.choice', 'Quot.sound']
