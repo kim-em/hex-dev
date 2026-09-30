@@ -409,19 +409,17 @@ end Expression
 
 end Hex.RealClosure
 
-/- The inherited `sorryAx` is `HexRealRootsMathlib.Tarski.check_rootSum` (#10389). -/
-/-- info: 'Hex.RealClosure.Root.exists_canonical' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.Root.exists_canonical' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Root.exists_canonical
-/-- info: 'Hex.RealClosure.Expression.canonicalValue_inverse?' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.Expression.canonicalValue_inverse?' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Expression.canonicalValue_inverse?
-/-- info: 'Hex.RealClosure.Root.toCanonical_real' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.Root.toCanonical_real' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Root.toCanonical_real
 /-- info: 'Hex.RealClosure.Expression.toCanonical_eq_canonicalValue' depends on axioms: [propext,
- sorryAx,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Expression.toCanonical_eq_canonicalValue

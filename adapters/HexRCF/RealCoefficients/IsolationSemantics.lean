@@ -12,8 +12,8 @@ public import HexRealAlgebraicMathlib.Order
 public section
 
 /-! The canonical real-algebraic producer feeds the generic checked-root
-semantics. Its only admitted mathematical input is the shared #10389 root-sum
-bridge consumed by `IsolationReplay.check_roots`. -/
+semantics through the shared root-sum theorem consumed by
+`IsolationReplay.check_roots`. -/
 
 namespace Hex.RCF.RealCoefficients
 

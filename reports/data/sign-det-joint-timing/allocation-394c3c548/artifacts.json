@@ -1,0 +1,18 @@
+{
+  "raw_directory": "/tmp/issue-10377-joint-allocation-394c3c548",
+  "source_revision": "394c3c54802ee1fe8e251098323b02c603536454",
+  "artifacts": {
+    "collector.py": "13d78a54d8118d7ddddb63ad36ea7fd2b813920bf500fa2ff86b2fbff9194d2c",
+    "metadata.json": "46728b7fdec5c4d308cf47f37c3e831832649577a32d0466da095a2be2b1d8fd",
+    "profile.log": "f1659bed90387a63c61c3f060d5a8be62fd796e6abcbdcdb63a49c7464c35a15",
+    "heaptrack.zst": "10981d1a8fedcfb21a0b5c65fda23b7c8710d9aae50eb5696e266224473d47b9",
+    "regions-2675704.jsonl": "62a6ffaf88cd186f3e4e3d3b51c82bf34b664918946bc2778de471a1fbe5d288",
+    "whole-process.txt": "a33bd4018a3be3585b2311b2586cc9e2dd690861d8f78b726ddb5a8af0f04fc9",
+    "comparison.txt": "a3a3ac25b7f87b28d10c56d254488547557767af5369d50ca9fdb0a1e8455cdc",
+    "comparison-correct-symbol.txt": "8a7e47e04db613c92cf91e015dab848d93ff4a4690cd6f4f63067c38dd446f8f",
+    "comparison-histogram.tsv": "ca015b29b8f2d998d2a1b36de515126460daccb3e78cd61c62df931d7aadfb9b",
+    "comparison-allocations.stacks": "3bf11aa0c3a980315cd9162eaf12c0dd19d4f58650446b8888d87c69e6d925f3",
+    "summary.json": "2d76bd48cdd41cd76de796086ab80f7efe6d68246edef0c223e26d57ef4ccdc8",
+    "postprocessor.py": "5a2ae69e2acb6dd48dc53a9b1126fdf8daab795bae2d313f950030dd72eb4c6f"
+  }
+}

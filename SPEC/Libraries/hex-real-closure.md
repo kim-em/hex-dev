@@ -36,11 +36,11 @@ The division of responsibility is:
 | [hex-sign-det](hex-sign-det.md) | Complete BKR tables and single-polynomial descriptors: validation, root identity/order, sign at a root and re-encoding. |
 | [hex-ordered-fn](hex-ordered-fn.md) | Exact rational-function fields, caller-supplied certified real-constant approximations, infinitesimal orders and proof-founded total coefficient search. |
 | [hex-real-algebraic](hex-real-algebraic.md) | Independent rational-base fast path; exact comparison and sorted roots with multiplicities. |
+| [hex-number-field](../../HexNumberField/SPEC/hex-number-field.md) | Exact `QAdjoin` coordinates and canonical algebraic-number conversion for packing at a rational selected-root handle. |
 | This library | Generic characteristic-zero Yun decomposition, staged contexts, executable ordered-field carriers, selected-root arithmetic, splitting/transport, root isolation, tower sampling and exploration. |
 
-The [number-field SPEC](../../HexNumberField/SPEC/hex-number-field.md)
-provides precedent for lazy selected roots, but its fixed irreducible,
-complex-embedded fields are not the generic tower representation.
+Fixed irreducible number fields with complex embeddings provide a precedent
+for lazy selected roots. The staged contexts below represent generic towers.
 [`SimpleRealRoot`](../../HexRealRoots/SimpleRealRoot.lean) uses integer
 polynomials and a rational separation bound; interval overlap there cannot
 be transplanted to infinitesimal towers.
@@ -515,6 +515,7 @@ Required theorem shapes, with the semantic parameters and coefficient laws above
 | `Element.eval_add`, `eval_mul`, `sign_sound` | Executable arithmetic/sign agrees with selected-root interpretation for every valid operand. |
 | `Element.eq_iff` | Executable zero sign of `a-b` iff denotations agree; lifted equality iff equality in `Value ctx`. |
 | `Element.inv_sound` | Selected squarefree root and nonzero `q(α)` give `eval(inv q)*eval(q)=1`; total inversion maps zero to zero. |
+| `Root.Handle.packQAdjoin_checked`, `packQAdjoin?_isSome_iff`, `packQAdjoin?_eq_some_iff` | Fixed-field coordinates at the selected rational root pack to the same canonical real value; checked external generators are accepted exactly when equal to the selected generator, returning the proof-carrying packed result. |
 | `Context.transport_sound` | Refinement/enlargement preserves interpretations, selected roots, order and compositional transport for all live handles. |
 | `Yun.decompose_sound` | Exact zero case or the stated product, unit, degree, squarefree and coprime properties. |
 | `roots_sound` | `all` iff `F=0`; finite results are strictly increasing, contain exactly all real roots in `R` and carry each root's exact positive multiplicity. |
@@ -536,7 +537,7 @@ has a name in a SPEC.
 | --- | --- |
 | Tau Ceti, consumed by this companion | **Additional requested foundation:** every linearly ordered field `K` has an ordered real closed field `R` and an order-preserving field embedding `ι : K →+* R`, with `R` algebraic over `ι(K)`. Existence is missing on the pin and is explicit work alongside [#10300](https://github.com/kim-em/hex-dev/issues/10300). |
 | Tau Ceti through real-roots/sturm companions | Polynomial IVT and Rolle; signed-remainder/Cauchy-index identity with common factors and infinite endpoints. Consume the shared kernel's soundness; do not reprove a second Sturm–Tarski foundation here. |
-| Tau Ceti through sign-det companion | Thom injectivity/order, sign-count moment identity and correctness of support-preserving BKR reduction. Consume complete descriptor and sign-table correspondence. |
+| Tau Ceti through sign-det companion | Thom injectivity/order, finite sign-count moment identities and count recovery with independently complete candidate support. The sign-det companion applies these within its support-preserving recursion; consume its complete descriptor and sign-table correspondence. |
 | hex-ordered-fn-mathlib | Real evaluation under relative transcendence, sign soundness/progress conditional on caller approximation laws, Hahn-series infinitesimal embedding and ordered-field laws. An integer-exponent Hahn field is not real closed. |
 | hex-real-roots-mathlib | Reuse the implemented `Real.instIsRealClosed` from `HexRealRootsMathlib.RealClosed`; the shared companion supplies the instance missing from the pinned Mathlib. |
 | hex-real-algebraic-mathlib | Existing rational-base real closed carrier; compose its arithmetic/order/root correspondence for the trivial path. |

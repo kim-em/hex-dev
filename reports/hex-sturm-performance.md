@@ -456,10 +456,12 @@ The earlier head-degree replay test failed its cubic characterization. The
 deferred-normalization implementation and its predeclared mode-2 validation
 below resolve that performance finding, subject to implementation review. Concrete
 extension-depth and nested-evidence probes belong downstream under #10378;
-general root-sum/replay soundness and its executable singleton/sign/bound
-consequences belong to #10389. The integer query-one finite/whole-line counts
-and rational finite-dyadic specialization are proved using the existing real
-Sturm theorem; only the arbitrary-field count wrapper remains deferred. Whole-`Option` field-representation and
+general root-sum/replay soundness, singleton/sign/bound consequences and the
+exact-domain natural root-count wrapper are proved in the development
+`HexQuerySemantics` target. Their [semantic proof-cost evidence](sturm-tarski-semantics.md)
+is separate from these arithmetic measurements. The integer query-one
+finite/whole-line counts and rational finite-dyadic specialization also retain
+their proofs using the existing real Sturm theorem. Whole-`Option` field-representation and
 rational/integer agreement, and literal certificate transport, are proved in
 the companion; these timing observations do not discharge those proofs.
 The [recorded finding](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442)

@@ -124,7 +124,9 @@ theorem contains_normalize (raw : Raw) (x : ℝ) :
                       linarith
                     simpa [Raw.Contains, Lower.Contains, Upper.Contains,
                       Raw.normalizeUnchecked, Raw.consistent, less] using impossible
-                · have realNotLess : ¬toReal lower < toReal upper := by
+                · have notOrdered : ¬lower ≤ upper := fun ordered =>
+                    equal (Dyadic.le_antisymm ordered (Dyadic.not_lt.mp less))
+                  have realNotLess : ¬toReal lower < toReal upper := by
                     simpa only [toReal_lt_iff] using less
                   have realNotEqual : toReal lower ≠ toReal upper := by
                     intro same
@@ -136,22 +138,22 @@ theorem contains_normalize (raw : Raw) (x : ℝ) :
                       rintro ⟨lowerBound, upperBound⟩
                       linarith
                     simpa [Raw.Contains, Lower.Contains, Upper.Contains,
-                      Raw.normalizeUnchecked, Raw.consistent, less, equal] using impossible
+                      Raw.normalizeUnchecked, Raw.consistent, less, notOrdered] using impossible
                   · have impossible : ¬(toReal lower ≤ x ∧ x < toReal upper) := by
                       rintro ⟨lowerBound, upperBound⟩
                       linarith
                     simpa [Raw.Contains, Lower.Contains, Upper.Contains,
-                      Raw.normalizeUnchecked, Raw.consistent, less, equal] using impossible
+                      Raw.normalizeUnchecked, Raw.consistent, less, notOrdered] using impossible
                   · have impossible : ¬(toReal lower < x ∧ x ≤ toReal upper) := by
                       rintro ⟨lowerBound, upperBound⟩
                       linarith
                     simpa [Raw.Contains, Lower.Contains, Upper.Contains,
-                      Raw.normalizeUnchecked, Raw.consistent, less, equal] using impossible
+                      Raw.normalizeUnchecked, Raw.consistent, less, notOrdered] using impossible
                   · have impossible : ¬(toReal lower < x ∧ x < toReal upper) := by
                       rintro ⟨lowerBound, upperBound⟩
                       linarith
                     simpa [Raw.Contains, Lower.Contains, Upper.Contains,
-                      Raw.normalizeUnchecked, Raw.consistent, less, equal] using impossible
+                      Raw.normalizeUnchecked, Raw.consistent, less, notOrdered] using impossible
 
 theorem lowerContains_intersect (left right : Lower) (x : ℝ) :
     (Raw.intersectLowerUnchecked left right).Contains x ↔

@@ -1,0 +1,10 @@
+{
+  "scope": "Additional committed analyses; original manifest retained",
+  "sha256": {
+    "reanalyse.py": "e26d23ce83281f554a8020cebcf4cf5064622104c85f0a289f433d2fcdf8264f",
+    "reanalysis.json": "79fbcb7d3329802b6383f1e4a68f106f4800d3120a6b86977b26cd52189adaab",
+    "frame-allocation-counts.json": "67c79ab125db6324b81a77fd65ee6c2fa2974e73eaac76bef02a4df3ffa81f3c",
+    "analysis-addendum.json": "ec588ebb1388288b259f16706edb542926d163b501845279ccf65d0e830fefb1",
+    "callback-frame-allocation-counts.json": "9b31393b117d73ebad047031c3de627d718a504c31fe41082b2b8340b4457ac5"
+  }
+}

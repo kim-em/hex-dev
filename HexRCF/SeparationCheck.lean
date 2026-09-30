@@ -114,9 +114,7 @@ def classify? (f : ZPoly) (replay : SturmReplay)
   if hleft : endpoint ≤ I.lower then some .gt
   else if _hright : I.upper < endpoint then some .lt
   else
-    -- `Dyadic.not_lt` uses the converse naming convention from Mathlib and
-    -- turns `¬e ≤ l` into `l < e`.
-    let initial := DyadicInterval.mk I.lower endpoint (Dyadic.not_lt.mp hleft)
+    let initial := DyadicInterval.mk I.lower endpoint (Dyadic.not_le.mp hleft)
     if replay.count initial = 0 then some .gt
     else if replay.count initial = 1 then
       if Hex.dyadicSign (f.evalDyadic endpoint) = 0 then some .eq else some .lt

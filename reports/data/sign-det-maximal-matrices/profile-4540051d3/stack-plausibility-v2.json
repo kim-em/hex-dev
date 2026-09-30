@@ -1,0 +1,216 @@
+{
+  "scope": "Caller-stack plausibility; timing-window confidence is a separate check",
+  "status": "checked-paths-consistent",
+  "samples": 281,
+  "gcd_ancestor_samples": 228,
+  "unexpected_frames_below_gcd": 0,
+  "unresolved_samples_below_gcd": 0,
+  "unresolved_frames_below_gcd": 0,
+  "unresolved_frame_names": {},
+  "row_add_and_gcd_samples": 224,
+  "uint64_constructor_under_gcd_samples": 168,
+  "uint64_constructor_row_add_and_gcd_samples": 165,
+  "inclusive_function_samples": {
+    "List.mapTR.loop": 5,
+    "lean_nat_pow": 5,
+    "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop": 281,
+    "Hex.Matrix.ofFn": 7,
+    "lean-bench.LeanBench.runChildMode": 281,
+    "lean_apply_2": 281,
+    "lean-bench.LeanBench.Cli.runChildCmd": 281,
+    "lean_apply_1": 17,
+    "Int.pow": 5,
+    "Hex.SignDet.entry": 7,
+    "Array.ofFn.go": 20,
+    "__clone3": 281,
+    "lean-bench.LeanBench.kernelLoop": 281,
+    "Hex.SignDetBench.MaximalMatrix.runSolve": 281,
+    "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclB9nqe230100Ev": 281,
+    "_private.HexSignDet.MaximalMatrix.0_Hex.SignDetBench.MaximalMatrix.initFn_.lam_1.00_@.HexSignDet.MaximalMatrix.3572643847__hygCtx_.hyg.37__boxed": 281,
+    "_ZN4lean7lthread3imp5_mainEPv": 281,
+    "start_thread": 281,
+    "Hex.SignDet.solveSystem": 281,
+    "__gmpz_realloc": 28,
+    "__gmpz_add": 63,
+    "_ZN4lean3mpzC2Em": 170,
+    "free@@GLIBC_2.2.5": 39,
+    "_ZN4lean3mpzD2Ev": 47,
+    "Hex.Matrix.rowReduceLoop": 263,
+    "Hex.Matrix.inverse?": 263,
+    "Hex.Matrix.rowAdd": 260,
+    "Hex.Matrix.rowReduce": 263,
+    "lean_nat_gcd": 228,
+    "Fin.foldl.loop": 264,
+    "List.foldl": 261,
+    "Rat.mul": 156,
+    "__gmp_default_allocate": 56,
+    "malloc@@GLIBC_2.2.5": 35,
+    "__gmpz_init_set_ui": 63,
+    "Rat.add": 86,
+    "__gmpz_mul_2exp": 16,
+    "__gmp_default_reallocate": 12,
+    "realloc@@GLIBC_2.2.5": 9,
+    "lean_dec_ref_cold": 7,
+    "__gmpz_gcd": 23,
+    "mi_free": 1,
+    "__gmpn_copyi_x86_64": 4,
+    "lean_array_push": 1,
+    "__gmpn_gcd_11_x86_64": 1,
+    "__gmpn_gcd_1": 1,
+    "_ZNK4lean3mpz10get_size_tEv": 1,
+    "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_": 2,
+    "_ZN4lean3mpzC2Ej": 1,
+    "__gmpz_clear": 2,
+    "Hex.Matrix.mulVec": 2,
+    "_private.Init.Data.List.Impl.0_List.flatMapTR.go": 1,
+    "Hex.SignDet.momentMatrix": 3,
+    "List.zipWith": 2,
+    "Hex.SignDet.System.check": 10,
+    "Hex.Matrix.mulImpl": 6,
+    "Array.instDecidableEqImpl": 1,
+    "Int.instDecidableEq": 1,
+    "Array.isEqvAux": 1
+  },
+  "unexpected_frame_names": {},
+  "allowed_frame_pattern": "^(?:__gmp.*|_ZNK?4lean3mpz.*|_ZN4lean3gcd.*|(?:malloc|calloc|free|cfree|realloc)(?:@.*)?|mi_.*|lean_alloc_small_object_core|0x[0-9a-f]+|_Unwind_Resume)$",
+  "gmp_add_or_shift_below_gcd": 78,
+  "gmp_add_or_shift_without_uint64_constructor": 0,
+  "inspected_paths_by_leaf": {
+    "__gmpz_add": 44,
+    "__gmpz_realloc": 6,
+    "__gmpz_mul_2exp": 16,
+    "realloc@@GLIBC_2.2.5": 9,
+    "__gmp_default_reallocate": 3
+  },
+  "examples": [
+    {
+      "leaf": "__gmpz_add",
+      "frames_below_gcd": [
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "unexpected_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor_immediate_caller": true
+    },
+    {
+      "leaf": "__gmpz_add",
+      "frames_below_gcd": [
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "unexpected_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor_immediate_caller": true
+    },
+    {
+      "leaf": "__gmpz_realloc",
+      "frames_below_gcd": [
+        "__gmpz_realloc",
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "unexpected_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor_immediate_caller": true
+    },
+    {
+      "leaf": "__gmpz_mul_2exp",
+      "frames_below_gcd": [
+        "__gmpz_mul_2exp",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "unexpected_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor_immediate_caller": true
+    },
+    {
+      "leaf": "__gmpz_add",
+      "frames_below_gcd": [
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "unexpected_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor_immediate_caller": true
+    },
+    {
+      "leaf": "__gmpz_add",
+      "frames_below_gcd": [
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "unexpected_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor_immediate_caller": true
+    },
+    {
+      "leaf": "__gmpz_add",
+      "frames_below_gcd": [
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "unexpected_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor_immediate_caller": true
+    },
+    {
+      "leaf": "realloc@@GLIBC_2.2.5",
+      "frames_below_gcd": [
+        "realloc@@GLIBC_2.2.5",
+        "__gmp_default_reallocate",
+        "__gmpz_realloc",
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "unexpected_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor_immediate_caller": true
+    },
+    {
+      "leaf": "__gmpz_add",
+      "frames_below_gcd": [
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "unexpected_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor_immediate_caller": true
+    },
+    {
+      "leaf": "realloc@@GLIBC_2.2.5",
+      "frames_below_gcd": [
+        "realloc@@GLIBC_2.2.5",
+        "__gmp_default_reallocate",
+        "__gmpz_realloc",
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "unexpected_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor_immediate_caller": true
+    },
+    {
+      "leaf": "__gmpz_add",
+      "frames_below_gcd": [
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "unexpected_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor_immediate_caller": true
+    },
+    {
+      "leaf": "__gmpz_realloc",
+      "frames_below_gcd": [
+        "__gmpz_realloc",
+        "__gmpz_add",
+        "_ZN4lean3mpzC2Em"
+      ],
+      "unexpected_callee": false,
+      "gmp_callee": true,
+      "uint64_constructor_immediate_caller": true
+    }
+  ],
+  "limitation": "This checks specific call-path concerns, not every unwind edge. Lean mpz(uint64) calls GMP add and shift; those descendants are valid."
+}

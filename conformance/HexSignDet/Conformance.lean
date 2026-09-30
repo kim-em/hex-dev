@@ -12,6 +12,9 @@ public import HexSturm.Fixtures
 public import HexRealRoots.TarskiTests
 
 public meta import HexSignDet.Replay
+public meta import HexSignDet.Dag
+public meta import HexSignDet.SignOperands
+public meta import HexSturm.Fixtures
 public meta import HexSignDet.Matrix
 public meta import HexSignDet.Support
 public meta import HexSignDet.Produce
@@ -808,6 +811,49 @@ theorem literal_accepts : (Replay.leaf literalNode).check Sturm.orderSign 7
     SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
+/-- A finite cache deliberately returns a non-sign outside its supplied keys.
+Replay may use it only after agreement on every required operand is proved. -/
+@[expose] def cachedSign (operands : List Rat) (x : Rat) : Int :=
+  if x ∈ operands then Sturm.orderSign x else 42
+
+theorem cachedSign_agrees (operands : List Rat) (x : Rat) (hx : x ∈ operands) :
+    cachedSign operands x = Sturm.orderSign x := by
+  simp only [cachedSign, ite_eq_left hx]
+
+@[expose] def literalOperands : List Rat :=
+  (Replay.leaf literalNode).signOperands Sturm.Fixtures.p (.finite (-2)) (.finite 2)
+
+/-- Finite agreement transfers actual literal acceptance without a global
+lawfulness claim about the cache or another execution of a producer. -/
+theorem cached_literal : (Replay.leaf literalNode).check (cachedSign literalOperands) 7
+    Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] = true := by
+  rw [Replay.check_sign_congr (cachedSign literalOperands) Sturm.orderSign 7
+    Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] (.leaf literalNode)
+    (cachedSign_agrees literalOperands)]
+  exact literal_accepts
+
+set_option maxRecDepth 16384 in
+/-- Literal context binding survives finite caching. The endpoint difference
+is essential: returning the wrong sign for it rejects otherwise valid replay.
+The cache is demonstrably not a lawful sign function on all rationals. -/
+theorem cached_rejections :
+    (Replay.leaf literalNode).check (cachedSign literalOperands) 8
+      Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] = false ∧
+    (Replay.leaf literalNode).check
+      (fun x => if x = -4 then 1 else cachedSign literalOperands x) 7
+      Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] = false ∧
+    cachedSign literalOperands 100 = 42 := by
+  constructor
+  · rw [Replay.check_sign_congr (cachedSign literalOperands) Sturm.orderSign 8
+      Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] (.leaf literalNode)
+      (cachedSign_agrees literalOperands)]
+    decide +kernel
+  · simp only [Replay.check, EndpointSigns.ofSign,
+      literalOperands, cachedSign, Replay.signOperands, Node.signOperands,
+      momentSignOperands, TarskiCertificate.signOperands, SignedRemainderChain.signOperands,
+      Endpoint.signOperand, Endpoint.orderOperands, Endpoint.nonvanishingOperands]
+    decide +kernel
+
 /-- Restrict the literal root-count certificate to the positive root. -/
 @[expose] def singletonQuery : TarskiCertificate Rat Rat Nat :=
   {Sturm.Fixtures.literal with
@@ -929,6 +975,148 @@ theorem full_kernel : fullReplay.check Sturm.orderSign 7 singletonRaw.head
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
+/-- The inventory includes both children of the actual full Thom tree. -/
+theorem cached_full :
+    fullReplay.check (cachedSign (fullReplay.signOperands Sturm.Fixtures.p
+      (.finite 0) (.finite 2))) 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
+      (singletonRaw.full []).queries = true := by
+  have h := Replay.check_sign_congr
+    (cachedSign (fullReplay.signOperands Sturm.Fixtures.p (.finite 0) (.finite 2)))
+    Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
+    (singletonRaw.full []).queries fullReplay
+    (fun x hx => cachedSign_agrees _ x (by simpa only [singletonRaw] using hx))
+  exact h.trans full_kernel
+
+-- These guards execute the cache-bearing native path. The ordinary-kernel
+-- acceptance proof is `cached_full`; it uses the proved replay congruence.
+#guard fullReplay.check (cachedSign (fullReplay.signOperands Sturm.Fixtures.p
+  (.finite 0) (.finite 2))) 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
+  (singletonRaw.full []).queries
+
+-- Parent-only facts omit the child-only scales 4 and 8; neither is a sign
+-- fact merely because the supplied integer matrix has an exact inverse.
+#guard !fullReplay.check (cachedSign (fullNode.signOperands Sturm.Fixtures.p
+  (.finite 0) (.finite 2))) 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
+  (singletonRaw.full []).queries
+
+/-- Literal identity reductions of the query one, retaining its positional index. -/
+@[expose] def unitStep : ReductionStep Rat := ⟨0, 1, ⟨1, 0, 1⟩⟩
+
+@[expose] def preparedNode : Node Rat Nat :=
+  {selectedNode with
+    preparation := some ⟨[unitStep]⟩
+    reductions := #v[some ⟨[], 1⟩, some ⟨[unitStep], 1⟩,
+      some ⟨[unitStep, unitStep], 1⟩]}
+
+@[expose] def truncatedNode : Node Rat Nat :=
+  {preparedNode with reductions := #v[some ⟨[], 1⟩, some ⟨[unitStep], 1⟩,
+    some ⟨[unitStep], 1⟩]}
+
+set_option maxRecDepth 32768 in
+/-- Kernel replay checks supplied preprocessing and moment reductions under a
+finite cache. Truncating a factor witness rejects the same literal matrix. -/
+theorem cached_reduction_kernel :
+    (Replay.leaf preparedNode).check
+      (cachedSign (preparedNode.signOperands Sturm.Fixtures.p (.finite 0) (.finite 2)))
+      7 Sturm.Fixtures.p (.finite 0) (.finite 2) [1] = true ∧
+    (Replay.leaf truncatedNode).check
+      (cachedSign (truncatedNode.signOperands Sturm.Fixtures.p (.finite 0) (.finite 2)))
+      7 Sturm.Fixtures.p (.finite 0) (.finite 2) [1] = false := by
+  constructor
+  · rw [Replay.check_sign_congr
+      (cachedSign (preparedNode.signOperands Sturm.Fixtures.p (.finite 0) (.finite 2)))
+      Sturm.orderSign 7 Sturm.Fixtures.p (.finite 0) (.finite 2) [1] (.leaf preparedNode)
+      (cachedSign_agrees _)]
+    simp only [Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+      TarskiCertificate.check_eq, SignedRemainderChain.check,
+      Reduction.check, QueryReduction.check, ← Array.all_toList, Array.toList_range]
+    decide +kernel
+  · rw [Replay.check_sign_congr
+      (cachedSign (truncatedNode.signOperands Sturm.Fixtures.p (.finite 0) (.finite 2)))
+      Sturm.orderSign 7 Sturm.Fixtures.p (.finite 0) (.finite 2) [1] (.leaf truncatedNode)
+      (cachedSign_agrees _)]
+    simp only [Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+      TarskiCertificate.check_eq, SignedRemainderChain.check,
+      Reduction.check, QueryReduction.check, ← Array.all_toList, Array.toList_range]
+    decide +kernel
+
+#guard (Replay.leaf preparedNode).check
+  (cachedSign (preparedNode.signOperands Sturm.Fixtures.p (.finite 0) (.finite 2)))
+  7 Sturm.Fixtures.p (.finite 0) (.finite 2) [1]
+#guard !(Replay.leaf truncatedNode).check
+  (cachedSign (truncatedNode.signOperands Sturm.Fixtures.p (.finite 0) (.finite 2)))
+  7 Sturm.Fixtures.p (.finite 0) (.finite 2) [1]
+
+@[expose] def malformedNode : Node Rat Nat :=
+  {literalNode with moments := #v[{Sturm.Fixtures.literal with
+    remainders := {Sturm.Fixtures.literalChain with steps := #[]}}]}
+
+set_option maxRecDepth 16384 in
+/-- A finite cache does not turn truncated chain evidence into acceptance. -/
+theorem cached_malformed_kernel :
+    (Replay.leaf malformedNode).check
+      (cachedSign (malformedNode.signOperands Sturm.Fixtures.p (.finite (-2)) (.finite 2)))
+      7 Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] = false := by
+  rw [Replay.check_sign_congr
+    (cachedSign (malformedNode.signOperands Sturm.Fixtures.p (.finite (-2)) (.finite 2)))
+    Sturm.orderSign 7 Sturm.Fixtures.p (.finite (-2)) (.finite 2) [] (.leaf malformedNode)
+    (cachedSign_agrees _)]
+  simp only [Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
+    TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+#guard !(Replay.leaf malformedNode).check
+  (cachedSign (malformedNode.signOperands Sturm.Fixtures.p (.finite (-2)) (.finite 2)))
+  7 Sturm.Fixtures.p (.finite (-2)) (.finite 2) []
+
+/-- This foreign domain is valid on its own context and endpoints, but it
+cannot be selected for the caller's domain cache. -/
+@[expose] def foreignQuery : TarskiCertificate Rat Rat Nat :=
+  {singletonQuery with
+    context := 8
+    lower := .finite (-3)
+    upper := .finite 3}
+
+@[expose] def foreignNode : Node Rat Nat :=
+  {selectedNode with moments := #v[foreignQuery, singletonQuery, singletonQuery]}
+
+#guard (foreignQuery.domain.replay? Sturm.orderSign
+  (EndpointSigns.ofSign Sturm.orderSign)).isSome
+
+/-- The binding guard runs before any foreign-domain sign replay. -/
+theorem foreign_cache_kernel :
+    (foreignNode.cache Sturm.orderSign 7 Sturm.Fixtures.p (.finite 0) (.finite 2) none).isNone =
+      true := by
+  decide +kernel
+
+/-- Graph entry zero has the same foreign-domain protection as node caching. -/
+theorem foreign_graph_cache_kernel :
+    ((⟨#[⟨foreignNode, none⟩], 0⟩ : Dag Rat Nat).cache Sturm.orderSign 7 Sturm.Fixtures.p
+      (.finite 0) (.finite 2)).isNone = true := by
+  decide +kernel
+
+/-- Only the context changes; the head and interval still match the caller. -/
+@[expose] def foreignContext : Node Rat Nat :=
+  {selectedNode with moments := #v[{singletonQuery with context := 8},
+    singletonQuery, singletonQuery]}
+
+#guard (({singletonQuery with context := 8} : TarskiCertificate Rat Rat Nat).domain.replay?
+  Sturm.orderSign (EndpointSigns.ofSign Sturm.orderSign)).isSome
+
+theorem context_cache_kernel :
+    (foreignContext.cache Sturm.orderSign 7 Sturm.Fixtures.p (.finite 0) (.finite 2)
+      none).isNone = true := by
+  decide +kernel
+
+theorem context_graph_cache_kernel :
+    ((⟨#[⟨foreignContext, none⟩], 0⟩ : Dag Rat Nat).cache Sturm.orderSign 7 Sturm.Fixtures.p
+      (.finite 0) (.finite 2)).isNone = true := by
+  decide +kernel
+
+#guard ((⟨#[⟨selectedNode, none⟩], 0⟩ : Dag Rat Nat).cache Sturm.orderSign 7 Sturm.Fixtures.p
+  (.finite 0) (.finite 2)).isSome
+
 /-- Extract the unique full row using the shared literal replay proof. -/
 def sharedDescriptor : Descriptor Rat Nat Sturm.orderSign 7 :=
   Descriptor.ofFullRow singletonRaw fullReplay (by decide +kernel) rfl full_kernel ([1, 1], 1)
@@ -1037,6 +1225,47 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Descriptor.rootsFrom_sorted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Descriptor.rootsFrom_sorted
+/-- info: 'Hex.SignedRemainderChain.check_sign_congr' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms SignedRemainderChain.check_sign_congr
+/-- info: 'Hex.TarskiCertificate.check_sign_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms TarskiCertificate.check_sign_congr
+/-- info: 'Hex.SignDet.Replay.check_sign_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Replay.check_sign_congr
+/-- info: 'Hex.SignDet.Conformance.cached_literal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms cached_literal
+/-- info: 'Hex.SignDet.Conformance.cached_rejections' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms cached_rejections
+/-- info: 'Hex.SignDet.Conformance.cached_full' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms cached_full
+
+/-- info: 'Hex.SignDet.Conformance.cached_reduction_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms cached_reduction_kernel
+/-- info: 'Hex.SignDet.Conformance.cached_malformed_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms cached_malformed_kernel
+/-- info: 'Hex.SignDet.Conformance.foreign_cache_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms foreign_cache_kernel
+
+/-- info: 'Hex.SignDet.Conformance.foreign_graph_cache_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms foreign_graph_cache_kernel
+
+/-- info: 'Hex.SignDet.Conformance.context_cache_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms context_cache_kernel
+
+/-- info: 'Hex.SignDet.Conformance.context_graph_cache_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms context_graph_cache_kernel
+
 /-- info: 'Hex.SignDet.Descriptor.rootsFromTable_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Descriptor.rootsFromTable_eq
@@ -1074,6 +1303,17 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Conformance.empty_rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms empty_rejected
+
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_none' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.buildRoots_none
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_ofEmpty' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.buildRoots_ofEmpty
+
+/-- info: 'Hex.SignDet.Descriptor.buildRoots_ofSingle' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.buildRoots_ofSingle
 
 /-- info: 'Hex.SignDet.Descriptor.buildRoots_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
@@ -1116,5 +1356,12 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Descriptor.fullOrder_reverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Descriptor.fullOrder_reverse
+
+/-- info: 'Hex.SignDet.Descriptor.buildReencoding_ofNone' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.buildReencoding_ofNone
+/-- info: 'Hex.SignDet.Descriptor.buildReencoding_ofEmpty' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.buildReencoding_ofEmpty
 
 end Hex.SignDet.Conformance

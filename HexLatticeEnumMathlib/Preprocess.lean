@@ -31,24 +31,21 @@ theorem centre_lattice (z : Vector Int n) (p : Prepared b (castVector (vector b 
     (hp : p.Valid) (i : Fin n) : p.centre z i = (z[i] : Rat) := by
   have hd := distance_decomposition p.toData b.rows (castVector (vector b z)) hp z
   have hz : distance (vector b z) (castVector (vector b z)) = 0 := by
-    simp [distance, subtract_eq, Vector.normSq, HexMatrixMathlib.dotProduct_eq, dotProduct,
-      HexMatrixMathlib.vectorEquiv_apply]
+    simp only [distance, subtract_eq, Vector.normSq,
+      HexMatrixMathlib.dotProduct_eq, dotProduct]
+    simp
   change distance (vector b z) _ = _ at hd
   rw [hz] at hd
   change 0 = p.residual.normSq + ∑ i : Fin n, p.norms[i] * ((z[i] : Rat) - p.centre z i) ^ 2 at hd
   have hr : 0 ≤ p.residual.normSq := by
     rw [Vector.normSq, HexMatrixMathlib.dotProduct_eq]
     exact Finset.sum_nonneg fun j _ => mul_self_nonneg _
-  have hi := Finset.single_le_sum
-    (fun (j : Fin n) (_ : j ∈ Finset.univ) => mul_nonneg (hp.1 j).1.le (sq_nonneg ((z[j] : Rat) - p.centre z j)))
-    (Finset.mem_univ i)
-  have hn := (hp.1 i).1
-  simp only [Fin.getElem_fin] at hd hi hn ⊢
-  have hprod : p.norms[i.val] * ((z[i.val] : Rat) - p.centre z i) ^ 2 ≤ 0 :=
-    hi.trans (by linarith)
-  have hsq : ((z[i.val] : Rat) - p.centre z i) ^ 2 ≤ 0 := by
-    nlinarith [sq_nonneg ((z[i.val] : Rat) - p.centre z i)]
-  have he := le_antisymm hsq (sq_nonneg ((z[i.val] : Rat) - p.centre z i))
+  have hnonneg (j : Fin n) (_ : j ∈ Finset.univ) :
+      0 ≤ p.norms[j] * ((z[j] : Rat) - p.centre z j) ^ 2 :=
+    mul_nonneg (hp.1 j).1.le (sq_nonneg _)
+  have hsum := (add_eq_zero_iff_of_nonneg hr (Finset.sum_nonneg hnonneg)).mp hd.symm
+  have hi := (Finset.sum_eq_zero_iff_of_nonneg hnonneg).mp hsum.2 i (Finset.mem_univ i)
+  have he := (mul_eq_zero.mp hi).resolve_left (ne_of_gt (hp.1 i).1)
   exact (sub_eq_zero.mp (sq_eq_zero_iff.mp he)).symm
 
 /-- Nearest plane recovers exact integer coefficients when the target is a lattice point. -/
