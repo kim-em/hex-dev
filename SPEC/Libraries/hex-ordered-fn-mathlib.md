@@ -291,6 +291,11 @@ monotone coefficient hom and prove its embedding preserves and reflects
 order: support and lowest index are preserved, and leading coefficients
 map by that hom. Prove commuting constant embeddings. Consequently ε₂ is
 smaller than every positive element of K(ε₁), including ε₁^m for positive m.
+For the executable canonical rational-function carrier, the coefficient map
+`HexRationalFnMathlib.mapHom` preserves infinitesimal signs and is strictly
+monotone under a strictly monotone coefficient-field embedding. These are
+`Infinitesimal.mapHom_sign` and `mapHom_strictMono`; the map also preserves
+constants and the indeterminate.
 
 The formal indeterminate is transcendental by construction. The
 integer-exponent Hahn field is not real closed: its exponent-one monomial

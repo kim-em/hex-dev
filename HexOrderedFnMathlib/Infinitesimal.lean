@@ -240,7 +240,7 @@ private theorem lowestCoeff_map {L : Type v} [Field L] [DecidableEq L]
 omit [IsStrictOrderedRing K] in
 /-- Coefficient-field embeddings preserve the selected infinitesimal sign. -/
 theorem mapHom_sign {L : Type v} [Field L] [DecidableEq L]
-    [LinearOrder L] [IsStrictOrderedRing L]
+    [LinearOrder L]
     (f : K →+* L) (ordered : StrictMono f) (q : RationalFn K) :
     sign orderSign (HexRationalFnMathlib.mapHom f q) = sign orderSign q := by
   change sign orderSign (HexRationalFnMathlib.coeffMap f q) = _
