@@ -1,0 +1,35 @@
+{
+  "cpu": 19,
+  "load_start": [
+    0.20556640625,
+    0.83203125,
+    5.244140625
+  ],
+  "load_end": [
+    0.20556640625,
+    0.83203125,
+    5.244140625
+  ],
+  "started_at": "2026-09-29T21:38:15.453369+00:00",
+  "ended_at": "2026-09-29T21:38:16.952346+00:00",
+  "command": [
+    ".lake/build/bin/hexrealclosure_bench",
+    "run",
+    "Hex.RealClosure.Bench.runYun",
+    "Hex.RealClosure.Bench.runIsolation",
+    "Hex.RealClosure.Bench.runAssembly",
+    "--export-file",
+    "reports/hex-real-closure/isolation-anchors.json"
+  ],
+  "source_sha256": {
+    "bench/HexRealClosure/Bench.lean": "f15789b2cdd5b93447f6a8f180a6dcac90c75bee943f3eaf055713f4881e994e",
+    "HexRealClosure/IsolationRoots.lean": "f21e51f722874aad64a00b96b547a5c1c6ecef6e7f88ca3efa8446a659ef8507",
+    "HexRealClosure/RootFactors.lean": "277dc341654af4694b327e7bf18aa32042954d58391455e17ed84130a88df013",
+    "HexRealClosure/BisectionFrontier.lean": "0afa9cea6d4710f8b7a795b0e1696998655fd0bfd208a162a5b33f212d4ddbfe",
+    "HexSturm/Basic.lean": "e94705d172a585b5d9c718941e1e8251a145ee6bb152cbaaf695d0d0e3a20beb",
+    "lake-manifest.json": "39f443e69a6206ee1785b4a832de8344af65eec1cb2ee4fc803c30c9ebb3122a",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    ".lake/build/bin/hexrealclosure_bench": "87494fdc856266002d9301834fa4be49d94efebff36f6d1d5ddf4813311cc6fd"
+  },
+  "purpose": "fixed functional anchors; no Phase-4 tower or scaling claim"
+}
