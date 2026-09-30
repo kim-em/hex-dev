@@ -94,7 +94,10 @@ def contextCodec (parent : Signature) : ValueCodec Signature where
   decode j := match Literal.ofJson j with
     | some (.array (.cons (.number 0 0) .nil)) => .ok parent
     | some (.array (.cons (.number 1 0) (.cons literal .nil))) =>
-      require "invalid context reference" (Signature.ofLiteral literal)
+      match Signature.ofLiteral literal with
+      | none => .error "invalid context reference"
+      | some context =>
+        if context = parent then .error "noncanonical context reference" else .ok context
     | _ => .error "invalid relative context reference"
 
 theorem contextCodec_lawful (parent : Signature) : (contextCodec parent).Lawful := by

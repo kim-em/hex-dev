@@ -794,28 +794,35 @@ Signature and relative context-reference codecs have proved structured
 roundtrips. Parsing a signature supplies an identity, not a validated root.
 Exact equality uses the core pointer shortcut for shared immutable signatures;
 context hashes are constant when indexing replay nodes with one predecessor.
+The relative context reader rejects a full duplicate of its parent reference.
 Literal arrays are emitted by an accumulator with `Array.push`.
 
 `Tower.Catalog` is an immutable catalog of caller-constructed validated prefixes.
 Insertion rejects rebinding. Its separate base catalog supplies real search
-progress and reconstructs infinitesimal stages. Unknown algebraic signatures
-are rejected until their native prefix is installed. Readers retrieve the full
-context first, then decode a scalar or polynomial in that context; returned
-packed values retain their owning context.
+progress and reconstructs infinitesimal stages. An algebraic signature is
+accepted only when that exact native context is installed; inserting a shorter
+prefix does not install its successors. Readers retrieve the full context first,
+then decode a scalar or polynomial in that context; returned packed values
+retain their owning context. A cached signature hash filters catalog entries,
+and exact equality confirms a match. The successful lookup supplies the binding
+proof, so the payload decoder does not compare that signature a second time.
 
 The structured codecs have proved literal write/read roundtrips. Nonzero
 algebraic payloads retain both the polynomial and cached sign; their reader
 checks predecessor coefficients and recomputes the sign in the exact context.
 It restores the stored polynomial without arithmetic repacking, preserving
 literal certificate coefficients that are semantically equal but structurally
-different. Arithmetic still uses `Element.ofPoly` and retains its computed
-monic clean remainder. Polynomial readers reject trailing literal zeros.
+different. A correctly signed external payload may have arbitrarily high
+degree, so its sign check and later arithmetic have costs that depend on that
+degree. Arithmetic uses `Element.ofPoly` and retains the computed remainder
+when the definition is monic and clean; other definitions remain unreduced.
+Polynomial readers reject trailing literal zeros.
 
 Run `lake build HexRealClosure.TowerTests HexRealClosureTests`. The examples build
 three actual algebraic levels, use their explicit embeddings, read old values
-after extensions, restore a noncanonical coefficient, and reject stale or
-unknown bindings, forged signs, zero claims, trailing zeros and malformed base
-payloads. The core roundtrip proofs introduce no admission. General persistent
+after extensions, restore an unreduced noncanonical coefficient, and reject
+stale or unknown bindings, forged signs, zero claims, trailing zeros and
+malformed base payloads. The core roundtrip proofs introduce no admission. General persistent
 refinement, transport of later descriptors, interpretation of arbitrary towers,
 complete isolation and the real-closed union remain open.
 Proving that native frame serialization always succeeds (so the optional
