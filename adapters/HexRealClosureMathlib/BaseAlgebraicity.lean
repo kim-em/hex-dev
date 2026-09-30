@@ -117,6 +117,25 @@ theorem mapped_algebraic (B R : Type*) [Field B] [Field R]
     ⟨fun x => ambient.algebraic x⟩
   exact Algebra.IsAlgebraic.trans (Hex.RationalFn B) (Hex.RationalFn R) ambient.Carrier
 
+set_option linter.overlappingInstances false in
+/-- The algebraicity result uses the native coefficient and rational-function
+field dictionaries passed to checked tower conversion. -/
+theorem mappedNative_algebraic {B R : Type*} [Field B]
+    [g : Lean.Grind.Field B] [DecidableEq B]
+    [Field R] [DecidableEq R] [LinearOrder R] [IsStrictOrderedRing R]
+    (compatible : Field.toGrindField (K := B) = g)
+    (f : B →+* R)
+    (halg : letI : Algebra B R := f.toAlgebra; Algebra.IsAlgebraic B R)
+    (ambient : Ambient (Hex.RationalFn R)) :
+    letI : Field (@Hex.RationalFn B g inferInstance) := HexPolyMathlib.fieldOfGrind
+    letI : Algebra (@Hex.RationalFn B g inferInstance) ambient.Carrier :=
+      (mappedNativeHom compatible f ambient).toAlgebra
+    Algebra.IsAlgebraic (@Hex.RationalFn B g inferInstance) ambient.Carrier := by
+  subst g
+  letI : Algebra B R := f.toAlgebra
+  letI : Algebra.IsAlgebraic B R := halg
+  exact mapped_algebraic B R ambient
+
 end Ambient
 
 end Hex.RealClosure
@@ -124,3 +143,7 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.Ambient.mapped_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Ambient.mapped_algebraic
+
+/-- info: 'Hex.RealClosure.Ambient.mappedNative_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Ambient.mappedNative_algebraic

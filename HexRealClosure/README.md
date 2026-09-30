@@ -1160,14 +1160,18 @@ mapped `B(ε)`. The proof combines Mathlib's algebraic polynomial-extension
 and fraction-field theorems, transports them through the executable equivalence,
 then uses transitivity of algebraicity. It applies after restricting a merely
 real-closed old ambient to its relative algebraic union.
+`Ambient.mappedNative_algebraic` states the same result with the native field
+dictionaries used by checked tower conversion.
 `exists_base_lower` proves that every positive element of an ordered algebraic
 extension has a smaller positive element from the base, using an ordered-field
 polynomial root bound without an Archimedean assumption.
-`infinitesimal_lt_algebraic` then shows that a positive parameter smaller than
-every positive base element stays below every positive element of the old
-algebraic field. Kernel examples instantiate both results with actual ordered
-algebraic ambient models. The computational stage-order identification still
-remains.
+`exists_mapped_lower` gives the corresponding conclusion when the coefficient
+field has no separate Mathlib order. `infinitesimal_lt_algebraic` then shows
+that a parameter smaller than every positive base image stays below every
+positive element of the old algebraic field. Kernel examples instantiate
+algebraicity with actual ordered algebraic ambient models and derive the bound
+inside a relative algebraic closure from inequalities known only over its base.
+The computational stage-order identification still remains.
 
 ## Ordered algebraic ambient models
 

@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.BaseAlgebraicity
+public import Mathlib.Algebra.Order.Ring.InjSurj
 
 public section
 
@@ -17,8 +18,7 @@ open Polynomial Finset
 Archimedean field or a real-valued norm. -/
 private theorem root_lt_bound {F : Type*} [Field F] [LinearOrder F]
     [IsStrictOrderedRing F]
-    (p : Polynomial F) (hp : p ≠ 0) (x : F) (hx : 0 ≤ x)
-    (hr : p.eval x = 0) :
+    (p : Polynomial F) (hp : p ≠ 0) (x : F) (hr : p.eval x = 0) :
     x < (∑ i ∈ range p.natDegree, |p.coeff i|) / |p.leadingCoeff| + 1 := by
   let d := p.natDegree
   let s : F := ∑ i ∈ range d, |p.coeff i|
@@ -33,6 +33,7 @@ private theorem root_lt_bound {F : Type*} [Field F] [LinearOrder F]
     exact lt_of_lt_of_le hsmall (by linarith)
   have hxone : 1 ≤ x := le_of_not_gt hsmall
   have hxpos : 0 < x := lt_of_lt_of_le zero_lt_one hxone
+  have hx : 0 ≤ x := hxpos.le
   have hroot :
       (∑ i ∈ range d, p.coeff i * x ^ i) + p.leadingCoeff * x ^ d = 0 := by
     simpa only [d, eval_eq_sum_range, sum_range_succ, coeff_natDegree] using hr
@@ -83,7 +84,7 @@ private theorem root_lt_bound {F : Type*} [Field F] [LinearOrder F]
 theorem exists_base_upper {B R : Type*} [Field B] [LinearOrder B]
     [IsStrictOrderedRing B] [Field R] [LinearOrder R]
     [IsStrictOrderedRing R] (f : B →+* R) (ordered : StrictMono f)
-    (x : R) (hx : 0 ≤ x)
+    (x : R)
     (algebraic : letI : Algebra B R := f.toAlgebra; IsAlgebraic B x) :
     ∃ b : B, x < f b := by
   letI : Algebra B R := f.toAlgebra
@@ -107,7 +108,7 @@ theorem exists_base_upper {B R : Type*} [Field B] [LinearOrder B]
         |(p.map f).leadingCoeff| + 1 := by
     simp only [b, map_add, map_one, map_div₀, map_sum, habs,
       Polynomial.natDegree_map, Polynomial.coeff_map, Polynomial.leadingCoeff_map]
-  exact ⟨b, by rw [hmapb]; exact root_lt_bound (p.map f) hmap x hx hrootMap⟩
+  exact ⟨b, by rw [hmapb]; exact root_lt_bound (p.map f) hmap x hrootMap⟩
 
 /-- Every positive algebraic element admits a smaller positive base element. -/
 theorem exists_base_lower {B R : Type*} [Field B] [LinearOrder B]
@@ -117,8 +118,7 @@ theorem exists_base_lower {B R : Type*} [Field B] [LinearOrder B]
     (algebraic : letI : Algebra B R := f.toAlgebra; IsAlgebraic B x) :
     ∃ b : B, 0 < b ∧ f b < x := by
   letI : Algebra B R := f.toAlgebra
-  obtain ⟨b, hb⟩ := exists_base_upper f ordered x⁻¹ (inv_nonneg.mpr hx.le)
-    algebraic.inv
+  obtain ⟨b, hb⟩ := exists_base_upper f ordered x⁻¹ algebraic.inv
   have hfb : 0 < f b := (inv_pos.mpr hx).trans hb
   have hbpos : 0 < b := by
     by_contra h
@@ -130,19 +130,36 @@ theorem exists_base_lower {B R : Type*} [Field B] [LinearOrder B]
   have hlt := (inv_lt_inv₀ hfb (inv_pos.mpr hx)).mpr hb
   simpa only [map_inv₀, inv_inv] using hlt
 
+/-- An ordered algebraic field has a positive coefficient below each positive
+element, even when the coefficient field has no separately supplied order. -/
+theorem exists_mapped_lower {B R : Type*} [Field B]
+    [Field R] [LinearOrder R] [IsStrictOrderedRing R]
+    (f : B →+* R) (x : R) (hx : 0 < x)
+    (algebraic : letI : Algebra B R := f.toAlgebra; IsAlgebraic B x) :
+    ∃ b : B, 0 < f b ∧ f b < x := by
+  letI : LinearOrder B := LinearOrder.lift' f f.injective
+  letI : IsStrictOrderedRing B :=
+    Function.Injective.isStrictOrderedRing f f.map_zero f.map_one
+      f.map_add f.map_mul (fun {_ _} => Iff.rfl) (fun {_ _} => Iff.rfl)
+  have hf : StrictMono f := fun _ _ h => h
+  obtain ⟨b, hb, hbx⟩ := exists_base_lower f hf x hx algebraic
+  change f 0 < f b at hb
+  rw [f.map_zero] at hb
+  exact ⟨b, hb, hbx⟩
+
 /-- Infinitesimality relative to the base extends to every positive element
 of an ordered algebraic extension of that base. -/
 theorem infinitesimal_lt_algebraic {B R S : Type*}
-    [Field B] [LinearOrder B] [IsStrictOrderedRing B]
+    [Field B]
     [Field R] [LinearOrder R] [IsStrictOrderedRing R]
     [Field S] [LinearOrder S] [IsStrictOrderedRing S]
-    (f : B →+* R) (hf : StrictMono f)
+    (f : B →+* R)
     (algebraic : letI : Algebra B R := f.toAlgebra;
       ∀ x : R, IsAlgebraic B x)
     (e : R →+* S) (he : StrictMono e)
-    (δ : S) (hδ : ∀ b : B, 0 < b → δ < e (f b))
+    (δ : S) (hδ : ∀ b : B, 0 < f b → δ < e (f b))
     (x : R) (hx : 0 < x) : δ < e x := by
-  obtain ⟨b, hbpos, hbx⟩ := exists_base_lower f hf x hx (algebraic x)
+  obtain ⟨b, hbpos, hbx⟩ := exists_mapped_lower f x hx (algebraic x)
   exact (hδ b hbpos).trans (he hbx)
 
 end Hex.RealClosure
@@ -154,3 +171,7 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.infinitesimal_lt_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.infinitesimal_lt_algebraic
+
+/-- info: 'Hex.RealClosure.exists_mapped_lower' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.exists_mapped_lower
