@@ -727,8 +727,9 @@ from the old context cannot be reused in the new one. The native tests include
 a restored high-degree representative and a nonmonic target that keeps its
 unreduced polynomial. Each converted nonzero coefficient currently runs its
 own sign query; reusable sign handles are a later cost improvement. This
-conversion keeps the predecessor fixed; recursively converting a tower's
-later descriptors remains separate.
+conversion keeps the predecessor fixed. `Tower.Refinement` below converts an
+immediate later descriptor; automatic conversion of an arbitrary dependent
+suffix remains separate.
 
 `AlgebraicRoots.lean` applies the successful root-assembly theorems to actual
 `Algebraic.Element` coefficients. Given a zero-reflecting predecessor interpretation into an ordered real closed
@@ -858,8 +859,9 @@ three actual algebraic levels, use their explicit embeddings, read old values
 after extensions, restore an unreduced noncanonical coefficient, and reject
 stale or unknown bindings, forged signs, zero claims, trailing zeros and
 malformed base payloads. The core roundtrip proofs introduce no admission.
-General persistent refinement, transport of later descriptors, complete
-isolation and the real-closed union remain open.
+Automatic rebuilding of a dependent suffix, complete isolation and
+identification with the real-closed union remain open; checked one-level
+refinement and immediate later-root transport are described below.
 
 Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
 non-monic reducible rational definition, followed by a definition with
@@ -900,7 +902,8 @@ APIs; byte-parser and pretty-printer laws, and a roundtrip theorem for every
 freshly encoded tower (which needs graph-shape completeness), remain open.
 Batch callers can reconstruct once, insert the returned context, and then use
 the installed-prefix readers to avoid replaying each missing frame per value.
-Refinement and transport retain the obligations above.
+The root reader's graph-shape and byte-format obligations also apply after
+refinement.
 
 ### Interpretation, algebraicity and order of native towers
 
@@ -943,8 +946,9 @@ model through three arbitrary validated root levels, including the algebraicity
 and image-field inclusions. The semantic root results use the proved
 `Tarski.check_rootSum` theorem and only the standard three axioms. They are
 relative to a supplied real-closed
-ambient field and base embedding. Compatibility across native refinements and
-identification with the real-closed algebraic union remain open. No tower
+ambient field and base embedding. The refinement companion below proves
+compatibility for a checked final-root change and one later level.
+Identification with the real-closed algebraic union remains open. No tower
 performance claim is made.
 
 ### Yun decomposition over native tower coefficients
@@ -981,6 +985,8 @@ each old value by reading its actual stored polynomial and packing it at the
 same selected root in the new definition. The old context and its values stay
 valid. `Context.polynomial` and `Context.ofPoly` expose these native operations
 without imposing a degree bound on general representatives.
+This tower conversion uses the cached target extension for repeated values;
+`AlgebraicReencode.lean` supplies the corresponding one-level element API.
 
 `Model.refine_value`, `refine_zero`, `refine_equal` and `refine_compare` prove
 value preservation, canonical zero preservation and reflection, and preservation
