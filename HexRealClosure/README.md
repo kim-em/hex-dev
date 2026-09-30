@@ -885,9 +885,9 @@ model through three arbitrary validated root levels, including the algebraicity
 and image-field inclusions. The semantic root results use the proved
 `Tarski.check_rootSum` theorem and only the standard three axioms. They are
 relative to a supplied real-closed
-ambient field and base embedding. Compatibility across native refinements and
-identification with the real-closed algebraic union remain open. No tower
-performance claim is made.
+ambient field and base embedding. Automatic recursive refinement of arbitrary
+tower suffixes and identification with the real-closed algebraic union remain
+open. No tower performance claim is made.
 
 ### Yun decomposition over native tower coefficients
 
@@ -936,15 +936,20 @@ field before and after refinement. `Refinement.mapPoly` converts native
 coefficients; `refine_degree` and `refine_poly` prove exact degree and ambient
 polynomial preservation.
 
-`Refinement.mapDescriptor?` transports a later root's head and endpoints and
-rebuilds its evidence against the new predecessor signature. `refine_descriptor`
-proves this operation succeeds for every validated later descriptor;
-`refine_root` proves it selects the same ambient root. `Refinement.later?` packages that revalidation with its cached extension and
+`Model.adjoin_value` and `adjoin_ofPoly` interpret the public child's actual
+stored polynomial and packing operation. `Refinement.mapDescriptor?` transports
+a later root's head and endpoints and rebuilds its evidence against the new
+predecessor signature. Given a real-closed predecessor model,
+`refine_descriptor` proves success for every validated later descriptor;
+`refine_root` proves it selects the same ambient root. `Refinement.later?`
+packages that revalidation with its cached extension and
 transport closure in a private `Later` bundle. `Later.transport` converts values
 using their actual stored polynomial; `refine_later` proves preservation without
 a caller-supplied descriptor-matching premise. `refine_later_exists` proves
-bundle construction succeeds. Retain the extension and use `Extension.pack`
-for repeated packing with its captured native prepared state. When the root frame changes, old context bindings are rejected by the new reader and validator.
+bundle construction succeeds under the same model. Constructing `Later` adjoins
+the old level once; retain the bundle and use `Extension.pack` for repeated
+packing with its captured native prepared state. When the root frame changes,
+old context bindings are rejected by the new reader and validator.
 
 Run `lake build HexRealClosure.TowerRefinementTests HexRealClosureMathlib.TowerModelTests`.
 Native checks refine a nonmonic reducible definition over an algebraic
