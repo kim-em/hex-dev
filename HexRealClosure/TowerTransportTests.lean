@@ -31,13 +31,40 @@ private def baseSample : Array Bool :=
   let two : old.Value := 1 + 1
   let moved := conversion.value two
   let target := conversion.context
+  let eps : target.Value := by
+    change (Conversion.infinitesimal (BaseContext.rational registry)).context.Value
+    rw [(Conversion.infinitesimal_spec (BaseContext.rational registry)).1]
+    exact BaseContext.Element.infinitesimal (BaseContext.rational registry)
   #[decide (old.signature.base.infinitesimals = 0),
     decide (target.signature.base.infinitesimals = 1),
     target.equal moved (1 + 1),
-    (target.read (target.write moved)).toOption.isSome,
+    ((target.read (target.write moved)).toOption.map (target.equal moved)) == some true,
+    decide (target.compare 0 eps = .lt),
+    decide (target.compare eps (conversion.value 1) = .lt),
     (old.read (target.write moved)).toOption.isNone]
 
-#guard baseSample == #[true, true, true, true, true]
+#guard baseSample == #[true, true, true, true, true, true, true]
+
+/-- Revalidate one selected square root over the new rational-function base. -/
+private def rootSample : Option (Array Bool) :=
+  let base := Context.base (BaseContext.rational registry)
+  let two : base.Value := 1 + 1
+  let x : DensePoly base.Value := DensePoly.ofCoeffs #[0, 1]
+  let raw : RawDescriptor base.Value Signature :=
+    { context := base.signature, head := x * x - DensePoly.C two,
+      lower := .finite 1, upper := .finite two, indices := [], signs := [] }
+  (Descriptor.validate base.sign base.signature raw).bind fun descriptor =>
+  let original := base.adjoin descriptor
+  let suffix : Suffix base := .root descriptor .nil
+  let conversion := Conversion.infinitesimal (BaseContext.rational registry)
+  (conversion.rebuild? suffix).map fun rebuilt =>
+  let result := rebuilt.result
+  let root := result.value original.generator
+  #[result.context.equal (root * root) (result.value (original.embed two)),
+    decide (result.context.compare root 1 = .gt),
+    (result.context.read (result.context.write root)).toOption.isSome]
+
+#guard rootSample == some #[true, true, true]
 
 /-- Change the first root definition and rebuild three later square roots.
 An embedded noncanonical one and an inverse retain their original meaning. -/

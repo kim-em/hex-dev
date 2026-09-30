@@ -1112,9 +1112,12 @@ in one ambient field when their interpretations agree on the native embedding.
 `infinitesimalHom` obtains that agreement from compatible coefficient and
 rational-function homomorphisms. Under those premises, `rebuild_infinitesimal`
 proves that the checked descriptor-retaining traversal succeeds for every
-finite algebraic suffix. Constructing the required common enlarged ambient
-model, proving its infinitesimal is below every positive old algebraic value,
-and providing a total `Context.enlarge` remain open.
+finite algebraic suffix. A kernel example supplies these premises for every
+finite suffix over ℚ using the ordered algebraic real closure of ℚ(ε), and a
+native check rebuilds a selected square root there. Constructing the common
+enlarged ambient model that retains an arbitrary old algebraic interpretation
+literally, proving its infinitesimal is below every positive old algebraic
+value, and providing a total `Context.enlarge` remain open.
 
 ## Ordered algebraic ambient models
 

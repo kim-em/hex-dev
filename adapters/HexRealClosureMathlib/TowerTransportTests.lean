@@ -7,13 +7,43 @@ module
 
 public import HexRealClosureMathlib.TowerTransport
 public import HexRealClosureMathlib.SelectedRoot
+public import HexRealClosureMathlib.Ambient
 
 namespace Hex.RealClosure.Tower.Conversion.Tests
+
+open scoped Hex.OrderedFn.Infinitesimal
 
 private def registry : BaseContext.Registry := fun _ => none
 private abbrev base := Context.base (BaseContext.rational registry)
 private noncomputable def rational : Tower.Model base ℝ :=
   Tower.Model.base (BaseContext.rational registry) (Rat.castHom ℝ) ratSign
+
+/-- The rational base and its infinitesimal extension have compatible models
+in the actual ordered algebraic real closure of rational functions. -/
+example (suffix : Suffix base) :
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal (BaseContext.rational registry)) suffix,
+      (Conversion.infinitesimal (BaseContext.rational registry)).rebuild? suffix =
+        some rebuilt := by
+  let wide := Ambient.infinitesimal Rat
+  letI : Field wide.Carrier := wide.field
+  letI : LinearOrder wide.Carrier := wide.order
+  letI : IsStrictOrderedRing wide.Carrier := wide.ordered
+  let g := Ambient.nativeHom HexRationalFnMathlib.ratField_eq wide
+  have hOld (a : Rat) : Hex.OrderedFn.orderSign a =
+      (SignType.sign ((Rat.castHom wide.Carrier) a) : Int) := by
+    rw [Rat.cast_strictMono.sign_comp,
+      Hex.OrderedFn.Infinitesimal.orderSign_eq]
+  have hNew (q : Hex.RationalFn Rat) :
+      Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign q =
+        (SignType.sign (g q) : Int) :=
+    Ambient.nativeHom_sign HexRationalFnMathlib.ratField_eq wide q
+  have hcomp (a : Rat) : g (Hex.RationalFn.C a) = (Rat.castHom wide.Carrier) a := by
+    rw [Ambient.nativeHom_C]
+    change (wide.inclusion.comp (HexRationalFnMathlib.constantHom (K := Rat))) a =
+      (Rat.castHom wide.Carrier) a
+    simp
+  exact (Conversion.Model.infinitesimalHom (BaseContext.rational registry)
+    (Rat.castHom wide.Carrier) g hOld hNew hcomp).rebuild_exists suffix
 
 variable (descriptor : SignDet.Descriptor base.Value Signature base.sign base.signature)
 variable {head : DensePoly base.Value} {lower upper : Endpoint base.Value}
