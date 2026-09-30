@@ -23,7 +23,6 @@ theorem Context.enlarge?_model {context : Context registry}
     (base : BaseContext.Context registry B sign)
     (suffix : Suffix (Context.base base))
     (target_eq : suffix.context = context)
-    (origin_eq : context.origin = Origin.pack base suffix target_eq)
     {K : Type u} [Field K] [LinearOrder K] [DecidableEq K]
     [IsStrictOrderedRing K] [IsRealClosed K]
     (old : Tower.Model (Context.base base) K)
@@ -32,8 +31,23 @@ theorem Context.enlarge?_model {context : Context registry}
       Nonempty (Conversion.Model result (target_eq ▸ old.extend suffix)) := by
   obtain ⟨result, hresult, ⟨preserved⟩⟩ := model.extend_exists suffix
   refine ⟨result.cast target_eq, ?_, ⟨preserved.cast target_eq⟩⟩
-  rw [Context.enlarge?_eq base suffix target_eq origin_eq, hresult]
+  rw [Context.enlarge?_eq base suffix target_eq, hresult]
   rfl
+
+/-- Checked enlargement preserves the canonical interpretation of every
+value in a supplied validated root suffix. -/
+theorem Context.enlarge?_suffix_model
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    {K : Type u} [Field K] [LinearOrder K] [DecidableEq K]
+    [IsStrictOrderedRing K] [IsRealClosed K]
+    (old : Tower.Model (Context.base base) K)
+    (model : Conversion.Model (Conversion.infinitesimal base) old) :
+    ∃ result : Conversion suffix.context,
+      suffix.context.enlarge? = some result ∧
+        Nonempty (Conversion.Model result (old.extend suffix)) := by
+  exact Context.enlarge?_model base suffix rfl old model
 
 /-- A sign-compatible interpretation of the extracted staged base makes
 checked enlargement succeed for its stored root suffix. -/
@@ -42,7 +56,6 @@ theorem Context.enlarge?_exists {context : Context registry}
     (base : BaseContext.Context registry B sign)
     (suffix : Suffix (Context.base base))
     (target_eq : suffix.context = context)
-    (origin_eq : context.origin = Origin.pack base suffix target_eq)
     {R : Type u} [Field R] [LinearOrder R] [IsStrictOrderedRing R]
     [DecidableEq R]
     (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* R)
@@ -51,7 +64,25 @@ theorem Context.enlarge?_exists {context : Context registry}
   let model := Conversion.Model.infinitesimalMapped base f hsign
     (Ambient.infinitesimal R)
   obtain ⟨result, hresult, _⟩ :=
-    Context.enlarge?_model base suffix target_eq origin_eq _ model
+    Context.enlarge?_model base suffix target_eq _ model
+  exact ⟨result, hresult⟩
+
+/-- Checked enlargement succeeds at any finite algebraic depth over a staged
+base with a sign-compatible ordered-field interpretation. -/
+theorem Context.enlarge?_suffix
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    {R : Type u} [Field R] [LinearOrder R] [IsStrictOrderedRing R]
+    [DecidableEq R]
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* R)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int)) :
+    ∃ result : Conversion suffix.context,
+      suffix.context.enlarge? = some result := by
+  let model := Conversion.Model.infinitesimalMapped base f hsign
+    (Ambient.infinitesimal R)
+  obtain ⟨result, hresult, _⟩ :=
+    Context.enlarge?_suffix_model base suffix _ model
   exact ⟨result, hresult⟩
 
 end Hex.RealClosure.Tower
@@ -60,6 +91,14 @@ end Hex.RealClosure.Tower
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Context.enlarge?_model
 
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_suffix_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_suffix_model
+
 /-- info: 'Hex.RealClosure.Tower.Context.enlarge?_exists' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Context.enlarge?_exists
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_suffix' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_suffix

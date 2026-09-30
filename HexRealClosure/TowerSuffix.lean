@@ -23,6 +23,36 @@ variable {registry : BaseContext.Registry}
   | .nil => .root descriptor .nil
   | .root first rest => .root first (rest.snoc descriptor)
 
+/-- Concatenate two validated root suffixes in predecessor order. -/
+@[expose] def Suffix.append {source : Context registry} :
+    (first : Suffix source) → Suffix first.context → Suffix source
+  | .nil, later => later
+  | .root descriptor rest, later => .root descriptor (rest.append later)
+
+/-- Concatenation ends in the context of its second suffix. -/
+theorem Suffix.append_context {source : Context registry}
+    (first : Suffix source) (later : Suffix first.context) :
+    (first.append later).context = later.context := by
+  induction first with
+  | nil => rfl
+  | root descriptor rest ih => exact ih later
+
+/-- Concatenation respects an equality between the first suffix's target and
+the second suffix's source. -/
+theorem Suffix.append_cast_context {source other : Context registry}
+    (first : Suffix source) (h : first.context = other)
+    (later : Suffix other) :
+    (first.append (h.symm ▸ later)).context = later.context := by
+  cases h
+  exact first.append_context later
+
+/-- Appending no roots retains the original suffix. -/
+theorem Suffix.append_nil {source : Context registry} (first : Suffix source) :
+    first.append .nil = first := by
+  induction first with
+  | nil => rfl
+  | root descriptor rest ih => exact congrArg (Suffix.root descriptor) ih
+
 /-- Appending a root returns its actual native child context. -/
 theorem Suffix.snoc_context {source : Context registry} (suffix : Suffix source)
     (descriptor : SignDet.Descriptor suffix.context.Value Signature
@@ -31,6 +61,19 @@ theorem Suffix.snoc_context {source : Context registry} (suffix : Suffix source)
   induction suffix with
   | nil => rfl
   | root first rest ih => exact ih descriptor
+
+/-- Appending a nonempty suffix first appends its initial root. -/
+theorem Suffix.append_root {source : Context registry} (first : Suffix source)
+    (descriptor : SignDet.Descriptor first.context.Value Signature
+      first.context.sign first.context.signature)
+    (rest : Suffix (first.context.adjoin descriptor).context) :
+    first.append (.root descriptor rest) =
+      (first.snoc descriptor).append
+        ((Suffix.snoc_context first descriptor).symm ▸ rest) := by
+  induction first with
+  | nil => rfl
+  | root head tail ih =>
+    exact congrArg (Suffix.root head) (ih descriptor rest)
 
 /-- Number of validated algebraic root levels in the suffix. -/
 @[expose] def Suffix.length {source : Context registry} : Suffix source → Nat
@@ -89,6 +132,17 @@ theorem Context.adjoin_cast {left right : Context registry}
   cases h
   rfl
 
+/-- Append an actual selected root to a packed origin. -/
+@[expose] def Origin.snoc {parent : Context registry} (origin : Origin parent)
+    (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature) :
+    Origin (parent.adjoin descriptor).context := by
+  cases origin with
+  | pack base suffix hparent =>
+    let mapped := Context.castDescriptor hparent descriptor
+    refine .pack base (suffix.snoc mapped) ?_
+    rw [Suffix.snoc_context]
+    exact Context.adjoin_cast hparent descriptor
+
 /-- Follow the exact predecessor chain to recover its staged base and
 validated descriptors without decoding serialized data. -/
 @[expose] def Chain.origin {E : Type} [Zero E] [DecidableEq E]
@@ -98,17 +152,8 @@ validated descriptors without decoding serialized data. -/
   cases chain with
   | base parentBase => exact .pack parentBase .nil rfl
   | root parent descriptor frame encoded =>
-    obtain ⟨base, suffix, hparent⟩ := Chain.origin parent
-    let native : SignDet.Descriptor (Context.pack parent).Value Signature
-        (Context.pack parent).sign (Context.pack parent).signature := descriptor
-    let mapped := Context.castDescriptor hparent native
-    refine .pack base (suffix.snoc mapped) ?_
-    rw [Suffix.snoc_context]
-    change (suffix.context.adjoin mapped).context = _
-    rw [show (suffix.context.adjoin mapped).context =
-      ((Context.pack parent).adjoin descriptor).context from
-      Context.adjoin_cast hparent native]
-    exact Context.adjoin_root_eq parent descriptor frame encoded
+    let extended := (Chain.origin parent).snoc descriptor
+    exact (Context.adjoin_root_eq parent descriptor frame encoded) ▸ extended
 
 /-- Every validated packed tower has a staged base and an exact finite suffix
 of its stored root extensions. No descriptor is reconstructed from a signature.

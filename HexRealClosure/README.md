@@ -1140,11 +1140,18 @@ In the Mathlib bridge, `Context.enlarge?_model` preserves the interpretation
 `old.extend suffix` of every value through the returned conversion, and hence
 its equality and order. `Context.enlarge?_exists` proves conversion success
 when the extracted base admits a sign-compatible map into an ordered field.
-`Context.origin_adjoin_base` discharges the origin equality for one root over
-a staged base. A corresponding equation for longer stored suffixes is still
-needed to apply the theorem directly at arbitrary depth. Origin extraction
-currently appends suffixes and can reconstruct old frames; no depth-scaling
-cost is claimed for this constructor.
+`Context.origin_adjoin` tracks every appended descriptor in the stored origin.
+`Suffix.origin_exact` proves that extraction after any validated suffix over
+a staged base recovers the same descriptors in predecessor order. Consequently,
+given a compatible model of the infinitesimal base conversion into a real
+closed ordered field, `Context.enlarge?_suffix_model` interprets every converted
+value against the canonical extension `old.extend suffix` of the supplied base
+model at arbitrary finite depth. `Context.enlarge?_suffix` proves conversion
+success when the staged base has
+a sign-compatible ordered-field map. Identifying that canonical interpretation
+with a caller's arbitrary old model remains separate. Computing suffix
+contexts during extraction can reconstruct old frames; no depth-scaling cost
+is claimed for this constructor.
 
 General `Context.enlarge` still requires:
 
