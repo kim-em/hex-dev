@@ -8,6 +8,7 @@ module
 public import HexRealClosureMathlib.TowerTransport
 public import HexRealClosureMathlib.SelectedRoot
 public import HexRealClosureMathlib.TowerRestriction
+public import HexRealClosureMathlib.TowerEnlarge
 
 namespace Hex.RealClosure.Tower.Conversion.Tests
 
@@ -82,6 +83,11 @@ variable (descriptor : SignDet.Descriptor base.Value Signature base.sign base.si
 variable {head : DensePoly base.Value} {lower upper : Endpoint base.Value}
 variable (encoding : SignDet.Reencoding descriptor head lower upper)
 variable (suffix : Suffix (base.adjoin descriptor).context)
+
+/-- The rational base origin discharges the checked-enlargement theorem. -/
+example : ∃ result : Conversion base, base.enlarge? = some result := by
+  exact Context.enlarge?_exists (BaseContext.rational registry) .nil rfl
+    (Context.origin_base (BaseContext.rational registry)) (Rat.castHom ℝ) ratSign
 
 /-- Complete reconstruction and interpretation at arbitrary finite depth. -/
 example : ∃ result, (Conversion.refine base encoding).extend? suffix = some result ∧

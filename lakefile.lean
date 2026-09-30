@@ -648,7 +648,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.BaseAlgebraicity, `HexRealClosureMathlib.BaseBound,
     `HexRealClosureMathlib.EnlargementTests,
     `HexRealClosureMathlib.Union, `HexRealClosureMathlib.TowerUnion,
-    `HexRealClosureMathlib.TowerRestriction,
+    `HexRealClosureMathlib.TowerRestriction, `HexRealClosureMathlib.TowerEnlarge,
     `HexRealClosureMathlib.UnionTests].map Glob.one
 
 lean_exe hexrealclosure_root_order_tests where
