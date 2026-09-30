@@ -1,0 +1,6 @@
+{
+ "path": "HexBasic/Kernel.lean",
+ "baseline_blob": null,
+ "current_blob": "0217ab55e98021f89bfcbbff6a69530f19293837",
+ "reason": "Moves the kernel-evaluation loop drivers and raw Nat spelling lemmas verbatim from HexGraphIso/Kernel/Packed.lean into a new HexBasic module, with their simp lemmas scoped to Hex.Kernel. The factorization path reaches it through the HexBasic umbrella, but no executable factorization definition calls these drivers, so the compiled call graph is unchanged."
+}

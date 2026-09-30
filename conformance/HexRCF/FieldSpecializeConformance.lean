@@ -97,7 +97,7 @@ private def ratDomain? : Option (Sturm.PreparedDomain Rat) :=
       Sturm.check recorded () ratHead ratQuery (.finite 1) (.finite 2)
         cert.value cert
 
-/-- info: 'Hex.RCF.RealCoefficients.SignInputs.certificate_check_congr' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'Hex.RCF.RealCoefficients.SignInputs.certificate_check_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms SignInputs.certificate_check_congr
 

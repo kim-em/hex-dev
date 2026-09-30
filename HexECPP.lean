@@ -11,6 +11,8 @@ public import HexECPP.Affine
 public import HexECPP.Replay
 public import HexECPP.Cert
 public import HexECPP.Import
+public import HexECPP.CM
+public import HexECPP.Search
 
 public section
 

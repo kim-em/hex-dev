@@ -138,6 +138,25 @@ a single change.
 - With variant F, Co3 checked in about two minutes of kernel time, in
   declarations of under ten seconds each.
 
+## The implemented checker
+
+`Kernel.check` of `HexPermGroup.Kernel`, on certificates from `Kernel.certify`
+for the same ATLAS generators, with each piece in its own declaration under
+the default heartbeat limit and the default chunk budget. Host `chungus2`,
+2026-09-28, each file run alone under a memory limit.
+
+| group | degree | kernel total | largest declaration | peak memory |
+|---|---|---|---|---|
+| M11, classical generators | 11 | 0.1 s | 0.1 s | 0.24 GB |
+| M24 | 24 | 0.9 s | 0.2 s | 0.32 GB |
+| J2 | 100 | 4.3 s | 2.1 s | 0.73 GB |
+| HS | 100 | 8.3 s | 2.6 s | 0.84 GB |
+| McL | 275 | 55 s | 9.1 s | 3.7 GB |
+| Co3 | 276 | 111 s | 9.2 s | 5.6 GB |
+
+For comparison, `checkChain` replay of M11 with the classical generators takes
+28.3 s and 5.8 GB (above).
+
 ## Appendix: prototype checker (variant F)
 
 No soundness proof, and not the SPEC's checker: it reads lengths from lists

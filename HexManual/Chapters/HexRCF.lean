@@ -11,6 +11,15 @@ import HexRCF.RealCoefficients
 import HexRealClosure
 import HexSignDet
 import HexSignDetMathlib.SelectedProducer
+import HexSignDetMathlib.CompletionProducer
+import HexSignDetMathlib.TableProducer
+import HexSignDetMathlib.ReencodingProducer
+import HexSignDetMathlib.ReencodingRefinement
+import HexSignDetMathlib.Convert
+
+import HexSignDetMathlib.QueryHandle
+
+import HexSignDetMathlib.RootList
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -712,14 +721,52 @@ original divisor obligations before normalization. Closed values built with
 supported sentences, a divisor must be proved nonzero before certificate
 construction.
 
-The algebraic examples use the generic accepted-query soundness theorem
-`HexRealRootsMathlib.Tarski.check_rootSum`. Its proof is currently admitted in
-[#10389](https://github.com/kim-em/hex-dev/issues/10389); the fixed-field
-certificate checks and the chosen-root identifications above are proved from
-that stated theorem. Thus these examples are kernel-checked relative to that
-one mathematical admission. The rational examples and their axiom inventory
-above do not depend on it. See {ref "hex-number-field"}[HexNumberField] and
+The algebraic examples use the proved generic accepted-query soundness theorem
+`HexRealRootsMathlib.Tarski.check_rootSum`. Their fixed-field certificate checks
+and chosen-root identifications use only Lean's standard logical axioms.
+See {ref "hex-number-field"}[HexNumberField] and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
+
+# Simultaneous signs and repeated roots over a cubic field
+%%%
+tag := "hex-rcf-cubic-signs"
+%%%
+
+Mathlib writes the nonnegative real cube root of two as
+`(2 : ℝ) ^ (1 / 3 : ℝ)`, using {name}`Real.rpow`. It is a closed algebraic
+coefficient here; powers of the quantified variable still have natural-number
+exponents. The first example finds a positive square root of this coefficient
+and checks two inequalities at the same root, without a supplied witness.
+The second finds a common root of two different polynomials. That root has
+multiplicity two in the first polynomial and multiplicity one in the second.
+
+```lean
+example : ∃ x : ℝ,
+    x ^ 2 = (2 : ℝ) ^ (1 / 3 : ℝ) ∧
+    1 < x ∧ x < (2 : ℝ) ^ (1 / 3 : ℝ) := by
+  rcf
+
+example : ∃ x : ℝ,
+    (x - (2 : ℝ) ^ (1 / 3 : ℝ)) ^ 2 = 0 ∧
+    x ^ 3 = 2 ∧ 1 < x ∧ x < 3 / 2 := by
+  rcf
+
+example : ∀ x : ℝ,
+    (x - computedCoefficient.toReal) ^ 2 = 0 → 1 < x ∧ x < 3 / 2 := by
+  rcf
+
+example : ∃ x : ℝ,
+    (x - computedCoefficient.toReal) ^ 2 = 0 ∧ 1 < x ∧ x < 3 / 2 := by
+  rcf
+```
+
+The last two examples use the actual `QAdjoin` coordinate `(a² + 1) / 2`
+constructed above, where `a` is the selected cube root of two. They check both
+the location and existence of a repeated root over this nonquadratic field.
+Repeated factors are allowed in the user's polynomials; the internal root
+domain used for sign determination is squarefree. These examples use the
+proved fixed-field replay and root-sum results, and their proofs depend only
+on Lean's standard logical axioms.
 
 # Arithmetic at a selected algebraic root
 %%%
@@ -791,8 +838,8 @@ end
 ```
 
 The companion proves that checked signs, inversion, refinement and canonical
-conversion preserve the selected real value. Those proofs inherit the named
-accepted-query admission in [#10389](https://github.com/kim-em/hex-dev/issues/10389).
+conversion preserve the selected real value. Those proofs use the shared
+accepted-query soundness theorem `HexRealRootsMathlib.Tarski.check_rootSum`.
 `Root.Handle.Value h` carries the same packed representation and gives
 generic `DensePoly` algorithms operations that share this cached root.
 See {ref "hex-number-field"}[HexNumberField] for fixed-field arithmetic and
@@ -818,18 +865,30 @@ private def bkrX : DensePoly Rat :=
   DensePoly.ofCoeffs #[0, 1]
 
 private def bkrTablePasses : Bool :=
-  match Sturm.prepare Sturm.orderSign bkrHead
-      .negInf .posInf with
+  match determine Sturm.orderSign 7 bkrHead
+      .negInf .posInf [bkrX, bkrX - 1] with
   | none => false
-  | some domain =>
-    match buildTablePrepared 7 domain [bkrX, bkrX - 1] with
-    | .error _ => false
-    | .ok table =>
-      table.rows.toList == [([-1, -1], 1), ([1, 0], 1)] &&
-        table.count [0, 0] == 0
+  | some table =>
+    table.rows.toList == [([-1, -1], 1), ([1, 0], 1)] &&
+      table.count [0, 0] == 0
 
 #guard bkrTablePasses
 ```
+
+{name}`Hex.SignDet.determine` returns `none` exactly when the defining
+polynomial and interval do not form a valid root domain. An interval with no
+roots returns an empty table. With no queries, the count at the empty sign
+pattern is the number of roots. To reuse a prepared polynomial and
+interval, call {name}`Hex.SignDet.determinePrepared` directly.
+
+The success and correctness theorems are in
+`HexSignDetMathlib.TableProducer`. {name}`Hex.SignDet.determinePrepared_success`
+proves that the actual prepared BKR producer always supplies a checked table
+under the coefficient-interpretation laws.
+{name}`Hex.SignDet.determine_correct` identifies every returned count with the
+number of mathematical roots having that sign pattern, including zero for
+omitted patterns. Both the producer-success and count-correctness results use
+the shared proved root-sum theorem.
 
 Derivative signs identify a selected root. Here the positive root of
 `x² − 1` is selected by the sign of the first derivative. A second checked
@@ -893,15 +952,269 @@ private def signsFieldPasses : Bool :=
 ```
 
 Import `HexSignDetMathlib.SelectedProducer` for the success and correctness
-theorems. {name}`Hex.SignDet.Descriptor.buildSigns_success` proves that this operation
+theorems. {name}`Hex.SignDet.Descriptor.buildSigns_success` proves that `buildSigns`
 always succeeds for a validated descriptor when coefficient arithmetic and
 signs have their specified mathematical meaning. It proves preparation and
 table construction succeed and rules out every final internal error; successful
 output is not a hypothesis. {name}`Hex.SignDet.Descriptor.buildSigns_roots`
 also proves that the returned list gives the signs at the original selected
-root, in query order. These proofs use the named root-sum admission in
-[#10389](https://github.com/kim-em/hex-dev/issues/10389); they do not require a
-theorem about ordering roots by Thom encodings.
+root, in query order. These proofs use the shared root-sum theorem
+`HexRealRootsMathlib.Tarski.check_rootSum`.
+
+For one polynomial, a validated descriptor provides an ordinary integer sign.
+The same cubic-field example can use this operation directly, receiving only the integer
+sign from the checked calculation:
+
+```lean
+private def totalSignsFieldPasses : Bool :=
+  match Descriptor.validate signsFieldSign 7 signsRoot with
+  | some root =>
+    [root.signAt (signsX - 1),
+      root.signAt (signsX - DensePoly.C 2),
+      root.signAt (signsX.natPow 3 - DensePoly.C 2)] == [1, -1, 0]
+  | none => false
+
+#guard totalSignsFieldPasses
+```
+
+{name}`Hex.SignDet.Descriptor.signAt_success` proves that the underlying
+checked calculation succeeds, so its diagnostic zero fallback is unreachable
+when the coefficient operations satisfy their interpretation laws.
+{name}`Hex.SignDet.Descriptor.signAt_correct` identifies the returned integer
+with the evaluation sign at the descriptor's original selected root. Both
+results use the same shared root-sum theorem. For several queries, `buildSigns`
+shares one table across the list; each `signAt` call constructs its own table.
+
+Completing a partial derivative description supplies every derivative sign
+without changing the selected root. Over the same cubic coefficient field,
+`P = (x − α)x(x + α)` has roots `−α`, `0` and `α`. Its second derivative is
+`6x`, so its positive sign selects α. Completion returns the signs of `P′`,
+`P″` and `P‴`, all positive at α, in that order.
+
+```lean
+private def completionHead : DensePoly signsField :=
+  (signsX - DensePoly.C signsAlpha) * signsX *
+    (signsX + DensePoly.C signsAlpha)
+private def partialRoot : RawDescriptor signsField Nat :=
+  ⟨7, completionHead, .negInf, .posInf, [2], [1]⟩
+private def completionPasses : Bool :=
+  match Descriptor.validate signsFieldSign 7 partialRoot with
+  | none => false
+  | some root =>
+    match root.buildCompletion with
+    | .error _ => false
+    | .ok evidence =>
+      let full := root.complete
+      full.raw.indices == [1, 2, 3] &&
+        full.raw.signs == [1, 1, 1] &&
+        full.raw.signs == evidence.descriptor.raw.signs &&
+        root.raw.completes full.raw
+
+#guard completionPasses
+```
+
+Import `HexSignDetMathlib.CompletionProducer` for
+{name}`Hex.SignDet.Descriptor.buildCompletion_success` and
+{name}`Hex.SignDet.Descriptor.complete_correct`. They prove that completion
+succeeds for every validated partial description and retains its original
+mathematical root, head, interval and context. This includes an empty partial
+word when the interval contains exactly one root. The proofs use the shared
+proved root-sum theorem.
+They do not require the separate Thom ordering theorem. Each call computes and
+checks its full derivative table; use `buildCompletion` directly when you need
+the evidence as well as the completed descriptor.
+
+For successive queries at one selected root, retain its prepared domain with
+{name}`Hex.SignDet.Descriptor.prepareQueries`. This avoids the initial preparation call on each query list. Table
+construction and selected-sign validation still replay the domain evidence
+and joint table; the handle carries no measured speedup guarantee. Over the same cubic coefficient field:
+
+```lean
+private def preparedSignsFieldPasses : Bool :=
+  match Descriptor.validate signsFieldSign 7 signsRoot with
+  | none => false
+  | some root =>
+    match root.prepareQueries with
+    | none => false
+    | some handle =>
+      match handle.buildSigns [signsX - 1, signsX - DensePoly.C 2],
+          handle.buildSigns [signsX.natPow 3 - DensePoly.C 2] with
+      | .ok pair, .ok zero =>
+        pair.values.toList == [1, -1] && zero.value == 0 &&
+          handle.signAt (signsX - 1) == 1 &&
+          handle.signAt (signsX.natPow 3 - DensePoly.C 2) == 0
+      | _, _ => false
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard preparedSignsFieldPasses
+```
+
+{name}`Hex.SignDet.Descriptor.prepareQueries_success` proves that preparation
+succeeds for validated descriptions under the coefficient laws.
+{name}`Hex.SignDet.QueryHandle.buildSigns_roots` and
+{name}`Hex.SignDet.QueryHandle.signAt_correct` identify all returned signs at
+the original selected root. These results use the shared proved root-sum theorem.
+The handle retains the original context, polynomial, interval and derivative selection; copied
+certificates must still pass the ordinary literal replay checks.
+
+Re-encoding asks whether the same selected root can be described using a
+new defining polynomial and interval. It returns `none` if the target domain
+is invalid or excludes that root. Sharing a different root is insufficient:
+the source below selects +α from `(x − α)(x + α)`, while the target `x + α`
+has only −α. Restricting the original head to `(−2, 0)` also excludes +α.
+Both calls return ordinary absence, with no internal error.
+
+```lean
+private def absentReencodingPasses : Bool :=
+  match Descriptor.validate signsFieldSign 7 signsRoot with
+  | none => false
+  | some root =>
+    let absentHead := match root.buildReencoding
+        (signsX + DensePoly.C signsAlpha) .negInf .posInf with
+      | .ok none => true
+      | _ => false
+    let absentInterval := match root.buildReencoding
+        signsHead (.finite (-2)) (.finite 0) with
+      | .ok none => true
+      | _ => false
+    absentHead && absentInterval
+
+#guard absentReencodingPasses
+```
+
+Import `HexSignDetMathlib.ReencodingProducer` for
+{name}`Hex.SignDet.Descriptor.buildReencoding_absent`. It proves this result
+for every lawful coefficient interpretation when the selected root is absent
+from the target domain. Preparation and joint table construction are proved
+from the input; successful output is not assumed. The proof uses the shared
+proved root-sum theorem. It needs neither a root-separating interval nor a
+Thom ordering theorem. General success for a different defining polynomial
+when the root is present is a separate proof requirement. For an accepted re-encoding,
+{name}`Hex.SignDet.Reencoding.root_eq_source` proves that the new descriptor
+retains the source root.
+
+Refining the interval can retain the root instead. Here `(1, 3/2)` contains
++α and excludes −α. The producer constructs a complete derivative word and
+fresh evidence for those bounds. Evidence from the original whole-line
+description is rejected at the refined interval.
+
+```lean
+private def refinedCubicRootPasses : Bool :=
+  match Descriptor.validate signsFieldSign 7 signsRoot with
+  | none => false
+  | some root =>
+    match root.buildReencoding signsHead (.finite 1) (.finite (3/2)) with
+    | .ok (some r) =>
+      r.target.raw.lower == .finite 1 &&
+        r.target.raw.upper == .finite (3/2) &&
+        r.target.raw.signs == [1, 1] &&
+        r.target.signAt (signsX.natPow 3 - DensePoly.C 2) == 0 &&
+        r.target.raw.check signsFieldSign 7 r.target.evidence &&
+        !({signsRoot with lower := .finite 1, upper := .finite (3/2)}).check
+          signsFieldSign 7 root.evidence
+    | _ => false
+
+#guard refinedCubicRootPasses
+```
+
+{name}`Hex.SignDet.Descriptor.buildReencoding_refinement` proves success and
+preservation of the selected root for a valid smaller root domain of the same
+polynomial containing that root. Its hypotheses describe the input interval;
+they do not assume a successful computation. The proof uses the old validated
+selection's uniqueness and the proved shared Sturm–Tarski theorem. It applies to
+generic lawful coefficients, including non-Archimedean interpretations, without
+assuming rational isolating bounds.
+{name}`Hex.SignDet.Descriptor.buildReencoding_congr` also covers different stored
+coefficients representing the same polynomial, tested by a zero difference;
+the producer builds fresh evidence bound to the new representation.
+General success for a different mathematical defining polynomial requires the
+separate Thom foundations.
+A coefficient conversion lets a selected root participate in queries over a
+larger coefficient field. Here the source selects √2 over the rationals. Moving
+its descriptor into the existing field ℚ(∛2) allows a query comparing it with ∛2:
+
+```lean
+private theorem cubic_zero (q : Rat) :
+    (PolyQuot.ofRat q : signsField) = 0 ↔ q = 0 := by
+  rw [← Field.value_eq_zero cubicGenerator.rep
+      cubicGenerator.rep_mk
+      ((AlgebraicNumber.isReal_iff cubicGenerator).mp
+        CubeTwo.realAlgebraic.property),
+    FieldSpecialize.value_ofRat cubicGenerator.rep
+      cubicGenerator.rep_mk
+      ((AlgebraicNumber.isReal_iff cubicGenerator).mp
+        CubeTwo.realAlgebraic.property),
+    Rat.cast_eq_zero]
+
+private def convertedRootPasses : Bool :=
+  let raw : RawDescriptor Rat Nat :=
+    ⟨7, bkrX * bkrX - 2, .finite 0, .posInf, [], []⟩
+  match Descriptor.validate Sturm.orderSign 7 raw with
+  | none => false
+  | some root =>
+    match root.convert PolyQuot.ofRat cubic_zero signsFieldSign 8 with
+    | .ok (.ok moved) =>
+      moved.raw.context == 8 &&
+        moved.signAt (signsX - DensePoly.C signsAlpha) == 1 &&
+        moved.signAt (signsX * signsX - DensePoly.C 2) == 0
+    | _ => false
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard convertedRootPasses
+```
+
+{name}`Hex.SignDet.Descriptor.convert` maps the head and endpoints, retains the
+partial derivative selection and builds fresh evidence in the new context.
+It reconstructs every derivative query using the target's ordinary operations.
+A context identifier here stands for the caller's immutable context data;
+changing its binding requires fresh evidence even when all polynomial values
+stay the same. No old certificate is copied by this operation.
+
+{name}`Hex.SignDet.Descriptor.convert_success` and
+{name}`Hex.SignDet.Descriptor.convert_root` prove success and preservation of the
+selected root when both coefficient interpretations are lawful and the
+conversion preserves their values. They cover noninjective representations and
+assume no Archimedean property or rational isolating intervals. Applying them
+to infinitesimal coefficients requires a lawful interpretation into a real
+closed field. The nested-infinitesimal fixture tests execution and context
+changes; it does not provide that interpretation.
+These semantic proofs use the proved shared Sturm–Tarski theorem. An arbitrary
+converter still has the builder's ordinary input and internal-error diagnostics.
+
+Root enumeration constructs a full derivative description for each root. This
+example uses the same actual cubic coefficient field and enumerates the roots
+of `P = (x − α)x(x + α)`. The returned words correspond to `−α`, `0` and `α`:
+
+```lean
+private def rootsFieldPasses : Bool :=
+  let p := signsHead * signsX
+  match Descriptor.buildRoots signsFieldSign 7 p .negInf .posInf with
+  | .ok (some roots) =>
+    roots.map (fun d => d.raw.signs) ==
+      [[1, -1, 1], [-1, 0, 1], [1, 1, 1]]
+  | _ => false
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+#guard rootsFieldPasses
+```
+
+{name}`Hex.SignDet.Descriptor.buildRoots_coverage` proves that every successful
+output covers every mathematical root in the interval exactly once. On valid
+domains with no roots, {name}`Hex.SignDet.Descriptor.buildRoots_empty` proves
+the actual constructor succeeds with an empty list;
+{name}`Hex.SignDet.Descriptor.buildRoots_constant_success` covers nonzero
+constant heads. {name}`Hex.SignDet.Descriptor.buildRoots_subsingleton` proves
+success on every valid domain containing at most one root, including linear
+heads and isolating intervals, without a Thom-order assumption.
+{name}`Hex.SignDet.Descriptor.buildRoots_none_iff` characterizes invalid domains
+exactly without using the root-sum theorem. The success and coverage results use
+the shared proved root-sum theorem. A general proof that
+enumeration succeeds on every valid domain and returns roots in mathematical
+order still requires the separate Thom foundation. This example checks the
+actual output; it does not discharge those general proof obligations.
 
 Two roots can be compared even if their defining polynomials differ. The
 comparison constructs a checked common squarefree polynomial and expresses
@@ -985,8 +1298,7 @@ private def independentRootsPass : Bool :=
 The sign-table and descriptor examples run checked producers and finite
 certificate checks; the changed sign vector above is rejected. The companion
 proves complete real-root counts, selected-root identity and signs using the
-root-sum bridge tracked by
-[#10389](https://github.com/kim-em/hex-dev/issues/10389), which remains admitted.
+proved root-sum theorem `HexRealRootsMathlib.Tarski.check_rootSum`.
 Strict root ordering still requires the Thom foundation from Tau Ceti, and the
 full library assignment retains its separate BKR/Thom foundation gate. The
 separate common-field conversion preserves the selected algebraic values by

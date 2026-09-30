@@ -1,0 +1,12 @@
+{
+  "cpu": 15,
+  "host": "chungus2",
+  "source": "c4499500068eeb909d2d32daa5371b8a3f43dfba",
+  "loadavg": [
+    4.91650390625,
+    4.00048828125,
+    4.44921875
+  ],
+  "returncode": 0,
+  "output": "env: lean=4.34.1, os=linux, arch=x86_64, commit=c449950-dirty, 2026-09-28T08:58:44Z, host=chungus2\nrunNative128    [fixed] repeats=5\n  repeat 0  62.877 ms\n  repeat 1  61.661 ms\n  repeat 2  62.416 ms\n  repeat 3  62.365 ms\n  repeat 4  62.572 ms\n  median: 62.416 ms    min: 61.661 ms    max: 62.877 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 71_884 kB..72_660 kB (across 5 ok repeat(s))\n\nrunNative256    [fixed] repeats=5\n  repeat 0  722.001 ms\n  repeat 1  717.627 ms\n  repeat 2  718.061 ms\n  repeat 3  708.906 ms\n  repeat 4  717.085 ms\n  median: 717.627 ms    min: 708.906 ms    max: 722.001 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 71_912 kB..72_668 kB (across 5 ok repeat(s))\n\nrunNativeCheck    [fixed] repeats=5\n  repeat 0  4.746 ms\n  repeat 1  4.694 ms\n  repeat 2  4.730 ms\n  repeat 3  4.752 ms\n  repeat 4  4.735 ms\n  median: 4.735 ms    min: 4.694 ms    max: 4.752 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 71_876 kB..72_344 kB (across 5 ok repeat(s))\n\nrunNativeConvert    [fixed] repeats=5\n  repeat 0  65.354 ms\n  repeat 1  66.009 ms\n  repeat 2  65.453 ms\n  repeat 3  66.789 ms\n  repeat 4  65.939 ms\n  median: 65.939 ms    min: 65.354 ms    max: 66.789 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 74_300 kB..74_844 kB (across 5 ok repeat(s))\n\nrelative median (baseline = runNative128, the first CLI argument):\n  runNative128: 1.000\u00d7 (62.416 ms)\n  runNative256: 11.497\u00d7 (717.627 ms)\n  runNativeCheck: 0.076\u00d7 (4.735 ms)\n  runNativeConvert: 1.056\u00d7 (65.939 ms)\nagreement: all functions agree on output\nexported to reports/ecpp/native/compiled-updated.json\n"
+}

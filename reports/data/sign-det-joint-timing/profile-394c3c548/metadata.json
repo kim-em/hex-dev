@@ -1,0 +1,48 @@
+{
+  "schema": "hex-sign-det-joint-profile-v1",
+  "revision": "394c3c54802ee1fe8e251098323b02c603536454",
+  "cpu": 52,
+  "host": "chungus2",
+  "load_before": [
+    6.03466796875,
+    5.93212890625,
+    14.357421875
+  ],
+  "binary_sha256": "fcf1ddbab177d9ec61d0347b4cbbd9f57ceec94f418c1e961f40fa5ba5deb8c8",
+  "collector_sha256": "dae87f4c4e575dc7aa5b9c15627ada3f119f569ec53f7a537f29c50c74b8d340",
+  "state": "complete",
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-joint-evidence/.lake/build/bin/hexsigndet_bench",
+    "profile",
+    "Hex.SignDetBench.Joint.runComparison",
+    "--param",
+    "31",
+    "--cache-mode",
+    "cold",
+    "--profiler",
+    "perf record --clockid mono -e cycles:u -F 199 --call-graph dwarf -o /tmp/issue-10377-joint-profile-394c3c548/perf.data --"
+  ],
+  "perf_version": "perf version 7.2.8",
+  "environment": {
+    "LEAN_BENCH_TIMED_REGIONS_SIDECAR": "/tmp/issue-10377-joint-profile-394c3c548/regions-%p.jsonl"
+  },
+  "exit_code": 0,
+  "script_command": [
+    "perf",
+    "script",
+    "--ns",
+    "-i",
+    "/tmp/issue-10377-joint-profile-394c3c548/perf.data",
+    "--no-demangle",
+    "-F",
+    "time,ip,sym,dso"
+  ],
+  "binary_sha256_after": "fcf1ddbab177d9ec61d0347b4cbbd9f57ceec94f418c1e961f40fa5ba5deb8c8",
+  "revision_after": "394c3c54802ee1fe8e251098323b02c603536454",
+  "status_after": "",
+  "load_after": [
+    6.18359375,
+    5.9677734375,
+    14.2783203125
+  ]
+}

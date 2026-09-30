@@ -80,6 +80,25 @@ theorem queryPrepared_sound (domain : Sturm.PreparedDomain E)
   exact (check_sound f hz h1 ha hs hm hnat sign hsign () _ _ _ _ _ _ checked).2
 
 include h1 ha hs hm hnat hsign hn hi in
+/-- Query one with the stored chain counts distinct roots in the current open
+interval, using the proved shared root-sum theorem. -/
+theorem countPrepared_sound (domain : Sturm.PreparedDomain E)
+    (binding : domain.sign = sign) :
+    Sturm.countPrepared domain =
+      (Tarski.rootsIn (interpret f hz domain.head)
+        (domain.lower.map f) (domain.upper.map f)).card := by
+  rw [Sturm.countPrepared_eq, queryPrepared_sound f hz h1 ha hs hm hnat sign hsign hn hi domain binding,
+    interpret_one f hz h1, Tarski.rootSum_one]
+
+include hz h1 ha hs hm hnat hsign hn hi in
+/-- Lawful prepared counts are nonnegative before any conversion to `Nat`.
+This uses the same proved root-sum theorem as their cardinality theorem. -/
+theorem countPrepared_nonneg (domain : Sturm.PreparedDomain E)
+    (binding : domain.sign = sign) : 0 ≤ Sturm.countPrepared domain := by
+  rw [countPrepared_sound f hz h1 ha hs hm hnat sign hsign hn hi domain binding]
+  exact Nat.cast_nonneg _
+
+include h1 ha hs hm hnat hsign hn hi in
 /-- A successful ordinary query has the same meaning as prepared querying. -/
 theorem query_sound (p q : DensePoly E) (a b : Endpoint E) (value : Int)
     (result : Sturm.query sign p q a b = some value) :
@@ -93,5 +112,78 @@ theorem query_sound (p q : DensePoly E) (a b : Endpoint E) (value : Int)
     (fun x => (hsg x).2.2.2) () p q a b certificate produced
   rw [← hvalue]
   exact (check_sound f hz h1 ha hs hm hnat sign hsign () _ _ _ _ _ _ checked).2
+
+include h1 ha hs hm hnat hsign hn hi in
+/-- A successful query of one is exactly the number of distinct interval roots. -/
+theorem query_count (p : DensePoly E) (a b : Endpoint E) (value : Int)
+    (result : Sturm.query sign p 1 a b = some value) :
+    value = (Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f)).card := by
+  simpa only [interpret_one f hz h1, Tarski.rootSum_one] using
+    query_sound f hz h1 ha hs hm hnat sign hsign hn hi p 1 a b value result
+
+include hz h1 ha hs hm hnat hsign hn hi in
+/-- Actual query-one answers are nonnegative; this justifies conversion to natural counts. -/
+theorem query_nonneg (p : DensePoly E) (a b : Endpoint E) (value : Int)
+    (result : Sturm.query sign p 1 a b = some value) : 0 ≤ value := by
+  rw [query_count f hz h1 ha hs hm hnat sign hsign hn hi p a b value result]
+  exact Int.natCast_nonneg _
+
+include h1 ha hs hm hnat hsign hn hi in
+/-- A successful query is bounded by the number of distinct interval roots and the head degree. -/
+theorem query_bound (p q : DensePoly E) (a b : Endpoint E) (value : Int)
+    (result : Sturm.query sign p q a b = some value) :
+    |value| ≤ (Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f)).card ∧
+      (Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f)).card ≤ p.natDegree := by
+  rw [query_sound f hz h1 ha hs hm hnat sign hsign hn hi p q a b value result]
+  exact ⟨Tarski.abs_rootSum_le _ _ _ _, by
+    simpa only [natDegree_interpret] using Tarski.rootsIn_card_le (interpret f hz p) (a.map f) (b.map f)⟩
+
+include h1 ha hs hm hnat hsign hn hi in
+/-- On an interval containing exactly one root, a query returns the sign at that root. -/
+theorem query_sign (p q : DensePoly E) (a b : Endpoint E) (value : Int) (x : R)
+    (result : Sturm.query sign p q a b = some value)
+    (single : Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f) = {x}) :
+    value = (SignType.sign ((interpret f hz q).eval x) : Int) := by
+  rw [query_sound f hz h1 ha hs hm hnat sign hsign hn hi p q a b value result]
+  exact Tarski.rootSum_singleton _ _ _ _ x single
+
+include h1 ha hs hm hnat hsign hn hi in
+/-- Successful natural counts are exactly the cardinality of the semantic root set. -/
+theorem rootCount_eq (p : DensePoly E) (a b : Endpoint E) (n : Nat)
+    (result : Sturm.rootCount sign p a b = some n) :
+    n = (Tarski.rootsIn (interpret f hz p) (a.map f) (b.map f)).card := by
+  obtain ⟨value, hvalue, rfl⟩ := Option.map_eq_some_iff.mp result
+  rw [query_count f hz h1 ha hs hm hnat sign hsign hn hi p a b value hvalue]
+  exact Int.toNat_natCast _
+
+include h1 ha hs hm hnat hsign hn hi in
+omit [IsRealClosed R] in
+/-- Natural counting succeeds exactly on the existing query domain. -/
+theorem rootCount_isSome (p : DensePoly E) (a b : Endpoint E) :
+    (Sturm.rootCount sign p a b).isSome = true ↔ Domain f hz p a b := by
+  have hsg := sign_spec f sign hsign
+  simpa only [Sturm.rootCount, Option.isSome_map] using
+    query_isSome f hz ha hs hm sign (fun x => (hsg x).2.1)
+      (fun x => (hsg x).2.2.1) h1 hn hi hnat (fun x => (hsg x).1) p 1 a b
+
+include hz h1 ha hs hm hnat hsign hn hi in
+/-- A successful query-one answer is preserved exactly by natural-count conversion. -/
+theorem rootCount_query (p : DensePoly E) (a b : Endpoint E) (value : Int)
+    (result : Sturm.query sign p 1 a b = some value) :
+    ∃ n, Sturm.rootCount sign p a b = some n ∧ (n : Int) = value := by
+  refine ⟨value.toNat, ?_, Int.toNat_of_nonneg ?_⟩
+  · simp only [Sturm.rootCount, result, Option.map_some]
+  · exact query_nonneg f hz h1 ha hs hm hnat sign hsign hn hi p a b value result
+
+include hz h1 ha hs hm hnat hsign hn hi in
+/-- Casting natural counts back to integers preserves the whole query result. -/
+theorem rootCount_map (p : DensePoly E) (a b : Endpoint E) :
+    (Sturm.rootCount sign p a b).map (fun n => (n : Int)) = Sturm.query sign p 1 a b := by
+  cases result : Sturm.query sign p 1 a b with
+  | none => simp [Sturm.rootCount, result]
+  | some value =>
+    simp only [Sturm.rootCount, result, Option.map_some]
+    exact congrArg some (Int.toNat_of_nonneg
+      (query_nonneg f hz h1 ha hs hm hnat sign hsign hn hi p a b value result))
 
 end HexSturmMathlib

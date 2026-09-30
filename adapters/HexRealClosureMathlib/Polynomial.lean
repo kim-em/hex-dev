@@ -360,21 +360,19 @@ theorem polyDenote_refine {context version : Nat} {d : Root context}
 
 end Hex.RealClosure
 
-/- The inherited `sorryAx` in these guards is the named #10389
-`Tarski.check_rootSum` dependency. -/
-/-- info: 'Hex.RealClosure.polyValue_divMod' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.polyValue_divMod' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.polyValue_divMod
-/-- info: 'Hex.RealClosure.polyValue_bezout' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.polyValue_bezout' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.polyValue_bezout
-/-- info: 'Hex.RealClosure.polyValue_derivative' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.polyValue_derivative' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.polyValue_derivative
-/- The same named admission is inherited by polynomial transport semantics. -/
-/-- info: 'Hex.RealClosure.polyDenote_refine' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+-- Polynomial transport preserves the same axiom boundary.
+/-- info: 'Hex.RealClosure.polyDenote_refine' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.polyDenote_refine
-/-- info: 'Hex.RealClosure.polyCachedValue_divMod' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.polyCachedValue_divMod' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.polyCachedValue_divMod
