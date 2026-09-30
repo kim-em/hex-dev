@@ -100,6 +100,16 @@ def constructors (n : Nat) :=
 -- not degree, and remains word-sized. Full output consumption is also bounded.
 setup_benchmark constructors _n => 1 where { config with tags := #["degree"] }
 
+/-- Read the complete canonical result after embedding the coefficient field. -/
+def transportCoeffs (f : RationalFn Rat) :=
+  let mapped := RationalFn.liftConstants f
+  (mapped.num.toArray, mapped.den.toArray)
+
+-- Cost model: Θ(n): each of the n numerator coefficients and the fixed
+-- denominator coefficients is mapped once. No polynomial gcd is executed.
+setup_benchmark transportCoeffs n => n with prep := linearFraction where
+  { config with tags := #["degree"] }
+
 scoped instance : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
 scoped instance : ZMod64.PrimeModulus 7 := ZMod64.primeModulusOfPrime (by decide)
 abbrev F := ZMod64 7

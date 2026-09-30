@@ -33,7 +33,7 @@ field library may use `RationalFn K` as its coefficient field without importing
 expression tactics.
 
 Partial fractions, expression reification, `Together` and `cancel` tactics,
-multivariate fractions, composition, coefficient-field maps, series expansions,
+multivariate fractions, composition, series expansions,
 pole orders and algebraic extensions of `K(x)` are outside this first version.
 They can use the representation and theorems here. In particular, a later
 expression tactic must track the denominators of its original expression.
@@ -186,6 +186,18 @@ Euclidean arithmetic over `K(x)` and agrees with Lean's field convention.
 It is not a statement that a rational function has a value at a pole. The
 partial evaluation API below never returns a field value for a pole.
 
+## Coefficient-field transport
+
+`RationalFn.mapCoeffs` maps a canonical fraction through a zero-reflecting
+coefficient-field embedding. Its arguments state preservation of one,
+subtraction, multiplication, division and inversion using the lightweight
+field operations. It maps the stored numerator and denominator coefficientwise
+and retains their monicity and coprimality; it does not run normalization or
+gcd. `mapCoeffs_num` and `mapCoeffs_den` expose these literal stored components.
+`liftConstants` instantiates the map for `K(X) → K(X)(Y)` using `RationalFn.C`.
+The Mathlib companion packages this executable function as a ring homomorphism
+and proves its fraction-field interpretation.
+
 ## Evaluation and its domain
 
 `eval? f a : Option K` evaluates the canonical denominator by Horner's rule.
@@ -289,6 +301,7 @@ arguments, such as `2N`, account for intermediate products.
 | Addition/subtraction | At most two gcds, a constant number of exact divisions and products. |
 | Multiplication/division | At most two gcds, four exact divisions and two products, plus linear inversion scaling for division. |
 | Inversion/negation | Linear coefficient work, no gcd. |
+| Coefficient-field transport | One map per stored numerator and denominator coefficient, linear in their total length; no gcd. |
 | Equality | At most linear coefficient comparisons, no gcd or multiplication. |
 | Evaluation | Linear field operations by two Horner evaluations. |
 | Derivative | Polynomial differentiation and a constant number of products, followed by normalization. |
@@ -362,6 +375,7 @@ advertised proof-search operations.
 | --- | --- |
 | `normalizeWith`, `normalize`, `ofFraction?` | Compiled: `RationalFnFamilies.normalizeDegree`, `normalizeCancel`, `checkedFraction`; `RationalFnWorkloads.normalizeChain`, `heightNormalize`. |
 | `ofPoly`, `C`, `X`, natural/integer casts, `toPoly?`, stored-pair projections | Compiled: `RationalFnWorkloads.constructors`, a bounded-degree, bounded-word constant-work family. |
+| `mapCoeffs`, `liftConstants` | Compiled: `RationalFnWorkloads.transportCoeffs`, a degree ladder with a nonconstant denominator and bounded rational coefficients. |
 | `addWith`, `subWith`, addition/subtraction instances | Compiled: `RationalFnFamilies.addCoprime`, `addShared`, `addCancel`, `addTotal`, `addEqual`, `subtract`; `RationalFnWorkloads.heightAdd`. |
 | `mulWith`, `divWith`, multiplication/division instances, `div?` | Compiled: `RationalFnFamilies.multiply`, `cancelMultiply`, `divide`, `checkedDivide`; `RationalFnWorkloads.multiply`, `unbalanced`, `unbalancedSchoolbook`, `heightMultiply`. |
 | Negation, inversion, `inv?` | Compiled: `RationalFnScaling.negate`; `RationalFnFamilies.inverse`, `checkedInverse` include nonmonic scaling. The monic `RationalFnScaling.inverse` is supplemental sharing/hash evidence. |

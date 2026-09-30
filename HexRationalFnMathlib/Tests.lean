@@ -73,6 +73,23 @@ example : RationalFn.eval? (RationalFn.normalize (DensePoly.ofList [-1, 0, 1])
 
 example (f : RationalFn ℚ) (n : Int) : toRatFunc (f ^ n) = toRatFunc f ^ n := map_zpow₀ equiv f n
 
+-- The first coefficient extension embeds rational-function coefficients into
+-- rational functions over the preceding rational-function field.
+example (q : RationalFn ℚ) :
+    coeffMap (constantHom (K := ℚ)) q = mapHom (constantHom (K := ℚ)) q :=
+  coeffMap_eq_mapHom _ _
+
+example :
+    coeffMap (constantHom (K := ℚ))
+      (RationalFn.ofPoly (DensePoly.ofList [1, 1] : DensePoly ℚ)) =
+        RationalFn.ofPoly
+          (DensePoly.ofList [RationalFn.C 1, RationalFn.C 1] : DensePoly (RationalFn ℚ)) := by
+  decide +kernel
+
+example : mapHom (constantHom (K := ℚ)) pole =
+    (1 / RationalFn.X : RationalFn (RationalFn ℚ)) := by
+  decide +kernel
+
 /-- info: 'HexRationalFnMathlib.Tests.certified_fraction' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms certified_fraction
@@ -82,5 +99,8 @@ example (f : RationalFn ℚ) (n : Int) : toRatFunc (f ^ n) = toRatFunc f ^ n := 
 /-- info: 'HexRationalFnMathlib.algEquiv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms HexRationalFnMathlib.algEquiv
+/-- info: 'HexRationalFnMathlib.coeffMap_eq_mapHom' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexRationalFnMathlib.coeffMap_eq_mapHom
 
 end HexRationalFnMathlib.Tests
