@@ -111,6 +111,7 @@ theorem Context.adjoin_native (chain : Chain registry E sign clean codec binding
       HEq extension.generator (Algebraic.Element.ofPoly
         (context := Algebraic.Context.adjoin descriptor clean) (DensePoly.ofCoeffs #[0, 1])) :=
   Context.adjoin_spec chain descriptor _ (Context.adjoin_some (.pack chain) descriptor)
+
 /-- The total facade retains the same native packing closure. -/
 theorem Context.adjoin_pack (chain : Chain registry E sign clean codec binding)
     (descriptor : Descriptor E Signature sign binding) :

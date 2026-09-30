@@ -315,6 +315,7 @@ theorem Context.adjoin_spec (chain : Chain registry E sign clean codec binding)
       HEq extension.generator (Algebraic.Element.ofPoly
         (context := Algebraic.Context.adjoin descriptor clean) (DensePoly.ofCoeffs #[0, 1])) :=
   Context.adjoin_spec_proof chain descriptor extension h
+
 private theorem Context.pack_spec_proof (chain : Chain registry E sign clean codec binding)
     (descriptor : Descriptor E Signature sign binding)
     (extension : Extension (.pack chain) descriptor)

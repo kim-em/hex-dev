@@ -861,8 +861,9 @@ three actual algebraic levels, use their explicit embeddings, read old values
 after extensions, restore an unreduced noncanonical coefficient, and reject
 stale or unknown bindings, forged signs, zero claims, trailing zeros and
 malformed base payloads. The core roundtrip proofs introduce no admission.
-General persistent refinement, transport of later descriptors, complete
-isolation and the real-closed union remain open.
+Automatic discovery of a dependent suffix, complete isolation and
+identification with the real-closed union remain open; checked refinement
+and conversion through an explicitly supplied suffix are described below.
 
 Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
 non-monic reducible rational definition, followed by a definition with
@@ -903,7 +904,8 @@ APIs; byte-parser and pretty-printer laws, and a roundtrip theorem for every
 freshly encoded tower (which needs graph-shape completeness), remain open.
 Batch callers can reconstruct once, insert the returned context, and then use
 the installed-prefix readers to avoid replaying each missing frame per value.
-Refinement and transport retain the obligations above.
+The root reader's graph-shape and byte-format obligations also apply after
+refinement.
 
 ### Interpretation, algebraicity and order of native towers
 
