@@ -967,8 +967,9 @@ the gcds actually computed on native factors.
 Run `lake build HexRealClosure.TowerYunTests HexRealClosureMathlib.TowerModelTests`.
 The executable examples decompose a repeated nonmonic cubic over two selected
 root levels, including a noncanonical coefficient representing one, and check
-two multiplicity labels and their computed gcd. Kernel examples apply replay,
-squarefreeness and completeness at three arbitrary validated root levels.
+a gap between multiplicity labels 1 and 3, including their computed gcd.
+Kernel examples apply replay, squarefreeness and completeness at three
+arbitrary validated root levels.
 The proofs use only the standard three axioms. Complete root isolation and
 the remaining conformance and performance evaluation remain open.
 

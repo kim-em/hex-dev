@@ -49,14 +49,14 @@ private def sample : Option (Array Bool) :=
         second.context.equal e.1.leadingCoeff 1, decide (one ≠ 1),
         second.context.equal one 1]
       let other := y - DensePoly.C (second.embed a)
-      match Yun.decomposeRaw (linear * linear * other) with
+      match Yun.decomposeRaw (linear * linear * linear * other) with
       | .zero => none
       | .factors unit₂ entries₂ =>
         if h₂ : entries₂.size = 2 then
           let firstFactor := entries₂[0]'(by omega)
           let secondFactor := entries₂[1]'(by omega)
           some (checks ++ #[second.context.equal unit₂ 1,
-            decide (firstFactor.2 = 1), decide (secondFactor.2 = 2),
+            decide (firstFactor.2 = 1), decide (secondFactor.2 = 3),
             decide (firstFactor.1.natDegree = 1 ∧ secondFactor.1.natDegree = 1),
             second.context.equal (firstFactor.1.eval (second.embed a)) 0,
             second.context.equal (secondFactor.1.eval b) 0,
