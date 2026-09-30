@@ -13,6 +13,41 @@ public section
 open Hex.RealClosure
 open scoped Hex.OrderedFn.Infinitesimal
 
+section Mapped
+attribute [local instance 2000] Field.toGrindField
+
+/-- The native ℚ(δ) base maps into the same semantic second-infinitesimal
+ambient field, preserving constants, the indeterminate, signs and order. -/
+private noncomputable def nested : Ambient (Hex.RationalFn (Hex.RationalFn Rat)) :=
+  Ambient.infinitesimal (Hex.RationalFn Rat)
+
+private def coefficients : Rat →+* Hex.RationalFn Rat :=
+  HexRationalFnMathlib.constantHom
+
+private theorem coefficients_ordered : StrictMono coefficients :=
+  fun a b less => (Hex.OrderedFn.Infinitesimal.C_lt a b).mpr less
+
+example (a : Rat) :
+    Ambient.mappedHom coefficients nested (Hex.RationalFn.C a) =
+      Ambient.coefficientHom nested (coefficients a) :=
+  Ambient.mappedHom_C coefficients nested a
+
+example :
+    Ambient.mappedHom coefficients nested (Hex.RationalFn.X : Hex.RationalFn Rat) =
+      nested.inclusion (Hex.RationalFn.X : Hex.RationalFn (Hex.RationalFn Rat)) :=
+  Ambient.mappedHom_X coefficients nested
+
+example (q : Hex.RationalFn Rat) :
+    Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign q =
+      (SignType.sign (Ambient.mappedHom coefficients nested q) : Int) :=
+  Ambient.mappedHom_sign coefficients coefficients_ordered nested q
+
+example (p q : Hex.RationalFn Rat) (less : p < q) :
+    Ambient.mappedHom coefficients nested p < Ambient.mappedHom coefficients nested q :=
+  (Ambient.mappedHom_strictMono coefficients coefficients_ordered nested) less
+
+end Mapped
+
 example : ∃ s : (Ambient.infinitesimal Rat).Carrier,
     0 < s ∧ s ^ 2 = Ambient.nativeHom HexRationalFnMathlib.ratField_eq
       (Ambient.infinitesimal Rat) (Hex.RationalFn.X : Hex.RationalFn Rat) ∧
