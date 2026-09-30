@@ -166,7 +166,8 @@ This includes irrational real roots of rational inputs after mapping to ℝ.
 coefficient map that preserves its arithmetic. The companion instantiates
 this theorem for cached rational selected-root coefficients; their inverse
 semantics use the proved `Tarski.check_rootSum` theorem.
-Arbitrary ordered coefficient towers still need their interpretation laws.
+`Tower.Model` below propagates these interpretation laws through finite native
+root towers over a supplied ordered real-closed ambient field.
 `Yun.Invariant.init`, `step` and `component` in the companion prove the
 repeated-factor recurrence's pointwise root invariant over characteristic-zero
 fields, including nonmonic inputs. Over an algebraically closed field, the
@@ -570,7 +571,7 @@ that these retained valid domains cannot return the absent-domain result. That
 branch remains a diagnostic guard, using the internal system error rather than
 a descriptor-replay error.
 
-`hexrealclosure_isolation_conformance` emits nineteen actual executions. The pinned
+`hexrealclosure_isolation_conformance` emits eighteen actual executions. The pinned
 Z3 RCF oracle independently checks inputs, finite-bound policy, node caps,
 scalar-preserving deflation, cell counts, selected derivative words, literal
 descriptor contexts, complete root coverage and absence of duplicates. Cases include nonmonic input,
@@ -581,15 +582,13 @@ The nested isolation case finds both roots of `Y²−√2` using a coefficient s
 from the reducible definition `(X²−2)(X−3)`. The fixture includes that first
 descriptor; the oracle checks its head, interval and context before evaluating
 stored coefficient polynomials at its selected root. The nested isolation cells
-are singletons; the whole-line and capped-completion cases exercise
-derivative-sign descriptors.
+are singletons, while the other fixtures exercise derivative-sign descriptors.
 The nested assembly case
 checks all three roots and their multiplicities in `(Y²−√2)²(Y−1)`, including
 noncanonical stored coefficient polynomials in the expanded input.
-Seven further cases independently check Yun assembly against exact Z3 roots and
-derivative-derived multiplicities, including zero, a constant, a pure power,
-distinct multiplicity labels, a root-free factor, a simple restored zero and a
-nonzero bisection point with multiplicity two.
+Six further cases independently check Yun assembly against exact Z3 roots and
+derivative-derived multiplicities, including zero, constants, a pure power,
+distinct multiplicity labels, a root-free factor and a simple restored zero.
 The oracle does not replay descriptor proof graphs or prove producer totality.
 
 `Isolation.Root` retains both emitted coefficient points and selected-root
@@ -788,8 +787,8 @@ context enlargement and transport, general root isolation and multiplicities,
 rational delegation agreement and a compatible real-closed union construction.
 Each native algebraic context prepares and retains the shared selected-root
 query domain once, eagerly during context construction. `Context.buildSigns`
-reuses it for singleton and joint
-queries; `buildSigns_eq` proves exact agreement with the original producer,
+reuses it for singleton and joint queries; `buildSigns_eq` proves exact
+agreement with the original producer,
 including its certificates and errors. The BKR table and certificate replay
 still run for each query list. Under the companion coefficient interpretation,
 `Context.handle_success` proves that preparation succeeds using the
@@ -858,8 +857,8 @@ three actual algebraic levels, use their explicit embeddings, read old values
 after extensions, restore an unreduced noncanonical coefficient, and reject
 stale or unknown bindings, forged signs, zero claims, trailing zeros and
 malformed base payloads. The core roundtrip proofs introduce no admission.
-General persistent refinement, transport of later descriptors, interpretation
-of arbitrary towers, complete isolation and the real-closed union remain open.
+General persistent refinement, transport of later descriptors, complete
+isolation and the real-closed union remain open.
 
 Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
 non-monic reducible rational definition, followed by a definition with
@@ -900,7 +899,52 @@ APIs; byte-parser and pretty-printer laws, and a roundtrip theorem for every
 freshly encoded tower (which needs graph-shape completeness), remain open.
 Batch callers can reconstruct once, insert the returned context, and then use
 the installed-prefix readers to avoid replaying each missing frame per value.
-General interpretation, refinement and transport retain the obligations above.
+Refinement and transport retain the obligations above.
+
+### Interpretation, algebraicity and order of native towers
+
+`Tower.Model context K` interprets the exact native context in an ordered field.
+It is a companion result carrying zero reflection and arithmetic/sign
+correspondence; executable constructors do not accept this record. `Model.base`
+uses an embedding of the canonical base carrier and its actual sign theorem.
+The existing `fieldOfGrind` bridge preserves the native coefficient operations.
+For a real-closed ambient field, `Model.adjoin` derives the child interpretation
+from the predecessor model and the validated descriptor. It uses the actual
+public extension: `adjoin_embed` preserves predecessor values and
+`adjoin_generator` identifies the selected generator with the descriptor's root.
+`root_value` and `adjoin_denote` connect those models to the selected-root
+interpretation of the actual stored algebraic representative. These steps can
+be repeated at arbitrary finite depth.
+
+`Model.field` is the image subfield of the ambient field. Its values have genuine
+field and order instances, while raw native expressions retain their ordinary
+operations. `Model.toValue` is surjective and identifies expressions with the
+same mathematical value. `adjoin_mono` includes the whole predecessor field.
+Every child expression has a polynomial representative evaluated at the
+selected generator (`adjoin_polynomial`). The companion proves that generator,
+every child expression, and every element of the child image field are
+algebraic over the predecessor's entire image field. Reducible and nonmonic
+squarefree definitions are allowed; no minimal polynomial or representation
+degree bound is assumed.
+
+`Context.equal` and `Context.compare` execute the native sign check on a
+difference. `Model.equal_spec` and `compare_spec` prove that they compare the
+interpreted values. `adjoin_equal` and `adjoin_compare` preserve these exact
+results under the public embedding. Values must belong to the same context;
+structural equality of nonzero representatives has a different meaning.
+
+Run `lake build HexRealClosure.TowerOrderTests HexRealClosureMathlib.TowerModelTests`.
+Executable checks use a nonmonic reducible definition for √2 and a second root
+with noncanonical predecessor coefficients. They cover semantically equal
+but literally different nonzero expressions, all three comparison results,
+canonical zero and embedded comparisons. Kernel examples propagate a rational
+model through three arbitrary validated root levels, including the algebraicity
+and image-field inclusions. The semantic root results use the proved
+`Tarski.check_rootSum` theorem and only the standard three axioms. They are
+relative to a supplied real-closed
+ambient field and base embedding. Compatibility across native refinements and
+identification with the real-closed algebraic union remain open. No tower
+performance claim is made.
 
 ## Ordered algebraic ambient models
 
