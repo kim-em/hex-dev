@@ -616,6 +616,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.TransportReduction, `HexRealClosureMathlib.TransportPreparation, `HexRealClosureMathlib.TransportMoment, `HexRealClosureMathlib.TransportReplay, `HexRealClosureMathlib.TransportSample, `HexRealClosureMathlib.TransportDescriptor, `HexRealClosureMathlib.TransportSelected,
     `HexRealClosureMathlib.AlgebraicTransport, `HexRealClosureMathlib.AlgebraicYun,
     `HexRealClosureMathlib.AlgebraicReencode,
+    `HexRealClosureMathlib.AlgebraicRoots,
     `HexRealClosureMathlib.SpecializePolynomial, `HexRealClosureMathlib.SpecializeRegular, `HexRealClosureMathlib.SpecializeQuery, `HexRealClosureMathlib.SpecializeTarski,
     `HexRealClosureMathlib.SpecializeReduction,
     `HexRealClosureMathlib.SpecializeMoment,

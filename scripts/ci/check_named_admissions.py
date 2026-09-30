@@ -203,6 +203,7 @@ def check() -> None:
              "HexRealClosureMathlib.AlgebraicTransport", "HexRealClosureMathlib.AlgebraicYun",
              "HexRealClosureMathlib.AlgebraicReencode",
              "HexRealClosure.AlgebraicReencodeTests",
+             "HexRealClosureMathlib.AlgebraicRoots",
              "HexRealClosureMathlib.BaseClean", "HexRealClosureMathlib.AlgebraicTower",
              "HexRealClosureMathlib.Union", "HexRealClosureMathlib.UnionTests",
              "HexRealClosureMathlib.QAdjoin"] + [

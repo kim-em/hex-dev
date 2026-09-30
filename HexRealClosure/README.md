@@ -570,7 +570,7 @@ that these retained valid domains cannot return the absent-domain result. That
 branch remains a diagnostic guard, using the internal system error rather than
 a descriptor-replay error.
 
-`hexrealclosure_isolation_conformance` emits eighteen actual executions. The pinned
+`hexrealclosure_isolation_conformance` emits nineteen actual executions. The pinned
 Z3 RCF oracle independently checks inputs, finite-bound policy, node caps,
 scalar-preserving deflation, cell counts, selected derivative words, literal
 descriptor contexts, complete root coverage and absence of duplicates. Cases include nonmonic input,
@@ -581,13 +581,15 @@ The nested isolation case finds both roots of `Y²−√2` using a coefficient s
 from the reducible definition `(X²−2)(X−3)`. The fixture includes that first
 descriptor; the oracle checks its head, interval and context before evaluating
 stored coefficient polynomials at its selected root. The nested isolation cells
-are singletons, while the other fixtures exercise derivative-sign descriptors.
+are singletons; the whole-line and capped-completion cases exercise
+derivative-sign descriptors.
 The nested assembly case
 checks all three roots and their multiplicities in `(Y²−√2)²(Y−1)`, including
 noncanonical stored coefficient polynomials in the expanded input.
-Six further cases independently check Yun assembly against exact Z3 roots and
-derivative-derived multiplicities, including zero, constants, a pure power,
-distinct multiplicity labels, a root-free factor and a simple restored zero.
+Seven further cases independently check Yun assembly against exact Z3 roots and
+derivative-derived multiplicities, including zero, a constant, a pure power,
+distinct multiplicity labels, a root-free factor, a simple restored zero and a
+nonzero bisection point with multiplicity two.
 The oracle does not replay descriptor proof graphs or prove producer totality.
 
 `Isolation.Root` retains both emitted coefficient points and selected-root
@@ -721,6 +723,14 @@ The companion proves preservation of the selected root, value and interpreted
 dependent polynomial, with zero reflection for converted values. Old values
 remain typed by their original context. This conversion keeps the predecessor
 fixed; recursively converting a tower's later descriptors remains separate.
+
+`AlgebraicRoots.lean` applies the successful root-assembly theorems to actual
+`Algebraic.Element` coefficients. Given a zero-reflecting predecessor interpretation into an ordered real closed
+field that preserves arithmetic, negation, inverse, division and sign, the
+level's selected-value interpretation supplies every coefficient premise. A
+successful finite assembly therefore covers exactly the ambient roots of the
+interpreted input with original multiplicities and no duplicate values; `all`
+is equivalent to semantic zero. Producer success and ordering remain separate obligations.
 
 `AlgebraicValue.lean` defines the image subfield `Value ctx`, with lawful field
 and order instances inherited from the ambient field. `Element.toValue`
