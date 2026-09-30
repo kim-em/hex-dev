@@ -1120,8 +1120,9 @@ finite algebraic suffix. `rebuild_rational` supplies these premises for every
 finite suffix over ℚ using the ordered algebraic real closure of ℚ(ε), and a
 native check rebuilds a selected square root there. Constructing the common
 enlarged-base interpretation compatible with an arbitrary old algebraic
-interpretation, proving its infinitesimal is below every positive old
-algebraic value, and providing a total `Context.enlarge` remain open.
+interpretation, proving the native ε agrees with the semantic infinitesimal,
+showing mapped towers agree with re-extension through their selected roots,
+and providing a total `Context.enlarge` remain open.
 
 ## Ordered algebraic ambient models
 
@@ -1148,11 +1149,14 @@ construction examples use the semantic coefficient dictionaries.
 
 `Tower.Model.map` carries an interpreted native tower through a strictly
 increasing field homomorphism, preserving its values and sign law.
-`Ambient.coefficientHom` includes an old ordered ambient field as constants
-in the ordered algebraic real closure of its infinitesimal extension, and
-`Tower.Model.liftInfinitesimal` uses that map to interpret the whole old tower
-there. The native enlarged base still needs a compatible interpretation in
-this same ambient field before general `Context.enlarge` can be assembled.
+`Ambient.coefficientHom` includes any ordered field as constants in a supplied
+ordered algebraic real closure of its infinitesimal extension.
+`Tower.Model.liftInfinitesimal` uses this map to interpret the whole old tower
+in the chosen closure of `R(ε)`. `liftInfinitesimal_X_lt` proves the semantic ε
+is below every positive interpreted old tower value. The native enlarged base
+still needs a compatible interpretation in this same ambient field, and the
+mapped tower must agree with re-extension through its selected roots, before
+general `Context.enlarge` can be assembled.
 
 Identifying native towers with the compatible algebraic union, descriptor construction and simultaneous
 realization of finite sign conditions at one ordinary real point remain
