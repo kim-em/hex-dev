@@ -315,9 +315,9 @@ predecessor element. A conditional two-constant construction verifies progress
 from the exact first-level bounds, relative transcendence over that whole field,
 second-level sign/zero/order correspondence, embedding comparisons, key order
 and reader round trips. These base contexts do not yet contain algebraic levels.
-Integrating general selected-root storage,
-full dependency transport, algebraic context reconstruction, isolation and
-exploration remains part of the tower implementation.
+Selected-root storage and checked reconstruction of algebraic prefixes are
+provided below. Full dependency transport, complete isolation and exploration
+remain part of the tower implementation.
 
 ### Polynomials in a base context
 
@@ -381,9 +381,9 @@ The examples exercise rational reconstruction, two infinitesimal levels, an
 actual named real followed by two infinitesimals, immutable catalog extension,
 duplicate paths, changed versions, missing registrations, malformed fractions,
 and kernel round trips for a concrete installed named-real catalog. These
-readers cover the real and
-infinitesimal base stages. Algebraic descriptors, dependency transport and
-complete algebraic context reconstruction remain part of the tower work.
+readers cover the real and infinitesimal base stages. The algebraic prefix
+reader below reconstructs validated root levels; transport across multiple
+live contexts remains part of the tower work.
 
 ## Capped isolation and root assembly
 
@@ -782,9 +782,10 @@ Tarski foundation. Their axiom guards contain only the three standard kernel
 axioms, and the audited import cones contain no admissions. These interpretations are
 conditional on an ambient ordered real closed field, not an existence proof.
 
-The remaining tower work includes the recursive algebraic dependency catalog,
-context enlargement and transport, general root isolation and multiplicities,
-rational delegation agreement and a compatible real-closed union construction.
+The remaining tower work includes dependency closure across multiple live
+contexts, context enlargement and transport, complete ordered root isolation
+and multiplicities, rational delegation agreement, and identification of native
+presentations with the compatible real-closed union.
 Each native algebraic context prepares and retains the shared selected-root
 query domain once, eagerly during context construction. `Context.buildSigns`
 reuses it for singleton and joint queries; `buildSigns_eq` proves exact
@@ -945,6 +946,32 @@ relative to a supplied real-closed
 ambient field and base embedding. Compatibility across native refinements and
 identification with the real-closed algebraic union remain open. No tower
 performance claim is made.
+
+### Yun decomposition over native tower coefficients
+
+`Model.decompose_map` identifies the actual `Yun.decomposeRaw` result over
+native coefficients with the lawful field recurrence on their interpreted
+values. `Model.decompose_sound` proves full replay acceptance of that mapped
+output. The raw coefficients keep ordinary operations and canonical zero;
+the model supplies the arithmetic correspondence without assigning field
+laws to stored expressions.
+
+For positive-degree inputs, `Model.decompose_factor` gives each interpreted
+output factor's monicity, positive degree, simplicity, and exact root
+multiplicity. `decompose_root` covers every root of a nonzero input in the
+ambient field, with its original multiplicity and membership in the native
+output array. `decompose_complete` applies this coverage to a known result.
+`decompose_squarefree` and `decompose_coprime` establish constant degrees for
+the gcds actually computed on native factors.
+
+Run `lake build HexRealClosure.TowerYunTests HexRealClosureMathlib.TowerModelTests`.
+The executable examples decompose a repeated nonmonic cubic over two selected
+root levels, including a noncanonical coefficient representing one, and check
+a gap between multiplicity labels 1 and 3, including their computed gcd.
+Kernel examples apply replay, squarefreeness and completeness at three
+arbitrary validated root levels.
+The proofs use only the standard three axioms. Complete root isolation and
+the remaining conformance and performance evaluation remain open.
 
 ## Ordered algebraic ambient models
 

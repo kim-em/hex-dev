@@ -182,6 +182,7 @@ def check() -> None:
              "HexRealClosure.TowerOrder", "HexRealClosure.TowerOrderTests",
              "HexRealClosureMathlib.TowerModel", "HexRealClosureMathlib.TowerModelTests",
              "HexRealClosureMathlib.TowerAlgebraic",
+             "HexRealClosureMathlib.TowerYun", "HexRealClosure.TowerYunTests",
              "HexRealClosureMathlib.BaseTests", "HexRealClosure.BaseCatalogTests",
              "HexRealClosure.BisectionTests", "HexRealClosure.DeflationConformance",
              "HexRealClosure.BisectionFrontierTests", "HexRealClosure.IsolationTests",
