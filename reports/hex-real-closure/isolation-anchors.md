@@ -1,8 +1,10 @@
-# Rational root-production anchors
+# Root-production timing anchors
 
-These compiled, Mathlib-free fixed benchmarks exercise three stages of the
-rational root producer. They are functional timing anchors on one input, not
-scaling evidence or measurements of a tower.
+## Rational producer calls
+
+These compiled, Mathlib-free fixed benchmarks exercise three distinct calls
+in the rational root producer. They are functional timing anchors on one input,
+not scaling evidence or measurements of a tower.
 
 `Hex.RealClosure.Bench.runYun` removes the zero factor from
 `-3X²(X²−2)³(X−3)⁵` and runs the raw-coefficient Yun recurrence on the
@@ -12,12 +14,16 @@ nonzero quotient. It checks the two resulting multiplicities, 3 and 5.
 extracts zero, runs Yun, isolates the actual factors and checks four real
 root entries with multiplicities 2, 3, 3 and 5. The benchmark inputs pass
 through `IO.Ref` so their production work occurs inside the timed calls.
+Assembly isolates Yun's squarefree factors separately, while `runIsolation`
+isolates their degree-three product. The three timings should not be added or
+subtracted. Each registration returns a fixed success hash after checking the
+properties just described; the hash does not encode the full result.
 
 The clean-commit run on the shared host `chungus2` used CPU 19 selected by the
 CPU lease. Each registration had ten measured calls; every
 completed call returned the expected hash `0x1`.
 
-| Stage | Median | Observed range |
+| Registration | Median | Observed range |
 | --- | ---: | ---: |
 | Yun recurrence | 60.228 µs | 59.075–60.797 µs |
 | Isolation and completion | 272.311 µs | 269.274–274.129 µs |
@@ -37,7 +43,11 @@ and the [unpinned export](isolation-anchors-unpinned.json). The initial
 development isolation result, about 32 ns, measured a constant-folded call
 before its input moved through `IO.Ref`; it is invalid as isolation timing
 evidence. The corrected development and unpinned runs are context, not
-additional trials of the pinned clean-commit measurement.
+additional trials of the pinned clean-commit measurement. The unpinned clean
+run omitted CPU pinning, so it was followed by one pinned run with unchanged
+source; both completed runs are retained. The rational `Bench.lean` hash in
+its context file belongs to the version before `runNested` was added; the
+three rational benchmark bodies were unchanged by that addition.
 
 ## Nested selected-root call
 
@@ -56,11 +66,20 @@ across the measured child processes was 68,376–69,164 kB. The
 [export](nested-anchor.json), [log](nested-anchor.log), and
 [context](nested-anchor-context.json) retain all samples, the command,
 host conditions, and source and executable hashes. The source commit was
-`04f7262`; the runner marked it dirty because it wrote the untracked
-measurement files during the run.
+`04f7262`; the runner marked the working tree dirty, but the context did not
+record which paths caused that status. Source and executable hashes identify
+the recorded artifacts; the dirty flag is retained as a limitation.
 
-Run `lake build hexrealclosure_bench`, then
-`.lake/build/bin/hexrealclosure_bench run Hex.RealClosure.Bench.runYun Hex.RealClosure.Bench.runIsolation Hex.RealClosure.Bench.runAssembly Hex.RealClosure.Bench.runNested`.
+To remeasure the current registrations, run `lake build hexrealclosure_bench`
+and use an automatically selected CPU for each of these separate calls:
+
+```sh
+taskset -c "$(python3 scripts/bench/idle_core.py)" .lake/build/bin/hexrealclosure_bench run Hex.RealClosure.Bench.runYun Hex.RealClosure.Bench.runIsolation Hex.RealClosure.Bench.runAssembly --export-file /tmp/hex-real-closure-rational-rerun.json
+taskset -c "$(python3 scripts/bench/idle_core.py)" .lake/build/bin/hexrealclosure_bench run Hex.RealClosure.Bench.runNested --export-file /tmp/hex-real-closure-nested-rerun.json
+```
+
+The context files record the original source commits and selected CPUs; a
+rerun on current source is a new observation, not an extension of those runs.
 
 The formal #10378 performance evaluation still requires the specified depth
 and coefficient families, systematic nested sign and zero counts, BKR counts, splitting
