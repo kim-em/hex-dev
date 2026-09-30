@@ -17,16 +17,15 @@ open SignDet
 
 private def registry : BaseContext.Registry := fun _ => none
 
-private def canRefine {source : Context registry} (suffix : Suffix source) : Bool :=
+private def refineAgain? {source : Context registry} (suffix : Suffix source) :
+    Option (Conversion suffix.context) :=
   match suffix with
-  | .nil => false
-  | .root current _ =>
+  | .nil => none
+  | .root current rest =>
     match current.buildReencoding (DensePoly.scale (1 + 1) current.raw.head)
         current.raw.lower current.raw.upper with
-    | .ok (some encoding) =>
-      let changed := Conversion.refine source encoding
-      decide (changed.context.signature ≠ (source.adjoin current).context.signature)
-    | _ => false
+    | .ok (some encoding) => (Conversion.refine source encoding).extend? rest
+    | _ => none
 
 /-- Refine a reducible nonmonic definition, reconstruct a later linear root,
 and compose two checked definition changes before rebuilding the later root. -/
@@ -60,12 +59,13 @@ private def sample : Option (Array Bool) :=
   let next := (Conversion.refine base following).cast same.symm
   let successive := initial.comp next
   (successive.rebuild? suffix).bind fun rebuilt =>
-  (successive.extend? suffix).map fun composed =>
+  (refineAgain? rebuilt.suffix).map fun second =>
+  let composed := rebuilt.result
+  let total := rebuilt.result.comp (second.cast rebuilt.context_eq)
   let value := composed.value old.generator
   let movedOne := composed.value (old.embed one)
   let packet := composed.context.write movedOne
   let identity := Conversion.identity base
-  let nextRefinement := canRefine rebuilt.suffix
   #[decide (composed.context.signature.roots.length = 2),
     decide (old.context.signature ≠ composed.context.signature),
     composed.context.equal (value * value) (composed.value (old.embed (first.embed two))),
@@ -78,9 +78,10 @@ private def sample : Option (Array Bool) :=
     successive.context.equal (successive.value first.generator * successive.value first.generator)
       (successive.value (first.embed two)),
     identity.context.equal (identity.value two) (1 + 1),
-    decide (rebuilt.suffix.context.signature = rebuilt.result.context.signature),
-    decide (rebuilt.result.context.signature = composed.context.signature),
-    nextRefinement]
+    decide (total.context.signature.roots.length = 2),
+    decide (total.context.signature ≠ composed.context.signature),
+    total.context.equal (total.value old.generator * total.value old.generator)
+      (total.value (old.embed (first.embed two)))]
 
 /-- info: some #[true, true, true, true, true, true, true, true, true, true, true, true, true, true, true] -/
 #guard_msgs in

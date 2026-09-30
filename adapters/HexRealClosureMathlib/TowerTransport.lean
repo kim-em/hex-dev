@@ -271,8 +271,9 @@ noncomputable def extend (suffix : Suffix source) (result : Conversion suffix.co
   have same : actual = result := Option.some.inj (output.symm.trans h)
   exact same ▸ Classical.choice (Classical.choose_spec spec).2
 
-/-- The retained rebuilt descriptors and final native conversion preserve
-every old value in the same ambient model as ordinary suffix traversal. -/
+/-- The final native conversion returned alongside rebuilt descriptors
+preserves every old value in the same ambient model as ordinary traversal.
+Alignment with the interpretation of the returned suffix is separate. -/
 noncomputable def rebuild (suffix : Suffix source)
     (rebuilt : Rebuilt conversion suffix)
     (h : conversion.rebuild? suffix = some rebuilt) :

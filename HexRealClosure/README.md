@@ -985,9 +985,12 @@ context. `Conversion.rebuild?` additionally returns a `Rebuilt` result with
 the converted validated descriptors as a new `Suffix`. Its context equality
 binds that suffix to the final conversion, and `rebuild_result` proves it
 returns the same conversion as `extend?`. A caller can select a descriptor in
-the rebuilt suffix for a further checked refinement; automatic selection and
-conversion of arbitrary dependent expressions remain separate work. Every
-original context and value remains valid independently.
+the rebuilt suffix for a further checked executable refinement and compose
+the resulting native conversions. The semantic model is proved for the final
+conversion, but it is not yet identified with the model built from the returned
+suffix; a second refinement therefore still needs that proof. Automatic
+selection and conversion of arbitrary dependent expressions also remain open.
+Every original context and value remains valid independently.
 
 The companion `Conversion.Model` relates the native conversion to the original
 model and supplies the actual target model. `Model.identity` and `Model.comp`
@@ -1008,8 +1011,8 @@ Run `lake build HexRealClosure.TowerConversionTests HexRealClosureMathlib.TowerT
 The routine native fixture checks a changed nonmonic reducible definition, a
 later linear root, identity, two successive definition changes composed with
 proved context reconciliation, equations and packet ownership. It also
-checks that the rebuilt suffix supplies a descriptor suitable for another
-checked re-encoding.
+re-encodes a descriptor from the rebuilt suffix, composes that second native
+refinement, and checks its converted root equation.
 The explicit four-level native driver is built with
 `lake build hexrealclosure_transport_tests` and run with
 `.lake/build/bin/hexrealclosure_transport_tests`. Routine CI type-checks this

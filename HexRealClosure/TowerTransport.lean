@@ -99,6 +99,22 @@ def Conversion.refine (parent : Context registry)
   ⟨(parent.refine encoding).extension.context, (parent.refine encoding).transport,
     .refine parent encoding⟩
 
+/-- One step shared by both suffix traversals after descriptor validation. -/
+private def Conversion.adjoinWith {source : Context registry} (conversion : Conversion source)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (converted : SignDet.Descriptor conversion.context.Value Signature
+      conversion.context.sign conversion.context.signature)
+    (h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
+      (source.mapDescriptor conversion.context conversion.value descriptor) = some converted) :
+    Conversion (source.adjoin descriptor).context :=
+  let extension := conversion.context.adjoin converted
+  let pack := extension.pack
+  ⟨extension.context,
+    fun x => pack
+      (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value)),
+    .adjoin conversion.checked descriptor converted
+      (SignDet.Descriptor.build_raw (SignDet.Descriptor.validate_eq_some.mp h))⟩
+
 /-- Rebuild one more later root and convert all values at that level. Repeating
 this operation rebuilds any finite list of later levels without changing old contexts. -/
 def Conversion.adjoin? {source : Context registry} (conversion : Conversion source)
@@ -107,14 +123,7 @@ def Conversion.adjoin? {source : Context registry} (conversion : Conversion sour
   match h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
       (source.mapDescriptor conversion.context conversion.value descriptor) with
   | none => none
-  | some converted =>
-    let extension := conversion.context.adjoin converted
-    let pack := extension.pack
-    some ⟨extension.context,
-      fun x => pack
-        (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value)),
-      .adjoin conversion.checked descriptor converted
-        (SignDet.Descriptor.build_raw (SignDet.Descriptor.validate_eq_some.mp h))⟩
+  | some converted => some (conversion.adjoinWith descriptor converted h)
 
 private theorem Conversion.refine_spec_proof (parent : Context registry)
     {source : SignDet.Descriptor parent.Value Signature parent.sign parent.signature}
@@ -241,12 +250,13 @@ conversion. The equality binds the returned suffix to that conversion's
 actual target context. -/
 structure Rebuilt {source : Context registry} (initial : Conversion source)
     (original : Suffix source) : Type 1 where
+  private mk ::
   result : Conversion original.context
   suffix : Suffix initial.context
   context_eq : suffix.context = result.context
 
 /-- Rebuild every later root and retain its validated descriptor. The returned
-suffix can be used as the input for another refinement in the new tower. -/
+suffix supplies checked executable inputs for another refinement. -/
 def Conversion.rebuild? {source : Context registry} (conversion : Conversion source)
     (suffix : Suffix source) : Option (Rebuilt conversion suffix) :=
   match suffix with
@@ -256,14 +266,8 @@ def Conversion.rebuild? {source : Context registry} (conversion : Conversion sou
         (source.mapDescriptor conversion.context conversion.value descriptor) with
     | none => none
     | some converted =>
-      let extension := conversion.context.adjoin converted
-      let pack := extension.pack
       let next : Conversion (source.adjoin descriptor).context :=
-        ⟨extension.context,
-          fun x => pack
-            (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value)),
-          .adjoin conversion.checked descriptor converted
-            (SignDet.Descriptor.build_raw (SignDet.Descriptor.validate_eq_some.mp h))⟩
+        conversion.adjoinWith descriptor converted h
       match next.rebuild? rest with
       | none => none
       | some rebuilt =>
@@ -283,11 +287,7 @@ theorem Conversion.rebuild_result {source : Context registry}
     · rfl
     · rename_i converted h
       let next : Conversion (current.adjoin descriptor).context :=
-        ⟨(conversion.context.adjoin converted).context,
-          fun x => (conversion.context.adjoin converted).pack
-            (DensePoly.ofCoeffs ((current.polynomial descriptor x).toArray.map conversion.value)),
-          .adjoin conversion.checked descriptor converted
-            (SignDet.Descriptor.build_raw (SignDet.Descriptor.validate_eq_some.mp h))⟩
+        conversion.adjoinWith descriptor converted h
       cases hr : next.rebuild? rest with
       | none => simpa only [hr, Option.map, next, Suffix.context] using ih next
       | some rebuilt => simpa only [hr, Option.map, next, Suffix.context] using ih next
