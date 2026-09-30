@@ -1048,6 +1048,7 @@ the actual conversion closures.
 `Suffix` represents a finite sequence of validated later root levels. Its
 `context` is the original final context. `Suffix.embed` includes each original
 value through the actual root extensions while retaining its old owner;
+bind `let include := suffix.embed` to reuse the extension chain for many values.
 `Tower.Model.extend_embed` proves value preservation. `extend_base_agree`
 propagates agreement with any supplied base-field embedding, and
 `extend_base_embed` supplies it for the canonical base model.
@@ -1090,13 +1091,15 @@ proved context reconciliation, equations and packet ownership. It also
 re-encodes a descriptor from the rebuilt suffix, composes that second native
 refinement, and checks its converted root equation.
 `TowerTransportTests` also executes its base and one-root `#guard` checks in
-routine CI. The explicit four-level native driver is built with
+routine CI, including literal serialized agreement of `Suffix.embed` with the
+native root inclusion. The explicit four-level native driver is built with
 `lake build hexrealclosure_transport_tests` and run with
 `.lake/build/bin/hexrealclosure_transport_tests`. Routine CI type-checks this
 fixture but does not execute the deep calculation.
 This deeper fixture changes a nonmonic reducible first definition and rebuilds
 three later square roots. It checks the sixteenth-power equation, the final
-root equation, ordering, embedded noncanonical one and inverse values, and old
+root equation, ordering, literal suffix inclusion across three roots, embedded
+noncanonical one and inverse values, and old
 and new packet ownership. Kernel examples cover arbitrary finite suffixes over
 a validated rational-root context. Generic coefficient and comparison transfer
 and root construction use the proved root-sum theorem and only the standard

@@ -287,7 +287,9 @@ validated suffix. The original value retains its original context. -/
   match suffix with
   | .nil => id
   | .root descriptor rest =>
-      fun a => rest.embed ((source.adjoin descriptor).embed a)
+      let extension := source.adjoin descriptor
+      let includeRest := rest.embed
+      fun a => includeRest (extension.embed a)
 
 /-- Rebuild every later level in order and return the final native conversion.
 Each rebuilt level retains its packing closure and fresh descriptor evidence. -/

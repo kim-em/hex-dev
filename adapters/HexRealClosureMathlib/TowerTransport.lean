@@ -33,9 +33,9 @@ theorem extend_embed {source : Context registry} (model : Model source K)
     ∀ a : source.Value, (model.extend suffix).value (suffix.embed a) = model.value a := by
   induction suffix with
   | nil => intro a; rfl
-  | @root step descriptor rest ih =>
+  | @root parent descriptor rest ih =>
     intro a
-    exact (ih (model.adjoin descriptor) ((step.adjoin descriptor).embed a)).trans
+    exact (ih (model.adjoin descriptor) ((parent.adjoin descriptor).embed a)).trans
       (model.adjoin_embed descriptor a)
 
 /-- Agreement with a coefficient-field map survives every selected-root
