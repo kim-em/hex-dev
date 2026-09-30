@@ -61,6 +61,7 @@ ORACLES=(
   "HexRealAlgebraic|hexrealalgebraic_emit_fixtures|scripts/oracle/real_algebraic_flint.py|conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl"
   # Pinned Z3 RCF, exact nested-infinitesimal roots
   "HexSignDet|hexsigndet_emit_infinitesimal|scripts/oracle/sign_det_z3.py|conformance-fixtures/HexSignDet/infinitesimal.jsonl"
+  "HexSignDet|hexsigndet_emit_nested_fields|scripts/oracle/sign_det_nested_z3.py|conformance-fixtures/HexSignDet/nested-fields.jsonl"
   "HexOrderedFn|hexorderedfn_emit_fixtures|scripts/oracle/ordered_fn_z3.py|conformance-fixtures/HexOrderedFn/infinitesimal.jsonl"
   "HexOrderedFn|hexorderedfn_emit_real_fixtures|scripts/oracle/ordered_fn_real.py|conformance-fixtures/HexOrderedFn/real.jsonl"
   # SymPy backed
@@ -95,6 +96,7 @@ ORACLES=(
   "HexRealFormula|hexrealformula_emit_fixtures|scripts/oracle/real_formula.py|conformance-fixtures/HexRealFormula/formula.jsonl"
   "HexRealClosure|hexrealclosure_bounds_conformance|scripts/oracle/real_closure_bounds.py|conformance-fixtures/HexRealClosure/bounds.jsonl"
   "HexRealClosure|hexrealclosure_deflation_conformance|scripts/oracle/real_closure_deflation.py|conformance-fixtures/HexRealClosure/deflation.jsonl"
+  "HexRealClosure|hexrealclosure_isolation_conformance|scripts/oracle/real_closure_isolation.py|conformance-fixtures/HexRealClosure/isolation.jsonl"
   # Exact Python integer/Fraction Cartesian enumeration
   "HexLatticeEnum|hexlatticeenum_emit_fixtures|scripts/oracle/lattice_enum.py|conformance-fixtures/HexLatticeEnum/latticeenum.jsonl"
   # Conway tables backed
@@ -238,9 +240,23 @@ run_tuple() {
     fi
   fi
 
+  if [ "$oracle" = "scripts/oracle/sign_det_nested_z3.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_sign_det_nested_z3; then
+      echo "FAIL: $lib :: nested-field oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
   if [ "$oracle" = "scripts/oracle/real_closure_bounds.py" ]; then
     if ! python3 -m unittest scripts.oracle.test_real_closure_bounds; then
       echo "FAIL: $lib :: finite-bound oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/real_closure_isolation.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_real_closure_isolation; then
+      echo "FAIL: $lib :: isolation completion oracle rejection checks failed"
       return 1
     fi
   fi

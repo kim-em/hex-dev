@@ -1,0 +1,70 @@
+{
+  "build.log.gz": {
+    "uncompressed_sha256": "8670348f7dc881a069aaa3c7834ebfa2a0a0edaa95c771cb94bd610c21707f13",
+    "uncompressed_bytes": 30674
+  },
+  "source.patch.gz": {
+    "uncompressed_sha256": "226a5daac844d1477e0b6b97fdbee12735c0fe63ef940f22356144d426139585",
+    "uncompressed_bytes": 17488
+  },
+  "diagnostics/bounded-default-examples.log.gz": {
+    "uncompressed_sha256": "14223862849896f82b2b69882550fe0485608f818c32bf75064d9666ed3e53b8",
+    "uncompressed_bytes": 36824
+  },
+  "diagnostics/bounded-default-manual.log.gz": {
+    "uncompressed_sha256": "7e42c75ac081d5db1bb53f5d887ddfd8e27b2e225745eabb66c4341aa7043642",
+    "uncompressed_bytes": 34257
+  },
+  "diagnostics/zeta-common-root-profile.log.gz": {
+    "uncompressed_sha256": "17dd2b8eeb02056dc7cbe17fde6be80db6c3c85e51bbfe6527d68b1d65fb0850",
+    "uncompressed_bytes": 2104220
+  },
+  "diagnostics/final-handler-tests.log.gz": {
+    "uncompressed_sha256": "8617e1014666c303b35c605f5ae385d71a53968082b2c08bf97ec4150c0863fa",
+    "uncompressed_bytes": 91
+  },
+  "diagnostics/final-examples-validation.log.gz": {
+    "uncompressed_sha256": "1252edc450edd6157c50b8bfc3d446675bc7f530a1545c431c5ff11dd43304df",
+    "uncompressed_bytes": 30674
+  },
+  "diagnostics/final-manual-validation.log.gz": {
+    "uncompressed_sha256": "93410c9ca7a1bd1103997c17e2ea74b3a3aebf5dac1211952b6132ee02d842b4",
+    "uncompressed_bytes": 37243
+  },
+  "diagnostics/final-full-build.log.gz": {
+    "uncompressed_sha256": "e1ff5e0bd5397ac2666d90d073d66c166dc8e4b5d56328b3ea55e9aaf0533867",
+    "uncompressed_bytes": 115377
+  },
+  "diagnostics/final-ambient-handler-tests.log.gz": {
+    "uncompressed_sha256": "bb47c0040eec9c4dcb0b150bf721482f9e3a9d6b96fbb69d2256aefc30da4098",
+    "uncompressed_bytes": 91
+  },
+  "diagnostics/final-ambient-full-build.log.gz": {
+    "uncompressed_sha256": "017ca2ab55ffa08d52be1ac498057e988a998b56422167a48c5877356a81a3bd",
+    "uncompressed_bytes": 114645
+  },
+  "diagnostics/final-ambient-manual-build.log.gz": {
+    "uncompressed_sha256": "6f7eddd134db1794dd472d6531fa9984a9333e7d040851bde183b71d84ae036a",
+    "uncompressed_bytes": 37428
+  },
+  "source-from-main.patch.gz": {
+    "uncompressed_sha256": "1c4610a795872bdc5752056be3f7ad9d04c65ddb414dd0e7bb0562e6667969ba",
+    "uncompressed_bytes": 110517
+  },
+  "parent-from-main.patch.gz": {
+    "uncompressed_sha256": "c25268e71830e1774238cc08ccbc6808cf4c3a7b570df491fc00d7a4e468579f",
+    "uncompressed_bytes": 103308
+  },
+  "diagnostics/final-exporting-handler-tests.log.gz": {
+    "uncompressed_sha256": "c674b5bf053e769b3cf30d15a81f838d2bce96317de66ce5bcf0d09a96249c1f",
+    "uncompressed_bytes": 203
+  },
+  "diagnostics/final-exporting-full-build.log.gz": {
+    "uncompressed_sha256": "b3f4f14f3089e60f9ec5e91e330366138618482a2239ff61660c362dfff8e672",
+    "uncompressed_bytes": 114646
+  },
+  "diagnostics/final-exporting-manual-build.log.gz": {
+    "uncompressed_sha256": "25e0df9c9a92b78b76dd9128f608a1fb1570c85ea61f8af6e5e4b64da3a743f4",
+    "uncompressed_bytes": 37430
+  }
+}

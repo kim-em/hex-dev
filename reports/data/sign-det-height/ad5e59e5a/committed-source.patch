@@ -1,0 +1,787 @@
+diff --git a/bench/HexSignDet/Bench.lean b/bench/HexSignDet/Bench.lean
+index 9ed18eb62..c4e3ebd19 100644
+--- a/bench/HexSignDet/Bench.lean
++++ b/bench/HexSignDet/Bench.lean
+@@ -9,0 +10 @@ import HexSignDet.Maximal
++import HexSignDet.Height
+@@ -59,0 +61,34 @@ open Hex.SignDet
++/- Positive monomial preprocessing and its supplied-evidence replay have
++fixed dense dimensions. Rat normalization uses gcd(c,c), gcd(0,c), gcd(c,1),
++exact division c/c or c/1, and long-by-one-limb multiplication. The equal-input
++gcd and exact divisions are linear because their operands coincide or their
++quotient is one limb; this is not a claim about general H-bit gcd/division.
++Replay uses bounded-integer scalar products and proportional differences.
++Thus each phase performs Θ(H) bit work. These registrations isolate those
++phases so fixed BKR systems do not dominate a 64-to-4096-bit ladder. They
++are normalization evidence, not coverage of height growth in general chains,
++and do not measure full production (which includes complete tree replay). -/
++-- Declared cost-model: Θ(H), fixed query slots and degenerate gcd/division operands.
++setup_benchmark Height.runReduce height => height
++  with prep := Height.phaseInput
++  where {
++    paramSchedule := .custom Height.phaseHeights
++    paramFloor := 8192
++    paramCeiling := 524288
++    outerTrials := 6
++    targetInnerNanos := 1000000000
++    maxSecondsPerCall := 10
++  }
++
++-- Declared cost-model: Θ(H), fixed scalar identities with no unrelated long products.
++setup_benchmark Height.runCheck height => height
++  with prep := Height.phaseInput
++  where {
++    paramSchedule := .custom Height.phaseHeights
++    paramFloor := 8192
++    paramCeiling := 524288
++    outerTrials := 6
++    targetInnerNanos := 1000000000
++    maxSecondsPerCall := 10
++  }
++
+@@ -192,0 +228,2 @@ def main (args : List String) : IO UInt32 :=
++  else if args == ["inspect-height"] then Hex.SignDetBench.Height.inspect
++  else if args == ["inspect-height-phases"] then Hex.SignDetBench.Height.inspectPhases
+@@ -197,0 +235 @@ def main (args : List String) : IO UInt32 :=
++    Hex.SignDetBench.Height.verify
+diff --git a/bench/HexSignDet/Height.lean b/bench/HexSignDet/Height.lean
+new file mode 100644
+index 000000000..99694acc9
+--- /dev/null
++++ b/bench/HexSignDet/Height.lean
+@@ -0,0 +1,174 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import HexSignDet.Input
++import Lean.Data.Json
++
++namespace Hex.SignDetBench
++open Hex.SignDet
++
++private def bits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
++
++namespace Height
++
++/-- Fixed degree and support, with independently increasing coefficient bits.
++The only real root of the head is one; all three queries are positive there.
++The full ternary reference is checked in addition to this independent oracle. -/
++def input (height : Nat) : Option (Input × Replay Rat Nat × Node Rat Nat) := do
++  if height < 2 then none else do
++    let c : Rat := ((2^height - 1 : Nat) : Rat)
++    let p : DensePoly Rat := DensePoly.monomial 3 1 - 1
++    let qs := [DensePoly.monomial 2 c, DensePoly.monomial 1 c, DensePoly.C c]
++    if p.eval 1 != 0 || !qs.all (fun q => Sturm.orderSign (q.eval 1) == 1) then none else do
++      let domain ← Sturm.prepare Sturm.orderSign p .negInf .posInf
++      let .ok reduced := buildPrepared (10377 : Nat) domain qs | none
++      let .ok direct := buildPrepared (10377 : Nat) domain qs false | none
++      let .ok full := referencePrepared (10377 : Nat) domain qs | none
++      let expected := [([1, 1, 1], (1 : Int))]
++      let graph := Dag.encode reduced.val
++      if entries reduced.val.node.system != expected || entries direct.val.node.system != expected ||
++          entries full.system != expected || full.size != 27 ||
++          !full.check Sturm.orderSign 10377 p .negInf .posInf qs ||
++          !graph.check Sturm.orderSign 10377 p .negInf .posInf qs then none else
++        some (⟨p, qs, some domain, some reduced.val, some graph⟩, direct.val, full)
++
++private def ratBits (q : Rat) : Nat := max (bits q.num) (q.den.log2 + 1)
++private def polyBits (p : DensePoly Rat) : Nat :=
++  p.toArray.foldl (fun k q => max k (ratBits q)) 0
++private def stepBits (s : RemainderStep Rat) : Nat :=
++  max (polyBits s.quotient) (max (ratBits s.leftScale) (ratBits s.rightScale))
++private def chainBits (c : SignedRemainderChain Rat) : Nat :=
++  max (c.chain.foldl (fun k p => max k (polyBits p)) 0)
++    (max (c.steps.foldl (fun k s => max k (stepBits s)) (stepBits c.initial))
++      ((c.terminal.map (fun (s, q) => max (ratBits s) (polyBits q))).getD 0))
++def witnessBits (tree : Replay Rat Nat) : Nat := (nodes tree).foldl (fun k n =>
++  let k := n.moments.toList.foldl (fun k c =>
++    max k (max (polyBits c.queryPoly) (max (chainBits c.squarefree) (chainBits c.remainders)))) k
++  let steps := (n.preparation.map (·.steps)).getD [] ++
++    n.reductions.toList.flatMap (fun r => (r.map (·.steps)).getD [])
++  steps.foldl (fun k s => max k (max (polyBits s.next) (stepBits s.witness))) k) 0
++
++/-- The height ladder fixes every degree and support dimension. It records
++literal coefficient/witness bits and byte sizes, not elapsed-time, allocation
++or peak live arithmetic measurements. -/
++def inspect : IO UInt32 := do
++  for height in #[64, 128, 256, 512, 1024, 2048, 4096] do
++    let some (i, direct, full) := input height | throw (IO.userError "invalid height input")
++    let some reduced := i.tree | throw (IO.userError "missing height tree")
++    let some graph := i.graph | throw (IO.userError "missing height graph")
++    let directGraph := Dag.encode direct
++    let reducedBytes := graph.encodeBytes ValueCodec.rat ValueCodec.nat
++    let directBytes := directGraph.encodeBytes ValueCodec.rat ValueCodec.nat
++    let ns := nodes reduced
++    let slots := ns.foldl (fun k n => k + n.size) 0
++    let maxColumns := ns.foldl (fun k n => max k n.size) 0
++    unless i.head.natDegree == 3 && i.queries.map DensePoly.natDegree == [2, 1, 0] &&
++        slots == 11 && ns.length == 5 && maxColumns == 3 && full.size == 27 do
++      throw (IO.userError "height input dimensions changed")
++    let expected := [([1, 1, 1], (1 : Int))]
++    for (g, bytes) in [(graph, reducedBytes), (directGraph, directBytes)] do
++      let some replayed := g.replay? Sturm.orderSign 10377 i.head .negInf .posInf i.queries
++        | throw (IO.userError "height graph replay failed")
++      let .ok decoded := Dag.decodeBytes ValueCodec.rat ValueCodec.nat Sturm.orderSign
++          10377 i.head .negInf .posInf i.queries bytes
++        | throw (IO.userError "height byte replay failed")
++      unless entries replayed.val.node.system == expected &&
++          entries decoded.val.node.system == expected do
++        throw (IO.userError "height replay table differs from the independent root table")
++    IO.println <| (Lean.Json.mkObj [
++      ("height", Lean.toJson height), ("context", Lean.toJson (10377 : Nat)),
++      ("head", Codec.poly ValueCodec.rat i.head),
++      ("queries", Codec.list (Codec.poly ValueCodec.rat) i.queries),
++      ("table", Lean.toJson (entries reduced.node.system)),
++      ("directTable", Lean.toJson (entries direct.node.system)),
++      ("fullTable", Lean.toJson (entries full.system)),
++      ("queryCoefficientBits", Lean.toJson (i.queries.foldl (fun k q => max k (polyBits q)) 0)),
++      ("reducedWitnessBits", Lean.toJson (witnessBits reduced)),
++      ("directWitnessBits", Lean.toJson (witnessBits direct)),
++      ("querySlots", Lean.toJson slots), ("maxColumns", Lean.toJson maxColumns),
++      ("treeNodes", Lean.toJson ns.length), ("graphNodes", Lean.toJson graph.entries.size),
++      ("graphEdges", Lean.toJson (graph.entries.foldl (fun k e => k + if e.children.isSome then 2 else 0) 0)),
++      ("reducedGraphBytes", Lean.toJson reducedBytes.size),
++      ("directGraphBytes", Lean.toJson directBytes.size),
++      ("inputHash", Lean.toJson (hash i).toNat),
++      ("productionResultHash", Lean.toJson (hash (some (hash expected))).toNat),
++      ("replayResultHash", Lean.toJson (hash true).toNat)]).compress
++    (← IO.getStdout).flush
++  return 0
++
++/-- A fixed phase ladder avoids the bounded BKR work in the small inventory.
++The largest integer occupies 64 KiB before allocator headers. -/
++def phaseHeights : Array Nat := #[8192, 16384, 32768, 65536, 131072, 262144, 524288]
++
++structure PhaseInput where
++  head : DensePoly Rat
++  queries : List (DensePoly Rat)
++  reduction : QueryReduction Rat
++
++private def reductionHash (r : QueryReduction Rat) : UInt64 :=
++  hash (r.steps.map fun s => (s.index, polyHash s.next,
++    s.witness.leftScale, polyHash s.witness.quotient, s.witness.rightScale))
++
++instance : Hashable PhaseInput where
++  hash i := hash (polyHash i.head, i.queries.map polyHash, reductionHash i.reduction)
++
++/-- Prepare only the actual query preprocessing phase. Unlike the small-input
++inventory, this does not construct unreduced powers of the large coefficient. -/
++def phaseInput (height : Nat) : PhaseInput :=
++  let c : Rat := ((2^height - 1 : Nat) : Rat)
++  let p : DensePoly Rat := DensePoly.monomial 3 1 - 1
++  let qs := [DensePoly.monomial 2 c, DensePoly.monomial 1 c, DensePoly.C c]
++  ⟨p, qs, QueryReduction.build Sturm.orderSign p qs⟩
++
++/-- Check every literal preprocessing field against the symbolic monomial
++oracle. Maxima alone would not justify the fixed number of large operands. -/
++def phaseValid (height : Nat) (i : PhaseInput) : Bool :=
++  let c : Rat := ((2^height - 1 : Nat) : Rat)
++  let units : List (DensePoly Rat) :=
++    [DensePoly.monomial 2 1, DensePoly.monomial 1 1, DensePoly.C 1]
++  height > 1 && ratBits c == height &&
++    i.head == DensePoly.monomial 3 1 - 1 &&
++    i.queries == units.map (DensePoly.scale c) &&
++    i.reduction.steps.length == 3 &&
++    (i.reduction.steps.zip units).zipIdx.all (fun ((s, q), j) =>
++      s.index == j && s.next == q && s.witness.leftScale == 1 &&
++      s.witness.quotient == 0 && s.witness.rightScale == c) &&
++    i.reduction.check Sturm.orderSign i.head i.queries
++
++@[noinline] def runReduce (i : PhaseInput) : UInt64 :=
++  reductionHash (QueryReduction.build Sturm.orderSign i.head i.queries)
++
++@[noinline] def runCheck (i : PhaseInput) : Bool :=
++  i.reduction.check Sturm.orderSign i.head i.queries
++
++/-- Large-phase inputs are recorded symbolically, avoiding decimal JSON tokens
++whose parser limits are unrelated to normalization or replay performance. -/
++def inspectPhases : IO UInt32 := do
++  for height in phaseHeights do
++    let i := phaseInput height
++    unless phaseValid height i do
++      throw (IO.userError s!"invalid height normalization input at {height}")
++    IO.println <| (Lean.Json.mkObj [
++      ("height", Lean.toJson height),
++      ("coefficient", Lean.toJson "2^height-1"),
++      ("head", Lean.toJson "X^3-1"),
++      ("queryDegrees", Lean.toJson ([2, 1, 0] : List Nat)),
++      ("steps", Lean.toJson i.reduction.steps.length),
++      ("coefficientBits", Lean.toJson height),
++      ("coefficientBytes", Lean.toJson ((height + 7) / 8)),
++      ("inputHash", Lean.toJson (hash i).toNat),
++      ("productionResultHash", Lean.toJson (hash (runReduce i)).toNat),
++      ("replayResultHash", Lean.toJson (hash (runCheck i)).toNat)]).compress
++    (← IO.getStdout).flush
++  return 0
++
++/-- CI exercises the actual normalization and replay without scientific timings. -/
++def verify : IO Unit := do
++  unless phaseValid 8192 (phaseInput 8192) do
++    throw (IO.userError "height phase fixture failed at 8192 bits")
++
++end Height
++
++end Hex.SignDetBench
+diff --git a/lakefile.lean b/lakefile.lean
+index effa12f05..e8edf518a 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -1724 +1724 @@ lean_lib HexSignDetBenchSupport where
+-    .one `HexSignDet.Paired, .one `HexSignDet.Maximal]
++    .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Height]
+diff --git a/reports/sign-det-height-model.md b/reports/sign-det-height-model.md
+new file mode 100644
+index 000000000..eda5d599f
+--- /dev/null
++++ b/reports/sign-det-height-model.md
+@@ -0,0 +1,114 @@
++# Coefficient-height normalization evidence
++
++The head is `P=X³−1` and the queries are `[cX²,cX,c]`, with
++`c=2^H−1`. Degree, support and matrix dimensions remain fixed while
++coefficient height grows. The unique real root is 1: the remaining factor
++`X²+X+1` is positive. All three queries are positive there, so the exact
++complete table contains `[1,1,1]` with count one.
++
++The small inventory at 64,…,4096 bits checks the reduced and unreduced
++producers and the full 27-column reference against that independent table.
++It checks graph and byte replay tables, rather than merely successful decoding.
++Literal inputs, stored witness bits, dimensions, graph edges and certificate
++bytes are recorded. Stored maxima do not measure temporary arithmetic or
++aggregate live memory. These graphs have no shared nodes.
++
++Scientific registrations measure `QueryReduction.build` and
++`QueryReduction.check` separately. The construction registration also computes
++a checksum of the literal reduction output; the checking registration returns
++a Boolean. Construction times therefore include that checksum work. The phase
++ladder is fixed before measurement at
++8192,16384,32768,65536,131072,262144,524288 bits, with six trials per
++height and a one-second target per batch. It avoids making the bounded BKR
++systems dominate a small-height timing range. Preparation constructs only the
++reduced preprocessing evidence; it does not expand unreduced powers of c or
++build the full reference. Input preparation and independent correctness
++validation occur outside the timed operation. No completed sample is removed because of host activity,
++and no retry is automatic.
++
++The mode-1 claim is `Θ(H)` for these two phases on this positive-monomial
++family. Preprocessing normalizes the monomials to unit coefficients.
++Lean 4.34.1 and 4.35.0-rc3 have identical `Rat.mul` definitions: they cancel
++cross-factors with gcd and exact division before multiplying. Here its large operands are degenerate: `gcd(c,c)`, `gcd(0,c)`,
++`gcd(c,1)`, and division `c/c` or `c/1`. Equality or a one-limb quotient
++makes those particular operations linear; this is not a general gcd or
++long-division bound. Other operations are multiplication by one limb and
++proportional sums, differences and comparisons. The fixed number of slots
++therefore gives linear bit work. General GMP gcd uses different algorithms
++and thresholds; see the primary [Lehmer algorithm documentation](https://gmplib.org/manual/Lehmer_0027s-Algorithm.html)
++and [subquadratic gcd documentation](https://gmplib.org/manual/Subquadratic-GCD).
++
++The phase input guard checks every original polynomial and reduction field
++against the symbolic formula, including all indices, unit remainders,
++quotients and scales. Large phase records describe c symbolically instead of
++using enormous decimal JSON tokens. The largest input integer occupies
++64 KiB before allocator overhead. CPU cache sizes are recorded as host context;
++cache or allocator effects can still make a finite-range result inconclusive.
++The declared model is not changed to fit those observations.
++
++This family removes coefficient height at preprocessing. It covers that phase,
++not height growth through general Sturm chains, full production, shared-graph
++replay or nested coefficients. A harder coefficient family and the other
++Phase-4 tracks remain required. In particular, an end-to-end linear timing claim
++is not made from the 64-to-4096-bit inventory.
++
++Collect with `python3 scripts/bench/collect_sign_det_height.py --output <new-directory>`
++after committing sources and building `hexsigndet_bench`. The output must be
++outside the source worktree. The driver leases one CPU, verifies build
++freshness, archives reconstructible sources, records executable hashes and
++host context, and retains every log and export. Validation checks the exact
++schedule, settings, oracle-bound output hashes and clean source revision.
++Complete measurements and model verdicts are recorded separately; the
++collector returns nonzero if either verdict is inconclusive.
++
++The harness's peak RSS is a process lifetime high-water mark, including
++untimed preparation and runtime startup. It is not isolated replay memory.
++The pinned harness has no allocation-byte counter; a missing value is not
++zero. These registrations alone cannot discharge allocation, nested-field,
++maximal-support, joint-query, unreduced comparison or complete Phase-4 gates.
++
++The [retained collection](data/sign-det-height/640bf10bd/metadata.json)
++uses Lean 4.34.1 and committed source
++`640bf10bd72d2ad25e6ce5d9f1c409e5dfc13eaa` on shared host `chungus2`, automatically leased CPU 82. All 84 scientific samples
++completed with the expected outputs and exact trial-major schedules. Sources
++and executable hashes were unchanged. Both mode-1 verdicts are **consistent
++with declared complexity**; no sample was removed and no rerun was used.
++The normalized slopes are −0.081272 for construction and −0.074066 for
++replay. The harness omits the first rung from its fitted verdict, while the
++raw exports retain it.
++
++The host's recorded data L1 is 48 KiB, L2 is 1 MiB and L3 is 32 MiB. These
++are context, not a claim of cache isolation. Medians below include every
++completed sample at each height; they are observations on this host.
++
++| Coefficient bits | Normalization median µs | Replay median µs |
++| ---: | ---: | ---: |
++| 8,192 | 8.261 | 18.054 |
++| 16,384 | 14.018 | 33.216 |
++| 32,768 | 22.650 | 57.533 |
++| 65,536 | 41.920 | 107.791 |
++| 131,072 | 77.885 | 206.123 |
++| 262,144 | 164.919 | 404.705 |
++| 524,288 | 324.728 | 808.804 |
++
++The source-derived reduced byte-size difference is 16 times the difference
++in the decimal digit count of c. The five unshared nodes have eight original
++query occurrences; each stores c once in the query and once as a preprocessing
++scale. Every other reduced graph literal is height-independent. The small
++inventory passes this additional relative-size check at all seven heights.
++The absolute size remains an observed value: at 4096 bits the reduced graph
++has 25,297 bytes and the unreduced graph 46,760 bytes. This is not a proof
++of a general byte-parser roundtrip or an independent reconstruction of every
++encoded byte.
++
++The archive preserves the exact premeasurement sources, including the
++original validator. The additional model-formula and relative-size validation passes the
++same retained data; it does not replace or remove measurements. Later report
++and validator edits do not change the measured normalization or checking
++functions. Reproduction uses the base and patch recorded in the metadata.
++
++These passing results establish the declared normalization-phase models for
++the archived Lean 4.34.1 revision only. They do not establish performance on
++the current Lean 4.35.0-rc3 toolchain. General coefficient-height propagation, allocation, nested fields,
++maximal support, joint comparisons and the remaining Phase-4 requirements
++remain open under #10377.
+diff --git a/scripts/bench/collect_sign_det_height.py b/scripts/bench/collect_sign_det_height.py
+new file mode 100644
+index 000000000..e3408d430
+--- /dev/null
++++ b/scripts/bench/collect_sign_det_height.py
+@@ -0,0 +1,143 @@
++#!/usr/bin/env python3
++"""Retain the declared coefficient-height schedules and their unmodified verdicts."""
++from __future__ import annotations
++
++import argparse
++import datetime
++import hashlib
++import json
++import os
++from pathlib import Path
++import platform
++import subprocess
++import sys
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(ROOT))
++from scripts.bench.sign_det_compare import archive_sources
++from scripts.bench.sign_det_height import FUNCTIONS, validate, validate_phases, validate_export
++from scripts.bench.sign_det_sparse import source_hashes
++from scripts.bench.structural_tactic_sweep import acquire_cpu
++
++
++def digest(path):
++    return hashlib.sha256(path.read_bytes()).hexdigest()
++
++
++def revision():
++    return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
++
++
++def clean():
++    if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True):
++        raise ValueError("commit source changes before collecting measurements")
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--output", type=Path, required=True)
++    args = parser.parse_args()
++    clean()
++    out = args.output.resolve()
++    if out.is_relative_to(ROOT):
++        raise ValueError("write measurement output outside the source worktree")
++    executable = ROOT / ".lake/build/bin/hexsigndet_bench"
++    if not executable.exists():
++        raise ValueError("build hexsigndet_bench first")
++    subprocess.run(["lake", "build", "--no-build", "hexsigndet_bench"], cwd=ROOT, check=True)
++    out.mkdir(parents=True, exist_ok=False)
++    cpu, lease = acquire_cpu()
++    os.sched_setaffinity(0, {cpu})
++    sources = source_hashes()
++    for relative in ("scripts/bench/collect_sign_det_height.py",
++                     "scripts/bench/sign_det_height.py", "scripts/bench/test_sign_det_height.py",
++                     "scripts/bench/sign_det_compare.py", "reports/sign-det-height-model.md"):
++        sources[relative] = digest(ROOT / relative)
++    metadata = {
++        "schema": "hex-sign-det-height-measurement-v1", "revision": revision(),
++        "source_sha256": sources, "binary_sha256": digest(executable),
++        "binary_path": str(executable), "binary_resolved_path": str(executable.resolve()),
++        "freshness_check": "lake build --no-build hexsigndet_bench",
++        "host": platform.node(), "platform": platform.platform(), "cpu": cpu,
++        "affinity": sorted(os.sched_getaffinity(0)), "load_before": os.getloadavg(),
++        "cpu_cache": [{name: (entry / name).read_text().strip()
++                       for name in ("level", "type", "size")}
++                      for entry in sorted(Path(f"/sys/devices/system/cpu/cpu{cpu}/cache").glob("index*"))],
++        "started": datetime.datetime.now(datetime.timezone.utc).isoformat(),
++        "functions": list(FUNCTIONS), "scientific_timing_samples": 0,
++        "state": "running", "commands": [], "results": {},
++    }
++    record = out / "metadata.json"
++
++    def save():
++        record.write_text(json.dumps(metadata, indent=2) + "\n")
++
++    def check_unchanged():
++        clean()
++        if revision() != metadata["revision"] or digest(executable) != metadata["binary_sha256"]:
++            raise ValueError("source revision or executable changed during measurement")
++        for relative, expected in sources.items():
++            if digest(ROOT / relative) != expected:
++                raise ValueError("source changed during measurement: " + relative)
++
++    def run(name, arguments):
++        command = [str(executable), *arguments]
++        metadata["commands"].append({"name": name, "argv": command})
++        save()
++        with (out / (name + ".log")).open("w") as log:
++            result = subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
++        metadata["commands"][-1]["exit_code"] = result.returncode
++        save()
++        check_unchanged()
++        return result
++
++    try:
++        archive_sources(out, metadata)
++        save()
++        run("inventory", ["inspect-height"]).check_returncode()
++        inventory = out / "inventory.log"
++        metadata["inventory_rows"] = validate(inventory)
++        run("phases", ["inspect-height-phases"]).check_returncode()
++        phase_inventory = out / "phases.log"
++        metadata["phase_rows"] = validate_phases(phase_inventory)
++        save()
++        for name in FUNCTIONS:
++            export = out / (name + ".json")
++            result = run(name, ["run", "Hex.SignDetBench." + name,
++                                "--export-file", str(export)])
++            # An inconclusive verdict can return nonzero. Validate the complete
++            # export before interpreting the exit code; never discard its samples.
++            summary = validate_export(export, name, phase_inventory, metadata["revision"])
++            if result.returncode not in (0, 1) or (
++                    result.returncode == 1 and summary["verdict"] != "inconclusive"):
++                result.check_returncode()
++            metadata["results"][name] = summary
++            metadata["scientific_timing_samples"] += 42
++            save()
++        metadata["state"] = "complete"
++    except BaseException as error:
++        metadata["state"] = "failed"
++        metadata["error"] = str(error)
++        raise
++    finally:
++        metadata["finished"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
++        metadata["load_after"] = os.getloadavg()
++        metadata["binary_sha256_after"] = digest(executable)
++        metadata["revision_after"] = revision()
++        metadata["unchanged"] = (metadata["binary_sha256_after"] == metadata["binary_sha256"]
++                                 and metadata["revision_after"] == metadata["revision"])
++        if not metadata["unchanged"]:
++            metadata["state"] = "failed"
++            metadata["error"] = "source revision or executable changed at collection end"
++        metadata["output_sha256"] = {
++            path.name: digest(path) for path in sorted(out.iterdir()) if path.is_file()
++            and path.name != "metadata.json"}
++        save()
++        lease.close()
++    print(out, metadata["state"], metadata["scientific_timing_samples"], "samples", flush=True)
++    return int(metadata["state"] != "complete" or
++               any(r["verdict"] == "inconclusive" for r in metadata["results"].values()))
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/bench/sign_det_height.py b/scripts/bench/sign_det_height.py
+new file mode 100644
+index 000000000..79d81c1bc
+--- /dev/null
++++ b/scripts/bench/sign_det_height.py
+@@ -0,0 +1,138 @@
++#!/usr/bin/env python3
++"""Check the fixed-degree height ladder against its unique real root, 1."""
++import argparse
++import json
++import math
++from pathlib import Path
++
++HEIGHTS = [64, 128, 256, 512, 1024, 2048, 4096]
++PHASE_HEIGHTS = [8192, 16384, 32768, 65536, 131072, 262144, 524288]
++FUNCTIONS = ("Height.runReduce", "Height.runCheck")
++HASH_FIELDS = {"inputHash", "productionResultHash", "replayResultHash"}
++
++
++def expected(height):
++    c = 2**height - 1
++    table = [[[1, 1, 1], 1]]
++    return {
++        "height": height, "context": 10377,
++        "head": [[-1, 1], [0, 1], [0, 1], [1, 1]],
++        "queries": [[[0, 1]] * degree + [[c, 1]] for degree in (2, 1, 0)],
++        "table": table, "directTable": table, "fullTable": table,
++        "queryCoefficientBits": c.bit_length(),
++        "reducedWitnessBits": c.bit_length(),
++        "directWitnessBits": (3*c*c).bit_length(),
++        "querySlots": 11, "maxColumns": 3, "treeNodes": 5,
++        "graphNodes": 5, "graphEdges": 4,
++    }
++
++
++def integer_tree(value):
++    if isinstance(value, list):
++        return all(integer_tree(v) for v in value)
++    return type(value) is int
++
++
++def validate(path):
++    rows = [json.loads(line) for line in path.read_text().splitlines()]
++    if len(rows) != len(HEIGHTS):
++        raise ValueError("incomplete height ladder")
++    for row, height in zip(rows, HEIGHTS, strict=True):
++        oracle = expected(height)
++        if (not isinstance(row, dict) or
++                set(row) != set(oracle) | HASH_FIELDS | {"reducedGraphBytes", "directGraphBytes"} or
++                not all(integer_tree(v) for v in row.values()) or
++                any(row[k] != v for k, v in oracle.items())):
++            raise ValueError("height input, sign table or stored witness dimensions disagree")
++        if (any(not 0 <= row[key] < 2**64 for key in HASH_FIELDS) or
++                row["reducedGraphBytes"] <= 0 or row["directGraphBytes"] <= 0):
++            raise ValueError("invalid byte size or hash")
++    # The five unshared nodes have 3+1+2+1+1 query occurrences. Each
++    # stores c once in the raw query and once as its preparation scale.
++    # All other reduced graph literals are independent of height.
++    baseline = rows[0]["reducedGraphBytes"]
++    digits = len(str(2**HEIGHTS[0]-1))
++    for row, height in zip(rows, HEIGHTS, strict=True):
++        if row["reducedGraphBytes"] - baseline != 16*(len(str(2**height-1))-digits):
++            raise ValueError("reduced byte-size differences disagree with the 16 coefficient copies")
++    return len(rows)
++
++
++def phase_expected(height):
++    return {"height": height, "coefficient": "2^height-1", "head": "X^3-1",
++            "queryDegrees": [2, 1, 0], "steps": 3, "coefficientBits": height,
++            "coefficientBytes": (height+7)//8}
++
++
++def validate_phases(path):
++    rows = [json.loads(line) for line in path.read_text().splitlines()]
++    if len(rows) != len(PHASE_HEIGHTS):
++        raise ValueError("incomplete normalization phase ladder")
++    for row, height in zip(rows, PHASE_HEIGHTS, strict=True):
++        oracle = phase_expected(height)
++        if (not isinstance(row, dict) or set(row) != set(oracle) | HASH_FIELDS or
++                any(row[key] != value for key, value in oracle.items()) or
++                any(type(row[key]) is not int or not 0 <= row[key] < 2**64
++                    for key in HASH_FIELDS) or
++                any(type(row[key]) is not int for key in
++                    ("height", "steps", "coefficientBits", "coefficientBytes")) or
++                not integer_tree(row["queryDegrees"])):
++            raise ValueError("normalization phase input differs from the symbolic oracle")
++    return len(rows)
++
++
++def validate_export(path, name, inventory, revision):
++    """Check the registered schedule and oracle-bound outputs, retaining its verdict."""
++    if name not in FUNCTIONS:
++        raise ValueError("unknown height operation")
++    validate_phases(inventory)
++    inputs = {row["height"]: row for row in
++              map(json.loads, inventory.read_text().splitlines())}
++    data = json.loads(path.read_text())
++    if data.get("export_schema_version") != 1 or len(data.get("results", [])) != 1:
++        raise ValueError("unexpected benchmark export")
++    result = data["results"][0]
++    if (result.get("function") != "Hex.SignDetBench." + name or
++            result.get("kind") != "parametric" or result.get("complexity_formula") != "height" or
++            result.get("hashable") is not True or
++            result.get("budget_truncated") is not False or
++            result.get("env", {}).get("git_commit") != revision or
++            result.get("env", {}).get("git_dirty") is not False):
++        raise ValueError("benchmark is not bound to the clean measured source")
++    config = result.get("config", {})
++    required = {"param_floor": PHASE_HEIGHTS[0], "param_ceiling": PHASE_HEIGHTS[-1],
++                "outer_trials": 6, "target_inner_nanos": 1000000000,
++                "max_seconds_per_call": 10, "signal_floor_multiplier": 10,
++                "cache_mode": "warm", "verdict_warmup_fraction": 0.2,
++                "slope_tolerance": 0.15, "narrow_range_noise_floor": 1.5,
++                "param_schedule": {"kind": "custom", "params": PHASE_HEIGHTS}}
++    if any(config.get(key) != value for key, value in required.items()):
++        raise ValueError("measurement changed the declared height protocol")
++    points = result.get("points", [])
++    if [(p.get("trial_index"), p.get("param")) for p in points] != [
++            (trial, h) for trial in range(6) for h in PHASE_HEIGHTS]:
++        raise ValueError("missing, extra, reordered or duplicated timing samples")
++    key = "productionResultHash" if name == "Height.runReduce" else "replayResultHash"
++    for point in points:
++        if type(point.get("trial_index")) is not int or type(point.get("param")) is not int:
++            raise ValueError("noninteger sample index")
++        if (point.get("status") != "ok" or point.get("part_of_verdict") is not True or
++                point.get("below_signal_floor") is not False or
++                point.get("result_hash") != hex(inputs[point["param"]][key])):
++            raise ValueError("failed sample or output differs from the known root table")
++        nanos = point.get("per_call_nanos")
++        repeats = point.get("inner_repeats")
++        if (type(nanos) not in (int, float) or not math.isfinite(nanos) or nanos <= 0 or
++                type(repeats) is not int or repeats <= 0):
++            raise ValueError("invalid timing or repeat count")
++    if result.get("verdict") not in ("consistent_with_declared_complexity", "inconclusive"):
++        raise ValueError("unknown model verdict")
++    return {key: result[key] for key in
++            ("verdict", "complexity_formula", "slope", "c_min", "c_max", "advisories")}
++
++
++if __name__ == "__main__":
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("inventory", type=Path)
++    args = parser.parse_args()
++    print(f"{validate(args.inventory)} height rows match the independent root/sign oracle")
+diff --git a/scripts/bench/test_sign_det_height.py b/scripts/bench/test_sign_det_height.py
+new file mode 100644
+index 000000000..ca6ddc43a
+--- /dev/null
++++ b/scripts/bench/test_sign_det_height.py
+@@ -0,0 +1,135 @@
++#!/usr/bin/env python3
++"""Reject substituted height inputs even when the noncryptographic hash agrees."""
++import copy
++import json
++import math
++from pathlib import Path
++import tempfile
++import unittest
++
++from scripts.bench.sign_det_height import HEIGHTS, PHASE_HEIGHTS, expected, phase_expected, validate, validate_phases, validate_export
++
++
++class HeightValidation(unittest.TestCase):
++    def setUp(self):
++        self.temp = tempfile.TemporaryDirectory()
++        self.addCleanup(self.temp.cleanup)
++        self.path = Path(self.temp.name) / "inventory.jsonl"
++        self.rows = [dict(expected(h), inputHash=1, productionResultHash=1, replayResultHash=2,
++                          reducedGraphBytes=100+16*(len(str(2**h-1))-len(str(2**64-1))),
++                          directGraphBytes=100) for h in HEIGHTS]
++
++    def check(self, rows):
++        self.path.write_text("\n".join(map(json.dumps, rows)))
++        return validate(self.path)
++
++    def test_complete(self):
++        self.assertEqual(self.check(self.rows), 7)
++
++    def test_changed_evidence(self):
++        for field in ("queries", "table", "directTable", "fullTable", "reducedWitnessBits",
++                      "directWitnessBits", "graphNodes", "maxColumns", "context"):
++            with self.subTest(field=field), self.assertRaises(ValueError):
++                rows = copy.deepcopy(self.rows)
++                rows[0][field] = 0
++                self.check(rows)
++
++    def test_wrong_byte_growth(self):
++        self.rows[2]["reducedGraphBytes"] += 1
++        with self.assertRaises(ValueError):
++            self.check(self.rows)
++
++    def test_same_hash_changed_height(self):
++        self.rows[1] = copy.deepcopy(self.rows[0])
++        self.rows[1]["height"] = HEIGHTS[1]
++        with self.assertRaises(ValueError):
++            self.check(self.rows)
++
++    def test_incomplete_reordered_and_boolean(self):
++        for rows in (self.rows[:-1], self.rows[::-1],
++                     [dict(self.rows[0], table=[[[True, 1, 1], 1]])] + self.rows[1:]):
++            with self.assertRaises(ValueError):
++                self.check(rows)
++
++
++class HeightExportValidation(unittest.TestCase):
++    def setUp(self):
++        self.temp = tempfile.TemporaryDirectory()
++        self.addCleanup(self.temp.cleanup)
++        self.path = Path(self.temp.name) / "inventory.jsonl"
++        rows = [dict(phase_expected(h), inputHash=1, productionResultHash=1, replayResultHash=2)
++                for h in PHASE_HEIGHTS]
++        self.path.write_text("\n".join(map(json.dumps, rows)))
++        self.export = Path(self.temp.name) / "timings.json"
++        self.result = {
++            "function": "Hex.SignDetBench.Height.runCheck", "kind": "parametric",
++            "hashable": True, "budget_truncated": False,
++            "env": {"git_commit": "source", "git_dirty": False},
++            "config": {"param_floor": 8192, "param_ceiling": 524288,
++                       "outer_trials": 6, "target_inner_nanos": 1000000000,
++                       "max_seconds_per_call": 10, "signal_floor_multiplier": 10,
++                       "cache_mode": "warm", "verdict_warmup_fraction": 0.2,
++                       "slope_tolerance": 0.15, "narrow_range_noise_floor": 1.5,
++                       "param_schedule": {"kind": "custom", "params": PHASE_HEIGHTS}},
++            "points": [{"trial_index": t, "param": h, "status": "ok",
++                        "result_hash": "0x2", "part_of_verdict": True, "below_signal_floor": False,
++                        "per_call_nanos": 10000, "inner_repeats": 100}
++                       for t in range(6) for h in PHASE_HEIGHTS],
++            "verdict": "inconclusive", "complexity_formula": "height",
++            "slope": -0.5, "c_min": 1, "c_max": 2, "advisories": []}
++
++    def check_export(self, result):
++        self.export.write_text(json.dumps({"export_schema_version": 1, "results": [result]}))
++        return validate_export(self.export, "Height.runCheck", self.path, "source")
++
++    def test_symbolic_phase_oracle(self):
++        self.assertEqual(validate_phases(self.path), 7)
++        rows = [json.loads(line) for line in self.path.read_text().splitlines()]
++        for key, value in [("head", "X^3+1"), ("coefficient", "2^height"),
++                           ("queryDegrees", [True, 1, 0]), ("steps", False),
++                           ("coefficientBytes", 42), ("productionResultHash", -1)]:
++            changed = copy.deepcopy(rows)
++            changed[0][key] = value
++            self.path.write_text("\n".join(map(json.dumps, changed)))
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                validate_phases(self.path)
++        self.path.write_text("\n".join(map(json.dumps, rows)))
++
++    def test_inconclusive_is_retained(self):
++        self.assertEqual(self.check_export(self.result)["verdict"], "inconclusive")
++
++    def test_wrong_source_protocol_and_result(self):
++        for key, value in [("env", {"git_commit": "old", "git_dirty": False}),
++                           ("env", {"git_commit": "source", "git_dirty": True}),
++                           ("function", "Hex.SignDetBench.Height.runReduce"),
++                           ("budget_truncated", True), ("complexity_formula", "height*height"),
++                           ("verdict", "pass")]:
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                result = copy.deepcopy(self.result)
++                result[key] = value
++                self.check_export(result)
++        result = copy.deepcopy(self.result)
++        result["config"]["outer_trials"] = 2
++        with self.assertRaises(ValueError):
++            self.check_export(result)
++
++    def test_missing_reordered_and_duplicated_samples(self):
++        points = self.result["points"]
++        for changed in [points[:-1], points[::-1], [points[0], points[0]] + points[2:]]:
++            result = dict(self.result, points=changed)
++            with self.assertRaises(ValueError):
++                self.check_export(result)
++
++    def test_invalid_sample_values(self):
++        for key, value in [("result_hash", "0x1"), ("status", "timeout"),
++                           ("part_of_verdict", False), ("below_signal_floor", True), ("trial_index", False),
++                           ("per_call_nanos", math.inf), ("per_call_nanos", -1),
++                           ("per_call_nanos", True), ("inner_repeats", True)]:
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                result = copy.deepcopy(self.result)
++                result["points"][0][key] = value
++                self.check_export(result)
++
++
++if __name__ == "__main__":
++    unittest.main()

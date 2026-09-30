@@ -173,22 +173,18 @@ theorem cubic_sign (d : Descriptor CubicField Nat fieldSign 7)
     (Field.value_natCast rep binding real) sign_spec value_neg
     (Field.value_inv rep binding real) q
 
-/-- info: 'Hex.SignDetMathlib.SelectedProducerConformance.cubic_sign' depends on axioms: [propext,
- sorryAx,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.SignDetMathlib.SelectedProducerConformance.cubic_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms cubic_sign
 
 /-- info: 'Hex.SignDetMathlib.SelectedProducerConformance.sign_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms sign_spec
 
 /-- info: 'Hex.SignDetMathlib.SelectedProducerConformance.cubic_success' depends on axioms: [propext,
- sorryAx,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms cubic_success
 
 end Hex.SignDetMathlib.SelectedProducerConformance

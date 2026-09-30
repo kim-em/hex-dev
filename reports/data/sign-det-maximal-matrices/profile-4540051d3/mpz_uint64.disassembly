@@ -1,0 +1,49 @@
+
+/home/kim/.local/state/hex/issue-10377-profiles/maximal-solve-4540051d3/archived-debuggee:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000049b97d0 <_ZN4lean3mpzC1Em>:
+ 49b97d0:	41 56                	push   %r14
+ 49b97d2:	53                   	push   %rbx
+ 49b97d3:	48 83 ec 18          	sub    $0x18,%rsp
+ 49b97d7:	49 89 f6             	mov    %rsi,%r14
+ 49b97da:	48 89 fb             	mov    %rdi,%rbx
+ 49b97dd:	44 89 f6             	mov    %r14d,%esi
+ 49b97e0:	e8 eb 4e 03 00       	call   49ee6d0 <__gmpz_init_set_ui>
+ 49b97e5:	49 c1 ee 20          	shr    $0x20,%r14
+ 49b97e9:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 49b97ee:	44 89 f6             	mov    %r14d,%esi
+ 49b97f1:	e8 ca ff ff ff       	call   49b97c0 <_ZN4lean3mpzC1Ej>
+ 49b97f6:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 49b97fb:	ba 20 00 00 00       	mov    $0x20,%edx
+ 49b9800:	48 89 fe             	mov    %rdi,%rsi
+ 49b9803:	e8 68 4f 03 00       	call   49ee770 <__gmpz_mul_2exp>
+ 49b9808:	48 8d 54 24 08       	lea    0x8(%rsp),%rdx
+ 49b980d:	48 89 df             	mov    %rbx,%rdi
+ 49b9810:	48 89 de             	mov    %rbx,%rsi
+ 49b9813:	e8 38 50 03 00       	call   49ee850 <__gmpz_add>
+ 49b9818:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 49b981d:	e8 3e 00 00 00       	call   49b9860 <_ZN4lean3mpzD1Ev>
+ 49b9822:	48 83 c4 18          	add    $0x18,%rsp
+ 49b9826:	5b                   	pop    %rbx
+ 49b9827:	41 5e                	pop    %r14
+ 49b9829:	c3                   	ret
+ 49b982a:	49 89 c6             	mov    %rax,%r14
+ 49b982d:	eb 0d                	jmp    49b983c <_ZN4lean3mpzC1Em+0x6c>
+ 49b982f:	49 89 c6             	mov    %rax,%r14
+ 49b9832:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 49b9837:	e8 24 00 00 00       	call   49b9860 <_ZN4lean3mpzD1Ev>
+ 49b983c:	48 89 df             	mov    %rbx,%rdi
+ 49b983f:	e8 1c 53 03 00       	call   49eeb60 <__gmpz_clear>
+ 49b9844:	4c 89 f7             	mov    %r14,%rdi
+ 49b9847:	e8 64 1f 33 fc       	call   ceb7b0 <_Unwind_Resume>
+ 49b984c:	48 89 c7             	mov    %rax,%rdi
+ 49b984f:	e8 9c e1 32 fc       	call   ce79f0 <__clang_call_terminate>
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:

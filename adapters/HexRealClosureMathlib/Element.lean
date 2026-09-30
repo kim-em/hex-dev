@@ -628,17 +628,17 @@ end Root.Handle.Value
 end Hex.RealClosure
 
 /-- info: 'Hex.RealClosure.Element.eq_zero_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Element.eq_zero_iff
-/-- info: 'Hex.RealClosure.Element.value_inv' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.Element.value_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Element.value_inv
-/-- info: 'Hex.RealClosure.Element.equal_iff' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.Element.equal_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Element.equal_iff
-/-- info: 'Hex.RealClosure.Element.value_refine' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.Element.value_refine' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Element.value_refine
-/-- info: 'Hex.RealClosure.Root.Handle.Value.value_inv' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.Root.Handle.Value.value_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Root.Handle.Value.value_inv

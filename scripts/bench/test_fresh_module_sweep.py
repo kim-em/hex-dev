@@ -377,6 +377,37 @@ class PairingTests(unittest.TestCase):
                 "case", "reference", sweep.ProbeModule("Baseline"), sample
             )
 
+    def test_axiom_namespace_excludes_imported_logs(self) -> None:
+        output = "\n".join([
+            "'Imported.checked' depends on axioms: [sorryAx]",
+            "'Probe.SemanticSibling.checked' depends on axioms: [sorryAx]",
+            "'Probe.Semantic.counts_roots' depends on axioms: [propext, Classical.choice, Quot.sound]",
+        ])
+        self.assertEqual(sweep.parse_axioms(output, "Probe.Semantic"),
+                         list(EXPECTED_AXIOMS))
+        self.assertIsNone(sweep.parse_axioms(output, "Probe.SemanticBaseline"))
+        self.assertEqual(sweep.parse_axioms(output), ["sorryAx"])
+
+    def test_axiom_namespace_checks_every_local_inventory(self) -> None:
+        output = "\n".join([
+            "'Probe.Semantic.first' depends on axioms: [propext]",
+            "'Probe.Semantic.second' depends on axioms: [propext, sorryAx]",
+        ])
+        self.assertEqual(sweep.parse_axioms(output, "Probe.Semantic"),
+                         ["propext", "sorryAx"])
+        self.assertEqual(sweep.parse_axioms(
+            "'Probe.Semantic.clean' does not depend on any axioms", "Probe.Semantic"), [])
+
+    def test_axiom_namespace_handles_primed_names(self) -> None:
+        self.assertEqual(sweep.parse_axioms(
+            "info: /tmp/other's/probe.lean:1:0: 'Probe.Semantic.checked'extra' depends on axioms: [sorryAx]",
+            "Probe.Semantic"), ["sorryAx"])
+
+    def test_namespace_axiom_validation_is_order_independent(self) -> None:
+        sweep.validate_axioms("case", "candidate", sweep.ProbeModule(
+            "Probe", EXPECTED_AXIOMS, "Probe.Semantic"),
+            {"axioms": list(reversed(EXPECTED_AXIOMS))})
+
     def test_rotation_is_stable(self) -> None:
         self.assertEqual(sweep.rotate(["a", "b", "c"], 1), ["b", "c", "a"])
         self.assertEqual(sweep.rotate(["a", "b", "c"], 4), ["b", "c", "a"])

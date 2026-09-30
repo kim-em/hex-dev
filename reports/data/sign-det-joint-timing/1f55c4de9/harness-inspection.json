@@ -1,0 +1,9 @@
+{
+  "observed_at": "2026-09-29T01:08:07.218325+00:00",
+  "scope": "inspection during the original collection; not a start-of-run observation",
+  "binding": {
+    "revision": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+    "manifest_revision": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+    "status": ""
+  }
+}

@@ -142,6 +142,11 @@ private def emitReencoding (coeff : E → Json) (sign : E → Int) (depth : Nat)
       | .ok none => Json.mkObj [("status", toJson "none")]
       | .ok (some r) => Json.mkObj [("status", toJson "ok"),
           ("signs", toJson r.target.raw.signs), ("indices", toJson r.target.raw.indices),
+          ("targetHead", poly coeff r.target.raw.head),
+          ("targetLower", endpoint coeff r.target.raw.lower),
+          ("targetUpper", endpoint coeff r.target.raw.upper),
+          ("oldIntervalReplay", toJson (r.evidence.check sign 10377 head raw.lower raw.upper
+            (r.target.raw.queries ++ d.raw.constraints))),
           ("replay", toJson (d.checkReencoding r.target head a b r.evidence))]
     | _ => Json.mkObj [("status", toJson "invalid-input")]
   emit depth ("reencode/" ++ name) "reencode"
@@ -163,6 +168,13 @@ private def emitTable (coeff : E → Json) (sign : E → Int) (depth : Nat)
       [("reduced", produced sign domain qs true), ("direct", produced sign domain qs false)] ++
       (if qs.length ≤ 4 then [("reference", reference sign domain qs)] else [])
   emit depth name "table" (Json.mkObj (input ++ fields))
+
+/-- A single nested interval refinement, usable as a direct API example. -/
+def runRefinement : IO Unit := do
+  let nr : RawDescriptor Second Nat :=
+    ⟨10377, nested, .finite 0, .finite (2 * delta), [], []⟩
+  emitReencoding second secondSign 2 "nested/refinement" nr
+    nested (.finite (delta / 2)) (.finite (3 * delta / 2))
 
 def run : IO Unit := do
   let p := passmore
@@ -211,7 +223,11 @@ def run : IO Unit := do
   emitDescriptor second secondSign 2 "nested/stale-context" {nr with context := 10378} []
   emitReencoding second secondSign 2 "nested/reencode" nr
     (x - DensePoly.C delta) .negInf .posInf
+  runRefinement
 
 end Hex.SignDet.EmitInfinitesimal
 
-def main : IO Unit := Hex.SignDet.EmitInfinitesimal.run
+def main (args : List String) : IO Unit :=
+  if args == ["refinement"] then Hex.SignDet.EmitInfinitesimal.runRefinement
+  else if args == [] then Hex.SignDet.EmitInfinitesimal.run
+  else throw (IO.userError "expected no arguments or refinement")

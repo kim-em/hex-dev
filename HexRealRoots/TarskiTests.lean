@@ -210,23 +210,23 @@ theorem shared_kernel :
       !check {alternate with squarefree := {alternate.squarefree with terminal := none}} &&
       !check {sharedLiteral with context := 8}
 
-/-- info: 'Hex.TarskiCertificate.checkCached_eq' depends on axioms: [propext] -/
+/-- info: 'Hex.TarskiCertificate.checkCached_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms TarskiCertificate.checkCached_eq
 
-/-- info: 'Hex.TarskiCertificate.check_eq' depends on axioms: [propext] -/
+/-- info: 'Hex.TarskiCertificate.check_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms TarskiCertificate.check_eq
-/-- info: 'Hex.TarskiCertificate.Domain.replay_data' depends on axioms: [propext] -/
+/-- info: 'Hex.TarskiCertificate.Domain.replay_data' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms TarskiCertificate.Domain.replay_data
-/-- info: 'Hex.TarskiCertificate.checkHit_eq' depends on axioms: [propext] -/
+/-- info: 'Hex.TarskiCertificate.checkHit_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms TarskiCertificate.checkHit_eq
-/-- info: 'Hex.TarskiCertificate.checkHit_replay' depends on axioms: [propext] -/
+/-- info: 'Hex.TarskiCertificate.checkHit_replay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms TarskiCertificate.checkHit_replay
-/-- info: 'Hex.TarskiCertificate.checkHit_checks' depends on axioms: [propext] -/
+/-- info: 'Hex.TarskiCertificate.checkHit_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms TarskiCertificate.checkHit_checks
 /-- info: 'Hex.TarskiTests.shared_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/

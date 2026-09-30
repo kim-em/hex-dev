@@ -125,26 +125,23 @@ theorem cubic_queries (d : Descriptor CubicField Nat fieldSign 7) (h : QueryHand
 /-- info: 'Hex.SignDet.QueryHandle.signAt_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms QueryHandle.signAt_eq
-/-- info: 'Hex.SignDet.Descriptor.prepareQueries_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Descriptor.prepareQueries_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Descriptor.prepareQueries_success
-/-- info: 'Hex.SignDet.QueryHandle.buildSigns_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.QueryHandle.buildSigns_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms QueryHandle.buildSigns_success
-/-- info: 'Hex.SignDet.QueryHandle.signAt_success' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.QueryHandle.signAt_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms QueryHandle.signAt_success
 
-/-- info: 'Hex.SignDet.QueryHandle.buildSigns_roots' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.QueryHandle.buildSigns_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms QueryHandle.buildSigns_roots
-/-- info: 'Hex.SignDet.QueryHandle.signAt_correct' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.QueryHandle.signAt_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms QueryHandle.signAt_correct
-/-- info: 'Hex.SignDetMathlib.QueryHandleConformance.cubic_queries' depends on axioms: [propext,
- sorryAx,
- Classical.choice,
- Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.QueryHandleConformance.cubic_queries' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms cubic_queries
 

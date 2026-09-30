@@ -460,16 +460,16 @@ end Element
 
 end Hex.RealClosure.Algebraic
 
-/-- info: 'Hex.RealClosure.Algebraic.Context.buildSigns_ne_error' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Context.buildSigns_ne_error' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Context.buildSigns_ne_error
-/-- info: 'Hex.RealClosure.Algebraic.Element.denote_eq_zero' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Element.denote_eq_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Element.denote_eq_zero
-/-- info: 'Hex.RealClosure.Algebraic.Element.denote_inv' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Element.denote_inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Element.denote_inv
-/-- info: 'Hex.RealClosure.Algebraic.Element.compare_spec' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Algebraic.Element.compare_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Element.compare_spec
 

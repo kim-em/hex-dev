@@ -7,6 +7,7 @@ module
 
 public import HexSignDet.Induction
 public import HexSignDetMathlib.RationalSolve
+public import HexSignDetMathlib.Foundation
 
 public section
 
@@ -66,7 +67,7 @@ theorem system_counts {r arity : Nat} (rows : Vector (List Nat) r)
   have hn := columns_distinct rows cols a d hd hi
   simp only [System.check, Bool.and_eq_true]
   exact ⟨⟨⟨⟨⟨hr, hc⟩, decide_eq_true hn⟩, counts_nonneg cols xs⟩, decide_eq_true hd⟩,
-    decide_eq_true hi, decide_eq_true (count_moments rows cols hn xs cover)⟩
+    decide_eq_true hi, decide_eq_true (foundation_moments rows cols hn xs cover)⟩
 
 /-- A complete candidate support and a checked inverse suffice for the true
 finite counts to pass the system checker. No count or moment equality is
@@ -79,7 +80,7 @@ theorem System.check_counts {r arity : Nat} (s : System r) (h : s.check arity = 
     simp only [System.check, Bool.and_eq_true, decide_eq_true_eq] at h
     exact h.1.1.1.2
   have hc := counts_nonneg s.columns xs
-  have hm := count_moments s.rows s.columns hn xs cover
+  have hm := foundation_moments s.rows s.columns hn xs cover
   simp only [System.check, Bool.and_eq_true] at h ⊢
   exact ⟨⟨⟨h.1.1.1, hc⟩, h.1.2⟩, h.2.1, decide_eq_true hm⟩
 
