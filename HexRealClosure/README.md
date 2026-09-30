@@ -1465,9 +1465,13 @@ selected-root extension from algebraicity of every predecessor value; a
 kernel example checks three successive root levels over ℚ. Kernel examples
 also restrict the rational base model from ℝ, apply the constructor to any
 tower model in an algebraic `Ambient Rat`, and check that its codomain agrees
-with `Ambient.ofUnion` for any permitted ordered base embedding. Supplying
-the algebraicity premise along each validated prefix, stating base-map
-agreement, and using the restriction in `Context.enlarge` remain open.
+with `Ambient.ofUnion` for any permitted ordered base embedding.
+`Tower.Model.extend_algebraic_over` propagates the algebraicity premise through every
+validated finite root suffix; `extend_field_algebraic_over` applies it to the
+final image field. `extend_base_algebraic` and
+`extend_base_field_algebraic` supply both conclusions for a canonical base
+model. Stating base-map agreement and using the restriction in
+`Context.enlarge` remain open.
 
 Presenting every algebraic generator by a native selected-root descriptor and
 identifying all compatible native presentations with this semantic union remain

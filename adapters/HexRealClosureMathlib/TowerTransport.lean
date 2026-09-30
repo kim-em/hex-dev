@@ -7,6 +7,7 @@ module
 
 public import HexRealClosure.TowerTransport
 public import HexRealClosureMathlib.TowerRefinement
+public import HexRealClosureMathlib.TowerAlgebraic
 public import HexRealClosureMathlib.Ambient
 
 public section
@@ -24,6 +25,60 @@ variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRe
   match suffix with
   | .nil => original
   | .root descriptor rest => (original.adjoin descriptor).extend rest
+
+/-- Algebraicity over a fixed base persists through every validated root in a
+finite suffix, with no irreducibility hypothesis on its defining polynomials. -/
+theorem extend_algebraic_over {B : Type v} [Field B] [Algebra B K]
+    {source : Context registry} (model : Model source K) (suffix : Suffix source)
+    (halgebraic : ∀ a : source.Value, IsAlgebraic B (model.value a)) :
+    ∀ a : suffix.context.Value, IsAlgebraic B ((model.extend suffix).value a) := by
+  induction suffix with
+  | nil => exact halgebraic
+  | root descriptor rest ih =>
+    exact ih (model.adjoin descriptor)
+      (model.adjoin_algebraic_over descriptor halgebraic)
+
+/-- The final image field of a validated suffix is algebraic over the same base. -/
+theorem extend_field_algebraic_over {B : Type v} [Field B] [Algebra B K]
+    {source : Context registry} (model : Model source K) (suffix : Suffix source)
+    (halgebraic : ∀ a : source.Value, IsAlgebraic B (model.value a))
+    (a : (model.extend suffix).field) : IsAlgebraic B (a : K) := by
+  obtain ⟨x, hx⟩ := a.property
+  rw [← hx]
+  exact model.extend_algebraic_over suffix halgebraic x
+
+/-- Starting with the canonical base model makes every finite selected-root
+suffix algebraic over its original coefficient field. -/
+theorem extend_base_algebraic {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* K)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+    (suffix : Suffix (Context.base base)) :
+    letI : Field B := HexPolyMathlib.fieldOfGrind
+    letI : Algebra B K := f.toAlgebra
+    ∀ a : suffix.context.Value,
+      IsAlgebraic B (((Model.base base f hsign).extend suffix).value a) := by
+  letI : Field B := HexPolyMathlib.fieldOfGrind
+  letI : Algebra B K := f.toAlgebra
+  exact (Model.base base f hsign).extend_algebraic_over suffix
+    (Model.base_algebraic base f hsign)
+
+/-- The full image field of a finite tower over its canonical base is
+algebraic over that base. -/
+theorem extend_base_field_algebraic {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* K)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+    (suffix : Suffix (Context.base base)) :
+    letI : Field B := HexPolyMathlib.fieldOfGrind
+    letI : Algebra B K := f.toAlgebra
+    ∀ a : ((Model.base base f hsign).extend suffix).field,
+      IsAlgebraic B (a : K) := by
+  letI : Field B := HexPolyMathlib.fieldOfGrind
+  letI : Algebra B K := f.toAlgebra
+  intro a
+  exact (Model.base base f hsign).extend_field_algebraic_over suffix
+    (Model.base_algebraic base f hsign) a
 
 /-- Interpret the entire old tower in a supplied ordered algebraic real
 closure of the old ambient field's infinitesimal extension. -/
@@ -705,3 +760,19 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.cast' depends on axioms: [propext,
 /-- info: 'Hex.RealClosure.Tower.Model.liftInfinitesimal_X_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Model.liftInfinitesimal_X_lt
+
+/-- info: 'Hex.RealClosure.Tower.Model.extend_algebraic_over' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.extend_algebraic_over
+
+/-- info: 'Hex.RealClosure.Tower.Model.extend_field_algebraic_over' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.extend_field_algebraic_over
+
+/-- info: 'Hex.RealClosure.Tower.Model.extend_base_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.extend_base_algebraic
+
+/-- info: 'Hex.RealClosure.Tower.Model.extend_base_field_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.extend_base_field_algebraic
