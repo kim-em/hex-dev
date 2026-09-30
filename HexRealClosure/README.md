@@ -1046,9 +1046,14 @@ changes at the starting root before extending the suffix, without discarding
 the actual conversion closures.
 
 `Suffix` represents a finite sequence of validated later root levels. Its
-`context` is the original final context. `Conversion.extend?` rebuilds every
-level in order and returns the conversion into the new immutable final
-context. `Conversion.rebuild?` additionally returns a `Rebuilt` result with
+`context` is the original final context. `Suffix.embed` includes each original
+value through the actual root extensions while retaining its old owner;
+`Tower.Model.extend_embed` proves value preservation. `extend_base_agree`
+propagates agreement with any supplied base-field embedding, and
+`extend_base_embed` supplies it for the canonical base model.
+`Conversion.extend?` rebuilds every level in order and returns the conversion
+into the new immutable final context. `Conversion.rebuild?` additionally returns
+a `Rebuilt` result with
 the converted validated descriptors as a new `Suffix`. Its context equality
 binds that suffix to the final conversion, and `rebuild_result` proves it
 returns the same conversion as `extend?`. A caller can select the first descriptor
@@ -1470,8 +1475,8 @@ with `Ambient.ofUnion` for any permitted ordered base embedding.
 validated finite root suffix; `extend_field_algebraic_over` applies it to the
 final image field. `extend_base_algebraic` and
 `extend_base_field_algebraic` supply both conclusions for a canonical base
-model. Stating base-map agreement and using the restriction in
-`Context.enlarge` remain open.
+model. An arbitrary old model must supply its agreement with the chosen base
+map; applying the restriction in `Context.enlarge` remains open.
 
 Presenting every algebraic generator by a native selected-root descriptor and
 identifying all compatible native presentations with this semantic union remain

@@ -25,6 +25,14 @@ noncomputable example (suffix : Suffix base) :
       (Tower.Model.extend_base_algebraic
         (BaseContext.rational registry) (Rat.castHom ℝ) ratSign suffix a))
 
+/-- Including an old rational value through any validated root suffix retains
+the same rational embedding. -/
+example (suffix : Suffix base) (a : base.Value) :
+    (rational.extend suffix).value (suffix.embed a) = (a.stored : ℝ) := by
+  simpa only [rational, Rat.coe_castHom] using
+    (Tower.Model.extend_base_embed
+      (BaseContext.rational registry) (Rat.castHom ℝ) ratSign suffix a)
+
 /-- The rational base and its infinitesimal extension have compatible models
 in the actual ordered algebraic real closure of rational functions. -/
 example (suffix : Suffix base) :
