@@ -114,6 +114,23 @@ noncomputable def infinitesimal (L : Type u) [Field L] [LinearOrder L]
     [IsStrictOrderedRing L] [DecidableEq L] : Ambient (Hex.RationalFn L) :=
   ofField (Hex.RationalFn L)
 
+/-- Include the old ordered field as constants in the algebraic real closure
+of its infinitesimal rational-function extension. -/
+@[expose] noncomputable def coefficientHom (L : Type u) [Field L] [LinearOrder L]
+    [IsStrictOrderedRing L] [DecidableEq L] :
+    L →+* (infinitesimal L).Carrier :=
+  (infinitesimal L).inclusion.comp (HexRationalFnMathlib.constantHom (K := L))
+
+/-- The old coefficient field keeps its strict order in the enlarged ambient. -/
+theorem coefficientHom_strictMono (L : Type u) [Field L] [LinearOrder L]
+    [IsStrictOrderedRing L] [DecidableEq L] : StrictMono (coefficientHom L) := by
+  intro a b less
+  exact (infinitesimal L).monotone
+    ((Hex.OrderedFn.Infinitesimal.C_lt a b).mpr less)
+
+@[simp] theorem coefficientHom_apply (a : L) :
+    coefficientHom L a = (infinitesimal L).inclusion (Hex.RationalFn.C a) := rfl
+
 -- The explicit compatibility premise identifies the two field dictionaries.
 set_option linter.overlappingInstances false in
 /-- Interpret native fractions through their proved field-dictionary equality.
@@ -271,6 +288,10 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.Ambient.infinitesimal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Ambient.infinitesimal
+
+/-- info: 'Hex.RealClosure.Ambient.coefficientHom_strictMono' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.coefficientHom_strictMono
 
 /-- info: 'Hex.RealClosure.Ambient.exists_sqrt_X' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

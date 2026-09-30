@@ -13,6 +13,8 @@ public section
 
 namespace Hex.RealClosure.Tower.Model
 
+open scoped Hex.OrderedFn.Infinitesimal
+
 variable {registry : BaseContext.Registry} {K : Type u}
 variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K]
 
@@ -22,6 +24,19 @@ variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRe
   match suffix with
   | .nil => original
   | .root descriptor rest => (original.adjoin descriptor).extend rest
+
+/-- Interpret the entire old tower in the ordered algebraic real closure of
+the old ambient field's infinitesimal rational-function extension. -/
+@[expose] noncomputable def liftInfinitesimal {source : Context registry} {R : Type u}
+    [Field R] [LinearOrder R] [IsStrictOrderedRing R] [DecidableEq R]
+    (model : Model source R) : Model source (Ambient.infinitesimal R).Carrier :=
+  model.map (Ambient.coefficientHom R) (Ambient.coefficientHom_strictMono R)
+
+@[simp] theorem liftInfinitesimal_value {source : Context registry} {R : Type u}
+    [Field R] [LinearOrder R] [IsStrictOrderedRing R] [DecidableEq R]
+    (model : Model source R) (a : source.Value) :
+    model.liftInfinitesimal.value a = Ambient.coefficientHom R (model.value a) :=
+  model.map_value _ _ a
 
 end Hex.RealClosure.Tower.Model
 
@@ -667,3 +682,7 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.cast' depends on axioms: [propext,
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_rational' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.rebuild_rational
+
+/-- info: 'Hex.RealClosure.Tower.Model.liftInfinitesimal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Model.liftInfinitesimal
