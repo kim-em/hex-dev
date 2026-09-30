@@ -177,6 +177,8 @@ def check() -> None:
              "HexRealClosure.QAdjoinTests",
              "HexRealClosure.TowerCatalog", "HexRealClosure.TowerTests",
              "HexRealClosure.RootFrame", "HexRealClosure.RootFrameTests",
+             "HexRealClosure.LiteralSupport", "HexRealClosure.CodecSupport",
+             "HexRealClosure.FrameFormat", "HexRealClosure.FrameFormatTests",
              "HexRealClosureMathlib.BaseTests", "HexRealClosure.BaseCatalogTests",
              "HexRealClosure.BisectionTests", "HexRealClosure.DeflationConformance",
              "HexRealClosure.BisectionFrontierTests", "HexRealClosure.IsolationTests",
@@ -203,6 +205,7 @@ def check() -> None:
              "HexRealClosureMathlib.SpecializeTests", "HexRealClosureMathlib.Algebraic",
              "HexRealClosureMathlib.AlgebraicClean", "HexRealClosureMathlib.AlgebraicValue",
              "HexRealClosureMathlib.AlgebraicTransport", "HexRealClosureMathlib.AlgebraicYun",
+             "HexRealClosureMathlib.AlgebraicRoots",
              "HexRealClosureMathlib.BaseClean", "HexRealClosureMathlib.AlgebraicTower",
              "HexRealClosureMathlib.Union", "HexRealClosureMathlib.UnionTests",
              "HexRealClosureMathlib.QAdjoin"] + [

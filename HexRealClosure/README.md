@@ -570,7 +570,7 @@ that these retained valid domains cannot return the absent-domain result. That
 branch remains a diagnostic guard, using the internal system error rather than
 a descriptor-replay error.
 
-`hexrealclosure_isolation_conformance` emits eighteen actual executions. The pinned
+`hexrealclosure_isolation_conformance` emits nineteen actual executions. The pinned
 Z3 RCF oracle independently checks inputs, finite-bound policy, node caps,
 scalar-preserving deflation, cell counts, selected derivative words, literal
 descriptor contexts, complete root coverage and absence of duplicates. Cases include nonmonic input,
@@ -581,13 +581,15 @@ The nested isolation case finds both roots of `Y²−√2` using a coefficient s
 from the reducible definition `(X²−2)(X−3)`. The fixture includes that first
 descriptor; the oracle checks its head, interval and context before evaluating
 stored coefficient polynomials at its selected root. The nested isolation cells
-are singletons, while the other fixtures exercise derivative-sign descriptors.
+are singletons; the whole-line and capped-completion cases exercise
+derivative-sign descriptors.
 The nested assembly case
 checks all three roots and their multiplicities in `(Y²−√2)²(Y−1)`, including
 noncanonical stored coefficient polynomials in the expanded input.
-Six further cases independently check Yun assembly against exact Z3 roots and
-derivative-derived multiplicities, including zero, constants, a pure power,
-distinct multiplicity labels, a root-free factor and a simple restored zero.
+Seven further cases independently check Yun assembly against exact Z3 roots and
+derivative-derived multiplicities, including zero, a constant, a pure power,
+distinct multiplicity labels, a root-free factor, a simple restored zero and a
+nonzero bisection point with multiplicity two.
 The oracle does not replay descriptor proof graphs or prove producer totality.
 
 `Isolation.Root` retains both emitted coefficient points and selected-root
@@ -713,6 +715,14 @@ multiplicity in the original polynomial. The proof uses the level's verified
 division and inverse, which require the predecessor interpretation to preserve
 division. It assumes no field laws on stored representatives.
 
+`AlgebraicRoots.lean` applies the successful root-assembly theorems to actual
+`Algebraic.Element` coefficients. Given a zero-reflecting predecessor interpretation into an ordered real closed
+field that preserves arithmetic, negation, inverse, division and sign, the
+level's selected-value interpretation supplies every coefficient premise. A
+successful finite assembly therefore covers exactly the ambient roots of the
+interpreted input with original multiplicities and no duplicate values; `all`
+is equivalent to semantic zero. Producer success and ordering remain separate obligations.
+
 `AlgebraicValue.lean` defines the image subfield `Value ctx`, with lawful field
 and order instances inherited from the ambient field. `Element.toValue`
 preserves arithmetic and sign, is surjective, and identifies exactly the
@@ -773,13 +783,15 @@ and full signature. The constructors derive ordinary coefficient operations,
 recursive cleanliness and the coefficient codec; raw algebraic carriers have
 no ring or field instance.
 
-`Tower.Context` packages such a chain with its value type. `Context.adjoin?`
+`Tower.Context` packages such a chain with its value type. `Context.adjoin`
 accepts the exact context-bound descriptor and returns an `Extension` containing
 the new context, its selected generator and the actual constant-polynomial
-embedding. Old values keep their owning context. The optional failure checks
-structured serialization shape; descriptor acceptance is already established.
+embedding. Old values keep their owning context. The compatibility operation
+`Context.adjoin?` has an optional serialization-shape result, but
+`Context.adjoin_isSome` proves that failure unreachable for a validated
+descriptor; `Context.adjoin_some` relates it to the total operation.
 The returned extension retains its literal frame, the proof of its complete
-binding, and `Context.adjoin_spec` identifies the native child, embedding and
+binding, and `Context.adjoin_native` identifies the native child, embedding and
 generator without unfolding the private constructor.
 These context packages live in `Type 1`; `Option.bind` can connect their results
 to ordinary scalar computations across universe levels.
@@ -799,14 +811,13 @@ Literal arrays are emitted by an accumulator with `Array.push`.
 
 `Tower.Catalog` is an immutable catalog of caller-constructed validated prefixes.
 Insertion rejects rebinding. Its separate base catalog supplies real search
-progress and reconstructs infinitesimal stages. The installed-prefix readers
-accept an algebraic signature only when that exact native context is installed;
-inserting a shorter prefix does not install its successors. Readers retrieve
-the full context first, then decode a scalar or polynomial in that context;
-returned packed values retain their owning context. A cached signature hash
-filters catalog entries, and exact equality confirms a match. The successful
-lookup supplies the binding proof, so the payload decoder does not compare
-that signature a second time.
+progress and reconstructs infinitesimal stages. An algebraic signature is
+accepted only when that exact native context is installed; inserting a shorter
+prefix does not install its successors. Readers retrieve the full context first,
+then decode a scalar or polynomial in that context; returned packed values
+retain their owning context. A cached signature hash filters catalog entries,
+and exact equality confirms a match. The successful lookup supplies the binding
+proof, so the payload decoder does not compare that signature a second time.
 
 The structured codecs have proved literal write/read roundtrips. Nonzero
 algebraic payloads retain both the polynomial and cached sign; their reader
@@ -826,10 +837,13 @@ stale or unknown bindings, forged signs, zero claims, trailing zeros and
 malformed base payloads. The core roundtrip proofs introduce no admission.
 General persistent refinement, transport of later descriptors, interpretation
 of arbitrary towers, complete isolation and the real-closed union remain open.
-Proving that native frame serialization always succeeds (so the optional
-adjoin facade can become total) remains open. The frame reader below checks
-missing prefixes; a universal roundtrip theorem for every freshly encoded
-tower without installed algebraic prefixes remains open.
+Native frame-format totality is proved independently of graph decoding
+and byte-parser completeness.
+
+Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
+non-monic reducible rational definition, followed by a definition with
+noncanonical predecessor coefficients. The frame-format axiom guards use only
+the standard three axioms.
 
 ### Reconstruction from algebraic frames
 
@@ -861,9 +875,10 @@ prefixes, and reject an explicit stale full predecessor reference, misplaced
 frames, false graph versions and matrix certificates, unknown real providers,
 malformed frames and extra unreachable graph entries. These are
 structured JSON APIs; they do not establish byte-parser or pretty-printer laws.
-Completeness for every freshly encoded native tower still needs the native
-frame-format and graph-shape proofs. General interpretation, refinement and
-transport retain the obligations listed above.
+Native frame-format totality is proved separately. A roundtrip theorem for
+every freshly encoded tower still needs graph-shape completeness; byte-parser
+and pretty-printer laws remain outside these structured JSON results. General
+interpretation, refinement and transport retain the obligations listed above.
 
 ## Ordered algebraic ambient models
 
