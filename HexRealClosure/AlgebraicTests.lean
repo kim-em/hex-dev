@@ -30,6 +30,12 @@ private def rationalSample (scale : Rat) : Option (Array Int) := do
   let equation := square - two
   let expected := Element.ofPoly (context := context)
     (DensePoly.scale (-(1 / 7 : Rat)) (x + DensePoly.C 3))
+  let qs := [x, x * x - DensePoly.C 2]
+  let signs ← match context.buildSigns qs with
+    | .ok signs => some signs
+    | .error _ => none
+  let _ ← if context.handle.isSome && signs.values.toList == [1, 0] &&
+      context.root.checkSigns qs signs.values signs.evidence then some () else none
   return #[a.sign, b.sign, equation.sign, (b⁻¹).sign,
     (b * b⁻¹ - 1).sign, (b⁻¹ - expected).sign,
     if square.equal two then 1 else 0,
@@ -74,6 +80,13 @@ private def infinitesimalSample : Option (Array Int) := do
   let context := base.adjoin d
   let a := Element.ofPoly (context := context) (DensePoly.ofCoeffs #[0, 1])
   let e := Element.ofCoeff (context := context) epsilon
+  let y : DensePoly B := DensePoly.ofCoeffs #[0, 1]
+  let queries := [y, y * y - DensePoly.C epsilon]
+  let signs ← match context.buildSigns queries with
+    | .ok result => some result
+    | .error _ => none
+  let _ ← if context.handle.isSome && signs.values.toList == [1, 0] &&
+      context.root.checkSigns queries signs.values signs.evidence then some () else none
   return #[a.sign, (a - e).sign, (a * a - e).sign,
     (a * a⁻¹ - 1).sign, (a⁻¹).sign, if a.isClean then 1 else 0,
     (context.reduce (DensePoly.ofCoeffs #[0, 0, 0, 1])).natDegree]
@@ -108,6 +121,13 @@ private def nestedSample (scale : Nat) : Option (Array Int) := do
   let poly : DensePoly (Element second) := DensePoly.ofCoeffs #[-old, 0, 1]
   let divisor : DensePoly (Element second) := DensePoly.ofCoeffs #[-b, 1]
   let remainder := (DensePoly.divMod poly divisor).2
+  let qs := [y, y * y - DensePoly.C a]
+  let signs ← match second.buildSigns qs with
+    | .ok signs => some signs
+    | .error _ => none
+  let _ ← if first.handle.isSome && second.handle.isSome &&
+      signs.values.toList == [1, 0] &&
+      second.root.checkSigns qs signs.values signs.evidence then some () else none
   return #[b.sign, (b - old).sign, (b * b - old).sign, (b * b⁻¹ - 1).sign,
     if remainder.isZero then 1 else 0, (below₂⁻¹).sign,
     (below₂ * below₂⁻¹ - 1).sign,

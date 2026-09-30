@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Algebraic
-public import HexSignDetMathlib.SelectedProducer
+public import HexSignDetMathlib.QueryHandle
 public import HexPolyMathlib.Interpret
 
 public section
@@ -38,8 +38,17 @@ real closed field. This interpretation is never a core constructor argument. -/
 variable (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
 
 include hz h1 ha hs hm hnat hsign hn hi in
-/-- The explicit internal-error branch of the scalar adapter is unreachable
-under the predecessor interpretation, by success of the actual BKR producer. -/
+/-- Native construction retains a prepared query domain whenever the actual
+coefficient operations have the supplied lawful interpretation. -/
+theorem Context.handle_success (context : Context E Ctx coeffSign parent) :
+    ∃ handle : SignDet.QueryHandle context.root, context.handle = some handle := by
+  rw [context.handle_checked]
+  exact context.root.prepareQueries_success f hz h1 ha hs hm hnat hsign hn hi
+
+include hz h1 ha hs hm hnat hsign hn hi in
+/-- The original selected-sign producer cannot return an error under the
+predecessor interpretation. `Context.buildSigns_eq` transfers this result to
+the retained-domain adapter used by scalar arithmetic. -/
 theorem Context.buildSigns_ne_error (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) (error : SignDet.BuildError) :
     context.root.buildSigns [p] ≠ .error error := by
@@ -462,3 +471,7 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Element.compare_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Element.compare_spec
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.handle_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.handle_success
