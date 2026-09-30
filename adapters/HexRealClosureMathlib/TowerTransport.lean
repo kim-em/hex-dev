@@ -109,6 +109,25 @@ noncomputable def cast {other : Context registry} (h : source = other) :
   exact model
 
 omit [DecidableEq K] in
+private theorem cast_target_proof {other : Context registry} (h : source = other) :
+    HEq (model.cast h).target model.target := by
+  cases h
+  rfl
+
+omit [DecidableEq K] in
+/-- Changing source ownership leaves the actual target interpretation intact. -/
+theorem cast_target {other : Context registry} (h : source = other) :
+    HEq (model.cast h).target model.target := model.cast_target_proof h
+
+omit [DecidableEq K] in
+private theorem target_cast_original {context : Context registry}
+    {left right : Hex.RealClosure.Tower.Model context K}
+    {next : Conversion context} (h : left = right) (following : Model next right) :
+    HEq (h.symm ▸ following).target following.target := by
+  cases h
+  rfl
+
+omit [DecidableEq K] in
 /-- Compose semantic witnesses for the actual two native conversions. -/
 noncomputable def comp {next : Conversion conversion.context}
     (following : Model next model.target) : Model (conversion.comp next) original where
@@ -116,6 +135,14 @@ noncomputable def comp {next : Conversion conversion.context}
   value x := by
     rw [cast_value _ _ _ _ (conversion.comp_spec next).2]
     exact (following.value (conversion.value x)).trans (model.value x)
+
+omit [DecidableEq K] in
+/-- Composition retains the second conversion's target interpretation. -/
+theorem comp_target {next : Conversion conversion.context}
+    (following : Model next model.target) :
+    HEq (model.comp following).target following.target := by
+  unfold comp
+  exact following.target.cast_heq (conversion.comp_spec next).1.symm
 
 variable [IsStrictOrderedRing K] [IsRealClosed K]
 
@@ -219,20 +246,81 @@ theorem root (converted : SignDet.Descriptor conversion.context.Value Signature
     dsimp only [Context.mapDescriptor] at hs
     simpa only [model.polynomial] using hs
 
+/-- Interpret a later conversion using its actual converted descriptor and
+packing closure. This form keeps the target model tied to that descriptor. -/
+noncomputable def adjoinWith
+    (converted : SignDet.Descriptor conversion.context.Value Signature
+      conversion.context.sign conversion.context.signature)
+    (binding : converted.raw = source.mapDescriptor conversion.context conversion.value descriptor)
+    (result : Conversion (source.adjoin descriptor).context)
+    (context : result.context = (conversion.context.adjoin converted).context)
+    (values : HEq result.value (fun x => conversion.context.ofPoly converted
+      (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value)))) :
+    Model result (original.adjoin descriptor) := by
+  refine ⟨context.symm ▸ model.target.adjoin converted, ?_⟩
+  intro x
+  rw [cast_value _ _ _ _ values, model.target.adjoin_ofPoly, model.polynomial,
+    model.target.adjoin_generator, model.root descriptor converted binding,
+    original.adjoin_value descriptor x, original.adjoin_generator]
+
+/-- The explicit converted descriptor also fixes the new ambient model. -/
+theorem adjoinWith_target
+    (converted : SignDet.Descriptor conversion.context.Value Signature
+      conversion.context.sign conversion.context.signature)
+    (binding : converted.raw = source.mapDescriptor conversion.context conversion.value descriptor)
+    (result : Conversion (source.adjoin descriptor).context)
+    (context : result.context = (conversion.context.adjoin converted).context)
+    (values : HEq result.value (fun x => conversion.context.ofPoly converted
+      (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value)))) :
+    HEq (model.adjoinWith descriptor converted binding result context values).target
+      (model.target.adjoin converted) := by
+  unfold adjoinWith
+  exact (model.target.adjoin converted).cast_heq context.symm
+
 /-- Interpret the actual returned later conversion. This preserves every
 stored value and can be applied again at the next root level. -/
 noncomputable def adjoin (result : Conversion (source.adjoin descriptor).context)
     (h : conversion.adjoin? descriptor = some result) : Model result (original.adjoin descriptor) := by
   let spec := conversion.adjoin_spec descriptor result h
   let converted := Classical.choose spec
-  have binding := (Classical.choose_spec spec).1
-  have context := (Classical.choose_spec spec).2.1
-  have values := (Classical.choose_spec spec).2.2
-  refine ⟨context.symm ▸ model.target.adjoin converted, ?_⟩
-  intro x
-  rw [cast_value _ _ _ _ values, model.target.adjoin_ofPoly, model.polynomial,
-    model.target.adjoin_generator, model.root descriptor converted binding,
-    original.adjoin_value descriptor x, original.adjoin_generator]
+  exact model.adjoinWith descriptor converted (Classical.choose_spec spec).1 result
+    (Classical.choose_spec spec).2.1 (Classical.choose_spec spec).2.2
+
+private theorem extend_cast_heq {left right : Context registry} (h : left = right)
+    (target : Hex.RealClosure.Tower.Model right K) (suffix : Suffix left) :
+    HEq ((h.symm ▸ target).extend suffix) (target.extend (h ▸ suffix)) := by
+  cases h
+  rfl
+
+/-- Interpret the exact rebuilt suffix in the target model of the starting
+conversion, while preserving the old final values. -/
+private theorem align_exists {suffix : Suffix source} {result : Conversion suffix.context}
+    {converted : Suffix conversion.context}
+    (trace : Rebuilds conversion suffix result converted) :
+    ∃ witness : Model result (original.extend suffix),
+      HEq witness.target (model.target.extend converted) := by
+  induction trace with
+  | nil initial =>
+    exact ⟨model, HEq.rfl⟩
+  | root initial descriptor rest converted h tail ih =>
+    let next := initial.adjoinChecked descriptor converted h
+    let binding := SignDet.Descriptor.build_raw (SignDet.Descriptor.validate_eq_some.mp h)
+    let step := model.adjoinWith descriptor converted binding next
+      (initial.adjoinChecked_context descriptor converted h)
+      (initial.adjoinChecked_value descriptor converted h)
+    obtain ⟨witness, hw⟩ := ih step
+    refine ⟨witness, ?_⟩
+    have ht := model.adjoinWith_target descriptor converted binding next
+      (initial.adjoinChecked_context descriptor converted h)
+      (initial.adjoinChecked_value descriptor converted h)
+    have hc := initial.adjoinChecked_context descriptor converted h
+    have cast_target := (model.target.adjoin converted).cast_heq hc.symm
+    have heq : step.target = (hc.symm ▸ model.target.adjoin converted) :=
+      eq_of_heq (ht.trans cast_target.symm)
+    rw [heq] at hw
+    refine hw.trans ?_
+    simpa only [Hex.RealClosure.Tower.Model.extend, Suffix.context] using
+      (extend_cast_heq hc (model.target.adjoin converted) _)
 
 include model in
 /-- Recursive rebuilding succeeds for every finite validated suffix and
@@ -271,16 +359,55 @@ noncomputable def extend (suffix : Suffix source) (result : Conversion suffix.co
   have same : actual = result := Option.some.inj (output.symm.trans h)
   exact same ▸ Classical.choice (Classical.choose_spec spec).2
 
-/-- The final native conversion returned alongside rebuilt descriptors
-preserves every old value in the same ambient model as ordinary traversal.
-Alignment with the interpretation of the returned suffix is separate. -/
+/-- Interpret the final conversion using the exact rebuilt suffix, while
+preserving every old value in the original ambient field. -/
 noncomputable def rebuild (suffix : Suffix source)
     (rebuilt : Rebuilt conversion suffix)
+    (_h : conversion.rebuild? suffix = some rebuilt) :
+    Model rebuilt.result (original.extend suffix) :=
+  Classical.choose (model.align_exists rebuilt.checked)
+
+/-- The semantic target of the final conversion is the model obtained by
+interpreting its returned validated suffix from the starting target model. -/
+theorem rebuild_target (suffix : Suffix source) (rebuilt : Rebuilt conversion suffix)
     (h : conversion.rebuild? suffix = some rebuilt) :
-    Model rebuilt.result (original.extend suffix) := by
-  have he := congrArg (Option.map Rebuilt.result) h
-  rw [conversion.rebuild_result suffix] at he
-  exact model.extend suffix rebuilt.result (by simpa only [Option.map_some] using he)
+    HEq (model.rebuild suffix rebuilt h).target
+      (model.target.extend rebuilt.suffix) :=
+  Classical.choose_spec (model.align_exists rebuilt.checked)
+
+/-- Compose a later semantic conversion with the rebuilt tower. The context
+equality and model alignment discharge the ownership change automatically. -/
+noncomputable def rebuildComp (suffix : Suffix source)
+    (rebuilt : Rebuilt conversion suffix)
+    (h : conversion.rebuild? suffix = some rebuilt)
+    (next : Conversion rebuilt.suffix.context)
+    (following : Model next (model.target.extend rebuilt.suffix)) :
+    Model (rebuilt.result.comp (next.cast rebuilt.context_eq))
+      (original.extend suffix) := by
+  let first := model.rebuild suffix rebuilt h
+  let right := following.cast rebuilt.context_eq
+  have cast_target := (model.target.extend rebuilt.suffix).cast_heq rebuilt.context_eq
+  have target_eq : first.target =
+      (rebuilt.context_eq ▸ model.target.extend rebuilt.suffix) :=
+    eq_of_heq ((model.rebuild_target suffix rebuilt h).trans cast_target.symm)
+  exact first.comp (target_eq.symm ▸ right)
+
+/-- A composed later conversion retains the later target model, so further
+checked refinements can use it without recovering an arbitrary witness. -/
+theorem rebuildComp_target (suffix : Suffix source)
+    (rebuilt : Rebuilt conversion suffix)
+    (h : conversion.rebuild? suffix = some rebuilt)
+    (next : Conversion rebuilt.suffix.context)
+    (following : Model next (model.target.extend rebuilt.suffix)) :
+    HEq (model.rebuildComp suffix rebuilt h next following).target following.target := by
+  let first := model.rebuild suffix rebuilt h
+  let right := following.cast rebuilt.context_eq
+  have cast_target := (model.target.extend rebuilt.suffix).cast_heq rebuilt.context_eq
+  have target_eq : first.target =
+      (rebuilt.context_eq ▸ model.target.extend rebuilt.suffix) :=
+    eq_of_heq ((model.rebuild_target suffix rebuilt h).trans cast_target.symm)
+  exact (first.comp_target (target_eq.symm ▸ right)).trans
+    ((target_cast_original target_eq right).trans (following.cast_target rebuilt.context_eq))
 
 omit [IsStrictOrderedRing K] [IsRealClosed K] in
 include model in
@@ -341,6 +468,10 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.adjoin' depends on axioms: [propex
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.adjoin
 
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.adjoinWith' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.adjoinWith
+
 /--
 info: 'Hex.RealClosure.Tower.Conversion.Model.extend_exists' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
@@ -391,6 +522,18 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.extend' depends on axioms: [propex
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.rebuild
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_target' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuild_target
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuildComp' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuildComp
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuildComp_target' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuildComp_target
 
 /--
 info: 'Hex.RealClosure.Tower.Conversion.Model.cast' depends on axioms: [propext, Classical.choice, Quot.sound]

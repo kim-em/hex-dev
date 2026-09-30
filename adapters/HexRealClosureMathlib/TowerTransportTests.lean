@@ -36,6 +36,75 @@ example (result : Conversion suffix.context)
     Nonempty (Conversion.Model result ((rational.adjoin descriptor).extend suffix)) :=
   ⟨(Conversion.Model.refine rational encoding).extend suffix result h⟩
 
+/-- The returned suffix has the same ambient interpretation as the final
+conversion, so a later semantic conversion can compose with it. -/
+example (rebuilt : Rebuilt (Conversion.refine base encoding) suffix)
+    (h : (Conversion.refine base encoding).rebuild? suffix = some rebuilt) :
+    HEq ((Conversion.Model.refine rational encoding).rebuild suffix rebuilt h).target
+      ((Conversion.Model.refine rational encoding).target.extend rebuilt.suffix) :=
+  (Conversion.Model.refine rational encoding).rebuild_target suffix rebuilt h
+
+example (rebuilt : Rebuilt (Conversion.refine base encoding) suffix)
+    (h : (Conversion.refine base encoding).rebuild? suffix = some rebuilt)
+    (next : Conversion rebuilt.suffix.context)
+    (following : Conversion.Model next
+      ((Conversion.Model.refine rational encoding).target.extend rebuilt.suffix)) :
+    Nonempty (Conversion.Model (rebuilt.result.comp (next.cast rebuilt.context_eq))
+      ((rational.adjoin descriptor).extend suffix)) :=
+  ⟨(Conversion.Model.refine rational encoding).rebuildComp suffix rebuilt h next following⟩
+
+private theorem second_refine {source : Context registry} (ambient : Tower.Model source ℝ)
+    {suffix' : Suffix source}
+    {converted : SignDet.Descriptor source.Value Signature source.sign source.signature}
+    {rest : Suffix (source.adjoin converted).context}
+    (shape : suffix' = .root converted rest)
+    {head' : DensePoly source.Value} {lower' upper' : Endpoint source.Value}
+    (second : SignDet.Reencoding converted head' lower' upper')
+    (next : Conversion rest.context)
+    (hn : (Conversion.refine source second).extend? rest = some next) :
+    Nonempty (Conversion.Model
+      (next.cast (congrArg (fun s : Suffix source => s.context) shape.symm))
+      (ambient.extend suffix')) := by
+  cases shape
+  exact ⟨(Conversion.Model.refine ambient second).extend rest next hn⟩
+
+/-- The shape needed to select that first root follows from the returned
+checked trace, rather than from a caller's semantic assumption. -/
+example {later : SignDet.Descriptor (base.adjoin descriptor).context.Value Signature
+      (base.adjoin descriptor).context.sign (base.adjoin descriptor).context.signature}
+    {rest : Suffix ((base.adjoin descriptor).context.adjoin later).context}
+    (rebuilt : Rebuilt (Conversion.refine base encoding) (.root later rest)) :
+    ∃ converted : SignDet.Descriptor (Conversion.refine base encoding).context.Value Signature
+        (Conversion.refine base encoding).context.sign
+        (Conversion.refine base encoding).context.signature,
+      ∃ tail : Suffix ((Conversion.refine base encoding).context.adjoin converted).context,
+        rebuilt.suffix = .root converted tail := rebuilt.root_shape
+
+/-- A checked change of the first rebuilt root extends through the remaining
+suffix, then composes with the original conversion. -/
+example (rebuilt : Rebuilt (Conversion.refine base encoding) suffix)
+    (h : (Conversion.refine base encoding).rebuild? suffix = some rebuilt)
+    {converted : SignDet.Descriptor (Conversion.refine base encoding).context.Value Signature
+      (Conversion.refine base encoding).context.sign
+      (Conversion.refine base encoding).context.signature}
+    {rest : Suffix ((Conversion.refine base encoding).context.adjoin converted).context}
+    (shape : rebuilt.suffix = .root converted rest)
+    {head' : DensePoly (Conversion.refine base encoding).context.Value}
+    {lower' upper' : Endpoint (Conversion.refine base encoding).context.Value}
+    (second : SignDet.Reencoding converted head' lower' upper')
+    (next : Conversion rest.context)
+    (hn : (Conversion.refine (Conversion.refine base encoding).context second).extend? rest =
+      some next) :
+    let actual := next.cast (congrArg
+      (fun s : Suffix (Conversion.refine base encoding).context => s.context) shape.symm)
+    ∃ following : Conversion.Model actual
+          ((Conversion.Model.refine rational encoding).target.extend rebuilt.suffix),
+        HEq ((Conversion.Model.refine rational encoding).rebuildComp suffix rebuilt h actual following).target
+          following.target := by
+  let first := Conversion.Model.refine rational encoding
+  obtain ⟨following⟩ := second_refine first.target shape second next hn
+  exact ⟨following, first.rebuildComp_target suffix rebuilt h _ following⟩
+
 example {first : Conversion base} (model : Conversion.Model first rational)
     {other : Context registry} (h : base = other) (x : other.Value) :
     (model.cast h).target.value ((first.cast h).value x) =

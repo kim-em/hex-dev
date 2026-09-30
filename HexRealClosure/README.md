@@ -984,13 +984,12 @@ level in order and returns the conversion into the new immutable final
 context. `Conversion.rebuild?` additionally returns a `Rebuilt` result with
 the converted validated descriptors as a new `Suffix`. Its context equality
 binds that suffix to the final conversion, and `rebuild_result` proves it
-returns the same conversion as `extend?`. A caller can select a descriptor in
-the rebuilt suffix for a further checked executable refinement and compose
-the resulting native conversions. The semantic model is proved for the final
-conversion, but it is not yet identified with the model built from the returned
-suffix; a second refinement therefore still needs that proof. Automatic
-selection and conversion of arbitrary dependent expressions also remain open.
-Every original context and value remains valid independently.
+returns the same conversion as `extend?`. A caller can select the first descriptor
+in the rebuilt suffix for a further checked refinement and compose the resulting
+native conversions. Each returned `Rebuilt` value carries a derivation of the
+exact validated steps. Automatic selection and conversion of arbitrary dependent
+expressions remain open. Every original context and value remains valid
+independently.
 
 The companion `Conversion.Model` relates the native conversion to the original
 model and supplies the actual target model. `Model.identity` and `Model.comp`
@@ -1002,7 +1001,11 @@ succeeds. `extend_exists` proves success and interpretation preservation for an
 arbitrary finite suffix, without caller-supplied replay evidence. `Model.extend`
 interprets a particular result returned by the executable. `rebuild_exists`
 proves the descriptor-retaining traversal succeeds, and `Model.rebuild`
-interprets its final conversion. The generic
+interprets its final conversion. `rebuild_target` identifies its target model
+with the interpretation of the returned suffix, while `rebuildComp` composes
+a subsequent semantic conversion and reconciles context ownership. Further
+refinement uses `rebuild?` and its aligned `Model.rebuild` witness.
+The generic
 `zero`, `degree`, `polynomial`, `equal`, `compare` and `mono` results preserve
 canonical zero, dense-polynomial degree and interpretation, actual native
 comparison results, and inclusion of the whole original image field.
