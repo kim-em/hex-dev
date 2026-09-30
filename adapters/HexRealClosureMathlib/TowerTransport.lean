@@ -694,11 +694,27 @@ noncomputable def infinitesimalMapped {B : Type} [Lean.Grind.Field B] [Decidable
     Ambient.mappedNativeHom_C compatible f ambient a
   exact infinitesimalHom context old new hOld hNew hcomp
 
+/-- Every finite validated root suffix over a sign-compatible base embeds
+through the common enlarged ambient field and rebuilds successfully. -/
+theorem rebuild_mapped {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (context : BaseContext.Context registry B sign)
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* R)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+    (ambient : Ambient (Hex.RationalFn R))
+    (suffix : Suffix (Context.base context)) :
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal context) suffix,
+      (Conversion.infinitesimal context).rebuild? suffix = some rebuilt :=
+  (infinitesimalMapped context f hsign ambient).rebuild_exists suffix
+
 end Hex.RealClosure.Tower.Conversion.Model
 
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.infinitesimalMapped' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.infinitesimalMapped
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_mapped' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuild_mapped
 
 /--
 info: 'Hex.RealClosure.Tower.Conversion.Model.zero' depends on axioms: [propext, Classical.choice, Quot.sound]
