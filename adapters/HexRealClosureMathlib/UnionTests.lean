@@ -5,13 +5,30 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.Union
+public import HexRealClosureMathlib.TowerUnion
+public import HexRealClosureMathlib.SelectedRoot
 public import HexRealRootsMathlib.RealClosed
 
 public section
 
 noncomputable section
 namespace Hex.RealClosure.Union.Tests
+
+private def registry : BaseContext.Registry := fun _ => none
+private abbrev rationalBase := Tower.Context.base (BaseContext.rational registry)
+private noncomputable def rationalModel : Tower.Model rationalBase ℝ :=
+  Tower.Model.base (BaseContext.rational registry) (Rat.castHom ℝ) ratSign
+private theorem rational_value (a : rationalBase.Value) :
+    rationalModel.value a = (a.stored : ℝ) :=
+  Tower.Model.base_value (BaseContext.rational registry) (Rat.castHom ℝ) ratSign a
+
+/-- The rational native base restricts from ℝ to its relative algebraic union. -/
+example : Tower.Model rationalBase (Ambient.ofUnion ℝ Rat.cast_strictMono).Carrier := by
+  have algebraic (a : rationalBase.Value) : IsAlgebraic Rat (rationalModel.value a) := by
+    rw [rational_value]
+    simpa using (isAlgebraic_algebraMap a.stored :
+      IsAlgebraic Rat (algebraMap Rat ℝ a.stored))
+  exact rationalModel.restrictUnion algebraic
 
 attribute [local instance 2000] Field.toGrindField
 open Polynomial
@@ -21,6 +38,36 @@ example : IsRealClosed (Carrier Rat ℝ) := realClosed
 
 /-- The restriction constructor applies to the actual nonalgebraic real ambient. -/
 example : Ambient Rat := Ambient.ofUnion ℝ Rat.cast_strictMono
+
+/-- The restriction targets the same relative algebraic union packaged by
+`Ambient.ofUnion` for the ordinary rational embedding in ℝ. -/
+example {registry : BaseContext.Registry} {context : Tower.Context registry}
+    (model : Tower.Model context ℝ)
+    (algebraic : ∀ a : context.Value, IsAlgebraic Rat (model.value a)) :
+    Tower.Model context (Ambient.ofUnion ℝ Rat.cast_strictMono).Carrier :=
+  model.restrictUnion algebraic
+
+/-- The same carrier agreement holds for a general ordered base embedding. -/
+example {registry : BaseContext.Registry} {context : Tower.Context registry}
+    {B R : Type u} [Field B] [LinearOrder B] [Field R] [LinearOrder R]
+    [IsStrictOrderedRing R] [IsRealClosed R] [Algebra B R]
+    (ordered : StrictMono (algebraMap B R)) (model : Tower.Model context R)
+    (algebraic : ∀ a : context.Value, IsAlgebraic B (model.value a)) :
+    Tower.Model context (Ambient.ofUnion R ordered).Carrier :=
+  model.restrictUnion algebraic
+
+/-- An actual algebraic ambient can restrict any interpreted tower without
+changing any native value's interpretation in that ambient. -/
+example {registry : BaseContext.Registry} {context : Tower.Context registry}
+    (ambient : Ambient Rat) (model : Tower.Model context ambient.Carrier) :
+    letI : Algebra Rat ambient.Carrier := ambient.inclusion.toAlgebra
+    ∃ restricted : Tower.Model context (Carrier Rat ambient.Carrier),
+      ∀ a, ((restricted.value a : ambient.Carrier) = model.value a) := by
+  letI : Algebra Rat ambient.Carrier := ambient.inclusion.toAlgebra
+  have algebraic (a : context.Value) : IsAlgebraic Rat (model.value a) := by
+    obtain ⟨p, nonzero, root⟩ := ambient.algebraic (model.value a)
+    exact ⟨p, nonzero, root⟩
+  exact ⟨model.restrictUnion algebraic, fun a => model.restrictUnion_value algebraic a⟩
 
 private theorem sqrt_member (n : Nat) : Real.sqrt n ∈ field Rat ℝ := by
   apply root_mem (X ^ 2 - C (n : Carrier Rat ℝ))
