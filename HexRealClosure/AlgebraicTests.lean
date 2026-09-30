@@ -80,6 +80,13 @@ private def infinitesimalSample : Option (Array Int) := do
   let context := base.adjoin d
   let a := Element.ofPoly (context := context) (DensePoly.ofCoeffs #[0, 1])
   let e := Element.ofCoeff (context := context) epsilon
+  let y : DensePoly B := DensePoly.ofCoeffs #[0, 1]
+  let queries := [y, y * y - DensePoly.C epsilon]
+  let signs ← match context.buildSigns queries with
+    | .ok result => some result
+    | .error _ => none
+  let _ ← if context.handle.isSome && signs.values.toList == [1, 0] &&
+      context.root.checkSigns queries signs.values signs.evidence then some () else none
   return #[a.sign, (a - e).sign, (a * a - e).sign,
     (a * a⁻¹ - 1).sign, (a⁻¹).sign, if a.isClean then 1 else 0,
     (context.reduce (DensePoly.ofCoeffs #[0, 0, 0, 1])).natDegree]

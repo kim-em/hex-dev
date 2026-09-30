@@ -758,13 +758,13 @@ Tarski foundation. Their axiom guards contain only the three standard kernel
 axioms, and the audited import cones contain no admissions. These interpretations are
 conditional on an ambient ordered real closed field, not an existence proof.
 
-The remaining tower work includes context enlargement and transport, complete
-general root isolation and multiplicities, rational delegation agreement and
-identification of native contexts with the compatible real-closed union.
-Construction of a native algebraic context eagerly prepares and retains its
-shared selected-root query domain. `Context.buildSigns` reuses it for singleton
-and caller-supplied joint queries; `buildSigns_eq` proves exact agreement with
-the original producer,
+The remaining tower work includes the recursive algebraic dependency catalog,
+context enlargement and transport, general root isolation and multiplicities,
+rational delegation agreement and a compatible real-closed union construction.
+Each native algebraic context prepares and retains the shared selected-root
+query domain once, eagerly during context construction. `Context.buildSigns`
+reuses it for singleton and joint queries; `buildSigns_eq` proves exact
+agreement with the original producer,
 including its certificates and errors. The BKR table and certificate replay
 still run for each query list. Under the companion coefficient interpretation,
 `Context.handle_success` proves that preparation succeeds using the
@@ -834,7 +834,7 @@ after extensions, restore an unreduced noncanonical coefficient, and reject
 stale or unknown bindings, forged signs, zero claims, trailing zeros and
 malformed base payloads. The core roundtrip proofs introduce no admission.
 General persistent refinement, transport of later descriptors, complete
-isolation and identification with the real-closed union remain open.
+isolation and the real-closed union remain open.
 Reconstructing new validated algebraic levels from serialized frames remains
 open. Native frame-format totality is proved independently of graph decoding
 and byte-parser completeness.
