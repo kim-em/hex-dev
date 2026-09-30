@@ -780,13 +780,15 @@ and full signature. The constructors derive ordinary coefficient operations,
 recursive cleanliness and the coefficient codec; raw algebraic carriers have
 no ring or field instance.
 
-`Tower.Context` packages such a chain with its value type. `Context.adjoin?`
+`Tower.Context` packages such a chain with its value type. `Context.adjoin`
 accepts the exact context-bound descriptor and returns an `Extension` containing
 the new context, its selected generator and the actual constant-polynomial
-embedding. Old values keep their owning context. The optional failure checks
-structured serialization shape; descriptor acceptance is already established.
+embedding. Old values keep their owning context. The compatibility operation
+`Context.adjoin?` has an optional serialization-shape result, but
+`Context.adjoin_isSome` proves that failure unreachable for a validated
+descriptor; `Context.adjoin_some` relates it to the total operation.
 The returned extension retains its literal frame, the proof of its complete
-binding, and `Context.adjoin_spec` identifies the native child, embedding and
+binding, and `Context.adjoin_native` identifies the native child, embedding and
 generator without unfolding the private constructor.
 These context packages live in `Type 1`; `Option.bind` can connect their results
 to ordinary scalar computations across universe levels.
