@@ -7,6 +7,7 @@ module
 
 public import HexRealClosureMathlib.TowerTransport
 public import HexRealClosureMathlib.SelectedRoot
+public import HexRealClosureMathlib.TowerUnion
 
 namespace Hex.RealClosure.Tower.Conversion.Tests
 
@@ -14,6 +15,15 @@ private def registry : BaseContext.Registry := fun _ => none
 private abbrev base := Context.base (BaseContext.rational registry)
 private noncomputable def rational : Tower.Model base ℝ :=
   Tower.Model.base (BaseContext.rational registry) (Rat.castHom ℝ) ratSign
+
+/-- Every validated rational-root suffix restricts to the relative algebraic union. -/
+noncomputable example (suffix : Suffix base) :
+    Tower.Model suffix.context (Union.Carrier Rat ℝ) :=
+  (rational.extend suffix).restrictUnion (by
+    intro a
+    simpa only [rational] using
+      (Tower.Model.extend_base_algebraic
+        (BaseContext.rational registry) (Rat.castHom ℝ) ratSign suffix a))
 
 /-- The rational base and its infinitesimal extension have compatible models
 in the actual ordered algebraic real closure of rational functions. -/
