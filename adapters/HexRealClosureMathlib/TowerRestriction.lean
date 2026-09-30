@@ -17,7 +17,7 @@ variable [Field K] [LinearOrder K] [IsStrictOrderedRing K]
 
 /-- A finite validated tower over its canonical base restricts to the
 relative algebraic subfield of any supplied real closed model. -/
-@[expose] noncomputable def extend_base_restrict {B : Type} [Lean.Grind.Field B]
+@[expose] noncomputable def baseRestrict {B : Type} [Lean.Grind.Field B]
     [DecidableEq B] {sign : B → Int}
     [DecidableEq K] [IsRealClosed K]
     (base : BaseContext.Context registry B sign)
@@ -34,7 +34,7 @@ relative algebraic subfield of any supplied real closed model. -/
 
 /-- Restriction preserves each value of the complete validated suffix after
 inclusion into the original ambient field. -/
-@[simp] theorem extend_base_restrict_value {B : Type} [Lean.Grind.Field B]
+@[simp] theorem baseRestrict_value {B : Type} [Lean.Grind.Field B]
     [DecidableEq B] {sign : B → Int}
     [DecidableEq K] [IsRealClosed K]
     (base : BaseContext.Context registry B sign)
@@ -44,17 +44,16 @@ inclusion into the original ambient field. -/
     letI : Field B := HexPolyMathlib.fieldOfGrind
     letI : Algebra B K := f.toAlgebra
     ∀ a : suffix.context.Value,
-      Union.inclusion ((extend_base_restrict base f hsign suffix).value a) =
+      ((baseRestrict base f hsign suffix).value a : K) =
         ((Model.base base f hsign).extend suffix).value a := by
   letI : Field B := HexPolyMathlib.fieldOfGrind
   letI : Algebra B K := f.toAlgebra
   intro a
-  exact restrictUnion_value (B := B) ((Model.base base f hsign).extend suffix)
-    (extend_base_algebraic base f hsign suffix) a
+  rfl
 
 /-- The restricted tower model uses the prescribed base algebra map after
 every validated root in the original suffix. -/
-theorem extend_base_restrict_embed {B : Type} [Lean.Grind.Field B]
+theorem baseRestrict_embed {B : Type} [Lean.Grind.Field B]
     [DecidableEq B] {sign : B → Int}
     [DecidableEq K] [IsRealClosed K]
     (base : BaseContext.Context registry B sign)
@@ -64,7 +63,7 @@ theorem extend_base_restrict_embed {B : Type} [Lean.Grind.Field B]
     letI : Field B := HexPolyMathlib.fieldOfGrind
     letI : Algebra B K := f.toAlgebra
     ∀ a : (Context.base base).Value,
-      (extend_base_restrict base f hsign suffix).value (suffix.embed a) =
+      (baseRestrict base f hsign suffix).value (suffix.embed a) =
         algebraMap B (Union.Carrier B K) a.stored := by
   letI : Field B := HexPolyMathlib.fieldOfGrind
   letI : Algebra B K := f.toAlgebra
@@ -75,14 +74,14 @@ theorem extend_base_restrict_embed {B : Type} [Lean.Grind.Field B]
 
 end Hex.RealClosure.Tower.Model
 
-/-- info: 'Hex.RealClosure.Tower.Model.extend_base_restrict' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.baseRestrict' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.RealClosure.Tower.Model.extend_base_restrict
+#print axioms Hex.RealClosure.Tower.Model.baseRestrict
 
-/-- info: 'Hex.RealClosure.Tower.Model.extend_base_restrict_embed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.baseRestrict_embed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.RealClosure.Tower.Model.extend_base_restrict_embed
+#print axioms Hex.RealClosure.Tower.Model.baseRestrict_embed
 
-/-- info: 'Hex.RealClosure.Tower.Model.extend_base_restrict_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.baseRestrict_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.RealClosure.Tower.Model.extend_base_restrict_value
+#print axioms Hex.RealClosure.Tower.Model.baseRestrict_value

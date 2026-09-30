@@ -1133,10 +1133,11 @@ rational case is an instance of this theorem.
 
 General `Context.enlarge` still requires:
 
-1. Relating an arbitrary old model to a chosen `B`-algebra map and proving
-   agreement on its base coefficients. For a canonical base model extended
-   through a validated finite suffix, `Tower.Model.extend_base_restrict`
-   already constructs the restriction and proves value and base-map agreement.
+1. Relating an arbitrary old model to a chosen `B`-algebra map, proving
+   agreement on its base coefficients and algebraicity of every value. For a
+   canonical base model extended through a validated finite suffix,
+   `Tower.Model.baseRestrict` constructs the restriction and proves value and
+   base-map agreement once that suffix presentation is available.
    Packaging the union with `Ambient.ofUnion` also requires an order-preserving
    base map and a real-closed old ambient; its current API places both fields
    in the same universe.
@@ -1175,11 +1176,6 @@ algebraicity with actual ordered algebraic ambient models, including the native
 ℚ(ε) dictionary cast, and derive the bound inside a relative algebraic closure
 from inequalities known only over its base.
 The computational stage-order identification still remains.
-
-`Tower.Model.extend_base_restrict` combines finite-suffix algebraicity with
-the existing `restrictUnion` construction. It interprets the whole old suffix
-in the relative algebraic subfield, preserves each original value after
-inclusion, and agrees with the prescribed base map at every suffix depth.
 
 ## Ordered algebraic ambient models
 
@@ -1518,8 +1514,12 @@ with `Ambient.ofUnion` for any permitted ordered base embedding.
 validated finite root suffix; `extend_field_algebraic_over` applies it to the
 final image field. `extend_base_algebraic` and
 `extend_base_field_algebraic` supply both conclusions for a canonical base
-model. An arbitrary old model must supply its agreement with the chosen base
-map; applying the restriction in `Context.enlarge` remains open.
+model. `Tower.Model.baseRestrict` combines this algebraicity proof with the
+existing `restrictUnion` construction. For a canonical base model and any
+validated finite suffix, it preserves every interpreted value after inclusion
+and agrees with the prescribed base map at every suffix depth. An arbitrary
+old model must supply its agreement with the chosen base map and algebraicity
+of its values; applying the restriction in `Context.enlarge` remains open.
 
 Presenting every algebraic generator by a native selected-root descriptor and
 identifying all compatible native presentations with this semantic union remain
