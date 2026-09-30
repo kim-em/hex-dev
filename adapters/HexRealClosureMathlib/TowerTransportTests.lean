@@ -40,6 +40,24 @@ example (suffix : Suffix base) :
       (Conversion.infinitesimal (BaseContext.rational registry)).rebuild? suffix =
         some rebuilt := Conversion.Model.rebuild_rational registry suffix
 
+/-- The native rational base and its new infinitesimal receive compatible
+models in one common algebraic real closure. -/
+noncomputable example :
+    letI : Field Rat := HexPolyMathlib.fieldOfGrind
+    let ambient := Ambient.infinitesimal Rat
+    let f : Rat →+* Rat := RingHom.id Rat
+    Nonempty (Conversion.Model
+      (Conversion.infinitesimal (BaseContext.rational registry))
+      (Tower.Model.base (BaseContext.rational registry)
+        ((Ambient.coefficientHom ambient).comp f)
+        (Conversion.Model.mapped_base_sign f
+          (fun a => by simpa using Hex.OrderedFn.Infinitesimal.orderSign_eq a) ambient))) := by
+  letI : Field Rat := HexPolyMathlib.fieldOfGrind
+  exact ⟨Conversion.Model.infinitesimalMapped
+    (BaseContext.rational registry) (RingHom.id Rat)
+    (fun a => by simpa using Hex.OrderedFn.Infinitesimal.orderSign_eq a)
+    (Ambient.infinitesimal Rat)⟩
+
 variable (descriptor : SignDet.Descriptor base.Value Signature base.sign base.signature)
 variable {head : DensePoly base.Value} {lower upper : Endpoint base.Value}
 variable (encoding : SignDet.Reencoding descriptor head lower upper)

@@ -180,6 +180,74 @@ theorem mappedHom_sign {B : Type v} [Field B] [DecidableEq B]
   rw [← mappedSign]
   exact (Hex.OrderedFn.Infinitesimal.mapHom_sign f ordered q).symm
 
+/-- A supplied native coefficient sign suffices for semantic fraction signs;
+the coefficient field needs no Mathlib order instance. -/
+theorem mappedHom_sign_of {B : Type v} [Field B] [DecidableEq B]
+    (f : B →+* L) (baseSign : B → Int)
+    (agrees : ∀ a, baseSign a = (SignType.sign (f a) : Int))
+    (model : Ambient (Hex.RationalFn L)) (q : Hex.RationalFn B) :
+    Hex.OrderedFn.Infinitesimal.sign baseSign q =
+      (SignType.sign (mappedHom f model q) : Int) := by
+  change Hex.OrderedFn.Infinitesimal.sign baseSign q =
+    (SignType.sign (model.inclusion (HexRationalFnMathlib.mapHom f q)) : Int)
+  rw [model.inclusion_sign]
+  have mappedSign :
+      Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign
+        (HexRationalFnMathlib.mapHom f q) =
+        (SignType.sign (HexRationalFnMathlib.mapHom f q) : Int) := by
+    rw [Hex.OrderedFn.Infinitesimal.sign_orderSign]
+    exact congrArg (fun s : SignType => (s : Int))
+      (Hex.OrderedFn.Infinitesimal.embed_strictMono.sign_comp _)
+  rw [← mappedSign]
+  exact Hex.OrderedFn.Infinitesimal.mapHom_sign_of f baseSign agrees q
+
+set_option linter.overlappingInstances false in
+/-- Interpret the executable rational-function carrier with its original
+Grind field dictionary through the mapped ambient homomorphism. -/
+@[expose] noncomputable def mappedNativeHom {B : Type v} [Field B]
+    [g : Lean.Grind.Field B] [DecidableEq B]
+    (compatible : Field.toGrindField (K := B) = g)
+    (f : B →+* L)
+    (model : Ambient (Hex.RationalFn L)) :
+    letI : Field (@Hex.RationalFn B g inferInstance) := HexPolyMathlib.fieldOfGrind
+    @Hex.RationalFn B g inferInstance →+* model.Carrier := by
+  letI : Field (@Hex.RationalFn B g inferInstance) := HexPolyMathlib.fieldOfGrind
+  subst g
+  exact mappedHom f model
+
+set_option linter.overlappingInstances false in
+/-- The executable constant embedding agrees with the mapped ambient base. -/
+theorem mappedNativeHom_C {B : Type v} [Field B] [g : Lean.Grind.Field B]
+    [DecidableEq B] (compatible : Field.toGrindField (K := B) = g)
+    (f : B →+* L) (model : Ambient (Hex.RationalFn L)) (a : B) :
+    mappedNativeHom compatible f model (@Hex.RationalFn.C B g inferInstance a) =
+      coefficientHom model (f a) := by
+  subst g
+  exact mappedHom_C f model a
+
+set_option linter.overlappingInstances false in
+/-- The executable indeterminate is the same semantic infinitesimal. -/
+theorem mappedNativeHom_X {B : Type v} [Field B] [g : Lean.Grind.Field B]
+    [DecidableEq B] (compatible : Field.toGrindField (K := B) = g)
+    (f : B →+* L) (model : Ambient (Hex.RationalFn L)) :
+    mappedNativeHom compatible f model (@Hex.RationalFn.X B g inferInstance) =
+      model.inclusion (Hex.RationalFn.X : Hex.RationalFn L) := by
+  subst g
+  exact mappedHom_X f model
+
+set_option linter.overlappingInstances false in
+/-- The executable fraction sign agrees with the mapped semantic value. -/
+theorem mappedNativeHom_sign {B : Type v} [Field B]
+    [g : Lean.Grind.Field B] [DecidableEq B]
+    (compatible : Field.toGrindField (K := B) = g)
+    (f : B →+* L) (baseSign : B → Int)
+    (agrees : ∀ a, baseSign a = (SignType.sign (f a) : Int))
+    (model : Ambient (Hex.RationalFn L)) (q : @Hex.RationalFn B g inferInstance) :
+    Hex.OrderedFn.Infinitesimal.sign baseSign q =
+      (SignType.sign (mappedNativeHom compatible f model q) : Int) := by
+  subst g
+  exact mappedHom_sign_of f baseSign agrees model q
+
 /-- The actual indeterminate remains positive in any ordered algebraic
 real closure of the infinitesimal field. -/
 theorem X_pos (model : Ambient (Hex.RationalFn L)) :
@@ -354,6 +422,14 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.Ambient.coefficientHom_strictMono' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Ambient.coefficientHom_strictMono
+
+/-- info: 'Hex.RealClosure.Ambient.mappedNativeHom' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.mappedNativeHom
+
+/-- info: 'Hex.RealClosure.Ambient.mappedNativeHom_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.mappedNativeHom_sign
 
 /-- info: 'Hex.RealClosure.Ambient.mappedHom' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

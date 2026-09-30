@@ -252,6 +252,23 @@ theorem mapHom_sign {L : Type v} [Field L] [DecidableEq L]
     rw [orderSign_eq, orderSign_eq, ordered.sign_comp]
   simp only [hsign]
 
+omit [LinearOrder K] [IsStrictOrderedRing K] in
+/-- The executable coefficient map preserves an arbitrary supplied base sign
+when that sign agrees with the ordered target field. -/
+theorem mapHom_sign_of {L : Type v} [Field L] [DecidableEq L]
+    [LinearOrder L]
+    (f : K →+* L) (baseSign : K → Int)
+    (agrees : ∀ a, baseSign a = (SignType.sign (f a) : Int))
+    (q : RationalFn K) :
+    sign baseSign q =
+      sign orderSign (HexRationalFnMathlib.mapHom f q) := by
+  change sign baseSign q = sign orderSign (HexRationalFnMathlib.coeffMap f q)
+  unfold sign
+  simp only [HexRationalFnMathlib.coeffMap, RationalFn.mapCoeffs_num,
+    RationalFn.mapCoeffs_den, DensePoly.Interpret.map_eq_zero,
+    lowestCoeff_map]
+  simp only [agrees, orderSign_eq]
+
 /-- The sign does not depend on the choice of numerator and denominator. -/
 theorem sign_fraction (baseSign : K → Int)
     (hs : ∀ a, baseSign a = (SignType.sign a : Int))
