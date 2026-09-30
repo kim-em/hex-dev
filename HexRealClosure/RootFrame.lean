@@ -102,9 +102,10 @@ def Catalog.readFrames (catalog : Catalog registry) (parent : Context registry) 
       | .ok result => .ok ⟨result.val, by
           rw [result.property, child.property, Signature.append_cons]⟩
 
-/-- Recover a native tower from a supplied whole-context identity. The catalog
-first supplies a validated real base and its erased search progress. Cached
-algebraic prefixes are reused; missing levels are checked from replay frames. -/
+/-- Recover a native tower from a supplied whole-context identity. Exact
+catalog hits return immediately. Otherwise a validated real base supplies its
+erased search progress, cached algebraic prefixes are reused, and missing
+levels are checked from replay frames. -/
 def Catalog.reconstruct (catalog : Catalog registry) (binding : Signature) :
     Except String { context : Context registry // context.signature = binding } :=
   match hl : catalog.lookup binding with

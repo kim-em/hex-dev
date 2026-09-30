@@ -75,6 +75,10 @@ private def sample : Option (Array Bool) :=
     rejected (catalog.reconstruct { second.context.signature with roots := [second.frame] }),
     rejected (catalog.reconstruct { second.context.signature with
       roots := [second.frame, original.frame] }),
+    rejected (catalog.reconstruct { second.context.signature with
+      roots := [original.frame, original.frame] }),
+    rejected (withPrefix.reconstruct { second.context.signature with
+      roots := [original.frame, original.frame] }),
     rejected (catalog.reconstruct { second.context.signature with roots := [badFrame] }),
     rejected (catalog.reconstruct { second.context.signature with
       base := ⟨[⟨"missing", 0⟩], 0⟩ }),
@@ -87,7 +91,7 @@ private def sample : Option (Array Bool) :=
 
 /--
 info: some #[true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-  true, true, true, true]
+  true, true, true, true, true, true]
 -/
 #guard_msgs in
 #eval sample

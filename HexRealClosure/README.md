@@ -857,9 +857,9 @@ proves exact re-encoding of every successful root-frame reconstruction.
 
 Run `lake build HexRealClosure.RootFrameTests`. The examples reconstruct two
 successive roots, restore generator payloads and polynomials, reuse cached
-prefixes, and reject stale predecessors, false graph versions and matrix
-certificates, unknown real providers, malformed frames and extra unreachable
-graph entries. These are
+prefixes, and reject an explicit stale full predecessor reference, misplaced
+frames, false graph versions and matrix certificates, unknown real providers,
+malformed frames and extra unreachable graph entries. These are
 structured JSON APIs; they do not establish byte-parser or pretty-printer laws.
 Completeness for every freshly encoded native tower still needs the native
 frame-format and graph-shape proofs. General interpretation, refinement and
