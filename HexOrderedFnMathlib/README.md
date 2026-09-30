@@ -12,6 +12,11 @@ in the lexicographically ordered Hahn field. The coefficient scan equals the
 polynomial trailing coefficient; signs, normalization and comparisons agree
 with this embedding. Scoped `LinearOrder`, `IsStrictOrderedRing` and core
 ordered-ring instances make the rational-function field an ordered field.
+`Infinitesimal.mapHom_sign` and `mapHom_strictMono` prove that the executable
+coefficient map preserves signs and order under any ordered field embedding;
+it also keeps constants and the infinitesimal indeterminate by the rational-function
+map laws. This supplies the ordered coefficient transport needed when a tower
+base is enlarged.
 
 The indeterminate is positive and below every positive coefficient. Its
 reciprocal exceeds every integer. At the next level, the new indeterminate

@@ -213,6 +213,45 @@ theorem sign_eq (baseSign : K → Int)
 theorem sign_orderSign (f : RationalFn K) :
     sign orderSign f = (SignType.sign (embed f) : Int) := sign_eq _ orderSign_eq f
 
+omit [LinearOrder K] [IsStrictOrderedRing K] in
+private theorem lowestIndex_map {L : Type v} [Field L] [DecidableEq L]
+    (f : K →+* L) (p : DensePoly K) :
+    lowestIndex (DensePoly.Interpret.map f (HexRationalFnMathlib.coeff_zero_iff f) p) =
+      lowestIndex p := by
+  unfold lowestIndex
+  change (DensePoly.Interpret.map f (HexRationalFnMathlib.coeff_zero_iff f) p).toArray.findIdx
+      (fun c => c != 0) = p.toArray.findIdx (fun c => c != 0)
+  rw [DensePoly.Interpret.map_array]
+  have predicate : (fun c : L => c != 0) ∘ f = (fun c : K => c != 0) := by
+    funext c
+    simp only [Function.comp_apply, Lean.Grind.bne_eq_decide_not_eq]
+    by_cases h : c = 0 <;> simp [h]
+  unfold Array.findIdx
+  rw [Array.findIdx?_map, predicate]
+  simp
+
+omit [LinearOrder K] [IsStrictOrderedRing K] in
+private theorem lowestCoeff_map {L : Type v} [Field L] [DecidableEq L]
+    (f : K →+* L) (p : DensePoly K) :
+    lowestCoeff (DensePoly.Interpret.map f (HexRationalFnMathlib.coeff_zero_iff f) p) =
+      f (lowestCoeff p) := by
+  simp only [lowestCoeff, lowestIndex_map, DensePoly.Interpret.map_coeff]
+
+omit [IsStrictOrderedRing K] in
+/-- Coefficient-field embeddings preserve the selected infinitesimal sign. -/
+theorem mapHom_sign {L : Type v} [Field L] [DecidableEq L]
+    [LinearOrder L] [IsStrictOrderedRing L]
+    (f : K →+* L) (ordered : StrictMono f) (q : RationalFn K) :
+    sign orderSign (HexRationalFnMathlib.mapHom f q) = sign orderSign q := by
+  change sign orderSign (HexRationalFnMathlib.coeffMap f q) = _
+  unfold sign
+  simp only [HexRationalFnMathlib.coeffMap, RationalFn.mapCoeffs_num,
+    RationalFn.mapCoeffs_den, DensePoly.Interpret.map_eq_zero,
+    lowestCoeff_map]
+  have hsign (a : K) : orderSign (f a) = orderSign a := by
+    rw [orderSign_eq, orderSign_eq, ordered.sign_comp]
+  simp only [hsign]
+
 /-- The sign does not depend on the choice of numerator and denominator. -/
 theorem sign_fraction (baseSign : K → Int)
     (hs : ∀ a, baseSign a = (SignType.sign a : Int))
@@ -371,6 +410,19 @@ theorem X_lt_pow (n : ℕ) :
 
 /-- The embedding of the infinitesimal field into Hahn series is strictly monotone. -/
 theorem embed_strictMono : StrictMono (embed (K := K)) := fun _ _ h => (embed_lt _ _).mp h
+
+/-- Mapping coefficients through an ordered field embedding preserves the
+infinitesimal rational-function order. -/
+theorem mapHom_strictMono {L : Type v} [Field L] [DecidableEq L]
+    [LinearOrder L] [IsStrictOrderedRing L]
+    (f : K →+* L) (ordered : StrictMono f) :
+    StrictMono (HexRationalFnMathlib.mapHom f) := by
+  intro p q hpq
+  change sign orderSign (p - q) < 0 at hpq
+  change sign orderSign
+    (HexRationalFnMathlib.mapHom f p - HexRationalFnMathlib.mapHom f q) < 0
+  rw [← map_sub, mapHom_sign f ordered]
+  exact hpq
 
 /-- Interpret two successive infinitesimals in the iterated Hahn field. -/
 noncomputable def towerEmbed : RationalFn (RationalFn K) →+* Lex (HahnSeries ℤ (Lex (HahnSeries ℤ K))) :=
