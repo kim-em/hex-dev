@@ -1126,7 +1126,10 @@ rational-function homomorphisms. Under those premises, `rebuild_infinitesimal`
 proves that the checked descriptor-retaining traversal succeeds for every
 finite algebraic suffix. `rebuild_rational` supplies these premises for every
 finite suffix over ℚ using the ordered algebraic real closure of ℚ(ε), and a
-native check rebuilds a selected square root there.
+native check rebuilds a selected square root there. `rebuild_mapped` proves the
+same success for any native base admitting a sign-compatible ring homomorphism
+into an ordered field; it constructs the enlarged ambient internally. The
+rational case is an instance of this theorem.
 
 General `Context.enlarge` still requires:
 
@@ -1137,10 +1140,13 @@ General `Context.enlarge` still requires:
    that base map. Packaging the union with `Ambient.ofUnion` also requires an
    order-preserving base map and a real-closed old ambient; its current API
    places both fields in the same universe.
-2. Connecting `Ambient.mappedHom` to the native `BaseContext` field dictionary
-   and the restricted old model. The mapped homomorphism already interprets
-   `B(ε)` in the enlarged ambient field, preserving coefficients, `X`, signs
-   and order for an ordered coefficient-field embedding.
+2. Constructing a coefficient map for the restricted old tower model and
+   proving its `Tower.Model.liftInfinitesimal` interpretation agrees on base
+   values with the base model supplied by `infinitesimalMapped`. Their later
+   root extensions still need identification through item 3.
+   `Ambient.mappedNativeHom` interprets `B(ε)` in the enlarged ambient field,
+   preserving coefficients, `X` and signs. The semantic `mappedHom` also
+   preserves order for an ordered coefficient-field embedding.
 3. Proving selected-root mapping through ordered field embeddings and agreement
    of mapped towers with descriptor-based re-extension at every root level.
 4. With the old ambient algebraic over `B`, proving the enlarged closure
@@ -1181,6 +1187,10 @@ ordered algebraic real closure of its infinitesimal extension.
 functions into that same closure. It agrees with `coefficientHom` on constants,
 sends the native `X` to the semantic infinitesimal, and preserves signs and
 strict order; a kernel example uses ℚ(δ) inside the real closure of ℚ(ε)(δ).
+`Ambient.mappedNativeHom` transports this map to the executable carrier using
+the proved field-dictionary equality. `Conversion.Model.infinitesimalMapped`
+uses its constant and sign laws to interpret the native base conversion in
+that common ambient field from any matching base coefficient map.
 `Tower.Model.liftInfinitesimal` uses `coefficientHom` to interpret the whole old tower
 in any supplied ordered algebraic real closure of `R(ε)`; `Ambient.infinitesimal R`
 supplies one such choice. `Ambient.X_pos` and `X_lt_coefficient` prove

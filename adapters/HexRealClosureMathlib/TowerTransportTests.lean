@@ -40,6 +40,39 @@ example (suffix : Suffix base) :
       (Conversion.infinitesimal (BaseContext.rational registry)).rebuild? suffix =
         some rebuilt := Conversion.Model.rebuild_rational registry suffix
 
+/-- The native rational base embeds in an enlarged ambient over ℝ. -/
+noncomputable example :
+    let ambient := Ambient.infinitesimal ℝ
+    let f : Rat →+* ℝ := Rat.castHom ℝ
+    Nonempty (Conversion.Model
+      (Conversion.infinitesimal (BaseContext.rational registry))
+      (Tower.Model.base (BaseContext.rational registry)
+        ((Ambient.coefficientHom ambient).comp f)
+        (Conversion.Model.mapped_base_sign f ratSign ambient))) := by
+  exact ⟨Conversion.Model.infinitesimalMapped
+    (BaseContext.rational registry) (Rat.castHom ℝ) ratSign
+    (Ambient.infinitesimal ℝ)⟩
+
+example (suffix : Suffix base) :
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal (BaseContext.rational registry)) suffix,
+      (Conversion.infinitesimal (BaseContext.rational registry)).rebuild? suffix =
+        some rebuilt :=
+  Conversion.Model.rebuild_mapped
+    (BaseContext.rational registry) (Rat.castHom ℝ) ratSign suffix
+
+private abbrev nestedBase := (BaseContext.rational registry).infinitesimal
+
+/-- A base that is itself a native rational-function level can be enlarged
+through the proved native interpretation of that level. -/
+noncomputable example (suffix : Suffix (Context.base nestedBase)) :
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal nestedBase) suffix,
+      (Conversion.infinitesimal nestedBase).rebuild? suffix = some rebuilt := by
+  classical
+  let old := Ambient.infinitesimal Rat
+  let f := Ambient.nativeHom HexRationalFnMathlib.ratField_eq old
+  exact Conversion.Model.rebuild_mapped nestedBase f
+    (fun q => Ambient.nativeHom_sign HexRationalFnMathlib.ratField_eq old q) suffix
+
 variable (descriptor : SignDet.Descriptor base.Value Signature base.sign base.signature)
 variable {head : DensePoly base.Value} {lower upper : Endpoint base.Value}
 variable (encoding : SignDet.Reencoding descriptor head lower upper)

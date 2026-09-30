@@ -16,7 +16,7 @@ open scoped Hex.OrderedFn.Infinitesimal
 section Mapped
 attribute [local instance 2000] Field.toGrindField
 
-/-- The native ℚ(δ) base maps into the same semantic second-infinitesimal
+/-- The ℚ(δ) base maps into the same semantic second-infinitesimal
 ambient field, preserving constants, the indeterminate, signs and order. -/
 private noncomputable def nested : Ambient (Hex.RationalFn (Hex.RationalFn Rat)) :=
   Ambient.infinitesimal (Hex.RationalFn Rat)
@@ -45,6 +45,12 @@ example (q : Hex.RationalFn Rat) :
 example (p q : Hex.RationalFn Rat) (less : p < q) :
     Ambient.mappedHom coefficients nested p < Ambient.mappedHom coefficients nested q :=
   (Ambient.mappedHom_strictMono coefficients coefficients_ordered nested) less
+
+example (n : ℕ) :
+    Ambient.mappedHom coefficients nested (Hex.RationalFn.X : Hex.RationalFn Rat) <
+      Ambient.coefficientHom nested ((Hex.RationalFn.X : Hex.RationalFn Rat) ^ n) := by
+  rw [Ambient.mappedHom_X, Ambient.coefficientHom_apply]
+  exact nested.monotone (Hex.OrderedFn.Infinitesimal.X_lt_pow n)
 
 end Mapped
 

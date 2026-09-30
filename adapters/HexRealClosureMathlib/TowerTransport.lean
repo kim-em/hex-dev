@@ -649,6 +649,72 @@ theorem compare (x y : source.Value) :
 end Model
 end Hex.RealClosure.Tower.Conversion
 
+namespace Hex.RealClosure.Tower.Conversion.Model
+
+open scoped Hex.OrderedFn.Infinitesimal
+
+variable {registry : BaseContext.Registry} {R : Type u}
+variable [Field R] [LinearOrder R] [IsStrictOrderedRing R] [DecidableEq R]
+
+/-- The old base embedding retains its prescribed sign after inclusion as
+constants in the enlarged semantic field. -/
+theorem mapped_base_sign {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* R)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+    (ambient : Ambient (Hex.RationalFn R)) (a : B) :
+    sign a = (SignType.sign (Ambient.coefficientHom ambient (f a)) : Int) := by
+  rw [hsign]
+  exact (congrArg (fun s : SignType => (s : Int))
+    ((Ambient.coefficientHom_strictMono ambient).sign_comp (f a))).symm
+
+/-- The mapped native `B(δ)` and the old base field have compatible canonical
+models inside one ordered algebraic real closure of `R(δ)`. -/
+noncomputable def infinitesimalMapped {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (context : BaseContext.Context registry B sign)
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* R)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+    (ambient : Ambient (Hex.RationalFn R)) :
+    letI : Field B := HexPolyMathlib.fieldOfGrind
+    Model (Conversion.infinitesimal context)
+      (Hex.RealClosure.Tower.Model.base context
+        ((Ambient.coefficientHom ambient).comp f)
+        (mapped_base_sign f hsign ambient)) := by
+  letI : Field B := HexPolyMathlib.fieldOfGrind
+  have compatible : Field.toGrindField (K := B) = ‹Lean.Grind.Field B› :=
+    HexPolyMathlib.toGrind_fieldOfGrind
+  let old := (Ambient.coefficientHom ambient).comp f
+  let new := Ambient.mappedNativeHom compatible f ambient
+  have hOld (a : B) : sign a = (SignType.sign (old a) : Int) :=
+    mapped_base_sign f hsign ambient a
+  have hNew (q : Hex.RationalFn B) :
+      Hex.OrderedFn.Infinitesimal.sign sign q =
+        (SignType.sign (new q) : Int) :=
+    Ambient.mappedNativeHom_sign compatible f sign hsign ambient q
+  have hcomp (a : B) : new (Hex.RationalFn.C a) = old a :=
+    Ambient.mappedNativeHom_C compatible f ambient a
+  exact infinitesimalHom context old new hOld hNew hcomp
+
+/-- Every finite validated root suffix over a sign-compatible base embeds
+through the common enlarged ambient field and rebuilds successfully. -/
+theorem rebuild_mapped {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (context : BaseContext.Context registry B sign)
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* R)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+    (suffix : Suffix (Context.base context)) :
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal context) suffix,
+      (Conversion.infinitesimal context).rebuild? suffix = some rebuilt :=
+  (infinitesimalMapped context f hsign (Ambient.infinitesimal R)).rebuild_exists suffix
+
+end Hex.RealClosure.Tower.Conversion.Model
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.infinitesimalMapped' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.infinitesimalMapped
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_mapped' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuild_mapped
+
 /--
 info: 'Hex.RealClosure.Tower.Conversion.Model.zero' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
