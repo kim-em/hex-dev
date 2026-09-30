@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
+public import HexRealClosure.FrameFormat
 public import HexRealClosure.TowerCatalog
 
 public section
@@ -42,7 +43,7 @@ structure RestoredRoot (parent : Context registry) (frame : Literal) : Type 1 wh
   descriptor : Descriptor parent.Value Signature parent.sign parent.signature
   extension : Extension parent descriptor
   accepted : parent.readDescriptor frame.toJson = .ok descriptor
-  constructed : parent.adjoin? descriptor = some extension
+  constructed : extension = parent.adjoin descriptor
   frame_eq : extension.frame = frame
 
 /-- Reconstruct one new native algebraic level from supplied structured data.
@@ -52,11 +53,11 @@ def Context.readFrame (parent : Context registry) (frame : Literal) :
     Except String (RestoredRoot parent frame) :=
   match hd : parent.readDescriptor frame.toJson with
   | .error message => .error message
-  | .ok descriptor => match he : parent.adjoin? descriptor with
-    | none => .error "unsupported native root frame"
-    | some extension => if hf : extension.frame = frame then
-        .ok ⟨descriptor, extension, hd, he, hf⟩
-      else .error "noncanonical root frame"
+  | .ok descriptor =>
+    let extension := parent.adjoin descriptor
+    if hf : extension.frame = frame then
+      .ok ⟨descriptor, extension, hd, rfl, hf⟩
+    else .error "noncanonical root frame"
 
 theorem RestoredRoot.binding (result : RestoredRoot parent frame) :
     result.extension.context.signature = parent.signature.extend frame := by

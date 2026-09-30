@@ -837,13 +837,12 @@ stale or unknown bindings, forged signs, zero claims, trailing zeros and
 malformed base payloads. The core roundtrip proofs introduce no admission.
 General persistent refinement, transport of later descriptors, interpretation
 of arbitrary towers, complete isolation and the real-closed union remain open.
-Native frame-format totality is proved independently of graph decoding
-and byte-parser completeness.
 
 Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
 non-monic reducible rational definition, followed by a definition with
 noncanonical predecessor coefficients. The frame-format axiom guards use only
-the standard three axioms.
+the standard three axioms. Native frame-format totality is independent of
+graph decoding and byte-parser completeness.
 
 ### Reconstruction from algebraic frames
 
@@ -857,8 +856,8 @@ has a different full identity and is rejected by this last check.
 
 `Catalog.reconstruct` recovers an entire context from its structured signature.
 It retrieves the validated real base and its actual erased search progress,
-then visits algebraic frames in predecessor order, reusing installed prefixes
-and checking each missing one. Its returned context carries a proof of the
+then visits algebraic frames in predecessor order. It can reuse installed
+prefixes and checks each missing one. Its returned context carries a proof of the
 requested full signature. Unknown validated bases and false or differently
 encoded frames produce errors. Catalog insertion remains an explicit operation.
 
@@ -870,15 +869,15 @@ write-read roundtrips are proved for installed contexts. `RestoredRoot.frame_dat
 proves exact re-encoding of every successful root-frame reconstruction.
 
 Run `lake build HexRealClosure.RootFrameTests`. The examples reconstruct two
-successive roots, restore generator payloads and polynomials, reuse cached
-prefixes, and reject an explicit stale full predecessor reference, misplaced
+successive roots, restore generator payloads and polynomials, work with a cached
+prefix, and reject an explicit stale full predecessor reference, misplaced
 frames, false graph versions and matrix certificates, unknown real providers,
-malformed frames and extra unreachable graph entries. These are
-structured JSON APIs; they do not establish byte-parser or pretty-printer laws.
-Native frame-format totality is proved separately. A roundtrip theorem for
-every freshly encoded tower still needs graph-shape completeness; byte-parser
-and pretty-printer laws remain outside these structured JSON results. General
-interpretation, refinement and transport retain the obligations listed above.
+malformed frames and extra unreachable graph entries. These are structured JSON
+APIs; byte-parser and pretty-printer laws, and a roundtrip theorem for every
+freshly encoded tower (which needs graph-shape completeness), remain open.
+Batch callers can reconstruct once, insert the returned context, and then use
+the installed-prefix readers to avoid replaying each missing frame per value.
+General interpretation, refinement and transport retain the obligations above.
 
 ## Ordered algebraic ambient models
 
