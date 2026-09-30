@@ -822,9 +822,9 @@ Run `lake build HexRealClosure.TowerTests HexRealClosureTests`. The examples bui
 three actual algebraic levels, use their explicit embeddings, read old values
 after extensions, restore an unreduced noncanonical coefficient, and reject
 stale or unknown bindings, forged signs, zero claims, trailing zeros and
-malformed base payloads. The core roundtrip proofs introduce no admission. General persistent
-refinement, transport of later descriptors, interpretation of arbitrary towers,
-complete isolation and the real-closed union remain open.
+malformed base payloads. The core roundtrip proofs introduce no admission.
+General persistent refinement, transport of later descriptors, interpretation
+of arbitrary towers, complete isolation and the real-closed union remain open.
 Reconstructing new validated algebraic levels from serialized frames and
 proving that native frame serialization always succeeds (so the optional
 adjoin facade can become total) also remain open.
