@@ -270,7 +270,7 @@ noncomputable def adjoin (model : Model context K)
 
 /-- The public child's interpretation is the selected-root interpretation of
 the actual algebraic representative, transported across its native binding. -/
-theorem adjoin_value (chain : Chain registry E sign clean codec binding)
+theorem adjoin_denote (chain : Chain registry E sign clean codec binding)
     (model : Model (.pack chain) K)
     (descriptor : SignDet.Descriptor E Signature sign binding)
     (a : ((.pack chain : Context registry).adjoin descriptor).context.Value) :
