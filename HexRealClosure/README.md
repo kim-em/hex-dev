@@ -1078,13 +1078,14 @@ The generic
 canonical zero, dense-polynomial degree and interpretation, actual native
 comparison results, and inclusion of the whole original image field.
 
-Run `lake build HexRealClosure.TowerConversionTests HexRealClosureMathlib.TowerTransportTests`.
+Run `lake build HexRealClosure.TowerConversionTests HexRealClosure.TowerTransportTests HexRealClosureMathlib.TowerTransportTests`.
 The routine native fixture checks a changed nonmonic reducible definition, a
 later linear root, identity, two successive definition changes composed with
 proved context reconciliation, equations and packet ownership. It also
 re-encodes a descriptor from the rebuilt suffix, composes that second native
 refinement, and checks its converted root equation.
-The explicit four-level native driver is built with
+`TowerTransportTests` also executes its base and one-root `#guard` checks in
+routine CI. The explicit four-level native driver is built with
 `lake build hexrealclosure_transport_tests` and run with
 `.lake/build/bin/hexrealclosure_transport_tests`. Routine CI type-checks this
 fixture but does not execute the deep calculation.
@@ -1105,14 +1106,17 @@ performance result is claimed.
 one positive infinitesimal, using the existing constant-rational-function
 embedding. The conversion keeps the old base and its values valid. A native
 check compares an embedded rational value and rejects a packet from the new
-base in the old context.
+base in the old context. The routine native checks live in
+`HexRealClosure.TowerTransportTests`; they also compare ε with zero and an
+embedded positive rational, then rebuild √2 and compare expressions involving
+its new generator and ε.
 
 `Conversion.Model.infinitesimal` relates the conversion to old and new models
 in one ambient field when their interpretations agree on the native embedding.
 `infinitesimalHom` obtains that agreement from compatible coefficient and
 rational-function homomorphisms. Under those premises, `rebuild_infinitesimal`
 proves that the checked descriptor-retaining traversal succeeds for every
-finite algebraic suffix. A kernel example supplies these premises for every
+finite algebraic suffix. `rebuild_rational` supplies these premises for every
 finite suffix over ℚ using the ordered algebraic real closure of ℚ(ε), and a
 native check rebuilds a selected square root there. Constructing the common
 enlarged ambient model that retains an arbitrary old algebraic interpretation

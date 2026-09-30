@@ -7,6 +7,7 @@ module
 
 public import HexRealClosure.TowerTransport
 public import HexRealClosureMathlib.TowerRefinement
+public import HexRealClosureMathlib.Ambient
 
 public section
 
@@ -402,6 +403,35 @@ theorem rebuild_infinitesimal {B : Type} [Lean.Grind.Field B] [DecidableEq B]
       (Conversion.infinitesimal context).rebuild? suffix = some rebuilt :=
   (infinitesimal context old new compatible).rebuild_exists suffix
 
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- Every validated finite suffix over ℚ rebuilds after adjoining an
+infinitesimal, using the ordered algebraic real closure of ℚ(ε). -/
+theorem rebuild_rational (registry : BaseContext.Registry)
+    (suffix : Suffix (Context.base (BaseContext.rational registry))) :
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal (BaseContext.rational registry)) suffix,
+      (Conversion.infinitesimal (BaseContext.rational registry)).rebuild? suffix =
+        some rebuilt := by
+  let wide := Ambient.infinitesimal Rat
+  letI : Field wide.Carrier := wide.field
+  letI : LinearOrder wide.Carrier := wide.order
+  letI : IsStrictOrderedRing wide.Carrier := wide.ordered
+  let g := Ambient.nativeHom HexRationalFnMathlib.ratField_eq wide
+  have hOld (a : Rat) : Hex.OrderedFn.orderSign a =
+      (SignType.sign ((Rat.castHom wide.Carrier) a) : Int) := by
+    rw [Rat.cast_strictMono.sign_comp,
+      Hex.OrderedFn.Infinitesimal.orderSign_eq]
+  have hNew (q : Hex.RationalFn Rat) :
+      Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign q =
+        (SignType.sign (g q) : Int) :=
+    Ambient.nativeHom_sign HexRationalFnMathlib.ratField_eq wide q
+  have hcomp (a : Rat) : g (Hex.RationalFn.C a) = (Rat.castHom wide.Carrier) a := by
+    rw [Ambient.nativeHom_C]
+    change (wide.inclusion.comp (HexRationalFnMathlib.constantHom (K := Rat))) a =
+      (Rat.castHom wide.Carrier) a
+    simp
+  exact (infinitesimalHom (BaseContext.rational registry)
+    (Rat.castHom wide.Carrier) g hOld hNew hcomp).rebuild_exists suffix
+
 /-- Interpret the final conversion using the exact rebuilt suffix, while
 preserving every old value in the original ambient field. -/
 noncomputable def rebuild (suffix : Suffix source)
@@ -633,3 +663,7 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.cast' depends on axioms: [propext,
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.infinitesimalHom' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.infinitesimalHom
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_rational' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuild_rational

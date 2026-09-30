@@ -60,11 +60,26 @@ private def rootSample : Option (Array Bool) :=
   (conversion.rebuild? suffix).map fun rebuilt =>
   let result := rebuilt.result
   let root := result.value original.generator
+  let eps : conversion.context.Value := by
+    change (Conversion.infinitesimal (BaseContext.rational registry)).context.Value
+    rw [(Conversion.infinitesimal_spec (BaseContext.rational registry)).1]
+    exact BaseContext.Element.infinitesimal (BaseContext.rational registry)
+  let mixed := match rebuilt.suffix with
+    | .root converted .nil =>
+      let next := conversion.context.adjoin converted
+      let raised := next.generator
+      let epsRaised := next.embed eps
+      #[decide (next.context.compare (raised + epsRaised) raised = .gt),
+        decide (next.context.compare (raised - epsRaised) 1 = .gt)]
+    | _ => #[false, false]
   #[result.context.equal (root * root) (result.value (original.embed two)),
     decide (result.context.compare root 1 = .gt),
-    (result.context.read (result.context.write root)).toOption.isSome]
+    decide (result.context.compare root (1 + 1) = .lt),
+    decide (result.context.signature.base.infinitesimals = 1),
+    (result.context.read (result.context.write root)).toOption.isSome,
+    (original.context.read (result.context.write root)).toOption.isNone] ++ mixed
 
-#guard rootSample == some #[true, true, true]
+#guard rootSample == some #[true, true, true, true, true, true, true, true]
 
 /-- Change the first root definition and rebuild three later square roots.
 An embedded noncanonical one and an inverse retain their original meaning. -/
