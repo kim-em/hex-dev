@@ -103,7 +103,8 @@ theorem Context.queryPoly_sign (context : Context E Ctx coeffSign parent) (p : D
   · rfl
   · split
     · rfl
-    · have hhead : context.root.raw.head ≠ 0 := by
+    · rw [context.queryRemainder_eq]
+      have hhead : context.root.raw.head ≠ 0 := by
         intro h
         apply context.root.head_ne_zero f hz
         simp only [h, interpret_zero]

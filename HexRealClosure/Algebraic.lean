@@ -93,6 +93,24 @@ theorem Context.signQuery_of_success (context : Context E Ctx coeffSign parent)
     context.signQuery p = signs.value := by
   simp [signQuery, context.buildSigns_eq, h, Nat.not_le_of_gt hsize]
 
+/-- Compute only the sign-corrected pseudo-remainder needed by a scalar query.
+The multiplier power and corrected quotient are not used by the query. -/
+@[expose] def Context.queryRemainder (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) : DensePoly E :=
+  let remainder := (DensePoly.pseudoDivMod p context.root.raw.head).2
+  if DensePoly.pseudoExponent p context.root.raw.head % 2 = 1 ∧
+      coeffSign context.root.raw.head.leadingCoeff < 0 then
+    -remainder
+  else remainder
+
+/-- The direct query remainder agrees with the shared positive pseudo-division. -/
+theorem Context.queryRemainder_eq (context : Context E Ctx coeffSign parent)
+    (p : DensePoly E) :
+    context.queryRemainder p =
+      (DensePoly.positivePseudoDiv coeffSign p context.root.raw.head).remainder := by
+  unfold queryRemainder DensePoly.positivePseudoDiv DensePoly.pseudoDiv
+  split <;> rfl
+
 /-- Keep constants and already-smaller queries. For larger queries use the
 shared positive pseudo-remainder; its positive scalar preserves the sign at
 this root. Stored representatives and defining polynomials are unchanged. -/
@@ -100,7 +118,7 @@ this root. Stored representatives and defining polynomials are unchanged. -/
     (p : DensePoly E) : DensePoly E :=
   if p.size ≤ 1 then p
   else if p.natDegree < context.root.raw.head.natDegree then p
-  else (DensePoly.positivePseudoDiv coeffSign p context.root.raw.head).remainder
+  else context.queryRemainder p
 
 /-- Constant queries retain the direct predecessor sign operation. -/
 theorem Context.queryPoly_const (context : Context E Ctx coeffSign parent)
@@ -124,11 +142,14 @@ theorem Context.queryPoly_degree (context : Context E Ctx coeffSign parent) (p :
   · split
     · assumption
     · have hs := DensePoly.positivePseudoDiv_remainder_lt coeffSign p context.root.raw.head hhead
+      rw [context.queryRemainder_eq]
       rw [DensePoly.natDegree_eq_size_sub_one]
       rw [DensePoly.natDegree_eq_size_sub_one] at hpos ⊢
       omega
 
-/-- Selected-root signs use the bounded query without changing stored syntax. -/
+/-- Selected-root signs use the bounded query without changing stored syntax.
+The companion proves the preliminary pseudo-remainder preserves the sign;
+the BKR certificate checks the reduced query. -/
 @[expose] def Context.signPoly (context : Context E Ctx coeffSign parent)
     (p : DensePoly E) : Int := context.signQuery (context.queryPoly p)
 

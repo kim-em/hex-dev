@@ -670,14 +670,16 @@ coefficient carriers with an explicit storage predicate.
 zero or a nonzero polynomial with its checked sign. The context computes its
 literal-monic/clean reduction decision once. Packing retains the actual monic
 remainder when eligible. Independently of storage, `Context.queryPoly` performs
-positive pseudo-reduction before submitting a scalar query to the shared
-selected-root sign producer. The producer already reduces its operands; this
+positive pseudo-reduction through a remainder-only path before submitting a
+scalar query to the shared selected-root sign producer. The producer already
+reduces its operands; this
 step moves the first reduction outside its replay certificate. That makes the
 producer's corresponding reduction trivial and avoids replaying the original
 high-degree identity. The actual remainder has smaller degree and the same
 sign at the selected root, including negative leading coefficients. Constants
-and smaller queries take a direct path. Any cost saving requires measurement. Reading a stored sign reuses its result. Nonmonic or unclean definitions
-retain the raw representative. A leading coefficient that denotes one but differs structurally
+and smaller queries take a direct path. Reading a stored sign reuses its result.
+Nonmonic or unclean definitions retain the raw representative. A leading
+coefficient that denotes one but differs structurally
 from literal one does not enable monic storage.
 
 Ordinary addition, subtraction, negation, multiplication, inversion and
