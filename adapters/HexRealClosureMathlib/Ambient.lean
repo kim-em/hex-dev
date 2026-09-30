@@ -17,7 +17,7 @@ namespace Hex.RealClosure
 
 attribute [local instance 2000] Field.toGrindField
 
-universe u
+universe u v
 
 /-- An ordered algebraic real closure of a semantic coefficient field.
 This companion object is not an executable carrier or a native constructor premise. -/
@@ -129,6 +129,56 @@ theorem coefficientHom_strictMono (model : Ambient (Hex.RationalFn L)) :
 
 theorem coefficientHom_apply (model : Ambient (Hex.RationalFn L)) (a : L) :
     coefficientHom model a = model.inclusion (Hex.RationalFn.C a) := rfl
+
+/-- Map an ordered coefficient field into the same semantic infinitesimal
+extension used for the old ambient field. -/
+@[expose] noncomputable def mappedHom {B : Type v} [Field B] [DecidableEq B]
+    (f : B →+* L) (model : Ambient (Hex.RationalFn L)) :
+    Hex.RationalFn B →+* model.Carrier :=
+  model.inclusion.comp (HexRationalFnMathlib.mapHom f)
+
+/-- Mapping a base coefficient agrees with the ambient constant inclusion. -/
+theorem mappedHom_C {B : Type v} [Field B] [DecidableEq B]
+    (f : B →+* L) (model : Ambient (Hex.RationalFn L)) (a : B) :
+    mappedHom f model (Hex.RationalFn.C a) = coefficientHom model (f a) := by
+  change model.inclusion (HexRationalFnMathlib.mapHom f (Hex.RationalFn.C a)) =
+    model.inclusion (Hex.RationalFn.C (f a))
+  rw [HexRationalFnMathlib.mapHom_C]
+
+/-- Both mapped fraction fields use the same infinitesimal indeterminate. -/
+theorem mappedHom_X {B : Type v} [Field B] [DecidableEq B]
+    (f : B →+* L) (model : Ambient (Hex.RationalFn L)) :
+    mappedHom f model (Hex.RationalFn.X : Hex.RationalFn B) =
+      model.inclusion (Hex.RationalFn.X : Hex.RationalFn L) := by
+  change model.inclusion (HexRationalFnMathlib.mapHom f Hex.RationalFn.X) = _
+  rw [HexRationalFnMathlib.mapHom_X]
+
+/-- The mapped infinitesimal base keeps its strict order in the common ambient. -/
+theorem mappedHom_strictMono {B : Type v} [Field B] [DecidableEq B]
+    [LinearOrder B] [IsStrictOrderedRing B]
+    (f : B →+* L) (ordered : StrictMono f)
+    (model : Ambient (Hex.RationalFn L)) : StrictMono (mappedHom f model) :=
+  model.monotone.comp (Hex.OrderedFn.Infinitesimal.mapHom_strictMono f ordered)
+
+/-- The native sign of a mapped infinitesimal fraction is its semantic sign. -/
+theorem mappedHom_sign {B : Type v} [Field B] [DecidableEq B]
+    [LinearOrder B]
+    (f : B →+* L) (ordered : StrictMono f)
+    (model : Ambient (Hex.RationalFn L)) (q : Hex.RationalFn B) :
+    Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign q =
+      (SignType.sign (mappedHom f model q) : Int) := by
+  change Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign q =
+    (SignType.sign (model.inclusion (HexRationalFnMathlib.mapHom f q)) : Int)
+  rw [model.inclusion_sign]
+  have mappedSign :
+      Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign
+        (HexRationalFnMathlib.mapHom f q) =
+        (SignType.sign (HexRationalFnMathlib.mapHom f q) : Int) := by
+    rw [Hex.OrderedFn.Infinitesimal.sign_orderSign]
+    exact congrArg (fun s : SignType => (s : Int))
+      (Hex.OrderedFn.Infinitesimal.embed_strictMono.sign_comp _)
+  rw [← mappedSign]
+  exact (Hex.OrderedFn.Infinitesimal.mapHom_sign f ordered q).symm
 
 /-- The actual indeterminate remains positive in any ordered algebraic
 real closure of the infinitesimal field. -/
@@ -304,6 +354,18 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.Ambient.coefficientHom_strictMono' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Ambient.coefficientHom_strictMono
+
+/-- info: 'Hex.RealClosure.Ambient.mappedHom' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.mappedHom
+
+/-- info: 'Hex.RealClosure.Ambient.mappedHom_strictMono' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.mappedHom_strictMono
+
+/-- info: 'Hex.RealClosure.Ambient.mappedHom_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.mappedHom_sign
 
 /-- info: 'Hex.RealClosure.Ambient.X_pos' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

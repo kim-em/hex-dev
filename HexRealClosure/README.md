@@ -1137,9 +1137,10 @@ General `Context.enlarge` still requires:
    that base map. Packaging the union with `Ambient.ofUnion` also requires an
    order-preserving base map and a real-closed old ambient; its current API
    places both fields in the same universe.
-2. Interpreting the native `B(ε)` in the same enlarged ambient field as the
-   mapped old tower, compatibly on coefficients, with native `X` mapped to the
-   semantic infinitesimal and with the native sign law preserved.
+2. Connecting `Ambient.mappedHom` to the native `BaseContext` field dictionary
+   and the restricted old model. The mapped homomorphism already interprets
+   `B(ε)` in the enlarged ambient field, preserving coefficients, `X`, signs
+   and order for an ordered coefficient-field embedding.
 3. Proving selected-root mapping through ordered field embeddings and agreement
    of mapped towers with descriptor-based re-extension at every root level.
 4. With the old ambient algebraic over `B`, proving the enlarged closure
@@ -1176,7 +1177,11 @@ construction examples use the semantic coefficient dictionaries.
 increasing field homomorphism, preserving its values and sign law.
 `Ambient.coefficientHom` includes any ordered field as constants in a supplied
 ordered algebraic real closure of its infinitesimal extension.
-`Tower.Model.liftInfinitesimal` uses this map to interpret the whole old tower
+`Ambient.mappedHom` maps a smaller ordered coefficient field's rational
+functions into that same closure. It agrees with `coefficientHom` on constants,
+sends the native `X` to the semantic infinitesimal, and preserves signs and
+strict order; a kernel example uses ℚ(δ) inside the real closure of ℚ(ε)(δ).
+`Tower.Model.liftInfinitesimal` uses `coefficientHom` to interpret the whole old tower
 in any supplied ordered algebraic real closure of `R(ε)`; `Ambient.infinitesimal R`
 supplies one such choice. `Ambient.X_pos` and `X_lt_coefficient` prove
 the semantic ε is positive and below every positive old coefficient, while
