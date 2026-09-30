@@ -13,6 +13,8 @@ public section
 
 namespace Hex.RealClosure.Tower.Model
 
+open scoped Hex.OrderedFn.Infinitesimal
+
 variable {registry : BaseContext.Registry} {K : Type u}
 variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K]
 
@@ -22,6 +24,34 @@ variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRe
   match suffix with
   | .nil => original
   | .root descriptor rest => (original.adjoin descriptor).extend rest
+
+/-- Interpret the entire old tower in a supplied ordered algebraic real
+closure of the old ambient field's infinitesimal extension. -/
+@[expose] noncomputable def liftInfinitesimal {source : Context registry} {R : Type u}
+    [Field R] [LinearOrder R] [IsStrictOrderedRing R] [DecidableEq R]
+    (ambient : Ambient (Hex.RationalFn R))
+    (model : Model source R) : Model source ambient.Carrier :=
+  model.map (Ambient.coefficientHom ambient)
+    (Ambient.coefficientHom_strictMono ambient)
+
+@[simp] theorem liftInfinitesimal_value {source : Context registry} {R : Type u}
+    [Field R] [LinearOrder R] [IsStrictOrderedRing R] [DecidableEq R]
+    (ambient : Ambient (Hex.RationalFn R)) (model : Model source R)
+    (a : source.Value) :
+    (model.liftInfinitesimal ambient).value a =
+      Ambient.coefficientHom ambient (model.value a) :=
+  model.map_value _ _ a
+
+/-- The semantic new infinitesimal is below every positive interpreted old
+tower value in the common enlarged ambient field. -/
+theorem liftInfinitesimal_X_lt {source : Context registry} {R : Type u}
+    [Field R] [LinearOrder R] [IsStrictOrderedRing R] [DecidableEq R]
+    (ambient : Ambient (Hex.RationalFn R)) (model : Model source R)
+    (a : source.Value) (positive : 0 < model.value a) :
+    ambient.inclusion (Hex.RationalFn.X : Hex.RationalFn R) <
+      (model.liftInfinitesimal ambient).value a := by
+  rw [liftInfinitesimal_value]
+  exact Ambient.X_lt_coefficient ambient _ positive
 
 end Hex.RealClosure.Tower.Model
 
@@ -426,7 +456,7 @@ theorem rebuild_rational (registry : BaseContext.Registry)
     Ambient.nativeHom_sign HexRationalFnMathlib.ratField_eq wide q
   have hcomp (a : Rat) : g (Hex.RationalFn.C a) = (Rat.castHom wide.Carrier) a := by
     rw [Ambient.nativeHom_C]
-    change (wide.inclusion.comp (HexRationalFnMathlib.constantHom (K := Rat))) a =
+    change (Ambient.coefficientHom wide) a =
       (Rat.castHom wide.Carrier) a
     simp
   exact (infinitesimalHom (BaseContext.rational registry)
@@ -667,3 +697,11 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.cast' depends on axioms: [propext,
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_rational' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.rebuild_rational
+
+/-- info: 'Hex.RealClosure.Tower.Model.liftInfinitesimal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Model.liftInfinitesimal
+
+/-- info: 'Hex.RealClosure.Tower.Model.liftInfinitesimal_X_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Model.liftInfinitesimal_X_lt

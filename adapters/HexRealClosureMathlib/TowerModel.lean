@@ -37,6 +37,31 @@ variable [Field K] [LinearOrder K]
 
 namespace Model
 
+/-- Carry a native tower interpretation into a larger ordered field through
+the actual order-preserving field embedding. -/
+@[expose] noncomputable def map {context : Context registry} {L : Type v}
+    [Field L] [LinearOrder L] (embedding : K →+* L)
+    (ordered : StrictMono embedding) (model : Model context K) : Model context L where
+  value := fun a => embedding (model.value a)
+  zero_iff := by
+    intro a
+    rw [← embedding.map_zero, embedding.injective.eq_iff, model.zero_iff]
+  one := by rw [model.one, embedding.map_one]
+  add := by intro a b; rw [model.add, embedding.map_add]
+  sub := by intro a b; rw [model.sub, map_sub]
+  mul := by intro a b; rw [model.mul, embedding.map_mul]
+  nat := by intro n; rw [model.nat, map_natCast]
+  neg := by intro a; rw [model.neg, map_neg]
+  inv := by intro a; rw [model.inv, map_inv₀]
+  div := by intro a b; rw [model.div, map_div₀]
+  sign := by intro a; rw [model.sign, ordered.sign_comp]
+
+/-- The mapped model interprets every native value by the prescribed embedding. -/
+@[simp] theorem map_value {context : Context registry} {L : Type v}
+    [Field L] [LinearOrder L] (embedding : K →+* L)
+    (ordered : StrictMono embedding) (model : Model context K) (a : context.Value) :
+    (model.map embedding ordered).value a = embedding (model.value a) := rfl
+
 /-- Transport an interpretation along literal equality of native contexts. -/
 private noncomputable def cast {context other : Context registry} (model : Model context K)
     (h : context = other) : Model other K := h ▸ model
@@ -395,6 +420,10 @@ end Adjoin
 
 end Model
 end Hex.RealClosure.Tower
+
+/-- info: 'Hex.RealClosure.Tower.Model.map' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.map
 
 /-- info: 'Hex.RealClosure.Tower.Model.base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

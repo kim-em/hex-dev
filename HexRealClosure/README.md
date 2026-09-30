@@ -1095,10 +1095,10 @@ root equation, ordering, embedded noncanonical one and inverse values, and old
 and new packet ownership. Kernel examples cover arbitrary finite suffixes over
 a validated rational-root context. Generic coefficient and comparison transfer
 and root construction use the proved root-sum theorem and only the standard
-three axioms. Full base enlargement, automatic extraction of a suffix from requested
-expressions or a catalog, uncached reader completeness, and identification of
-native presentations with the real-closed algebraic union remain open. No
-performance result is claimed.
+three axioms. General base enlargement is itemized below. Automatic extraction
+of a suffix from requested expressions or a catalog, uncached reader
+completeness, and identification of native presentations with the real-closed
+algebraic union remain open. No performance result is claimed.
 
 ### Infinitesimal base conversion
 
@@ -1118,10 +1118,23 @@ rational-function homomorphisms. Under those premises, `rebuild_infinitesimal`
 proves that the checked descriptor-retaining traversal succeeds for every
 finite algebraic suffix. `rebuild_rational` supplies these premises for every
 finite suffix over ℚ using the ordered algebraic real closure of ℚ(ε), and a
-native check rebuilds a selected square root there. Constructing the common
-enlarged ambient model that retains an arbitrary old algebraic interpretation
-literally, proving its infinitesimal is below every positive old algebraic
-value, and providing a total `Context.enlarge` remain open.
+native check rebuilds a selected square root there.
+
+General `Context.enlarge` still requires:
+
+1. If the old model uses a merely real-closed ambient field, restricting its
+   values to the relative algebraic union over `B` before lifting.
+2. Interpreting the native `B(ε)` in the same enlarged ambient field as the
+   mapped old tower, compatibly on coefficients, with native `X` mapped to the
+   semantic infinitesimal and with the native sign law preserved.
+3. Proving selected-root mapping through ordered field embeddings and agreement
+   of mapped towers with descriptor-based re-extension at every root level.
+4. With the old ambient algebraic over `B`, proving the enlarged closure
+   algebraic over `B(ε)` by transitivity.
+5. Proving the local algebraic bound and staged-order agreement required by the
+   SPEC for the computational `B(ε)` levels.
+6. Extracting the live suffix automatically and assembling the total checked
+   constructor with its value and order preservation statements.
 
 ## Ordered algebraic ambient models
 
@@ -1146,9 +1159,21 @@ and the native infinitesimal sign; the separate caller test uses the actual
 core rational dictionary without changing caller instance priorities. The two-level
 construction examples use the semantic coefficient dictionaries.
 
-Identifying native towers with the compatible algebraic union, descriptor construction and simultaneous
-realization of finite sign conditions at one ordinary real point remain
-separate obligations.
+`Tower.Model.map` carries an interpreted native tower through a strictly
+increasing field homomorphism, preserving its values and sign law.
+`Ambient.coefficientHom` includes any ordered field as constants in a supplied
+ordered algebraic real closure of its infinitesimal extension.
+`Tower.Model.liftInfinitesimal` uses this map to interpret the whole old tower
+in any supplied ordered algebraic real closure of `R(ε)`; `Ambient.infinitesimal R`
+supplies one such choice. `Ambient.X_pos` and `X_lt_coefficient` prove
+the semantic ε is positive and below every positive old coefficient, while
+`liftInfinitesimal_X_lt` applies that bound to interpreted tower values. The
+remaining native and staged-order obligations are listed above.
+
+Identifying native tower presentations with the algebraic union remains
+separate from restricting a semantic ambient field in item 1 above.
+Descriptor construction and simultaneous realization of finite sign
+conditions at one ordinary real point also remain open.
 
 ### Finite signs at an ordinary real parameter
 

@@ -114,6 +114,35 @@ noncomputable def infinitesimal (L : Type u) [Field L] [LinearOrder L]
     [IsStrictOrderedRing L] [DecidableEq L] : Ambient (Hex.RationalFn L) :=
   ofField (Hex.RationalFn L)
 
+/-- Include the old ordered field as constants in the algebraic real closure
+of its infinitesimal rational-function extension. -/
+@[expose] noncomputable def coefficientHom
+    (model : Ambient (Hex.RationalFn L)) : L →+* model.Carrier :=
+  model.inclusion.comp (HexRationalFnMathlib.constantHom (K := L))
+
+/-- The old coefficient field keeps its strict order in the enlarged ambient. -/
+theorem coefficientHom_strictMono (model : Ambient (Hex.RationalFn L)) :
+    StrictMono (coefficientHom model) := by
+  intro a b less
+  exact model.monotone
+    ((Hex.OrderedFn.Infinitesimal.C_lt a b).mpr less)
+
+theorem coefficientHom_apply (model : Ambient (Hex.RationalFn L)) (a : L) :
+    coefficientHom model a = model.inclusion (Hex.RationalFn.C a) := rfl
+
+/-- The actual indeterminate remains positive in any ordered algebraic
+real closure of the infinitesimal field. -/
+theorem X_pos (model : Ambient (Hex.RationalFn L)) :
+    0 < model.inclusion (Hex.RationalFn.X : Hex.RationalFn L) := by
+  simpa only [map_zero] using model.monotone Hex.OrderedFn.Infinitesimal.X_pos
+
+/-- The semantic infinitesimal is below every positive old coefficient. -/
+theorem X_lt_coefficient (model : Ambient (Hex.RationalFn L))
+    (a : L) (positive : 0 < a) :
+    model.inclusion (Hex.RationalFn.X : Hex.RationalFn L) < coefficientHom model a := by
+  rw [coefficientHom_apply]
+  exact model.monotone (Hex.OrderedFn.Infinitesimal.X_lt_C a positive)
+
 -- The explicit compatibility premise identifies the two field dictionaries.
 set_option linter.overlappingInstances false in
 /-- Interpret native fractions through their proved field-dictionary equality.
@@ -271,6 +300,18 @@ end Hex.RealClosure
 /-- info: 'Hex.RealClosure.Ambient.infinitesimal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Ambient.infinitesimal
+
+/-- info: 'Hex.RealClosure.Ambient.coefficientHom_strictMono' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.coefficientHom_strictMono
+
+/-- info: 'Hex.RealClosure.Ambient.X_pos' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.X_pos
+
+/-- info: 'Hex.RealClosure.Ambient.X_lt_coefficient' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Ambient.X_lt_coefficient
 
 /-- info: 'Hex.RealClosure.Ambient.exists_sqrt_X' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
