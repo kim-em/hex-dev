@@ -88,17 +88,15 @@ theorem System.counts_eq {r : Nat} {arity : Nat} (s : System r)
   apply s.unique h
   rw [count_moments s.rows s.columns hn xs cover, hm]
 
-/-- Every observed condition remains after pruning, once complete support and
-the finite moment interpretation have been established independently. -/
-theorem System.covers_support {r : Nat} {arity : Nat} (s : System r)
-    (h : s.check arity = true) (xs : List (List Int))
+/-- Exact observation counts retain every covered condition after pruning.
+This representation step does not recover counts from matrix equations. -/
+theorem System.covers_counts {r : Nat} (s : System r) (xs : List (List Int))
     (cover : ∀ x ∈ xs, x ∈ s.columns.toList)
-    (hm : s.values = moments s.rows xs) : ∀ x ∈ xs, x ∈ s.support := by
+    (hc : SignDet.counts s.columns xs = s.counts) : ∀ x ∈ xs, x ∈ s.support := by
   intro x hx
   obtain ⟨i, hi, he⟩ := List.mem_iff_getElem.mp (cover x hx)
   have hir : i < r := by simpa using hi
   have he' : s.columns[(⟨i, hir⟩ : Fin r)] = x := by simpa using he
-  have hc := s.counts_eq h xs cover hm
   have hp : 0 < s.counts[(⟨i, hir⟩ : Fin r)] := by
     rw [← hc]
     simp only [SignDet.counts, Fin.getElem_fin, Vector.getElem_ofFn]
@@ -111,6 +109,14 @@ theorem System.covers_support {r : Nat} {arity : Nat} (s : System r)
   apply List.mem_map.mpr
   refine ⟨⟨i, hir⟩, ?_, rfl⟩
   simpa [System.positive] using hp
+
+/-- Every observed condition remains after pruning, once complete support and
+the finite moment interpretation have been established independently. -/
+theorem System.covers_support {r : Nat} {arity : Nat} (s : System r)
+    (h : s.check arity = true) (xs : List (List Int))
+    (cover : ∀ x ∈ xs, x ∈ s.columns.toList)
+    (hm : s.values = moments s.rows xs) : ∀ x ∈ xs, x ∈ s.support :=
+  s.covers_counts xs cover (s.counts_eq h xs cover hm)
 
 /-- Exact counts prohibit spurious positive columns, as well as preserving
 realized ones. This direction needs no separate coverage hypothesis. -/

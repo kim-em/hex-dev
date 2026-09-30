@@ -12,8 +12,8 @@ public import HexRCF.RealCoefficients.FieldBuild
 
 public section
 
-/-! The optional tactic admission audit accepts only the exact #10389 bridge.
-The ordinary rational tactic does not import that bridge. -/
+/-! The optional tactic rejects every nonstandard axiom, including hidden
+admissions in auxiliary proofs. The proved query bridge passes this audit. -/
 
 namespace Hex.RCF.AdmissionConformance
 

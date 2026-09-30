@@ -34,6 +34,69 @@ private def checked (qs : List (DensePoly Rat)) (bytes : ByteArray) : Bool :=
   (Dag.decodeBytes ValueCodec.rat ValueCodec.nat Sturm.orderSign 7 singletonRaw.head
     singletonRaw.lower singletonRaw.upper qs bytes).isOk
 
+/-- Cache keys are derived from the actual parse result, so agreement needs
+neither a byte roundtrip premise nor parsing inside the kernel proof. -/
+def byteSign (bytes : ByteArray) : Rat → Int :=
+  match decoded bytes with
+  | .ok dag => cachedSign (dag.signOperands singletonRaw.head singletonRaw.lower singletonRaw.upper)
+  | .error _ => fun _ => 42
+
+theorem cached_bytes (qs : List (DensePoly Rat)) (bytes : ByteArray) :
+    (Dag.decodeBytes ValueCodec.rat ValueCodec.nat (byteSign bytes) 7 singletonRaw.head
+      singletonRaw.lower singletonRaw.upper qs bytes).map Subtype.val =
+    (Dag.decodeBytes ValueCodec.rat ValueCodec.nat Sturm.orderSign 7 singletonRaw.head
+      singletonRaw.lower singletonRaw.upper qs bytes).map Subtype.val := by
+  apply Dag.decodeBytes_sign_congr
+  intro dag hd x hx
+  change decoded bytes = .ok dag at hd
+  simp only [byteSign, hd]
+  exact cachedSign_agrees _ x hx
+
+theorem cached_descriptor_bytes (bytes : ByteArray) :
+    (Dag.decodeDescriptor ValueCodec.rat ValueCodec.nat (byteSign bytes) 7
+      (singletonRaw.full [1, 1]) bytes).map (fun d => (d.raw, d.evidence)) =
+    (Dag.decodeDescriptor ValueCodec.rat ValueCodec.nat Sturm.orderSign 7
+      (singletonRaw.full [1, 1]) bytes).map (fun d => (d.raw, d.evidence)) := by
+  apply Dag.decodeDescriptor_sign_congr
+  intro dag hd x hx
+  change decoded bytes = .ok dag at hd
+  simp only [byteSign, hd]
+  exact cachedSign_agrees _ x hx
+
+#guard let bytes := encoded full
+  let actual := Dag.decodeBytes ValueCodec.rat ValueCodec.nat (byteSign bytes) 7
+    singletonRaw.head singletonRaw.lower singletonRaw.upper fullNode.queries bytes
+  let lawful := Dag.decodeBytes ValueCodec.rat ValueCodec.nat Sturm.orderSign 7
+    singletonRaw.head singletonRaw.lower singletonRaw.upper fullNode.queries bytes
+  match actual, lawful with
+  | .ok a, .ok b =>
+    let ga := Dag.encode a.val
+    let gb := Dag.encode b.val
+    ga.root == gb.root && ga.entries == gb.entries
+  | _, _ => false
+
+#guard let bytes := encoded full
+  let actual := Dag.decodeDescriptor ValueCodec.rat ValueCodec.nat (byteSign bytes) 7
+    (singletonRaw.full [1, 1]) bytes
+  let lawful := Dag.decodeDescriptor ValueCodec.rat ValueCodec.nat Sturm.orderSign 7
+    (singletonRaw.full [1, 1]) bytes
+  match actual, lawful with
+  | .ok a, .ok b =>
+    let ga := Dag.encode a.evidence
+    let gb := Dag.encode b.evidence
+    ga.root == gb.root && ga.entries == gb.entries &&
+      a.raw.context == b.raw.context && a.raw.head == b.raw.head &&
+      a.raw.lower == b.raw.lower && a.raw.upper == b.raw.upper &&
+      a.raw.indices == b.raw.indices && a.raw.signs == b.raw.signs
+  | _, _ => false
+
+/-- info: 'Hex.SignDet.FastCheck.cached_bytes' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms cached_bytes
+/-- info: 'Hex.SignDet.FastCheck.cached_descriptor_bytes' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms cached_descriptor_bytes
+
 private def roundtrip (d : Dag Rat Nat) : Bool :=
   match decoded (encoded d) with
   | .error _ => false

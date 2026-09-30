@@ -1,10 +1,13 @@
 # hex-real-roots-mathlib
 
 Dependencies: hex-real-roots, hex-poly-mathlib, hex-poly-z-mathlib and
-Mathlib; the shared abstract Sturm–Tarski foundation adds a planned Tau Ceti
-import. When implemented, the release configuration must carry that pinned
-third-party dependency to the published companion and its downstream consumers.
-This SPEC does not change publication metadata.
+Mathlib; the shared abstract Sturm–Tarski foundation uses a Tau Ceti
+import in the development-only `HexQuerySemantics` target. Its proved semantic
+modules currently live under `adapters/HexRealRootsMathlib/`, outside the
+released companion. Publishing that layer remains an obligation: move it into
+the companion managed paths and carry the pinned Tau Ceti dependency through
+the release configuration and downstream consumers. The proof is complete;
+this SPEC does not claim that the semantic layer has been published.
 
 Mathlib companion for [hex-real-roots](https://github.com/leanprover/hex-real-roots). Proves
 **soundness** of the certified isolations (a `RealRootIsolation`
@@ -624,7 +627,8 @@ correspondence, the squarefreeness check and success exactly on squarefreeness
 plus the executable endpoint guards. `TarskiDomain.lean` proves integer/dyadic
 endpoint correspondence, exact mathematical domain equivalence and domain
 soundness of accepted replay. Root-sum and semantic replay soundness,
-singleton-sign and count/bound results below remain proof gates.
+singleton-sign and count/bound results are proved in the development
+`HexQuerySemantics` adapters; publishing that layer remains required.
 
 `TarskiCompare.lean` proves that arbitrary accepted chains for positively
 scaled inputs have equal lengths and entrywise positive scaling under their
@@ -644,7 +648,8 @@ zero. This rational-count extension does not require the root-free guards
 of the separate Tarski-query API.
 
 The [Tarski-query primitive](../../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries)
-requires new signed-remainder/Cauchy-index semantics here. Prove
+uses the general signed-remainder/Cauchy-index semantics proved in the
+development adapters. Its contract requires
 `tarskiQuery_eq`, identifying the executable variation drop with the sum of
 `sign (f(α))` over the real roots of squarefree nonzero `p` in the interval,
 under its non-root endpoint guards. Prove `tarskiQuery_isSome` for that domain
@@ -661,8 +666,8 @@ prove this statement: a root where `f` is negative contributes `-1`, and a
 common root contributes zero. Introduce the signed-query theorem without
 weakening the existing Sturm-count predicate or its theorems.
 
-The abstract foundation is a planned Tau Ceti import through this companion,
-shared by the integer frontend and
+The abstract foundation is imported from Tau Ceti through this companion’s
+development adapters, shared by the integer frontend and
 [hex-sturm](../../SPEC/Libraries/hex-sturm.md#required-correspondence-and-specialization-theorems).
 It is not a second proof from the existing derivative-chain theorem.
 The [Sturm–Tarski theorem](https://www.isa-afp.org/entries/Sturm_Tarski.html)
@@ -690,25 +695,33 @@ distinct-root set under squarefreeness and endpoint nonvanishing.
 `integer_check_rootSum` and `integer_query_rootSum` give the supported
 query-one identity with the mathematical root sum; the rational companion
 transports this identity through positive denominator clearing.
-The shared abstract variation/root-sum identity and its
-executable semantic consequences belong to #10389; effective implementation,
-algebraic correspondence and independent evidence belong to #10375.
+`TarskiFoundation.lean` connects accepted positive-scaled remainder chains to
+Tau Ceti’s abstract Sturm–Tarski identity. `Tarski.check_rootSum` proves the
+shared checker’s semantics for arbitrary coefficient and endpoint
+representations over an ordered real closed field. `TarskiReal.lean` specializes
+it to integer coefficients and dyadic endpoints, including the query producer
+and unique-root sign theorem. The existing derivative-Sturm proofs remain
+available independently.
 
 ### Shared foundation and proof ownership
 
-The following are planned statement shapes, not available declarations at
-the [Mathlib pin](../../lake-manifest.json)
-`1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`. Import the family foundation
-requested from Tau Ceti by [#10300](https://github.com/kim-em/hex-dev/issues/10300)
-once here: polynomial IVT on `[a,b]`, Rolle between distinct roots, and the
-signed-remainder/Cauchy-index formula. With
-`[Field R] [LinearOrder R] [IsStrictOrderedRing R] [IsRealClosed R]`, that
-formula equates zero-skipping variation drop to
-`∑ α ∈ Roots(P;a,b), sign (F.eval α)` for nonzero squarefree `P`, strictly
-ordered finite or infinite endpoints, and nonvanishing at finite endpoints.
-It includes `F=0`, initial reduction of `F*P'`, zero initial remainder,
-positive-scaled recurrence identities and nonconstant terminal gcd; root
-count is the `F=1` specialization. It must not assume `P,F` are coprime.
+The foundation is imported through
+`TauCeti.Algebra.Polynomial.Sturm.Infinity`. Its declarations
+`TauCeti.Sturm.sum_sign`, `sum_sign_Ioi`, `sum_sign_Iio`, and `sum_sign_univ`
+provide the finite, right-unbounded, left-unbounded, and whole-field identities.
+They assume `[Field R] [LinearOrder R] [IsStrictOrderedRing R] [IsRealClosed R]`,
+a signed remainder sequence, a Tarski seed, simple roots in the relevant
+interval, and nonvanishing at finite endpoints. `IsTarskiSeed` expresses
+agreement of the second chain entry with `F * P′` at roots of `P`, so initial
+reduction modulo `P` is supported. No coprimality hypothesis is imposed.
+
+Hex proves the passage from its checked positive-scaled recurrence identities
+to these hypotheses, the squarefree-to-simple-root implication, the endpoint
+variation correspondence, and the zero-seed singleton-chain case. The resulting
+shared theorem covers zero queries, nonconstant terminal gcds, constant heads,
+and infinite endpoints. Root count is its query-one specialization. Its exact
+upstream revision is recorded by the Tau Ceti dependency in the Lake manifest;
+the Mathlib pin alone does not supply this foundation.
 
 ### Abstract signed remainders
 
@@ -716,9 +729,8 @@ Use `sgn : R → Int` with values `-1,0,1`, and the finite set
 `Roots(P;a,b)` of **distinct** roots (`P.roots.toFinset` filtered by strict
 endpoint inequalities). Infinite endpoint inequalities impose no bound on
 that side. Require `P≠0`, `Squarefree P`, `a<b` and nonzero evaluations of
-`P` at finite endpoints. For arbitrary `F : Polynomial R`, the planned
-shared theorem `HexRealRootsMathlib.Tarski.variation_eq` has the following
-explicit certificate hypotheses:
+`P` at finite endpoints. For arbitrary `F : Polynomial R`, the
+checker accepts the following explicit certificate identities:
 
 ```text
 S₀ = P
@@ -736,6 +748,12 @@ For the singleton `[P]`, replace the initial identity by
 `u*(F*P')=A*P` with `u>0`; there is no second entry or terminal pair.
 This includes nonzero constant heads and every zero initial remainder.
 All branches retain the domain guards.
+
+`check_signed` translates the checked recurrence and terminal identities into
+`TauCeti.Sturm.IsSignedRemainderSeq`; `check_seed` translates the initial
+identity into `TauCeti.Sturm.IsTarskiSeed`. The proved `variation_eq` takes
+these two predicates, `Squarefree P`, ordered endpoints and nonvanishing at
+finite endpoints. It does not take the raw certificate identities separately.
 
 For a chain entry at a finite endpoint use its evaluation sign. At `+∞`
 use its leading-coefficient sign; at `−∞` multiply that by `(-1)^natDegree`.
@@ -795,8 +813,9 @@ Horner and degree-parity infinity sign agreement. Positive rescaling
 preserves signs/variations; translate every initial, step and terminal
 identity. Negative scaling alone does not preserve these quantities.
 
-The shared `Hex.TarskiCertificate.check_sound` derives the mathematical guards
-and `HexRealRootsMathlib.Tarski.variation_eq` from accepted finite literal data.
+The shared `HexRealRootsMathlib.Tarski.check_rootSum` derives the mathematical
+guards and applies `HexRealRootsMathlib.Tarski.variation_eq` to accepted finite
+literal data.
 Squarefreeness is in the fraction field (hence in `R` in characteristic zero), so integer `4*X`
 is accepted. Recurrence identities alone do not prove squarefreeness: a
 separate gcd or Bézout guard witness is checked. Prove producer correctness
@@ -847,7 +866,8 @@ import of hex-real-algebraic-mathlib, and the odd-root proof has only one copy.
 
 Instantiate the shared domain/replay bridge with `D=ℤ`, `j=Int.castRingHom ℝ`
 and exact dyadic evaluation to prove `ZPoly.tarskiQuery_eq` and
-`IntTarskiCertificate.check_sound` here. Also retain `tarskiQuery_isSome` for exactly
+`IntTarskiCertificate.check_sound` in the development adapter
+`TarskiReal.lean`. Also retain `tarskiQuery_isSome` for exactly
 the nonzero/squarefree/root-free domain and `tarskiQuery_sign` for a singleton
 root set. `DyadicInterval.lt` already supplies endpoint ordering. Optimized
 integer content and dyadic Horner operations must correspond to the shared

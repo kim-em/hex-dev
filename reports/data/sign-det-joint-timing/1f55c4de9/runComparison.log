@@ -1,0 +1,44 @@
+Hex.SignDetBench.Joint.runComparison    expected complexity: n^3    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=1f55c4d, 2026-09-29T01:01:51Z, host=chungus2
+  param  per-call    repeats  C
+      3   12.650 ms  ×2^3     C=469436.208 [trial 1/6]
+      7   80.327 ms  ×2^0     C=229601.950 [trial 1/6]
+     15  517.534 ms  ×2^0     C=153398.055 [trial 1/6]
+     31    3.724 s   ×2^0     C=124654.194 [trial 1/6]
+     63    —         —        C=     —     [killed at cap] [trial 1/6]
+      3   12.619 ms  ×2^3     C=469436.208 [trial 2/6]
+      7   81.011 ms  ×2^0     C=229601.950 [trial 2/6]
+     15  517.266 ms  ×2^0     C=153398.055 [trial 2/6]
+     31    3.703 s   ×2^0     C=124654.194 [trial 2/6]
+     63    —         —        C=     —     [killed at cap] [trial 2/6]
+      3   12.703 ms  ×2^3     C=469436.208 [trial 3/6]
+      7   78.607 ms  ×2^0     C=229601.950 [trial 3/6]
+     15  517.903 ms  ×2^0     C=153398.055 [trial 3/6]
+     31    3.693 s   ×2^0     C=124654.194 [trial 3/6]
+     63    —         —        C=     —     [killed at cap] [trial 3/6]
+      3   12.661 ms  ×2^3     C=469436.208 [trial 4/6]
+      7   78.332 ms  ×2^0     C=229601.950 [trial 4/6]
+     15  514.814 ms  ×2^0     C=153398.055 [trial 4/6]
+     31    3.720 s   ×2^0     C=124654.194 [trial 4/6]
+     63    —         —        C=     —     [killed at cap] [trial 4/6]
+      3   12.689 ms  ×2^3     C=469436.208 [trial 5/6]
+      7   78.548 ms  ×2^0     C=229601.950 [trial 5/6]
+     15  527.684 ms  ×2^0     C=153398.055 [trial 5/6]
+     31    3.903 s   ×2^0     C=124654.194 [trial 5/6]
+     63    —         —        C=     —     [killed at cap] [trial 5/6]
+      3   12.725 ms  ×2^3     C=469436.208 [trial 6/6]
+      7   78.900 ms  ×2^0     C=229601.950 [trial 6/6]
+     15  519.739 ms  ×2^0     C=153398.055 [trial 6/6]
+     31    3.707 s   ×2^0     C=124654.194 [trial 6/6]
+     63    —         —        C=     —     [killed at cap] [trial 6/6]
+  verdict: inconclusive (cMin=124654.194, cMax=469436.208, β=-0.568, looks faster than declared by ~n^0.568)
+  per-spawn floor (harness self-measurement): 21.356 ms
+  peak RSS: 67_244 kB..98_772 kB (across 24 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+        3  6/6      12.675 ms   12.619 ms   12.725 ms  0.834%
+        7  6/6      78.753 ms   78.332 ms   81.011 ms  3.402%
+       15  6/6     517.718 ms  514.814 ms  527.684 ms  2.486%
+       31  6/6       3.714 s     3.693 s     3.903 s   5.652%
+  ‼ ladder stopped at param=63 after hitting the wallclock cap (`maxSecondsPerCall = 60.000s`); subsequent rungs in the schedule were skipped. Raise the cap if you need to reach further.
+exported to /tmp/issue-10377-joint-timing-1f55c4de9/runComparison.json

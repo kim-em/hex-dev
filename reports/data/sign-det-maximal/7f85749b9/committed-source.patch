@@ -1,0 +1,296 @@
+diff --git a/bench/HexSignDet/Bench.lean b/bench/HexSignDet/Bench.lean
+index 867f552ec..9ed18eb62 100644
+--- a/bench/HexSignDet/Bench.lean
++++ b/bench/HexSignDet/Bench.lean
+@@ -8,0 +9 @@ import HexSignDet.Paired
++import HexSignDet.Maximal
+@@ -191,0 +193 @@ def main (args : List String) : IO UInt32 :=
++  else if args == ["inspect-maximal"] then Hex.SignDetBench.inspectMaximal
+@@ -194,0 +197,5 @@ def main (args : List String) : IO UInt32 :=
++  else if args.head? == some "verify" then do
++    match Hex.SignDetBench.buildMaximal 2 with
++    | .ok _ => pure ()
++    | .error message => throw (IO.userError s!"maximal-support fixture failed: {message}")
++    LeanBench.Cli.dispatch args
+diff --git a/bench/HexSignDet/Maximal.lean b/bench/HexSignDet/Maximal.lean
+new file mode 100644
+index 000000000..4870ce0ed
+--- /dev/null
++++ b/bench/HexSignDet/Maximal.lean
+@@ -0,0 +1,94 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import HexSignDet.Input
++import HexPolyFast.Interpolation
++import HexPolyFast.Karatsuba
++import Lean.Data.Json
++
++namespace Hex.SignDetBench
++open Hex.SignDet Hex.DensePoly
++
++/-- Every ternary word is realized once at a distinct integer root. Word
++count/shape checks are sanity checks on `words`; root distinctness comes from
++the consecutive integer points. Degree and direct evaluation check the complete
++root/sign oracle independently of interpolation and Tarski replay. -/
++def buildMaximal (s : Nat) : Except String Input := do
++  let conditions := (words [-1, 0, 1] s).toArray
++  if conditions.size != 3^s || !decide conditions.toList.Nodup ||
++      conditions.any (fun word => word.length != s || word.any (fun v => v < -1 || 1 < v)) then
++    throw "invalid ternary word inventory"
++  let points : Array Rat := (Array.range conditions.size).map fun (i : Nat) => (i : Rat)
++  let some plan := InterpPlan.build? (karatsubaPlan 2) points |
++    throw "interpolation plan failed"
++  let some built := plan.evalPlan.cachedNode | throw "point product is missing"
++  let p := built.1
++  let qs ← (List.range s).mapM fun j => do
++    let some q := plan.interpolate? (conditions.map fun word => ((word[j]! : Int) : Rat)) |
++      throw s!"query interpolation failed at coordinate {j}"
++    pure q
++  if p.natDegree != 3^s then throw "point product has the wrong degree"
++  for i in [:conditions.size] do
++    if p.eval points[i]! != 0 then throw s!"head does not vanish at root {i}"
++    for j in [:s] do
++      if (qs.getD j 0).eval points[i]! != ((conditions[i]![j]! : Int) : Rat) then
++        throw s!"wrong query value at root {i}, coordinate {j}"
++  let some domain := Sturm.prepare Sturm.orderSign p .negInf .posInf |
++    throw "invalid maximal root domain"
++  let .ok reduced := buildPrepared (10377 : Nat) domain qs |
++    throw "reduced table construction failed"
++  let .ok direct := buildPrepared (10377 : Nat) domain qs false |
++    throw "unreduced table construction failed"
++  let .ok full := referencePrepared (10377 : Nat) domain qs |
++    throw "full reference construction failed"
++  let expected := conditions.toList.map fun word => (word, (1 : Int))
++  if entries reduced.val.node.system != expected then throw "wrong reduced complete table"
++  if entries direct.val.node.system != expected then throw "wrong unreduced complete table"
++  if entries full.system != expected then throw "wrong full reference complete table"
++  if full.size != 3^s then throw "wrong reference column count"
++  if !full.check Sturm.orderSign 10377 p .negInf .posInf qs then
++    throw "full reference replay failed"
++  let graph := Dag.encode reduced.val
++  if !graph.check Sturm.orderSign 10377 p .negInf .posInf qs then throw "graph replay failed"
++  return ⟨p, qs, some domain, some reduced.val, some graph⟩
++
++private def intBits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
++private def ratBits (q : Rat) : Nat := max (intBits q.num) (q.den.log2 + 1)
++private def polyBits (p : DensePoly Rat) : Nat := p.toArray.foldl (fun n q => max n (ratBits q)) 0
++
++/-- Inspect maximal support using fixed small inputs. Sizes and stored bits
++are observations of the actual certificates, not peak allocation/bit counts or
++a complexity measurement. Every line is flushed before the next input starts. -/
++def inspectMaximal : IO UInt32 := do
++  for s in #[1, 2, 3] do
++    let input ← match buildMaximal s with
++      | .ok input => pure input
++      | .error message => throw (IO.userError s!"maximal input {s}: {message}")
++    let some tree := input.tree | throw (IO.userError "missing maximal tree")
++    let some graph := input.graph | throw (IO.userError "missing maximal graph")
++    let ns := nodes tree
++    let moments := ns.foldl (fun n node => n + node.size) 0
++    let maxColumns := ns.foldl (fun n node => max n node.size) 0
++    let witnessBits := ns.foldl (fun n node => node.moments.toList.foldl (fun n cert =>
++      cert.remainders.chain.foldl (fun n p => max n (polyBits p)) n) n) 0
++    unless tree.node.system.support.length == 3^s && maxColumns == 3^s do
++      throw (IO.userError s!"maximal support inventory failed at {s}")
++    IO.println <| (Lean.Json.mkObj [
++      ("family", Lean.toJson "maximal-ternary-support"), ("queries", Lean.toJson s),
++      ("rootCount", Lean.toJson (3^s)), ("realizedSupport", Lean.toJson tree.node.system.support.length),
++      ("headDegree", Lean.toJson input.head.natDegree),
++      ("queryDegree", Lean.toJson (input.queries.foldl (fun n p => max n p.natDegree) 0)),
++      ("headCoefficientBits", Lean.toJson (polyBits input.head)),
++      ("queryCoefficientBits", Lean.toJson (input.queries.foldl (fun n p => max n (polyBits p)) 0)),
++      ("remainderCoefficientBits", Lean.toJson witnessBits),
++      ("querySlots", Lean.toJson moments), ("maxColumns", Lean.toJson maxColumns),
++      ("treeNodes", Lean.toJson ns.length), ("graphNodes", Lean.toJson graph.entries.size),
++      ("graphEdges", Lean.toJson (graph.entries.foldl (fun n e => n + if e.children.isSome then 2 else 0) 0)),
++      ("inputHash", Lean.toJson (hash input).toNat),
++      ("tableHash", Lean.toJson (hash (entries tree.node.system)).toNat)]).compress
++    (← IO.getStdout).flush
++  return 0
++
++end Hex.SignDetBench
+diff --git a/lakefile.lean b/lakefile.lean
+index ccbb63bd3..8fa26fce0 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -1701 +1701 @@ lean_lib HexSignDetBenchSupport where
+-    .one `HexSignDet.Paired]
++    .one `HexSignDet.Paired, .one `HexSignDet.Maximal]
+diff --git a/scripts/bench/sign_det_maximal.py b/scripts/bench/sign_det_maximal.py
+new file mode 100644
+index 000000000..649b8dd79
+--- /dev/null
++++ b/scripts/bench/sign_det_maximal.py
+@@ -0,0 +1,115 @@
++#!/usr/bin/env python3
++"""Collect an untimed maximal-support input inventory with verified source provenance.
++
++This records no scientific timings and supplies no Phase-4 scaling verdict.
++Every completed command output is retained, including failures.
++"""
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++import os
++from pathlib import Path
++import platform
++import subprocess
++import sys
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(ROOT))
++from scripts.bench.sign_det_compare import archive_sources
++from scripts.bench.sign_det_sparse import source_hashes
++from scripts.bench.structural_tactic_sweep import acquire_cpu
++
++PARAMS = (1, 2, 3)
++
++
++def validate_inventory(path):
++    rows = [json.loads(line) for line in path.read_text().splitlines()]
++    if [row.get("queries") for row in rows] != list(PARAMS):
++        raise ValueError("missing, extra or reordered maximal-support inputs")
++    for row, queries in zip(rows, PARAMS, strict=True):
++        roots = 3**queries
++        expected = {"family": "maximal-ternary-support", "queries": queries,
++                    "rootCount": roots, "realizedSupport": roots,
++                    "headDegree": roots, "maxColumns": roots,
++                    "treeNodes": 2*queries-1, "graphNodes": 2*queries-1,
++                    "graphEdges": 2*(queries-1), "querySlots": (3, 15, 45)[queries-1]}
++        if any(row.get(key) != value for key, value in expected.items()):
++            raise ValueError("wrong maximal-support dimensions at query count " + str(queries))
++        for key in ("headDegree", "queryDegree", "headCoefficientBits",
++                    "queryCoefficientBits", "remainderCoefficientBits", "querySlots",
++                    "rootCount", "realizedSupport", "maxColumns", "treeNodes",
++                    "graphNodes", "graphEdges", "queries"):
++            if type(row.get(key)) is not int or row[key] < 0:
++                raise ValueError("invalid inventory size: " + key)
++        for key in ("inputHash", "tableHash"):
++            if type(row.get(key)) is not int or not 0 <= row[key] < 2**64:
++                raise ValueError("invalid inventory hash: " + key)
++    return rows
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--output", type=Path, required=True)
++    args = parser.parse_args()
++    status = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True)
++    if status:
++        raise ValueError("commit source changes before collecting an archived inventory")
++    executable = ROOT / ".lake/build/bin/hexsigndet_bench"
++    if not executable.exists():
++        raise ValueError("build hexsigndet_bench first")
++    subprocess.run(["lake", "build", "--no-build", "hexsigndet_bench"],
++                   cwd=ROOT, check=True)
++    out = args.output.resolve()
++    out.mkdir(parents=True, exist_ok=False)
++    cpu, lease = acquire_cpu()
++    os.sched_setaffinity(0, {cpu})
++    sources = source_hashes()
++    for relative in ("scripts/bench/sign_det_maximal.py", "scripts/bench/sign_det_compare.py",
++                     "scripts/bench/test_sign_det_maximal.py"):
++        sources[relative] = hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
++    metadata = {"schema": "hex-sign-det-maximal-inventory-v1",
++                "kind": "untimed-input-inventory", "scientific_timing_samples": 0,
++                "revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
++                "source_sha256": sources,
++                "binary_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
++                "host": platform.node(), "platform": platform.platform(),
++                "cpu": cpu, "affinity": sorted(os.sched_getaffinity(0)),
++                "load_start": os.getloadavg(),
++                "command": [str(executable), "inspect-maximal"], "state": "running"}
++    record = out / "metadata.json"
++    try:
++        archive_sources(out, metadata)
++        record.write_text(json.dumps(metadata, indent=2) + "\n")
++        with (out / "inventory.jsonl").open("w") as stdout, (out / "stderr.log").open("w") as stderr:
++            result = subprocess.run(metadata["command"], cwd=ROOT, stdout=stdout, stderr=stderr)
++        metadata["exit_code"] = result.returncode
++        metadata["load_after"] = os.getloadavg()
++        metadata["inventory_sha256"] = hashlib.sha256((out / "inventory.jsonl").read_bytes()).hexdigest()
++        result.check_returncode()
++        rows = validate_inventory(out / "inventory.jsonl")
++        for relative, expected in sources.items():
++            if hashlib.sha256((ROOT / relative).read_bytes()).hexdigest() != expected:
++                raise ValueError("source changed during inventory collection: " + relative)
++        metadata["binary_sha256_after"] = hashlib.sha256(executable.read_bytes()).hexdigest()
++        metadata["revision_after"] = subprocess.check_output(
++            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
++        if (metadata["binary_sha256_after"] != metadata["binary_sha256"] or
++                metadata["revision_after"] != metadata["revision"]):
++            raise ValueError("source revision or executable changed during collection")
++        metadata["validation"] = {"inputs": len(rows), "maximal_support": True}
++        metadata["state"] = "complete"
++    except Exception as error:
++        metadata["state"] = "failed"
++        metadata["error"] = str(error)
++        raise
++    finally:
++        record.write_text(json.dumps(metadata, indent=2) + "\n")
++        lease.close()
++    print(out, flush=True)
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/bench/test_sign_det_maximal.py b/scripts/bench/test_sign_det_maximal.py
+new file mode 100644
+index 000000000..e6b28a8b2
+--- /dev/null
++++ b/scripts/bench/test_sign_det_maximal.py
+@@ -0,0 +1,48 @@
++"""Reject incomplete or corrupted inventories before marking provenance complete."""
++import copy
++import json
++from pathlib import Path
++from tempfile import TemporaryDirectory
++import unittest
++
++from scripts.bench.sign_det_maximal import ROOT, validate_inventory
++
++
++class MaximalInventoryTests(unittest.TestCase):
++    def setUp(self):
++        fixture = ROOT / "reports/data/sign-det-maximal/247dfcc2c/inventory.jsonl"
++        self.rows = [json.loads(line) for line in fixture.read_text().splitlines()]
++
++    def validate(self, rows):
++        with TemporaryDirectory() as directory:
++            path = Path(directory) / "inventory.jsonl"
++            path.write_text("".join(json.dumps(row) + "\n" for row in rows))
++            return validate_inventory(path)
++
++    def test_retained_known_root_inventory(self):
++        self.assertEqual(self.validate(self.rows), self.rows)
++
++    def test_incomplete_duplicate_or_reordered_schedule(self):
++        for rows in (self.rows[:-1], self.rows + self.rows[:1], self.rows[::-1]):
++            with self.subTest(rows=rows), self.assertRaises(ValueError):
++                self.validate(rows)
++
++    def test_wrong_support_or_missing_graph_edge(self):
++        for key in ("rootCount", "realizedSupport", "maxColumns", "graphEdges",
++                    "treeNodes", "graphNodes", "headDegree", "querySlots"):
++            rows = copy.deepcopy(self.rows)
++            rows[1][key] -= 1
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                self.validate(rows)
++
++    def test_invalid_sizes_and_hashes(self):
++        for key, value in (("querySlots", -1), ("headCoefficientBits", True),
++                           ("inputHash", -1), ("tableHash", 2**64)):
++            rows = copy.deepcopy(self.rows)
++            rows[0][key] = value
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                self.validate(rows)
++
++
++if __name__ == "__main__":
++    unittest.main()

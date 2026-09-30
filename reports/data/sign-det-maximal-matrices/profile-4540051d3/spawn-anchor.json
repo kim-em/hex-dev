@@ -1,0 +1,6 @@
+{
+  "wall_ns_at_spawn": 1790655715997822605,
+  "mono_ns_at_spawn": 65707758430764,
+  "clock_bracket_ns": 1903,
+  "scope": "parent clock pair immediately before launching the profiling command"
+}

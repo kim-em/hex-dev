@@ -12,7 +12,7 @@ package Hex where
   leanOptions := #[⟨`doc.verso, true⟩, ⟨`doc.verso.suggestions, false⟩]
 
 require verso from git
-  "https://github.com/leanprover/verso.git" @ "v4.34.0"
+  "https://github.com/leanprover/verso.git" @ "v4.35.0-rc3"
 
 -- Test-only native oracle. Released Hex libraries do not depend on it.
 require NautyFFI from git
@@ -22,14 +22,19 @@ require NautyFFI from git
 require «lean-bench» from git
   "https://github.com/kim-em/lean-bench.git" @ "master"
 
-require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @
-    "d13f23b723b8a846827a245b89c10fc7d3f11612"
-
 -- Hasse's theorem is imported from the axiom-clean formalization in AINTLIB.
 require AINTLIB from git
   "https://github.com/CBirkbeck/AINTLIB.git" @
-    "a139855402075efea30e26c3b80ea1cd57a3ece0"
+    "3808ce862c09ad5b4de0c76f10ba00946ed2eff3"
+
+-- Abstract Sturm–Tarski semantics for the development query adapters.
+require TauCeti from git
+  "https://github.com/TauCetiProject/TauCeti.git" @
+    "ff72a2e86930d5268476ee33d55ab054ed1c3ea5"
+
+require mathlib from git
+  "https://github.com/leanprover-community/mathlib4.git" @
+    "d870b9068518a0870842d15a0cd42637ec30b587"
 
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"
@@ -288,7 +293,7 @@ lean_lib HexRealClosure where
 
 @[default_target]
 lean_lib HexRealClosureTests where
-  globs := #[.one `HexRealClosure.Tests]
+  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests, .one `HexRealClosure.RootFactorsTests]
 
 @[default_target]
 lean_lib HexRealClosureMathlib where
@@ -362,6 +367,7 @@ lean_lib HexMatrix where
 
 @[default_target]
 lean_lib HexPermGroup where
+  precompileModules := true
 
 @[default_target]
 lean_lib HexPermGroupMathlib where
@@ -589,23 +595,52 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.Tactic,
     `HexRCF.RealCoefficients.CellFormula].map Glob.one
 
--- Optional semantic results; selected-root proofs inherit the #10389 admission.
+-- Semantic results connecting accepted queries to roots and selected values.
 @[default_target]
 lean_lib HexQuerySemantics where
   srcDir := "adapters"
-  globs := #[`HexRealRootsMathlib.TarskiSoundness, `HexSturmMathlib.Soundness,
+  globs := #[`HexRealRootsMathlib.TarskiFoundation, `HexRealRootsMathlib.TarskiSoundness, `HexRealRootsMathlib.TarskiReal,
+    `HexSturmMathlib.Soundness,
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
+    `HexSignDetMathlib.CompletionProducer, `HexSignDetMathlib.Convert,
+    `HexSignDetMathlib.QueryHandle, `HexSignDetMathlib.TableProducer,
+    `HexSignDetMathlib.ReencodingProducer, `HexSignDetMathlib.RootList,
+    `HexSignDetMathlib.ReencodingRefinement,
+    `HexRealClosureMathlib.Specialize, `HexRealClosureMathlib.SpecializeTests,
+    `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
+    `HexRealClosureMathlib.TransportArithmetic, `HexRealClosureMathlib.TransportQuery, `HexRealClosureMathlib.TransportTests,
+    `HexRealClosureMathlib.TransportPower, `HexRealClosureMathlib.TransportTarski,
+    `HexRealClosureMathlib.TransportRing,
+    `HexRealClosureMathlib.TransportClosed, `HexRealClosureMathlib.TransportClosedQuery, `HexRealClosureMathlib.TransportClosedReduction, `HexRealClosureMathlib.TransportRegular,
+    `HexRealClosureMathlib.TransportReduction, `HexRealClosureMathlib.TransportPreparation, `HexRealClosureMathlib.TransportMoment, `HexRealClosureMathlib.TransportReplay, `HexRealClosureMathlib.TransportSample, `HexRealClosureMathlib.TransportDescriptor, `HexRealClosureMathlib.TransportSelected,
+    `HexRealClosureMathlib.AlgebraicTransport, `HexRealClosureMathlib.AlgebraicYun,
+    `HexRealClosureMathlib.SpecializePolynomial, `HexRealClosureMathlib.SpecializeRegular, `HexRealClosureMathlib.SpecializeQuery, `HexRealClosureMathlib.SpecializeTarski,
+    `HexRealClosureMathlib.SpecializeReduction,
+    `HexRealClosureMathlib.SpecializeMoment,
+    `HexRealClosureMathlib.SpecializeReplay,
+    `HexRealClosureMathlib.SpecializeSample,
+    `HexRealClosureMathlib.SpecializeSelected,
+    `HexRealClosureMathlib.SpecializeDescriptor,
     `HexRealClosureMathlib.Algebraic, `HexRealClosureMathlib.AlgebraicClean,
     `HexRealClosureMathlib.TowerModel, `HexRealClosureMathlib.TowerModelTests,
     `HexRealClosureMathlib.TowerAlgebraic,
     `HexRealClosureMathlib.AlgebraicValue, `HexRealClosureMathlib.BaseClean, `HexRealClosureMathlib.AlgebraicTower,
-    `HexSignDetMathlib.CompletionProducer, `HexSignDetMathlib.QueryHandle,
     `HexRealClosureMathlib.SelectedRoot,
-    `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element,
+    `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element, `HexRealClosureMathlib.QAdjoin,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
     `HexRealClosureMathlib.YunInvariant, `HexRealClosureMathlib.Bounds,
-    `HexRealClosureMathlib.Deflation]
+    `HexRealClosureMathlib.Deflation, `HexRealClosureMathlib.Bisection,
+    `HexRealClosureMathlib.BisectionRoots, `HexRealClosureMathlib.BisectionFrontier,
+    `HexRealClosureMathlib.BisectionCounts, `HexRealClosureMathlib.Isolation,
+    `HexRealClosureMathlib.BisectionFactor, `HexRealClosureMathlib.IsolationFactor,
+    `HexRealClosureMathlib.ZeroFactor, `HexRealClosureMathlib.IsolationRoots,
+    `HexRealClosureMathlib.RootOrder, `HexRealClosureMathlib.RootFactors,
+    `HexRealClosureMathlib.Ambient, `HexRealClosureMathlib.AmbientTests,
+    `HexRealClosureMathlib.Union, `HexRealClosureMathlib.UnionTests].map Glob.one
+
+lean_exe hexrealclosure_root_order_tests where
+  root := `HexRealClosure.RootOrderTests
 
 lean_exe hexlll_external_reduction where
   root := `HexLLL.ExternalReduction
@@ -1052,6 +1087,16 @@ lean_lib HexBerlekampMathlibProofProbeScientific where
     `HexBerlekampMathlib.ProofProbe.Irreducible8,
     `HexBerlekampMathlib.ProofProbe.Irreducible16]
 
+lean_lib HexSignDetMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[.submodules `HexSignDetMathlib.ProofProbe]
+
+-- Depth-three kernel reductions run manually to keep their large memory demand
+-- out of the shared hosted build. Depth-one/two probes remain in the CI target above.
+lean_lib HexSignDetMathlibNestedProofProbe where
+  srcDir := "bench"
+  globs := #[.submodules `HexSignDetMathlib.NestedProofProbe]
+
 lean_lib HexRealFormulaProofProbe where
   srcDir := "bench"
   globs := #[`HexRealFormulaMathlib.ProofProbe.Support,
@@ -1098,7 +1143,12 @@ lean_lib HexConformance where
     ++ #[`HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.FastCheck, `HexSignDet.Infinitesimal, `HexSignDetMathlib.Conformance, `HexSignDetMathlib.RootSemantics,
       `HexSignDetMathlib.SelectedProducerConformance,
       `HexSignDetMathlib.CompletionConformance,
-      `HexSignDetMathlib.QueryHandleConformance].map Glob.one
+      `HexSignDetMathlib.QueryHandleConformance,
+      `HexSignDetMathlib.TableConformance, `HexSignDetMathlib.ReencodingConformance,
+      `HexSignDetMathlib.RootListConformance, `HexSignDetMathlib.RefinementConformance,
+      `HexSignDetMathlib.ConvertConformance].map Glob.one
+
+    ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests].map Glob.one
 
     ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]
@@ -1443,6 +1493,10 @@ lean_exe hexsigndet_emit_fixtures where
   srcDir := "conformance"
   root := `HexSignDet.EmitFixtures
 
+lean_exe hexsigndet_emit_nested_fields where
+  srcDir := "conformance"
+  root := `HexSignDet.EmitNestedFields
+
 lean_exe hexsigndet_emit_infinitesimal where
   srcDir := "conformance"
   root := `HexSignDet.EmitInfinitesimal
@@ -1576,6 +1630,10 @@ lean_exe hexrealclosure_bounds_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.BoundsConformance
 
+lean_exe hexrealclosure_isolation_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.IsolationConformance
+
 lean_exe hexrealclosure_deflation_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.DeflationConformance
@@ -1623,6 +1681,10 @@ lean_lib HexGraphIsoSparseCfiProbe where
   srcDir := "bench"
   moreLeanArgs := #["-Dprofiler=true"]
   globs := #[`HexGraphIso.SparseProofProbe.Support, `HexGraphIso.SparseProofProbe.Cfi]
+
+lean_lib HexPermGroupMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[`HexPermGroupMathlib.ProofProbe.Kernel]
 
 lean_lib HexGraphIsoMathlibProofProbe where
   srcDir := "bench"
@@ -1716,7 +1778,8 @@ lean_exe hexsigndet_bench where
 lean_lib HexSignDetBenchSupport where
   srcDir := "bench"
   globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
-    .one `HexSignDet.Paired]
+    .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint,
+    .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height]
 
 lean_exe hexsturm_bench where
   srcDir := "bench"

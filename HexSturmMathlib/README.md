@@ -16,6 +16,13 @@ agreement for arbitrary accepted certificates on those corresponding inputs.
 The theorems permit noninjective coefficient interpretations and require no
 field instance on noncanonical representatives.
 
+`withEndpoints_isSome` characterizes success of endpoint retargeting by the
+same mathematical domain, and `withEndpoints_domain` proves validity for the
+actual returned object. The core `PreparedDomain.withEndpoints_bindings`
+theorem preserves the literal sign, head and chain and binds the new endpoints.
+`certifyCountPrepared_checks` proves acceptance of query-one certificates made
+from that stored chain. These results use the domain and arithmetic proofs.
+
 `query_congr` proves whole-`Option` agreement between field representations
 at corresponding finite or infinite endpoints, allowing positive scaling of
 both polynomial inputs. `check_congr` compares arbitrary accepted certificates.
@@ -24,20 +31,24 @@ evidence over the integers; `IntCast.certificate_checks` embeds integer evidence
 and its endpoints into the rational frontend. These translations retain the
 full context and value and do not rerun the polynomial producer.
 
-The integer query-one count follows from the existing real Sturm theorem;
-`query_rat_count` and `query_rat_nonneg` transport it to rational polynomials
-on dyadic intervals. The generic signed root-sum theorem, semantic replay
-soundness, arbitrary ordered-field count and singleton results, and remaining
-Phase-4 evidence are still required. The shared IVT/Rolle and
-signed-remainder/Cauchy-index foundation is an explicit gate for root-sum
-semantics and their consequences. See [the specification](SPEC/hex-sturm-mathlib.md).
+The shared Sturm–Tarski theorem proves root-sum semantics for arbitrary
+accepted certificates over an ordered real closed field. `query_sound` and
+`queryPrepared_sound` apply it to the ordinary and prepared producers;
+`query_count`, `query_sign` and `query_bound` give counts, singleton signs and
+degree bounds. `query_nonneg` justifies the exact natural-number conversion in
+`Sturm.rootCount`, whose success domain is unchanged.
+`countPrepared_sound` relates the actual prepared count to the number of
+distinct roots in its current open interval through the proved shared theorem.
+`countPrepared_nonneg` proves nonnegativity under the same coefficient laws
+before a consumer converts the count to `Nat`.
 
-The optional development target `HexQuerySemantics` builds
-`adapters/HexSturmMathlib/Soundness.lean` together with the BKR root-semantics
-modules. They prove field-query and sign-table consequences of the named
-`HexRealRootsMathlib.Tarski.check_rootSum` statement, whose proof is admitted
-under #10389. These modules are not published; their dependency probes audit
-the admission rather than establish independent query correctness.
+The development target `HexQuerySemantics` builds
+`adapters/HexSturmMathlib/Soundness.lean` together with the integer specialization
+and BKR root-semantics modules. These adapters are not published; their
+publication requires integrating them into the companion library target and
+adding pinned Tau Ceti release dependencies. Their axiom audits admit only `propext`,
+`Classical.choice` and `Quot.sound`. Remaining Phase-4 evidence is specified in
+[the specification](SPEC/hex-sturm-mathlib.md).
 
 Executable translations live in Mathlib-free `HexSturm.Transport`; see the
 [SPEC](SPEC/hex-sturm-mathlib.md) for their endpoint and binding contracts.

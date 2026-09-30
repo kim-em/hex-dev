@@ -64,9 +64,12 @@ variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
 /-- Recursive support completeness and exact counts from finite moment
 interpretation. The parent solve is used only after child coverage has proved
 that every observation occurs among its Cartesian candidate columns. -/
-theorem Replay.support_complete {sign : E → Int} {context : Ctx}
+theorem Replay.support_counts {sign : E → Int} {context : Ctx}
     {p : DensePoly E} {a b : Endpoint E} {qs : List (DensePoly E)}
     {t : Replay E Ctx} {xs : List (List Int)}
+    (recover : ∀ {r arity : Nat} (s : System r), s.check arity = true →
+      ∀ xs : List (List Int), (∀ x ∈ xs, x ∈ s.columns.toList) →
+        s.values = moments s.rows xs → counts s.columns xs = s.counts)
     (hc : t.check sign context p a b qs = true)
     (ho : Observations qs.length xs) (hm : t.Interprets qs.length xs) :
     (∀ x ∈ xs, x ∈ t.node.system.support) ∧
@@ -79,7 +82,8 @@ theorem Replay.support_complete {sign : E → Int} {context : Ctx}
     have cover : ∀ x ∈ xs, x ∈ n.system.columns.toList := by
       rw [hf.1.1.2]
       exact leaf_covers ho hf.1.1.1
-    exact ⟨n.system.covers_support hn xs cover hm, n.system.counts_eq hn xs cover hm⟩
+    have counts := recover n.system hn xs cover hm
+    exact ⟨n.system.covers_counts xs cover counts, counts⟩
   | split n l r ihl ihr =>
     obtain ⟨hl, hr, hp⟩ := Replay.check_children hc
     obtain ⟨hm, hml, hmr⟩ := hm
@@ -93,7 +97,19 @@ theorem Replay.support_complete {sign : E → Int} {context : Ctx}
       exact mem_product (hleft.1 _ (List.mem_map.mpr ⟨x, hx, rfl⟩))
         (hright.1 _ (List.mem_map.mpr ⟨x, hx, rfl⟩))
     have hn := (Node.check_bindings (Replay.check_node hc)).2
-    exact ⟨n.system.covers_support hn xs cover hm, n.system.counts_eq hn xs cover hm⟩
+    have counts := recover n.system hn xs cover hm
+    exact ⟨n.system.covers_counts xs cover counts, counts⟩
+
+/-- Specialize the same replay induction to the Mathlib-free finite count
+proof. The companion can specialize it to an imported count-recovery theorem. -/
+theorem Replay.support_complete {sign : E → Int} {context : Ctx}
+    {p : DensePoly E} {a b : Endpoint E} {qs : List (DensePoly E)}
+    {t : Replay E Ctx} {xs : List (List Int)}
+    (hc : t.check sign context p a b qs = true)
+    (ho : Observations qs.length xs) (hm : t.Interprets qs.length xs) :
+    (∀ x ∈ xs, x ∈ t.node.system.support) ∧
+    counts t.node.system.columns xs = t.node.system.counts :=
+  t.support_counts (@System.counts_eq) hc ho hm
 
 /-- The retained support contains precisely the observed conditions. In
 particular, every omitted condition has zero multiplicity in the observations. -/

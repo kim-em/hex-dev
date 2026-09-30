@@ -1,0 +1,6 @@
+{
+  "path": "lake-manifest.json",
+  "baseline_blob": "60a00fff506e825068a077b409c59636f483d4ef",
+  "current_blob": "5cddc2911685049e858d2f21f7509367edb28a25",
+  "reason": "Adds only the pinned TauCeti dependency for the optional HexQuerySemantics proof adapters. Every existing dependency entry and compiler pin is unchanged. The computational libraries and benchmark executables do not import TauCeti or its Mathlib dependencies, so neither the measured factorization implementation nor its native link inputs change."
+}

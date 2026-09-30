@@ -1363,7 +1363,7 @@ private theorem reduceToMatrixResult_proper (plan : MulPlan F) (bound fuel : Nat
             refine ⟨[qr.1], ProperQuotients.cons hqpos hbdegree hdiv
               (ProperQuotients.nil b qr.2),
               (quotientStep_singleton plan qr.1).symm, ?_⟩
-            rw [GcdStep.apply_euclid, sub_mul_eq_remainder hdiv]
+            rw [GcdStep.apply_euclid, sub_mul_eq_remainder (q := qr.1) (r := qr.2) hdiv]
           split
           · exact hsingle
           · rename_i hremBeyond
@@ -1612,27 +1612,42 @@ private theorem quotientStep_a01 (plan : MulPlan F)
   simpa only [GcdStep.apply, mul_one_right_poly, hmulzero,
     zero_add] using h
 
+/-- Kernel-visible extended gcd; native code uses the proved half-gcd engine. -/
+@[expose] def xgcdWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
+  let _ := plan
+  xgcd p q
+
+/-- Kernel-visible gcd with exact reference scaling. -/
+@[expose] def gcdWith (plan : MulPlan F) (p q : DensePoly F) : DensePoly F :=
+  let _ := plan
+  gcd p q
+
+/-- Kernel-visible one-sided extended gcd. -/
+@[expose] def xgcdLeftWith (plan : MulPlan F) (p q : DensePoly F) : XGCDLeftResult F :=
+  let _ := plan
+  xgcdLeft p q
+
 /-- Plan-driven half-gcd extended gcd. -/
-def xgcdWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
+def xgcdWithImpl (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
   let result := gcdMatrixResult plan (p.size + q.size + 1) p q
   { gcd := result.gcd, left := result.matrix.a00, right := result.matrix.a01 }
 
 /-- Gcd projection of the half-gcd engine. -/
-def gcdWith (plan : MulPlan F) (p q : DensePoly F) : DensePoly F :=
-  (xgcdWith plan p q).gcd
+def gcdWithImpl (plan : MulPlan F) (p q : DensePoly F) : DensePoly F :=
+  (xgcdWithImpl plan p q).gcd
 
 /-- One-sided result projection of the half-gcd engine.  It shares the full
-matrix computation with `xgcdWith`; this API omits the unused result field but
+matrix computation with `xgcdWithImpl`; this API omits the unused result field but
 does not promise a cheaper algorithm. -/
-def xgcdLeftWith (plan : MulPlan F) (p q : DensePoly F) : XGCDLeftResult F :=
-  let r := xgcdWith plan p q
+def xgcdLeftWithImpl (plan : MulPlan F) (p q : DensePoly F) : XGCDLeftResult F :=
+  let r := xgcdWithImpl plan p q
   { gcd := r.gcd, left := r.left }
 
 /-- Half-gcd returns exactly the established extended-gcd result, including
 the raw gcd scaling and both Bezout coefficients. -/
-theorem xgcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
-    xgcdWith plan p q = xgcd p q := by
-  unfold xgcdWith xgcd
+theorem xgcdWithImpl_eq (plan : MulPlan F) (p q : DensePoly F) :
+    xgcdWithImpl plan p q = xgcd p q := by
+  unfold xgcdWithImpl xgcd
   let fuel := p.size + q.size + 1
   let result := gcdMatrixResult plan fuel p q
   change XGCDResult.mk result.gcd result.matrix.a00 result.matrix.a01 =
@@ -1649,16 +1664,16 @@ theorem xgcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
   rw [hmatrix', quotientStep_a00, quotientStep_a01]
 
 /-- Half-gcd returns exactly the established gcd. -/
-theorem gcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
-    gcdWith plan p q = gcd p q := by
-  rw [gcdWith, xgcdWith_eq, xgcd_gcd_eq_gcd]
+theorem gcdWithImpl_eq (plan : MulPlan F) (p q : DensePoly F) :
+    gcdWithImpl plan p q = gcd p q := by
+  rw [gcdWithImpl, xgcdWithImpl_eq, xgcd_gcd_eq_gcd]
 
 /-- The one-sided half-gcd projection agrees exactly with the established
 one-sided extended gcd. -/
-theorem xgcdLeftWith_eq (plan : MulPlan F) (p q : DensePoly F) :
-    xgcdLeftWith plan p q = xgcdLeft p q := by
-  unfold xgcdLeftWith
-  rw [xgcdWith_eq]
+theorem xgcdLeftWithImpl_eq (plan : MulPlan F) (p q : DensePoly F) :
+    xgcdLeftWithImpl plan p q = xgcdLeft p q := by
+  unfold xgcdLeftWithImpl
+  rw [xgcdWithImpl_eq]
   have hg := xgcdLeft_gcd_eq_xgcd (R := F) p q
   have hl := xgcdLeft_left_eq_xgcd (R := F) p q
   cases hleft : xgcdLeft p q with
@@ -1670,5 +1685,32 @@ theorem xgcdLeftWith_eq (plan : MulPlan F) (p q : DensePoly F) :
           subst g'
           subst l'
           rfl
+
+/-- Planned extended gcd has the exact reference result. -/
+theorem xgcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
+    xgcdWith plan p q = xgcd p q := rfl
+
+/-- Planned gcd retains the exact reference scaling. -/
+theorem gcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
+    gcdWith plan p q = gcd p q := rfl
+
+/-- Planned one-sided extended gcd retains the exact reference result. -/
+theorem xgcdLeftWith_eq (plan : MulPlan F) (p q : DensePoly F) :
+    xgcdLeftWith plan p q = xgcdLeft p q := rfl
+
+/-- Compile the extended-gcd reference through the existing half-gcd engine. -/
+@[csimp] theorem xgcdWith_csimp : @xgcdWith = @xgcdWithImpl := by
+  funext F instEq instField plan p q
+  exact (xgcdWithImpl_eq plan p q).symm
+
+/-- Compile the gcd reference through the existing half-gcd projection. -/
+@[csimp] theorem gcdWith_csimp : @gcdWith = @gcdWithImpl := by
+  funext F instEq instField plan p q
+  exact (gcdWithImpl_eq plan p q).symm
+
+/-- Compile the one-sided reference through the existing half-gcd projection. -/
+@[csimp] theorem xgcdLeftWith_csimp : @xgcdLeftWith = @xgcdLeftWithImpl := by
+  funext F instEq instField plan p q
+  exact (xgcdLeftWithImpl_eq plan p q).symm
 
 end Hex.DensePoly

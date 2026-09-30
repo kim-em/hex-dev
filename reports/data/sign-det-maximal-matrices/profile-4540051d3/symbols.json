@@ -1,0 +1,640 @@
+{
+  "string_table": [
+    "start_thread",
+    "malloc@@GLIBC_2.2.5",
+    "free@@GLIBC_2.2.5",
+    "realloc@@GLIBC_2.2.5",
+    "__clone3",
+    "lp_Hex_Hex_Matrix_ofFn___redArg___lam__0___boxed",
+    "lp_Hex_Hex_Matrix_transpose___redArg",
+    "lp_Hex_List_mapTR_loop___at___00Hex_SignDet_entry_spec__0",
+    "lp_Hex_Hex_SignDet_entry",
+    "lp_Hex_Hex_SignDet_momentMatrix___lam__0___boxed",
+    "lp_Hex_Hex_Matrix_identity___at___00Hex_SignDet_System_check_spec__4___lam__0",
+    "lp_Hex_Hex_Matrix_identity___at___00Hex_SignDet_System_check_spec__4___lam__0___boxed",
+    "lp_Hex_Fin_foldl_loop___at___00Vector_dotProductImpl___at___00Hex_Matrix_mulImpl___at___00Hex_SignDet_System_check_spec__3_spec__3_spec__6",
+    "lp_Hex_Hex_Matrix_mulImpl___at___00Hex_SignDet_System_check_spec__3___lam__1___boxed",
+    "lp_Hex_Hex_Matrix_mulImpl___at___00Hex_SignDet_System_check_spec__3",
+    "lp_Hex_Hex_SignDet_System_check",
+    "lp_Hex_Hex_SignDet_solveSystem___lam__0___boxed",
+    "lp_Hex_Hex_SignDet_solveSystem___lam__1",
+    "lp_Hex_Hex_SignDet_solveSystem___lam__1___boxed",
+    "lp_Hex_Fin_foldl_loop___at___00Hex_Matrix_rowScale___at___00Hex_Matrix_rowReduceLoop___at___00Hex_Matrix_rowReduce___at___00Hex_Matrix_inverse_x3f___at___00Hex_SignDet_solveSystem_spec__1_spec__1_spec__4_spec__14_spec__18___redArg",
+    "lp_Hex_Hex_Matrix_rowAdd___at___00__private_HexRowReduce_Pivot_0__Hex_Matrix_eliminateColumn___at___00Hex_Matrix_rowReduceLoop___at___00Hex_Matrix_rowReduce___at___00Hex_Matrix_inverse_x3f___at___00Hex_SignDet_solveSystem_spec__1_spec__1_spec__4_spec__15_spec__20___lam__0",
+    "lp_Hex_Hex_Matrix_rowAdd___at___00__private_HexRowReduce_Pivot_0__Hex_Matrix_eliminateColumn___at___00Hex_Matrix_rowReduceLoop___at___00Hex_Matrix_rowReduce___at___00Hex_Matrix_inverse_x3f___at___00Hex_SignDet_solveSystem_spec__1_spec__1_spec__4_spec__15_spec__20___lam__0___boxed",
+    "lp_Hex_Fin_foldl_loop___at___00Hex_Matrix_rowAdd___at___00__private_HexRowReduce_Pivot_0__Hex_Matrix_eliminateColumn___at___00Hex_Matrix_rowReduceLoop___at___00Hex_Matrix_rowReduce___at___00Hex_Matrix_inverse_x3f___at___00Hex_SignDet_solveSystem_spec__1_spec__1_spec__4_spec__15_spec__20_spec__23___redArg",
+    "lp_Hex_Hex_Matrix_rowAdd___at___00__private_HexRowReduce_Pivot_0__Hex_Matrix_eliminateColumn___at___00Hex_Matrix_rowReduceLoop___at___00Hex_Matrix_rowReduce___at___00Hex_Matrix_inverse_x3f___at___00Hex_SignDet_solveSystem_spec__1_spec__1_spec__4_spec__15_spec__20",
+    "lp_Hex_List_foldl___at___00__private_HexRowReduce_Pivot_0__Hex_Matrix_eliminateColumn___at___00Hex_Matrix_rowReduceLoop___at___00Hex_Matrix_rowReduce___at___00Hex_Matrix_inverse_x3f___at___00Hex_SignDet_solveSystem_spec__1_spec__1_spec__4_spec__15_spec__21",
+    "lp_Hex_Hex_Matrix_rowReduceLoop___at___00Hex_Matrix_rowReduce___at___00Hex_Matrix_inverse_x3f___at___00Hex_SignDet_solveSystem_spec__1_spec__1_spec__4",
+    "lp_Hex_Hex_Matrix_rowReduce___at___00Hex_Matrix_inverse_x3f___at___00Hex_SignDet_solveSystem_spec__1_spec__1",
+    "lp_Hex_Hex_Matrix_inverse_x3f___at___00Hex_SignDet_solveSystem_spec__1",
+    "lp_Hex___private_Init_Data_List_Impl_0__List_flatMapTR_go___at___00__private_Init_Data_List_Impl_0__List_flatMapTR_go___at___00Hex_SignDet_solveSystem_spec__7_spec__9",
+    "lp_Hex_Fin_foldl_loop___at___00Vector_dotProductImpl___at___00Hex_Matrix_mulVec___at___00Hex_SignDet_solveSystem_spec__4_spec__5_spec__10",
+    "lp_Hex_Hex_Matrix_mulVec___at___00Hex_SignDet_solveSystem_spec__4___lam__0",
+    "lp_Hex_Hex_Matrix_mulVec___at___00Hex_SignDet_solveSystem_spec__4___lam__0___boxed",
+    "lp_Hex_Hex_SignDet_solveSystem",
+    "lp_lean_x2dbench___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00LeanBench_kernelLoop_spec__0___redArg",
+    "lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1",
+    "lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1___boxed",
+    "lp_lean_x2dbench_LeanBench_runChildMode___lam__2",
+    "lp_lean_x2dbench_LeanBench_runChildMode",
+    "lp_lean_x2dbench_LeanBench_Cli_runChildCmd",
+    "lp_lean_x2dbench_LeanBench_Cli_runChildCmd___boxed",
+    "lp_Hex___private_HexSignDet_MaximalMatrix_0__Hex_SignDetBench_MaximalMatrix_build",
+    "lp_Hex_Hex_SignDetBench_MaximalMatrix_input",
+    "lp_Hex_Hex_SignDetBench_MaximalMatrix_runSolve",
+    "lp_Hex___private_HexSignDet_MaximalMatrix_0__Hex_SignDetBench_MaximalMatrix_initFn___lam__1_00___x40_HexSignDet_MaximalMatrix_3572643847____hygCtx___hyg_37____boxed",
+    "lp_Hex___private_HexSignDet_MaximalMatrix_0__Hex_SignDetBench_MaximalMatrix_initFn___lam__2_00___x40_HexSignDet_MaximalMatrix_3572643847____hygCtx___hyg_37_",
+    "l_Int_instDecidableEq___boxed",
+    "l_Int_pow",
+    "l_List_zipWith___at___00List_zip_spec__0___redArg",
+    "l_Array_isEqvAux___redArg",
+    "l_Array_ofFn_go___redArg",
+    "l_Array_ofFn___redArg",
+    "l_List_foldl___at___00Array_appendList_spec__0___redArg",
+    "l_Array_instDecidableEqImpl___redArg___lam__0___boxed",
+    "l_Rat_mul",
+    "l_Rat_add",
+    "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclB9nqe230100Ev",
+    "_ZN4lean7lthread3imp5_mainEPv",
+    "_ZN4lean3mpzC2Ej",
+    "_ZN4lean3mpzC2Em",
+    "_ZN4lean3mpzD2Ev",
+    "_ZNK4lean3mpz10get_size_tEv",
+    "_ZN4lean3gcdERNS_3mpzERKS0_S3_",
+    "__gmpz_init",
+    "__gmpn_copyi_x86_64",
+    "__gmpn_gcd_11_x86_64",
+    "__gmpz_realloc",
+    "__gmp_default_allocate",
+    "__gmp_default_reallocate",
+    "__gmpz_init_set_ui",
+    "__gmpz_mul_2exp",
+    "__gmpz_add",
+    "__gmpz_clear",
+    "__gmpz_gcd",
+    "__gmpn_gcd_1",
+    "lean_alloc_object",
+    "lean_dec_ref_cold",
+    "lean_nat_pow",
+    "lean_nat_gcd",
+    "lean_array_push",
+    "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_",
+    "lean_apply_1",
+    "lean_apply_2",
+    "mi_free",
+    "_ZL19mi_arenas_try_allocP9mi_heap_smmbbP10mi_arena_smiP10mi_memid_s",
+    "_ZL28mi_arenas_page_regular_allocP10mi_theap_smm",
+    "_ZL37mi_bbitmap_try_find_and_clear_genericP12mi_bbitmap_smmPmPFbP11mi_bchunk_smS1_PbE",
+    "_Z18_mi_malloc_genericP10mi_theap_smmPP9mi_page_s",
+    "lean_alloc_small_object_core",
+    "_ZL16mi_free_block_mtP9mi_page_sP10mi_block_sbb",
+    "_ZL23mi_arenas_try_find_freeP9mi_heap_smmbbP10mi_arena_smiP10mi_memid_s",
+    "_ZL21mi_arena_try_alloc_atP10mi_arena_smbmP10mi_memid_s",
+    "_ZL26mi_arenas_page_alloc_freshP10mi_theap_smmmb",
+    "_ZL28mi_bchunk_try_find_and_clearP11mi_bchunk_sPm",
+    "_ZL26mi_page_queue_find_free_exP10mi_theap_sP15mi_page_queue_sb"
+  ],
+  "data": [
+    {
+      "debug_name": "libc.so.6",
+      "symbol_table": [
+        {
+          "rva": 641904,
+          "size": 1280,
+          "symbol": 0
+        },
+        {
+          "rva": 714928,
+          "size": 455,
+          "symbol": 1
+        },
+        {
+          "rva": 716496,
+          "size": 525,
+          "symbol": 2
+        },
+        {
+          "rva": 717584,
+          "size": 1419,
+          "symbol": 3
+        },
+        {
+          "rva": 1196112,
+          "size": 71,
+          "symbol": 4
+        }
+      ]
+    },
+    {
+      "debug_name": "hexsigndet_bench",
+      "symbol_table": [
+        {
+          "rva": 12059792,
+          "size": 237,
+          "symbol": 5
+        },
+        {
+          "rva": 12060880,
+          "size": 149,
+          "symbol": 6
+        },
+        {
+          "rva": 12094832,
+          "size": 534,
+          "symbol": 7
+        },
+        {
+          "rva": 12095632,
+          "size": 180,
+          "symbol": 8
+        },
+        {
+          "rva": 12095824,
+          "size": 305,
+          "symbol": 9
+        },
+        {
+          "rva": 12096736,
+          "size": 189,
+          "symbol": 10
+        },
+        {
+          "rva": 12096928,
+          "size": 104,
+          "symbol": 11
+        },
+        {
+          "rva": 12097936,
+          "size": 806,
+          "symbol": 12
+        },
+        {
+          "rva": 12100544,
+          "size": 287,
+          "symbol": 13
+        },
+        {
+          "rva": 12101504,
+          "size": 298,
+          "symbol": 14
+        },
+        {
+          "rva": 12101808,
+          "size": 3203,
+          "symbol": 15
+        },
+        {
+          "rva": 12188048,
+          "size": 313,
+          "symbol": 16
+        },
+        {
+          "rva": 12188368,
+          "size": 584,
+          "symbol": 17
+        },
+        {
+          "rva": 12188960,
+          "size": 229,
+          "symbol": 18
+        },
+        {
+          "rva": 12189696,
+          "size": 922,
+          "symbol": 19
+        },
+        {
+          "rva": 12191616,
+          "size": 272,
+          "symbol": 20
+        },
+        {
+          "rva": 12191888,
+          "size": 186,
+          "symbol": 21
+        },
+        {
+          "rva": 12192080,
+          "size": 980,
+          "symbol": 22
+        },
+        {
+          "rva": 12193072,
+          "size": 343,
+          "symbol": 23
+        },
+        {
+          "rva": 12193424,
+          "size": 1408,
+          "symbol": 24
+        },
+        {
+          "rva": 12194832,
+          "size": 2957,
+          "symbol": 25
+        },
+        {
+          "rva": 12198096,
+          "size": 621,
+          "symbol": 26
+        },
+        {
+          "rva": 12198720,
+          "size": 408,
+          "symbol": 27
+        },
+        {
+          "rva": 12199920,
+          "size": 323,
+          "symbol": 28
+        },
+        {
+          "rva": 12200464,
+          "size": 308,
+          "symbol": 29
+        },
+        {
+          "rva": 12200784,
+          "size": 211,
+          "symbol": 30
+        },
+        {
+          "rva": 12201008,
+          "size": 42,
+          "symbol": 31
+        },
+        {
+          "rva": 12201056,
+          "size": 2634,
+          "symbol": 32
+        },
+        {
+          "rva": 12480976,
+          "size": 4098,
+          "symbol": 33
+        },
+        {
+          "rva": 12485104,
+          "size": 1503,
+          "symbol": 34
+        },
+        {
+          "rva": 12486608,
+          "size": 88,
+          "symbol": 35
+        },
+        {
+          "rva": 12500000,
+          "size": 2395,
+          "symbol": 36
+        },
+        {
+          "rva": 12502688,
+          "size": 7914,
+          "symbol": 37
+        },
+        {
+          "rva": 13063520,
+          "size": 1886,
+          "symbol": 38
+        },
+        {
+          "rva": 13065408,
+          "size": 42,
+          "symbol": 39
+        },
+        {
+          "rva": 13496704,
+          "size": 1545,
+          "symbol": 40
+        },
+        {
+          "rva": 13498416,
+          "size": 243,
+          "symbol": 41
+        },
+        {
+          "rva": 13499904,
+          "size": 1104,
+          "symbol": 42
+        },
+        {
+          "rva": 13506320,
+          "size": 37,
+          "symbol": 43
+        },
+        {
+          "rva": 13506368,
+          "size": 2780,
+          "symbol": 44
+        },
+        {
+          "rva": 75940224,
+          "size": 144,
+          "symbol": 45
+        },
+        {
+          "rva": 75941600,
+          "size": 864,
+          "symbol": 46
+        },
+        {
+          "rva": 75952288,
+          "size": 784,
+          "symbol": 47
+        },
+        {
+          "rva": 76023248,
+          "size": 387,
+          "symbol": 48
+        },
+        {
+          "rva": 76023648,
+          "size": 425,
+          "symbol": 49
+        },
+        {
+          "rva": 76024080,
+          "size": 106,
+          "symbol": 50
+        },
+        {
+          "rva": 76033344,
+          "size": 304,
+          "symbol": 51
+        },
+        {
+          "rva": 76347728,
+          "size": 16,
+          "symbol": 52
+        },
+        {
+          "rva": 76381712,
+          "size": 2247,
+          "symbol": 53
+        },
+        {
+          "rva": 76386752,
+          "size": 3717,
+          "symbol": 54
+        },
+        {
+          "rva": 77303520,
+          "size": 32,
+          "symbol": 55
+        },
+        {
+          "rva": 77305152,
+          "size": 165,
+          "symbol": 56
+        },
+        {
+          "rva": 77305792,
+          "size": 7,
+          "symbol": 57
+        },
+        {
+          "rva": 77305808,
+          "size": 132,
+          "symbol": 58
+        },
+        {
+          "rva": 77305952,
+          "size": 16,
+          "symbol": 59
+        },
+        {
+          "rva": 77306304,
+          "size": 17,
+          "symbol": 60
+        },
+        {
+          "rva": 77308368,
+          "size": 5,
+          "symbol": 61
+        },
+        {
+          "rva": 77309104,
+          "size": 19,
+          "symbol": 62
+        },
+        {
+          "rva": 77317830,
+          "size": 93,
+          "symbol": 63
+        },
+        {
+          "rva": 77320256,
+          "size": 61,
+          "symbol": 64
+        },
+        {
+          "rva": 77430144,
+          "size": 153,
+          "symbol": 65
+        },
+        {
+          "rva": 77430320,
+          "size": 53,
+          "symbol": 66
+        },
+        {
+          "rva": 77430384,
+          "size": 72,
+          "symbol": 67
+        },
+        {
+          "rva": 77522640,
+          "size": 57,
+          "symbol": 68
+        },
+        {
+          "rva": 77522800,
+          "size": 223,
+          "symbol": 69
+        },
+        {
+          "rva": 77523024,
+          "size": 777,
+          "symbol": 70
+        },
+        {
+          "rva": 77523808,
+          "size": 34,
+          "symbol": 71
+        },
+        {
+          "rva": 77617360,
+          "size": 1411,
+          "symbol": 72
+        },
+        {
+          "rva": 77620304,
+          "size": 324,
+          "symbol": 73
+        },
+        {
+          "rva": 77628128,
+          "size": 28,
+          "symbol": 74
+        },
+        {
+          "rva": 77628272,
+          "size": 211,
+          "symbol": 75
+        },
+        {
+          "rva": 77644480,
+          "size": 429,
+          "symbol": 76
+        },
+        {
+          "rva": 77645344,
+          "size": 845,
+          "symbol": 77
+        },
+        {
+          "rva": 77664480,
+          "size": 78,
+          "symbol": 78
+        },
+        {
+          "rva": 77668384,
+          "size": 786,
+          "symbol": 79
+        },
+        {
+          "rva": 77677904,
+          "size": 7372,
+          "symbol": 80
+        },
+        {
+          "rva": 77685280,
+          "size": 7242,
+          "symbol": 81
+        },
+        {
+          "rva": 77919824,
+          "size": 111,
+          "symbol": 82
+        },
+        {
+          "rva": 77936544,
+          "size": 1051,
+          "symbol": 83
+        },
+        {
+          "rva": 77937936,
+          "size": 1092,
+          "symbol": 84
+        },
+        {
+          "rva": 77971104,
+          "size": 1466,
+          "symbol": 85
+        },
+        {
+          "rva": 78012960,
+          "size": 930,
+          "symbol": 86
+        },
+        {
+          "rva": 78059936,
+          "size": 101,
+          "symbol": 87
+        },
+        {
+          "rva": 78060048,
+          "size": 123,
+          "symbol": 88
+        },
+        {
+          "rva": 78063440,
+          "size": 1438,
+          "symbol": 89
+        },
+        {
+          "rva": 78064880,
+          "size": 761,
+          "symbol": 90
+        },
+        {
+          "rva": 78065648,
+          "size": 1982,
+          "symbol": 91
+        },
+        {
+          "rva": 78072592,
+          "size": 558,
+          "symbol": 92
+        },
+        {
+          "rva": 78078416,
+          "size": 988,
+          "symbol": 93
+        }
+      ]
+    }
+  ],
+  "provenance": [
+    {
+      "command": [
+        "nm",
+        "-S",
+        "-n",
+        "--defined-only",
+        "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+      ],
+      "stderr": "",
+      "binary_sha256": "fc8e04292ecf9c1dfe9114c258e913bd4498c4a42e59c72fd62e0a23b71a81b0"
+    },
+    {
+      "command": [
+        "nm",
+        "-D",
+        "-S",
+        "-n",
+        "--defined-only",
+        "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+      ],
+      "stderr": "",
+      "binary_sha256": "fc8e04292ecf9c1dfe9114c258e913bd4498c4a42e59c72fd62e0a23b71a81b0"
+    },
+    {
+      "path": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6",
+      "status": "symbolized",
+      "resolved_addresses": 28,
+      "unresolved_addresses": 0
+    },
+    {
+      "command": [
+        "nm",
+        "-S",
+        "-n",
+        "--defined-only",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-maximal-timing/.lake/build/bin/hexsigndet_bench"
+      ],
+      "stderr": "",
+      "binary_sha256": "213a2f6990e799d1659c441782f9c3951ab45318c821dfccb58058e52fc22603"
+    },
+    {
+      "command": [
+        "nm",
+        "-D",
+        "-S",
+        "-n",
+        "--defined-only",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-maximal-timing/.lake/build/bin/hexsigndet_bench"
+      ],
+      "stderr": "",
+      "binary_sha256": "213a2f6990e799d1659c441782f9c3951ab45318c821dfccb58058e52fc22603"
+    },
+    {
+      "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-maximal-timing/.lake/build/bin/hexsigndet_bench",
+      "status": "symbolized",
+      "resolved_addresses": 278,
+      "unresolved_addresses": 2
+    }
+  ]
+}

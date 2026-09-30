@@ -728,6 +728,7 @@ libraries:
     mathlib: true
     done_through: 7
     status: active
+    proof_probes: [bench/HexPermGroupMathlib/ProofProbe]
   HexGraphIso:
     deps: [HexBasic, HexMatrix, HexPermGroup]
     mathlib: false
@@ -1580,6 +1581,7 @@ libraries:
   HexSignDetMathlib:
     deps: [HexSignDet, HexSturmMathlib, HexPolyMathlib, HexMatrixMathlib, HexRankMathlib]
     mathlib: true
+    proof_probes: [bench/HexSignDetMathlib/ProofProbe, bench/HexSignDetMathlib/NestedProofProbe]
     done_through: 0
     status: active
   HexRealClosure:

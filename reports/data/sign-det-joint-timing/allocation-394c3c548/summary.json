@@ -1,0 +1,24 @@
+{
+  "schema": "hex-sign-det-joint-allocation-summary-v1",
+  "source_revision": "394c3c54802ee1fe8e251098323b02c603536454",
+  "function": "Hex.SignDetBench.Joint.runComparison",
+  "parameter": 31,
+  "whole_process_allocation_calls": 1039653778,
+  "histogram_allocation_calls": 1039653778,
+  "whole_process_requested_bytes": 10237421113,
+  "filtered_stack_allocation_calls": 772119942,
+  "exact_callback_stack_allocation_calls": 385922080,
+  "other_filtered_stack_allocation_calls": 386197862,
+  "folded_stacks": 3982647,
+  "callback_frame_variants": {
+    "lp_Hex_Hex_SignDetBench_Joint_runComparison": 385922080
+  },
+  "callback_frame_pattern": "^lp_Hex_Hex_SignDetBench_Joint_runComparison(?:___redArg|___boxed)?$",
+  "limitations": [
+    "Heaptrack summary and histogram totals are whole-process even with --filter-bt-function.",
+    "The original l_Hex callback filter matched no reported allocators; the corrected substring also matches helpers used during preparation.",
+    "Exact callback frame matching excludes those preparation stacks; incomplete unwinding can omit callback frames, so this is attributable work, not a complete callback allocation counter.",
+    "Requested bytes count malloc/realloc requests intercepted by heaptrack, not all Lean object allocations or live memory.",
+    "Instrumented runtime and RSS include heaptrack overhead and are not scientific timing observations."
+  ]
+}

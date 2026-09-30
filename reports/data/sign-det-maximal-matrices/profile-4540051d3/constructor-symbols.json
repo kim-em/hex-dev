@@ -1,0 +1,22 @@
+{
+  "command": [
+    "nm",
+    "-S",
+    "--defined-only",
+    "/home/kim/.local/state/hex/issue-10377-profiles/maximal-solve-4540051d3/archived-debuggee"
+  ],
+  "symbols": [
+    {
+      "address": "00000000049b97d0",
+      "size": "0000000000000084",
+      "type": "T",
+      "name": "_ZN4lean3mpzC1Em"
+    },
+    {
+      "address": "00000000049b97d0",
+      "size": "0000000000000084",
+      "type": "T",
+      "name": "_ZN4lean3mpzC2Em"
+    }
+  ]
+}

@@ -35,10 +35,16 @@ comparator order while removing zero coefficients. -/
 structure Poly (n : Nat) (R : Type)
     (cmp : Mono n → Mono n → Ordering := Mono.lex) where
   terms : List (Mono n × R)
-  deriving BEq, DecidableEq
+  deriving BEq
 
 variable {cmp : Mono n → Mono n → Ordering}
   {targetCmp : Mono k → Mono k → Ordering}
+
+/-- Compare the stored lists without transporting computed lists through
+constructor equalities. This keeps proof reduction on the list decision. -/
+instance [DecidableEq R] : DecidableEq (Poly n R cmp) := fun p q =>
+  decidable_of_iff (p.terms = q.terms)
+    ⟨by cases p; cases q; simp, congrArg Poly.terms⟩
 
 /-- Merge two increasing canonical term lists, combining equal monomials.
 

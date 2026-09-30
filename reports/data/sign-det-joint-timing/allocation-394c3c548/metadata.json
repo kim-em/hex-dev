@@ -1,0 +1,78 @@
+{
+  "schema": "hex-sign-det-joint-allocation-v1",
+  "revision": "394c3c54802ee1fe8e251098323b02c603536454",
+  "cpu": 34,
+  "host": "chungus2",
+  "load_before": [
+    5.40380859375,
+    5.96484375,
+    9.22802734375
+  ],
+  "binary_sha256": "fcf1ddbab177d9ec61d0347b4cbbd9f57ceec94f418c1e961f40fa5ba5deb8c8",
+  "collector_sha256": "13d78a54d8118d7ddddb63ad36ea7fd2b813920bf500fa2ff86b2fbff9194d2c",
+  "state": "complete",
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-joint-evidence/.lake/build/bin/hexsigndet_bench",
+    "profile",
+    "Hex.SignDetBench.Joint.runComparison",
+    "--param",
+    "31",
+    "--cache-mode",
+    "cold",
+    "--profiler",
+    "heaptrack --record-only -o /tmp/issue-10377-joint-allocation-394c3c548/heaptrack --"
+  ],
+  "heaptrack_version": "heaptrack 1.6.80",
+  "environment": {
+    "LEAN_BENCH_TIMED_REGIONS_SIDECAR": "/tmp/issue-10377-joint-allocation-394c3c548/regions-%p.jsonl"
+  },
+  "exit_code": 0,
+  "regions": [
+    {
+      "kind": "region",
+      "mono_t0_ns": 57732500034358,
+      "mono_t1_ns": 57946946881688,
+      "count": 1,
+      "label": "kernel"
+    }
+  ],
+  "analysis_commands": [
+    [
+      "heaptrack_print",
+      "-f",
+      "/tmp/issue-10377-joint-allocation-394c3c548/heaptrack.zst",
+      "--print-peaks",
+      "0",
+      "--print-temporary",
+      "0",
+      "--print-allocators",
+      "1",
+      "--peak-limit",
+      "8"
+    ],
+    [
+      "heaptrack_print",
+      "-f",
+      "/tmp/issue-10377-joint-allocation-394c3c548/heaptrack.zst",
+      "--print-peaks",
+      "0",
+      "--print-temporary",
+      "0",
+      "--print-allocators",
+      "1",
+      "--peak-limit",
+      "8",
+      "--filter-bt-function",
+      "l_Hex_SignDetBench_Joint_runComparison"
+    ]
+  ],
+  "scope": "one instrumented cold comparison; whole-process and callback-stack-filtered allocation observations, not scientific timings",
+  "binary_sha256_after": "fcf1ddbab177d9ec61d0347b4cbbd9f57ceec94f418c1e961f40fa5ba5deb8c8",
+  "revision_after": "394c3c54802ee1fe8e251098323b02c603536454",
+  "status_after": "",
+  "load_after": [
+    9.42919921875,
+    8.3994140625,
+    8.76611328125
+  ]
+}

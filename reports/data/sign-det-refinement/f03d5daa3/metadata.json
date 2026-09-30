@@ -1,0 +1,43 @@
+{
+  "kind": "representative-api-process-observation",
+  "revision": "f03d5daa333a6c46f236e24ecbfaf3e8c4d7e83e",
+  "source_worktree": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-refinement",
+  "source_clean_before": true,
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-refinement/.lake/build/bin/hexsigndet_emit_infinitesimal",
+    "refinement"
+  ],
+  "executable_path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-refinement/.lake/build/bin/hexsigndet_emit_infinitesimal",
+  "resolved_executable_path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377/.lake/build/bin/hexsigndet_emit_infinitesimal",
+  "binary_sha256": "60519341658e65b4e7717a312d26aacd82ae2184386ca831870386f4cbc405fd",
+  "binary_sha256_after": "60519341658e65b4e7717a312d26aacd82ae2184386ca831870386f4cbc405fd",
+  "build_freshness_command": [
+    "lake",
+    "build",
+    "--no-build",
+    "hexsigndet_emit_infinitesimal"
+  ],
+  "build_freshness_sha256": "ce96fd3c636d54f14b4a5e71cacb9d25b6bdffff342891de481103b9b7af0875",
+  "host": "chungus2",
+  "cpu": 5,
+  "affinity": [
+    5
+  ],
+  "load_before": [
+    0.47412109375,
+    0.9814453125,
+    1.12646484375
+  ],
+  "load_after": [
+    0.5966796875,
+    0.99853515625,
+    1.13134765625
+  ],
+  "elapsed_nanos": 3967359951,
+  "exit_code": 0,
+  "revision_after": "f03d5daa333a6c46f236e24ecbfaf3e8c4d7e83e",
+  "source_clean_after": true,
+  "scope": "One complete process, including startup, descriptor preparation, re-encoding, interval-binding checks and JSON output; no scaling or Phase-4 verdict.",
+  "stdout_sha256": "705e44e252e71b4ec603518c69c7e5c7aa00d75bf62306b0ebca208072fe4eab",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

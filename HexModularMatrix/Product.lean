@@ -8,6 +8,7 @@ module
 
 public import HexModularMatrix.Row
 public import HexMatrix.MatrixAlgebra
+import all Init.Data.Fin.Fold
 
 public section
 
@@ -30,8 +31,8 @@ termination_by n - k
 
 theorem dot_eq (a b : Vector (ZMod64 p) n) : dot a b 0 0 = a.dotProduct b := by
   rw [dot_loop]
-  change Fin.foldl n _ _ = _
-  rw [Fin.foldl_eq_finRange_foldl]
+  change Fin.foldlTR n _ _ = _
+  rw [← Fin.foldl_eq_foldlTR, Fin.foldl_eq_finRange_foldl]
   rfl
 
 /-- Multiply cached rows by the columns of a right-hand side. -/

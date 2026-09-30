@@ -328,9 +328,9 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Model.base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.base
-/-- info: 'Hex.RealClosure.Tower.Model.adjoin' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.adjoin' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.adjoin
-/-- info: 'Hex.RealClosure.Tower.Model.adjoin_embed' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.adjoin_embed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Model.adjoin_embed
