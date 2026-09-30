@@ -714,6 +714,30 @@ multiplicity in the original polynomial. The proof uses the level's verified
 division and inverse, which require the predecessor interpretation to preserve
 division. It assumes no field laws on stored representatives.
 
+`AlgebraicReencode.lean` changes one level's defining polynomial through a
+checked `SignDet.Reencoding` of the same selected root. `Element.reencode`
+repacks an old value under the new immutable context, and
+`Element.reencodePoly` converts the coefficients of a dependent polynomial.
+The companion proves preservation of the selected root, value and interpreted
+dependent polynomial, with zero reflection for converted values. Old values
+remain typed by their original context. `Context.reencode_adjoin` identifies
+the target context with adjoining the new descriptor under the same cleanliness
+rule. Repacking may canonicalize a literal representative because evidence
+from the old context cannot be reused in the new one. The native tests include
+a restored high-degree representative and a nonmonic target that keeps its
+unreduced polynomial. Each converted nonzero coefficient currently runs its
+own sign query; reusable sign handles are a later cost improvement. This
+conversion keeps the predecessor fixed; recursively converting a tower's
+later descriptors remains separate.
+
+`AlgebraicRoots.lean` applies the successful root-assembly theorems to actual
+`Algebraic.Element` coefficients. Given a zero-reflecting predecessor interpretation into an ordered real closed
+field that preserves arithmetic, negation, inverse, division and sign, the
+level's selected-value interpretation supplies every coefficient premise. A
+successful finite assembly therefore covers exactly the ambient roots of the
+interpreted input with original multiplicities and no duplicate values; `all`
+is equivalent to semantic zero. Producer success and ordering remain separate obligations.
+
 `AlgebraicValue.lean` defines the image subfield `Value ctx`, with lawful field
 and order instances inherited from the ambient field. `Element.toValue`
 preserves arithmetic and sign, is surjective, and identifies exactly the
