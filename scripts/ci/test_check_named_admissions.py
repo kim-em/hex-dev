@@ -115,6 +115,10 @@ class AdmissionScannerTests(unittest.TestCase):
             root_probes = [root / name for name in (
                 "HexRealClosure/TowerCatalog.lean",
                 "HexRealClosure/TowerTests.lean",
+                "HexRealClosure/LiteralSupport.lean",
+                "HexRealClosure/CodecSupport.lean",
+                "HexRealClosure/FrameFormat.lean",
+                "HexRealClosure/FrameFormatTests.lean",
                 "HexRealClosure/BisectionTests.lean",
                 "adapters/HexRealClosureMathlib/Bisection.lean",
                 "adapters/HexRealClosureMathlib/BisectionRoots.lean",

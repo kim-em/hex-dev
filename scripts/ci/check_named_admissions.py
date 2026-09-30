@@ -176,6 +176,8 @@ def check() -> None:
              "HexSignDetMathlib.ConvertConformance", "HexRealClosure.BaseTests",
              "HexRealClosure.QAdjoinTests",
              "HexRealClosure.TowerCatalog", "HexRealClosure.TowerTests",
+             "HexRealClosure.LiteralSupport", "HexRealClosure.CodecSupport",
+             "HexRealClosure.FrameFormat", "HexRealClosure.FrameFormatTests",
              "HexRealClosureMathlib.BaseTests", "HexRealClosure.BaseCatalogTests",
              "HexRealClosure.BisectionTests", "HexRealClosure.DeflationConformance",
              "HexRealClosure.BisectionFrontierTests", "HexRealClosure.IsolationTests",
