@@ -260,6 +260,7 @@ structure Extension (parent : Context registry)
   binding : context.signature = parent.signature.extend frame
   embed : parent.Value → context.Value
   generator : context.Value
+  pack : DensePoly parent.Value → context.Value
 
 /-- The descriptor uses this context's exact value type, sign and signature.
 The returned embedding is the actual constant-polynomial packing operation. -/
@@ -274,9 +275,11 @@ def Context.adjoin? (context : Context registry)
     exact match he : Literal.ofJson (rootData codec descriptor) with
       | none => none
       | some frame =>
+        let native := Algebraic.Context.adjoin descriptor clean
         let handle : Context registry := .pack (.root chain descriptor frame he)
-        some ⟨frame, he, handle, rfl, Algebraic.Element.ofCoeff,
-          Algebraic.Element.ofPoly (DensePoly.ofCoeffs #[0, 1])⟩
+        some ⟨frame, he, handle, rfl, Algebraic.Element.ofCoeff (context := native),
+          Algebraic.Element.ofPoly (context := native) (DensePoly.ofCoeffs #[0, 1]),
+          Algebraic.Element.ofPoly (context := native)⟩
 
 section
 variable {E : Type} [Zero E] [DecidableEq E]
@@ -312,6 +315,28 @@ theorem Context.adjoin_spec (chain : Chain registry E sign clean codec binding)
       HEq extension.generator (Algebraic.Element.ofPoly
         (context := Algebraic.Context.adjoin descriptor clean) (DensePoly.ofCoeffs #[0, 1])) :=
   Context.adjoin_spec_proof chain descriptor extension h
+
+private theorem Context.pack_spec_proof (chain : Chain registry E sign clean codec binding)
+    (descriptor : Descriptor E Signature sign binding)
+    (extension : Extension (.pack chain) descriptor)
+    (h : Context.adjoin? (.pack chain) descriptor = some extension) :
+    HEq extension.pack (Algebraic.Element.ofPoly
+      (context := Algebraic.Context.adjoin descriptor clean)) := by
+  simp only [Context.adjoin?] at h
+  split at h
+  · contradiction
+  · cases h
+    exact HEq.rfl
+
+/-- The packing closure captures the actual native child context. -/
+theorem Context.pack_spec (chain : Chain registry E sign clean codec binding)
+    (descriptor : Descriptor E Signature sign binding)
+    (extension : Extension (.pack chain) descriptor)
+    (h : Context.adjoin? (.pack chain) descriptor = some extension) :
+    HEq extension.pack (Algebraic.Element.ofPoly
+      (context := Algebraic.Context.adjoin descriptor clean)) :=
+  Context.pack_spec_proof chain descriptor extension h
+
 end
 
 end Hex.RealClosure.Tower

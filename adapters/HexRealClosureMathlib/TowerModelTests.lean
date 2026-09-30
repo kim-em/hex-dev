@@ -7,6 +7,7 @@ module
 
 public import HexRealClosureMathlib.TowerAlgebraic
 public import HexRealClosureMathlib.TowerYun
+public import HexRealClosureMathlib.TowerRefinement
 public import HexRealClosureMathlib.SelectedRoot
 
 namespace Hex.RealClosure.Tower.Model.Tests
@@ -114,6 +115,35 @@ example (p : DensePoly (third d₁ d₂ d₃).context.Value) (hp : p ≠ 0) (x :
         entry.2 = (HexPolyMathlib.toPolynomial ((model₃ d₁ d₂ d₃).mapPoly p)).rootMultiplicity x ∧
           (HexPolyMathlib.toPolynomial ((model₃ d₁ d₂ d₃).mapPoly entry.1)).IsRoot x :=
   (model₃ d₁ d₂ d₃).decompose_root p hp x hx
+
+variable {head : DensePoly (first d₁).context.Value}
+variable {lower upper : Endpoint (first d₁).context.Value}
+variable (encoding : SignDet.Reencoding d₂ head lower upper)
+
+example (value : (second d₁ d₂).context.Value) :
+    ((model₁ d₁).refine encoding).value (((first d₁).context.refine encoding).transport value) =
+      (model₂ d₁ d₂).value value :=
+  (model₁ d₁).refine_value encoding value
+
+example : ((model₁ d₁).refine encoding).field = (model₂ d₁ d₂).field :=
+  (model₁ d₁).refine_field encoding
+
+example (p : DensePoly (second d₁ d₂).context.Value) :
+    (((first d₁).context.refine encoding).mapPoly p).natDegree = p.natDegree :=
+  (model₁ d₁).refine_degree encoding p
+
+example : ∃ converted, ((first d₁).context.refine encoding).mapDescriptor? d₃ = some converted :=
+  (model₁ d₁).refine_descriptor encoding d₃
+
+example : ∃ converted, ((first d₁).context.refine encoding).later? d₃ = some converted :=
+  (model₁ d₁).refine_later_exists encoding d₃
+
+example (converted : Later ((first d₁).context.refine encoding) d₃)
+    (value : (third d₁ d₂ d₃).context.Value) :
+    ((model₁ d₁).later encoding d₃ converted).value (converted.transport value) =
+      (model₃ d₁ d₂ d₃).value value :=
+  (model₁ d₁).refine_later encoding d₃ converted value
+
 end Successive
 
 end Hex.RealClosure.Tower.Model.Tests

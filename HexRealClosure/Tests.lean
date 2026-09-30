@@ -20,6 +20,7 @@ public import HexRealClosure.RootFrameTests
 public import HexRealClosure.FrameFormatTests
 public import HexRealClosure.TowerOrderTests
 public import HexRealClosure.TowerYunTests
+public import HexRealClosure.TowerRefinementTests
 public import HexRealClosure.QAdjoinTests
 public meta import HexSturm.Basic
 public meta import HexRealClosure.Bounds

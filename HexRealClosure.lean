@@ -23,4 +23,5 @@ public import HexRealClosure.TowerCatalog
 public import HexRealClosure.RootFrame
 public import HexRealClosure.FrameFormat
 public import HexRealClosure.TowerOrder
+public import HexRealClosure.TowerRefinement
 public import HexRealClosure.QAdjoin
