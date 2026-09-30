@@ -21,8 +21,9 @@ subtracted. Each registration returns a fixed success hash after checking the
 properties just described; the hash does not encode the full result.
 
 The clean-commit run on the shared host `chungus2` used CPU 19 selected by the
-CPU lease. Each registration had ten measured calls; every
-completed call returned the expected hash `0x1`.
+CPU lease. Each registration had ten measured repeats averaging 32 Yun, 4
+isolation, or 8 assembly calls per repeat; every completed repeat returned the
+expected hash `0x1`. The observed ranges below are ranges of repeat means.
 
 | Registration | Median | Observed range |
 | --- | ---: | ---: |
@@ -30,7 +31,7 @@ completed call returned the expected hash `0x1`.
 | Isolation and completion | 272.311 µs | 269.274–274.129 µs |
 | Root assembly | 198.364 µs | 195.448–203.237 µs |
 
-The [export](isolation-anchors.json) retains all measured durations and
+The [export](isolation-anchors.json) retains all repeat durations and
 runner metadata. The [log](isolation-anchors.log) records the harness output.
 The [context](isolation-anchors-context.json) records CPU affinity, host load,
 the exact command, and source and executable hashes. Peak RSS across the
@@ -47,9 +48,10 @@ evidence. The corrected development and unpinned runs are context, not
 additional trials of the pinned clean-commit measurement. The unpinned clean
 run omitted CPU pinning, so it was followed by one pinned run with unchanged
 source; both completed runs are retained. The pinned run was slightly slower
-for all three registrations and is the reported measurement. The rational `Bench.lean` hash in
-its context file belongs to the version before `runNested` was added; the
-three rational benchmark bodies were unchanged by that addition.
+for all three registrations and is the reported measurement. The rational
+`Bench.lean` hash in its context file belongs to the version before
+`runNested` was added; the three rational benchmark bodies were unchanged by
+that addition.
 
 ## Nested selected-root call
 
