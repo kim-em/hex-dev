@@ -835,14 +835,47 @@ stale or unknown bindings, forged signs, zero claims, trailing zeros and
 malformed base payloads. The core roundtrip proofs introduce no admission.
 General persistent refinement, transport of later descriptors, complete
 isolation and the real-closed union remain open.
-Reconstructing new validated algebraic levels from serialized frames remains
-open. Native frame-format totality is proved independently of graph decoding
-and byte-parser completeness.
 
 Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
 non-monic reducible rational definition, followed by a definition with
 noncanonical predecessor coefficients. The frame-format axiom guards use only
-the standard three axioms.
+the standard three axioms. Native frame-format totality is independent of
+graph decoding and byte-parser completeness.
+
+### Reconstruction from algebraic frames
+
+`Context.readDescriptor` reads the exact seven-field descriptor frame and
+independently replays its supplied graph over the native predecessor. Its
+formal derivatives, count-one condition, context and root-domain bindings are
+checked by the shared descriptor checker. `Context.readFrame` then constructs
+the native extension and checks that it re-encodes to the exact requested
+frame. A replay with extra unused entries may be mathematically accepted but
+has a different full identity and is rejected by this last check.
+
+`Catalog.reconstruct` recovers an entire context from its structured signature.
+It retrieves the validated real base and its actual erased search progress,
+then visits algebraic frames in predecessor order. It can reuse installed
+prefixes and checks each missing one. Its returned context carries a proof of the
+requested full signature. Unknown validated bases and false or differently
+encoded frames produce errors. Catalog insertion remains an explicit operation.
+
+`Catalog.restoreElement` and `restorePolynomial` reconstruct the native context
+before decoding the payload; the returned packed value retains that context.
+The existing `readElement` and `readPolynomial` use only installed algebraic
+prefixes. Successful restoration has proved binding preservation, and
+write-read roundtrips are proved for installed contexts. `RestoredRoot.frame_data`
+proves exact re-encoding of every successful root-frame reconstruction.
+
+Run `lake build HexRealClosure.RootFrameTests`. The examples reconstruct two
+successive roots, restore generator payloads and polynomials, work with a cached
+prefix, and reject an explicit stale full predecessor reference, misplaced
+frames, false graph versions and matrix certificates, unknown real providers,
+malformed frames and extra unreachable graph entries. These are structured JSON
+APIs; byte-parser and pretty-printer laws, and a roundtrip theorem for every
+freshly encoded tower (which needs graph-shape completeness), remain open.
+Batch callers can reconstruct once, insert the returned context, and then use
+the installed-prefix readers to avoid replaying each missing frame per value.
+Refinement and transport retain the obligations above.
 
 ### Interpretation, algebraicity and order of native towers
 
