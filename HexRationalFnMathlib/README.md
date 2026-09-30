@@ -10,6 +10,12 @@ without reducing normalization in the kernel. The partial evaluation theorems
 explicitly distinguish failure at a canonical pole from Mathlib's total evaluator
 returning zero there.
 
+`coeffMap` is executable coefficient transport, and `mapHom` packages the same
+function as a field-embedding ring homomorphism. It maps each canonical pair
+directly, without gcd. `toRatFunc_mapHom` proves agreement with Mathlib's
+rational-function map; `mapHom_C` and `mapHom_X` identify constants and the
+indeterminate. `mapHom_id` and `mapHom_comp` support successive base changes.
+
 Coefficients use the `Lean.Grind.Field` induced by the same Mathlib `Field`.
 For concrete coefficient types with another lightweight instance, make that choice
 explicit using `attribute [local instance 2000] Field.toGrindField`.

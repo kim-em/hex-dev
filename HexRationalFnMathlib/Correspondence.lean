@@ -17,7 +17,7 @@ public section
 
 namespace HexRationalFnMathlib
 
-universe u
+universe u v w
 variable {K : Type u} [Field K] [DecidableEq K]
 open Hex
 
@@ -377,6 +377,182 @@ theorem check_sound (p q : DensePoly K) (cert : RationalFn.Cert K)
   have hc := (RationalFn.check_iff p q cert).mp h
   exact ⟨toRatFunc_eq (f := RationalFn.ofCert p q cert h) hc.2.2.1 hc.1,
     num_toRatFunc (RationalFn.ofCert p q cert h), den_toRatFunc (RationalFn.ofCert p q cert h)⟩
+
+section Map
+open scoped nonZeroDivisors
+variable {L : Type v} [Field L] [DecidableEq L]
+
+omit [DecidableEq K] [DecidableEq L] in
+/-- Polynomial coefficient embeddings preserve nonzero denominators. -/
+theorem map_nonzero (f : K →+* L) :
+    (Polynomial K)⁰ ≤ ((Polynomial L)⁰).comap (Polynomial.mapRingHom f) := by
+  intro p hp
+  exact mem_nonZeroDivisors_iff_ne_zero.mpr <|
+    (Polynomial.map_ne_zero_iff f.injective).mpr
+      (mem_nonZeroDivisors_iff_ne_zero.mp hp)
+
+omit [DecidableEq K] [DecidableEq L] in
+/-- A field embedding reflects zero at each coefficient. -/
+theorem coeff_zero_iff (f : K →+* L) (a : K) : f a = 0 ↔ a = 0 := by
+  constructor
+  · intro h
+    exact f.injective (by simpa using h)
+  · intro h
+    subst a
+    exact f.map_zero
+
+private theorem toPolynomial_map (f : K →+* L) (p : DensePoly K) :
+    HexPolyMathlib.toPolynomial (DensePoly.Interpret.map f (coeff_zero_iff f) p) =
+      (HexPolyMathlib.toPolynomial p).map f := by
+  ext i
+  simp only [HexPolyMathlib.coeff_toPolynomial, DensePoly.Interpret.map_coeff,
+    Polynomial.coeff_map]
+
+/-- Executable transport along a coefficient-field embedding. -/
+@[expose] def coeffMap (f : K →+* L) (q : RationalFn K) : RationalFn L :=
+  RationalFn.mapCoeffs f (coeff_zero_iff f) f.map_one (map_sub f) (map_mul f)
+    (map_div₀ f) (map_inv₀ f) q
+
+/-- Executable coefficient transport denotes the usual map of rational functions. -/
+theorem toRatFunc_coeffMap (f : K →+* L) (q : RationalFn K) :
+    toRatFunc (coeffMap f q) =
+      RatFunc.mapRingHom (Polynomial.mapRingHom f) (map_nonzero f) (toRatFunc q) := by
+  unfold coeffMap
+  simp only [toRatFunc, embed, RatFunc.coe_mapRingHom_eq_coe_map]
+  rw [RatFunc.map_apply_div]
+  simp only [RationalFn.mapCoeffs_num, RationalFn.mapCoeffs_den,
+    toPolynomial_map, Polynomial.coe_mapRingHom]
+
+/-- Change rational-function coefficients along a field embedding. Its function
+is the executable canonical-pair map. -/
+@[expose] def mapHom (f : K →+* L) : RationalFn K →+* RationalFn L where
+  toFun := coeffMap f
+  map_zero' := by
+    apply toRatFunc_injective
+    rw [toRatFunc_coeffMap, toRatFunc_zero, toRatFunc_zero, map_zero]
+  map_one' := by
+    apply toRatFunc_injective
+    rw [toRatFunc_coeffMap, toRatFunc_one, toRatFunc_one, map_one]
+  map_add' p q := by
+    apply toRatFunc_injective
+    rw [toRatFunc_coeffMap, toRatFunc_add, toRatFunc_add,
+      toRatFunc_coeffMap, toRatFunc_coeffMap, map_add]
+  map_mul' p q := by
+    apply toRatFunc_injective
+    rw [toRatFunc_coeffMap, toRatFunc_mul, toRatFunc_mul,
+      toRatFunc_coeffMap, toRatFunc_coeffMap, map_mul]
+
+/-- The coefficient homomorphism commutes with the Mathlib fraction-field model. -/
+theorem toRatFunc_mapHom (f : K →+* L) (q : RationalFn K) :
+    toRatFunc (mapHom f q) =
+      RatFunc.mapRingHom (Polynomial.mapRingHom f) (map_nonzero f) (toRatFunc q) :=
+  toRatFunc_coeffMap f q
+
+/-- The executable map agrees with the fraction-field coefficient homomorphism. -/
+theorem coeffMap_eq_mapHom (f : K →+* L) (q : RationalFn K) :
+    coeffMap f q = mapHom f q := rfl
+
+/-- Changing coefficients along a field embedding preserves rational-function equality. -/
+theorem mapHom_injective (f : K →+* L) : Function.Injective (mapHom f) := by
+  intro p q h
+  apply toRatFunc_injective
+  apply RatFunc.map_injective (Polynomial.mapRingHom f) (map_nonzero f)
+    (by simpa only [Polynomial.coe_mapRingHom] using Polynomial.map_injective f f.injective)
+  simpa only [toRatFunc_mapHom, RatFunc.coe_mapRingHom_eq_coe_map] using
+    congrArg toRatFunc h
+
+/-- Executable coefficient transport is injective along a field embedding. -/
+theorem coeffMap_injective (f : K →+* L) :
+    Function.Injective (coeffMap f) := by
+  intro p q h
+  apply mapHom_injective f
+  simpa only [coeffMap_eq_mapHom] using h
+
+/-- Mapping coefficients through the identity embedding fixes each fraction. -/
+theorem mapHom_id : mapHom (RingHom.id K) = RingHom.id (RationalFn K) := by
+  apply RingHom.ext
+  intro q
+  apply RationalFn.ext
+  · apply DensePoly.ext_coeff
+    intro i
+    change (coeffMap (RingHom.id K) q).num.coeff i = q.num.coeff i
+    simp only [coeffMap, RationalFn.mapCoeffs_num,
+      DensePoly.Interpret.map_coeff, RingHom.id_apply]
+  · apply DensePoly.ext_coeff
+    intro i
+    change (coeffMap (RingHom.id K) q).den.coeff i = q.den.coeff i
+    simp only [coeffMap, RationalFn.mapCoeffs_den,
+      DensePoly.Interpret.map_coeff, RingHom.id_apply]
+
+/-- Successive coefficient embeddings compose on canonical fractions. -/
+theorem mapHom_comp {M : Type w} [Field M] [DecidableEq M]
+    (g : L →+* M) (f : K →+* L) :
+    (mapHom g).comp (mapHom f) = mapHom (g.comp f) := by
+  apply RingHom.ext
+  intro q
+  apply RationalFn.ext
+  · apply DensePoly.ext_coeff
+    intro i
+    change (coeffMap g (coeffMap f q)).num.coeff i =
+      (coeffMap (g.comp f) q).num.coeff i
+    simp only [coeffMap, RationalFn.mapCoeffs_num,
+      DensePoly.Interpret.map_coeff, RingHom.comp_apply]
+  · apply DensePoly.ext_coeff
+    intro i
+    change (coeffMap g (coeffMap f q)).den.coeff i =
+      (coeffMap (g.comp f) q).den.coeff i
+    simp only [coeffMap, RationalFn.mapCoeffs_den,
+      DensePoly.Interpret.map_coeff, RingHom.comp_apply]
+
+/-- Executable coefficient transport preserves addition. -/
+@[simp] theorem coeffMap_add (f : K →+* L) (p q : RationalFn K) :
+    coeffMap f (p + q) = coeffMap f p + coeffMap f q := by
+  simp only [coeffMap_eq_mapHom, map_add]
+
+/-- Executable coefficient transport preserves multiplication. -/
+@[simp] theorem coeffMap_mul (f : K →+* L) (p q : RationalFn K) :
+    coeffMap f (p * q) = coeffMap f p * coeffMap f q := by
+  simp only [coeffMap_eq_mapHom, map_mul]
+
+/-- A coefficient remains a coefficient after changing the base field. -/
+@[simp] theorem mapHom_C (f : K →+* L) (a : K) :
+    mapHom f (RationalFn.C a) = RationalFn.C (f a) := by
+  apply toRatFunc_injective
+  rw [toRatFunc_mapHom, toRatFunc_C, toRatFunc_C]
+  change (RatFunc.mapRingHom (Polynomial.mapRingHom f) (map_nonzero f))
+    (algebraMap (Polynomial K) (RatFunc K) (Polynomial.C a)) =
+      algebraMap (Polynomial L) (RatFunc L) (Polynomial.C (f a))
+  have h := RatFunc.map_apply_div (Polynomial.mapRingHom f) (map_nonzero f)
+    (Polynomial.C a) 1
+  simpa only [RatFunc.coe_mapRingHom_eq_coe_map, map_one, div_one,
+    Polynomial.coe_mapRingHom, Polynomial.map_C] using h
+
+/-- Changing the coefficient field fixes the indeterminate. -/
+@[simp] theorem mapHom_X (f : K →+* L) :
+    mapHom f (RationalFn.X : RationalFn K) = RationalFn.X := by
+  apply toRatFunc_injective
+  rw [toRatFunc_mapHom, toRatFunc_X, toRatFunc_X]
+  change (RatFunc.mapRingHom (Polynomial.mapRingHom f) (map_nonzero f))
+    (algebraMap (Polynomial K) (RatFunc K) Polynomial.X) =
+      algebraMap (Polynomial L) (RatFunc L) Polynomial.X
+  have h := RatFunc.map_apply_div (Polynomial.mapRingHom f) (map_nonzero f)
+    Polynomial.X 1
+  simpa only [RatFunc.coe_mapRingHom_eq_coe_map, map_one, div_one,
+    Polynomial.coe_mapRingHom, Polynomial.map_X] using h
+
+/-- Executable transport maps constants through the coefficient embedding. -/
+@[simp] theorem coeffMap_C (f : K →+* L) (a : K) :
+    coeffMap f (RationalFn.C a) =
+      RationalFn.C (f a) := by
+  rw [coeffMap_eq_mapHom, mapHom_C]
+
+/-- Executable transport fixes the indeterminate. -/
+@[simp] theorem coeffMap_X (f : K →+* L) :
+    coeffMap f (RationalFn.X : RationalFn K) =
+      RationalFn.X := by
+  rw [coeffMap_eq_mapHom, mapHom_X]
+
+end Map
 
 end
 end HexRationalFnMathlib

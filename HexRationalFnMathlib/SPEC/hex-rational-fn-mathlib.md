@@ -86,6 +86,18 @@ formal derivative theorem explicitly as the quotient rule for the embedded
 polynomial derivatives, together with additivity and the Leibniz rule. This
 does not assume an analytic topology or differentiability structure on `K`.
 
+## Coefficient-field embeddings
+
+For a field embedding `f : K →+* L`, `coeffMap f` instantiates the Mathlib-free
+canonical-pair map with the actual field laws. `mapHom f` packages that same
+executable function as `RationalFn K →+* RationalFn L`.
+`toRatFunc_coeffMap` and `toRatFunc_mapHom` identify both with Mathlib's
+coefficient map on `RatFunc`; `coeffMap_eq_mapHom` identifies the executable
+function and bundled homomorphism. Prove injectivity and preservation of
+constants, the indeterminate, addition and multiplication, as well as identity
+and composition of successive coefficient embeddings. The mapped pair is
+already canonical, so coefficient transport does not recompute a gcd.
+
 ## Partial evaluation
 
 Mathlib's
