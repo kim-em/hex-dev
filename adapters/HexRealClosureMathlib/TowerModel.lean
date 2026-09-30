@@ -252,6 +252,10 @@ end Root
 section Adjoin
 variable [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K]
 variable {context : Context registry}
+variable {E : Type} [Zero E] [DecidableEq E]
+variable [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
+variable {sign : E → Int} {clean : E → Bool} {codec : SignDet.ValueCodec E}
+variable {binding : Signature}
 
 /-- Interpret the child returned by the public total native constructor.
 The selected root and predecessor operations are the existing native ones. -/
@@ -263,6 +267,24 @@ noncomputable def adjoin (model : Model context K)
     let extension := Context.adjoin (.pack chain) descriptor
     exact (model.root chain descriptor extension.frame extension.encoded).cast
       (Context.adjoin_native chain descriptor).1.symm
+
+/-- The public child's interpretation is the selected-root interpretation of
+the actual algebraic representative, transported across its native binding. -/
+theorem adjoin_value (chain : Chain registry E sign clean codec binding)
+    (model : Model (.pack chain) K)
+    (descriptor : SignDet.Descriptor E Signature sign binding)
+    (a : ((.pack chain : Context registry).adjoin descriptor).context.Value) :
+    (model.adjoin descriptor).value a =
+      Algebraic.Element.denote model.value model.zero_iff model.one model.add
+        model.sub model.mul model.nat model.sign
+        (_root_.cast (congrArg Context.Value
+          (Context.adjoin_native chain descriptor).1) a) := by
+  let extension := Context.adjoin (.pack chain) descriptor
+  have hc := (Context.adjoin_native chain descriptor).1
+  let b := _root_.cast (congrArg Context.Value hc) a
+  unfold adjoin
+  rw [cast_value _ _ b a (cast_heq _ _).symm]
+  exact model.root_value chain descriptor extension.frame extension.encoded b
 
 /-- The public extension's actual embedding preserves the old interpretation. -/
 theorem adjoin_embed (model : Model context K)

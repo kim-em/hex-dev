@@ -855,7 +855,9 @@ For a real-closed ambient field, `Model.adjoin` derives the child interpretation
 from the predecessor model and the validated descriptor. It uses the actual
 public extension: `adjoin_embed` preserves predecessor values and
 `adjoin_generator` identifies the selected generator with the descriptor's root.
-These steps can be repeated at arbitrary finite depth.
+`root_value` and `adjoin_value` connect those models to the selected-root
+interpretation of the actual stored algebraic representative. These steps can
+be repeated at arbitrary finite depth.
 
 `Model.field` is the image subfield of the ambient field. Its values have genuine
 field and order instances, while raw native expressions retain their ordinary
