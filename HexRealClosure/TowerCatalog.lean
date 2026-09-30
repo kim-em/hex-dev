@@ -75,27 +75,35 @@ theorem Context.ofBase_signature (entry : BaseContext.PackedContext registry) :
   cases entry
   rfl
 
+private structure CatalogItem (registry : BaseContext.Registry) : Type 1 where
+  digest : UInt64
+  context : Context registry
+
 /-- Immutable catalog of native validated prefixes. Entries retain exact real
 search progress and every checked algebraic descriptor. A binding can never be
 rebound; the separate base catalog reconstructs uninstalled base stages. -/
 structure Catalog (registry : BaseContext.Registry) : Type 1 where
   private mk ::
   private base : BaseContext.Catalog registry
-  private entries : List (Context registry)
+  private entries : List (CatalogItem registry)
 
 namespace Catalog
 
 def ofBase (base : BaseContext.Catalog registry) : Catalog registry := ⟨base, []⟩
 def empty (registry : BaseContext.Registry) : Catalog registry := ofBase (.empty registry)
 
-private def find (binding : Signature) : List (Context registry) → Option (Context registry)
+private def find (binding : Signature) (digest : UInt64) :
+    List (CatalogItem registry) → Option (Context registry)
   | [] => none
-  | entry :: rest => if entry.signature = binding then some entry else find binding rest
+  | entry :: rest =>
+    if entry.digest = digest then
+      if entry.context.signature = binding then some entry.context else find binding digest rest
+    else find binding digest rest
 
 /-- Compare the full ordered literal binding. Unknown algebraic signatures
 are rejected; a reader does not manufacture new progress proofs or roots. -/
 def lookup (catalog : Catalog registry) (binding : Signature) : Option (Context registry) :=
-  match find binding catalog.entries with
+  match find binding (hash binding.literal) catalog.entries with
   | some context => some context
   | none => if binding.roots = [] then (catalog.base.read binding.base).map Context.ofBase
     else none
@@ -103,7 +111,7 @@ def lookup (catalog : Catalog registry) (binding : Signature) : Option (Context 
 /-- Install an already constructed prefix, retaining the exact native handle. -/
 def insert (catalog : Catalog registry) (entry : Context registry) : Option (Catalog registry) :=
   match catalog.lookup entry.signature with
-  | none => some ⟨catalog.base, entry :: catalog.entries⟩
+  | none => some ⟨catalog.base, ⟨hash entry.signature.literal, entry⟩ :: catalog.entries⟩
   | some _ => none
 
 /-- Resolve the context first, then check every recursively stored coefficient. -/
@@ -111,7 +119,7 @@ def insert (catalog : Catalog registry) (entry : Context registry) : Option (Cat
     Except String (PackedElement registry) :=
   match catalog.lookup raw.binding with
   | none => .error "unknown context"
-  | some context => match context.read raw with
+  | some context => match context.codec.decode raw.value with
     | .error message => .error message
     | .ok value => .ok ⟨context, value⟩
 
@@ -119,30 +127,33 @@ def insert (catalog : Catalog registry) (entry : Context registry) : Option (Cat
     Except String (PackedPolynomial registry) :=
   match catalog.lookup raw.binding with
   | none => .error "unknown context"
-  | some context => match context.readPoly raw with
+  | some context => match Codec.readPoly context.codec raw.value with
     | .error message => .error message
     | .ok value => .ok ⟨context, value⟩
 
-private theorem find_signature (binding : Signature) (entries : List (Context registry))
-    (context : Context registry) (h : find binding entries = some context) :
+private theorem find_signature (binding : Signature) (digest : UInt64)
+    (entries : List (CatalogItem registry))
+    (context : Context registry) (h : find binding digest entries = some context) :
     context.signature = binding := by
   induction entries with
   | nil => simp [find] at h
   | cons first rest ih =>
     simp only [find] at h
     split at h
-    · cases h; assumption
+    · split at h
+      · cases h; assumption
+      · exact ih h
     · exact ih h
 
 theorem lookup_signature (catalog : Catalog registry) (binding : Signature)
     (context : Context registry) (h : catalog.lookup binding = some context) :
     context.signature = binding := by
   simp only [lookup] at h
-  cases he : find binding catalog.entries with
+  cases he : find binding (hash binding.literal) catalog.entries with
   | some entry =>
     simp only [he, Option.some.injEq] at h
     subst context
-    exact find_signature binding _ entry he
+    exact find_signature binding _ _ entry he
   | none =>
     simp only [he] at h
     split at h
@@ -166,7 +177,7 @@ theorem readElement_signature (catalog : Catalog registry) (raw : Serialized)
   | none => simp [hl] at h
   | some context =>
     simp only [hl] at h
-    cases hr : context.read raw with
+    cases hr : context.codec.decode raw.value with
     | error message => simp [hr] at h
     | ok value =>
       simp only [hr, Except.ok.injEq] at h
@@ -181,7 +192,7 @@ theorem readPolynomial_signature (catalog : Catalog registry) (raw : Serialized)
   | none => simp [hl] at h
   | some context =>
     simp only [hl] at h
-    cases hr : context.readPoly raw with
+    cases hr : Codec.readPoly context.codec raw.value with
     | error message => simp [hr] at h
     | ok value =>
       simp only [hr, Except.ok.injEq] at h
@@ -216,14 +227,13 @@ theorem lookup_insert_other (catalog : Catalog registry) (entry : Context regist
 theorem read_write (catalog : Catalog registry) (context : Context registry) (a : context.Value)
     (h : catalog.lookup context.signature = some context) :
     catalog.readElement (context.write a) = .ok ⟨context, a⟩ := by
-  simp only [readElement, Context.write, h]
-  rw [← Context.write, Context.read_write]
+  simp [readElement, Context.write, h, context.codec_lawful a]
 
 theorem readPolynomial_write (catalog : Catalog registry) (context : Context registry)
     (p : context.Poly) (h : catalog.lookup context.signature = some context) :
     catalog.readPolynomial (context.writePoly p) = .ok ⟨context, p⟩ := by
-  simp only [readPolynomial, Context.writePoly, h]
-  rw [← Context.writePoly, Context.readPoly_write]
+  simp [readPolynomial, Context.writePoly, h,
+    Codec.read_poly context.codec context.codec_lawful p]
 
 end Catalog
 end Hex.RealClosure.Tower

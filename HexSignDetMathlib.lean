@@ -10,6 +10,7 @@ public import HexSignDetMathlib.ReductionProducer
 public import HexSignDetMathlib.Basis
 public import HexSignDetMathlib.Solve
 public import HexSignDetMathlib.RationalSolve
+public import HexSignDetMathlib.Foundation
 public import HexSignDetMathlib.FiniteSolve
 public import HexSignDetMathlib.ParentSystem
 public import HexSignDetMathlib.TreeChecks

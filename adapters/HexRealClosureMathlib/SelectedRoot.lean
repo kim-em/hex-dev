@@ -481,25 +481,18 @@ theorem sign_refine {context version : Nat} {d : Root context}
 end Expression
 end Hex.RealClosure
 
-/- The inherited `sorryAx` is `HexRealRootsMathlib.Tarski.check_rootSum` (#10389). -/
-/-- info: 'Hex.RealClosure.Expression.inverse?_sound' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.Expression.inverse?_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Expression.inverse?_sound
-/-- info: 'Hex.RealClosure.Expression.denote_transport' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.Expression.denote_transport' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Expression.denote_transport
-/-- info: 'Hex.RealClosure.Expression.denote_rebind' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.Expression.denote_rebind' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Expression.denote_rebind
-/-- info: 'Hex.RealClosure.Expression.candidate_mul_eq_one_of_split' depends on axioms: [propext,
- sorryAx,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.Expression.candidate_mul_eq_one_of_split' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Expression.candidate_mul_eq_one_of_split
-/-- info: 'Hex.RealClosure.Expression.candidate_mul_eq_one_of_nonzero' depends on axioms: [propext,
- sorryAx,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
+/-- info: 'Hex.RealClosure.Expression.candidate_mul_eq_one_of_nonzero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Expression.candidate_mul_eq_one_of_nonzero

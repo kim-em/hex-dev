@@ -1,0 +1,289 @@
+
+/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000004a00220 <lean_nat_gcd>:
+ 4a00220:	55                   	push   %rbp
+ 4a00221:	41 57                	push   %r15
+ 4a00223:	41 56                	push   %r14
+ 4a00225:	53                   	push   %rbx
+ 4a00226:	48 83 ec 38          	sub    $0x38,%rsp
+ 4a0022a:	48 89 f3             	mov    %rsi,%rbx
+ 4a0022d:	49 89 fe             	mov    %rdi,%r14
+ 4a00230:	41 f6 c6 01          	test   $0x1,%r14b
+ 4a00234:	75 68                	jne    4a0029e <lean_nat_gcd+0x7e>
+ 4a00236:	f6 c3 01             	test   $0x1,%bl
+ 4a00239:	0f 85 c9 00 00 00    	jne    4a00308 <lean_nat_gcd+0xe8>
+ 4a0023f:	49 83 c6 08          	add    $0x8,%r14
+ 4a00243:	48 83 c3 08          	add    $0x8,%rbx
+ 4a00247:	4c 8d 7c 24 08       	lea    0x8(%rsp),%r15
+ 4a0024c:	4c 89 ff             	mov    %r15,%rdi
+ 4a0024f:	e8 3c d1 fa ff       	call   49ad390 <_ZN4lean3mpzC1Ev>
+ 4a00254:	4c 89 ff             	mov    %r15,%rdi
+ 4a00257:	4c 89 f6             	mov    %r14,%rsi
+ 4a0025a:	48 89 da             	mov    %rbx,%rdx
+ 4a0025d:	e8 8e db fa ff       	call   49addf0 <_ZN4lean3gcdERNS_3mpzERKS0_S3_>
+ 4a00262:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a00267:	e8 54 d3 fa ff       	call   49ad5c0 <_ZNK4lean3mpz9is_size_tEv>
+ 4a0026c:	84 c0                	test   %al,%al
+ 4a0026e:	0f 84 6f 01 00 00    	je     4a003e3 <lean_nat_gcd+0x1c3>
+ 4a00274:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a00279:	e8 62 d3 fa ff       	call   49ad5e0 <_ZNK4lean3mpz10get_size_tEv>
+ 4a0027e:	48 85 c0             	test   %rax,%rax
+ 4a00281:	0f 88 5c 01 00 00    	js     4a003e3 <lean_nat_gcd+0x1c3>
+ 4a00287:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a0028c:	e8 4f d3 fa ff       	call   49ad5e0 <_ZNK4lean3mpz10get_size_tEv>
+ 4a00291:	48 8d 1c 45 01 00 00 	lea    0x1(,%rax,2),%rbx
+ 4a00298:	00 
+ 4a00299:	e9 76 01 00 00       	jmp    4a00414 <lean_nat_gcd+0x1f4>
+ 4a0029e:	49 d1 ee             	shr    $1,%r14
+ 4a002a1:	48 8d 7c 24 18       	lea    0x18(%rsp),%rdi
+ 4a002a6:	4c 89 f6             	mov    %r14,%rsi
+ 4a002a9:	f6 c3 01             	test   $0x1,%bl
+ 4a002ac:	0f 85 c2 00 00 00    	jne    4a00374 <lean_nat_gcd+0x154>
+ 4a002b2:	e8 39 d1 fa ff       	call   49ad3f0 <_ZN4lean3mpzC1Em>
+ 4a002b7:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a002bc:	e8 cf d0 fa ff       	call   49ad390 <_ZN4lean3mpzC1Ev>
+ 4a002c1:	48 83 c3 08          	add    $0x8,%rbx
+ 4a002c5:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a002ca:	48 8d 74 24 18       	lea    0x18(%rsp),%rsi
+ 4a002cf:	48 89 da             	mov    %rbx,%rdx
+ 4a002d2:	e8 19 db fa ff       	call   49addf0 <_ZN4lean3gcdERNS_3mpzERKS0_S3_>
+ 4a002d7:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a002dc:	e8 df d2 fa ff       	call   49ad5c0 <_ZNK4lean3mpz9is_size_tEv>
+ 4a002e1:	84 c0                	test   %al,%al
+ 4a002e3:	0f 84 35 01 00 00    	je     4a0041e <lean_nat_gcd+0x1fe>
+ 4a002e9:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a002ee:	e8 ed d2 fa ff       	call   49ad5e0 <_ZNK4lean3mpz10get_size_tEv>
+ 4a002f3:	48 85 c0             	test   %rax,%rax
+ 4a002f6:	0f 88 22 01 00 00    	js     4a0041e <lean_nat_gcd+0x1fe>
+ 4a002fc:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a00301:	e8 da d2 fa ff       	call   49ad5e0 <_ZNK4lean3mpz10get_size_tEv>
+ 4a00306:	eb 5f                	jmp    4a00367 <lean_nat_gcd+0x147>
+ 4a00308:	48 d1 eb             	shr    $1,%rbx
+ 4a0030b:	48 8d 7c 24 18       	lea    0x18(%rsp),%rdi
+ 4a00310:	48 89 de             	mov    %rbx,%rsi
+ 4a00313:	e8 d8 d0 fa ff       	call   49ad3f0 <_ZN4lean3mpzC1Em>
+ 4a00318:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a0031d:	e8 6e d0 fa ff       	call   49ad390 <_ZN4lean3mpzC1Ev>
+ 4a00322:	49 83 c6 08          	add    $0x8,%r14
+ 4a00326:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a0032b:	48 8d 54 24 18       	lea    0x18(%rsp),%rdx
+ 4a00330:	4c 89 f6             	mov    %r14,%rsi
+ 4a00333:	e8 b8 da fa ff       	call   49addf0 <_ZN4lean3gcdERNS_3mpzERKS0_S3_>
+ 4a00338:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a0033d:	e8 7e d2 fa ff       	call   49ad5c0 <_ZNK4lean3mpz9is_size_tEv>
+ 4a00342:	84 c0                	test   %al,%al
+ 4a00344:	0f 84 f8 00 00 00    	je     4a00442 <lean_nat_gcd+0x222>
+ 4a0034a:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a0034f:	e8 8c d2 fa ff       	call   49ad5e0 <_ZNK4lean3mpz10get_size_tEv>
+ 4a00354:	48 85 c0             	test   %rax,%rax
+ 4a00357:	0f 88 e5 00 00 00    	js     4a00442 <lean_nat_gcd+0x222>
+ 4a0035d:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a00362:	e8 79 d2 fa ff       	call   49ad5e0 <_ZNK4lean3mpz10get_size_tEv>
+ 4a00367:	48 8d 1c 45 01 00 00 	lea    0x1(,%rax,2),%rbx
+ 4a0036e:	00 
+ 4a0036f:	e9 ff 00 00 00       	jmp    4a00473 <lean_nat_gcd+0x253>
+ 4a00374:	e8 77 d0 fa ff       	call   49ad3f0 <_ZN4lean3mpzC1Em>
+ 4a00379:	48 d1 eb             	shr    $1,%rbx
+ 4a0037c:	48 8d 7c 24 28       	lea    0x28(%rsp),%rdi
+ 4a00381:	48 89 de             	mov    %rbx,%rsi
+ 4a00384:	e8 67 d0 fa ff       	call   49ad3f0 <_ZN4lean3mpzC1Em>
+ 4a00389:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a0038e:	e8 fd cf fa ff       	call   49ad390 <_ZN4lean3mpzC1Ev>
+ 4a00393:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a00398:	48 8d 74 24 18       	lea    0x18(%rsp),%rsi
+ 4a0039d:	48 8d 54 24 28       	lea    0x28(%rsp),%rdx
+ 4a003a2:	e8 49 da fa ff       	call   49addf0 <_ZN4lean3gcdERNS_3mpzERKS0_S3_>
+ 4a003a7:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a003ac:	e8 0f d2 fa ff       	call   49ad5c0 <_ZNK4lean3mpz9is_size_tEv>
+ 4a003b1:	84 c0                	test   %al,%al
+ 4a003b3:	0f 84 c1 00 00 00    	je     4a0047a <lean_nat_gcd+0x25a>
+ 4a003b9:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a003be:	e8 1d d2 fa ff       	call   49ad5e0 <_ZNK4lean3mpz10get_size_tEv>
+ 4a003c3:	48 85 c0             	test   %rax,%rax
+ 4a003c6:	0f 88 ae 00 00 00    	js     4a0047a <lean_nat_gcd+0x25a>
+ 4a003cc:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a003d1:	e8 0a d2 fa ff       	call   49ad5e0 <_ZNK4lean3mpz10get_size_tEv>
+ 4a003d6:	48 8d 1c 45 01 00 00 	lea    0x1(,%rax,2),%rbx
+ 4a003dd:	00 
+ 4a003de:	e9 c8 00 00 00       	jmp    4a004ab <lean_nat_gcd+0x28b>
+ 4a003e3:	bf 18 00 00 00       	mov    $0x18,%edi
+ 4a003e8:	e8 b3 51 06 00       	call   4a655a0 <lean_alloc_small_object_core>
+ 4a003ed:	48 89 c3             	mov    %rax,%rbx
+ 4a003f0:	0f b7 68 04          	movzwl 0x4(%rax),%ebp
+ 4a003f4:	48 89 c7             	mov    %rax,%rdi
+ 4a003f7:	48 83 c7 08          	add    $0x8,%rdi
+ 4a003fb:	48 8d 74 24 08       	lea    0x8(%rsp),%rsi
+ 4a00400:	e8 1b d1 fa ff       	call   49ad520 <_ZN4lean3mpzC1ERKS0_>
+ 4a00405:	c7 03 01 00 00 00    	movl   $0x1,(%rbx)
+ 4a0040b:	81 cd 00 00 00 fa    	or     $0xfa000000,%ebp
+ 4a00411:	89 6b 04             	mov    %ebp,0x4(%rbx)
+ 4a00414:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a00419:	e9 a6 00 00 00       	jmp    4a004c4 <lean_nat_gcd+0x2a4>
+ 4a0041e:	bf 18 00 00 00       	mov    $0x18,%edi
+ 4a00423:	e8 78 51 06 00       	call   4a655a0 <lean_alloc_small_object_core>
+ 4a00428:	48 89 c3             	mov    %rax,%rbx
+ 4a0042b:	0f b7 68 04          	movzwl 0x4(%rax),%ebp
+ 4a0042f:	48 89 c7             	mov    %rax,%rdi
+ 4a00432:	48 83 c7 08          	add    $0x8,%rdi
+ 4a00436:	48 8d 74 24 08       	lea    0x8(%rsp),%rsi
+ 4a0043b:	e8 e0 d0 fa ff       	call   49ad520 <_ZN4lean3mpzC1ERKS0_>
+ 4a00440:	eb 22                	jmp    4a00464 <lean_nat_gcd+0x244>
+ 4a00442:	bf 18 00 00 00       	mov    $0x18,%edi
+ 4a00447:	e8 54 51 06 00       	call   4a655a0 <lean_alloc_small_object_core>
+ 4a0044c:	48 89 c3             	mov    %rax,%rbx
+ 4a0044f:	0f b7 68 04          	movzwl 0x4(%rax),%ebp
+ 4a00453:	48 89 c7             	mov    %rax,%rdi
+ 4a00456:	48 83 c7 08          	add    $0x8,%rdi
+ 4a0045a:	48 8d 74 24 08       	lea    0x8(%rsp),%rsi
+ 4a0045f:	e8 bc d0 fa ff       	call   49ad520 <_ZN4lean3mpzC1ERKS0_>
+ 4a00464:	c7 03 01 00 00 00    	movl   $0x1,(%rbx)
+ 4a0046a:	81 cd 00 00 00 fa    	or     $0xfa000000,%ebp
+ 4a00470:	89 6b 04             	mov    %ebp,0x4(%rbx)
+ 4a00473:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a00478:	eb 40                	jmp    4a004ba <lean_nat_gcd+0x29a>
+ 4a0047a:	bf 18 00 00 00       	mov    $0x18,%edi
+ 4a0047f:	e8 1c 51 06 00       	call   4a655a0 <lean_alloc_small_object_core>
+ 4a00484:	48 89 c3             	mov    %rax,%rbx
+ 4a00487:	0f b7 68 04          	movzwl 0x4(%rax),%ebp
+ 4a0048b:	48 89 c7             	mov    %rax,%rdi
+ 4a0048e:	48 83 c7 08          	add    $0x8,%rdi
+ 4a00492:	48 8d 74 24 08       	lea    0x8(%rsp),%rsi
+ 4a00497:	e8 84 d0 fa ff       	call   49ad520 <_ZN4lean3mpzC1ERKS0_>
+ 4a0049c:	c7 03 01 00 00 00    	movl   $0x1,(%rbx)
+ 4a004a2:	81 cd 00 00 00 fa    	or     $0xfa000000,%ebp
+ 4a004a8:	89 6b 04             	mov    %ebp,0x4(%rbx)
+ 4a004ab:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a004b0:	e8 cb cf fa ff       	call   49ad480 <_ZN4lean3mpzD1Ev>
+ 4a004b5:	48 8d 7c 24 28       	lea    0x28(%rsp),%rdi
+ 4a004ba:	e8 c1 cf fa ff       	call   49ad480 <_ZN4lean3mpzD1Ev>
+ 4a004bf:	48 8d 7c 24 18       	lea    0x18(%rsp),%rdi
+ 4a004c4:	e8 b7 cf fa ff       	call   49ad480 <_ZN4lean3mpzD1Ev>
+ 4a004c9:	48 89 d8             	mov    %rbx,%rax
+ 4a004cc:	48 83 c4 38          	add    $0x38,%rsp
+ 4a004d0:	5b                   	pop    %rbx
+ 4a004d1:	41 5e                	pop    %r14
+ 4a004d3:	41 5f                	pop    %r15
+ 4a004d5:	5d                   	pop    %rbp
+ 4a004d6:	c3                   	ret
+ 4a004d7:	eb 4a                	jmp    4a00523 <lean_nat_gcd+0x303>
+ 4a004d9:	48 89 c3             	mov    %rax,%rbx
+ 4a004dc:	eb 52                	jmp    4a00530 <lean_nat_gcd+0x310>
+ 4a004de:	eb 59                	jmp    4a00539 <lean_nat_gcd+0x319>
+ 4a004e0:	eb 57                	jmp    4a00539 <lean_nat_gcd+0x319>
+ 4a004e2:	48 89 c3             	mov    %rax,%rbx
+ 4a004e5:	48 8d 7c 24 18       	lea    0x18(%rsp),%rdi
+ 4a004ea:	e8 91 cf fa ff       	call   49ad480 <_ZN4lean3mpzD1Ev>
+ 4a004ef:	48 89 df             	mov    %rbx,%rdi
+ 4a004f2:	e8 09 ee 2d fc       	call   cdf300 <_Unwind_Resume>
+ 4a004f7:	48 89 c3             	mov    %rax,%rbx
+ 4a004fa:	48 8d 7c 24 18       	lea    0x18(%rsp),%rdi
+ 4a004ff:	e8 7c cf fa ff       	call   49ad480 <_ZN4lean3mpzD1Ev>
+ 4a00504:	48 89 df             	mov    %rbx,%rdi
+ 4a00507:	e8 f4 ed 2d fc       	call   cdf300 <_Unwind_Resume>
+ 4a0050c:	48 89 c3             	mov    %rax,%rbx
+ 4a0050f:	48 8d 7c 24 18       	lea    0x18(%rsp),%rdi
+ 4a00514:	e8 67 cf fa ff       	call   49ad480 <_ZN4lean3mpzD1Ev>
+ 4a00519:	48 89 df             	mov    %rbx,%rdi
+ 4a0051c:	e8 df ed 2d fc       	call   cdf300 <_Unwind_Resume>
+ 4a00521:	eb 35                	jmp    4a00558 <lean_nat_gcd+0x338>
+ 4a00523:	48 89 c3             	mov    %rax,%rbx
+ 4a00526:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a0052b:	e8 50 cf fa ff       	call   49ad480 <_ZN4lean3mpzD1Ev>
+ 4a00530:	48 8d 7c 24 28       	lea    0x28(%rsp),%rdi
+ 4a00535:	eb 0a                	jmp    4a00541 <lean_nat_gcd+0x321>
+ 4a00537:	eb 00                	jmp    4a00539 <lean_nat_gcd+0x319>
+ 4a00539:	48 89 c3             	mov    %rax,%rbx
+ 4a0053c:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a00541:	e8 3a cf fa ff       	call   49ad480 <_ZN4lean3mpzD1Ev>
+ 4a00546:	48 8d 7c 24 18       	lea    0x18(%rsp),%rdi
+ 4a0054b:	e8 30 cf fa ff       	call   49ad480 <_ZN4lean3mpzD1Ev>
+ 4a00550:	48 89 df             	mov    %rbx,%rdi
+ 4a00553:	e8 a8 ed 2d fc       	call   cdf300 <_Unwind_Resume>
+ 4a00558:	48 89 c3             	mov    %rax,%rbx
+ 4a0055b:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a00560:	e8 1b cf fa ff       	call   49ad480 <_ZN4lean3mpzD1Ev>
+ 4a00565:	48 89 df             	mov    %rbx,%rdi
+ 4a00568:	e8 93 ed 2d fc       	call   cdf300 <_Unwind_Resume>
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:
+
+/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000004a00570 <lean_nat_log2>:
+ 4a00570:	40 f6 c7 01          	test   $0x1,%dil
+ 4a00574:	75 17                	jne    4a0058d <lean_nat_log2+0x1d>
+ 4a00576:	50                   	push   %rax
+ 4a00577:	48 83 c7 08          	add    $0x8,%rdi
+ 4a0057b:	e8 60 d4 fa ff       	call   49ad9e0 <_ZNK4lean3mpz4log2Ev>
+ 4a00580:	48 83 c4 08          	add    $0x8,%rsp
+ 4a00584:	48 8d 04 45 01 00 00 	lea    0x1(,%rax,2),%rax
+ 4a0058b:	00 
+ 4a0058c:	c3                   	ret
+ 4a0058d:	31 c0                	xor    %eax,%eax
+ 4a0058f:	48 83 ff 04          	cmp    $0x4,%rdi
+ 4a00593:	72 1a                	jb     4a005af <lean_nat_log2+0x3f>
+ 4a00595:	48 89 f9             	mov    %rdi,%rcx
+ 4a00598:	0f 1f 84 00 00 00 00 	nopl   0x0(%rax,%rax,1)
+ 4a0059f:	00 
+ 4a005a0:	48 d1 e9             	shr    $1,%rcx
+ 4a005a3:	48 ff c0             	inc    %rax
+ 4a005a6:	48 83 ff 07          	cmp    $0x7,%rdi
+ 4a005aa:	48 89 cf             	mov    %rcx,%rdi
+ 4a005ad:	77 f1                	ja     4a005a0 <lean_nat_log2+0x30>
+ 4a005af:	48 8d 04 45 01 00 00 	lea    0x1(,%rax,2),%rax
+ 4a005b6:	00 
+ 4a005b7:	c3                   	ret
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:
+
+/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000049addf0 <_ZN4lean3gcdERNS_3mpzERKS0_S3_>:
+ 49addf0:	e9 db b6 04 00       	jmp    49f94d0 <__gmpz_gcd>
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:
+
+/home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000049ad9e0 <_ZNK4lean3mpz4log2Ev>:
+ 49ad9e0:	83 7f 04 00          	cmpl   $0x0,0x4(%rdi)
+ 49ad9e4:	7e 13                	jle    49ad9f9 <_ZNK4lean3mpz4log2Ev+0x19>
+ 49ad9e6:	50                   	push   %rax
+ 49ad9e7:	be 02 00 00 00       	mov    $0x2,%esi
+ 49ad9ec:	e8 2f 9f 04 00       	call   49f7920 <__gmpz_sizeinbase>
+ 49ad9f1:	48 ff c8             	dec    %rax
+ 49ad9f4:	48 83 c4 08          	add    $0x8,%rsp
+ 49ad9f8:	c3                   	ret
+ 49ad9f9:	31 c0                	xor    %eax,%eax
+ 49ad9fb:	c3                   	ret
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:

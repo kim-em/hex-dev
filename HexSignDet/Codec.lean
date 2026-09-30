@@ -7,6 +7,7 @@ module
 
 public import HexSignDet.Codec.Node
 public import HexSignDet.Codec.Bytes
+public import HexSignDet.DagSigns
 
 public section
 
@@ -98,6 +99,64 @@ def Dag.decodeDescriptor (value : ValueCodec E) (ctx : ValueCodec Ctx) (sign : E
   match dag.descriptor? sign context raw with
   | none => throw "descriptor replay rejected"
   | some d => return d
+
+/-- Agreement on the actual decoded graph preserves exact parse/replay errors
+and the returned tree. This does not assert any parser/printer roundtrip. -/
+theorem Dag.decodeBytes_sign_congr (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (sign sign' : E → Int) (context : Ctx) (p : DensePoly E) (lo hi : Endpoint E)
+    (qs : List (DensePoly E)) (input : ByteArray) (limits : Codec.Limits)
+    (h : ∀ dag, Codec.decodeGraph value ctx context p lo hi input limits = .ok dag →
+      ∀ x ∈ dag.signOperands p lo hi, sign x = sign' x) :
+    (Dag.decodeBytes value ctx sign context p lo hi qs input limits).map Subtype.val =
+      (Dag.decodeBytes value ctx sign' context p lo hi qs input limits).map Subtype.val := by
+  unfold Dag.decodeBytes
+  cases hd : Codec.decodeGraph value ctx context p lo hi input limits with
+  | error err => rfl
+  | ok dag =>
+    have he := dag.replay_sign_congr sign sign' context p lo hi qs (h dag hd)
+    simp only [bind, Except.bind]
+    cases ht : dag.replay? sign context p lo hi qs with
+    | none =>
+      have ht' : dag.replay? sign' context p lo hi qs = none := by
+        simpa only [ht, Option.map_none, Option.map_eq_none_iff] using he.symm
+      simp only [ht', Except.map]
+      rfl
+    | some tree =>
+      cases ht' : dag.replay? sign' context p lo hi qs with
+      | none => simp [ht, ht'] at he
+      | some tree' =>
+        simp only [pure, Except.map]
+        exact congrArg Except.ok (by simpa [ht, ht'] using he)
+
+/-- Descriptor byte replay preserves exact errors, raw root identity and
+literal evidence under finite agreement on every decoded entry. -/
+theorem Dag.decodeDescriptor_sign_congr (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (sign sign' : E → Int) (context : Ctx) (raw : RawDescriptor E Ctx)
+    (input : ByteArray) (limits : Codec.Limits)
+    (h : ∀ dag, Codec.decodeGraph value ctx context raw.head raw.lower raw.upper input limits =
+      .ok dag → ∀ x ∈ dag.signOperands raw.head raw.lower raw.upper, sign x = sign' x) :
+    (Dag.decodeDescriptor value ctx sign context raw input limits).map
+        (fun d => (d.raw, d.evidence)) =
+      (Dag.decodeDescriptor value ctx sign' context raw input limits).map
+        (fun d => (d.raw, d.evidence)) := by
+  unfold Dag.decodeDescriptor
+  cases hd : Codec.decodeGraph value ctx context raw.head raw.lower raw.upper input limits with
+  | error err => rfl
+  | ok dag =>
+    have he := dag.descriptor_sign_congr sign sign' context raw (h dag hd)
+    simp only [bind, Except.bind]
+    cases ht : dag.descriptor? sign context raw with
+    | none =>
+      have ht' : dag.descriptor? sign' context raw = none := by
+        simpa only [ht, Option.map_none, Option.map_eq_none_iff] using he.symm
+      simp only [ht', Except.map]
+      rfl
+    | some d =>
+      cases ht' : dag.descriptor? sign' context raw with
+      | none => simp [ht, ht'] at he
+      | some d' =>
+        simp only [pure, Except.map]
+        exact congrArg Except.ok (by simpa [ht, ht'] using he)
 
 /-- Descriptor byte replay preserves the entire requested root identity,
 including its exact derivative slots and signs. -/

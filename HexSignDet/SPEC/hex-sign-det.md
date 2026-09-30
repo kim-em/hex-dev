@@ -74,7 +74,8 @@ strictly positive `Nat` counts. Its total lookup returns zero for omitted
 conditions. Completeness means this lookup equals `count(σ)` for **every**
 condition, including omitted ones. Consequently the sum is `#Z ≤ degree P`,
 and there are at most `#Z` output rows. Sorting table rows in the fixed order
-`-1<0<1` only makes serialization deterministic; it is not root ordering.
+`-1<0<1`, lexicographically with the first query most significant, only
+makes serialization deterministic; it is not root ordering.
 Certificate count vectors include zeros and are nonnegative integers; exact
 rational intermediate solutions must be proved integral and nonnegative
 before conversion. Never round, truncate or clamp them.
@@ -275,7 +276,7 @@ the companion proves their semantic meanings.
 
 | Operation | Result |
 | --- | --- |
-| `determine p I Q` | `Option SignTable`, with `none` exactly for an invalid root domain. `determinePrepared` is total on a prepared domain. |
+| `determine p I Q` | `Option SignTable`, with `none` exactly for an invalid root domain. `determinePrepared` is total on a prepared domain. Its specified internal-error branch emits a `panic!` diagnostic and returns `SignTable.empty`; the companion proves that branch unreachable under lawful coefficient interpretations. |
 | `validate raw` | `Option (Descriptor K)`, with success exactly for a uniquely realized well-formed descriptor. |
 | `complete d` | Full descriptor of the same root, total on `Descriptor K`. |
 | `roots p I` | Complete strictly increasing descriptor list, or `none` for an invalid domain. Constants give an empty list; multiplicities belong downstream. |
@@ -307,7 +308,11 @@ resource exhaustion or ordinary coefficient arithmetic. A malformed certificate
 fails `Replay.check`; that failure does not prove the requested mathematical
 result false. Negative/nonintegral counts or a singular selected matrix on a
 valid domain cannot occur for the specified producer. Prove these exclusions;
-do not convert an internal invariant gap into `none` or a default table.
+do not return `none` for them or use a default table to avoid proving success.
+The specified diagnostic fallback of `determinePrepared` is unreachable under
+the coefficient-interpretation laws. `determinePrepared_success` must prove
+that the actual producer returns `.ok`, without assuming successful
+construction, and that the total operation returns that produced table.
 
 Recursion splits finite query lists strictly; empty and singleton lists are
 explicit bases. Products, derivative lists, row selection and sorting have
@@ -356,7 +361,7 @@ at Mathlib `1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`:
 | Shared query algorithm and literal replay | hex-real-roots implements `ZPoly.tarskiQuery` and `IntTarskiCertificate`, including algebraic correspondence and produced-certificate acceptance. hex-sturm implements the ordered-field frontend and prepared-query reuse. Abstract root-sum/replay soundness remains a completion gate. |
 | Abstract polynomial IVT, Rolle and signed-remainder/Cauchy-index identity | Tau Ceti import through hex-real-roots-mathlib, consumed via hex-sturm-mathlib's query/replay soundness. Include infinities, common gcd and zero remainder. Do not duplicate the primitive here. |
 | Moment identity | Tau Ceti to hex-sign-det-mathlib: actual finite root counts satisfy `t=M*c`, including `0^0=1`, empty lists and zero roots. |
-| Recursive BKR support reduction | Tau Ceti to hex-sign-det-mathlib: the family contract for abstract support-preserving reductions, with explicit complete-input-support and reduction premises. Hex proves the elementary child-restriction/Cartesian-product step locally and connects reduction premises to literal evidence. |
+| Recursive BKR support reduction | Tau Ceti to hex-sign-det-mathlib: finite moment identities and count recovery from a left inverse and independently complete candidate support. Hex applies these at each solve in the existing split-tree induction, proving child restriction, Cartesian coverage and zero-count pruning against literal evidence. |
 | Row selection and invertibility | Existing HexRank/HexRankMathlib certificates and row/column rank results. HexSignDet proves the permutation and inverse-format adapters. Square row-basis existence is linear algebra, not an additional Tau Ceti real-algebra import. |
 | Reduced moments | HexSignDet extracts the checked literal identities through `ReductionStep.check_eq`. HexSignDetMathlib proves sign preservation at roots through `ReductionStep.check_sign` and `Reduction.check_sign`, then applies hex-sturm's query semantics to obtain the specified unreduced moments. |
 | Thom injectivity and order | Tau Ceti to hex-sign-det-mathlib: full derivative encodings at roots are injective and satisfy the largest-differing-index rule above. Hex proves completion, count-one validity, joint re-encoding and comparison correspondence. |

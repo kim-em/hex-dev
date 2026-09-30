@@ -150,7 +150,7 @@ theorem le?_eq_some_true {limit : EndpointLimit} {left right : Dyadic}
 theorem le?_eq_some_false {limit : EndpointLimit} {left right : Dyadic}
     (h : le? limit left right = some false) : right < left := by
   unfold le? at h
-  split at h <;> simp_all [Dyadic.not_lt]
+  split at h <;> simp_all [Dyadic.not_le]
 
 theorem checkedClosed?_eq_some {limit : EndpointLimit} {node : NodeId .real}
     {lower upper : Dyadic} {output : Row}
@@ -173,7 +173,7 @@ theorem min2?_sound {limit : EndpointLimit} {left right result : Dyadic}
       exact (min_eq_left (dyadic_le hle)).symm
     · simp [min2?, le?, hcost, hle] at h
       subst result
-      have hright : right < left := Dyadic.not_lt.mp hle
+      have hright : right < left := Dyadic.not_le.mp hle
       exact (min_eq_right (dyadic_lt hright).le).symm
   · simp [min2?, le?, hcost] at h
 
@@ -187,7 +187,7 @@ theorem max2?_sound {limit : EndpointLimit} {left right result : Dyadic}
       exact (max_eq_right (dyadic_le hle)).symm
     · simp [max2?, le?, hcost, hle] at h
       subst result
-      have hright : right < left := Dyadic.not_lt.mp hle
+      have hright : right < left := Dyadic.not_le.mp hle
       exact (max_eq_left (dyadic_lt hright).le).symm
   · simp [max2?, le?, hcost] at h
 

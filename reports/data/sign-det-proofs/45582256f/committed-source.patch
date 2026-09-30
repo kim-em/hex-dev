@@ -1,0 +1,683 @@
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D1/Accept.lean b/bench/HexSignDetMathlib/ProofProbe/D1/Accept.lean
+new file mode 100644
+index 000000000..ecacda244
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D1/Accept.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D1.Accept
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 1
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 1 evidence = true := by
++  simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq, evidence, graph, entries,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D1.Accept
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D1/BadLiteral.lean b/bench/HexSignDetMathlib/ProofProbe/D1/BadLiteral.lean
+new file mode 100644
+index 000000000..6214b68dc
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D1/BadLiteral.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D1.BadLiteral
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 1
++
++end Hex.SignDetMathlib.ProofProbe.D1.BadLiteral
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D1/Literal.lean b/bench/HexSignDetMathlib/ProofProbe/D1/Literal.lean
+new file mode 100644
+index 000000000..aab0b92d7
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D1/Literal.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D1.Literal
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 1
++
++end Hex.SignDetMathlib.ProofProbe.D1.Literal
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D1/Reject.lean b/bench/HexSignDetMathlib/ProofProbe/D1/Reject.lean
+new file mode 100644
+index 000000000..f20186196
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D1/Reject.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D1.Reject
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 1
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 1 evidence = false := by
++  simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq, evidence, stale, entries,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D1.Reject
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D3/Accept.lean b/bench/HexSignDetMathlib/ProofProbe/D3/Accept.lean
+new file mode 100644
+index 000000000..c1f8b887a
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D3/Accept.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D3.Accept
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 3
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 3 evidence = true := by
++  simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq, evidence, graph, entries,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D3.Accept
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D3/BadLiteral.lean b/bench/HexSignDetMathlib/ProofProbe/D3/BadLiteral.lean
+new file mode 100644
+index 000000000..5597c1305
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D3/BadLiteral.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D3.BadLiteral
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 3
++
++end Hex.SignDetMathlib.ProofProbe.D3.BadLiteral
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D3/Literal.lean b/bench/HexSignDetMathlib/ProofProbe/D3/Literal.lean
+new file mode 100644
+index 000000000..ef8059bed
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D3/Literal.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D3.Literal
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 3
++
++end Hex.SignDetMathlib.ProofProbe.D3.Literal
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D3/Reject.lean b/bench/HexSignDetMathlib/ProofProbe/D3/Reject.lean
+new file mode 100644
+index 000000000..fe5298937
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D3/Reject.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D3.Reject
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 3
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 3 evidence = false := by
++  simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq, evidence, stale, entries,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D3.Reject
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D5/Accept.lean b/bench/HexSignDetMathlib/ProofProbe/D5/Accept.lean
+new file mode 100644
+index 000000000..bc9d7dd0a
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D5/Accept.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D5.Accept
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 5
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 5 evidence = true := by
++  simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq, evidence, graph, entries,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D5.Accept
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D5/BadLiteral.lean b/bench/HexSignDetMathlib/ProofProbe/D5/BadLiteral.lean
+new file mode 100644
+index 000000000..62d055219
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D5/BadLiteral.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D5.BadLiteral
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 5
++
++end Hex.SignDetMathlib.ProofProbe.D5.BadLiteral
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D5/Literal.lean b/bench/HexSignDetMathlib/ProofProbe/D5/Literal.lean
+new file mode 100644
+index 000000000..c2c9bf1e4
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D5/Literal.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D5.Literal
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 5
++
++end Hex.SignDetMathlib.ProofProbe.D5.Literal
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D5/Reject.lean b/bench/HexSignDetMathlib/ProofProbe/D5/Reject.lean
+new file mode 100644
+index 000000000..d7529b25b
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D5/Reject.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D5.Reject
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 5
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 5 evidence = false := by
++  simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq, evidence, stale, entries,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D5.Reject
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D7/Accept.lean b/bench/HexSignDetMathlib/ProofProbe/D7/Accept.lean
+new file mode 100644
+index 000000000..e8ca10a83
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D7/Accept.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D7.Accept
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 7
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 7 evidence = true := by
++  simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq, evidence, graph, entries,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D7.Accept
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D7/BadLiteral.lean b/bench/HexSignDetMathlib/ProofProbe/D7/BadLiteral.lean
+new file mode 100644
+index 000000000..e6c64c6c7
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D7/BadLiteral.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D7.BadLiteral
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 7
++
++end Hex.SignDetMathlib.ProofProbe.D7.BadLiteral
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D7/Literal.lean b/bench/HexSignDetMathlib/ProofProbe/D7/Literal.lean
+new file mode 100644
+index 000000000..8f75bd2ae
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D7/Literal.lean
+@@ -0,0 +1,17 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D7.Literal
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := graph 7
++
++end Hex.SignDetMathlib.ProofProbe.D7.Literal
+diff --git a/bench/HexSignDetMathlib/ProofProbe/D7/Reject.lean b/bench/HexSignDetMathlib/ProofProbe/D7/Reject.lean
+new file mode 100644
+index 000000000..692c8d5cc
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/D7/Reject.lean
+@@ -0,0 +1,29 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDetMathlib.ProofProbe.Inputs
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.D7.Reject
++open Hex.SignDet Hex.SignDetMathlib.ProofProbe.Inputs
++
++@[expose] def evidence : Dag Rat Nat := stale 7
++
++set_option maxRecDepth 65536 in
++set_option maxHeartbeats 4000000 in
++/-- Fresh ordinary-kernel replay of the supplied graph expression. -/
++theorem checked : check 7 evidence = false := by
++  simp only [check, Dag.check, Dag.replay_eq, Dag.step_eq, evidence, stale, entries,
++    Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
++    TarskiCertificate.check_eq, SignedRemainderChain.check,
++    ← Array.all_toList, Array.toList_range]
++  decide +kernel
++
++#print axioms checked
++
++end Hex.SignDetMathlib.ProofProbe.D7.Reject
+diff --git a/bench/HexSignDetMathlib/ProofProbe/Inputs.lean b/bench/HexSignDetMathlib/ProofProbe/Inputs.lean
+new file mode 100644
+index 000000000..51291a1b9
+--- /dev/null
++++ b/bench/HexSignDetMathlib/ProofProbe/Inputs.lean
+@@ -0,0 +1,45 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++module
++
++public import HexSignDet.Conformance
++public import HexSignDetMathlib
++public meta import HexSignDet.Dag
++public meta import HexSignDet.Conformance
++
++public section
++
++namespace Hex.SignDetMathlib.ProofProbe.Inputs
++open Hex.SignDet Hex.SignDet.Conformance
++
++/-- A schematic literal parent: the constant queries have their unique
++positive sign on the root in (0,2). No certificate producer is invoked. -/
++@[expose] def parent (arity : Nat) : Node Rat Nat :=
++  {singletonNode with
++    queries := List.replicate arity (DensePoly.C 2)
++    system := {literalSystem with
++      rows := #v[List.replicate arity 0]
++      columns := #v[List.replicate arity 1]
++      counts := #v[1], values := #v[1]}}
++
++@[expose] def entries : Nat → Array (Dag.Entry Rat Nat)
++  | 0 => #[⟨derivativeNode, none⟩]
++  | depth + 1 => (entries depth).push ⟨parent (2 ^ (depth + 1)), some (depth, depth)⟩
++
++/-- Both child references share the preceding accepted entry. This is a
++same-level proof graph, not a graph of nested coefficient-sign certificates. -/
++@[expose] def graph (depth : Nat) : Dag Rat Nat := ⟨entries depth, depth⟩
++
++@[expose] def stale : Nat → Dag Rat Nat
++  | 0 => ⟨#[⟨{derivativeNode with context := 8}, none⟩], 0⟩
++  | depth + 1 => ⟨(entries depth).push
++      ⟨{parent (2 ^ (depth + 1)) with context := 8}, some (depth, depth)⟩, depth + 1⟩
++
++@[expose] def check (depth : Nat) (evidence : Dag Rat Nat) : Bool :=
++  evidence.check Sturm.orderSign 7 singletonRaw.head singletonRaw.lower singletonRaw.upper
++    (List.replicate (2 ^ depth) (DensePoly.C 2))
++
++end Hex.SignDetMathlib.ProofProbe.Inputs
+diff --git a/lakefile.lean b/lakefile.lean
+index 798acfe84..887b6ae87 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -1047,0 +1048,4 @@ lean_lib HexBerlekampMathlibProofProbeScientific where
++lean_lib HexSignDetMathlibProofProbe where
++  srcDir := "bench"
++  globs := #[.submodules `HexSignDetMathlib.ProofProbe]
++
+diff --git a/libraries.yml b/libraries.yml
+index 9f310d5dc..9f6a6bcb7 100644
+--- a/libraries.yml
++++ b/libraries.yml
+@@ -1582,0 +1583 @@ libraries:
++    proof_probes: [bench/HexSignDetMathlib/ProofProbe]
+diff --git a/reports/sign-det-proof-model.md b/reports/sign-det-proof-model.md
+new file mode 100644
+index 000000000..5be4d0fa7
+--- /dev/null
++++ b/reports/sign-det-proof-model.md
+@@ -0,0 +1,90 @@
++# Same-level graph kernel replay
++
++The build-only probes under `bench/HexSignDetMathlib/ProofProbe` cover accepted
++and stale-context graphs at depths 1, 3, 5 and 7. Their query arities are 2,
++8, 32 and 128. The root head is X²−1 on (0,2), all queries are the constant
++2, and each parent has one candidate sign word. Both child edges refer to
++the preceding node. This gives depth+1 graph entries and twice-depth edges.
++The rejection fixture changes only the final node's context, after a valid
++prefix. It does not time a missing-root or empty-input shortcut.
++
++These are schematic literal certificates: their compact expressions use
++replication and arrays to express supplied rows, counts and witnesses.
++They invoke no prepared-domain, query, sign-table or rank producer. Each
++candidate module rewrites the proved cache-invariance identities, unfolds the
++actual graph/local/query checkers and closes
++its theorem with `decide +kernel`. It does not reuse an imported conformance
++acceptance theorem. The kernel therefore checks the literal data and its
++normalization. All eight accepted theorem declarations have exactly
++`propext`, `Classical.choice` and `Quot.sound` in their axiom inventories.
++
++Each replay module is paired with a separate fresh module declaring the
++identical certificate expression but no replay theorem. Accepted and rejected
++fixtures each have their own matching literal reference. Imported inputs
++and dependencies stay warm; only the measured module's artifacts are
++removed before `lake build +<module>:olean`. The shared fresh-module runner
++uses six rounds, rotating pair order and alternating adjacent arm order.
++Every completed pair and signed candidate-minus-reference delta is retained,
++together with source hashes, dirty-state checks, emitted artifact sizes,
++compiler output and axiom inspection. An automatically leased CPU is used
++without a host-idleness test. No null control or automatic rerun is required.
++
++The paired difference includes reduction of the compact certificate expression,
++proof elaboration and ordinary kernel checking. It is not pure compiled
++checker time and receives no LeanBench complexity verdict. Timeouts are
++operational safeguards; this suite declares no absolute performance budget.
++A runner `release_quality` flag establishes its provenance and complete
++samples, not full Phase-4 coverage or semantic correctness.
++
++This is one same-level graph family with constant coefficient/witness size
++and support one. It does not replace proof evidence for nested coefficient
++certificates, arbitrary root-sum soundness, increasing matrix/support or
++witness sizes, descriptor operations, or the final semantic theorems. Those
++remain separate requirements. The shared semantic bridge in #10389 and the
++separate Thom/BKR foundations are still needed for root-level conclusions.
++
++## Recorded observations
++
++The clean source revision `06d77092b1e5824191b7fd9716aeefa46dfe2db8`
++produced all 48 adjacent pairs (96 fresh-module builds) on `chungus2`, using
++automatically leased logical CPU 67. All six rounds and both arm orientations
++were retained, with no rerun. Every candidate's inspected axiom inventory
++contains exactly the three axioms listed above. The runner reports complete
++measurements with no provenance exceptions.
++
++The table gives wall-clock milliseconds. The delta is the median of the six
++paired differences, not the difference between the two arm medians. The range
++and sample standard deviation describe those same six signed differences.
++
++| Depth | Outcome | Literal median | Replay median | Paired delta median | Delta range | Delta sample SD |
++| --- | --- | ---: | ---: | ---: | ---: | ---: |
++| 1 | accept | 2875.019 | 3529.115 | 646.696 | 115.728–869.264 | 272.722 |
++| 1 | reject | 2953.218 | 3330.310 | 506.164 | 253.125–574.168 | 141.081 |
++| 3 | accept | 2910.410 | 3620.341 | 723.968 | 508.464–882.887 | 139.429 |
++| 3 | reject | 2935.934 | 3551.907 | 674.471 | 511.159–780.323 | 110.439 |
++| 5 | accept | 2817.296 | 3716.300 | 985.638 | 673.789–1075.316 | 164.813 |
++| 5 | reject | 2877.687 | 3720.243 | 838.207 | 768.606–918.529 | 63.101 |
++| 7 | accept | 2862.839 | 4032.919 | 1196.948 | 1096.703–1303.096 | 76.639 |
++| 7 | reject | 2857.459 | 3958.770 | 1115.630 | 805.619–1221.176 | 149.194 |
++
++The observations show increasing median replay overhead over these four
++depths, with substantial variation, especially at depth 1. They establish
++neither an asymptotic complexity bound nor an absolute performance gate.
++The runner's `no-comparable-control` classification is retained: this suite
++does not provide a null-control resolution verdict. Host activity is recorded
++context and did not exclude any completed sample.
++
++The recorded timings apply only to the archived `06d77092b` sources and
++toolchain. The current checker and compiler differ from that archive, so these
++figures are not performance evidence for the current implementation. The
++current proof modules use general cache-invariance identities to expose the
++complete literal checks; they do not reuse an acceptance theorem.
++
++The [raw sweep](data/sign-det-proofs/06d77092b/sweep.json) retains compiler
++output, all timings, peak RSS, emitted artifact sizes and 197 source hashes.
++RSS includes the complete compiler process and imported environment; it does
++not measure replay allocation. Artifact sizes are module sizes, not serialized
++certificate sizes. The [source archive](data/sign-det-proofs/06d77092b/source-archive.json)
++identifies a committed patch against a merged base. Reconstruction in a
++temporary Git index verified every recorded source hash, preserving the
++measured source closure across subsequent rebases and squash merges.
+diff --git a/scripts/bench/sign_det_proofs.py b/scripts/bench/sign_det_proofs.py
+new file mode 100644
+index 000000000..1a4cf85d7
+--- /dev/null
++++ b/scripts/bench/sign_det_proofs.py
+@@ -0,0 +1,51 @@
++#!/usr/bin/env python3
++"""Matched fresh-module measurements of ordinary-kernel BKR graph replay.
++
++Literal and replay modules are rebuilt adjacently in six rotated rounds.
++Timeouts are operational; this suite declares no wall-time performance budget.
++"""
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(ROOT))
++from scripts.bench.fresh_module_sweep import ProbeModule, ProbePair, SweepSpec, run_cli
++from scripts.bench.structural_tactic_sweep import acquire_cpu
++
++AXIOMS = ("propext", "Classical.choice", "Quot.sound")
++PAIRS = tuple(
++    ProbePair(
++        name=f"depth-{depth}-{kind.lower()}",
++        reference=ProbeModule(f"HexSignDetMathlib.ProofProbe.D{depth}.{literal}"),
++        candidate=ProbeModule(f"HexSignDetMathlib.ProofProbe.D{depth}.{kind}", AXIOMS),
++        metadata={"family": "same-level-graph", "outcome": kind.lower(),
++                  "depth": depth, "query_arity": 2**depth,
++                  "graph_nodes": depth + 1, "graph_edges": 2*depth,
++                  "measurement_scope": "literal normalization plus ordinary-kernel replay",
++                  "semantic_root_soundness": "foundation gate remains open"})
++    for depth in (1, 3, 5, 7)
++    for kind, literal in (("Accept", "Literal"), ("Reject", "BadLiteral")))
++
++SPEC = SweepSpec(
++    description=__doc__ or "BKR graph proof probes", pairs=PAIRS,
++    probe_target="HexSignDetMathlibProofProbe",
++    schema="hex-sign-det-graph-proofs-v1",
++    measurement="paired-fresh-module-olean-wall",
++    output_stem="hex-sign-det-graph-proofs",
++    required_samples=6, retain_compiler_output=True,
++    extra_sources=(Path("libraries.yml"), Path("SPEC/benchmarking.md"),
++                   Path("reports/sign-det-proof-model.md"),
++                   Path("scripts/bench/structural_tactic_sweep.py")))
++
++
++def main():
++    cpu, lease = acquire_cpu()
++    try:
++        return run_cli(SPEC, Path(__file__),
++                       [*sys.argv[1:], "--shared-host", "--cpu", str(cpu)])
++    finally:
++        lease.close()
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())

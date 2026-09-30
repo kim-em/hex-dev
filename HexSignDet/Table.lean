@@ -21,9 +21,18 @@ structure SignTable (arity : Nat) where
     (∀ s ∈ row.1, s = -1 ∨ s = 0 ∨ s = 1) ∧ 0 < row.2
   distinct : (rows.toList.map Prod.fst).Nodup
 
+/-- The empty sparse table has count zero for every condition. It describes
+a domain without roots only after the root interpretation has been proved. -/
+def SignTable.empty (arity : Nat) : SignTable arity :=
+  ⟨#[], by simp, by simp⟩
+
 /-- Total lookup, including zero for every omitted condition. -/
 @[expose] def SignTable.count {arity : Nat} (t : SignTable arity) (condition : List Int) : Nat :=
   (t.rows.toList.lookup condition).getD 0
+
+theorem SignTable.empty_count (arity : Nat) (condition : List Int) :
+    (empty arity).count condition = 0 := by
+  rfl
 
 /-- Convert only positive coordinates; zero counts remain implicit. -/
 @[expose] def System.tableRows {r : Nat} (s : System r) : Array (List Int × Nat) :=
@@ -139,13 +148,14 @@ theorem Replay.table_lookup {sign : E → Int} {context : Ctx} {p : DensePoly E}
 /-- Every lookup, including omitted conditions, agrees with the finite
 observations interpreted by the actual accepted replay. Root-sum semantics
 are required to instantiate this theorem with roots. -/
-theorem Replay.table_count {sign : E → Int} {context : Ctx}
+theorem Replay.count_table {sign : E → Int} {context : Ctx}
     {p : DensePoly E} {a b : Endpoint E} {qs : List (DensePoly E)}
     (t : Replay E Ctx) {xs : List (List Int)}
     (hc : t.check sign context p a b qs = true)
-    (ho : Observations qs.length xs) (hm : t.Interprets qs.length xs) (c : List Int) :
+    (cover : ∀ x ∈ xs, x ∈ t.node.system.support)
+    (counts : SignDet.counts t.node.system.columns xs = t.node.system.counts)
+    (c : List Int) :
     (t.table hc).count c = xs.countP (fun x => decide (x = c)) := by
-  obtain ⟨cover, counts⟩ := t.support_complete hc ho hm
   by_cases hs : c ∈ t.node.system.support
   · obtain ⟨i, hi, he⟩ := List.mem_map.mp hs
     have hr : (c, t.node.system.counts[i].toNat) ∈ (t.table hc).rows.toList := by
@@ -169,5 +179,16 @@ theorem Replay.table_count {sign : E → Int} {context : Ctx}
     intro x hx
     have hne : x ≠ c := fun he => hs (he ▸ cover x hx)
     simpa using hne
+
+/-- Sparse lookup specializes to observations interpreted by the accepted
+replay, using its Mathlib-free support induction. -/
+theorem Replay.table_count {sign : E → Int} {context : Ctx}
+    {p : DensePoly E} {a b : Endpoint E} {qs : List (DensePoly E)}
+    (t : Replay E Ctx) {xs : List (List Int)}
+    (hc : t.check sign context p a b qs = true)
+    (ho : Observations qs.length xs) (hm : t.Interprets qs.length xs) (c : List Int) :
+    (t.table hc).count c = xs.countP (fun x => decide (x = c)) := by
+  obtain ⟨cover, counts⟩ := t.support_complete hc ho hm
+  exact t.count_table hc cover counts c
 
 end Hex.SignDet
