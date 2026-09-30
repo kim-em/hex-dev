@@ -135,6 +135,46 @@ instance : Zero (Element context) := ⟨zero⟩
 private theorem stored_zero_proof : (0 : Element context).stored = none := rfl
 theorem stored_zero : (0 : Element context).stored = none := stored_zero_proof
 
+/-- Restore a literal nonzero stored form after checking its cached sign in
+this exact context. Certificate coefficients must retain their polynomial;
+arithmetic packing continues to use `ofPoly` and its reduction policy. -/
+def restore? (p : DensePoly E) (claimed : Int) : Option (Element context) :=
+  if hc : context.signPoly p = claimed then
+    if hn : claimed ≠ 0 then some ⟨some ⟨p, claimed, hc, hn⟩⟩ else none
+  else none
+
+private theorem stored_restore_proof (p : DensePoly E) (claimed : Int)
+    (hc : context.signPoly p = claimed) (hn : claimed ≠ 0) :
+    (restore? (context := context) p claimed).map Element.stored =
+      some (some ⟨p, claimed, hc, hn⟩) := by
+  simp [restore?, hc, hn]
+
+theorem stored_restore (p : DensePoly E) (claimed : Int)
+    (hc : context.signPoly p = claimed) (hn : claimed ≠ 0) :
+    (restore? (context := context) p claimed).map Element.stored =
+      some (some ⟨p, claimed, hc, hn⟩) := stored_restore_proof p claimed hc hn
+
+/-- Every existing nonzero restores literally, including representatives that
+are semantically equal but structurally different. -/
+private theorem restore_stored_proof (a : Element context) (p : Nonzero context)
+    (h : a.stored = some p) : restore? p.polynomial p.sign = some a := by
+  rcases a with ⟨stored⟩
+  cases h
+  simp [restore?, p.checked, p.nonzero]
+
+theorem restore_stored (a : Element context) (p : Nonzero context)
+    (h : a.stored = some p) : restore? p.polynomial p.sign = some a :=
+  restore_stored_proof a p h
+
+theorem restore_zero (p : DensePoly E) :
+    restore? (context := context) p 0 = none := by
+  simp [restore?]
+
+theorem restore_stale (p : DensePoly E) (claimed : Int)
+    (h : context.signPoly p ≠ claimed) :
+    restore? (context := context) p claimed = none := by
+  simp [restore?, h]
+
 /-- Reduction is part of this zero test, so packing retains its computed
 remainder and caches the one selected-root query result. -/
 def ofPoly (p : DensePoly E) : Element context :=
@@ -159,7 +199,7 @@ theorem stored_ofPoly (p : DensePoly E) :
   | none => 0
   | some p => p.polynomial
 
-/-- A denominator-one polynomial whose coefficients are recursively clean. -/
+/-- A polynomial whose coefficients are recursively clean. -/
 @[expose] def isClean (a : Element context) : Bool :=
   a.polynomial.toArray.all context.cleanCoeff
 

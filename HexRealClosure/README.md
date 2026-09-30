@@ -784,6 +784,77 @@ table; a reusable selected-sign handle is requested from #10377. Formal tower
 performance evaluation, including nested sign/zero counts and coefficient
 growth, remains open.
 
+## Recursive tower contexts and checked readers
+
+`Tower.Chain` completes the staged base before adjoining algebraic roots. Each
+root is validated over the entire predecessor carrier using its actual sign
+and full signature. The constructors derive ordinary coefficient operations,
+recursive cleanliness and the coefficient codec; raw algebraic carriers have
+no ring or field instance.
+
+`Tower.Context` packages such a chain with its value type. `Context.adjoin`
+accepts the exact context-bound descriptor and returns an `Extension` containing
+the new context, its selected generator and the actual constant-polynomial
+embedding. Old values keep their owning context. The compatibility operation
+`Context.adjoin?` has an optional serialization-shape result, but
+`Context.adjoin_isSome` proves that failure unreachable for a validated
+descriptor; `Context.adjoin_some` relates it to the total operation.
+The returned extension retains its literal frame, the proof of its complete
+binding, and `Context.adjoin_native` identifies the native child, embedding and
+generator without unfolding the private constructor.
+These context packages live in `Type 1`; `Option.bind` can connect their results
+to ordinary scalar computations across universe levels.
+
+A `Tower.Signature` contains the complete base signature and every ordered
+algebraic frame. Each frame retains the literal head, interval, Thom slots and
+shared replay graph, including all witnesses. References to the exact parent
+are encoded relative to the enclosing full signature. Hashing only indexes the
+shared graph's exact node comparisons. Identity uses structured data and does
+not depend on JSON printing, byte parsing, short names or hashes.
+Signature and relative context-reference codecs have proved structured
+roundtrips. Parsing a signature supplies an identity, not a validated root.
+Exact equality uses the core pointer shortcut for shared immutable signatures;
+context hashes are constant when indexing replay nodes with one predecessor.
+The relative context reader rejects a full duplicate of its parent reference.
+Literal arrays are emitted by an accumulator with `Array.push`.
+
+`Tower.Catalog` is an immutable catalog of caller-constructed validated prefixes.
+Insertion rejects rebinding. Its separate base catalog supplies real search
+progress and reconstructs infinitesimal stages. An algebraic signature is
+accepted only when that exact native context is installed; inserting a shorter
+prefix does not install its successors. Readers retrieve the full context first,
+then decode a scalar or polynomial in that context; returned packed values
+retain their owning context. A cached signature hash filters catalog entries,
+and exact equality confirms a match. The successful lookup supplies the binding
+proof, so the payload decoder does not compare that signature a second time.
+
+The structured codecs have proved literal write/read roundtrips. Nonzero
+algebraic payloads retain both the polynomial and cached sign; their reader
+checks predecessor coefficients and recomputes the sign in the exact context.
+It restores the stored polynomial without arithmetic repacking, preserving
+literal certificate coefficients that are semantically equal but structurally
+different. A correctly signed external payload may have arbitrarily high
+degree, so its sign check and later arithmetic have costs that depend on that
+degree. Arithmetic uses `Element.ofPoly` and retains the computed remainder
+when the definition is monic and clean; other definitions remain unreduced.
+Polynomial readers reject trailing literal zeros.
+
+Run `lake build HexRealClosure.TowerTests HexRealClosureTests`. The examples build
+three actual algebraic levels, use their explicit embeddings, read old values
+after extensions, restore an unreduced noncanonical coefficient, and reject
+stale or unknown bindings, forged signs, zero claims, trailing zeros and
+malformed base payloads. The core roundtrip proofs introduce no admission.
+General persistent refinement, transport of later descriptors, interpretation
+of arbitrary towers, complete isolation and the real-closed union remain open.
+Reconstructing new validated algebraic levels from serialized frames remains
+open. Native frame-format totality is proved independently of graph decoding
+and byte-parser completeness.
+
+Run `lake build HexRealClosure.FrameFormatTests` for total construction over a
+non-monic reducible rational definition, followed by a definition with
+noncanonical predecessor coefficients. The frame-format axiom guards use only
+the standard three axioms.
+
 ## Ordered algebraic ambient models
 
 `Ambient.ofField K` in the companion consumes Tau Ceti's proved ordered

@@ -19,4 +19,6 @@ public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
 public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.AlgebraicReencode
+public import HexRealClosure.TowerCatalog
+public import HexRealClosure.FrameFormat
 public import HexRealClosure.QAdjoin
