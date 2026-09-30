@@ -1122,8 +1122,13 @@ native check rebuilds a selected square root there.
 
 General `Context.enlarge` still requires:
 
-1. If the old model uses a merely real-closed ambient field, restricting its
-   values to the relative algebraic union over `B` before lifting.
+1. If the old model uses a merely real-closed ambient field, proving every
+   context value algebraic over the chosen `B`-algebra map, stating and proving
+   that map agrees with the model on base coefficients, and applying
+   `Tower.Model.restrictUnion` before lifting. The model does not yet expose
+   that base map. Packaging the union with `Ambient.ofUnion` also requires an
+   order-preserving base map and a real-closed old ambient; its current API
+   places both fields in the same universe.
 2. Interpreting the native `B(ε)` in the same enlarged ambient field as the
    mapped old tower, compatibly on coefficients, with native `X` mapped to the
    semantic infinitesimal and with the native sign law preserved.
@@ -1448,6 +1453,16 @@ the construction for the usual rational embedding into the real numbers and
 place `sqrt(2)` and `sqrt(3)` in one finite compatible extension. A two-level
 infinitesimal ambient is restricted over the first rational-function base;
 its square root of the first infinitesimal is included back into that ambient.
+
+`Tower.Model.restrictUnion` carries a native tower interpretation into this
+union when every context value is algebraic over the chosen `B`-algebra map;
+coercing the restricted values back gives the original interpretation exactly.
+The map must agree with the model's base coefficients when used for base
+enlargement. Kernel examples restrict the rational base model from ℝ, apply
+the constructor to any tower model in an algebraic `Ambient Rat`, and check
+that its codomain agrees with `Ambient.ofUnion` for any permitted ordered base
+embedding. Proving algebraicity for contexts with adjoined roots and using the
+restriction in `Context.enlarge` remain open.
 
 Presenting every algebraic generator by a native selected-root descriptor and
 identifying all compatible native presentations with this semantic union remain
