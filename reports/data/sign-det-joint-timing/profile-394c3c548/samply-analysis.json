@@ -1,0 +1,157 @@
+{
+  "scope": "Samply/framehop postprocessing of the original unchanged perf capture; no new timing collection",
+  "source_revision": "394c3c54802ee1fe8e251098323b02c603536454",
+  "samply_version": "0.13.1",
+  "filter_revision": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "filter_repository": "https://github.com/kim-em/lean-bench-samply",
+  "commands": [
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/samply.json.gz",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/perf.data"
+      ],
+      "stdout_and_stderr": "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/samply-import.log"
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/perf.data"
+      ],
+      "stdout": "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/perf-samples.txt"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/samply.json.gz",
+        "--perf-script",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/perf-samples.txt",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/normalized.json.gz",
+        "--spawn-anchor",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/analysis-clock-anchor.json"
+      ]
+    },
+    {
+      "argv": [
+        "python3",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/normalized.json.gz",
+        "--sidecar",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/regions-2626161.jsonl",
+        "--spawn-anchor",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/analysis-clock-anchor.json",
+        "--out",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/filtered.json.gz",
+        "--diagnostics",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ]
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/profile/elf_symbols.py",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/filtered.json.gz",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/symbols.json"
+      ]
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/profile/summarize_profile.py",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/filtered.json.gz",
+        "--symbols",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/symbols.json",
+        "--diagnostics",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/diagnostics.json",
+        "--thread",
+        "hexsigndet_benc",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/inclusive-summary.json"
+      ]
+    }
+  ],
+  "clock_conversion": {
+    "sample_count": 1948,
+    "origin_ns": 56492748029461,
+    "residual_ns": 0,
+    "original_start_time_ms": 1790646510976.2896,
+    "corrected_start_time_ms": 1790646500987.4207,
+    "method": "all raw perf timestamps equal imported timestamps plus one offset; correct the common wall-clock origin"
+  },
+  "clock_anchor_scope": "The clock anchor was recorded at analysis time, not spawn. Every imported sample matches the raw monotonic timestamps with one common offset and zero residual; the same offset maps the recorded operation interval. No wall-clock correctness claim depends on this analysis-time anchor.",
+  "raw_sha256": {
+    "samply.json.gz": "a229ade4e4371e358ec4ba84601eb8fe9106209a50ef3293187ff1b84279c37b",
+    "perf-samples.txt": "0444b8f19b59ba5e4ec91c783931e788e87b72eb18884c70d630c0c4da34ad6e",
+    "normalized.json.gz": "adc6adcc205d97180fbebacff1f5d088b46dfd49c62d195ffcba0caef803985d",
+    "filtered.json.gz": "01202665b81868bad22bede2c1c75fef7f2a4e6d7760e7dde5c1c2be3b7e196a",
+    "symbols.json": "4d0d623a244ba8ed89ba80d31999c19c3b6edd83123ca0e6fb0336d77652569c",
+    "diagnostics.json": "d95b298e6a080c5e825ce5f2a4d8725aca64fdced92a48e0a08200f2c6a86499",
+    "inclusive-summary.json": "c6d5f22eb598f5212cef6cbc7ff4ecbc1e3a97fe8c5ff1e42c8ddbf7b28a729f"
+  },
+  "hex_dev_revision_for_analysis_tools": "262536f856dc16aa87462403e36227ddfe93ae72",
+  "analysis_tools_sha256": {
+    "scripts/profile/normalize_perf.py": "fbe80a6081d4c952ccbf0e0c7d34096b7aab8b4ca3baa1850c3015cf2e6ca8c2",
+    "scripts/profile/elf_symbols.py": "5b1293b476d7e3df82ad8f93212000a5efc11603d49d50d43821c5013d111207",
+    "scripts/profile/summarize_profile.py": "ba36b14948d7986bb8c349f2655323b24d33cc05ad0349d492e9929e00ab24fe",
+    "scripts/profile/factor_sampling_profile.py": "3dce3d0975f811be1210b2c97bd7faf244e50b97db55b5d57eadae2fd407b1eb"
+  },
+  "filter_checkout_status_verified": "",
+  "commands_scope": "Commands that produced the recorded outputs. Replaying them verbatim would overwrite those outputs: substitute a fresh output directory for all generated artifacts, preserving the raw perf.data and sidecar inputs.",
+  "reproducibility_scope": "Hashes identify retained files. Intermediate Samply metadata can depend on file timestamps; bit-for-bit reproduction is not claimed. Verify raw/imported event alignment, window samples and analysis quantities.",
+  "archived_binary": "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/archived-debuggee",
+  "archived_binary_sha256": "fcf1ddbab177d9ec61d0347b4cbbd9f57ceec94f418c1e961f40fa5ba5deb8c8",
+  "stack_check_command": [
+    "python3",
+    "reports/data/sign-det-joint-timing/profile-394c3c548/stack_plausibility.py",
+    "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/filtered.json.gz",
+    "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/symbols.json",
+    "reports/data/sign-det-joint-timing/profile-394c3c548/stack-plausibility.json"
+  ],
+  "disassembly_commands": [
+    {
+      "argv": [
+        "objdump",
+        "-d",
+        "--disassemble=lean_nat_gcd",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/archived-debuggee"
+      ],
+      "stdout": "reports/data/sign-det-joint-timing/profile-394c3c548/gcd-disassembly.txt"
+    },
+    {
+      "argv": [
+        "objdump",
+        "-d",
+        "--disassemble=_ZN4lean3mpzC1Em",
+        "/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/archived-debuggee"
+      ],
+      "stdout": "reports/data/sign-det-joint-timing/profile-394c3c548/constructor-disassembly.txt"
+    }
+  ],
+  "filter_checkout_verification": {
+    "command": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "clean": true,
+    "output": ""
+  },
+  "objdump_version": "GNU objdump (GNU Binutils) 2.46"
+}

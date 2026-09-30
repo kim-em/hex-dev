@@ -1,0 +1,50 @@
+[
+  {
+    "dimension": 3,
+    "queries": 1,
+    "solve_median_ms": 0.0165458674315,
+    "solve_peak_rss_median_mib": 65.7109375,
+    "check_median_ms": 0.0022455889895,
+    "check_peak_rss_median_mib": 66.3984375
+  },
+  {
+    "dimension": 9,
+    "queries": 2,
+    "solve_median_ms": 0.27066051757799997,
+    "solve_peak_rss_median_mib": 66.478515625,
+    "check_median_ms": 0.021804408081000003,
+    "check_peak_rss_median_mib": 66.498046875
+  },
+  {
+    "dimension": 27,
+    "queries": 3,
+    "solve_median_ms": 4.62759621875,
+    "solve_peak_rss_median_mib": 66.15625,
+    "check_median_ms": 0.2533010449215,
+    "check_peak_rss_median_mib": 66.373046875
+  },
+  {
+    "dimension": 81,
+    "queries": 4,
+    "solve_median_ms": 80.82614,
+    "solve_peak_rss_median_mib": 68.18359375,
+    "check_median_ms": 3.25223478125,
+    "check_peak_rss_median_mib": 68.447265625
+  },
+  {
+    "dimension": 243,
+    "queries": 5,
+    "solve_median_ms": 1449.698225,
+    "solve_peak_rss_median_mib": 77.7578125,
+    "check_median_ms": 51.440856,
+    "check_peak_rss_median_mib": 78.001953125
+  },
+  {
+    "dimension": 729,
+    "queries": 6,
+    "solve_median_ms": 26580.2632775,
+    "solve_peak_rss_median_mib": 119.78515625,
+    "check_median_ms": 991.465444,
+    "check_peak_rss_median_mib": 119.40625
+  }
+]

@@ -52,7 +52,7 @@ python3 scripts/oracle/sign_det_flint.py --check
 python3 -m unittest scripts.oracle.test_sign_det_flint
 ```
 
-`infinitesimal.jsonl` contains 29 cases emitted by `hexsigndet_emit_infinitesimal`
+`infinitesimal.jsonl` contains 30 cases emitted by `hexsigndet_emit_infinitesimal`
 using the existing rational-function fields over one and two positive
 infinitesimals. The independent Z3 RCF oracle requires `z3-solver==4.15.4.0`
 and numeric runtime version `(4, 15, 4, 0)`. Each record creates a fresh context

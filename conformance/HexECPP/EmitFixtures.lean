@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPP.Import
+import HexECPP.Search
 import HexECPP.Fixture17
 import HexECPP.Fixture65
 import HexECPP.Fixture256
@@ -77,8 +77,49 @@ private def emitSmallCurves : IO Unit := do
           | .ok (_, ws) => emitScalar n a b q Q ws
           | .error _ => pure ()
 
+private def emitChain : Cert → IO Unit
+  | .base c => emitSubject c.subject (Hex.Nat.checkPrime c)
+  | c@(.step _ _ _ _ _ _ _ child) => do
+      emitStep c
+      emitChain child
+
+private def emitTwists : IO Unit := do
+  for (n, d, j, g) in [(13, 3, (0 : Int), 2), (17, 4, (1728 : Int), 3)] do
+    for (a, b) in CM.curves n ⟨d, j⟩ g do
+      for x in List.range n do
+        for y in List.range n do
+          if onCurve n a b x y then
+            for q in List.range (2 * n + 1) do
+              if let .ok (_, ws) := proposeScalar defaultImportBudget n a q (.affine x y) then
+                emitScalar n a b q (.affine x y) ws
+  for (n, d, j, g) in [(13, 3, (0 : Int), 2), (17, 4, (1728 : Int), 3),
+      (11, 7, (-3375 : Int), 2)] do
+    for (a, b) in CM.curves n ⟨d, j⟩ g do
+      let order := 1 + ((List.range n).map fun x =>
+        ((List.range n).filter (onCurve n a b x)).length).sum
+      emit <| Json.mkObj [("kind", toJson "curve"), ("n", toJson n),
+        ("a", toJson a), ("b", toJson b), ("j", toJson (residue n j)),
+        ("order", toJson order)]
+
+private def emitCM : IO Unit := do
+  for n in [5, 7, 9, 13, 17, 25, 35, 49, 101, 113] do
+    for a in List.range n do
+      emit <| Json.mkObj [
+        ("kind", toJson "root"), ("n", toJson n), ("a", toJson a),
+        ("symbol", toJson (CM.symbol a n)), ("root", toJson (CM.sqrt? n 2 a))]
+  for (n, d, r) in [(13, 3, 6), (13, 3, 1), (17, 4, 4), (11, 7, 2),
+      (47, 11, 6), (35, 3, 15), (49, 3, 20)] do
+    emit <| Json.mkObj [("kind", toJson "norm"), ("n", toJson n),
+      ("d", toJson d), ("root", toJson r), ("result", toJson (CM.norm? n d r))]
+  for n in [177080666831933235355717939809840315427,
+      69199437377629051939477864552334532767081794053034238723740032946332041487367] do
+    if let .ok c := (produce n 0).result then emitChain c
+    else throw <| IO.userError "native fixture unexpectedly exhausted"
+
 def main (_ : List String) : IO UInt32 := do
   emitSmallCurves
+  emitCM
+  emitTwists
   let P : Point := .affine 1 2
   emitOperation 7 0 3 .infinity P []
   emitOperation 7 0 3 P .infinity []

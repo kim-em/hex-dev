@@ -1,0 +1,20 @@
+{
+  "source": {
+    "revision": "b46026b4caec0f26cba2c2a4ee18712816cef2fa",
+    "base_revision": "72db07c8cb3ce6a0c21cbc41a72e989a28cc70de",
+    "tree": "12d168dc694357cf1e89dadea40ea2147c48305c",
+    "patch": "source-from-main.patch.gz",
+    "scope": "complete tracked source tree",
+    "apply_option": "--unidiff-zero",
+    "reconstruction_check": "passed"
+  },
+  "parent": {
+    "revision": "9dca11cee2f2b85f4c33bbab00a6875da21ef47d",
+    "base_revision": "72db07c8cb3ce6a0c21cbc41a72e989a28cc70de",
+    "tree": "ad2fc997eeb173e5ce250296f047b340b95abead",
+    "patch": "parent-from-main.patch.gz",
+    "scope": "complete tracked source tree",
+    "apply_option": "--unidiff-zero",
+    "reconstruction_check": "passed"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "HexRCF/Tactic.lean": "08c0f294dcbf2b5fe5b8868cc51a148e0aa5bcf55202c3294eb6647d7fb8f514",
+  "HexRCF/HandlerTests.lean": "09c3f80a799e99142ca9969dfc3f2c6c4232d608c347abf25176ba8924794071",
+  "HexRCF/HandlerTests/Support.lean": "f6f023738c082923714ee1c524eea6d8ac62073d055b2e409ab19355a20c8288",
+  "conformance/HexRCF/CubicReplayProbe.lean": "409563b699ff44fe26208e501692ab61cc5a258cad42e182912a84e1064d43c4",
+  "conformance/HexRCF/RealCoefficientTactic.lean": "85f0cd6f6be9dc5698a3ca2979a3be65cd7c7e3ff27cbbcd6bebc42a8e907f25",
+  "lakefile.lean": "38575747003c3cff4b8a44702047865f3896408032274682f4cd863cc0428f23"
+}

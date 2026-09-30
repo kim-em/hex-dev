@@ -21,6 +21,34 @@ zero counts, and the row basis preserves their order. The scaled left-inverse
 identity is checked directly; no conversion from a differently ordered rank
 witness is assumed.
 
+`Replay.signOperands` gives a conservative finite list of coefficient values
+whose signs determine the tree checker's result. `Replay.check_sign_congr`
+proves that agreement on those signs preserves both acceptance and rejection,
+including malformed supplied witnesses. The shared Tarski and chain APIs expose
+`signOperands` and `check_sign_congr` too; the existing `rcf` coefficient adapter
+uses these same inventories and proofs. Finite endpoints require their order
+difference and polynomial evaluations; infinite endpoints require leading
+coefficients. Zero is an extra conservative chain operand. These lists describe
+result dependencies, not an ordered trace of runtime sign calls, and retain
+repeated occurrences. A finite cache need not be lawful outside its keys, but
+callers must prove agreement at every required operand before transferring the
+original checker's soundness. A dependency graph across coefficient-field levels
+and its exact context/operand bindings remain separate requirements.
+`Dag.signOperands` covers every serialized entry, including entries unreachable
+from the root. `Dag.replay_sign_congr` preserves failure and the exact returned
+tree under finite sign agreement; `Dag.check_sign_congr` preserves the Boolean
+result. These proofs follow the actual memoized prefix fold without expanding
+and rechecking a recursive tree. A cache law for the selected root's reachable
+entries alone does not suffice, since graph replay checks all stored entries.
+`Dag.descriptor_sign_congr` preserves the raw descriptor and literal evidence.
+`Dag.decodeBytes_sign_congr` and `Dag.decodeDescriptor_sign_congr` preserve
+exact errors and successful data under agreement on the actual decoded graph;
+they do not prove parser/printer byte roundtrips. Callers holding a decoded graph
+can use its `replay?` or `descriptor?` interface and the corresponding congruence
+to reuse that graph without parsing the same bytes again.
+Inventories retain repeated occurrences, so consumers may deduplicate
+keys while proving membership covers the whole inventory.
+
 `Dag.replay?` accepts a topologically ordered array of same-level BKR entries
 and a root index. References address earlier accepted entries only. Each entry
 checks its own query/matrix certificates once; both child edges still bind the
@@ -62,15 +90,30 @@ and context codecs must preserve their whole values. General codec roundtrip
 proofs, lower-level coefficient-sign edges and performance measurements remain
 required.
 
+`RawDescriptor.map` maps coefficients and finite endpoints to a new
+representation and context while retaining derivative indices and signs.
+`Descriptor.convert` feeds that raw input to the existing descriptor builder.
+It constructs fresh preparation, query, support and matrix evidence; it copies
+no source replay and reconstructs derivative queries under target operations.
+The supplied coefficient map must reflect canonical zero. Arbitrary conversions
+retain ordinary builder diagnostics. The companion proves success and preservation
+of the selected root when both lawful coefficient interpretations denote the
+same converted values, including noninjective representations. They assume no
+Archimedean property and apply to any lawful interpretation into a real closed field.
+The nested-infinitesimal fixture tests executable context changes; it does not
+supply such an interpretation or a semantic proof for that coefficient type.
+Those semantic results use the proved
+`HexRealRootsMathlib.Tarski.check_rootSum` theorem in the development adapter.
+
 Context, head, interval and query-list bindings use literal equality. Tarski
 polynomial identities use the shared zero-difference checks. Context values
 must contain the caller's full immutable context data, including any refinement;
 a hash or reused numeric identifier is insufficient. The current certificate
 tree retains the head squarefree evidence in each moment. Graph replay offers
 the first entry's validated domain to every node. A node reuses that domain when
-it matches the node's first witness; otherwise a node with several moments
-validates its own first domain once. A single moment without a matching shared
-domain uses full replay directly. Later matching witnesses reuse the selected
+it matches the node's first witness. Otherwise a node with several moments
+checks its first domain's caller bindings before validating that domain once.
+A single moment without a matching shared domain uses full replay directly. Later matching witnesses reuse the selected
 domain; different witnesses fall back to complete replay. `Node.check_eq` proves
 unconditional equality with the original result for every node and cache.
 `TarskiCertificate.checkCached_eq` proves the underlying shared-kernel agreement
@@ -80,7 +123,8 @@ prefix replay, including returned trees and all rejections. Each node selects
 one domain witness for reuse; other witnesses within that node still incur full
 replay at each occurrence. Domain replay and literal binding costs require
 performance measurements, including heterogeneous witnesses and one-moment nodes.
-The graph creates its initial domain even if only one moment will use it.
+`Dag.cache` checks its first domain's caller bindings before creating the initial
+cache, even if only one moment will use it.
 Node selection considers the first witness, so a different shared witness used
 only by later moments can miss. Every moment checks literal cache bindings,
 including the first moment used for selection. These costs belong in that
@@ -104,10 +148,10 @@ and per-row operands used by both construction and its companion statements.
 `buildPrepared` additionally returns
 a proof that the independent replay accepts the resulting tree. Its `BuildError`
 diagnostics remain available for arbitrary coefficient operations. The companion
-proves construction succeeds under its lawful interpretation and the named
-#10389 root-sum bridge; these diagnostics are not mathematical domain failures,
-and this is not yet the total `determinePrepared`
-API. No supplied roots or guessed counts enter construction. `referencePrepared`
+proves construction succeeds under its lawful interpretation and the shared
+proved root-sum theorem; these diagnostics are not mathematical domain failures,
+and `determinePrepared` wraps the same producer with its success guarantee.
+No supplied roots or guessed counts enter construction. `referencePrepared`
 builds the exponential full-ternary system for small-case comparisons; production
 recursion never calls it.
 
@@ -147,7 +191,7 @@ identity with the precise retained row and support lists used by `buildTreeFrom`
 `solveScaled_eq` proves that solving a checked integer system recovers its
 counts, including zero dimensions and non-unit denominators. The companion
 combines these finite facts with the actual root-query semantics to prove
-producer completeness relative to the named #10389 bridge.
+producer completeness relative to the shared proved root-sum theorem.
 
 `count_moments` proves the finite counting identity on an independently complete
 candidate support. `Replay.support_complete` then proves recursive coverage and
@@ -155,9 +199,13 @@ exact counts for the actual checked tree, conditional on `Replay.Interprets`:
 each node's moments must be the sums over the same finite observations restricted
 to its query positions. `Replay.support_iff` excludes both missing and spurious
 positive conditions. The companion establishes this explicit moment contract
-from query/root semantics through the admitted #10389 bridge; the executable
+from query/root semantics through the proved shared root-sum theorem; the executable
 checker does not assume it, and the finite induction is not a root-sum
 soundness theorem.
+`Replay.support_counts` factors that same induction through a proved finite
+count-recovery theorem. The companion supplies its Tau Ceti bridge at every
+node; the Mathlib-free specialization uses `System.counts_eq`. Neither
+specialization changes the executable tree or its candidate order.
 
 The conformance target includes recursive rational examples with supplied exact
 roots, malformed matrices and tree mutations, and ordinary-kernel literal
@@ -186,6 +234,36 @@ recursive replay. Its total `count` returns zero for omitted conditions.
 under the same explicit `Replay.Interprets` contract. Structural table validity
 alone does not prove root completeness. `buildTablePrepared` exposes sparse
 construction while retaining the internal diagnostics of `buildPrepared`.
+`Replay.count_table` is the representation adapter from independently proved
+support coverage and exact integer counts to this same sparse lookup.
+`SelectedSigns.signs_of_count` similarly shares the selected-sign lookup
+argument with the companion, while `signs_eq` keeps its Mathlib-free contract.
+
+`Descriptor.prepareQueries` constructs a `QueryHandle` for successive queries
+at the same validated root. It retains the exact prepared squarefree domain.
+`QueryHandle.buildSigns` and `signAt` use the same selected-sign producer as the
+ordinary descriptor APIs; the finite agreement proofs preserve their results.
+The handle is indexed by the original descriptor, including its context,
+interval and derivative word. `checkSigns` retains the ordinary literal replay
+checks, so evidence from another selection or changed representation is rejected.
+The companion proves handle construction and every prepared query succeed
+under lawful coefficients, with the shared proved root-sum dependency.
+Preparation is shared; each query list still builds its joint table and runs
+independent replay. No query-answer cache or performance speedup is claimed.
+
+`determinePrepared context domain queries` returns the table directly using
+that same checked producer. Its internal-error branch prints a diagnostic and
+returns an empty table; `determinePrepared_success` excludes that branch under
+the lawful coefficient-interpretation assumptions using the shared proved
+root-sum theorem. Each call constructs the BKR evidence and runs its full
+independent replay check. `determine sign context
+head lower upper queries` first prepares the root domain and returns `none`
+exactly for an invalid domain. Valid domains without roots return an empty
+table. Empty query lists count all roots at the empty sign word; zero and
+repeated queries keep their positions. The companion proves exact root counts
+for every word, including zero for omitted words, using the same shared
+proved root-sum theorem. Use `buildTablePrepared`
+for explicit diagnostics, or `buildPrepared` to retain the replay certificate.
 
 `RawDescriptor` records its full context, root domain, distinct derivative
 indices and sign word. `RawDescriptor.check` reconstructs the formal derivative
@@ -218,6 +296,29 @@ selected derivatives followed by the exact requested queries. `SelectedSigns`
 retains the full replay, a fixed-length sign vector and the assertion that
 filtering gives exactly its count-one row. `SelectedSigns.signs_eq` proves
 agreement for every matching finite observation under `Replay.Interprets`.
+`Descriptor.signAt` returns an ordinary integer for one polynomial using the
+same checked joint-table construction. Its explicit internal-error branch
+emits a panic diagnostic in compiled execution and returns zero;
+`Descriptor.signAt_success` in the companion proves that branch
+unreachable under lawful coefficient interpretation, and `signAt_correct`
+identifies the result with evaluation at the selected root. The executable
+operation takes no companion proof package. Each call prepares its domain,
+constructs a checked table and repeats its replay in selected-sign extraction.
+Use `buildSigns` for several queries to share one table. Preparation and replay
+costs remain part of the specified Phase-4 measurements.
+
+`Descriptor.complete` exposes the completed descriptor directly. It calls the
+same `buildCompletion` producer. An internal error prints a diagnostic and
+returns the original validated descriptor; the companion proves this branch
+unreachable when coefficient arithmetic and signs have their specified
+interpretation. The fallback retains the source's indices and may still be
+partial; `complete_correct` proves fullness under those interpretation laws.
+Completion retains the exact head, interval and context,
+including for an empty partial encoding that selects a unique root. Call
+`buildCompletion` when the completion evidence or explicit diagnostics are
+needed. Each call constructs and checks its full derivative table, then checks
+that replay again when constructing the returned descriptor. It does not cache
+a previous completion.
 
 `Descriptor.buildRoots` enumerates full derivative encodings, validates each
 count-one row, and inserts them by Thom order. `rootsFrom_perm` proves that
@@ -242,6 +343,11 @@ both degree branches of the public entry point to the actual prepared table;
 `buildRoots_perm` and `buildRoots_sorted` give its row preservation and finite
 strict sortedness. `buildRoots_raw` binds every returned descriptor to
 the requested context, head, interval and full derivative slots.
+`buildRoots_none` proves that the absent-domain result occurs exactly when
+preparation fails. `buildRoots_ofEmpty` proves actual empty-table success in
+both degree branches, without any ordering premise. `buildRoots_ofSingle`
+proves actual success for one unit-count row without any comparator premise. These finite proofs have
+no admitted dependencies.
 `buildRoots_constant` proves that any successful constant-head result is empty
 using descriptor shape alone. Constants retain the literal checking path.
 Each descriptor still constructs its full index list. Every insertion comparison
@@ -263,6 +369,17 @@ strict finite-endpoint queries. It retains joint count-one evidence and a
 validated target descriptor. Invalid target domains and absent selected roots
 return `none`; internal invariant failures remain diagnostic. The companion
 proves that each actual endpoint query expresses its strict bound.
+`Descriptor.buildReencoding_refinement` proves that the actual algorithm succeeds
+when a valid interval for the same head retains the selected root and its root
+set is contained in the original domain. The output preserves that root and
+has fresh evidence bound to the new interval. The old validated partial word
+supplies uniqueness, so this proof applies to noninjective representations
+and non-Archimedean coefficient interpretations without a general Thom
+injectivity theorem. `Descriptor.buildReencoding_congr` also permits a differently
+stored head with a zero difference from the original polynomial. Fresh evidence
+retains the new literal head binding. `Descriptor.reencoding_rows` proves the unique joint row
+whenever any target contains the source root; establishing uniqueness from a
+new head's derivative word alone remains a separate foundation requirement.
 `Descriptor.buildComparison` re-encodes both roots on the common head over the
 whole line, then applies the guarded full Thom rule. It retains both joint
 replays and the common-product witness. This handles shared roots, different
@@ -272,10 +389,9 @@ four BKR tables and four prepared domains: joint re-encoding evidence and a
 separate target descriptor for each side. Sharing this work and accounting
 for its cost against the required comparison bounds remain required.
 
-The total `determinePrepared` API remains required.
-The optional companion proves producer completeness and root-count correspondence
-relative to the named #10389 root-sum bridge; it does not yet provide those
-total executable wrappers. `Descriptor.buildSigns_success` rules out every
+The total table APIs have producer completeness and root-count correspondence
+relative to the shared proved root-sum theorem. Other selected-root wrappers
+retain their separate obligations. `Descriptor.buildSigns_success` rules out every
 internal selected-sign error on validated descriptors with lawful coefficients;
 the executable diagnostic interface is retained for arbitrary operations.
 Completion and root lists still require their totality proofs.
@@ -283,7 +399,7 @@ Strict-order comparison correspondence,
 re-encoding success characterization and domain-exact totality, the consumer
 sample-point interface, serialization and
 nested evidence sharing also remain required. The semantic proofs interpret the
-actual query replays through #10389; the specified BKR/Thom foundations are a
+actual query replays through the shared proved root-sum theorem; the specified BKR/Thom foundations are a
 separate completion gate. No performance milestone is claimed here. See the [specification](SPEC/hex-sign-det.md)
 for the complete contract and [#10377](https://github.com/kim-em/hex-dev/issues/10377)
 for the remaining assignment.
@@ -297,7 +413,10 @@ coefficient levels and starts a fresh oracle context. The corrected
 `(εx²−1)(εx³−1)` example exercises the two positive partial descriptors,
 completion, root order, selected signs and cross-polynomial re-encoding without
 a rational separator. Two-level fixtures isolate `δ` from `ε` and `ε+δ` using
-an endpoint `2δ`. Both coefficient levels reject changed context, head and
+an endpoint `2δ`. Interval refinement narrows `(0,2δ)` to `(δ/2,3δ/2)`,
+retaining δ with the full word `(+,-,+)` even though no positive rational lies
+between those endpoints. The independent oracle checks the selected-root
+identity after refinement. Both coefficient levels reject changed context, head and
 derivative-query bindings, and reject a multi-query table presented as a leaf.
 These leaf-arity checks do not test an identity-preserving incomplete support
 forgery. The oracle enforces each case’s coefficient depth and the corrected
@@ -315,6 +434,22 @@ lake build HexSignDet +HexSignDet.Conformance hexsigndet_emit_infinitesimal
 python3 scripts/oracle/sign_det_z3.py --check
 python3 -m unittest scripts.oracle.test_sign_det_z3
 ```
+
+Run only the nested refinement API example with
+`.lake/build/bin/hexsigndet_emit_infinitesimal refinement`.
+
+The [retained representative observation](../reports/data/sign-det-refinement/f03d5daa3/metadata.json)
+records one complete `refinement` process at source revision `f03d5daa3`:
+3.967 seconds on chungus2, automatically selected CPU 5. It includes startup,
+preparation, re-encoding, interval-binding checks and JSON output. The record
+retains build freshness, clean source state, unchanged source/binary checks and
+oracle-checked output. Its executable resolved through the shared build directory
+of the original `hex-dev-issue-10377` worktree, as recorded in the metadata.
+The freshness and hash checks bind that observation to its archived source and
+binary; it is not a measurement of the current rebased implementation.
+The [earlier observation](../reports/data/sign-det-refinement/ef06438d2/metadata.json)
+is retained too; it predates the explicit returned-bound fields and lacks the
+later clean-tree/freshness metadata. Neither is a scaling or Phase-4 verdict.
 
 Structural expansion and checked graph replay deliberately treat unreachable
 entries differently: both reject invalid references, while only replay checks

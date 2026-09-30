@@ -121,14 +121,17 @@ def pari_group_check(rows: list[dict]) -> None:
     curve = None
     for row in rows:
         kind = row["kind"]
-        if kind not in ("add", "scalar", "step") or row.get("result") is None and kind != "step":
+        if kind not in ("add", "scalar", "step", "curve") or (row.get("result") is None and kind not in ("step", "curve")):
             continue
         key = (row["n"], row["a"], row["b"])
         if key != curve:
             n, a, b = key
             commands.append(f"E=ellinit([0,0,0,{a},{b}],{n});")
             curve = key
-        if kind == "add":
+        if kind == "curve":
+            commands.append("print([lift(E.j),ellcard(E)]);")
+            expected.append([row["j"], row["order"]])
+        elif kind == "add":
             commands.append(
                 f"print(lift(elladd(E,{_gp_point(row['p'])},{_gp_point(row['q'])})));"
             )
@@ -154,10 +157,43 @@ def pari_group_check(rows: list[dict]) -> None:
         assert normalized == want, (i, normalized, want)
 
 
+def jacobi(a: int, n: int) -> int:
+    sign = 1
+    a %= n
+    while a:
+        while a % 2 == 0:
+            a //= 2
+            if n % 8 in (3, 5):
+                sign = -sign
+        if a % 4 == n % 4 == 3:
+            sign = -sign
+        a, n = n % a, a
+    return sign if n == 1 else 0
+
+
 def main() -> int:
     rows = [json.loads(line) for line in sys.stdin if line.strip()]
     for row in rows:
         kind = row["kind"]
+        if kind == "curve":
+            n, a, b = (row[k] for k in ("n", "a", "b"))
+            order = 1 + sum((y*y - x*x*x - a*x - b) % n == 0
+                            for x in range(n) for y in range(n))
+            assert row["order"] == order, row
+            assert row["j"] == 1728*4*a**3*pow(4*a**3+27*b*b, -1, n) % n, row
+            continue
+        if kind == "root":
+            n, a, root = row["n"], row["a"], row["root"]
+            assert row["symbol"] == jacobi(a, n), row
+            if root is not None:
+                assert 0 <= root < n and root * root % n == a % n, row
+            continue
+        if kind == "norm":
+            if row["result"] is not None:
+                t, v = row["result"]
+                assert t * t + row["d"] * v * v == 4 * row["n"], row
+            continue
+
         if kind == "add":
             got = add(row["n"], row["a"], row["p"], row["q"], row["witnesses"])
             assert got == row["result"], row

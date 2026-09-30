@@ -1,0 +1,49 @@
+
+/home/kim/.local/state/hex/issue-10377-profiles/issue-10377-joint-profile-394c3c548/archived-debuggee:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000049c9830 <_ZN4lean3mpzC1Em>:
+ 49c9830:	41 56                	push   %r14
+ 49c9832:	53                   	push   %rbx
+ 49c9833:	48 83 ec 18          	sub    $0x18,%rsp
+ 49c9837:	49 89 f6             	mov    %rsi,%r14
+ 49c983a:	48 89 fb             	mov    %rdi,%rbx
+ 49c983d:	44 89 f6             	mov    %r14d,%esi
+ 49c9840:	e8 cb 4e 03 00       	call   49fe710 <__gmpz_init_set_ui>
+ 49c9845:	49 c1 ee 20          	shr    $0x20,%r14
+ 49c9849:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 49c984e:	44 89 f6             	mov    %r14d,%esi
+ 49c9851:	e8 ca ff ff ff       	call   49c9820 <_ZN4lean3mpzC1Ej>
+ 49c9856:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 49c985b:	ba 20 00 00 00       	mov    $0x20,%edx
+ 49c9860:	48 89 fe             	mov    %rdi,%rsi
+ 49c9863:	e8 48 4f 03 00       	call   49fe7b0 <__gmpz_mul_2exp>
+ 49c9868:	48 8d 54 24 08       	lea    0x8(%rsp),%rdx
+ 49c986d:	48 89 df             	mov    %rbx,%rdi
+ 49c9870:	48 89 de             	mov    %rbx,%rsi
+ 49c9873:	e8 18 50 03 00       	call   49fe890 <__gmpz_add>
+ 49c9878:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 49c987d:	e8 3e 00 00 00       	call   49c98c0 <_ZN4lean3mpzD1Ev>
+ 49c9882:	48 83 c4 18          	add    $0x18,%rsp
+ 49c9886:	5b                   	pop    %rbx
+ 49c9887:	41 5e                	pop    %r14
+ 49c9889:	c3                   	ret
+ 49c988a:	49 89 c6             	mov    %rax,%r14
+ 49c988d:	eb 0d                	jmp    49c989c <_ZN4lean3mpzC1Em+0x6c>
+ 49c988f:	49 89 c6             	mov    %rax,%r14
+ 49c9892:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 49c9897:	e8 24 00 00 00       	call   49c98c0 <_ZN4lean3mpzD1Ev>
+ 49c989c:	48 89 df             	mov    %rbx,%rdi
+ 49c989f:	e8 fc 52 03 00       	call   49feba0 <__gmpz_clear>
+ 49c98a4:	4c 89 f7             	mov    %r14,%rdi
+ 49c98a7:	e8 64 1f 33 fc       	call   cfb810 <_Unwind_Resume>
+ 49c98ac:	48 89 c7             	mov    %rax,%rdi
+ 49c98af:	e8 9c e1 32 fc       	call   cf7a50 <__clang_call_terminate>
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:

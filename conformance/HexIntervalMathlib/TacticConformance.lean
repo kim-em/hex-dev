@@ -105,6 +105,17 @@ example {x : ℝ} (singleton : x = 1) :
 example {x y : ℝ} (hx : x = 4) (hy : y = 2) : x / y = 2 := by
   interval
 
+-- Computed singleton endpoints also pass through subsequent division and ties.
+theorem nestedReciprocal {x : ℝ} (hx : x = 2) : 1 / x⁻¹ = 2 := by
+  interval
+
+theorem nestedDivision {x y z : ℝ} (hx : x = 8) (hy : y = 4) (hz : z = 2) :
+    x / y / z = 1 := by
+  interval
+
+theorem reciprocalMin {x : ℝ} (hx : x = 2) : min x⁻¹ (1 / 2) = 1 / 2 := by
+  interval
+
 -- A scientific decimal is not an integer source cut and must not displace the
 -- later authenticated integer cut for the same source expression.
 example {x : ℝ} (_poison : (1.5 : ℝ) ≤ x) (valid : 1 ≤ x) : 1 ≤ x := by
@@ -253,5 +264,23 @@ info: 'Hex.IntervalMathlib.TacticConformance.reciprocalSum' depends on axioms: [
 -/
 #guard_msgs in
 #print axioms reciprocalSum
+
+/--
+info: 'Hex.IntervalMathlib.TacticConformance.nestedReciprocal' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms nestedReciprocal
+
+/--
+info: 'Hex.IntervalMathlib.TacticConformance.nestedDivision' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms nestedDivision
+
+/--
+info: 'Hex.IntervalMathlib.TacticConformance.reciprocalMin' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms reciprocalMin
 
 end Hex.IntervalMathlib.TacticConformance
