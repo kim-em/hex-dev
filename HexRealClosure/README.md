@@ -975,12 +975,15 @@ retains an erased derivation of these native operations, with no semantic law
 record as an executable argument. `Conversion.comp` composes two actual
 conversions, retaining both closures. `Conversion.cast` reconciles source
 ownership using a proved context equality. Together these support consecutive
-changes without discarding the actual conversion closures.
+changes at the starting root before extending the suffix, without discarding
+the actual conversion closures.
 
 `Suffix` represents a finite sequence of validated later root levels. Its
 `context` is the original final context. `Conversion.extend?` rebuilds every
 level in order and returns the conversion into the new immutable final
-context. Every original context and value remains valid independently.
+context. Every original context and value remains valid independently. The
+converted descriptors are not returned as a new `Suffix`; another refinement
+of the rebuilt tower requires that additional interface and model alignment.
 
 The companion `Conversion.Model` relates the native conversion to the original
 model and supplies the actual target model. `Model.identity` and `Model.comp`
