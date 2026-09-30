@@ -29,26 +29,29 @@ variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRe
 the old ambient field's infinitesimal rational-function extension. -/
 @[expose] noncomputable def liftInfinitesimal {source : Context registry} {R : Type u}
     [Field R] [LinearOrder R] [IsStrictOrderedRing R] [DecidableEq R]
-    (model : Model source R) : Model source (Ambient.infinitesimal R).Carrier :=
-  model.map (Ambient.coefficientHom (Ambient.infinitesimal R))
-    (Ambient.coefficientHom_strictMono (Ambient.infinitesimal R))
+    (ambient : Ambient (Hex.RationalFn R))
+    (model : Model source R) : Model source ambient.Carrier :=
+  model.map (Ambient.coefficientHom ambient)
+    (Ambient.coefficientHom_strictMono ambient)
 
 @[simp] theorem liftInfinitesimal_value {source : Context registry} {R : Type u}
     [Field R] [LinearOrder R] [IsStrictOrderedRing R] [DecidableEq R]
-    (model : Model source R) (a : source.Value) :
-    model.liftInfinitesimal.value a =
-      Ambient.coefficientHom (Ambient.infinitesimal R) (model.value a) :=
+    (ambient : Ambient (Hex.RationalFn R)) (model : Model source R)
+    (a : source.Value) :
+    (model.liftInfinitesimal ambient).value a =
+      Ambient.coefficientHom ambient (model.value a) :=
   model.map_value _ _ a
 
 /-- The semantic new infinitesimal is below every positive interpreted old
 tower value in the common enlarged ambient field. -/
 theorem liftInfinitesimal_X_lt {source : Context registry} {R : Type u}
     [Field R] [LinearOrder R] [IsStrictOrderedRing R] [DecidableEq R]
-    (model : Model source R) (a : source.Value) (positive : 0 < model.value a) :
-    (Ambient.infinitesimal R).inclusion (Hex.RationalFn.X : Hex.RationalFn R) <
-      model.liftInfinitesimal.value a := by
+    (ambient : Ambient (Hex.RationalFn R)) (model : Model source R)
+    (a : source.Value) (positive : 0 < model.value a) :
+    ambient.inclusion (Hex.RationalFn.X : Hex.RationalFn R) <
+      (model.liftInfinitesimal ambient).value a := by
   rw [liftInfinitesimal_value]
-  exact Ambient.X_lt_coefficient (Ambient.infinitesimal R) _ positive
+  exact Ambient.X_lt_coefficient ambient _ positive
 
 end Hex.RealClosure.Tower.Model
 

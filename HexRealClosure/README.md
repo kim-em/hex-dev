@@ -1127,11 +1127,13 @@ General `Context.enlarge` still requires:
    semantic infinitesimal and with the native sign law preserved.
 2. Proving selected-root mapping through ordered field embeddings and agreement
    of mapped towers with descriptor-based re-extension at every root level.
-3. Proving the enlarged closure algebraic over `B(ε)` from algebraicity of the
-   old closure over `B` and transitivity.
-4. Proving the local algebraic bound and staged-order agreement required by the
+3. If the old model uses a merely real-closed ambient field, restricting its
+   values to the relative algebraic union over `B` before lifting.
+4. With the old ambient algebraic over `B`, proving the enlarged closure
+   algebraic over `B(ε)` by transitivity.
+5. Proving the local algebraic bound and staged-order agreement required by the
    SPEC for the computational `B(ε)` levels.
-5. Extracting the live suffix automatically and assembling the total checked
+6. Extracting the live suffix automatically and assembling the total checked
    constructor with its value and order preservation statements.
 
 ## Ordered algebraic ambient models
@@ -1162,7 +1164,8 @@ increasing field homomorphism, preserving its values and sign law.
 `Ambient.coefficientHom` includes any ordered field as constants in a supplied
 ordered algebraic real closure of its infinitesimal extension.
 `Tower.Model.liftInfinitesimal` uses this map to interpret the whole old tower
-in the chosen closure of `R(ε)`. `Ambient.X_pos` and `X_lt_coefficient` prove
+in any supplied ordered algebraic real closure of `R(ε)`; `Ambient.infinitesimal R`
+supplies one such choice. `Ambient.X_pos` and `X_lt_coefficient` prove
 the semantic ε is positive and below every positive old coefficient, while
 `liftInfinitesimal_X_lt` applies that bound to interpreted tower values. The
 remaining native and staged-order obligations are listed above.
