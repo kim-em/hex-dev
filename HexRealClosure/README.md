@@ -1131,6 +1131,21 @@ same success for any native base admitting a sign-compatible ring homomorphism
 into an ordered field; it constructs the enlarged ambient internally. The
 rational case is an instance of this theorem.
 
+`Context.enlarge?` extracts a context's stored staged base and validated root
+suffix, adds one positive infinitesimal to that base, and runs the checked
+suffix conversion. It returns a `Conversion` from the original context when
+every descriptor validates in its new predecessor. The core
+`Context.enlarge?_eq` theorem identifies the exact checked suffix traversal.
+In the Mathlib bridge, `Context.enlarge?_model` preserves the interpretation
+`old.extend suffix` of every value through the returned conversion, and hence
+its equality and order. `Context.enlarge?_exists` proves conversion success
+when the extracted base admits a sign-compatible map into an ordered field.
+`Context.origin_adjoin_base` discharges the origin equality for one root over
+a staged base. A corresponding equation for longer stored suffixes is still
+needed to apply the theorem directly at arbitrary depth. Origin extraction
+currently appends suffixes and can reconstruct old frames; no depth-scaling
+cost is claimed for this constructor.
+
 General `Context.enlarge` still requires:
 
 1. Relating an arbitrary old model to a chosen `B`-algebra map, proving

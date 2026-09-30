@@ -1,0 +1,65 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import HexRealClosure.TowerEnlarge
+public import HexRealClosureMathlib.TowerTransport
+
+public section
+
+namespace Hex.RealClosure.Tower
+
+universe u
+
+variable {registry : BaseContext.Registry}
+
+/-- A compatible semantic model of the new base extends through the stored
+root suffix. Every old value has the same interpretation after conversion. -/
+theorem Context.enlarge?_model {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    (target_eq : suffix.context = context)
+    (origin_eq : context.origin = Origin.pack base suffix target_eq)
+    {K : Type u} [Field K] [LinearOrder K] [DecidableEq K]
+    [IsStrictOrderedRing K] [IsRealClosed K]
+    (old : Tower.Model (Context.base base) K)
+    (model : Conversion.Model (Conversion.infinitesimal base) old) :
+    ∃ result : Conversion context, context.enlarge? = some result ∧
+      Nonempty (Conversion.Model result (target_eq ▸ old.extend suffix)) := by
+  obtain ⟨result, hresult, ⟨preserved⟩⟩ := model.extend_exists suffix
+  refine ⟨result.cast target_eq, ?_, ⟨preserved.cast target_eq⟩⟩
+  rw [Context.enlarge?_eq base suffix target_eq origin_eq, hresult]
+  rfl
+
+/-- A sign-compatible interpretation of the extracted staged base makes
+checked enlargement succeed for its stored root suffix. -/
+theorem Context.enlarge?_exists {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    (target_eq : suffix.context = context)
+    (origin_eq : context.origin = Origin.pack base suffix target_eq)
+    {R : Type u} [Field R] [LinearOrder R] [IsStrictOrderedRing R]
+    [DecidableEq R]
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* R)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int)) :
+    ∃ result : Conversion context, context.enlarge? = some result := by
+  let model := Conversion.Model.infinitesimalMapped base f hsign
+    (Ambient.infinitesimal R)
+  obtain ⟨result, hresult, _⟩ :=
+    Context.enlarge?_model base suffix target_eq origin_eq _ model
+  exact ⟨result, hresult⟩
+
+end Hex.RealClosure.Tower
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_model
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_exists' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_exists

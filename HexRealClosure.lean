@@ -26,4 +26,5 @@ public import HexRealClosure.TowerOrder
 public import HexRealClosure.TowerRefinement
 public import HexRealClosure.TowerTransport
 public import HexRealClosure.TowerSuffix
+public import HexRealClosure.TowerEnlarge
 public import HexRealClosure.QAdjoin
