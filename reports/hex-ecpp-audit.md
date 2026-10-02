@@ -206,3 +206,10 @@ any recursive child failure; its post-change build is retained in
 `audit/retry-prefix-verification.json`. The unrelated upstream attachment/doc
 finding is recorded as #10600. Companion parser-location propagation remains
 an optional Phase 0 companion improvement, outside this computational issue.
+
+`audit/pr-final-review.txt` retains the focused independent closure check.
+It confirms that the replay attribution and real prefix regression resolve
+the remaining findings, with no blocker. Its wording clarifications are
+incorporated: faster GMP regimes remain below the quadratic bound, replay
+leaf attribution does not claim complete assembly stack unwinding, and
+recorded working-tree hashes identify the source changes at collection.

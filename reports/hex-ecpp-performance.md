@@ -50,9 +50,9 @@ width from 32 through 512 bits at the supplied vector's 65-bit modulus.
 GP version and exact outputs. Expected points and inverse transcripts are
 prepared outside timing; every measured call checks the complete result.
 
-The modulus-width registrations use mode 2. No tight monomial covers their
-operand-dependent Euclidean iterations, quotient sizes and changing GMP
-arithmetic regimes. GMP's [basecase division](https://gmplib.org/manual/Basecase-Division)
+The modulus-width registrations use mode 2. No tight monomial covers the changing GMP arithmetic regimes and, on the
+diagonal, scalar bit-copying. Proposals additionally have operand-dependent
+Euclidean iterations and quotient sizes. GMP's [basecase division](https://gmplib.org/manual/Basecase-Division)
 and [multiplication](https://gmplib.org/manual/Basecase-Multiplication)
 have quadratic upper bounds. Classical extended Euclid also costs O(k²):
 quotient widths sum to O(k), with each division/coefficient update bounded
@@ -268,16 +268,21 @@ The checked replay profile independently covers the two replay upper-bound
 registrations: `python3 scripts/profile/ecpp.py --only scalar-modulus-replay
 --output reports/ecpp/audit/profiles-replay-widths-final.json --profiler-root
 <checkout>`. [profiles-replay-widths-final.json](ecpp/audit/profiles-replay-widths-final.json)
-retains source `929c1d4f1`, executable/core digests and passing filter diagnostics.
+retains source `929c1d4f1` plus the recorded working-tree profiling case
+(committed in `690326b85`), executable/core digests and passing filter diagnostics.
 The profiling label is the replay phase of `scalar-modulus-widths`.
 GMP accounts for 93.11% of leaf samples: multiply/subtract-multiply primitives
 contribute 33.23%/22.81%, with quotient/remainder and basecase multiplication
-also visible. Thus the cited multiply/divide bounds cover the dominant timed
+also visible. Toom-2 multiplication and divide-and-conquer division appear
+too; these faster regimes remain below the cited quadratic upper bounds. Thus the cited multiply/divide bounds cover the dominant timed
 arithmetic. Allocation is 5.80%; each addition allocates boundedly many
 k-bit residues and arithmetic temporaries, also below the quadratic per-addition
 bound. The fixed-scalar modulus wrapper executes the identical callback with
 fewer additions; the diagonal registration adds at most 2k such operations.
-Neither replay callback computes an inverse. All prior profiles remain applicable
+Neither replay callback computes an inverse. Assembly stack unwinding omits
+many caller frames, so this profile supplies leaf attribution rather than
+inclusive caller coverage; the passing timed-region filter selects the
+benchmark thread independently of stack depth. All prior profiles remain applicable
 to unchanged timed operation bodies, as recorded by `evidence-reuse.json`.
 
 Inclusive percentages overlap and must not be summed. Dense scalar replay is
@@ -330,9 +335,9 @@ Completed unsuccessful runs are retained, with their limited evidentiary roles e
   retains its specific evidentiary role.
 - The two fixed-modulus scalar rows in `scientific-widths-final.json` were
   collected under quadratic upper bounds through 4,096 bits and already
-  showed linear scaling. That declaration missed the dominant bounded-width
+  showed linear scaling. That declaration was a loose upper bound for the dominant bounded-width
   Euclidean/ring work in this range. The corrected model follows the source
-  operand limits and profile, and uses the actual 32–512-bit caller regime.
+  operand limits, and uses the actual 32–512-bit caller regime.
   Fresh mode-1 samples in `scientific-caller-final.json` certify it; the old
   observations are retained without relabeling.
 
