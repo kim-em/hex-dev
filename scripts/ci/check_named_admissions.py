@@ -208,6 +208,7 @@ def check() -> None:
              "HexRealClosure.RootTransport", "HexRealClosureMathlib.RootTransport",
              "HexRealClosure.RootCollection", "HexRealClosureMathlib.RootCollection",
              "HexRealClosure.RootCollectionTests",
+             "HexRealClosure.Sample", "HexRealClosure.SampleTests", "HexRealClosureMathlib.Sample",
              "HexRealClosureMathlib.TowerCoverage",
              "HexRealClosureMathlib.TowerNaturality",
              "HexRealClosureMathlib.TowerEnlargeOrder",

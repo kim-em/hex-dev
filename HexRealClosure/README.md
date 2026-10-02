@@ -1,5 +1,37 @@
 # Selected-root arithmetic and immutable bases
 
+## Sections and sectors
+
+`Tower.Sample.section` constructs a section from a validated descriptor and
+retains its cached root context, ordinary native value, and coefficient
+conversion. `Sample.signs` evaluates a polynomial family through that actual
+conversion. `Cell.contains` checks section equality or strict sector membership
+using native comparison.
+
+`Sample.partition context polynomials` obtains all finite roots of each
+nonzero polynomial, collects their complete root contexts into one arithmetic
+context, sorts the values, and removes equal boundaries. Zero polynomials
+contribute no boundary. `Partition.sections` returns each distinct boundary;
+`Partition.sectors` returns the two exterior rays and all intervening open
+sectors. Bounded samples use the midpoint of adjacent native values, and ray
+samples use offsets by one. The root-free whole line uses zero. This construction
+works for infinitesimally close roots without requiring a separating rational.
+`Partition.sector?` rejects an index outside this complete list.
+
+The companion `HexRealClosureMathlib.Sample` proves exact boundary coverage,
+strict ordering, coefficient-preserving sign evaluation, and correctness of
+each returned section and sector under every compatible collection model.
+Every sector sample passes native strict membership, and no root of a nonzero
+input polynomial lies in its open sector. The proofs use the actual complete
+root and collection producers; no caller-supplied root coverage or sample sign
+agreement is required. Tests include rational roots, zero and constant
+polynomials, and roots at two infinitesimally close native values.
+
+The API produces ordinary values in their native contexts. Joint specialization
+of nested selected roots and successive infinitesimals to one ordinary real
+assignment, independent sample conformance, and the full performance evaluation
+remain separate obligations.
+
 `Root.validate` checks a `Hex.SignDet.RawDescriptor Rat Nat` against its exact
 version tag. The tag is a `Nat` and does not yet own a defining polynomial or
 dependency graph. An `Expression d` stores a rational polynomial evaluated at the
