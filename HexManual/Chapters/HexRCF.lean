@@ -1651,11 +1651,59 @@ solver receives exactly the interpreted polynomial. Zero has a universal
 root set; a nonzero constant has an empty finite set. This is the direct
 canonical-carrier API. The tactic specializes to fixed-field coordinates,
 squarefrees its carrier and checks proposed intervals over those coordinates;
-its fallback uses these same strict enclosures. The canonical-carrier proposal
-laws here do not establish totality of that fixed-field pipeline.
-Proposals still require separation and literal root-count replay before they
-can form a checked cell decomposition. These producer laws do not complete
-the general algebraic decision procedure or its certificate search.
+its fallback uses these same strict enclosures.
+
+{name}`Hex.RCF.RealCoefficients.isolateAt_progress` proves that every nonzero
+squarefree canonical head eventually yields accepted isolation evidence along
+any precision schedule tending to infinity. Separation, root-free endpoints,
+complete root coverage and interval counts are derived using the owner's
+complete sorted root list and the literal Sturm checker.
+{name}`Hex.RCF.RealCoefficients.FieldBuild.isolateAt_progress` gives the same
+guarantee over original fixed-field coordinates at a checked selected real
+embedding, including the canonical fallback after bounded direct search fails.
+Canonical conversion preserves the exact interpreted polynomial.
+The corresponding `isolate` entry points search successive precisions and
+return isolation evidence together with its checker acceptance proof and
+exact binding to the builder that produced the shared squarefree chain.
+The preferred fixed-field search, head conversion and complete root
+solving run once. Refinement repeats interval construction and gap checks;
+the accepted Sturm replay evidence is built once after the gaps pass.
+These are compiled producers. A quoted proof must recheck the emitted literal
+certificate in the ordinary kernel.
+Their termination follows from these progress laws for nonzero squarefree
+inputs; they do not change the tactic's fixed-precision attempt.
+
+{name}`Hex.RCF.RealCoefficients.FieldRootSigns.Table.build_success` proves
+that atom-query production succeeds after isolation construction succeeds.
+Queries retain the shared squarefree chain and are checked at the same root
+interval and original head.
+{name}`Hex.RCF.RealCoefficients.FieldBuild.isolateFormula_queries` composes
+this query production with the total formula isolation entry point.
+
+{name}`Hex.RCF.RealCoefficients.RadicalCert.build_success_real` proves that
+the actual bounded derivative-gcd quotient search produces accepted radical
+evidence for every nonzero head under the checked real arithmetic interpretation.
+{name}`Hex.RCF.RealCoefficients.RadicalCert.build_squarefree` derives
+squarefreeness of the returned core from the producer's exact quotient and the
+owner's Yun invariant. It is not a hypothesis supplied to the radical checker.
+Nonzero constants are included; zero still has no finite root list.
+The core need not be monic: for `X³` the raw derivative gcd yields `X/3`.
+
+The executable `RadicalCert.reduce` entry point takes the proved progress law,
+returns the builder's certificate and retains exact production binding plus
+literal acceptance. The real interpretation is used only in the proof, so a
+fixed field's noncomputable real embedding is not passed to compiled arithmetic.
+
+{name}`Hex.RCF.RealCoefficients.FieldBuild.isolateFormula` composes this
+reduction with precision search for the complete shared formula carrier,
+including repeated/common roots, zero atoms and formulas without atoms.
+The shared formula keeps its guard atoms, whose nonzero endpoint polynomials
+enter the carrier. Squarefreeness is derived before isolation; it is not an
+extra admission required from the caller.
+This constructs a checked root envelope. The complete fixed-field sign-table,
+decision-certificate pipeline and total algebraic tactic search remain separate
+obligations. The current
+tactic still tries only its fixed precision.
 
 # Caller-supplied finite bounds
 %%%

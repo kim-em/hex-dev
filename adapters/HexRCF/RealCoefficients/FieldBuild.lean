@@ -38,9 +38,7 @@ dyadic interval proposals. -/
     (head : DensePoly (PolyQuot p root)) (precision : Nat) :
     Option IsolationCert := do
   let coefficients ← head.toArray.mapM (canonical? rep hrep)
-  let roots ← (RealAlgebraicPoly.ofArray coefficients).roots.finite?
-  let intervals ← roots.mapM fun r => rootInterval r.root precision
-  return ⟨intervals⟩
+  solverIntervals (RealAlgebraicPoly.ofArray coefficients) precision
 
 /-- A search-only sign oracle. An unsuccessful canonical conversion makes the
 proposal fail its subsequent exact replay checks. -/
@@ -48,7 +46,9 @@ proposal fail its subsequent exact replay checks. -/
     (hrep : SimpleRoot.mk rep = root) (a : PolyQuot p root) : Int :=
   (canonical? rep hrep a).map RealAlgebraicNumber.sign |>.getD 0
 
-private def buildProposed {Ctx : Type u} [DecidableEq Ctx]
+/-- Check an optional search proposal over its original field coordinates.
+A missing or rejected proposal remains a failed attempt. -/
+@[expose] def buildProposed {Ctx : Type u} [DecidableEq Ctx]
     (sign : PolyQuot p root → Int) (context : Ctx)
     (head : DensePoly (PolyQuot p root)) (proposal : Option IsolationCert) :
     Option (IsolationReplay (PolyQuot p root) Ctx) :=
@@ -71,7 +71,7 @@ private theorem buildProposed_checked {Ctx : Type u} [DecidableEq Ctx]
 /-- First search with prepared field root counts. If that bounded search or
 its exact replay fails, use the existing canonical root solver for proposals.
 Both paths return only evidence accepted over the original field coordinates. -/
-def isolateAt [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+@[expose] def isolateAt [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
     (context : Ctx) (head : DensePoly (PolyQuot p root))
     (precision : Nat) : Option (IsolationReplay (PolyQuot p root) Ctx) :=
@@ -101,6 +101,37 @@ theorem isolateAt_checked [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq
       have heq : direct = cert := by simpa [hdirect] using h
       subst cert
       exact buildProposed_checked _ _ _ _ _ hdirect
+
+private theorem buildProposed_build {Ctx : Type u} [DecidableEq Ctx]
+    (sign : PolyQuot p root → Int) (context : Ctx) (head : DensePoly (PolyQuot p root))
+    (proposal : Option IsolationCert) (cert : IsolationReplay (PolyQuot p root) Ctx)
+    (produced : buildProposed sign context head proposal = some cert) :
+    ∃ isolations, IsolationReplay.build sign FieldDecision.point context head isolations = some cert := by
+  unfold buildProposed at produced
+  split at produced
+  · contradiction
+  · exact ⟨_, produced⟩
+
+/-- Every successful preferred or fallback attempt retains its exact builder
+binding, including the canonical squarefree chain used by query production. -/
+theorem isolateAt_build [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
+    (context : Ctx) (head : DensePoly (PolyQuot p root)) (precision : Nat)
+    (cert : IsolationReplay (PolyQuot p root) Ctx)
+    (produced : isolateAt rep hrep context head precision = some cert) :
+    ∃ isolations, IsolationReplay.build (proposalSign rep hrep) FieldDecision.point
+      context head isolations = some cert := by
+  unfold isolateAt at produced
+  cases direct : buildProposed (proposalSign rep hrep) context head
+      (FieldIsolate.propose? (proposalSign rep hrep) FieldDecision.point head) with
+  | none =>
+    apply buildProposed_build (proposalSign rep hrep) context head
+      (proposeCanonical rep hrep head precision) cert
+    simpa only [direct] using produced
+  | some result =>
+    have same : result = cert := by simpa only [direct, Option.some.injEq] using produced
+    subst result
+    exact buildProposed_build _ _ _ _ _ direct
 
 /-- Prepare the rational defining polynomial once and certify the finite sign
 arguments that replay will read. The selected square fixes the root and both
