@@ -74,6 +74,29 @@ example {polynomials : List parent.Poly} (family : Partition parent polynomials)
   family.sectorBetween?_success original model .negInf (.finite upper) .negInf (.finite first)
     (family.leftRay_mem first rest values) rfl (congrArg Endpoint.finite same)
 
+/-- The last boundary supplies an accepted right ray through ordinary imports. -/
+example {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (original : Model parent K) (model : Collection.Model family.collection original)
+    (before : List family.collection.input.context.Value) (last lower : family.collection.input.context.Value)
+    (values : family.values = before ++ [last])
+    (same : model.input.target.value lower = model.input.target.value last) :
+    ∃ sample, family.sectorBetween? (.finite lower) .posInf = some sample :=
+  family.sectorBetween?_success original model (.finite lower) .posInf (.finite last) .posInf
+    (family.rightRay_mem before last values) (congrArg Endpoint.finite same) rfl
+
+/-- Consecutive list entries supply a bounded request without private unfolding. -/
+example {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (original : Model parent K) (model : Collection.Model family.collection original)
+    (before after : List family.collection.input.context.Value)
+    (a b lower upper : family.collection.input.context.Value)
+    (values : family.values = before ++ a :: b :: after)
+    (lowerSame : model.input.target.value lower = model.input.target.value a)
+    (upperSame : model.input.target.value upper = model.input.target.value b) :
+    ∃ sample, family.sectorBetween? (.finite lower) (.finite upper) = some sample :=
+  family.sectorBetween?_success original model (.finite lower) (.finite upper) (.finite a) (.finite b)
+    (family.bounded_mem before after a b values)
+    (congrArg Endpoint.finite lowerSame) (congrArg Endpoint.finite upperSame)
+
 /-- A boundary request provides its computed sign vector at every point of
 the requested interval, using only the public checked result and ordinary imports. -/
 example {polynomials : List parent.Poly} (family : Partition parent polynomials)

@@ -205,6 +205,45 @@ theorem Partition.leftRay_mem {polynomials : List parent.Poly} (family : Partiti
     Cell.sector .negInf (.finite first) ∈ family.cells := by
   simp [Partition.cells, values, Sample.sectors, leftRay]
 
+/-- The final boundary of a nonempty partition has its exterior right ray. -/
+theorem Partition.rightRay_mem {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (before : List family.collection.input.context.Value) (last : family.collection.input.context.Value)
+    (values : family.values = before ++ [last]) :
+    Cell.sector (.finite last) .posInf ∈ family.cells := by
+  have tail : ∀ first earlier, Cell.sector (.finite last) .posInf ∈
+      (between family.collection.input.context first (earlier ++ [last])).map Prod.snd := by
+    intro first earlier
+    induction earlier generalizing first with
+    | nil => simp [between, rightRay]
+    | cons next rest ih =>
+      simp only [List.cons_append, between, List.map_cons]
+      exact List.mem_cons_of_mem _ (ih next)
+  cases before with
+  | nil => simp [Partition.cells, values, Sample.sectors, between, rightRay]
+  | cons first rest =>
+    simp only [Partition.cells, values, List.cons_append, Sample.sectors, List.map_cons]
+    exact List.mem_cons_of_mem _ (List.mem_append_right _ (List.mem_cons_of_mem _ (tail first rest)))
+
+/-- Consecutive boundaries in the complete list define an actual bounded sector. -/
+theorem Partition.bounded_mem {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (before after : List family.collection.input.context.Value)
+    (lower upper : family.collection.input.context.Value)
+    (values : family.values = before ++ lower :: upper :: after) :
+    Cell.sector (.finite lower) (.finite upper) ∈ family.cells := by
+  have tail : ∀ first earlier, Cell.sector (.finite lower) (.finite upper) ∈
+      (between family.collection.input.context first (earlier ++ lower :: upper :: after)).map Prod.snd := by
+    intro first earlier
+    induction earlier generalizing first with
+    | nil => simp [between, bounded]
+    | cons next rest ih =>
+      simp only [List.cons_append, between, List.map_cons]
+      exact List.mem_cons_of_mem _ (ih next)
+  cases before with
+  | nil => simp [Partition.cells, values, Sample.sectors, between, bounded]
+  | cons first rest =>
+    simp only [Partition.cells, values, List.cons_append, Sample.sectors, List.map_cons]
+    exact List.mem_cons_of_mem _ (List.mem_append_right _ (List.mem_cons_of_mem _ (tail first rest)))
+
 /-- Every returned section retains the same actual coefficient conversion. -/
 theorem Partition.sections_input {polynomials : List parent.Poly} (family : Partition parent polynomials)
     {sample : Sample parent} (present : sample ∈ family.sections) :

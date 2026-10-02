@@ -1579,7 +1579,8 @@ list. `Partition.sectorBetween?` checks requested finite or infinite boundaries
 against adjacent cells of that same complete family. It rejects non-adjacent,
 reversed and missing boundaries; the partition supplies the root-free evidence.
 The companion proves that every actual adjacent cell is accepted, including
-both rays and the root-free whole line.
+both rays and the root-free whole line. Requests match boundaries by value,
+so equal native representatives are accepted.
 
 The companion `HexRealClosureMathlib.Sample` proves exact boundary coverage,
 strict ordering, exact cell coverage and uniqueness, coefficient-preserving
