@@ -1505,7 +1505,7 @@ libraries:
   HexRealAlgebraic:
     deps: [HexNumberField]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
   HexRealAlgebraicMathlib:
     deps: [HexRealAlgebraic, HexNumberFieldMathlib, HexRealRootsMathlib]
@@ -1564,7 +1564,7 @@ libraries:
   HexSturm:
     deps: [HexPoly, HexRealRoots]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
     phase4:
       input_families:
