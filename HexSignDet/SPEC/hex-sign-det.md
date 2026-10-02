@@ -332,7 +332,8 @@ there is no generic fallback sign or global resource-budget substitute.
 
 All shapes assume the computational coefficients are interpreted with
 operation/sign preservation and zero reflection in a lawful exact coefficient
-field, followed by its order-preserving embedding. Root statements use the ambient `R,ι` above. They are planned obligations:
+field, followed by its order-preserving embedding. Root statements use the ambient `R,ι` above. These are required statement
+shapes; the companion records the implemented correspondence:
 
 | Statement | Required conclusion |
 | --- | --- |

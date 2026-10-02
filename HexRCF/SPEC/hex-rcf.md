@@ -1621,16 +1621,21 @@ must rebuild quoted proofs in fresh modules and audit the transitive axiom
 set, excluding `sorryAx`, new axioms and compiled evaluation trust.
 
 Keep separate [compiled and proof-example tracks](../../PLAN/Phase4.md#evidence-tracks).
-Mathlib-free family drivers measure coefficient production, root/sign search,
-executable replay and specialization arithmetic. Representative build-only
+Mathlib-free family drivers measure the reusable coefficient arithmetic,
+root/sign search and executable replay that they actually import. They may use
+inputs prepared by the adapter, but must not claim to time the adapter itself.
+Coefficient authentication, Mathlib-facing specialization and proof construction
+remain on the build-only tactic/proof track when their imports include Mathlib. Representative build-only
 HexRCF examples exercise abstraction/reification, literal quotation, ordinary
 kernel replay, realization and the full tactic in CI, with axiom audits and
 negative cases. Ordinary theorem applications need no dedicated timing probes.
 No Mathlib-importing executable benchmark is added.
 
-The adapter owns coverage of coefficient production and specialization in the
-Mathlib-free family drivers, coordinating reusable operations with their
-library owners. Vary degree, distinct atom count, coefficient size, precision
+The adapter owns end-to-end correctness and representative proof examples for
+coefficient production and specialization. Reusable computational primitives
+are measured in their Mathlib-free owners; any extraction of new reusable
+computation must preserve the existing semantics and be specified first.
+No core extraction is required merely to manufacture an executable timing. Vary degree, distinct atom count, coefficient size, precision
 and tower depth independently. Include bounded failures and common/repeated
 roots, not only easy enclosing bounds. Record memory, proof/serialized sizes,
 unique DAG nodes and expanded reference work. Quotation must preserve sharing

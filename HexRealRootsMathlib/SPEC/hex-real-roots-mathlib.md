@@ -668,7 +668,7 @@ weakening the existing Sturm-count predicate or its theorems.
 
 The abstract foundation is imported from Tau Ceti through this companion’s
 development adapters, shared by the integer frontend and
-[hex-sturm](../../SPEC/Libraries/hex-sturm.md#required-correspondence-and-specialization-theorems).
+[hex-sturm](../../HexSturm/SPEC/hex-sturm.md#required-correspondence-and-specialization-theorems).
 It is not a second proof from the existing derivative-chain theorem.
 The [Sturm–Tarski theorem](https://www.isa-afp.org/entries/Sturm_Tarski.html)
 is prior art, not an existing Lean import. This companion supplies
@@ -876,17 +876,17 @@ kernel. No generic field frontend is imported to prove these specializations.
 [hex-sturm-mathlib](../../SPEC/Libraries/hex-sturm-mathlib.md) consumes these
 shared results for field guards, generic endpoint sign operations, coefficient-proof
 composition, positive rational denominator clearing and `rootCount_eq`.
-Real-closure existence for arbitrary ordered fields remains a separate Tau
-Ceti obligation consumed downstream by hex-real-closure-mathlib. All missing
-results above are planned proof obligations, never new axioms, and the
-existing derivative `Sturm.IsSturmChain` development remains unchanged.
+The pinned Tau Ceti also supplies ordered real-closure existence, consumed
+downstream by hex-real-closure-mathlib. The shared semantic theorems above are
+proved in the development adapter; publication remains separate. The existing
+derivative `Sturm.IsSturmChain` development remains unchanged.
 
 Shared replay conformance must include negative sums, common gcds, zero
 initial remainder, constants, semantic degree cancellation and rejected
 scales/terminal data. Integer specialization tests include `4*X` and finite
 root-endpoint rejection. General and non-Archimedean frontend integration
 fixtures are owned by the new companion's
-[conformance contract](../../SPEC/Libraries/hex-sturm-mathlib.md#conformance-and-phase-4-evidence).
+[conformance contract](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md#conformance-and-phase-4-evidence).
 Check shared literal replay through ordinary-kernel correctness examples and
 axiom audits, including nested evidence and rejected certificates. Arithmetic
 producer benchmarks remain in the Mathlib-free owner. The correspondence
