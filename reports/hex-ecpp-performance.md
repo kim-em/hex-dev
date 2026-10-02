@@ -10,8 +10,8 @@ measurements remain in [reports/ecpp/README.md](ecpp/README.md).
 
 | Advertised compiled operation | Targets | Strongest justified mode |
 | --- | --- | --- |
-| Checked affine scalar replay, inverse consumption | `Hex.ECPPBench.runReplay` | 1: independently derived quadratic compiled cost on dense large scalars, fixed modulus seven |
-| Scalar transcript proposal | `Hex.ECPPBench.runProposal` | 1: the same bit-extraction cost, with linear fixed-modulus inverse and list work |
+| Checked affine scalar replay, inverse consumption | `runReplay`, `runScalarReplay`, `runSizedReplay`, `runModulusReplay` | 1: large-scalar bit-copy and bounded-width caller regimes; 2: actual modulus-width arithmetic |
+| Scalar transcript proposal | `runProposal`, `runScalarProposal`, `runSizedProposal`, `runModulusProposal` | 1: the same bit-copy/bounded-width regimes; 2: classical Euclidean inverse and ring upper bounds at variable modulus widths |
 | `parsePari` and text scanning/decoding | `Hex.ECPPBench.runParse`; `runParse512` | 1: linear fixed-width row ladder; 3: full wide-integer endpoint |
 | Parsed-input `preflight` | `Hex.ECPPBench.runPreflight` | 1: linear fixed-width row traversal |
 | `check`, `checkAt`, local `checkStep`, size inequality and terminal replay | `runCheck65`, `runCheck256`, `runCheck512`, `runNativeCheck` | 3: complete accepted chains with explicit terminal certificates |
@@ -22,7 +22,7 @@ measurements remain in [reports/ecpp/README.md](ecpp/README.md).
 
 Point-addition branches and helper predicates are measured inside replay,
 proposal and complete checking. They are not independent search endpoints.
-The four structured families in `libraries.yml` cover each significant phase:
+The five structured families in `libraries.yml` cover each significant phase:
 transcript length, row vectors, supplied certificates and native production.
 `runSize65/256/512` are private representation-count observations; they do not
 advertise a public size API or discharge a performance criterion.
@@ -38,6 +38,37 @@ and [runtime `lean_nat_big_shiftr`](https://github.com/leanprover/lean4/blob/v4.
 The SPEC's separate `O(L)` **modular-operation** bound is unchanged. The actual
 scientific ladder doubles `k` from 262,144 through 4,194,304, exposing bignum
 suffix work. It is a family claim, not a subject-bit complexity theorem.
+
+Actual caller widths have separate coverage. Independent GP-generated primes
+range from 64 through 4,096 bits, with full-width point coordinates and dense
+scalars. `runSizedReplay` and `runSizedProposal` grow both widths together;
+`runModulusReplay` and `runModulusProposal` hold the scalar at 47 bits while
+varying modulus width. `runScalarReplay` and `runScalarProposal` vary scalar
+width from 32 through 512 bits at the supplied vector's 65-bit modulus.
+[The generation record](ecpp/audit/sized-primes.json) retains the command,
+GP version and exact outputs. Expected points and inverse transcripts are
+prepared outside timing; every measured call checks the complete result.
+
+The modulus-width registrations use mode 2. No tight monomial covers their
+operand-dependent Euclidean iterations, quotient sizes and changing GMP
+arithmetic regimes. GMP's [basecase division](https://gmplib.org/manual/Basecase-Division)
+and [multiplication](https://gmplib.org/manual/Basecase-Multiplication)
+have quadratic upper bounds. Classical extended Euclid also costs O(k²):
+quotient widths sum to O(k), with each division/coefficient update bounded
+by its quotient width times k. See Brent and Zimmermann,
+[Modern Computer Arithmetic, §§1.6, 1.6.2 and 2.5](https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf).
+At most 2k additions/inverses give the diagonal cubic bound; a fixed scalar
+gives the quadratic modulus bound. The profile attributes the dominant
+phase to this very Euclidean recurrence. Bit extraction and list work are
+below those bounds. These declarations precede collection and assert upper
+bounds, rather than fitted equalities.
+
+The fixed-modulus caller ladder uses the stronger mode 1 in its bounded-width
+regime: scalar extraction copies at most eight limbs and Euclidean/ring
+operands remain at 65 bits. At most two additions/inverses per scalar bit
+give linear work across 32–512 bits. This is separate from the multi-million-bit
+scalar ladder's quadratic copying regime; neither claim extrapolates into
+the other regime. All six callbacks belong to `scalar-modulus-widths`.
 
 Parser/preflight ladders double row count from one through 4,096. Every row
 has fixed-width fields, so bytes, digit scans, JSON decoding and integer-limit
@@ -69,6 +100,12 @@ also fingerprints the computational prerequisites and frozen fixtures.
 | `Hex.ECPPBench.runProposal` | `k * k` | consistent with declared complexity | -0.036033 | [runProposal.json](ecpp/audit/scientific-scalar-final.artifacts/runProposal.json) |
 | `Hex.ECPPBench.runParse` | `r` | consistent with declared complexity | -0.002348 | [runParse.json](ecpp/audit/scientific-current.artifacts/runParse.json) |
 | `Hex.ECPPBench.runPreflight` | `r` | consistent with declared complexity | -0.016072 | [runPreflight.json](ecpp/audit/scientific-current.artifacts/runPreflight.json) |
+| `Hex.ECPPBench.runSizedReplay` | `k³` | within declared upper bound (observed faster) | -1.227522 | [runSizedReplay.json](ecpp/audit/scientific-gmp.artifacts/runSizedReplay.json) |
+| `Hex.ECPPBench.runSizedProposal` | `k³` | within declared upper bound (observed faster) | -0.785837 | [runSizedProposal.json](ecpp/audit/scientific-widths-final.artifacts/runSizedProposal.json) |
+| `Hex.ECPPBench.runModulusReplay` | `k²` | within declared upper bound (observed faster) | -1.230348 | [runModulusReplay.json](ecpp/audit/scientific-widths-final.artifacts/runModulusReplay.json) |
+| `Hex.ECPPBench.runModulusProposal` | `k²` | within declared upper bound (observed faster) | -0.806975 | [runModulusProposal.json](ecpp/audit/scientific-widths-final.artifacts/runModulusProposal.json) |
+| `Hex.ECPPBench.runScalarReplay` | `k`, 32–512 bits | consistent with declared complexity | 0.011959 | [runScalarReplay.json](ecpp/audit/scientific-caller-final.artifacts/runScalarReplay.json) |
+| `Hex.ECPPBench.runScalarProposal` | `k`, 32–512 bits | consistent with declared complexity | 0.011601 | [runScalarProposal.json](ecpp/audit/scientific-caller-final.artifacts/runScalarProposal.json) |
 
 Each ladder has three trial-major outer trials; no advisory remains. Commands:
 `hexecpp_bench run <target> --export-file <export>`, orchestrated by
@@ -80,6 +117,20 @@ are in [scientific-current.json](ecpp/audit/scientific-current.json), source
 `524f5ebdbd20ac3e99eefd8363376e230d2233c9`. The proposal callback, bit extraction
 and its fixed-modulus helpers are unchanged between these sources; later
 parser/search diagnostic edits and additive registrations do not affect it.
+
+The four modulus-width harness exports say **inconclusive** because the
+harness currently implements two-sided matching. Each has a negative residual
+slope, declining normalized ratios, complete trials and no advisory. The
+independently qualified mode-2 declarations therefore pass with the distinct
+one-sided result shown above, as required by the benchmark contract pending
+lean-bench #70. [scientific-widths-final.json](ecpp/audit/scientific-widths-final.json)
+records source `e893b9f15c45f5cb1366ab6bd14858ce92568a8e` and the restored
+natural-number inverse. Replay's earlier export uses the identical timed
+callback, prime moduli and canonical transcripts; proposal preparation is
+outside measurement. [evidence-reuse.json](ecpp/audit/evidence-reuse.json)
+records unchanged core hashes and the documentation-only search delta.
+The fixed-modulus scalar ladder's fresh record is
+[scientific-caller-final.json](ecpp/audit/scientific-caller-final.json).
 
 Budgets are twice a retained baseline median rounded upward, declared before
 their validation runs in `scripts/bench/ecpp_audit.py`. This permits a modest
@@ -197,6 +248,16 @@ the normalized summaries and their digests are committed.
 | rows / `runParse` / 4,096 | 13.12 | 0 | 55.71 | 25.61 | 5.57 | [rows](ecpp/audit/profiles-current-profile-row-vectors.json) |
 | supplied / `runConvert512` / frozen 512-bit vector | 2.63 | 43.18 | 41.44 | 7.50 | 5.25 | [supplied](ecpp/audit/profiles-current-profile-supplied-certificates.json) |
 | native / `runNativeHard` / validation-256-7, seed 7 | 1.84 | 42.74 | 45.12 | 6.87 | 3.44 | [native](ecpp/audit/profiles-current-profile-native-production.json) |
+| scalar/modulus / `runSizedProposal` / 512 bits | 1.74 | 40.43 | 46.81 | 8.31 | 2.70 | [widths](ecpp/audit/profiles-widths-final-profile-scalar-modulus-widths.json) |
+
+The width profile uses source `e893b9f15c45f5cb1366ab6bd14858ce92568a8e`:
+`python3 scripts/profile/ecpp.py --only scalar-modulus-widths --output
+reports/ecpp/audit/profiles-widths-final.json --profiler-root <checkout>`.
+[profiles-widths-final.json](ecpp/audit/profiles-widths-final.json) retains
+commands, source/binary digests and passing filter diagnostics. Extended
+Euclid accounts for 90.43% inclusive samples, directly connecting the
+published bound to the dominant timed proposal phase. It complements the
+fixed-modulus bit-copy profile and complete converter/search profiles.
 
 Inclusive percentages overlap and must not be summed. Dense scalar replay is
 100% inside `replayBits`; GMP suffix copying explains its compiled quadratic
@@ -234,12 +295,26 @@ Completed unsuccessful runs are retained, with their limited evidentiary roles e
   count. Corrected paired hash checking derives the retained summary without
   rerunning successful measurements.
 
+- `scientific-gmp.json`, `regression-gmp.json` and `profiles-gmp.json`
+  retain the signed-integer inverse attachment experiment. Its compiled C
+  fallback lacks a GMP GCDEXT reference, as shown in `inverse-backend.json`.
+  Adjacent ratios for 65/256/512-bit conversion are 1.571/1.152/1.124 and
+  native 128/256-bit production 1.296/1.355 against the common bootstrap.
+  The original natural-number recurrence is restored, reusing its passing
+  evidence rather than retaining this slowdown. The experimental proposal's
+  `k³ log k` declaration cited the wrong backend and cannot certify the final
+  operation. Fresh proposal/modulus runs use the classical Euclid bound.
+  The checked replay callback and its canonical prime-field inputs do not
+  change with the preparation backend, so that passing upper-bound export
+  retains its specific evidentiary role.
+- The two fixed-modulus scalar rows in `scientific-widths-final.json` are
+  conservative upper-bound observations through 4,096 bits. They are not the
+  final certification: the stronger bounded-width linear declarations at
+  actual caller sizes precede `scientific-caller-final.json` collection.
+
 Earlier records are observations, not retroactively passing verdicts. The
 successful current ladders and declared budgets are the Phase 4 evidence.
 Shared-host variation, synthetic fixed-modulus scalar scope, finite native
 capability and different PARI terminal contracts are explicit practical limits.
 
 ## Concerns
-
-Representative modulus/scalar coverage and the inverse-backend change are
-under validation; Phase 4 is rolled back until their evidence passes.
