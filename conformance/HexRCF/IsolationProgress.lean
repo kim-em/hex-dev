@@ -63,6 +63,8 @@ private instance : SquareTwo.polynomial.CheckedIrreducible := SquareTwo.checked
 private abbrev fieldRep := Field.literalRep SquareTwo.polynomial SquareTwo.square
   (by decide) (by decide)
 private abbrev fieldRoot := SimpleRoot.mk fieldRep
+private theorem fieldReal : fieldRep.root.im = 0 :=
+  Field.literalRep_real SquareTwo.polynomial SquareTwo.square (by decide) (by decide) (by decide)
 private def fieldHead : DensePoly (PolyQuot SquareTwo.polynomial fieldRoot) :=
   DensePoly.ofCoeffs #[-SquareTwo.coordinate SquareTwo.square (by decide) (by decide), 0, 1]
 
@@ -80,6 +82,41 @@ private def tinyHead : DensePoly (PolyQuot SquareTwo.polynomial fieldRoot) :=
 #guard ((FieldBuild.buildProposed (FieldBuild.proposalSign fieldRep rfl) () tinyHead
   (FieldBuild.proposeCanonical fieldRep rfl tinyHead 140)).map
     (fun cert => cert.isolations.intervals.size)) == some 2
+
+private theorem tinyPolynomial : HexPolyMathlib.Interpret.interpret
+    (Field.value fieldRep) (Field.value_eq_zero fieldRep rfl fieldReal) tinyHead =
+      Polynomial.X * (Polynomial.X - Polynomial.C (((1 / (2 ^ 132) : Rat) : ℝ))) := by
+  rw [mul_sub, ← pow_two, mul_comm (Polynomial.X : Polynomial ℝ) (Polynomial.C _)]
+  ext i
+  rw [HexPolyMathlib.Interpret.coeff_interpret]
+  by_cases small : i ≤ 2
+  · interval_cases i <;> norm_num [tinyHead, DensePoly.coeff_ofCoeffs,
+      Array.getD_eq_getD_getElem?, Polynomial.coeff_sub, Polynomial.coeff_C_mul,
+      FieldSpecialize.value_ofRat fieldRep rfl fieldReal,
+      Field.value_zero fieldRep rfl fieldReal, Field.value_one fieldRep rfl fieldReal]
+  · have large : 3 ≤ i := by omega
+    have absent : [(0 : PolyQuot SquareTwo.polynomial fieldRoot),
+        PolyQuot.ofRat (-1 / (2 ^ 132)), 1][i]? = none :=
+      List.getElem?_eq_none (by simpa using large)
+    simp [tinyHead, DensePoly.coeff_ofCoeffs, Array.getD_eq_getD_getElem?, absent,
+      Polynomial.coeff_sub, Polynomial.coeff_C_mul, Polynomial.coeff_X,
+      Polynomial.coeff_X_pow, show i ≠ 2 by omega, show 1 ≠ i by omega]
+    exact Field.value_zero fieldRep rfl fieldReal
+private theorem tinySquarefree : Squarefree (HexPolyMathlib.Interpret.interpret
+    (Field.value fieldRep) (Field.value_eq_zero fieldRep rfl fieldReal) tinyHead) := by
+  rw [tinyPolynomial]
+  have distinct : IsUnit ((0 : ℝ) - ((1 / (2 ^ 132) : Rat) : ℝ)) :=
+    (by norm_num : (0 : ℝ) - ((1 / (2 ^ 132) : Rat) : ℝ) ≠ 0).isUnit
+  have coprime := Polynomial.isCoprime_X_sub_C_of_isUnit_sub distinct
+  simp only [Polynomial.C_0, sub_zero] at coprime
+  exact (Polynomial.separable_X.mul Polynomial.separable_X_sub_C coprime).squarefree
+private theorem tinyNonzero : tinyHead ≠ 0 := by
+  intro zero
+  have interpreted := congrArg (HexPolyMathlib.Interpret.interpret
+    (Field.value fieldRep) (Field.value_eq_zero fieldRep rfl fieldReal)) zero
+  exact tinySquarefree.ne_zero (by simpa using interpreted)
+#guard (FieldBuild.isolate fieldRep rfl fieldReal () tinyHead
+  tinyNonzero tinySquarefree).val.isolations.intervals.size == 2
 
 -- Repeated atom occurrences still receive their own bound query lookup on
 -- every further root, using the producer's shared squarefree chain.
@@ -104,8 +141,6 @@ private def query (atom : RealFormula.Poly 1) : DensePoly (PolyQuot SquareTwo.po
       algebraic_zero RealAlgebraicNumber.one_toReal)]
     using (squarefree_one : Squarefree (1 : Polynomial ℝ)))).val.isolations.intervals.isEmpty
 
-private theorem fieldReal : fieldRep.root.im = 0 :=
-  Field.literalRep_real SquareTwo.polynomial SquareTwo.square (by decide) (by decide) (by decide)
 #guard (FieldBuild.isolate fieldRep rfl fieldReal ()
   (1 : DensePoly (PolyQuot SquareTwo.polynomial fieldRoot))
   (by
@@ -197,3 +232,10 @@ end Hex.RCF.IsolationProgressTests
 /-- info: 'Hex.RCF.RealCoefficients.FieldBuild.isolateFormula_queries' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.RealCoefficients.FieldBuild.isolateFormula_queries
+
+/-- info: '_private.HexRCF.IsolationProgress.0.Hex.RCF.IsolationProgressTests.closeSquarefree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.IsolationProgressTests.closeSquarefree
+/-- info: '_private.HexRCF.IsolationProgress.0.Hex.RCF.IsolationProgressTests.tinySquarefree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.IsolationProgressTests.tinySquarefree

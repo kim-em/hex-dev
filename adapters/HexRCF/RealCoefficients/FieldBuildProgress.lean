@@ -170,6 +170,7 @@ theorem isolateAt_progress [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableE
 by searching successive precisions. Canonical conversion and progress prove
 termination; the returned certificate still passes the fixed-coordinate checker.
 The preferred search, head conversion and root solving each run once.
+Refinement checks only interval gaps; the accepted replay is built once.
 Quotation must emit the literal certificate and recheck it in the ordinary
 kernel; kernel reduction of this compiled search is not required. This does
 not assert termination of the full formula certificate producer. -/
@@ -194,28 +195,38 @@ def isolate [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     -- Conversion and complete root solving are shared across all precisions.
     let roots := (head.toArray.mapM (canonical? rep hrep)).bind fun coefficients =>
       (RealAlgebraicPoly.ofArray coefficients).roots.finite?
-    let attempt (precision : Nat) := buildProposed (proposalSign rep hrep) context head
-      (do
-        let roots ← roots
-        let intervals ← roots.mapM fun r => rootInterval r.root precision
-        return ⟨intervals⟩)
-    have attempt_eq (precision : Nat) :
-        attempt precision = isolateAt rep hrep context head precision := by
-      simp only [isolateAt, direct, attempt, roots, proposeCanonical, solverIntervals,
-        bind, Option.bind_assoc]
-    have available : ∃ precision, (attempt precision).isSome = true := by
-      obtain ⟨K, progress⟩ := isolateAt_progress rep hrep real context head nonzero squarefree
+    let proposal (precision : Nat) : Option IsolationCert := do
+      let roots ← roots
+      let intervals ← roots.mapM fun r => rootInterval r.root precision
+      return ⟨intervals⟩
+    let separated (precision : Nat) := (proposal precision).filter IsolationCert.checkGaps
+    have proposal_eq (precision : Nat) :
+        proposal precision = proposeCanonical rep hrep head precision := by
+      simp only [proposal, roots, proposeCanonical, solverIntervals, bind, Option.bind_assoc]
+    have available : ∃ precision, (separated precision).isSome = true := by
+      obtain ⟨K, progress⟩ := proposeCanonical_progress rep hrep real head nonzero
         id Filter.tendsto_id
-      obtain ⟨cert, produced⟩ := progress K le_rfl
-      change isolateAt rep hrep context head K = some cert at produced
-      exact ⟨K, by rw [attempt_eq, produced]; rfl⟩
+      obtain ⟨isolations, produced, gaps⟩ := progress K le_rfl
+      change proposeCanonical rep hrep head K = some isolations at produced
+      exact ⟨K, by simp only [separated, proposal_eq, produced, Option.filter_some,
+        gaps, ↓reduceIte]; rfl⟩
     let precision := Nat.find available
-    have produced := Nat.find_spec available
-    let cert := (attempt precision).get produced
-    have result : isolateAt rep hrep context head precision = some cert := by
-      rw [← attempt_eq]; exact Option.eq_some_of_isSome produced
-    exact ⟨cert, isolateAt_checked rep hrep context head precision cert result,
-      isolateAt_build rep hrep context head precision cert result⟩
+    have found := Nat.find_spec available
+    let isolations := (separated precision).get found
+    have filtered : separated precision = some isolations := Option.eq_some_of_isSome found
+    have inputs := Option.filter_eq_some_iff.mp filtered
+    have produced : proposeCanonical rep hrep head precision = some isolations :=
+      (proposal_eq precision).symm.trans inputs.1
+    have accepted : (IsolationReplay.build (proposalSign rep hrep) FieldDecision.point
+        context head isolations).isSome = true := by
+      obtain ⟨cert, built⟩ := proposeCanonical_accepted rep hrep real context head nonzero
+        squarefree precision isolations produced inputs.2
+      rw [built]; rfl
+    let cert := (IsolationReplay.build (proposalSign rep hrep) FieldDecision.point
+      context head isolations).get accepted
+    have built : IsolationReplay.build (proposalSign rep hrep) FieldDecision.point
+        context head isolations = some cert := Option.eq_some_of_isSome accepted
+    exact ⟨cert, (IsolationReplay.build_checked _ _ _ _ _ _ built).2, ⟨isolations, built⟩⟩
 
 /-- Produce the complete shared carrier's radical and accepted root isolations.
 Repeated and common atom roots are reduced by the actual checked gcd quotient;

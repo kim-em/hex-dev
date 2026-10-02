@@ -231,7 +231,8 @@ theorem isolateAt_progress [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableE
 
 /-- Search successive precisions until the actual isolation checker accepts.
 The preceding progress theorem proves termination for a nonzero squarefree
-head. Root solving runs once; `Nat.find` refines only intervals and replay.
+head. Root solving runs once; `Nat.find` refines intervals until their gap check
+passes, then the replay builder runs once.
 The returned proof checks the literal evidence, without a search-fuel premise.
 This is a compiled producer: quotation must emit its literal certificate and
 recheck that certificate in the ordinary kernel. It does not change the
@@ -251,23 +252,31 @@ def isolate [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     let roots ← roots
     let intervals ← roots.mapM fun r => rootInterval r.root precision
     return ⟨intervals⟩
-  let attempt (precision : Nat) : Option (IsolationReplay RealAlgebraicNumber Ctx) :=
-    match proposal precision with
-    | none => none
-    | some isolations => IsolationReplay.build RealAlgebraicNumber.sign
-        (fun d => RealAlgebraicNumber.ofRat d.toRat) context head isolations
-  have attempt_eq (precision : Nat) : attempt precision = isolateAt context head precision := rfl
-  have available : ∃ precision, (attempt precision).isSome = true := by
-    obtain ⟨K, progress⟩ := isolateAt_progress context head nonzero squarefree id Filter.tendsto_id
-    obtain ⟨cert, produced⟩ := progress K le_rfl
-    change isolateAt context head K = some cert at produced
-    exact ⟨K, by rw [attempt_eq, produced]; rfl⟩
+  let separated (precision : Nat) := (proposal precision).filter IsolationCert.checkGaps
+  have proposal_eq (precision : Nat) : proposal precision = proposeIsolations head precision := rfl
+  have available : ∃ precision, (separated precision).isSome = true := by
+    obtain ⟨K, progress⟩ := proposeIsolations_separated head nonzero id Filter.tendsto_id
+    obtain ⟨isolations, produced, gaps⟩ := progress K le_rfl
+    change proposeIsolations head K = some isolations at produced
+    exact ⟨K, by simp only [separated, proposal_eq, produced, Option.filter_some,
+      gaps, ↓reduceIte]; rfl⟩
   let precision := Nat.find available
-  have produced := Nat.find_spec available
-  let cert := (attempt precision).get produced
-  have result : isolateAt context head precision = some cert := by
-    rw [← attempt_eq]; exact Option.eq_some_of_isSome produced
-  exact ⟨cert, isolateAt_checked context head precision cert result,
-    isolateAt_build context head precision cert result⟩
+  have found := Nat.find_spec available
+  let isolations := (separated precision).get found
+  have filtered : separated precision = some isolations := Option.eq_some_of_isSome found
+  have inputs := Option.filter_eq_some_iff.mp filtered
+  have produced : proposeIsolations head precision = some isolations :=
+    (proposal_eq precision).symm.trans inputs.1
+  have accepted : (IsolationReplay.build RealAlgebraicNumber.sign
+      (fun d => RealAlgebraicNumber.ofRat d.toRat) context head isolations).isSome = true := by
+    obtain ⟨cert, built⟩ := proposeIsolations_accepted context head squarefree precision
+      isolations produced inputs.2
+    rw [built]; rfl
+  let cert := (IsolationReplay.build RealAlgebraicNumber.sign
+    (fun d => RealAlgebraicNumber.ofRat d.toRat) context head isolations).get accepted
+  have built : IsolationReplay.build RealAlgebraicNumber.sign
+      (fun d => RealAlgebraicNumber.ofRat d.toRat) context head isolations = some cert :=
+    Option.eq_some_of_isSome accepted
+  exact ⟨cert, (IsolationReplay.build_checked _ _ _ _ _ _ built).2, ⟨isolations, built⟩⟩
 
 end Hex.RCF.RealCoefficients

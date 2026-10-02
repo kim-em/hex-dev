@@ -1666,7 +1666,8 @@ The corresponding `isolate` entry points search successive precisions and
 return isolation evidence together with its checker acceptance proof and
 exact binding to the builder that produced the shared squarefree chain.
 The preferred fixed-field search, head conversion and complete root
-solving run once; refinement repeats interval construction and checking.
+solving run once. Refinement repeats interval construction and gap checks;
+the accepted Sturm replay evidence is built once after the gaps pass.
 These are compiled producers. A quoted proof must recheck the emitted literal
 certificate in the ordinary kernel.
 Their termination follows from these progress laws for nonzero squarefree
