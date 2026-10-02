@@ -987,22 +987,6 @@ HexMvPolyMathlib.lean
     done_through: 7
     status: active
     proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
-    phase4:
-      comparators:
-        - tool: "canonical sorted-list MvSparsePoly proxy"
-          class: informational
-          rationale: "Mathlib MvSparsePoly is not yet available in the pinned Mathlib revision, so a local canonical sorted-list proxy with linear merge addition and balanced translated-row multiplication remains an informational comparison for the canonical PolyList certificate path."
-      input_families:
-        - name: kernel-sparse-addition
-          description: Disjoint, interleaved, and scattered supports checked under lex and grevlex, including an arity-eight case.
-        - name: kernel-sparse-multiplication
-          description: Low-collision integer and high-collision rational products checked across lex and arity-eight grevlex representations.
-        - name: kernel-cancellation-identities
-          description: Cancellation-heavy integer and rational identities checked from a downstream module with decide +kernel.
-        - name: kernel-structural-collisions
-          description: Rename and substitution identities whose distinct source terms collide in the destination support.
-        - name: kernel-sos-certificates
-          description: Representative sum-of-squares certificate identities checked from a downstream module with decide +kernel.
 ```
 
 `HexBasic` is a dependency for the reasons under "Kernel exposure", and

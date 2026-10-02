@@ -7,10 +7,11 @@ Authors: Kim Morrison
 import HexGenericRankMathlib
 import Mathlib.Algebra.Field.ZMod
 
-set_option maxHeartbeats 0
 
 open Matrix MvPolynomial in
 theorem result : (!![X (0 : Fin 1) ^ 3 - X 0] :
     Matrix (Fin 1) (Fin 1) (MvPolynomial (Fin 1) (ZMod 3))).rank = 1 := by rank
 
+/-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms result

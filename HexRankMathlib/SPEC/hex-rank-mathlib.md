@@ -576,6 +576,17 @@ Tests include quadratic and cubic presentations, a nonmonic primitive
 polynomial, fractional coordinates, empty and rectangular shapes, and forged
 lower/upper certificates. The carrier examples build in CI with ordinary kernel replay.
 
+Closed carrier proofs use the literal layer’s `addClosedProof`, avoiding a
+preliminary elaborator type check. Proofs that depend on local instances are
+closed by `mkAuxTheorem` before insertion.
+
+Each handler obtains an equality and derives bounds with `Eq.le`, `Eq.ge`
+and transitivity, using a kernel-decided comparison of natural numbers.
+
+Rank goals on `Hex.Matrix` inputs are a later obligation of this
+library; the witness cannot certify the executable's own value without a Mathlib-free
+rank theory.
+
 ## Decidability
 
 ```lean

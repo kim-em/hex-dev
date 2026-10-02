@@ -5,10 +5,11 @@ Authors: Kim Morrison
 -/
 import HexMinPolyMathlib.Tactic
 
-set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 
 theorem result : minpoly ℚ (!![58, 0; 0, 58] : Matrix (Fin 2) (Fin 2) ℚ) =
     Polynomial.C (-58) + Polynomial.X := by min_poly
 
+/-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms result

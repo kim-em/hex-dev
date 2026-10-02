@@ -10,7 +10,7 @@ public import HexRCF.DecisionCheck
 
 public section
 
-/-! Stable structural hashes shared by compiled and fresh-module HexRCF probes. -/
+/-! Stable structural hashes for compiled HexRCF benchmarks. -/
 
 namespace Hex.RCFBench
 

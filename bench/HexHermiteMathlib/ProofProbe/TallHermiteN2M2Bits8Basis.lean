@@ -5,9 +5,10 @@ Authors: Kim Morrison
 -/
 import HexHermiteMathlib.Tactic
 
-set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 
 theorem result : Nonempty (HexHermiteMathlib.HermiteBasis !![2, -2; -2, 66; 2, 62; -2, -62] 2) := by hermite
 
+/-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms result

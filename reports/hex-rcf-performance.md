@@ -2,12 +2,10 @@
 
 ## Bench Targets
 
-`HexRCF` has two separate Phase-4 evidence tracks. The Mathlib-free compiled
-track is the `hexrcf_bench` LeanBench executable. The Mathlib-facing tactic
-track is a build-only fresh-module sweep: it has no proof-probe executable,
-`list`/`verify` entry, in-process clock, scientific asymptotic verdict, or
-sampling profile. The two tracks are reported separately and their timings are
-never added or substituted for one another.
+The Mathlib-free compiled track is the `hexrcf_bench` LeanBench executable.
+CI builds representative tactic, supplied-literal and registered-constant
+proofs through `HexRCFProofProbe`; these correctness examples have no timing
+contract.
 
 The compiled registrations are stable parametric families. Fixture generation
 is outside each timed region; LeanBench's required structural result hash is
@@ -27,38 +25,6 @@ paraphrase.
 | `runReplayCells` | `k = 18, 20, 22, 24, 26, 28` | `k ^ 5 * (ceilLog2 (k + 1)) ^ 2` | Isolation validation and the `k` root-cell common-root queries take `O(k^3)` exact operations. The primitive PRS for `prod_(j<=k)(x-j)` has operand height `B(k) = O(k^2 log k)`; with quasi-linear multiplication, the wall-cost proxy for `O(k^3 M(B(k)))` is `k^5 ceilLog2(k+1)^2`. Construction stays in `prep`. |
 | `runReplaySigns` | `u = 64, 96, 128, 160, 192, 256` | `u * u` | With three carrier cells fixed, product construction, deduplication, aligned common-root lookup, sign-row construction, and formula lookup scan prefixes of the `u` distinct scalar-multiple entries, for `O(u^2)` total work. |
 | `runReplayFormula` | `s = 64, 128, 256, 512, 1024, 2048` | `s` | The arithmetic payload and atom multiset stay fixed. Polynomial discovery and the strict option-valued formula fold visit each appended literal/connective node a bounded number of times, giving `O(s)` structural work. |
-
-The proof sweep preregisters nineteen adjacent fresh-module pairs in this exact
-order. Six balanced rounds rotate the pair order and alternate the build
-orientation.
-
-| pair | reference | candidate | role |
-|---|---|---|---|
-| `fresh-build-null` | `Baseline` | `Baseline` | baseline null control |
-| `degree10-tactic-null` | `Degree10.Tactic` | `Degree10.Tactic` | degree-10 tactic null control |
-| `degree50-tactic-null` | `Degree50.Tactic` | `Degree50.Tactic` | degree-50 tactic null control |
-| `double-degree50-null` | `DoubleDegree50` | `DoubleDegree50` | expensive null control containing two independent degree-50 `by rcf` theorems |
-| `quadratic-reify` | `Baseline` | `Quadratic.Reify` | reification |
-| `quadratic-search` | `Quadratic.Input` | `Quadratic.Search` | compiled-search attribution |
-| `quadratic-literal` | `Quadratic.Input` | `Quadratic.Literal` | literal elaboration |
-| `quadratic-replay` | `Quadratic.Literal` | `Quadratic.Replay` | kernel replay |
-| `quadratic-tactic` | `Baseline` | `Quadratic.Tactic` | end-to-end tactic; 2 s regression-bound budget |
-| `degree10-reify` | `Baseline` | `Degree10.Reify` | reification |
-| `degree10-search` | `Degree10.Input` | `Degree10.Search` | compiled-search attribution |
-| `degree10-literal` | `Degree10.Input` | `Degree10.Literal` | literal elaboration |
-| `degree10-replay` | `Degree10.Literal` | `Degree10.Replay` | kernel replay |
-| `degree10-tactic` | `Baseline` | `Degree10.Tactic` | end-to-end tactic; 12 s regression-bound budget |
-| `degree50-reify` | `Baseline` | `Degree50.Reify` | reification |
-| `degree50-search` | `Degree50.Input` | `Degree50.Search` | compiled-search attribution |
-| `degree50-literal` | `Degree50.Input` | `Degree50.Literal` | literal elaboration |
-| `degree50-replay` | `Degree50.Literal` | `Degree50.Replay` | kernel replay |
-| `degree50-tactic` | `Baseline` | `Degree50.Tactic` | end-to-end tactic; 30 s adversarial-ceiling budget |
-
-`HexRCFProofProbe` is the reduced structural CI target. It checks the common
-support, all three reified goals, every committed literal against both the
-accepted checker and the builder-output hash, and the quadratic module matrix.
-`HexRCFProofProbeScientific` owns the degree-10 and degree-50 measured modules
-and the expensive `DoubleDegree50` module.
 
 The informational python-flint surface consists of
 `runFlintDecisionOverhead` and the paired fixed registrations
@@ -218,9 +184,7 @@ commit `fa30c2763cf523f3ac8e46dc3a1dad0845a40098`, and lean-bench-samply clean
 commit `a69ffaf99da33c1424ef80246d923c676159501b`. The sampling helper and
 profiler threads were deliberately not constrained by `taskset`; these traces
 make attribution claims only, not timing claims. Timing verdicts come from the
-compiled and proof artifacts above.
-
-The proof track uses CI-built example files.
+compiled artifacts above.
 
 The exact commands were instances of:
 

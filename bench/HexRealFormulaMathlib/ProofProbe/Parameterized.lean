@@ -13,6 +13,8 @@ public section
 namespace Hex.RealFormula.ProofProbe
 
 real_parameter_probe parameterized
+/-- info: 'Hex.RealFormula.ProofProbe.parameterized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms parameterized
 
 end Hex.RealFormula.ProofProbe

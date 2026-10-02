@@ -5,10 +5,11 @@ Authors: Kim Morrison
 -/
 import HexHermiteMathlib.Tactic
 
-set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 
 theorem result : (![-4, -4] : Fin 2 → ℤ) ∈
     Submodule.span ℤ (Set.range !![2, 2; -2, -2]) := by hermite
 
+/-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms result

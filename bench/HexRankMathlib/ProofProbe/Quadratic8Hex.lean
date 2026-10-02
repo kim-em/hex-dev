@@ -6,7 +6,6 @@ Authors: Kim Morrison
 import HexRankMathlib
 import Mathlib.NumberTheory.Zsqrtd.GaussianInt
 
-set_option maxHeartbeats 0
 
 theorem result : Matrix.rank (R := GaussianInt) !![⟨1, 1⟩, ⟨-9, -9⟩, ⟨-3, -3⟩, ⟨0, 0⟩, ⟨-8, -8⟩, ⟨-3, -3⟩, ⟨4, 4⟩, ⟨7, 7⟩;
   ⟨9, 18⟩, ⟨-7, -14⟩, ⟨0, 0⟩, ⟨-7, -14⟩, ⟨8, 16⟩, ⟨-5, -10⟩, ⟨3, 6⟩, ⟨-9, -18⟩;

@@ -357,14 +357,12 @@ this proof surface has no paired timing decision, timing ladder, absolute
 build-time gate, profile or headline-report requirement. The computational
 owner's LeanBench obligations remain separate.
 
-The focused equality corpus contains the original quadratic 4×4 issue fixture,
-rank-one 10×10, independent quotients with a dependent row at 6×6, product
-denominators at 5×5, identity plus rank one at 5×5, two-term and degree-eight
-quotient numerators at 4×4, a dense generic-ring 4×4 and a small composite-
-characteristic control. Add numeric-backend regression controls. For result
-production start with nonzero numeric and symbolic 2×2/3×3 outputs, then the
-quadratic 4×4 and identity-plus-rank-one 4×4 cases. These are coverage directions,
-not new dispatch predicates.
+The two original issue regressions (quadratic 4×4 and rank-one 10×10) also
+build in CI. Larger independent-quotient, product-denominator, identity-plus-
+rank-one, two-term, degree-eight, generic-ring and nonzero result fixtures stay
+under `conformance/HexPolyDetMathlib/Diagnostics`, built manually with
+`lake build HexPolyDetMathlibDiagnostics`. They check the focused correctness
+corpus independently of timing.
 
 The explicit equality, result and term interfaces remain opt-in.
 `Hex.normPolyDet` is not a default simp-chain entry.

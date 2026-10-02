@@ -71,6 +71,11 @@ no Mathlib-importing benchmark executable.
 
 ## Frontend implementation and validation
 
+The frontend lives in `HexSmithMathlib/Tactic.lean`; list certificates belong to
+`HexSmith/Kernel.lean`, and the companion's soundness theorems accept arbitrary
+checked witnesses. Proof tests live in `HexSmithMathlib/Tests.lean`; malformed
+certificate regressions also belong in the Mathlib-free conformance driver.
+
 Representative example files under `bench/HexSmithMathlib/ProofProbe` exercise
 chain, deficient, rectangular and empty quotient presentations. CI builds them
 through `HexStructuralTacticProofProbe` on every PR. These examples and the
@@ -233,10 +238,4 @@ a noncanonical but valid transform certificate to ensure soundness does not
 assume producer equality. Audit axioms against `propext`, `Classical.choice`,
 `Quot.sound` only.
 
-Representative example files under `bench/HexSmithMathlib/ProofProbe` exercise
-chain, deficient, rectangular and empty quotient presentations. CI builds them
-through `HexStructuralTacticProofProbe` on every PR. These examples and the
-ordinary library/conformance tests establish correctness; this proof surface has
-no paired timing decision, timing ladder, absolute build-time gate, profile or
-headline-report requirement. The computational owner's LeanBench obligations
-remain separate.
+The CI example coverage is specified in [Frontend implementation and validation](#frontend-implementation-and-validation).

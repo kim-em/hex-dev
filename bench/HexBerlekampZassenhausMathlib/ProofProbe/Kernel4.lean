@@ -179,6 +179,8 @@ set_option maxHeartbeats 4000000 in
 theorem kernel4 : Irreducible (X ^ 4 - 10 * X ^ 2 + 1 : Polynomial ℤ) :=
   irreducibility! (X ^ 4 - 10 * X ^ 2 + 1 : Polynomial ℤ)
 
+/-- info: 'HexBerlekampZassenhausMathlib.ProofProbe.kernel4' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms kernel4
 
 end HexBerlekampZassenhausMathlib.ProofProbe

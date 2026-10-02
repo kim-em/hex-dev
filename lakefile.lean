@@ -480,7 +480,9 @@ lean_lib HexPolyDetMathlibProofProbe where
     `HexPolyDetMathlib.ProofProbe.Symbolic2Hex,
     `HexPolyDetMathlib.ProofProbe.Quotient2Hex,
     `HexPolyDetMathlib.ProofProbe.ResultNumeric2Hex,
-    `HexPolyDetMathlib.ProofProbe.ResultSymbolic2Hex].map Glob.one
+    `HexPolyDetMathlib.ProofProbe.ResultSymbolic2Hex,
+    `HexPolyDetMathlib.ProofProbe.OriginalQuadratic4,
+    `HexPolyDetMathlib.ProofProbe.RankOne10].map Glob.one
 
 @[default_target]
 lean_lib HexBareissMathlib where
@@ -508,7 +510,6 @@ lean_lib HexBareissMathlibProofProbe where
     `HexBareissMathlib.ProofProbe.Large4Bits256Mathlib,
     `HexBareissMathlib.ProofProbe.Rational8Hex,
     `HexBareissMathlib.ProofProbe.Rational8Mathlib]
-
 
 @[default_target]
 lean_lib HexDetMathlib where
@@ -817,7 +818,7 @@ lean_lib HexMvGcdBenchSupport where
 
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
-  globs := #[`HexMvPolyCorpus]
+  globs := #[`HexMvPolyCorpus, `HexMvPoly.Sorted]
 
 lean_lib HexModularBenchSupport where
   srcDir := "bench"
@@ -1032,6 +1033,10 @@ lean_lib HexRealFormulaProofProbe where
   globs := #[`HexRealFormulaMathlib.ProofProbe.Support,
     `HexRealFormulaMathlib.ProofProbe.Parameterized,
     `HexRealFormulaMathlib.ProofProbe.Alternation].map Glob.one
+
+lean_lib HexRCFBenchSupport where
+  srcDir := "bench"
+  globs := #[`HexRCF.BenchHash].map Glob.one
 
 lean_lib HexRCFProofProbe where
   srcDir := "bench"
@@ -1595,13 +1600,11 @@ lean_lib HexGraphIsoProofProbe where
 
 lean_lib HexGraphIsoSparseProofProbe where
   srcDir := "bench"
-  moreLeanArgs := #["-Dprofiler=true"]
   globs := #[`HexGraphIso.SparseProofProbe.Support,
     `HexGraphIso.SparseProofProbe.Positive12,
     `HexGraphIso.SparseProofProbe.Negative12,
     `HexGraphIso.SparseProofProbe.Coloured10Pos,
     `HexGraphIso.SparseProofProbe.Coloured10Neg]
-
 
 lean_lib HexPermGroupMathlibProofProbe where
   srcDir := "bench"
@@ -2023,7 +2026,10 @@ lean_exe hexnumberfield_quadratic where
 
 lean_lib HexCharPolyMathlibProofProbe where
   srcDir := "bench"
-  globs := #[.submodules `HexCharPolyMathlib.ProofProbe]
+  globs := #[`HexCharPolyMathlib.ProofProbe.Support,
+    `HexCharPolyMathlib.ProofProbe.BlockSupport,
+    `HexCharPolyMathlib.ProofProbe.ComputedSupport,
+    `HexCharPolyMathlib.ProofProbe.Examples].map Glob.one
 
 -- Manual issue-10301 experiments; neither target belongs to the default build or CI.
 lean_lib CadSampleCostsExperiment where
@@ -2049,3 +2055,8 @@ lean_lib HexGraphIsoCfiDiagnostics where
   srcDir := "conformance"
   globs := #[`HexGraphIso.Diagnostics.DenseCfi,
     `HexGraphIso.Diagnostics.SparseCfi].map Glob.one
+
+-- Focused larger symbolic determinant correctness fixtures.
+lean_lib HexPolyDetMathlibDiagnostics where
+  srcDir := "conformance"
+  globs := #[.submodules `HexPolyDetMathlib.Diagnostics]

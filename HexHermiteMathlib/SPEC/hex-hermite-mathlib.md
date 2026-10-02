@@ -95,6 +95,11 @@ Mathlib-importing benchmark executable.
 
 ## Frontend implementation and validation
 
+The frontend lives in `HexHermiteMathlib/Tactic.lean`; list certificates belong to
+`HexHermite/Kernel.lean`, and the companion's soundness theorems accept arbitrary
+checked witnesses. Proof tests live in `HexHermiteMathlib/Tests.lean`; malformed
+certificate regressions also belong in the Mathlib-free conformance driver.
+
 Representative example files under `bench/HexHermiteMathlib/ProofProbe` exercise
 tall and empty kernel bases, membership and nonmembership. CI builds them
 through `HexStructuralTacticProofProbe` on every PR. These examples and the
@@ -254,10 +259,4 @@ identities and residual bounds. Include nonmembership supported in a nonpivot
 column and a valid noncanonical transform. Audit all accepted proof axioms
 against `propext`, `Classical.choice`, `Quot.sound` only.
 
-Representative example files under `bench/HexHermiteMathlib/ProofProbe` exercise
-tall and empty kernel bases, membership and nonmembership. CI builds them
-through `HexStructuralTacticProofProbe` on every PR. These examples and the
-ordinary library/conformance tests establish correctness; this proof surface has
-no paired timing decision, timing ladder, absolute build-time gate, profile or
-headline-report requirement. The computational owner's LeanBench obligations
-remain separate.
+The CI example coverage is specified in [Frontend implementation and validation](#frontend-implementation-and-validation).

@@ -39,6 +39,11 @@ companion conformance and `proof_probes`, with CI-built examples.
 
 ## Frontend implementation and validation
 
+The frontend lives in `HexMinPolyMathlib/Tactic.lean`; list certificates belong to
+`HexMinPoly/Kernel.lean`, and the companion's soundness theorems accept arbitrary
+checked witnesses. Proof tests live in `HexMinPolyMathlib/Tests.lean`; malformed
+certificate regressions also belong in the Mathlib-free conformance driver.
+
 Representative example files under `bench/HexMinPolyMathlib/ProofProbe` exercise
 cyclic, repeated-block, nilpotent and rational minimal polynomials. CI builds
 them through `HexStructuralTacticProofProbe` on every PR. These examples and the
@@ -218,10 +223,4 @@ nonmonic output and zero denominators. Use mutations known to violate the
 identity (not changes to unused data). Audit accepted theorem axioms: only
 `propext`, `Classical.choice`, `Quot.sound`, never `sorryAx` or native trust.
 
-Representative example files under `bench/HexMinPolyMathlib/ProofProbe` exercise
-cyclic, repeated-block, nilpotent and rational minimal polynomials. CI builds
-them through `HexStructuralTacticProofProbe` on every PR. These examples and the
-ordinary library/conformance tests establish correctness; this proof surface has
-no paired timing decision, timing ladder, absolute build-time gate, profile or
-headline-report requirement. The computational owner's LeanBench obligations
-remain separate.
+The CI example coverage is specified in [Frontend implementation and validation](#frontend-implementation-and-validation).

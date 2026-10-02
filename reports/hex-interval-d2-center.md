@@ -81,8 +81,11 @@ The committed record is
 contains five samples, raw timings, peak RSS, artifacts, axiom reports where a
 probe emits one, the exact environment, and SHA-256 hashes of all 16 inputs.
 Variant order rotates between samples, exact probe artifacts are removed before
-each Lake build, and the harness aborts if a measured input changes. Reproduce
-it with:
+each Lake build, and the harness aborts if a measured input changes. The record
+includes the completed semantic-instantiation study; those timing arms are
+retired. Current semantic correctness examples build in CI through
+`HexIntervalMathlibReplayProbe`. Reproduce the compiled and Mathlib-free
+replay portions with:
 
 ```sh
 python3 scripts/bench/interval_center_sweep.py \

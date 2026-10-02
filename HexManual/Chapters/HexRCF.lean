@@ -1634,7 +1634,7 @@ caller state and stop handler dispatch. The existing algebraic cell solver
 continues to handle its documented inputs. Registrations alone do not complete
 the general coefficient-field decision procedure.
 
-The fresh-module probes in `bench/HexRCF/ProofProbe/Registered/` also prove
+The CI-built examples in `bench/HexRCF/ProofProbe/Registered/` also prove
 `∀ x, x² > π-4`, `∀ x, x²+exp 1 > 2`,
 `∃ x, x=exp 1 ∧ 2<x ∧ x<3`, and the guarded
 `∀ x, x²+1/(4-π)>0`. Their callers supply coarse bounds
@@ -1643,23 +1643,10 @@ Mathlib's existing numerical inequalities. These are test registrations;
 the optional library supplies no such providers. All four quoted theorem
 dependencies are exactly `propext`, `Classical.choice` and `Quot.sound`.
 
-For this fixed four-proof module, the command
-`python3 scripts/bench/hexrcf_registered_proofs.py` asks whether these
-coarse enclosures suffice for the four ordinary-kernel quotations without
-root/cell construction, and measures their aggregate cost over the same
-imports. It runs four adjacent
-matched-import pairs in alternating AB/BA order and retains every sample.
-At source revision `27d5465a3`, Lean `v4.35.0-rc3` on the shared `chungus2`
-host, pinned to CPU 83 with one Lean thread, fresh module builds took
-8.55–9.32 seconds (median 8.57); matched imports took 7.42–7.56 seconds
-(median 7.52). The median paired difference was 1.09 seconds. Median peak
-resident memory was 3.27 GiB for the proofs and 3.20 GiB for matched imports.
-These aggregate builds include elaboration, proof construction and ordinary
-kernel checks; they do not isolate individual tactic stages or establish
-scaling, convergence or completeness. The
-[raw results](https://github.com/kim-em/hex-dev/blob/main/reports/bench-results/hexrcf-registered-27d5465a3-chungus2.json)
-and [all arm records](https://github.com/kim-em/hex-dev/blob/main/reports/bench-results/hexrcf-registered-27d5465a3-chungus2.json.samples.jsonl)
-retain compiler output, proof dependencies, artifact sizes and host context.
+CI builds this four-proof module through `HexRCFProofProbe`. Its guarded axiom
+reports check the ordinary-kernel dependency surface on every PR. These examples
+show that the coarse caller enclosures suffice without root/cell construction;
+they make no timing, convergence or completeness claim.
 
 # Cross-references
 %%%

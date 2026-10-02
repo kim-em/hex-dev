@@ -11,6 +11,8 @@ namespace Hex.RationalFn.ProofProbe
 theorem reject64 : check p q { cert64 with s := cert64.s + 1 } = false := by
   decide +kernel
 
+/-- info: 'Hex.RationalFn.ProofProbe.reject64' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms reject64
 end Hex.RationalFn.ProofProbe
 

@@ -228,6 +228,11 @@ that consumer-level comparison adds no dependency between the libraries.
 
 ## Frontend implementation and validation
 
+The frontend lives in `HexRowReduceMathlib/Tactic.lean`; list certificates belong to
+`HexRowReduce/Kernel.lean`, and the companion's soundness theorems accept arbitrary
+checked witnesses. Proof tests live in `HexRowReduceMathlib/Tests.lean`; malformed
+certificate regressions also belong in the Mathlib-free conformance driver.
+
 The tactic contracts below are design requirements. Their kernel-certificate
 subsections specify additions owned by the Mathlib-free algorithm library;
 they do not move that code into this companion. When implementing those
@@ -383,14 +388,7 @@ indices and nonzero residuals. Test that singular `A⁻¹ = 0` succeeds while
 `A * 0 = 1` is rejected for positive dimensions. Audit axioms: only
 `propext`, `Classical.choice`, `Quot.sound`.
 
-Representative example files under `bench/HexRowReduceMathlib/ProofProbe`
-exercise inverse results, product equalities, singularity, unique/affine
-solutions and inconsistency. CI builds them through
-`HexStructuralTacticProofProbe` on every PR. These examples and the ordinary
-library/conformance tests establish correctness; this proof surface has no
-paired timing decision, timing ladder, absolute build-time gate, profile or
-headline-report requirement. The computational owner's LeanBench obligations
-remain separate.
+The CI example coverage is specified in [Frontend implementation and validation](#frontend-implementation-and-validation).
 
 
 ## The `solve` tactic
@@ -551,11 +549,4 @@ and separators with either nonzero left product or zero dot product.
 Audit the accepted theorem axioms against `propext`, `Classical.choice`,
 `Quot.sound` only, including negative results.
 
-Representative example files under `bench/HexRowReduceMathlib/ProofProbe`
-exercise inverse results, product equalities, singularity, unique/affine
-solutions and inconsistency. CI builds them through
-`HexStructuralTacticProofProbe` on every PR. These examples and the ordinary
-library/conformance tests establish correctness; this proof surface has no
-paired timing decision, timing ladder, absolute build-time gate, profile or
-headline-report requirement. The computational owner's LeanBench obligations
-remain separate.
+The CI example coverage is specified in [Frontend implementation and validation](#frontend-implementation-and-validation).

@@ -7,7 +7,6 @@ import HexRankMathlib.ProofProbe.NumberFieldSupport
 
 open RankProbe
 open scoped Hex.PolyQuot.QAdjoinField
-set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 
 theorem result : Matrix.rank (R := K) !![α, 1, 0, 0, 0, 0, 0, 0;

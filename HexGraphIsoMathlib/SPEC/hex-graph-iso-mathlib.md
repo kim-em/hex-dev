@@ -386,7 +386,7 @@ They include:
 - malformed or underfunded certificates rejected without changing the goal;
 - a positive random `n = 12` relabelling and a negative random `n = 12` pair;
 - positive and negative coloured cases at `n = 10`;
-- a scheduled negative CFI pair with separately recorded limits.
+- an optional manual negative CFI diagnostic with separately recorded limits.
 
 Representative example files under `bench/HexGraphIsoMathlib/ProofProbe`
 exercise positive and negative Mathlib graph replay. CI builds them through

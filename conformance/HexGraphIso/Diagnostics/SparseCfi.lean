@@ -5,13 +5,15 @@ Authors: Kim Morrison
 -/
 import HexGraphIso.SparseProofProbe.Support
 
-/-! Scheduled negative CFI replay, with the dense probe's larger limits. -/
+/-! Optional manual negative CFI replay, with the dense probe's larger limits. -/
 
 set_option maxRecDepth 4000000
 set_option maxHeartbeats 40000000
 
 open Hex.GraphIso Hex.GraphIso.SparseProofProbe in
-theorem Hex.GraphIso.SparseProofProbe.cfi_ne : ¬ Sparse.Isomorphic (cfi false) (cfi true) := by
+theorem Hex.GraphIso.Diagnostics.sparseCfi : ¬ Sparse.Isomorphic (cfi false) (cfi true) := by
   graph_iso (maxSearchNodes := 100000000) (maxCertRecords := 100000000)
 
-#print axioms Hex.GraphIso.SparseProofProbe.cfi_ne
+/-- info: 'Hex.GraphIso.Diagnostics.sparseCfi' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Diagnostics.sparseCfi

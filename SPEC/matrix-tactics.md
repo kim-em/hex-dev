@@ -288,9 +288,9 @@ route of `hex-det` (triangularizations modulo several small primes plus
 
 ## The bar against Mathlib
 
-A tactic ships only when, on every family of the fixture ladder below that
-the pinned Mathlib tactic also accepts, its fresh-module median is below
-Mathlib's, with the paired sweep of `scripts/bench/fresh_module_sweep.py`
+The numeric determinant has an independent measured contract: on every shared
+family its fresh-module median is below the pinned Mathlib tactic's, with the
+paired sweep of `scripts/bench/fresh_module_sweep.py`
 (six samples, adjacent pairs, alternating orientation) and one kernel-only
 profile per family recorded in the owning library's SPEC. "Strictly
 superior" means both:
@@ -328,7 +328,9 @@ of another tactic. A decline is never a scope success.
 
 The comparators are the unmodified pinned `eval_det`/`norm_det`
 (`Mathlib/Tactic/NormDet.lean`, Bird's algorithm with a certificate chain
-normalized by `ring`) for `det` and `eval_rank`/`norm_rank` for `rank`.
+normalized by `ring`) for `det`. The rank companion uses CI-built correctness
+examples under its own SPEC; its former `eval_rank`/`norm_rank` comparisons are
+settled diagnostics, not a current performance gate.
 Mathlib has no characteristic-polynomial tactic. For `char_poly`, compare
 against Hex's existing frontend and the scalar list Berkowitz baseline on the
 same `dense` 4, 8, 16, 32 signed 8-bit inputs. The packed certificate should
@@ -346,8 +348,9 @@ Vandermonde with required pivot swaps), `singular` (duplicate rows and rank
 `n − 1` products with a late failed pivot), `low-rank` (rectangular
 products of known rank), `large-coefficients` (dimensions `2, 4, 8, 16`,
 entry bits `64, 256, 1024`), `finite-carriers` (`Fin 7`, `Fin 8`, `ZMod`
-counterparts), `closed-algebraic` (`α² = 2` blocks). The proof probes
-follow `bench/HexRankMathlib/ProofProbe` (`{family}{Hex,Mathlib}.lean`
+counterparts), `closed-algebraic` (`α² = 2` blocks). Numeric determinant
+measurements cover the applicable square integer/rational families. Their
+proof probes follow `bench/HexBareissMathlib/ProofProbe` (`{family}{Hex,Mathlib}.lean`
 pairs against import-only baselines) under the owning library's
 `proof_probes` reservation.
 
