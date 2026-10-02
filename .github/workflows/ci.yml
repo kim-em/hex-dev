@@ -153,6 +153,7 @@ jobs:
           python3 -m unittest scripts/bench/test_rationalfn_flint.py
           python3 -m unittest scripts/bench/test_sign_det_sparse.py
           python3 -m unittest scripts/bench/test_sign_det_compare.py
+          python3 -m unittest scripts/bench/test_sign_det_allocations.py
           python3 -m unittest scripts/bench/test_sign_det_maximal.py
           python3 -m unittest scripts/bench/test_sign_det_maximal_matrix.py
           python3 -m unittest scripts/bench/test_sign_det_joint.py

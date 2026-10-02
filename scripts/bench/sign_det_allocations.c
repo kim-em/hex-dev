@@ -36,15 +36,13 @@ Audit direct and inlined allocation paths in the actual measured executable.
 #ifndef SIGN_DET_RESULT
 #define SIGN_DET_RESULT void *
 #endif
-/* Macro expansion must precede Valgrind's token pasting. */
-#define CALLBACK_WRAPPER_1(name) I_WRAP_SONAME_FNNAME_ZU(NONE, name)
-#define CALLBACK_WRAPPER(name) CALLBACK_WRAPPER_1(name)
+#define CALLBACK_WRAPPER(name) I_WRAP_SONAME_FNNAME_ZU(NONE, name)
 static __thread unsigned depth;
 static __thread unsigned active;
 static unsigned long long requests[3], bytes[3], callbacks;
 static int overflow;
 
-static void record(unsigned kind, size_t n) {
+static __attribute__((always_inline)) inline void record(unsigned kind, size_t n) {
     if (!active) return;
     if (bytes[kind] > UINT64_MAX - n || requests[kind] == UINT64_MAX) overflow = 1;
     else { bytes[kind] += n; ++requests[kind]; }
@@ -94,17 +92,25 @@ SIGN_DET_RESULT CALLBACK_WRAPPER(SIGN_DET_CALLBACK)(void *input) {
 
 #ifdef SIGN_DET_CHECK
 #include <stdlib.h>
-__attribute__((noinline)) void *mi_malloc(size_t n) { return malloc(n); }
-__attribute__((noinline)) void *lean_alloc_object(size_t n) { return mi_malloc(n); }
-__attribute__((noinline)) void *lean_alloc_small_object_core(unsigned n) { return mi_malloc(n); }
-__attribute__((noinline)) void *mi_malloc_small(size_t n) { return mi_malloc(n); }
-__attribute__((noinline)) void *mi_new_n(size_t n, size_t size) { return mi_malloc(n * size); }
-__attribute__((noinline)) void *__gmp_default_allocate(size_t n) { return mi_malloc(n); }
-__attribute__((noinline)) void *__gmp_default_reallocate(void *p, size_t old_n, size_t n) {
+#ifndef SIGN_DET_CHECK_VALUE
+#define SIGN_DET_CHECK_VALUE 0xabu
+#endif
+#if defined(__clang__)
+#define FIXTURE_FN __attribute__((noinline, optnone))
+#else
+#define FIXTURE_FN __attribute__((noipa))
+#endif
+FIXTURE_FN void *mi_malloc(size_t n) { return malloc(n); }
+FIXTURE_FN void *lean_alloc_object(size_t n) { return mi_malloc(n); }
+FIXTURE_FN void *lean_alloc_small_object_core(unsigned n) { return mi_malloc(n); }
+FIXTURE_FN void *mi_malloc_small(size_t n) { return mi_malloc(n); }
+FIXTURE_FN void *mi_new_n(size_t n, size_t size) { return mi_malloc(n * size); }
+FIXTURE_FN void *__gmp_default_allocate(size_t n) { return mi_malloc(n); }
+FIXTURE_FN void *__gmp_default_reallocate(void *p, size_t old_n, size_t n) {
     (void)old_n; return realloc(p, n);
 }
 static void *volatile sink;
-__attribute__((noinline)) SIGN_DET_RESULT SIGN_DET_CALLBACK(void *input) {
+FIXTURE_FN SIGN_DET_RESULT SIGN_DET_CALLBACK(void *input) {
     (void)input;
     void *p = lean_alloc_small_object_core(16); sink = p; free(p);
     p = lean_alloc_object(48); sink = p; free(p);
@@ -112,11 +118,11 @@ __attribute__((noinline)) SIGN_DET_RESULT SIGN_DET_CALLBACK(void *input) {
     p = mi_new_n(2, 16); sink = p; free(p);
     p = __gmp_default_allocate(64); sink = p;
     p = __gmp_default_reallocate(p, 64, 96); sink = p; free(p);
-    return (SIGN_DET_RESULT)0xabu;
+    return (SIGN_DET_RESULT)SIGN_DET_CHECK_VALUE;
 }
 int main(void) {
     void *p = mi_malloc(256); sink = p; free(p);
     uintptr_t result = (uintptr_t)SIGN_DET_CALLBACK(NULL);
-    return result != 0xabu;
+    return result != SIGN_DET_CHECK_VALUE;
 }
 #endif

@@ -8,22 +8,29 @@ actual generated C. A typed return preserves pointer, Boolean and integer
 results. Each instrumented result must match an uninstrumented invocation on
 the same input.
 
-The three counter groups are:
+The three groups classify the entry point at which a request is intercepted:
 
-- Lean object requests: `lean_alloc_small_object_core` and `lean_alloc_object`;
-- other direct mimalloc requests: `mi_malloc`, `mi_malloc_small` and `mi_new_n`;
-- GMP requests: `__gmp_default_allocate` and `__gmp_default_reallocate`.
+- `lean_alloc_*` entry points: `lean_alloc_small_object_core` and `lean_alloc_object`;
+- direct mimalloc entry points: `mi_malloc`, `mi_malloc_small` and `mi_new_n`;
+- GMP default allocator entry points: `__gmp_default_allocate` and `__gmp_default_reallocate`.
 
 A thread-local nesting counter charges only the outermost wrapped request.
 For example, a Lean object request that calls `mi_malloc` is charged once to
-the Lean group. GMP reallocation charges the newly requested size, including
+the `lean_alloc_*` group. Runtime-internal Lean array growth and the inline
+large-constructor path can call `mi_malloc` directly, so their requests appear
+in the direct mimalloc group. The first group is not a total count of all Lean
+objects. GMP reallocation charges the newly requested size, including
 in-place reallocation. Small Lean object sizes include alignment already
 performed before calling the wrapped allocation entry point. These are
 cumulative requested bytes, not live heap or memory retained after a call.
 The groups are separate from the benchmark's reserved `alloc_bytes` field.
 
-Valgrind DHAT ad-hoc events independently sum the requested bytes and request
-counts. The driver rejects disagreement with the wrapper's counters, overflow,
+Valgrind DHAT ad-hoc events record the same requested bytes and request
+counts as the wrapper. The driver classifies each event by its emitting wrapper
+frame and checks
+per-group totals against the counters. This verifies event provenance and bucket
+assignment; it does not independently detect missing allocators or incorrect
+size arguments. The driver rejects disagreement, overflow,
 missing callback instrumentation and repeated callbacks. Activation at callback
 entry and deactivation at exit exclude preparation and process initialization;
 stack truncation does not change the counters. The operation must be pure and
@@ -32,10 +39,13 @@ single-threaded. The wrapper does not propagate activation to spawned threads.
 The controlled `SIGN_DET_CHECK` fixture requests 64 Lean bytes, 56 other
 mimalloc bytes and 160 GMP bytes in six requests. Its nested allocator calls
 and a separate 256-byte request outside the callback must not add events.
-Pointer and Boolean result variants both return the expected value and report
-280 DHAT units in six events.
+Pointer, Boolean and 64-bit integer variants preserve their expected return
+values and report 280 DHAT units in six events. Run all three with the driver
+`--self-check`; every capture also runs these fixtures before measurement.
 
-Before interpreting a capture as complete coverage, audit the measured binary's
+The driver requires every wrapped allocator symbol to be defined in the actual
+executable and retains the allocator symbol inventory. Before interpreting a
+capture as complete coverage, also audit the measured binary's
 allocation entry points and generated/inlined paths. The wrappers count the
 listed client requests; allocator backing pages, arbitrary foreign malloc
 calls and alternative allocators are outside these counters. They do not
@@ -59,12 +69,14 @@ python3 scripts/bench/sign_det_allocations.py \
 ```
 
 Pilot records are retained under
-`/home/kim/.local/state/hex/issue-10377-profiles/allocation-method-check`.
+`/home/kim/.local/state/hex/issue-10377-profiles/allocation-method-validated`.
 The degree-three comparison recorded 6,283,680 Lean bytes, 624,384 other
 mimalloc bytes and 10,490,208 GMP bytes. Reduced graph checking recorded
-1,672,112, 130,416 and 2,584,336 bytes respectively. These two preliminary
-observations used a dirty collector checkout with exact source hashes and
-retained collector snapshots. They demonstrate working instrumentation;
+1,672,112, 130,416 and 2,584,336 bytes respectively. These two validation
+observations used clean collector revision
+`b03612417e18dd84d5b6acf640adb7ea1461e7af` and retained uninstrumented result
+comparisons, source hashes and raw output. The earlier dirty pilot remains
+retained separately. They demonstrate working instrumentation;
 they are not a scaling result or full Phase-4 evidence. Wider matrices,
-coefficient sizes, nested fields and all remaining performance gates still
+coefficient sizes, nested fields and all remaining performance requirements still
 require their specified evidence.
