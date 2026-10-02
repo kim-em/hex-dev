@@ -83,6 +83,16 @@ current converted coefficients. -/
 @[expose] def Context.collect? (parent : Context registry) (sources : List (Root parent)) :
     Option (Collection parent) := (Collection.empty parent).gather? sources
 
+/-- Ordinary shared-context assembly. The companion proves the diagnostic
+failure branch unreachable under the coefficient model laws. -/
+@[expose] def Context.collect (parent : Context registry) (sources : List (Root parent)) :
+    Collection parent :=
+  match parent.collect? sources with
+  | some collection => collection
+  | none =>
+    letI : Inhabited (Collection parent) := ⟨Collection.empty parent⟩
+    panic! "Tower.Context.collect: root revalidation failed"
+
 theorem RootMap.cast_source {target other : Context registry} (entry : RootMap parent target)
     (same : target = other) : (entry.cast same).source = entry.source := by
   cases same

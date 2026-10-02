@@ -202,6 +202,8 @@ def check() -> None:
              "HexRealClosure.TowerRoots", "HexRealClosure.TowerRootsTests",
              "HexRealClosureMathlib.TowerRoots",
              "HexRealClosure.RootTransport", "HexRealClosureMathlib.RootTransport",
+             "HexRealClosure.RootCollection", "HexRealClosureMathlib.RootCollection",
+             "HexRealClosure.RootCollectionTests",
              "HexRealClosureMathlib.TowerCoverage",
              "HexRealClosureMathlib.TowerNaturality",
              "HexRealClosureMathlib.Specialize",

@@ -729,9 +729,33 @@ complete operation on the same repeated-factor input as `runRoots`, with input
 construction outside the timed call. These are fixed functional anchors; the
 required tower scaling evaluation remains separate.
 
-These entries can own distinct extensions over their common coefficient
-context. The operation that gathers all requested entries into one common
-native context remains part of the live-context transport requirement.
+`ctx.collect roots` gathers any finite list of root handles over `ctx` into one
+actual native context. Its `input` maps every original coefficient value into
+that context; `entries` retains the root handles in input order and a conversion
+for every value in each original root context. Each entry supplies `value`
+for its selected root and `apply` for an arbitrary old root-context value.
+`collect?` exposes revalidation failure; the companion proves it succeeds and
+agrees with ordinary collection under the input model laws.
+
+Collection revalidates each next root over the converted coefficient context
+and includes all previously collected contexts into its new child. Old handles
+stay valid in their own contexts. `Root.move?_success` proves preservation of
+both the converted coefficient context and the complete old root context;
+`RootMap.Model.value` and `Collection.Model.values` identify all transported
+values and the ordered root list in one shared ambient model.
+`Context.roots_collected_sorted` specializes this agreement to the strictly
+ordered output of complete root finding. Callers retain the original positive
+multiplicity labels beside that ordered list.
+
+Run `lake build HexRealClosure.RootCollectionTests` for a runnable mixed-field
+example: √2 and the positive root of `3(X²-3)` enter one context, where their
+sum satisfies `s⁴-10s²+1=0`. The example checks inversion, nonlinear transport,
+old-handle validity, and stale-context reader rejection. The isolation
+conformance driver exports the actual recursive stored values and root frames;
+the independent Z3 oracle checks selected roots, cached signs, coefficient
+inclusions and arithmetic. Its embedded replay graphs are retained data and
+are not replayed by that oracle. Collecting arbitrary dependency-closed live
+contexts, including differing staged bases, remains required.
 
 `TowerCoverage.lean` connects the native producer to the relative algebraic
 union. `Model.nativePoly` lifts coefficients from the input's mathematical
