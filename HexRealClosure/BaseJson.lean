@@ -26,6 +26,28 @@ mutual
   | x :: xs => .cons x.literal (Syntax.literals xs)
 end
 
+@[expose] def Syntax.literalsLoop : List Syntax → List Literal → Literals
+  | [], acc => Literals.ofList acc.reverse
+  | x :: xs, acc => Syntax.literalsLoop xs (x.literal :: acc)
+
+private theorem Syntax.literalsLoop_eq (xs : List Syntax) (acc : List Literal) :
+    Syntax.literalsLoop xs acc = Literals.ofList (acc.reverse ++ xs.map Syntax.literal) := by
+  induction xs generalizing acc with
+  | nil => simp [Syntax.literalsLoop]
+  | cons x xs ih => simp [Syntax.literalsLoop, ih, List.reverse_cons, List.append_assoc]
+
+private theorem Syntax.literals_eq (xs : List Syntax) :
+    Syntax.literals xs = Literals.ofList (xs.map Syntax.literal) := by
+  induction xs with
+  | nil => rfl
+  | cons x xs ih => simp [Syntax.literals, ih, Literals.ofList, Codec.Json.Values.ofList]
+
+@[expose] def Syntax.writeLiterals (xs : List Syntax) : Literals := Syntax.literalsLoop xs []
+
+@[csimp] theorem Syntax.literals_impl : Syntax.literals = Syntax.writeLiterals := by
+  funext xs
+  simp [Syntax.writeLiterals, Syntax.literalsLoop_eq, Syntax.literals_eq]
+
 mutual
 /-- Canonical rationals and exact field counts are checked before the existing
 base reader checks level shapes and nonzero fraction denominators. -/
@@ -34,12 +56,17 @@ base reader checks level shapes and nonzero fraction denominators. -/
     let q := mkRat n d.toNat
     if 0 < d ∧ q.num = n ∧ (q.den : Int) = d then some (.rational q) else none
   | .array (.cons (.number 1) (.cons (.array p) (.cons (.array q) .nil))) => do
-    return .fraction (← Syntax.ofLiterals p) (← Syntax.ofLiterals q)
+    return .fraction (← Syntax.ofLiteralsLoop p []) (← Syntax.ofLiteralsLoop q [])
   | _ => none
-@[expose] def Syntax.ofLiterals : Literals → Option (List Syntax)
-  | .nil => some []
-  | .cons x xs => do return (← Syntax.ofLiteral x) :: (← Syntax.ofLiterals xs)
+@[expose] def Syntax.ofLiteralsLoop : Literals → List Syntax → Option (List Syntax)
+  | .nil, acc => some acc.reverse
+  | .cons x xs, acc => do
+    let value ← Syntax.ofLiteral x
+    Syntax.ofLiteralsLoop xs (value :: acc)
 end
+
+@[expose] def Syntax.ofLiterals (xs : Literals) : Option (List Syntax) :=
+  Syntax.ofLiteralsLoop xs []
 
 mutual
 theorem Syntax.ofLiteral_literal (x : Syntax) : Syntax.ofLiteral x.literal = some x := by
@@ -47,16 +74,21 @@ theorem Syntax.ofLiteral_literal (x : Syntax) : Syntax.ofLiteral x.literal = som
   | rational q =>
     simp [Syntax.literal, Syntax.ofLiteral, Rat.mkRat_self, Nat.pos_of_ne_zero q.den_nz]
   | fraction p q =>
-    simp [Syntax.literal, Syntax.ofLiteral, Syntax.ofLiterals_literals p,
-      Syntax.ofLiterals_literals q]
+    simp [Syntax.literal, Syntax.ofLiteral, Syntax.ofLiteralsLoop_literals p [],
+      Syntax.ofLiteralsLoop_literals q []]
+
+theorem Syntax.ofLiteralsLoop_literals (xs : List Syntax) (acc : List Syntax) :
+    Syntax.ofLiteralsLoop (Syntax.literals xs) acc = some (acc.reverse ++ xs) := by
+  cases xs with
+  | nil => simp [Syntax.literals, Syntax.ofLiteralsLoop]
+  | cons x xs => simp [Syntax.literals, Syntax.ofLiteralsLoop,
+      Syntax.ofLiteral_literal x, Syntax.ofLiteralsLoop_literals xs (x :: acc),
+      List.reverse_cons, List.append_assoc]
+end
 
 theorem Syntax.ofLiterals_literals (xs : List Syntax) :
     Syntax.ofLiterals (Syntax.literals xs) = some xs := by
-  cases xs with
-  | nil => rfl
-  | cons x xs => simp [Syntax.literals, Syntax.ofLiterals,
-      Syntax.ofLiteral_literal x, Syntax.ofLiterals_literals xs]
-end
+  simpa [Syntax.ofLiterals] using Syntax.ofLiteralsLoop_literals xs []
 
 private def require {A : Type} (message : String) : Option A → Except String A
   | none => .error message

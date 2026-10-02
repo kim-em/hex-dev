@@ -56,7 +56,11 @@ independent replay remains separate.
 
 The coefficient/context `ValueCodec` targets `Codec.Json.Value`, the shared
 integer-only JSON tree. `ValueCodec.decode_encode` lifts its literal codec law
-through the actual UTF-8 printer/parser under the lexical limits.
+through the actual UTF-8 printer/parser when the printed bytes pass the
+lexical policy. The unguarded `Codec.encoded_graph` law preserves every graph
+JSON field without that premise. A characterization of policy acceptance in
+terms of value size, depth and maximum integer digits is a separate obligation;
+the guarded law does not supply it.
 `Codec.Json.readBytes_write` establishes the underlying parser/printer law for
 every finite JSON value without a parser-success premise. Arrays and object
 fields retain their order and duplicate fields literally. Integer numbers have

@@ -67,7 +67,8 @@ def parse (limits : Limits) (input : ByteArray) : Except String Json := do
   return value
 
 /-- The byte parser recovers the exact integer-only JSON value. The premise
-checks only the caller's lexical resource limits, not parser success. -/
+is the caller's lexical policy (including syntax prechecks), not parser
+success. This theorem does not characterize policy acceptance by value metrics. -/
 theorem parse_write (value : Json) (limits : Limits)
     (bound : checkBytes limits value.writeBytes = .ok ()) :
     parse limits value.writeBytes = .ok value := by

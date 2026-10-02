@@ -41,12 +41,16 @@ instance (priority := high) : DecidableEq Signature := fun a b =>
 @[expose] def Signature.extend (signature : Signature) (frame : Literal) : Signature :=
   { signature with roots := signature.roots ++ [frame] }
 
-private def readKeys : Literals → Option (List BaseContext.ConstantKey)
-  | .nil => some []
-  | .cons (.array (.cons (.string name) (.cons (.number version) .nil))) xs =>
-    if 0 ≤ version then (fun keys => ⟨name, version.toNat⟩ :: keys) <$> readKeys xs
+private def readKeysLoop : Literals → List BaseContext.ConstantKey →
+    Option (List BaseContext.ConstantKey)
+  | .nil, acc => some acc.reverse
+  | .cons (.array (.cons (.string name) (.cons (.number version) .nil))) xs, acc =>
+    if 0 ≤ version then readKeysLoop xs (⟨name, version.toNat⟩ :: acc)
     else none
-  | _ => none
+  | _, _ => none
+
+private def readKeys (xs : Literals) : Option (List BaseContext.ConstantKey) :=
+  readKeysLoop xs []
 
 /-- Read the full structured identity. Reading an identity supplies no root
 validation; the catalog must still find its validated native prefix. -/
@@ -56,16 +60,23 @@ def Signature.ofLiteral : Literal → Option Signature
       readKeys keys else none
   | _ => none
 
+private theorem readKeysLoop_write (keys : List BaseContext.ConstantKey)
+    (acc : List BaseContext.ConstantKey) :
+    readKeysLoop (Literals.ofList (keys.map fun key =>
+      Codec.Json.Value.array (.cons (.string key.name) (.cons (.number key.version) .nil)))) acc =
+      some (acc.reverse ++ keys) := by
+  induction keys generalizing acc with
+  | nil => simp [Literals.ofList, Codec.Json.Values.ofList, readKeysLoop]
+  | cons key keys ih =>
+    cases key
+    simp only [Literals.ofList, Codec.Json.Values.ofList] at ih ⊢
+    simp [readKeysLoop, ih, List.reverse_cons, List.append_assoc]
+
 private theorem readKeys_write (keys : List BaseContext.ConstantKey) :
     readKeys (Literals.ofList (keys.map fun key =>
       Codec.Json.Value.array (.cons (.string key.name) (.cons (.number key.version) .nil)))) =
       some keys := by
-  induction keys with
-  | nil => rfl
-  | cons key keys ih =>
-    cases key
-    simp only [Literals.ofList, Codec.Json.Values.ofList] at ih ⊢
-    simp [readKeys, ih]
+  simpa [readKeys] using readKeysLoop_write keys []
 
 theorem Signature.ofLiteral_literal (signature : Signature) :
     Signature.ofLiteral signature.literal = some signature := by
@@ -125,9 +136,7 @@ variable {sign : E → Int} {binding : Signature}
 node equality. Hashing only indexes that equality search. The descriptor's
 head, bounds and ordered Thom slots are retained separately from the replay. -/
 @[expose] def rootData (value : ValueCodec E) (root : Descriptor E Signature sign binding) : Codec.Json :=
-  letI : Hashable E := ⟨fun a => match Literal.ofJson (value.encode a) with
-    | some literal => hash literal
-    | none => 0⟩
+  letI : Hashable E := ⟨fun a => hash (value.encode a)⟩
   -- Accepted nodes have one predecessor; hashing it adds no discrimination.
   -- Exact node equality still checks every context, including malformed data.
   letI : Hashable Signature := ⟨fun _ => 0⟩

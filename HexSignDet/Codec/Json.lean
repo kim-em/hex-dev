@@ -57,6 +57,14 @@ private theorem Values.pushArray_eq (xs : Values) (result : Array Value) :
 @[simp] theorem Values.toArray_eq (xs : Values) : xs.toArray = xs.toList.toArray := by
   simp [toArray, pushArray_eq]
 
+@[expose] def Values.toListLoop (xs : Values) : List Value := xs.toArray.toList
+
+/-- Compiled list conversion uses the width loop while preserving the
+recursive reference definition used by literal roundtrip proofs. -/
+@[csimp] theorem Values.toList_impl : Values.toList = Values.toListLoop := by
+  funext xs
+  simp only [Values.toListLoop, Values.toArray_eq, List.toList_toArray]
+
 /-- Array construction preserves every element in order. -/
 @[expose] def arr (xs : Array Json) : Json := .array (Values.ofList xs.toList)
 

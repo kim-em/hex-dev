@@ -104,9 +104,11 @@ indices, earlier references and full context/domain bindings before replay.
 `Dag.decode_replays` connects it to the actual decoded graph. `Dag.decodeDescriptor`
 uses the same bytes for an exact requested Thom descriptor and preserves every
 raw field through the existing derivative and count-one checks. Supplied coefficient
-and context codecs must preserve their whole values. General codec roundtrip
-proofs, lower-level coefficient-sign edges and performance measurements remain
-required.
+and context codecs use the shared integer-only JSON type and must preserve
+their whole values. `ValueCodec.decode_encode` and `Codec.decode_graph` prove
+actual byte roundtrips when printed bytes pass the lexical policy, with the
+original structural bounds and subject bindings for graphs. Lower-level
+coefficient-sign edges and performance measurements remain required.
 
 `RawDescriptor.map` maps coefficients and finite endpoints to a new
 representation and context while retaining derivative indices and signs.

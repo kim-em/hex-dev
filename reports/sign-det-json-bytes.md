@@ -115,3 +115,43 @@ The [pinned runtime source](https://github.com/leanprover/lean4/blob/v4.35.0-rc3
 sets a 1 GiB default thread stack on 64-bit hosts. An OS stack limit alone does
 not constrain that explicitly allocated thread stack. These capacity checks
 measure no running-time law or peak memory.
+
+The context codec has separate native width probes:
+
+```sh
+lake build hexrealclosure_codec_bytes
+(ulimit -s 8192; LEAN_MAIN_USE_THREAD=0 LEAN_STACK_SIZE_KB=8192 .lake/build/bin/hexrealclosure_codec_bytes 1000000)
+```
+
+The signature codec’s actual guarded byte path accepts one million literal root entries
+(4,000,016 printed bytes) and 250,000 context keys (3,500,016 bytes). A separate
+probe runs `Codec.parse` followed by `Syntax.ofLiteral` on a fraction syntax
+payload with 500,000 numerator terms (8,000,030 bytes); it re-encodes every term.
+It does not call the base element codec or reconstruct a coefficient value.
+The signature probes check exact reconstructed literal equality, list lengths
+and hashing. They test untrusted literal storage, not
+validated million-level towers or mathematical coefficient facts. The CI-built
+`HexRealClosure.CodecTests` uses smaller instances of the same checks.
+
+Literal-list conversion uses a compiler replacement proved equal to its
+recursive reference definition. Coefficient-payload writing calls its
+accumulator directly within the mutual definition; its literal roundtrip
+laws follow the actual loop. Context
+key reading and payload reading accumulate their results; their literal
+roundtrip laws remain proved. Hashing iterates over array/object width and
+retains exact equality at every lookup. These capacity checks do not establish
+peak-memory bounds or performance scaling.
+
+`Codec.checkBytes` includes delimiter/quote and numeric-syntax prechecks as well
+as resource limits. The guarded byte laws require this actual policy to accept
+the encoded output; they do not prove an equivalent condition using value size,
+depth and maximum digits alone. That general characterization remains separate.
+The underlying JSON parser/printer law and `Codec.encoded_graph` are unconditional.
+The printer's per-token whitespace counts against the graph byte allowance.
+Conformance separately accepts removal of its final whitespace byte and rejects
+removal of the final closing delimiter together with that whitespace.
+
+Native context capacity runs in the existing oracle job whenever
+`HexRealClosure` or `HexSignDet` is selected; its executable is part of the
+shared build. It runs the same stack canary before the context probes. The
+hash comparison demonstrates completion and consistency, not collision freedom.

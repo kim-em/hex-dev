@@ -18,6 +18,7 @@ public import HexRealClosure.QueryReductionTests
 public import HexRealClosure.AlgebraicReencodeTests
 public import HexRealClosure.TowerTests
 public import HexRealClosure.RootFrameTests
+public import HexRealClosure.CodecTests
 public import HexRealClosure.FrameFormatTests
 public import HexRealClosure.TowerOrderTests
 public import HexRealClosure.TowerYunTests

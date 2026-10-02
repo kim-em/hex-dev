@@ -42,7 +42,7 @@ end Literals
 @[simp] theorem Literal.ofJson_toJson (literal : Literal) :
     Literal.ofJson literal.toJson = some literal := rfl
 
-@[simp] theorem Literal.toJson_ofJson (j : Hex.SignDet.Codec.Json) (x : Literal)
+theorem Literal.toJson_ofJson (j : Hex.SignDet.Codec.Json) (x : Literal)
     (h : Literal.ofJson j = some x) : x.toJson = j := by
   exact (Option.some.inj h).symm
 

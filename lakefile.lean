@@ -298,6 +298,11 @@ lean_lib HexRealClosureTests where
     .one `HexRealClosure.RootCollectionTests,
     .one `HexRealClosure.TowerTransportTests]
 
+-- Manual native capacity probes for the actual certificate/context codecs.
+lean_exe hexrealclosure_codec_bytes where
+  srcDir := "conformance"
+  root := `HexRealClosure.CodecBytesDriver
+
 -- The deep fixture is type-checked above; only its execution is outside routine CI.
 lean_exe hexrealclosure_transport_tests where
   root := `HexRealClosure.TowerTransportTests
