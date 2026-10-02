@@ -24,7 +24,8 @@ BUDGETS = {"runCheck65": .00032, "runCheck256": .012, "runCheck512": .045,
            "runConvert65": .0016, "runConvert256": .17, "runConvert512": 1.05,
            "runNative128": .125, "runNative256": 1.45,
            "runNativeHard": 3.3,
-           "runNativeCheck": .010, "runNativeConvert": .14}
+           "runNativeCheck": .010, "runNativeConvert": .14,
+           "runParse512": .0016, "runNativeExhaust": .075}
 
 
 def sha(path: Path) -> str:
@@ -38,6 +39,8 @@ def main() -> None:
     parser.add_argument("--trials", type=int, default=5)
     parser.add_argument("--family", action="append", choices=FAMILIES)
     parser.add_argument("--skip-endpoints", action="store_true")
+    parser.add_argument("--no-families", action="store_true")
+    parser.add_argument("--target", action="append", choices=list(BUDGETS))
     args = parser.parse_args()
     if args.output.exists():
         parser.error("output exists; preserve completed runs")
@@ -75,7 +78,7 @@ def main() -> None:
             report["baseline_source"] = subprocess.check_output(
                 ["git", "rev-parse", "HEAD"], cwd=baseline.parents[3], text=True).strip()
             available = run([str(baseline), "list"], cwd=baseline.parents[3])
-            shared = [name for name in BUDGETS if f"  {name} " in available]
+            shared = [name for name in args.target or BUDGETS if f"  {name} " in available]
             report["new_targets_without_prior_registration"] = [n for n in BUDGETS if n not in shared]
             # Trial-major, adjacent arms, alternating AB/BA across trials.
             for trial in range(args.trials):
@@ -105,12 +108,12 @@ def main() -> None:
                 ratios[name] = dict(paired_ratios=pairs, median=statistics.median(pairs))
             report["regression_ratios"] = ratios
         else:
-            for name in args.family or FAMILIES:
+            for name in ([] if args.no_families else args.family or FAMILIES):
                 destination = directory / (name.rsplit(".", 1)[-1] + ".json")
                 run([str(BENCH), "run", name, "--export-file", str(destination)])
             if not args.skip_endpoints:
                 destination = directory / "endpoints.json"
-                run([str(BENCH), "run", *BUDGETS, "--repeats", str(args.trials),
+                run([str(BENCH), "run", *(args.target or BUDGETS), "--repeats", str(args.trials),
                      "--export-file", str(destination)])
                 results = json.loads(destination.read_text())["results"]
                 report["fixed_verdicts"] = {

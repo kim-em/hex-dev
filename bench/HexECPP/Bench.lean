@@ -26,7 +26,7 @@ or terminal construction. Asymptotic detection for these complete endpoints
 is replaced by operation-specific regression budgets in `ecpp_audit.py`,
 derived before measurement from twice the retained endpoint medians. Parser
 and scalar primitives instead use the independently derived ladders below.
-`runParse512` and `runSize*` remain observation/hash anchors without budgets.
+`runSize*` remain observation/hash anchors without budgets.
 -/
 
 open Hex.ECPP
@@ -160,6 +160,47 @@ setup_fixed_benchmark runNativeCheck where {
   repeats := 5, warmupFirstIter := true, expectedHash := some (hash (1 : Nat)) }
 setup_fixed_benchmark runNativeConvert where {
   repeats := 5, warmupFirstIter := true, expectedHash := some (hash (1 : Nat)) }
+
+/-- Square root, Cornacchia norm and the complete exceptional twist portfolio,
+checked by their integer equations on runtime inputs. -/
+private def cmProposals (n d : Nat) : Bool := Id.run do
+  let k := if d % 4 == 0 then d / 4 else d
+  let a := modSub n 0 k
+  let some r := CM.sqrt? n 3 a | return false
+  let some (t, v) := CM.norm? n d r | return false
+  let curves := CM.portfolio.flatMap (fun inv => CM.curves n inv 3)
+  return CM.rootValid n a r && CM.normValid n d t v &&
+    (CM.traces d t v).length == (if d == 3 then 6 else 4) &&
+    curves.length == 24 && curves.all (fun (a, b) =>
+      a < n && b < n && (4 * a * a * a + 27 * b * b) % n != 0)
+
+initialize cm128Ref : IO.Ref Nat ← IO.mkRef 305927751028606010005614597858307057793
+initialize exhaustedRef : IO.Ref Nat ← IO.mkRef 86906364443826889462434168665794151905575430136092680752789091262591140309013
+
+@[noinline] def runCM128 (_ : Unit) : IO Nat := do
+  return if cmProposals (← cm128Ref.get) 4 then 1 else 0
+
+@[noinline] def runCM256 (_ : Unit) : IO Nat := do
+  return if cmProposals (← nativeHardRef.get) 3 then 1 else 0
+
+@[noinline] def runCountedConvert65 (_ : Unit) : IO Nat := do
+  return match parsePari defaultImportBudget (← pari65Ref.get) with
+  | .error _ => 0
+  | .ok input => if (convertCounted defaultImportBudget Hex.Nat.defaultPrimeCertBudget
+      (Hex.Rand.ofSeed 1) 200 input).toOption.any (fun result => checkAt input.subject result.1) then 1 else 0
+
+/-- Frozen tuning-256-3 exercises the complete root portfolio without an
+accepted point; its resource result is content checked. -/
+@[noinline] def runNativeExhaust (_ : Unit) : IO Nat := do
+  let n ← exhaustedRef.get
+  return match (produce n 3).result with
+  | .error e => if e.resource == .portfolio && e.subject == n then 1 else 0
+  | .ok _ => 0
+
+setup_fixed_benchmark runCM128 where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
+setup_fixed_benchmark runCM256 where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
+setup_fixed_benchmark runCountedConvert65 where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
+setup_fixed_benchmark runNativeExhaust where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
 
 /-!
 # Controlled ECPP input families
