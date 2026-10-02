@@ -12,14 +12,14 @@ public import HexSignDet.Codec.Laws
 public section
 
 namespace Hex.RealClosure.BaseContext
-open Tower Lean SignDet
+open Tower SignDet
 
 mutual
 /-- Structured base payloads preserve every recursive fraction level. -/
 @[expose] def Syntax.literal : Syntax → Literal
-  | .rational q => .array (.cons (.number 0 0)
-      (.cons (.number q.num 0) (.cons (.number q.den 0) .nil)))
-  | .fraction p q => .array (.cons (.number 1 0)
+  | .rational q => .array (.cons (.number 0)
+      (.cons (.number q.num) (.cons (.number q.den) .nil)))
+  | .fraction p q => .array (.cons (.number 1)
       (.cons (.array (Syntax.literals p)) (.cons (.array (Syntax.literals q)) .nil)))
 @[expose] def Syntax.literals : List Syntax → Literals
   | [] => .nil
@@ -30,10 +30,10 @@ mutual
 /-- Canonical rationals and exact field counts are checked before the existing
 base reader checks level shapes and nonzero fraction denominators. -/
 @[expose] def Syntax.ofLiteral : Literal → Option Syntax
-  | .array (.cons (.number 0 0) (.cons (.number n 0) (.cons (.number d 0) .nil))) =>
+  | .array (.cons (.number 0) (.cons (.number n) (.cons (.number d) .nil))) =>
     let q := mkRat n d.toNat
     if 0 < d ∧ q.num = n ∧ (q.den : Int) = d then some (.rational q) else none
-  | .array (.cons (.number 1 0) (.cons (.array p) (.cons (.array q) .nil))) => do
+  | .array (.cons (.number 1) (.cons (.array p) (.cons (.array q) .nil))) => do
     return .fraction (← Syntax.ofLiterals p) (← Syntax.ofLiterals q)
   | _ => none
 @[expose] def Syntax.ofLiterals : Literals → Option (List Syntax)

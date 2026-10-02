@@ -7,13 +7,12 @@ module
 
 public import HexSignDet.Codec.Basic
 import all HexSignDet.Codec.Basic
-import all Lean.Data.Json.Basic
-import all Lean.Data.Json.FromToJson.Basic
+import all HexSignDet.Codec.Json
 
 public section
 
 namespace Hex.SignDet
-open Lean
+open Codec (Json)
 
 /-- Structured encoding followed by decoding preserves the entire input value.
 This law does not include JSON printing or byte parsing. It is needed for
@@ -23,10 +22,10 @@ structured roundtrips, not for soundness of independent replay. -/
 
 namespace Codec
 
-@[simp] theorem read_nat (n : Nat) : fromJson? (toJson n) = .ok n := by
+@[simp] theorem read_nat (n : Nat) : Json.decode (Json.of n) = .ok n := by
   rfl
 
-@[simp] theorem read_int (n : Int) : fromJson? (toJson n) = .ok n := by
+@[simp] theorem read_int (n : Int) : Json.decode (Json.of n) = .ok n := by
   rfl
 
 end Codec
@@ -35,8 +34,7 @@ theorem ValueCodec.nat_lawful : nat.Lawful := Codec.read_nat
 
 theorem ValueCodec.rat_lawful : rat.Lawful := by
   intro q
-  simp [rat, Json.getArr?, bind, Except.bind, pure, Except.pure, Codec.read_int, Codec.read_nat,
-    q.den_nz, Rat.mkRat_self]
+  simp [rat, Json.getArr_arr, bind, Except.bind, pure, Except.pure, q.den_nz, Rat.mkRat_self]
 
 namespace Codec
 
@@ -44,6 +42,8 @@ namespace Codec
 theorem read_array (encode : α → Json) (read : Json → Except String α)
     (h : ∀ x, read (encode x) = .ok x) (a : Array α) :
     readArray read (array encode a) = .ok a := by
+  unfold readArray array
+  rw [Json.getArr_arr]
   change (a.map encode).mapM read = .ok a
   simp only [Array.mapM_map]
   have hf : (read ∘ encode) = (fun x => (pure x : Except String α)) :=
@@ -61,6 +61,8 @@ supports structurally bounded indices without assuming all indices are valid. -/
 theorem read_list_of (encode : α → Json) (read : Json → Except String α)
     (a : List α) (h : ∀ x ∈ a, read (encode x) = .ok x) :
     readList read (list encode a) = .ok a := by
+  unfold readList list readArray array
+  rw [Json.getArr_arr]
   change Array.toList <$> (a.toArray.map encode).mapM read = .ok a
   rw [Array.toList_mapM]
   simp only [Array.toList_map, List.mapM_map]
@@ -76,14 +78,15 @@ theorem read_list_of (encode : α → Json) (read : Json → Except String α)
 theorem read_vector (encode : α → Json) (read : Json → Except String α)
     (h : ∀ x, read (encode x) = .ok x) (a : Vector α n) :
     vector n read (array encode a.toArray) = .ok a := by
-  have hm : (a.toArray.map encode).mapM read = .ok a.toArray := read_array encode read h _
-  simp [vector, tuple, array, Json.getArr?, bind, Except.bind, pure, Except.pure,
+  have hm : (a.toArray.map encode).mapM read = .ok a.toArray := by
+    simpa [readArray, array, bind, Except.bind] using read_array encode read h a.toArray
+  simp [vector, tuple, array, Json.getArr_arr, bind, Except.bind, pure, Except.pure,
     a.size_toArray, hm]
 
 theorem read_option (encode : α → Json) (read : Json → Except String α)
     (h : ∀ x, read (encode x) = .ok x) (a : Option α) :
     readOption read (option encode a) = .ok a := by
-  cases a <;> simp [readOption, option, Json.getArr?, bind, Except.bind, pure,
+  cases a <;> simp [readOption, option, Json.getArr_arr, bind, Except.bind, pure,
     Except.pure, h, Functor.map, Except.map]
 
 theorem read_poly {E : Type} [Zero E] [DecidableEq E]
@@ -96,24 +99,24 @@ theorem read_endpoint {E : Type} [Zero E] [DecidableEq E]
     (value : ValueCodec E) (h : value.Lawful) (e : Endpoint E) :
     readEndpoint value (endpoint value e) = .ok e := by
   unfold ValueCodec.Lawful at h
-  cases e <;> simp [readEndpoint, endpoint, Json.getArr?, bind, Except.bind, pure,
+  cases e <;> simp [readEndpoint, endpoint, Json.getArr_arr, bind, Except.bind, pure,
     Except.pure, h, Functor.map, Except.map]
 
 /-- The standard JSON array instances use the same ordered traversal. -/
-theorem read_jsonArray {α : Type} [ToJson α] [FromJson α]
-    (h : ∀ x : α, fromJson? (toJson x) = .ok x) (a : Array α) :
-    fromJson? (toJson a) = .ok a := read_array toJson fromJson? h a
+theorem read_jsonArray {α : Type} [Json.To α] [Json.From α]
+    (h : ∀ x : α, Json.decode (Json.of x) = .ok x) (a : Array α) :
+    Json.decode (Json.of a) = .ok a := read_array Json.of Json.decode h a
 
-theorem read_index (i : Fin n) : index n (toJson i.val) = .ok i := by
-  simp [index, read_nat, bind, Except.bind, i.isLt, pure, Except.pure]
+theorem read_index (i : Fin n) : index n (Json.of i.val) = .ok i := by
+  simp [index, bind, Except.bind, i.isLt, pure, Except.pure]
 
 theorem read_matrix (a : Matrix Int n m) : matrix n m (encodeMatrix a) = .ok a := by
-  have rows : (array (array toJson) (a.rows.toArray.map Vector.toArray)) =
-      array (fun row : Vector Int m => array toJson row.toArray) a.rows.toArray := by
+  have rows : (array (array Json.of) (a.rows.toArray.map Vector.toArray)) =
+      array (fun row : Vector Int m => array Json.of row.toArray) a.rows.toArray := by
     simp [array, Array.map_map, Function.comp_def]
   rw [encodeMatrix, rows]
-  have hv := read_vector (fun row : Vector Int m => array toJson row.toArray)
-    (vector m fromJson?) (read_vector toJson fromJson? read_int) a.rows
+  have hv := read_vector (fun row : Vector Int m => array Json.of row.toArray)
+    (vector m Json.decode) (read_vector Json.of Json.decode read_int) a.rows
   simp only [matrix, hv, Functor.map, Except.map]
   congr 1
   apply Matrix.ext

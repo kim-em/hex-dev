@@ -11,7 +11,8 @@ public meta import HexRealClosure.TowerCatalog
 public section
 
 namespace Hex.RealClosure.Tower.Tests
-open Lean SignDet
+open SignDet
+open SignDet.Codec (Json)
 
 private def registry : BaseContext.Registry := fun _ => none
 private def rejected (result : Except String α) : Bool := result.toOption.isNone
@@ -55,20 +56,20 @@ private def sample : Option (Array Bool) :=
   (catalog₂.insert third.context).bind fun catalog =>
   -- This monic clean head reduces `definition + 1` to `1` under arithmetic packing.
   let unreduced : Serialized := ⟨first.context.signature,
-    .arr #[Codec.poly base.codec (definition + DensePoly.C 1), toJson (1 : Int)]⟩
+    .arr #[Codec.poly base.codec (definition + DensePoly.C 1), Codec.Json.of (1 : Int)]⟩
   ((catalog.readElement unreduced).toOption).bind fun unreducedRead =>
   let old := first.context.write semanticOne
   ((catalog.readElement old).toOption).bind fun oldRead =>
   let newest := third.context.write c
   ((catalog.readElement newest).toOption).bind fun newestRead =>
   (newest.value.getArr?.toOption).bind fun fields =>
-  let wrongSign : Serialized := ⟨newest.binding, .arr #[fields[0]!, toJson (-1 : Int)]⟩
-  let zeroSign : Serialized := ⟨newest.binding, .arr #[fields[0]!, toJson (0 : Int)]⟩
+  let wrongSign : Serialized := ⟨newest.binding, .arr #[fields[0]!, Codec.Json.of (-1 : Int)]⟩
+  let zeroSign : Serialized := ⟨newest.binding, .arr #[fields[0]!, Codec.Json.of (0 : Int)]⟩
   (fields[0]!.getArr?.toOption).bind fun coefficients =>
   (coefficients[1]!.getArr?.toOption).bind fun nested =>
   (nested[0]!.getArr?.toOption).bind fun nestedCoefficients =>
   let nestedSign : Serialized := ⟨newest.binding, .arr #[
-    .arr (coefficients.set! 1 (.arr #[nested[0]!, toJson (-1 : Int)])), fields[1]!]⟩
+    .arr (coefficients.set! 1 (.arr #[nested[0]!, Codec.Json.of (-1 : Int)])), fields[1]!]⟩
   let nestedZero : Serialized := ⟨newest.binding, .arr #[
     .arr (coefficients.set! 1 (.arr #[
       .arr (nestedCoefficients.push (first.context.codec.encode 0)), nested[1]!])), fields[1]!]⟩
@@ -109,8 +110,8 @@ private def sample : Option (Array Bool) :=
     rejected (catalog.readElement nestedSign), rejected (catalog.readElement nestedZero),
     rejected (catalog.readElement ⟨newest.binding, .arr #[fields[0]!]⟩),
     rejected (catalog.readElement ⟨newest.binding, .arr #[fields[0]!, fields[1]!, .null]⟩),
-    rejected (catalog.readElement ⟨newest.binding, .arr #[fields[0]!, .num ⟨10, 1⟩]⟩),
-    rejected (catalog.readElement ⟨newest.binding, .arr #[fields[0]!, .str "1"]⟩),
+    rejected (catalog.readElement ⟨newest.binding, .arr #[fields[0]!, .number 2]⟩),
+    rejected (catalog.readElement ⟨newest.binding, .arr #[fields[0]!, .string "1"]⟩),
     rejected (catalog.readPolynomial ⟨printedPoly.binding,
       .arr (polyCoefficients.push (third.context.codec.encode 0))⟩),
     decide (sameRoot.context.signature = first.context.signature),
@@ -131,7 +132,7 @@ info: some #[true, true, true, true, true, true, true, true, true, true, true, t
 private def duplicateParent : Bool :=
   let parent := (Context.base (BaseContext.rational registry)).signature
   match (contextCodec parent).decode
-      (.arr #[.num ⟨1, 0⟩, parent.literal.toJson]) with
+      (.arr #[.number 1, parent.literal.toJson]) with
   | .error message => message == "noncanonical context reference"
   | .ok _ => false
 
@@ -145,7 +146,7 @@ private def baseSample : Array Bool := Id.run do
   return #[((base.read raw).toOption.map (fun a => samePayload raw (base.write a))).getD false,
     rejected (base.read ⟨base.signature, (BaseContext.Syntax.rational 2).literal.toJson⟩),
     rejected (base.read ⟨base.signature,
-      .arr #[toJson (0 : Nat), toJson (2 : Int), toJson (2 : Nat)]⟩)]
+      .arr #[Codec.Json.of (0 : Nat), Codec.Json.of (2 : Int), Codec.Json.of (2 : Nat)]⟩)]
 
 /-- info: #[true, true, true] -/
 #guard_msgs in
@@ -156,14 +157,14 @@ private def rationalSample : Array Bool :=
   let base := Context.base (BaseContext.rational registry)
   let catalog := Catalog.empty registry
   let bad (j : Json) := rejected (base.read ⟨base.signature, j⟩)
-  #[bad (.arr #[toJson (0 : Nat), toJson (2 : Int), toJson (0 : Int)]),
-    bad (.arr #[toJson (0 : Nat), toJson (2 : Int), toJson (-1 : Int)]),
-    bad (.arr #[toJson (0 : Nat), .num ⟨20, 1⟩, toJson (1 : Nat)]),
-    bad .null, bad (.mkObj []),
+  #[bad (.arr #[Codec.Json.of (0 : Nat), Codec.Json.of (2 : Int), Codec.Json.of (0 : Int)]),
+    bad (.arr #[Codec.Json.of (0 : Nat), Codec.Json.of (2 : Int), Codec.Json.of (-1 : Int)]),
+    bad (.arr #[Codec.Json.of (0 : Nat), .string "2", Codec.Json.of (1 : Nat)]),
+    bad .null, bad (.object .nil),
     (catalog.lookup base.signature).isSome, (catalog.insert base).isNone,
     (catalog.readElement (base.write 1)).toOption.isSome,
-    rejected (Signature.codec.decode (.arr #[.arr #[], .num ⟨0, 1⟩, .arr #[]])),
-    rejected ((contextCodec base.signature).decode (.arr #[.num ⟨0, 0⟩, .null]))]
+    rejected (Signature.codec.decode (.arr #[.arr #[], .string "0", .arr #[]])),
+    rejected ((contextCodec base.signature).decode (.arr #[.number 0, .null]))]
 
 /-- info: #[true, true, true, true, true, true, true, true, true, true] -/
 #guard_msgs in

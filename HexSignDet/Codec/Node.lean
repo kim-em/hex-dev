@@ -10,39 +10,38 @@ public import HexSignDet.Codec.Evidence
 public section
 
 namespace Hex.SignDet.Codec
-open Lean
 
 /-- Row, column and count order is serialized literally. Integer matrix
 identities remain the independent checker's responsibility. -/
 def system (s : System n) : Json :=
-  .arr #[toJson s.rows.toArray, toJson s.columns.toArray, toJson s.counts.toArray,
-    toJson s.values.toArray, encodeMatrix s.inverse, toJson s.denominator]
+  .arr #[Json.of s.rows.toArray, Json.of s.columns.toArray, Json.of s.counts.toArray,
+    Json.of s.values.toArray, encodeMatrix s.inverse, Json.of s.denominator]
 
 def readSystem (n arity : Nat) (j : Json) : Except String (System n) := do
   let a ← tuple 6 j
-  let rows ← vector n (fun j => Vector.toList <$> vector arity (fromJson? (α := Nat)) j) a[0]
-  let columns ← vector n (fun j => Vector.toList <$> vector arity (fromJson? (α := Int)) j) a[1]
-  return ⟨rows, columns, ← vector n fromJson? a[2], ← vector n fromJson? a[3],
-    ← matrix n n a[4], ← fromJson? a[5]⟩
+  let rows ← vector n (fun j => Vector.toList <$> vector arity (Json.decode (α := Nat)) j) a[0]
+  let columns ← vector n (fun j => Vector.toList <$> vector arity (Json.decode (α := Int)) j) a[1]
+  return ⟨rows, columns, ← vector n Json.decode a[2], ← vector n Json.decode a[3],
+    ← matrix n n a[4], ← Json.decode a[5]⟩
 
 def basis (b : Matrix.RankCert Int n m) : Json :=
-  .arr #[toJson b.rank, toJson (b.rows.toArray.map Fin.val), toJson (b.cols.toArray.map Fin.val),
-    toJson b.denom, encodeMatrix b.adj]
+  .arr #[Json.of b.rank, Json.of (b.rows.toArray.map Fin.val), Json.of (b.cols.toArray.map Fin.val),
+    Json.of b.denom, encodeMatrix b.adj]
 
 /-- Selected indices are checked against the decoded matrix dimensions before
 constructing `Fin` values. No rank or nonsingularity claim is assumed. -/
 def readBasis (n m : Nat) (j : Json) : Except String (Matrix.RankCert Int n m) := do
   let a ← tuple 5 j
-  let rank ← fromJson? (α := Nat) a[0]
+  let rank ← Json.decode (α := Nat) a[0]
   if rank > n || rank > m then throw "rank exceeds matrix dimensions"
   return ⟨rank, ← vector rank (index n) a[1], ← vector rank (index m) a[2],
-    ← fromJson? a[3], ← matrix rank rank a[4]⟩
+    ← Json.decode a[3], ← matrix rank rank a[4]⟩
 
 variable {E Ctx : Type} [Zero E] [DecidableEq E]
 
 def node (value : ValueCodec E) (context : ValueCodec Ctx) (n : Node E Ctx) : Json :=
   .arr #[context.encode n.context, poly value n.head, endpoint value n.lower,
-    endpoint value n.upper, list (poly value) n.queries, toJson n.size, system n.system,
+    endpoint value n.upper, list (poly value) n.queries, Json.of n.size, system n.system,
     array (tarski value context) n.moments.toArray,
     array (option (reduction value)) n.reductions.toArray,
     option (preparation value) n.preparation, basis n.basis]
@@ -58,7 +57,7 @@ def readNode (value : ValueCodec E) (context : ValueCodec Ctx) (j : Json) :
   let lower ← readEndpoint value a[2]
   let upper ← readEndpoint value a[3]
   let queries ← readList (readPoly value) a[4]
-  let size ← fromJson? (α := Nat) a[5]
+  let size ← Json.decode (α := Nat) a[5]
   let system ← readSystem size queries.length a[6]
   return ⟨ctx, head, lower, upper, queries, size, system,
     ← vector size (readTarski value context) a[7],

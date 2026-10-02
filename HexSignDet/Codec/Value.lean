@@ -20,15 +20,15 @@ inductive Value where
   | string (value : String)
   | array (values : Values)
   | object (fields : Fields)
-  deriving DecidableEq, Repr
+  deriving DecidableEq, Repr, Hashable
 inductive Values where
   | nil
   | cons (value : Value) (rest : Values)
-  deriving DecidableEq, Repr
+  deriving DecidableEq, Repr, Hashable
 inductive Fields where
   | nil
   | cons (key : String) (value : Value) (rest : Fields)
-  deriving DecidableEq, Repr
+  deriving DecidableEq, Repr, Hashable
 end
 
 mutual

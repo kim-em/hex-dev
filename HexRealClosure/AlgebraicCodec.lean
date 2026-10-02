@@ -8,12 +8,12 @@ module
 public import HexRealClosure.Algebraic
 public import HexSignDet.Codec.Laws
 import all HexSignDet.Codec.Basic
-import all Lean.Data.Json.Basic
+import all HexSignDet.Codec.Json
 
 public section
 
 namespace Hex.RealClosure.Algebraic
-open Lean SignDet
+open SignDet
 
 variable {E Ctx : Type} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
@@ -26,14 +26,14 @@ coefficient, rejects trailing zeros, and recomputes the claimed sign. -/
 def Element.codec (value : ValueCodec E) : ValueCodec (Element context) where
   encode a := match a.stored with
     | none => .arr #[]
-    | some p => .arr #[Codec.poly value p.polynomial, toJson p.sign]
+    | some p => .arr #[Codec.poly value p.polynomial, Codec.Json.of p.sign]
   decode j := do
     let fields ← j.getArr?
     match fields.toList with
     | [] => return 0
     | [p, s] =>
       let polynomial ← Codec.readPoly value p
-      let claimed ← fromJson? (α := Int) s
+      let claimed ← Codec.Json.decode (α := Int) s
       match Element.restore? polynomial claimed with
       | some a => return a
       | none => throw "stored sign rejected"
@@ -48,11 +48,11 @@ theorem Element.codec_lawful (value : ValueCodec E) (h : value.Lawful) :
   | none =>
     have ha : a = 0 := Element.ext (hs.trans Element.stored_zero.symm)
     subst a
-    simp [Element.codec, Element.stored_zero, Json.getArr?, bind, Except.bind,
+    simp [Element.codec, Element.stored_zero, Codec.Json.getArr_arr, bind, Except.bind,
       pure, Except.pure]
   | some p =>
-    simp [Element.codec, hs, Json.getArr?, bind, Except.bind, pure, Except.pure,
-      Codec.read_poly value h, Codec.read_int, Element.restore_stored a p hs]
+    simp [Element.codec, hs, Codec.Json.getArr_arr, bind, Except.bind, pure, Except.pure,
+      Codec.read_poly value h, Element.restore_stored a p hs]
 
 end Hex.RealClosure.Algebraic
 

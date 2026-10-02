@@ -6,6 +6,10 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.Codec
+public import Lean.Data.Json.Parser
+public meta import Lean.Data.Json.Parser
+public import Lean.Data.Json.Printer
+public meta import Lean.Data.Json.Printer
 public import HexSignDet.Codec.EvidenceLaws
 public import HexSignDet.Codec.NodeLaws
 public import HexSignDet.Codec.GraphLaws
@@ -22,7 +26,7 @@ public section
 compiled execution. Ordinary-kernel graph replay and axiom probes remain in
 CrossCheck; successful byte decoding retains that finite checker evidence. -/
 namespace Hex.SignDet.FastCheck
-open Lean
+open Codec (Json)
 open Hex.SignDet.Conformance
 open Hex.SignDet.CrossCheck
 
@@ -145,29 +149,29 @@ private def roundtrip (d : Dag Rat Nat) : Bool :=
 #guard (decoded (encoded ⟨#[⟨{firstNode with lower := .finite (-2)}, none⟩], 0⟩)).toOption.isNone
 
 private def replace (i : Nat) (value : Json) (j : Json) : Json :=
-  match j with
-  | .arr a => .arr (a.set! i value)
-  | _ => .null
+  match j.getArr? with
+  | .ok a => .arr (a.set! i value)
+  | .error _ => .null
 
 private def nodeWire : Json := Codec.node ValueCodec.rat ValueCodec.nat derivativeNode
 private def readNode (j : Json) : Bool :=
   (Codec.readNode ValueCodec.rat ValueCodec.nat j).isOk
 
 #guard readNode nodeWire
-#guard !readNode (replace 5 (toJson (4 : Nat)) nodeWire)
-#guard !readNode (replace 5 (toJson (10^50 : Nat)) nodeWire)
+#guard !readNode (replace 5 (Json.of (4 : Nat)) nodeWire)
+#guard !readNode (replace 5 (Json.of (10^50 : Nat)) nodeWire)
 #guard !readNode (replace 7 (.arr #[]) nodeWire)
 #guard !readNode (replace 8 (.arr #[]) nodeWire)
-#guard !readNode (replace 10 (.arr #[toJson (4 : Nat), .arr #[], .arr #[],
-  toJson (1 : Int), .arr #[]]) nodeWire)
-#guard !readNode (replace 10 (.arr #[toJson (1 : Nat), toJson (#[3] : Array Nat),
-  toJson (#[0] : Array Nat), toJson (1 : Int), toJson (#[#[1]] : Array (Array Int))]) nodeWire)
+#guard !readNode (replace 10 (.arr #[Json.of (4 : Nat), .arr #[], .arr #[],
+  Json.of (1 : Int), .arr #[]]) nodeWire)
+#guard !readNode (replace 10 (.arr #[Json.of (1 : Nat), Json.of (#[3] : Array Nat),
+  Json.of (#[0] : Array Nat), Json.of (1 : Int), Json.of (#[#[1]] : Array (Array Int))]) nodeWire)
 
-#guard (ValueCodec.rat.decode (.arr #[toJson (2 : Int), toJson (2 : Nat)])).toOption.isNone
-#guard (ValueCodec.rat.decode (.arr #[toJson (1 : Int), toJson (0 : Nat)])).toOption.isNone
+#guard (ValueCodec.rat.decode (.arr #[Json.of (2 : Int), Json.of (2 : Nat)])).toOption.isNone
+#guard (ValueCodec.rat.decode (.arr #[Json.of (1 : Int), Json.of (0 : Nat)])).toOption.isNone
 #guard (Codec.readPoly ValueCodec.rat
   (.arr #[ValueCodec.rat.encode 1, ValueCodec.rat.encode 0])).toOption.isNone
-#guard (Codec.readEndpoint ValueCodec.rat (.arr #[toJson (1 : Nat)])).toOption.isNone
+#guard (Codec.readEndpoint ValueCodec.rat (.arr #[Json.of (1 : Nat)])).toOption.isNone
 #guard (decoded "[2,0,[]]".toUTF8).toOption.isNone
 #guard (decoded "[1,0,[],0]".toUTF8).toOption.isNone
 #guard (decoded "[1,0,[]] trailing".toUTF8).toOption.isNone
@@ -189,7 +193,7 @@ private def readNode (j : Json) : Bool :=
     match buildPrepared ([7, 1] : List Nat) domain [DensePoly.ofCoeffs #[0, 1]] with
     | .error _ => false
     | .ok tree =>
-      let ctx : ValueCodec (List Nat) := ⟨toJson, fromJson?⟩
+      let ctx : ValueCodec (List Nat) := ⟨Json.of, Json.decode⟩
       let bytes := (Dag.encode tree.val).encodeBytes ValueCodec.rat ctx
       (Dag.decodeBytes ValueCodec.rat ctx Sturm.orderSign [7, 1] singletonRaw.head
         singletonRaw.lower singletonRaw.upper tree.val.node.queries bytes).isOk &&
@@ -348,7 +352,7 @@ theorem graph_rejected : check literalGraph sharedParent.queries = false := by
 #guard_msgs in
 #print axioms reduction_node_roundtrip
 
-/-- info: 'Hex.SignDet.ValueCodec.nat_lawful' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.ValueCodec.nat_lawful' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms ValueCodec.nat_lawful
 /-- info: 'Hex.SignDet.ValueCodec.rat_lawful' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -372,25 +376,22 @@ theorem graph_rejected : check literalGraph sharedParent.queries = false := by
 
 namespace NumberForm
 
-/-- A codec can distinguish the internal number representation even though
-its printer emits a valid integer token. Structured laws alone allow this. -/
-@[expose] def codec : ValueCodec Unit where
-  encode _ := .num ⟨10, 1⟩
-  decode
-    | .num n => if n.mantissa == 10 && n.exponent == 1 then .ok () else .error "changed number form"
-    | _ => .error "expected a number"
+/-- Structured Lean JSON can retain number representations that collapse to
+identical bytes. Certificate codecs instead use the integer-only JSON type. -/
+@[expose] def encode (_ : Unit) : Lean.Json := .num ⟨10, 1⟩
+@[expose] def decode : Lean.Json → Except String Unit
+  | .num n => if n.mantissa == 10 && n.exponent == 1 then .ok () else .error "changed number form"
+  | _ => .error "expected a number"
 
-/-- This codec satisfies the existing structured law in the ordinary kernel. -/
-theorem lawful : codec.Lawful := by
-  intro x
+theorem lawful (x : Unit) : decode (encode x) = .ok x := by
   cases x
   rfl
 
-#guard (codec.encode ()).compress == "1"
-#guard match Codec.parse {} (codec.encode ()).compress.toUTF8 with
+#guard (encode ()).compress == "1"
+#guard match Lean.Json.parse (encode ()).compress with
   | .ok (.num n) => n.mantissa == 1 && n.exponent == 0
   | _ => false
-#guard ((Codec.parse {} (codec.encode ()).compress.toUTF8).bind codec.decode).toOption.isNone
+#guard ((Lean.Json.parse (encode ()).compress).bind decode).toOption.isNone
 
 /-- info: 'Hex.SignDet.FastCheck.NumberForm.lawful' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

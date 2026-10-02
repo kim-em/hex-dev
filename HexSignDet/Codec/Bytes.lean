@@ -61,9 +61,9 @@ def checkBytes (limits : Limits) (input : ByteArray) : Except String Unit := do
 
 /-- UTF-8 and finite lexical limits are checked before the shared JSON parser
 can allocate numeric values or recursively construct nested arrays. -/
-def parse (limits : Limits) (input : ByteArray) : Except String Lean.Json := do
+def parse (limits : Limits) (input : ByteArray) : Except String Json := do
   checkBytes limits input
-  let some text := String.fromUTF8? input | throw "invalid certificate UTF-8"
-  Lean.Json.parse text
+  let some value := Json.readBytes input | throw "invalid certificate JSON or UTF-8"
+  return value
 
 end Hex.SignDet.Codec
