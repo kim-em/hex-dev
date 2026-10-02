@@ -158,7 +158,10 @@ validated descriptors without decoding serialized data. -/
 /-- Every validated packed tower has a staged base and an exact finite suffix
 of its stored root extensions. No descriptor is reconstructed from a signature.
 Consumers should use the original context for arithmetic and use the returned
-equality only to align types; computing `Suffix.context` rebuilds frames. -/
+equality only to align types. Extraction appends descriptors by rebuilding
+each existing prefix, giving quadratically many old-descriptor adjoins; each
+prepares its Sturm domain and encodes/parses its frame. Computing
+`Suffix.context` also rebuilds contexts. -/
 @[expose] def Context.origin (context : Context registry) : Origin context := by
   cases context with
   | pack chain => exact chain.origin
