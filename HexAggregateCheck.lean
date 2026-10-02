@@ -9,7 +9,7 @@ module
 public import HexBasic
 public import HexArith
 public import HexPrimality
-import HexECPP
+public import HexECPP
 public import HexPrimalityMathlib
 public import HexPoly
 public import HexMvPoly
