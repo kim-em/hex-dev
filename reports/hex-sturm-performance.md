@@ -507,7 +507,7 @@ Constants and sparse monomials retain their former compact behavior.
 
 | Current registration | Declared expression | Mode | Degree ladder | Result |
 | --- | --- | --- | --- | --- |
-| `runReplay` | `n ^ 4` | 2: one-sided upper bound | 256, 512, 1024, 2048 | within declared upper bound (observed faster) |
+| `runReplay` | `n ^ 4` | Historical mode-2 declaration; admission suspended | 256, 512, 1024, 2048 | observed faster; dominant-phase audit outstanding |
 
 The original `n²` tables above preserve historical declarations and verdicts;
 they are not the current registration.

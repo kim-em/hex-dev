@@ -124,6 +124,7 @@ open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
 #guard
   let roots := (RealAlgebraicPoly.ofArray #[1, -2, 1]).roots
   roots.finite?.isSome && roots.toArray.size == 1 &&
+    roots.toArray.all (fun r => r.multiplicity == 2) &&
     roots.contains 1 && !(roots.contains 0) && !(roots.contains (-1))
 
 #guard

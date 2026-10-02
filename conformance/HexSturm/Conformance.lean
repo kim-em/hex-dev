@@ -17,8 +17,10 @@ public meta import HexPolyZ.IntegerPolynomial
 public section
 
 /-!
-Oracle: none (runtime field/integer differentials supplement analytic expectations).
-Mode: always; elaborated by `HexConformance` in CI.
+Oracle: none (core); pinned python-flint exact selected-root signs through the
+shared integer fixtures in `conformance/HexRealRoots` (CI).
+Mode: always (core); required (shared CI oracle). This module elaborates through
+`HexConformance`; field/integer differential checks supplement analytic expectations.
 Covered operations:
 - Preparation, positive normalization and endpoint retargeting.
 - Ordinary/prepared queries, counts and certification.
