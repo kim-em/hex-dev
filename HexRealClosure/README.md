@@ -729,9 +729,47 @@ complete operation on the same repeated-factor input as `runRoots`, with input
 construction outside the timed call. These are fixed functional anchors; the
 required tower scaling evaluation remains separate.
 
-These entries can own distinct extensions over their common coefficient
-context. The operation that gathers all requested entries into one common
-native context remains part of the live-context transport requirement.
+`ctx.collect roots` gathers any finite list of root handles over `ctx` into one
+actual native context. Its `input` maps every original coefficient value into
+that context; `entries` retains the root handles in input order and a conversion
+for every value in each original root context. Each entry supplies `value`
+for its selected root and `apply` for an arbitrary old root-context value.
+`collect?` exposes revalidation failure; the companion proves it succeeds and
+agrees with ordinary collection under the input model laws.
+
+Collection revalidates each next root over the converted coefficient context
+and includes all previously collected contexts into its new child. Old handles
+stay valid in their own contexts. `Root.move?_success` proves preservation of
+both the converted coefficient context and the complete old root context;
+`RootMap.Model.value` and `Collection.Model.values` identify all transported
+values and the ordered root list in one shared ambient model.
+`Context.roots_collected_sorted` specializes this agreement to the strictly
+ordered output of complete root finding for every compatible collection model.
+`Context.roots_collected_ordered` gives the native all-pairs sign comparisons
+for that output, given a `Tower.Model` of the input context, without
+a caller-supplied collection model.
+Entries retain input order, so callers can zip them with the original positive
+multiplicity labels. Collection retains each selected root’s descriptor head.
+For complete root output, that head is a Yun squarefree factor, possibly
+deflated by exactly hit points. Under the input model laws, the formal tower
+degree over the input context is the product of these defining degrees.
+Point roots (zero and exactly hit cut points) add no level; rational roots
+that remain selected handles add their descriptor level. For r distinct
+real roots of a degree-n input, this is at most n^r, with worst case n^n.
+This is representation size, not the degree of the denoted field extension.
+Arithmetic in reducible levels uses zero-divisor splitting. The constructor
+currently does not deflate by previously collected roots; assessing this
+growth belongs to the required tower scaling evaluation.
+
+Run `lake build HexRealClosure.RootCollectionTests` for a runnable mixed-field
+example: √2 and the positive root of `3(X²-3)` enter one context, where their
+sum satisfies `s⁴-10s²+1=0`. The example checks inversion, nonlinear transport,
+old-handle validity, and stale-context reader rejection. The isolation
+conformance driver exports the actual recursive stored values and root frames;
+the independent Z3 oracle checks selected roots, cached signs, coefficient
+inclusions and arithmetic. Its embedded replay graphs are retained data and
+are not replayed by that oracle. Collecting arbitrary dependency-closed live
+contexts, including differing staged bases, remains required.
 
 `TowerCoverage.lean` connects the native producer to the relative algebraic
 union. `Model.nativePoly` lifts coefficients from the input's mathematical
@@ -1318,7 +1356,8 @@ packaging and dependency closure. The interpretation ingredients are:
    and assembling
    the total checked constructor with its value and order preservation
    statements. `Context.origin` extracts the exact base and validated root
-   suffix of one stored context; the cross-context dependency traversal remains.
+   suffix of one stored context. `Context.collect` gathers root handles over
+   one common predecessor; arbitrary live-context dependency traversal remains.
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the

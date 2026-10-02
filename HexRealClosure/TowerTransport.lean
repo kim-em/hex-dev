@@ -148,8 +148,57 @@ def Conversion.refine (parent : Context registry)
   ⟨(parent.refine encoding).extension.context, (parent.refine encoding).transport,
     .refine parent encoding⟩
 
-/-- One native conversion step after descriptor validation. Both suffix
-traversals use this exact converted descriptor and packing closure. -/
+/-- Repack an old root context using the supplied actual converted child.
+The validation and cached-child equality are erased construction evidence. -/
+def Conversion.adjoinCached {source : Context registry} (conversion : Conversion source)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (converted : SignDet.Descriptor conversion.context.Value Signature
+      conversion.context.sign conversion.context.signature)
+    (h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
+      (source.mapDescriptor conversion.context conversion.value descriptor) = some converted)
+    (extension : Extension conversion.context converted)
+    (built : extension = conversion.context.adjoin converted) :
+    Conversion (source.adjoin descriptor).context :=
+  ⟨extension.context,
+    fun x => extension.pack
+      (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value)), by
+    cases built
+    exact .adjoin conversion.checked descriptor converted
+      (SignDet.Descriptor.build_raw (SignDet.Descriptor.validate_eq_some.mp h))⟩
+
+private theorem Conversion.adjoinCached_spec_proof {source : Context registry}
+    (conversion : Conversion source)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (converted : SignDet.Descriptor conversion.context.Value Signature
+      conversion.context.sign conversion.context.signature)
+    (h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
+      (source.mapDescriptor conversion.context conversion.value descriptor) = some converted)
+    (extension : Extension conversion.context converted)
+    (built : extension = conversion.context.adjoin converted) :
+    (conversion.adjoinCached descriptor converted h extension built).context = extension.context ∧
+      HEq (conversion.adjoinCached descriptor converted h extension built).value
+        (fun x => conversion.context.ofPoly converted
+          (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value))) := by
+  cases built
+  exact ⟨rfl, HEq.rfl⟩
+
+/-- Cached transport retains the actual child and its native packing closure. -/
+theorem Conversion.adjoinCached_spec {source : Context registry}
+    (conversion : Conversion source)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (converted : SignDet.Descriptor conversion.context.Value Signature
+      conversion.context.sign conversion.context.signature)
+    (h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
+      (source.mapDescriptor conversion.context conversion.value descriptor) = some converted)
+    (extension : Extension conversion.context converted)
+    (built : extension = conversion.context.adjoin converted) :
+    (conversion.adjoinCached descriptor converted h extension built).context = extension.context ∧
+      HEq (conversion.adjoinCached descriptor converted h extension built).value
+        (fun x => conversion.context.ofPoly converted
+          (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map conversion.value))) :=
+  conversion.adjoinCached_spec_proof descriptor converted h extension built
+
+/-- One native conversion step constructs its validated converted child. -/
 def Conversion.adjoinChecked {source : Context registry} (conversion : Conversion source)
     (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
     (converted : SignDet.Descriptor conversion.context.Value Signature

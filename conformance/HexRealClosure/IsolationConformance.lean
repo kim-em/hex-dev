@@ -7,6 +7,7 @@ module
 
 public import HexRealClosure.CompleteRoots
 public import HexRealClosure.AlgebraicContext
+public import HexRealClosure.RootCollection
 public import HexSignDet.Codec
 public import HexOrderedFn.Infinitesimal
 public import Lean.Data.Json.Printer
@@ -85,6 +86,43 @@ private def emitAssembly {E : Type} [Zero E] [DecidableEq E] [One E] [Add E]
 private def emitAssemblyRat (name : String) (p : DensePoly Rat) : IO Unit :=
   emitAssembly name Sturm.orderSign rational p
 
+private def emitCollection : IO Unit := do
+  let registry : BaseContext.Registry := fun _ => none
+  let base := Tower.Context.base (BaseContext.rational registry)
+  let two : base.Value := 1 + 1
+  let three : base.Value := two + 1
+  let x : DensePoly base.Value := DensePoly.ofCoeffs #[0, 1]
+  let some first := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature, head := x * x - DensePoly.C two,
+        lower := .finite 1, upper := .finite two, indices := [], signs := [] }
+    | throw (IO.userError "collection first descriptor failed")
+  let some last := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature, head := DensePoly.scale three (x * x - DensePoly.C three),
+        lower := .finite 1, upper := .finite two, indices := [], signs := [] }
+    | throw (IO.userError "collection nonmonic descriptor failed")
+  let sources : List (Tower.Root base) :=
+    [Tower.Root.ofSelection base (.selected first), .point 0,
+      Tower.Root.ofSelection base (.selected last)]
+  let some collection := base.collect? sources
+    | throw (IO.userError "native shared-context collection failed")
+  let [alpha, zero, beta] := collection.entries
+    | throw (IO.userError "native collection source count changed")
+  let shared := collection.input.context
+  let sum := alpha.value + beta.value
+  let inputs := collection.entries.toArray.map fun entry => Json.mkObj [
+    ("context", entry.source.context.signature.literal.toJson),
+    ("value", entry.source.context.codec.encode entry.source.value),
+    ("mapped", shared.codec.encode entry.value),
+    ("oldInverse", entry.source.context.codec.encode ((entry.source.value - 1)⁻¹)),
+    ("mappedInverse", shared.codec.encode (entry.apply ((entry.source.value - 1)⁻¹)))]
+  IO.println (Json.mkObj [("case", .str "native common root contexts"),
+    ("mode", .str "collection"), ("context", shared.signature.literal.toJson),
+    ("inputs", .arr inputs), ("sum", shared.codec.encode sum),
+    ("inverse", shared.codec.encode sum⁻¹),
+    ("zero", shared.codec.encode zero.value),
+    ("two", shared.codec.encode (collection.input.value two)),
+    ("three", shared.codec.encode (collection.input.value three))]).compress
+
 def main : IO Unit := do
   let x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
   emitRat "zero" 0
@@ -133,3 +171,4 @@ def main : IO Unit := do
     (nested * nested * (y - 1)) 10379 (some baseDescriptor)
   let cutFactor : DensePoly Rat := DensePoly.ofCoeffs #[3, -5, 2]
   emitAssemblyRat "assembly nonzero cut point" (cutFactor * cutFactor)
+  emitCollection
