@@ -1179,8 +1179,11 @@ sign evaluation implements endpoint membership. Checked empty-domain folding
 may avoid cell construction after all source guards have been validated.
 
 The optional public import `HexRCF.RealCoefficients` supplies source-schema
-preparation. Numerical solving remains planned and will use the base
-registration interface in `HexRCF.Tactic`.
+preparation and implemented selected real-algebraic/common-field solving
+through the registration interface in `HexRCF.Tactic`. General registered
+constants, the full source-conversion contract and producer completeness
+remain required. Existing algebraic examples consume proved shared query
+semantics; the handler rejects all dependencies on `sorryAx`.
 `@[rcf_handler]` registers a monomorphic meta declaration of type
 `Hex.RCF.Handler` (`Expr → MetaM HandlerResult`). The base checks the signature,
 deduplicates declaration names and tries them in `Name.lt` order, independent
@@ -1617,23 +1620,34 @@ are independent differential tests, never soundness premises. Kernel tests
 must rebuild quoted proofs in fresh modules and audit the transitive axiom
 set, excluding `sorryAx`, new axioms and compiled evaluation trust.
 
-Keep separate [compiled and fresh-module proof tracks](../../SPEC/benchmarking.md#proof-probe-example-files).
-Mathlib-free family drivers measure coefficient production, root/sign search,
-executable replay and specialization arithmetic separately. Build-only HexRCF
-probes measure coefficient abstraction/reification, literal elaboration,
-ordinary-kernel replay, realization and the full tactic with matched imports.
-No Mathlib-importing executable benchmark is added. Vary degree, distinct atom
-count, coefficient size, precision and tower depth independently; include
-bounded failures and common/repeated roots, not only easy enclosing bounds.
-Record proof/serialized bytes, memory, unique DAG nodes and expanded reference
-work. For local work `L_d` with child costs `T_i`, charge
-`T_d ≤ L_d + ∑ T_i`; do not hide recursively nested proofs behind a unit-cost
-sign oracle or assert a polynomial bound in unrestricted tower depth.
-Quotation must preserve sharing or account for its expansion. Follow shared-host
-CPU selection, fixed trial-major schedules, adjacent alternating AB/BA arms,
-retention of every completed sample and at most one unchanged inconclusive
-rerun. Existing rational tactic timings do not become extension guarantees;
-preregister bounded extension cases when implementation permits measurements.
+Keep separate [compiled and proof-example tracks](../../PLAN/Phase4.md#evidence-tracks).
+Mathlib-free family drivers measure the reusable coefficient arithmetic,
+root/sign search and executable replay that they actually import. They may use
+inputs prepared by the adapter, but must not claim to time the adapter itself.
+Coefficient authentication, Mathlib-facing specialization and proof construction
+remain on the build-only tactic/proof track when their imports include Mathlib. Representative build-only
+HexRCF examples exercise abstraction/reification, literal quotation, ordinary
+kernel replay, realization and the full tactic in CI, with axiom audits and
+negative cases. Ordinary theorem applications need no dedicated timing probes.
+No Mathlib-importing executable benchmark is added.
+
+The adapter owns end-to-end correctness and representative proof examples for
+coefficient production and specialization. Reusable computational primitives
+are measured in their Mathlib-free owners; any extraction of new reusable
+computation must preserve the existing semantics and be specified first.
+No core extraction is required merely to manufacture an executable timing. Vary degree, distinct atom count, coefficient size, precision
+and tower depth independently. Include bounded failures and common/repeated
+roots, not only easy enclosing bounds. Record memory, proof/serialized sizes,
+unique DAG nodes and expanded reference work. Quotation must preserve sharing
+or account for its expansion. Targeted tactic/proof
+measurements address an observed performance problem or a named decision
+about quotation, sharing or sample selection; they are not generic mandatory
+sweeps. Record the measured scope, proof/serialized sizes and lower-level work.
+For local work `L_d` with child costs `T_i`, charge
+`T_d ≤ L_d + ∑ T_i`; do not treat nested signs as unit cost or assert a
+polynomial bound in unrestricted tower depth. Follow shared-host measurement
+rules and retain completed observations. Existing rational tactic timings
+do not establish performance of the real-coefficient extension.
 
 ### Implementation prerequisites
 
@@ -1654,8 +1668,8 @@ missing algorithm or theorem obligations.
 | [Sign-det](../../SPEC/Libraries/hex-sign-det.md) and [companion](../../SPEC/Libraries/hex-sign-det-mathlib.md) | Complete BKR support/counts, Thom existence/uniqueness/order, sign-at-root, common-root re-encoding and their literal correspondence, using the existing matrix/rank companions. |
 | HexNumberField / HexNumberFieldMathlib | Existing `QAdjoin` arithmetic, coordinate interpretation, `toAlgebraicNumber` value preservation, `value_real`, `common_get` for the computed presentation, and `AlgebraicNumber.nthRoot` correspondence. The adapter must prove selected real interpretations, check any literal common-field presentation against its source values, and prove root-alias equalities. |
 | HexRealAlgebraic / HexRealAlgebraicMathlib | Existing `toReal`, exact comparison, `RealAlgebraicPoly.roots` with multiplicities/`all`, and Repr correspondence; new tower conversions and trivial-base agreement must be proved. |
-| [Real-closure](../../SPEC/Libraries/hex-real-closure.md) and [companion](../../SPEC/Libraries/hex-real-closure-mathlib.md) | Implemented contexts and total coefficient representations, selected-root interpretation, splitting/all-live transport, Yun and complete ordered roots, shared samples and real `Sample.realizeReplay` including joint nested constraints. SPEC #10318 is merged; these APIs/proofs are planned. Quotient and interpretation laws are proof prerequisites; core algebraic execution is independent of them. Transcendental search retains its caller progress premise. |
-| Tau Ceti through the owning companions | Univariate IVT/Rolle, signed-remainder/Cauchy-index, Thom and BKR foundations from the existing #10300 roadmap work. Ordered algebraic real-closure existence is additionally needed for symbolic infinitesimal ambient models; direct finite replay into ℝ does not need that existence theorem. Continue the existing roadmap PR, never a duplicate. |
+| [Real-closure](../../SPEC/Libraries/hex-real-closure.md) and [companion](../../SPEC/Libraries/hex-real-closure-mathlib.md) | Implemented contexts and total coefficient representations, selected-root interpretation, splitting/all-live transport, Yun and complete ordered roots, shared samples and real `Sample.realizeReplay` including joint nested constraints. Arithmetic, suffix transport and intermediate isolation proofs are implemented; complete ordered roots, all-live enlargement and nested real-sample realization remain integration obligations. Quotient and interpretation laws are proof prerequisites; core algebraic execution is independent of them. Transcendental search retains its caller progress premise. |
+| Tau Ceti through the owning companions | Univariate IVT/Rolle, signed-remainder/Cauchy-index, Thom and BKR foundations from the existing #10300 roadmap work. Ordered algebraic real-closure existence is additionally needed for symbolic infinitesimal ambient models; direct finite replay into ℝ does not need that existence theorem. The required foundations are available in the Tau Ceti pin; use their actual statements rather than waiting for completion of the broader roadmap. |
 | This optional HexRCF adapter | Coefficient/source authentication, shared-schema abstraction/specialization, generic carrier/cell and half-open correspondence, finite real witness export, quotation, `check_domains`, `check_sound`, construction termination and certificate acceptance, manual examples and both evidence tracks. |
 
 Transcendence over predecessor fields and effective convergence are explicit

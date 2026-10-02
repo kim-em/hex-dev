@@ -5,12 +5,15 @@ isolation over ordered coefficient fields, including infinitesimal bases.
 
 ## Status, scope and placement
 
-This planned computational library completes the
+This computational library implements the tower layer of the
 [real-closure family](../future-work.md#real-closures-of-ordered-fields).
-Names and statements below are required mathematical/API shapes, not existing
-or checked Lean declarations. This SPEC introduces no implementation, target,
-phase advancement or publication. The companion has its own directive
-[#10318](https://github.com/kim-em/hex-dev/issues/10318).
+The [implementation overview](../../HexRealClosure/README.md) describes the
+available arithmetic, isolation, context and transport APIs. Names and
+statements below specify the complete contract; they are not a claim that
+every public operation or totality proof is delivered. Complete ordered roots,
+dependency-closed enlargement, exploration and nested sample realization remain
+integration obligations. Publication and phase advancement require their own
+checks; implementing an intermediate API does not establish either.
 
 `HexRealClosure`, namespace `Hex.RealClosure`, consumes `HexPoly`, `HexSturm`,
 `HexSignDet`, `HexOrderedFn` and `HexRealAlgebraic`. Rational-function

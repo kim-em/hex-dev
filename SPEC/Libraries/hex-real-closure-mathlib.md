@@ -5,13 +5,15 @@ finite-sign realization for [hex-real-closure](hex-real-closure.md).
 
 ## Status and placement
 
-This is the planned companion required by
-[#10318](https://github.com/kim-em/hex-dev/issues/10318), within the
+This companion interprets the implemented tower arithmetic within the
 [real-closure family](../future-work.md#real-closures-of-ordered-fields).
-New declaration names and formulas below are mathematical/API contracts,
-not available declarations or checked Lean prototypes. No implementation,
-phase advancement, publication, tactic, CAD/coverings algorithm or
-nonstandard-analysis result is introduced by this SPEC.
+Its semantic modules under `adapters/HexRealClosureMathlib` are built in the
+development monorepo. The [implementation overview](../../HexRealClosure/README.md)
+distinguishes proved operations from remaining integration obligations.
+New declaration names and formulas below are required mathematical/API
+contracts; they do not assert that all totality, native-union correspondence
+or nested realization proofs are complete. Publication into a split companion
+requires target, dependency and managed-path integration separately.
 
 `HexRealClosureMathlib`, namespace `Hex.RealClosure`, imports
 `HexRealClosure`, `HexPolyMathlib`, `HexSturmMathlib`, `HexSignDetMathlib`,
@@ -70,9 +72,9 @@ The audit baseline is Mathlib revision
 | Owner | Input and availability |
 | --- | --- |
 | Mathlib `FieldTheory/IsRealClosed/Basic.lean` | Existing class and `IsRealClosed.of_linearOrderedField`: nonnegative elements are squares and odd-degree polynomials have roots. This pin does not supply ordered real-closure existence or an `IsRealClosed ℝ` instance. |
-| Tau Ceti through [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#shared-foundation-and-proof-ownership) and [hex-sturm-mathlib](hex-sturm-mathlib.md) | Planned polynomial IVT/Rolle, signed-remainder/Cauchy-index identity, and their Hex query/replay bridges. Include common gcds, zero query, positive scaling, root-free finite endpoints and infinities. |
+| Tau Ceti through [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#shared-foundation-and-proof-ownership) and [hex-sturm-mathlib](hex-sturm-mathlib.md) | Proved polynomial IVT/Rolle, signed-remainder/Cauchy-index identity, and the shared Hex root-sum/query-replay bridge. Include common gcds, zero query, positive scaling, root-free finite endpoints and infinities. |
 | Tau Ceti through [hex-sign-det-mathlib](hex-sign-det-mathlib.md) | Required Thom injectivity/order and finite actual-count moment/count-recovery foundations. The sign-det companion applies count recovery at each node of the support-preserving recursion and owns complete-table, descriptor, comparison and re-encoding correspondence. |
-| [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md) | Planned real evaluation under relative transcendence, sign soundness/progress conditional on caller-supplied approximation laws, rational-function/Hahn embedding and lowest-coefficient sign correspondence. |
+| [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md) | Proved real evaluation under relative transcendence, sign soundness/progress conditional on caller-supplied approximation laws, rational-function/Hahn embedding and lowest-coefficient sign correspondence. |
 | hex-real-roots-mathlib | Implemented `Real.instIsRealClosed`, proved from existing real square roots and polynomial order/IVT lemmas. Use this shared instance for real transcendental bases. |
 | [hex-real-algebraic-mathlib](../../HexRealAlgebraicMathlib/SPEC/hex-real-algebraic-mathlib.md) | Existing `RealAlgebraicNumber` ordered field and real-closed instance, comparison, root and Repr correspondence; use it for the rational base. |
 | Tau Ceti, consumed here | Implemented `TauCeti.RealClosure.exists_realClosure`, consumed by `Ambient.exists_ambient` and `Ambient.ofField`; supplies unconditional ordered algebraic infinitesimal ambient models. |
@@ -598,21 +600,21 @@ instances and negative checker regressions for:
 - Trivial backend agreement, Repr round trips, forged/nonconvergent enclosures,
   optional inconclusive sign attempts, invalid stages and cyclic DAGs.
 
-Phase 4 separates computational production from proof evidence. Runtime
-`tower8` isolation and clean-versus-eager normalization ablation belong to
-the Mathlib-free owner; correlate their coefficient sizes, gcd work, depth,
-split count and certificates with this companion's replay measurements.
-Use fresh-module proof probes for elaboration, kernel replay, proof/serialized
-size, peak memory and axiom audits, including nested specialization and failed
-replays. No `native_decide`, introduced axiom or trusted oracle is permitted.
-Measure depth/degree/sign-family size, sharing and lower-level evidence work
-separately. Record one representative attribution profile when Phase 4
-requires it; do not hide coefficient proof costs in an outer timing.
+Phase 4 separates computational production from proof evidence under
+[the repository policy](../../PLAN/Phase4.md#evidence-tracks). The Mathlib-free
+owner measures `tower8`, clean-versus-eager normalization, coefficient growth,
+depth, splitting and nested evidence. This companion supplies correspondence theorems rather than a tactic or proof
+generator, so Phase 4 adds no proof-track deliverable. Its correctness tests
+include ordinary-kernel certificate checking and nested specialization,
+rejected replays and transitive axiom audits.
+Ordinary theorem applications do not require dedicated timing sweeps.
+No `native_decide`, introduced axiom or trusted oracle is permitted.
 
-Run on the shared host with automatic CPU selection where supported, fixed
-trial-major schedules, adjacent alternating AB/BA comparisons, every completed
-sample retained and at most one unchanged inconclusive rerun. Host activity
-is context, not a sample exclusion criterion. Absolute times are observations;
-CI timeouts and the paper's historical timings are not scientific targets.
-Extend existing CI scripts when implementation reaches conformance; this
-SPEC adds no workflows or measurements and advances no phase.
+Measure proof elaboration, replay, quotation or sharing only to resolve an
+identified implementation choice or observed cost problem. Record the question,
+matched workloads, proof/serialized sizes and lower-level evidence costs;
+retain completed observations. Such diagnostics do not replace computational
+performance requirements or establish a new mandatory proof-performance gate.
+Shared-host comparisons follow the existing automatic CPU selection and
+adjacent alternating AB/BA discipline. Extend existing CI scripts rather than
+adding workflows. This contract does not advance a phase or publish a library.
