@@ -25,7 +25,7 @@ Tightening its verify path remains tracked under #10577. This is verification ev
 | Arithmetic and scalar dictionaries | `runAdd`, `runSub`, `runMul`, `runDiv`, `runNeg`, `runInv`, `runNatPow`, `runIntPow`, `runScalars`; corresponding bare controls; `runHard*` | Canonical baseline and adjacent wrapper controls; mode/budget incomplete |
 | Equality, comparison, order, sign, abs, conjugation | `runEquality`, `runCompare`, `runCompareExact`, `runOrder`, `runSign`, `runAbs`, `runConj`, `runCloseCompare`, `runCloseExact` | Fixed branch/hash/comparison anchors; separation models incomplete |
 | Floor, ceiling, approximation, representation | `runRounding`, `runApprox`, `runRepr` | Baseline anchors; ceiling has proved before/after improvement |
-| Square roots | `runSqrt`, `runSqrtTotal` | Baseline and branch checks; degree/height scaling incomplete |
+| Square roots | `runSqrt`, `runSqrtTotal` | Baseline/branch checks on pre-change source; degree/height scaling incomplete |
 | Polynomial constructors and root-set projections/membership | `runPolyConstructors`, `runMembership`, `runRootSet` | Mode-1 family passes |
 | Polynomial roots and integer roots | `runRoots`, `runRepeatedRoots`, `runEightRoots`, `runIntegerRoots`, `runFilterRoots`, `runSortRoots`, `runExactifyRoots` | Fixed whole-path anchors, valid merge-sort family, diagnostic repeated exactification control |
 | Complex norms, absolute value, real/imaginary parts | `runNorm`, `runComplexAbs`, `runProjections` | Fixed baseline/branch anchors |
@@ -159,8 +159,10 @@ in the linked summaries.
 
 - [#10577](https://github.com/kim-em/hex-dev/issues/10577): finish operation-specific mode/budget justification and comparators, genuine root/leaf parameter families, separation/point and rounding sweeps, and square-root/rational-construction characterization. The shipped `compare_eq` and root completeness/multiplicity/sorting theorems are available independently of this timing work.
 
-The duplicate negative-input guard in `sqrt?`/`sqrtRoot?` remains an owned
-Phase-4 review concern under #10577; it does not change the proved partial result.
+The checked square-root wrapper delegates directly to `sqrtRoot?`, removing
+the duplicate negative-input check. Existing selector soundness and nonnegative
+totality prove the same contract. Earlier square-root baseline observations
+retain their pre-change source; they provide no current performance admission.
 
 The 32-second per-library verification warning remains under #10577; the
 360-second CI cap is an operational safeguard. Hard addition/subtraction
