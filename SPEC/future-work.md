@@ -1135,9 +1135,11 @@ does not register or implement these libraries.
 [hex-rational-fn](../HexRationalFn/SPEC/hex-rational-fn.md) already represents
 `K(X)` by coprime `DensePoly K` numerators and monic denominators, over
 `Lean.Grind.Field` with decidable equality. `HexPoly.Field` supplies division,
-gcd and extended gcd. Generic characteristic-zero Yun decomposition over
-`DensePoly K` is missing; `hex-real-closure` owns its specification, including
-multiplicities over lawful exact coefficient fields.
+gcd and extended gcd. `hex-real-closure` owns the implemented
+characteristic-zero Yun decomposition
+and its correspondence over interpreted coefficient representations. Complete
+ordered root production must combine this decomposition with isolation to
+return the specified multiplicities.
 [hex-real-roots](../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries) owns
 integer Sturm chains and the implemented `ZPoly.tarskiQuery` and `IntTarskiCertificate`.
 Their abstract root-sum and replay soundness theorems are proved in the
@@ -1198,7 +1200,7 @@ these computational libraries. Reuse existing total `DensePoly` and
 coefficients use the [shared execution contract](real-closure-execution.md):
 canonical-zero representations and ordinary total operations reuse `DensePoly`;
 companions prove their noninjective interpretation and semantic field laws.
-Ordinary ordered-domain pseudo-division is the missing lower arithmetic.
+The shared ordinary ordered-domain pseudo-division supplies the lower arithmetic.
 
 #### Execution policy and implementation boundary
 
@@ -1525,20 +1527,18 @@ preserves degree.
 | `hex-ordered-fn-mathlib` | No additional abstract real-closed-field theorem: uses Mathlib rational functions, real analysis and Hahn series | Real evaluation under relative transcendence; enclosure soundness and eventual success; Hahn embedding, sign rule and ordered-field laws |
 | `hex-real-closure-mathlib` | Existence of an algebraic real closed ordered extension of every ordered field (an explicit additional foundation requested alongside #10300); polynomial IVT/Rolle and Thom/sign determination through the preceding companions | Selected-root arithmetic and splitting transport, termination, ordered complete root lists, compatible-tower semantics and real-closedness of their algebraic union, trivial-tower agreement, finite-sign sector realization |
 
-The companion semantics are conditional on this ambient field and embedding
-until their existence is discharged. The pin has neither real-closure
-existence nor an `IsRealClosed ℝ` instance. Make these obligations explicit:
-use Hex's existing `IsRealClosed RealAlgebraicNumber` for the rational base;
-use the implemented `Real.instIsRealClosed` in `hex-real-roots-mathlib`,
-proved from Mathlib real square roots and polynomial order/IVT lemmas, for
-both integer specialization and the real transcendental base; consume the ordered real-closure existence
-theorem from Tau Ceti for infinitesimal bases. The required existence shape
-is: for every linearly ordered field `K`, there exist an ordered real closed
-field `R` and order-preserving field embedding `ι : K →+* R` with `R`
-algebraic over `ι(K)`. This is additional to the univariate theorem list
-currently requested by #10300, not an assertion that the roadmap or pin
-already supplies it. The real-closure companion SPEC must record that
-foundational requirement before proof work starts.
+The pinned Tau Ceti supplies polynomial IVT/Rolle, Sturm–Tarski, Thom
+identity/order, finite BKR counting and ordered algebraic real-closure
+existence. Hex's shared root-sum theorem and BKR/Thom interpretation consume
+these proofs; no admission exception applies. Use the shared
+`Real.instIsRealClosed` and the existing real-algebraic instance for concrete
+bases. For infinitesimal bases, `TauCeti.RealClosure.exists_realClosure`
+supplies an ordered real closed field `R` and an order-preserving embedding
+`ι : K →+* R`, with `R` algebraic over `ι(K)` in the same universe.
+The tower companion's `Ambient` construction consumes that theorem.
+Availability of these foundations does not establish totality of every Hex
+producer, native-tower coverage or nested real-sample realization; those are
+separate correspondence obligations of the owners above.
 
 Within that supplied ambient field, Hex proves the compatible-tower model:
 positive square roots and odd-degree roots lie in the algebraic union, and
@@ -1555,9 +1555,10 @@ levels. The SPECs must bound and benchmark these compositions, and `rcf` emits
 only evidence needed for the final real-valued coefficient or finite-sign
 realization claims. Foundation references are [Cohen–Mahboubi, LMCS
 2012](https://lmcs.episciences.org/844) and [Vermande, CPP
-2026](https://doi.org/10.1145/3779031.3779100). All companion SPECs name these
-imported assumptions and remain planned where those results are missing;
-writing the SPECs does not wait for their proofs.
+2026](https://doi.org/10.1145/3779031.3779100). Companion SPECs distinguish the
+imported foundations from correctness of
+their executable consumers. Neither a roadmap nor a successful numerical
+fixture substitutes for the latter proofs.
 
 The exploration API offers caller-registered constants, staged infinitesimal
 construction, arithmetic, comparison, polynomial `roots` and a reconstructible `Repr`,
@@ -1627,12 +1628,15 @@ completed sample, and keep all bench imports Mathlib-free.
 #### SPEC directives
 
 Each computational library and each companion has its own SPEC directive.
-Their initial planned SPECs live in `SPEC/Libraries/hex-*.md`, matching other
-planned libraries; per-library directories are introduced with implementation.
-All eight depend on this family design; companion directives also depend on
-their computational contract. Implementations, publication, CAD/coverings and
-tactic extensions remain later work. The links below are the issue tracker;
-the dependency diagram above is the library import contract.
+The eight SPEC directives are complete. Implemented libraries keep their
+contracts in per-library directories, with compatibility links from
+`SPEC/Libraries/`; the tower contracts retain their current SPEC placement.
+Implementation and integration are coordinated by
+[#10331](https://github.com/kim-em/hex-dev/issues/10331). That issue records
+owners, remaining deliverables and assignment dependencies. The diagram above
+is the library import contract, not a worker schedule. Publication into split
+repositories is a separate deliverable; full CAD and coverings are downstream
+projects rather than family completion requirements.
 
 | Computational SPEC | Companion SPEC |
 | --- | --- |

@@ -131,8 +131,10 @@ Follow the [family audit and ownership table](../../SPEC/future-work.md#proof-ow
 and the dependency pins in [the manifest](../../lake-manifest.json).
 The companion consumes Tau Ceti foundations through the shared interpretation
 interface; it must not import a concrete real-closure tower implementation.
-The required Thom identity/order statements below are Tau Ceti completion
-requirements tracked by [#10300](https://github.com/kim-em/hex-dev/issues/10300).
+The pinned Tau Ceti supplies the required Thom identity/order foundations.
+The shared query semantics and finite BKR bridge are also proved; no named
+admission exception remains. Producer completeness and certificate interfaces
+still require proofs about their actual implementations.
 The root-identity and order bridge consumes `Polynomial.thomEncoding_injOn`,
 `Polynomial.exists_derivativeSign_ne` and `Polynomial.lt_iff_derivativeSign`
 from `TauCeti.Algebra.Polynomial.Thom`. The polynomial Rolle premise is discharged
@@ -462,25 +464,23 @@ Use multiple infinitesimal levels and nested evidence without importing
 towers here. Decimal approximations and a mere `0<ε<1` hypothesis do not
 establish these infinitesimal claims.
 
-Phase 4 uses [fresh-module proof evidence](../../SPEC/benchmarking.md#proof-probe-example-files):
-measure fresh proof modules with warm imports and ordinary kernel checking;
-record source/toolchain hashes, axiom sets, proof artifact/certificate sizes,
-wall time and host activity. Sweep degree, query count, realized support,
-coefficient/witness bits, extension depth and nested evidence size. Include
-valid and rejected probes, completion, sign-at-root and expensive
-cross-polynomial re-encoding. Measure support/pruning proof cost separately
-from moment interpretation, matrix replay and nested coefficient evidence.
+Phase 4 follows [the repository evidence tracks](../../PLAN/Phase4.md#evidence-tracks).
+Build representative ordinary-kernel examples in CI for matrix/replay checking,
+completion, sign-at-root, cross-polynomial re-encoding and nested evidence,
+including rejection cases and axiom audits. Ordinary theorem applications
+and law proofs do not require dedicated timing sweeps.
 
-Compare reduced/full small-case replay, reduced/unreduced moment replay and
-same-head/joint-encoding paths on matched workloads. Runtime production,
-Tarski queries, coefficient signs, matrix solving and gcd work are measured
-by Mathlib-free benches owned by the computational libraries; no ordinary
-bench imports this companion. Record matrix dimensions, query counts, DAG
-nodes/edges, peak bits and allocation. External CAS time is not a proof-checking
-baseline. Include one representative attribution profile. Use fixed
-trial-major schedules, adjacent alternating `AB`/`BA` comparisons, one
-selected CPU where supported, retain every completed shared-host sample and
-allow at most one unchanged rerun after an inconclusive result. The family's
-`tower8` isolation and clean/eager normalization ablation remain downstream
-integration requirements. This SPEC supplies evidence requirements, not
-measurements or phase advancement.
+Runtime production, Tarski queries, coefficient signs, matrix solving and gcd
+work remain measured by Mathlib-free benches owned by the computational
+libraries. Retain their required comparisons of reduced/full small cases,
+reduced/unreduced moments and same-head/joint-encoding paths, with matrix
+sizes, query counts, DAG sizes, coefficient growth and representative profiles.
+No executable bench imports this companion. External CAS time is not a
+proof-checking baseline. The family's `tower8` and clean/eager ablation belong
+to the downstream tower owner.
+
+Proof-cost comparisons are justified when they resolve an identified choice
+about replay, quotation or sharing, or investigate an observed bottleneck.
+State that decision and separate support, moment, matrix and lower-level proof
+work. Follow shared-host measurement rules and retain completed observations;
+do not create a generic sweep obligation for every theorem or parameter.

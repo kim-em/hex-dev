@@ -339,27 +339,18 @@ signs at the two positive roots. Include multiple infinitesimal levels and
 nested certificates. These are downstream tests against pinned Z3 RCF data,
 not imports back into this companion or claims about arbitrary `0<ε<1`.
 
-Phase 4 uses the [fresh-module proof evidence](../../SPEC/benchmarking.md#proof-probe-example-files)
-track for ordinary kernel replay: build fresh measured modules with warm
-imports, record source/toolchain hashes, theorem axiom sets, emitted artifact
-sizes, wall time and host activity. Sweep head/query degree, coefficient and
-endpoint sizes, chain length, extension depth and nested evidence size;
-include valid and rejected replay probes. Separate producer,
-coefficient-sign and endpoint arithmetic measurements in Mathlib-free benches
-owned by hex-sturm/hex-real-roots from elaboration and kernel proof costs.
-No ordinary bench target imports this companion.
-The `scripts/bench/sturm_semantics_sweep.py` driver compares the semantic
-replay module with its exact import-only baseline, retaining compiler output
-and axiom audits. It measures fresh applications of the imported theorem;
-it does not count the foundation's first build as replay cost.
-The [semantic replay report](../../reports/sturm-tarski-semantics.md) records
-the measured source, complete samples, and scope of this evidence.
+Phase 4 follows [the repository evidence tracks](../../PLAN/Phase4.md#evidence-tracks).
+CI builds representative ordinary-kernel replay examples, including rational,
+integer, noninjective and nested coefficient cases, rejected evidence and
+transitive axiom audits. Ordinary theorem applications do not require timing
+sweeps. Producer, coefficient-sign and endpoint arithmetic measurements belong
+to Mathlib-free benches in hex-sturm/hex-real-roots; no executable benchmark
+imports this companion.
 
-Compare matched rational/integer replay paths and positive-clearing transport;
-record arithmetic/guard/translation costs separately and include one
-representative attribution profile. Use fixed trial-major schedules and
-adjacent alternating `AB`/`BA` comparisons on the shared host, keep every
-completed sample, and permit at most one unchanged inconclusive rerun. A CAS
+The [semantic replay report](../../reports/sturm-tarski-semantics.md) retains
+existing theorem-application observations and their limited scope. Those
+observations impose no continuing fresh-module sweep requirement. Additional
+proof-cost measurements must resolve a named replay/quotation design choice
+or an observed bottleneck, under the shared-host measurement policy. A CAS
 query time is not a Lean proof-checking baseline. Full BKR, `tower8` isolation
 and normalization ablations remain the respective family owners' requirements.
-This SPEC supplies requirements, not performance measurements or phase claims.
