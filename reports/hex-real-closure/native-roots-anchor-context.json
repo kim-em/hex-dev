@@ -27,10 +27,12 @@
   ],
   "exitCode": 0,
   "measuredBaseCommit": "321764a1f22825453e304693ca9a7fa357c359f9",
-  "rebasedAs": "849923d67",
+  "rebasedAs": "849923d6705c8e162ab1d68bc439f0c852cb33df",
   "rebasedBaseCommit": "afdb1f7f0047d76f49154b6feefd7cbefefa6a03",
-  "patchAgreement": "git range-diff shows all six native-root patches unchanged by rebase; the current bench source hash matches the measured source",
+  "patchAgreement": "git range-diff shows all six native-root patches unchanged by rebase; the bench source hash at sourceHashCheckedAt matches the measured source",
   "retainedExport": "native-roots-anchor.json",
   "retainedExportSha256": "9ee8e886cfccfded2ae772a493e6bf3fb2909cbde9632612c53a67cbf2119695",
-  "retainedCopy": "The retained export is a byte-for-byte copy of the export-file named in command."
+  "retainedCopy": "The retained export is a byte-for-byte copy of the export-file named in command.",
+  "sourceHashCheckedAt": "6c6c4771671a235f39446a1121f18039af0801d9",
+  "sourceAvailability": "The measured source and base precede the rebase and are not ancestors of main; their availability through old branch history is not guaranteed. The full rebased revision and retained source hash identify the patch-equivalent benchmark source."
 }

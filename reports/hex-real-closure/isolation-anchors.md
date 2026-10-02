@@ -130,7 +130,10 @@ named in the recorded command; its SHA-256 is recorded in the context.
 The measurement preceded the rebase: `1fdfd2886` used base `321764a1f`,
 and its patch is unchanged at `849923d67` over merged base `afdb1f7f0`.
 The range comparison verifies all six native-root patches were unchanged;
-the current benchmark source SHA-256 matches the measured source.
+the benchmark source SHA-256 at `6c6c47716` matches the measured source.
+The pre-rebase source revisions are outside main's ancestry and may be
+unavailable through old branch history; the rebased revision and retained
+source hash identify the patch-equivalent benchmark source.
 The executable hash identifies the measured pre-rebase build.
 
 This fixed anchor measures the complete native operation on one rational input.

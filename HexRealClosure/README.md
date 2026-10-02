@@ -1255,9 +1255,15 @@ descriptors. `Tower.Model.extend_embed` proves that this extended model agrees
 with the supplied enlarged base model on embedded base values; the theorem
 expresses the target alignment up to the context casts.
 `Context.enlarge?_interpreted` supplies that same descriptor and target-model
-alignment for an arbitrary old model from its initial-base agreement.
+alignment for an arbitrary old model from its initial-base agreement and
+compatible new-base conversion. `Model.restrict` names the actual restriction
+of an arbitrary old suffix model through the native inclusion.
+`Context.enlarge?_constructed` exposes the exact rebuilt suffix and its target
+interpretation through `infinitesimalMapped`, using that restriction.
+`enlarge?_ambient` is its simpler existence corollary.
 
-General `Context.enlarge` uses these interpretation and transport ingredients:
+General `Context.enlarge` still requires algebraic restriction, staged-order
+packaging and dependency closure. The interpretation ingredients are:
 
 1. Relating an arbitrary old model to a chosen `B`-algebra map, proving
    agreement on its base coefficients and algebraicity of every value. For a
@@ -1265,9 +1271,9 @@ General `Context.enlarge` uses these interpretation and transport ingredients:
    `Tower.Model.baseRestrict` constructs the restriction and proves value and
    base-map agreement. `Context.origin` supplies the suffix presentation of
    each packed context up to equality with that context; identifying an
-   arbitrary old model now follows from `Model.extend_unique` after restricting
+   arbitrary old model follows from `Model.extend_unique` after restricting
    it to the base through `Model.comap`, using a compatible reference
-   interpretation of the inclusion in an independent field. `Model.baseHom` extracts that
+   interpretation of the inclusion in an independent real closed field. `Model.baseHom` extracts that
    restriction's actual coefficient homomorphism.
    Packaging the union with `Ambient.ofUnion` also requires an order-preserving
    base map and a real-closed old ambient; its current API places both fields
@@ -1296,9 +1302,9 @@ General `Context.enlarge` uses these interpretation and transport ingredients:
    The old model can live in any ordered field and determines the resulting
    coefficient homomorphism. The algebraic restriction and staged
    order still need packaging with the final dependency-closed API.
-4. Applying the local algebraic bound to the computational `B(ε)` levels and
+4. **Remaining:** applying the local algebraic bound to the computational `B(ε)` levels and
    proving their staged order agrees with the enlarged ambient interpretation.
-5. Gathering a dependency-closed collection of live contexts and assembling
+5. **Remaining:** gathering a dependency-closed collection of live contexts and assembling
    the total checked constructor with its value and order preservation
    statements. `Context.origin` extracts the exact base and validated root
    suffix of one stored context; the cross-context dependency traversal remains.

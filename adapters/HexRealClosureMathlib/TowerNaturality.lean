@@ -187,6 +187,22 @@ target's actual values. -/
     intro a
     rw [← other.sign, reference.sign, preserved, original.sign]
 
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- Restrict an arbitrary model of a finite root suffix to its initial
+predecessor. The independent reference supplies existence for the native
+inclusion laws; the resulting values come entirely from the old model. -/
+@[expose] noncomputable def restrict {source : Context registry}
+    (reference : Model source L) (suffix : Suffix source)
+    (old : Model suffix.context K) : Model source K :=
+  reference.comap (reference.extend suffix) old suffix.embed (reference.extend_embed suffix)
+
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- Restriction reads the old model through the actual native suffix inclusion. -/
+@[simp] theorem restrict_value {source : Context registry}
+    (reference : Model source L) (suffix : Suffix source)
+    (old : Model suffix.context K) (a : source.Value) :
+    (reference.restrict suffix old).value a = old.value (suffix.embed a) := rfl
+
 /-- Agreement on the initial predecessor determines every arbitrary model
 of a validated finite root suffix, at all depths. -/
 theorem extend_unique {source : Context registry} (original : Model source K)
@@ -258,6 +274,14 @@ theorem baseHom_value {B : Type} [Lean.Grind.Field B] [DecidableEq B]
     {sign : B → Int} (base : BaseContext.Context registry B sign)
     (model : Model (Context.base base) K) (a : (Context.base base).Value) :
     model.baseHom base a.stored = model.value a := rfl
+
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- The extracted base homomorphism agrees with its actual executable sign. -/
+theorem baseHom_sign {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (model : Model (Context.base base) K) (a : B) :
+    sign a = (SignType.sign (model.baseHom base a) : Int) :=
+  model.sign (⟨a⟩ : BaseContext.Element base)
 
 end Hex.RealClosure.Tower.Model
 

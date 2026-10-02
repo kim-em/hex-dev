@@ -28,11 +28,11 @@ example (suffix : Suffix base) (old : Tower.Model suffix.context ℝ) :
 
 /-- The old model may live in a non-real-closed ordered field, while its
 reference base interpretation lives independently in the real numbers. -/
-example (old : Tower.Model base Rat) :
+example (suffix : Suffix base) (old : Tower.Model suffix.context Rat) :
     let ambient := Ambient.infinitesimal Rat
-    ∃ result : Conversion base, base.enlarge? = some result ∧
+    ∃ result : Conversion suffix.context, suffix.context.enlarge? = some result ∧
       Nonempty (Conversion.Model result (old.liftInfinitesimal ambient)) :=
-  Context.enlarge?_ambient (BaseContext.rational registry) .nil rfl rational old
+  Context.enlarge?_ambient (BaseContext.rational registry) suffix rfl rational old
     (Ambient.infinitesimal Rat)
 
 /-- Every validated rational-root suffix restricts to the relative algebraic union. -/
