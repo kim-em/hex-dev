@@ -236,7 +236,7 @@ def headInput (n : Nat) : Input :=
 def runInitialWide := runInitial
 def runClearingWide := runClearing
 
-/- Mode 1: query one has no initial cancellation; the derivative materializes
+/- Cost-model derivation, mode 1: query one has no initial cancellation; the derivative materializes
 n coefficients with Θ(n) total-width progression and multiplies by word-size
 indices. The output alone has Θ(n²) bits. This ladder makes limb work dominate
 per-coefficient dispatch. Preparation builds only the polynomial. -/
@@ -252,7 +252,7 @@ setup_benchmark runInitialWide n => n ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Mode 1: clearing the fixed denominator six traverses and materializes
+/- Cost-model derivation, mode 1: clearing the fixed denominator six traverses and materializes
 Θ(n²) coefficient bits with big-by-small arithmetic; scalar lcm work is fixed.
 The same head-only preparation avoids constructing a cubic-bit chain. -/
 setup_benchmark runClearingWide n => n ^ 2

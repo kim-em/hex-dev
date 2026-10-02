@@ -532,7 +532,7 @@ def runLeafChecks (i : ArrayInput) : Bool × Bool × Bool × Bool × Option Rat 
     a.toAlgebraic.re == a.toAlgebraic && a.toAlgebraic.im == 0,
     a.toRat?)
 
--- Diagnostic control: the array parameter does not drive the leaf operations.
+-- Cost-model interpretation, diagnostic control: the array parameter does not drive the leaf operations.
 -- Its constant verdict does not satisfy Phase-4 operation coverage.
 setup_benchmark runLeafChecks _n => 1
   with prep := arrayInput

@@ -427,7 +427,7 @@ def runCoefficientBits (i : AxisInput) : Option Int := ZPoly.tarskiQuery i.p 1 i
 def runEndpointBits (i : AxisInput) : Option Int := ZPoly.tarskiQuery i.p 1 i.interval
 def runFractionalBits (i : AxisInput) : Option Int := ZPoly.tarskiQuery i.p 1 i.interval
 
-/- Mode 2: fixed degree bounds the number of scalar operations; operand and
+/- Cost-model derivation, mode 2: fixed degree bounds the number of scalar operations; operand and
 intermediate widths are O(bits). GMP's published quadratic multiplication/gcd
 bounds give O(bits²). Binary normalization, allocation and GMP crossover
 thresholds prevent a uniform tight monomial for the whole pipeline. -/
@@ -443,7 +443,7 @@ setup_benchmark runCoefficientBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Mode 2: eight fixed Horner steps per fixed chain entry perform arithmetic
+/- Cost-model derivation, mode 2: eight fixed Horner steps per fixed chain entry perform arithmetic
 on O(bits)-wide dyadic accumulators. The same published GMP upper bounds
 cover their scalar products. This is an endpoint-size axis, not a head- or
 query-degree axis. No fitted arithmetic-regime exponent is used. -/
@@ -474,7 +474,7 @@ def retargetInput (n : Nat) : RetargetInput :=
 def runRetargetWide (i : RetargetInput) : Bool :=
   i.domain.any fun d => (d.withEndpoints? (.finite (-3)) (.finite 3)).isSome
 
-/- Mode 1: X^n−2 has a short derivative chain, so preparation needs only
+/- Cost-model derivation, mode 1: X^n−2 has a short derivative chain, so preparation needs only
 linear storage. Retargeting at ±3 performs n big-by-small Horner products
 with Θ(n)-bit accumulators. Θ(n²) bit work dominates the Θ(n) dispatch term
 on the preregistered 1600..13000-limb regime. The original Chebyshev attempt
@@ -491,7 +491,7 @@ setup_benchmark runRetargetWide n => n ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Mode 2: unlike the withdrawn power-of-two endpoint family, odd b-bit
+/- Cost-model derivation, mode 2: unlike the withdrawn power-of-two endpoint family, odd b-bit
 mantissas make each nontrivial fixed-degree Horner product growing-by-growing.
 Both integral and fractional endpoints exercise GMP multiplication. -/
 setup_benchmark runFractionalBits bits => bits ^ 2
@@ -526,7 +526,7 @@ def runCachedReplayBits := runCachedReplay
 def runClearBits := runClear
 def runInfiniteBits := runInfinite
 
-/- Mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
 published quadratic product/gcd bounds cover this phase. Size thresholds
@@ -543,7 +543,7 @@ setup_benchmark runPreparedBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
 published quadratic product/gcd bounds cover this phase. Size thresholds
@@ -560,7 +560,7 @@ setup_benchmark runCountBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
 published quadratic product/gcd bounds cover this phase. Size thresholds
@@ -577,7 +577,7 @@ setup_benchmark runPreparedCountBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
 published quadratic product/gcd bounds cover this phase. Size thresholds
@@ -594,7 +594,7 @@ setup_benchmark runCertificateBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
 published quadratic product/gcd bounds cover this phase. Size thresholds
@@ -611,7 +611,7 @@ setup_benchmark runPreparedCertificateBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
 published quadratic product/gcd bounds cover this phase. Size thresholds
@@ -628,7 +628,7 @@ setup_benchmark runCountCertificateBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
 published quadratic product/gcd bounds cover this phase. Size thresholds
@@ -645,7 +645,7 @@ setup_benchmark runFieldReplayBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
 published quadratic product/gcd bounds cover this phase. Size thresholds
@@ -662,7 +662,7 @@ setup_benchmark runCachedReplayBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
 published quadratic product/gcd bounds cover this phase. Size thresholds
@@ -679,7 +679,7 @@ setup_benchmark runClearBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
 published quadratic product/gcd bounds cover this phase. Size thresholds
@@ -711,7 +711,7 @@ def embedInput (n : Nat) : IntegerInput :=
 def runEmbedSparse (i : IntegerInput) : Option UInt64 :=
   i.cert.map fun c => certHash c.toRat
 
-/- Mode 1: embedding is a literal coefficient/scale cast, not arithmetic on
+/- Cost-model derivation, mode 1: embedding is a literal coefficient/scale cast, not arithmetic on
 coefficient magnitudes. X^n−2 has a short chain containing Θ(n) word-size
 entries. Every cast and scalar hash is constant word work; output traversal
 and array allocation are Θ(n). The old long-chain bit-volume hypothesis is
