@@ -686,6 +686,26 @@ The current global insertion sort uses at most quadratically many comparisons,
 with common-polynomial re-encoding for descriptor pairs. These fixed anchors
 make no scaling claim and do not complete the required Phase-4 evaluation.
 
+### Rational generic-route agreement
+
+`Trivial.polynomial` converts a rational dense polynomial to the existing
+`RealAlgebraicPoly` coefficient representation. `Trivial.roots` runs the
+complete generic producer and converts each actual root through the existing
+selected-root canonical conversion; point roots retain their rational value.
+It preserves `RealRootSet.all`, root order and positive multiplicities.
+The companion proves `Trivial.roots_eq`: the entire converted result equals
+`(Trivial.polynomial p).roots`, including the zero case and exact labels.
+`Trivial.compare` delegates comparison of converted roots to
+`RealAlgebraicNumber.compare`; `compare_eq` proves the checked generic
+comparison succeeds and returns that same order.
+
+Run `lake build HexRealClosure.TrivialTests` for executable differential
+checks of zero, constants, zero multiplicity, irrational pairs, repeated Yun
+factors, negative nonmonic definitions and non-dyadic rational roots. All pairs
+of returned roots are compared through both routes. The conversion still
+performs canonical root selection for each selected generic descriptor;
+this agreement is not a claim of equal runtime cost or generic-path scaling.
+
 ### Native complete roots
 
 `Tower.Context.roots p` materializes the complete producer's output as a native
