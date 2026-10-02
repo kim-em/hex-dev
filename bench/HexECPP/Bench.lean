@@ -194,19 +194,27 @@ def scalarInput (bits : Nat) : Nat × List Nat :=
     7 0 input.1 (.affine 1 2)).toOption.any fun (p, ws) =>
       p == .infinity && ws == input.2
 
--- Derivation: dense scalars 13*(2^k-1) have k+O(1) bits and a periodic
--- fixed-width residue schedule. Each bit runs at most two word-size affine
--- additions. Both checked replay and transcript generation therefore take
--- Theta(k) time; this isolates the SPEC's O(L) ring-operation bound.
-setup_benchmark runReplay k => k with prep := scalarInput where {
-  paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+-- Derivation: dense scalars 13*(2^k-1) have k+O(1) bits. The SPEC
+-- prescribes Nat.testBit, defined in Lean 4.35 as 1 &&& (q >>> i) != 0.
+-- For a bignum q, each shift materializes its remaining suffix: summing
+-- k-i bits over the k positions costs Theta(k^2 / wordBits). The affine
+-- operations modulo seven and witness traversal contribute Theta(k).
+-- Thus the compiled large-scalar family is quadratic, while the SPEC's
+-- separate O(L) modular-ring-operation count remains linear. The earlier
+-- linear declaration omitted these copies; retained runs are not evidence
+-- for this corrected model. These sizes expose the bignum regime.
+setup_benchmark runReplay k => k * k with prep := scalarInput where {
+  paramFloor := 32768, paramCeiling := 1048576, outerTrials := 3
+  targetInnerNanos := 5000000000, maxSecondsPerCall := 40.0
 }
 
--- Derivation: the same bit schedule performs Theta(k) extended-GCD calls on
--- fixed operands modulo seven; reversing and comparing the witnesses adds
--- Theta(k) work. Arbitrary subject-bit growth is deliberately held constant.
-setup_benchmark runProposal k => k with prep := scalarInput where {
-  paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+-- Derivation: the identical bit extraction has Theta(k^2 / wordBits)
+-- suffix-copy cost. Fixed-modulus extended GCD, witness reversal and
+-- comparison contribute only Theta(k). This is a compiled-time claim,
+-- not a replacement for the SPEC's modular-operation bound.
+setup_benchmark runProposal k => k * k with prep := scalarInput where {
+  paramFloor := 32768, paramCeiling := 1048576, outerTrials := 3
+  targetInnerNanos := 5000000000, maxSecondsPerCall := 40.0
 }
 
 def rowBudget (rows : Nat) : ImportBudget :=
@@ -232,12 +240,14 @@ def parsedInput (rows : Nat) : ImportBudget × PariCertificate :=
 -- traverse them once. Bounded integer arithmetic has constant cost here.
 setup_benchmark runParse r => r with prep := textInput where {
   paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+  targetInnerNanos := 2000000000, maxSecondsPerCall := 8.0
 }
 
 -- Derivation: list length, seven fixed-width bit checks per row and original
 -- index traversal each cost Theta(r); no endpoint construction is timed.
 setup_benchmark runPreflight r => r with prep := parsedInput where {
   paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+  targetInnerNanos := 2000000000, maxSecondsPerCall := 8.0
 }
 
 end Hex.ECPPBench
