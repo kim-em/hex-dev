@@ -693,7 +693,8 @@ make no scaling claim and do not complete the required Phase-4 evaluation.
 complete generic producer and converts each actual root through the existing
 selected-root canonical conversion; point roots retain their rational value.
 It preserves `RealRootSet.all`, root order and positive multiplicities.
-The companion proves `Trivial.Rational.roots_eq`: the entire converted result equals
+The companion module `HexRealClosureMathlib.Trivial` proves
+`Trivial.Rational.roots_eq`: the entire converted result equals
 `(Trivial.Rational.polynomial p).roots`, including the zero case and exact labels.
 `Trivial.Rational.compare` delegates comparison of converted roots to
 `RealAlgebraicNumber.compare`; `compare_eq` proves the checked generic
@@ -705,12 +706,16 @@ irrational pairs, repeated Yun
 factors, negative nonmonic definitions and non-dyadic rational roots. All pairs
 of returned roots are compared through both routes. Checked descriptors also
 exercise equality of √2 through different quadratic/quartic heads and of
-a rational point with a selected cubic root in both comparison directions. The conversion still
+a rational point with a selected cubic root in both comparison directions,
+and strict comparisons of √2 with ∛3 through different selected heads.
+Run `lake build HexRealClosureMathlib.Trivial` for the companion proofs.
+The conversion still
 performs canonical root selection for each selected generic descriptor;
 this agreement is not a claim of equal runtime cost or generic-path scaling.
 The full trivial-fragment contract still requires algebraic tower coefficients,
 comparison of tower values, arithmetic agreement and conversion round trips.
-The rational results above do not discharge those broader obligations.
+Those obligations and independent python-flint cross-checks remain in
+[#10378](https://github.com/kim-em/hex-dev/issues/10378).
 
 ### Native complete roots
 

@@ -54,6 +54,18 @@ private def equalityCases : IO Unit := do
         lower := .finite 1, upper := .finite 2, indices := [], signs := [] }
     | throw (IO.userError "quartic equality descriptor failed")
   equalRoots (.selected quadratic) (.selected quartic)
+  let some cubic := Root.validate 42
+      { context := 42, head := x * x * x - DensePoly.C 3,
+        lower := .finite 1, upper := .finite 2, indices := [], signs := [] }
+    | throw (IO.userError "strict cubic comparison descriptor failed")
+  let a : Isolation.Root (Sturm.orderSign : Rat → Int) 42 := .selected quadratic
+  let b : Isolation.Root (Sturm.orderSign : Rat → Int) 42 := .selected cubic
+  let .ok forward := a.compare b
+    | throw (IO.userError "strict selected-root forward comparison failed")
+  let .ok backward := b.compare a
+    | throw (IO.userError "strict selected-root reverse comparison failed")
+  require (forward == .lt && backward == .gt) "strict selected-root comparison disagrees"
+  require (compare a b == .lt && compare b a == .gt) "strict canonical comparison disagrees"
   let some rational := Root.validate 42
       { context := 42, head := (DensePoly.scale 3 x - 1) * square,
         lower := .finite 0, upper := .finite 1, indices := [], signs := [] }

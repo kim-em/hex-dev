@@ -140,12 +140,12 @@ theorem roots_eq (context : Nat) (p : DensePoly Rat) :
       simp only [backend, RealRootSet.toArray, RealRootSet.finite?, Option.getD_some] at backend_order
       have ordered := backend_order.imp (fun h => (RealAlgebraicNumber.lt_iff _ _).mp h)
       let relation := fun a b : RealRootCount => a.root.toReal < b.root.toReal
-      letI : Std.Antisymm relation := ⟨fun _ _ less greater => False.elim ((lt_asymm less) greater)⟩
-      letI : Std.Irrefl relation := ⟨fun _ => lt_irrefl _⟩
+      let : Std.Antisymm relation := ⟨fun _ _ less greater => False.elim ((lt_asymm less) greater)⟩
+      let : Std.Irrefl relation := ⟨fun _ => lt_irrefl _⟩
       have same : entries.map entry = existing.toList :=
         List.Pairwise.eq_of_mem_iff (r := relation) (entries_sorted p generic) ordered
           (fun s => (entries_spec p generic s).trans (backend_spec p backend s).symm)
-      simp only [roots, generic, output, backend]
+      simp only [roots, generic, output]
       rw [same, Array.toArray_toList]
 
 end Hex.RealClosure.Trivial.Rational
