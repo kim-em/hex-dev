@@ -1,0 +1,26 @@
+{
+  "cpu": 63,
+  "host": "chungus2",
+  "load_start": [
+    74.14599609375,
+    47.86767578125,
+    34.8076171875
+  ],
+  "command": [
+    "/tmp/issue-10577-signs-unchanged",
+    "run",
+    "Hex.SturmBench.runSigns",
+    "--export-file",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-signs-unchanged/results.json"
+  ],
+  "role": "single unchanged rerun after inconclusive mode-1 signs result",
+  "source_snapshot_sha256": "877730129181af94f3e7251fa409dabc4a70bd8c347131a636ad1c502fbd5faa",
+  "binary_sha256": "d81094975c9e126f7bc3c3935ca06cf3c8d5c1bb65b72f59d9c82d09891f125e",
+  "exit_code": 0,
+  "load_end": [
+    78.7109375,
+    49.71533203125,
+    35.54931640625
+  ],
+  "binary_unchanged": true
+}

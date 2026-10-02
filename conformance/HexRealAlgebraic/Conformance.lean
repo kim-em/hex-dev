@@ -122,3 +122,11 @@ open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
   a.normSq == ofRat (9 / 4) && a.abs == ofRat (3 / 2) &&
     z.normSq == 0 && z.abs == 0 &&
     AlgebraicNumber.I.normSq == 1 && AlgebraicNumber.I.abs == 1
+
+-- Irrational values on both sides of positive and negative integers.
+#guard
+  let s := (Hex.RealAlgebraicNumber.ofAlgebraic?
+    (Hex.ZPoly.rootNear #p[-2, 0, 1] (3 / 2))).getD 0
+  let e := s * Hex.RealAlgebraicNumber.ofRat (1 / (2 ^ (12 : Nat) : Rat))
+  (#[1 + e, 1 - e, -1 + e, -1 - e]).map (fun a => (a.floor, a.ceil)) ==
+    #[(1, 2), (0, 1), (-1, 0), (-2, -1)]

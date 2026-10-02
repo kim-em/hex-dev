@@ -11,3 +11,9 @@ Prepared bindings, sign normalization, domain guards, query-one reuse, cached re
 
 No unresolved Phase-2 blocker. This token attests scaffolding only; it does not
 attest benchmark budgets, Phase 4, package publication or distribution readiness.
+
+Independent follow-up at 6d78bf3e1fb1aa23129df83f7888979dd5afeb6d checks
+declaration coverage and implementation shape. Performance findings remain
+tracked by #10577, with their evidence and required actions in
+status/reviews/issue-10577-opus-followup.md. No separate decomposition issues
+are created under this assignment.

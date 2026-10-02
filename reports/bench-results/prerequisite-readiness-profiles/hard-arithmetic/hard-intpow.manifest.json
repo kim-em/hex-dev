@@ -1,0 +1,372 @@
+{
+  "family": "hard-intpow",
+  "function": "Hex.RealAlgebraicBench.runHardIntPow",
+  "parameter": 0,
+  "cpu": 76,
+  "load": [
+    4.15283203125,
+    5.70166015625,
+    8.37109375
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/hard-intpow",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/hard-intpow/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/hard-intpow/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "profile",
+        "Hex.RealAlgebraicBench.runHardIntPow",
+        "--param",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--max-seconds-per-call",
+        "60",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/hard-intpow/samply.json.gz",
+        "/tmp/issue-10577-perf/hard-intpow/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/hard-intpow/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/hard-intpow/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/hard-intpow/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/hard-intpow/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/hard-intpow/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/hard-intpow/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/hard-intpow/timed-1280491.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/hard-intpow/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/hard-intpow/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/hard-intpow/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/hard-intpow/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/hard-intpow/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/hard-intpow/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/hard-intpow/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/hard-intpow/diagnostics.json",
+        "--thread",
+        "hexrealalgebrai",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/hard-arithmetic/hard-intpow.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "d9a1f72c4cc6fa592f3ebaeec3d96eb5c41794dedb9828b7e0b2b60a8532808b",
+  "commit": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1280491,
+    "bench_thread_name": "hexrealalgebrai",
+    "bench_thread_tid": "1280494",
+    "regions_total": 9,
+    "total_timed_ms": 2200.566801,
+    "expected_samples_bench_thread": 2198.4,
+    "retained_samples_bench_thread": 2197,
+    "rejected_samples_bench_thread": 412,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790917979687137027,
+    "spawn_anchor_mono_ns": 327971447746478,
+    "sidecar_mono_anchor_ns": 327972030581189,
+    "samply_meta_start_time_ms": 1790917979723.0237,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.9432839751243591,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.9432839751243591,
+      "raw_max_residual_ms": 0.973874032497406,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 9,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 2197,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.9432839751243591,
+          "boundary_residual_raw_max_ms": 0.973874032497406,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0018206645425580324,
+          "leaf_function_support_size": 765,
+          "comparison_samples": 2197,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.004551661356395084,
+          "sampling_noise_allowance": 0.033780564980026344,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.001968510477127068,
+          "leaf_function_support_size": 763,
+          "comparison_samples": 2192,
+          "exchanged_samples": 5,
+          "exchanged_fraction": 0.002281021897810219,
+          "sampling_noise_allowance": 0.023909636279477144,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 2197,
+          "top_leaf_functions": [
+            {
+              "function": 78,
+              "name": "0x4b0a5d3",
+              "samples": 200
+            },
+            {
+              "function": 160,
+              "name": "0x4b73d51",
+              "samples": 87
+            },
+            {
+              "function": 292,
+              "name": "0xae923",
+              "samples": 75
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 2197,
+          "top_leaf_functions": [
+            {
+              "function": 78,
+              "name": "0x4b0a5d3",
+              "samples": 200
+            },
+            {
+              "function": 160,
+              "name": "0x4b73d51",
+              "samples": 87
+            },
+            {
+              "function": 292,
+              "name": "0xae923",
+              "samples": 75
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 2192,
+          "top_leaf_functions": [
+            {
+              "function": 78,
+              "name": "0x4b0a5d3",
+              "samples": 199
+            },
+            {
+              "function": 160,
+              "name": "0x4b73d51",
+              "samples": 87
+            },
+            {
+              "function": 292,
+              "name": "0xae923",
+              "samples": 74
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "d40df5947dd338826ff79a6a053ccdc7edeaecd28d6667f6a092758534fc7d11",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "3a4f78a74cce0d385cd8c09b89fa953186c6367fcb01cc769ff857a2fa007a9e",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "061133c93083413077ffb53501fc2861ff97b97bcab9c721682f94e0f7d4e797",
+    "perf.data": "f79dac0b9287eee45353e527e4178f620f82133b095059601b32e0b6cec57572",
+    "timed-1280491.jsonl": "c08a382db53d67a3476f1de873451a2bf402617bdaf425ef611fa8548fe98214",
+    "5.stdout": "aa32e48714081bae92c1e89436e427270a0783a8566c832af6d5307e869fa5f1",
+    "5.stderr": "248af588a81318f5522e10d43546b4425b44df67241fdfa1431e827948dc4071",
+    "samply.json.gz": "70dad61efc1c9a4f7bd7f997fc7a4ef1c1ffbdcbff63f85def71d74b0d170674",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "03d16020d6fbd8ff15cec10f6cd0eaeeed88d1166aedba74dc57f3048f34aada",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "03d16020d6fbd8ff15cec10f6cd0eaeeed88d1166aedba74dc57f3048f34aada",
+    "normalized.json.gz": "93a2eb118319ad4cc496db89affb34d197314619387afda24ce5a84984f62bf6",
+    "8.stdout": "af1f54a1f23b2c3e5a08c98f5541c54dc4c482c3c1fb974c79bd37ee5335723c",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "792f187d5e25a95be8c2ff58837f0b1cf5f487fb1c47954c286d3ee48bb62bc2",
+    "diagnostics.json": "8919b8857630f9989bc6ae1ae72c0eba2b1f03a714c70ce42cefc4452564af15",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "5ed951bd48706f66f262ee6f5f39b3f4acfba90fd255aebcd7dedd72c20bf0f7",
+    "symbols.json": "4359d07e169d69612c37e73fbbd506abe2547d3f9daf333b582ea57e89d7e4b0",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

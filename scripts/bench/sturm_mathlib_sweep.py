@@ -19,18 +19,18 @@ from scripts.bench.fresh_module_sweep import (  # noqa: E402
 )
 
 AXIOMS = ("propext", "Classical.choice", "Quot.sound")
-BASELINE = ProbeModule("HexSturmMathlib.Replay.Baseline")
+BASELINE = ProbeModule("HexSturmMathlib.Tests.Replay.Baseline")
 SPEC = SweepSpec(
     description=__doc__ or "Tarski literal replay proof sweep",
     pairs=tuple(
         ProbePair(name.lower(), BASELINE,
-                  ProbeModule("HexSturmMathlib.Replay." + name, AXIOMS),
+                  ProbeModule("HexSturmMathlib.Tests.Replay." + name, AXIOMS),
                   {"family": "literal-rational-query", "degree": 2,
                    "scope": "checker and domain; no root-sum theorem"})
         for name in ("Accepted", "Rejected")
     ),
-    probe_target="HexConformance",
-    src_dir=Path("conformance"),
+    probe_target="HexSturmMathlibTests",
+    src_dir=Path("."),
     schema="hex-sturm-mathlib-literal-probes-v1",
     measurement="paired-fresh-module-olean-wall",
     output_stem="hex-sturm-mathlib",

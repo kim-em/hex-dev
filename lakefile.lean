@@ -231,6 +231,10 @@ lean_lib HexRealAlgebraic where
 @[default_target]
 lean_lib HexRealAlgebraicMathlib where
 
+@[default_target]
+lean_lib HexRealAlgebraicMathlibTests where
+  globs := #[.one `HexRealAlgebraicMathlib.Tests]
+
 lean_lib HexNumberFieldTower where
 
 lean_lib HexPolyFp where
@@ -336,6 +340,10 @@ lean_lib HexRealClosureMathlibTests where
 
 @[default_target]
 lean_lib HexSturmMathlib where
+
+@[default_target]
+lean_lib HexSturmMathlibTests where
+  globs := #[.one `HexSturmMathlib.Tests, .submodules `HexSturmMathlib.Tests]
 
 lean_lib HexInterval where
 
@@ -1139,8 +1147,7 @@ lean_lib HexConformance where
 
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks,
       `HexRealAlgebraic.FieldSignConformance, `HexNumberField.ComplexChecks,
-      `HexRealAlgebraic.ReprChecks, `HexRealAlgebraicMathlib.FieldSignConformance,
-      `HexRealAlgebraicMathlib.Audit].map Glob.one
+      `HexRealAlgebraic.ReprChecks, `HexRealAlgebraicMathlib.FieldSignConformance].map Glob.one
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
@@ -1155,8 +1162,7 @@ lean_lib HexConformance where
       `HexRealClosureMathlib.SignFactsConformance,
       `HexRealClosureMathlib.SignRequestsConformance].map Glob.one
 
-    ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
-    ++ #[.submodules `HexSturmMathlib.Replay]
+    ++ #[`HexSturm.Fixtures, `HexSturm.Conformance].map Glob.one
 
     ++ #[`HexKronecker.Conformance].map Glob.one
 

@@ -49,9 +49,9 @@ initialize closeRef : IO.Ref (Option (RealAlgebraicNumber × RealAlgebraicNumber
 private def closePair : IO (RealAlgebraicNumber × RealAlgebraicNumber) := do
   if let some pair ← closeRef.get then return pair
   let (a, _) ← pairRef.get
-  let shift := ((← IO.getEnv "HEX_REAL_BENCH_SHIFT").bind String.toNat?).getD 50
+  let shift := 50
   let pair := (a, a + ofRat (1 / (2 ^ shift : Rat)))
-  unless shift < 50 || (Hex.Interval.realOrder? pair.1.toAlgebraic.rep.1.square
+  unless (Hex.Interval.realOrder? pair.1.toAlgebraic.rep.1.square
       pair.2.toAlgebraic.rep.1.square).isNone do
     throw (IO.userError "close-comparison fixture must have overlapping stored intervals")
   closeRef.set (some pair)
@@ -294,30 +294,26 @@ def runBareDiv : Unit → IO UInt64 := fun _ => do
 
 /-- Bare dependency route, using the same dynamic operands and checksum. -/
 def runBareNeg : Unit → IO UInt64 := fun _ => do
-  let (x, y) ← pairRef.get
+  let (x, _) ← pairRef.get
   let a := x.toAlgebraic
-  let b := y.toAlgebraic
   return algebraicChecksum (-a)
 
 /-- Bare dependency route, using the same dynamic operands and checksum. -/
 def runBareInv : Unit → IO UInt64 := fun _ => do
-  let (x, y) ← pairRef.get
+  let (x, _) ← pairRef.get
   let a := x.toAlgebraic
-  let b := y.toAlgebraic
   return algebraicChecksum (a⁻¹)
 
 /-- Bare dependency route, using the same dynamic operands and checksum. -/
 def runBareNatPow : Unit → IO UInt64 := fun _ => do
-  let (x, y) ← pairRef.get
+  let (x, _) ← pairRef.get
   let a := x.toAlgebraic
-  let b := y.toAlgebraic
   return algebraicChecksum (a ^ (7 : Nat))
 
 /-- Bare dependency route, using the same dynamic operands and checksum. -/
 def runBareIntPow : Unit → IO UInt64 := fun _ => do
-  let (x, y) ← pairRef.get
+  let (x, _) ← pairRef.get
   let a := x.toAlgebraic
-  let b := y.toAlgebraic
   return algebraicChecksum (a ^ (-7 : Int))
 
 -- API coverage anchor; this operational cap makes no performance claim.
@@ -462,6 +458,158 @@ setup_benchmark runRootSet _n => 1
     signalFloorMultiplier := 1
     maxSecondsPerCall := 3
   }
+
+/-- Independent calls of the actual per-root exactification phase. Each input
+is a valid root witness; this batch is not asserted to be one polynomial's
+complete root set. Fixed degree and height make each call constant work. -/
+def exactifyInput (n : Nat) : Array RootCount :=
+  let root := (ZPoly.rootNear #p[-2, 0, 1] (3 / 2)).toRoot
+  Array.replicate n ⟨root, 1, by decide⟩
+
+instance : Hashable RootCount where
+  hash r := hash (r.root.p.toArray, r.root.rep.1.square.re.toRat,
+    r.root.rep.1.square.im.toRat, r.multiplicity)
+
+def runExactifyRoots (roots : Array RootCount) : Array UInt64 :=
+  roots.map fun r => (RealAlgebraicPoly.realRoot? r).map
+    (fun a => hash (checksum a.root, a.multiplicity)) |>.getD 0
+
+-- Diagnostic batching control: n calls with identical fixed-size witnesses.
+-- Its linear verdict measures array traversal and repeated fixed calls, not
+-- growth of the polynomial or the leaf exactification problem. It does not
+-- satisfy Phase-4 operation coverage.
+setup_benchmark runExactifyRoots n => n
+  with prep := exactifyInput
+  where {
+    paramSchedule := .custom #[8, 16, 32, 64, 128]
+    paramFloor := 8
+    paramCeiling := 128
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 60
+  }
+
+private def reverseBits (width value : Nat) : Nat :=
+  (List.range width).foldl (fun acc k => 2 * acc + (value / 2 ^ k) % 2) 0
+
+def sortInput (n : Nat) : Array RealRootCount :=
+  (List.range n).toArray.map fun k =>
+    ⟨ofRat (reverseBits (Nat.log2 n) k + 1 : Nat), 1, by decide⟩
+
+instance : Hashable RealRootCount where
+  hash r := hash (checksum r.root, r.multiplicity)
+
+def runSortRoots (roots : Array RealRootCount) : Array RealRootCount :=
+  (roots.toList.mergeSort (fun a b => decide (a.root ≤ b.root))).toArray
+
+-- Mode 1: the same mergeSort/comparator expression used by realRoots.
+-- Bit-reversal at power-of-two rungs forces interleaving at every merge.
+-- Rational roots 1..n have disjoint stored intervals and word-size heights;
+-- each comparison/hash is constant word work. Sorting costs Θ(n log n),
+-- and consuming all n resulting roots adds Θ(n) work.
+setup_benchmark runSortRoots n => n * (Nat.log2 n + 1)
+  with prep := sortInput
+  where {
+    paramSchedule := .custom #[16, 32, 64, 128, 256]
+    paramFloor := 16
+    paramCeiling := 256
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 60
+  }
+
+/-- Erased-witness packaging, checked packaging, rational recognition and
+real projections on word-size rational leaves in a growing coefficient array.
+These operations inspect fixed-size canonical leaves, rather than traversing
+that array. The results include semantic checks and the recognized rational. -/
+def runLeafChecks (i : ArrayInput) : Bool × Bool × Bool × Bool × Option Rat :=
+  let a := i.coefficients.getD (i.coefficients.size / 2) 0
+  ((ofAlgebraic? a.toAlgebraic).isSome,
+    ofAlgebraic a.toAlgebraic a.property == a,
+    a.conj == a,
+    a.toAlgebraic.re == a.toAlgebraic && a.toAlgebraic.im == 0,
+    a.toRat?)
+
+-- Diagnostic control: the array parameter does not drive the leaf operations.
+-- Its constant verdict does not satisfy Phase-4 operation coverage.
+setup_benchmark runLeafChecks _n => 1
+  with prep := arrayInput
+  where {
+    paramSchedule := .custom #[16, 32, 64, 128, 256]
+    paramFloor := 16
+    paramCeiling := 256
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 60
+  }
+
+initialize hardRef : IO.Ref (Option (RealAlgebraicNumber × RealAlgebraicNumber)) ←
+  IO.mkRef none
+
+/-- Positive real member of the parent's degree-product-12 addition family.
+This keeps the owner's actual isolator and exactification pipeline. -/
+private def hardPair : IO (RealAlgebraicNumber × RealAlgebraicNumber) := do
+  if let some pair ← hardRef.get then return pair
+  let degree := 6
+  let p : ZPoly := DensePoly.ofCoeffs ((Array.replicate (max degree 2) (0 : Int)).push 1 |>.set! 0 (-2))
+  let (_, b) ← pairRef.get
+  let pair := (real (ZPoly.rootNear p (11 / 10)), b)
+  hardRef.set (some pair)
+  return pair
+
+private def hardArithmetic (op : Nat) (bare : Bool) : IO UInt64 := do
+  let (a, b) ← hardPair
+  if bare then
+    let a := a.toAlgebraic
+    let b := b.toAlgebraic
+    let c := match op with
+      | 0 => a + b | 1 => a - b | 2 => a * b | 3 => a / b
+      | 4 => -a | 5 => a⁻¹ | 6 => a ^ (7 : Nat) | _ => a ^ (-7 : Int)
+    return algebraicChecksum c
+  else
+    let c := match op with
+      | 0 => a + b | 1 => a - b | 2 => a * b | 3 => a / b
+      | 4 => -a | 5 => a⁻¹ | 6 => a ^ (7 : Nat) | _ => a ^ (-7 : Int)
+    return checksum c
+
+def runHardAdd : Unit → IO UInt64 := fun _ => hardArithmetic 0 false
+def runHardBareAdd : Unit → IO UInt64 := fun _ => hardArithmetic 0 true
+def runHardSub : Unit → IO UInt64 := fun _ => hardArithmetic 1 false
+def runHardBareSub : Unit → IO UInt64 := fun _ => hardArithmetic 1 true
+def runHardMul : Unit → IO UInt64 := fun _ => hardArithmetic 2 false
+def runHardBareMul : Unit → IO UInt64 := fun _ => hardArithmetic 2 true
+def runHardDiv : Unit → IO UInt64 := fun _ => hardArithmetic 3 false
+def runHardBareDiv : Unit → IO UInt64 := fun _ => hardArithmetic 3 true
+def runHardNeg : Unit → IO UInt64 := fun _ => hardArithmetic 4 false
+def runHardBareNeg : Unit → IO UInt64 := fun _ => hardArithmetic 4 true
+def runHardInv : Unit → IO UInt64 := fun _ => hardArithmetic 5 false
+def runHardBareInv : Unit → IO UInt64 := fun _ => hardArithmetic 5 true
+def runHardNatPow : Unit → IO UInt64 := fun _ => hardArithmetic 6 false
+def runHardBareNatPow : Unit → IO UInt64 := fun _ => hardArithmetic 6 true
+def runHardIntPow : Unit → IO UInt64 := fun _ => hardArithmetic 7 false
+def runHardBareIntPow : Unit → IO UInt64 := fun _ => hardArithmetic 7 true
+
+-- Canonical-input calibration anchors. No absolute budget or Phase-4 claim
+-- is inferred from the operational cap; the report must discharge mode choice.
+setup_fixed_benchmark runHardAdd where { observations with maxSecondsPerCall := 60, expectedHash := some 0x7cc18faa80303c8 }
+setup_fixed_benchmark runHardBareAdd where { observations with maxSecondsPerCall := 60, expectedHash := some 0x7cc18faa80303c8 }
+setup_fixed_benchmark runHardSub where { observations with maxSecondsPerCall := 60, expectedHash := some 0xcfcded9e67ef422a }
+setup_fixed_benchmark runHardBareSub where { observations with maxSecondsPerCall := 60, expectedHash := some 0xcfcded9e67ef422a }
+setup_fixed_benchmark runHardMul where { observations with maxSecondsPerCall := 60, expectedHash := some 0x7b833c10aa349c1 }
+setup_fixed_benchmark runHardBareMul where { observations with maxSecondsPerCall := 60, expectedHash := some 0x7b833c10aa349c1 }
+setup_fixed_benchmark runHardDiv where { observations with maxSecondsPerCall := 60, expectedHash := some 0xf93e953cb46d6203 }
+setup_fixed_benchmark runHardBareDiv where { observations with maxSecondsPerCall := 60, expectedHash := some 0xf93e953cb46d6203 }
+setup_fixed_benchmark runHardNeg where { observations with maxSecondsPerCall := 60, expectedHash := some 0x90151aeb609428ad }
+setup_fixed_benchmark runHardBareNeg where { observations with maxSecondsPerCall := 60, expectedHash := some 0x90151aeb609428ad }
+setup_fixed_benchmark runHardInv where { observations with maxSecondsPerCall := 60, expectedHash := some 0x7f480553f9384a48 }
+setup_fixed_benchmark runHardBareInv where { observations with maxSecondsPerCall := 60, expectedHash := some 0x7f480553f9384a48 }
+setup_fixed_benchmark runHardNatPow where { observations with maxSecondsPerCall := 60, expectedHash := some 0xfac774ca5ef39829 }
+setup_fixed_benchmark runHardBareNatPow where { observations with maxSecondsPerCall := 60, expectedHash := some 0xfac774ca5ef39829 }
+setup_fixed_benchmark runHardIntPow where { observations with maxSecondsPerCall := 60, expectedHash := some 0xee54fcb23d356212 }
+setup_fixed_benchmark runHardBareIntPow where { observations with maxSecondsPerCall := 60, expectedHash := some 0xee54fcb23d356212 }
 
 end Hex.RealAlgebraicBench
 

@@ -1,0 +1,8 @@
+Hex.RealAlgebraicBench.runHardInv    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T03:58:24Z, host=chungus2
+  repeat 0  33.030 ms
+  median: 33.030 ms    min: 33.030 ms    max: 33.030 ms
+  hash: all repeats agree
+  observed hash: 0x7f480553f9384a48
+  peak RSS: 68_268 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Inv-3-Hard.json

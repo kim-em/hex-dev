@@ -1,0 +1,8 @@
+Hex.RealAlgebraicBench.runRounding    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T02:58:27Z, host=chungus2
+  repeat 0  15.205 µs  (×2^7, total 1.946 ms)
+  median: 15.205 µs    min: 15.205 µs    max: 15.205 µs
+  hash: all repeats agree
+  observed hash: 0x89104a575971b244
+  peak RSS: 62_352 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-ceiling-pairs/0-after.json

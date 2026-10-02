@@ -18,7 +18,7 @@ intervals. The value proof compares arbitrary accepted remainder chains by
 positive scaling, including singleton chains and nonconstant terminal gcds;
 it does not require a root-sum theorem. `check_rat_value` proves equality of
 values for arbitrary accepted certificates on the corresponding inputs.
-Conformance instantiates the generic theorems on canonical rationals and noncanonical
+Ordinary-kernel tests instantiate the generic theorems on canonical rationals and noncanonical
 representatives and inspects their axioms.
 
 `Compare.lean` proves `check_congr` for arbitrary accepted field certificates
@@ -39,9 +39,10 @@ The development-only `HexQuerySemantics` target proves root-sum/replay semantics
 root counts, nonnegativity and degree bounds, and singleton-root signs through
 the shared hex-real-roots-mathlib foundation. The theorem for arbitrary
 accepted certificates has no producer-success hypothesis. All these results
-use only Lean's standard logical axioms. Scaffolding is attested at Phase 1;
-independent review and dependency-ordered conformance/Phase-4 attestation
-remain required. This theorem-only layer has no dedicated Phase-4 timing
+use only Lean's standard logical axioms. Independent scaffolding review is
+attested at Phase 2 in `libraries.yml`; dependency-ordered conformance and
+Phase-4 attestation remain required. The `HexSturmMathlibTests` target builds
+the theorem and axiom checks under `HexSturmMathlib/Tests`. This theorem-only layer has no dedicated Phase-4 timing
 deliverable under the current policy.
 
 These proved semantic modules currently live under `adapters/`, outside the
@@ -253,7 +254,9 @@ These use the existing real foundation, not a new analytic proof.
 
 `rootCount_sturm` in `Rational.lean` identifies every successful natural
 count on a finite dyadic interval with the existing `ZPoly.sturmCount` after
-positive denominator clearing, for positive-degree rationally squarefree heads.
+positive denominator clearing, including accepted nonzero constants. The success
+hypothesis supplies squarefreeness; callers need no additional degree or
+squarefreeness premise.
 Success entails both endpoint-root-free guards. The half-open API's behavior
 at an upper root is preserved.
 

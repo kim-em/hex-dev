@@ -91,11 +91,35 @@ theorem floor_toReal (a : RealAlgebraicNumber) : a.floor = ⌊a.toReal⌋ :=
 
 /-- Executable ceiling agrees with real ceiling. -/
 theorem ceil_toReal (a : RealAlgebraicNumber) : a.ceil = ⌈a.toReal⌉ := by
-  rw [ceil, floor_toReal, neg_toReal, Int.floor_neg, neg_neg]
+  cases h : a.toRat? with
+  | some q =>
+    have ha := (toRat?_eq_some a q).mp h
+    rw [ceil, h, ha, ofRat_toReal, Rat.ceil_cast]
+    change q.ceil = ⌈q⌉
+    rw [Rat.ceil_eq_neg_floor_neg, Rat.floor_def, Rat.ceil_def',
+      Rat.num_neg_eq_neg_num, Rat.den_neg_eq_den]
+  | none =>
+    rw [ceil, h, floor_toReal]
+    apply (Int.ceil_eq_floor_add_one_iff_notMem a.toReal).mpr ?_ |>.symm
+    rintro ⟨n, hn⟩
+    have ha : a = ofRat (n : Rat) := by
+      apply toReal_injective
+      simpa only [ofRat_toReal, Rat.cast_intCast] using hn.symm
+    have hr := (toRat?_eq_some a (n : Rat)).mpr ha
+    simp only [h] at hr
+    cases hr
 
-instance : FloorRing RealAlgebraicNumber :=
-  FloorRing.ofFloor RealAlgebraicNumber floor fun n a => by
+/-- Ceiling and floor retain the defining negation relation. -/
+theorem ceil_eq (a : RealAlgebraicNumber) : a.ceil = -(-a).floor := by
+  rw [ceil_toReal, floor_toReal, neg_toReal, Int.floor_neg, neg_neg]
+
+instance : FloorRing RealAlgebraicNumber where
+  floor := floor
+  ceil := ceil
+  gc_coe_floor n a := by
     rw [le_iff, intCast_toReal, floor_toReal, Int.le_floor]
+  gc_ceil_coe a n := by
+    rw [le_iff, intCast_toReal, ceil_toReal, Int.ceil_le]
 
 /-- Floor is below its argument in the executable ordered field. -/
 theorem floor_le (a : RealAlgebraicNumber) : (a.floor : RealAlgebraicNumber) ≤ a := by

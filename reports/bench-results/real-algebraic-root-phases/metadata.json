@@ -1,0 +1,31 @@
+{
+  "cpu": 74,
+  "head": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "host": "chungus2",
+  "load_start": [
+    2.63037109375,
+    3.654296875,
+    4.84716796875
+  ],
+  "commands": [
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runExactifyRoots",
+      "Hex.RealAlgebraicBench.runSortRoots",
+      "Hex.RealAlgebraicBench.runLeafChecks",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-phases/results.json"
+    ]
+  ],
+  "source_sha256": "a53f8e727946068ea6b61328bc1e7e986af042568420f3c819e8a427664de1dd",
+  "binary_sha256": "5737696b97d268c9d6fcb46658d6f757a78c4d241bc01ab59fa3ee4877cd437f",
+  "load_end": [
+    3.0078125,
+    3.69921875,
+    4.8486328125
+  ],
+  "source_unchanged": true,
+  "binary_unchanged": true,
+  "exit_code": 0
+}
