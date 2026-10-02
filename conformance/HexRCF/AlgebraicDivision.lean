@@ -20,6 +20,11 @@ set_option maxHeartbeats 2000000
 theorem quotient_identity : ∀ x : ℝ,
     x / Real.sqrt 2 = (Real.sqrt 2 / 2) * x := by rcf
 
+theorem square_divisor : ∀ x : ℝ, x / Real.sqrt 4 = x / 2 := by rcf
+
+theorem mixed_square_alias : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt 4 - Real.sqrt 2 > 0 := by rcf
+
 theorem quotient_positive : ∀ x : ℝ,
     x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0 := by rcf
 
@@ -198,3 +203,11 @@ end Hex.RCF.AlgebraicDivision
 /-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.negative_quotient' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.AlgebraicDivision.negative_quotient
+
+/-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.square_divisor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.AlgebraicDivision.square_divisor
+
+/-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.mixed_square_alias' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.AlgebraicDivision.mixed_square_alias

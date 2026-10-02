@@ -679,6 +679,10 @@ example : ∀ x : ℝ,
   rcf
 
 example : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt 4 - Real.sqrt 2 > 0 := by
+  rcf
+
+example : ∀ x : ℝ,
     x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0 := by
   rcf
 

@@ -225,10 +225,22 @@ private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
   let identity : DensePoly Rat := DensePoly.ofList [0, 1]
   if let some degree ← naturalSquareRoot? source then
     let (_, _, anchorValue) ← FieldRuntime.coefficient source
+    let sourceP := SquareRoot.polynomial degree
+    let sourceSquare := if anchorValue.toAlgebraic.p == sourceP then
+        anchorValue.toAlgebraic.rep.1.square
+      else
+        -- A perfect-square radicand has a linear minimal polynomial. Its
+        -- source alias is still authenticated with `X² - n`, independently
+        -- of the canonical generator's defining polynomial.
+        let precision := mahlerPrec sourceP + 4
+        let ball := anchorValue.approxBall precision
+        { re := ball.re, im := 0, prec := precision }
+    unless Decidable.decide (atomWitness sourceP sourceSquare) &&
+        Decidable.decide ((mahlerPrec sourceP : Int) ≤ sourceSquare.prec) do
+      throwError "rcf: square-root source has no checked selected-root witness"
     let fieldExpr ← FieldLiteral.ratPolyExpr identity
     let sourceProof ← mkAppM ``CommonPresentation.generator_eval #[source]
-    return some ⟨source, anchorValue,
-      anchorValue.toAlgebraic.p, anchorValue.toAlgebraic.rep.1.square,
+    return some ⟨source, anchorValue, sourceP, sourceSquare,
       identity, fieldExpr, sourceProof,
       .radical degree⟩
   unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return none
