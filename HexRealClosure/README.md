@@ -1275,6 +1275,10 @@ General `Context.enlarge` still requires:
    `HexSignDetMathlib.Embedding` supply selected-root correspondence through
    ordered field embeddings. `Context.enlarge?_aligned` identifies the
    executable re-extension target with its supplied enlarged base model.
+   `Model.map_adjoin` and `map_extend` prove that the actual stored child
+   values and every validated finite suffix commute with that ordered ambient
+   embedding. Identifying an arbitrary old model with this canonical
+   descriptor-based interpretation remains required.
 4. Applying the local algebraic bound to the computational `B(ε)` levels and
    proving their staged order agrees with the enlarged ambient interpretation.
 5. Gathering a dependency-closed collection of live contexts and assembling
