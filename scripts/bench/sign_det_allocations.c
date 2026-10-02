@@ -50,8 +50,8 @@ static __attribute__((always_inline)) inline void record(unsigned kind, size_t n
 }
 #define WRAP1(name, type, kind) \
 void *I_WRAP_SONAME_FNNAME_ZU(NONE, name)(type n) { \
-    OrigFn fn; void *p; unsigned outer = depth++ == 0; \
-    VALGRIND_GET_ORIG_FN(fn); CALL_FN_W_W(p, fn, n); \
+    OrigFn fn; void *p; unsigned outer; \
+    VALGRIND_GET_ORIG_FN(fn); outer = depth++ == 0; CALL_FN_W_W(p, fn, n); \
     --depth; if (outer && p) record(kind, n); return p; \
 }
 WRAP1(lean_alloc_small_object_core, unsigned, 0)
@@ -61,8 +61,8 @@ WRAP1(mi_malloc_small, size_t, 1)
 WRAP1(__gmp_default_allocate, size_t, 2)
 
 void *I_WRAP_SONAME_FNNAME_ZU(NONE, mi_new_n)(size_t n, size_t size) {
-    OrigFn fn; void *p; unsigned outer = depth++ == 0;
-    VALGRIND_GET_ORIG_FN(fn); CALL_FN_W_WW(p, fn, n, size);
+    OrigFn fn; void *p; unsigned outer;
+    VALGRIND_GET_ORIG_FN(fn); outer = depth++ == 0; CALL_FN_W_WW(p, fn, n, size);
     --depth;
     if (outer && p) {
         if (n && size > SIZE_MAX / n) overflow = 1;
@@ -71,8 +71,8 @@ void *I_WRAP_SONAME_FNNAME_ZU(NONE, mi_new_n)(size_t n, size_t size) {
     return p;
 }
 void *I_WRAP_SONAME_FNNAME_ZU(NONE, __gmp_default_reallocate)(void *old, size_t old_size, size_t n) {
-    OrigFn fn; void *p; unsigned outer = depth++ == 0;
-    VALGRIND_GET_ORIG_FN(fn); CALL_FN_W_WWW(p, fn, old, old_size, n);
+    OrigFn fn; void *p; unsigned outer;
+    VALGRIND_GET_ORIG_FN(fn); outer = depth++ == 0; CALL_FN_W_WWW(p, fn, old, old_size, n);
     --depth; if (outer && p) record(2, n); return p;
 }
 SIGN_DET_RESULT CALLBACK_WRAPPER(SIGN_DET_CALLBACK)(void *input) {

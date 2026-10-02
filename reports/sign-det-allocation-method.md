@@ -36,15 +36,17 @@ entry and deactivation at exit exclude preparation and process initialization;
 stack truncation does not change the counters. The operation must be pure and
 single-threaded. The wrapper does not propagate activation to spawned threads.
 
-The controlled `SIGN_DET_CHECK` fixture requests 64 Lean bytes, 56 other
-mimalloc bytes and 160 GMP bytes in six requests. Its nested allocator calls
+The controlled `SIGN_DET_CHECK` fixture requests 64 bytes at `lean_alloc_*` entry points,
+56 bytes at direct mimalloc entry points and 160 bytes at GMP entry points in six requests. Its nested allocator calls
 and a separate 256-byte request outside the callback must not add events.
 Pointer, Boolean and 64-bit integer variants preserve their expected return
 values and report 280 DHAT units in six events. Run all three with the driver
 `--self-check`; every capture also runs these fixtures before measurement.
 
 The driver requires every wrapped allocator symbol to be defined in the actual
-executable and retains the allocator symbol inventory. Before interpreting a
+executable and retains the allocator symbol inventory. A disassembly audit
+rejects unwrapped direct mimalloc client calls outside allocator internals.
+This is not a complete indirect-call or foreign-allocation detector. Before interpreting a
 capture as complete coverage, also audit the measured binary's
 allocation entry points and generated/inlined paths. The wrappers count the
 listed client requests; allocator backing pages, arbitrary foreign malloc
@@ -70,8 +72,9 @@ python3 scripts/bench/sign_det_allocations.py \
 
 Pilot records are retained under
 `/home/kim/.local/state/hex/issue-10377-profiles/allocation-method-validated`.
-The degree-three comparison recorded 6,283,680 Lean bytes, 624,384 other
-mimalloc bytes and 10,490,208 GMP bytes. Reduced graph checking recorded
+The degree-three comparison recorded 6,283,680 bytes at `lean_alloc_*` entry
+points, 624,384 bytes at direct mimalloc entry points and 10,490,208 bytes at
+GMP entry points. Reduced graph checking recorded
 1,672,112, 130,416 and 2,584,336 bytes respectively. These two validation
 observations used clean collector revision
 `b03612417e18dd84d5b6acf640adb7ea1461e7af` and retained uninstrumented result

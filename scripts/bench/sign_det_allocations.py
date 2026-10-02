@@ -54,7 +54,7 @@ def counters(output):
     return records[0]
 
 
-def check_events(counts, dhat):
+def check_events(counts, dhat, origin):
     """Check provenance and per-entry-point assignment of the emitted events.
 
     DHAT records these same requests. It does not independently detect missed
@@ -65,6 +65,8 @@ def check_events(counts, dhat):
     totals = {kind: [0, 0] for kind in KINDS}
     for point in dhat["pps"]:
         frame = dhat["ftbl"][point["fs"][0]]
+        if "(in " + str(origin) + ")" not in frame:
+            raise ValueError("emitting frame is not from the expected wrapper")
         names = [name for name in ALLOCATORS if re.search(r": " + name + r"(?:\s|\()", frame)]
         if len(names) != 1:
             raise ValueError("unclassified emitting wrapper frame: " + frame)
@@ -101,6 +103,32 @@ def allocator_inventory(exe, out):
     return {"defined_symbols": inventory, "sha256": digest(out / "allocator-symbols.txt")}
 
 
+def direct_allocator_calls(exe, out):
+    """Audit direct mimalloc client calls; this does not cover indirect calls."""
+    proc = subprocess.Popen(["objdump", "-d", "--demangle", "--no-show-raw-insn", str(exe)],
+                            stdout=subprocess.PIPE, text=True)
+    caller = ""
+    calls = set()
+    for line in proc.stdout:
+        label = re.match(r"^[0-9a-f]+ <(.+)>:", line)
+        if label:
+            caller = label[1]
+        target = re.search(r"\b(?:call|jmp)\s+[0-9a-f]+ <(mi_[^>]+)>", line)
+        if target and not caller.startswith(("mi_", "_mi_")):
+            calls.add(target[1])
+    if proc.wait():
+        raise RuntimeError("allocator call disassembly failed")
+    (out / "direct-mimalloc-calls.json").write_text(json.dumps(sorted(calls), indent=2) + "\n")
+    # Freeing and option/thread setup are not client object allocation requests.
+    allowed = {"mi_malloc", "mi_malloc_small", "mi_new_n", "mi_free", "mi_free_size",
+               "mi_option_init(mi_option_desc_s*)", "mi_thread_init"}
+    unexpected = calls - allowed
+    if unexpected:
+        raise ValueError("uncovered direct mimalloc calls: " + ", ".join(sorted(unexpected)))
+    return {"targets": sorted(calls), "sha256": digest(out / "direct-mimalloc-calls.json"),
+            "scope": "direct symbol calls outside mi_/_mi_ routines; indirect/inlined alternatives require audit"}
+
+
 def compile_wrapper(command, path, metadata):
     metadata.setdefault("compile_commands", []).append(command)
     run = subprocess.run(command, capture_output=True, text=True)
@@ -128,7 +156,7 @@ def self_check(out, args, metadata):
                     "mimalloc_requests": 2, "mimalloc_bytes": 56, "gmp_requests": 2, "gmp_bytes": 160}
         if counts != expected:
             raise ValueError("controlled allocator/nesting fixture failed")
-        check_events(counts, json.loads(raw.read_text()))
+        check_events(counts, json.loads(raw.read_text()), exe)
         checks.append({"result_type": result, "returned_value": value, "counters": counts,
                        "log_sha256": digest(log), "dhat_sha256": digest(raw)})
     metadata["self_checks"] = checks
@@ -168,26 +196,34 @@ def main():
                         valgrind_version=subprocess.check_output([str(args.valgrind), "--version"], text=True).strip(),
                         headers_sha256={name: digest(args.include / "valgrind" / name)
                                         for name in ("valgrind.h", "dhat.h")})
+        collector_names = ("scripts/bench/sign_det_allocations.c", "scripts/bench/sign_det_allocations.py")
+        collector_hashes = {name: digest(ROOT / name) for name in collector_names}
+        metadata["collector_sha256"] = collector_hashes
+        for name in collector_names:
+            target = out / "collector-sources" / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes((ROOT / name).read_bytes())
         self_check(out, args, metadata)
+        if any(digest(ROOT / name) != expected for name, expected in collector_hashes.items()):
+            raise ValueError("collector changed during the self-check")
         if not args.self_check:
+            sources_before_build = source_hashes() | collector_hashes
             with (out / "build.log").open("w") as stream:
                 build = subprocess.run(["lake", "build", "hexsigndet_bench"], stdout=stream, stderr=subprocess.STDOUT)
             build.check_returncode()
-            sources = source_hashes()
-            for name in ("scripts/bench/sign_det_allocations.c", "scripts/bench/sign_det_allocations.py"):
-                sources[name] = digest(ROOT / name)
-                target = out / "collector-sources" / name
-                target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_bytes((ROOT / name).read_bytes())
+            sources = source_hashes() | {name: digest(ROOT / name) for name in collector_names}
+            if sources != sources_before_build:
+                raise ValueError("source changed during the Lake build; output retained")
             metadata.update(source_sha256=sources, binary_sha256=digest(exe),
                             revision=subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
                             git_status=subprocess.check_output(["git", "status", "--porcelain"], text=True),
-                            allocator_inventory=allocator_inventory(exe, out))
+                            allocator_inventory=allocator_inventory(exe, out),
+                            direct_allocator_calls=direct_allocator_calls(exe, out))
             wrappers = {}
             for i, function in enumerate(args.functions):
                 symbol, result, generated = callback_type(function)
                 wrapper = out / f"wrapper-{i}.so"
-                command = ["cc", "-shared", "-fPIC", "-O2", "-Wall", "-Wextra", "-I" + str(args.include),
+                command = ["cc", "-shared", "-fPIC", "-ftls-model=initial-exec", "-O2", "-Wall", "-Wextra", "-I" + str(args.include),
                            "-DSIGN_DET_CALLBACK=" + symbol, "-DSIGN_DET_RESULT=" + result,
                            str(ROOT / "scripts/bench/sign_det_allocations.c"), "-o", str(wrapper)]
                 compile_wrapper(command, wrapper, metadata)
@@ -222,7 +258,7 @@ def main():
                         run.check_returncode()
                         row = benchmark_row(log.read_text(), function, parameter)
                         counts = counters(log.read_text())
-                        check_events(counts, json.loads(raw.read_text()))
+                        check_events(counts, json.loads(raw.read_text()), wrappers[function])
                         if row["result_hash"] != original["result_hash"]:
                             raise ValueError("instrumentation changed the operation result")
                         sample.update(state="complete", result_hash=row["result_hash"], counters=counts,
