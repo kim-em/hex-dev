@@ -35,7 +35,7 @@ private meta def naturalSquareRoot? (source : Expr) : MetaM (Option Nat) := do
 private inductive SourceKind where
   | radical (degree : Nat)
   | selected (args : Array Expr)
-  | normalized (proof : Expr)
+  | normalized (args : Array Expr) (hreal : Expr)
   deriving Inhabited
 
 private structure SourcePlan where
@@ -97,6 +97,44 @@ private meta def normalizedArgs? (argument : Expr) :
       (·.isAppOfArity ``AlgebraicNumber.ofNormalized 8) | return none
   return some (algebraic.getAppArgs, realArgs[1]!)
 
+private partial def sourceAtoms (e : Expr) (seen : Array Expr) : Array Expr :=
+  if e.isAppOfArity ``Real.sqrt 1 ||
+      e.isAppOfArity ``RealAlgebraicNumber.toReal 1 then
+    if seen.contains e then seen else seen.push e
+  else
+    match e with
+    | .app fn arg => sourceAtoms arg (sourceAtoms fn seen)
+    | .forallE _ type body _ | .lam _ type body _ =>
+        sourceAtoms body (sourceAtoms type seen)
+    | .letE _ type value body _ =>
+        sourceAtoms body (sourceAtoms value (sourceAtoms type seen))
+    | .mdata _ body | .proj _ _ body => sourceAtoms body seen
+    | _ => seen
+
+private meta def candidate (target : Expr) : MetaM Bool := do
+  -- Local aliases are resolved by the shared frontend, with their proofs.
+  if target.hasFVar then return true
+  let atoms := sourceAtoms target #[]
+  if atoms.size ≥ 2 then return true
+  let some atom := atoms[0]? | return false
+  unless atom.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return false
+  let argument := atom.appArg!
+  let anchor ← match ← fieldArgs? argument with
+    | some (_, anchor, _) => pure anchor
+    | none => pure argument
+  return (← normalizedArgs? anchor).isSome
+
+/-- Classify the entire source before executing any algebraic construction.
+Unknown siblings must cause a decline before a recognized sibling can fail. -/
+private meta def eligible (source : Expr) : MetaM Bool := do
+  if (← naturalSquareRoot? source).isSome then return true
+  unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return false
+  let argument := source.appArg!
+  let anchor ← match ← fieldArgs? argument with
+    | some (_, anchor, _) => pure anchor
+    | none => pure argument
+  return (← selectedArgs? anchor).isSome || (← normalizedArgs? anchor).isSome
+
 private meta def sourceRoot? (argument : Expr) :
     MetaM (Option (RealAlgebraicNumber × ZPoly × DyadicSquare × SourceKind)) := do
   if let some args ← selectedArgs? argument then
@@ -109,18 +147,7 @@ private meta def sourceRoot? (argument : Expr) :
   let rep : Q(RefinedIsolation $sourceP) ← pure args[6]!
   let square := q(($rep).1.square)
   let s ← FieldRuntime.evalSquare square
-  let pExpr : Q(ZPoly) ← FieldLiteral.zpolyExpr p
-  let sExpr : Q(DyadicSquare) ← FieldLiteral.squareExpr s
-  -- These proofs authenticate the producer's printable proposal against the
-  -- original constructor data. Neither the canonical representative nor its
-  -- isolation search is reduced in the quotation.
-  let hs ← if ← isDefEq square sExpr then mkEqRefl square
-    else coefficientProof square sExpr
-  let hw ← mkDecideProof (q(atomWitness $pExpr $sExpr) : Q(Prop))
-  let hp ← mkDecideProof (q((mahlerPrec $pExpr : Int) ≤ ($sExpr).prec) : Q(Prop))
-  let proof ← mkAppM ``Selected.normalized_toReal
-    (args ++ #[hreal, sExpr, hw, hp, hs])
-  return some (← FieldRuntime.evalReal argument, p, s, .normalized proof)
+  return some (← FieldRuntime.evalReal argument, p, s, .normalized args hreal)
 
 private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
   let identity : DensePoly Rat := DensePoly.ofList [0, 1]
@@ -229,7 +256,7 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
                 throwError "rcf: source radical has a different defining polynomial"
               let nExpr : Q(ℕ) := mkNatLit degree
               pure q(SquareRoot.polynomial $nExpr)
-          | .selected _ | .normalized _ => FieldLiteral.zpolyExpr sourceP
+          | .selected _ | .normalized _ _ => FieldLiteral.zpolyExpr sourceP
         let sourceWitness ← mkDecideProof
           (q(atomWitness $sourcePExpr $sourceSquareExpr) : Q(Prop))
         let sourcePrecision ← mkDecideProof
@@ -246,7 +273,20 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
           | .selected args => do
               let sourceValue ← mkAppM ``Selected.real_toReal args
               mkAppM ``Eq.symm #[sourceValue]
-          | .normalized proof => pure proof
+          | .normalized args hreal => do
+              let originalP : Q(ZPoly) ← pure args[0]!
+              let rep : Q(RefinedIsolation $originalP) ← pure args[6]!
+              let goal : Q(Prop) := q(($rep).1.square = $sourceSquareExpr)
+              -- Derived square equality is not reducible through `decide`
+              -- in the module boundary. Check reflexivity against the original
+              -- square with the ordinary kernel, without MetaM reduction of
+              -- a potentially computed isolation or an auxiliary cache hit.
+              let hs ← withOptions (fun opts =>
+                  debug.skipKernelTC.set (Elab.async.set opts false) false) do
+                mkAuxTheorem goal (← mkEqRefl sourceSquareExpr)
+                  (zetaDelta := true) (cache := false)
+              mkAppM ``Selected.normalized_toReal
+                (args ++ #[hreal, sourceSquareExpr, sourceWitness, sourcePrecision, hs])
         sourcePExprs := sourcePExprs.push sourcePExpr
         sourceSquareExprs := sourceSquareExprs.push sourceSquareExpr
         sourceWitnesses := sourceWitnesses.push sourceWitness
@@ -389,6 +429,7 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
   else throwError "rcf: common square failed its root witness"
 
 @[rcf_handler] meta def handle : Handler := fun target => do
+  unless ← candidate target do return .declined
   if ← Registration.deferExact target then return .declined
   let source ← match ← Reify.prepare target with
     | .ok source => pure source
@@ -406,6 +447,7 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
       | some (_, anchor, _) => pure anchor
       | none => pure argument
     if (← normalizedArgs? anchor).isNone then return .declined
+  unless ← source.coefficients.allM eligible do return .declined
   let mut plans : Array SourcePlan := #[]
   for coefficient in source.coefficients do
     let some plan ← sourcePlan? coefficient | return .declined

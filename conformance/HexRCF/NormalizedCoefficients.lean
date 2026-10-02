@@ -5,7 +5,11 @@ Authors: Kim Morrison
 -/
 module
 
-import HexRCF.RealCoefficients
+public import HexRCF.RealCoefficients
+public import HexReflect.Session
+public meta import HexRCF.RealCoefficients
+public meta import Qq
+public meta import Lean.Elab.Term.TermElabM
 
 open Hex Hex.RCF.RealCoefficients
 
@@ -14,10 +18,10 @@ set_option maxHeartbeats 2000000
 
 -- These inputs use the existing checked algebraic-number constructor rather
 -- than `Selected.real`, including its erased canonicalization-success proof.
-private abbrev cubicRep : RefinedIsolation CubeTwo.polynomial :=
-  Field.literalRep CubeTwo.polynomial CubeTwo.square (by decide) (by decide)
+private def cubicRep : RefinedIsolation CubeTwo.polynomial :=
+  ⟨⟨CubeTwo.square, .ofWitness (by decide)⟩, by decide⟩
 
-private abbrev cubicAlgebraic : AlgebraicNumber :=
+private def cubicAlgebraic : AlgebraicNumber :=
   AlgebraicNumber.ofNormalized CubeTwo.polynomial (by rfl) (by decide)
     (by decide) CubeTwo.checked CubeTwo.squarefree cubicRep
     (AlgebraicNumber.ofNormalized?_isSome _ _ _ _ _ _ _)
@@ -28,7 +32,7 @@ private def cubic : RealAlgebraicNumber :=
     exact (congrArg Complex.im (Selected.normalized_toComplex
       CubeTwo.polynomial (by rfl) (by decide) (by decide)
       CubeTwo.checked CubeTwo.squarefree cubicRep _)).trans
-      (Field.literalRep_real _ _ _ _ (by decide)))
+      ((HexRootsMathlib.RefinedIsolation.meetsRealAxis_iff cubicRep).mp (by decide)))
 
 private abbrev coordinate : QAdjoin cubic.toAlgebraic :=
   (cubic.toAlgebraic.toQAdjoin ^ 2 + 1) / 2
@@ -78,18 +82,56 @@ theorem normalized_negative : ∀ x : ℝ, x ^ 2 - negative.toReal > 0 := by
 example : ∀ x : ℝ, x ^ 2 + negative.toReal > 0 := by
   rcf
 
--- False results stay terminal, and the failed attempt restores tactic state.
-example : True := by
-  fail_if_success
-    have : ∀ x : ℝ, x ^ 2 + cubic.toReal < 0 := by rcf
-  have h : ∀ x : ℝ, x ^ 2 + cubic.toReal > 0 := by rcf
-  trivial
+/-- error: rcf: the universal sentence is false on the prepared cells -/
+#guard_msgs in
+example : ∀ x : ℝ, x ^ 2 + cubic.toReal < 0 := by
+  rcf
 
--- Guard scanning still runs on the original source, before cancellation.
-example : True := by
-  fail_if_success
-    have : ∀ x : ℝ, x + 0 / (cubic.toReal - cubic.toReal) = x := by rcf
-  trivial
+private abbrev negativeCoordinate : QAdjoin negative.toAlgebraic :=
+  negative.toAlgebraic.toQAdjoin + 1
+
+private abbrev negativeCoefficient : RealAlgebraicNumber :=
+  Coefficients.ofField negative negativeCoordinate
+
+theorem negative_field : ∀ x : ℝ, x ^ 2 - negativeCoefficient.toReal > 0 := by
+  rcf
+
+theorem common_conjugates : ∀ x : ℝ, x ^ 2 + negative.toReal + Real.sqrt 2 ≥ 0 := by
+  rcf
+
+/-- error: rcf: the universal sentence is false on the prepared cells -/
+#guard_msgs in
+example : ∀ x : ℝ, x ^ 2 + negative.toReal + Real.sqrt 2 > 0 := by
+  rcf
+
+open Lean Meta Qq in
+local elab "mixedDecline%" : term => do
+  let saved ← saveState
+  let result ← CommonTactic.handle q(∀ x : ℝ,
+    x ^ 2 + cubic.toReal + Real.sqrt (1 / 2) > 0)
+  saved.restore
+  match result with
+  | .declined => return q(True.intro)
+  | _ => throwError "normalized/unsupported mixture must decline before construction"
+
+-- The common-field handler does not claim a mixed unsupported source.
+example : True := mixedDecline%
+
+open Lean Meta Qq in
+local elab "guardRejection%" : term => do
+  let .ok source ← Reify.prepare q(∀ x : ℝ,
+    x + 0 / (cubic.toReal - cubic.toReal) = x) |
+    throwError "cancelled guard source did not prepare"
+  unless source.divisors.size == 1 do
+    throwError "cancelled source divisor was omitted"
+  Tactic.checkGuards source
+  return q(True.intro)
+
+-- Source preparation retains the cancelled divisor. Its guard checker
+-- refuses the exact zero, independently of the quotient solver's coverage.
+/-- error: rcf: could not prove a closed divisor nonzero -/
+#guard_msgs in
+example : True := guardRejection%
 
 /-- info: '_private.HexRCF.NormalizedCoefficients.0.normalized_positive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
@@ -110,3 +152,11 @@ example : True := by
 /-- info: '_private.HexRCF.NormalizedCoefficients.0.normalized_negative' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms normalized_negative
+
+/-- info: '_private.HexRCF.NormalizedCoefficients.0.negative_field' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms negative_field
+
+/-- info: '_private.HexRCF.NormalizedCoefficients.0.common_conjugates' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms common_conjugates

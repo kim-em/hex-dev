@@ -113,6 +113,7 @@ The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
 `QAdjoin` coordinates converted through `Coefficients.ofField`. It binds the
 original isolation square to the literal selected-root replay, preserving the
-chosen embedding without reducing canonicalization in the quoted proof.
+chosen embedding. Elaboration executes canonicalization; the kernel reduces
+the supplied isolation and square identity, rather than canonicalization.
 This extends source conversion; general reconstruction and algebraic-only
 producer completeness remain required.
