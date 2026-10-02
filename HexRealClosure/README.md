@@ -1179,10 +1179,11 @@ General `Context.enlarge` still requires:
    `Ambient.mappedNativeHom` interprets `B(ε)` in the enlarged ambient field,
    preserving coefficients, `X` and signs. The semantic `mappedHom` also
    preserves order for an ordered coefficient-field embedding.
-3. Proving selected-root mapping through ordered field embeddings and
-   identifying the lifted old tower with the descriptor-based re-extension.
-   `Context.enlarge?_aligned` already identifies the executable re-extension
-   target with its supplied enlarged base model.
+3. Proving agreement of mapped towers with descriptor-based re-extension at
+   every root level. `Descriptor.root_map` and `Descriptor.root_comp` in
+   `HexSignDetMathlib.Embedding` supply selected-root correspondence through
+   ordered field embeddings. `Context.enlarge?_aligned` identifies the
+   executable re-extension target with its supplied enlarged base model.
 4. Applying the local algebraic bound to the computational `B(ε)` levels and
    proving their staged order agrees with the enlarged ambient interpretation.
 5. Gathering a dependency-closed collection of live contexts and assembling

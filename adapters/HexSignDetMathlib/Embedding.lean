@@ -55,10 +55,14 @@ theorem interval_embedding (a b : Endpoint E) (x : K) :
 include hι hvalue in
 /-- A root of a nonzero interpreted polynomial remains a root in the same
 interval after embedding its field. -/
-theorem root_mem_embedding (p : DensePoly E) (hp : interpret f hfz p ≠ 0)
+theorem root_mem_embedding (p : DensePoly E)
     (a b : Endpoint E) (x : K)
     (hx : x ∈ Tarski.rootsIn (interpret f hfz p) (a.map f) (b.map f)) :
     ι x ∈ Tarski.rootsIn (interpret g hgz p) (a.map g) (b.map g) := by
+  have hp : interpret f hfz p ≠ 0 := by
+    intro hzero
+    have hmem := (Tarski.mem_rootsIn _ _ _ x).mp hx
+    simpa only [hzero, Polynomial.roots_zero, Multiset.notMem_zero] using hmem.1
   have hp' : interpret g hgz p ≠ 0 := by
     rw [interpret_embedding f hfz g hgz ι hvalue]
     exact (Polynomial.map_ne_zero_iff ι.injective).mpr hp
@@ -92,12 +96,9 @@ theorem Descriptor.root_map {context : Ctx} (d : Descriptor E Ctx sign context) 
     d.root g hgz hg1 hga hgs hgm hgnat hgsign =
       ι (d.root f hfz hf1 hfa hfs hfm hfnat hfsign) := by
   obtain ⟨hx, hsigns⟩ := d.root_spec f hfz hf1 hfa hfs hfm hfnat hfsign
-  have hd := d.evidence.check_domain f hfz hf1 hfa hfs hfm hfnat sign hfsign
-    context d.raw.head d.raw.lower d.raw.upper d.raw.queries
-    (RawDescriptor.check_eq d.accepted).2.2.1
   symm
   apply d.root_unique g hgz hg1 hga hgs hgm hgnat hgsign
-  · exact root_mem_embedding f hfz g hgz ι hι hvalue _ hd.1 _ _ _ hx
+  · exact root_mem_embedding f hfz g hgz ι hι hvalue _ _ _ _ hx
   · rw [signsAt_embedding f hfz g hgz ι hι hvalue]
     exact hsigns
 
@@ -116,6 +117,5 @@ theorem Descriptor.root_comp {context : Ctx} (d : Descriptor E Ctx sign context)
         (fun a => by rw [hι.sign_comp]; exact hfsign a) =
       ι (d.root f hfz hf1 hfa hfs hfm hfnat hfsign) := by
   apply d.root_map f hfz (fun a => ι (f a)) _ ι hι (fun _ => rfl)
-
 
 end Hex.SignDet

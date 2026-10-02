@@ -7,6 +7,7 @@ module
 
 public import HexSignDetMathlib.Convert
 public import HexSignDetMathlib.Embedding
+public import HexRealAlgebraicMathlib.RealClosed
 public import HexSignDetMathlib.ReencodingConformance
 public import HexSignDet.Infinitesimal
 public import HexRCF.RealCoefficients.FieldSpecialize
@@ -241,6 +242,37 @@ theorem extension_root {L : Type*} [Field L] [DecidableEq L] [LinearOrder L]
     ReencodingConformance.Noncanonical.mul ReencodingConformance.Noncanonical.natCast
     ReencodingConformance.Noncanonical.sign
 
+/-- Rational signs agree in Hex's concrete real closed algebraic field. -/
+theorem algebraic_sign (q : Rat) : Sturm.orderSign q =
+    (SignType.sign (q : RealAlgebraicNumber) : Int) := by
+  rw [HexSturmMathlib.orderSign_eq]
+  congr 1
+  exact (StrictMono.sign_comp (f := Rat.castHom RealAlgebraicNumber)
+    Rat.cast_strictMono q).symm
+
+/-- A rational-coefficient descriptor selects the same root in the concrete
+real algebraic field and in ℝ through the existing proved embedding. The two
+coefficient interpretations agree by preservation of rational casts. -/
+theorem algebraic_root (d : Descriptor Rat Nat Sturm.orderSign 7) :
+    RealAlgebraicNumber.toRealHom
+        (d.root (fun q : Rat => (q : RealAlgebraicNumber)) (fun _ => Rat.cast_eq_zero)
+          Rat.cast_one (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
+          (fun _ _ => Rat.cast_mul _ _) (fun _ => Rat.cast_natCast _) algebraic_sign) =
+      d.root (fun q : Rat => (q : ℝ)) (fun _ => Rat.cast_eq_zero)
+        Rat.cast_one (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
+        (fun _ _ => Rat.cast_mul _ _) (fun _ => Rat.cast_natCast _)
+        Noncanonical.rational_sign := by
+  symm
+  exact d.root_map (fun q : Rat => (q : RealAlgebraicNumber)) (fun _ => Rat.cast_eq_zero)
+    (fun q : Rat => (q : ℝ)) (fun _ => Rat.cast_eq_zero) RealAlgebraicNumber.toRealHom
+    RealAlgebraicNumber.toRealOrderEmbedding.strictMono
+    (fun q => (map_ratCast RealAlgebraicNumber.toRealHom q).symm)
+    Rat.cast_one (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
+    (fun _ _ => Rat.cast_mul _ _) (fun _ => Rat.cast_natCast _)
+    Rat.cast_one (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
+    (fun _ _ => Rat.cast_mul _ _) (fun _ => Rat.cast_natCast _)
+    algebraic_sign Noncanonical.rational_sign
+
 /-- The rational-to-cubic embedding satisfies the production success theorem
 for every validated source, independently of the particular test inputs. -/
 theorem cubic_success (source : Descriptor Rat Nat Sturm.orderSign 7) :
@@ -318,5 +350,8 @@ theorem cubic_root (source : Descriptor Rat Nat Sturm.orderSign 7)
 /-- info: 'Hex.SignDetMathlib.ConvertConformance.extension_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms extension_root
+/-- info: 'Hex.SignDetMathlib.ConvertConformance.algebraic_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms algebraic_root
 
 end Hex.SignDetMathlib.ConvertConformance
