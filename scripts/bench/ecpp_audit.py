@@ -34,6 +34,24 @@ def sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def regression_ratios(samples: list[dict]) -> dict:
+    """Compare content hashes across adjacent arms, including non-Boolean cases."""
+    ratios = {}
+    for name in dict.fromkeys(s["target"] for s in samples):
+        pairs = []
+        for trial in sorted({s["trial"] for s in samples if s["target"] == name}):
+            values = {s["arm"]: s["data"] for s in samples
+                      if s["target"] == name and s["trial"] == trial}
+            if set(values) != {"A", "B"} or any(d["status"] != "ok" for d in values.values()):
+                raise RuntimeError(f"incomplete regression pair: {name}, {trial}")
+            if values["A"]["result_hash"] != values["B"]["result_hash"]:
+                raise RuntimeError(f"regression content mismatch: {name}, {trial}")
+            times = {arm: d["total_nanos"] / d["inner_repeats"] for arm, d in values.items()}
+            pairs.append(times["B"] / times["A"])
+        ratios[name] = dict(paired_ratios=pairs, median=statistics.median(pairs))
+    return ratios
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
@@ -95,20 +113,7 @@ def main() -> None:
                         data = json.loads(output)
                         report["samples"].append(dict(trial=trial, arm=arm, target=name, data=data))
                         save()
-            ratios = {}
-            for name in shared:
-                pairs = []
-                for trial in range(args.trials):
-                    values = {}
-                    for sample in report["samples"]:
-                        if sample["target"] == name and sample["trial"] == trial:
-                            data = sample["data"]
-                            if data["status"] != "ok" or data["result_hash"] != "0x1":
-                                raise RuntimeError(f"invalid regression result: {sample}")
-                            values[sample["arm"]] = data["total_nanos"] / data["inner_repeats"]
-                    pairs.append(values["B"] / values["A"])
-                ratios[name] = dict(paired_ratios=pairs, median=statistics.median(pairs))
-            report["regression_ratios"] = ratios
+            report["regression_ratios"] = regression_ratios(report["samples"])
         else:
             for name in ([] if args.no_families else args.family or FAMILIES):
                 destination = directory / (name.rsplit(".", 1)[-1] + ".json")
