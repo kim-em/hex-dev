@@ -162,8 +162,11 @@ def bytesPass : Bool :=
         #v[0, 1] bytes).toOption.isNone &&
       (Dag.decodeSigns ValueCodec.rat ValueCodec.nat source fullNode.queries #v[1, 1]
         (bytes.extract 0 (bytes.size - 2))).toOption.isNone &&
-      (Dag.decodeSigns ValueCodec.rat ValueCodec.nat source fullNode.queries #v[1, 1]
-        (bytes.extract 0 (bytes.size - 1))).isOk
+      (match Dag.decodeSigns ValueCodec.rat ValueCodec.nat source fullNode.queries #v[1, 1]
+          (bytes.extract 0 (bytes.size - 1)) with
+        | .ok shortened => shortened.values == actual.values &&
+          sameEvidence shortened.evidence actual.evidence
+        | .error _ => false)
   | _, _ => false
 
 #guard bytesPass

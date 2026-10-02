@@ -20,15 +20,13 @@ mutual
   | .rational q => .array (.cons (.number 0)
       (.cons (.number q.num) (.cons (.number q.den) .nil)))
   | .fraction p q => .array (.cons (.number 1)
-      (.cons (.array (Syntax.literals p)) (.cons (.array (Syntax.literals q)) .nil)))
-@[expose] def Syntax.literals : List Syntax → Literals
-  | [] => .nil
-  | x :: xs => .cons x.literal (Syntax.literals xs)
-end
-
+      (.cons (.array (Syntax.literalsLoop p [])) (.cons (.array (Syntax.literalsLoop q [])) .nil)))
 @[expose] def Syntax.literalsLoop : List Syntax → List Literal → Literals
   | [], acc => Literals.ofList acc.reverse
   | x :: xs, acc => Syntax.literalsLoop xs (x.literal :: acc)
+end
+
+@[expose] def Syntax.literals (xs : List Syntax) : Literals := Syntax.literalsLoop xs []
 
 private theorem Syntax.literalsLoop_eq (xs : List Syntax) (acc : List Literal) :
     Syntax.literalsLoop xs acc = Literals.ofList (acc.reverse ++ xs.map Syntax.literal) := by
@@ -36,17 +34,11 @@ private theorem Syntax.literalsLoop_eq (xs : List Syntax) (acc : List Literal) :
   | nil => simp [Syntax.literalsLoop]
   | cons x xs ih => simp [Syntax.literalsLoop, ih, List.reverse_cons, List.append_assoc]
 
-private theorem Syntax.literals_eq (xs : List Syntax) :
-    Syntax.literals xs = Literals.ofList (xs.map Syntax.literal) := by
-  induction xs with
-  | nil => rfl
-  | cons x xs ih => simp [Syntax.literals, ih, Literals.ofList, Codec.Json.Values.ofList]
+private theorem Syntax.literals_nil : Syntax.literals [] = .nil := rfl
 
-@[expose] def Syntax.writeLiterals (xs : List Syntax) : Literals := Syntax.literalsLoop xs []
-
-@[csimp] theorem Syntax.literals_impl : Syntax.literals = Syntax.writeLiterals := by
-  funext xs
-  simp [Syntax.writeLiterals, Syntax.literalsLoop_eq, Syntax.literals_eq]
+private theorem Syntax.literals_cons (x : Syntax) (xs : List Syntax) :
+    Syntax.literals (x :: xs) = .cons x.literal (Syntax.literals xs) := by
+  simp [Syntax.literals, Syntax.literalsLoop_eq, Literals.ofList, Codec.Json.Values.ofList]
 
 mutual
 /-- Canonical rationals and exact field counts are checked before the existing
@@ -74,14 +66,17 @@ theorem Syntax.ofLiteral_literal (x : Syntax) : Syntax.ofLiteral x.literal = som
   | rational q =>
     simp [Syntax.literal, Syntax.ofLiteral, Rat.mkRat_self, Nat.pos_of_ne_zero q.den_nz]
   | fraction p q =>
-    simp [Syntax.literal, Syntax.ofLiteral, Syntax.ofLiteralsLoop_literals p [],
-      Syntax.ofLiteralsLoop_literals q []]
+    change (do
+      let numerator ← Syntax.ofLiteralsLoop (Syntax.literals p) []
+      let denominator ← Syntax.ofLiteralsLoop (Syntax.literals q) []
+      pure (Syntax.fraction numerator denominator)) = some (Syntax.fraction p q)
+    simp [Syntax.ofLiteralsLoop_literals p [], Syntax.ofLiteralsLoop_literals q []]
 
 theorem Syntax.ofLiteralsLoop_literals (xs : List Syntax) (acc : List Syntax) :
     Syntax.ofLiteralsLoop (Syntax.literals xs) acc = some (acc.reverse ++ xs) := by
   cases xs with
-  | nil => simp [Syntax.literals, Syntax.ofLiteralsLoop]
-  | cons x xs => simp [Syntax.literals, Syntax.ofLiteralsLoop,
+  | nil => simp [Syntax.literals_nil, Syntax.ofLiteralsLoop]
+  | cons x xs => simp [Syntax.literals_cons, Syntax.ofLiteralsLoop,
       Syntax.ofLiteral_literal x, Syntax.ofLiteralsLoop_literals xs (x :: acc),
       List.reverse_cons, List.append_assoc]
 end

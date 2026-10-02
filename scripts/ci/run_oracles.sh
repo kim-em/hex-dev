@@ -170,6 +170,9 @@ for entry in "${FILTERED_ORACLES[@]}"; do
   IFS='|' read -r _ emit _ _ <<<"$entry"
   emits+=("$emit")
 done
+if library_selected HexRealClosure; then
+  emits+=("hexrealclosure_codec_bytes")
+fi
 if [ "${#emits[@]}" -gt 0 ] && ! lake build "${emits[@]}"; then
   echo "FAIL: building emit executables" >&2
   exit 1
@@ -374,6 +377,15 @@ done
 if [ "$failed" -ne 0 ]; then
   echo
   echo "Conformance: oracle run failed; see preceding markers for the libraries." >&2
+  exit 1
+fi
+
+# Native context capacity follows the owning library filter, including changes
+# that do not select HexSignDet's independent JSON oracle.
+if library_selected HexRealClosure &&
+    ! (ulimit -s 8192; LEAN_MAIN_USE_THREAD=0 LEAN_STACK_SIZE_KB=8192 \
+      .lake/build/bin/hexrealclosure_codec_bytes 1000000); then
+  echo "Conformance: native context codec capacity failed." >&2
   exit 1
 fi
 
