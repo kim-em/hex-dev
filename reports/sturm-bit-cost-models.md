@@ -374,7 +374,7 @@ constant word work. The declaration is `n`, on
 `2048,4096,8192,16384,32768`. Embedding preserves signs rather than recomputing
 Horner values. The former long-chain bit-volume hypothesis is not reused.
 
-### Growing-by-growing arithmetic: independently qualified mode 2
+### Growing-operand mode-2 candidates
 
 New mantissas are deterministic odd integers with their top bit set and
 unrelated LCG words in the interior. They do not collapse to a power-of-two
@@ -405,3 +405,10 @@ single tight monomial across these limb regimes. Operation-only profiles must
 confirm that general multiplication/gcd really occurs in the measured phase;
 otherwise the upper-bound claim is not admitted. These qualifications and
 schedules precede collection. The cap is not an absolute performance budget.
+
+Admission status: the odd cubic and integral-endpoint profiles show the
+required general products/gcds. The fractional family has no own profile.
+The translated frontend captures predominantly show single-limb arithmetic
+and copies; general-product caller attribution is incomplete. They therefore
+do not establish the dominant published phase and are unadmitted candidates.
+Their original declarations and completed measurements remain retained.

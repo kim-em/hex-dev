@@ -16,10 +16,17 @@ public meta import HexPolyZ.IntegerPolynomial
 
 public section
 
-/-! Field frontend conformance: infinities, invalid domains, prepared reuse,
-literal context bindings and positive rational/integer scaling agreement.
-Computational conformance owner: `HexSturm`.
-The rational/integer comparisons are runtime validation, not a backend theorem. -/
+/-! Core profile: oracle none, mode always; elaborated by `HexConformance` in CI.
+Operations: preparation, endpoint retargeting, ordinary/prepared queries and
+counts, positive normalization, ordinary/prepared certification, cached/plain checking, and literal
+denominator clearing and integer embedding.
+Properties: analytic counts/sign sums for the known roots ±1, prepared-chain
+reuse, exact input/context bindings, and positive scaling agreement.
+Edges: constants, zero/repeated heads, common query roots, invalid/equal/reversed
+endpoints, every finite/infinite endpoint pair, noncanonical coefficients,
+corrupted identities, stale endpoint evidence, and foreign contexts.
+Computational conformance owner: `HexSturm`. Rational/integer comparisons are
+additional runtime differential checks, not an independent semantic oracle. -/
 namespace Hex.Sturm.Conformance
 
 open DensePoly Hex.Sturm.Fixtures
@@ -75,6 +82,41 @@ open scoped Hex
   | some cert => check orderSign 7 p (x - 1) .negInf .posInf (-1) cert &&
     !check orderSign 8 p (x - 1) .negInf .posInf (-1) cert &&
     !check orderSign 7 p (x - 1) (.finite 0) .posInf (-1) cert
+
+/- Normalization retains the leading sign and reconstructs the original head.
+These exact cases include a negative leading coefficient and rational scale. -/
+#guard (#[((ofCoeffs #[-2, 0, 2] : DensePoly Rat), 2, ofCoeffs #[-1, 0, 1]),
+    (ofCoeffs #[-2, 0, -2], 2, ofCoeffs #[-1, 0, -1]),
+    (ofCoeffs #[3 / 2, -3 / 2], 3 / 2, ofCoeffs #[1, -1]),
+    (C 5, 5, C 1), (0, 0, 0)] : Array (DensePoly Rat × Rat × DensePoly Rat)).all
+  fun (head, factor, normalized) =>
+    normalize orderSign head == (factor, normalized) && scale factor normalized == head
+
+/- Valid cache hits, absent caches and foreign-domain misses agree on three
+independent analytic queries. Cached evidence must never accept corrupt query
+identities, a foreign context, or stale endpoint bindings. -/
+#guard match certify orderSign (7 : Nat) p 1 .negInf .posInf with
+  | none => false
+  | some parent =>
+    let cache := TarskiCertificate.Domain.replay? orderSign
+      (EndpointSigns.ofSign orderSign) parent.domain
+    cache.isSome && (#[ (1, 2), (x, 0), (x - 1, -1)] :
+        Array (DensePoly Rat × Int)).all fun (f, expected) =>
+      match certify orderSign (7 : Nat) p f .negInf .posInf,
+          certify orderSign (8 : Nat) p f .negInf .posInf with
+      | some cert, some foreign =>
+        let foreignCache := TarskiCertificate.Domain.replay? orderSign
+          (EndpointSigns.ofSign orderSign) foreign.domain
+        let corrupt := { cert with remainders :=
+          { cert.remainders with initial := ⟨1, 1, 2⟩ } }
+        foreignCache.isSome &&
+          checkCached orderSign 7 p f .negInf .posInf expected cache cert &&
+          checkCached orderSign 7 p f .negInf .posInf expected none cert &&
+          checkCached orderSign 7 p f .negInf .posInf expected foreignCache cert &&
+          !checkCached orderSign 8 p f .negInf .posInf expected cache cert &&
+          !checkCached orderSign 7 p f (.finite 0) .posInf expected cache cert &&
+          !checkCached orderSign 7 p f .negInf .posInf expected cache corrupt
+      | _, _ => false
 
 /- Endpoint retargeting checks every finite/infinite pair, including root
 endpoints and reversed bounds. The count oracle evaluates the two known roots

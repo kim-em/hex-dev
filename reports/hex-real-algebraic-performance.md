@@ -12,7 +12,10 @@ performance deliverable.
 
 `bench/HexRealAlgebraic/Bench.lean` registers 67 cases. `lake exe
 hexrealalgebraic_bench list` lists them; `verify` checks their runtime wiring and
-hashes. The existing CI job builds and verifies this executable.
+hashes. The existing CI job builds and verifies this executable. The retained
+[local smoke-gate log](bench-results/prerequisite-verify-budget.log) records
+44 Sturm and 67 real-algebraic cases, completing in 37 seconds against the
+600-second operational cap. This is verification evidence, not a scientific budget.
 
 | Shipped surface | Registrations | Evidence status |
 | --- | --- | --- |
@@ -20,10 +23,10 @@ hashes. The existing CI job builds and verifies this executable.
 | Arithmetic and scalar dictionaries | `runAdd`, `runSub`, `runMul`, `runDiv`, `runNeg`, `runInv`, `runNatPow`, `runIntPow`, `runScalars`; corresponding bare controls; `runHard*` | Canonical baseline and adjacent wrapper controls; mode/budget incomplete |
 | Equality, comparison, order, sign, abs, conjugation | `runEquality`, `runCompare`, `runCompareExact`, `runOrder`, `runSign`, `runAbs`, `runConj`, negative/near-zero branches, `runCloseCompare`, `runCloseExact` | Fixed branch/hash/comparison anchors; separation models incomplete |
 | Floor, ceiling, approximation, representation | `runRounding`, `runApprox`, `runRepr` | Baseline anchors; ceiling has proved before/after improvement |
-| Square roots | `runSqrt`, `runSqrtBranches` | Baseline and branch checks; degree/height scaling incomplete |
+| Square roots | `runSqrt`, `runSqrtTotal` | Baseline and branch checks; degree/height scaling incomplete |
 | Polynomial constructors and root-set projections/membership | `runPolyConstructors`, `runMembership`, `runRootSet` | Mode-1 family passes |
-| Polynomial roots and integer roots | `runRoots`, `runRepeatedRoots`, `runEightRoots`, `runIntegerRoots`, `runRootCases`, `runFilterRoots`, `runSortRoots`, `runExactifyRoots` | Fixed whole-path anchors, valid merge-sort family, diagnostic repeated exactification control |
-| Complex norms, absolute value, real/imaginary parts | `runNorm`, `runComplexAbs`, `runRealImag`, `runRealBranches`, `runNormBranches` | Fixed baseline/branch anchors |
+| Polynomial roots and integer roots | `runRoots`, `runRepeatedRoots`, `runEightRoots`, `runIntegerRoots`, `runFilterRoots`, `runSortRoots`, `runExactifyRoots` | Fixed whole-path anchors, valid merge-sort family, diagnostic repeated exactification control |
+| Complex norms, absolute value, real/imaginary parts | `runNorm`, `runComplexAbs`, `runProjections` | Fixed baseline/branch anchors |
 | External comparison/protocol | `runQqbarCompare`, `runQqbarCloseCompare`, `runQqbarProtocol` | Informational persistent python-flint/FLINT qqbar comparison |
 
 `runLeafChecks` does not drive the leaf problem with its array parameter.
@@ -43,7 +46,9 @@ passes `n * (log2 n + 1)`, residual +0.062902. All are finite word-size-height
 families, not general bit-complexity claims.
 
 [The fixed canonical baseline](bench-results/real-algebraic-readiness-canonical-baseline/)
-retains all four samples for all 45 anchors, including four rounding timeouts.
+retains all four samples for all 45 anchors, including four rounding timeouts from the pre-ceiling-fix executable.
+Those timeouts are retained historical observations; the optimized executable
+passes current verification but has no replacement canonical baseline.
 Its one-second cap is an operational safeguard, not a performance budget.
 [The original baseline](bench-results/real-algebraic-readiness-baseline/)
 likewise supplies coverage only.
@@ -53,7 +58,9 @@ uses the positive real root of `X^6−2` and `sqrt(3)`, with operands prepared
 outside timed bodies. Every operation has four adjacent alternating AB/BA blocks
 against the corresponding bare canonical-number operation. All 64 arms complete,
 with identical hashes within every pair, and unchanged source/binary fingerprints.
-Current fixed cases have explicit hashes and fixed degree/separation inputs;
+The retained calibration source used the default degree/separation settings
+and did not enable `expected_hash_check`. Current fixed cases have explicit
+hashes and fixed degree/separation inputs;
 environment variables cannot silently replace these scientific fixtures.
 
 | Operation | Real median ms | Bare median ms | Real range ms |
@@ -147,3 +154,6 @@ in the linked summaries.
 ## Concerns
 
 - [#10577](https://github.com/kim-em/hex-dev/issues/10577): finish operation-specific mode/budget justification and comparators, genuine root/leaf parameter families, separation/point and rounding sweeps, and square-root/rational-construction characterization. The shipped `compare_eq` and root completeness/multiplicity/sorting theorems are available independently of this timing work.
+
+The duplicate negative-input guard in `sqrt?`/`sqrtRoot?` remains an owned
+Phase-4 review concern under #10577; it does not change the proved partial result.

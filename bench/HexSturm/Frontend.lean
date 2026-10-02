@@ -526,10 +526,11 @@ def runCachedReplayBits := runCachedReplay
 def runClearBits := runClear
 def runInfiniteBits := runInfinite
 
-/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds cover this phase. Size thresholds
+published quadratic product/gcd bounds require dominant-phase attribution, which the
+retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runPreparedBits bits => bits ^ 2
   with prep := translatedInput
@@ -543,10 +544,11 @@ setup_benchmark runPreparedBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds cover this phase. Size thresholds
+published quadratic product/gcd bounds require dominant-phase attribution, which the
+retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runCountBits bits => bits ^ 2
   with prep := translatedInput
@@ -560,10 +562,11 @@ setup_benchmark runCountBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds cover this phase. Size thresholds
+published quadratic product/gcd bounds require dominant-phase attribution, which the
+retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runPreparedCountBits bits => bits ^ 2
   with prep := translatedInput
@@ -577,10 +580,11 @@ setup_benchmark runPreparedCountBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds cover this phase. Size thresholds
+published quadratic product/gcd bounds require dominant-phase attribution, which the
+retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runCertificateBits bits => bits ^ 2
   with prep := translatedInput
@@ -594,10 +598,11 @@ setup_benchmark runCertificateBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds cover this phase. Size thresholds
+published quadratic product/gcd bounds require dominant-phase attribution, which the
+retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runPreparedCertificateBits bits => bits ^ 2
   with prep := translatedInput
@@ -611,10 +616,11 @@ setup_benchmark runPreparedCertificateBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds cover this phase. Size thresholds
+published quadratic product/gcd bounds require dominant-phase attribution, which the
+retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runCountCertificateBits bits => bits ^ 2
   with prep := translatedInput
@@ -628,10 +634,11 @@ setup_benchmark runCountCertificateBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds cover this phase. Size thresholds
+published quadratic product/gcd bounds require dominant-phase attribution, which the
+retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runFieldReplayBits bits => bits ^ 2
   with prep := translatedInput
@@ -645,10 +652,11 @@ setup_benchmark runFieldReplayBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds cover this phase. Size thresholds
+published quadratic product/gcd bounds require dominant-phase attribution, which the
+retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runCachedReplayBits bits => bits ^ 2
   with prep := translatedInput
@@ -662,10 +670,11 @@ setup_benchmark runCachedReplayBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds cover this phase. Size thresholds
+published quadratic product/gcd bounds require dominant-phase attribution, which the
+retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runClearBits bits => bits ^ 2
   with prep := translatedInput
@@ -679,10 +688,11 @@ setup_benchmark runClearBits bits => bits ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 2: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
+/- Cost-model derivation, unadmitted mode-2 candidate: T_8(X−z), with odd b-bit z and endpoints z±2, has a fixed
 normal chain with Θ(b)-bit coefficients. Its linear quotients contain −z;
 chain products and endpoint Horner multiply two growing operands. GMP's
-published quadratic product/gcd bounds cover this phase. Size thresholds
+published quadratic product/gcd bounds require dominant-phase attribution, which the
+retained profiles do not establish. Size thresholds
 prevent a single tight monomial across the registered limb regimes. -/
 setup_benchmark runInfiniteBits bits => bits ^ 2
   with prep := translatedInput

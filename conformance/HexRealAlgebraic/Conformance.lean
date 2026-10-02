@@ -15,7 +15,9 @@ those oracles and adds degree-twelve roots and deterministic randomized construc
 
 Operations: checked and proof-taking construction, casts, arithmetic, powers and scalar
 multiplication, comparison and extrema, sign, abs, conjugation, square roots, polynomial
-roots, rounding, rational recognition, and dyadic approximation.
+roots and root-set membership/projection, integer roots, rounding, rational
+recognition, dyadic approximation, complex normSq/abs, real/imaginary projections,
+and Repr round trips.
 Properties: exact order, arithmetic identities, equal construction paths, positive-root
 selection, root multiplicities, and approximation enclosures.
 Edges: zero, division by zero, negative rationals, empty and constant polynomials,
@@ -80,6 +82,16 @@ open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
     RealAlgebraicNumber.ofRoot? z.toAlgebraic.toRoot == some z &&
     (RealAlgebraicNumber.ofRoot? AlgebraicNumber.I.toRoot).isNone
 
+-- Exercise proof-taking and lazy-root construction on zero, a negative
+-- rational, and an irrational real; conjugation and real projections preserve
+-- each value, and imaginary projection vanishes.
+#guard
+  let s := (ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] (3 / 2))).getD 0
+  (#[0, ofRat (-3 / 2), s]).all fun a =>
+    RealAlgebraicNumber.ofAlgebraic a.toAlgebraic a.property == a &&
+    RealAlgebraicNumber.ofRoot? a.toAlgebraic.toRoot == some a &&
+    a.conj == a && a.toAlgebraic.re == a && a.toAlgebraic.im == 0
+
 #guard
   let a := ofRat (9 / 4)
   let checked := if h : 0 ≤ a then some (a.sqrt h) else none
@@ -130,3 +142,27 @@ open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
   let e := s * Hex.RealAlgebraicNumber.ofRat (1 / (2 ^ (12 : Nat) : Rat))
   (#[1 + e, 1 - e, -1 + e, -1 - e]).map (fun a => (a.floor, a.ceil)) ==
     #[(1, 2), (0, 1), (-1, 0), (-2, -1)]
+
+-- Three field/scalar dictionary cases and nonnegative square-root branches.
+#guard
+  let s := (sqrt? 2).getD 0
+  (#[0, ofRat (-3 / 2), s]).all fun a =>
+    a + 0 == a && a - a == 0 && a * 1 == a && -(-a) == a &&
+    a ^ (2 : Nat) == a * a && a ^ (-1 : Int) == a⁻¹ &&
+    (2 : Nat) • a == a + a && (-2 : Int) • a == -(a + a) &&
+    (2 : Rat) • a == a + a &&
+    (if a == 0 then a / a == 0 else a / a == 1)
+
+#guard
+  (#[0, ofRat (9 / 4), 2]).all fun a =>
+    if h : 0 ≤ a then
+      let r := a.sqrt h
+      r * r == a && decide (0 ≤ r) && a.sqrt? == some r
+    else false
+
+#guard
+  (#[#[], #[ofRat (-3 / 2)], #[0, -1, 1]] : Array (Array RealAlgebraicNumber)).all
+    fun coeffs => match RealAlgebraicPoly.ofAlgebraic?
+        (AlgebraicPoly.ofArray (coeffs.map RealAlgebraicNumber.toAlgebraic)) with
+      | none => false
+      | some p => p.toAlgebraic.coeffs == (RealAlgebraicPoly.ofArray coeffs).toAlgebraic.coeffs

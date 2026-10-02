@@ -625,14 +625,16 @@ diagnostics; their existence does not attest every ordered-field frontend.
 | `runRetargetWide` | Mode 1, `n²` | Short-chain `X^n−2`, endpoints retargeted to ±3, degree 65536–524288 |
 | `runEmbedSparse` | Mode 1, `n` | Literal integer certificate for `X^n−2`, degree 2048–32768 |
 | `runInitialWide`, `runClearingWide` | Mode 1, `n²` | Chebyshev coefficient arrays, degree 16384–131072 |
-| `runCoefficientBits`, `runEndpointBits`, `runFractionalBits` | Mode 2, published `bits²` upper bound | Odd growing coefficients or dyadic mantissas, 2048–32768 bits |
-| `runPreparedBits`, `runCountBits`, `runPreparedCountBits`, `runCertificateBits`, `runPreparedCertificateBits`, `runCountCertificateBits`, `runFieldReplayBits`, `runCachedReplayBits`, `runClearBits`, `runInfiniteBits` | Mode 2, published `bits²` upper bound | `T_8(X−z)`, odd growing integer `z`, endpoints `z±2` or infinity |
+| `runCoefficientBits`, `runEndpointBits` | Mode 2, published `bits²` upper bound | Odd growing coefficients or dyadic mantissas, 2048–32768 bits |
+| `runFractionalBits` | Unadmitted mode-2 candidate; operation-specific profile missing | Odd dyadic mantissas, 2048–32768 bits |
+| `runPreparedBits`, `runCountBits`, `runPreparedCountBits`, `runCertificateBits`, `runPreparedCertificateBits`, `runCountCertificateBits`, `runFieldReplayBits`, `runCachedReplayBits`, `runClearBits`, `runInfiniteBits` | Unadmitted mode-2 candidates; dominant phase not established | `T_8(X−z)`, odd growing integer `z`, endpoints `z±2` or infinity |
 
 [Cost derivations](sturm-bit-cost-models.md) precede the corresponding
 collections. They describe bit work on these specific families, not the
 SPEC's general ring-operation bound or downstream extension-oracle costs.
-The translated family keeps degree fixed and drives general growing-operand
-arithmetic; it does not inherit the invalid head-degree quartic hypothesis.
+The translated family keeps degree fixed. Its preregistered general-product
+hypothesis is not established by the available profiles; it contributes no
+Phase-4 pass.
 Cached replay checks the literal cache binding during fixture preparation.
 
 ## Verdicts
@@ -650,23 +652,25 @@ LeanBench's trial-major schedule retains four trials at every rung.
 | `runEmbedSparse` | `n` | +0.005649 | two-sided pass |
 | `runCoefficientBits` | `bits ^ 2` | -0.352125 | within declared upper bound (observed faster) |
 | `runEndpointBits` | `bits ^ 2` | -0.586339 | within declared upper bound (observed faster) |
-| `runFractionalBits` | `bits ^ 2` | -0.580784 | within declared upper bound (observed faster) |
-| `runPreparedBits` | `bits ^ 2` | -0.849544 | within declared upper bound (observed faster) |
-| `runCountBits` | `bits ^ 2` | -0.869592 | within declared upper bound (observed faster) |
-| `runPreparedCountBits` | `bits ^ 2` | -0.655776 | within declared upper bound (observed faster) |
-| `runCertificateBits` | `bits ^ 2` | -0.882864 | within declared upper bound (observed faster) |
-| `runPreparedCertificateBits` | `bits ^ 2` | -0.867449 | within declared upper bound (observed faster) |
-| `runCountCertificateBits` | `bits ^ 2` | -0.777107 | within declared upper bound (observed faster) |
-| `runFieldReplayBits` | `bits ^ 2` | -0.876956 | within declared upper bound (observed faster) |
-| `runCachedReplayBits` | `bits ^ 2` | -0.856630 | within declared upper bound (observed faster) |
-| `runClearBits` | `bits ^ 2` | -0.829891 | within declared upper bound (observed faster) |
-| `runInfiniteBits` | `bits ^ 2` | -0.954303 | within declared upper bound (observed faster) |
+| `runFractionalBits` | `bits ^ 2` | -0.580784 | unadmitted: own profile missing |
+| `runPreparedBits` | `bits ^ 2` | -0.849544 | unadmitted: dominant general-product phase unproved |
+| `runCountBits` | `bits ^ 2` | -0.869592 | unadmitted: dominant general-product phase unproved |
+| `runPreparedCountBits` | `bits ^ 2` | -0.655776 | unadmitted: dominant general-product phase unproved |
+| `runCertificateBits` | `bits ^ 2` | -0.882864 | unadmitted: dominant general-product phase unproved |
+| `runPreparedCertificateBits` | `bits ^ 2` | -0.867449 | unadmitted: dominant general-product phase unproved |
+| `runCountCertificateBits` | `bits ^ 2` | -0.777107 | unadmitted: dominant general-product phase unproved |
+| `runFieldReplayBits` | `bits ^ 2` | -0.876956 | unadmitted: dominant general-product phase unproved |
+| `runCachedReplayBits` | `bits ^ 2` | -0.856630 | unadmitted: dominant general-product phase unproved |
+| `runClearBits` | `bits ^ 2` | -0.829891 | unadmitted: dominant general-product phase unproved |
+| `runInfiniteBits` | `bits ^ 2` | -0.954303 | unadmitted: dominant general-product phase unproved |
 
-The mode-2 harness wording is `inconclusive`, in the faster direction. Its
-translation above uses the preregistered published bounds and the matching
-GMP-dominated profiles, not a fitted replacement exponent. A tight wall-time
-monomial is unavailable across GMP's multiplication/gcd thresholds. This
-weaker claim remains distinct from two-sided consistency.
+The candidate harness wording is `inconclusive`, in the faster direction.
+Only the odd cubic and integral-endpoint families currently connect their
+preregistered published bounds to operation-specific general-product/gcd
+profiles. The fractional family lacks its own capture. The ten translated
+families remain unadmitted: GMP leaf dominance alone does not identify a
+published bound for the dominant phase. All samples and original declarations
+remain retained; no fitted exponent or replacement pass is inferred.
 
 [Prepared nonconstant queries](bench-results/prerequisite-prepared-query-degree/)
 pass their two-sided quadratic declarations: residuals −0.066 and −0.077.
@@ -713,12 +717,13 @@ The odd cubic and odd endpoint captures at 32768 bits have 95.25% and 98.38%
 GMP leaves respectively. Their generic products/reduction work includes
 `addmul_1`, basecase/Toom multiplication and half-gcd steps. The ten translated
 frontend captures have 93.71–96.44% GMP leaves and 3.31–5.67% allocation.
-The same fixed-degree chain/replay or endpoint operations multiply growing
-operands; GMP's published multiplication/gcd upper bounds cover the phase
-these profiles exercise. Native GMP call stacks sometimes omit the outer
-Hex frames, so the recorded inclusive ranking is partial; the leaf attribution
-and the source operation census do not treat that omission as own-code cost.
-The cited publications and operand-width derivations are in the cost-model report.
+Their dominant leaves are `mod_1`, `addmul_1`, `divexact_1`, `copyi` and
+`mul_1`; general basecase/Toom products account for roughly 5% or less.
+Incomplete outer Hex stacks do not establish that the single-limb leaves
+belong to general multiplication. The observed growth is about bits^1.05–1.35,
+and infinity checking has no finite-endpoint Horner phase. Consequently the
+translated captures do not qualify their proposed mode-2 bounds. Caller-level
+attribution or another admissible characterization remains required.
 
 The degree-1024 integer-producer diagnostic has 47.51% allocation, 41.69% GMP
 and 6.62% runtime leaves. The coefficient-sign map has 61.63% runtime,
