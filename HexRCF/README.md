@@ -92,12 +92,18 @@ Development happens in the
 mirror. Contributions are welcome as pull requests to the `SPEC/` directory:
 describe the behavior you want and leave the implementation to the maintainer.
 
-In the `hex-dev` development monorepo, the `HexRCF.RealCoefficients` import exposes
-`Hex.RCF.RealCoefficients.Reify.prepare`. It constructs a shared source schema,
-a fixed closed-coefficient valuation and a kernel-checked equivalence to the
-original goal, retaining all source divisor obligations. Within `hex-dev`, Lake builds it through
-the default `HexRCFRealCoefficients` target; this target is not published to the
-split repository. It registers no solver: coefficient
-authentication, nonzero-guard checking, specialization and real-coefficient replay
-remain separate integration gates. See the
+In the `hex-dev` development monorepo, the optional `HexRCF.RealCoefficients`
+import extends `rcf` with the documented selected algebraic/common-field inputs
+and caller-registered finite bounds. `@[rcf_constant]` registers an exact closed
+real subject, an approximation procedure and its containment proof; width and
+progress guarantees remain separate. The finite path checks all original
+source divisors before proof construction, including cancelled divisions, and
+checks frozen bound/subject/version evidence with ordinary kernel proofs.
+Nonseparating bounds leave guards unresolved. This mode is bounded proof search,
+not a complete named-constant field solver.
+
+`Hex.RCF.RealCoefficients.Reify.prepare` produces the shared source schema,
+fixed coefficient valuation and equivalence to the original goal. The optional
+adapter is validated through the default `HexRCFRealCoefficients` Lake target
+and is not yet published to the split repository. See the
 [SPEC](SPEC/hex-rcf.md#planned-real-coefficient-extension).

@@ -1603,7 +1603,7 @@ libraries:
     # The existing shared-formula dependency and pins are retained for compatibility.
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib, HexRealFormulaMathlib]
     # Extra imports are confined to adapters/HexRCF; published pins stay unchanged.
-    adapter_deps: [HexRealAlgebraicMathlib, HexSturm, HexSturmMathlib, HexNumberFieldMathlib]
+    adapter_deps: [HexRealAlgebraicMathlib, HexSturm, HexSturmMathlib, HexNumberFieldMathlib, HexOrderedFnMathlib]
     mathlib: true
     done_through: 7
     status: active

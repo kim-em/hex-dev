@@ -1339,6 +1339,96 @@ production remain separate proof requirements. The
 separate common-field conversion preserves the selected algebraic values by
 the proved `QAdjoin.common_get` theorem.
 
+# Caller-supplied finite bounds
+%%%
+tag := "hex-rcf-registered-bounds"
+%%%
+
+The optional import also accepts a caller's registered closed real subject.
+A {name}`Hex.RCF.RealCoefficients.Registration` contains an executable
+approximation and a separate containment theorem for that exact subject.
+The `rcf_constant` attribute registers its declaration. Subjects match by
+reducible definitional equality; duplicate matches are rejected. A registered
+whole expression is tried before its arithmetic constituents.
+In a Lean module, mark the registration and its computational definitions
+`@[expose]` so their frozen-result equalities reduce in the ordinary kernel.
+A consuming module also needs `meta import` of the caller's registration
+module to execute its approximation.
+
+This example uses the existing theorem that a sine lies in `[-1,1]`. The
+caller supplies that fixed bound; the tactic does not construct an analytic
+approximation procedure. The bound suffices for a square plus `2 + sin 1`.
+
+```lean
+open Hex.OrderedFn.Oracle
+
+private def callerBounds (_ : Rat) : Bounds := ⟨-1, 1, by decide⟩
+
+private theorem callerContainment
+    (δ : Rat) (_ : 0 < δ) :
+    Contains (callerBounds δ) (Real.sin 1) := by
+  simpa [Contains, callerBounds] using
+    And.intro (Real.neg_one_le_sin 1) (Real.sin_le_one 1)
+
+@[rcf_constant] private def callerRegistration :
+    Registration (Real.sin 1) where
+  version := 1
+  approximation := callerBounds
+  containment := callerContainment
+
+example : ∀ x : ℝ, x ^ 2 + 2 + Real.sin 1 > 0 := by rcf
+example : ∃ x : ℝ,
+    x = Real.sin 1 ∧ -2 < x ∧ x < 2 := by rcf
+```
+
+The finite path requests width `1/16` once. The actual width here is `2`;
+containment does not assert that the request was met. A requested-width theorem
+has the separate type
+{name}`Hex.OrderedFn.Oracle.ApproximationWidth`, applied to
+{name}`Hex.OrderedFn.Oracle.Approximation.ofConstant` with `callerBounds`.
+Convergence and relative transcendence are separate hypotheses for total
+search. This fixed bound makes no such claim. Finite proofs from containment
+need neither hypothesis.
+
+All original divisors are checked before cancellation, coefficient abstraction
+or proof search. Thus even an erased division by `sin 1 - sin 1` is invalid.
+The supplied interval also cannot certify that `sin 1` is nonzero: a bound
+containing zero proves neither equality to zero nor a strict sign.
+
+```lean
+/-- error: rcf: original divisor is zero -/
+#guard_msgs in
+example : ∀ x : ℝ,
+    x ^ 2 + 2 + Real.sin 1 +
+      0 / (Real.sin 1 - Real.sin 1) > 0 := by
+  rcf
+
+/-- error: rcf: original divisor remains unresolved
+in supplied bounds -/
+#guard_msgs in
+example : ∀ x : ℝ,
+    x ^ 2 + 2 + Real.sin 1 + 0 / Real.sin 1 > 0 := by
+  rcf
+```
+
+For direct proof construction, {name}`Hex.RCF.RealCoefficients.Finite.prepare`
+returns the shared source formula/equivalence, fixed coefficient order, frozen
+bounds and checked original guards. {name}`Hex.RCF.RealCoefficients.Finite.build`
+proposes a proof of that schema using the frozen facts, and
+{name}`Hex.RCF.RealCoefficients.Finite.check` checks it and transports it back to
+the original goal. The certificate binds the source, registry/provider versions,
+precision request, coefficient subjects and guards. Checking validates ordinary
+proofs and frozen callback identities; it does not repeat approximation or root
+search. Source coefficients and guards retain the same selected real values.
+
+This finite path uses nonlinear proof reconstruction from the supplied bounds,
+with conjunctions and a proposed ordinary real existential witness. It may fail
+on a true statement, and such a failure is an unresolved proof attempt, not a
+false verdict. Lean's execution limits can also interrupt it. Failures restore
+caller state and stop handler dispatch. The existing algebraic cell solver
+continues to handle its documented inputs. Registrations alone do not complete
+the general coefficient-field decision procedure.
+
 # Cross-references
 %%%
 tag := "hex-rcf-cross-references"

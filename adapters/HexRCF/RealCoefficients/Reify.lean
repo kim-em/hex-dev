@@ -8,6 +8,7 @@ module
 
 public meta import HexRealFormulaMathlib.Reify
 public meta import HexRCF.Reify
+public meta import HexRCF.RealCoefficients.Registration
 public meta import HexRCF.RealCoefficients.Interpret
 public import HexRealAlgebraicMathlib.Basic
 public import Mathlib.Analysis.SpecialFunctions.Exp
@@ -80,9 +81,23 @@ private partial def castGuards (e : Expr) : ScanM Unit := do
     modify (·.push q(($d : ℝ)))
   for a in args do castGuards a
 
-private partial def scalar (source : Expr) : ScanM Unit := do
+private partial def scalar (registered : Array Expr) (source : Expr) : ScanM Unit := do
   let e := source.consumeMData
   unless isClosed e do reject e "coefficient must be closed"
+  if ← registered.anyM (fun value => liftM (Registration.sameSubject e value)) then
+    -- A registered whole subject is admitted first, but its original field
+    -- divisions are still source obligations, even inside analytic syntax.
+    let _ ← Meta.transformWithCache e {} (pre := fun part => do
+      let (op, args) := part.getAppFnArgs
+      let divisor := if op == ``HDiv.hDiv && args.size == 6 then some args[5]!
+        else if op == ``Inv.inv && args.size == 3 then some args[2]! else none
+      if let some d := divisor then
+        if ← isReal d then modify (·.push d)
+        else if (← inferType d).isConstOf ``Rat then
+          let d : Q(ℚ) := d
+          modify (·.push q(($d : ℝ)))
+      return .continue) (skipInstances := true)
+    return ()
   if e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 then return ()
   if e.isConstOf ``Real.pi then return ()
   if e.isAppOfArity ``Real.exp 1 then
@@ -97,10 +112,10 @@ private partial def scalar (source : Expr) : ScanM Unit := do
   let op := e.getAppFn.constName?
   if e.isAppOfArity ``Real.sqrt 1 then
     Hex.RealFormula.Reify.charge .exponent 2
-    return ← scalar e.appArg!
+    return ← scalar registered e.appArg!
   if e.isAppOfArity ``Real.rpow 2 then
-    scalar args[0]!
-    scalar args[1]!
+    scalar registered args[0]!
+    scalar registered args[1]!
     let _ ← Coefficients.rootDegree args[1]!
     return ()
   if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].any (op == some ·) &&
@@ -113,8 +128,8 @@ private partial def scalar (source : Expr) : ScanM Unit := do
       else if op == some ``HSub.hSub then q($a - $b)
       else if op == some ``HMul.hMul then q($a * $b) else q($a / $b)
     unless ← isDefEq e canonical do reject e "nonstandard real arithmetic instance"
-    scalar args[4]!
-    scalar args[5]!
+    scalar registered args[4]!
+    scalar registered args[5]!
     if op == some ``HDiv.hDiv then modify (·.push args[5]!)
     return ()
   if [``Neg.neg, ``Inv.inv].any (op == some ·) && args.size == 3 then
@@ -122,7 +137,7 @@ private partial def scalar (source : Expr) : ScanM Unit := do
     let a : Q(ℝ) := args[2]!
     let canonical := if op == some ``Neg.neg then q(-$a) else q($a⁻¹)
     unless ← isDefEq e canonical do reject e "nonstandard real unary operation"
-    scalar args[2]!
+    scalar registered args[2]!
     if op == some ``Inv.inv then modify (·.push args[2]!)
     return ()
   if e.isAppOfArity ``HPow.hPow 6 then
@@ -131,8 +146,8 @@ private partial def scalar (source : Expr) : ScanM Unit := do
       let a : Q(ℝ) := args[4]!
       let p : Q(ℝ) := args[5]!
       unless ← isDefEq e q($a ^ $p) do reject e "nonstandard real power instance"
-      scalar args[4]!
-      scalar args[5]!
+      scalar registered args[4]!
+      scalar registered args[5]!
       let _ ← Coefficients.rootDegree args[5]!
       return ()
     unless (← inferType args[5]!).isConstOf ``Nat do
@@ -144,7 +159,7 @@ private partial def scalar (source : Expr) : ScanM Unit := do
     let a : Q(ℝ) := args[4]!
     let n : Q(ℕ) := args[5]!
     unless ← isDefEq e q($a ^ $n) do reject e "nonstandard real power instance"
-    return ← scalar args[4]!
+    return ← scalar registered args[4]!
   if [``OfNat.ofNat, ``Nat.cast, ``Int.cast, ``Rat.cast, ``RatCast.ratCast,
       ``OfScientific.ofScientific].any (op == some ·) then
     castGuards e
@@ -171,11 +186,11 @@ private def checkDomains (source : Expr) : FrontendM Unit := do
     checkInterval e
     return .continue) (skipInstances := true)
 
-private def preflight (source : Expr) : FrontendM (Array Expr) := do
+private def preflight (registered : Array Expr) (source : Expr) : FrontendM (Array Expr) := do
   let (_, divisors) ← (Meta.transformWithCache (m := StateRefT (Array Expr) FrontendM) source {} (pre := fun e => do
     if ← isReal e then
       if isClosed e then
-        scalar e
+        scalar registered e
         return .done e
       let (op, args) := e.getAppFnArgs
       if op == ``HDiv.hDiv && args.size == 6 then
@@ -200,22 +215,19 @@ private def normalize (source : Expr) : MetaM Expr :=
       return .continue (some q($a * $b⁻¹))
     return .continue) (skipInstances := true)
 
-private partial def hasNamedSource (e : Expr) : Bool :=
-  e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 ||
-    e.isAppOfArity ``Real.sqrt 1 ||
-    e.isAppOfArity ``Real.rpow 2 ||
-    e.isConstOf ``Real.pi ||
-    e.isAppOfArity ``Real.exp 1 ||
-    e.getAppArgs.any hasNamedSource
+private partial def hasNamedSource (registered : Array Expr) (e : Expr) : MetaM Bool := do
+  if (← registered.anyM (Registration.sameSubject e)) ||
+      e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 ||
+      e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 ||
+      e.isConstOf ``Real.pi || e.isAppOfArity ``Real.exp 1 then return true
+  e.getAppArgs.anyM (hasNamedSource registered)
 
-private def isNamedCoefficient (e : Expr) : MetaM Bool := do
+private def isNamedCoefficient (registered : Array Expr) (e : Expr) : MetaM Bool := do
   if e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 ||
-      e.isAppOfArity ``Real.sqrt 1 ||
-      e.isAppOfArity ``Real.rpow 2 ||
-      e.isConstOf ``Real.pi ||
-      e.isAppOfArity ``Real.exp 1 then return true
+      e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 ||
+      e.isConstOf ``Real.pi || e.isAppOfArity ``Real.exp 1 then return true
   if e.isAppOfArity ``Inv.inv 3 || e.isAppOfArity ``HDiv.hDiv 6 then
-    return e.getAppArgs.any hasNamedSource
+    return ← e.getAppArgs.anyM (hasNamedSource registered)
   if e.isAppOfArity ``HPow.hPow 6 then
     return (← inferType e.getAppArgs[5]!).isConstOf ``Real
   return false
@@ -223,9 +235,9 @@ private def isNamedCoefficient (e : Expr) : MetaM Bool := do
 /-- Abstract named algebraic inputs, leaving rational arithmetic to the
 shared polynomial reifier. Thus `2 * sqrt 2` uses the same one-dimensional
 field as `sqrt 2`, rather than creating another unrelated coefficient. -/
-private def collect (source : Expr) : MetaM (Array Expr) := do
+private def collect (registered : Array Expr) (source : Expr) : MetaM (Array Expr) := do
   let (_, (values, _)) ← (Meta.transformWithCache (m := StateRefT (Array Expr × ExprSet) MetaM) source {} (pre := fun e => do
-    if isClosed e && (← isReal e) && (← isNamedCoefficient e) then
+    if isClosed e && (← isReal e) && ((← registered.anyM (fun value => liftM (Registration.sameSubject e value))) || (← isNamedCoefficient registered e)) then
       let (values, seen) ← get
       unless seen.contains e do set (values.push e, seen.insert e)
       return .done e
@@ -258,7 +270,7 @@ private def closeSource (source : Expr) : FrontendM (Expr × Expr) := do
   checkWithKernel proof
   return (closed, proof)
 
-private def prepareCore (original : Expr) (config : Hex.RealFormula.Reify.Config) : FrontendM Source := do
+private def prepareCore (registered : Array Expr) (original : Expr) (config : Hex.RealFormula.Reify.Config) : FrontendM Source := do
   let cap := (← get).budget.remaining.sourceNodes
   Hex.RealFormula.Reify.charge .sourceNodes (Hex.Reflect.sourceNodeCount original (cap + 1))
   checkDomains original
@@ -270,9 +282,9 @@ private def prepareCore (original : Expr) (config : Hex.RealFormula.Reify.Config
       unless e.isAppOfArity ``Exists 2 do reject source "expected one real quantifier"
   let cap := (← get).budget.remaining.sourceNodes
   Hex.RealFormula.Reify.charge .sourceNodes (Hex.Reflect.sourceNodeCount source (cap + 1))
-  let divisors ← preflight source
+  let divisors ← preflight registered source
   let normalized ← normalize source
-  let coefficients ← collect normalized
+  let coefficients ← collect registered normalized
   let state ← get
   let outcome ← liftM <| withParameters coefficients 0 #[] fun parameters =>
     ((do
@@ -323,7 +335,9 @@ private def prepareCore (original : Expr) (config : Hex.RealFormula.Reify.Config
       set state
       return result
 
-/-- Build a source schema for closed rational, real algebraic and π/e coefficient expressions.
+/-- Build a source schema for closed rational, real algebraic, π/e and explicitly
+supplied registered subjects. The latter are pending frontend coordinates;
+their caller must authenticate containment and any original internal guards.
 Retain all original divisor obligations, including those beneath cancellation
 and zero multiplication. This is frontend preparation only: guard discharge,
 authenticated coefficient interpretation and decision replay are still required.
@@ -339,11 +353,12 @@ Unsupported syntax and
 budget limits return structured errors. Unexpected elaboration/kernel errors and
 Lean runtime failures remain terminal exceptions, with state restored; callers
 must not reclassify them as solver declines. -/
-def prepare (source : Expr) (config : Hex.RealFormula.Reify.Config := {}) : MetaM (Except Hex.RealFormula.Reify.Error Source) := do
+def prepare (source : Expr) (config : Hex.RealFormula.Reify.Config := {})
+    (registered : Array Expr := #[]) : MetaM (Except Hex.RealFormula.Reify.Error Source) := do
   let saved ← saveState
   let (result, _) ← tryFinally'
     (do
-      let outcome ← ((prepareCore source config).run
+      let outcome ← ((prepareCore registered source config).run
         { config, budget := .ofBudget config.ring.budget }).run
       return outcome.map Prod.fst)
     (fun result => do
