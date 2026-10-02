@@ -830,6 +830,20 @@ and chosen-root identifications use only Lean's standard logical axioms.
 See {ref "hex-number-field"}[HexNumberField] and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
 
+A fresh-module comparison of the cubic reciprocal uses identical imports and
+shared source setup for `Coefficients.ofField` and direct
+`QAdjoin.toAlgebraicNumber` conversion. At source `b0c583792`, Lean
+`v4.35.0-rc3` on shared `chungus2` CPU 79, four adjacent alternating AB/BA
+rounds give median build times 11.22 and 11.07 seconds respectively, with
+median peak RSS 3.30 GiB in both arms. The median paired direct-minus-wrapped
+margin is +0.09 seconds; margins range from −1.04 to +0.59 seconds and do not
+resolve a cost difference. Both private olean files contain 603,016 bytes.
+This measures proof construction for one identity whose specialized equality
+atom is zero, without an import-only arm or a root-search scaling claim.
+The [report and retained samples](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-division-proofs.md)
+record all eight arms and host activity. These observations do not establish
+general extension performance or total algebraic search.
+
 # Simultaneous signs and repeated roots over a cubic field
 %%%
 tag := "hex-rcf-cubic-signs"
