@@ -60,4 +60,16 @@ theorem isolateAt_checked [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq
   · contradiction
   · exact (IsolationReplay.build_checked _ _ _ _ _ _ h).2
 
+/-- Retain the exact builder binding needed for checked query production. -/
+theorem isolateAt_build [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+    (context : Ctx) (head : DensePoly RealAlgebraicNumber) (precision : Nat)
+    (cert : IsolationReplay RealAlgebraicNumber Ctx)
+    (produced : isolateAt context head precision = some cert) :
+    ∃ isolations, IsolationReplay.build RealAlgebraicNumber.sign
+      (fun d => RealAlgebraicNumber.ofRat d.toRat) context head isolations = some cert := by
+  unfold isolateAt at produced
+  split at produced
+  · contradiction
+  · exact ⟨_, produced⟩
+
 end Hex.RCF.RealCoefficients

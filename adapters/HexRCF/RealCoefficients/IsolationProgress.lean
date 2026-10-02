@@ -38,7 +38,6 @@ theorem rootInterval_separated (left right : RealAlgebraicNumber)
   simpa only [HexRealRootsMathlib.toReal_eq_cast_toRat,
     HexRootsMathlib.Dyadic.toReal] using gap
 
-
 /-- A finite strictly ordered root array eventually has disjoint strict
 enclosures; no minimum separation or precision bound is assumed. -/
 theorem rootArray_separated (roots : Array RealAlgebraicNumber)
@@ -85,7 +84,6 @@ theorem rootArray_separated (roots : Array RealAlgebraicNumber)
     have hi1 : i + 1 < roots.size := by omega
     have gap := hK k hk ⟨i, by omega⟩ ⟨i + 1, hi1⟩ (by change i < i + 1; omega)
     simpa [IsolationCert.checkGaps, cert, hi1] using gap
-
 
 /-- The owner's complete sorted root producer and strict enclosure laws
 make nonzero canonical polynomial proposals eventually pass the gap checker. -/
@@ -135,8 +133,6 @@ theorem proposeIsolations_separated [RealAlgebraicNumber.Laws]
       RealAlgebraicNumber.toReal algebraic_zero head).mp h)
   exact solverIntervals_progress (RealAlgebraicPoly.ofArray head.toArray) polynomialNe schedule progress
 
-
-
 /-- The actual canonical proposal carries all real roots and strictly
 encloses each root at its matching index, using the owner's root correspondence. -/
 theorem solverIntervals_spec (solver : RealAlgebraicPoly) (precision : Nat) (isolations : IsolationCert)
@@ -182,7 +178,6 @@ theorem solverIntervals_spec (solver : RealAlgebraicPoly) (precision : Nat) (iso
       · rintro ⟨i, value⟩
         exact ⟨roots[i.val], Array.getElem_mem _, value⟩
 
-
 /-- Canonical proposals enclose a complete root list for the original
 interpreted coefficient polynomial. -/
 theorem proposeIsolations_spec [RealAlgebraicNumber.Laws]
@@ -194,7 +189,6 @@ theorem proposeIsolations_spec [RealAlgebraicNumber.Laws]
       (∀ x, (interpret RealAlgebraicNumber.toReal algebraic_zero head).IsRoot x ↔ ∃ i, root i = x) := by
   simpa only [solver_polynomial] using
     solverIntervals_spec (RealAlgebraicPoly.ofArray head.toArray) precision isolations produced
-
 
 /-- Separated proposals for a genuinely squarefree head are accepted
 by the actual isolation builder, with domain and root counts derived. -/
@@ -235,28 +229,45 @@ theorem isolateAt_progress [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableE
     isolations produced gaps
   exact ⟨cert, by unfold isolateAt; rw [produced]; exact accepted⟩
 
-
 /-- Search successive precisions until the actual isolation checker accepts.
 The preceding progress theorem proves termination for a nonzero squarefree
-head; `Nat.find` performs the existing executable attempt at each precision.
+head. Root solving runs once; `Nat.find` refines only intervals and replay.
 The returned proof checks the literal evidence, without a search-fuel premise.
-This entry point does not change the tactic's bounded attempt. -/
+This is a compiled producer: quotation must emit its literal certificate and
+recheck that certificate in the ordinary kernel. It does not change the
+tactic's bounded attempt. -/
 def isolate [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (context : Ctx) (head : DensePoly RealAlgebraicNumber) (nonzero : head ≠ 0)
     (squarefree : Squarefree (HexPolyMathlib.Interpret.interpret
       RealAlgebraicNumber.toReal algebraic_zero head)) :
     {cert : IsolationReplay RealAlgebraicNumber Ctx //
       cert.check RealAlgebraicNumber.sign (fun d => RealAlgebraicNumber.ofRat d.toRat)
-        context head = true} := by
-  have available : ∃ precision, (isolateAt context head precision).isSome = true := by
+        context head = true ∧
+      ∃ isolations, IsolationReplay.build RealAlgebraicNumber.sign
+        (fun d => RealAlgebraicNumber.ofRat d.toRat) context head isolations = some cert} := by
+  -- Root solving is independent of interval precision and runs once.
+  let roots := (RealAlgebraicPoly.ofArray head.toArray).roots.finite?
+  let proposal (precision : Nat) : Option IsolationCert := do
+    let roots ← roots
+    let intervals ← roots.mapM fun r => rootInterval r.root precision
+    return ⟨intervals⟩
+  let attempt (precision : Nat) : Option (IsolationReplay RealAlgebraicNumber Ctx) :=
+    match proposal precision with
+    | none => none
+    | some isolations => IsolationReplay.build RealAlgebraicNumber.sign
+        (fun d => RealAlgebraicNumber.ofRat d.toRat) context head isolations
+  have attempt_eq (precision : Nat) : attempt precision = isolateAt context head precision := rfl
+  have available : ∃ precision, (attempt precision).isSome = true := by
     obtain ⟨K, progress⟩ := isolateAt_progress context head nonzero squarefree id Filter.tendsto_id
     obtain ⟨cert, produced⟩ := progress K le_rfl
     change isolateAt context head K = some cert at produced
-    exact ⟨K, by rw [produced]; rfl⟩
+    exact ⟨K, by rw [attempt_eq, produced]; rfl⟩
   let precision := Nat.find available
   have produced := Nat.find_spec available
-  let cert := (isolateAt context head precision).get produced
-  refine ⟨cert, isolateAt_checked context head precision cert ?_⟩
-  exact Option.eq_some_of_isSome produced
+  let cert := (attempt precision).get produced
+  have result : isolateAt context head precision = some cert := by
+    rw [← attempt_eq]; exact Option.eq_some_of_isSome produced
+  exact ⟨cert, isolateAt_checked context head precision cert result,
+    isolateAt_build context head precision cert result⟩
 
 end Hex.RCF.RealCoefficients

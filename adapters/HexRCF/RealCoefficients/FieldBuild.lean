@@ -102,6 +102,37 @@ theorem isolateAt_checked [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq
       subst cert
       exact buildProposed_checked _ _ _ _ _ hdirect
 
+private theorem buildProposed_build {Ctx : Type u} [DecidableEq Ctx]
+    (sign : PolyQuot p root → Int) (context : Ctx) (head : DensePoly (PolyQuot p root))
+    (proposal : Option IsolationCert) (cert : IsolationReplay (PolyQuot p root) Ctx)
+    (produced : buildProposed sign context head proposal = some cert) :
+    ∃ isolations, IsolationReplay.build sign FieldDecision.point context head isolations = some cert := by
+  unfold buildProposed at produced
+  split at produced
+  · contradiction
+  · exact ⟨_, produced⟩
+
+/-- Every successful preferred or fallback attempt retains its exact builder
+binding, including the canonical squarefree chain used by query production. -/
+theorem isolateAt_build [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
+    (context : Ctx) (head : DensePoly (PolyQuot p root)) (precision : Nat)
+    (cert : IsolationReplay (PolyQuot p root) Ctx)
+    (produced : isolateAt rep hrep context head precision = some cert) :
+    ∃ isolations, IsolationReplay.build (proposalSign rep hrep) FieldDecision.point
+      context head isolations = some cert := by
+  unfold isolateAt at produced
+  cases direct : buildProposed (proposalSign rep hrep) context head
+      (FieldIsolate.propose? (proposalSign rep hrep) FieldDecision.point head) with
+  | none =>
+    apply buildProposed_build (proposalSign rep hrep) context head
+      (proposeCanonical rep hrep head precision) cert
+    simpa only [direct] using produced
+  | some result =>
+    have same : result = cert := by simpa only [direct, Option.some.injEq] using produced
+    subst result
+    exact buildProposed_build _ _ _ _ _ direct
+
 /-- Prepare the rational defining polynomial once and certify the finite sign
 arguments that replay will read. The selected square fixes the root and both
 open rational endpoints. -/

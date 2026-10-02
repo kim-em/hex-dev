@@ -1663,7 +1663,12 @@ guarantee over original fixed-field coordinates at a checked selected real
 embedding, including the canonical fallback after bounded direct search fails.
 Canonical conversion preserves the exact interpreted polynomial.
 The corresponding `isolate` entry points search successive precisions and
-return isolation evidence together with its checker acceptance proof.
+return isolation evidence together with its checker acceptance proof and
+exact binding to the builder that produced the shared squarefree chain.
+The preferred fixed-field search, head conversion and complete root
+solving run once; refinement repeats interval construction and checking.
+These are compiled producers. A quoted proof must recheck the emitted literal
+certificate in the ordinary kernel.
 Their termination follows from these progress laws for nonzero squarefree
 inputs; they do not change the tactic's fixed-precision attempt.
 
@@ -1671,6 +1676,8 @@ inputs; they do not change the tactic's fixed-precision attempt.
 that atom-query production succeeds after isolation construction succeeds.
 Queries retain the shared squarefree chain and are checked at the same root
 interval and original head.
+{name}`Hex.RCF.RealCoefficients.FieldBuild.isolateFormula_queries` composes
+this query production with the total formula isolation entry point.
 
 {name}`Hex.RCF.RealCoefficients.RadicalCert.build_success_real` proves that
 the actual bounded derivative-gcd quotient search produces accepted radical
@@ -1690,7 +1697,8 @@ fixed field's noncomputable real embedding is not passed to compiled arithmetic.
 reduction with precision search for the complete shared formula carrier,
 including repeated/common roots, zero atoms and formulas without atoms.
 The shared formula keeps its guard atoms, whose nonzero endpoint polynomials
-enter the carrier. Squarefreeness is derived before isolation; it is not an extra admission required from the caller.
+enter the carrier. Squarefreeness is derived before isolation; it is not an
+extra admission required from the caller.
 This constructs a checked root envelope. The complete fixed-field sign-table,
 decision-certificate pipeline and total algebraic tactic search remain separate
 obligations. The current

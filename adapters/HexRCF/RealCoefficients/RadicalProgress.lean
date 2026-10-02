@@ -217,6 +217,8 @@ private theorem interpreted_power (input : DensePoly E) (n : Nat) :
     power_value, ← Interpret.interpret_map]
 
 include h1 ha in
+-- Mapping the two native division identities expands the quotient algorithms
+-- during elaboration; this local allowance does not change executable search.
 set_option maxHeartbeats 800000 in
 private theorem candidate_identities (input : DensePoly E) (nonzero : input ≠ 0) :
     let core := (DensePoly.divMod input (DensePoly.gcd input input.derivativeImpl)).1

@@ -7,6 +7,7 @@ module
 
 public import HexRCF.RealCoefficients.FieldBuild
 public import HexRCF.RealCoefficients.RadicalProgress
+public import HexRCF.RealCoefficients.FieldRootSignsProgress
 public import HexRCF.RealCoefficients.IsolationProgress
 public import HexRCF.RealCoefficients.IsolationSemantics
 public import HexNumberFieldMathlib.Exact
@@ -52,7 +53,6 @@ theorem proposalSign_spec (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep =
     simp only [proposalSign, produced, Option.map_some, Option.getD_some]
     rw [algebraic_sign, canonical_value rep hrep real a b produced]
 
-
 /-- Converting the native coefficient array preserves the exact interpreted
 polynomial, including zero padding and leading cancellation. -/
 theorem canonical_polynomial (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
@@ -84,8 +84,6 @@ theorem canonical_polynomial (rep : RefinedIsolation p) (hrep : SimpleRoot.mk re
         Array.getElem?_eq_none mapped, Option.getD_none, RealAlgebraicNumber.zero_toReal]
       exact (Field.value_zero rep hrep real).symm
 
-
-
 /-- The actual canonical fallback eventually produces separated intervals
 for every nonzero fixed-field head along a cofinal precision schedule. -/
 theorem proposeCanonical_progress [RealAlgebraicNumber.Laws]
@@ -107,7 +105,6 @@ theorem proposeCanonical_progress [RealAlgebraicNumber.Laws]
   change (head.toArray.mapM (canonical? rep hrep)).bind
     (fun coefficients => solverIntervals (RealAlgebraicPoly.ofArray coefficients) (schedule k)) = some cert
   rw [converted]; exact generated
-
 
 /-- A separated canonical proposal is accepted over the original field
 coordinates when their interpreted head is nonzero and squarefree. -/
@@ -144,7 +141,6 @@ theorem proposeCanonical_accepted [RealAlgebraicNumber.Laws] {Ctx : Type u} [Dec
   simpa only [FieldDecision.point, HexRealRootsMathlib.toReal_eq_cast_toRat] using
     FieldSpecialize.value_ofRat rep hrep real d.toRat
 
-
 /-- The preferred bounded search or its canonical fallback eventually
 yields accepted fixed-field isolation evidence for a nonzero squarefree head.
 The statement does not assert full certificate construction or tactic totality. -/
@@ -170,29 +166,56 @@ theorem isolateAt_progress [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableE
     simp only [buildProposed, produced]
     exact accepted
 
-
 /-- Construct accepted isolation evidence over the original selected field
 by searching successive precisions. Canonical conversion and progress prove
 termination; the returned certificate still passes the fixed-coordinate checker.
-This does not assert termination of the full formula certificate producer. -/
+The preferred search, head conversion and root solving each run once.
+Quotation must emit the literal certificate and recheck it in the ordinary
+kernel; kernel reduction of this compiled search is not required. This does
+not assert termination of the full formula certificate producer. -/
 def isolate [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
     (context : Ctx) (head : DensePoly (PolyQuot p root)) (nonzero : head ≠ 0)
     (squarefree : Squarefree (HexPolyMathlib.Interpret.interpret
       (Field.value rep) (Field.value_eq_zero rep hrep real) head)) :
     {cert : IsolationReplay (PolyQuot p root) Ctx //
-      cert.check (proposalSign rep hrep) FieldDecision.point context head = true} := by
-  have available : ∃ precision, (isolateAt rep hrep context head precision).isSome = true := by
-    obtain ⟨K, progress⟩ := isolateAt_progress rep hrep real context head nonzero squarefree
-      id Filter.tendsto_id
-    obtain ⟨cert, produced⟩ := progress K le_rfl
-    change isolateAt rep hrep context head K = some cert at produced
-    exact ⟨K, by rw [produced]; rfl⟩
-  let precision := Nat.find available
-  have produced := Nat.find_spec available
-  let cert := (isolateAt rep hrep context head precision).get produced
-  refine ⟨cert, isolateAt_checked rep hrep context head precision cert ?_⟩
-  exact Option.eq_some_of_isSome produced
+      cert.check (proposalSign rep hrep) FieldDecision.point context head = true ∧
+      ∃ isolations, IsolationReplay.build (proposalSign rep hrep) FieldDecision.point
+        context head isolations = some cert} := by
+  -- The preferred search runs once. Only its failure starts canonical search.
+  cases direct : buildProposed (proposalSign rep hrep) context head
+      (FieldIsolate.propose? (proposalSign rep hrep) FieldDecision.point head) with
+  | some cert =>
+    have result : isolateAt rep hrep context head 0 = some cert := by
+      simp only [isolateAt, direct]
+    exact ⟨cert, isolateAt_checked rep hrep context head 0 cert result,
+      isolateAt_build rep hrep context head 0 cert result⟩
+  | none =>
+    -- Conversion and complete root solving are shared across all precisions.
+    let roots := (head.toArray.mapM (canonical? rep hrep)).bind fun coefficients =>
+      (RealAlgebraicPoly.ofArray coefficients).roots.finite?
+    let attempt (precision : Nat) := buildProposed (proposalSign rep hrep) context head
+      (do
+        let roots ← roots
+        let intervals ← roots.mapM fun r => rootInterval r.root precision
+        return ⟨intervals⟩)
+    have attempt_eq (precision : Nat) :
+        attempt precision = isolateAt rep hrep context head precision := by
+      simp only [isolateAt, direct, attempt, roots, proposeCanonical, solverIntervals,
+        bind, Option.bind_assoc]
+    have available : ∃ precision, (attempt precision).isSome = true := by
+      obtain ⟨K, progress⟩ := isolateAt_progress rep hrep real context head nonzero squarefree
+        id Filter.tendsto_id
+      obtain ⟨cert, produced⟩ := progress K le_rfl
+      change isolateAt rep hrep context head K = some cert at produced
+      exact ⟨K, by rw [attempt_eq, produced]; rfl⟩
+    let precision := Nat.find available
+    have produced := Nat.find_spec available
+    let cert := (attempt precision).get produced
+    have result : isolateAt rep hrep context head precision = some cert := by
+      rw [← attempt_eq]; exact Option.eq_some_of_isSome produced
+    exact ⟨cert, isolateAt_checked rep hrep context head precision cert result,
+      isolateAt_build rep hrep context head precision cert result⟩
 
 /-- Produce the complete shared carrier's radical and accepted root isolations.
 Repeated and common atom roots are reduced by the actual checked gcd quotient;
@@ -206,7 +229,9 @@ def isolateFormula [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
       RadicalCert.build context (FieldCarrier.product values formula) = some cert ∧
         cert.check context (FieldCarrier.product values formula) = true},
       {cert : IsolationReplay (PolyQuot p root) Ctx //
-        cert.check (proposalSign rep hrep) FieldDecision.point context radical.val.core = true} := by
+        cert.check (proposalSign rep hrep) FieldDecision.point context radical.val.core = true ∧
+          ∃ isolations, IsolationReplay.build (proposalSign rep hrep) FieldDecision.point
+            context radical.val.core isolations = some cert} := by
   let product := FieldCarrier.product values formula
   let radical := RadicalCert.reduce context product
     (RadicalCert.build_success_real (Field.value rep) (Field.value_eq_zero rep hrep real)
@@ -220,5 +245,24 @@ def isolateFormula [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (Field.value_natCast rep hrep real) context product radical.val radical.property.1
   exact ⟨radical, isolate rep hrep real context radical.val.core
     (RadicalCert.core_ne_zero context product radical.val radical.property.2) squarefree⟩
+
+/-- The total formula root producer carries the exact binding consumed by
+atom-query production, so every root query is built and checked at that same
+selected embedding, carrier core and isolation interval. -/
+theorem isolateFormula_queries [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
+    (context : Ctx) (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1)) :
+    let data := isolateFormula rep hrep real context values formula
+    ∃ table, FieldRootSigns.Table.build (proposalSign rep hrep) FieldDecision.point
+      context data.fst.val.core data.snd.val
+      (FieldSpecialize.literalPolynomial values) formula = some table := by
+  let data := isolateFormula rep hrep real context values formula
+  obtain ⟨isolations, produced⟩ := data.snd.property.2
+  exact FieldRootSigns.Table.build_success (Field.value rep) (Field.value_eq_zero rep hrep real)
+    (Field.value_one rep hrep real) (Field.value_add rep hrep real) (Field.value_sub rep hrep real)
+    (Field.value_mul rep hrep real) (Field.value_neg rep hrep real) (Field.value_inv rep hrep real)
+    (Field.value_natCast rep hrep real) (proposalSign rep hrep) (proposalSign_spec rep hrep real)
+    FieldDecision.point context data.fst.val.core isolations data.snd.val produced
+    (FieldSpecialize.literalPolynomial values) formula
 
 end Hex.RCF.RealCoefficients.FieldBuild

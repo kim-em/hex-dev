@@ -92,11 +92,17 @@ private def guarded : RealFormula.QF 2 :=
 #guard (FieldBuild.isolateFormula rep rfl repReal () values
   (.atom ⟨0, .eq⟩ : RealFormula.QF 2)).snd.val.isolations.intervals.isEmpty
 
--- Ordinary kernel proofs read the returned evidence, independently of #guard.
+-- The total envelope is consumed by the actual repeated-atom query builder.
+#guard (FieldRootSigns.Table.build (FieldBuild.proposalSign rep rfl) FieldDecision.point
+  () envelope.fst.val.core envelope.snd.val
+  (FieldSpecialize.literalPolynomial values) formula).isSome
+
+-- The following kernel proofs use the producer's checked acceptance law.
+-- They do not reduce the search or replace literal certificate quotation.
 theorem formula_radical_checked : envelope.fst.val.check () (FieldCarrier.product values formula) = true :=
   envelope.fst.property.2
 theorem formula_isolation_checked : envelope.snd.val.check (FieldBuild.proposalSign rep rfl)
-    FieldDecision.point () envelope.fst.val.core = true := envelope.snd.property
+    FieldDecision.point () envelope.fst.val.core = true := envelope.snd.property.1
 
 end Hex.RCF.RadicalProgressTests
 /-- info: 'Hex.RCF.RealCoefficients.RadicalCert.build_core' depends on axioms: [propext, Quot.sound] -/

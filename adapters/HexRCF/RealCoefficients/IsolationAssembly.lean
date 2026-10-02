@@ -229,8 +229,6 @@ private theorem isolationCards (polynomial : Polynomial ℝ) (nonzero : polynomi
     · rintro rfl
       exact ⟨(complete _).mpr ⟨i, rfl⟩, (bounds i).1, (bounds i).2⟩
 
-
-
 /-- Complete roots enclosed by strictly separated intervals establish every
 root-count and endpoint obligation of the actual isolation producer. The
 squarefree hypothesis is explicit; this theorem does not manufacture a
