@@ -1,11 +1,12 @@
 """Reject lost samples, incorrect answers and changed scientific protocols."""
 import copy
+import hashlib
 import json
 from pathlib import Path
 import tempfile
 import unittest
 
-from scripts.bench.rank_checker_analyze import measurement
+from scripts.bench.rank_checker_analyze import journal, measurement
 
 
 class MeasurementValidation(unittest.TestCase):
@@ -65,6 +66,26 @@ class MeasurementValidation(unittest.TestCase):
             result['config'][field] = value
             with self.assertRaises(ValueError):
                 self.validate(result)
+
+    def test_modified_raw_export_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            row = {'label': 'case', 'command': ['bench', 'run', 'case'],
+                   'exit_code': 0, 'output_errors': []}
+            records = {'commands.jsonl': row,
+                       'metadata.json': {'schedule': [['case', row['command']]]},
+                       'completion.json': {'scheduled': 1, 'completed': 1, 'failures': []},
+                       'case.json': {'verdict': 'inconclusive'}}
+            for name, value in records.items():
+                (root / name).write_text(json.dumps(value) + '\n')
+            (root / 'retention.json').write_text(json.dumps({
+                'completed_commands': ['case'],
+                'sha256': {name: hashlib.sha256((root / name).read_bytes()).hexdigest()
+                           for name in records}}))
+            journal(root, ['case'])
+            (root / 'case.json').write_text('{"verdict":"consistent_with_declared_complexity"}\n')
+            with self.assertRaisesRegex(ValueError, 'hash mismatch'):
+                journal(root, ['case'])
 
 
 if __name__ == '__main__':

@@ -6,6 +6,7 @@ reported exactly as LeanBench emitted them. The two paired schedules diagnose
 constants at one dimension and cannot establish a complexity pass.
 """
 import argparse
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -29,6 +30,13 @@ def require(condition, message):
 
 
 def journal(directory, labels):
+    retained = read(directory / 'retention.json')
+    require(retained['completed_commands'] == labels, f'{directory}: retention schedule mismatch')
+    required = {'metadata.json', 'commands.jsonl', *(label + '.json' for label in labels)}
+    require(required <= retained['sha256'].keys(), f'{directory}: missing retained raw files')
+    for name, expected in retained['sha256'].items():
+        require(hashlib.sha256((directory / name).read_bytes()).hexdigest() == expected,
+                f'{directory}: retained file hash mismatch: {name}')
     completion = read(directory / 'completion.json')
     require(completion['scheduled'] == completion['completed'] == len(labels),
             f'{directory}: incomplete schedule')

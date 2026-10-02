@@ -291,7 +291,9 @@ The two selection helpers have independent mode-1 cubic models on the same
 linked-list access, while output allocation is O(n²). Their preparation checks
 the pivot indices, prefix minor and transpose against structural constructions.
 These benchmarks expose the profile's list-access cost without changing the
-selector implementations. Every schedule uses six fixed trial-major trials,
+selector implementations. Their cubic attribution bounds describe the existing
+linked-list helpers; they do not assert an intrinsic cubic cost for selection.
+Every schedule uses six fixed trial-major trials,
 a 2-second batch target and the unchanged harness tolerance.
 
 All four selector targets pass; their [validated analysis](bench-results/hex-rank-10352/checker/selection-analysis.json)
@@ -307,8 +309,19 @@ retains all 168 samples and links the four exports:
 No new implementation or selector schedule needed an unchanged rerun. The
 original checker, its one allowed rerun, the tail-only experiment's availability
 record and the borrowed-only inconclusive result remain explicit historical
-evidence; none is relabelled as a pass. The current implementation has its own
-complete set of passing applicable verdicts.
+evidence; none is relabelled as a pass. The final implementation's new passing
+verdicts combine with the unchanged `dotImpl`/`dotAcc` primitive's passing
+`borrow-dot` evidence and the original Lean 4.34.0 `prepare*` evidence described
+above to cover all applicable targets. The borrowed dot's executable body is
+unchanged by the array replacement.
+
+The final 447-case list and 98-case smoke are also captured at the committed
+source in [current-verification.json](bench-results/hex-rank-10352/checker/driver/current-verification.json),
+with source/executable hashes and exact commands. The frozen array driver
+predates the four selector registrations; the selection driver differs from the
+final bench source only by adding the words “linear” and “cubic” to two model
+comments. The final executable is byte-identical to the verified selection
+binary. Both original and current-source smoke captures are retained.
 
 The frozen executables are recorded in [binaries/](bench-results/hex-rank-10352/checker/binaries/):
 `before` reconstructs main `a29afca7a`, `borrow` reconstructs `1a9f17f84`, and
