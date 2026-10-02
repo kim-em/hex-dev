@@ -19,6 +19,7 @@ import HexSignDetMathlib.ThomReencoding
 import HexSignDetMathlib.ThomRoots
 import HexRationalFn
 import HexOrderedFn.Infinitesimal
+import HexSignDetMathlib.ComparisonProducer
 import HexSignDetMathlib.Convert
 
 import HexSignDetMathlib.QueryHandle
@@ -1288,10 +1289,7 @@ private def orderedRootsPass : Bool :=
   match Descriptor.build Sturm.orderSign 7 positiveRoot,
       Descriptor.build Sturm.orderSign 7 rootTwo with
   | .ok (.ok one), .ok (.ok two) =>
-    match one.buildComparison two with
-    | .ok result => result.order == .lt &&
-        result.common.check 7 positiveRoot.head rootTwo.head
-    | _ => false
+    one.compare two == .lt && two.compare one == .gt
   | _, _ => false
 
 #guard orderedRootsPass
@@ -1314,14 +1312,59 @@ private def commonRootPass : Bool :=
       Descriptor.build Sturm.orderSign 7 sharedRoot with
   | .ok (.ok left), .ok (.ok right) =>
     match left.buildComparison right with
-    | .ok result => result.order == .eq &&
-        result.common.check 7
-          sqrtTwoRoot.head sharedRoot.head
+    | .ok result =>
+      result.common.check 7 sqrtTwoRoot.head sharedRoot.head &&
+        (left.buildOrder right).toOption == some .eq &&
+        left.compare right == .eq
     | _ => false
   | _, _ => false
 
 #guard commonRootPass
 ```
+
+The same defining polynomial can name one root through different intervals.
+Both `(0,2)` and `(1,2)` contain only the positive root of `x² − 2`.
+The comparison completes these two descriptions and returns equality directly.
+It checks that construction succeeded before inspecting the total result.
+
+```lean
+private def sameHeadPass : Bool :=
+  match Descriptor.validate Sturm.orderSign 7 sqrtTwoRoot,
+      Descriptor.validate Sturm.orderSign 7
+        {sqrtTwoRoot with
+          lower := .finite 1
+          upper := .finite 2
+          indices := []
+          signs := []} with
+  | some left, some right =>
+    (left.buildOrder right).toOption == some .eq &&
+      left.compare right == .eq
+  | _, _ => false
+
+#guard sameHeadPass
+```
+
+{name}`Hex.SignDet.Descriptor.compare` is the total root-order operation.
+It completes partial descriptors and compares their encodings directly when the
+stored defining polynomials agree, even across different intervals. For different
+heads it retains the original root selections when
+changing their defining polynomial. Import `HexSignDetMathlib.ComparisonProducer`
+for {name}`Hex.SignDet.Descriptor.compare_correct` and the equality and strict-order
+equivalences {name}`Hex.SignDet.Descriptor.compare_eq_iff`,
+{name}`Hex.SignDet.Descriptor.compare_lt_iff` and
+{name}`Hex.SignDet.Descriptor.compare_gt_iff`.
+{name}`Hex.SignDet.Descriptor.buildComparison_success` proves that the actual
+common-polynomial constructor, both joint re-encodings and the full-word
+comparison succeed under lawful coefficient interpretations. The total operation's
+internal error branch emits a diagnostic and returns `eq`.
+{name}`Hex.SignDet.Descriptor.compare_ofError` proves that exact fallback value;
+{name}`Hex.SignDet.Descriptor.buildOrder_roots` proves actual success and excludes
+that branch under the coefficient laws. The executable operation requires
+ordinary coefficient operations and signs, without a companion proof package.
+The proofs require canonical zero, allow other stored values to have multiple
+representations, and apply to arbitrary ordered real
+closed fields, including fields with infinitesimals. They use the proved shared
+root-sum semantics and Tau Ceti Thom identity/order foundations.
 
 For two independently selected coefficients, the existing number-field
 constructor finds one coordinate field. Here √2 and √3 start as roots of
@@ -1362,9 +1405,11 @@ proved root-sum theorem `HexRealRootsMathlib.Tarski.check_rootSum`.
 The full-word comparison uses Tau Ceti’s delivered Thom identity and order
 theorems through the companion. {name}`Hex.SignDet.Comparison.order_root`
 proves that all three orders returned by an accepted comparison agree with the
-original selected roots. Universal root-list production and mathematical
-sorting are proved; common-product comparison production remains required. The
-separate common-field conversion preserves the selected algebraic values by
+original selected roots. {name}`Hex.SignDet.Descriptor.buildComparison_success`
+proves that the actual comparison constructor succeeds;
+{name}`Hex.SignDet.Descriptor.compare_correct` gives the result of the total
+operation. Universal root-list production and mathematical sorting are also
+proved. The common-field conversion preserves the selected algebraic values by
 the proved `QAdjoin.common_get` theorem.
 
 # Cross-references

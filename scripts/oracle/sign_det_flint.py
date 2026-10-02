@@ -44,7 +44,8 @@ REQUIRED_CASES = {
         "zero-head", "repeated-head", "root-endpoint", "reversed-interval")),
     *(f"compare/{name}" for name in ("equal-linear-vectors", "reverse-linear", "permuted-slots",
         "shared-irrational", "distinct-irrational", "negative-head", "scaled-head",
-        "foreign-endpoint", "disjoint-intervals", "overlapping-equal")),
+        "foreign-endpoint", "disjoint-intervals", "overlapping-equal",
+        "same-head-overlap")),
     *(f"reencode/{name}" for name in ("shared-irrational", "outside-target", "missing-root",
         "invalid-target", "foreign-endpoints")),
 }
@@ -236,6 +237,11 @@ def check_comparison(data: dict[str, Any]) -> None:
     require(len(li) == len(ri) == 1, "common head loses a selected root")
     expected_order = "lt" if li[0] < ri[0] else "gt" if li[0] > ri[0] else "eq"
     require(actual.get("order") == expected_order, "comparison differs from exact numerical root order")
+    require(actual.get("totalOrder") == expected_order,
+            "total comparison differs from exact numerical root order")
+    reverse_order = "gt" if expected_order == "lt" else "lt" if expected_order == "gt" else "eq"
+    require(actual.get("reverseOrder") == reverse_order,
+            "reversed total comparison differs from exact numerical root order")
     for field, index in (("leftSigns", li[0]), ("rightSigns", ri[0])):
         require(sign_vector(actual.get(field), n) and actual[field] == words[index][:n],
                 f"{field} encodes a different common-head root")

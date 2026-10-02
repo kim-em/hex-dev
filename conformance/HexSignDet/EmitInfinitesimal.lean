@@ -122,6 +122,8 @@ private def emitComparison (coeff : E → Json) (sign : E → Int) (depth : Nat)
       | .error err => failure err
       | .ok c => Json.mkObj [("status", toJson "ok"), ("commonHead", poly coeff c.common.head),
           ("order", toJson (match c.order with | .lt => "lt" | .eq => "eq" | .gt => "gt")),
+          ("totalOrder", toJson (match l.compare r with | .lt => "lt" | .eq => "eq" | .gt => "gt")),
+          ("reverseOrder", toJson (match r.compare l with | .lt => "lt" | .eq => "eq" | .gt => "gt")),
           ("leftSigns", toJson c.leftEncoding.target.raw.signs),
           ("rightSigns", toJson c.rightEncoding.target.raw.signs),
           ("commonReplay", toJson (c.common.check 10377 left.head right.head)),
@@ -197,6 +199,12 @@ def run : IO Unit := do
   let qr : RawDescriptor First Nat := ⟨10377, q, .negInf, .posInf, [1], [1]⟩
   emitDescriptor first firstSign 1 "square/negative-head"
     {qr with head := -q, signs := [-1]} [x, q]
+  emitComparison first firstSign 1 "square/same-head-overlap" qr
+    {qr with
+      lower := .finite epsilon
+      upper := .posInf
+      indices := []
+      signs := []}
   emitComparison first firstSign 1 "square/scaled-equal" qr
     {qr with head := DensePoly.C (-epsilon) * q, signs := [-1]}
   emitComparison first firstSign 1 "passmore/shared-cubic" raw

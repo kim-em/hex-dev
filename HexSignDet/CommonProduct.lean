@@ -57,4 +57,18 @@ def CommonProduct.build (context : Ctx) (p q : DensePoly E) :
     ⟨context, p, q, h, g, (DensePoly.divMod h p).1, (DensePoly.divMod h q).1⟩
   if hc : c.check context p q = true then .ok ⟨c, hc⟩ else .error .system
 
+/-- The actual gcd/division constructor succeeds when its literal record
+passes the replay guard. This equation exposes no second implementation. -/
+theorem CommonProduct.build_of_check (context : Ctx) (p q : DensePoly E)
+    (h : (⟨context, p, q, (DensePoly.divMod (p * q) (DensePoly.gcd p q)).1,
+      DensePoly.gcd p q,
+      (DensePoly.divMod (DensePoly.divMod (p * q) (DensePoly.gcd p q)).1 p).1,
+      (DensePoly.divMod (DensePoly.divMod (p * q) (DensePoly.gcd p q)).1 q).1⟩ :
+        CommonProduct E Ctx).check context p q = true) :
+    CommonProduct.build context p q = .ok ⟨⟨context, p, q,
+      (DensePoly.divMod (p * q) (DensePoly.gcd p q)).1, DensePoly.gcd p q,
+      (DensePoly.divMod (DensePoly.divMod (p * q) (DensePoly.gcd p q)).1 p).1,
+      (DensePoly.divMod (DensePoly.divMod (p * q) (DensePoly.gcd p q)).1 q).1⟩, h⟩ := by
+  simp only [CommonProduct.build, h, ↓reduceDIte]
+
 end Hex.SignDet
