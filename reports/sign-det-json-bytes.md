@@ -97,10 +97,12 @@ ceiling. Combined high depth and width and complete memory attribution remain
 integration checks. The low-level decimal word readers accept leading
 zeros; JSON token parsing separately rejects them.
 
-Stack setup matters for Lean native executables: the v4.35.0-rc3 runtime runs
-`main` on a separate thread by default, with a 1 GiB thread stack on 64-bit
-hosts. An OS `RLIMIT_STACK` alone does not constrain that explicit thread
-stack. Capacity observations made with the earlier OS-only setup are retained
-as value/capacity checks, but do not establish an 8 MiB stack bound. The corrected
-oracle environment sets `LEAN_MAIN_USE_THREAD=0` and `LEAN_STACK_SIZE_KB=8192`
-before launching the executable.
+All full-size cases listed above and the smaller CI suite pass with the
+constrained main thread. The stress runner first executes a deliberately
+non-tail recursive canary in the same binary. It must finish on Lean's default
+thread and abort with a stack-overflow diagnostic under the constrained setup.
+This detects runtime flags being ignored; core dumps are disabled for the canary.
+The [pinned runtime source](https://github.com/leanprover/lean4/blob/v4.35.0-rc3/src/runtime/thread.cpp)
+sets a 1 GiB default thread stack on 64-bit hosts. An OS stack limit alone does
+not constrain that explicitly allocated thread stack. These capacity checks
+measure no running-time law or peak memory.

@@ -40,6 +40,25 @@ def stack_limit():
     if hard != resource.RLIM_INFINITY and hard < 8 * 1024 * 1024:
         raise ValueError("requires an 8 MiB hard stack allowance")
     resource.setrlimit(resource.RLIMIT_STACK, (8 * 1024 * 1024, hard))
+    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+
+
+def check_stack(executable):
+    """The same non-tail call must finish with the default thread and overflow
+    with the constrained main thread, so ignored runtime flags cannot pass."""
+    default_env = dict(os.environ)
+    default_env.pop("LEAN_MAIN_USE_THREAD", None)
+    default_env.pop("LEAN_STACK_SIZE_KB", None)
+    control = subprocess.run([str(executable), "--stack-canary"], capture_output=True,
+                             preexec_fn=stack_limit, env=default_env)
+    if control.returncode != 0 or control.stdout.strip() != b"1000000":
+        raise RuntimeError("stack canary control failed: " + control.stderr.decode(errors="replace"))
+    limited = subprocess.run([str(executable), "--stack-canary"], capture_output=True,
+                             preexec_fn=stack_limit,
+                             env=dict(os.environ, LEAN_MAIN_USE_THREAD="0", LEAN_STACK_SIZE_KB="8192"))
+    if limited.returncode != -6 or b"Stack overflow" not in limited.stderr:
+        raise RuntimeError(f"8 MiB stack canary did not overflow: exit {limited.returncode}")
+    print("stack canary: default-thread control passes, constrained main thread overflows", flush=True)
 
 
 def run_guard(executable, source):
@@ -60,6 +79,7 @@ def main():
                         default=ROOT / ".lake/build/bin/hexsigndet_json_bytes")
     parser.add_argument("--ci", action="store_true", help="smaller mandatory native probes")
     args = parser.parse_args()
+    check_stack(args.exe)
     with tempfile.TemporaryDirectory(prefix="hex-json-stress-") as directory:
         source = Path(directory) / "source.json"
         target = Path(directory) / "printed.json"

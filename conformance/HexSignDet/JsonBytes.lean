@@ -29,4 +29,13 @@ example (value : Value) : readBytes value.writeBytes = some value := readBytes_w
     some (.object (.cons "x" (.number 1) (.cons "x" (.number 2) .nil)))
 #guard readBytes "\"\\ud83d\\ude00\"".toUTF8 == some (.string "😀")
 
+/-- A deliberately non-tail call tests the executable's stack configuration.
+This is only a native test canary, never part of parsing or certificate replay. -/
+@[noinline] def stackCanary : Nat → IO Nat
+  | 0 => pure 0
+  | n + 1 => do
+    let result ← stackCanary n
+    if result == n then pure (result + 1)
+    else throw (IO.userError "stack canary result changed")
+
 end Hex.SignDet.JsonBytes

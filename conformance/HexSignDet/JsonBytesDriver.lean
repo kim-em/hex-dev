@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexSignDet.Codec.Value
+import HexSignDet.JsonBytes
 import HexSignDet.Codec.Bytes
 import Lean.Data.Json
 
@@ -58,6 +59,7 @@ private def runLines : IO Unit := do
 /-- File mode avoids an unrelated JSON transport when checking large native inputs. -/
 def main (args : List String) : IO Unit := do
   match args with
+  | ["--stack-canary"] => IO.println (← Hex.SignDet.JsonBytes.stackCanary 1000000)
   | [] => runLines
   | ["--check-file", source] =>
     let bytes ← IO.FS.readBinFile source
@@ -72,4 +74,4 @@ def main (args : List String) : IO Unit := do
     let some value := Hex.SignDet.Codec.Json.readBytes bytes
       | throw (IO.userError "JSON input rejected")
     IO.FS.writeBinFile target value.writeBytes
-  | _ => throw (IO.userError "expected no arguments, --check-file SOURCE, or --file SOURCE TARGET")
+  | _ => throw (IO.userError "expected no arguments, --stack-canary, --check-file SOURCE, or --file SOURCE TARGET")
