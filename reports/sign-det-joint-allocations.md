@@ -146,7 +146,9 @@ matches the generated source identified by every capture.
 
 No completed observation is discarded. All 55 scheduled observations completed.
 This collection supplies allocation observations for joint table production,
-completion, comparison and replay. Maximal support, independent
+completion, comparison and replay. A separate
+[complete matrix collection](sign-det-matrix-allocations.md) measures the finite
+maximal-support solver and checker. Complete polynomial-query families, independent
 coefficient-height and nested-field families, live memory and the remaining
 Phase-4 obligations require their own evidence. It does not resolve
 the running-time report's inconclusive verdicts or complete #10377.
