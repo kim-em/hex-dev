@@ -19,7 +19,7 @@ variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRe
 
 /-- Interpret the actual root context in the same ambient real closed field
 as its coefficient context. No model is an executable constructor argument. -/
-noncomputable def Root.model (root : Root parent) (model : Model parent K) :
+@[expose] noncomputable def Root.model (root : Root parent) (model : Model parent K) :
     Model root.context K := by
   cases root with
   | point value => exact model
@@ -28,7 +28,7 @@ noncomputable def Root.model (root : Root parent) (model : Model parent K) :
     exact model.adjoin descriptor
 
 /-- Interpret the stored native value through its actual extension model. -/
-noncomputable def Root.denote (root : Root parent) (model : Model parent K) : K :=
+@[expose] noncomputable def Root.denote (root : Root parent) (model : Model parent K) : K :=
   (root.model model).value root.value
 
 /-- Native materialization preserves the root selected by the producer. -/
@@ -91,7 +91,7 @@ theorem Root.compare_correct (a b : Root parent) (model : Model parent K) :
   simp only [Root.compare, a.compare?_correct b model]
 
 /-- The value carried by one native root entry in its actual root context. -/
-noncomputable def RootEntry.denote (entry : RootEntry parent) (model : Model parent K) : K :=
+@[expose] noncomputable def RootEntry.denote (entry : RootEntry parent) (model : Model parent K) : K :=
   entry.root.denote model
 
 theorem RootEntry.denote_ofEntry (entry : Roots.Entry parent.sign parent.signature)
@@ -139,6 +139,20 @@ theorem Context.roots_sorted (model : Model parent K) (p : DensePoly parent.Valu
     Roots.roots_sorted model.value model.zero_iff model.one model.add model.sub model.mul
       model.nat model.sign model.neg model.inv model.div p produced
 
+/-- Every root of a nonzero native polynomial occurs as an actual stored
+value returned by the complete native producer, with its coefficient embedding. -/
+theorem Model.root_exists (model : Model parent K) (p : DensePoly parent.Value)
+    (nonzero : HexPolyMathlib.Interpret.interpret model.value model.zero_iff p ≠ 0)
+    (x : K) (root : (HexPolyMathlib.Interpret.interpret model.value model.zero_iff p).IsRoot x) :
+    ∃ out, parent.roots p = .finite out ∧ ∃ entry ∈ out, entry.denote model = x := by
+  cases produced : parent.roots p with
+  | all => exact False.elim (nonzero ((Context.roots_all model p).mp produced))
+  | finite out =>
+    obtain ⟨entry, member, value, _⟩ := (Context.roots_spec model p produced x
+      ((HexPolyMathlib.Interpret.interpret model.value model.zero_iff p).rootMultiplicity x)).mpr
+        ⟨root, rfl⟩
+    exact ⟨out, rfl, entry, member, value⟩
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.Root.embed_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -164,3 +178,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.roots_sorted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.roots_sorted
+
+/-- info: 'Hex.RealClosure.Tower.Model.root_exists' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Model.root_exists
