@@ -111,3 +111,32 @@ and the five exhausted outcomes agree. The existing kernel replays therefore
 remain applicable; unchanged successful measurements are reused. All resource
 limits and the local/portfolio/child priority regressions build in the existing
 conformance targets. No operation or edge-case coverage obligation remains.
+
+## Proof and API attestation
+
+The complete core build and conformance targets are green on the pinned
+Lean toolchain, with zero proof placeholders, axioms or native-decision
+steps. Phase 5 requires no additional mathematical bridge proofs.
+
+The declaration inventory above is the substantive Phase 6 review. Each
+public operation has a docstring and a downstream purpose; constructor and
+acceptance equations characterize ordinary proof use. The old digit scanner
+and duplicate bit-length lemma were removed rather than preserved unused.
+Checked curve predicates remain executable arithmetic checks, not hidden
+Mathlib group-law assumptions. The imported declaration linter is clean.
+The adjacent baseline comparison and every operation-specific performance
+budget pass, as detailed in `hex-ecpp-performance.md` and its retained
+`audit/regression-current-summary.json`. Shared-host observations are not
+universal latency guarantees.
+
+## Documentation and split validation
+
+The dedicated core-only Verso chapter builds inside `HexManual`, with live
+bounded native search, supplied conversion, checker and resource-exhaustion
+examples. The README has the required released-package sections and its
+verbatim quickstart builds in a fresh Lake client. The fresh coordinated
+split stages exact monorepo prerequisites, carries the public Lake settings
+and links native arithmetic without any Mathlib directory or dependency.
+`audit/split.json` retains all source fingerprints and build output;
+`scripts/release/check_ecpp_split.py` reproduces that validation. The companion
+correspondence section is reserved for #10586 and coordinated on that issue.
