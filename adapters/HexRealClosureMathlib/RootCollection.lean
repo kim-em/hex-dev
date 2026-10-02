@@ -163,13 +163,28 @@ while retaining the strict order of all its returned roots. -/
 theorem Context.roots_collected_sorted (original : Model parent K) (p : DensePoly parent.Value)
     {entries : List (RootEntry parent)} (returned : parent.roots p = .finite entries) :
     let collection := parent.collect (entries.map (·.root))
-    ∃ model : Collection.Model collection original,
+    ∀ model : Collection.Model collection original,
       (collection.values.map model.input.target.value).Pairwise (· < ·) := by
-  obtain ⟨model⟩ := (Context.collect_success original (entries.map (·.root))).2
-  refine ⟨model, model.sorted ?_⟩
+  intro collection model
+  apply model.sorted
   rw [Context.collect_sources original]
   simpa only [List.map_map, Function.comp_def, RootEntry.denote] using
     Context.roots_sorted original p returned
+
+/-- Native sign comparisons strictly order the complete roots in their
+single collected arithmetic context. -/
+theorem Context.roots_collected_ordered (original : Model parent K) (p : DensePoly parent.Value)
+    {entries : List (RootEntry parent)} (returned : parent.roots p = .finite entries) :
+    let collection := parent.collect (entries.map (·.root))
+    ∀ model : Collection.Model collection original,
+      collection.values.Pairwise (fun a b => collection.input.context.sign (b - a) = 1) := by
+  intro collection model
+  have ordered := Context.roots_collected_sorted original p returned model
+  rw [List.pairwise_map] at ordered
+  apply ordered.imp
+  intro a b less
+  rw [model.input.target.sign, model.input.target.sub, sign_eq_one_iff.mpr (sub_pos.mpr less)]
+  rfl
 
 end Hex.RealClosure.Tower
 
@@ -196,3 +211,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.roots_collected_sorted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Context.roots_collected_sorted
+
+/-- info: 'Hex.RealClosure.Tower.Context.roots_collected_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.roots_collected_ordered

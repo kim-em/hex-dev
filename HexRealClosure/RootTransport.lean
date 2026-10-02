@@ -42,8 +42,8 @@ and the native packing closure for its original root context. -/
   ⟨.selected converted child rfl,
     Conversion.includeRoot conversion.context converted child rfl,
     (Conversion.includeRoot_spec conversion.context converted child rfl).1,
-    conversion.adjoinChecked descriptor converted accepted,
-    conversion.adjoinChecked_context descriptor converted accepted⟩
+    conversion.adjoinCached descriptor converted accepted child rfl,
+    (conversion.adjoinCached_spec descriptor converted accepted child rfl).1⟩
 
 /-- Revalidate a root after converting its coefficients. The returned maps
 retain every old value's owner, while permitting transport of the whole old

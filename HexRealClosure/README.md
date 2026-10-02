@@ -744,8 +744,11 @@ both the converted coefficient context and the complete old root context;
 `RootMap.Model.value` and `Collection.Model.values` identify all transported
 values and the ordered root list in one shared ambient model.
 `Context.roots_collected_sorted` specializes this agreement to the strictly
-ordered output of complete root finding. Callers retain the original positive
-multiplicity labels beside that ordered list.
+ordered output of complete root finding for every compatible collection model.
+Entries retain input order, so callers can zip them with the original positive
+multiplicity labels. Collection retains each original defining polynomial;
+collecting conjugates or duplicate roots can multiply representation degrees.
+The constructor currently does not deflate by previously collected roots.
 
 Run `lake build HexRealClosure.RootCollectionTests` for a runnable mixed-field
 example: √2 and the positive root of `3(X²-3)` enter one context, where their
@@ -1342,7 +1345,8 @@ packaging and dependency closure. The interpretation ingredients are:
    and assembling
    the total checked constructor with its value and order preservation
    statements. `Context.origin` extracts the exact base and validated root
-   suffix of one stored context; the cross-context dependency traversal remains.
+   suffix of one stored context. `Context.collect` gathers root handles over
+   one common predecessor; arbitrary live-context dependency traversal remains.
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the

@@ -51,13 +51,13 @@ noncomputable def Moved.Model.selected {conversion : Conversion parent}
   exact
     { input := Conversion.Model.includeRoot model.target converted _ rfl
       transported := model.adjoinWith descriptor converted binding
-        (conversion.adjoinChecked descriptor converted accepted)
-        (conversion.adjoinChecked_context descriptor converted accepted)
-        (conversion.adjoinChecked_value descriptor converted accepted)
+        (conversion.adjoinCached descriptor converted accepted _ rfl)
+        (conversion.adjoinCached_spec descriptor converted accepted _ rfl).1
+        (conversion.adjoinCached_spec descriptor converted accepted _ rfl).2
       input_target := Conversion.Model.includeRoot_target model.target converted _ rfl
       transported_target := model.adjoinWith_target descriptor converted binding _
-        (conversion.adjoinChecked_context descriptor converted accepted)
-        (conversion.adjoinChecked_value descriptor converted accepted)
+        (conversion.adjoinCached_spec descriptor converted accepted _ rfl).1
+        (conversion.adjoinCached_spec descriptor converted accepted _ rfl).2
       root := by
         change (model.target.adjoin converted).value
           (conversion.context.adjoin converted).generator =

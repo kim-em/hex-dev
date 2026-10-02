@@ -69,6 +69,23 @@ private def run : IO Unit := do
   let .ok restored := alpha.context.read (alpha.context.write alpha.value)
     | throw (IO.userError "old context reader stopped accepting its value")
   require (alpha.context.sign (restored - alpha.value) == 0) "old context reader changed its value"
+  let .finite conjugates := base.roots (x * x - DensePoly.C two)
+    | throw (IO.userError "quadratic roots returned all")
+  let conjugateCollection := base.collect (conjugates.map (·.root))
+  let [negative, positive] := conjugateCollection.values
+    | throw (IO.userError "quadratic collection lost a conjugate")
+  let conjugateContext := conjugateCollection.input.context
+  require (conjugateContext.sign (negative + positive) == 0)
+    "collected conjugates changed their relation"
+  let difference := positive - negative
+  require (conjugateContext.sign difference == 1) "collected conjugates are not increasing"
+  require (conjugateContext.sign (difference * difference⁻¹ - 1) == 0)
+    "inverse splitting over the reducible conjugate definition failed"
+  let duplicate := base.collect [alpha, alpha]
+  let [left, right] := duplicate.values
+    | throw (IO.userError "duplicate collection lost an input handle")
+  require (duplicate.input.context.sign (left - right) == 0)
+    "duplicate root collection changed selection"
   IO.println "common root contexts, nonlinear transport and mixed arithmetic checks passed"
 
 #eval run

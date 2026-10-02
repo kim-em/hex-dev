@@ -41,7 +41,8 @@ structure RootMap (parent target : Context registry) : Type 1 where
     (entry.conversion.comp_spec following).1.trans (next.cast_spec entry.context.symm).1⟩
 
 /-- A shared native context, its original coefficient inclusion, and the
-ordered inclusions of all roots collected so far. -/
+inclusions of original root contexts. Input-order and interpretation invariants
+are proved for actual `collect` and `collect?` outputs. -/
 structure Collection (parent : Context registry) : Type 1 where
   input : Conversion parent
   entries : List (RootMap parent input.context)

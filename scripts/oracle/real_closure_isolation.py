@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact Z3 oracle for capped bisection and root assembly over nested values.
+"""Exact Z3 oracle for capped isolation, root assembly and native collection.
 
 Checks the actual inputs, scalar-preserving deflation, retained cell counts,
 selected roots, completeness and absence of duplicates. Proof graphs and
@@ -355,12 +355,15 @@ def verify_collection(row):
         roots = []
         for frame, expected in zip(raw[2], expected_heads):
             require(isinstance(frame, list) and len(frame) == 7 and frame[0] == [0] and
+                    type(frame[0][0]) is int and
                     isinstance(frame[1], list) and isinstance(frame[6], list),
                     "malformed native root frame")
             head = [value(c, roots) for c in frame[1]]
             require(head == [n * rcf.one for n in expected], "wrong native root equation")
-            require(isinstance(frame[2], list) and len(frame[2]) == 2 and frame[2][0] == 1 and
-                    isinstance(frame[3], list) and len(frame[3]) == 2 and frame[3][0] == 1,
+            require(isinstance(frame[2], list) and len(frame[2]) == 2 and
+                    type(frame[2][0]) is int and frame[2][0] == 1 and
+                    isinstance(frame[3], list) and len(frame[3]) == 2 and
+                    type(frame[3][0]) is int and frame[3][0] == 1,
                     "wrong native root interval")
             lower, upper = value(frame[2][1], roots), value(frame[3][1], roots)
             require(lower == rcf.one and upper == 2 * rcf.one, "native root interval changed")
@@ -525,7 +528,7 @@ def verify(rows):
 def main():
     rows = [json.loads(line) for line in sys.stdin if line.strip()]
     verify(rows)
-    print(f"verified {len(rows)} capped isolation and root-assembly fixtures with exact Z3 RCF")
+    print(f"verified {len(rows)} isolation, assembly and native-collection fixtures with exact Z3 RCF")
 
 
 if __name__ == "__main__":
