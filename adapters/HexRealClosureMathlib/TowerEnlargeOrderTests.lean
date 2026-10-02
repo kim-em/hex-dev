@@ -40,18 +40,45 @@ example (suffix : Suffix base) (old : Model suffix.context ℝ) :
     letI : Algebra (Hex.RationalFn Rat) ambient.Carrier :=
       (Ambient.mappedNativeHom HexPolyMathlib.toGrind_fieldOfGrind coefficient ambient).toAlgebra
     Algebra.IsAlgebraic (Hex.RationalFn Rat) ambient.Carrier := by
+  intro initial
+  letI : Field Rat := HexPolyMathlib.fieldOfGrind
+  letI : Algebra Rat ℝ := (initial.baseHom rationalBase).toAlgebra
   exact Model.suffixRestrict_algebraic rationalBase suffix rational old
+    (Ambient.infinitesimal (Union.Carrier Rat ℝ))
 
-/-- A selected root's actual enlarged context supplies a native parameter
-below every old positive value; callers need no cast or new model witness. -/
+/-- A selected root's actual enlargement returns its native parameter below
+every old positive value, with no second reconstruction or existential scalar. -/
 example (descriptor : SignDet.Descriptor base.Value Signature base.sign base.signature) :
     let context := (base.adjoin descriptor).context
-    ∃ result : Conversion context, context.enlarge? = some result ∧
-      ∃ parameter : result.context.Value, result.context.sign parameter = 1 ∧
-        ∀ a, context.sign a = 1 → result.context.sign (parameter - result.value a) = -1 := by
-  obtain ⟨rebuilt, _, enlarged, _, positive, small⟩ := Context.enlarge?_ordered
+    ∃ result : Enlargement context, context.enlargeWithParameter? = some result ∧
+      result.conversion.context.sign result.parameter = 1 ∧
+        ∀ a, context.sign a = 1 → result.conversion.context.sign
+          (result.parameter - result.conversion.value a) = -1 := by
+  obtain ⟨rebuilt, enlarged, _, _, _, positive, small⟩ := Context.enlargeWithParameter?_model
     rationalBase (.root descriptor .nil) rfl rational (rational.adjoin descriptor)
     (Ambient.infinitesimal ℝ)
-  exact ⟨rebuilt.result.cast rfl, enlarged, _, positive, small⟩
+  exact ⟨rebuilt.enlargement rationalBase rfl, enlarged, positive, small⟩
+
+/-- The combined restriction/enlargement theorem supplies the actual returned
+parameter and preservation model over the old tower's relative algebraic union. -/
+example (suffix : Suffix base) (old : Model suffix.context ℝ) :
+    let initial := suffix.restrict rational old
+    letI : Field Rat := HexPolyMathlib.fieldOfGrind
+    letI : Algebra Rat ℝ := (initial.baseHom rationalBase).toAlgebra
+    let restricted := Model.suffixRestrict rationalBase suffix rational old
+    let ambient := Ambient.infinitesimal (Union.Carrier Rat ℝ)
+    ∃ result : Enlargement suffix.context,
+      suffix.context.enlargeWithParameter? = some result ∧
+        Nonempty (Conversion.Model result.conversion (restricted.liftInfinitesimal ambient)) ∧
+        result.conversion.context.sign result.parameter = 1 ∧
+        ∀ a, suffix.context.sign a = 1 → result.conversion.context.sign
+          (result.parameter - result.conversion.value a) = -1 := by
+  intro initial
+  letI : Field Rat := HexPolyMathlib.fieldOfGrind
+  letI : Algebra Rat ℝ := (initial.baseHom rationalBase).toAlgebra
+  let ambient := Ambient.infinitesimal (Union.Carrier Rat ℝ)
+  obtain ⟨_, _, rebuilt, enlarged, model, _, _, positive, small⟩ :=
+    Context.enlargeWithParameter?_algebraic rationalBase suffix rational old ambient
+  exact ⟨rebuilt.enlargement rationalBase rfl, enlarged, ⟨model⟩, positive, small⟩
 
 end Hex.RealClosure.Tower.EnlargeOrder.Tests

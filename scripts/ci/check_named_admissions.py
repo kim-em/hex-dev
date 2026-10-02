@@ -211,6 +211,7 @@ def check() -> None:
              "HexRealClosureMathlib.TowerEnlargeOrder",
              "HexRealClosureMathlib.TowerEnlargeOrderTests",
              "HexRealClosure.TowerEnlargeOrderTests",
+             "HexRealClosure.TowerEnlargement",
              "HexRealClosureMathlib.Specialize",
              "HexRealClosureMathlib.SpecializePolynomial",
              "HexRealClosureMathlib.SpecializeRegular", "HexRealClosureMathlib.SpecializeQuery", "HexRealClosureMathlib.SpecializeTarski",

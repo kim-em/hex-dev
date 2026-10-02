@@ -184,3 +184,11 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Suffix.origin_exact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Suffix.origin_exact
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.parameter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.parameter
+
+/-- info: 'Hex.RealClosure.Tower.Rebuilt.parameter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Rebuilt.parameter

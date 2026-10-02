@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.TowerEnlarge
+public import HexRealClosure.TowerEnlargement
 public import HexRealClosureMathlib.TowerRestriction
 public import HexRealClosureMathlib.BaseBound
 public import HexRealClosureMathlib.BaseAlgebraicity
@@ -81,14 +82,14 @@ theorem suffixRestrict_algebraic {B : Type} [Lean.Grind.Field B] [DecidableEq B]
     let initial := suffix.restrict reference old
     letI : Field B := HexPolyMathlib.fieldOfGrind
     letI : Algebra B K := (initial.baseHom base).toAlgebra
+    ∀ ambient : Ambient (Hex.RationalFn (Union.Carrier B K)),
     let restricted := suffixRestrict base suffix reference old
     let coefficient := (suffix.restrict reference restricted).baseHom base
-    let ambient := Ambient.infinitesimal (Union.Carrier B K)
     letI : Field (Hex.RationalFn B) := HexPolyMathlib.fieldOfGrind
     letI : Algebra (Hex.RationalFn B) ambient.Carrier :=
       (Ambient.mappedNativeHom HexPolyMathlib.toGrind_fieldOfGrind coefficient ambient).toAlgebra
     Algebra.IsAlgebraic (Hex.RationalFn B) ambient.Carrier := by
-  intro initial
+  intro initial ambient
   letI : Field B := HexPolyMathlib.fieldOfGrind
   letI : Algebra B K := (initial.baseHom base).toAlgebra
   let coefficient := (suffix.restrict reference (suffixRestrict base suffix reference old)).baseHom base
@@ -103,7 +104,26 @@ theorem suffixRestrict_algebraic {B : Type} [Lean.Grind.Field B] [DecidableEq B]
     rw [coefficient_eq]
     exact root
   exact Ambient.mappedNative_algebraic HexPolyMathlib.toGrind_fieldOfGrind coefficient
-    algebraic (Ambient.infinitesimal (Union.Carrier B K))
+    algebraic ambient
+
+/-- Infinitesimality only over the actual initial coefficient map suffices
+for every positive old tower value, by its local algebraic bound. -/
+theorem suffix_infinitesimal {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    {S : Type v} [Field S] [LinearOrder S] [DecidableEq S]
+    [IsStrictOrderedRing S] [IsRealClosed S]
+    (reference : Model (Context.base base) S) (old : Model suffix.context K)
+    {L : Type w} [Field L] [LinearOrder L] [IsStrictOrderedRing L]
+    (embedding : K →+* L) (ordered : StrictMono embedding) (parameter : L) :
+    let initial := suffix.restrict reference old
+    letI : Field B := HexPolyMathlib.fieldOfGrind
+    (∀ b, 0 < initial.baseHom base b → parameter < embedding (initial.baseHom base b)) →
+      ∀ a, 0 < old.value a → parameter < embedding (old.value a) := by
+  intro initial small a positive
+  letI : Field B := HexPolyMathlib.fieldOfGrind
+  exact infinitesimal_lt_algebraic (initial.baseHom base) embedding ordered parameter small
+    (old.value a) positive (suffix_algebraic base suffix reference old a)
 
 end Hex.RealClosure.Tower.Model
 
@@ -207,6 +227,103 @@ theorem Context.enlarge?_ordered {context : Context registry}
       sign_eq_neg_one_iff.mpr (sub_neg.mpr small)]
     rfl
 
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- Checked enlargement exposes its actual new parameter, its interpretation,
+and the exact target model aligned with the actual rebuilt suffix. -/
+theorem Context.enlargeWithParameter?_model {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base)) (target_eq : suffix.context = context)
+    {R : Type v} [Field R] [LinearOrder R] [DecidableEq R] [IsStrictOrderedRing R]
+    {S : Type w} [Field S] [LinearOrder S] [DecidableEq S]
+    [IsStrictOrderedRing S] [IsRealClosed S]
+    (reference : Model (Context.base base) S) (old : Model context R)
+    (ambient : Ambient (Hex.RationalFn R)) :
+    let initial := suffix.restrict reference (target_eq.symm ▸ old)
+    let input := Conversion.Model.infinitesimalMapped base (initial.baseHom base)
+      (Model.baseHom_sign base initial) ambient
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal base) suffix,
+      let result := rebuilt.enlargement base target_eq
+      context.enlargeWithParameter? = some result ∧
+        ∃ model : Conversion.Model result.conversion (old.liftInfinitesimal ambient),
+          HEq model.target (input.target.extend rebuilt.suffix) ∧
+          model.target.value result.parameter = ambient.inclusion Hex.RationalFn.X ∧
+          result.conversion.context.sign result.parameter = 1 ∧
+          ∀ a, context.sign a = 1 → result.conversion.context.sign
+            (result.parameter - result.conversion.value a) = -1 := by
+  intro initial input
+  obtain ⟨rebuilt, produced, _, model, aligned⟩ :=
+    Context.enlarge?_constructed base suffix target_eq reference old ambient
+  obtain ⟨other, other_produced, _, _, positive, small⟩ :=
+    Context.enlarge?_ordered base suffix target_eq reference old ambient
+  have same : other = rebuilt := Option.some.inj (other_produced.symm.trans produced)
+  subst other
+  refine ⟨rebuilt, ?_, model, aligned, ?_, positive, small⟩
+  · rw [Context.enlargeWithParameter?_eq base suffix target_eq, produced]
+    rfl
+  · exact (Rebuilt.parameter_value base target_eq rebuilt input.target
+      (old.liftInfinitesimal ambient) model aligned).trans
+        (Conversion.Model.infinitesimalMapped_parameter base (initial.baseHom base)
+          (Model.baseHom_sign base initial) ambient)
+
+/-- Native parameter order needs only a lawful reference interpretation of the
+initial base; no caller-supplied old model or ambient field is required. -/
+theorem Context.enlargeWithParameter?_ordered {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base)) (target_eq : suffix.context = context)
+    {S : Type v} [Field S] [LinearOrder S] [DecidableEq S]
+    [IsStrictOrderedRing S] [IsRealClosed S]
+    (reference : Model (Context.base base) S) :
+    ∃ result : Enlargement context, context.enlargeWithParameter? = some result ∧
+      result.conversion.context.sign result.parameter = 1 ∧
+      ∀ a, context.sign a = 1 → result.conversion.context.sign
+        (result.parameter - result.conversion.value a) = -1 := by
+  obtain ⟨rebuilt, produced, _, _, _, positive, small⟩ :=
+    Context.enlargeWithParameter?_model base suffix target_eq reference
+      (target_eq ▸ reference.extend suffix) (Ambient.infinitesimal S)
+  exact ⟨rebuilt.enlargement base target_eq, produced, positive, small⟩
+
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- Restrict the actual old model, enlarge over its algebraic union, and retain
+one returned parameter with value, native order and rebuilt-target agreement.
+The same new-base map makes the whole enlarged ambient algebraic. -/
+theorem Context.enlargeWithParameter?_algebraic
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign) (suffix : Suffix (Context.base base))
+    {S : Type v} [Field S] [LinearOrder S] [DecidableEq S]
+    [IsStrictOrderedRing S] [IsRealClosed S]
+    (reference : Model (Context.base base) S) (old : Model suffix.context K) :
+    let initial := suffix.restrict reference old
+    letI : Field B := HexPolyMathlib.fieldOfGrind
+    letI : Algebra B K := (initial.baseHom base).toAlgebra
+    ∀ ambient : Ambient (Hex.RationalFn (Union.Carrier B K)),
+      let restricted := Model.suffixRestrict base suffix reference old
+      let coefficient := (suffix.restrict reference restricted).baseHom base
+      let input := Conversion.Model.infinitesimalMapped base coefficient
+        (Model.baseHom_sign base (suffix.restrict reference restricted)) ambient
+      letI : Field (Hex.RationalFn B) := HexPolyMathlib.fieldOfGrind
+      letI : Algebra (Hex.RationalFn B) ambient.Carrier :=
+        (Ambient.mappedNativeHom HexPolyMathlib.toGrind_fieldOfGrind coefficient ambient).toAlgebra
+      (∀ a, (restricted.value a : K) = old.value a) ∧
+      Algebra.IsAlgebraic (Hex.RationalFn B) ambient.Carrier ∧
+      ∃ rebuilt : Rebuilt (Conversion.infinitesimal base) suffix,
+        let result := rebuilt.enlargement base rfl
+        suffix.context.enlargeWithParameter? = some result ∧
+          ∃ model : Conversion.Model result.conversion (restricted.liftInfinitesimal ambient),
+            HEq model.target (input.target.extend rebuilt.suffix) ∧
+            model.target.value result.parameter = ambient.inclusion Hex.RationalFn.X ∧
+            result.conversion.context.sign result.parameter = 1 ∧
+            ∀ a, suffix.context.sign a = 1 → result.conversion.context.sign
+              (result.parameter - result.conversion.value a) = -1 := by
+  intro initial ambient
+  letI : Field B := HexPolyMathlib.fieldOfGrind
+  letI : Algebra B K := (initial.baseHom base).toAlgebra
+  refine ⟨Model.suffixRestrict_value base suffix reference old,
+    Model.suffixRestrict_algebraic base suffix reference old ambient, ?_⟩
+  exact Context.enlargeWithParameter?_model base suffix rfl reference
+    (Model.suffixRestrict base suffix reference old) ambient
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.Model.suffixRestrict' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -236,3 +353,19 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Model.suffixRestrict_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Model.suffixRestrict_algebraic
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlargeWithParameter?_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.enlargeWithParameter?_model
+
+/-- info: 'Hex.RealClosure.Tower.Model.suffix_infinitesimal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Model.suffix_infinitesimal
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlargeWithParameter?_algebraic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.enlargeWithParameter?_algebraic
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlargeWithParameter?_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.enlargeWithParameter?_ordered

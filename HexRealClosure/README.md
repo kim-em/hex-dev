@@ -1385,9 +1385,12 @@ and staged-order results with dependency closure. The interpretation ingredients
    proves the resulting infinitesimal ambient is algebraic over the mapped
    native `B(ε)` field, without requiring the whole old ambient to be
    algebraic over `B`.
-4. `Context.enlarge?_ordered` proves the actual returned context contains a
-   positive native parameter below every positive old value carried through
-   its conversion. `Conversion.parameter` supplies the new base parameter,
+4. `Context.enlargeWithParameter?` returns both the actual conversion and its
+   parameter from one reconstruction. Its conversion projection agrees with
+   `Context.enlarge?`; reading the parameter never reruns root validation.
+   `Context.enlargeWithParameter?_ordered` proves this returned parameter
+   positive and below every positive old value carried through its conversion,
+   using only a lawful reference model of the initial base. `Conversion.parameter` supplies the new base parameter,
    and `Rebuilt.parameter` includes it through every actual rebuilt root
    level. `infinitesimalMapped_parameter` and `Rebuilt.parameter_value`
    identify that stored value with the same ambient indeterminate used by
@@ -1793,8 +1796,10 @@ still assemble the proved algebraic restriction and native parameter order
 with all requested live contexts in one compatible native context.
 
 Run `lake build HexRealClosure.TowerEnlargeOrderTests` for actual enlargement
-through √2 and √√2. The test compares the new parameter with old generators,
-positive differences and inverses, verifies sign preservation, and checks that
+through √2 and √√2. The test calls the public producer directly and compares its returned
+parameter with old generators, tiny positive rationals, positive differences,
+inverses and a preceding infinitesimal. It preserves negative and zero signs
+as well, and checks that
 the returned signature retains the old root depth and adds exactly one
 infinitesimal level. The companion consumer tests use an arbitrary old
 rational tower model inside ℝ, its relative algebraic restriction, and the
