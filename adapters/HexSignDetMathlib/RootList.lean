@@ -193,7 +193,7 @@ include h1 ha hs hm hnat hsign in
 /-- Every successful actual root enumeration covers all roots exactly once.
 This interprets accepted output without assuming a root-separating interval
 or Thom order. Success on all valid domains and strict mathematical sorting
-remain separate obligations requiring the Thom foundations. -/
+remain separate obligations. -/
 theorem Descriptor.buildRoots_coverage {context : Ctx} {p : DensePoly E}
     {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
     (h : Descriptor.buildRoots sign context p a b = .ok (some out)) :

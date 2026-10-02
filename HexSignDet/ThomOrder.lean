@@ -41,6 +41,40 @@ theorem compareFrom_cons_lt (a b : Int) (as bs : List Int) :
             · simp [compareFrom, compareFrom_self, hab, hn, Int.compare_eq_lt]
             · simp [compareFrom, compareFrom_self, hab, hp, hn]
 
+/-- A strict result on equally long suffixes ignores all earlier positions.
+This relates the executable recursion to the largest differing index rule. -/
+theorem compareFrom_drop {order : Ordering} (ho : order ≠ .eq)
+    (as bs : List Int) (n : Nat) (hlen : as.length = bs.length)
+    (h : compareFrom (as.drop n) (bs.drop n) = some order) :
+    compareFrom as bs = some order := by
+  induction n generalizing as bs with
+  | zero => simpa using h
+  | succ n ih =>
+    cases as with
+    | nil =>
+      cases bs with
+      | nil => simpa using h
+      | cons b bs => simp at hlen
+    | cons a as =>
+      cases bs with
+      | nil => simp at hlen
+      | cons b bs =>
+        have ht := ih as bs (by simpa using hlen) (by simpa using h)
+        simp [compareFrom, ht, ho]
+
+/-- At the last differing coordinate, the common next sign orients the
+comparison. All lower coordinates are ignored by the actual recursion. -/
+theorem compareFrom_at_lt (as bs : List Int) (n : Nat)
+    (hlen : as.length = bs.length) (hn : n < as.length)
+    (htail : as.drop (n + 1) = bs.drop (n + 1))
+    (h : ((as.drop (n + 1)).head? = some 1 ∧ as[n] < bs[n]'(hlen ▸ hn)) ∨
+      ((as.drop (n + 1)).head? = some (-1) ∧ bs[n]'(hlen ▸ hn) < as[n])) :
+    compareFrom as bs = some .lt := by
+  apply compareFrom_drop (by decide : Ordering.lt ≠ .eq) as bs n hlen
+  rw [List.drop_eq_getElem_cons (i := n) (l := as) hn,
+    List.drop_eq_getElem_cons (i := n) (l := bs) (hlen ▸ hn)]
+  exact (compareFrom_cons_lt _ _ _ _).mpr (Or.inr ⟨htail, h⟩)
+
 /-- The finite strict comparison is transitive even before assigning root
 semantics to the vectors. Unorderable pairs do not supply a premise. -/
 theorem compareFrom_trans {as bs cs : List Int}

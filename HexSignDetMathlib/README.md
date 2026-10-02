@@ -200,8 +200,15 @@ equality. Literal head, context and endpoint checks still require fresh evidence
 `Descriptor.buildReencoding_refinement` specializes this result to the same
 stored head. Neither result needs general Thom injectivity or rational isolating
 bounds; both use the shared proved Sturm–Tarski theorem.
-General success for a different mathematical defining polynomial still requires
-the Thom foundation.
+`Descriptor.buildReencoding_success` in `HexSignDetMathlib.ThomReencoding`
+proves actual success and root preservation for any valid target head and
+interval containing the source root. Neither equality of defining polynomials
+nor containment in the old interval is required. Tau Ceti Thom injectivity
+makes the target full word count one; the source equation, partial derivative
+word and endpoint constraints select the original root in the joint table.
+Conformance re-encodes the actual cubic value into a linear head and into a
+quadratic head with an additional root outside the original interval. An
+ordinary-kernel specialization also uses noninjective coefficient storage.
 `Descriptor.convert_success` and `Descriptor.convert_root` in
 `HexSignDetMathlib.Convert` prove that rebuilding a descriptor after a
 value-preserving coefficient and context change succeeds and preserves its
@@ -214,13 +221,15 @@ instance on representation coefficients is required. These results use
 the proved shared Sturm–Tarski theorem.
 `Comparison.eq_iff_root_eq` proves that a successful common-product comparison
 returns equality exactly when the original selected real roots coincide. It
-uses the common full derivative word and count-one descriptors; strict `<` and
-`>` still require the separate Thom-order foundation.
+uses the common full derivative word and count-one descriptors.
+`Comparison.order_root` identifies all three returned orders with the order of
+the original selected roots, using their root-preserving re-encodings and the
+actual full-word comparator theorem.
 The executable API retains its internal diagnostics for arbitrary coefficient
 operations. The companion rules out selected-sign and completion errors under
 lawful coefficients. The domain-exact total table wrappers are available; root
-enumeration, general re-encoding success and strict root order retain their separate
-proof obligations.
+enumeration success and common-product comparison production retain their
+separate proof obligations.
 
 `Descriptor.buildSigns_success` proves that the actual selected-sign producer
 succeeds for every validated descriptor and finite ordered query list under
@@ -274,7 +283,7 @@ none of these success proofs needs a Thom theorem.
 `buildRoots_none_iff` characterizes invalid mathematical domains exactly,
 and `buildRoots_domain` proves validity of the original input without using the root-sum theorem.
 Universal producer success and correspondence with strict mathematical
-root order remain separate obligations requiring the Thom foundations.
+root order remain separate proof obligations.
 Conformance exercises whole-line and bounded domains, empty results for
 constants and root-free heads, negative leading coefficients, noncanonical
 coefficients, and the actual cubic field ℚ(∛2).
@@ -286,10 +295,24 @@ the latter remains a separate shared-domain check. `endpoint_eval`, `endpoint_lo
 and `endpoint_upper` prove the semantics of the actual finite-boundary polynomials
 used by joint re-encoding.
 
-General Thom ordering, re-encoding success for present roots, the remaining
-total public interfaces and Phase-4 evidence remain required.
-Root-sum/replay soundness follows from the shared proved theorem;
-the specified BKR/Thom foundations retain their separate integration obligations.
+`HexSignDetMathlib.Thom` connects the actual reconstructed derivative words to
+Tau Ceti's Thom identity and strict order theorems. `RawDescriptor.full_unique`
+proves uniqueness among roots of a nonzero head; `full_fiber` gives each
+realized full word count one. `full_order` proves that the existing recursive
+largest-differing-index comparison always returns the mathematical order.
+`Descriptor.fullOrder_root` proves the same result for the guarded public
+comparison on applicable validated full descriptors. Polynomial Rolle is
+proved from the real-closed-field axioms by Tau Ceti; it is not supplied as an
+extra assumption. These results cover non-Archimedean fields and noninjective
+coefficient storage without rational separators or a field instance on stored
+coefficients. Conformance checks the actual foundation and bridge axiom
+inventories with the ordinary kernel.
+
+Universal enumeration success, common-product comparison production, the
+remaining total public interfaces, certificate byte roundtrips and Phase-4
+evidence remain required. Root-sum/replay soundness follows from the shared
+proved theorem; finite BKR proofs consume Tau Ceti moment/count recovery, and
+root identity and strict comparison consume Tau Ceti Thom theorems.
 See the
 [specification](SPEC/hex-sign-det-mathlib.md) for the complete assignment.
 

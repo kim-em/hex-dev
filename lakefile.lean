@@ -30,7 +30,7 @@ require AINTLIB from git
 -- Abstract Sturm–Tarski semantics for the development query adapters.
 require TauCeti from git
   "https://github.com/TauCetiProject/TauCeti.git" @
-    "ff72a2e86930d5268476ee33d55ab054ed1c3ea5"
+    "0dbbe255a4f418084b30a3ffe6763d824a6b4250"
 
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @
@@ -611,7 +611,8 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.CompletionProducer, `HexSignDetMathlib.Convert,
     `HexSignDetMathlib.QueryHandle, `HexSignDetMathlib.TableProducer,
     `HexSignDetMathlib.ReencodingProducer, `HexSignDetMathlib.RootList,
-    `HexSignDetMathlib.ReencodingRefinement,
+    `HexSignDetMathlib.ReencodingRefinement, `HexSignDetMathlib.Thom,
+    `HexSignDetMathlib.ThomReencoding,
     `HexRealClosureMathlib.Specialize, `HexRealClosureMathlib.SpecializeTests,
     `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
     `HexRealClosureMathlib.TransportArithmetic, `HexRealClosureMathlib.TransportQuery, `HexRealClosureMathlib.TransportTests,
@@ -1158,6 +1159,7 @@ lean_lib HexConformance where
       `HexSignDetMathlib.QueryHandleConformance,
       `HexSignDetMathlib.TableConformance, `HexSignDetMathlib.ReencodingConformance,
       `HexSignDetMathlib.RootListConformance, `HexSignDetMathlib.RefinementConformance,
+      `HexSignDetMathlib.ThomConformance,
       `HexSignDetMathlib.ConvertConformance].map Glob.one
 
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests].map Glob.one

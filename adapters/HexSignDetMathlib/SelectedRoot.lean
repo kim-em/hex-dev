@@ -508,7 +508,8 @@ private theorem Comparison.root_eq {context : Ctx}
 
 include h1 ha hs hm hnat hsign in
 /-- Equality is the exact semantic meaning of the equality branch of the
-checked common-product comparison. Strict order has a separate Thom gate. -/
+checked common-product comparison. This equality proof does not use the
+strict Thom-order theorem. -/
 theorem Comparison.eq_iff_root_eq {context : Ctx}
     {left right : Descriptor E Ctx sign context} (c : Comparison left right) :
     c.order = .eq ↔

@@ -29,6 +29,8 @@ helpers, plus a literal HexBasic precompile flag when HexGraphIso already
 forces that dependency to load natively through Lake shared-library dependencies.
 An AINTLIB requirement is independent when it is newly added at a fixed git
 revision and the graph driver's import closure contains no AINTLIB module.
+The exact proof-only Tau Ceti Thom revision advance is independent when the
+measured import closure excludes TauCeti; other revision changes remain stale.
 Prose under the library tree is edited often enough, and cannot move
 a curve, that making every docstring cost a sweep would either stop the prose
 being written or make regeneration routine enough to stop meaning anything.
@@ -110,6 +112,20 @@ def lakefile_texts_differ(before: str, after: str) -> bool:
             and (prefixes := graph_import_prefixes()) is not None
             and "AINTLIB" not in prefixes and "HasseWeil" not in prefixes):
         del new_blocks["require AINTLIB"]
+    # This exact Tau Ceti advance adds only the two Thom proof modules. It
+    # retains the compiler and all existing dependency revisions. Permit the
+    # reviewed pin transition only when neither measured import closure reaches
+    # TauCeti; unknown revisions or requirement changes remain stale.
+    thom_url = r'"https://github\.com/TauCetiProject/TauCeti\.git"'
+    old_thom = freshness.strip_lean_comments(old_blocks.get("require TauCeti", "")).strip()
+    new_thom = freshness.strip_lean_comments(new_blocks.get("require TauCeti", "")).strip()
+    if (re.fullmatch(r'require TauCeti from git\s*' + thom_url + r'\s*@\s*'
+                     r'"ff72a2e86930d5268476ee33d55ab054ed1c3ea5"', old_thom)
+            and re.fullmatch(r'require TauCeti from git\s*' + thom_url + r'\s*@\s*'
+                             r'"0dbbe255a4f418084b30a3ffe6763d824a6b4250"', new_thom)
+            and (prefixes := graph_import_prefixes()) is not None
+            and "TauCeti" not in prefixes):
+        new_blocks["require TauCeti"] = old_blocks["require TauCeti"]
     if set(old_blocks) != set(new_blocks):
         return True
     return any(new_blocks[name] != body for name, body in old_blocks.items())
