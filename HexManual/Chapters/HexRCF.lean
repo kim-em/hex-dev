@@ -1429,6 +1429,30 @@ caller state and stop handler dispatch. The existing algebraic cell solver
 continues to handle its documented inputs. Registrations alone do not complete
 the general coefficient-field decision procedure.
 
+The fresh-module probes in `bench/HexRCF/ProofProbe/Registered/` also prove
+`∀ x, x² > π-4`, `∀ x, x²+exp 1 > 2`,
+`∃ x, x=exp 1 ∧ 2<x ∧ x<3`, and the guarded
+`∀ x, x²+1/(4-π)>0`. Their callers supply coarse bounds
+`π ∈ [3,63/20]` and `exp 1 ∈ [27/10,14/5]`, with containment proved from
+Mathlib's existing numerical inequalities. These are test registrations;
+the optional library supplies no such providers. All four quoted theorem
+dependencies are exactly `propext`, `Classical.choice` and `Quot.sound`.
+
+For this fixed four-proof module, the command
+`python3 scripts/bench/hexrcf_registered_proofs.py` runs four adjacent
+matched-import pairs in alternating AB/BA order and retains every sample.
+At source revision `f78731d3d`, Lean `v4.35.0-rc3` on the shared `chungus2`
+host, pinned to CPU 38 with one Lean thread, fresh module builds took
+8.67–8.85 seconds (median 8.71); matched imports took 7.57–7.87 seconds
+(median 7.73). The median paired difference was 1.03 seconds. Median peak
+resident memory was 3.27 GiB for the proofs and 3.20 GiB for matched imports.
+These aggregate builds include elaboration, proof construction and ordinary
+kernel checks; they do not isolate individual tactic stages or establish
+scaling, convergence or completeness. The
+[raw results](https://github.com/kim-em/hex-dev/blob/main/reports/bench-results/hexrcf-registered-f78731d3d-chungus2.json)
+and [all arm records](https://github.com/kim-em/hex-dev/blob/main/reports/bench-results/hexrcf-registered-f78731d3d-chungus2.json.samples.jsonl)
+retain compiler output, proof dependencies, artifact sizes and host context.
+
 # Cross-references
 %%%
 tag := "hex-rcf-cross-references"
