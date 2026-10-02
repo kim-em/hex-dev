@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexRCF.RealCoefficients.FieldSpecialize
 public import HexRealFormulaMathlib.Semantics
 public import HexRealAlgebraicMathlib.Laws
 public import HexPolyMathlib.GrindTransport
@@ -75,18 +76,21 @@ including cancellation of leading terms and the zero polynomial. -/
 theorem degree (values : Fin n → RealAlgebraicNumber)
     (p : RealFormula.Poly (n + 1)) :
     ((HexPolyMathlib.toPolynomial (polynomial values p)).map
-      RealAlgebraicNumber.toRealHom).natDegree = (polynomial values p).natDegree := by
-  rw [Polynomial.natDegree_map_eq_of_injective
-    RealAlgebraicNumber.toReal_injective, HexPolyMathlib.natDegree_toPolynomial]
+      RealAlgebraicNumber.toRealHom).natDegree = (polynomial values p).natDegree :=
+  FieldSpecialize.degree RealAlgebraicNumber.toRealHom
+    (fun _ => by
+      rw [← RealAlgebraicNumber.zero_toReal]
+      exact RealAlgebraicNumber.toReal_injective.eq_iff) values p
 
 /-- The leading coefficient is interpreted at the same fixed real embedding. -/
 theorem leading (values : Fin n → RealAlgebraicNumber)
     (p : RealFormula.Poly (n + 1)) :
     ((HexPolyMathlib.toPolynomial (polynomial values p)).map
       RealAlgebraicNumber.toRealHom).leadingCoeff =
-      (polynomial values p).leadingCoeff.toReal := by
-  rw [Polynomial.leadingCoeff_map_of_injective
-    RealAlgebraicNumber.toReal_injective, HexPolyMathlib.leadingCoeff_toPolynomial]
-  rfl
+      (polynomial values p).leadingCoeff.toReal :=
+  FieldSpecialize.leading RealAlgebraicNumber.toRealHom
+    (fun _ => by
+      rw [← RealAlgebraicNumber.zero_toReal]
+      exact RealAlgebraicNumber.toReal_injective.eq_iff) values p
 
 end Hex.RCF.RealCoefficients.Specialize

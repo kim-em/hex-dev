@@ -23,6 +23,8 @@ open scoped HexMvPolyMathlib
 -- literal compiler below continues to use the native dense operations.
 attribute [local instance 2500] Semiring.toGrindSemiring
 
+section Generic
+
 variable {D : Type u} [CommRing D] [DecidableEq D]
 
 local instance : CommRing (DensePoly D) := HexPolyMathlib.denseCommRing
@@ -89,6 +91,8 @@ theorem leading (f : D →+* ℝ) (hz : ∀ a, f a = 0 ↔ a = 0)
   rw [Polynomial.leadingCoeff_map_of_injective (injective f hz),
     HexPolyMathlib.leadingCoeff_toPolynomial]
 
+end Generic
+
 variable {p : ZPoly} {root : SimpleRoot p} [ZPoly.CheckedIrreducible p]
 
 /-- Compile substitution using only the fixed field's ordinary total
@@ -105,6 +109,8 @@ coefficient operations. No proof-bearing field instance is evaluated. -/
       Mono.prod (literalCoordinate values) m) 0
 
 noncomputable local instance : Field (PolyQuot p root) := Hex.PolyQuot.field p root
+noncomputable local instance : CommRing (DensePoly (PolyQuot p root)) :=
+  HexPolyMathlib.denseCommRing
 
 omit [ZPoly.CheckedIrreducible p] in
 /-- Rational sample points retain their ordinary real value. -/

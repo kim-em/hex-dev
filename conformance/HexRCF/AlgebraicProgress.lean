@@ -57,6 +57,10 @@ theorem enclosure_progress (root : RealAlgebraicNumber)
         HexRealRootsMathlib.Dyadic.toReal interval.lower < epsilon :=
   rootInterval_progress root schedule h epsilon hepsilon
 
+-- Nonzero constants produce the empty finite root list, even at precision zero.
+#guard ((proposeIsolations (DensePoly.C (RealAlgebraicNumber.ofRat 3)) 0).map
+  (fun cert => cert.intervals.size)) == some 0
+
 private def coordinate : Fin 2 → Rat := fun _ => 3
 private def source : RealFormula.Poly 3 :=
   (MvPoly.X 0 - MvPoly.X 1) * MvPoly.X 2 ^ 3 + MvPoly.X 2
