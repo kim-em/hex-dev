@@ -298,7 +298,7 @@ lean_lib HexRealClosureTests where
     .one `HexRealClosure.RootCollectionTests,
     .one `HexRealClosure.TowerTransportTests]
 
--- Manual native capacity probes for the actual certificate/context codecs.
+-- Native CI capacity probes for the actual certificate/context codecs.
 lean_exe hexrealclosure_codec_bytes where
   srcDir := "conformance"
   root := `HexRealClosure.CodecBytesDriver

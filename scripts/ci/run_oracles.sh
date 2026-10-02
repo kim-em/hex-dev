@@ -170,7 +170,7 @@ for entry in "${FILTERED_ORACLES[@]}"; do
   IFS='|' read -r _ emit _ _ <<<"$entry"
   emits+=("$emit")
 done
-if library_selected HexRealClosure; then
+if library_selected HexRealClosure || library_selected HexSignDet; then
   emits+=("hexrealclosure_codec_bytes")
 fi
 if [ "${#emits[@]}" -gt 0 ] && ! lake build "${emits[@]}"; then
@@ -380,10 +380,11 @@ if [ "$failed" -ne 0 ]; then
   exit 1
 fi
 
-# Native context capacity follows the owning library filter, including changes
-# that do not select HexSignDet's independent JSON oracle.
-if library_selected HexRealClosure &&
-    ! (ulimit -s 8192; LEAN_MAIN_USE_THREAD=0 LEAN_STACK_SIZE_KB=8192 \
+# Native context capacity covers the owning library and its JSON dependency.
+if { library_selected HexRealClosure || library_selected HexSignDet; } &&
+    ! (PYTHONPATH=scripts/oracle python3 -c \
+      'from pathlib import Path; from sign_det_json_stress import check_stack; check_stack(Path(".lake/build/bin/hexrealclosure_codec_bytes"))' &&
+      ulimit -s 8192 && LEAN_MAIN_USE_THREAD=0 LEAN_STACK_SIZE_KB=8192 \
       .lake/build/bin/hexrealclosure_codec_bytes 1000000); then
   echo "Conformance: native context codec capacity failed." >&2
   exit 1
