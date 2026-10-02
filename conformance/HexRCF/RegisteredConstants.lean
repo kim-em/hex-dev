@@ -186,6 +186,13 @@ def binderRegistration : Registration (Real.sin (sSup {t : ℝ | 1 / t < 1})) wh
     simpa [Contains, cancelledBounds] using
       And.intro (Real.neg_one_le_sin _) (Real.sin_le_one _)
 
+def quotientRegistration : Registration (Real.sin (1 / supplied)) where
+  version := 1
+  approximation := cancelledBounds
+  containment δ _ := by
+    simpa [Contains, cancelledBounds] using
+      And.intro (Real.neg_one_le_sin _) (Real.sin_le_one _)
+
 def squareRegistration : Registration (Real.sqrt 2) where
   version := 1
   approximation := suppliedBounds
@@ -207,6 +214,12 @@ run_elab do
       (attr.add ``malformedRegistration stx .global *> pure false)
       (fun _ => pure true)
     unless failed do throwError "malformed registration was admitted"
+    attr.add ``quotientRegistration stx .global
+    let prepared ← Finite.prepare q(∀ x : ℝ, x ^ 2 + 2 + Real.sin (1 / supplied) > 0)
+    unless prepared.source.coefficients == #[q(Real.sin (1 / supplied))] &&
+        prepared.source.divisors == #[q(supplied)] do
+      throwError "whole-subject normalization changed the provider or lost its guard"
+    let _ ← Finite.check prepared.source (← Finite.build prepared)
     attr.add ``cancelledRegistration stx .global
     -- Whole-subject registration must retain divisions inside analytic syntax,
     -- including beneath zero multiplication, zero powers and an empty domain.
