@@ -365,5 +365,5 @@ schedules, retain every completed sample, and allow at most one unchanged
 rerun of an inconclusive result. No performance measurements or phase
 advancement follow merely from this contract.
 
-The library records Phase 3 in `libraries.yml`; the readiness audit gives the
-conformance/correctness evidence and remaining Phase-4 requirements.
+Phase attestation is recorded in `libraries.yml`; the readiness audit gives
+the conformance/correctness evidence and remaining requirements.

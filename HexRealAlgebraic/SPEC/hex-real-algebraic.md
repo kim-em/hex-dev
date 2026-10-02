@@ -22,5 +22,5 @@ with the complex squared norm and norm and proves nonnegativity, zero
 characterizations, conjugation invariance, multiplicativity, and the square
 identity. Computational number fields never import their real subtype.
 
-The library records Phase 3 in `libraries.yml`; the readiness audit gives the
-conformance/correctness evidence and remaining Phase-4 requirements.
+Phase attestation is recorded in `libraries.yml`; the readiness audit gives
+the conformance/correctness evidence and remaining requirements.

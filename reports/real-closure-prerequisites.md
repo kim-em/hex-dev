@@ -9,14 +9,15 @@ All four record Phases 1–3. Phase 1 reuses the implemented APIs; Phase 2 has
 independent per-library scaffolding reviews in `status/`. Phase 3 has compiled
 operation/property/edge checks for both cores, ordinary-kernel companion builds
 and axiom guards, and required PR CI. Phase 4 remains incomplete for both cores;
-the theorem-only companions need their cores at Phase 4 before recording it.
+the theorem-only companions need their cores at Phase 4 and their headline
+correctness/bridge requirements discharged before recording it.
 
 | Library | Implemented/proved coverage | Phase requirements still to discharge | Evidence |
 | --- | --- | --- | --- |
 | HexSturm | Shared ordered-domain kernel; guarded queries and exact-domain natural counts; prepared domains, retargeting, counts, cached replay and literal certificate transport | Phase 4: comparator/registration reconciliation, admissible characterization and retained concerns | `HexSturm/Basic.lean`, `Transport.lean`, `conformance/HexSturm/Conformance.lean`, [performance report](hex-sturm-performance.md) |
-| HexSturmMathlib | Domain equivalence, prepared bindings, producer acceptance, representation congruence and rational/integer whole-Option agreement; root-sum semantics, count equality and bounds in development adapters | Core-dependent Phase-4 attestation; no dedicated performance deliverable for this theorem-only layer | `Domain`, `Compare`, `Rational`, `DenominatorClearing`, `IntCast`; `adapters/HexSturmMathlib/Soundness.lean`; ordinary-kernel `HexSturmMathlibTests` |
+| HexSturmMathlib | Domain equivalence, prepared bindings, producer acceptance, representation congruence and rational/integer whole-Option agreement; root-sum semantics, count equality and bounds in development adapters | Phase 4: core eligibility and named headline correctness/bridge-target reconciliation; no dedicated performance deliverable for this theorem-only layer | `Domain`, `Compare`, `Rational`, `DenominatorClearing`, `IntCast`; `adapters/HexSturmMathlib/Soundness.lean`; ordinary-kernel `HexSturmMathlibTests` |
 | HexRealAlgebraic | Real subtype, rational recognition and toRat?-first rounding, canonical arithmetic/order, rounding, square roots, integer and algebraic-coefficient real roots, complex norms | Phase 4: canonical fixed operations need admissible models/budgets; root/leaf, separation and rounding sweeps remain | `conformance/HexRealAlgebraic`, pinned FLINT/qqbar oracle and fixtures; `bench/HexRealAlgebraic/Bench.lean` |
-| HexRealAlgebraicMathlib | Arithmetic/order and closure, law/dictionary coherence, rational recognition, rounding, approximation, Repr round trip, roots completeness/multiplicity/strict order and real closedness | Core-dependent Phase-4 attestation; no dedicated performance deliverable for this theorem-only layer | `HexRealAlgebraicMathlib/Instances.lean`, `Roots.lean`, `RealClosed.lean`, `HexRealAlgebraicMathlib/Tests.lean` |
+| HexRealAlgebraicMathlib | Arithmetic/order and closure, law/dictionary coherence, rational recognition, rounding, approximation, Repr round trip, roots completeness/multiplicity/strict order and real closedness | Phase 4: core eligibility and named headline correctness/bridge-target reconciliation; no dedicated performance deliverable for this theorem-only layer | `HexRealAlgebraicMathlib/Instances.lean`, `Roots.lean`, `RealClosed.lean`, `HexRealAlgebraicMathlib/Tests.lean` |
 
 ## Semantic availability
 
@@ -45,6 +46,19 @@ The forward comparison-strategy extension at the end of
 is excluded: point/lazy/fixed-field/tower algorithms and the six new comparator
 families are not shipped obligations under this audit. This exclusion does
 not exempt the implemented `realCompare` or `RealAlgebraicPoly.roots` surface.
+
+## Headline correctness and bridge boundary
+
+`PLAN/Conventions.md` requires a named end-to-end headline correctness theorem
+in the Mathlib bridge for Phase-4 attestation. The existing correspondence
+results remain available, but neither pair's current SPEC names a single
+headline theorem covering its public postconditions. Naming/composition and
+ordinary-kernel audits of those headlines remain under #10577. The Sturm
+semantic results currently build through `HexQuerySemantics` under `adapters/`;
+Phase-4 evidence must reconcile their bridge-target availability with that
+policy. Split-package integration remains with #10575 and is not asserted by
+these monorepo results. Available mathematical proofs do not depend on that
+publication work.
 
 ## Dependencies and downstream owners
 

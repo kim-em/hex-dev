@@ -19,7 +19,17 @@ hashes. The existing CI job builds and verifies this executable. The retained
 took 32 seconds and exceeded the 30-second per-library soft threshold.
 [Required CI](https://github.com/kim-em/hex-dev/actions/runs/36972953823)
 records 60 seconds for this executable and 336 seconds total under the shared
-360-second cap. Tightening its verify path remains tracked under #10577. This is verification evidence, not a scientific budget.
+360-second cap. This is verification evidence, not a scientific budget.
+
+The fixed verifier already invokes each runner once in-process, without warmup
+or tuning. The hard add/subtract registrations and their bare controls account
+for about 26 of the 32 local seconds. There is no repeat-count or tuning setting
+left to reduce for these calls. The harness policy forbids replacing a
+canonical fixed input with an easier smoke input, and the scientific inputs
+and their expected hashes are preserved. The operational warning and remaining
+canonical-arithmetic cost remain under #10577. The full CI cap remains enforced;
+no increase or verification bypass is introduced. The retained 336-second run
+has only 24 seconds of headroom, a concrete CI-variance concern.
 
 | Shipped surface | Registrations | Evidence status |
 | --- | --- | --- |

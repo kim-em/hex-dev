@@ -51,8 +51,9 @@ and BKR root-semantics modules. These adapters are not published; their
 publication requires integrating them into the companion library target and
 adding pinned Tau Ceti release dependencies. Their axiom audits admit only `propext`,
 `Classical.choice` and `Quot.sound`. This theorem-only companion has no dedicated
-Phase-4 performance deliverable; dependency eligibility and ordinary-kernel
-correctness checks remain required. See [the specification](SPEC/hex-sturm-mathlib.md).
+Phase-4 performance deliverable. Ordinary-kernel correctness checks are built
+by `HexSturmMathlibTests` and `HexQuerySemantics`; Phase-4 dependency and
+headline-theorem requirements remain in the readiness audit. See [the specification](SPEC/hex-sturm-mathlib.md).
 
 Executable translations live in Mathlib-free `HexSturm.Transport`; see the
 [SPEC](SPEC/hex-sturm-mathlib.md) for their endpoint and binding contracts.

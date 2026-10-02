@@ -39,9 +39,11 @@ The development-only `HexQuerySemantics` target proves root-sum/replay semantics
 root counts, nonnegativity and degree bounds, and singleton-root signs through
 the shared hex-real-roots-mathlib foundation. The theorem for arbitrary
 accepted certificates has no producer-success hypothesis. All these results
-use only Lean's standard logical axioms. Independent scaffolding review is
-attested at Phase 2 in `libraries.yml`; Phase-3 correctness checks are complete.
-Core-dependent Phase-4 attestation remains required. The `HexSturmMathlibTests` target builds
+use only Lean's standard logical axioms. Independent scaffolding reviews are
+retained in `status/`; ordinary-kernel correctness checks are complete. Phase
+attestation is recorded in `libraries.yml`. Phase 4 still requires core
+eligibility and a named headline correctness theorem with its bridge-target
+availability reconciled against the development-adapter boundary. The `HexSturmMathlibTests` target builds
 the ordinary companion checks under `HexSturmMathlib/Tests`. Semantic axiom
 guards live beside their development-only imports under `adapters/` and build
 through `HexQuerySemantics`. This theorem-only layer has no dedicated Phase-4 timing

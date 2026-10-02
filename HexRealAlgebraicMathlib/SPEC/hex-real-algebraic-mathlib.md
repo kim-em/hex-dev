@@ -49,8 +49,8 @@ reducible polynomial is part of the computational cost.
 The number-field companion owns `realCompare_eq_exact` and all point, lazy,
 and fixed-field correspondence. This companion transports those equations
 through the real subtype and retains its existing `compare_eq`, order laws,
-and executable dictionaries. The new array obligations have conformance and
+and executable dictionaries. When implemented, the new array obligations will need conformance and
 performance evidence in `HexRealAlgebraic`; no proof-generation API is added.
 
-The library records Phase 3 in `libraries.yml`; the readiness audit gives the
-conformance/correctness evidence and remaining Phase-4 requirements.
+Phase attestation is recorded in `libraries.yml`; the readiness audit gives
+the conformance/correctness evidence and remaining requirements.
