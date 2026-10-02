@@ -1,0 +1,27 @@
+{
+  "source_commit": "114730329e94c58b7f005c5b6c5eb2dc5d327e41",
+  "source_parent": "bfd04f57cff6e1f207199f68db34d50cf92be97d",
+  "patch_sha256": "a91dd80ad773a473de7fb68fc12a2654750546413d7e5ed564d37d1086d4ff65",
+  "scope": [
+    "HexRank/Polynomial.lean",
+    "bench/HexRank/Bench/Quotient.lean",
+    "scripts/bench/rank_measure.py"
+  ],
+  "raw_measurements_available": false,
+  "missing_paths": [
+    "/tmp/hexrank-dot-*",
+    "/tmp/hexrank-scale-10352"
+  ],
+  "observation_source": "https://github.com/kim-em/hex-dev/issues/10352#issuecomment-5752610168",
+  "reported_observations": {
+    "adjacent_ab_ba_arms": 12,
+    "median_paired_after_before_approximate": 1.009,
+    "scaling_ladders": 7,
+    "inconclusive": [
+      "checkFull",
+      "produceFull"
+    ]
+  },
+  "interpretation": "Source is recoverable; reported observations cannot be independently reanalyzed without the missing raw samples. No speedup or passing performance gate is established.",
+  "borrowed_row_followup": "Reported build-checked only; uncommitted source and measurements unavailable. No improvement claimed."
+}

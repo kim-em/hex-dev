@@ -17,4 +17,6 @@ theorem result : Matrix.rank (R := GaussianInt) !![⟨1, 1⟩, ⟨-9, -9⟩, ⟨
   ⟨-8, -8⟩, ⟨5, 5⟩, ⟨-8, -8⟩, ⟨3, 3⟩, ⟨8, 8⟩, ⟨2, 2⟩, ⟨8, 8⟩, ⟨-8, -8⟩;
   ⟨-7, -14⟩, ⟨-7, -14⟩, ⟨-5, -10⟩, ⟨-5, -10⟩, ⟨7, 14⟩, ⟨0, 0⟩, ⟨-5, -10⟩, ⟨9, 18⟩] = 8 := by rank
 
+/-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms result

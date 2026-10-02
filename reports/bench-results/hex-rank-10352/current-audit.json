@@ -1,0 +1,44 @@
+{
+  "base": "01ad7e59944bb637b306ab0ef166f8f640019b8d",
+  "audited_revision": "a29afca7a",
+  "runtime_audit": {
+    "HexRank/Cert.lean": "Adds DecidableEq RankCert, absent from timed operations.",
+    "HexRank/Polynomial.lean": "Unchanged reference checker and helpers before the isolated borrowed-row experiment.",
+    "HexRank/PolyProduce.lean": "Unchanged.",
+    "HexRank/ReduceImpl.lean": "Unchanged.",
+    "HexRank/Produce.lean": "Unchanged.",
+    "bench/HexRank": "Unchanged registrations, fixtures and schedules.",
+    "HexBareiss/Kernel.lean": "DetWitness budgeted producer added; HexRank uses its own producer and does not call this path.",
+    "HexMvPoly/Kernel.lean": "Kernel witness arithmetic; polynomial-ring benchmarks use MvPoly ring operations, not this list checker.",
+    "HexPoly/Instances.lean": "natPow weakens typeclass hypotheses without changing the arithmetic body.",
+    "HexPoly/Lcm.lean": "monicize weakens typeclass hypotheses without changing the arithmetic body.",
+    "HexMatrix/Scaled.lean": "Adds expose attributes for kernel reduction; absent from the timed rank paths."
+  },
+  "toolchain_before": "leanprover/lean4:v4.34.0",
+  "toolchain_current": "leanprover/lean4:v4.35.0-rc3",
+  "evidence_scope": "Retained results describe their pinned compiler and dependency versions. No timings are asserted to have been rerun on current main. New checker comparisons use two frozen binaries built with the same current toolchain.",
+  "dependency_phases": {
+    "HexRank": {
+      "HexBareiss": 7,
+      "HexDeterminant": 7,
+      "HexMatrix": 7,
+      "HexArith": 7,
+      "HexBasic": 7,
+      "HexPoly": 4
+    },
+    "HexRankMathlib": {
+      "HexRank": 3,
+      "HexBareissMathlib": 7,
+      "HexDeterminantMathlib": 7,
+      "HexMatrixMathlib": 7,
+      "HexNumberFieldMathlib": 7
+    }
+  },
+  "proof_track": {
+    "root": "bench/HexRankMathlib/ProofProbe",
+    "ci_target": "HexRankMathlibProofProbe",
+    "checked_hex_results": 10,
+    "policy": "CI-built representative tactics and certificate replay; timings diagnostic, not a required verdict.",
+    "phase_blocker": "HexRank remains at 3."
+  }
+}

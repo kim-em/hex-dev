@@ -17,10 +17,22 @@ statements and the producers are in the computational SPEC and are not
 restated here.
 
 This library owns no runtime search, conformance driver or compiled
-benchmark. Its proof-side surface, the `rank` tactic, is measured by the
-fresh-module probes under `bench/HexRankMathlib/ProofProbe` against the
-unmodified pinned `eval_rank` ([The `rank` tactic](#the-rank-tactic)).
-Build-only examples live in `HexRankMathlib/Tests.lean`.
+benchmark. Its proof-side surface, the `rank` tactic and its certificate
+construction and kernel replay, uses representative example files under the
+manifest's `bench/HexRankMathlib/ProofProbe` root. CI builds them through
+`HexRankMathlibProofProbe`: integer full/deficient/low-rank literals, rational
+and quadratic full/deficient literals, and an optional number-field literal.
+The result declarations print their axiom dependencies; accepted proofs use
+only `propext`, `Classical.choice` and `Quot.sound`. Ordinary correspondence
+theorems and decidability instances use build-only correctness examples in
+`HexRankMathlib/Tests.lean` and the carrier tests.
+
+Under [Phase 4](../../PLAN/Phase4.md), these CI builds are the required proof
+track evidence. There is no compiled executable, tactic complexity verdict,
+required timing sweep, comparator ratio, profile or headline report for this
+library. The retained `eval_rank` comparisons below and the separate
+[carrier report](../../reports/hex-rank-carriers-performance.md) are build-cost
+diagnostics at their recorded revisions; they do not gate this proof track.
 
 Throughout, `e` is `HexMatrixMathlib.matrixEquiv`, `A : Hex.Matrix R n m`,
 `c : Hex.Matrix.RankCert R n m`, and `B`, `C`, `P`, `U`, `d`, `r` are as
@@ -499,7 +511,8 @@ turn, and reported as a false target, a producer bug, or an entry the
 kernel cannot reduce. Accepted theorems depend on `propext`,
 `Classical.choice` and `Quot.sound` only.
 
-**Comparator.** The unmodified pinned `eval_rank` is the comparator. The
+**Diagnostic comparison.** The unmodified pinned `eval_rank` supplies a
+reference for the retained build-cost investigation, not a Phase-4 ratio gate. The
 fresh-module probes `bench/HexRankMathlib/ProofProbe/{Dense8,Dense16,
 Deficient16,Dense32,LowRank32}{Hex,Mathlib}.lean` prove the same literal
 by `rank` and by `eval_rank`, each against its import-only baseline

@@ -16,4 +16,6 @@ theorem result : Matrix.rank (R := ℚ) !![(1 : ℚ) / 2, (-9 : ℚ) / 2, (-3 : 
   (-8 : ℚ) / 8, (5 : ℚ) / 8, (-8 : ℚ) / 8, (3 : ℚ) / 8, (8 : ℚ) / 8, (2 : ℚ) / 8, (8 : ℚ) / 8, (-8 : ℚ) / 8;
   (-7 : ℚ) / 9, (-7 : ℚ) / 9, (-5 : ℚ) / 9, (-5 : ℚ) / 9, (7 : ℚ) / 9, (0 : ℚ) / 9, (-5 : ℚ) / 9, (9 : ℚ) / 9] = 8 := by rank
 
+/-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms result

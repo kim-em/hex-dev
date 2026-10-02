@@ -19,4 +19,6 @@ theorem result : Matrix.rank (R := K) !![α, 1, 0, 0, 0, 0, 0, 0;
   0, 0, 0, 0, 0, 0, α, 1;
   0, 0, 0, 0, 0, 0, 1, α] = 8 := by rank
 
+/-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms result
