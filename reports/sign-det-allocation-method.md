@@ -51,7 +51,8 @@ targets, and is not a complete indirect-call or foreign-allocation detector. Bef
 capture as complete coverage, also audit the measured binary's
 allocation entry points and generated/inlined paths. The wrappers count the
 listed client requests; allocator backing pages, arbitrary foreign malloc
-calls and alternative allocators are outside these counters. Stack storage, including GMP scratch buffers placed on the stack, is excluded.
+calls and alternative allocators are outside these counters. Stack storage,
+including GMP scratch buffers placed on the stack, is excluded.
 The same computation can move scratch to intercepted heap requests at a
 backend threshold; counts describe that heap traffic, not all temporary storage.
 They do not establish a portable total-process allocation API. Instrumented elapsed times

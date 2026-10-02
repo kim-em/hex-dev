@@ -1,8 +1,6 @@
 {
   "scope": "post-capture disassembly of the unchanged measured executable",
-  "started_utc": "2026-10-02T18:50:01.134190+00:00",
-  "script_sha256": "5e1ec4b8a9c25f75e7e0a0ac82b9f9db0aacb43b13c4357650cf55a34b45f729",
-  "binary_sha256_before": "3beb9e7ca54d5748da0a157e6eea416b2b0307f264d380651f2f066f4858bb28",
+  "binary_sha256": "3beb9e7ca54d5748da0a157e6eea416b2b0307f264d380651f2f066f4858bb28",
   "objdump_version": "GNU objdump (GNU Binutils) 2.46\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n",
   "outputs": [
     {
@@ -35,7 +33,5 @@
       "file": "__gmp_tmp_reentrant_alloc.asm",
       "sha256": "a45d6a5367dbcd86aa660c47a4f6d76be6dca1d0325cfb1d13d17cf8c44173a2"
     }
-  ],
-  "binary_sha256_after": "3beb9e7ca54d5748da0a157e6eea416b2b0307f264d380651f2f066f4858bb28",
-  "finished_utc": "2026-10-02T18:50:01.645537+00:00"
+  ]
 }

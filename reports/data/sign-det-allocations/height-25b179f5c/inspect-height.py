@@ -36,8 +36,9 @@ assert record['source_sha256_before'] == meta['source_sha256']
 assert record['binary_sha256_before'] == meta['binary_sha256']
 record['command'] = [str(exe), 'inspect-height-phases']
 result = subprocess.run(record['command'], capture_output=True, text=True)
-log = out / 'height-inspection.log'
-log.write_text(result.stdout + result.stderr)
+log = out / 'height-inspection.pending.log'
+with log.open('x') as stream:
+    stream.write(result.stdout + result.stderr)
 record.update(exit_code=result.returncode, log_sha256=digest(log))
 result.check_returncode()
 inputs = [json.loads(line) for line in result.stdout.splitlines()]
@@ -50,5 +51,9 @@ record.update(source_sha256_after=sources(), binary_sha256_after=digest(exe),
               finished_utc=datetime.datetime.now(datetime.timezone.utc).isoformat())
 assert record['source_sha256_after'] == meta['source_sha256_after']
 assert record['binary_sha256_after'] == meta['binary_sha256_after']
-(out / 'height-inspection.json').write_text(json.dumps(record, indent=2) + '\n')
+pending = out / 'height-inspection.pending.json'
+with pending.open('x') as stream:
+    stream.write(json.dumps(record, indent=2) + '\n')
+log.replace(out / 'height-inspection.log')
+pending.replace(out / 'height-inspection.json')
 print('Post-capture validation passed with complete source and binary bindings')

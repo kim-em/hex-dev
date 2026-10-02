@@ -1,7 +1,7 @@
 {
   "scope": "post-capture input validation; hashes are not capture-time provenance",
-  "started_utc": "2026-10-02T18:37:21.495800+00:00",
-  "script_sha256": "546be49ef022dcc0acb4cea9a0686a855b2cc7ae32606e40a3805c15f14a1436",
+  "started_utc": "2026-10-02T18:50:01.727779+00:00",
+  "script_sha256": "fdd031ae42bada011f77ea32f365cbd4284d526a5fd23a66908d752885acf788",
   "revision": "25b179f5c8f2143cd77753cd8c802d364aefd958",
   "git_status": "",
   "source_sha256_before": {
@@ -532,5 +532,5 @@
     "scripts/bench/sign_det_allocations.py": "eb31321a8077fd2ddb9a7873f8764082cf4bc22bd53a06338f8f481086ecc7c2"
   },
   "binary_sha256_after": "3beb9e7ca54d5748da0a157e6eea416b2b0307f264d380651f2f066f4858bb28",
-  "finished_utc": "2026-10-02T18:37:21.789403+00:00"
+  "finished_utc": "2026-10-02T18:50:01.987429+00:00"
 }
