@@ -15,7 +15,7 @@ namespace Hex.RCF.RealCoefficients
 
 /-- Enclose a canonical real algebraic value with a strict dyadic margin.
 The extra unit also gives exact rational roots nonzero-width intervals. -/
-def rootInterval (root : RealAlgebraicNumber) (precision : Nat) : Option DyadicInterval :=
+@[expose] def rootInterval (root : RealAlgebraicNumber) (precision : Nat) : Option DyadicInterval :=
   let ball := root.approxBall precision
   let margin := Dyadic.ofInt 1 >>> (precision : Int)
   let lower := ball.re - ball.radius - margin
@@ -24,7 +24,7 @@ def rootInterval (root : RealAlgebraicNumber) (precision : Nat) : Option DyadicI
 
 /-- Use the existing algebraic root solver to propose ordinary real cells.
 This is a search result: callers must check coverage, counts and separation. -/
-def proposeIsolations [RealAlgebraicNumber.Laws]
+@[expose] def proposeIsolations [RealAlgebraicNumber.Laws]
     (head : DensePoly RealAlgebraicNumber) (precision : Nat) : Option IsolationCert := do
   let roots ← (RealAlgebraicPoly.ofArray head.toArray).roots.finite?
   let intervals ← roots.mapM fun r => rootInterval r.root precision

@@ -1523,6 +1523,61 @@ operation. Universal root-list production and mathematical sorting are also
 proved. The common-field conversion preserves the selected algebraic values by
 the proved `QAdjoin.common_get` theorem.
 
+# Specialization and ordinary real enclosures
+%%%
+tag := "hex-rcf-specialization-enclosures"
+%%%
+
+The shared formula records coefficient parameters and the quantified variable.
+Specialization evaluates the parameters in their fixed real embeddings and
+combines equal powers of the variable. Leading terms can disappear when
+independently named coefficients denote the same value.
+{name}`Hex.RCF.RealCoefficients.Specialize.degree` proves that the resulting
+polynomial's degree agrees with its real interpretation, including constants
+and zero. {name}`Hex.RCF.RealCoefficients.FieldSpecialize.literal_degree` gives
+the same guarantee for the literal fixed-field compiler.
+
+```lean
+open Hex.RCF.RealCoefficients
+
+example (values : Fin n → Hex.RealAlgebraicNumber)
+    (p : Hex.RealFormula.Poly (n + 1)) :
+    ((HexPolyMathlib.toPolynomial
+      (Specialize.polynomial values p)).map
+      Hex.RealAlgebraicNumber.toRealHom).natDegree =
+      (Specialize.polynomial values p).natDegree :=
+  Specialize.degree values p
+
+example (root : Hex.RealAlgebraicNumber)
+    (precision : Nat) :
+    (rootInterval root precision).isSome = true := by
+  obtain ⟨interval, produced, _, _, _⟩ :=
+    rootInterval_spec root precision
+  rw [produced]
+  rfl
+```
+
+{name}`Hex.RCF.RealCoefficients.rootInterval_spec` also proves that the root
+lies strictly between the returned endpoints and that their distance is at
+most `4 · 2⁻precision`. The extra dyadic margin keeps exact rational roots,
+including zero, inside an interval of positive width.
+{name}`Hex.RCF.RealCoefficients.rootInterval_progress` proves that every
+precision schedule tending to infinity eventually reaches any positive width
+request. These points and endpoints are ordinary real numbers. The current
+tactic attempts precision eight; it does not yet run this refinement schedule.
+
+{name}`Hex.RCF.RealCoefficients.proposeIsolations_isSome_iff` establishes
+finite proposal production for exactly the nonzero dense heads. The canonical
+solver receives exactly the interpreted polynomial. Zero has a universal
+root set; a nonzero constant has an empty finite set. This is the direct
+canonical-carrier API. The tactic specializes to fixed-field coordinates,
+squarefrees its carrier and checks proposed intervals over those coordinates;
+its fallback uses these same strict enclosures. The canonical-carrier proposal
+laws here do not establish totality of that fixed-field pipeline.
+Proposals still require separation and literal root-count replay before they
+can form a checked cell decomposition. These producer laws do not complete
+the general algebraic decision procedure or its certificate search.
+
 # Caller-supplied finite bounds
 %%%
 tag := "hex-rcf-registered-bounds"
