@@ -32,6 +32,7 @@ def main():
     parser.add_argument('--profiler-root', type=Path, required=True)
     parser.add_argument('--only', nargs='+', choices=[c[0] for c in CASES])
     parser.add_argument('--target-nanos', default=10000000000, type=int)
+    parser.add_argument('--scalar-bits', default=4096, type=int)
     args = parser.parse_args()
     if args.output.exists():
         parser.error('preserve completed profile records; choose a new output')
@@ -65,6 +66,8 @@ def main():
         for family, name, param in CASES:
             if args.only and family not in args.only:
                 continue
+            if family == 'transcript-length':
+                param = args.scalar_bits
             directory = Path('/tmp') / (args.output.stem + '-' + family)
             directory.mkdir(exist_ok=False)
             anchor = directory / 'anchor.json'
@@ -96,7 +99,7 @@ def main():
             symbols = directory / 'symbols.json'
             run(['python3', 'scripts/profile/elf_symbols.py', str(filtered),
                  '--output', str(symbols)])
-            summary = args.output.parent / ('profile-' + family + '.json')
+            summary = args.output.parent / (args.output.stem + '-profile-' + family + '.json')
             run(['python3', 'scripts/profile/summarize_profile.py', str(filtered),
                  '--symbols', str(symbols), '--diagnostics', str(diagnostics),
                  '--thread', 'hexecpp_bench', '--top', '25', '--output', str(summary)])
