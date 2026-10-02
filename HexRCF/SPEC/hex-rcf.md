@@ -1106,6 +1106,9 @@ recursively recognizing its grammar constituents; maximal closed-subterm
 abstraction does not change this deterministic policy.
 
 The existing exact algebraic handlers run before the supplied-bound handler.
+They check eligibility before reification: an opaque registered whole subject
+outside their scalar syntax or exponent envelope selects the supplied frontend.
+This selection never retries a solver after a budget, false or replay failure.
 Only providers used by the source coefficients and original guards participate
 in finite evidence: unrelated duplicate or opaque registrations do not affect
 another goal. Replay checks observation coverage for this used subset as well

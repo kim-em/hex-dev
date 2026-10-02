@@ -98,8 +98,8 @@ and caller-registered finite bounds. `@[rcf_constant]` registers an exact closed
 real subject, an approximation procedure and its containment proof; width and
 progress guarantees remain separate. The finite path checks all original
 source divisors before proof construction, including cancelled divisions, and
-checks frozen bound/subject/version evidence and coverage of used providers
-with ordinary kernel proofs.
+checks frozen bound/subject/version bindings and coverage of used providers,
+then validates enclosure, guard and final proofs in the ordinary kernel.
 Nonseparating bounds leave guards unresolved. This mode is bounded proof search,
 not a complete named-constant field solver.
 

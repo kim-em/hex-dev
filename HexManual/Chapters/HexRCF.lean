@@ -1430,6 +1430,13 @@ precision request, coefficient subjects and guards. Checking validates ordinary
 proofs and frozen callback identities; it does not repeat approximation or root
 search. Source coefficients and guards retain the same selected real values.
 
+The existing algebraic handlers retain their documented inputs, including
+registered small algebraic composites. Before exact reification, a registered
+whole subject outside the exact scalar syntax or exponent envelope selects the
+supplied frontend. Once an eligible backend starts, budget and replay failures
+stop dispatch. Only providers used by source coefficients and original guards
+are evaluated and bound into finite evidence.
+
 This finite path uses nonlinear proof reconstruction from the supplied bounds,
 with conjunctions and a proposed ordinary real existential witness. The current
 witness is the first collected coefficient, or zero when there are none; it

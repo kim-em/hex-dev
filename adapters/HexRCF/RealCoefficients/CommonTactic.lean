@@ -367,6 +367,7 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
 
 @[rcf_handler] meta def handle : Handler := fun target => do
   if (sourceAtoms target #[]).size < 2 then return .declined
+  if ← Registration.deferExact target then return .declined
   let source ← match ← Reify.prepare target with
     | .ok source => pure source
     | .error (.unsupported _ _) => return .declined

@@ -135,6 +135,21 @@ run_elab do
   let some otherEvidence := other.coefficients[0]? | throwError "missing other enclosure"
   refuses (Finite.check leaf.source { leafCertificate with prepared :=
     { leaf with coefficients := #[{ evidence with observations := otherEvidence.observations }] } })
+  let joint ← Finite.prepare q(∀ x : ℝ,
+    x ^ 2 + supplied > 0 ∧ x ^ 2 + uncertain + 10 > 0)
+  unless joint.registry.map Prod.fst == #[``suppliedRegistration, ``uncertainRegistration] do
+    throwError "joint source did not bind both providers"
+  let jointCertificate ← Finite.build joint
+  let _ ← Finite.check joint.source jointCertificate
+  let some first := joint.coefficients[0]? | throwError "missing joint first coefficient"
+  let some second := joint.coefficients[1]? | throwError "missing joint second coefficient"
+  unless first.observations.map (·.declaration) != second.observations.map (·.declaration) do
+    throwError "joint providers were not distinct"
+  -- Both observations belong to this source context. Coverage must still bind
+  -- each observation to its particular coefficient, even with valid proofs.
+  let altered := joint.coefficients.set! 0 { first with observations := second.observations }
+  refuses (Finite.check joint.source { jointCertificate with prepared :=
+    { joint with coefficients := altered } })
   refuses (Finite.check prepared.source
     { certificate with prepared := { prepared with guards := #[] } })
   refuses (Finite.check prepared.source
@@ -202,6 +217,31 @@ def squareRegistration : Registration (Real.sqrt 2) where
     · norm_num [Real.le_sqrt]
     · norm_num [Real.sqrt_le_iff]
 
+def powerRegistration : Registration ((Real.sin 1) ^ 65) where
+  version := 1
+  approximation := cancelledBounds
+  containment δ _ := by
+    simp only [Contains, cancelledBounds]
+    have h : |(Real.sin 1) ^ 65| ≤ (1 : ℝ) := calc
+      |(Real.sin 1) ^ 65| = |Real.sin 1| ^ 65 := abs_pow _ _
+      _ ≤ 1 ^ 65 := pow_le_pow_left₀ (abs_nonneg _) (Real.abs_sin_le_one _) _
+      _ = 1 := one_pow _
+    simpa using abs_le.mp h
+
+def compositeBounds (_ : Rat) : Bounds := ⟨2, 3, by decide⟩
+def compositeRegistration : Registration (1 + Real.sqrt 2) where
+  version := 1
+  approximation := compositeBounds
+  containment δ _ := by
+    simp only [Contains, compositeBounds]
+    constructor
+    · have h : (1 : ℝ) ≤ Real.sqrt 2 := by norm_num [Real.le_sqrt]
+      norm_num only [Rat.cast_ofNat]
+      linarith
+    · have h : Real.sqrt 2 ≤ (2 : ℝ) := by norm_num [Real.sqrt_le_iff]
+      norm_num only [Rat.cast_ofNat]
+      linarith
+
 -- Test attributes against a saved environment, so imports of this module do
 -- not acquire a duplicate registration or altered global state.
 run_elab do
@@ -214,6 +254,39 @@ run_elab do
       (attr.add ``malformedRegistration stx .global *> pure false)
       (fun _ => pure true)
     unless failed do throwError "malformed registration was admitted"
+    attr.add ``powerRegistration stx .global
+    let powerTarget := q(∀ x : ℝ, x ^ 2 + 2 + (Real.sin 1) ^ 65 > 0)
+    unless ← Registration.deferExact powerTarget do
+      throwError "registered whole power did not select finite eligibility"
+    let goal ← mkFreshExprMVar powerTarget
+    let action : Elab.TermElabM (List MVarId) := Elab.Term.withSynthesize do
+      Elab.Tactic.run goal.mvarId! <| Elab.Tactic.withoutRecover
+        (Elab.Tactic.evalTactic (← `(tactic| rcf)) *> Elab.Tactic.pruneSolvedGoals)
+    unless (← action.run' {} {}).isEmpty do throwError "registered whole power failed"
+    Hex.RCF.checkAxioms `registeredPowerRegression (← instantiateMVars goal)
+    withLocalDeclD `a q(ℝ) fun a => do
+      let a : Q(ℝ) := a
+      withLocalDeclD `ha q($a = (Real.sin 1) ^ 65) fun _ => do
+        let target := q(∀ x : ℝ, x ^ 2 + 2 + $a > 0)
+        unless ← Registration.deferExact target do
+          throwError "checked whole-power alias did not select finite eligibility"
+        let goal ← mkFreshExprMVar target
+        let action : Elab.TermElabM (List MVarId) := Elab.Term.withSynthesize do
+          Elab.Tactic.run goal.mvarId! <| Elab.Tactic.withoutRecover
+            (Elab.Tactic.evalTactic (← `(tactic| rcf)) *> Elab.Tactic.pruneSolvedGoals)
+        unless (← action.run' {} {}).isEmpty do throwError "registered whole-power alias failed"
+        Hex.RCF.checkAxioms `registeredPowerAliasRegression (← instantiateMVars goal)
+    attr.add ``compositeRegistration stx .global
+    let compositeTarget := q(∀ x : ℝ,
+      x ^ 2 - 2 * (1 + Real.sqrt 2) * x + 3 + 2 * Real.sqrt 2 ≥ 0)
+    if ← Registration.deferExact compositeTarget then
+      throwError "registered small algebraic composite lost exact eligibility"
+    let goal ← mkFreshExprMVar compositeTarget
+    let action : Elab.TermElabM (List MVarId) := Elab.Term.withSynthesize do
+      Elab.Tactic.run goal.mvarId! <| Elab.Tactic.withoutRecover
+        (Elab.Tactic.evalTactic (← `(tactic| rcf)) *> Elab.Tactic.pruneSolvedGoals)
+    unless (← action.run' {} {}).isEmpty do throwError "registered algebraic composite failed"
+    Hex.RCF.checkAxioms `registeredCompositeRegression (← instantiateMVars goal)
     attr.add ``quotientRegistration stx .global
     let prepared ← Finite.prepare q(∀ x : ℝ, x ^ 2 + 2 + Real.sin (1 / supplied) > 0)
     unless prepared.source.coefficients == #[q(Real.sin (1 / supplied))] &&

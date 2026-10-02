@@ -14,11 +14,13 @@ namespace Hex.RCF.ProofProbe.Registered
 
 open RealCoefficients Hex.OrderedFn.Oracle
 
--- Neither exposed nor meta-imported by Support. Unused providers must not
+-- Unexposed provider with a type alias. Lookup of unrelated providers must not
 -- require executable bodies or frozen-version reduction in a consuming module.
 def unusedBounds (_ : Rat) : Bounds := ⟨-1, 1, by decide⟩
 
-@[rcf_constant] def unusedRegistration : Registration (Real.sin 42) where
+@[expose] def UnusedRegistration := Registration (Real.sin 42)
+
+@[rcf_constant] def unusedRegistration : UnusedRegistration where
   version := 7
   approximation := unusedBounds
   containment δ _ := by

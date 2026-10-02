@@ -225,6 +225,7 @@ private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
   else throwError "rcf: selected square failed its root witness"
 
 @[rcf_handler] meta def handle : Handler := fun target => do
+  if ← Registration.deferExact target then return .declined
   let source ← match ← Reify.prepare target with
     | .ok source => pure source
     | .error (.unsupported _ _) => return .declined
