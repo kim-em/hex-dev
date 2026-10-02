@@ -116,19 +116,19 @@ private def emitCollection : IO Unit := do
     | throw (IO.userError "native collection source count changed")
   let shared := collection.input.context
   let sum := alpha.value + beta.value
-  let inputs := collection.entries.toArray.map fun entry => Json.mkObj [
+  let inputs := collection.entries.toArray.map fun entry => object [
     ("context", entry.source.context.signature.literal.toJson),
     ("value", entry.source.context.codec.encode entry.source.value),
     ("mapped", shared.codec.encode entry.value),
     ("oldInverse", entry.source.context.codec.encode ((entry.source.value - 1)⁻¹)),
     ("mappedInverse", shared.codec.encode (entry.apply ((entry.source.value - 1)⁻¹)))]
-  IO.println (Json.mkObj [("case", .str "native common root contexts"),
-    ("mode", .str "collection"), ("context", shared.signature.literal.toJson),
+  printJson (object [("case", .string "native common root contexts"),
+    ("mode", .string "collection"), ("context", shared.signature.literal.toJson),
     ("inputs", .arr inputs), ("sum", shared.codec.encode sum),
     ("inverse", shared.codec.encode sum⁻¹),
     ("zero", shared.codec.encode zero.value),
     ("two", shared.codec.encode (collection.input.value two)),
-    ("three", shared.codec.encode (collection.input.value three))]).compress
+    ("three", shared.codec.encode (collection.input.value three))])
 
 def main : IO Unit := do
   let x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
