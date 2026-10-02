@@ -29,6 +29,7 @@ public import HexRCF.RealCoefficients.IsolationProgress
 public import HexRCF.RealCoefficients.RadicalCheck
 public import HexRCF.RealCoefficients.Radical
 public import HexRCF.RealCoefficients.RadicalBuild
+public import HexRCF.RealCoefficients.RadicalProgress
 public import HexRCF.RealCoefficients.FieldDecision
 public import HexRCF.RealCoefficients.FieldRootSigns
 public import HexRCF.RealCoefficients.FieldRootSignsProgress

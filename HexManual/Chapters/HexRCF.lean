@@ -1670,9 +1670,30 @@ inputs; they do not change the tactic's fixed-precision attempt.
 {name}`Hex.RCF.RealCoefficients.FieldRootSigns.Table.build_success` proves
 that atom-query production succeeds after isolation construction succeeds.
 Queries retain the shared squarefree chain and are checked at the same root
-interval and original head. These laws still require a genuinely squarefree
-input to isolation. They do not prove radical production, the complete
-fixed-field certificate pipeline or total algebraic tactic search. The current
+interval and original head.
+
+{name}`Hex.RCF.RealCoefficients.RadicalCert.build_success_real` proves that
+the actual bounded derivative-gcd quotient search produces accepted radical
+evidence for every nonzero head under the checked real arithmetic interpretation.
+{name}`Hex.RCF.RealCoefficients.RadicalCert.build_squarefree` derives
+squarefreeness of the returned core from the producer's exact quotient and the
+owner's Yun invariant. It is not a hypothesis supplied to the radical checker.
+Nonzero constants are included; zero still has no finite root list.
+The core need not be monic: for `X³` the raw derivative gcd yields `X/3`.
+
+The executable `RadicalCert.reduce` entry point takes the proved progress law,
+returns the builder's certificate and retains exact production binding plus
+literal acceptance. The real interpretation is used only in the proof, so a
+fixed field's noncomputable real embedding is not passed to compiled arithmetic.
+
+{name}`Hex.RCF.RealCoefficients.FieldBuild.isolateFormula` composes this
+reduction with precision search for the complete shared formula carrier,
+including repeated/common roots, zero atoms and formulas without atoms.
+The shared formula keeps its guard atoms, whose nonzero endpoint polynomials
+enter the carrier. Squarefreeness is derived before isolation; it is not an extra admission required from the caller.
+This constructs a checked root envelope. The complete fixed-field sign-table,
+decision-certificate pipeline and total algebraic tactic search remain separate
+obligations. The current
 tactic still tries only its fixed precision.
 
 # Caller-supplied finite bounds

@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.FieldBuild
+public import HexRCF.RealCoefficients.RadicalProgress
 public import HexRCF.RealCoefficients.IsolationProgress
 public import HexRCF.RealCoefficients.IsolationSemantics
 public import HexNumberFieldMathlib.Exact
@@ -192,5 +193,32 @@ def isolate [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
   let cert := (isolateAt rep hrep context head precision).get produced
   refine ⟨cert, isolateAt_checked rep hrep context head precision cert ?_⟩
   exact Option.eq_some_of_isSome produced
+
+/-- Produce the complete shared carrier's radical and accepted root isolations.
+Repeated and common atom roots are reduced by the actual checked gcd quotient;
+squarefreeness is a proved producer conclusion. The formula retains its guard
+atoms. This constructs the root envelope, not the full sign-table/decision
+certificate or a quoted theorem of the source goal. -/
+def isolateFormula [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
+    (context : Ctx) (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1)) :
+    Σ radical : {cert : RadicalCert (PolyQuot p root) Ctx //
+      RadicalCert.build context (FieldCarrier.product values formula) = some cert ∧
+        cert.check context (FieldCarrier.product values formula) = true},
+      {cert : IsolationReplay (PolyQuot p root) Ctx //
+        cert.check (proposalSign rep hrep) FieldDecision.point context radical.val.core = true} := by
+  let product := FieldCarrier.product values formula
+  let radical := RadicalCert.reduce context product
+    (RadicalCert.build_success_real (Field.value rep) (Field.value_eq_zero rep hrep real)
+      (Field.value_one rep hrep real) (Field.value_add rep hrep real)
+      (Field.value_sub rep hrep real) (Field.value_mul rep hrep real)
+      (Field.value_div rep hrep real) (Field.value_natCast rep hrep real)
+      context product (FieldCarrier.product_ne_zero values formula))
+  have squarefree := RadicalCert.build_squarefree (Field.value rep)
+    (Field.value_eq_zero rep hrep real) (Field.value_sub rep hrep real)
+    (Field.value_mul rep hrep real) (Field.value_div rep hrep real)
+    (Field.value_natCast rep hrep real) context product radical.val radical.property.1
+  exact ⟨radical, isolate rep hrep real context radical.val.core
+    (RadicalCert.core_ne_zero context product radical.val radical.property.2) squarefree⟩
 
 end Hex.RCF.RealCoefficients.FieldBuild
