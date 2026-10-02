@@ -42,7 +42,9 @@ accepted certificates has no producer-success hypothesis. All these results
 use only Lean's standard logical axioms. Independent scaffolding review is
 attested at Phase 2 in `libraries.yml`; dependency-ordered conformance and
 Phase-4 attestation remain required. The `HexSturmMathlibTests` target builds
-the theorem and axiom checks under `HexSturmMathlib/Tests`. This theorem-only layer has no dedicated Phase-4 timing
+the ordinary companion checks under `HexSturmMathlib/Tests`. Semantic axiom
+guards live beside their development-only imports under `adapters/` and build
+through `HexQuerySemantics`. This theorem-only layer has no dedicated Phase-4 timing
 deliverable under the current policy.
 
 These proved semantic modules currently live under `adapters/`, outside the

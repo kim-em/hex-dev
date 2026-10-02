@@ -343,7 +343,10 @@ lean_lib HexSturmMathlib where
 
 @[default_target]
 lean_lib HexSturmMathlibTests where
-  globs := #[.one `HexSturmMathlib.Tests, .submodules `HexSturmMathlib.Tests]
+  globs := #[.one `HexSturmMathlib.Tests,
+    .one `HexSturmMathlib.Tests.Replay.Accepted,
+    .one `HexSturmMathlib.Tests.Replay.Rejected,
+    .one `HexSturmMathlib.Tests.Replay.Baseline]
 
 lean_lib HexInterval where
 
@@ -640,7 +643,8 @@ lean_lib HexRCFRealCoefficients where
 lean_lib HexQuerySemantics where
   srcDir := "adapters"
   globs := #[`HexRealRootsMathlib.TarskiFoundation, `HexRealRootsMathlib.TarskiSoundness, `HexRealRootsMathlib.TarskiReal,
-    `HexSturmMathlib.Soundness,
+    `HexSturmMathlib.Soundness, `HexSturmMathlib.Tests.Replay.Semantics,
+    `HexSturmMathlib.Tests.Replay.SemanticsBaseline,
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
     `HexSignDetMathlib.CompletionProducer, `HexSignDetMathlib.Convert,
