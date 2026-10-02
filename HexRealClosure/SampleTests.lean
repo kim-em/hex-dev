@@ -34,6 +34,23 @@ private def run : IO Unit := do
     "wrong repeated-root section signs"
   require (duplicateFamily.sectors.map (fun s => s.signs duplicates) ==
     [[-1, 1, 1], [-1, -1, 1], [1, 1, 1]]) "wrong duplicate-family sector signs"
+  let cubicQs := [x * (x * x - DensePoly.C (1 : base.Value))]
+  let boundedFamily := partition base cubicQs
+  let lower := boundedFamily.collection.input.value (-1)
+  let middle := boundedFamily.collection.input.value 0
+  let upper := boundedFamily.collection.input.value 1
+  require (boundedFamily.sectorBetween? (.finite lower) (.finite upper)).isNone
+    "non-adjacent boundaries accepted"
+  require (boundedFamily.sectorBetween? (.finite upper) (.finite lower)).isNone
+    "reversed sector boundaries accepted"
+  let some boundedSample := boundedFamily.sectorBetween? (.finite middle) (.finite upper)
+    | throw (IO.userError "adjacent sector boundaries rejected")
+  require (boundedSample.cell.contains boundedSample.value && boundedSample.signs cubicQs == [-1])
+    "wrong requested bounded-sector sample"
+  require (boundedFamily.sectorBetween? .negInf (.finite lower)).isSome
+    "left ray request rejected"
+  require (boundedFamily.sectorBetween? (.finite upper) .posInf).isSome
+    "right ray request rejected"
   let some descriptor := SignDet.Descriptor.validate base.sign base.signature
       { context := base.signature, head := quadratic,
         lower := .finite 1, upper := .finite (1 + 1), indices := [], signs := [] }
@@ -45,6 +62,7 @@ private def run : IO Unit := do
   let whole := partition base wholeQs
   require (whole.sections.isEmpty && whole.sectors.length == 1) "root-free family has boundaries"
   require (whole.sectors.map (fun s => s.signs wholeQs) == [[1, 0]]) "wrong whole-line signs"
+  require (whole.sectorBetween? .negInf .posInf).isSome "whole-line request rejected"
   let staged := (BaseContext.rational registry).infinitesimal
   let inf := Context.base staged
   let epsilon : inf.Value := BaseContext.Element.infinitesimal (BaseContext.rational registry)

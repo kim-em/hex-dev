@@ -51,9 +51,18 @@ def Sample.ofRoot (root : Root parent) : Sample parent :=
   Sample.mk root.conversion root.convertedValue (.section root.convertedValue)
 
 /-- Construct a section from a validated descriptor over the input context. -/
-def Sample.section (parent : Context registry)
+@[expose] def Sample.section (parent : Context registry)
     (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature) : Sample parent :=
   Sample.ofRoot (Root.ofSelection parent (.selected descriptor))
+
+/-- The public descriptor constructor uses the actual cached root section. -/
+theorem Sample.section_eq (parent : Context registry)
+    (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature) :
+    Sample.section parent descriptor = Sample.ofRoot (Root.ofSelection parent (.selected descriptor)) := rfl
+
+/-- Keep a sample's actual input ownership together with its cell. -/
+@[expose] def Sample.cellView (sample : Sample parent) :
+    (input : Conversion parent) × Cell input.context := ⟨sample.input, sample.cell⟩
 
 namespace Sample
 
@@ -127,7 +136,7 @@ def Partition.sectors {polynomials : List parent.Poly} (family : Partition paren
 
 /-- Request a sector by its position in the complete ordered family. An index
 outside that list is rejected, rather than accepting incomplete boundaries. -/
-def Partition.sector? {polynomials : List parent.Poly} (family : Partition parent polynomials)
+@[expose] def Partition.sector? {polynomials : List parent.Poly} (family : Partition parent polynomials)
     (index : Nat) : Option (Sample parent) := family.sectors[index]?
 
 /-- The actual section and sector cells in the common coefficient context. -/
@@ -135,6 +144,33 @@ def Partition.cells {polynomials : List parent.Poly} (family : Partition parent 
     List (Cell family.collection.input.context) :=
   family.values.map Cell.section ++
     (Sample.sectors family.collection.input.context family.values).map Prod.snd
+
+/-- The cell partition is exactly the cells of the returned samples, with
+their common coefficient conversion retained in each dependent pair. -/
+theorem Partition.cells_eq {polynomials : List parent.Poly} (family : Partition parent polynomials) :
+    (family.sections ++ family.sectors).map Tower.Sample.cellView =
+      family.cells.map (fun cell => ⟨family.collection.input, cell⟩) := by
+  simp only [Partition.sections, Partition.sectors, Partition.cells, Tower.Sample.cellView,
+    List.map_append, List.map_map, Function.comp_def]
+
+private def sameEndpoint (context : Context registry) : Endpoint context.Value → Endpoint context.Value → Bool
+  | .negInf, .negInf | .posInf, .posInf => true
+  | .finite a, .finite b => context.equal a b
+  | _, _ => false
+
+private def requested (context : Context registry) (lower upper : Endpoint context.Value)
+    (point : context.Value × Cell context) : Bool :=
+  match point.2 with
+  | .section _ => false
+  | .sector a b => sameEndpoint context lower a && sameEndpoint context upper b
+
+/-- Check requested boundaries against the complete adjacent sector family.
+Finite boundaries are compared by value; non-adjacent requests are rejected. -/
+def Partition.sectorBetween? {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (lower upper : Endpoint family.collection.input.context.Value) : Option (Tower.Sample parent) :=
+  ((Sample.sectors family.collection.input.context family.values).find?
+    (requested family.collection.input.context lower upper)).map fun point =>
+      Tower.Sample.mk family.collection.input point.1 point.2
 
 private theorem between_length (context : Context registry) (lower : context.Value)
     (rest : List context.Value) : (between context lower rest).length = rest.length + 1 := by
@@ -185,6 +221,25 @@ theorem Partition.sector?_none {polynomials : List parent.Poly} (family : Partit
     (index : Nat) : family.sector? index = none ↔ family.values.length < index := by
   rw [Partition.sector?, List.getElem?_eq_none_iff, family.sectors_length]
   omega
+
+/-- Indexed sector results belong to the actual complete sample list. -/
+theorem Partition.sector?_mem {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (index : Nat) (sample : Tower.Sample parent) (returned : family.sector? index = some sample) :
+    sample ∈ family.sectors := by
+  obtain ⟨bounds, equal⟩ := List.getElem?_eq_some_iff.mp returned
+  exact equal ▸ List.getElem_mem bounds
+
+/-- A successful boundary request returns an actual sector of the complete family. -/
+theorem Partition.sectorBetween?_mem {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (lower upper : Endpoint family.collection.input.context.Value) (sample : Tower.Sample parent)
+    (returned : family.sectorBetween? lower upper = some sample) : sample ∈ family.sectors := by
+  cases found : (Sample.sectors family.collection.input.context family.values).find?
+      (requested family.collection.input.context lower upper) with
+  | none => simp [Partition.sectorBetween?, found] at returned
+  | some point =>
+    simp only [Partition.sectorBetween?, found, Option.map_some, Option.some.injEq] at returned
+    subst sample
+    exact List.mem_map.mpr ⟨point, List.mem_of_find?_eq_some found, rfl⟩
 
 end Sample
 end Hex.RealClosure.Tower

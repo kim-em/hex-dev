@@ -7,6 +7,7 @@ module
 
 public import HexRealClosure.Sample
 public import HexRealClosureMathlib.RootCollection
+public import TauCeti.FieldTheory.RealClosure.IVT
 import all HexRealClosure.Sample
 
 public section
@@ -53,6 +54,34 @@ theorem Cell.contains_correct (model : Model context K) (cell : Cell context) (a
   | sector lower upper =>
     cases lower <;> cases upper <;>
       simp [Cell.contains, Cell.Mem, compare_lt model]
+
+omit [DecidableEq K] [IsStrictOrderedRing K] in
+/-- Every interpreted section or sector contains the interval between its points. -/
+theorem Cell.interval_mem (model : Model context K) (cell : Cell context) {a b x : K}
+    (left : cell.Mem model a) (right : cell.Mem model b) (bounds : a ≤ x ∧ x ≤ b) :
+    cell.Mem model x := by
+  cases cell with
+  | «section» root => simp only [Cell.Mem] at *; order
+  | sector lower upper =>
+    cases lower <;> cases upper <;> simp_all [Cell.Mem] <;>
+      first | order | (constructor <;> order)
+
+omit [DecidableEq K] in
+/-- A root-free polynomial has one sign throughout an interpreted cell, over
+any real closed ordered field, including a non-Archimedean field. -/
+theorem Cell.sign_eq [IsRealClosed K] (model : Model context K) (cell : Cell context)
+    (p : Polynomial K) {a b : K} (left : cell.Mem model a) (right : cell.Mem model b)
+    (rootFree : ∀ x, cell.Mem model x → p.eval x ≠ 0) :
+    SignType.sign (p.eval a) = SignType.sign (p.eval b) := by
+  have positive : 0 < p.eval a * p.eval b := by
+    rcases le_total a b with before | before
+    · exact p.eval_mul_pos_of_no_roots before
+        (fun x hx => rootFree x (cell.interval_mem model left right hx))
+    · simpa only [mul_comm] using p.eval_mul_pos_of_no_roots before
+        (fun x hx => rootFree x (cell.interval_mem model right left hx))
+  rcases mul_pos_iff.mp positive with ⟨ha, hb⟩ | ⟨ha, hb⟩
+  · rw [sign_eq_one_iff.mpr ha, sign_eq_one_iff.mpr hb]
+  · rw [sign_eq_neg_one_iff.mpr ha, sign_eq_neg_one_iff.mpr hb]
 
 namespace Sample
 
@@ -292,6 +321,15 @@ private theorem afterCells_unique (model : Model context K) (lower : context.Val
           exact False.elim (equal inside.symm)
         · exact unique other ⟨later, inside⟩
 
+omit [IsStrictOrderedRing K] in
+private theorem sector_mem_eq (model : Model context K)
+    (lower upper a b : Endpoint context.Value)
+    (lowerSame : sameEndpoint context lower a = true)
+    (upperSame : sameEndpoint context upper b = true) (x : K) :
+    (Cell.sector lower upper).Mem model x ↔ (Cell.sector a b).Mem model x := by
+  cases lower <;> cases a <;> cases upper <;> cases b <;>
+    simp_all [sameEndpoint, Cell.Mem, model.equal_spec]
+
 variable [IsRealClosed K]
 
 /-- A section carries the selected root through its actual cached conversion. -/
@@ -303,6 +341,23 @@ theorem ofRoot_correct (root : Root parent) (original : Model parent K) :
       realization.target.value (Tower.Sample.ofRoot root).value = root.denote original := by
   refine ⟨root.conversionModel original, ?_, rfl, root.convertedValue_value original⟩
   exact (Cell.contains_correct (root.conversionModel original).target _ _).mpr rfl
+
+/-- The public section constructor carries exactly the descriptor's selected root. -/
+theorem section_correct (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature)
+    (original : Model parent K) :
+    ∃ realization : Conversion.Model (Tower.Sample.section parent descriptor).input original,
+      (Tower.Sample.section parent descriptor).cell.contains (Tower.Sample.section parent descriptor).value = true ∧
+      (Tower.Sample.section parent descriptor).cell.Mem realization.target
+        (realization.target.value (Tower.Sample.section parent descriptor).value) ∧
+      realization.target.value (Tower.Sample.section parent descriptor).value =
+        descriptor.root original.value original.zero_iff original.one original.add original.sub
+          original.mul original.nat original.sign := by
+  rw [Tower.Sample.section_eq]
+  obtain ⟨realization, checked, inside, value⟩ :=
+    ofRoot_correct (Root.ofSelection parent (.selected descriptor)) original
+  refine ⟨realization, checked, inside, value.trans ?_⟩
+  rw [Root.denote_selection, Root.selection_ofSelection]
+  rfl
 
 /-- The actual family producer contains exactly the roots of its nonzero members. -/
 theorem roots_mem (original : Model parent K) (polynomials : List parent.Poly) (x : K) :
@@ -448,6 +503,61 @@ theorem Partition.sections_correct {polynomials : List parent.Poly}
   · exact (Cell.contains_correct model.input.target _ _).mpr rfl
   · exact (family.coverage original model _).mp (List.mem_map.mpr ⟨value, member, rfl⟩)
 
+/-- A checked boundary request denotes exactly the requested open sector,
+under the same actual model as the complete family. -/
+theorem Partition.sectorBetween?_correct {polynomials : List parent.Poly}
+    (family : Partition parent polynomials) (original : Model parent K)
+    (model : Collection.Model family.collection original)
+    (lower upper : Endpoint family.collection.input.context.Value) (sample : Tower.Sample parent)
+    (returned : family.sectorBetween? lower upper = some sample) :
+    ∃ realization : Conversion.Model sample.input original,
+      HEq realization model.input ∧ sample.cell.contains sample.value = true ∧
+      ∀ x, sample.cell.Mem realization.target x ↔
+        (Cell.sector lower upper).Mem model.input.target x := by
+  have member := family.sectorBetween?_mem lower upper sample returned
+  cases found : (Sample.sectors family.collection.input.context family.values).find?
+      (requested family.collection.input.context lower upper) with
+  | none => simp [Partition.sectorBetween?, found] at returned
+  | some point =>
+    simp only [Partition.sectorBetween?, found, Option.map_some, Option.some.injEq] at returned
+    subst sample
+    have accepted := List.find?_some found
+    cases cell : point.2 with
+    | «section» root => simp [requested, cell] at accepted
+    | sector a b =>
+      have bounds : sameEndpoint family.collection.input.context lower a = true ∧
+          sameEndpoint family.collection.input.context upper b = true := by
+        simpa only [requested, cell, Bool.and_eq_true] using accepted
+      obtain ⟨realization, aligned, checked, _, _⟩ := family.sectors_correct original model _ member
+      have same : realization = model.input := eq_of_heq aligned
+      subst realization
+      refine ⟨model.input, HEq.rfl, ?_, ?_⟩
+      · simpa only [cell] using checked
+      · intro x
+        exact (sector_mem_eq model.input.target lower upper a b bounds.1 bounds.2 x).symm
+
+/-- The computed sign vector applies to every point of the returned sector,
+including zero polynomials, in any real closed ordered field. -/
+theorem Partition.sector_signs {polynomials : List parent.Poly}
+    (family : Partition parent polynomials) (original : Model parent K)
+    (model : Collection.Model family.collection original) (sample : Tower.Sample parent)
+    (present : sample ∈ family.sectors) :
+    ∃ realization : Conversion.Model sample.input original,
+      HEq realization model.input ∧ ∀ x, sample.cell.Mem realization.target x →
+        sample.signs polynomials = polynomials.map (fun p => (SignType.sign
+          ((HexPolyMathlib.Interpret.interpret original.value original.zero_iff p).eval x) : Int)) := by
+  obtain ⟨realization, aligned, _, inside, rootFree⟩ := family.sectors_correct original model sample present
+  refine ⟨realization, aligned, ?_⟩
+  intro x contained
+  rw [signs_correct sample original realization polynomials]
+  apply List.map_congr_left
+  intro p member
+  by_cases zero : HexPolyMathlib.Interpret.interpret original.value original.zero_iff p = 0
+  · simp only [zero, Polynomial.eval_zero]
+  · apply congrArg (fun s : SignType => (s : Int))
+    exact sample.cell.sign_eq realization.target _ inside contained
+      (fun y hy => rootFree y hy p member zero)
+
 
 end Sample
 end Hex.RealClosure.Tower
@@ -479,3 +589,23 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Sample.Partition.sections_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Sample.Partition.sections_correct
+
+/-- info: 'Hex.RealClosure.Tower.Cell.interval_mem' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Cell.interval_mem
+
+/-- info: 'Hex.RealClosure.Tower.Cell.sign_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Cell.sign_eq
+
+/-- info: 'Hex.RealClosure.Tower.Sample.section_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Sample.section_correct
+
+/-- info: 'Hex.RealClosure.Tower.Sample.Partition.sectorBetween?_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Sample.Partition.sectorBetween?_correct
+
+/-- info: 'Hex.RealClosure.Tower.Sample.Partition.sector_signs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Sample.Partition.sector_signs

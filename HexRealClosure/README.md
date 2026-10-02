@@ -1575,13 +1575,21 @@ sectors. Bounded samples use the midpoint of adjacent native values, and ray
 samples use offsets by one. The root-free whole line uses zero. This
 construction works for infinitesimally close roots without requiring a
 separating rational. `Partition.sector?` rejects an index outside this complete
-list.
+list. `Partition.sectorBetween?` checks requested finite or infinite boundaries
+against adjacent cells of that same complete family. It rejects non-adjacent,
+reversed and missing boundaries; the partition supplies the root-free evidence.
 
 The companion `HexRealClosureMathlib.Sample` proves exact boundary coverage,
 strict ordering, exact cell coverage and uniqueness, coefficient-preserving
 sign evaluation, and correctness of each returned section and sector under
 every compatible collection model. Every sector sample passes native strict
 membership, and no root of a nonzero input polynomial lies in its open sector.
+Every polynomial has its computed sign throughout the sector, including
+identically zero polynomials. This uses polynomial intermediate values over
+arbitrary real closed ordered fields and applies to non-Archimedean models.
+Public equations link the cells to the actual returned samples, and public
+membership lemmas let indexed and boundary-request results use these guarantees
+under ordinary imports.
 The proofs use the actual complete root and collection producers; no
 caller-supplied root coverage or sample sign agreement is required. Tests
 include rational roots, zero and constant polynomials, repeated and equal
@@ -1592,11 +1600,10 @@ All samples use one common collection context, which adjoins every selected
 root before boundary deduplication. This can increase tower depth and
 intermediate extension degrees; duplicate descriptors are not shared. Boundary
 insertion processes the roots in reverse order, making an already ascending
-input linear in comparisons; the worst case remains quadratic. Sector sign
-constancy over general real closed fields still needs its polynomial
-intermediate-value theorem.
+input linear in comparisons; the worst case remains quadratic. Each comparison
+also carries the sign-determination cost of the common tower.
 
-The API produces ordinary values in their native contexts. Joint specialization
+The API produces field values in their native contexts. Joint specialization
 of nested selected roots and successive infinitesimals to one ordinary real
 assignment, independent sample conformance, and the full performance evaluation
 remain separate obligations.

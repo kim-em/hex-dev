@@ -420,6 +420,9 @@ adjacent boundaries `a<b` (possibly infinite), a finite polynomial family `Q`,
 and evidence that no nonzero member of `Q` has a root in `(a,b)`. Zero
 polynomials are allowed and have constant zero sign. Supply boundary order
 and completeness of the boundary root list, not just two chosen roots.
+A complete family partition may construct this evidence itself; checked
+boundary requests must still reject non-adjacent pairs. An indexed interface
+may additionally select sectors from that validated complete partition.
 The result includes the sample context, input embedding, strict membership
 and signs of every member of `Q` at the sample. A midpoint in a common root
 context handles bounded sectors; `a+1`, `b-1` and `0` handle rays and the whole

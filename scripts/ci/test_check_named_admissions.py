@@ -174,6 +174,7 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/Sample.lean",
                 "HexRealClosure/SampleTests.lean",
                 "adapters/HexRealClosureMathlib/Sample.lean",
+                "adapters/HexRealClosureMathlib/SampleTests.lean",
                 "adapters/HexRealClosureMathlib/RootTransport.lean",
                 "adapters/HexRealClosureMathlib/RootCollection.lean",
                 "adapters/HexRealClosureMathlib/TowerCoverage.lean",
