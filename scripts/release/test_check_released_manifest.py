@@ -172,8 +172,8 @@ class ReleasedCiTests(unittest.TestCase):
 
         return released_ci_workflows()["hex-basic"]
 
-    def check(self, workflow: str) -> None:
-        entries = [{"repo": "leanprover/hex-example"}]
+    def check(self, workflow: str, **entry_fields) -> None:
+        entries = [{"repo": "leanprover/hex-example", **entry_fields}]
         with patch(
             "scripts.release.check_released_manifest.released_ci_workflows",
             return_value={"hex-example": workflow},
@@ -193,6 +193,25 @@ class ReleasedCiTests(unittest.TestCase):
 
     def test_complete_workflow_is_accepted(self) -> None:
         self.check(self.workflow())
+
+    def test_declared_test_modules_must_be_built(self) -> None:
+        workflow = self.workflow().replace(
+            "run: lake build", "run: lake build HexExample", 1
+        )
+        fields = {"lib": "HexExample", "test_modules": ["HexExample.Check"]}
+        with self.assertRaisesRegex(ValueError, "explicitly build HexExampleTests"):
+            self.check(workflow, **fields)
+        self.check(workflow.replace("lake build HexExample",
+                                    "lake build HexExample HexExampleTests"), **fields)
+
+    def test_comment_and_similar_target_do_not_build_tests(self) -> None:
+        workflow = self.workflow().replace(
+            "run: lake build",
+            "run: |\n            # lake build HexExampleTests\n"
+            "            lake build HexExampleTestsExtra", 1
+        )
+        with self.assertRaisesRegex(ValueError, "explicitly build HexExampleTests"):
+            self.check(workflow, lib="HexExample", test_modules=["HexExample.Check"])
 
     def test_restore_and_save_paths_must_match(self) -> None:
         workflow = self.workflow()

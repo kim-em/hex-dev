@@ -6,14 +6,13 @@ Authors: Kim Morrison
 
 module
 
-public import HexPrimality
+public import HexPrimality.Cert
 
 public section
 
 /-!
-A compact Pocklington certificate for the Curve25519 prime `2^255 - 19`.
-Every witness base is `2`; the remaining numbers are subjects of child
-certificates, not trusted primality assumptions.
+A compact Pocklington and Brillhart–Lehmer–Selfridge certificate for the
+Curve25519 prime `2^255 - 19`. Every child is checked recursively.
 -/
 
 namespace Hex.Nat
@@ -21,26 +20,27 @@ namespace Hex.Nat
 private def curve25519Cert : PrimeCert :=
   .pock 57896044618658097711785492504343953926634992332820282019728792003956564819949 [
     (2, 0,
-      .pock 74058212732561358302231226437062788676166966415465897661863160754340907 [
+      .pock3 74058212732561358302231226437062788676166966415465897661863160754340907
+        2028478494862525422475607 22304740449229861598212 2028478494862525422475606 [
         (2, 0, .small 2),
-        (2, 0, .small 3),
+        (2, 0, .small 353),
+        (2, 0, .small 57467),
         (2, 0,
-          .pock 75445702479781427272750846543864801 [
-            (2, 0, .small 75707),
-            (2, 0,
-              .pock 1919519569386763 [
-                (2, 0, .small 127),
-                (2, 0,
-                  .pock 8574133 [
-                    (2, 0, .small 103),
-                    (2, 0, .small 991)])])])])]
+          .pock3 31757755568855353 4028945 289 4028944 [
+            (5, 2, .small 2),
+            (2, 0, .small 223),
+            (2, 0, .small 4153)])])]
 
-/-- On this shared AMD EPYC 9455 host with Lean 4.34.0-rc2 and dependencies
-already built, `lake build HexPrimality.Examples.Curve25519` reported 25 seconds
-for this module's kernel replay; the enclosing shell measured 29.578 seconds
-of wall-clock time. These are host-specific observations. -/
+/-- On the shared AMD EPYC 9455 host with Lean 4.35.0-rc3, dependencies built,
+and CPU 12 leased automatically, a fresh `lake build +HexPrimality.Examples.Curve25519`
+reported 679 ms for module elaboration and kernel checking, and 4.505 seconds
+of total wall time. These are host-specific observations, not isolated kernel CPU time. -/
 theorem curve25519_prime :
     Prime (2 ^ 255 - 19) := by
   exact prime_of_checkPrimeAt (c := curve25519Cert) (by decide +kernel)
+
+/-- info: 'Hex.Nat.curve25519_prime' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms curve25519_prime
 
 end Hex.Nat
