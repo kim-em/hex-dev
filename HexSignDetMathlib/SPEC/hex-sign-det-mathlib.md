@@ -465,7 +465,9 @@ towers here. Decimal approximations and a mere `0<ε<1` hypothesis do not
 establish these infinitesimal claims.
 
 Phase 4 follows [the repository evidence tracks](../../PLAN/Phase4.md#evidence-tracks).
-Build representative ordinary-kernel examples in CI for matrix/replay checking,
+Retain representative examples in the declared
+`bench/HexSignDetMathlib/ProofProbe` and `NestedProofProbe` roots for
+matrix/replay checking,
 completion, sign-at-root, cross-polynomial re-encoding and nested evidence,
 including rejection cases and axiom audits. Ordinary theorem applications
 and law proofs do not require dedicated timing sweeps.

@@ -887,10 +887,12 @@ scales/terminal data. Integer specialization tests include `4*X` and finite
 root-endpoint rejection. General and non-Archimedean frontend integration
 fixtures are owned by the new companion's
 [conformance contract](../../SPEC/Libraries/hex-sturm-mathlib.md#conformance-and-phase-4-evidence).
-Measure shared literal replay through fresh-module kernel proof probes,
-recording axiom sets and artifact sizes; keep arithmetic producer benchmarks
-in the Mathlib-free owner. Nested evidence size and rejected-certificate paths
-are explicit proof-probe dimensions, not hidden coefficient-oracle costs.
+Check shared literal replay through ordinary-kernel correctness examples and
+axiom audits, including nested evidence and rejected certificates. Arithmetic
+producer benchmarks remain in the Mathlib-free owner. The correspondence
+theorems impose no dedicated theorem-application timing requirement; nested
+coefficient work must still be accounted for in the consuming computation or
+proof generator rather than hidden behind a unit-cost oracle.
 
 ## File organisation
 

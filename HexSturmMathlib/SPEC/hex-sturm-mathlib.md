@@ -340,7 +340,9 @@ nested certificates. These are downstream tests against pinned Z3 RCF data,
 not imports back into this companion or claims about arbitrary `0<ε<1`.
 
 Phase 4 follows [the repository evidence tracks](../../PLAN/Phase4.md#evidence-tracks).
-CI builds representative ordinary-kernel replay examples, including rational,
+This companion supplies correspondence theorems, not a tactic or proof
+generator, so Phase 4 adds no proof-track deliverable. Its existing correctness
+tests build ordinary-kernel replay examples, including rational,
 integer, noninjective and nested coefficient cases, rejected evidence and
 transitive axiom audits. Ordinary theorem applications do not require timing
 sweeps. Producer, coefficient-sign and endpoint arithmetic measurements belong

@@ -1628,8 +1628,13 @@ kernel replay, realization and the full tactic in CI, with axiom audits and
 negative cases. Ordinary theorem applications need no dedicated timing probes.
 No Mathlib-importing executable benchmark is added.
 
-Compiled evidence varies degree, atom count, coefficient size, precision and
-tower depth as specified by the owning algorithms. Targeted tactic/proof
+The adapter owns coverage of coefficient production and specialization in the
+Mathlib-free family drivers, coordinating reusable operations with their
+library owners. Vary degree, distinct atom count, coefficient size, precision
+and tower depth independently. Include bounded failures and common/repeated
+roots, not only easy enclosing bounds. Record memory, proof/serialized sizes,
+unique DAG nodes and expanded reference work. Quotation must preserve sharing
+or account for its expansion. Targeted tactic/proof
 measurements address an observed performance problem or a named decision
 about quotation, sharing or sample selection; they are not generic mandatory
 sweeps. Record the measured scope, proof/serialized sizes and lower-level work.

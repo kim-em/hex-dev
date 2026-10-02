@@ -603,9 +603,10 @@ instances and negative checker regressions for:
 Phase 4 separates computational production from proof evidence under
 [the repository policy](../../PLAN/Phase4.md#evidence-tracks). The Mathlib-free
 owner measures `tower8`, clean-versus-eager normalization, coefficient growth,
-depth, splitting and nested evidence. This companion supplies representative
-CI-built ordinary-kernel examples for certificate checking and nested
-specialization, including rejected replays and transitive axiom audits.
+depth, splitting and nested evidence. This companion supplies correspondence theorems rather than a tactic or proof
+generator, so Phase 4 adds no proof-track deliverable. Its correctness tests
+include ordinary-kernel certificate checking and nested specialization,
+rejected replays and transitive axiom audits.
 Ordinary theorem applications do not require dedicated timing sweeps.
 No `native_decide`, introduced axiom or trusted oracle is permitted.
 

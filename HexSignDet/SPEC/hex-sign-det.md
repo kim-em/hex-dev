@@ -535,17 +535,17 @@ joint-encoding lists, including coefficient sizes and reduction replay costs.
 Z3 and python-flint end-to-end comparisons are informational where an exact
 matching operation is available; root isolation time must not be labelled
 matrix-solving time. No external oracle supplies a comparable Lean proof
-checker. Kernel replay uses the companion's
-[fresh-module proof evidence](../../SPEC/benchmarking.md#proof-probe-example-files)
-track, with ordinary kernel checking and axiom inspection, separately from
-Mathlib-free executable benches. Include valid and rejected nested proof
-probes and one representative profile attributing arithmetic, matrices and
-coefficient-sign work. The family's full `tower8` isolation and
+checker. Kernel replay has representative CI-built examples in the
+companion's declared proof-example roots, with ordinary kernel checking and
+axiom inspection, including valid and rejected nested evidence. This is
+separate from Mathlib-free executable benches and imposes no generic theorem
+timing sweep. Computational profiles attribute arithmetic, matrix and
+coefficient-sign work as required by the compiled track. The family's full `tower8` isolation and
 clean-versus-eager normalization ablation remain hex-real-closure integration
 obligations; this library supplies their sign-table/descriptor measurements.
 
 Use the shared host, automatic CPU selection, fixed trial-major schedules and
 adjacent alternating `AB`/`BA` comparisons. Retain every completed sample and
 allow at most one unchanged rerun after an inconclusive result. The
-`bench verify` fast check is not Phase-4 performance evidence. No benchmark result, proof
-completion or phase advancement is claimed by this planned SPEC.
+`bench verify` fast check is not Phase-4 performance evidence. This contract does not itself establish a benchmark result, proof
+completion or phase advancement.
