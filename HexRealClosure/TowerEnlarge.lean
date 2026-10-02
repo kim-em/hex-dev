@@ -26,8 +26,15 @@ level, with ownership in the returned native target context. -/
     {sign : B → Int} (base : BaseContext.Context registry B sign)
     {suffix : Suffix (Context.base base)}
     (rebuilt : Rebuilt (Conversion.infinitesimal base) suffix) : rebuilt.result.context.Value :=
-  _root_.cast (congrArg Context.Value rebuilt.context_eq)
-    (rebuilt.suffix.embed (Conversion.parameter base))
+  rebuilt.includeValue (Conversion.parameter base)
+
+/-- The cached initial inclusion agrees with the returned validated suffix. -/
+theorem Rebuilt.parameter_eq {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    {suffix : Suffix (Context.base base)}
+    (rebuilt : Rebuilt (Conversion.infinitesimal base) suffix) :
+    rebuilt.parameter base = _root_.cast (congrArg Context.Value rebuilt.context_eq)
+      (rebuilt.suffix.embed (Conversion.parameter base)) := rebuilt.include_eq _
 
 /-- Rebuild one packed tower over an additional positive infinitesimal. The
 stored predecessor chain supplies the base and the exact validated root

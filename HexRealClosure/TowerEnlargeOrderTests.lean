@@ -42,6 +42,16 @@ private def run : IO Unit := do
     | throw (IO.userError "first native infinitesimal failed")
   check enlarged.conversion.context [enlarged.parameter, -enlarged.parameter,
     (NatCast.natCast (10 ^ 40) : enlarged.conversion.context.Value)⁻¹]
+  let previous := enlarged.conversion.context
+  let z : DensePoly previous.Value := DensePoly.ofCoeffs #[0, 1]
+  let some infinitesimalRoot := SignDet.Descriptor.validate previous.sign previous.signature
+      { context := previous.signature, head := z * z - DensePoly.C (1 + enlarged.parameter),
+        lower := .finite 1, upper := .finite (1 + 1), indices := [], signs := [] }
+    | throw (IO.userError "root over an existing infinitesimal failed")
+  let stagedRoot := previous.adjoin infinitesimalRoot
+  let gamma := stagedRoot.generator
+  check stagedRoot.context [stagedRoot.embed enlarged.parameter, gamma, gamma - 1,
+    (gamma - 1)⁻¹, -gamma, 0]
   let two : base.Value := 1 + 1
   let x : DensePoly base.Value := DensePoly.ofCoeffs #[0, 1]
   let some descriptor := SignDet.Descriptor.validate base.sign base.signature

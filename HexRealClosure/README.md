@@ -1390,12 +1390,23 @@ and staged-order results with dependency closure. The interpretation ingredients
    `Context.enlarge?`; reading the parameter never reruns root validation.
    `Context.enlargeWithParameter?_ordered` proves this returned parameter
    positive and below every positive old value carried through its conversion,
-   using only a lawful reference model of the initial base. `Conversion.parameter` supplies the new base parameter,
-   and `Rebuilt.parameter` includes it through every actual rebuilt root
-   level. `infinitesimalMapped_parameter` and `Rebuilt.parameter_value`
+   using only a lawful reference model of the initial base.
+   `Conversion.parameter` supplies the new base parameter,
+   and `Rebuilt.parameter` uses the cached initial inclusion carried by
+   `rebuild?` through every actual child. It reuses each child’s native
+   embedding without encoding or parsing its descriptor frame again. `infinitesimalMapped_parameter` and `Rebuilt.parameter_value`
    identify that stored value with the same ambient indeterminate used by
-   the sign-preserving new-base interpretation. This holds for arbitrary
-   ordered old fields and for the restricted algebraic-union model above.
+   the sign-preserving new-base interpretation. `enlargeWithParameter?_model`
+   carries an arbitrary old ordered-field model, the exact target alignment
+   and the parameter’s ambient value. `enlargeWithParameter?_algebraic`
+   combines preservation through the old model’s union restriction,
+   algebraicity of any enlarged ambient over the same native new-base map,
+   that target alignment and the returned parameter’s value and order.
+   Native order follows from the model over the entire restricted old
+   field’s infinitesimal extension. `Model.suffix_infinitesimal` also applies
+   the local algebraic bound when a parameter is only known smaller than
+   positive values of the initial base map; this supports comparisons in
+   other compatible ambient interpretations for dependency closure.
 5. **Remaining:** gathering a dependency-closed collection of live contexts
    and assembling
    the total checked constructor with its value and order preservation
@@ -1423,7 +1434,8 @@ positive element of the old algebraic field. Kernel examples instantiate
 algebraicity with actual ordered algebraic ambient models, including the native
 ℚ(ε) dictionary cast, and derive the bound inside a relative algebraic closure
 from inequalities known only over its base.
-The computational stage-order identification still remains.
+The returned native parameter’s interpretation and order are identified by
+`Context.enlargeWithParameter?_model`; the cross-context assembly remains.
 
 `Context.origin` recursively follows a packed tower's stored predecessor
 chain and returns its staged base, the ordered validated root suffix, and an
@@ -1474,7 +1486,7 @@ in any supplied ordered algebraic real closure of `R(ε)`; `Ambient.infinitesima
 supplies one such choice. `Ambient.X_pos` and `X_lt_coefficient` prove
 the semantic ε is positive and below every positive old coefficient, while
 `liftInfinitesimal_X_lt` applies that bound to interpreted tower values. The
-remaining native and staged-order obligations are listed above.
+remaining dependency-closed transport obligations are listed above.
 
 Identifying native tower presentations with the algebraic union remains
 separate from restricting a semantic ambient field in item 1 above.

@@ -177,7 +177,9 @@ theorem Rebuilt.parameter_value {B : Type} [Lean.Grind.Field B] [DecidableEq B]
   have owned : HEq
       (_root_.cast (congrArg Context.Value (rebuilt.result.cast_spec target_eq).1.symm)
         (rebuilt.parameter base)) (rebuilt.suffix.embed (Conversion.parameter base)) :=
-    (_root_.cast_heq _ _).trans (_root_.cast_heq _ _)
+    by
+      rw [Rebuilt.parameter_eq]
+      exact (_root_.cast_heq _ _).trans (_root_.cast_heq _ _)
   exact (value_heq
     (rebuilt.context_eq.trans (rebuilt.result.cast_spec target_eq).1.symm)
     (input.extend rebuilt.suffix) model.target aligned _ _ owned).trans

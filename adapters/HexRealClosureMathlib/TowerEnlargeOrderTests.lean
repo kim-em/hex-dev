@@ -46,6 +46,19 @@ example (suffix : Suffix base) (old : Model suffix.context ℝ) :
   exact Model.suffixRestrict_algebraic rationalBase suffix rational old
     (Ambient.infinitesimal (Union.Carrier Rat ℝ))
 
+/-- Only the initial coefficient inequalities are supplied to the local
+algebraic bound; it then applies to every interpreted old tower value. -/
+example (suffix : Suffix base) (old : Model suffix.context ℝ) :
+    let ambient := Ambient.infinitesimal ℝ
+    ∀ a, 0 < old.value a → ambient.inclusion Hex.RationalFn.X <
+      Ambient.coefficientHom ambient (old.value a) := by
+  let ambient := Ambient.infinitesimal ℝ
+  apply Model.suffix_infinitesimal rationalBase suffix rational old
+    (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient)
+    (ambient.inclusion Hex.RationalFn.X)
+  intro b positive
+  exact Ambient.X_lt_coefficient ambient _ positive
+
 /-- A selected root's actual enlargement returns its native parameter below
 every old positive value, with no second reconstruction or existential scalar. -/
 example (descriptor : SignDet.Descriptor base.Value Signature base.sign base.signature) :
