@@ -329,9 +329,11 @@ them through sign-shape validation and literal descriptor guards, and supplies
 the laws used by `insert_sorted` and `rootsFrom_sorted`. These finite strict
 sortedness proofs require no caller-supplied comparator laws. The companion's
 `Descriptor.fullOrder_root` relates applicable full comparisons to strict
-mathematical root order using Tau Ceti's Thom theorems. Ruling out insertion
-and extraction errors for every valid root-list input remains required;
-no default order or omitted row conceals such a failure.
+mathematical root order using Tau Ceti's Thom theorems.
+`Descriptor.buildRoots_success` rules out insertion and extraction errors for
+every valid domain under lawful coefficients; `buildRoots_roots` proves the
+actual result covers every root exactly once in strictly increasing order.
+No rational separators or injective coefficient storage are required.
 For positive-degree heads, `rootsFromTable` extracts every descriptor from the
 same accepted full table. Its proof-backed row constructor reuses the literal
 query/context bindings, derives sign shape from the table, and establishes
@@ -400,7 +402,8 @@ the executable diagnostic interface is retained for arbitrary operations.
 Completion and re-encoding have producer success proofs under lawful
 coefficients. `Comparison.order_root` identifies every accepted comparison
 with the mathematical order of the original roots. Universal root-list
-production, common-product comparison production and the remaining total
+production and mathematical sorting are proved; common-product comparison
+production and the remaining total
 public interfaces, the consumer sample-point interface, serialization and
 nested evidence sharing remain required. The semantic proofs interpret the
 actual query replays through the shared proved root-sum theorem; the specified BKR/Thom foundations are a

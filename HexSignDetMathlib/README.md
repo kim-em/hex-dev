@@ -226,10 +226,9 @@ uses the common full derivative word and count-one descriptors.
 the original selected roots, using their root-preserving re-encodings and the
 actual full-word comparator theorem.
 The executable API retains its internal diagnostics for arbitrary coefficient
-operations. The companion rules out selected-sign and completion errors under
-lawful coefficients. The domain-exact total table wrappers are available; root
-enumeration success and common-product comparison production retain their
-separate proof obligations.
+operations. The companion rules out selected-sign, completion and enumeration
+errors under lawful coefficients. The domain-exact total table wrappers are
+available; common-product comparison production remains a separate obligation.
 
 `Descriptor.buildSigns_success` proves that the actual selected-sign producer
 succeeds for every validated descriptor and finite ordered query list under
@@ -282,11 +281,27 @@ production success and the root counts use the same root-sum theorem throughout;
 none of these success proofs needs a Thom theorem.
 `buildRoots_none_iff` characterizes invalid mathematical domains exactly,
 and `buildRoots_domain` proves validity of the original input without using the root-sum theorem.
-Universal producer success and correspondence with strict mathematical
-root order remain separate proof obligations.
+`Descriptor.buildRoots_success` in `HexSignDetMathlib.ThomRoots` proves actual
+success on every valid domain, not just domains containing at most one root.
+`RawDescriptor.full_fiber` derives count one for every realized row, table-word
+distinctness excludes duplicate insertion, and `Descriptor.fullOrder_root`
+discharges every actual comparison guard. `Thom.insert_success` and
+`rootsFromTable_success` follow the existing recursive operations.
+`Descriptor.buildRoots_ordered` interprets the existing finite sorting result
+as strict mathematical order. `Descriptor.buildRoots_roots` combines actual
+success, exact coverage, no duplicates and strict ordering. Constants and
+finite/infinite endpoints are included. The generic interpretation admits
+noninjective coefficient storage and any real closed target field, including
+non-Archimedean ones. `Descriptor.buildRoots_isSome` states actual success iff
+the original domain is valid, supplying the SPEC’s `roots_isSome` contract;
+`buildRoots_roots` supplies its `roots_correct` contract.
 Conformance exercises whole-line and bounded domains, empty results for
 constants and root-free heads, negative leading coefficients, noncanonical
-coefficients, and the actual cubic field ℚ(∛2).
+coefficients, and the actual cubic field ℚ(∛2). It also enumerates 0 and ε
+using actual ordered rational-function coefficients, checks their selected
+signs and order, and rejects a changed context. These roots have no rational
+separator. A closed noninjective specialization and guarded axiom inventories
+verify the ordinary-kernel proof dependencies.
 
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient
@@ -308,7 +323,7 @@ coefficient storage without rational separators or a field instance on stored
 coefficients. Conformance checks the actual foundation and bridge axiom
 inventories with the ordinary kernel.
 
-Universal enumeration success, common-product comparison production, the
+Common-product comparison production, the
 remaining total public interfaces, certificate byte roundtrips and Phase-4
 evidence remain required. Root-sum/replay soundness follows from the shared
 proved theorem; finite BKR proofs consume Tau Ceti moment/count recovery, and
