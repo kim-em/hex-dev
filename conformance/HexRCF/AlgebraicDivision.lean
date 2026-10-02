@@ -27,6 +27,16 @@ theorem mixed_square_alias : ∀ x : ℝ,
 
 theorem lone_square_root : ∀ x : ℝ, x ^ 2 + Real.sqrt 3 > 0 := by rcf
 
+theorem lone_square_four : ∀ x : ℝ, x ^ 2 + Real.sqrt 4 > 0 := by rcf
+
+theorem lone_square_one : ∀ x : ℝ, x ^ 2 + Real.sqrt 1 > 0 := by rcf
+
+private abbrev wrappedSelected : RealAlgebraicNumber :=
+  Coefficients.ofField CubeTwo.realAlgebraic (CubeTwo.realAlgebraic.toAlgebraic.toQAdjoin ^ 2 - 1)
+
+theorem wrapped_selected_positive : ∀ x : ℝ,
+    x ^ 2 + wrappedSelected.toReal > 0 := by rcf
+
 theorem compound_selected : ∀ x : ℝ,
     x ^ 2 + (CubeTwo.realAlgebraic.toReal ^ 2 - 1) > 0 := by rcf
 
@@ -78,6 +88,16 @@ private theorem plasticSquarefree : HasOnlySimpleRoots plasticPolynomial := by
   let : plasticPolynomial.CheckedIrreducible := plasticChecked
   exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable plasticPolynomial hne).mpr
     (ZPoly.CheckedIrreducible.separable plasticPolynomial)
+private abbrev selectedAlpha : RealAlgebraicNumber :=
+  Selected.real plasticPolynomial plasticSquare
+    (by decide) (by decide) (by rfl) (by decide) (by decide)
+    plasticChecked plasticSquarefree (by decide)
+private abbrev selectedBeta : RealAlgebraicNumber :=
+  Coefficients.ofField selectedAlpha (selectedAlpha.toAlgebraic.toQAdjoin ^ 2 - 1)
+
+theorem selected_cubic_reciprocal : ∀ x : ℝ,
+    x / selectedAlpha.toReal = selectedBeta.toReal * x := by rcf
+
 private abbrev plasticRep : RefinedIsolation plasticPolynomial :=
   Field.literalRep plasticPolynomial plasticSquare (by decide) (by decide)
 private abbrev plasticAlgebraic : AlgebraicNumber :=
@@ -138,6 +158,11 @@ example : ∀ x : ℝ, x ^ 2 + 0 / (Real.sqrt 2 - Real.sqrt 2) ≥ 0 := by rcf
 /-- error: rcf: original closed divisor is zero -/
 #guard_msgs in
 example : ∀ x : ℝ, x ≤ 0 → 0 < x → 0 / (alpha.toReal - alpha.toReal) = 0 := by rcf
+
+/-- error: rcf: original closed divisor is zero -/
+#guard_msgs in
+example (a : ℝ) (h : a = Real.sqrt 2 - Real.sqrt 2) :
+    ∀ x : ℝ, x ^ 2 + 0 / a ≥ 0 := by rcf
 
 end Hex.RCF.AlgebraicDivision
 
@@ -224,3 +249,19 @@ end Hex.RCF.AlgebraicDivision
 /-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.compound_selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.AlgebraicDivision.compound_selected
+
+/-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.lone_square_four' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.AlgebraicDivision.lone_square_four
+
+/-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.lone_square_one' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.AlgebraicDivision.lone_square_one
+
+/-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.wrapped_selected_positive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.AlgebraicDivision.wrapped_selected_positive
+
+/-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.selected_cubic_reciprocal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.AlgebraicDivision.selected_cubic_reciprocal

@@ -28,7 +28,7 @@ private meta def kernelDecide (goal : Expr) : MetaM Expr := do
       (simp only [CommonPresentation.checkPresentation, Field.checkSignTable,
         LiteralSign.Table.check, Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
         ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
-       repeat' constructor; all_goals decide +kernel)))
+       repeat' apply And.intro; all_goals decide +kernel)))
   unless remaining.isEmpty do
     throwError "rcf: literal source replay did not close"
   return ← instantiateMVars candidate
@@ -490,7 +490,7 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
           let goal ← mkAppM ``Ne #[coeffs, zeroPoly]
           let hcoeff ← mkDecideProof goal
           let hne ← mkAppM ``Field.coordinate_ne_zero #[compiled.expression, hcoeff]
-          let proof := mkApp reflect hne
+          let proof := mkApp (← mkLambdaFVars #[inst] (mkApp reflect hne)) irred
           Hex.RCF.checkAxioms `Hex.RCF.RealCoefficients.CommonTactic.handle proof
           let _ ← withOptions (fun opts =>
               debug.skipKernelTC.set (Elab.async.set opts false) false) do
@@ -562,18 +562,8 @@ private meta partial def gather (source : Expr) (leaves : Array Expr) :
     | .ok source => pure source
     | .error (.unsupported _ _) => return .declined
     | .error error => return .failed (Hex.RealFormula.Reify.Error.toMessageData error)
-  if source.coefficients.size == 1 && source.divisors.isEmpty then
-    let coefficient := source.coefficients[0]!
-    if ← eligible coefficient then
-      if coefficient.isAppOfArity ``Real.sqrt 1 then
-        if (← naturalSquareRoot? coefficient) == some 2 then return .declined
-      else
-        let argument := coefficient.appArg!
-        let anchor ← match ← fieldArgs? argument with
-          | some (_, anchor, _) => pure anchor
-          | none => pure argument
-        if (← normalizedArgs? anchor).isNone && !(← directConversion argument) then
-          return .declined
+  if source.coefficients.size == 1 && source.divisors.isEmpty &&
+      (← Tactic.handlesCoefficient source.coefficients[0]!) then return .declined
   let mut leaves := #[]
   for scalar in source.coefficients ++ source.divisors do
     let some next ← gather scalar leaves | return .declined

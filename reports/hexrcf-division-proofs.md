@@ -30,6 +30,12 @@ margins from −1.04 s to +0.59 s. These four observations do not resolve a
 cost difference. They show that both source forms produce ordinary proofs
 with the same private serialized artifact size for this input. Olean size
 includes metadata and is not a count of proof or evidence DAG nodes.
+The source-presentation sign table and target sign table are checked separately;
+this measurement includes both checks and does not isolate their costs. The
+recorded source predates the later alias/dispatch changes and the check that
+instantiates each divisor guard with its literal irreducibility witness before
+search. These observations are tied to the recorded source, not timings of the
+final PR head or of the newly accepted source forms.
 There is no import-only arm, numerical algorithm benchmark, parameter sweep
 or general completeness claim. Absolute times are observations on this shared
 host. Every completed sample is retained; there is no unchanged rerun.

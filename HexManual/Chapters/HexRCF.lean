@@ -539,7 +539,7 @@ wrapper. Both forms preserve the selected embedding.
 The two-square-root examples below combine `Real.sqrt 2` and `Real.sqrt 3`
 in one common field and check that each field coordinate names the intended
 positive root. This path accepts natural literal radicands when at least two
-distinct square roots occur in the goal. A lone `Real.sqrt 2` uses the earlier
+distinct square roots occur in the goal. A lone `Real.sqrt 2` without division uses the earlier
 single-coefficient path; other positive natural square roots use the common-field
 frontend, including perfect-square radicands. The
 two-root examples use a larger heartbeat limit for the quartic common field.
@@ -661,14 +661,18 @@ example : ∀ x : ℝ,
   rcf
 
 example : ∀ x : ℝ,
-    x / normalizedPlastic.toReal = plasticCoefficient.toReal * x := by
+    x / normalizedPlastic.toReal =
+      plasticCoefficient.toReal * x := by
   rcf
 
-private abbrev convertedPlastic : Hex.RealAlgebraicNumber :=
-  Hex.RealAlgebraicNumber.ofAlgebraic plasticCoordinate.toAlgebraicNumber (by
+private abbrev convertedPlastic :
+    Hex.RealAlgebraicNumber :=
+  Hex.RealAlgebraicNumber.ofAlgebraic
+    plasticCoordinate.toAlgebraicNumber (by
     rw [Hex.AlgebraicNumber.isReal_iff, Hex.QAdjoin.toAlgebraicNumber,
       Hex.PolyQuot.toAlgebraicNumber_toComplex]
-    exact Hex.QAdjoin.value_real plasticCoordinate normalizedPlastic.property)
+    exact Hex.QAdjoin.value_real plasticCoordinate
+      normalizedPlastic.property)
 
 example : ∀ x : ℝ,
     x / normalizedPlastic.toReal = convertedPlastic.toReal * x := by
@@ -690,13 +694,12 @@ example : ∃ x : ℝ,
     x ^ 2 = 1 / (Real.sqrt 2 + 1) ∧ 0 < x ∧ x < 1 := by
   rcf
 
-example : True := by
-  fail_if_success
-    have : ∀ x : ℝ,
-        x ^ 2 + 0 / (normalizedPlastic.toReal -
-          normalizedPlastic.toReal) ≥ 0 := by
-      rcf
-  trivial
+/-- error: rcf: original closed divisor is zero -/
+#guard_msgs in
+example : ∀ x : ℝ,
+    x ^ 2 + 0 / (normalizedPlastic.toReal -
+      normalizedPlastic.toReal) ≥ 0 := by
+  rcf
 
 example : ∃ x : ℝ,
     x ^ 2 = normalizedPlastic.toReal ∧
@@ -820,7 +823,10 @@ selected cubic coefficient, `rcf` isolates a root of `x² − selectedCubic`
 over its fixed real number field and checks both inequalities at that same
 root in the interval example. The `fail_if_success` examples show that a false
 algebraic statement produces no proof, nonpolynomial syntax in the quantified
-variable is rejected, and a cancelled zero divisor remains invalid source syntax.
+variable is rejected, and a cancelled zero divisor remains an invalid input.
+`CubeTwo.realAlgebraic` exposes its checked selected-root construction, so
+its lone examples use the selected-root frontend. Earlier cubic measurements
+record their stated source revision and do not measure this routing change.
 The adapter's source reifier preserves explicit coefficient aliases and
 original divisor obligations before normalization. Closed values built with
 `Selected.real` may be named using `def` in the same file. Across modules, use
