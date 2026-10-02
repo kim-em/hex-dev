@@ -35,7 +35,7 @@ diagnostic fallback is unreachable under the coefficient interpretation laws. -/
   match roots? sign context p with
   | .ok output => output
   | .error error =>
-    letI : Inhabited (Output sign context) := ⟨.finite []⟩
+    letI : Inhabited (Output sign context) := ⟨.all⟩
     panic! s!"Roots.roots: internal error {repr error}"
 
 /-- The total API returns its actual successful checked construction. -/

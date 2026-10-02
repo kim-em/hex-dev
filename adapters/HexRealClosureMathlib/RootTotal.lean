@@ -135,11 +135,10 @@ theorem roots_success (context : Ctx) (p : DensePoly E) :
   obtain ⟨output, built⟩ := roots?_success φ hz h1 ha hs hm hnat hsign hn hi hd context p
   exact ⟨output, built, roots_of_success built⟩
 
-include hz h1 ha hs hm hnat hsign hn hi in
+include hz h1 ha hs hm hnat hsign hn hi hd in
 /-- Checked complete roots cover exactly the input's mathematical roots
 with their exact multiplicities after the actual global sort. -/
-theorem roots?_spec (hd : ∀ a b, φ (a / b) = φ a / φ b)
-    {context : Ctx} (p : DensePoly E) {out : List (Entry sign context)}
+theorem roots?_spec {context : Ctx} (p : DensePoly E) {out : List (Entry sign context)}
     (built : roots? sign context p = .ok (.finite out)) (x : K) (label : Nat) :
     (∃ entry ∈ out, entry.value φ hz h1 ha hs hm hnat hsign = x ∧
       entry.multiplicity = label) ↔

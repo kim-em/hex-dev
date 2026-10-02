@@ -23,9 +23,9 @@ structure Entry (sign : E → Int) (context : Ctx) where
   multiplicity : Nat
   positive : 0 < multiplicity
 
-/-- Intermediate root assembly. The zero polynomial retains its separate
-all-roots case, without attaching finite multiplicities. Strict order and
-producer success remain separate proof obligations. -/
+/-- Root output, retaining zero's separate all-roots case without finite
+multiplicities. `assemble` produces intermediate entries; `roots` orders them
+and its companion proves total success and exact mathematical roots. -/
 inductive Output (sign : E → Int) (context : Ctx) where
   | all
   | finite (entries : List (Entry sign context))

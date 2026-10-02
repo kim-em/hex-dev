@@ -483,11 +483,10 @@ Root cuts
 still prepare both quotient domains and recompute every pending domain and
 count, including count-zero cells. No timing improvement is claimed.
 
-The frontier feeds descriptor completion and factor assembly below. The
-complete ordered `RootSet` still needs general descriptor comparison laws and
-producer totality. Automatic dependency transport, compatible real-closed
-union semantics and simultaneous ordinary-real realization remain separate
-requirements of the full tower.
+The frontier feeds descriptor completion and the complete generic root producer
+below. Native root entries with extension contexts and coefficient embeddings,
+automatic dependency transport, native compatible real-closed union coverage
+and simultaneous ordinary-real realization remain requirements of the full tower.
 
 ### Bound selection and whole-line dispatch
 
@@ -563,9 +562,10 @@ disjoint retained cells and the shared enumeration's coverage theorem. The
 proofs apply to raw coefficients through a zero-reflecting interpretation in
 an ordered real closed field, and use only the standard three axioms.
 
-This intermediate output does not claim globally sorted root values or full
-producer success. It is for nonzero squarefree input; the factor assembly below
-restores Yun multiplicities and handles the zero-polynomial case.
+`complete?_success` proves actual producer success for every nonzero squarefree
+input, including singleton retained cells and whole-line enumeration. This
+intermediate output is not globally sorted; the complete root operation below
+orders entries, restores Yun multiplicities and handles the zero-polynomial case.
 Unresolved and whole-line enumeration currently prepare the retained domains
 again; the requested upstream prepared-root enumeration API remains a subsequent
 integration. `cell_enumeration_present` and `Whole.enumeration_present` prove
@@ -660,7 +660,9 @@ semantic zero.
 supplied coefficient carrier. It returns `all` for zero or a strictly increasing
 finite list of roots with their original positive multiplicities. It runs the
 actual assembly and globally sorts the retained entries. `Roots.roots?` exposes
-the internal diagnostic result. The companion's `assemble_success` and
+the internal diagnostic result. An invariant failure in the total wrapper
+prints a panic and falls back to `all`, so it cannot resemble a root-free
+answer for a nonzero polynomial. The companion's `assemble_success` and
 `roots_success` exclude these diagnostics under the coefficient interpretation
 laws, including successful completion of every retained cell and actual Yun
 factor. No producer output is assumed. `roots_all`, `roots_spec` and
@@ -670,13 +672,19 @@ laws allow raw coefficient representations without a field instance or an
 injective interpretation, provided zero is reflected and operations and signs
 are preserved.
 
-The compiled isolation fixture exercises this total operation on repeated
+The compiled isolation fixture exercises the complete checked producer on repeated
 factors and over a selected algebraic coefficient. Its independent exact Z3 RCF
 oracle checks coverage, multiplicities and strict order; mutation tests reject
-permuted outputs. The native repeated-factor test checks the ordered labels
+permuted outputs, and preserves explicit error rows for any internal failure.
+The native tests exercise the total wrapper's zero case and check the ordered labels
 `[3, 2, 3, 5]` for `-3 X² (X²-2)³ (X-3)⁵`.
 The native tower wrapper and trivial-base agreement are separate requirements
 of the full `RootSet` interface.
+`runRoots` times the actual total operation, including global ordering, on this
+repeated-factor input; `runAssembly` retains the intermediate timing anchor.
+The current global insertion sort uses at most quadratically many comparisons,
+with common-polynomial re-encoding for descriptor pairs. These fixed anchors
+make no scaling claim and do not complete the required Phase-4 evaluation.
 
 ### Arithmetic over general selected-root predecessors
 
@@ -765,7 +773,9 @@ field that preserves arithmetic, negation, inverse, division and sign, the
 level's selected-value interpretation supplies every coefficient premise. A
 successful finite assembly therefore covers exactly the ambient roots of the
 interpreted input with original multiplicities and no duplicate values; `all`
-is equivalent to semantic zero. Producer success and ordering remain separate obligations.
+is equivalent to semantic zero. The generic complete-root success and strict-order
+theorems also apply to this interpretation; native materialization of the roots
+and their extension embeddings is a separate interface requirement.
 
 `AlgebraicValue.lean` defines the image subfield `Value ctx`, with lawful field
 and order instances inherited from the ambient field. `Element.toValue`

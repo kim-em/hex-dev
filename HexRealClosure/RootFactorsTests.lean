@@ -15,8 +15,8 @@ private def require (test : Bool) (message : String) : IO Unit :=
   unless test do throw (IO.userError message)
 
 private def checkZero : IO Unit :=
-  match Roots.assemble Sturm.orderSign (10378 : Nat) (0 : DensePoly Rat) with
-  | .ok .all => pure ()
+  match Roots.roots Sturm.orderSign (10378 : Nat) (0 : DensePoly Rat) with
+  | .all => pure ()
   | _ => throw (IO.userError "zero polynomial lost its all-roots case")
 
 private def checkConstant (constant : Rat) : IO Unit :=
