@@ -362,6 +362,21 @@ def check_ci_workflows(entries: list[dict]) -> None:
             steps = job.get("steps") if isinstance(job, dict) else None
             if not isinstance(steps, list):
                 fail(f"{entry['repo']}: CI job {job_name} has no steps")
+            if entry.get("test_modules"):
+                target = entry["lib"] + "Tests"
+                builds = [
+                    match.group(1).split()
+                    for step in steps if isinstance(step, dict)
+                    for match in re.finditer(
+                        r"(?m)^\s*lake\s+build\b([^\n;|&]*)",
+                        step.get("run", "").replace("\\\n", " "),
+                    )
+                ]
+                if not any(target in targets for targets in builds):
+                    fail(
+                        f"{entry['repo']}: managed CI must explicitly build "
+                        f"{target} for its test_modules"
+                    )
             indexed = {
                 action: [
                     index for index, step in enumerate(steps)
