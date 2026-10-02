@@ -69,13 +69,28 @@ python3 scripts/oracle/sign_det_json_stress.py
 With the same 8 MiB stack, the compiled parser/printer handles a 16 MiB ASCII
 string, a million escaped characters, a two-million-element array, 300,000
 object fields with duplicate keys, nesting depth 128 and a 4,096-digit integer.
-Python independently compares the input and output values. These are capacity
+Python independently compares the input and output values of the parse/print
+composition; file mode does not inspect constructors independently. The
+324-case line-mode oracle separately does that inspection. The existing CI oracle runs smaller probes (a 4 MiB string, a million array
+elements and 100,000 object fields) plus byte/depth/digit rejection probes.
+Each rejection checks its diagnostic and that no output file was produced.
+These are capacity
 observations, not timing/scaling evidence or exhaustive coverage of every
 input permitted by the limits. They do not exercise derived structural
-equality on wide parsed values. The character list, token list and result
+equality or `Repr` on wide values, or the line driver's recursive constructor
+inspection and equality. Depth allowances larger than 128 are unvalidated. The character list, token list and result
 still increase memory use; token concatenation can copy data at each nesting
 level. The printer adds whitespace and may produce more bytes than the input,
-including 16 MiB plus one byte for the ceiling-size string. A larger output can
+including 16 MiB plus one byte for the ceiling-size string. The escaped-string
+probe grows from 2,000,002 to 6,000,003 bytes; arrays grow from 4,000,001 to
+8,000,002 bytes; duplicate object fields grow from 1,800,001 to 3,000,002 bytes.
+The driver also checks the printed output against the default lexical guard;
+the ceiling-size string's extra byte is rejected. A larger output can
 require a larger decoding byte allowance. Final certificate integration must
-account for that expansion. The low-level decimal word readers accept leading
+account for that expansion and provide a guarded public decoding entry point.
+The low-level `Json.readBytes` is intentionally unguarded; certificate consumers
+must use `Codec.checkBytes` first. These probes do not measure peak memory;
+character-list storage alone can require hundreds of megabytes near the byte
+ceiling. Combined high depth and width and complete memory attribution remain
+integration checks. The low-level decimal word readers accept leading
 zeros; JSON token parsing separately rejects them.

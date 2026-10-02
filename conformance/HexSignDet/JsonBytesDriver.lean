@@ -59,6 +59,11 @@ private def runLines : IO Unit := do
 def main (args : List String) : IO Unit := do
   match args with
   | [] => runLines
+  | ["--check-file", source] =>
+    let bytes ← IO.FS.readBinFile source
+    match Hex.SignDet.Codec.checkBytes {} bytes with
+    | .error message => throw (IO.userError message)
+    | .ok () => pure ()
   | ["--file", source, target] =>
     let bytes ← IO.FS.readBinFile source
     match Hex.SignDet.Codec.checkBytes {} bytes with
@@ -67,4 +72,4 @@ def main (args : List String) : IO Unit := do
     let some value := Hex.SignDet.Codec.Json.readBytes bytes
       | throw (IO.userError "JSON input rejected")
     IO.FS.writeBinFile target value.writeBytes
-  | _ => throw (IO.userError "expected no arguments, or --file SOURCE TARGET")
+  | _ => throw (IO.userError "expected no arguments, --check-file SOURCE, or --file SOURCE TARGET")

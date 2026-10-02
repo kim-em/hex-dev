@@ -150,8 +150,8 @@ theorem dropSpace_emit (token : Token) (suffix : List Char) :
     | negSucc n => simp [emit, write, Int.repr_eq_ite, String.toList_append]
   | string s => simp [emit, write, Str.write]
 
-/-- A finite lexer for untrusted certificate text. The caller chooses fuel;
-byte decoding uses the actual number of input characters plus one. -/
+/-- Finite reference lexer used in proofs. Native byte decoding uses
+`lexLoop`; this reference retains one stack frame per token. -/
 @[expose] def lex : Nat → List Char → Option (List Token)
   | 0, _ => none
   | fuel + 1, input => do
@@ -229,6 +229,12 @@ private theorem lexLoop_eq (fuel : Nat) (input : List Char) (reversed : List Tok
         obtain ⟨token, rest⟩ := pair
         simp only [bind, Option.bind, ih]
         cases lex fuel rest <;> simp [List.reverse_cons, List.append_assoc]
+
+/-- The accumulator lexer agrees with the finite reference on all inputs,
+including malformed token sequences and insufficient fuel. -/
+theorem lexLoop_spec (fuel : Nat) (input : List Char) :
+    lexLoop fuel input [] = lex fuel input := by
+  simpa using lexLoop_eq fuel input []
 
 /-- Validate UTF-8 and lex integer-only JSON certificate bytes. -/
 @[expose] def readBytes (input : ByteArray) : Option (List Token) := do

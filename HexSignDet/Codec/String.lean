@@ -275,6 +275,16 @@ private theorem scanBody_write (cs : List Char) (suffix : List Char) :
       simp [hq, hb, ih]
       omega
 
+/-- Accumulator string parsing agrees with the finite reference, including
+malformed escapes and insufficient fuel. -/
+theorem readBodyLoop_spec (fuel : Nat) (input : List Char) :
+    readBodyLoop fuel input [] = readBody fuel input := by
+  simpa using readBodyLoop_eq fuel input []
+
+/-- The accumulator scan counts precisely the reference quoted prefix. -/
+theorem scanLoop_spec (input : List Char) : scanLoop input 0 = scanBody input := by
+  simpa using scanLoop_eq input 0
+
 /-- Read a quoted prefix, retaining all following characters. The parser fuel
 counts the quoted prefix, so later strings are not repeatedly scanned. -/
 @[expose] def readPrefix (input : List Char) : Option (String × List Char) :=

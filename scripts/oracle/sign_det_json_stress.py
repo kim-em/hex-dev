@@ -8,7 +8,6 @@ coverage of all inputs below the ceiling.
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 import resource
 import subprocess
@@ -19,7 +18,12 @@ from sign_det_json_bytes import expected
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def cases():
+def cases(ci=False):
+    if ci:
+        yield "ci-string", b'"' + b"x" * (4 * 1024 * 1024) + b'"'
+        yield "ci-array-width", b"[" + b"0," * 999999 + b"0]"
+        yield "ci-object-width", b"{" + b'"x":0,' * 99999 + b'"x":0}'
+        return
     yield "string-byte-ceiling", b'"' + b"x" * (16777216 - 2) + b'"'
     yield "escaped-string", b'"' + b"\\n" * 1000000 + b'"'
     yield "array-width", b"[" + b"0," * 1999999 + b"0]"
@@ -35,15 +39,27 @@ def stack_limit():
     resource.setrlimit(resource.RLIMIT_STACK, (8 * 1024 * 1024, hard))
 
 
+def run_guard(executable, source):
+    return subprocess.run([str(executable), "--check-file", str(source)],
+                          capture_output=True, preexec_fn=stack_limit)
+
+
+def rejection_cases():
+    yield "byte-limit", b'"' + b"x" * (16777216 - 1) + b'"', "certificate byte limit exceeded"
+    yield "depth-limit", b"[" * 129 + b"0" + b"]" * 129, "certificate nesting limit exceeded"
+    yield "digit-limit", b"1" + b"0" * 4096, "integer token limit exceeded"
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--exe", type=Path,
                         default=ROOT / ".lake/build/bin/hexsigndet_json_bytes")
+    parser.add_argument("--ci", action="store_true", help="smaller mandatory native probes")
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="hex-json-stress-") as directory:
         source = Path(directory) / "source.json"
         target = Path(directory) / "printed.json"
-        for name, raw in cases():
+        for name, raw in cases(args.ci):
             source.write_bytes(raw)
             target.unlink(missing_ok=True)
             completed = subprocess.run([str(args.exe), "--file", str(source), str(target)],
@@ -54,8 +70,27 @@ def main():
             printed = target.read_bytes()
             if expected(raw) != expected(printed):
                 raise ValueError(name + ": parsed/printed value changed")
-            print(f"{name}: {len(raw)} input bytes, {len(printed)} output bytes, passed",
-                  flush=True)
+            target_check = run_guard(args.exe, target)
+            guard_message = target_check.stderr.decode("utf-8", errors="replace")
+            if len(printed) > 16777216:
+                if target_check.returncode == 0 or "certificate byte limit exceeded" not in guard_message:
+                    raise ValueError(name + ": expanded output byte limit was not enforced")
+                guard_status = "byte limit rejects output"
+            elif target_check.returncode != 0:
+                raise ValueError(name + ": printed output guard failed: " + guard_message)
+            else:
+                guard_status = "output guard accepts"
+            print(f"{name}: {len(raw)} input bytes, {len(printed)} output bytes, "
+                  f"{len(printed) / len(raw):.3f}x, {guard_status}, passed", flush=True)
+        for name, raw, message in rejection_cases():
+            source.write_bytes(raw)
+            target.unlink(missing_ok=True)
+            completed = subprocess.run([str(args.exe), "--file", str(source), str(target)],
+                                       capture_output=True, preexec_fn=stack_limit)
+            if (completed.returncode == 0 or message not in completed.stderr.decode("utf-8", errors="replace")
+                    or target.exists()):
+                raise ValueError(name + ": missing lexical rejection")
+            print(name + ": rejected before parsing, passed", flush=True)
 
 
 if __name__ == "__main__":

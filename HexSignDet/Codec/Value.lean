@@ -251,6 +251,15 @@ private theorem readLoop_all (fuel : Nat) :
                 cases token <;> simp [io, Fields.prepend]
                 cases readFields fuel false suffix <;> rfl
 
+/-- Native parsing agrees with the finite reference for every token sequence,
+including malformed arrays/objects and insufficient fuel. -/
+theorem readLoop_spec (fuel : Nat) (input : List Token) :
+    readLoop fuel input = read fuel input := (readLoop_all fuel).1 input
+
+/-- Native token production preserves the exact reference token list. -/
+theorem Value.tokensLoop_spec (value : Value) : value.tokensLoop = value.tokens :=
+  value.tokensLoop_eq
+
 mutual
 /-- A sufficient parser recursion bound, independent of integer magnitudes
 and Unicode string lengths. -/
@@ -394,7 +403,9 @@ end
 @[expose] def Value.writeBytes (value : Value) : ByteArray := Token.writeBytes value.tokensLoop
 
 /-- Validate UTF-8, lex integers/strings, parse the JSON structure, and require
-that no trailing token remains. Fuel comes from the actual finite token count. -/
+that no trailing token remains. Fuel comes from the actual finite token count.
+This low-level operation has no byte/depth/digit guard. Certificate decoding
+must run `Codec.checkBytes` first; unrestricted nesting can exhaust the stack. -/
 @[expose] def readBytes (input : ByteArray) : Option Value := do
   let tokens ← Token.readBytes input
   let (value, rest) ← readLoop (tokens.length + 1) tokens
