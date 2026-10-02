@@ -114,6 +114,8 @@ constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
 `QAdjoin` coordinates converted through `Coefficients.ofField`. It binds the
 original isolation square to the literal selected-root replay, preserving the
 chosen embedding. Elaboration executes canonicalization; the kernel reduces
-the supplied isolation and square identity, rather than canonicalization.
+the original polynomial and square identities, rather than canonicalization.
+These identities must reduce across imports. A transported isolation certificate
+without a directly checkable root witness is currently rejected before search.
 This extends source conversion; general reconstruction and algebraic-only
 producer completeness remain required.

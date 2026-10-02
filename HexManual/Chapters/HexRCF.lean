@@ -513,8 +513,12 @@ by a `def` in the same file. It also accepts the existing checked
 {name}`Hex.AlgebraicNumber.ofNormalized` constructor directly, followed by
 {name}`Hex.RealAlgebraicNumber.ofAlgebraic` with a reality proof. The original
 isolation square authenticates the chosen root. Elaboration executes
-canonicalization, but the kernel checks the supplied isolation and its literal
-square identity rather than replaying canonicalization. The example below computes `α² − 1` in the field
+canonicalization. Before common-field search, the adapter checks a direct root
+witness on the original square. The kernel authenticates its literal square
+and polynomial identities rather than replaying canonicalization.
+Both identities must reduce in the kernel, including across imports.
+A transported certificate without a direct witness is currently rejected.
+The example below computes `α² − 1` in the field
 of the selected root of `X³ − X − 1` and uses its proved real conversion.
 The constructor data must be executable and visible to the frontend; an
 arbitrary opaque algebraic value has no implicit reconstruction rule.

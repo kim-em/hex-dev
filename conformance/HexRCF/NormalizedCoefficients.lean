@@ -6,8 +6,10 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients
+public import HexRCF.NormalizedInputs
 public import HexReflect.Session
 public meta import HexRCF.RealCoefficients
+public meta import HexRCF.NormalizedInputs
 public meta import Qq
 public meta import Lean.Elab.Term.TermElabM
 
@@ -104,17 +106,29 @@ theorem common_conjugates : ∀ x : ℝ, x ^ 2 + negative.toReal + Real.sqrt 2 �
 example : ∀ x : ℝ, x ^ 2 + negative.toReal + Real.sqrt 2 > 0 := by
   rcf
 
+-- The complete exposed constructor works across a module boundary.
+theorem imported_positive : ∀ x : ℝ,
+    x ^ 2 + Hex.RCF.NormalizedInputs.exposed.toReal > 0 := by
+  rcf
+
+-- Executability alone does not authenticate a hidden isolation square.
+/-- error: rcf: normalized source square must reduce to its literal encoding in the kernel -/
+#guard_msgs in
+example : ∀ x : ℝ, x ^ 2 + Hex.RCF.NormalizedInputs.hidden.toReal > 0 := by
+  rcf
+
 open Lean Meta Qq in
 local elab "mixedDecline%" : term => do
   let saved ← saveState
   let result ← CommonTactic.handle q(∀ x : ℝ,
-    x ^ 2 + cubic.toReal + Real.sqrt (1 / 2) > 0)
+    x ^ 2 + Hex.RCF.NormalizedInputs.hidden.toReal + Real.sqrt (1 / 2) > 0)
   saved.restore
   match result with
   | .declined => return q(True.intro)
   | _ => throwError "normalized/unsupported mixture must decline before construction"
 
--- The common-field handler does not claim a mixed unsupported source.
+-- The imported hidden square throws if constructed. An unsupported sibling
+-- must decline before that check, so this catches interleaved classification.
 example : True := mixedDecline%
 
 open Lean Meta Qq in
@@ -160,3 +174,7 @@ example : True := guardRejection%
 /-- info: '_private.HexRCF.NormalizedCoefficients.0.common_conjugates' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms common_conjugates
+
+/-- info: '_private.HexRCF.NormalizedCoefficients.0.imported_positive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms imported_positive

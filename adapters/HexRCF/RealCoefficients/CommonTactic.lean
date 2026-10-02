@@ -35,7 +35,7 @@ private meta def naturalSquareRoot? (source : Expr) : MetaM (Option Nat) := do
 private inductive SourceKind where
   | radical (degree : Nat)
   | selected (args : Array Expr)
-  | normalized (args : Array Expr) (hreal : Expr)
+  | normalized (selected : Expr)
   deriving Inhabited
 
 private structure SourcePlan where
@@ -147,7 +147,30 @@ private meta def sourceRoot? (argument : Expr) :
   let rep : Q(RefinedIsolation $sourceP) ← pure args[6]!
   let square := q(($rep).1.square)
   let s ← FieldRuntime.evalSquare square
-  return some (← FieldRuntime.evalReal argument, p, s, .normalized args hreal)
+  unless Decidable.decide (atomWitness p s) do
+    throwError "rcf: normalized source square needs a directly checkable root witness"
+  unless Decidable.decide ((mahlerPrec p : Int) ≤ s.prec) do
+    throwError "rcf: normalized source square has insufficient precision"
+  let literalP : Q(ZPoly) ← FieldLiteral.zpolyExpr p
+  let literalSquare : Q(DyadicSquare) ← FieldLiteral.squareExpr s
+  -- Authenticate executable data before canonicalization or common-field search.
+  -- The kernel checks literal identities without reducing the constructor result.
+  let bindLiteral (goal : Expr) (literal : Expr) (label : String) : MetaM Expr := do
+    try
+      withOptions (fun opts =>
+          debug.skipKernelTC.set (Elab.async.set opts false) false) do
+        mkAuxTheorem goal (← mkEqRefl literal)
+          (zetaDelta := true) (cache := false)
+    catch _ =>
+      throwError "rcf: normalized source {label} must reduce to its literal encoding in the kernel"
+  let _ ← bindLiteral q($sourceP = $literalP) literalP "polynomial"
+  let hs ← bindLiteral q(($rep).1.square = $literalSquare) literalSquare "square"
+  let hw ← mkDecideProof (q(atomWitness $literalP $literalSquare) : Q(Prop))
+  let hp ← mkDecideProof
+    (q((mahlerPrec $literalP : Int) ≤ ($literalSquare).prec) : Q(Prop))
+  let selected ← mkAppM ``Selected.normalized_toReal
+    (args ++ #[hreal, literalSquare, hw, hp, hs])
+  return some (← FieldRuntime.evalReal argument, p, s, .normalized selected)
 
 private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
   let identity : DensePoly Rat := DensePoly.ofList [0, 1]
@@ -203,7 +226,6 @@ private def oneQuantifier {n : Nat} (formula : RealFormula.Prenex n) :
   | _ => none
 
 private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : MetaM Expr := do
-  Tactic.checkGuards source
   let anchors := plans.map (·.anchorValue)
   let common := QAdjoin.common (anchors.map RealAlgebraicNumber.toAlgebraic)
   unless common.entries.size == anchors.size do
@@ -256,7 +278,7 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
                 throwError "rcf: source radical has a different defining polynomial"
               let nExpr : Q(ℕ) := mkNatLit degree
               pure q(SquareRoot.polynomial $nExpr)
-          | .selected _ | .normalized _ _ => FieldLiteral.zpolyExpr sourceP
+          | .selected _ | .normalized _ => FieldLiteral.zpolyExpr sourceP
         let sourceWitness ← mkDecideProof
           (q(atomWitness $sourcePExpr $sourceSquareExpr) : Q(Prop))
         let sourcePrecision ← mkDecideProof
@@ -273,20 +295,7 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
           | .selected args => do
               let sourceValue ← mkAppM ``Selected.real_toReal args
               mkAppM ``Eq.symm #[sourceValue]
-          | .normalized args hreal => do
-              let originalP : Q(ZPoly) ← pure args[0]!
-              let rep : Q(RefinedIsolation $originalP) ← pure args[6]!
-              let goal : Q(Prop) := q(($rep).1.square = $sourceSquareExpr)
-              -- Derived square equality is not reducible through `decide`
-              -- in the module boundary. Check reflexivity against the original
-              -- square with the ordinary kernel, without MetaM reduction of
-              -- a potentially computed isolation or an auxiliary cache hit.
-              let hs ← withOptions (fun opts =>
-                  debug.skipKernelTC.set (Elab.async.set opts false) false) do
-                mkAuxTheorem goal (← mkEqRefl sourceSquareExpr)
-                  (zetaDelta := true) (cache := false)
-              mkAppM ``Selected.normalized_toReal
-                (args ++ #[hreal, sourceSquareExpr, sourceWitness, sourcePrecision, hs])
+          | .normalized selected => pure selected
         sourcePExprs := sourcePExprs.push sourcePExpr
         sourceSquareExprs := sourceSquareExprs.push sourceSquareExpr
         sourceWitnesses := sourceWitnesses.push sourceWitness
@@ -448,9 +457,11 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
       | none => pure argument
     if (← normalizedArgs? anchor).isNone then return .declined
   unless ← source.coefficients.allM eligible do return .declined
+  Tactic.checkGuards source
   let mut plans : Array SourcePlan := #[]
   for coefficient in source.coefficients do
-    let some plan ← sourcePlan? coefficient | return .declined
+    let some plan ← sourcePlan? coefficient |
+      throwError "rcf: internal: eligible source has no coefficient plan"
     plans := plans.push plan
   let proof ← prove source plans
   return .proved proof
