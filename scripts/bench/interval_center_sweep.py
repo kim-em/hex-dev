@@ -62,7 +62,6 @@ PROVENANCE_SOURCES = [
     ROOT / "HexInterval.lean",
     ROOT / "HexInterval" / "Basic.lean",
     ROOT / "HexInterval" / "Experiment" / "Center.lean",
-    ROOT / "HexIntervalMathlib" / "Experiment" / "Center.lean",
     ROOT / "bench" / "HexBench" / "IntervalCenterSpike.lean",
     ROOT / "lakefile.lean",
     ROOT / "lake-manifest.json",
@@ -80,7 +79,7 @@ def parse_args() -> argparse.Namespace:
         "--output",
         type=Path,
         default=ROOT / "reports" / "bench-results" /
-        "hex-interval-d2-center.json",
+        "hex-interval-d2-center-core.json",
     )
     return parser.parse_args()
 
@@ -339,13 +338,9 @@ def main() -> int:
 
     build = [
         "lake", "build", "HexIntervalExperiment",
-        "HexIntervalMathlibExperiment",
         "hex_interval_center_spike",
         "+HexInterval.ReplayCenterBaseline:olean",
         "+HexInterval.WhnfCenterBaseline:olean",
-        "+HexIntervalMathlib.CenterBaseline:olean",
-        "+HexIntervalMathlib.CenterReflected:olean",
-        "+HexIntervalMathlib.CenterDirect:olean",
     ]
     proc = subprocess.run(build, cwd=ROOT, capture_output=True, text=True)
     require_success(proc, build)

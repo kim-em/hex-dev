@@ -5,49 +5,12 @@ Authors: Kim Morrison
 -/
 
 import HexGraphIsoMathlib
-import Mathlib.Data.Fintype.Powerset
 
-/-!
-Shared inputs for the Mathlib-route `graph_iso` CI-built examples
-(SPEC/hex-graph-iso-mathlib § Tests): the generalized Petersen and
-Kneser graphs of the manual chapter on their genuinely different
-vertex types, and the recorded random `n = 12` pair as `SimpleGraph`s
-over `Fin 12`. The CI-built proof examples import this shared input module.
--/
+/-! Recorded positive and negative random `n = 12` pairs as `SimpleGraph`s
+for the Mathlib-route `graph_iso` CI examples. Cross-type goals remain covered
+by `HexGraphIsoMathlib/TacticTests.lean`. -/
 
 namespace Hex.GraphIso.MathlibProofProbe
-
-def gpetersen (p q : Nat) :
-    SimpleGraph (Fin 2 × Fin p) where
-  Adj v w :=
-    v ≠ w ∧
-      ((v.1 = 0 ∧ w.1 = 0 ∧
-          (w.2.val = (v.2.val + 1) % p ∨
-            v.2.val = (w.2.val + 1) % p)) ∨
-       (v.1 = 1 ∧ w.1 = 1 ∧
-          (w.2.val = (v.2.val + q) % p ∨
-            v.2.val = (w.2.val + q) % p)) ∨
-       (v.1 ≠ w.1 ∧ v.2 = w.2))
-  symm := ⟨by
-    intro v w h
-    refine ⟨h.1.symm, ?_⟩
-    rcases h.2 with ⟨a, b, c⟩ | ⟨a, b, c⟩ | ⟨a, b⟩
-    · exact Or.inl ⟨b, a, c.symm⟩
-    · exact Or.inr (Or.inl ⟨b, a, c.symm⟩)
-    · exact Or.inr (Or.inr ⟨fun e => a e.symm, b.symm⟩)⟩
-  loopless := ⟨by intro v h; exact h.1 rfl⟩
-
-instance (p q : Nat) : DecidableRel (gpetersen p q).Adj :=
-  fun _ _ => inferInstanceAs (Decidable (_ ∧ _))
-
-def kneser (m r : Nat) :
-    SimpleGraph {s : Finset (Fin m) // s.card = r} where
-  Adj s t := Disjoint s.val t.val ∧ s ≠ t
-  symm := ⟨by intro s t h; exact ⟨h.1.symm, h.2.symm⟩⟩
-  loopless := ⟨by intro s h; exact h.2 rfl⟩
-
-instance (m r : Nat) : DecidableRel (kneser m r).Adj :=
-  fun _ _ => inferInstanceAs (Decidable (_ ∧ _))
 
 /-- Lexicographic pair index of `(i, j)`, `i < j`, over 12 vertices. -/
 def pairIdx (i j : Nat) : Nat :=

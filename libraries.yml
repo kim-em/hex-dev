@@ -761,8 +761,6 @@ libraries:
     proof_probes: [bench/HexGraphIsoMathlib/ProofProbe]
     phase4:
       input_families:
-        - name: cross-type-goals
-          description: Generalized Petersen against Kneser at (5, 2) on genuinely different vertex types, and the same-family negative against the pentagonal prism, at n = 10.
         - name: random-pair-transport
           description: The recorded random n = 12 positive and negative pairs carried across the bridge as SimpleGraphs over Fin 12.
   HexHermite:

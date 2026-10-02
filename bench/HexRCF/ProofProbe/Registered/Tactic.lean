@@ -30,5 +30,4 @@ theorem piInverse : ∀ x : ℝ, x ^ 2 + 1 / (4 - Real.pi) > 0 := by rcf
 #guard_msgs in
 #print axioms piInverse
 
-
 end Hex.RCF.ProofProbe.Registered

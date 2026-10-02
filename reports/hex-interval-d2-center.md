@@ -89,7 +89,8 @@ replay portions with:
 
 ```sh
 python3 scripts/bench/interval_center_sweep.py \
-  --samples 5 --repeats 100000
+  --samples 5 --repeats 100000 \
+  --output /tmp/hex-interval-d2-center-core.json
 ```
 
 The harness invokes Lean only through Lake and never uses `native_decide`.

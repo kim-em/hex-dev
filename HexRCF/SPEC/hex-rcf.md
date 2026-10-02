@@ -719,12 +719,12 @@ comments repeat these derivations.
 The five manifest input-family dimensions map respectively to carrier
 degree/root count, distinct versus repeated occurrences, common-root package
 count, separation depth, and the three independent replay subladders (cells,
-distinct sign entries, and formula occurrences). The CI-built tactic examples do not participate in those complexity verdicts.
+distinct sign entries, and formula occurrences). The CI-built tactic examples
+do not participate in those complexity verdicts.
 
 Representative example files under `bench/HexRCF/ProofProbe` exercise quadratic
 positivity, an existential witness, supplied literal replay and registered real
-constants. CI builds them
-through `HexRCFProofProbe` on every PR. These examples and the ordinary
+constants. CI builds them through `HexRCFProofProbe` on every PR. These examples and the ordinary
 library/conformance tests establish correctness; this proof surface has no
 paired timing decision, timing ladder, absolute build-time gate, profile or
 headline-report requirement. The computational owner's LeanBench obligations

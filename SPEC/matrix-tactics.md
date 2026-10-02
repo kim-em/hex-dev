@@ -292,8 +292,7 @@ The numeric determinant has an independent measured contract: on every shared
 family its fresh-module median is below the pinned Mathlib tactic's, with the
 paired sweep of `scripts/bench/fresh_module_sweep.py`
 (six samples, adjacent pairs, alternating orientation) and one kernel-only
-profile per family recorded in the owning library's SPEC. "Strictly
-superior" means both:
+profile per family recorded in the owning library's SPEC. This contract requires both:
 
 - **runtime**: a smaller median on every shared family, reported with the
   ratio and the kernel-only times, not a win on selected rungs;

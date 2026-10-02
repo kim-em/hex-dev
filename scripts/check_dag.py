@@ -84,6 +84,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexRankTests",
     "HexRankMathlibProofProbe",
     "HexCharPolyMathlibProofProbe",
+    "HexCharPolyMathlibMeasurements",
     "HexBareissMathlibProofProbe",
     "HexPolyDetMathlibProofProbe",
     "HexPolyDetMathlibDiagnostics",

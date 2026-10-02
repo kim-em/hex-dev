@@ -818,7 +818,7 @@ lean_lib HexMvGcdBenchSupport where
 
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
-  globs := #[`HexMvPolyCorpus, `HexMvPoly.Sorted]
+  globs := #[`HexMvPolyCorpus, `HexMvPoly.Sorted, `HexMvPoly.SortedTests]
 
 lean_lib HexModularBenchSupport where
   srcDir := "bench"
@@ -2060,3 +2060,38 @@ lean_lib HexGraphIsoCfiDiagnostics where
 lean_lib HexPolyDetMathlibDiagnostics where
   srcDir := "conformance"
   globs := #[.submodules `HexPolyDetMathlib.Diagnostics]
+
+-- Generated paired measurement arms, outside the representative CI target.
+lean_lib HexCharPolyMathlibMeasurements where
+  srcDir := "bench"
+  globs := #[
+    `HexCharPolyMathlib.ProofProbe.Dense4Check,
+    `HexCharPolyMathlib.ProofProbe.Dense4Block,
+    `HexCharPolyMathlib.ProofProbe.Dense4Quoted,
+    `HexCharPolyMathlib.ProofProbe.Dense4Computed,
+    `HexCharPolyMathlib.ProofProbe.Dense4Rank,
+    `HexCharPolyMathlib.ProofProbe.Dense4Original,
+    `HexCharPolyMathlib.ProofProbe.Dense4Packed,
+    `HexCharPolyMathlib.ProofProbe.Dense8Check,
+    `HexCharPolyMathlib.ProofProbe.Dense8Block,
+    `HexCharPolyMathlib.ProofProbe.Dense8Quoted,
+    `HexCharPolyMathlib.ProofProbe.Dense8Computed,
+    `HexCharPolyMathlib.ProofProbe.Dense8Rank,
+    `HexCharPolyMathlib.ProofProbe.Dense8Original,
+    `HexCharPolyMathlib.ProofProbe.Dense8Packed,
+    `HexCharPolyMathlib.ProofProbe.Dense16Check,
+    `HexCharPolyMathlib.ProofProbe.Dense16Block,
+    `HexCharPolyMathlib.ProofProbe.Dense16Quoted,
+    `HexCharPolyMathlib.ProofProbe.Dense16Computed,
+    `HexCharPolyMathlib.ProofProbe.Dense16Rank,
+    `HexCharPolyMathlib.ProofProbe.Dense16Original,
+    `HexCharPolyMathlib.ProofProbe.Dense16Packed,
+    `HexCharPolyMathlib.ProofProbe.Dense32Check,
+    `HexCharPolyMathlib.ProofProbe.Dense32Block,
+    `HexCharPolyMathlib.ProofProbe.Dense32Quoted,
+    `HexCharPolyMathlib.ProofProbe.Dense32Computed,
+    `HexCharPolyMathlib.ProofProbe.Dense32Rank,
+    `HexCharPolyMathlib.ProofProbe.Dense32Original,
+    `HexCharPolyMathlib.ProofProbe.Dense32Packed,
+    `HexCharPolyMathlib.ProofProbe.Dense16Candidate,
+    `HexCharPolyMathlib.ProofProbe.Dense16Reference].map Glob.one

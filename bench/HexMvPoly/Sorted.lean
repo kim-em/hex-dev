@@ -26,20 +26,13 @@ structure Poly (n : Nat) (R : Type)
   deriving BEq
 
 variable {cmp : Mono n → Mono n → Ordering}
-  {targetCmp : Mono k → Mono k → Ordering}
-
-/-- Compare the stored lists without transporting computed lists through
-constructor equalities. This keeps proof reduction on the list decision. -/
-instance [DecidableEq R] : DecidableEq (Poly n R cmp) := fun p q =>
-  decidable_of_iff (p.terms = q.terms)
-    ⟨by cases p; cases q; simp, congrArg Poly.terms⟩
 
 /-- Merge two increasing canonical term lists, combining equal monomials.
 
 The worker is structurally recursive on fuel rather than using a generated
 well-founded recursion theorem. The public entry point supplies exactly the
 sum of the input lengths, so the exhausted-fuel branch is unreachable for
-canonical calls. This keeps kernel reduction focused on the list merge itself.
+canonical calls.
 -/
 def merge [Zero R] [Add R] [DecidableEq R]
     (cmp : Mono n → Mono n → Ordering := Mono.lex)
@@ -98,9 +91,6 @@ def ofSortedTerms [Zero R] [Add R] [DecidableEq R]
 instance [Zero R] : Zero (Poly n R cmp) where
   zero := ⟨[]⟩
 
-instance [Zero R] [One R] [DecidableEq R] : One (Poly n R cmp) where
-  one := if (1 : R) = 0 then ⟨[]⟩ else ⟨[(Mono.zero, 1)]⟩
-
 /-- Single-pass canonical sparse addition. -/
 def add [Zero R] [Add R] [DecidableEq R]
     (p q : Poly n R cmp) : Poly n R cmp :=
@@ -158,52 +148,11 @@ instance [Zero R] [Add R] [Mul R] [DecidableEq R] [IsMonomialOrder cmp] :
     Mul (Poly n R cmp) where
   mul := mul
 
-/-- Linear-power helper used only by the structural substitution probe. -/
-def pow [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
-    [IsMonomialOrder cmp]
-    (p : Poly n R cmp) : Nat → Poly n R cmp
-  | 0 => 1
-  | exponent + 1 =>
-      let q := pow p ((exponent + 1) / 2)
-      let q2 := q * q
-      if (exponent + 1) % 2 = 0 then q2 else q2 * p
-termination_by exponent => exponent
-decreasing_by omega
-
-/-- Constant polynomial. -/
-def C [Zero R] [DecidableEq R] (coefficient : R)
-    (cmp : Mono n → Mono n → Ordering := Mono.lex) : Poly n R cmp :=
-  if coefficient = 0 then 0 else ⟨[(Mono.zero, coefficient)]⟩
-
-/-- Variable polynomial. -/
-def X [Zero R] [One R] [DecidableEq R] (i : Fin n)
-    (cmp : Mono n → Mono n → Ordering := Mono.lex) : Poly n R cmp :=
-  if (1 : R) = 0 then 0 else ⟨[(Mono.unit i, 1)]⟩
-
 /-- Rename variables, canonicalizing collisions. -/
 def rename [Zero R] [Add R] [DecidableEq R]
     (f : Fin n → Fin k) (p : Poly n R cmp)
     (targetCmp : Mono k → Mono k → Ordering := Mono.lex) : Poly k R targetCmp :=
   ofTerms (p.terms.map fun term => (Mono.rename f term.1, term.2)) targetCmp
-
-/-- Evaluate one source monomial under a polynomial substitution. -/
-def substMonomial [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
-    [IsMonomialOrder targetCmp]
-    (g : Fin n → Poly k R targetCmp) (m : Mono n) (coefficient : R) :
-    Poly k R targetCmp :=
-  (List.finRange n).foldl
-    (fun acc i =>
-      acc * pow (cmp := targetCmp) (g i) (Mono.degreeOf i m))
-    (C coefficient targetCmp)
-
-/-- Polynomial substitution for the collision probe. -/
-def subst [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
-    [IsMonomialOrder targetCmp]
-    (g : Fin n → Poly k R targetCmp) (p : Poly n R cmp) : Poly k R targetCmp :=
-  p.terms.foldl
-    (fun acc term =>
-      acc + substMonomial (targetCmp := targetCmp) g term.1 term.2)
-    0
 
 end Sorted
 

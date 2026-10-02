@@ -56,7 +56,9 @@ through Lake (expand the desired dimension and variant). A fresh measurement
 requires removing only that module's generated `.lake/build/lib/lean` artifacts.
 `generate.py` recreates the measured input modules byte for byte. The `Check`
 and `Quoted` variants use `Support.lean`; the explicit-block variant uses
-`BlockSupport.lean`. The generated modules are ignored by git. The recorded
+`BlockSupport.lean`. The generated modules are ignored by git and belong to the manual
+`HexCharPolyMathlibMeasurements` target. CI builds only the four representative
+modules in `HexCharPolyMathlibProofProbe`. The recorded
 profiles, source hashes, paired samples, and raw logs live in `evidence/`.
 The `.lean.txt` files there are exact snapshots of the measured support sources.
 Reproduction sources prepend copyright headers to those snapshots.

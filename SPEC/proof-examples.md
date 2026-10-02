@@ -26,7 +26,7 @@ Ordinary correctness tests remain in library and conformance targets.
 | `bench/HexDeterminantalIdealMathlib/ProofProbe` | CI examples | 3 | full and deficient rank loci. No paired measurement selects an algorithm, representation or policy. |
 | `bench/HexRankMathlib/ProofProbe` | CI examples | 6 | full and deficient integer ranks and rational, quadratic and number-field carriers. No paired measurement selects an algorithm, representation or policy. |
 | `bench/HexGenericRankMathlib/ProofProbe` | CI examples | 4 | generic rank, discharged hypotheses, residual side goals and finite characteristic. No paired measurement selects an algorithm, representation or policy. |
-| `bench/HexPolyDetMathlib/ProofProbe` | CI examples | 7 | numeric, symbolic and quotient equalities plus numeric and symbolic result production. No paired measurement selects an algorithm, representation or policy. |
+| `bench/HexPolyDetMathlib/ProofProbe` | CI examples | 7 | numeric, symbolic and quotient equalities plus numeric and symbolic result production, and the original quadratic/rank-one regressions. No paired measurement selects an algorithm, representation or policy. |
 | `bench/HexHermiteMathlib/ProofProbe` | CI examples | 4 | tall and empty kernel bases, membership and nonmembership. No paired measurement selects an algorithm, representation or policy. |
 | `bench/HexSmithMathlib/ProofProbe` | CI examples | 4 | chain, deficient, rectangular and empty quotient presentations. No paired measurement selects an algorithm, representation or policy. |
 | `bench/HexBerlekampMathlib/ProofProbe` | CI examples | 3 | factorization, irreducibility and repeated factors. No paired measurement selects an algorithm, representation or policy. |
