@@ -202,3 +202,7 @@ remain open under #10377. Separate reports cover the partial
 [joint-query and allocation evidence](sign-det-joint-performance.md), and
 [nested-field conformance](sign-det-nested-fields.md). None establishes the
 remaining gates on its own.
+
+Operation-scoped allocation observations for these exact normalization and
+checking phases are retained in [the allocation report](sign-det-height-allocations.md).
+They supplement the timing records; they do not measure live or peak memory.

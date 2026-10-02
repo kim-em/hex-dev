@@ -282,6 +282,51 @@ class AllocationValidationTests(unittest.TestCase):
             observations[key] = row["counters"]
         return meta, rows
 
+    def test_retained_height_capture(self):
+        import json
+        from pathlib import Path
+        functions = ["Hex.SignDetBench.Height.runReduce", "Hex.SignDetBench.Height.runCheck"]
+        heights = [8192, 16384, 32768, 65536, 131072, 262144, 524288]
+        meta, rows = self.check_supplement("height-25b179f5c", functions, heights, 3, 65,
+            module="Height", generated_path="height-25b179f5c/generated-height.c.gz")
+        root = Path(__file__).resolve().parents[2] / "reports/data/sign-det-allocations/height-25b179f5c"
+        inspection = json.loads((root / "height-inspection.json").read_text())
+        self.assertEqual(inspection["scope"], "post-capture input validation; hashes are not capture-time provenance")
+        self.assertEqual(inspection["exit_code"], 0)
+        self.assertTrue(inspection["source_unchanged"])
+        self.assertEqual(inspection["binary_sha256"], meta["binary_sha256"])
+        self.assertEqual(inspection["command"], [rows[0]["command"][0], "inspect-height-phases"])
+        log = root / "height-inspection.log"
+        self.assertEqual(capture.digest(log), inspection["log_sha256"])
+        inputs = [json.loads(line) for line in log.read_text().splitlines()]
+        self.assertEqual([row["height"] for row in inputs], heights)
+        for row in inputs:
+            self.assertEqual(row["coefficient"], "2^height-1")
+            self.assertEqual(row["head"], "X^3-1")
+            self.assertEqual(row["queryDegrees"], [2, 1, 0])
+            self.assertEqual(row["steps"], 3)
+            self.assertEqual(row["coefficientBits"], row["height"])
+            self.assertEqual(row["coefficientBytes"], (row["height"] + 7) // 8)
+        observations = {}
+        for row in rows:
+            input_row = next(i for i in inputs if i["height"] == row["parameter"])
+            key = "productionResultHash" if row["function"] == functions[0] else "replayResultHash"
+            self.assertEqual(row["result_hash"], hex(input_row[key]))
+            observations[row["function"], row["parameter"]] = row["counters"]
+        self.assertEqual(len(rows), 42)
+        report = (root.parents[2] / "sign-det-height-allocations.md").read_text()
+        operations = {"Normalization": functions[0], "Checking": functions[1]}
+        table = []
+        for line in report.splitlines():
+            cells = [cell.strip() for cell in line.split("|")]
+            if len(cells) == 8 and cells[1].isdigit() and cells[2] in operations:
+                key = operations[cells[2]], int(cells[1])
+                actual = [observations[key][kind + "_bytes"] for kind in capture.KINDS]
+                self.assertEqual([int(cell.replace(",", "")) for cell in cells[3:7]], actual + [sum(actual)])
+                table.append(key)
+        self.assertEqual(set(table), set(observations))
+        self.assertEqual(len(table), len(observations))
+
     def test_retained_production_capture(self):
         import json
         from pathlib import Path
