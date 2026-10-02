@@ -23,7 +23,8 @@ measurements remain in [reports/ecpp/README.md](ecpp/README.md).
 Point-addition branches and helper predicates are measured inside replay,
 proposal and complete checking. They are not independent search endpoints.
 The five structured families in `libraries.yml` cover each significant phase:
-transcript length, row vectors, supplied certificates and native production.
+transcript length, independent scalar/modulus widths, row vectors, supplied
+certificates and native production.
 `runSize65/256/512` are private representation-count observations; they do not
 advertise a public size API or discharge a performance criterion.
 
@@ -58,8 +59,9 @@ quotient widths sum to O(k), with each division/coefficient update bounded
 by its quotient width times k. See Brent and Zimmermann,
 [Modern Computer Arithmetic, §§1.6, 1.6.2 and 2.5](https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf).
 At most 2k additions/inverses give the diagonal cubic bound; a fixed scalar
-gives the quadratic modulus bound. The profile attributes the dominant
-phase to this very Euclidean recurrence. Bit extraction and list work are
+gives the quadratic modulus bound. The proposal profile attributes its dominant
+phase to this very Euclidean recurrence; checked replay instead measures ring
+operations and allocations, covered by the GMP bounds. Bit extraction and list work are
 below those bounds. These declarations precede collection and assert upper
 bounds, rather than fitted equalities.
 
@@ -125,7 +127,9 @@ independently qualified mode-2 declarations therefore pass with the distinct
 one-sided result shown above, as required by the benchmark contract pending
 lean-bench #70. [scientific-widths-final.json](ecpp/audit/scientific-widths-final.json)
 records source `e893b9f15c45f5cb1366ab6bd14858ce92568a8e` and the restored
-natural-number inverse. Replay's earlier export uses the identical timed
+natural-number inverse. The final modulus-proposal child records HEAD
+`873bdbc33`, which added derivation comments and companion compatibility only;
+its recorded core and executable hashes are unchanged. Replay's earlier export uses the identical timed
 callback, prime moduli and canonical transcripts; proposal preparation is
 outside measurement. [evidence-reuse.json](ecpp/audit/evidence-reuse.json)
 records unchanged core hashes and the documentation-only search delta.
@@ -249,6 +253,7 @@ the normalized summaries and their digests are committed.
 | supplied / `runConvert512` / frozen 512-bit vector | 2.63 | 43.18 | 41.44 | 7.50 | 5.25 | [supplied](ecpp/audit/profiles-current-profile-supplied-certificates.json) |
 | native / `runNativeHard` / validation-256-7, seed 7 | 1.84 | 42.74 | 45.12 | 6.87 | 3.44 | [native](ecpp/audit/profiles-current-profile-native-production.json) |
 | scalar/modulus / `runSizedProposal` / 512 bits | 1.74 | 40.43 | 46.81 | 8.31 | 2.70 | [widths](ecpp/audit/profiles-widths-final-profile-scalar-modulus-widths.json) |
+| scalar/modulus / `runSizedReplay` / 4,096 bits | 0.34 | 93.11 | 5.80 | 0.40 | 0.34 | [replay widths](ecpp/audit/profiles-replay-widths-final-profile-scalar-modulus-replay.json) |
 
 The width profile uses source `e893b9f15c45f5cb1366ab6bd14858ce92568a8e`:
 `python3 scripts/profile/ecpp.py --only scalar-modulus-widths --output
@@ -258,6 +263,22 @@ commands, source/binary digests and passing filter diagnostics. Extended
 Euclid accounts for 90.43% inclusive samples, directly connecting the
 published bound to the dominant timed proposal phase. It complements the
 fixed-modulus bit-copy profile and complete converter/search profiles.
+
+The checked replay profile independently covers the two replay upper-bound
+registrations: `python3 scripts/profile/ecpp.py --only scalar-modulus-replay
+--output reports/ecpp/audit/profiles-replay-widths-final.json --profiler-root
+<checkout>`. [profiles-replay-widths-final.json](ecpp/audit/profiles-replay-widths-final.json)
+retains source `929c1d4f1`, executable/core digests and passing filter diagnostics.
+The profiling label is the replay phase of `scalar-modulus-widths`.
+GMP accounts for 93.11% of leaf samples: multiply/subtract-multiply primitives
+contribute 33.23%/22.81%, with quotient/remainder and basecase multiplication
+also visible. Thus the cited multiply/divide bounds cover the dominant timed
+arithmetic. Allocation is 5.80%; each addition allocates boundedly many
+k-bit residues and arithmetic temporaries, also below the quadratic per-addition
+bound. The fixed-scalar modulus wrapper executes the identical callback with
+fewer additions; the diagonal registration adds at most 2k such operations.
+Neither replay callback computes an inverse. All prior profiles remain applicable
+to unchanged timed operation bodies, as recorded by `evidence-reuse.json`.
 
 Inclusive percentages overlap and must not be summed. Dense scalar replay is
 100% inside `replayBits`; GMP suffix copying explains its compiled quadratic
@@ -307,10 +328,13 @@ Completed unsuccessful runs are retained, with their limited evidentiary roles e
   The checked replay callback and its canonical prime-field inputs do not
   change with the preparation backend, so that passing upper-bound export
   retains its specific evidentiary role.
-- The two fixed-modulus scalar rows in `scientific-widths-final.json` are
-  conservative upper-bound observations through 4,096 bits. They are not the
-  final certification: the stronger bounded-width linear declarations at
-  actual caller sizes precede `scientific-caller-final.json` collection.
+- The two fixed-modulus scalar rows in `scientific-widths-final.json` were
+  collected under quadratic upper bounds through 4,096 bits and already
+  showed linear scaling. That declaration missed the dominant bounded-width
+  Euclidean/ring work in this range. The corrected model follows the source
+  operand limits and profile, and uses the actual 32–512-bit caller regime.
+  Fresh mode-1 samples in `scientific-caller-final.json` certify it; the old
+  observations are retained without relabeling.
 
 Earlier records are observations, not retroactively passing verdicts. The
 successful current ladders and declared budgets are the Phase 4 evidence.

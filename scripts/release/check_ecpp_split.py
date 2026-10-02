@@ -80,7 +80,7 @@ def main():
                   stdout=result.stdout, stderr=result.stderr, source_hashes=sources,
                   mathlib_directories=forbidden, skeleton_heads=skeleton_heads,
                   contract="Actual published unmanaged skeletons and sync transformations, coordinated next-release sources, local paths for exact staged "
-                           "prerequisites; a fresh client uses the README verbatim. Lake "
+                           "prerequisites. Full sync validators and version-pin/lockfile rewrites are covered by the guarded workflow dry run; this scratch build applies source/settings/toolchain transforms and replaces requires with exact staged local paths. A fresh client uses the README verbatim. Lake "
                            "generates all lockfiles. No development project cache is reused.")
     args.output.write_text(json.dumps(record, indent=2) + "\n")
     if result.returncode or forbidden:

@@ -108,7 +108,9 @@ registration checks and all 6,457 independent oracle cases.
 `audit/native-corpora.json` reconciles all 32 frozen subjects: 27 accepted
 certificates have exactly the retained complete rows and terminal witnesses,
 and the five exhausted outcomes agree. The existing kernel replays therefore
-remain applicable; unchanged successful measurements are reused. All resource
+remain applicable; unchanged successful measurements are reused. `audit/review-verification.json` adds all 29 current benchmark smoke checks,
+the repeated 6,457-case oracle check, and the affected companion/manual/aggregate
+build after diagnostic compatibility fixes. All resource
 limits and the local/portfolio/child priority regressions build in the existing
 conformance targets. No operation or edge-case coverage obligation remains.
 
@@ -123,7 +125,7 @@ public operation has a docstring and a downstream purpose; constructor and
 acceptance equations characterize ordinary proof use. The old digit scanner
 and duplicate bit-length lemma were removed rather than preserved unused.
 Checked curve predicates remain executable arithmetic checks, not hidden
-Mathlib group-law assumptions. The imported declaration linter is clean.
+Mathlib group-law assumptions. The imported declaration linter is clean; `audit/lint-final.json` retains the fresh post-review check of 261 declarations and 439 generated declarations with eleven linters.
 The adjacent baseline comparison and every operation-specific performance
 budget pass, as detailed in `hex-ecpp-performance.md` and its retained
 `audit/regression-current-summary.json`. Shared-host observations are not
@@ -142,7 +144,9 @@ and links native arithmetic without any Mathlib directory or dependency.
 correspondence section is reserved for #10586 and coordinated on that issue.
 
 The managed mirror workflow, closure pins and aggregate/manual integration
-pass the release manifest checks. `audit/release-dry-run.json` retains the
+pass the release manifest checks. `audit/review-structural-checks.json` retains
+the final DAG, trust-surface, Mathlib-free benchmark, phase, source and release
+checks. `audit/release-dry-run.json` retains the
 successful guarded GitHub workflow and local preview, using the live baseline
 and no force override. The initial repository contains only its unmanaged
 Lake skeleton; no published managed source was edited. A real coordinated
@@ -172,8 +176,9 @@ checker replay. Local-step diagnostics plus the final public-boundary check
 are intentional linear passes; all fixed operation budgets pass.
 
 The recursive-child priority regression now executes a real native search.
-The first order exhausts its point retries; the second reaches a smaller
-child whose depth allocation fails. A two-candidate cap records one backtrack
+An earlier twist exhausts its point retries; a later twist reaches a smaller
+child whose depth allocation fails. A separate eight-point cap stops before
+any child and retains only the parent retry, proving that ordering. A two-candidate cap records one backtrack
 and 36 point attempts, preserving the child's diagnostic over the parent's
 retry without planting any initial diagnostic. `audit/real-child-diagnostic.json`
 retains the executable probe. Complete parent portfolio exhaustion also keeps
@@ -189,3 +194,15 @@ complete the review's minor documentation and packaging findings. The full
 CI build additionally exposed two old positional diagnostic constructors in
 the companion elaborator; named fields preserve their existing kinds while
 initializing the new optional location fields.
+
+The follow-up implementation review is retained in `audit/pr-followup.txt`.
+Its remaining Phase 4 attribution gap is resolved by a separate 4,096-bit
+checked-replay profile, with 93.11% GMP leaf samples and passing filter
+diagnostics. Proposal and replay citations now name their actual dominant
+phases separately. The earlier scalar observation and corrected bounded-width
+declaration are stated transparently, with fresh samples and no relabeling.
+The retry-prefix guard additionally proves the parent retry occurs before
+any recursive child failure; its post-change build is retained in
+`audit/retry-prefix-verification.json`. The unrelated upstream attachment/doc
+finding is recorded as #10600. Companion parser-location propagation remains
+an optional Phase 0 companion improvement, outside this computational issue.
