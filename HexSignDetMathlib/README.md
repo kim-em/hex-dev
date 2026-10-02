@@ -153,7 +153,7 @@ query evidence; every claimed sign equals evaluation at the original descriptor'
 selected root. The executable graph and byte interfaces remain Mathlib-free.
 `GraphSignsConformance` checks literal acceptance and adversarial rejection in
 the ordinary kernel, audits proof dependencies and exercises byte decoding
-and existing producer evidence by compiled execution.
+and existing producer evidence by evaluation.
 
 `TableProducer` proves success of `buildTablePrepared` and the ordinary total
 `determinePrepared` API under the same coefficient-interpretation laws. Its

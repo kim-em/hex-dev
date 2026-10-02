@@ -70,7 +70,9 @@ a sign producer. `Dag.selectedSigns_evidence` preserves the exact claimed signs
 and literal replay; `Dag.selectedSigns_checked` connects them to the existing
 selected-root checker. `Dag.selectedSigns_replay` also preserves rejection of
 an incorrect claim on an accepted graph, and `Dag.selectedSigns_encode` accepts
-every encoded checked selected-sign tree with its exact original evidence. The companion's `Dag.selectedSigns_values` proves
+every encoded checked selected-sign tree with its exact original evidence.
+`Dag.selectedSigns_encode_eq` also preserves rejection for arbitrary encoded
+trees and claims. The companion's `Dag.selectedSigns_values` proves
 agreement with mathematical evaluation at the descriptor's selected root.
 `Dag.selectedSigns_sign_congr` transfers this result between sign functions
 that agree on every stored graph operand, provided both descriptors have the

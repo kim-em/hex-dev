@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.DagSigns
-public import HexSignDet.DagReplay
+public import HexSignDet.DagExpand
 public import HexSignDet.SelectedSigns
 
 public section
@@ -104,6 +104,33 @@ theorem selectedSigns_encode [Hashable E] [Hashable Ctx]
   obtain ⟨hc, hr⟩ := s.check_eq
   rw [s.evidence.table_rows hc] at hr
   simp [selectedSigns?, replay_encode hc, hr, bind, Option.bind, pure, SelectedSigns.ofTable]
+
+/-- Encoding any supplied tree preserves selected-sign acceptance and
+rejection, including false matrix/query evidence and an incorrect sign claim. -/
+theorem selectedSigns_encode_eq [Hashable E] [Hashable Ctx]
+    {sign : E → Int} {context : Ctx} (d : Descriptor E Ctx sign context)
+    (qs : List (DensePoly E)) (values : Vector Int qs.length) (tree : Replay E Ctx) :
+    ((encode tree).selectedSigns? d qs values).map (fun s => (s.values, s.evidence)) =
+      if d.checkSigns qs values tree then some (values, tree) else none := by
+  by_cases hc : tree.check sign context d.raw.head d.raw.lower d.raw.upper
+      (d.raw.queries ++ qs) = true
+  · obtain ⟨hw, hctx, _, _⟩ := RawDescriptor.check_eq d.accepted
+    simp only [selectedSigns?, replay_encode hc, bind, Option.bind,
+      Descriptor.checkSigns, RawDescriptor.checkSigns, hw, hctx, decide_true,
+      Bool.true_and, hc]
+    split <;> simp_all [pure, SelectedSigns.ofTable]
+  · have hn : replay? sign context d.raw.head d.raw.lower d.raw.upper
+        (d.raw.queries ++ qs) (encode tree) = none := by
+      have he := check_encode_eq (sign := sign) (context := context)
+        (p := d.raw.head) (a := d.raw.lower) (b := d.raw.upper)
+        (qs := d.raw.queries ++ qs) tree
+      simp only [check] at he
+      cases hr : replay? sign context d.raw.head d.raw.lower d.raw.upper
+          (d.raw.queries ++ qs) (encode tree) with
+      | none => rfl
+      | some t => simp [hr, hc] at he
+    simp [selectedSigns?, hn, bind, Option.bind,
+      Descriptor.checkSigns, RawDescriptor.checkSigns, hc]
 
 /-- Agreement on every stored graph node preserves rejection and the literal
 selected-query signs and evidence. The caller descriptors must name the same

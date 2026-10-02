@@ -82,8 +82,8 @@ theorem graph_kernel :
   decide +kernel
 
 set_option maxRecDepth 32768 in
-/-- Wrong sign claims, reordered queries, foreign contexts, forward references
-and false unreachable evidence reject in the ordinary kernel. -/
+/-- Wrong sign claims, reordered queries, foreign contexts, forward/self
+references and false unreachable evidence reject in the ordinary kernel. -/
 theorem rejected_kernel :
     (full.selectedSigns? source fullNode.queries #v[0, 1]).isSome = false ∧
     (full.selectedSigns? source fullNode.queries.reverse #v[1, 1]).isSome = false ∧
@@ -91,6 +91,8 @@ theorem rejected_kernel :
       {e with node := {e.node with context := 8}}}).selectedSigns?
       source fullNode.queries #v[1, 1]).isSome = false ∧
     (({full with entries := full.entries.set! 2 (⟨fullNode, some (0, 2)⟩)}).selectedSigns?
+      source fullNode.queries #v[1, 1]).isSome = false ∧
+    (({full with entries := full.entries.set! 0 (⟨firstNode, some (1, 1)⟩)}).selectedSigns?
       source fullNode.queries #v[1, 1]).isSome = false ∧
     (invalidExtra.selectedSigns? source fullNode.queries #v[1, 1]).isSome = false := by
   simp only [Dag.selectedSigns?, source_raw,
@@ -114,7 +116,8 @@ theorem prefix_kernel :
       prefixed [DensePoly.C 2] #v[1]).isSome = false ∧
     (equivalentPrefix.selectedSigns? prefixed [DensePoly.C 2] #v[1]).isSome = false := by
   simp only [Dag.selectedSigns?, prefixed_raw,
-    Dag.replay_eq, Dag.step_eq, full, equivalentPrefix, Replay.check, Node.check_eq, checkMoment_eq, queryPoly,
+    Dag.replay_eq, Dag.step_eq, full, equivalentPrefix,
+    Replay.check, Node.check_eq, checkMoment_eq, queryPoly,
     Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
@@ -130,8 +133,13 @@ def wholeLinePass : Bool :=
     | .error _ => false
     | .ok s =>
       let graph := Dag.encode s.evidence
+      let bytes := graph.encodeBytes ValueCodec.rat ValueCodec.nat
       (graph.selectedSigns? d [Sturm.Fixtures.x] #v[1]).isSome &&
         (graph.selectedSigns? d [Sturm.Fixtures.x] #v[-1]).isNone &&
+        (Dag.decodeSigns ValueCodec.rat ValueCodec.nat d [Sturm.Fixtures.x]
+          #v[1] bytes).toOption.isSome &&
+        (Dag.decodeSigns ValueCodec.rat ValueCodec.nat d [Sturm.Fixtures.x]
+          #v[-1] bytes).toOption.isNone &&
         s.evidence.node.system.tableRows.toList.any (fun row => row.1 == [-1, -1])
 
 #guard wholeLinePass
@@ -142,7 +150,7 @@ private def sameEvidence (left right : Replay Rat Nat) : Bool :=
   let r := Dag.encode right
   l.entries == r.entries && l.root == r.root
 
-/-- Native byte decoding retains supplied signs and literal checked replay;
+/-- Byte decoding retains supplied signs and literal checked replay;
 wrong values and truncated bytes fail without rerunning a producer. -/
 def bytesPass : Bool :=
   let bytes := full.encodeBytes ValueCodec.rat ValueCodec.nat
@@ -247,6 +255,9 @@ def producedPass (qs : List (DensePoly Rat)) (expected : List Int) : Bool :=
 /-- info: 'Hex.SignDet.Dag.selectedSigns_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Dag.selectedSigns_encode
+/-- info: 'Hex.SignDet.Dag.selectedSigns_encode_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Dag.selectedSigns_encode_eq
 /-- info: 'Hex.SignDet.Dag.decodeSigns_sign_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Dag.decodeSigns_sign_congr
