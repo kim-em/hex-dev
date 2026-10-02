@@ -119,7 +119,16 @@ private def terminal : Cert → Hex.Nat.PrimeCert
 initialize native128Ref : IO.Ref Nat ← IO.mkRef 177080666831933235355717939809840315427
 initialize native256Ref : IO.Ref Nat ← IO.mkRef 69199437377629051939477864552334532767081794053034238723740032946332041487367
 initialize nativeHardRef : IO.Ref Nat ← IO.mkRef 96590133568377947488922651108406533027621815589740576200326951544495709460191
-initialize nativeCertRef : IO.Ref Cert ← IO.mkRef ((produce 69199437377629051939477864552334532767081794053034238723740032946332041487367 0).result.toOption.getD (.base (.small 2)))
+initialize nativeCertRef : IO.Ref (Option Cert) ← IO.mkRef none
+
+/-- Warm the fixed replay input outside measurement; ordinary scalar/parser
+children need no native search during startup. Failure cannot become a leaf. -/
+def nativeCert : IO Cert := do
+  if let some c ← nativeCertRef.get then return c
+  let n ← native256Ref.get
+  let .ok c := (produce n 0).result | throw (IO.userError "native fixture exhausted")
+  nativeCertRef.set (some c)
+  return c
 
 @[noinline] def runNative128 (_ : Unit) : IO Nat := do
   let n ← native128Ref.get
@@ -137,18 +146,20 @@ rounded upward, not the harness timeout. -/
   return if (produce n 7).result.toOption.any (checkAt n) then 1 else 0
 
 @[noinline] def runNativeCheck (_ : Unit) : IO Nat := do
-  return if check (← nativeCertRef.get) then 1 else 0
+  return if checkAt (← native256Ref.get) (← nativeCert) then 1 else 0
 
 @[noinline] def runNativeConvert (_ : Unit) : IO Nat := do
-  let c ← nativeCertRef.get
+  let c ← nativeCert
   return if (convertText defaultImportBudget (frozenRows c) (terminal c)).toOption.any
     (checkAt c.subject) then 1 else 0
 
 setup_fixed_benchmark runNative128 where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
 setup_fixed_benchmark runNative256 where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
 setup_fixed_benchmark runNativeHard where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
-setup_fixed_benchmark runNativeCheck where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
-setup_fixed_benchmark runNativeConvert where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
+setup_fixed_benchmark runNativeCheck where {
+  repeats := 5, warmupFirstIter := true, expectedHash := some (hash (1 : Nat)) }
+setup_fixed_benchmark runNativeConvert where {
+  repeats := 5, warmupFirstIter := true, expectedHash := some (hash (1 : Nat)) }
 
 /-!
 # Controlled ECPP input families
