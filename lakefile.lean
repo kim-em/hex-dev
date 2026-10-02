@@ -294,7 +294,8 @@ lean_lib HexRealClosure where
 @[default_target]
 lean_lib HexRealClosureTests where
   globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests,
-    .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerTransportTests]
+    .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
+    .one `HexRealClosure.TowerTransportTests]
 
 -- The deep fixture is type-checked above; only its execution is outside routine CI.
 lean_exe hexrealclosure_transport_tests where
@@ -650,7 +651,8 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.ZeroFactor, `HexRealClosureMathlib.IsolationRoots,
     `HexRealClosureMathlib.IsolationTotal,
     `HexRealClosureMathlib.RootOrder, `HexRealClosureMathlib.RootFactors,
-    `HexRealClosureMathlib.RootTotal,
+    `HexRealClosureMathlib.RootTotal, `HexRealClosureMathlib.TowerRoots,
+    `HexRealClosureMathlib.TowerCoverage,
     `HexRealClosureMathlib.Ambient, `HexRealClosureMathlib.AmbientTests,
     `HexRealClosureMathlib.BaseAlgebraicity, `HexRealClosureMathlib.BaseBound,
     `HexRealClosureMathlib.EnlargementTests,

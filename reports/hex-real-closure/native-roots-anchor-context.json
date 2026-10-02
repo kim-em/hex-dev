@@ -1,0 +1,29 @@
+{
+  "cpu": 14,
+  "loadBefore": [
+    2.4140625,
+    7.68896484375,
+    11.9931640625
+  ],
+  "command": [
+    "taskset",
+    "-c",
+    "14",
+    ".lake/build/bin/hexrealclosure_bench",
+    "run",
+    "Hex.RealClosure.Bench.runNativeRoots",
+    "--export-file",
+    "/home/kim/.codex/tasks/hex-10378/native-roots-timing.json"
+  ],
+  "sourceCommit": "1fdfd2886dadd6877664aab42d9c9599cfdba995",
+  "gitStatus": "",
+  "benchSourceSha256": "2bd73daad82f60d49e9c171c21c975243fe353ac75fcd196795139d0dfd096fe",
+  "executableSha256": "6ddf6c4cbb7ba30e2313684c36170b0632a6c64ba0ca29a47fd7636f03fbd805",
+  "purpose": "Fixed native complete-root functional anchor, including eager child materialization; no scaling or overhead ratio claim.",
+  "loadAfter": [
+    2.4140625,
+    7.68896484375,
+    11.9931640625
+  ],
+  "exitCode": 0
+}

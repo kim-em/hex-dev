@@ -158,6 +158,10 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/CompleteRoots.lean",
                 "adapters/HexRealClosureMathlib/IsolationTotal.lean",
                 "adapters/HexRealClosureMathlib/RootTotal.lean",
+                "HexRealClosure/TowerRoots.lean",
+                "HexRealClosure/TowerRootsTests.lean",
+                "adapters/HexRealClosureMathlib/TowerRoots.lean",
+                "adapters/HexRealClosureMathlib/TowerCoverage.lean",
                 "adapters/HexRealClosureMathlib/RootFactors.lean")]
             qadjoin = root / "adapters/HexRealClosureMathlib/QAdjoin.lean"
             qadjoin_tests = root / "HexRealClosure/QAdjoinTests.lean"

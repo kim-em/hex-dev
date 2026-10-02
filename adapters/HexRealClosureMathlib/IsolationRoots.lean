@@ -248,7 +248,8 @@ theorem Route.complete_coverage {context : Ctx} {p : DensePoly E}
 
 include hz h1 ha hs hm hnat hsign hn hi in
 /-- Every successful actual isolation completion contains exactly all roots
-of the original input. Producer totality and global ordering are separate. -/
+of the original input. `complete?_success` proves producer totality and
+`Root.sort_success` gives global strict ordering. -/
 theorem Completion.coverage {context : Ctx} {p : DensePoly E}
     (completion : Completion sign context p) (x : K) :
     x ∈ completion.roots.values φ hz h1 ha hs hm hnat hsign ↔
