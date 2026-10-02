@@ -1605,7 +1605,8 @@ insertion processes the roots in reverse order, making an already ascending
 input linear in comparisons; the worst case remains quadratic. Each comparison
 also carries the sign-determination cost of the common tower. Each boundary
 request currently constructs all sector midpoints before searching; requesting
-every sector therefore repeats quadratically many midpoint calculations.
+every sector therefore repeats quadratically many midpoint calculations and
+endpoint comparisons. Each endpoint comparison uses native sign determination.
 
 The API produces field values in their native contexts. Joint specialization
 of nested selected roots and successive infinitesimals to one ordinary real

@@ -504,15 +504,18 @@ theorem Partition.sections_correct {polynomials : List parent.Poly}
   · exact (family.coverage original model _).mp (List.mem_map.mpr ⟨value, member, rfl⟩)
 
 /-- Every adjacent sector in the complete cell partition is accepted by the
-boundary request API, including both rays and the root-free whole line. -/
+boundary request API, including both rays and the root-free whole line.
+The requested endpoints may use different representatives of the same values. -/
 theorem Partition.sectorBetween?_success {polynomials : List parent.Poly}
     (family : Partition parent polynomials) (original : Model parent K)
     (model : Collection.Model family.collection original)
-    (lower upper : Endpoint family.collection.input.context.Value)
-    (adjacent : Cell.sector lower upper ∈ family.cells) :
+    (lower upper a b : Endpoint family.collection.input.context.Value)
+    (adjacent : Cell.sector a b ∈ family.cells)
+    (lowerEqual : lower.map model.input.target.value = a.map model.input.target.value)
+    (upperEqual : upper.map model.input.target.value = b.map model.input.target.value) :
     ∃ sample, family.sectorBetween? lower upper = some sample := by
   have present : ∃ point ∈ Sample.sectors family.collection.input.context family.values,
-      point.2 = Cell.sector lower upper := by
+      point.2 = Cell.sector a b := by
     rcases List.mem_append.mp adjacent with atRoot | sector
     · obtain ⟨root, _, impossible⟩ := List.mem_map.mp atRoot
       cases impossible
@@ -520,11 +523,14 @@ theorem Partition.sectorBetween?_success {polynomials : List parent.Poly}
   obtain ⟨point, member, cell⟩ := present
   have accepted : requested family.collection.input.context lower upper point = true := by
     simp only [requested, cell]
-    have same : ∀ bound : Endpoint family.collection.input.context.Value,
-        sameEndpoint family.collection.input.context bound bound = true := by
-      intro bound
-      cases bound <;> simp [sameEndpoint, model.input.target.equal_spec]
-    simp [same]
+    have same : ∀ first second : Endpoint family.collection.input.context.Value,
+        first.map model.input.target.value = second.map model.input.target.value →
+        sameEndpoint family.collection.input.context first second = true := by
+      intro first second equal
+      cases first <;> cases second <;>
+        simp_all [sameEndpoint, Endpoint.map, model.input.target.equal_spec]
+    rw [same lower a lowerEqual, same upper b upperEqual]
+    rfl
   cases found : (Sample.sectors family.collection.input.context family.values).find?
       (requested family.collection.input.context lower upper) with
   | none =>

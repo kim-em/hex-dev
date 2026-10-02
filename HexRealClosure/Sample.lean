@@ -193,6 +193,18 @@ theorem Partition.sectors_length {polynomials : List parent.Poly} (family : Part
     simpa only [Sample.sectors, List.length_cons] using
       congrArg (fun n => n + 1) (between_length family.collection.input.context first rest)
 
+/-- A root-free partition contains the whole-line sector. -/
+theorem Partition.wholeLine_mem {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (empty : family.values = []) : Cell.sector .negInf .posInf ∈ family.cells := by
+  simp [Partition.cells, empty, Sample.sectors]
+
+/-- The first boundary of a nonempty partition has its exterior left ray. -/
+theorem Partition.leftRay_mem {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (first : family.collection.input.context.Value) (rest : List family.collection.input.context.Value)
+    (values : family.values = first :: rest) :
+    Cell.sector .negInf (.finite first) ∈ family.cells := by
+  simp [Partition.cells, values, Sample.sectors, leftRay]
+
 /-- Every returned section retains the same actual coefficient conversion. -/
 theorem Partition.sections_input {polynomials : List parent.Poly} (family : Partition parent polynomials)
     {sample : Sample parent} (present : sample ∈ family.sections) :

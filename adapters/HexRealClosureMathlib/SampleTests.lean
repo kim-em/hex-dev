@@ -54,7 +54,25 @@ example {polynomials : List parent.Poly} (family : Partition parent polynomials)
     (lower upper : Endpoint family.collection.input.context.Value)
     (adjacent : Cell.sector lower upper ∈ family.cells) :
     ∃ sample, family.sectorBetween? lower upper = some sample :=
-  family.sectorBetween?_success original model lower upper adjacent
+  family.sectorBetween?_success original model lower upper lower upper adjacent rfl rfl
+
+/-- A root-free whole-line request succeeds without unfolding private definitions. -/
+example {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (original : Model parent K) (model : Collection.Model family.collection original)
+    (empty : family.values = []) :
+    ∃ sample, family.sectorBetween? .negInf .posInf = some sample :=
+  family.sectorBetween?_success original model .negInf .posInf .negInf .posInf
+    (family.wholeLine_mem empty) rfl rfl
+
+/-- A caller may use any representative of the first boundary for its left ray. -/
+example {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (original : Model parent K) (model : Collection.Model family.collection original)
+    (first upper : family.collection.input.context.Value)
+    (rest : List family.collection.input.context.Value) (values : family.values = first :: rest)
+    (same : model.input.target.value upper = model.input.target.value first) :
+    ∃ sample, family.sectorBetween? .negInf (.finite upper) = some sample :=
+  family.sectorBetween?_success original model .negInf (.finite upper) .negInf (.finite first)
+    (family.leftRay_mem first rest values) rfl (congrArg Endpoint.finite same)
 
 /-- A boundary request provides its computed sign vector at every point of
 the requested interval, using only the public checked result and ordinary imports. -/
