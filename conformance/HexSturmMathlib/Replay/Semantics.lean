@@ -152,4 +152,12 @@ theorem integer_value :
 #guard_msgs (whitespace := lax) in
 #print axioms HexSturmMathlib.query_sign
 
+/-- info: 'HexSturmMathlib.query_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexSturmMathlib.query_spec
+
+/-- info: 'HexSturmMathlib.rootCount_sturm' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexSturmMathlib.rootCount_sturm
+
 end HexSturmMathlib.ReplayTests

@@ -34,6 +34,7 @@ BUILD_ONLY_LIBS = {
     "HexGF2BenchSupport",
     "HexRankBenchSupport",
     "HexSignDetBenchSupport",
+    "HexSturmBenchSupport",
     "HexSignDetMathlibProofProbe",
     "HexSignDetMathlibNestedProofProbe",
     "HexBerlekampKernelProbe",

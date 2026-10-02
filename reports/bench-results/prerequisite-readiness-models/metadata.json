@@ -1,0 +1,46 @@
+{
+  "cpu": 26,
+  "head": "4f44b806075ae95ad1b3f05c55e6c1ad5bd3f423",
+  "host": "chungus2",
+  "cpu_model": "\t: AMD EPYC 9455 48-Core Processor",
+  "load_start": [
+    9.75048828125,
+    19.68701171875,
+    18.98974609375
+  ],
+  "commands": [
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+      "run",
+      "--filter",
+      "Hex.SturmFrontendBench",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/prerequisite-readiness-models/sturm.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runPolyConstructors",
+      "Hex.RealAlgebraicBench.runMembership",
+      "Hex.RealAlgebraicBench.runRootSet",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/prerequisite-readiness-models/arrays.json"
+    ]
+  ],
+  "hashes": {
+    "bench/HexSturm/Bench.lean": "a9236a8c5c4b4332712aa59a9438862297599a1220c579dce5c35beb2c4f2e77",
+    "bench/HexSturm/Frontend.lean": "aebf2df2c546b00ecb46ee6f9aaa41a125887e65220195dceafa15e245684e73",
+    "bench/HexRealAlgebraic/Bench.lean": "17e55c27fa898fc667c48001a09fd64b060eddc3692687207e6f89cf611be96d",
+    "lakefile.lean": "6e10a4b0c45a7db7a36c4199cf6e21bb0a1ffe71d78b6f82e1ff645bed24c8da",
+    "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    ".lake/build/bin/hexsturm_bench": "feddb153b88861710dd379b300edc1818b2e115ebaf24cad25691457a5fd911e",
+    ".lake/build/bin/hexrealalgebraic_bench": "12d82c7c430e545f7270c339e6d3e9b52b94f699ed7e4d6323777e69eb30e3d9"
+  },
+  "load_end": [
+    9.57861328125,
+    18.52392578125,
+    18.62451171875
+  ],
+  "sources_unchanged": true
+}

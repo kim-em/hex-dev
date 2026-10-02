@@ -16,6 +16,14 @@ axiom dependencies, and dictionary coherence during compilation.
 
 ## Array and comparison correspondence
 
+This section specifies the forward comparison-strategy extension owned by
+HexNumberField and HexNumberFieldTower. These new array and transport
+obligations are unimplemented and excluded from the shipped surface's current
+phase attestations, as specified at the end of the shared exact-comparison
+contract. The implemented `compare_eq` and polynomial-root correspondence
+remain required and are proved in the modules named above.
+
+
 The [exact comparison contract](../../SPEC/Libraries/hex-real-algebraic.md#exact-comparison-strategies)
 adds `sort_perm` and `sort_sorted`, identifying the array sort with a permutation
 in nondecreasing `realCompare` order. On canonical values, equality of comparison

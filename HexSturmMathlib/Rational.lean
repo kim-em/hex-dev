@@ -9,6 +9,7 @@ public import HexSturmMathlib.Domain
 public import HexRealRootsMathlib.TarskiDomain
 public import HexRealRootsMathlib.TarskiSigns
 public import HexRealRootsMathlib.TarskiCount
+public import HexRealRootsMathlib.ChainCorrespond
 
 public section
 
@@ -179,6 +180,34 @@ theorem query_rat_count (p : DensePoly Rat) (I : DyadicInterval) (value : Int)
   rw [HexRealRootsMathlib.Literal.rootsIn, toPolyℝ_clearDenominators,
     Polynomial.roots_C_mul _ (by exact_mod_cast ne_of_gt (ZPoly.clearDenominators_pos p))] at he
   exact he
+
+/-- On successful root-free finite domains, natural counting agrees with
+positive denominator clearing followed by the existing half-open Sturm count.
+The query success hypothesis supplies both endpoint-root-free guards; this
+statement does not change `ZPoly.sturmCount` at an upper endpoint root. -/
+theorem rootCount_sturm (p : DensePoly Rat) (I : DyadicInterval) (n : Nat)
+    (degree : 1 ≤ (ZPoly.clearDenominators p).2.natDegree)
+    (squarefree : ZPoly.SquareFreeRat (ZPoly.clearDenominators p).2)
+    (result : Sturm.rootCount Sturm.orderSign p
+      (.finite I.lower.toRat) (.finite I.upper.toRat) = some n) :
+    (n : Int) = ZPoly.sturmCount (ZPoly.clearDenominators p).2 I := by
+  classical
+  obtain ⟨value, hvalue, rfl⟩ := Option.map_eq_some_iff.mp result
+  have count := query_rat_count p I value hvalue
+  have nonneg : 0 ≤ value := by
+    rw [count]
+    exact Int.natCast_nonneg _
+  rw [Int.toNat_of_nonneg nonneg, count,
+    sturmCount_eq_card_roots _ degree squarefree I]
+  have hc : ((ZPoly.clearDenominators p).1 : ℝ) ≠ 0 := by
+    exact_mod_cast ne_of_gt (ZPoly.clearDenominators_pos p)
+  simp only [Literal.rootsIn, Literal.InInterval, toPolyℝ_clearDenominators,
+    Polynomial.roots_C_mul _ hc]
+  congr 1
+  congr 1
+  apply Multiset.filter_congr
+  intro x _
+  rfl
 
 /-- Rational query-one counting agrees with the open distinct-root sum. -/
 theorem query_rat_rootSum (p : DensePoly Rat) (I : DyadicInterval) (value : Int)

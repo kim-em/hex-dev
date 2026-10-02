@@ -178,8 +178,13 @@ it cannot establish this signed sum.
 
 ## Required frontend theorems
 
-Theorems below live under `HexSturmMathlib`, except upstream names explicitly
-identified. Assume the operation-preserving, zero-reflecting interpretation
+Theorems below use the `HexSturmMathlib` namespace. Domain, representation
+and rational/integer correspondence live in the companion library. Root-sum
+semantics (`query_spec`, `query_sound`, `queryPrepared_sound`,
+`countPrepared_sound`, `countPrepared_nonneg`, `check_sound`, `rootCount_eq`,
+`query_bound`, `query_sign`) and exact natural-count conversion live in the
+monorepo's `HexQuerySemantics` adapter target, not the released companion
+umbrella. Package integration of those adapters is owned by #10575. Assume the operation-preserving, zero-reflecting interpretation
 in the lawful semantic field described above.
 
 | Theorem | Hypotheses and conclusion |
@@ -187,7 +192,7 @@ in the lawful semantic field described above.
 | `prepare_sound` | A returned prepared object establishes `Domain(P;a,b)` and binds exactly its head and endpoints. |
 | `withEndpoints_isSome` | Retargeting a prepared head succeeds exactly when `Domain(P;a,b)` holds at the new endpoints. The core `PreparedDomain.withEndpoints_bindings` theorem separately preserves the literal head, sign and squarefree chain. |
 | `withEndpoints_domain` | The actual retargeted object has a valid domain at the requested endpoints. |
-| `query_sound` | `query p f a b = some q` implies `Domain(P;a,b)` and `q = TaQ(F,P;a,b)` for every supplied `R,ι,hι`. |
+| `query_spec` | `query p f a b = some q` implies `Domain(P;a,b)` and `q = TaQ(F,P;a,b)` for every supplied `R,ι,hι`. |
 | `queryPrepared_sound` | The prepared query computes the same mathematical sum for its bound domain and any `f`. |
 | `countPrepared_sound` | The actual prepared query-one operation equals `Roots(P;a,b).card`, interpreted as an integer. |
 | `countPrepared_nonneg` | The actual prepared integer count is nonnegative under the lawful coefficient interpretation, before conversion to `Nat`. |
@@ -208,6 +213,8 @@ a degree-zero fraction-field pseudo-gcd, or checked `A*P+B*P'=1`.
 It must include nonzero constants. An arbitrary common gcd of `P,F` is not
 this guard and must not be rejected. The bound and singleton theorems concern
 semantic root sets; they do not introduce root enumeration into the runtime.
+
+`query_sound` is the value-only projection of the combined `query_spec` contract.
 
 ### Root-count boundary
 
@@ -243,6 +250,12 @@ counts for arbitrary accepted integer query-one certificates;
 producer. `query_rat_count` and `query_rat_nonneg` in `Rational.lean` transport
 finite dyadic-interval counts to the rational frontend after positive clearing.
 These use the existing real foundation, not a new analytic proof.
+
+`rootCount_sturm` in `Rational.lean` identifies every successful natural
+count on a finite dyadic interval with the existing `ZPoly.sturmCount` after
+positive denominator clearing, for positive-degree rationally squarefree heads.
+Success entails both endpoint-root-free guards. The half-open API's behavior
+at an upper root is preserved.
 
 The existing integer root-count APIs and their proofs remain available.
 The general `Hex.Sturm.rootCount` uses the same shared query computation.

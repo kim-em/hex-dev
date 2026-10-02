@@ -23,8 +23,8 @@ congruence across field representations, with finite or infinite endpoints,
 and acceptance of literal certificate translations by denominator clearing
 and integer-to-rational embedding. The shared root-sum theorem supplies replay semantics, `rootCount` and
 singleton/sign bounds. Remaining Phase-4 evidence is required.
-Scaffolding is attested at Phase 1; independent review, conformance attestation
-and complete Phase-4 coverage remain required. No release is claimed.
+The authoritative phase attestations are recorded in `libraries.yml`.
+No release is claimed.
 
 `HexSturm` depends on `HexPoly` and `HexRealRoots`, with no Mathlib or
 Batteries import. Its namespace is `Hex.Sturm`. Its substantive work is
