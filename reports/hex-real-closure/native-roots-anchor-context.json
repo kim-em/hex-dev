@@ -25,5 +25,12 @@
     7.68896484375,
     11.9931640625
   ],
-  "exitCode": 0
+  "exitCode": 0,
+  "measuredBaseCommit": "321764a1f22825453e304693ca9a7fa357c359f9",
+  "rebasedAs": "849923d67",
+  "rebasedBaseCommit": "afdb1f7f0047d76f49154b6feefd7cbefefa6a03",
+  "patchAgreement": "git range-diff shows all six native-root patches unchanged by rebase; the current bench source hash matches the measured source",
+  "retainedExport": "native-roots-anchor.json",
+  "retainedExportSha256": "9ee8e886cfccfded2ae772a493e6bf3fb2909cbde9632612c53a67cbf2119695",
+  "retainedCopy": "The retained export is a byte-for-byte copy of the export-file named in command."
 }
