@@ -111,6 +111,23 @@ theorem imported_positive : ∀ x : ℝ,
     x ^ 2 + Hex.RCF.NormalizedInputs.exposed.toReal > 0 := by
   rcf
 
+-- Checked local coefficient equalities are substituted before classification.
+theorem alias_positive (a : ℝ) (ha : a = Hex.RCF.NormalizedInputs.exposed.toReal) :
+    ∀ x : ℝ, x ^ 2 + a > 0 := by
+  rcf
+
+theorem radical_aliases (a b : ℝ) (ha : a = Real.sqrt 2) (hb : Real.sqrt 3 = b) :
+    ∀ x : ℝ, x ^ 2 + b - a > 0 := by
+  rcf
+
+private def selectedTwo : RealAlgebraicNumber :=
+  Selected.real SquareTwo.polynomial SquareTwo.square (by decide) (by decide)
+    (by rfl) (by decide) (by decide) SquareTwo.checked SquareTwo.squarefree (by decide)
+
+theorem normalized_selected : ∀ x : ℝ,
+    x ^ 2 + cubic.toReal + selectedTwo.toReal > 0 := by
+  rcf
+
 -- Executability alone does not authenticate a hidden isolation square.
 /-- error: rcf: normalized source square must reduce to its literal encoding in the kernel -/
 #guard_msgs in
@@ -120,8 +137,13 @@ example : ∀ x : ℝ, x ^ 2 + Hex.RCF.NormalizedInputs.hidden.toReal > 0 := by
 open Lean Meta Qq in
 local elab "mixedDecline%" : term => do
   let saved ← saveState
-  let result ← CommonTactic.handle q(∀ x : ℝ,
+  let target := q(∀ x : ℝ,
     x ^ 2 + Hex.RCF.NormalizedInputs.hidden.toReal + Real.sqrt (1 / 2) > 0)
+  let .ok source ← Reify.prepare target |
+    throwError "mixed source must prepare before handler classification"
+  unless source.coefficients.size == 2 do
+    throwError "mixed source must expose both coefficients"
+  let result ← CommonTactic.handle target
   saved.restore
   match result with
   | .declined => return q(True.intro)
@@ -178,3 +200,15 @@ example : True := guardRejection%
 /-- info: '_private.HexRCF.NormalizedCoefficients.0.imported_positive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms imported_positive
+
+/-- info: '_private.HexRCF.NormalizedCoefficients.0.alias_positive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms alias_positive
+
+/-- info: '_private.HexRCF.NormalizedCoefficients.0.radical_aliases' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms radical_aliases
+
+/-- info: '_private.HexRCF.NormalizedCoefficients.0.normalized_selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms normalized_selected

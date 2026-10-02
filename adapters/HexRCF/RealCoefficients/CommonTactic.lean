@@ -163,13 +163,13 @@ private meta def sourceRoot? (argument : Expr) :
           (zetaDelta := true) (cache := false)
     catch _ =>
       throwError "rcf: normalized source {label} must reduce to its literal encoding in the kernel"
-  let _ ← bindLiteral q($sourceP = $literalP) literalP "polynomial"
+  let hpoly ← bindLiteral q($sourceP = $literalP) literalP "polynomial"
   let hs ← bindLiteral q(($rep).1.square = $literalSquare) literalSquare "square"
   let hw ← mkDecideProof (q(atomWitness $literalP $literalSquare) : Q(Prop))
   let hp ← mkDecideProof
     (q((mahlerPrec $literalP : Int) ≤ ($literalSquare).prec) : Q(Prop))
   let selected ← mkAppM ``Selected.normalized_toReal
-    (args ++ #[hreal, literalSquare, hw, hp, hs])
+    (args ++ #[hreal, literalP, hpoly, literalSquare, hw, hp, hs])
   return some (← FieldRuntime.evalReal argument, p, s, .normalized selected)
 
 private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do

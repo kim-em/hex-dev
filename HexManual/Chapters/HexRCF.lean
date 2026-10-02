@@ -628,7 +628,8 @@ private abbrev plasticAlgebraic : Hex.AlgebraicNumber :=
 private def normalizedPlastic : Hex.RealAlgebraicNumber :=
   Hex.RealAlgebraicNumber.ofAlgebraic plasticAlgebraic (by
     apply (Hex.AlgebraicNumber.isReal_iff _).mpr
-    exact (congrArg Complex.im (Selected.normalized_toComplex
+    exact (congrArg Complex.im
+      (Selected.normalized_toComplex
       plasticPolynomial (by rfl) (by decide) (by decide)
       plasticChecked plasticSquarefree plasticRep _)).trans
       (Field.literalRep_real _ _ _ _ (by decide)))
@@ -637,7 +638,8 @@ private abbrev plasticCoordinate :
     Hex.QAdjoin normalizedPlastic.toAlgebraic :=
   normalizedPlastic.toAlgebraic.toQAdjoin ^ 2 - 1
 
-private abbrev plasticCoefficient : Hex.RealAlgebraicNumber :=
+private abbrev plasticCoefficient :
+    Hex.RealAlgebraicNumber :=
   Coefficients.ofField normalizedPlastic plasticCoordinate
 
 example : ∀ x : ℝ,

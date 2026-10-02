@@ -83,12 +83,14 @@ theorem normalized_toReal (p : ZPoly)
       squarefree rep).isSome)
     (hreal : (AlgebraicNumber.ofNormalized p prim pos_lc pos_degree checked
       squarefree rep h).isReal = true)
-    (s : DyadicSquare) (hw : atomWitness p s)
-    (hp : (mahlerPrec p : Int) ≤ s.prec) (hs : rep.1.square = s) :
-    (Field.literalRep p s hw hp).root.re =
+    (q : ZPoly) (hpoly : p = q)
+    (s : DyadicSquare) (hw : atomWitness q s)
+    (hp : (mahlerPrec q : Int) ≤ s.prec) (hs : rep.1.square = s) :
+    (Field.literalRep q s hw hp).root.re =
       (RealAlgebraicNumber.ofAlgebraic
         (AlgebraicNumber.ofNormalized p prim pos_lc pos_degree checked
           squarefree rep h) hreal).toReal := by
+  subst q
   subst s
   have hr : (Field.literalRep p rep.1.square hw hp).root = rep.root := by
     change HexRootsMathlib.SimpleRoot.rootOf
