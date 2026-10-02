@@ -1693,7 +1693,8 @@ existing `restrictUnion` construction. For a canonical base model and any
 validated finite suffix, it preserves every interpreted value after inclusion
 and agrees with the prescribed base map at every suffix depth. An arbitrary
 old model in a real closed field uses `Suffix.restrict` and `Model.baseHom` to
-extract its base map from a reference base interpretation;
+extract its base map, using a reference interpretation in a real closed field
+for existence of the native inclusion laws;
 `Model.base_baseHom` and `Model.suffix_algebraic` derive agreement and
 algebraicity for that map. Packaging the restriction in the total
 `Context.enlarge` constructor remains open.
@@ -1702,7 +1703,8 @@ For any supplied native input model, `Model.roots_iff_union` identifies the
 actual complete-root presentations with the relative algebraic union of its
 entire value field. `Root.unionModel` interprets every value of each returned
 root context there, preserving its native operations and signs.
-`Context.enlarge?_constructed` identifies an arbitrary old model with the
-actual checked rebuilt target. The total `Context.enlarge` constructor must
+`Context.enlarge?_constructed` preserves the old model lifted into the
+infinitesimal ambient and identifies the converted target with the new-base
+model extended through the actual rebuilt suffix. The total `Context.enlarge` constructor must
 still package the algebraic restriction and staged order and gather all
 requested live contexts into one compatible native context.

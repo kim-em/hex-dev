@@ -128,7 +128,7 @@ The [export](native-roots-anchor.json), [log](native-roots-anchor.log), and
 command, CPU affinity, host load, source revision and source/executable hashes.
 The export is a byte-for-byte copy of the path
 named in the recorded command; its SHA-256 is recorded in the context.
-The context records the full equivalent source revision and matching benchmark
+The context records a revision on main with the matching benchmark-driver
 hash; the measured revision is outside main's ancestry and its availability
 through branch history is not guaranteed. The executable hash identifies the
 measured build.
