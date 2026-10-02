@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBareiss
-public import HexMvPoly.Kernel
+public import HexMvPoly.KernelResidue
 public import HexMvGcd.Divide
 public import HexMvGcd.Instances
 
@@ -28,6 +28,16 @@ def ops {C : Type} [Lean.Grind.CommRing C] [BEq C] [DecidableEq C]
   beq := MvPoly.Kernel.beq
   valid := MvPoly.Kernel.isCanonical k
 
+/-- The shared natural-residue arithmetic for kernel determinant certificates. -/
+def opsMod (p k : Nat) : DetOps (MvPoly.Kernel.PolyList Nat) where
+  zero := []
+  one := MvPoly.Kernel.oneMod p k
+  add := MvPoly.Kernel.addMod p
+  mul := MvPoly.Kernel.mulMod p
+  neg := MvPoly.Kernel.negMod p
+  beq := MvPoly.Kernel.beq
+  valid := MvPoly.Kernel.isCanonicalMod p k
+
 variable {k n : Nat} {C : Type} {cmp : Mono k → Mono k → Ordering}
   [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing C]
   [DecidableEq C] [BEq C] [LawfulBEq C]
@@ -40,13 +50,20 @@ def toList (p : MvPoly k C cmp) : MvPoly.Kernel.PolyList C :=
     (fun a b => (compare a.1 b.1).isGE)
 
 /-- Check the polynomial witness using canonical lists in compiled code.
-Kernel quotation uses integer coefficients; residue quotation additionally
-requires the reduced-Nat adapter from #10257. -/
+Kernel quotation uses integer coefficients or the shared natural-residue
+representation with `opsMod`. -/
 def check (n : Nat) (rows : List (List (MvPoly k C cmp)))
     (w : DetWitness (MvPoly k C cmp)) : Bool :=
   checkDetPolyList (ops k) n (rows.map (List.map toList)) (w.map toList)
 
 variable [Dvd C] [GcdOps C] [IsMonomialOrder cmp] [LawfulGcdOps C]
+
+/-- Budget the shared elimination by nonzero polynomial support. The caller's
+compiled checker validates the exact integer or residue serialization. -/
+def produce (budget : DetWitness.Budget) (n : Nat)
+    (check : List (List (MvPoly k C cmp)) → DetWitness (MvPoly k C cmp) → Bool)
+    (rows : List (List (MvPoly k C cmp))) : Except DetWitness.Error (DetWitness (MvPoly k C cmp)) :=
+  detWitnessBudgeted Hex.exactDiv n MvPoly.termCount budget check rows
 
 /-- Fraction-free elimination with polynomial exact division and a retained
 transform, accepting the witness only after the compiled list check. -/

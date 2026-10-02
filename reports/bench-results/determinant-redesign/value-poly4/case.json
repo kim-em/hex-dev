@@ -1,0 +1,8 @@
+{
+  "output": "reports/bench-results/determinant-redesign/value-poly4",
+  "ring": "poly",
+  "dimension": 4,
+  "bits": 8,
+  "shape": "dense",
+  "spread": 1
+}

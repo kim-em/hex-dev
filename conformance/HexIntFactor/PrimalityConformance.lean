@@ -38,16 +38,16 @@ private def squareSeed : Rand := Rand.ofSeed squarePrime
 
 private def squareFuel : Nat := min (defaultPrimeFuel squarePrime) 512
 
-private def tacticBudget : PrimeCertBudget := ⟨2, 1 <<< 15⟩
+private def tacticBudget : PrimeCertBudget := ⟨2, 1 <<< 15, .off⟩
 
 private def squareAllocation (factorFuel : Nat) : FactorSearchBudget :=
-  ⟨tacticBudget, squareFuel - 1, factorFuel⟩
+  { primeBudget := tacticBudget, primeFuel := squareFuel - 1, factorFuel := factorFuel }
 
 private def coreFailure : PrimeCertFailure :=
   match Internal.primeCertCountedWith? tacticBudget squarePrime squareSeed
       squareFuel with
   | .error failure => failure
-  | .ok _ => ⟨.composite, 0, squareSeed⟩
+  | .ok _ => ⟨.composite, 0, squareSeed, []⟩
 
 -- The ordinary elaborator allocation exhausts on this prime. Its advanced
 -- state is the exact starting point for deterministic extension dispatch.
@@ -98,3 +98,43 @@ example : Hex.Nat.Prime 1208925821721293454442757 :=
 /-- error: primality: 561 is not prime (Miller-Rabin witness 2) -/
 #guard_msgs in
 example : Hex.Nat.Prime 561 := primality 561
+
+-- The two registrations expose different schedules and separate ABI versions.
+run_cmd Lean.Elab.Command.liftTermElabM do
+  let some ext ← Hex.PrimalityTactic.constructionExtension?
+      `HexIntFactor.PrimalityTactic.constructionExtension
+    | throwError "missing construction registration"
+  unless ext.version == 1 && ext.factorName == ``Hex.Nat.ecmConstructionFactor do
+    throwError "incorrect construction registration"
+  unless (← Hex.PrimalityTactic.searchExtensions).any
+      (fun ext => ext.version == 3 && ext.factorName == ``Hex.Nat.intFactorSearch) do
+    throwError "ordinary search registration changed"
+
+-- The ordinary adapter must decline a total-limit construction allocation.
+private def boundedAdapter : FactorSearchResult :=
+  intFactorSearch { constructionBudget.factor with attemptLimit := some 1024 }
+    1000002 (Rand.ofSeed 19)
+
+#guard boundedAdapter.raw.factors.isEmpty && boundedAdapter.raw.residual == 1000002 &&
+  boundedAdapter.attempts == 0 && boundedAdapter.rand == Rand.ofSeed 19 && boundedAdapter.events.isEmpty
+
+-- Standard HexIntFactor import: even with ECM registered, an explicit adapter
+-- that declines total limits must exhaust instead of activating automatic ECM.
+/--
+error: primality?: certificate construction for 1000003 exhausted after 0 attempts (seed 1000003; maximum 521 bits, recursive depth 32, total attempts 1024, factor fuel 1024, explicit factor provider Hex.Nat.intFactorSearch (its per-attempt bounds apply), witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 32 factors and 4096 subsets, sieve bound at most 64); unresolved obligation 1000003
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 1000003 := by
+  primality? (factor := Hex.Nat.intFactorSearch)
+
+-- Registered providers impose no search on successes of the first route.
+run_cmd Lean.Elab.Command.liftTermElabM do
+  for (n, attempts) in [(2^521 - 1, 170), (2^255 - 19, 29)] do
+    let .ok first := Construction.run n (Rand.ofSeed n)
+      | throwError "core regression"
+    let (result, allocations) ← Hex.PrimalityTactic.construct n constructionBudget
+    let .ok result := result | throwError "automatic regression"
+    unless allocations.isEmpty && result.attempts == attempts &&
+        result.attempts == first.attempts && result.rand == first.rand &&
+        result.events == first.events && reprStr result.cert.raw == reprStr first.cert.raw do
+      throwError "first-route success changed"

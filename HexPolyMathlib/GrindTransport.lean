@@ -7,12 +7,13 @@ Authors: Kim Morrison
 module
 
 public import Mathlib.Algebra.Ring.GrindInstances
+public import Mathlib.Algebra.Field.Basic
 public import HexPoly
 
 public section
 
 /-!
-Mathlib ring structures for executable carriers.
+Mathlib ring and field structures for executable carriers.
 
 The computational libraries carry `Lean.Grind.CommRing` instances, while the
 Mathlib bridge theorems take Mathlib's `CommRing`. `commRingOfGrind` builds the
@@ -34,6 +35,9 @@ finite-field polynomials have no global Mathlib `CommRing` instance and are all
 covered by this one transport; `denseCommRing` names the dense-polynomial case.
 The private structure in `HexResultantMathlib/Specialize.lean` uses `npowRec`
 and is not a substitute: it replaces the executable power.
+`fieldOfGrind` extends this construction with the executable inverse,
+division and integer powers; `toGrind_fieldOfGrind` proves that the entire
+field reduct is preserved.
 -/
 
 namespace HexPolyMathlib
@@ -107,6 +111,40 @@ theorem toGrind_commRingOfGrind {R : Type u} [s : Lean.Grind.CommRing R] :
           (Lean.Grind.Semiring.ofNat_eq_natCast (k + 2)).symm
   · exact proof_irrel_heq _ _
   · exact proof_irrel_heq _ _
+
+section FieldTransport
+
+attribute [local instance] Lean.Grind.Semiring.natCast Lean.Grind.Ring.intCast
+
+/-- Mathlib's field structure with the executable field's operations. -/
+@[instance_reducible, expose] def fieldOfGrind {R : Type u} [s : Lean.Grind.Field R] :
+    Field R :=
+  { commRingOfGrind, s with
+    exists_pair_ne := ⟨0, 1, Lean.Grind.Field.zero_ne_one⟩
+    mul_inv_cancel := fun _ h => Lean.Grind.Field.mul_inv_cancel h
+    zpow := fun n a => a ^ n
+    zpow_zero' := Lean.Grind.Field.zpow_zero
+    zpow_succ' := fun n a => Lean.Grind.Field.zpow_succ a n
+    zpow_neg' := fun n a => by
+      simpa only [Int.negSucc_eq, Int.natCast_succ] using
+        Lean.Grind.Field.zpow_neg a (n + 1 : Int)
+    nnqsmul := _
+    qsmul := _ }
+
+/-- Interpreting an executable field as a Mathlib field preserves its full
+executable reduct, including inverses and powers. -/
+theorem toGrind_fieldOfGrind {R : Type u} [s : Lean.Grind.Field R] :
+    @Field.toGrindField R fieldOfGrind = s := by
+  unfold Field.toGrindField
+  dsimp only
+  congr 1
+  exact toGrind_commRingOfGrind
+
+/-- info: 'HexPolyMathlib.toGrind_fieldOfGrind' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexPolyMathlib.toGrind_fieldOfGrind
+
+end FieldTransport
 
 /-- A Mathlib `CommRing` structure whose `Lean.Grind.CommRing` reduct is the
 carrier's executable instance. A bridge theorem stated over `[CommRing R]` can be

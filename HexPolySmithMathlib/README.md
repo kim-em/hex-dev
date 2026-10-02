@@ -47,7 +47,7 @@ open Hex Hex.PolyMatrix HexPolySmithMathlib
 
 # Verification
 
-This library is correspondence-only. Every declaration is a proof or a
+Every declaration in this library is a proof or a
 noncomputable equivalence built from the verified output of `hex-poly-smith`.
 Executable conformance and performance evidence therefore remain owned by the
 Mathlib-free package.

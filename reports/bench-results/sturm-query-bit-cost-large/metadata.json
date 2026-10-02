@@ -1,0 +1,35 @@
+{
+  "cpu": 53,
+  "host": "chungus2",
+  "start": "2026-09-21T14:05:41.731949+00:00",
+  "load_start": [
+    4.55908203125,
+    6.23193359375,
+    5.15478515625
+  ],
+  "git_head": "a452384147b1cd0073730fa38d76c155ac64bb43",
+  "git_status": " M SPEC/benchmarking.md\n M bench/HexSturm/Bench.lean\n M reports/bench-results/sturm-axes/diagnostics-metadata.json\n M reports/hex-sturm-performance.md\n M scripts/bench/sturm_axes.py\n?? reports/bench-results/sturm-coefficient-control/\n?? reports/bench-results/sturm-query-bit-cost-wide/\n?? reports/bench-results/sturm-query-bit-cost/\n?? reports/sturm-bit-cost-models.md\n",
+  "binary_sha256": "54fec186d63ffbd34551e71c90deadd98123a7923b789d7717c4d6412e643237",
+  "source_sha256": "61889c9a9a4c83238c4a7d1f3dc89e4f5850cf8b6284cd49e190dc717ca45ba0",
+  "commands": [
+    {
+      "argv": [
+        "/tmp/hexsturm-query-bit-cost",
+        "run",
+        "Hex.SturmBench.runIntegerHigh",
+        "Hex.SturmBench.runInitialHigh",
+        "Hex.SturmBench.runReplayHigh",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-query-bit-cost-large/query-bits.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "derivation_sha256": "809158dd9c8e768e7bfd768711f3a6e654ce46cf9596212a85508f67f49454b5",
+  "end": "2026-09-21T14:16:13.523247+00:00",
+  "load_end": [
+    4.8935546875,
+    5.3857421875,
+    5.2060546875
+  ]
+}

@@ -1,0 +1,547 @@
+diff --git a/bench/HexSignDet/Bench.lean b/bench/HexSignDet/Bench.lean
+index 4559f30fa..867f552ec 100644
+--- a/bench/HexSignDet/Bench.lean
++++ b/bench/HexSignDet/Bench.lean
+@@ -6,0 +7,2 @@ import HexSignDet.Phases
++import HexSignDet.Small
++import HexSignDet.Paired
+@@ -56,0 +59,27 @@ open Hex.SignDet
++-- Declared cost-model: Θ(s log s), direct moments and bounded-size systems on the two-root family.
++setup_benchmark runSmallReduced s => s * (Nat.log2 s + 1)
++  with prep := smallInput
++  where {
++    paramSchedule := .custom #[1, 2, 3, 4, 5]
++    paramFloor := 1
++    paramCeiling := 5
++    outerTrials := 6
++    targetInnerNanos := 1000000000
++    maxSecondsPerCall := 60
++  }
++
++-- Declared cost-model: Θ(27^s) from cubic work on a full 3^s square system:
++-- dense Gauss-Jordan worst-case and inverse-identity replay. The structured
++-- moment matrix can have fewer row additions; retain any model mismatch.
++setup_benchmark runSmallFull s => 27^s
++  with prep := smallInput
++  where {
++    paramSchedule := .custom #[1, 2, 3, 4, 5]
++    paramFloor := 1
++    paramCeiling := 5
++    outerTrials := 6
++    targetInnerNanos := 1000000000
++    maxSecondsPerCall := 60
++  }
++
++
+@@ -161,0 +191,4 @@ def main (args : List String) : IO UInt32 :=
++  else if args == ["inspect-small"] then Hex.SignDetBench.inspectSmall
++  else if args == ["inspect-full"] then Hex.SignDetBench.inspectFull
++  else if let ["paired-small", path] := args then
++    Hex.SignDetBench.paired ``Hex.SignDetBench.runSmallReduced ``Hex.SignDetBench.runSmallFull path
+diff --git a/bench/HexSignDet/Paired.lean b/bench/HexSignDet/Paired.lean
+new file mode 100644
+index 000000000..bed573269
+--- /dev/null
++++ b/bench/HexSignDet/Paired.lean
+@@ -0,0 +1,62 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import LeanBench
++import LeanBench.Export
++
++namespace Hex.SignDetBench
++open LeanBench
++
++/-- Run two registered custom schedules in adjacent, alternating arm order.
++Sampling, child execution and statistical summaries use the shared harness.
++Each completed arm is flushed before another child starts. -/
++def paired (left right : Lean.Name) (path : String) : IO UInt32 := do
++  let some l ← findRuntimeEntry left | throw (IO.userError "missing left registration")
++  let some r ← findRuntimeEntry right | throw (IO.userError "missing right registration")
++  let .custom params := l.spec.config.paramSchedule
++    | throw (IO.userError "paired schedule must be explicit")
++  let .custom rparams := r.spec.config.paramSchedule
++    | throw (IO.userError "paired schedule must be explicit")
++  let trials := l.spec.config.outerTrials
++  unless params == rparams && trials == r.spec.config.outerTrials && trials > 0 && trials % 2 == 0 do
++    throw (IO.userError "paired schedules must agree and have positive even round count")
++  for entry in #[l, r] do
++    match entry.spec.config.validate with
++    | .error msg => throw (IO.userError msg)
++    | .ok () => pure ()
++  let env ← RunEnv.capture
++  let floor ← measureSpawnFloor env
++  let out ← IO.FS.Handle.mk path .write
++  let emit (row : Lean.Json) : IO Unit := do
++    out.putStrLn row.compress
++    out.flush
++  emit <| Lean.Json.mkObj [
++    ("kind", Lean.toJson "header"), ("schema", Lean.toJson "hex-sign-det-paired-v1"),
++    ("params", Lean.toJson params), ("trials", Lean.toJson trials),
++    ("left", Lean.toJson left.toString), ("right", Lean.toJson right.toString),
++    ("env", RunEnv.toJson env), ("spawnFloorNanos", Lean.toJson floor)]
++  let mut lp : Array DataPoint := #[]
++  let mut rp : Array DataPoint := #[]
++  for trial in [:trials] do
++    for param in params do
++      let arms := if trial % 2 == 0 then #[false, true] else #[true, false]
++      for isRight in arms do
++        let entry := if isRight then r else l
++        let point := { (← runOneBatch entry.spec param (some env)) with trialIndex := trial }
++        emit <| Lean.Json.mkObj [
++          ("kind", Lean.toJson "sample"), ("arm", Lean.toJson entry.spec.name.toString),
++          ("point", Export.dataPointToJson point)]
++        if isRight then rp := rp.push point else lp := lp.push point
++  let mut ok := true
++  for (entry, points) in #[(l, lp), (r, rp)] do
++    let annotated := annotateBelowSignalFloor entry.spec.config.signalFloorMultiplier floor points
++    let summary := { Stats.summarize entry.spec entry.complexity annotated with
++      spawnFloorNanos? := floor, env? := some env }
++    emit <| Lean.Json.mkObj [
++      ("kind", Lean.toJson "summary"), ("result", Export.benchmarkResultToJson summary)]
++    ok := ok && points.all (fun p => p.status == .ok) && summary.verdict != .inconclusive
++  return if ok then 0 else 1
++
++end Hex.SignDetBench
+diff --git a/bench/HexSignDet/Small.lean b/bench/HexSignDet/Small.lean
+new file mode 100644
+index 000000000..237ca19ba
+--- /dev/null
++++ b/bench/HexSignDet/Small.lean
+@@ -0,0 +1,122 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import HexSignDet.Input
++import Lean.Data.Json
++
++namespace Hex.SignDetBench
++open Hex.SignDet
++open scoped Hex
++
++/-- Both comparison arms receive the same prepared domain and ordered queries.
++Exact agreement with the known two-root table is checked outside timing. -/
++def smallInput (s : Nat) : Input :=
++  let x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
++  let p := x * x - 1
++  let qs := List.replicate s x
++  match Sturm.prepare Sturm.orderSign p .negInf .posInf with
++  | none => ⟨p, qs, none, none, none⟩
++  | some domain =>
++    match buildPrepared (10377 : Nat) domain qs false, referencePrepared (10377 : Nat) domain qs with
++    | .ok reduced, .ok full =>
++      let expected := if s == 0 then [([], (2 : Int))]
++        else [(List.replicate s (-1), (1 : Int)), (List.replicate s 1, 1)]
++      if entries reduced.val.node.system == expected && entries full.system == expected &&
++          full.check Sturm.orderSign 10377 p .negInf .posInf qs then
++        ⟨p, qs, some domain, some reduced.val, none⟩
++      else ⟨p, qs, none, none, none⟩
++    | _, _ => ⟨p, qs, none, none, none⟩
++
++/-- Construct and replay a reduced-support table. The `false` flag disables
++query-polynomial reduction, not BKR support reduction. -/
++@[noinline] def runSmallReduced (i : Input) : Option UInt64 := do
++  let domain ← i.domain
++  match buildPrepared (10377 : Nat) domain i.queries false with
++  | .error _ => none
++  | .ok tree => some (hash (entries tree.val.node.system))
++
++/-- Construct and replay the complete ternary table over the same prepared
++domain, with query-polynomial reduction likewise disabled. -/
++@[noinline] def runSmallFull (i : Input) : Option UInt64 := do
++  let domain ← i.domain
++  match referencePrepared (10377 : Nat) domain i.queries with
++  | .error _ => none
++  | .ok node =>
++    if node.check Sturm.orderSign 10377 i.head .negInf .posInf i.queries then
++      some (hash (entries node.system))
++    else none
++
++private def bits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
++
++/-- Literal counts, dimensions and stored inverse bits are checked independently
++of the timed hashes. They do not measure peak intermediate arithmetic bits. -/
++def inspectSmall : IO UInt32 := do
++  for s in #[1, 2, 3, 4, 5] do
++    let i := smallInput s
++    let some domain := i.domain | throw (IO.userError "invalid comparison input")
++    let some tree := i.tree | throw (IO.userError "missing reduced tree")
++    let .ok full := referencePrepared (10377 : Nat) domain i.queries
++      | throw (IO.userError "full reference failed")
++    let expected := [(List.replicate s (-1 : Int), (1 : Int)), (List.replicate s (1 : Int), 1)]
++    let ns := nodes tree
++    let queryCount := ns.foldl (fun k n => k + n.size) 0
++    let maxSize := ns.foldl (fun k n => max k n.size) 0
++    let inverseBits := full.system.inverse.rows.toArray.foldl (fun k row =>
++      row.toArray.foldl (fun k z => max k (bits z)) k) 0
++    unless full.size == 3^s && queryCount == 7*s-4 && maxSize ≤ 4 &&
++        entries tree.node.system == expected && entries full.system == expected &&
++        full.system.denominator.natAbs == 2^s && inverseBits ≤ s+1 do
++      throw (IO.userError s!"comparison inventory failed at {s}")
++    IO.println <| (Lean.Json.mkObj [
++      ("queries", Lean.toJson s), ("headDegree", Lean.toJson i.head.natDegree),
++      ("queryDegree", Lean.toJson (1 : Nat)), ("rootCount", Lean.toJson (2 : Nat)),
++      ("reducedQueries", Lean.toJson queryCount), ("fullQueries", Lean.toJson full.size),
++      ("maxReducedMatrixSize", Lean.toJson maxSize),
++      ("fullMatrixSize", Lean.toJson full.size),
++      ("fullInverseBits", Lean.toJson inverseBits),
++      ("fullDenominatorBits", Lean.toJson (bits full.system.denominator)),
++      ("inputHash", Lean.toJson (hash i).toNat),
++      ("resultHash", Lean.toJson (hash (some (hash expected))).toNat)]).compress
++  return 0
++
++/-- Observe the actual full-system elimination one column at a time. The checked
++nonzero diagonal means pivot search selects the current row without swapping.
++Other rows retain their column entry until their own elimination, so counting
++those nonzero entries counts the actual `eliminateColumn` updates. This is an
++untimed finite-input inventory, not a general operation-count theorem. -/
++def inspectFull : IO UInt32 := do
++  for s in #[1, 2, 3, 4, 5] do
++    let r := 3^s
++    let rows := (words [0, 1, 2] s).toArray
++    let cols := (words [-1, 0, 1] s).toArray
++    unless rows.size == r && cols.size == r do
++      throw (IO.userError "incorrect full matrix dimensions")
++    let m : Matrix Rat r r := Matrix.ofFn fun i j => (entry rows[i.val]! cols[j.val]! : Rat)
++    let mut state : Matrix.RowReduceState Rat r r := ⟨0, m, Matrix.identity r, []⟩
++    let mut updates := 0
++    let mut columns : Array Nat := #[]
++    for col in List.finRange r do
++      unless state.row == col.val && state.echelon[(col, col)] != 0 do
++        throw (IO.userError s!"unexpected pivot at {s}/{col.val}")
++      let count := (List.finRange r).countP fun row =>
++        row != col && state.echelon[(row, col)] != 0
++      updates := updates + count
++      columns := columns.push count
++      state := Matrix.rowReduceLoop col.val 1 state
++    let some inv := Matrix.inverse? m | throw (IO.userError "full inverse failed")
++    unless state.row == r && state.pivots == List.finRange r &&
++        state.echelon == Matrix.identity r && state.transform == inv do
++      throw (IO.userError s!"one-column traversal differs from full inverse at {s}")
++    IO.println <| (Lean.Json.mkObj [
++      ("queries", Lean.toJson s), ("matrixSize", Lean.toJson r),
++      ("eliminatedRows", Lean.toJson updates), ("updatesPerColumn", Lean.toJson columns),
++      ("rowAddCalls", Lean.toJson (2 * updates)),
++      ("rowAddScalarPairs", Lean.toJson (2 * updates * r)),
++      ("rowScaleScalarProducts", Lean.toJson (2 * r * r)),
++      ("inverseIdentityScalarPairs", Lean.toJson (r * r * r)),
++      ("matchesInverse", Lean.toJson true)]).compress
++  return 0
++
++end Hex.SignDetBench
+diff --git a/lakefile.lean b/lakefile.lean
+index c93d48417..688e5d165 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -1642 +1642,2 @@ lean_lib HexSignDetBenchSupport where
+-  globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases]
++  globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
++    .one `HexSignDet.Paired]
+diff --git a/scripts/bench/sign_det_compare.py b/scripts/bench/sign_det_compare.py
+new file mode 100644
+index 000000000..54d78f4a8
+--- /dev/null
++++ b/scripts/bench/sign_det_compare.py
+@@ -0,0 +1,188 @@
++#!/usr/bin/env python3
++"""Retain adjacent AB/BA sign-table comparisons and the shared harness verdicts."""
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++import math
++import os
++from pathlib import Path
++import platform
++import statistics
++import subprocess
++import sys
++import tempfile
++import time
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(ROOT))
++from scripts.bench.sign_det_sparse import source_hashes
++from scripts.bench.structural_tactic_sweep import acquire_cpu
++
++PARAMS = [1, 2, 3, 4, 5]
++TRIALS = 6
++ARMS = ["Hex.SignDetBench.runSmallReduced", "Hex.SignDetBench.runSmallFull"]
++
++
++def archive_sources(out, metadata):
++    """Retain and verify a patch reconstructing every recorded source file."""
++    revision = metadata["revision"]
++    paths = sorted(metadata["source_sha256"])
++    base = subprocess.check_output(["git", "merge-base", revision, "origin/main"],
++                                   cwd=ROOT, text=True).strip()
++    patch = subprocess.check_output(
++        ["git", "diff", "--binary", "--unified=0", base, revision, "--", *paths], cwd=ROOT)
++    with tempfile.TemporaryDirectory(prefix="hex-sign-det-source-") as temporary:
++        env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary) / "index"))
++        subprocess.run(["git", "read-tree", base], cwd=ROOT, env=env, check=True)
++        if patch:
++            subprocess.run(["git", "apply", "--cached", "--unidiff-zero"],
++                           input=patch, cwd=ROOT, env=env, check=True)
++        for path, expected in metadata["source_sha256"].items():
++            contents = subprocess.check_output(["git", "show", ":" + path], cwd=ROOT, env=env)
++            if hashlib.sha256(contents).hexdigest() != expected:
++                raise ValueError("archived source does not match measurement: " + path)
++    (out / "committed-source.patch").write_bytes(patch)
++    metadata["source_archive"] = {
++        "base_revision": base, "file": "committed-source.patch",
++        "sha256": hashlib.sha256(patch).hexdigest(), "apply_option": "--unidiff-zero",
++        "scope": "all paths in source_sha256", "reconstruction_check": "passed"}
++
++
++def validate(path, inventory, revision):
++    """Require every scheduled arm, true result, and the unmodified summaries."""
++    expected = [json.loads(line) for line in inventory.read_text().splitlines()]
++    if [r["queries"] for r in expected] != PARAMS:
++        raise ValueError("incomplete comparison inventory")
++    hashes = {r["queries"]: hex(r["resultHash"]) for r in expected}
++    rows = [json.loads(line) for line in path.read_text().splitlines()]
++    header = rows[0]
++    if any(header.get(k) != v for k, v in {
++            "kind": "header", "schema": "hex-sign-det-paired-v1", "params": PARAMS,
++            "trials": TRIALS, "left": ARMS[0], "right": ARMS[1]}.items()):
++        raise ValueError("wrong comparison header")
++    if (header["env"]["git_commit"] != revision or
++            header["env"]["git_dirty"] is not False):
++        raise ValueError("comparison child did not run from the clean measured revision")
++    schedule = [(arm, trial, param) for trial in range(TRIALS) for param in PARAMS
++                for arm in (ARMS if trial % 2 == 0 else ARMS[::-1])]
++    if len(rows) != 1 + len(schedule) + 2:
++        raise ValueError("missing or extra comparison records")
++    points = {arm: [] for arm in ARMS}
++    for row, (arm, trial, param) in zip(rows[1:-2], schedule, strict=True):
++        point = row["point"]
++        if (row["kind"], row["arm"], point["trial_index"], point["param"]) != (
++                "sample", arm, trial, param):
++            raise ValueError("comparison arms are missing, duplicated or reordered")
++        if (point["status"] != "ok" or point["result_hash"] != hashes[param] or
++                point["part_of_verdict"] is not True or point["below_signal_floor"] is not False):
++            raise ValueError("failed or incorrect comparison sample")
++        nanos = point["per_call_nanos"]
++        if (type(nanos) not in (int, float) or not math.isfinite(nanos) or nanos <= 0 or
++                type(point["inner_repeats"]) is not int or point["inner_repeats"] <= 0):
++            raise ValueError("invalid timing or repeat count")
++        points[arm].append(point)
++    summaries = {}
++    for row, arm in zip(rows[-2:], ARMS, strict=True):
++        result = row["result"]
++        if (row["kind"] != "summary" or result["function"] != arm or
++                result["kind"] != "parametric" or result["hashable"] is not True or
++                result["budget_truncated"] is not False or result["points"] != points[arm] or
++                result["env"] != header["env"]):
++            raise ValueError("summary differs from the retained sample stream")
++        required = {"param_floor": 1, "param_ceiling": 5, "outer_trials": TRIALS,
++                    "param_schedule": {"kind": "custom", "params": PARAMS},
++                    "target_inner_nanos": 1000000000, "max_seconds_per_call": 60,
++                    "signal_floor_multiplier": 10, "cache_mode": "warm"}
++        if any(result["config"][k] != v for k, v in required.items()):
++            raise ValueError("comparison changed the registered configuration")
++        if result["verdict"] not in ("consistent_with_declared_complexity", "inconclusive"):
++            raise ValueError("unknown harness verdict")
++        summaries[arm] = {k: result[k] for k in (
++            "verdict", "complexity_formula", "slope", "c_min", "c_max", "advisories")}
++    paired = []
++    for param in PARAMS:
++        left = [p["per_call_nanos"] for p in points[ARMS[0]] if p["param"] == param]
++        right = [p["per_call_nanos"] for p in points[ARMS[1]] if p["param"] == param]
++        ratios = [b/a for a, b in zip(left, right, strict=True)]
++        deltas = [b-a for a, b in zip(left, right, strict=True)]
++        paired.append({"param": param, "left_nanos": left, "right_nanos": right,
++                       "ratios": ratios, "deltas_nanos": deltas,
++                       "median_ratio": statistics.median(ratios),
++                       "median_delta_nanos": statistics.median(deltas)})
++    return {"observations": summaries, "paired": paired}
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--output", type=Path, required=True)
++    args = parser.parse_args()
++    status = subprocess.check_output(["git", "status", "--short"], cwd=ROOT, text=True)
++    if status:
++        raise RuntimeError("commit the measured sources before running the comparison")
++    out = args.output.resolve()
++    if out.is_relative_to(ROOT):
++        raise ValueError("write measurement output outside the source worktree")
++    out.mkdir(parents=True, exist_ok=False)
++    exe = ROOT / ".lake/build/bin/hexsigndet_bench"
++    cpu, lease = acquire_cpu()
++    os.sched_setaffinity(0, {cpu})
++    sources = source_hashes()
++    # The report is the measurement result; the profile runner is source.
++    for name in ("scripts/bench/sign_det_compare.py", "scripts/bench/test_sign_det_compare.py",
++                 "scripts/profile/sign_det.py"):
++        sources[name] = hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
++    metadata = {"revision": subprocess.check_output(["git", "rev-parse", "HEAD"],
++                    cwd=ROOT, text=True).strip(), "status": status, "source_sha256": sources,
++                "binary_sha256": hashlib.sha256(exe.read_bytes()).hexdigest(),
++                "host": platform.node(), "platform": platform.platform(), "cpu": cpu,
++                "affinity": sorted(os.sched_getaffinity(0)), "load_before": os.getloadavg(),
++                "harness_revision": subprocess.check_output(["git", "rev-parse", "HEAD"],
++                    cwd=ROOT / ".lake/packages/lean-bench", text=True).strip(),
++                "runs": [], "state": "running"}
++    def save():
++        (out / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
++
++    save()
++    try:
++        archive_sources(out, metadata)
++        save()
++        for label, command in (
++                ("inventory", [str(exe), "inspect-small"]),
++                ("paired", [str(exe), "paired-small", str(out / "samples.jsonl")])):
++            start = time.monotonic()
++            with (out / (label + ".log")).open("w") as log:
++                result = subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
++            metadata["runs"].append({"label": label, "command": command,
++                "exit_code": result.returncode, "wall_seconds": time.monotonic()-start,
++                "load_after": os.getloadavg()})
++            save()
++            if label == "inventory" and result.returncode:
++                raise ValueError("comparison inventory failed")
++        summary = validate(out / "samples.jsonl", out / "inventory.log", metadata["revision"])
++        (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
++        metadata["source_sha256_after"] = {
++            name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in sources}
++        metadata["binary_sha256_after"] = hashlib.sha256(exe.read_bytes()).hexdigest()
++        metadata["revision_after"] = subprocess.check_output(
++            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
++        if (metadata["source_sha256_after"] != sources or
++                metadata["binary_sha256_after"] != metadata["binary_sha256"] or
++                metadata["revision_after"] != metadata["revision"]):
++            raise ValueError("measured source or executable changed during the comparison")
++        metadata["state"] = "complete"
++        return int(any(r["exit_code"] for r in metadata["runs"]) or any(
++            r["verdict"] == "inconclusive" for r in summary["observations"].values()))
++    except (OSError, ValueError, KeyError, TypeError, IndexError,
++            subprocess.CalledProcessError) as error:
++        metadata.update(state="failed", error=str(error))
++        return 1
++    finally:
++        metadata["load_after"] = os.getloadavg()
++        save()
++        lease.close()
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/bench/test_sign_det_compare.py b/scripts/bench/test_sign_det_compare.py
+new file mode 100644
+index 000000000..7babb41ec
+--- /dev/null
++++ b/scripts/bench/test_sign_det_compare.py
+@@ -0,0 +1,97 @@
++#!/usr/bin/env python3
++"""Reject broken pairing, substituted outcomes and altered comparison summaries."""
++import copy
++import json
++from pathlib import Path
++import tempfile
++import unittest
++
++from scripts.bench.sign_det_compare import ARMS, PARAMS, TRIALS, validate
++
++
++class PairedValidation(unittest.TestCase):
++    def setUp(self):
++        self.temp = tempfile.TemporaryDirectory()
++        self.addCleanup(self.temp.cleanup)
++        self.path = Path(self.temp.name) / "samples.jsonl"
++        self.inventory = Path(self.temp.name) / "inventory.log"
++        self.inventory.write_text("\n".join(json.dumps({"queries": p, "resultHash": 123})
++                                              for p in PARAMS))
++        self.rows = [{"kind": "header", "schema": "hex-sign-det-paired-v1",
++                      "params": PARAMS, "trials": TRIALS, "left": ARMS[0], "right": ARMS[1],
++                      "env": {"git_commit": "test-revision", "git_dirty": False}}]
++        points = {a: [] for a in ARMS}
++        for trial in range(TRIALS):
++            for param in PARAMS:
++                for arm in (ARMS if trial % 2 == 0 else ARMS[::-1]):
++                    point = {"param": param, "trial_index": trial, "status": "ok",
++                             "result_hash": "0x7b", "part_of_verdict": True,
++                             "below_signal_floor": False, "per_call_nanos": 1000,
++                             "inner_repeats": 100}
++                    points[arm].append(point)
++                    self.rows.append({"kind": "sample", "arm": arm, "point": point})
++        for arm in ARMS:
++            self.rows.append({"kind": "summary", "result": {
++                "function": arm, "kind": "parametric", "hashable": True,
++                "budget_truncated": False, "points": copy.deepcopy(points[arm]),
++                "env": copy.deepcopy(self.rows[0]["env"]),
++                "config": {"param_floor": 1, "param_ceiling": 5, "outer_trials": TRIALS,
++                           "param_schedule": {"kind": "custom", "params": PARAMS},
++                           "target_inner_nanos": 1000000000, "max_seconds_per_call": 60,
++                           "signal_floor_multiplier": 10, "cache_mode": "warm"},
++                "verdict": "consistent_with_declared_complexity", "complexity_formula": "n",
++                "slope": 0, "c_min": 1, "c_max": 1, "advisories": []}})
++
++    def run_validation(self, rows):
++        self.path.write_text("\n".join(map(json.dumps, rows)))
++        return validate(self.path, self.inventory, "test-revision")
++
++    def test_complete_and_inconclusive_are_retained(self):
++        result = self.run_validation(self.rows)
++        self.assertEqual(result["paired"][0]["ratios"], [1] * TRIALS)
++        self.rows[-1]["result"]["verdict"] = "inconclusive"
++        self.assertEqual(self.run_validation(self.rows)["observations"][ARMS[1]]["verdict"],
++                         "inconclusive")
++
++    def test_missing_extra_and_reordered_arms(self):
++        for rows in (self.rows[:-1], self.rows + [self.rows[-1]],
++                     [self.rows[0], self.rows[2], self.rows[1], *self.rows[3:]]):
++            with self.subTest(rows=rows), self.assertRaises(ValueError):
++                self.run_validation(rows)
++
++    def test_failed_or_substituted_samples(self):
++        for key, value in (("status", "error"), ("result_hash", "0x0"),
++                           ("inner_repeats", 0), ("per_call_nanos", float("nan")),
++                           ("trial_index", 1), ("below_signal_floor", True)):
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                rows = copy.deepcopy(self.rows)
++                rows[1]["point"][key] = value
++                self.run_validation(rows)
++
++    def test_summary_cannot_replace_raw_measurement(self):
++        self.rows[-1]["result"]["points"][0]["per_call_nanos"] = 1
++        with self.assertRaises(ValueError):
++            self.run_validation(self.rows)
++
++    def test_configuration_and_inventory_must_match(self):
++        self.rows[-1]["result"]["config"]["outer_trials"] = 1
++        with self.assertRaises(ValueError):
++            self.run_validation(self.rows)
++        self.inventory.write_text("[]")
++        with self.assertRaises((ValueError, TypeError)):
++            self.run_validation(self.rows)
++
++    def test_dirty_or_mismatched_revision_fails(self):
++        for key, value in (("git_commit", "old-revision"), ("git_dirty", True)):
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                rows = copy.deepcopy(self.rows)
++                rows[0]["env"][key] = value
++                self.run_validation(rows)
++        rows = copy.deepcopy(self.rows)
++        rows[-1]["result"]["env"]["git_dirty"] = True
++        with self.assertRaises(ValueError):
++            self.run_validation(rows)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/scripts/profile/sign_det.py b/scripts/profile/sign_det.py
+index edb5e8b72..1b61a2a81 100644
+--- a/scripts/profile/sign_det.py
++++ b/scripts/profile/sign_det.py
+@@ -20,0 +21 @@ CASES = {
++    'full-reference': ('runSmallFull', 5, 5_000_000_000),

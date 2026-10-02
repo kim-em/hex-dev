@@ -8,3 +8,4 @@ module
 
 public import HexPolyDetMathlib.Sound
 public import HexPolyDetMathlib.Tactic
+public import HexPolyDetMathlib.Residue

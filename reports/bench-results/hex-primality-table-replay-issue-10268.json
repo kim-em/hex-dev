@@ -1,0 +1,233 @@
+{
+  "cpu": 27,
+  "host": "chungus2",
+  "samples": [
+    {
+      "status": "ok",
+      "seconds": 11.956273664953187,
+      "returncode": 0,
+      "load_before": [
+        72.70751953125,
+        55.23779296875,
+        43.138671875
+      ],
+      "load_after": [
+        94.0654296875,
+        60.423828125,
+        44.9580078125
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.TableReplay (10s)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.TableReplay:olean"
+      ],
+      "block": 0,
+      "phase": "lookup",
+      "arm": "old",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\nopen Hex.Nat\nmutual\n@[expose] def oldCheck : PrimeCert \u2192 Bool\n  | .small n => tableSearch n\n  | .pock n fs => checkPockArith n fs && oldChildren fs\n  | .pock3 n r s w fs => checkPock3Arith n r s w fs && oldChildren fs\n@[expose] def oldChildren : List (Nat \u00d7 Nat \u00d7 PrimeCert) \u2192 Bool\n  | [] => true\n  | (_, _, c) :: cs => oldCheck c && oldChildren cs\nend\n\ndef certificate : PrimeCert :=\n\n  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n\nexample : (tableSearch 57467) = true := by decide +kernel\n",
+      "source_bytes": 1254,
+      "olean_bytes": 32728
+    },
+    {
+      "status": "ok",
+      "seconds": 2.270951504993718,
+      "returncode": 0,
+      "load_before": [
+        94.0654296875,
+        60.423828125,
+        44.9580078125
+      ],
+      "load_after": [
+        101.5078125,
+        62.525390625,
+        45.72119140625
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.TableReplay (691ms)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.TableReplay:olean"
+      ],
+      "block": 0,
+      "phase": "lookup",
+      "arm": "new",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\nopen Hex.Nat\nmutual\n@[expose] def oldCheck : PrimeCert \u2192 Bool\n  | .small n => tableSearch n\n  | .pock n fs => checkPockArith n fs && oldChildren fs\n  | .pock3 n r s w fs => checkPock3Arith n r s w fs && oldChildren fs\n@[expose] def oldChildren : List (Nat \u00d7 Nat \u00d7 PrimeCert) \u2192 Bool\n  | [] => true\n  | (_, _, c) :: cs => oldCheck c && oldChildren cs\nend\n\ndef certificate : PrimeCert :=\n\n  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n\nexample : (isTablePrime 57467) = true := by decide +kernel\n",
+      "source_bytes": 1255,
+      "olean_bytes": 32728
+    },
+    {
+      "status": "ok",
+      "seconds": 13.446257781994063,
+      "returncode": 0,
+      "load_before": [
+        101.5078125,
+        62.525390625,
+        45.72119140625
+      ],
+      "load_after": [
+        114.16845703125,
+        66.5380859375,
+        47.2080078125
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.TableReplay (11s)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.TableReplay:olean"
+      ],
+      "block": 0,
+      "phase": "certificate",
+      "arm": "old",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\nopen Hex.Nat\nmutual\n@[expose] def oldCheck : PrimeCert \u2192 Bool\n  | .small n => tableSearch n\n  | .pock n fs => checkPockArith n fs && oldChildren fs\n  | .pock3 n r s w fs => checkPock3Arith n r s w fs && oldChildren fs\n@[expose] def oldChildren : List (Nat \u00d7 Nat \u00d7 PrimeCert) \u2192 Bool\n  | [] => true\n  | (_, _, c) :: cs => oldCheck c && oldChildren cs\nend\n\ndef certificate : PrimeCert :=\n\n  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n\nexample : (oldCheck certificate) = true := by decide +kernel\n",
+      "source_bytes": 1257,
+      "olean_bytes": 32728
+    },
+    {
+      "status": "ok",
+      "seconds": 2.541521606966853,
+      "returncode": 0,
+      "load_before": [
+        114.16845703125,
+        66.5380859375,
+        47.2080078125
+      ],
+      "load_after": [
+        116.3974609375,
+        67.791015625,
+        47.71728515625
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.TableReplay (1.3s)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.TableReplay:olean"
+      ],
+      "block": 0,
+      "phase": "certificate",
+      "arm": "new",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\nopen Hex.Nat\nmutual\n@[expose] def oldCheck : PrimeCert \u2192 Bool\n  | .small n => tableSearch n\n  | .pock n fs => checkPockArith n fs && oldChildren fs\n  | .pock3 n r s w fs => checkPock3Arith n r s w fs && oldChildren fs\n@[expose] def oldChildren : List (Nat \u00d7 Nat \u00d7 PrimeCert) \u2192 Bool\n  | [] => true\n  | (_, _, c) :: cs => oldCheck c && oldChildren cs\nend\n\ndef certificate : PrimeCert :=\n\n  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n\nexample : (checkPrime certificate) = true := by decide +kernel\n",
+      "source_bytes": 1259,
+      "olean_bytes": 32728
+    },
+    {
+      "status": "ok",
+      "seconds": 1.9726282460032962,
+      "returncode": 0,
+      "load_before": [
+        116.3974609375,
+        67.791015625,
+        47.71728515625
+      ],
+      "load_after": [
+        116.3974609375,
+        67.791015625,
+        47.71728515625
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.TableReplay (616ms)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.TableReplay:olean"
+      ],
+      "block": 1,
+      "phase": "lookup",
+      "arm": "new",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\nopen Hex.Nat\nmutual\n@[expose] def oldCheck : PrimeCert \u2192 Bool\n  | .small n => tableSearch n\n  | .pock n fs => checkPockArith n fs && oldChildren fs\n  | .pock3 n r s w fs => checkPock3Arith n r s w fs && oldChildren fs\n@[expose] def oldChildren : List (Nat \u00d7 Nat \u00d7 PrimeCert) \u2192 Bool\n  | [] => true\n  | (_, _, c) :: cs => oldCheck c && oldChildren cs\nend\n\ndef certificate : PrimeCert :=\n\n  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n\nexample : (isTablePrime 57467) = true := by decide +kernel\n",
+      "source_bytes": 1255,
+      "olean_bytes": 32728
+    },
+    {
+      "status": "ok",
+      "seconds": 11.086212390975561,
+      "returncode": 0,
+      "load_before": [
+        116.3974609375,
+        67.791015625,
+        47.71728515625
+      ],
+      "load_after": [
+        117.501953125,
+        69.6396484375,
+        48.53515625
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.TableReplay (9.7s)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.TableReplay:olean"
+      ],
+      "block": 1,
+      "phase": "lookup",
+      "arm": "old",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\nopen Hex.Nat\nmutual\n@[expose] def oldCheck : PrimeCert \u2192 Bool\n  | .small n => tableSearch n\n  | .pock n fs => checkPockArith n fs && oldChildren fs\n  | .pock3 n r s w fs => checkPock3Arith n r s w fs && oldChildren fs\n@[expose] def oldChildren : List (Nat \u00d7 Nat \u00d7 PrimeCert) \u2192 Bool\n  | [] => true\n  | (_, _, c) :: cs => oldCheck c && oldChildren cs\nend\n\ndef certificate : PrimeCert :=\n\n  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n\nexample : (tableSearch 57467) = true := by decide +kernel\n",
+      "source_bytes": 1254,
+      "olean_bytes": 32728
+    },
+    {
+      "status": "ok",
+      "seconds": 1.8620165519532748,
+      "returncode": 0,
+      "load_before": [
+        117.501953125,
+        69.6396484375,
+        48.53515625
+      ],
+      "load_after": [
+        118.8232421875,
+        70.70849609375,
+        48.99462890625
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.TableReplay (741ms)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.TableReplay:olean"
+      ],
+      "block": 1,
+      "phase": "certificate",
+      "arm": "new",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\nopen Hex.Nat\nmutual\n@[expose] def oldCheck : PrimeCert \u2192 Bool\n  | .small n => tableSearch n\n  | .pock n fs => checkPockArith n fs && oldChildren fs\n  | .pock3 n r s w fs => checkPock3Arith n r s w fs && oldChildren fs\n@[expose] def oldChildren : List (Nat \u00d7 Nat \u00d7 PrimeCert) \u2192 Bool\n  | [] => true\n  | (_, _, c) :: cs => oldCheck c && oldChildren cs\nend\n\ndef certificate : PrimeCert :=\n\n  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n\nexample : (checkPrime certificate) = true := by decide +kernel\n",
+      "source_bytes": 1259,
+      "olean_bytes": 32728
+    },
+    {
+      "status": "ok",
+      "seconds": 9.663281523971818,
+      "returncode": 0,
+      "load_before": [
+        118.8232421875,
+        70.70849609375,
+        48.99462890625
+      ],
+      "load_after": [
+        115.3935546875,
+        71.55810546875,
+        49.50439453125
+      ],
+      "stdout": "\u2714 [70/70] Built HexPrimality.ProofProbe.Curve25519.TableReplay (8.5s)\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.TableReplay:olean"
+      ],
+      "block": 1,
+      "phase": "certificate",
+      "arm": "old",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\nopen Hex.Nat\nmutual\n@[expose] def oldCheck : PrimeCert \u2192 Bool\n  | .small n => tableSearch n\n  | .pock n fs => checkPockArith n fs && oldChildren fs\n  | .pock3 n r s w fs => checkPock3Arith n r s w fs && oldChildren fs\n@[expose] def oldChildren : List (Nat \u00d7 Nat \u00d7 PrimeCert) \u2192 Bool\n  | [] => true\n  | (_, _, c) :: cs => oldCheck c && oldChildren cs\nend\n\ndef certificate : PrimeCert :=\n\n  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n\nexample : (oldCheck certificate) = true := by decide +kernel\n",
+      "source_bytes": 1257,
+      "olean_bytes": 32728
+    }
+  ],
+  "commit": "6bfa5b23230cf64faa5aac77bbd5dd55320a0c7d",
+  "table_sha256": "432df87644242e6a11f6ad1dc91b88a5876d341bb0c4f6fd8169bf5564ed036c",
+  "protocol": "two trial-major blocks; adjacent old/new arms reversed in second block; all completed samples retained"
+}

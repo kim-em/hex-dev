@@ -1,0 +1,238 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import HexSignDet.Descriptor
+
+public section
+
+namespace Hex.SignDet
+
+variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
+variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
+
+/-- Joint table replay on the selected formal derivatives and the exact
+additional query list. Filtering must give exactly the claimed count-one
+row, including every requested sign. No singleton-interval shortcut is used. -/
+@[expose] def RawDescriptor.checkSigns (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (qs : List (DensePoly E))
+    (values : Vector Int qs.length) (t : Replay E Ctx) : Bool :=
+  raw.wellFormed && decide (raw.context = context) &&
+  t.check sign context raw.head raw.lower raw.upper (raw.queries ++ qs) &&
+    decide ((t.node.system.tableRows.toList.filter fun row =>
+      decide (row.1.take raw.queries.length = raw.signs)) = [(raw.signs ++ values.toList, 1)])
+
+/-- The validated-descriptor interface to the same literal selected-sign checker. -/
+@[expose] def Descriptor.checkSigns {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (qs : List (DensePoly E))
+    (values : Vector Int qs.length) (t : Replay E Ctx) : Bool :=
+  d.raw.checkSigns sign context qs values t
+
+/-- A finite certificate for all query signs at a selected root. Context and
+descriptor identity are part of its type as well as checked replay operands. -/
+structure SelectedSigns {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (qs : List (DensePoly E)) where
+  values : Vector Int qs.length
+  evidence : Replay E Ctx
+  accepted : d.checkSigns qs values evidence = true
+
+/-- A single selected query has a total sign accessor, without a default for
+missing output. The companion proves its value at the selected real root. -/
+@[expose] def SelectedSigns.value {sign : E → Int} {context : Ctx}
+    {d : Descriptor E Ctx sign context} {q : DensePoly E} (s : SelectedSigns d [q]) : Int :=
+  s.values[0]
+
+theorem SelectedSigns.check_eq {sign : E → Int} {context : Ctx}
+    {d : Descriptor E Ctx sign context} {qs : List (DensePoly E)} (s : SelectedSigns d qs) :
+    ∃ h : s.evidence.check sign context d.raw.head d.raw.lower d.raw.upper
+        (d.raw.queries ++ qs) = true,
+      ((s.evidence.table h).rows.toList.filter fun row =>
+        decide (row.1.take d.raw.queries.length = d.raw.signs)) =
+          [(d.raw.signs ++ s.values.toList, 1)] := by
+  have h := s.accepted
+  simp only [Descriptor.checkSigns, RawDescriptor.checkSigns, Bool.and_eq_true,
+    decide_eq_true_eq] at h
+  obtain ⟨⟨⟨_, _⟩, hc⟩, hr⟩ := h
+  refine ⟨hc, ?_⟩
+  rw [s.evidence.table_rows hc]
+  exact hr
+
+/-- Every accepted selected sign is a literal ternary code. This finite
+conclusion already follows from the complete table's structural invariants. -/
+theorem SelectedSigns.ternary {sign : E → Int} {context : Ctx}
+    {d : Descriptor E Ctx sign context} {qs : List (DensePoly E)} (s : SelectedSigns d qs)
+    (i : Fin qs.length) : s.values[i] = -1 ∨ s.values[i] = 0 ∨ s.values[i] = 1 := by
+  obtain ⟨hc, he⟩ := s.check_eq
+  have hm : (d.raw.signs ++ s.values.toList, 1) ∈ (s.evidence.table hc).rows.toList := by
+    have hmem := List.mem_singleton_self (d.raw.signs ++ s.values.toList, (1 : Nat))
+    rw [← he] at hmem
+    exact (List.mem_filter.mp hmem).1
+  apply ((s.evidence.table hc).wellFormed _ hm).2.1
+  exact List.mem_append_right _ (List.getElem_mem (by simp))
+
+/-- Accepted selected-query evidence asserts one matching finite observation.
+Root interpretation still requires the shared root-sum soundness bridge. -/
+theorem SelectedSigns.count {sign : E → Int} {context : Ctx}
+    {d : Descriptor E Ctx sign context} {qs : List (DensePoly E)} (s : SelectedSigns d qs)
+    {xs : List (List Int)} (ho : Observations (d.raw.queries ++ qs).length xs)
+    (hm : s.evidence.Interprets (d.raw.queries ++ qs).length xs) :
+    xs.countP (fun x => decide (x = d.raw.signs ++ s.values.toList)) = 1 := by
+  obtain ⟨hc, he⟩ := s.check_eq
+  have hrow : (d.raw.signs ++ s.values.toList, 1) ∈ (s.evidence.table hc).rows.toList := by
+    have hmem := List.mem_singleton_self (d.raw.signs ++ s.values.toList, (1 : Nat))
+    rw [← he] at hmem
+    exact (List.mem_filter.mp hmem).1
+  rw [← s.evidence.table_count hc ho hm, SignTable.count_mem _ hrow]
+
+/-- Every observation matching the descriptor's constraints has exactly the
+returned query signs. Completeness, including omitted table rows, is essential
+here; a count-one row alone would not exclude another matching observation. -/
+theorem SelectedSigns.signs_of_count {sign : E → Int} {context : Ctx}
+    {d : Descriptor E Ctx sign context} {qs : List (DensePoly E)} (s : SelectedSigns d qs)
+    {xs : List (List Int)}
+    (counts : ∀ c, s.evidence.node.system.count c = xs.countP (fun y => decide (y = c)))
+    {x : List Int} (hx : x ∈ xs) (hp : x.take d.raw.queries.length = d.raw.signs) :
+    x = d.raw.signs ++ s.values.toList := by
+  obtain ⟨hc, he⟩ := s.check_eq
+  have hpos : 0 < xs.countP (fun y => decide (y = x)) := by
+    by_cases hn : 0 < xs.countP (fun y => decide (y = x))
+    · exact hn
+    · have hz : xs.countP (fun y => decide (y = x)) = 0 := by omega
+      have hf := List.countP_eq_zero.mp hz x hx
+      simp at hf
+  obtain ⟨n, hn⟩ := (s.evidence.table hc).mem_of_count_pos
+    (by rw [s.evidence.table_lookup hc, counts]; exact hpos)
+  have hf : (x, n) ∈ (s.evidence.table hc).rows.toList.filter
+      (fun row => decide (row.1.take d.raw.queries.length = d.raw.signs)) :=
+    List.mem_filter.mpr ⟨hn, by simp only [hp, decide_true]⟩
+  rw [he] at hf
+  exact congrArg Prod.fst (List.mem_singleton.mp hf)
+
+/-- The Mathlib-free selected-sign theorem specializes the same lookup
+argument to the local finite observation proof. The companion supplies its
+Tau Ceti count interpretation instead. -/
+theorem SelectedSigns.signs_eq {sign : E → Int} {context : Ctx}
+    {d : Descriptor E Ctx sign context} {qs : List (DensePoly E)} (s : SelectedSigns d qs)
+    {xs : List (List Int)} (ho : Observations (d.raw.queries ++ qs).length xs)
+    (hm : s.evidence.Interprets (d.raw.queries ++ qs).length xs)
+    {x : List Int} (hx : x ∈ xs) (hp : x.take d.raw.queries.length = d.raw.signs) :
+    x = d.raw.signs ++ s.values.toList := by
+  obtain ⟨hc, _⟩ := s.check_eq
+  apply s.signs_of_count (fun c => ?_) hx hp
+  rw [← s.evidence.table_lookup hc, s.evidence.table_count hc ho hm]
+
+variable [Neg E] [Inv E]
+
+/-- Joint selected-root signs from a supplied prepared domain. The ordinary
+selected-sign checker retains the descriptor's literal bindings; a mismatched
+domain remains an internal diagnostic. This is the same producer as buildSigns. -/
+def Descriptor.buildSignsPrepared {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (domain : Sturm.PreparedDomain E)
+    (qs : List (DensePoly E)) : Except BuildError (SelectedSigns d qs) :=
+  match buildPrepared context domain (d.raw.queries ++ qs) with
+  | .error err => .error err
+  | .ok t =>
+    let candidates := (t.val.table t.property).rows.toList.filter fun row =>
+      decide (row.1.take d.raw.queries.length = d.raw.signs)
+    match candidates with
+    | [(signs, 1)] =>
+      let values := signs.drop d.raw.queries.length
+      if hv : values.length = qs.length then
+        let v : Vector Int qs.length := ⟨values.toArray, by simpa using hv⟩
+        if h : d.checkSigns qs v t.val = true then .ok ⟨v, t.val, h⟩
+        else .error .replay
+      else .error .dimensions
+    | _ => .error .system
+
+/-- Build joint selected-root signs. The companion proves success for every
+validated descriptor under a lawful coefficient interpretation. Arbitrary
+coefficient operations retain the internal diagnostics. -/
+def Descriptor.buildSigns {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (qs : List (DensePoly E)) :
+    Except BuildError (SelectedSigns d qs) :=
+  match Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper with
+  | none => .error .replay
+  | some domain => d.buildSignsPrepared domain qs
+
+/-- A cached actual preparation uses precisely the ordinary selected producer. -/
+theorem Descriptor.buildSigns_prepared {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (domain : Sturm.PreparedDomain E)
+    (hd : Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper = some domain)
+    (qs : List (DensePoly E)) :
+    d.buildSigns qs = d.buildSignsPrepared domain qs := by
+  simp only [Descriptor.buildSigns, hd]
+
+/-- Successful actual construction includes successful shared preparation. -/
+theorem Descriptor.buildSigns_domain {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) {qs : List (DensePoly E)}
+    (s : SelectedSigns d qs) (hs : d.buildSigns qs = .ok s) :
+    ∃ domain, Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper = some domain := by
+  cases hd : Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper with
+  | none => simp only [Descriptor.buildSigns, hd, reduceCtorEq] at hs
+  | some domain => exact ⟨domain, rfl⟩
+
+/-- A successful prepared table with exactly one extending count-one row
+discharges every remaining guard of the actual selected-sign constructor. -/
+theorem Descriptor.buildSigns_ofTable {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (qs : List (DensePoly E))
+    (domain : Sturm.PreparedDomain E)
+    (hd : Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper = some domain)
+    (t : {t : Replay E Ctx //
+      t.check domain.sign context domain.head domain.lower domain.upper
+        (d.raw.queries ++ qs) = true})
+    (ht : buildPrepared context domain (d.raw.queries ++ qs) = .ok t)
+    (values : Vector Int qs.length)
+    (hr : t.val.node.system.tableRows.toList.filter
+      (fun row => decide (row.1.take d.raw.queries.length = d.raw.signs)) =
+        [(d.raw.signs ++ values.toList, 1)]) :
+    ∃ s, d.buildSigns qs = .ok s := by
+  obtain ⟨hw, hctx, _, _⟩ := RawDescriptor.check_eq d.accepted
+  have hlen := d.raw.wellFormed_length hw
+  have bindings := Sturm.prepare_eq_some sign d.raw.head d.raw.lower d.raw.upper domain hd
+  have hc : t.val.check sign context d.raw.head d.raw.lower d.raw.upper
+      (d.raw.queries ++ qs) = true := by
+    simpa only [bindings.1, bindings.2.1, bindings.2.2.1, bindings.2.2.2] using t.property
+  have ha : d.checkSigns qs values t.val = true := by
+    simp only [Descriptor.checkSigns, RawDescriptor.checkSigns, hw, hctx,
+      decide_true, Bool.true_and, hc, hr]
+  refine ⟨⟨values, t.val, ha⟩, ?_⟩
+  simp only [Descriptor.buildSigns, hd, Descriptor.buildSignsPrepared, ht, Replay.table_rows]
+  rw [hr]
+  simp only [← hlen, List.drop_left, Vector.length_toList, ↓reduceDIte]
+  simpa only [Vector.toArray_toList] using
+    (show (if h : d.checkSigns qs values t.val = true then
+      Except.ok (SelectedSigns.mk values t.val h) else .error BuildError.replay) =
+        .ok (SelectedSigns.mk values t.val ha) by rw [dite_eq_left ha])
+
+/-- The sign of a polynomial at a validated selected root, using the checked
+joint-table constructor. The diagnostic zero fallback records an internal failure for
+arbitrary coefficient operations; the companion proves it unreachable under
+the lawful coefficient interpretation. No field-law package is executed. -/
+@[expose] def Descriptor.signAt {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (q : DensePoly E) : Int :=
+  match d.buildSigns [q] with
+  | .ok s => s.value
+  | .error err => panic! s!"Descriptor.signAt: internal error {repr err}"
+
+/-- The total accessor uses the sign from the actual successful construction. -/
+theorem Descriptor.signAt_ofBuild {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (q : DensePoly E)
+    (s : SelectedSigns d [q]) (h : d.buildSigns [q] = .ok s) :
+    d.signAt q = s.value := by
+  simp only [Descriptor.signAt, h]
+
+/-- The public accessor always returns a ternary integer code. Its semantic
+meaning, including exclusion of internal failure, is proved in the companion. -/
+theorem Descriptor.signAt_ternary {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (q : DensePoly E) :
+    d.signAt q = -1 ∨ d.signAt q = 0 ∨ d.signAt q = 1 := by
+  cases h : d.buildSigns [q] with
+  | error e => simp [Descriptor.signAt, h]
+  | ok s =>
+    simpa [Descriptor.signAt, h, SelectedSigns.value] using
+      s.ternary ⟨0, by simp⟩
+
+end Hex.SignDet

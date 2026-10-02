@@ -137,6 +137,8 @@ Request fields: ``p`` (modulus), ``a``, ``b`` (coefficient lists).
 
 ### `fmpz_mat` (integer matrix)
 
+- `rank`: integer rank through ``flint.fmpz_mat(rows).rank()``.
+
 Request fields: ``rows`` (list of list of int).
 
 * ``det`` — returns the determinant as an integer. Computed via
@@ -756,6 +758,12 @@ def _fmpz_mat_det(req: dict[str, Any]) -> int:
     return int(m.det())
 
 
+def _fmpz_mat_rank(req: dict[str, Any]) -> int:
+    rows = req["rows"]
+    m = flint.fmpz_mat([[int(c) for c in r] for r in rows])
+    return int(m.rank())
+
+
 def _fmpz_mat_charpoly(req: dict[str, Any]) -> list[int]:
     rows = req["rows"]
     m = flint.fmpz_mat([[int(c) for c in r] for r in rows])  # type: ignore[union-attr]
@@ -792,6 +800,7 @@ def _fmpz_mat_snf(req: dict[str, Any]) -> list[int]:
 
 _FMPZ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "det": _fmpz_mat_det,
+    "rank": _fmpz_mat_rank,
     "charpoly": _fmpz_mat_charpoly,
     "minpoly": _fmpz_mat_minpoly,
     "hnf": _fmpz_mat_hnf,
@@ -852,8 +861,26 @@ def _fmpq_field(req: dict[str, Any], *, inverse: bool, cached_result: bool = Fal
     return [[encode(result[i, 0]) for i in range(n)], [[] for _ in range(n)]]
 
 
+def _fmpq_dixon_solve(req: dict[str, Any]) -> int:
+    """FLINT fmpq_mat_solve, with a common-denominator checksum reply."""
+    from math import lcm
+    rows, rhs = req["rows"], req["rhs"]
+    n = len(rows)
+    if any(len(row) != n for row in rows) or len(rhs) != n:
+        raise ValueError("Dixon solve shape mismatch")
+    a = flint.fmpq_mat(rows)
+    b = flint.fmpq_mat(rhs)
+    x = a.solve(b)
+    den = 1
+    for i in range(n):
+        for j in range(x.ncols()):
+            den = lcm(den, int(x[i, j].q))
+    return den + sum(int(x[i, j] * den) for i in range(n) for j in range(x.ncols()))
+
+
 _FMPQ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "rank_dense": _fmpq_mat_rank_dense,
+    "dixon_solve": _fmpq_dixon_solve,
     "field_inverse": lambda req: _fmpq_field(req, inverse=True),
     "field_solve": lambda req: _fmpq_field(req, inverse=False),
     "overhead": _fmpq_mat_overhead,

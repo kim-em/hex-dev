@@ -17,11 +17,6 @@ fresh-module probes under `bench/HexBareissMathlib/ProofProbe` against the
 unmodified pinned `eval_det`. Build-only examples live in
 `HexBareissMathlib/Tests.lean`.
 
-Computational conformance owner: `HexBareiss`.
-
-Computational performance owner: `HexBareiss` for the producer; this library
-for the tactic.
-
 ## Coefficient contract
 
 The Bareiss correspondence theorems take `[CommRing R] [DecidableEq R]` (Mathlib's `CommRing`,
@@ -299,25 +294,15 @@ for the transposition. For `ℚ`, `scaledRows_spec` gives
 `(∏ s) · det = value`, and the kernel-checked `v · ∏ s = value` cancels the
 nonzero product (`prodNat_cast`).
 
-## Naming note
-
-The simproc is documented below as `Hex.norm_det`; the shipped declaration
-is still the global `hex_norm_det`, and the rename (tactic and simproc
-names carry no `hex_` prefix) is an implementation obligation of
-https://github.com/kim-em/hex-dev/issues/10236, with the tests and README
-updated in the same change.
-
 ## Symbolic determinant
 
-The symbolic arm of `det` (entries that are ring expressions) is specified
-in [hex-poly-det-mathlib](../../SPEC/Libraries/hex-poly-det-mathlib.md), a
-separate unpublished library that attaches a second handler to this
-library's `det` syntax kind. It lives outside this published mirror
-because it imports hex-reflect and hex-mv-gcd, which are not published;
-this library imports no polynomial provider. The generic polynomial
-witness and checker it uses are hex-bareiss's
-([§Polynomial determinant certificate](../../HexBareiss/SPEC/hex-bareiss.md#polynomial-determinant-certificate)),
-instantiated at `MvPoly` by [hex-poly-det](../../SPEC/Libraries/hex-poly-det.md).
+The symbolic handler is specified in
+[hex-poly-det-mathlib](../../SPEC/Libraries/hex-poly-det-mathlib.md). It attaches
+to this library's determinant syntax and uses a cached, division-free Bird
+recurrence with scalar equality proofs. It is independent of the polynomial
+witness instantiation. Keep symbolic normalization outside this numeric library;
+its published import closure must not acquire polynomial/reflection providers.
+The generic executable polynomial witness remains a separate hex-bareiss API.
 
 ## The `det` tactic
 
@@ -329,9 +314,9 @@ of the literal layer of `hex-matrix-mathlib` (`!![…]`, `Matrix.of ![…]`,
 (unfolded within a small budget), and `d` a closed value; the term form
 `det% A` returning `Certified Matrix.det A` with its `value` and `proof`
 (the `!![…]` notations are given an integer expectation); and the simproc
-`Hex.norm_det`, which rewrites `Matrix.det A` to its value and falls back
-to Mathlib's `norm_det` when the Hex frontend declines, so that the two
-form one simp set and no input `norm_det` accepts regresses. Entries are
+`Hex.norm_det`, which rewrites `Matrix.det A` using a Hex certificate and
+leaves unsupported inputs unchanged. No entry point implicitly invokes
+Mathlib's `norm_det` or `eval_det`. Entries are
 closed numeric expressions that `norm_num` evaluates (the `fun` form's
 entries first pass through the default simp set, for `Fin.val`, casts and
 `if i = j` tests) and that the kernel reduces to their numerals.
@@ -345,7 +330,8 @@ comparison of the value with `d`. A rational matrix is scaled row by row by
 the least common multiple of its denominators to an integer one, whose
 witness is checked by `checkDetRat` together with the scaling and the
 value, through `det_eq_of_checkRat'`. The tactic takes the shared
-configuration structure `HexMatrixMathlib.KernelConfig` as an `optConfig`
+configuration structure `HexMatrixMathlib.Det.Config`, extending
+`HexMatrixMathlib.KernelConfig`, as an `optConfig`
 (`det -packing`; the default is packed) and is configured in no other way;
 with packing on the checks are `checkDetListPacked` and `checkDetRatPacked`
 with the entry bound and slot width the tactic computes from the entries
@@ -367,22 +353,26 @@ tries it **after** the numeric one and any later extensions. Extensions
 must also use `@[no_fallback]` for their own errors and
 `throwUnsupportedSyntax` outside their fragments. It reclassifies
 the target and, for determinant equations, tries `simp only [Hex.norm_det]`
-before reporting `det: not applicable: …` with the reason. This preserves
-`norm_det` for symbolic entries and other commutative rings, normalizing
-the determinant as `eval_det` does and leaving a residual goal for `ring`
-or `decide`.
+before reporting `det: not applicable: …` with the reason. This can normalize
+a closed numeric determinant with an open target value using a Hex certificate,
+leaving a residual value equality. This simp-only diagnostic behavior is for the
+numeric-only import. With the
+symbolic companion imported, equality goals with numeric matrices and symbolic
+right-hand sides obtain the numeric certificate and use the companion's scalar
+comparison, closing or reporting a decline instead of leaving a residual goal.
+Symbolic matrices and unsupported carriers require a Hex extension or an explicit
+user invocation of another tactic.
 
 An entry or closed value that cannot be evaluated is still declined with
-the reason; the numeric handler retains the same simp fallback for these
+the reason; the numeric handler retains the same Hex certificate normalization for these
 capability declines. Its `@[no_fallback]` attribute commits ordinary errors,
 so producer failures, rejected certificates and budget errors cannot be
 masked by a later tactic handler. Unsupported syntax still delegates.
-The simp fallback propagates errors unchanged, including certificate errors
+Hex certificate normalization propagates errors unchanged, including certificate errors
 from its simproc; it reports the original reason only when simp makes no
 progress.
 The `det%` form reports the classification reason directly; the simproc
-returns no result for either inapplicability or a capability decline and
-continues to compose with `norm_det`.
+returns no result for either inapplicability or a capability decline.
 A false target is reported with the certified value
 before any proof is built; a rejection by the kernel is diagnosed by
 evaluating the certificate check and the identification of the literal in
@@ -465,6 +455,48 @@ Determinants on `Hex.Matrix` inputs, finite and closed algebraic carriers
 and symbolic entries are out of scope here
 ([SPEC/matrix-tactics.md §Placement](../../SPEC/matrix-tactics.md#placement)).
 
+## Result production and shared syntax
+
+Declare `det A with d hd` beside the existing `det` and `det% A` syntax kinds.
+It accepts the same `optConfig` before `A`, computes the certified numeric value
+once, introduces a local definition `d` with that value and `hd : A.det = d`,
+and leaves the ambient goal available. Both identifiers are explicit. Reuse the
+same certificate producer and proof construction as the term form; do not invent
+a target or call the closing tactic to discover a value. Extensions handle
+symbolic inputs on the same syntax kind and preserve committed errors.
+
+`HexMatrixMathlib.Det.Config` keeps `packing := true`, with `det -packing`
+unchanged, and adds `maxHeartbeats := 2000000` and `maxRelationWork := 1000000`
+for the symbolic handler. These fields do not change numeric certificate
+selection; the numeric backend retains its own existing budgets. Use structure
+configuration, not experimental global options. `det% A` and simprocs use defaults;
+a programmatic result operation accepts explicit configuration.
+
+The public record remains `Certified Matrix.det A` with `value` and `proof`.
+An expected determinant answer is never required for the result forms. Preserve
+integer defaulting for unannotated numeric literals, and respect explicit
+carrier annotations and expected record types. An imported symbolic extension
+classifies the matrix first: closed numeric
+matrices always use numeric certificate computation. Whole equality-tactic
+delegation also requires that the numeric closing handler accept the supplied
+target; otherwise the companion compares the numeric certified value against
+the symbolic target. Result forms delegate before symbolic work. Neither matrix
+shape nor a failed scalar comparison selects another determinant algorithm.
+
+Use Lean's public heartbeat units for `maxHeartbeats` (1,000 internal heartbeats
+per unit). The symbolic ceiling cannot enlarge the ambient remaining allowance;
+zero configuration limits reject explicitly. The fields have no effect on
+numeric certificates, including when non-default, and do not produce a warning.
+See the companion contract for the distinction between recoverable work-budget
+declines and propagated runtime resource exceptions.
+
+The numeric owner exposes `compute (cfg : Config) (A : Expr) : MetaM (Outcome Result)`
+and a `certified` adapter, with `Result.value` and `Result.proof`. Provide one
+symbolic extension hook; keep the default numeric implementation available alone.
+The argument-taking tactic uses `colGt term:max` before `with`, and has its own
+named syntax kind and final diagnostic handler. Use `HexMatrix.certificate` for
+route and budget traces.
+
 ## Tests
 
 `HexBareissMathlib/Tests.lean`, build-only:
@@ -482,9 +514,9 @@ and symbolic entries are out of scope here
   `16 × 16` literal with `8`-bit entries;
 - `det%` on a definition, inline and on a rational literal, and its
   `proof` field closing the determinant equation;
-- `simp only [Hex.norm_det]` on integer and rational literals, and on
-  symbolic entries through `norm_det` (with `ring`), plus the `det` tactic
-  reaching `norm_det` on symbolic entries and on `ZMod 7`;
+- `simp only [Hex.norm_det]` on integer and rational literals; both the simproc
+  and tactic reject unsupported symbolic and `ZMod 7` inputs even with
+  Mathlib's `norm_det` imported; the caller can invoke Mathlib explicitly;
 - the messages on a false target, a closed non-literal and a goal that is
   not a determinant equation, plus open-matrix and open-value diagnostics
   without a test stub (`#guard_msgs`);

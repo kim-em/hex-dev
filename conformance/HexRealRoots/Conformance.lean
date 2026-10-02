@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRealRoots
+import HexRealRoots.TarskiTests
 
 /-!
 Core conformance checks for `HexRealRoots`.
@@ -16,6 +17,8 @@ uses `python-flint` (`fmpz_poly` real-root isolation) via
 Mode: always for core, `if_available` for the `python-flint` oracle profile.
 
 Covered operations:
+- `Hex.ZPoly.tarskiQuery`, `Hex.IntTarskiCertificate.certify`, `Hex.IntTarskiCertificate.check`
+  and the generic endpoint/query replay APIs, through `HexRealRoots.TarskiTests`.
 - `Hex.ZPoly.evalDyadic`
 - `Hex.dyadicSign`
 - `Hex.signVar`
@@ -33,6 +36,10 @@ Covered operations:
 - `Hex.ZPoly.squareFreeCore` (the non-square-free fallback the drivers document)
 
 Covered properties:
+- Signed queries and literal replay cover zero queries, common factors,
+  nonconstant terminal gcds, infinities, noncanonical coefficients and exact
+  context binding. Corrupted scales, terminal identities and signs are rejected.
+  The independent FLINT query oracle is wired through `EmitFixtures.lean`.
 - `evalDyadic` is exact: the sign at a dyadic point matches the hand-computed
   value, hitting `0` exactly at a rational root.
 - `signVar` skips zeros: the variation count of `(+, 0, −)` is `1`.
@@ -279,6 +286,44 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 #guard ZPoly.evalDyadic zeroPoly (di 5) = 0
 -- adversarial: `x − 5` hits an exact `0` at its root `5`.
 #guard ZPoly.evalDyadic linear (di 5) = 0
+
+-- Sparse monomials preserve signed exponents without materializing 2^exponent.
+example : ZPoly.evalDyadic (DensePoly.ofCoeffs #[0, 0, (1 : Int)])
+    ((Dyadic.ofInt 1) <<< (1000000000 : Int)) =
+      (Dyadic.ofInt 1) <<< (2000000000 : Int) := by decide
+example : ZPoly.evalDyadic (DensePoly.ofCoeffs #[0, 0, (1 : Int)])
+    ((Dyadic.ofInt 1) >>> (1000000000 : Int)) =
+      (Dyadic.ofInt 1) >>> (2000000000 : Int) := by decide
+example : ZPoly.evalDyadic (DensePoly.ofCoeffs #[(7 : Int)])
+    ((Dyadic.ofInt 1) <<< (1000000000 : Int)) = Dyadic.ofInt 7 := by decide
+
+-- Cancellation resets the accumulator before the remaining coefficients.
+example : ZPoly.evalDyadic (DensePoly.ofCoeffs #[(3 : Int), -2, 1])
+    (Dyadic.ofInt 2) = Dyadic.ofInt 3 := by decide
+
+-- Every Horner suffix is 2 at 1/2: intermediate powers of two must cancel.
+-- Substitution X ↦ -X exercises the same family at the negative endpoint.
+#guard #[0, 1, 2, 32, 256].all fun m =>
+  let cs := (Array.replicate m (1 : Int)).push 2
+  let negCs := cs.mapIdx fun i c => if i % 2 = 0 then c else -c
+  ZPoly.evalDyadic (DensePoly.ofCoeffs cs) (half 1) == Dyadic.ofInt 2 &&
+    ZPoly.evalDyadic (DensePoly.ofCoeffs negCs) (half (-1)) == Dyadic.ofInt 2
+
+-- Ordinary kernel reduction of the same cancellation family.
+example : ZPoly.evalDyadic (DensePoly.ofCoeffs ((Array.replicate 16 (1 : Int)).push 2))
+    ((Dyadic.ofInt 1) >>> (1 : Int)) = Dyadic.ofInt 2 := by decide
+
+-- Cancellation also occurs outside (-1,1): (3/2) * 2 - 1 = 2.
+#guard ZPoly.evalDyadic (DensePoly.ofCoeffs ((Array.replicate 256 (-1 : Int)).push 2))
+  (half 3) == Dyadic.ofInt 2
+
+-- Independent rational evaluation across signs, binary precisions and zeros.
+#guard (List.range 7).all fun i => (List.range 9).all fun j =>
+  (List.range 9).all fun k =>
+    let cs : Array Int := #[(i : Int) - 3, (j : Int) - 4, 0, (k : Int) - 4]
+    let p : ZPoly := DensePoly.ofCoeffs cs
+    let x := Dyadic.ofIntWithPrec ((j : Int) - 4) ((k : Int) - 4)
+    (p.evalDyadic x).toRat == cs.foldr (fun (c : Int) v => (c : Rat) + x.toRat * v) 0
 
 /-! # `dyadicSign`: exact sign of a dyadic. -/
 

@@ -6,6 +6,8 @@ Authors: Kim Morrison
 
 module
 
+public import HexDeterminantalIdeal.Kernel
+public import HexDeterminantalIdeal.Residue
 public import HexDeterminantalIdeal.Choose
 public import HexDeterminantalIdeal.Minors
 public import HexDeterminantalIdeal.Rank

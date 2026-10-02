@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "ffee9bc46edf5856435dd50093a3daa0f91b55db",
+  "current_blob": "efdc8eaf3450a5c3e204ffc48f9e8456905223ed",
+  "reason": "This Lake configuration transition adds AINTLIB for ECPP proofs, registers independent ECPP, real-closure, ordered-function, sign-determinant and probe/conformance/bench targets, and removes manual determinant experiments. It does not change the hexbz_factor_service executable declaration, its compiler options, any source or dependency in its native runtime import graph, or the pinned Mathlib revision. The HexRealClosure precompileModules flag affects elaborator-loadable artifacts for a separate library, not the measured integer-polynomial factorization service."
+}

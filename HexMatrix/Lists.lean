@@ -90,3 +90,22 @@ theorem entry_eq_getD (zero : α) (xs : List α) (i : Nat) :
   | x :: xs, ys => add (scale x ys) (0 :: mul xs ys)
 
 end Hex.Matrix.Lists
+
+namespace Hex.Matrix
+
+/-- The row-major list observation used in matrix denotation proofs. -/
+@[expose] def rowLists (A : Matrix R n m) : List (List R) := A.rows.toList.map Vector.toList
+
+theorem length_rowLists (A : Matrix R n m) : (rowLists A).length = n := by
+  simp [rowLists]
+
+theorem entry_rowLists (A : Matrix R n m) (i : Fin n) :
+    Lists.entry [] (rowLists A) i.val = A[i].toList := by
+  simp [rowLists, Lists.entry_eq_getD, List.getD_eq_getElem?_getD, i.isLt]
+
+theorem get_rowLists [Zero R] (A : Matrix R n m) (i : Fin n) (j : Fin m) :
+    Lists.entry 0 (Lists.entry [] (rowLists A) i.val) j.val = A[i][j] := by
+  rw [entry_rowLists]
+  simp [Lists.entry_eq_getD, List.getD_eq_getElem?_getD, j.isLt]
+
+end Hex.Matrix

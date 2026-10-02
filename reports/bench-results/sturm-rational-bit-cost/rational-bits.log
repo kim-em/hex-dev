@@ -1,0 +1,30 @@
+Hex.SturmBench.runRationalHigh    expected complexity: m ^ 2    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=205086d-dirty, 2026-09-21T14:25:44Z, host=chungus2
+      param  per-call  repeats  C
+    131_072   1.716 s  ×2^0     C=0.101 [trial 1/4]
+    262_144   6.244 s  ×2^0     C=0.091 [trial 1/4]
+    524_288  23.959 s  ×2^0     C=0.087 [trial 1/4]
+  1_048_576  96.010 s  ×2^0     C=0.087 [trial 1/4]
+    131_072   1.726 s  ×2^0     C=0.101 [trial 2/4]
+    262_144   6.237 s  ×2^0     C=0.091 [trial 2/4]
+    524_288  23.901 s  ×2^0     C=0.087 [trial 2/4]
+  1_048_576   —        —        C=0.087 [killed at cap] [trial 2/4]
+    131_072   1.731 s  ×2^0     C=0.101 [trial 3/4]
+    262_144   6.266 s  ×2^0     C=0.091 [trial 3/4]
+    524_288  23.930 s  ×2^0     C=0.087 [trial 3/4]
+  1_048_576  95.803 s  ×2^0     C=0.087 [trial 3/4]
+    131_072   1.733 s  ×2^0     C=0.101 [trial 4/4]
+    262_144   6.274 s  ×2^0     C=0.091 [trial 4/4]
+    524_288  23.809 s  ×2^0     C=0.087 [trial 4/4]
+  1_048_576  95.944 s  ×2^0     C=0.087 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=0.087, cMax=0.101, β=-0.068)
+  per-spawn floor (harness self-measurement): 20.878 ms
+  peak RSS: 900_212 kB..50_757_992 kB (across 15 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+        param  trials  median    min       max       spread
+      131_072  4/4      1.729 s   1.716 s   1.733 s  0.956%
+      262_144  4/4      6.255 s   6.237 s   6.274 s  0.582%
+      524_288  4/4     23.915 s  23.809 s  23.959 s  0.628%
+    1_048_576  3/4     95.944 s  95.803 s  96.010 s  0.216%
+  ‼ ladder stopped at param=1048576 after hitting the wallclock cap (`maxSecondsPerCall = 120.000s`); subsequent rungs in the schedule were skipped. Raise the cap if you need to reach further.
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-rational-bit-cost/rational-bits.json

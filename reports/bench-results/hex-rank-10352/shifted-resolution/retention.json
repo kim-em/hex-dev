@@ -1,0 +1,15 @@
+{
+  "source_directory": "/tmp/hexrank-science-shifted-resolution",
+  "source_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "completed_commands": [
+    "runRankCertDeficientHalfShifted"
+  ],
+  "sha256": {
+    "metadata.json": "020a0f4c89757e18146d593aa6912b32224701f440841dde7c3193bc856bccc4",
+    "completion.json": "5b5e773be7dcdf1a55181da1f91e1dafe54b78928a1157009541212ecce8b6d8",
+    "runRankCertDeficientHalfShifted.json": "93201572b6e48126f7214c45efc9126d29ccbd0cd30e51c8b68ff5de44542ef5",
+    "runRankCertDeficientHalfShifted.txt.gz": "6e55f90ff7dacdc7c38f17d51b0a212d3677a7074d4c8597384480764d6c7c0f",
+    "source.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commands.jsonl": "4db8f77d3283de32b1326f0923b1cdf8c501c6d975c40f8918cca942fa5f5c57"
+  }
+}

@@ -10,6 +10,7 @@ public import HexModularMatrix.Det
 public import HexModularMatrixMathlib.Bound
 public import HexBareissMathlib
 meta import HexModularMatrix.Det
+import all HexModularMatrix.Det
 
 public section
 
@@ -18,15 +19,35 @@ public section
 namespace HexModularMatrixMathlib
 
 /-- Every route of the modular/Bareiss dispatcher returns Mathlib's determinant. -/
-theorem detWith_eq (A : Hex.Matrix Int n n) (fuel : Nat) :
-    (Hex.ModularMatrix.detWith A fuel).value = Matrix.det (HexMatrixMathlib.matrixEquiv A) := by
-  cases h : A.detModular? fuel with
-  | none =>
-    rw [Hex.ModularMatrix.detWith_bareiss h]
-    exact (HexMatrixMathlib.bareiss_eq_det A).trans (HexMatrixMathlib.det_eq A)
-  | some d =>
-    rw [Hex.ModularMatrix.detWith_modular h]
-    exact (Hex.Matrix.detModular?_eq h).trans (HexMatrixMathlib.det_eq A)
+theorem detWith_eq (A : Hex.Matrix Int n n) (fuel : Nat)
+    (seed : Nat := Hex.ModularMatrix.defaultSeed) (useDivisor : Bool := false) :
+    (Hex.ModularMatrix.detWith A fuel seed useDivisor).value =
+      Matrix.det (HexMatrixMathlib.matrixEquiv A) := by
+  have ho : (Hex.ModularMatrix.ordinaryWith A fuel).value =
+      Matrix.det (HexMatrixMathlib.matrixEquiv A) := by
+    cases h : A.detModular? fuel with
+    | none =>
+      simp only [Hex.ModularMatrix.ordinaryWith, h]
+      exact (HexMatrixMathlib.bareiss_eq_det A).trans (HexMatrixMathlib.det_eq A)
+    | some d =>
+      simp only [Hex.ModularMatrix.ordinaryWith, h]
+      exact (Hex.Matrix.detModular?_eq h).trans (HexMatrixMathlib.det_eq A)
+  cases useDivisor with
+  | false => exact ho
+  | true =>
+    cases h : (A.detViaDivisorWith (Hex.Rand.ofSeed seed) fuel).1 with
+    | none => simpa only [Hex.ModularMatrix.detWith, h, Bool.true_eq, ↓reduceIte] using ho
+    | some d =>
+      rw [Hex.ModularMatrix.detWith_divisor h]
+      exact (Hex.Matrix.detViaDivisorWith_eq h).trans (HexMatrixMathlib.det_eq A)
+
+/-- The seeded total divisor route has a seed-independent mathematical value. -/
+theorem detViaDivisor_eq (A : Hex.Matrix Int n n) (seed : Nat) :
+    Hex.ModularMatrix.detViaDivisor A seed = Matrix.det (HexMatrixMathlib.matrixEquiv A) := by
+  unfold Hex.ModularMatrix.detViaDivisor
+  split
+  · exact (HexMatrixMathlib.bareiss_eq_det A).trans (HexMatrixMathlib.det_eq A)
+  · exact detWith_eq A (Hex.ModularMatrix.defaultFuel A) seed true
 
 /-- The total executable determinant agrees with Mathlib's determinant. -/
 theorem det_eq (A : Hex.Matrix Int n n) :

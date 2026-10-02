@@ -161,6 +161,24 @@ requests retained inverse-transform data for its complete list certificate.
 Those wrappers and list checkers are required before the frontends ship;
 their reduction paths never execute inverse, solve or RREF producers.
 
+### Structural field certificates
+
+`HexRowReduce/Kernel.lean` owns `InverseWitness`, `SolveWitness`,
+`checkInverseList`, `checkSolveList`, and the direct supplied-solution check
+`checkSolutionList`. Their contracts are the companion's
+[kernel-certificate sections](../../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-inverse-tactic).
+Positive scales, exact shapes, cross-multiplied literal identities and integer
+products are checked by structural list recursion. Complete solve witnesses
+include `R`, `U`, `W`, the pivot/free partition and the canonical affine basis;
+negative witnesses check a nonzero kernel vector or a separating row.
+
+`HexRowReduce/Witness.lean` runs one RREF for `inverseWitness` and one retained
+RREF for `solveWitness`. `Retained.reduce_fst` identifies the latter with
+`rowReduce`; the extra state carries the inverse transform by inverse column
+operations. `solveFrom` is the shared solving step used by `solve` and the
+certificate producer. None of these producers executes during arithmetic
+proof reduction; arbitrary-witness soundness belongs to the companion.
+
 ### Solve and inconsistency witness
 
 A solution stores a particular vector and a matrix whose columns are the

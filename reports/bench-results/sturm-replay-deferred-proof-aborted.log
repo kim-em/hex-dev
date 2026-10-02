@@ -1,0 +1,24 @@
+[warm] lake build +HexSturmMathlib.Replay.Accepted:deps +HexSturmMathlib.Replay.Baseline:deps +HexSturmMathlib.Replay.Rejected:deps
+[pair] accepted reference (HexSturmMathlib.Replay.Baseline)
+[pair] accepted candidate (HexSturmMathlib.Replay.Accepted)
+[pair] rejected reference (HexSturmMathlib.Replay.Baseline)
+[pair] rejected candidate (HexSturmMathlib.Replay.Rejected)
+[pair] rejected candidate (HexSturmMathlib.Replay.Rejected)
+[pair] rejected reference (HexSturmMathlib.Replay.Baseline)
+[pair] accepted candidate (HexSturmMathlib.Replay.Accepted)
+[pair] accepted reference (HexSturmMathlib.Replay.Baseline)
+[pair] accepted reference (HexSturmMathlib.Replay.Baseline)
+[pair] accepted candidate (HexSturmMathlib.Replay.Accepted)
+[pair] rejected reference (HexSturmMathlib.Replay.Baseline)
+[pair] rejected candidate (HexSturmMathlib.Replay.Rejected)
+[pair] rejected candidate (HexSturmMathlib.Replay.Rejected)
+[pair] rejected reference (HexSturmMathlib.Replay.Baseline)
+[pair] accepted candidate (HexSturmMathlib.Replay.Accepted)
+[pair] accepted reference (HexSturmMathlib.Replay.Baseline)
+Traceback (most recent call last):
+  File "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/scripts/bench/sturm_mathlib_sweep.py", line 42, in <module>
+    sys.exit(run_cli(SPEC, Path(__file__)))
+             ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/scripts/bench/fresh_module_sweep.py", line 1962, in run_cli
+    raise RuntimeError("repository checkout changed during the sweep")
+RuntimeError: repository checkout changed during the sweep

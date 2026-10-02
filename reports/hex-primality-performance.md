@@ -1,10 +1,15 @@
 # HexPrimality Performance Report
 
+The current supplied-certificate comparison against PrimeCert's fixed-window
+implementation is in [the replay attribution](hex-primality-replay-attribution.md).
+The comparator measurements below use an earlier PrimeCert revision.
+
 ## Bench Targets
 
 The compiled suite owns each executable surface once.  The first six rows use
 the published schoolbook upper bound; the next seven use two-sided controlled
-families; the last four are canonical fixed boundaries.
+families. The SQUFOF fuel row has its own current record; the remaining rows
+are canonical fixed boundaries.
 
 | target | declared complexity or fixed purpose |
 |---|---|
@@ -21,10 +26,16 @@ families; the last four are canonical fixed boundaries.
 | `Hex.PrimalityBench.runRho` | `Nat.sqrt n` |
 | `Hex.PrimalityBench.runSegment` | `n * Nat.sqrt n` |
 | `Hex.PrimalityBench.runNextPrime` | `n` |
+| `Hex.PrimalityBench.runSqufofFuel` | `n` on a fixed-size prime with forced recurrence fuel |
 | `Hex.PrimalityBench.runDecision512` | fixed 512-bit rho-backed decision boundary |
 | `Hex.PrimalityBench.runCertSearch512` | fixed 512-bit rho-backed search boundary |
 | `Hex.PrimalityBench.runChecker512` | fixed twin of the 512-bit kernel replay |
 | `Hex.PrimalityBench.runPock3Checker` | fixed Pocklington-3 constructor anchor |
+| `Hex.PrimalityBench.runConstruction` | fixed Curve25519 construction |
+| `Hex.PrimalityBench.runCurveChecker` | fixed twin of Curve25519 compiled replay |
+| `Hex.PrimalityBench.runRuntimePrimes` | fixed construction-policy sieve bound 524289 |
+| `Hex.PrimalityBench.runP521Construction` | fixed P-521 construction |
+| `Hex.PrimalityBench.runP521Checker` | fixed twin of P-521 compiled replay |
 
 The proof track has matched fresh modules at 31, 61, 123, 256, 511, and 512
 bits.  For every size it measures import baseline to input construction, input
@@ -39,7 +50,10 @@ controls before the substantive pairs in its rotated order.
 This assignment is normative in
 `HexPrimality/SPEC/hex-primality.md`.  The `table-smooth-certificates` family
 contains committed exact production-search witnesses, while
-`segment-enumeration` exercises the complete initial-segment route.
+`segment-enumeration` exercises the complete initial-segment route. The
+`squfof-raw-splitting` family covers the explicit splitter and its forced-work
+fuel ladder; its raw evidence is in the
+[SQUFOF report](hex-primality-squfof.md).
 
 ## Verdicts
 
@@ -116,6 +130,46 @@ one-parameter family, so modes 1 and 2 do not apply.  They use mode 3 absolute
 budgets.  Decision, search, and replay each have a 5 s budget; Pocklington-3
 has a 2 s budget.  Their medians were respectively 13.407 ms, 13.448 ms,
 678.436 us, and 632 ns, with all five samples and expected hashes agreeing.
+
+The construction-policy fixed targets use mode 3: each is one named
+certificate or one policy endpoint, so modes 1 and 2 do not describe this
+fixed comparison. Parametric sieve coverage remains in `runSieve`. All five
+have a 5 s absolute budget. The registered five-repeat run on `chungus2`,
+Lean 4.34.0, automatically selected CPU 12, retained all samples and
+reported expected-hash agreement:
+
+| target | budget | median per call | observed hash | verdict |
+|---|---:|---:|---:|---|
+| `runConstruction` | 5 s | 416 ms | `0x1d` | within budget; expected hash matches |
+| `runCurveChecker` | 5 s | 527 µs | `0x1` | within budget; expected hash matches |
+| `runRuntimePrimes` | 5 s | 52.0 ms | `0xa97e` | within budget; expected hash matches |
+| `runP521Construction` | 5 s | 1.38 s | `0xaa` | within budget; expected hash matches |
+| `runP521Checker` | 5 s | 11.6 ms | `0x1` | within budget; expected hash matches |
+
+The raw lean-bench export, complete output, source hashes, command, CPU,
+and host-load observations are retained in
+`reports/bench-results/hex-primality-fixed-fields-issue-10291.json`.
+Its pre-rebase source commit is `88b1c74ee` (published as `93a5a3a2a`
+after rebasing); the harness's `-dirty` suffix includes the
+untracked measurement outputs. The recorded source hashes identify the
+measured implementation. Reproduce with:
+
+```sh
+lake build hexprimality_bench
+taskset -c "$(python3 scripts/bench/idle_core.py)" \
+  .lake/build/bin/hexprimality_bench run \
+  Hex.PrimalityBench.runConstruction \
+  Hex.PrimalityBench.runCurveChecker \
+  Hex.PrimalityBench.runRuntimePrimes \
+  Hex.PrimalityBench.runP521Construction \
+  Hex.PrimalityBench.runP521Checker \
+  --export-file /tmp/primality-fixed-fields.json
+```
+
+The [standard-field investigation](hex-primality-fields.md) separately measures
+paired policy changes, rendering/elaboration, kernel replay, and a truncated
+subset-enumeration failure. Neither set of fixed targets supports an
+asymptotic claim about arbitrary large primes.
 
 The release-quality proof record is
 `reports/bench-results/hex-primality-core-proof-issue-9762-chungus2.json`
@@ -254,7 +308,7 @@ python3 scripts/bench/primality_primecert_compare.py \
 
 ## Profile
 
-Both declared families have inclusive profiles.  Certificate search was
+The certificate-search and segment families have inclusive profiles. Certificate search was
 profiled from pristine commit `ca6f6f9ca`; segment enumeration was refreshed
 from pristine commit `4655d0530`.  The filtered summaries are committed; raw
 profiler JSON remains developer-local.
@@ -278,6 +332,14 @@ passed, with no samples on other threads inside timed windows.
   (SHA-256
   `47484734a01844d77bc482c6006dedbe9b5f27842c178cd0647f03e9be02dfdc`).
 
+The `squfof-raw-splitting` profile in the
+[explicit-route report](hex-primality-squfof.md) attributes a 4,194,304-step
+compiled raw search on a 61-bit prime. Of 2,033 main-thread samples, 99.4%
+include `Squfof.search`; leaf cost is approximately 51.5% allocation, 29.5%
+GMP, 14.5% Lean runtime, 4.0% own code, and 0.5% other. This direct-process
+profile includes startup samples and is a forward-heavy forced-work control;
+the raw completion samples are reported separately.
+
 The exact commands were:
 
 ```sh
@@ -296,6 +358,35 @@ python3 scripts/profile/summarize_profile.py \
   --thread hexprimality_bench \
   --output reports/bench-results/hex-primality-profile-segment-4655d0530-chungus2.json
 ```
+
+## Pollard p−1 continuation
+
+The `p-minus-one-stage2` family is covered by the
+[arithmetic and consumer report](hex-primality-stage2.md), including exact
+extra-prime fixtures, full misses, route accounting, and checked outcomes.
+Continuation remains opt-in; the report separates native and interpreted
+construction evidence and ordinary factorization's allocation.
+
+## Bounded SQUFOF
+
+The `squfof-raw-splitting` family uses the explicit shared primitive without
+changing default dispatch. Its [native report](hex-primality-squfof.md) retains
+the varied-gap 32–64-bit completion corpus, 426 current fixed-schedule samples,
+308 retained earlier samples, all SQUFOF limits and Brent-rho seed/budget
+choices, phase counters, and independent division checks. All 36 semiprimes complete under
+ascending 65,536-, 131,072-, and 262,144-step slices and under the reversed
+262,144-step policy. The 61-bit prime exhausts every cap. In the adjacent
+AB/BA comparison, SQUFOF has the lower paired median on 28 of 36 semiprimes,
+including nine of 15 independently drawn pairs; Brent rho is lower on eight
+overall and six independently drawn pairs. This is an unequal-work raw splitter
+comparison, not a public portfolio improvement claim.
+
+The Mathlib-free `runSqufofFuel` registration uses mode 1: fixed-size operands,
+one multiplier, and a non-full queue yield an independently derived linear
+operation count in recurrence fuel. The [retained export](bench-results/hex-primality-squfof-fuel.json)
+is consistent with `n` over 512–8192 steps (`β = -0.013`), with every rung
+exhausting exactly its requested fuel. No default search policy changes follow
+from this explicit-route result.
 
 ## Concerns
 

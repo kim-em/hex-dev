@@ -1,0 +1,34 @@
+{
+  "commit": "45c363885f2e565a5a4fabf7b4a965f81c08e2d4",
+  "command": [
+    "scripts/bench/ordered_fn_z3.py",
+    "--output",
+    "/tmp/issue-10376-z3-final",
+    "--first-trial",
+    "2"
+  ],
+  "cpu": 42,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "python": "3.14.6 (main, Jun 10 2026, 10:03:53) [GCC 15.3.0]",
+  "z3": "4.15.4.0",
+  "load_before": [
+    7.68359375,
+    10.556640625,
+    28.83935546875
+  ],
+  "python_executable": "/tmp/issue-10376-oracle-venv/bin/python3",
+  "started_unix_ns": 1790573916501194609,
+  "overhead_only": false,
+  "executable_sha256": "ac7a257a18ed50b1c190004223c042498c846aafef6427b57dc33d9a91ec6af7",
+  "driver_sha256": "f29c4b78ab7334a68af60fab1e1dd073a43d172f8fa460ad42cee94b87694df1",
+  "libz3_path": "/tmp/issue-10376-oracle-venv/lib/python3.14/site-packages/z3/lib/libz3.so",
+  "libz3_sha256": "56d9977b9276bcb8cda9973a14058fcaa9f3bfee14ed57408b9faacd76d4d8f3",
+  "load_after": [
+    5.71484375,
+    9.14990234375,
+    26.6474609375
+  ],
+  "executable_sha256_after": "ac7a257a18ed50b1c190004223c042498c846aafef6427b57dc33d9a91ec6af7",
+  "completed_unix_ns": 1790574010574653639
+}

@@ -1,0 +1,14 @@
+{
+  "completed_arms": 72,
+  "files": {
+    "collection.log": "344425e525716c8db057e3b43bb395938002deb5ef7c84f5f1fed36a724f3f77",
+    "committed-source.patch": "6fed9a4c047f07687c90bee880d1d7bfacbd21dc3e65947d2b0dadefc4f0a9ee",
+    "rationalfn-compatibility.json": "d602791cca288f1fc41d190d2071e37c34aaf21c220bb2a5f1a4b46f8ea1728e",
+    "rationalfn-compatibility.json.samples.jsonl": "f29a59343e5e4da75c956ba4b7a25844ee0ad89893041e75554c22cc35c9fec8"
+  },
+  "invocation": "run_retained_cli(rationalfn_kernel_replay.SPEC, Path(\"scripts/bench/rationalfn_kernel_replay.py\"), [\"--output\", external_output])",
+  "measured_revision": "2616e53b0bd7de1d52896d06b9a968f270d5c76d",
+  "scope": "Existing rational-function certificate probe budgets on this host, not a before/after comparison.",
+  "source_base": "f53917bfc7f96a68491441222e7128ffee3bd916",
+  "source_hashes_verified": 69
+}

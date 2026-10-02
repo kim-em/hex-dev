@@ -1,0 +1,35 @@
+LEAN_EXPORT lean_object* lp_Hex_Determinant_Schedules_timed___redArg(lean_object* v_label_311_, lean_object* v_input_312_, lean_object* v_compute_313_, lean_object* v_format_314_){
+_start:
+{
+lean_object* v___x_316_; lean_object* v___x_317_; lean_object* v___x_318_; lean_object* v___x_319_; lean_object* v___x_320_; lean_object* v___x_321_; lean_object* v___x_322_; lean_object* v___x_323_; lean_object* v___x_324_; lean_object* v___x_325_; lean_object* v___x_326_; lean_object* v___x_327_; lean_object* v___x_328_; lean_object* v___x_329_; lean_object* v___x_330_; lean_object* v___x_331_; lean_object* v___x_332_; lean_object* v___x_333_; lean_object* v___x_334_; lean_object* v___x_335_; lean_object* v___x_336_; lean_object* v___x_337_; lean_object* v___x_338_; lean_object* v___x_339_; lean_object* v___x_340_;
+v___x_316_ = lean_io_mono_nanos_now();
+v___x_317_ = lean_st_ref_get(v_input_312_);
+v___x_318_ = lean_apply_1(v_compute_313_, v___x_317_);
+v___x_319_ = lean_st_mk_ref(v___x_318_);
+v___x_320_ = lean_io_mono_nanos_now();
+v___x_321_ = lean_st_ref_get(v___x_319_);
+lean_dec(v___x_319_);
+v___x_322_ = ((lean_object*)(lp_Hex_Determinant_Schedules_timed___redArg___closed__0));
+v___x_323_ = lean_alloc_ctor(3, 1, 0);
+lean_ctor_set(v___x_323_, 0, v_label_311_);
+v___x_324_ = lean_alloc_ctor(0, 2, 0);
+lean_ctor_set(v___x_324_, 0, v___x_322_);
+lean_ctor_set(v___x_324_, 1, v___x_323_);
+v___x_325_ = ((lean_object*)(lp_Hex_Determinant_Schedules_timed___redArg___closed__1));
+v___x_326_ = lean_nat_sub(v___x_320_, v___x_316_);
+lean_dec(v___x_316_);
+lean_dec(v___x_320_);
+v___x_327_ = l_Lean_JsonNumber_fromNat(v___x_326_);
+v___x_328_ = lean_alloc_ctor(2, 1, 0);
+lean_ctor_set(v___x_328_, 0, v___x_327_);
+v___x_329_ = lean_alloc_ctor(0, 2, 0);
+lean_ctor_set(v___x_329_, 0, v___x_325_);
+lean_ctor_set(v___x_329_, 1, v___x_328_);
+v___x_330_ = ((lean_object*)(lp_Hex_Determinant_Schedules_timed___redArg___closed__2));
+v___x_331_ = lean_apply_1(v_format_314_, v___x_321_);
+v___x_332_ = lean_alloc_ctor(3, 1, 0);
+lean_ctor_set(v___x_332_, 0, v___x_331_);
+v___x_333_ = lean_alloc_ctor(0, 2, 0);
+lean_ctor_set(v___x_333_, 0, v___x_330_);
+lean_ctor_set(v___x_333_, 1, v___x_332_);
+v___x_334_ = lean_box(0);

@@ -1,0 +1,40 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 231  of event 'cpu/cycles/P'
+# Event count (approx.): 5083757759
+#
+# Overhead  Command          Shared Object           Symbol
+# ........  ...............  ......................  ...........................................................................................................................................
+#
+    11.75%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_Word_dot___redArg
+     8.72%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_apply_1
+     7.80%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_apply_2
+     4.38%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_dec_ref_cold
+     3.89%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_ZMod64_addImpl___redArg
+     3.01%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_hex_zmod64_mul
+     2.61%  hexmodularmatri  hexmodularmatrix_bench  [.] l_Fin_foldl_loop___redArg
+     2.20%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_hadamardFast___lam__0
+     2.19%  hexmodularmatri  hexmodularmatrix_bench  [.] mi_malloc_small
+     2.19%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_ZMod64_ofNat___redArg
+     1.75%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Fin_foldl_loop___at___00Hex_Matrix_DetBound_sum___at___00Hex_Matrix_rowNormBound_spec__0_spec__0
+     1.75%  hexmodularmatri  hexmodularmatrix_bench  [.] l___private_Init_Data_Array_Basic_0__Array_ofFn_go___redArg
+     1.75%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_apply_4
+     1.75%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_Word_addFast___redArg
+     1.74%  hexmodularmatri  hexmodularmatrix_bench  [.] __gmpn_copyi_x86_64
+     1.72%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_Word_addFast___redArg___lam__1
+     1.48%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_copy_expand_array
+     1.36%  hexmodularmatri  libc.so.6               [.] cfree@GLIBC_2.2.5
+     1.31%  hexmodularmatri  hexmodularmatrix_bench  [.] mi_free
+     1.31%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_Word_addVec___redArg
+     1.31%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Fin_foldl_loop___at___00Hex_Matrix_setRow_spec__0___redArg
+     1.31%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Fin_foldl_loop___at___00Hex_Matrix_rowSwap_spec__0___redArg
+     1.31%  hexmodularmatri  libc.so.6               [.] malloc
+     1.31%  hexmodularmatri  hexmodularmatrix_bench  [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)
+
+
+#
+# (Tip: To show context switches in perf report sample context add --switch-events to perf record.)
+#

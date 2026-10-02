@@ -1,0 +1,11 @@
+{
+  "output": "reports/bench-results/determinant-redesign/value-owned32",
+  "ring": "int",
+  "dimension": 32,
+  "bits": 8,
+  "shape": "dense",
+  "owned": true,
+  "flat": false,
+  "modular": false,
+  "spread": 1
+}

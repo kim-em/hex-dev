@@ -3,246 +3,195 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexPolyDetMathlib.Tactic
-import Mathlib.Tactic.NormDet
-import Mathlib.Algebra.QuadraticAlgebra.Basic
-import Mathlib.Data.ZMod.Basic
 
+import HexPolyDetMathlib
+import HexPolyDetMathlib.NoFallbackTests
+import HexPolyDetMathlib.Bird.Audit
 
-example (x : Int) : Matrix.det !![x, 1; 1, x] = x ^ 2 - 1 := by det
+open Lean
 
-theorem symbolicDet {R : Type} [CommRing R] [CharZero R] (x : R) :
-    Matrix.det !![x, 1; 1, x] = x ^ 2 - 1 := by det
+open Matrix
 
-example (x : Rat) : Matrix.det !![x / 2, 1; 1, x / 3] = x ^ 2 / 6 - 1 := by det
-example (x : Rat) : Matrix.det !![x + 1 / 2, 1; 1, x - 1 / 3] =
-    x ^ 2 + x / 6 - 7 / 6 := by det
-example (x y : Rat) : Matrix.det !![x / y, 1; 1, x / y] = (x / y) ^ 2 - 1 := by det
-example (x y : Int) : Matrix.det !![x, y; x + x, y + y] = 0 := by det
-example (x : Int) : Matrix.det !![0, x; x, 1] = -x ^ 2 := by det
+example {R : Type} [CommRing R] (x : R) :
+    Matrix.det !![x, 1; 1, x] = (det% (!![x, 1; 1, x] : Matrix (Fin 2) (Fin 2) R)).value :=
+  (det% (!![x, 1; 1, x] : Matrix (Fin 2) (Fin 2) R)).proof
 
-example (x : Int) : x ^ 2 - 1 = Matrix.det !![x, 1; 1, x] := by det
-example (x : Int) : Matrix.det (Matrix.ofArray (m := 2) (n := 2) #[x, 1, 1, x] rfl) =
-    x ^ 2 - 1 := by det
-example (x : Int) : Matrix.det (fun i j : Fin 2 => if i = j then x else 1) = x ^ 2 - 1 := by det
-example (x : Int) : Matrix.det !![x, 1; 1, x] = (det% !![x, 1; 1, x]).value :=
-  (det% !![x, 1; 1, x]).proof
-example (x : Rat) : Matrix.det (!![x / 2, 1; 1, x / 3] : Matrix (Fin 2) (Fin 2) Rat) =
-    (det% (!![x / 2, 1; 1, x / 3] : Matrix (Fin 2) (Fin 2) Rat)).value :=
-  (det% (!![x / 2, 1; 1, x / 3] : Matrix (Fin 2) (Fin 2) Rat)).proof
-example (x : Int) : Matrix.det !![x, 1; 1, x] = x ^ 2 - 1 := by
+example {R : Type} [CommRing R] (x : R) :
+    Matrix.det (fun i j : Fin 2 => if i = j then x else 1) =
+      (det% ((fun i j : Fin 2 => if i = j then x else 1) : Matrix (Fin 2) (Fin 2) R)).value :=
+  (det% ((fun i j : Fin 2 => if i = j then x else 1) : Matrix (Fin 2) (Fin 2) R)).proof
+
+example {R : Type} [CommRing R] (x : R) :
+    Matrix.det (Matrix.ofArray #[x, 1, 1, x] (by rfl) : Matrix (Fin 2) (Fin 2) R) =
+      (det% (Matrix.ofArray #[x, 1, 1, x] (by rfl) : Matrix (Fin 2) (Fin 2) R)).value :=
+  (det% (Matrix.ofArray #[x, 1, 1, x] (by rfl) : Matrix (Fin 2) (Fin 2) R)).proof
+
+example {R : Type} [CommRing R] (x : R) :
+    Matrix.det (Matrix.of ![![x, 1], ![1, x]]) = x*x - 1 := by
+  det
+
+example {R : Type} [CommRing R] (x : R) : Matrix.det !![x, 1; 1, x] = x * x - 1 := by
+  det
+
+example {R : Type} [CommRing R] (x : R) : x * x - 1 = Matrix.det !![x, 1; 1, x] := by
+  det
+
+example {R : Type} [CommRing R] (x : R) : True := by
+  det (maxRelationWork := 100) (!![x, 1; 1, x] : Matrix (Fin 2) (Fin 2) R) with d hd
+  have : Matrix.det !![x, 1; 1, x] = d := hd
+  trivial
+
+example {R : Type} [CommRing R] (x : R) : Matrix.det !![x, 1; 1, x] = x * x - 1 := by
   simp only [Hex.normPolyDet]
   ring
-example : Matrix.det !![(1 : Int), 2; 3, 4] = -2 := by simp only [Hex.normPolyDet]
 
-/-- info: 'symbolicDet' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms symbolicDet
+example (x : Int) : Matrix.det (!![1, 2; 3, 4] : Matrix (Fin 2) (Fin 2) Int) = x - x - 2 := by
+  det
 
--- Even a local equality does not change the independent-atom computation.
-example (x : Int) (h : x = 0) : Matrix.det !![x] = 0 := by
-  fail_if_success det
-  simpa only [Matrix.det_fin_one, Matrix.of_apply, Matrix.cons_val_zero] using h
+example (x y z : Rat) :
+    (x+y)/z - x/z - y/z - 2 =
+      Matrix.det (!![1, 2; 3, 4] : Matrix (Fin 2) (Fin 2) Rat) := by
+  det
 
--- A right-hand side introducing an atom outside the matrix must decline.
-example (x y : Int) (h : Matrix.det !![x, 1; 1, x] = y) :
+example (a b : ZMod 3) : Matrix.det !![a, 0; 0, b] = a*b + 3*a*b := by
+  det
+
+example (a b : ZMod 3) :
+    Matrix.det !![a, 0; 0, b] = a*b + a*b + a*b + a*b := by
+  det
+
+example (x : ZMod 2) : Matrix.det !![-2*x, 0, 0; 0, x, 0; 0, 0, x] = 0 := by
+  det
+
+example (a b : ZMod 4) : Matrix.det !![a, 0; 0, b] = a*b + 4*a*b := by
+  det
+
+example {R : Type} [CommRing R] [CharP R 4] (a b : R) :
+    Matrix.det !![a, 0; 0, b] = a*b + 4*a*b := by
+  det
+
+example : True := by
+  det (!![1, 2; 3, 4] : Matrix (Fin 2) (Fin 2) Int) with d hd
+  have : d = -2 := by rfl
+  have : Matrix.det !![(1 : Int), 2; 3, 4] = d := hd
+  trivial
+
+example (x : ZMod 2) :
+    (det% (!![-2*x, 0, 0; 0, x, 0; 0, 0, x] : Matrix (Fin 3) (Fin 3) (ZMod 2))).value = 0 := by
+  rfl
+
+example {R : Type} [CommRing R] (x : R) :
+    Matrix.det !![x, 1; 1, x] = (det% !![x, 1; 1, x]).value :=
+  (det% !![x, 1; 1, x]).proof
+
+example {R : Type} [CommRing R] (x : R) : True := by
+  det !![x, 1; 1, x] with d hd
+  trivial
+
+example (x : Int) : Matrix.det !![x, 1; 1, x] = x ^ 2 - 1 := by
+  fail_if_success det (maxRelationWork := 0)
+  fail_if_success det (maxHeartbeats := 0)
+  det
+
+example : Matrix.det (!![1, 2; 3, 4] : Matrix (Fin 2) (Fin 2) Int) = -2 := by
+  det -packing
+
+example {R : Type} [CommRing R] [CharP R (2 + 2)] (a b : R) :
+    Matrix.det !![a, 0; 0, b] = a*b + 4*a*b := by
+  det
+
+example (x y : Rat) :
+    Matrix.det !![x/y, 1; 1, x/y] = (x/y)^2 - 1 := by
+  det
+
+example (x y : Rat) :
+    Matrix.det !![(x/y)/(x/y), 1; 1, (x/y)/(x/y)] =
+      ((x/y)/(x/y))^2 - 1 := by
+  det
+
+example (x : Rat) : Matrix.det !![x/0, 1; 1, x] = -1 := by
+  det
+
+example {R : Type} [CommRing R] (x : R) :
+    Matrix.det !![x, 1; 1, x] + 1 = x*x := by
+  simp only [Hex.normPolyDet]
+  ring
+
+example {R : Type} [CommRing R] (x y : R)
+    (h : Matrix.det !![x, 1; 1, x] = y) : y = x*x - 1 := by
+  simp only [Hex.normPolyDet] at h
+  calc
+    y = -1 + x ^ 2 := h.symm
+    _ = x*x - 1 := by ring
+
+example {R : Type} [CommRing R] (x y : R)
+    (h : Matrix.det !![x, 1; 1, x] = y) :
     Matrix.det !![x, 1; 1, x] = y := by
   fail_if_success det
   exact h
 
--- The composed fallback remains available on unsupported positive characteristic.
-example (x : ZMod 3) : Matrix.det !![x, 1; 1, x] = x ^ 2 - 1 := by
-  det
-
--- Coefficients cancel before elimination, although the batch contains atoms.
-example (x : Int) : Matrix.det !![x - x, 1; 1, x - x] = -1 := by det
-example (x : Int) : Matrix.det (fun (_ _ : Fin 0) => x) = 1 := by det
-example (x : Rat) : Matrix.det !![x / 0, 1; 1, x] = -1 := by det
-example (x : Rat) : Matrix.det !![x, 1; 1, x] = (det% !![x, 1; 1, x]).value :=
-  (det% !![x, 1; 1, x]).proof
-example {R : Type} [CommRing R] [CharZero R] (x : R) :
-    Matrix.det !![x, 1; 1, x] = (det% !![x, 1; 1, x]).value :=
-  (det% !![x, 1; 1, x]).proof
-
-namespace ClosedAlgebraic
-abbrev K := QuadraticAlgebra Rat 2 0
-@[irreducible] def α : K := QuadraticAlgebra.omega
-
-theorem square : α ^ 2 = 2 := by
-  rw [α, pow_two, QuadraticAlgebra.omega_mul_omega_eq_mk]
+example {R : Type} [CommRing R] (x : R) :
+    (det% (!![x, 1; 1, x] : Matrix (Fin 2) (Fin 2) R)).value = -1 + x ^ 2 := by
   rfl
 
-theorem polynomial : Matrix.det !![α, 1; 2, α] = α ^ 2 - 2 := by det
+example (x : Int) :
+    (det% (!![x, 1, 0; 1, x, 1; 0, 1, x] : Matrix (Fin 3) (Fin 3) Int)).value =
+      x ^ 3 - 2 * x := by
+  ring
 
-example : Matrix.det !![α, 1; 2, α] = 0 := by
-  fail_if_success det
-  rw [polynomial, square, sub_self]
-end ClosedAlgebraic
-
--- Positive-characteristic kernel probes are documented non-tests until both
--- #10255 and #10257 land. In particular X^3-X in characteristic 3 must be
--- treated as a nonzero polynomial, and a composite modulus must decline.
-
--- Malformed list encodings cannot reach the denotation theorem as certificates.
-example : Hex.Matrix.checkDetPolyList (HexMatrixMathlib.DetPoly.Polynomial.ops 1)
-    1 [[[([0], (1 : Int)), ([0], 1)]]]
-    (.triangular [] [[[([0], 1)]]] [([0], 2)]) = false := by decide +kernel
-example : Hex.Matrix.checkDetPolyList (HexMatrixMathlib.DetPoly.Polynomial.ops 1)
-    1 [[[([0, 0], (1 : Int))]]]
-    (.triangular [] [[[([0], 1)]]] [([0], 1)]) = false := by decide +kernel
-example : Hex.Matrix.checkDetPolyList (HexMatrixMathlib.DetPoly.Polynomial.ops 1)
-    1 [[[([0], (1 : Int))]]]
-    (.singular [[]]) = false := by decide +kernel
-
--- Closed scalar powers are bounded before the rational evaluator sees them.
-example : True := by
-  run_tac
-    let two ← Lean.Meta.mkNumeral (Lean.mkConst ``Rat) 2
-    let e ← Lean.Meta.mkAppM ``HPow.hPow #[two, Lean.mkNatLit 65]
-    match ← (HexMatrixMathlib.DetPoly.Normalize.scalarBound e).run with
-    | .error _ => pure ()
-    | .ok _ => throwError "expected a scalar exponent budget decline"
-  trivial
-
-example : True := by
-  run_tac
-    let two ← Lean.Meta.mkNumeral (Lean.mkConst ``Rat) 2
-    let e ← Lean.Meta.mkAppM ``HPow.hPow #[two, Lean.mkNatLit 64]
-    let e ← Lean.Meta.mkAppM ``HPow.hPow #[e, Lean.mkNatLit 64]
-    match ← (HexMatrixMathlib.DetPoly.Normalize.scalarBound e).run with
-    | .error _ => pure ()
-    | .ok _ => throwError "expected a scalar coefficient bit budget decline"
-  trivial
-
-namespace HexPolyDetTests
-
-open Lean Elab Tactic Meta in
-/-- Regression helper requiring the polynomial certificate, without the small
-formula route or Mathlib fallback. -/
-elab "certificate_det" : tactic => withMainContext do
-  let target ← instantiateMVars (← getMainTarget)
-  let some (A, rhs, reverse) := HexMatrixMathlib.Det.detTarget? target |
-    throwError "expected a determinant equation"
-  match ← HexMatrixMathlib.DetPoly.Frontend.compute A rhs with
-  | .success p => closeMainGoal `certificate_det (← if reverse then mkEqSymm p.proof else pure p.proof)
-  | .declined msg | .notApplicable msg => throwError "certificate required: {msg}"
-
-open Lean Elab Tactic Meta in
-elab "certificate_declines " reason:str : tactic => withMainContext do
-  let some (A, rhs, _) := HexMatrixMathlib.Det.detTarget? (← getMainTarget) |
-    throwError "expected a determinant equation"
-  match ← HexMatrixMathlib.DetPoly.Frontend.compute A rhs with
-  | .declined msg =>
-    unless ((← msg.toString).splitOn reason.getString).length > 1 do
-      throwError "unexpected decline: {msg}"
-  | _ => throwError "expected a certificate decline"
-
--- The target need not be a domain or characteristic zero.
-theorem generic4 {R : Type} [CommRing R] (x : R) :
-    Matrix.det !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x] =
-      x ^ 4 - 3 * x ^ 2 + 1 := by certificate_det
-
--- The producer divides by the nonconstant pivot x in these certificates.
-theorem division3 (x : Int) :
-    Matrix.det !![x, 1, 0; 1, x, 1; 0, 1, x] = x ^ 3 - 2 * x := by certificate_det
-
-theorem rational4 (x : Rat) :
-    Matrix.det !![x / 2, 1, 0, 0; 1, x / 2, 1, 0; 0, 1, x / 2, 1; 0, 0, 1, x / 2] =
-      x ^ 4 / 16 - 3 * x ^ 2 / 4 + 1 := by certificate_det
-
-example (x y z : Rat) : True := by
-  run_tac
-    let e ← Lean.Elab.Term.elabTerm
-      (← `($(Lean.mkIdent `x) / 2 + $(Lean.mkIdent `y) / 2 + $(Lean.mkIdent `z) / 2)) none
-    Lean.Elab.Term.synthesizeSyntheticMVarsNoPostponing
-    let e ← Lean.instantiateMVars e
-    let .ok r ← (HexMatrixMathlib.DetPoly.Normalize.expression e).run |
-      throwError "normalization failed"
-    unless r.scale == 2 do throwError "repeated denominators should share one scale"
-    let .ok (s, _) ← (HexMatrixMathlib.DetPoly.Normalize.row #[e, e, e, e]).run |
-      throwError "row normalization failed"
-    unless s == 2 do throwError "row denominators should share one scale"
-  trivial
-
-theorem singular4 (x y : Int) :
-    Matrix.det !![x, y, 1, 0; 0, x, y, 1; x, y, 1, 0; 1, 0, x, y] = 0 := by certificate_det
-
-theorem term4 (x : Int) :
-    Matrix.det !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x] =
-      (det% !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x]).value :=
-  (det% !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x]).proof
-
-theorem rationalTerm4 (x : Rat) :
-    Matrix.det !![x / 2, 1, 0, 0; 1, x / 2, 1, 0; 0, 1, x / 2, 1; 0, 0, 1, x / 2] =
-      (det% !![x / 2, 1, 0, 0; 1, x / 2, 1, 0; 0, 1, x / 2, 1; 0, 0, 1, x / 2]).value :=
-  (det% !![x / 2, 1, 0, 0; 1, x / 2, 1, 0; 0, 1, x / 2, 1; 0, 0, 1, x / 2]).proof
-
-example (x : Rat) : (det% !![x, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x]).value =
-    x ^ 4 := by ring
-
-example (x : Int) : Matrix.det (fun i j : Fin 4 => x + if i = j then 1 else 0) =
-    4 * x + 1 := by certificate_det
-
-example (x : Int) : Matrix.det (Matrix.ofArray (m := 4) (n := 4)
-    #[x, 1, 0, 0, 1, x, 1, 0, 0, 1, x, 1, 0, 0, 1, x] rfl) =
-    x ^ 4 - 3 * x ^ 2 + 1 := by certificate_det
-
-example (x : Int) : x ^ 4 - 3 * x ^ 2 + 1 =
-    Matrix.det !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x] := by certificate_det
-
-example (x : Int) : True := by
-  let y := x + 1
-  have : Matrix.det !![y, 1, 0, 0; 1, y, 1, 0; 0, 1, y, 1; 0, 0, 1, y] =
-      y ^ 4 - 3 * y ^ 2 + 1 := by certificate_det
-  trivial
-
-example (x : ZMod 6) :
-    Matrix.det !![x, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x] =
-      x ^ 4 := by certificate_det
-
--- Characteristic-aware conversion can disagree with integer replay. It must
--- decline before proof quotation, allowing the composed tactic to fall back.
-example (x : ZMod 6) :
-    Matrix.det !![x - 1, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x] =
-      (x - 1) * x ^ 3 := by
-  certificate_declines "entry (0, 0)"
-  det
-
--- Closed formulas do not require CharZero, even for composite characteristic.
 example {R : Type} [CommRing R] (x : R) :
-    Matrix.det !![x, 1, 0; 1, x, 1; 0, 1, x] = x ^ 3 - 2 * x := by det
-
--- Definitions discovered within the literal-unfolding budget use the general
--- closed formulas with the original matrix as argument.
-def symbolicMatrix (x : Int) : Matrix (Fin 2) (Fin 2) Int := !![x, 1; 1, x]
-example (x : Int) : (symbolicMatrix x).det = x ^ 2 - 1 := by det
-example (x : Int) : (symbolicMatrix x).det = (det% (symbolicMatrix x)).value :=
-  (det% (symbolicMatrix x)).proof
-
--- A new target atom forces a polynomial decline; the composed fallback closes it.
-example (x y : Int) :
     Matrix.det !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x] =
-      x ^ 4 - 3 * x ^ 2 + 1 + y - y := by det
-
--- Numeric delegation and its Hex simp fallback retain their original behavior.
-example (y : Int) (h : y = -2) : Matrix.det !![(1 : Int), 2; 3, 4] = y := by
+      x ^ 4 - 3 * x ^ 2 + 1 := by
   det
-  exact h.symm
 
-/-- info: 'HexPolyDetTests.generic4' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms generic4
-/-- info: 'HexPolyDetTests.rational4' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms rational4
-/-- info: 'HexPolyDetTests.singular4' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms singular4
-/-- info: 'HexPolyDetTests.term4' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms term4
+example : HexMatrixMathlib.Certified Matrix.det
+    (!![(1 : Rat), 2; 3, 4] : Matrix (Fin 2) (Fin 2) Rat) :=
+  det% !![1, 2; 3, 4]
 
-end HexPolyDetTests
+example {R : Type} [CommRing R] (x : R) :
+    Matrix.det (fun i j : Fin 2 => if i = j then x else 1) = x ^ 2 - 1 := by
+  det
 
-#print axioms Hex.PolyDet.check_of_ok
-#print axioms HexPolyDetTests.rationalTerm4
+example {R : Type} [CommRing R] (x : R) : True := by
+  let xs : Array R := #[x, 1, 1, x]
+  det (Matrix.ofArray xs (by rfl) : Matrix (Fin 2) (Fin 2) R) with d hd
+  have : d = -1 + x ^ 2 := by rfl
+  trivial
+
+example {R : Type} [Field R] (a b c d u v w x : R) :
+    Matrix.det !![a/u, b/v; c/w, d/x] = a*d/(u*x)-b*c/(v*w) := by
+  det
+
+example {R : Type} [Field R] (a b c d u v : R) :
+    Matrix.det !![a*c/u, a*d/u; b*c/v, b*d/v] = 0 := by
+  det
+
+example {R : Type} [Field R] (a b c d u v : R)
+    (h : Matrix.det !![a*c/u, a*d/u; b*c/v, b*d/v] = 0) :
+    Matrix.det !![a*c/u, a*d/u; b*c/v, b*d/v] = 0 := by
+  fail_if_success det (maxRelationWork := 1)
+  exact h
+
+example {R : Type} [Field R] (a b c d : R) :
+    Matrix.det !![a/b*(c/d)-a/d*(c/b), 0; a, b] = 0 := by
+  det
+
+example {R : Type} [Field R] (a : R)
+    (h : Matrix.det !![a/a] = 1) : Matrix.det !![a/a] = 1 := by
+  fail_if_success det
+  exact h
+
+example {R : Type} [CommRing R] :
+    Matrix.det (Matrix.ofArray #[] (by rfl) : Matrix (Fin 0) (Fin 0) R) = 1 := by
+  det
+
+example {R : Type} [CommRing R] (x : R) : Matrix.det !![x] = x := by
+  det
+
+example (x : Rat) :
+    (det% (!![x, 1; 1, x] : Matrix (Fin 2) (Fin 2) Rat)).value = -1 + x ^ 2 := by
+  rfl
+
+example {R : Type} [CommRing R] (x y : R) :
+    Matrix.det !![x + y, 0; 0, 1] = x + y := by
+  det

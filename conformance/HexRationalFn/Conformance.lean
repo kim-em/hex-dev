@@ -18,7 +18,7 @@ Oracle: SymPy rational-function domains (external fixtures), algebraic identitie
 Mode: always for these deterministic checks.
 
 Covered operations: canonical construction, equality, addition, subtraction,
-multiplication, inversion, checked division, natural powers and coefficient-field use.
+multiplication, inversion, checked division, natural powers and coefficient-field transport.
 Covered properties: canonical pair agreement, field laws, plan independence,
 polynomial division and Bézout identities over the rational-function field.
 Covered edge cases: zero denominators, nonmonic denominators, cancelled common
@@ -33,6 +33,14 @@ private def x : RationalFn Rat := RationalFn.X
 
 private def fraction (p q : List Rat) : Option (RationalFn Rat) :=
   RationalFn.ofFraction? (DensePoly.ofList p) (DensePoly.ofList q)
+
+#guard let y : RationalFn (RationalFn Rat) := RationalFn.X
+  RationalFn.liftConstants (1 / ((1 - x) * (1 - 2 * x))) =
+    1 / ((1 - y) * (1 - 2 * y))
+#guard RationalFn.liftConstants (0 : RationalFn Rat) =
+  (0 : RationalFn (RationalFn Rat))
+#guard RationalFn.liftConstants x =
+  (RationalFn.X : RationalFn (RationalFn Rat))
 
 #guard fraction [0] [0] = none
 #guard fraction [1] [0] = none

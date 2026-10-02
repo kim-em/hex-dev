@@ -1,0 +1,1263 @@
+{
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "cpu": 3,
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "commit": "162e4b900159412838a66d4764a5bc2babe11b88",
+  "diff_sha256": "7b43c548e75f1d01e2db727442ee522720faba0abfb8d1cf51f2374359baece9",
+  "protocol": "adjacent arms, AB/BA alternating blocks; every completed sample retained",
+  "checker_changed": false,
+  "certificates": {
+    "reference": {
+      "nonleaf_nodes": 5,
+      "entries": 10
+    },
+    "generated": {
+      "nonleaf_nodes": 3,
+      "entries": 8,
+      "attempts": 29
+    }
+  },
+  "samples": [
+    {
+      "block": 0,
+      "component": "input",
+      "arm": "Baseline",
+      "seconds": 2.300326411961578,
+      "returncode": 0,
+      "load_before": [
+        113.2724609375,
+        84.73974609375,
+        64.59765625
+      ],
+      "load_after": [
+        110.12744140625,
+        84.56103515625,
+        64.6484375
+      ],
+      "source_bytes": 310,
+      "source_sha256": "f6a3e3a530d870ac216d7482a614df1b937c53c008bebed5b3e3f3dd3693f8e0",
+      "olean_bytes": 2000,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Baseline (1.2s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 0,
+      "component": "input",
+      "arm": "Input",
+      "seconds": 2.113834780990146,
+      "returncode": 0,
+      "load_before": [
+        110.12744140625,
+        84.56103515625,
+        64.6484375
+      ],
+      "load_after": [
+        110.12744140625,
+        84.56103515625,
+        64.6484375
+      ],
+      "source_bytes": 342,
+      "source_sha256": "820fabf157414fb095a3607d77338c940b61f33c9e31d8ae546c9ce4fe67d912",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Input (1.1s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 0,
+      "component": "search",
+      "arm": "Input",
+      "seconds": 2.0235799989895895,
+      "returncode": 0,
+      "load_before": [
+        110.12744140625,
+        84.56103515625,
+        64.6484375
+      ],
+      "load_after": [
+        110.12744140625,
+        84.56103515625,
+        64.6484375
+      ],
+      "source_bytes": 342,
+      "source_sha256": "820fabf157414fb095a3607d77338c940b61f33c9e31d8ae546c9ce4fe67d912",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Input (1.0s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 0,
+      "component": "search",
+      "arm": "Search",
+      "seconds": 2.606812122045085,
+      "returncode": 0,
+      "load_before": [
+        110.12744140625,
+        84.56103515625,
+        64.6484375
+      ],
+      "load_after": [
+        107.474609375,
+        84.43505859375,
+        64.71484375
+      ],
+      "source_bytes": 487,
+      "source_sha256": "a79f3a84302d88eb9c3739cdcc76dbc80bac0dc3686b0b5771992bd7bd0db93b",
+      "olean_bytes": 4056,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Search (1.7s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Search.lean:18:0: 29\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 0,
+      "component": "literal",
+      "arm": "Input",
+      "seconds": 1.3506243619485758,
+      "returncode": 0,
+      "load_before": [
+        107.474609375,
+        84.43505859375,
+        64.71484375
+      ],
+      "load_after": [
+        107.474609375,
+        84.43505859375,
+        64.71484375
+      ],
+      "source_bytes": 342,
+      "source_sha256": "820fabf157414fb095a3607d77338c940b61f33c9e31d8ae546c9ce4fe67d912",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Input (709ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 0,
+      "component": "literal",
+      "arm": "Literal",
+      "seconds": 1.4285504940198734,
+      "returncode": 0,
+      "load_before": [
+        107.474609375,
+        84.43505859375,
+        64.71484375
+      ],
+      "load_after": [
+        107.1162109375,
+        84.74365234375,
+        64.9208984375
+      ],
+      "source_bytes": 1101,
+      "source_sha256": "12d23fff3e074e26d044f990118710cd30f5ee9a6b7e812096aab6bdd1374d98",
+      "olean_bytes": 4736,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Literal (814ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 0,
+      "component": "render",
+      "arm": "Literal",
+      "seconds": 1.6107488310080953,
+      "returncode": 0,
+      "load_before": [
+        107.1162109375,
+        84.74365234375,
+        64.9208984375
+      ],
+      "load_after": [
+        107.1162109375,
+        84.74365234375,
+        64.9208984375
+      ],
+      "source_bytes": 1101,
+      "source_sha256": "12d23fff3e074e26d044f990118710cd30f5ee9a6b7e812096aab6bdd1374d98",
+      "olean_bytes": 4736,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Literal (890ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 0,
+      "component": "render",
+      "arm": "Render",
+      "seconds": 1.4333550879964605,
+      "returncode": 0,
+      "load_before": [
+        107.1162109375,
+        84.74365234375,
+        64.9208984375
+      ],
+      "load_after": [
+        107.1162109375,
+        84.74365234375,
+        64.9208984375
+      ],
+      "source_bytes": 1183,
+      "source_sha256": "13030f94e8b6302d4e2a0425ef0ff95c5ab046dc52059d68d77647015f39a341",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Render (744ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 0,
+      "component": "replay",
+      "arm": "Literal",
+      "seconds": 1.391212071001064,
+      "returncode": 0,
+      "load_before": [
+        107.1162109375,
+        84.74365234375,
+        64.9208984375
+      ],
+      "load_after": [
+        107.1162109375,
+        84.74365234375,
+        64.9208984375
+      ],
+      "source_bytes": 1101,
+      "source_sha256": "12d23fff3e074e26d044f990118710cd30f5ee9a6b7e812096aab6bdd1374d98",
+      "olean_bytes": 4736,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Literal (717ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 0,
+      "component": "replay",
+      "arm": "Replay",
+      "seconds": 11.87648310296936,
+      "returncode": 0,
+      "load_before": [
+        107.1162109375,
+        84.74365234375,
+        64.9208984375
+      ],
+      "load_after": [
+        89.7705078125,
+        81.9580078125,
+        64.32421875
+      ],
+      "source_bytes": 1189,
+      "source_sha256": "abb39f786cbc5eb5b4fa488ac0892448adcd72440f578b4d7624defa42a46e42",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Replay (11s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Replay.lean:29:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 0,
+      "component": "complete",
+      "arm": "Baseline",
+      "seconds": 3.1614101710147224,
+      "returncode": 0,
+      "load_before": [
+        89.7705078125,
+        81.9580078125,
+        64.32421875
+      ],
+      "load_after": [
+        89.7705078125,
+        81.9580078125,
+        64.32421875
+      ],
+      "source_bytes": 310,
+      "source_sha256": "f6a3e3a530d870ac216d7482a614df1b937c53c008bebed5b3e3f3dd3693f8e0",
+      "olean_bytes": 2000,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Baseline (1.6s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 0,
+      "component": "complete",
+      "arm": "Tactic",
+      "seconds": 15.821361713984516,
+      "returncode": 0,
+      "load_before": [
+        89.7705078125,
+        81.9580078125,
+        64.32421875
+      ],
+      "load_after": [
+        73.01904296875,
+        78.64013671875,
+        63.60791015625
+      ],
+      "source_bytes": 427,
+      "source_sha256": "96276e5167aee292f88e45f784822cf89a88ed8f537a723a0acf664151ed093d",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Tactic (14s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Tactic.lean:18:52: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Tactic.lean:19:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 0,
+      "component": "certificate-comparison",
+      "arm": "Reference",
+      "seconds": 19.654395864985418,
+      "returncode": 0,
+      "load_before": [
+        73.01904296875,
+        78.64013671875,
+        63.60791015625
+      ],
+      "load_after": [
+        55.361328125,
+        74.25537109375,
+        62.48583984375
+      ],
+      "source_bytes": 1021,
+      "source_sha256": "6c2edaed88085eb6987b571009992778e9858cc5b8e798c37e654b13bb62e742",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Reference (18s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Reference.lean:32:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 0,
+      "component": "certificate-comparison",
+      "arm": "Replay",
+      "seconds": 12.896397902979515,
+      "returncode": 0,
+      "load_before": [
+        55.361328125,
+        74.25537109375,
+        62.48583984375
+      ],
+      "load_after": [
+        48.23291015625,
+        72.1064453125,
+        61.912109375
+      ],
+      "source_bytes": 1189,
+      "source_sha256": "abb39f786cbc5eb5b4fa488ac0892448adcd72440f578b4d7624defa42a46e42",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Replay (12s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Replay.lean:29:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "input",
+      "arm": "Input",
+      "seconds": 1.6099718610057607,
+      "returncode": 0,
+      "load_before": [
+        48.23291015625,
+        72.1064453125,
+        61.912109375
+      ],
+      "load_after": [
+        48.23291015625,
+        72.1064453125,
+        61.912109375
+      ],
+      "source_bytes": 342,
+      "source_sha256": "820fabf157414fb095a3607d77338c940b61f33c9e31d8ae546c9ce4fe67d912",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Input (1.1s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "input",
+      "arm": "Baseline",
+      "seconds": 1.2179838769952767,
+      "returncode": 0,
+      "load_before": [
+        48.23291015625,
+        72.1064453125,
+        61.912109375
+      ],
+      "load_after": [
+        45.0107421875,
+        71.0419921875,
+        61.6220703125
+      ],
+      "source_bytes": 310,
+      "source_sha256": "f6a3e3a530d870ac216d7482a614df1b937c53c008bebed5b3e3f3dd3693f8e0",
+      "olean_bytes": 2000,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Baseline (613ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "search",
+      "arm": "Search",
+      "seconds": 2.2581829599803314,
+      "returncode": 0,
+      "load_before": [
+        45.0107421875,
+        71.0419921875,
+        61.6220703125
+      ],
+      "load_after": [
+        45.0107421875,
+        71.0419921875,
+        61.6220703125
+      ],
+      "source_bytes": 487,
+      "source_sha256": "a79f3a84302d88eb9c3739cdcc76dbc80bac0dc3686b0b5771992bd7bd0db93b",
+      "olean_bytes": 4056,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Search (1.7s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Search.lean:18:0: 29\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "search",
+      "arm": "Input",
+      "seconds": 1.6531587850186042,
+      "returncode": 0,
+      "load_before": [
+        45.0107421875,
+        71.0419921875,
+        61.6220703125
+      ],
+      "load_after": [
+        45.0107421875,
+        71.0419921875,
+        61.6220703125
+      ],
+      "source_bytes": 342,
+      "source_sha256": "820fabf157414fb095a3607d77338c940b61f33c9e31d8ae546c9ce4fe67d912",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Input (941ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "literal",
+      "arm": "Literal",
+      "seconds": 3.128081838018261,
+      "returncode": 0,
+      "load_before": [
+        45.0107421875,
+        71.0419921875,
+        61.6220703125
+      ],
+      "load_after": [
+        50.77587890625,
+        71.80517578125,
+        61.919921875
+      ],
+      "source_bytes": 1101,
+      "source_sha256": "12d23fff3e074e26d044f990118710cd30f5ee9a6b7e812096aab6bdd1374d98",
+      "olean_bytes": 4736,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Literal (1.6s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "literal",
+      "arm": "Input",
+      "seconds": 3.0077318939729594,
+      "returncode": 0,
+      "load_before": [
+        50.77587890625,
+        71.80517578125,
+        61.919921875
+      ],
+      "load_after": [
+        57.6005859375,
+        72.87109375,
+        62.31787109375
+      ],
+      "source_bytes": 342,
+      "source_sha256": "820fabf157414fb095a3607d77338c940b61f33c9e31d8ae546c9ce4fe67d912",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Input (1.5s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "render",
+      "arm": "Render",
+      "seconds": 2.8695577519829385,
+      "returncode": 0,
+      "load_before": [
+        57.6005859375,
+        72.87109375,
+        62.31787109375
+      ],
+      "load_after": [
+        57.6005859375,
+        72.87109375,
+        62.31787109375
+      ],
+      "source_bytes": 1183,
+      "source_sha256": "13030f94e8b6302d4e2a0425ef0ff95c5ab046dc52059d68d77647015f39a341",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Render (1.5s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "render",
+      "arm": "Literal",
+      "seconds": 2.974229120009113,
+      "returncode": 0,
+      "load_before": [
+        57.6005859375,
+        72.87109375,
+        62.31787109375
+      ],
+      "load_after": [
+        65.16015625,
+        74.18505859375,
+        62.7998046875
+      ],
+      "source_bytes": 1101,
+      "source_sha256": "12d23fff3e074e26d044f990118710cd30f5ee9a6b7e812096aab6bdd1374d98",
+      "olean_bytes": 4736,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Literal (1.6s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "replay",
+      "arm": "Replay",
+      "seconds": 15.474960319988895,
+      "returncode": 0,
+      "load_before": [
+        65.16015625,
+        74.18505859375,
+        62.7998046875
+      ],
+      "load_after": [
+        77.1884765625,
+        76.28076171875,
+        63.66162109375
+      ],
+      "source_bytes": 1189,
+      "source_sha256": "abb39f786cbc5eb5b4fa488ac0892448adcd72440f578b4d7624defa42a46e42",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Replay (14s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Replay.lean:29:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "replay",
+      "arm": "Literal",
+      "seconds": 2.890269942989107,
+      "returncode": 0,
+      "load_before": [
+        77.1884765625,
+        76.28076171875,
+        63.66162109375
+      ],
+      "load_after": [
+        80.537109375,
+        76.990234375,
+        63.958984375
+      ],
+      "source_bytes": 1101,
+      "source_sha256": "12d23fff3e074e26d044f990118710cd30f5ee9a6b7e812096aab6bdd1374d98",
+      "olean_bytes": 4736,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Literal (1.5s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "complete",
+      "arm": "Tactic",
+      "seconds": 20.182280658977106,
+      "returncode": 0,
+      "load_before": [
+        80.537109375,
+        76.990234375,
+        63.958984375
+      ],
+      "load_after": [
+        106.150390625,
+        82.9736328125,
+        66.201171875
+      ],
+      "source_bytes": 427,
+      "source_sha256": "96276e5167aee292f88e45f784822cf89a88ed8f537a723a0acf664151ed093d",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Tactic (18s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Tactic.lean:18:52: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Tactic.lean:19:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "complete",
+      "arm": "Baseline",
+      "seconds": 3.6502321679727174,
+      "returncode": 0,
+      "load_before": [
+        106.150390625,
+        82.9736328125,
+        66.201171875
+      ],
+      "load_after": [
+        106.150390625,
+        82.9736328125,
+        66.201171875
+      ],
+      "source_bytes": 310,
+      "source_sha256": "f6a3e3a530d870ac216d7482a614df1b937c53c008bebed5b3e3f3dd3693f8e0",
+      "olean_bytes": 2000,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Baseline (1.7s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "certificate-comparison",
+      "arm": "Replay",
+      "seconds": 19.642001368978526,
+      "returncode": 0,
+      "load_before": [
+        106.150390625,
+        82.9736328125,
+        66.201171875
+      ],
+      "load_after": [
+        122.50048828125,
+        88.25732421875,
+        68.30078125
+      ],
+      "source_bytes": 1189,
+      "source_sha256": "abb39f786cbc5eb5b4fa488ac0892448adcd72440f578b4d7624defa42a46e42",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Replay (17s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Replay.lean:29:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 1,
+      "component": "certificate-comparison",
+      "arm": "Reference",
+      "seconds": 29.851834510976914,
+      "returncode": 0,
+      "load_before": [
+        122.50048828125,
+        88.25732421875,
+        68.30078125
+      ],
+      "load_after": [
+        148.95068359375,
+        98.10693359375,
+        72.22119140625
+      ],
+      "source_bytes": 1021,
+      "source_sha256": "6c2edaed88085eb6987b571009992778e9858cc5b8e798c37e654b13bb62e742",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Reference (27s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Reference.lean:32:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "input",
+      "arm": "Baseline",
+      "seconds": 4.842937178036664,
+      "returncode": 0,
+      "load_before": [
+        148.95068359375,
+        98.10693359375,
+        72.22119140625
+      ],
+      "load_after": [
+        158.884765625,
+        101.0107421875,
+        73.2998046875
+      ],
+      "source_bytes": 310,
+      "source_sha256": "f6a3e3a530d870ac216d7482a614df1b937c53c008bebed5b3e3f3dd3693f8e0",
+      "olean_bytes": 2000,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Baseline (2.4s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "input",
+      "arm": "Input",
+      "seconds": 5.9548836260219105,
+      "returncode": 0,
+      "load_before": [
+        158.884765625,
+        101.0107421875,
+        73.2998046875
+      ],
+      "load_after": [
+        168.98388671875,
+        104.0654296875,
+        74.43701171875
+      ],
+      "source_bytes": 342,
+      "source_sha256": "820fabf157414fb095a3607d77338c940b61f33c9e31d8ae546c9ce4fe67d912",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Input (3.4s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "search",
+      "arm": "Input",
+      "seconds": 4.179855160997249,
+      "returncode": 0,
+      "load_before": [
+        168.98388671875,
+        104.0654296875,
+        74.43701171875
+      ],
+      "load_after": [
+        176.5126953125,
+        106.7041015625,
+        75.4501953125
+      ],
+      "source_bytes": 342,
+      "source_sha256": "820fabf157414fb095a3607d77338c940b61f33c9e31d8ae546c9ce4fe67d912",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Input (2.0s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "search",
+      "arm": "Search",
+      "seconds": 5.584310221951455,
+      "returncode": 0,
+      "load_before": [
+        176.5126953125,
+        106.7041015625,
+        75.4501953125
+      ],
+      "load_after": [
+        183.5185546875,
+        109.31591796875,
+        76.46337890625
+      ],
+      "source_bytes": 487,
+      "source_sha256": "a79f3a84302d88eb9c3739cdcc76dbc80bac0dc3686b0b5771992bd7bd0db93b",
+      "olean_bytes": 4056,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Search (3.5s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Search.lean:18:0: 29\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "literal",
+      "arm": "Input",
+      "seconds": 6.423047798976768,
+      "returncode": 0,
+      "load_before": [
+        183.5185546875,
+        109.31591796875,
+        76.46337890625
+      ],
+      "load_after": [
+        195.3671875,
+        114.30810546875,
+        78.4404296875
+      ],
+      "source_bytes": 342,
+      "source_sha256": "820fabf157414fb095a3607d77338c940b61f33c9e31d8ae546c9ce4fe67d912",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Input (4.0s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "literal",
+      "arm": "Literal",
+      "seconds": 5.540387618995737,
+      "returncode": 0,
+      "load_before": [
+        195.3671875,
+        114.30810546875,
+        78.4404296875
+      ],
+      "load_after": [
+        201.82421875,
+        116.99267578125,
+        79.501953125
+      ],
+      "source_bytes": 1101,
+      "source_sha256": "12d23fff3e074e26d044f990118710cd30f5ee9a6b7e812096aab6bdd1374d98",
+      "olean_bytes": 4736,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Literal (2.9s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "render",
+      "arm": "Literal",
+      "seconds": 4.829519829014316,
+      "returncode": 0,
+      "load_before": [
+        201.82421875,
+        116.99267578125,
+        79.501953125
+      ],
+      "load_after": [
+        207.92431640625,
+        119.666015625,
+        80.568359375
+      ],
+      "source_bytes": 1101,
+      "source_sha256": "12d23fff3e074e26d044f990118710cd30f5ee9a6b7e812096aab6bdd1374d98",
+      "olean_bytes": 4736,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Literal (2.6s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "render",
+      "arm": "Render",
+      "seconds": 6.181822607002687,
+      "returncode": 0,
+      "load_before": [
+        207.92431640625,
+        119.666015625,
+        80.568359375
+      ],
+      "load_after": [
+        212.5751953125,
+        122.095703125,
+        81.564453125
+      ],
+      "source_bytes": 1183,
+      "source_sha256": "13030f94e8b6302d4e2a0425ef0ff95c5ab046dc52059d68d77647015f39a341",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Render (3.5s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "replay",
+      "arm": "Literal",
+      "seconds": 4.30176504998235,
+      "returncode": 0,
+      "load_before": [
+        212.5751953125,
+        122.095703125,
+        81.564453125
+      ],
+      "load_after": [
+        220.77734375,
+        125.29833984375,
+        82.818359375
+      ],
+      "source_bytes": 1101,
+      "source_sha256": "12d23fff3e074e26d044f990118710cd30f5ee9a6b7e812096aab6bdd1374d98",
+      "olean_bytes": 4736,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Literal (1.0s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "replay",
+      "arm": "Replay",
+      "seconds": 23.48032664001221,
+      "returncode": 0,
+      "load_before": [
+        220.77734375,
+        125.29833984375,
+        82.818359375
+      ],
+      "load_after": [
+        235.376953125,
+        134.8173828125,
+        86.8564453125
+      ],
+      "source_bytes": 1189,
+      "source_sha256": "abb39f786cbc5eb5b4fa488ac0892448adcd72440f578b4d7624defa42a46e42",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Replay (21s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Replay.lean:29:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "complete",
+      "arm": "Baseline",
+      "seconds": 4.4103654740029015,
+      "returncode": 0,
+      "load_before": [
+        235.376953125,
+        134.8173828125,
+        86.8564453125
+      ],
+      "load_after": [
+        235.42724609375,
+        136.49755859375,
+        87.65771484375
+      ],
+      "source_bytes": 310,
+      "source_sha256": "f6a3e3a530d870ac216d7482a614df1b937c53c008bebed5b3e3f3dd3693f8e0",
+      "olean_bytes": 2000,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Baseline (2.2s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "complete",
+      "arm": "Tactic",
+      "seconds": 27.5437605890329,
+      "returncode": 0,
+      "load_before": [
+        235.42724609375,
+        136.49755859375,
+        87.65771484375
+      ],
+      "load_after": [
+        223.97314453125,
+        143.23876953125,
+        91.45751953125
+      ],
+      "source_bytes": 427,
+      "source_sha256": "96276e5167aee292f88e45f784822cf89a88ed8f537a723a0acf664151ed093d",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Tactic (24s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Tactic.lean:18:52: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Tactic.lean:19:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "certificate-comparison",
+      "arm": "Reference",
+      "seconds": 45.357575199974235,
+      "returncode": 0,
+      "load_before": [
+        223.97314453125,
+        143.23876953125,
+        91.45751953125
+      ],
+      "load_after": [
+        204.44482421875,
+        150.068359375,
+        96.25634765625
+      ],
+      "source_bytes": 1021,
+      "source_sha256": "6c2edaed88085eb6987b571009992778e9858cc5b8e798c37e654b13bb62e742",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Reference (43s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Reference.lean:32:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 2,
+      "component": "certificate-comparison",
+      "arm": "Replay",
+      "seconds": 17.5476643590373,
+      "returncode": 0,
+      "load_before": [
+        204.44482421875,
+        150.068359375,
+        96.25634765625
+      ],
+      "load_after": [
+        178.92431640625,
+        147.091796875,
+        96.1455078125
+      ],
+      "source_bytes": 1189,
+      "source_sha256": "abb39f786cbc5eb5b4fa488ac0892448adcd72440f578b4d7624defa42a46e42",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Replay (15s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Replay.lean:29:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "input",
+      "arm": "Input",
+      "seconds": 2.8721618239651434,
+      "returncode": 0,
+      "load_before": [
+        178.92431640625,
+        147.091796875,
+        96.1455078125
+      ],
+      "load_after": [
+        169.80126953125,
+        145.728515625,
+        95.97802734375
+      ],
+      "source_bytes": 342,
+      "source_sha256": "820fabf157414fb095a3607d77338c940b61f33c9e31d8ae546c9ce4fe67d912",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Input (1.4s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "input",
+      "arm": "Baseline",
+      "seconds": 3.2109490580041893,
+      "returncode": 0,
+      "load_before": [
+        169.80126953125,
+        145.728515625,
+        95.97802734375
+      ],
+      "load_after": [
+        162.28955078125,
+        144.57080078125,
+        95.87060546875
+      ],
+      "source_bytes": 310,
+      "source_sha256": "f6a3e3a530d870ac216d7482a614df1b937c53c008bebed5b3e3f3dd3693f8e0",
+      "olean_bytes": 2000,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Baseline (1.2s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "search",
+      "arm": "Search",
+      "seconds": 4.382588935026433,
+      "returncode": 0,
+      "load_before": [
+        162.28955078125,
+        144.57080078125,
+        95.87060546875
+      ],
+      "load_after": [
+        154.65869140625,
+        143.28271484375,
+        95.71533203125
+      ],
+      "source_bytes": 487,
+      "source_sha256": "a79f3a84302d88eb9c3739cdcc76dbc80bac0dc3686b0b5771992bd7bd0db93b",
+      "olean_bytes": 4056,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Search (2.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Search.lean:18:0: 29\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "search",
+      "arm": "Input",
+      "seconds": 3.059830952959601,
+      "returncode": 0,
+      "load_before": [
+        154.65869140625,
+        143.28271484375,
+        95.71533203125
+      ],
+      "load_after": [
+        154.65869140625,
+        143.28271484375,
+        95.71533203125
+      ],
+      "source_bytes": 342,
+      "source_sha256": "820fabf157414fb095a3607d77338c940b61f33c9e31d8ae546c9ce4fe67d912",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Input (1.6s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "literal",
+      "arm": "Literal",
+      "seconds": 2.5625465030316263,
+      "returncode": 0,
+      "load_before": [
+        154.65869140625,
+        143.28271484375,
+        95.71533203125
+      ],
+      "load_after": [
+        147.318359375,
+        141.94970703125,
+        95.53955078125
+      ],
+      "source_bytes": 1101,
+      "source_sha256": "12d23fff3e074e26d044f990118710cd30f5ee9a6b7e812096aab6bdd1374d98",
+      "olean_bytes": 4736,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Literal (1.2s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "literal",
+      "arm": "Input",
+      "seconds": 2.868737616983708,
+      "returncode": 0,
+      "load_before": [
+        147.318359375,
+        141.94970703125,
+        95.53955078125
+      ],
+      "load_after": [
+        147.318359375,
+        141.94970703125,
+        95.53955078125
+      ],
+      "source_bytes": 342,
+      "source_sha256": "820fabf157414fb095a3607d77338c940b61f33c9e31d8ae546c9ce4fe67d912",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Input (1.6s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "render",
+      "arm": "Render",
+      "seconds": 3.13354171597166,
+      "returncode": 0,
+      "load_before": [
+        147.318359375,
+        141.94970703125,
+        95.53955078125
+      ],
+      "load_after": [
+        147.693359375,
+        142.11669921875,
+        95.84326171875
+      ],
+      "source_bytes": 1183,
+      "source_sha256": "13030f94e8b6302d4e2a0425ef0ff95c5ab046dc52059d68d77647015f39a341",
+      "olean_bytes": 4056,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Render (1.7s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "render",
+      "arm": "Literal",
+      "seconds": 3.8172370200045407,
+      "returncode": 0,
+      "load_before": [
+        147.693359375,
+        142.11669921875,
+        95.84326171875
+      ],
+      "load_after": [
+        146.3564453125,
+        141.93212890625,
+        96.0322265625
+      ],
+      "source_bytes": 1101,
+      "source_sha256": "12d23fff3e074e26d044f990118710cd30f5ee9a6b7e812096aab6bdd1374d98",
+      "olean_bytes": 4736,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Literal (1.9s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "replay",
+      "arm": "Replay",
+      "seconds": 17.46283662301721,
+      "returncode": 0,
+      "load_before": [
+        146.3564453125,
+        141.93212890625,
+        96.0322265625
+      ],
+      "load_after": [
+        148.1044921875,
+        142.525390625,
+        96.96240234375
+      ],
+      "source_bytes": 1189,
+      "source_sha256": "abb39f786cbc5eb5b4fa488ac0892448adcd72440f578b4d7624defa42a46e42",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Replay (15s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Replay.lean:29:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "replay",
+      "arm": "Literal",
+      "seconds": 3.8627125690109096,
+      "returncode": 0,
+      "load_before": [
+        148.1044921875,
+        142.525390625,
+        96.96240234375
+      ],
+      "load_after": [
+        145.853515625,
+        142.1513671875,
+        97.08642578125
+      ],
+      "source_bytes": 1101,
+      "source_sha256": "12d23fff3e074e26d044f990118710cd30f5ee9a6b7e812096aab6bdd1374d98",
+      "olean_bytes": 4736,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Literal (1.0s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "complete",
+      "arm": "Tactic",
+      "seconds": 11.350963353994302,
+      "returncode": 0,
+      "load_before": [
+        145.853515625,
+        142.1513671875,
+        97.08642578125
+      ],
+      "load_after": [
+        153.8232421875,
+        143.9755859375,
+        98.1630859375
+      ],
+      "source_bytes": 427,
+      "source_sha256": "96276e5167aee292f88e45f784822cf89a88ed8f537a723a0acf664151ed093d",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Tactic (9.7s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Tactic.lean:18:52: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Tactic.lean:19:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "complete",
+      "arm": "Baseline",
+      "seconds": 1.998516307969112,
+      "returncode": 0,
+      "load_before": [
+        153.8232421875,
+        143.9755859375,
+        98.1630859375
+      ],
+      "load_after": [
+        152.9560546875,
+        143.958984375,
+        98.404296875
+      ],
+      "source_bytes": 310,
+      "source_sha256": "f6a3e3a530d870ac216d7482a614df1b937c53c008bebed5b3e3f3dd3693f8e0",
+      "olean_bytes": 2000,
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.Baseline (880ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "certificate-comparison",
+      "arm": "Replay",
+      "seconds": 8.39366548700491,
+      "returncode": 0,
+      "load_before": [
+        152.9560546875,
+        143.958984375,
+        98.404296875
+      ],
+      "load_after": [
+        154.8017578125,
+        144.4912109375,
+        98.8212890625
+      ],
+      "source_bytes": 1189,
+      "source_sha256": "abb39f786cbc5eb5b4fa488ac0892448adcd72440f578b4d7624defa42a46e42",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Replay (7.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Replay.lean:29:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "block": 3,
+      "component": "certificate-comparison",
+      "arm": "Reference",
+      "seconds": 10.856244057998993,
+      "returncode": 0,
+      "load_before": [
+        154.8017578125,
+        144.4912109375,
+        98.8212890625
+      ],
+      "load_after": [
+        155.1171875,
+        144.8896484375,
+        99.43994140625
+      ],
+      "source_bytes": 1021,
+      "source_sha256": "6c2edaed88085eb6987b571009992778e9858cc5b8e798c37e654b13bb62e742",
+      "olean_bytes": 7568,
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Reference (9.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Reference.lean:32:0: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (76 jobs).\n",
+      "stderr": ""
+    }
+  ],
+  "measured_sources_sha256": {
+    "HexPrimality/Construction.lean": "104108bbd4e3583fc528a4d62f077820bac5fe81ac12e949d78ab42e5e4498aa",
+    "HexPrimality/Search.lean": "5dfd721234a2f4e5ec8b165d4327f0c14cd5647ef0383473ce420027761ebd87",
+    "HexPrimality/Elab.lean": "07efa20bf34cab4a697507063883250e21682ba85b8af6c09b430bbc97ca2350",
+    "HexPrimality/Sieve.lean": "f91c70cdac64ad16174fa80bd266db91576851d604474a0c8f587787bd5ef2cb",
+    "HexPrimality/PMinusOne.lean": "7279683d91cd8c777456ecfcbcedb2aff78c207410277f304924aefa97747d79",
+    "HexPrimality/Cert.lean": "e2fb751d95ac2536fa501b803ad8acb1d59679ee0c22237f1c17c45e96f91b79"
+  }
+}

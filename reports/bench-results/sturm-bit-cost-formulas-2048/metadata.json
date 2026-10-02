@@ -1,0 +1,6 @@
+{
+  "kind": "exact untimed closed-form checks",
+  "command": "python3 scripts/bench/sturm_bit_costs.py",
+  "script_sha256": "0d7d2f2d5c49cc7b3d44198c8dce65106bb107a4ad267a480d437b9bca6fed5f",
+  "fixture_sha256": "e2ea1d41323d2b9736fd931fbbdd1c1eeda2fd8a785753b408971a61dff565c6"
+}

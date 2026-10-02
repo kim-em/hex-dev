@@ -32,10 +32,10 @@ namespace Hex
 namespace DyadicComplexBall
 
 /-- The centre of a ball, componentwise. -/
-theorem center_re (b : DyadicComplexBall) : b.center.re = Dyadic.toReal b.re :=
+theorem center_re (b : DyadicComplexBall) : b.center.re = HexRootsMathlib.Dyadic.toReal b.re :=
   GaussDyadic.toComplex_re (b.re, b.im)
 
-theorem center_im (b : DyadicComplexBall) : b.center.im = Dyadic.toReal b.im :=
+theorem center_im (b : DyadicComplexBall) : b.center.im = HexRootsMathlib.Dyadic.toReal b.im :=
   GaussDyadic.toComplex_im (b.re, b.im)
 
 /-- A point of a ball is within the radius of the centre. -/
@@ -52,8 +52,8 @@ theorem radius_nonneg_of_mem {b : DyadicComplexBall} {z : ℂ} (h : z ∈ b.set)
 theorem meets_of_mem_set {b₁ b₂ : DyadicComplexBall} {z : ℂ}
     (h₁ : z ∈ b₁.set) (h₂ : z ∈ b₂.set) : b₁.meets b₂ = true := by
   unfold meets
-  rw [decide_eq_true_eq, ← Dyadic.toReal_le_toReal_iff, Dyadic.toReal_mul,
-    Dyadic.toReal_add, DyadicSquare.toReal_distSq]
+  rw [decide_eq_true_eq, ← HexRootsMathlib.Dyadic.toReal_le_toReal_iff, HexRootsMathlib.Dyadic.toReal_mul,
+    HexRootsMathlib.Dyadic.toReal_add, DyadicSquare.toReal_distSq]
   have h₁' := dist_le_of_mem h₁
   have h₂' := dist_le_of_mem h₂
   have htri : dist b₁.center b₂.center ≤ b₁.realRadius + b₂.realRadius := by
@@ -70,8 +70,8 @@ theorem dist_le_of_meets {b₁ b₂ : DyadicComplexBall} {z w : ℂ}
     (h : b₁.meets b₂ = true) (hz : z ∈ b₁.set) (hw : w ∈ b₂.set) :
     dist z w ≤ 2 * (b₁.realRadius + b₂.realRadius) := by
   unfold meets at h
-  rw [decide_eq_true_eq, ← Dyadic.toReal_le_toReal_iff, Dyadic.toReal_mul,
-    Dyadic.toReal_add, DyadicSquare.toReal_distSq] at h
+  rw [decide_eq_true_eq, ← HexRootsMathlib.Dyadic.toReal_le_toReal_iff, HexRootsMathlib.Dyadic.toReal_mul,
+    HexRootsMathlib.Dyadic.toReal_add, DyadicSquare.toReal_distSq] at h
   have hnn : 0 ≤ b₁.realRadius + b₂.realRadius :=
     add_nonneg (radius_nonneg_of_mem hz) (radius_nonneg_of_mem hw)
   have hcenters : dist b₁.center b₂.center ≤ b₁.realRadius + b₂.realRadius := by
@@ -101,7 +101,7 @@ theorem conj_mem_mirrorBall {b : DyadicComplexBall} {z : ℂ} (h : z ∈ b.set) 
     apply Complex.ext
     · rw [DyadicComplexBall.center_re, Complex.conj_re, DyadicComplexBall.center_re, hre]
     · rw [DyadicComplexBall.center_im, Complex.conj_im, DyadicComplexBall.center_im, him,
-        Dyadic.toReal_neg]
+        HexRootsMathlib.Dyadic.toReal_neg]
   have hradius : (mirrorBall b).realRadius = b.realRadius := rfl
   rw [DyadicComplexBall.set, Metric.mem_closedBall, hcenter, hradius, Complex.dist_conj_conj]
   exact DyadicComplexBall.dist_le_of_mem h
@@ -183,7 +183,7 @@ theorem mul_p_ne_zero (a b : AlgebraicNumber) : a.p * b.p ≠ 0 := by
 
 /-- The real part of a number is within the ball radius of the centre's. -/
 theorem abs_re_sub_center_le (a : AlgebraicNumber) (prec : Int) :
-    |a.toComplex.re - Dyadic.toReal (a.approx prec).re| ≤ (a.approx prec).realRadius := by
+    |a.toComplex.re - HexRootsMathlib.Dyadic.toReal (a.approx prec).re| ≤ (a.approx prec).realRadius := by
   have h := DyadicComplexBall.dist_le_of_mem (approx_mem a prec)
   rw [dist_eq_norm] at h
   have h' := Complex.abs_re_le_norm (a.toComplex - (a.approx prec).center)
@@ -220,7 +220,7 @@ theorem realCompareExact_eq (a b : AlgebraicNumber) (ha : a.isReal = true)
         then Ordering.lt else Ordering.gt) = _
     split
     · rename_i hlt
-      have hlt' := Dyadic.toReal_lt_toReal_iff.mpr hlt
+      have hlt' := HexRootsMathlib.Dyadic.toReal_lt_toReal_iff.mpr hlt
       symm
       rw [compare_lt_iff_lt]
       by_contra hge
@@ -228,9 +228,9 @@ theorem realCompareExact_eq (a b : AlgebraicNumber) (ha : a.isReal = true)
       rw [abs_of_nonneg (by linarith)] at hsep
       linarith
     · rename_i hnlt
-      have hge' : Dyadic.toReal (b.approx (separationPrec (a.p * b.p))).re ≤
-          Dyadic.toReal (a.approx (separationPrec (a.p * b.p))).re :=
-        not_lt.mp fun h => hnlt (Dyadic.toReal_lt_toReal_iff.mp h)
+      have hge' : HexRootsMathlib.Dyadic.toReal (b.approx (separationPrec (a.p * b.p))).re ≤
+          HexRootsMathlib.Dyadic.toReal (a.approx (separationPrec (a.p * b.p))).re :=
+        not_lt.mp fun h => hnlt (HexRootsMathlib.Dyadic.toReal_lt_toReal_iff.mp h)
       symm
       rw [compare_gt_iff_gt]
       by_contra hle
@@ -303,9 +303,9 @@ theorem square_im_pos_iff {d : AlgebraicNumber}
   have hdist : dist d.toComplex (HexRootsMathlib.DyadicSquare.center s) ≤
       HexRootsMathlib.DyadicSquare.radius s := by
     simpa only [HexRootsMathlib.DyadicSquare.closedDisc, Metric.mem_closedBall] using hmem
-  have hcenter : (HexRootsMathlib.DyadicSquare.center s).im = Dyadic.toReal s.im := by
+  have hcenter : (HexRootsMathlib.DyadicSquare.center s).im = HexRootsMathlib.Dyadic.toReal s.im := by
     simp [HexRootsMathlib.DyadicSquare.center_eq, Hex.DyadicSquare.center]
-  have himDist : |d.toComplex.im - Dyadic.toReal s.im| ≤
+  have himDist : |d.toComplex.im - HexRootsMathlib.Dyadic.toReal s.im| ≤
       HexRootsMathlib.DyadicSquare.radius s := by
     have h := Complex.abs_im_le_norm (d.toComplex - HexRootsMathlib.DyadicSquare.center s)
     rw [Complex.sub_im, hcenter] at h
@@ -326,7 +326,7 @@ theorem square_im_pos_iff {d : AlgebraicNumber}
           mul_lt_mul_of_pos_left hsqrt hpos
       _ ≤ (2 : ℝ) ^ (-(3 : ℤ)) * 2 := by gcongr
       _ = 1 / 4 := by norm_num
-  rw [← Dyadic.toReal_lt_toReal_iff, Dyadic.toReal_zero]
+  rw [← HexRootsMathlib.Dyadic.toReal_lt_toReal_iff, HexRootsMathlib.Dyadic.toReal_zero]
   rw [abs_le] at himDist
   rcases hcases with h | h
   · rw [h] at himDist ⊢
@@ -439,7 +439,7 @@ theorem ballDistSq_cast (b : DyadicComplexBall) (re im : Rat) :
   rw [Complex.sq_norm, Complex.normSq_apply, Complex.sub_re, Complex.sub_im,
     DyadicComplexBall.center_re, DyadicComplexBall.center_im]
   simp only [point, Complex.add_re, Complex.add_im, Complex.mul_re, Complex.mul_im,
-    Complex.I_re, Complex.I_im, Dyadic.toReal, Complex.ratCast_re, Complex.ratCast_im]
+    Complex.I_re, Complex.I_im, HexRootsMathlib.Dyadic.toReal, Complex.ratCast_re, Complex.ratCast_im]
   push_cast
   ring
 
@@ -453,7 +453,7 @@ theorem norm_center_sub_le (b : DyadicComplexBall) (re im : Rat) :
   rw [Complex.sub_re, Complex.sub_im, DyadicComplexBall.center_re,
     DyadicComplexBall.center_im] at h
   simp only [point, Complex.add_re, Complex.add_im, Complex.mul_re, Complex.mul_im,
-    Complex.I_re, Complex.I_im, Dyadic.toReal, Complex.ratCast_re, Complex.ratCast_im] at h
+    Complex.I_re, Complex.I_im, HexRootsMathlib.Dyadic.toReal, Complex.ratCast_re, Complex.ratCast_im] at h
   push_cast
   simpa using h
 

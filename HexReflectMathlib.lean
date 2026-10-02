@@ -10,7 +10,10 @@ public import HexReflectMathlib.Carrier
 public import HexReflectMathlib.Correspondence
 public import HexReflectMathlib.Residue
 
+public import HexReflectMathlib.Display
 public import HexReflectMathlib.Kernel
+
+public import HexReflectMathlib.KernelResidue
 
 public section
 

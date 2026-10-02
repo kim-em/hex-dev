@@ -1,0 +1,90 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import Determinant.Schedules
+
+namespace Determinant
+
+open Hex
+
+/-- Experimental elimination in one owned flat array. It retains the existing
+residue type, multiplication, addition and inverse primitive. Only the trailing
+block is updated. This is a value prototype, not a proved replacement. -/
+def ownedDet {p : Nat} [ZMod64.Bounds p] (A : Matrix (ZMod64 p) n n) :
+    Option (ZMod64 p) := Id.run do
+  let mut a : Array (ZMod64 p) := #[]
+  for i in [:n] do
+    for j in [:n] do
+      a := a.push (Schedules.entry A i j)
+  let mut det : ZMod64 p := 1
+  for k in [:n] do
+    let mut pivot := none
+    let mut nonzero := false
+    for i in [k:n] do
+      let x := a.getD (i * n + k) 0
+      if x != 0 then nonzero := true
+      if let some inv := ZMod64.inv? x then
+        pivot := some (i, inv)
+        break
+    let some (r, inv) := pivot | return if nonzero then none else some 0
+    if r != k then
+      for j in [k:n] do
+        let x := a.getD (k * n + j) 0
+        let y := a.getD (r * n + j) 0
+        a := a.set! (k * n + j) y
+        a := a.set! (r * n + j) x
+      det := -det
+    det := det * a.getD (k * n + k) 0
+    for i in [k+1:n] do
+      let c := -(a.getD (i * n + k) 0) * inv
+      a := a.set! (i * n + k) 0
+      if c != 0 then
+        for j in [k+1:n] do
+          let x := a.getD (i * n + j) 0
+          let y := a.getD (k * n + j) 0
+          a := a.set! (i * n + j) (x + c * y)
+  return some det
+
+/-- Same owned loop with raw word arithmetic and a hoisted modulus. Products
+fit in 62 bits under `ZMod64.Bounds`; residue conversion is at the boundary.
+This isolates a scalar/compilation choice from the elimination schedule. -/
+def wordDet {p : Nat} [ZMod64.Bounds p] (A : Matrix (ZMod64 p) n n) :
+    Option (ZMod64 p) := Id.run do
+  let modulus := UInt64.ofNat p
+  let mut a : Array UInt64 := #[]
+  for i in [:n] do
+    for j in [:n] do
+      a := a.push (Schedules.entry A i j).val
+  let mut det : UInt64 := 1
+  for k in [:n] do
+    let mut pivot := none
+    let mut nonzero := false
+    for i in [k:n] do
+      let x := a.getD (i * n + k) 0
+      if x != 0 then nonzero := true
+      if let some inv := ZMod64.inv? (ZMod64.ofNat p x.toNat) then
+        pivot := some (i, inv.val)
+        break
+    let some (r, inv) := pivot | return if nonzero then none else some 0
+    if r != k then
+      for j in [k:n] do
+        let x := a.getD (k * n + j) 0
+        let y := a.getD (r * n + j) 0
+        a := a.set! (k * n + j) y
+        a := a.set! (r * n + j) x
+      det := if det == 0 then 0 else modulus - det
+    det := (det * a.getD (k * n + k) 0) % modulus
+    for i in [k+1:n] do
+      let c := ((modulus - a.getD (i * n + k) 0) * inv) % modulus
+      a := a.set! (i * n + k) 0
+      if c != 0 then
+        for j in [k+1:n] do
+          let x := a.getD (i * n + j) 0
+          let y := a.getD (k * n + j) 0
+          let sum := x + (c * y) % modulus
+          a := a.set! (i * n + j) (if sum < modulus then sum else sum - modulus)
+  return some (ZMod64.ofNat p det.toNat)
+
+end Determinant

@@ -41,6 +41,7 @@ import HexManual.Chapters.HexNumberFieldTower
 import HexManual.Chapters.HexRealAlgebraic
 import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexReflect
+import HexManual.Chapters.HexRealFormula
 import HexManual.Chapters.HexPolyFast
 import HexManual.Chapters.HexRationalFn
 import HexManual.Chapters.HexLatticeEnum
@@ -62,6 +63,7 @@ import HexManual.Tutorials.AESField
 import HexManual.Tutorials.AESModulus
 import HexManual.Tutorials.PrimeSplitting
 import HexManual.Tutorials.Coppersmith
+import HexManual.Tutorials.FieldPrimes
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -164,8 +166,8 @@ tag := "tutorials"
 The reference chapters above document each library on its own terms. The
 tutorials here are application-first: each leads with a problem a reader
 already cares about and shows the libraries carrying a recognizable
-end-to-end workflow, with every code snippet checked as part of this
-build.
+end-to-end workflow. Lean examples are checked by the manual build or their
+linked conformance targets.
 
 {include 2 HexManual.Tutorials.AESField}
 
@@ -174,6 +176,8 @@ build.
 {include 2 HexManual.Tutorials.PrimeSplitting}
 
 {include 2 HexManual.Tutorials.Coppersmith}
+
+{include 2 HexManual.Tutorials.FieldPrimes}
 
 # Draft sections for unreleased libraries
 %%%
@@ -190,6 +194,8 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexTruncatedSeries}
 
 {include 2 HexManual.Chapters.HexReflect}
+
+{include 2 HexManual.Chapters.HexRealFormula}
 
 {include 2 HexManual.Chapters.HexPolyFast}
 

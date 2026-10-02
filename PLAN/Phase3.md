@@ -80,44 +80,21 @@ Reviewer checklist for Phase 3 PRs:
   issue for any deliberately uncovered op (with the conformance
   docstring not claiming it as covered).
 
-### Correspondence-only mathlib layers
+### Mathlib libraries
 
-The criteria and checklist above presuppose an executable surface to
-conform to. A library explicitly classified by `mathlib: true` and
-`correspondence_only: true` whose API is correspondence statements alone,
-with no executable reifier, certificate checker, or tactic of its own, has no
-conformance module at all:
-`conformance/HexFooMathlib/Conformance.lean` must not exist, per
-[SPEC/testing.md §Banned anti-patterns](../SPEC/testing.md#banned-anti-patterns).
-For such a library Phase 3 is done when all of:
+The criteria and checklist above presuppose an executable surface to conform
+to. A `mathlib: true` library whose API is theorems about executable operations
+owned elsewhere has none, and has no conformance module:
+`conformance/HexFooMathlib/Conformance.lean` does not exist, per
+[SPEC/testing.md §Banned anti-patterns](../SPEC/testing.md#banned-anti-patterns),
+and the operations it states theorems about are covered by the conformance of
+the Mathlib-free libraries that implement them. Phase 3 for such a library is
+done when `lake build HexFooMathlib` is green; record completion by bumping
+`libraries.yml[L].done_through` to `3`.
 
-1. `libraries.yml[L].correspondence_only` is `true`,
-   `conformance/HexFooMathlib/Conformance.lean` is absent, and no
-   `HexConformance` glob in `lakefile.lean` names it.
-   `scripts/conformance_targets.py` discovers targets by that
-   filename, so the library is absent from the conformance CI list.
-
-2. The library SPEC declares `correspondence-only-layer`, identifies the
-   computational owners on `Computational conformance owner(s):` and
-   `Computational performance owner(s):` lines, and the PR audits
-   whatever checks the layer carried and cites, for each
-   operation the layer transports, the coverage that lives in the
-   named computational owner or owners (more than one owner is normal,
-   since a layer may transport operations from several Mathlib-free
-   libraries). A check that exercises only the layer's own conversion
-   or index helpers has no executable destination to migrate to and is
-   deleted rather than moved; it is ceremonial, not coverage.
-
-3. `lake build HexFooMathlib` is green on the PR and remains green on
-   `main`.
-
-4. Record completion by bumping `libraries.yml[L].done_through` to
-   `3` in the same PR.
-
-A Mathlib-importing library that owns an executable reifier,
-certificate checker, or tactic is not correspondence-only. It takes the
-ordinary criteria, with its library SPEC defining that runtime contract
-and its CI reachability.
+A Mathlib-importing library that owns an executable reifier, certificate
+checker, or tactic takes the ordinary criteria, with its library SPEC defining
+that runtime contract and its CI reachability.
 
 ## Oracle wiring (forward reference)
 

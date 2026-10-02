@@ -147,6 +147,11 @@ def classify_paths(
 
         return Classification((), True, f"unclassified path changed: {path}")
 
+    # Infinitesimal conformance imports the provider outside library sources.
+    if "HexOrderedFn" in selected:
+        selected.update(("HexSignDet", "HexRealClosure"))
+        reasons.append("HexOrderedFn -> HexSignDet/HexRealClosure infinitesimal conformance")
+
     if not selected:
         return Classification((), True, "no changed path mapped to a library")
 

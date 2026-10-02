@@ -1,0 +1,7 @@
+{
+  "experiments/Determinant/runtime.py": "3df8008c780b7a503a0f865c2b5fe413c75b7286e4791fe08bf76cf65ee6e83e",
+  "experiments/Determinant/Fixture.lean": "3e77c33d5b96ffb581f97c6c59d5dd20a6ea4dd4a854c54829fa2d1ac6958c38",
+  "experiments/Determinant/Schedules.lean": "8a37b61a6d2841dd3c8cbbca3d3dac7fde2c07c8da1c3d40ba39dff4f78ca557",
+  "experiments/Determinant/Runtime.lean": "0fe11d939fac3f91965c7ae56c1a8a119e58b5fce07557f7d89b690e7f5a3805",
+  ".lake/build/bin/determinant_experiment": "d9deb4c7edcb5bc3e9d724fc722544fc94478c70238c3f038c74c05344f84e15"
+}

@@ -1,0 +1,17 @@
+{
+  "command": [
+    ".lake/build/bin/hexorderedfn_bench",
+    "sizes"
+  ],
+  "commit": "11b39a179099f6d5a92630659034977dc1aeb073",
+  "executable_sha256": "d0195ab6aee43f47a11a90cad385e1ab207c653e61a9e137f3895c85f83df174",
+  "size_fields": "Observed stored reduced endpoints and widths, including Horner intermediates and bound products; excludes GMP scratch buffers.",
+  "count_fields": "Source-derived search/provider/bound-operation counts; not runtime counters.",
+  "validation": {
+    "source_commit": "a53e9022fec2e0edae94fc0ed3e74dfd6d6b2b73",
+    "benchmark_source_sha256": "51fc5195efb56195cbd3d09f76e8068cf09b7ea2f1a64d1fca5ac6f796803ced",
+    "executable_sha256": "1082c88b629e416e1c3381375a421b68ddefd669d7df239be5abe0f2b51b207b",
+    "first_success_checks": "Every requested precision in the workload at each level, including every preceding failed trial.",
+    "output_matches_original": true
+  }
+}

@@ -519,3 +519,12 @@ no suspicious unregistered dominant cost was observed.
 ## Concerns
 
 `None.`
+
+## Optional shared-formula adapter
+
+`HexRCF.RealFormula` correspondence is covered by ordinary regression tests in
+`conformance/HexRCF/RealFormulaConformance.lean`, including the cubic
+`x³-x-1=0` under the half-open `(1,2]` existential. Applying the correspondence
+theorem has no dedicated performance benchmark. The adapter is an explicit
+development import built by `HexRCFRealFormula`; the released RCF umbrella
+remains independent of the incubating frontend.

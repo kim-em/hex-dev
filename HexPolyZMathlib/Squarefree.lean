@@ -27,10 +27,6 @@ open Polynomial
 
 noncomputable section
 
-/-- The rational cast of an executable integer polynomial. -/
-abbrev toPolyℚ (p : Hex.ZPoly) : Polynomial ℚ :=
-  (toPolynomial p).map (Int.castRingHom ℚ)
-
 /-- A dense polynomial stores at most one coefficient exactly when its
 Mathlib image has natural degree zero. -/
 theorem size_le_one_iff_natDegree_eq_zero {R : Type*} [Semiring R] [DecidableEq R]
@@ -45,14 +41,6 @@ theorem size_le_one_iff_natDegree_eq_zero {R : Type*} [Semiring R] [DecidableEq 
     rw [Hex.DensePoly.degree?_eq_some_of_pos_size g (Nat.pos_of_ne_zero h),
       Option.getD_some]
     omega
-
-/-- `toRatPoly` corresponds to the rational cast under `toPolynomial`. -/
-theorem toPolynomial_toRatPoly (f : Hex.ZPoly) :
-    HexPolyMathlib.toPolynomial (Hex.ZPoly.toRatPoly f) = toPolyℚ f := by
-  ext n
-  rw [HexPolyMathlib.coeff_toPolynomial, Hex.ZPoly.coeff_toRatPoly, toPolyℚ,
-    Polynomial.coeff_map, coeff_toPolynomial]
-  simp
 
 /-- Coefficients of the rational cast are the rational casts of the integer
 coefficients. -/

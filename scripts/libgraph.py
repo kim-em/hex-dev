@@ -19,20 +19,32 @@ KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck", "HexGraph"}
 # `bench/` and `conformance/`. They are not project libraries (no libraries.yml
 # entry, no repo-root file); exempt them from the Lake-config alignment check only.
 BUILD_ONLY_LIBS = {
+    "HexOrderedFnTests",
+    "HexRealClosureTests",
+    "HexRealClosureMathlibTests",
+    "CadSampleCostsExperiment",  # Manual experiments; no released library or CI target.
     "HexPolyFastKernels",
     "HexGraphIsoProofProbe",
     "HexGraphIsoCfiProbe",
     "HexGraphIsoSparseProofProbe",
     "HexGraphIsoSparseCfiProbe",
     "HexGraphIsoMathlibProofProbe",
+    "HexPermGroupMathlibProofProbe",
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
+    "HexRankBenchSupport",
+    "HexSignDetBenchSupport",
+    "HexSignDetMathlibProofProbe",
+    "HexSignDetMathlibNestedProofProbe",
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
     "HexPrimalityElabProbe",
     "HexPrimalityElabProbeScientific",
+    "HexPrimalityConstructionProbe",
     "HexPrimalityMathlibProofProbe",
+    "HexECPPMathlibProofProbe",
     "HexIntFactorKernelProbe",
+    "HexIntFactorFieldConformance",
     "HexMvGcdKernelProbe",
     "HexMvGcdBenchSupport",
     "HexRationalFnBenchSupport",
@@ -47,11 +59,14 @@ BUILD_ONLY_LIBS = {
     "HexIntervalExperiment",
     "HexGenericRankTests",
     "HexGenericRankMathlibProofProbe",
+    "HexDeterminantalIdealMathlibProofProbe",
     "HexRankTests",
     "HexRankMathlibProofProbe",
     "HexCharPolyMathlibProofProbe",
     "HexBareissMathlibProofProbe",
     "HexPolyDetMathlibProofProbe",
+    "HexKroneckerTests",
+    "HexKroneckerMathlibProofProbe",
     "HexIntervalMathlibExperiment",
     "HexIntervalPntFks2Local",
     "HexIntervalPntFks2ConformanceLocal",
@@ -61,6 +76,10 @@ BUILD_ONLY_LIBS = {
     "HexRealRootsMathlibReplayProbeScientific",
     "HexRCFProofProbe",
     "HexRCFProofProbeScientific",
+    "HexRealFormulaProofProbe",
+    "HexRCFRealFormula",
+    "HexRCFRealCoefficients",
+    "HexQuerySemantics",
     "HexConformance",
     "HexFactorizationModules",
     "HexMvFactorizationTests",
@@ -145,8 +164,8 @@ VALID_STATUSES = {"active", "planned", "draft"}
 PHASE4_COMPARATOR_CLASSES = {"gating", "informational"}
 LIBRARY_FIELDS = {
     "deps",
+    "adapter_deps",
     "mathlib",
-    "correspondence_only",
     "done_through",
     "status",
     "proof_probes",
@@ -182,10 +201,10 @@ class LibraryInfo:
     mathlib: bool
     done_through: int
     status: str
-    correspondence_only: bool = False
     proof_probes: tuple[str, ...] = ()
     phase4: Phase4Info | None = None
     external: str | None = None
+    adapter_deps: tuple[str, ...] = ()
 
     @property
     def is_active(self) -> bool:
@@ -227,18 +246,12 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         deps = current_fields["deps"]
         if not isinstance(deps, list) or not all(isinstance(dep, str) for dep in deps):
             raise ValueError(f"{current_name} has malformed deps")
+        adapter_deps = current_fields.get("adapter_deps", [])
+        if not isinstance(adapter_deps, list) or not all(isinstance(dep, str) for dep in adapter_deps):
+            raise ValueError(f"{current_name} has malformed adapter_deps")
         mathlib = current_fields["mathlib"]
         if not isinstance(mathlib, bool):
             raise ValueError(f"{current_name} has malformed mathlib flag")
-        correspondence_only = current_fields.get("correspondence_only", False)
-        if not isinstance(correspondence_only, bool):
-            raise ValueError(
-                f"{current_name} has malformed correspondence_only flag"
-            )
-        if correspondence_only and not mathlib:
-            raise ValueError(
-                f"{current_name} declares correspondence_only but mathlib is false"
-            )
         done_through = current_fields["done_through"]
         if not isinstance(done_through, int):
             raise ValueError(f"{current_name} has malformed done_through")
@@ -261,10 +274,6 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
             raise ValueError(f"{current_name} has malformed proof_probes")
         if len(proof_probes) != len(set(proof_probes)):
             raise ValueError(f"{current_name} has duplicate proof_probes entries")
-        if correspondence_only and proof_probes:
-            raise ValueError(
-                f"{current_name} declares correspondence_only and proof_probes"
-            )
         for probe in proof_probes:
             parts = Path(probe).parts
             if (
@@ -285,20 +294,16 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         phase4 = current_fields.get("phase4")
         if phase4 is not None and not isinstance(phase4, Phase4Info):
             raise ValueError(f"{current_name} has malformed phase4 block")
-        if correspondence_only and phase4 is not None:
-            raise ValueError(
-                f"{current_name} declares correspondence_only and a phase4 block"
-            )
         external = current_fields.get("external")
         if external is not None and not isinstance(external, str):
             raise ValueError(f"{current_name} has malformed external field")
         libs[current_name] = LibraryInfo(
             name=current_name,
             deps=tuple(deps),
+            adapter_deps=tuple(adapter_deps),
             mathlib=mathlib,
             done_through=done_through,
             status=status,
-            correspondence_only=correspondence_only,
             proof_probes=tuple(proof_probes),
             phase4=phase4,
             external=external,
@@ -343,7 +348,7 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         raise ValueError("no libraries found in libraries.yml")
 
     for name, info in libs.items():
-        for dep in info.deps:
+        for dep in (*info.deps, *info.adapter_deps):
             if dep not in libs:
                 raise ValueError(f"{name} depends on unknown library {dep}")
 
@@ -367,7 +372,7 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
     for name, info in libs.items():
         if not info.is_active:
             continue
-        for dep in info.deps:
+        for dep in (*info.deps, *info.adapter_deps):
             if not libs[dep].is_active:
                 raise ValueError(
                     f"{name} (status: active) depends on {dep} "
@@ -676,6 +681,8 @@ def may_import(
     l_b: str,
     libraries: OrderedDict[str, LibraryInfo],
     closure: dict[str, set[str]] | None = None,
+    *,
+    adapter: bool = False,
 ) -> bool:
     """True iff a file in library ``l_a`` may import a module from ``l_b``.
 
@@ -687,7 +694,9 @@ def may_import(
 
     Pass a precomputed ``closure`` (from ``reachable_dependencies``) when
     making many calls to avoid recomputing the topological closure each
-    time; otherwise it is built on demand.
+    time; otherwise it is built on demand. Development adapter sources may
+    additionally use their owner's ``adapter_deps`` and those libraries' normal
+    dependencies. These edges do not enter the published library closure.
     """
     if l_a not in libraries:
         raise ValueError(f"unknown library {l_a!r}")
@@ -697,7 +706,12 @@ def may_import(
         return True
     if closure is None:
         closure = reachable_dependencies(libraries)
-    return l_b in closure[l_a]
+    if l_b in closure[l_a]:
+        return True
+    return adapter and any(
+        l_b == dep or l_b in closure[dep]
+        for dep in libraries[l_a].adapter_deps
+    )
 
 
 def pascal_to_spec_path(name: str) -> str:
@@ -748,6 +762,8 @@ def library_owner_for_path(path: Path, libraries: OrderedDict[str, LibraryInfo])
     parts = path.parts
     if not parts:
         return None
+    if parts[0] == "adapters" and len(parts) > 1:
+        return library_owner_for_path(Path(*parts[1:]), libraries)
     first = parts[0]
     if first in libraries or first in KNOWN_EXCEPTIONS:
         return first

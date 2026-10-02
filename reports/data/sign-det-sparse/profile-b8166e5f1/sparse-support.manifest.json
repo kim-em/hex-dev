@@ -1,0 +1,370 @@
+{
+  "family": "sparse-support",
+  "function": "Hex.SignDetBench.runProduce",
+  "parameter": 2048,
+  "cpu": 72,
+  "load": [
+    3.55859375,
+    3.92138671875,
+    4.66259765625
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10377-sparse-profile-b8166e5f1",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex-real-formula-lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10377-sparse-profile-b8166e5f1/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377/.lake/build/bin/hexsigndet_bench",
+        "profile",
+        "Hex.SignDetBench.runProduce",
+        "--param",
+        "2048",
+        "--target-inner-nanos",
+        "5000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/samply.json.gz",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/tmp/hex-real-formula-lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/timed-126154.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10377-sparse-profile-b8166e5f1/diagnostics.json",
+        "--thread",
+        "hexsigndet_benc",
+        "--top",
+        "20",
+        "--output",
+        "reports/data/sign-det-sparse/profile-b8166e5f1/sparse-support.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "768b7b2d4220101b7fb601cd3858d47f65ddd471662065e6e98df76c5bbbbfaa",
+  "commit": "b8166e5f145866652a2f5e3fdb921e2eb0801bfa",
+  "dirty": false,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.1.5",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 126154,
+    "bench_thread_name": "hexsigndet_benc",
+    "bench_thread_tid": "126157",
+    "regions_total": 9,
+    "total_timed_ms": 4534.347007,
+    "expected_samples_bench_thread": 4529.8,
+    "retained_samples_bench_thread": 4526,
+    "rejected_samples_bench_thread": 1106,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790081919326606728,
+    "spawn_anchor_mono_ns": 1053029528270941,
+    "sidecar_mono_anchor_ns": 1053030768159797,
+    "samply_meta_start_time_ms": 1790081919356.604,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.8510630130767822,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.8510630130767822,
+      "raw_max_residual_ms": 0.9754469394683838,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 9,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 4526,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.8510630130767822,
+          "boundary_residual_raw_max_ms": 0.9754469394683838,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0011047282368537342,
+          "leaf_function_support_size": 1158,
+          "comparison_samples": 4526,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.002209456473707468,
+          "sampling_noise_allowance": 0.020174648568887458,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.0011047282368537345,
+          "leaf_function_support_size": 1154,
+          "comparison_samples": 4526,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.002209456473707468,
+          "sampling_noise_allowance": 0.02013977447441408,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 4526,
+          "top_leaf_functions": [
+            {
+              "function": 238,
+              "name": "0xaef3c",
+              "samples": 191
+            },
+            {
+              "function": 68,
+              "name": "0xae923",
+              "samples": 158
+            },
+            {
+              "function": 499,
+              "name": "0x4d02f48",
+              "samples": 83
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 4526,
+          "top_leaf_functions": [
+            {
+              "function": 238,
+              "name": "0xaef3c",
+              "samples": 191
+            },
+            {
+              "function": 68,
+              "name": "0xae923",
+              "samples": 158
+            },
+            {
+              "function": 499,
+              "name": "0x4d02f48",
+              "samples": 83
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 4526,
+          "top_leaf_functions": [
+            {
+              "function": 238,
+              "name": "0xaef3c",
+              "samples": 190
+            },
+            {
+              "function": 68,
+              "name": "0xae923",
+              "samples": 158
+            },
+            {
+              "function": 499,
+              "name": "0x4d02f48",
+              "samples": 83
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "3bc3c21269a63f39c7ae92408b9b087424c045373d01d7643b61d360f848d980",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "4dd633ce6dacab59e6b9d42eba3b7e4ae44f9daacce2ec4277cf200279ecbf9f",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "45811d635994c9dfee04df8874d3a2a99cfa74a454e478d404778000e4be7c72",
+    "perf.data": "c4d439b43644728d9469c6709722b3a06b383c1f05d704255d8d49ad1f409d40",
+    "timed-126154.jsonl": "577ebf09fa1fb4281ca5706fd384d0d96d07260dd74f1d899da15399391185fb",
+    "5.stdout": "adf1a53a9731c3e5dd59f938e20fb5db0c632be72b21c9b50fac0f23e3efb14a",
+    "5.stderr": "3f8620b77c6408bd44470e5308f4e881b5a283c259e118a769a00d39c24a3961",
+    "samply.json.gz": "7889ce6394854eca390fe090a7df4344fce8a30b53e26e71565d06e0eda12600",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "408749bae6a05564937893e6350c5abafcefc4232827ec0f02baf03b463543e8",
+    "7.stdout": "cd0876f80cc9d514395a8baf35a2a944f23902c67598b0bc6161fa5e9b0aaaf2",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "cd0876f80cc9d514395a8baf35a2a944f23902c67598b0bc6161fa5e9b0aaaf2",
+    "normalized.json.gz": "2fa8d8e6bf8fbcb30d84592c1bed1fd07b35bd2072539acf9ea0613b04ee0d1b",
+    "8.stdout": "268459fd1da162a3e847ddab99a0a366ad1c49a4ac28662215f58625b87a8cc4",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "0f56ceb83555c97ebbc3791d2dc669ba7a59d062a794943b0ebbe69eb825f522",
+    "diagnostics.json": "51246b10086f7873b2f1fa2523a7b36440bbab6c1bc87b7d8c4c3957d75fe1e5",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "bdb039ba0740ab8697aaef0528642618b37bc8c7e5949f42395456fea982fba4",
+    "symbols.json": "d0e10bdfd199199a31e914f15a2ff933774b75fc14f1ec45c4bf7ee011543801",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_duration_ns": 4534347007
+}

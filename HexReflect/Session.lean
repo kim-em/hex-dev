@@ -425,17 +425,25 @@ def selectProvider (cap : Capability) (ring : Arith.CommRing) :
 /-! # Conversion -/
 
 /-- Convert a reified ring input against a sealed environment under the
-requested order. -/
-def convert (r : ReifiedRing) (s : Sealed) (order : MonoOrder) :
+requested order. An explicit coefficient provider is validated against the
+classified ring and included in the conversion cache key; it does not alter
+registered provider selection or its cache. -/
+def convert (r : ReifiedRing) (s : Sealed) (order : MonoOrder)
+    (provider? : Option CoeffProvider := none) :
     m (ProviderOutcome Conversion) := withOutcome do
   let ring ← ringOf r
-  let provider ← match ← selectProvider .commRingNormalize ring with
-    | .success (.coefficients p) _ => pure p
-    | .success (.record name _) _ =>
-      failWith (.invalidProviderEvidence { name } "expected coefficient evidence")
-    | .notApplicable => declineWith (.missingCapability .commRingNormalize ring.type)
-    | .declined d _ => declineWith d
-    | .failure f => failWith f
+  let provider ← match provider? with
+    | some p =>
+      validateCoefficients ring p
+      pure p
+    | none =>
+      match ← selectProvider .commRingNormalize ring with
+      | .success (.coefficients p) _ => pure p
+      | .success (.record name _) _ =>
+        failWith (.invalidProviderEvidence { name } "expected coefficient evidence")
+      | .notApplicable => declineWith (.missingCapability .commRingNormalize ring.type)
+      | .declined d _ => declineWith d
+      | .failure f => failWith f
   unless (← getThe State).owns s do
     failWith (.internal "the sealed environment does not belong to this session")
   let key : ConversionKey := {
@@ -610,6 +618,26 @@ def failures : m (Array Failure) :=
   return (← getThe State).failures
 
 end Ops
+
+/-- Extend the set of distinct proof nodes, stopping at the total cap.
+A set reaching the cap may be truncated and must not be reused. -/
+def proofNodes (expressions : Array Expr) (cap : Nat) (seen : ExprSet := {}) : ExprSet :=
+  ((expressions.forM visit).run seen).2
+where
+  visit (e : Expr) : StateM ExprSet Unit := do
+    if (← get).size ≥ cap || (← get).contains e then return
+    modify (·.insert e)
+    match e with
+    | .app f a => visit f; visit a
+    | .lam _ t b _ | .forallE _ t b _ => visit t; visit b
+    | .letE _ t v b _ => visit t; visit v; visit b
+    | .mdata _ b | .proj _ _ b => visit b
+    | _ => pure ()
+
+/-- Count distinct nodes across emitted proofs, stopping at the supplied cap.
+Shared certificate and instance subexpressions are counted once. -/
+def proofNodeCount (expressions : Array Expr) (cap : Nat) : Nat :=
+  (proofNodes expressions cap).size
 
 /-- Cheap normalizers a frontend configures for discharging conditions. Each
 returns a proof of the proposition or `none`. -/

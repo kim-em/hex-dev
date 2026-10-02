@@ -85,7 +85,7 @@ theorem recursiveMap_injective [CommSemiring R] [DecidableEq R] :
   intro m
   have hc := congrArg
     (fun f =>
-      MvPolynomial.coeff (monoEquiv m) (Polynomial.coeff f e)) h
+      (Polynomial.coeff f e).coeff (monoEquiv m)) h
   simpa [recursiveMap] using hc
 
 /-- The comparison map preserves zero. -/

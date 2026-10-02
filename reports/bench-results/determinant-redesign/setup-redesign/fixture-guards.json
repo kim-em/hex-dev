@@ -1,0 +1,28 @@
+[
+  {
+    "command": [
+      "poly",
+      "bareiss",
+      "5",
+      "8",
+      "dense",
+      "1"
+    ],
+    "exit_status": 1,
+    "stdout": "",
+    "stderr": "uncaught exception: fixed polynomial fixture requires 4 8 dense 1\n"
+  },
+  {
+    "command": [
+      "univariate",
+      "dense",
+      "4",
+      "64",
+      "dense",
+      "1"
+    ],
+    "exit_status": 1,
+    "stdout": "",
+    "stderr": "uncaught exception: fixed polynomial fixture requires 4 8 dense 1\n"
+  }
+]

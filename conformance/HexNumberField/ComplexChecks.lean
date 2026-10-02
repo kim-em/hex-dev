@@ -57,13 +57,26 @@ private def fields (_ : Unit) : Bool :=
   let a := s + t
   let cubic := ZPoly.algebraicRoots #p[-2, 0, 0, 1]
   let chosen := QAdjoin.ofAlgebraics? a #[s, t, s]
+  let fast := QAdjoin.fastPair? s t
+  let conjugateFast := QAdjoin.fastPair? (-s) t
   let common := QAdjoin.common #[s, t, s]
+  let overlap := QAdjoin.common #[s, s]
+  let conjugates := QAdjoin.common #[s, -s]
+  let zeroPair := QAdjoin.common #[0, s]
+  let reverseZeroPair := QAdjoin.common #[s, 0]
   let zs := QAdjoin.common #[0, 0]
   (QAdjoin.ofAlgebraic? cubic[0]! cubic[1]!).isNone &&
     (QAdjoin.ofAlgebraic? s (-s)).isSome && (QAdjoin.ofAlgebraic? s t).isNone &&
     chosen.all Option.isSome &&
+    fast.map (fun p => p.entries.map (·.toAlgebraicNumber)) == some #[s, t] &&
+    conjugateFast.map (fun p => p.entries.map (·.toAlgebraicNumber)) == some #[-s, t] &&
+    (QAdjoin.fastPair? s s).isNone && (QAdjoin.fastPair? s (-s)).isNone &&
     chosen.map (fun v => v.map (·.toAlgebraicNumber)) == #[some s, some t, some s] &&
     common.entries.map (·.toAlgebraicNumber) == #[s, t, s] &&
+    overlap.entries.map (·.toAlgebraicNumber) == #[s, s] &&
+    conjugates.entries.map (·.toAlgebraicNumber) == #[s, -s] &&
+    zeroPair.entries.map (·.toAlgebraicNumber) == #[0, s] &&
+    reverseZeroPair.entries.map (·.toAlgebraicNumber) == #[s, 0] &&
     zs.entries.map (·.toAlgebraicNumber) == #[0, 0] &&
     (QAdjoin.common #[]).entries.isEmpty &&
     (QAdjoin.ofAlgebraic? a s).map (·.coeffs) == some (#p[0, -9/2, 0, 1/2] : DensePoly Rat)

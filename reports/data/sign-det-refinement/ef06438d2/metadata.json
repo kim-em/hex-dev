@@ -1,0 +1,29 @@
+{
+  "kind": "representative-api-process-observation",
+  "revision": "ef06438d207104be029431eb8999720f5081e80e",
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10377/.lake/build/bin/hexsigndet_emit_infinitesimal",
+    "refinement"
+  ],
+  "binary_sha256": "e94b2f49451faca6b738c616fefe5aeb6271e0b7b1457faa00b936b3b1be1c80",
+  "host": "chungus2",
+  "cpu": 75,
+  "affinity": [
+    75
+  ],
+  "load_before": [
+    0.3798828125,
+    0.830078125,
+    1.34814453125
+  ],
+  "load_after": [
+    0.509765625,
+    0.849609375,
+    1.35205078125
+  ],
+  "elapsed_nanos": 3869051474,
+  "exit_code": 0,
+  "scope": "One complete process, including startup, descriptor preparation, re-encoding and JSON output; no scaling or Phase-4 verdict.",
+  "stdout_sha256": "bcf63df5ec4c93c7ad8853087cc632f9d9f8cff6635e006173844edcb4b358a7",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -20,12 +20,14 @@ namespace Hex.DensePoly
 
 universe u
 
-variable {F : Type u} [Lean.Grind.Field F] [DecidableEq F]
-
-/-- Normalize a nonzero polynomial to leading coefficient `1`; keep `0` fixed. -/
+/-- Scale by the inverse leading coefficient, keeping `0` fixed.
+For field coefficients the result is monic; that law is proved separately. -/
 @[expose]
-def monicize (p : DensePoly F) : DensePoly F :=
+def monicize {F : Type u} [Zero F] [DecidableEq F] [Inv F] [Mul F]
+    (p : DensePoly F) : DensePoly F :=
   if p.isZero then 0 else scale p.leadingCoeff⁻¹ p
+
+variable {F : Type u} [Lean.Grind.Field F] [DecidableEq F]
 
 @[simp, grind =]
 theorem monicize_zero : monicize (0 : DensePoly F) = 0 := by

@@ -27,7 +27,33 @@ import HexPrimality
 #eval Hex.Nat.primesIn 0 30
 
 example : Hex.Nat.Prime 2147483647 := by primality
+
+-- Explicitly construct a certificate and offer its reusable literal.
+example : Hex.Nat.Prime (2 ^ 255 - 19) := by primality?
 ```
+
+# Reusable proofs
+
+`primality?` uses a larger, finite construction profile and offers a clickable
+`Try this:` replacement containing the checked certificate. Applying it removes
+search from subsequent builds; Lean still replays the checker in its kernel.
+The ordinary `primality` tactic retains its interactive budget.
+`primality? (pMinusOneStage2 := true)` enables bounded Pollard p−1
+continuations within the same total attempt budget. This option defaults to
+`false`.
+
+Use `primality? using expression` to check and render a certificate supplied by
+another producer. The expression may use named intermediate certificates or
+custom Lean macros; the suggestion contains only ordinary constructor data.
+
+```lean
+example : Hex.Nat.Prime 17 := by
+  primality? using (let two : Hex.Nat.PrimeCert := .small 2;
+    .pock 17 [(3, 3, two)])
+```
+
+Supplied producers are untrusted, explicitly selected computation. They must
+return closed certificate data; the kernel still checks the resulting literal.
 
 # Functionality
 
@@ -43,6 +69,24 @@ example : Hex.Nat.Prime 2147483647 := by primality
   primality.
 - `rhoFactor?` and `pMinusOneStage1` expose the bounded factor primitives used
   during certificate search. Every returned factor is validated by a theorem.
+- `Squfof.factor n limits` is an explicit deterministic proper-factor search
+  for `n < 2^64`. Its defaults allow 16 fixed multipliers, 65536 combined
+  forward/reverse recurrence steps per multiplier, and 128 live queue entries.
+  The `Result` distinguishes `factor d`, `noFactor`, `exhausted`, and
+  `unsupported`, with exact attempts, steps, and peak queue usage. A returned
+  divisor satisfies `Squfof.factor_spec`; the three accounting bounds also
+  have public theorems. This route is not enabled in default certificate
+  search. See the [native evidence](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-squfof.md).
+- `Squfof.Policy` explicitly selects `.first limits` or `.rescue limits`
+  in the factor-search budgets; all defaults remain `.off`. The producer
+  and nested certificate allocations are separate.
+- `PMinusOne.start` saves the stage-1 residue; `PMinusOne.stage2` continues it
+  over an exact prime interval. `PMinusOne.search` runs both stages, while
+  the counted forms retain attempts, unchanged random state, and batch diagnostics.
+  For example, `PMinusOne.search 1081 2 5 13` returns `factor 23`.
+  The stage-2 bound is capped at `4194304`; `whole` is a failed split.
+- `primesBelow` enumerates an exact ascending initial segment using the verified
+  runtime sieve, independently of the committed table bound.
 - `isTablePrime` queries the proved table of primes below `100000`, while
   `primesIn` enumerates any finite interval by exact trial division.
 - `nextPrime?` performs a bounded least-prime search and `orderOf` computes

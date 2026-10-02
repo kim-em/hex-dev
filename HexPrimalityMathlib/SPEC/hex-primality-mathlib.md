@@ -7,7 +7,7 @@ search, and initial-segment results, extends the bare `primality` tactic to
 `Nat.Prime` goals, and provides an explicit opt-in `Nat.Prime` `norm_num`
 policy.
 
-This is not a correspondence-only layer. Its elaborators choose registrations,
+Its elaborators choose registrations,
 dispatch between proof-producing routes, run bounded untrusted search, and
 reify terms for kernel checking. This SPEC therefore owns their success,
 decline, failure, resource, conformance, and proof-performance contracts.
@@ -147,6 +147,17 @@ recursive-fuel, rho-restart, and rho-step limits therefore have one executable
 and normative owner; their current values and evidence are specified in
 [the core tactic contract](../../HexPrimality/SPEC/hex-primality.md#the-tactic).
 The bridge must not copy those constants or silently widen them.
+
+### Reusable certificate suggestions
+
+The companion registers both `primality?` and `primality? using expression` for
+`Nat.Prime`, delegating to the core's shared `suggestPrime` handler. It emits
+`Hex.Nat.natPrime_of_checkPrimeAt` and the same literal data and kernel check
+as the core route. Construction policy, explicit producer evaluation, rejection,
+and source-language compatibility belong to the
+[core certificate-language contract](../../HexPrimality/SPEC/hex-primality.md#certificate-language-and-extension-policy).
+The companion adds no producer registry or checker semantics. Exact suggestion
+coverage lives in `HexPrimalityMathlibConformance.OptIn`.
 
 ### Default and opt-in `norm_num`
 
@@ -358,8 +369,7 @@ taskset -c "$cpu" python3 scripts/bench/primality_negative_sweep.py --samples 6 
 
 `lake build HexPrimalityElabProbe` is the untimed build-only reproduction.
 
-These probes are proof-performance evidence, not a claim that the layer is
-correspondence-only and exempt from review. Any change to registration,
+These probes are proof-performance evidence. Any change to registration,
 dispatch, thresholds, search budgets, reification, emitted proof shape, or
 imports must refresh the affected conformance and fresh-module evidence.
 

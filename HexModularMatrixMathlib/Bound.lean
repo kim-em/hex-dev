@@ -50,7 +50,7 @@ private theorem column_bound (A : Hex.Matrix Int n n) :
     exact_mod_cast HexArith.Nat.le_ceilSqrt_sq
       (Hex.Matrix.DetBound.sum (fun i : Fin n => A[(i, j)].natAbs ^ 2))
   have h := (Matrix.norm_det_le_prod_norm_column B).trans
-    (Finset.prod_le_prod (fun _ _ => Real.sqrt_nonneg _) (fun j _ => hc j))
+    (Finset.prod_le_prod₀ (fun _ _ => Real.sqrt_nonneg _) (fun j _ => hc j))
   rw [hd] at h
   rw [prod_eq]
   exact_mod_cast (by simpa only [Nat.cast_natAbs, Int.cast_abs, Real.norm_eq_abs, Nat.cast_prod] using h :

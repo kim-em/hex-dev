@@ -1,0 +1,34 @@
+{
+  "cpu": 3,
+  "load_before": [
+    7.83349609375,
+    9.55859375,
+    19.24853515625
+  ],
+  "command": [
+    "python3",
+    "/tmp/hex10170-lean-bench-samply/scripts/profile_bench.py",
+    "--bench-exe",
+    "/home/kim/worktrees/hex-dev/hex-dev-pollard-stage-2/.lake/build/bin/hexprimality_bench",
+    "--bench-name",
+    "Hex.PrimalityBench.Stage2.Bits512.runTrace",
+    "--param",
+    "32749",
+    "--target-nanos",
+    "5000000000",
+    "--out",
+    "/home/kim/worktrees/hex-dev/hex-dev-pollard-stage-2/reports/bench-results/pminusone-stage2-profile.json.gz",
+    "--keep-raw",
+    "--samply-args",
+    "--rate 999 --unstable-presymbolicate"
+  ],
+  "executable_sha256": "12554476f2b5c27131eee83bbe4a0955fe338e6eb068b7c9b333133fafe7ac93",
+  "exit_code": 2,
+  "load_after": [
+    8.00732421875,
+    9.56640625,
+    19.19873046875
+  ],
+  "raw_artifacts": "pminusone-profile-unfiltered",
+  "disposition": "unfiltered capture; not used for attribution"
+}

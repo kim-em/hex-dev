@@ -296,12 +296,12 @@ def _validate_prime_cert(cert: Any, path: str) -> None:
         if not _is_nat(cert.get("n")):
             raise FixtureError(f"{path}.n must be a nonnegative int: {cert!r}")
         return
-    if t not in {"pock", "pock3"}:
-        raise FixtureError(f"{path}.t must be small/pock/pock3: {cert!r}")
+    if t not in {"pock", "pock3", "pock3Sieve"}:
+        raise FixtureError(f"{path}.t must be small/pock/pock3/pock3Sieve: {cert!r}")
     if not _is_nat(cert.get("n")):
         raise FixtureError(f"{path}.n must be a nonnegative int: {cert!r}")
-    if t == "pock3":
-        for key in ("r", "s", "w"):
+    if t in {"pock3", "pock3Sieve"}:
+        for key in (("r", "s", "w", "m") if t == "pock3Sieve" else ("r", "s", "w")):
             if not _is_nat(cert.get(key)):
                 raise FixtureError(
                     f"{path}.{key} must be a nonnegative int: {cert!r}")

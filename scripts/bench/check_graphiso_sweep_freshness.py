@@ -25,7 +25,13 @@ Hex library namespaces outside the measured import closure. Target additions
 cannot change existing declarations, build options, defaults, or module
 ownership within that closure. The check also compares the Lake declarations
 that build the cactus executable, allowing edits confined to unrelated build
-helpers. Prose under the library tree is edited often enough, and cannot move
+helpers, plus a literal HexBasic precompile flag when HexGraphIso already
+forces that dependency to load natively through Lake shared-library dependencies.
+An AINTLIB requirement is independent when it is newly added at a fixed git
+revision and the graph driver's import closure contains no AINTLIB module.
+The exact proof-only Tau Ceti Thom revision advance is independent when the
+measured import closure excludes TauCeti; other revision changes remain stale.
+Prose under the library tree is edited often enough, and cannot move
 a curve, that making every docstring cost a sweep would either stop the prose
 being written or make regeneration routine enough to stop meaning anything.
 """
@@ -70,6 +76,23 @@ def graphiso_blocks(text: str) -> dict[str, str]:
             relevant[name] = body
         elif kind == "def" and declaration in GRAPHISO_BUILD_DEFS:
             relevant[name] = body
+    # Lake's LeanLib.recBuildShared loads the shared libraries of *all*
+    # transitive imports, regardless of their precompileModules setting.
+    # The measured tactic module imports HexGraphIso, so precompiling that
+    # library already loads native HexBasic. The cactus executable independently
+    # links native facets, which do not depend on precompileModules. This rule
+    # must be revisited if a future figure measures elaboration below HexGraphIso.
+    # Explicit HexBasic precompilation thus adds artifacts, not a new measured
+    # execution/loading path. Admit only the literal flag; retain every other
+    # field, and retain changes to HexGraphIso's own precompilation setting.
+    graph = freshness.strip_lean_comments(relevant.get("lean_lib HexGraphIso", "")).strip()
+    if graph == "lean_lib HexGraphIso where\n  precompileModules := true":
+        key = "lean_lib HexBasic"
+        if key in relevant:
+            basic = freshness.strip_lean_comments(relevant[key]).strip()
+            bare = "lean_lib HexBasic where"
+            if basic in (bare, bare + "\n  precompileModules := true"):
+                relevant[key] = bare
     return relevant
 
 
@@ -77,6 +100,32 @@ def lakefile_texts_differ(before: str, after: str) -> bool:
     """Whether a lakefile edit changes the cactus executable's build."""
     old_blocks = graphiso_blocks(before)
     new_blocks = graphiso_blocks(after)
+    # AINTLIB supplies Hasse's theorem to the separate ECPP bridge. It has no
+    # runtime path to the cactus executable when that import closure excludes it.
+    hasse = new_blocks.get("require AINTLIB", "")
+    if ("require AINTLIB" not in old_blocks
+            and re.fullmatch(
+                r'require AINTLIB from git\s*'
+                r'"https://github\.com/CBirkbeck/AINTLIB\.git"\s*@\s*'
+                r'"[0-9a-f]{40}"',
+                freshness.strip_lean_comments(hasse).strip())
+            and (prefixes := graph_import_prefixes()) is not None
+            and "AINTLIB" not in prefixes and "HasseWeil" not in prefixes):
+        del new_blocks["require AINTLIB"]
+    # This exact Tau Ceti advance adds only the two Thom proof modules. It
+    # retains the compiler and all existing dependency revisions. Permit the
+    # reviewed pin transition only when neither measured import closure reaches
+    # TauCeti; unknown revisions or requirement changes remain stale.
+    thom_url = r'"https://github\.com/TauCetiProject/TauCeti\.git"'
+    old_thom = freshness.strip_lean_comments(old_blocks.get("require TauCeti", "")).strip()
+    new_thom = freshness.strip_lean_comments(new_blocks.get("require TauCeti", "")).strip()
+    if (re.fullmatch(r'require TauCeti from git\s*' + thom_url + r'\s*@\s*'
+                     r'"ff72a2e86930d5268476ee33d55ab054ed1c3ea5"', old_thom)
+            and re.fullmatch(r'require TauCeti from git\s*' + thom_url + r'\s*@\s*'
+                             r'"0dbbe255a4f418084b30a3ffe6763d824a6b4250"', new_thom)
+            and (prefixes := graph_import_prefixes()) is not None
+            and "TauCeti" not in prefixes):
+        new_blocks["require TauCeti"] = old_blocks["require TauCeti"]
     if set(old_blocks) != set(new_blocks):
         return True
     return any(new_blocks[name] != body for name, body in old_blocks.items())

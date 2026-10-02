@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 
 import HexPrimality
+import HexPrimality.ConstructionConformance
+import HexPrimality.SqufofConformance
 
 /-!
 Core conformance checks for the `hex-primality` decision, certificate, and
@@ -60,6 +62,126 @@ Covered edge cases:
 
 open Hex.Nat
 
+namespace PollardStage2Tests
+
+open PMinusOne
+
+private def seed := Hex.Rand.ofSeed 27
+private def run (n : Nat) (b₂ : Nat := 13) := searchCounted n 2 5 b₂ seed
+
+#guard (start 1081 2 5).residue == some 216
+#guard (start 2047 2 5).residue == some 32
+#guard (start 1219 2 5).residue == some 998
+#guard primes 5 13 == [7, 11, 13]
+#guard (run 1081).result == .factor 23
+#guard (run 1081 7).result == .noFactor
+#guard (run 2047).result == .whole
+#guard (run 1219).result == .factor 23
+#guard (run 1081).events[1]!.batches == [⟨7, 13, 3, 23, []⟩]
+#guard (run 2047).events[1]!.batches == [⟨7, 13, 3, 2047, [1, 2047, 1]⟩]
+#guard (run 1219).events[1]!.batches == [⟨7, 13, 3, 1219, [1, 23]⟩]
+#guard recover 1081 [(7, 0), (11, 23)] == (.factor 23, [1081, 23])
+#guard recover 1081 [(7, 0), (11, 1)] == (.whole, [1081, 1])
+#guard (searchCounted 1081 23 5 13 seed).result == .factor 23
+#guard (searchCounted 1081 23 5 13 seed).attempts == 1
+#guard (searchCounted 161 2 5 13 seed).result == .factor 7
+#guard (searchCounted 161 2 5 13 seed).attempts == 1
+#guard (searchCounted 15 2 5 13 seed).result == .whole
+#guard (searchCounted 15 2 5 13 seed).attempts == 1
+#guard [1081, 2047, 1219].all fun n =>
+  (run n).attempts == 2 && (run n).rand == seed && (run n).events.length == 2
+#guard [0, 1, 2, 3].all fun n =>
+  (searchCounted n 2 5 13 seed).attempts == 1 &&
+  (searchCounted n 2 5 13 seed).result == .noFactor &&
+  (stage2Counted n 2 5 13 seed).result == .noFactor
+#guard [0, 1, 1081, 1082].all fun a =>
+  (start 1081 a 5).residue == none && search 1081 a 5 13 == .noFactor
+#guard stage2 1081 0 5 13 == .whole
+#guard stage2 1081 1 5 13 == .whole
+#guard stage2 1081 23 5 13 == .factor 23
+#guard stage2 1081 24 5 13 == .factor 23
+#guard stage2 1081 (1081 * 123 + 216) 5 13 == .factor 23
+#guard (stage2Counted 1081 23 13 5 seed).events[0]!.setupGcds == 1
+#guard (stage2Counted 1081 24 13 5 seed).events[0]!.setupGcds == 2
+#guard [0, 1].all fun b => (start 1081 2 b).residue == some 2
+#guard primes 0 7 == [2, 3, 5, 7]
+#guard primes 1 7 == [2, 3, 5, 7]
+#guard primes 7 7 == []
+#guard primes 13 5 == []
+#guard primes 13 16 == []
+#guard primes 7 11 == [11]
+#guard (searchCounted 1081 2 5 5 seed).attempts == 1
+#guard (stage2Counted 1081 216 5 5 seed).attempts == 1
+#guard (stage2Counted 1081 216 5 5 seed).events[0]!.multiplications == 0
+#guard (stage2Counted 1081 216 13 16 seed).events[0]!.multiplications == 0
+#guard stage2Bound (stage2BoundCap + 1) == 4194304
+#guard stage2Bound 0 == 0
+#guard stage2Bound 1 == 1
+example (n x b₁ b₂ : Nat) :
+    stage2 n x b₁ b₂ = stage2 n x (smoothBound b₁) (stage2Bound b₂) :=
+  stage2_bound ..
+example (n a b₁ b₂ : Nat) :
+    search n a b₁ b₂ = search n a (smoothBound b₁) (stage2Bound b₂) :=
+  search_bound ..
+#guard search 1081 23 (smoothBoundCap + 17) (stage2BoundCap + 17) == .factor 23
+#guard stage2 1081 23 (smoothBoundCap + 17) (stage2BoundCap + 17) == .factor 23
+
+-- Independent powers test the executable baby/giant terms, including small
+-- primes, block boundaries, skipped blocks, and endpoint primes.
+private def terms (n x : Nat) (qs : List Nat) : List Nat := Id.run do
+  let (u, h) := babies n x
+  let mut i := qs.headD 0 / 210
+  let mut v := HexArith.powModBits h i n
+  let mut ts := []
+  for q in qs do
+    v := advance n h (q / 210 - i) v
+    i := q / 210
+    ts := term n v u[q % 210]! :: ts
+  return ts.reverse
+
+#guard terms 1081 216 [7, 11, 13] == [486, 299, 11]
+#guard terms 2047 32 [7, 11, 13] == [3, 0, 1023]
+#guard terms 1219 998 [7, 11, 13] == [969, 989, 954]
+#guard ([486, 299, 11].foldl (fun a t => a * t % 1081) 1) == 736
+#guard [23, 47, 89, 53].map (orderOf 2) == [11, 23, 11, 52]
+#guard [23, 47, 89, 53].all fun p =>
+  (List.range (orderOf 2 p - 1)).all fun i => 2 ^ (i + 1) % p != 1
+#guard [2, 216, 998].all fun x =>
+  let qs := [2, 3, 5, 7, 199, 211, 419, 421, 1009, 2003]
+  terms 1081 x qs == qs.map (fun q => ((x ^ q % 1081) + 1081 - 1) % 1081)
+
+-- A prime with base order 10008 makes these complete scans miss. Flushes
+-- depend on candidate count, not on crossing a giant block.
+private def scanRun (count : Nat) :=
+  let b₂ := (primesBelow 500)[count - 1]!
+  stage2Counted 10009 11 0 b₂ seed
+#guard orderOf 11 10009 == 10008
+#guard [31, 32, 33, 64].all fun count =>
+  let r := scanRun count
+  let e := r.events[0]!
+  r.result == .noFactor && r.attempts == 1 && r.rand == seed &&
+  e.candidates == count && e.setupGcds == 2 &&
+  e.batches.map Batch.length == (if count ≤ 32 then [count]
+    else if count == 33 then [32, 1] else [32, 32]) &&
+  e.multiplications == 210 + e.giantAdvances + 2 * count &&
+  e.batches.all (fun b => b.gcd == 1 && b.recovery.isEmpty)
+
+-- Counter-only measurement mode preserves outcomes, work, and accounting,
+-- including whole-product recovery, while retaining no batch records.
+#guard [1081, 2047, 1219].all fun n =>
+  let x := (start n 2 5).residue.getD 0
+  let qs := primes 5 13
+  let full := fromPrepared n x 5 13 qs seed
+  let counters := fromPrepared n x 5 13 qs seed false
+  full.result == counters.result && full.rand == counters.rand &&
+  full.attempts == counters.attempts &&
+  full.events.map (fun e => { e with batches := [] }) == counters.events &&
+  counters.events[0]!.batches.isEmpty && counters.events[0]!.batchGcds == 1
+#guard (fromPrepared 2047 32 5 13 [7, 11, 13] seed false).events[0]!.recoveryGcds == 3
+#guard (fromPrepared 1219 998 5 13 [7, 11, 13] seed false).events[0]!.recoveryGcds == 2
+
+end PollardStage2Tests
+
 -- Multiplicative order: a typical primitive root, both junk-value edges, and
 -- a base-2 pseudoprime whose proper order catches a Fermat-only implementation.
 #guard orderOf 3 7 == 6
@@ -78,7 +200,7 @@ open Hex.Nat
 #guard defaultPrimeFuel 0 == 1
 #guard defaultPrimeFuel 2 == 2
 #guard defaultPrimeFuel (2 ^ 128) == 129
-#guard defaultPrimeCertBudget == ⟨8, 1 <<< 22⟩
+#guard defaultPrimeCertBudget == ⟨8, 1 <<< 22, .off⟩
 
 -- Direct and counted p−1 calls pin all three terminal gcd outcomes. Each
 -- counted call costs one attempt and preserves `Rand`.
@@ -104,9 +226,9 @@ private def pMinusOneWhole :=
 #guard pMinusOneWhole.attempts == 1
 #guard pMinusOneWhole.rand == Hex.Rand.ofSeed 13
 
-#guard smoothBoundCap == 9999
-#guard smoothBoundCap < primeTableBound
-#guard smoothBound (primeTableBound + 1000) == smoothBoundCap
+#guard smoothBoundCap == 524288
+#guard primeTableBound < smoothBoundCap
+#guard smoothBound (smoothBoundCap + 1000) == smoothBoundCap
 
 example {n base bound d : Nat} {r : Hex.Rand}
     (h : (pMinusOneStage1Counted n base bound r).result = .factor d) :
@@ -180,7 +302,7 @@ example {n base bound d : Nat} {r : Hex.Rand}
         | .ok _ => false)
 
 private def emptyFactorSearch : FactorSearch := fun _allocation n r =>
-  ⟨⟨[], n⟩, (r.words 2).2, 2⟩
+  ⟨⟨[], n⟩, (r.words 2).2, 2, []⟩
 
 private def squarePrime : Nat := 1208925821721293454442757
 
@@ -189,7 +311,7 @@ private def squareFactor : Nat := 549755814367
 private def squareFactorSearch : FactorSearch := fun allocation n r =>
   if n = squarePrime - 1 &&
       allocation.factorFuel = 2 * squarePrime.log2 + 8 then
-    ⟨⟨[(2, 2), (squareFactor, 2)], 1⟩, (r.words 3).2, 3⟩
+    ⟨⟨[(2, 2), (squareFactor, 2)], 1⟩, (r.words 3).2, 3, []⟩
   else defaultFactorSearch allocation n r
 
 #guard (match Internal.primeCertCountedUsing? squareFactorSearch
@@ -228,7 +350,7 @@ example {factor : FactorSearch} {n fuel : Nat} {r : Hex.Rand}
 -- Table division leaves `100549 · 100049`; base-2 stage 1 at bound 64
 -- splits it even with rho disabled. Acceptance still requires replay by the
 -- ordinary certificate checker.
-#guard (match Internal.primeCertCountedWith? ⟨0, 0⟩ 20119653803
+#guard (match Internal.primeCertCountedWith? ⟨0, 0, .off⟩ 20119653803
     (Hex.Rand.ofSeed 17) (defaultPrimeFuel 20119653803) with
   | .ok success =>
       success.cert.raw.subject == 20119653803 && checkPrime success.cert.raw
@@ -270,7 +392,7 @@ example {factor : FactorSearch} {n fuel : Nat} {r : Hex.Rand}
 -- untouched. It is below the square-root Pocklington threshold and above the
 -- cube-root threshold, so search must construct a `pock3` node and the ordinary
 -- checker must replay it.
-#guard (match Internal.primeCertCountedWith? ⟨0, 0⟩ 104929010073468929
+#guard (match Internal.primeCertCountedWith? ⟨0, 0, .off⟩ 104929010073468929
     (Hex.Rand.ofSeed 23) (defaultPrimeFuel 104929010073468929) with
   | .ok success =>
       match success.cert.raw with
@@ -393,7 +515,7 @@ set_option maxRecDepth 10000 in
 
 -- The elaborator's explicit rho allocation reaches a deterministic success
 -- on the committed 512-bit boundary prime.
-#guard (match Internal.primeCertCountedWith? ⟨2, 1 <<< 15⟩
+#guard (match Internal.primeCertCountedWith? ⟨2, 1 <<< 15, .off⟩
     9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177
     (Hex.Rand.ofSeed 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177)
     (defaultPrimeFuel 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177) with
@@ -401,7 +523,7 @@ set_option maxRecDepth 10000 in
   | .error _ => false)
 
 -- The same allocation fails promptly when both bounded restarts miss.
-#guard (match Internal.primeCertCountedWith? ⟨2, 1 <<< 15⟩
+#guard (match Internal.primeCertCountedWith? ⟨2, 1 <<< 15, .off⟩
     11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123
     (Hex.Rand.ofSeed 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123)
     (defaultPrimeFuel 11069588345001798189188705872711741673446310956174776680242876230365522527670481055399138994024099817696810905038323515123654848684366962778647276800762123) with
@@ -691,8 +813,11 @@ def primeTable : Array Nat :=
 
 -- #rebuild_primeTable 25 5 1
 
-private def sieveState1 : Nat :=
+/-- The final verified sieve state underlying the committed prime table. -/
+@[expose] def primeBits : Nat :=
   254
+
+private abbrev sieveState1 : Nat := primeBits
 
 private abbrev sieveStateFinal : Nat := sieveState1
 
@@ -710,3 +835,46 @@ private theorem primeTable_eq_bits :
 -/
 #guard_msgs in
 #rebuild_primeTable 25 5 1
+
+
+-- Raw kernel bounded multiplication retains overflow rejection and zero cases.
+example : Hex.Nat.boundedPowMul 7 2 4 1048576 = none := by decide +kernel
+example : Hex.Nat.boundedPowMul 7 2 3 1 = some 6 := by decide +kernel
+example : Hex.Nat.boundedPowMul 0 5 0 1048576 = some 0 := by decide +kernel
+example : Hex.Nat.boundedPowMul 0 0 1 1 = some 0 := by decide +kernel
+example : Hex.Nat.boundedPowMul 0 5 17 0 = some 17 := by decide +kernel
+
+-- The base-two path checks the bound before constructing a shifted product.
+example : Hex.Nat.boundedPowMul 7 2 1 3 = none := by decide +kernel
+example : Hex.Nat.boundedPowMul 8 2 1 3 = some 8 := by decide +kernel
+example : Hex.Nat.boundedPowMul 23 2 3 3 = none := by decide +kernel
+example : Hex.Nat.boundedPowMul 24 2 3 3 = some 24 := by decide +kernel
+example : Hex.Nat.boundedPowMul 0 2 0 1048576 = some 0 := by decide +kernel
+example : Hex.Nat.boundedPowMul 8 2 1 1048576 = none := by decide +kernel
+example : Hex.Nat.boundedPowMul 0 2 17 0 = some 17 := by decide +kernel
+
+-- Shared witnesses must compute the initial Fermat leg, reset on a changed
+-- base, and keep the total checker semantics at degenerate inputs.
+example : checkWitnesses 7 [(2, 0, .small 3), (2, 0, .small 3)] = true := by decide +kernel
+example : checkWitnesses 7 [(2, 0, .small 3), (3, 0, .small 3), (2, 0, .small 3)] = true := by decide +kernel
+example : checkWitnesses 7 [(0, 0, .small 3), (0, 0, .small 3)] = false := by decide +kernel
+example : checkWitnesses 7 [(2, 0, .small 3), (6, 0, .small 3)] = false := by decide +kernel
+example : checkWitnesses 0 [(0, 0, .small 0)] = false := by decide +kernel
+example : checkWitnesses 1 [(0, 0, .small 0)] = true := by decide +kernel
+
+-- The positive-subject product uses zero for overflow, including overflow
+-- in a suffix; that sentinel must never make a parent certificate pass.
+example : pockProduct 35 [(0, 0, .small 5), (0, 0, .small 7)] = 35 := by decide +kernel
+example : pockProduct 34 [(0, 0, .small 5), (0, 0, .small 7)] = 0 := by decide +kernel
+example : pockProduct 8 [(0, 0, .small 2), (0, 1, .small 3)] = 0 := by decide +kernel
+example : checkPrime (.pock 31 [(3, 0, .small 5), (3, 0, .small 7)]) = false := by decide +kernel
+example : checkPrime (.pock 7 [(2, 0, .small 0), (2, 0, .small 3)]) = false := by decide +kernel
+
+-- Unsupported policies are declined before trial division or random draws.
+#guard ([{ Hex.Nat.constructionBudget.factor with pMinusOneStage2 := true },
+    { Hex.Nat.constructionBudget.factor with attemptLimit := some 0 },
+    { Hex.Nat.constructionBudget.factor with attemptLimit := some 10 }] : List Hex.Nat.FactorSearchBudget).all (fun budget =>
+  let seed := Hex.Rand.ofSeed 7
+  let result := Hex.Nat.defaultFactorSearch budget 1081 seed
+  result.raw.factors.isEmpty && result.raw.residual == 1081 &&
+    result.attempts == 0 && result.rand == seed && result.events.isEmpty)

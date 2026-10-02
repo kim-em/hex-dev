@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+import HexDeterminantalIdealMathlib.TacticTests
 public import HexDeterminantalIdealMathlib
 public import HexMatrixMathlib
 

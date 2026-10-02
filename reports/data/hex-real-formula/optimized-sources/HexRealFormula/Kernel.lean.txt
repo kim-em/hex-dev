@@ -1,0 +1,157 @@
+module
+
+public import HexRealFormula.Syntax
+public import HexMvPoly.Kernel
+
+@[expose] public section
+
+/-! List-form formulas and checked decoding of serialized trees and DAGs. -/
+
+namespace Hex.RealFormula
+
+namespace Kernel
+
+/-- Serialized syntax; the enclosing record declares its coordinate arity. -/
+inductive Body where
+  | atom (p : MvPoly.Kernel.PolyList Int) (cmp : Cmp)
+  | tt | ff
+  | not (p : Body)
+  | and (p q : Body)
+  | or (p q : Body)
+  deriving DecidableEq, BEq, Repr
+
+/-- Every exponent vector has the declared length, including zero terms. -/
+def Body.Valid (n : Nat) : Body → Prop
+  | .atom p _ => ∀ t ∈ p, t.1.length = n
+  | .tt | .ff => True
+  | .not p => p.Valid n
+  | .and p q | .or p q => p.Valid n ∧ q.Valid n
+
+instance instDecidableValid (n : Nat) (p : Body) : Decidable (p.Valid n) :=
+  match p with
+  | .atom ts _ => inferInstanceAs (Decidable (∀ t ∈ ts, t.1.length = n))
+  | .tt | .ff => isTrue trivial
+  | .not p => instDecidableValid n p
+  | .and p q | .or p q =>
+    letI := instDecidableValid n p
+    letI := instDecidableValid n q
+    inferInstanceAs (Decidable (p.Valid n ∧ q.Valid n))
+
+/-- Check lengths before normalization can erase malformed zero terms. -/
+def Body.decode (n : Nat) : Body → Option (RealFormula.QF n)
+  | .atom p c => if p.all (fun t => t.1.length == n) then
+      some (.atom ⟨MvPoly.Kernel.denote (MvPoly.Kernel.normalize p), c⟩) else none
+  | .tt => some .tt | .ff => some .ff
+  | .not p => return .not (← p.decode n)
+  | .and p q => return .and (← p.decode n) (← q.decode n)
+  | .or p q => return .or (← p.decode n) (← q.decode n)
+
+/-- Exact list arithmetic; use only after validating arity. -/
+def Body.evalRat (ρ : List Rat) : Body → Bool
+  | .atom p c => c.evalRat (MvPoly.Kernel.evalAt ρ
+      (p.map fun t => (t.1, (t.2 : Rat))))
+  | .tt => true | .ff => false
+  | .not p => !p.evalRat ρ
+  | .and p q => p.evalRat ρ && q.evalRat ρ
+  | .or p q => p.evalRat ρ || q.evalRat ρ
+
+/-- Kernel data has an explicit arity and schema version. -/
+structure QF where
+  version : Nat := 1
+  arity : Nat
+  body : Body
+  deriving DecidableEq, BEq, Repr
+
+/-- A validated list tree, independent of tree-backed polynomial computation. -/
+structure Validated (n : Nat) where
+  body : Body
+  valid : body.Valid n
+  deriving DecidableEq
+
+/-- Validation visits both sides even when a Boolean branch is unused. -/
+def QF.validate (p : QF) : Option (Validated p.arity) :=
+  if p.version != 1 then none
+  else if h : p.body.Valid p.arity then some ⟨p.body, h⟩ else none
+
+/-- Evaluate a validated formula using only list arithmetic. -/
+def Validated.evalRat (p : Validated n) (ρ : Fin n → Rat) : Bool :=
+  p.body.evalRat (List.ofFn ρ)
+
+/-- References address earlier nodes or explicit supplied input formulas. -/
+inductive Node where
+  | atom (p : MvPoly.Kernel.PolyList Int) (cmp : Cmp)
+  | input (id : Nat)
+  | tt | ff
+  | not (p : Nat)
+  | and (p q : Nat)
+  | or (p q : Nat)
+  deriving DecidableEq, BEq, Repr
+
+/-- An acyclic, topologically ordered formula certificate. -/
+structure Dag where
+  version : Nat := 1
+  arity : Nat
+  nodes : Array Node
+  root : Nat
+  deriving DecidableEq, BEq, Repr
+
+/-- All nodes and input identifiers are checked, including unreachable nodes.
+Only references to the already decoded prefix are accepted. -/
+def Dag.decode (d : Dag) (inputs : Array (RealFormula.QF d.arity)) :
+    Option (RealFormula.QF d.arity) := do
+  if d.version != 1 then none else do
+    let mut decoded : Array (RealFormula.QF d.arity) := #[]
+    for node in d.nodes do
+      let p ← match node with
+        | .atom p c => (Body.atom p c).decode d.arity
+        | .input i => inputs[i]?
+        | .tt => some .tt | .ff => some .ff
+        | .not i => decoded[i]?.map RealFormula.QF.not
+        | .and i j => decoded[i]?.bind fun p => decoded[j]?.map (RealFormula.QF.and p)
+        | .or i j => decoded[i]?.bind fun p => decoded[j]?.map (RealFormula.QF.or p)
+      decoded := decoded.push p
+    decoded[d.root]?
+
+end Kernel
+
+/-- Encode normalized atoms as canonical kernel lists. -/
+def QF.kernelBody : QF n → Kernel.Body
+  | .atom a => .atom (MvPoly.Kernel.toList a.p) a.cmp
+  | .tt => .tt | .ff => .ff
+  | .not p => .not p.kernelBody
+  | .and p q => .and p.kernelBody q.kernelBody
+  | .or p q => .or p.kernelBody q.kernelBody
+
+/-- Versioned serialization with explicit arity. -/
+def QF.toKernel (p : QF n) : Kernel.QF := ⟨1, n, p.kernelBody⟩
+
+/-- Decode only the requested arity and supported schema version. -/
+def QF.ofKernel? (p : Kernel.QF) : Option (QF n) :=
+  if p.version == 1 && p.arity == n then p.body.decode n else none
+
+/-- Encoder output has the declared arity at every atom. -/
+theorem QF.kernelBody_valid (p : QF n) : p.kernelBody.Valid n := by
+  induction p with
+  | atom a => exact (MvPoly.Kernel.toList_canonical a.p).1
+  | tt | ff => trivial
+  | not p ih => exact ih
+  | and p q ihp ihq | or p q ihp ihq => exact ⟨ihp, ihq⟩
+
+/-- Decoding the list encoding recovers the original normalized syntax. -/
+theorem QF.decode_kernelBody (p : QF n) : p.kernelBody.decode n = some p := by
+  induction p with
+  | atom a =>
+    have h := (MvPoly.Kernel.toList_canonical a.p).1
+    simp [kernelBody, Kernel.Body.decode, List.all_eq_true,
+      MvPoly.Kernel.denote_normalize, MvPoly.Kernel.denote_toList]
+    exact fun a b hab => h (a, b) hab
+  | tt | ff => rfl
+  | not p ih => simp [kernelBody, Kernel.Body.decode, ih]
+  | and p q ihp ihq | or p q ihp ihq =>
+    simp [kernelBody, Kernel.Body.decode, ihp, ihq]
+
+/-- Kernel serialization is a checked round trip. -/
+theorem QF.ofKernel_toKernel (p : QF n) : ofKernel? p.toKernel = some p := by
+  simp [ofKernel?, toKernel, decode_kernelBody]
+
+end Hex.RealFormula

@@ -9,8 +9,12 @@ structure DensePoly (R : Type*) [Zero R] [DecidableEq R] where
   normalized : coeffs.size = 0 ∨ coeffs.back! ≠ 0
 ```
 
-The normalization invariant (no trailing zeros) ensures structural equality
-= semantic equality. Every operation maintains this invariant.
+The normalization invariant removes trailing stored zeros. For canonical
+coefficients, structural polynomial equality agrees with coefficientwise
+mathematical equality. For noncanonical representations with a zero-reflecting
+interpretation, it preserves semantic degree, but distinct nonzero stored
+polynomials may have the same interpretation. Every operation maintains the
+storage invariant; semantic identities then test zero coefficient differences.
 
 The polynomial literal `#p[a₀, a₁, ...]` abbreviates
 `DensePoly.ofCoeffs #[a₀, a₁, ...]`. Coefficients are listed in ascending
@@ -20,7 +24,8 @@ so a printed value can be pasted back.
 
 - Index = degree, `coeffs[i]` is coefficient of `x^i`
 - Normalization invariant: no trailing zeros
-- Structural equality = semantic equality
+- Structural equality is semantic equality for canonical coefficients;
+  noncanonical interpretations use zero differences
 - O(1) degree, O(1) coefficient access
 
 **Degree.** `degree?` returns `none` for the zero polynomial and otherwise the
@@ -52,7 +57,7 @@ usable without a transport step. `hex-sparse-poly`, `hex-gf2` and
   convolution and is the specification at every coefficient type; the
   subquadratic kernel is coefficient-specific and therefore lives
   downstream (`Hex.ZPoly.mulKronecker` in `hex-poly-z`). The planned
-  [hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md) adds explicit lawful
+  [hex-poly-fast](../../HexPolyFast/SPEC/hex-poly-fast.md) adds explicit lawful
   multiplication plans, Karatsuba, clipped products, fast division, and
   half-gcd without changing this operation or its instance. A
   type-preserving `@[csimp]` swap of `mul` itself is not available: every
@@ -140,6 +145,99 @@ theorem polyCRT_mod_snd [CommRing R] [DecidableEq R]
 Given coprime `a, b` with Bezout coefficients `s, t`, constructs `h`
 with `h ≡ u (mod a)` and `h ≡ v (mod b)`. Used by hex-hensel,
 hex-gfq-ring, and hex-berlekamp-mathlib (Berlekamp correctness proof).
+
+## Ordered-domain pseudo-division
+
+The [ordered-field Sturm contract](../../SPEC/Libraries/hex-sturm.md) uses
+ordinary `DensePoly D` over a nontrivial ordered commutative domain with
+executable equality. Preserve the existing total polynomial operations and
+field algorithms. For representation coefficients follow the family
+[execution contract](../../SPEC/real-closure-execution.md): structural equality
+and canonical zero permit the same `DensePoly` storage and kernels, without
+field instances on raw syntax. Correctness uses an operation-preserving
+interpretation which reflects zero; semantic identities test zero differences.
+
+The additional arithmetic needed by signed remainder chains is total
+pseudo-division, with no field division. Use ordinary operation instances and `DecidableEq D` for the usual
+leading-coefficient cancellation algorithm. Its reconstruction and degree
+laws require domain laws, or an operation-preserving, zero-reflecting
+interpretation for noncanonical representation coefficients. Order is needed
+only to choose the positive scale required by a signed chain. These are
+ordinary typeclass operations and mathematical hypotheses, not a new
+coefficient-operation record or a resource-budget interface.
+
+For nonzero `B`, return `u,Q,R` satisfying
+
+```text
+u ≠ 0,   u*A = Q*B + R,
+R = 0 or R.natDegree < B.natDegree.
+```
+
+With ordered-domain hypotheses the signed-chain variant chooses `u>0`.
+For example, ordinary pseudo-division gives `u=lc(B)^k`; if it is negative,
+negate `u,Q,R` together. A consumer forms the next signed remainder from
+`-R`; it must not independently force every remainder to be positive-leading.
+Zero divisor handling follows the existing division convention (unchanged
+input as remainder), with reconstruction/degree theorems explicitly requiring
+`B ≠ 0`. Zero dividends and dividends below the divisor degree need no
+cancellation and use `u=1,Q=0,R=A`.
+
+Termination follows from strict decrease of the nonzero remainder degree,
+or from a computed bound of at most `A.natDegree-B.natDegree+1` cancellations
+when `A≠0` and `deg B≤deg A`. A fuel-based implementation must prove its
+internally computed bound suffices; it has no caller threshold or partial
+result. `DensePoly.degree?` already distinguishes zero from nonzero constants.
+There is no second raw polynomial representation or semantic-degree API.
+
+Plain pseudo-gcd iterates pseudo-remainders without Bézout accumulators.
+Its result is a gcd up to a nonzero scalar **over the fraction field of D**,
+not necessarily a gcd in `D[X]`. If a consumer needs pseudo-xgcd, record
+`S*A+T*B=c*G` with `c≠0`; do not assert an unscaled Bézout identity over the
+coefficient domain. For instance `2*S+X*T=1` is impossible over `ℤ[X]`.
+For `(0,0)` choose `G=S=T=0,c=1`; with one zero input return the other up to
+its recorded nonzero scale. Add pseudo-xgcd only for a concrete use-site;
+field inversion already has the existing `xgcd`/`xgcdLeft` APIs.
+
+Field consumers reuse `divMod`, `gcd`, `xgcd`, `xgcdLeft` and `monicize`.
+The current gcd is not assumed monic. Normalizing a gcd explicitly must
+rescale any associated Bézout coefficients. Optimized integer content or
+subresultant normalization belongs with its backend and proves the relevant
+positive-scaling identities; it does not make all arithmetic return evidence.
+
+Prove reconstruction, degree decrease, zero cases, divisibility and field
+agreement as ordinary correctness theorems. Also provide companion transfer
+lemmas for operation-preserving, zero-reflecting representation maps; unlike
+the existing canonical polynomial equivalence, these maps need not be injective. The Mathlib companion relates
+these to `Polynomial` and fraction-field arithmetic. Query certificates live
+with the query owner, not on individual coefficient additions/multiplications.
+No `Hex.PolyOps`, fallible arithmetic callbacks, shared limits/budgets or
+per-operation certificates are part of this library.
+
+Conformance covers negative leading coefficients, zero and constant inputs,
+exact divisions, `(2,X)` over integers, repeated factors, reconstruction and
+strict remainder degree. Compare the field specialization with existing
+field division and gcd up to the recorded scale. Benchmark pseudo-division,
+plain gcd and any required extended variant separately, recording coefficient
+growth and verifying that plain gcd does not compute Bézout accumulators.
+
+## Noninjective polynomial correspondence
+
+Generic operation-only transfer lemmas belong here; Mathlib `Polynomial`
+interpretation belongs in hex-poly-mathlib. For `eval : E → K`, assume zero
+reflection and preservation of each scalar operation used by a kernel,
+including natural casts where derivatives/powers need them. Do not assume
+`eval` injective or ring/field laws on `E`. Prove coefficientwise interpretation
+commutes with the actual division/gcd/xgcd algorithms, their size-derived
+bounds, derivative, Horner evaluation and required pseudo-remainders. Compose
+with the existing lawful-target theorems. Gcd results are up to a nonzero
+scalar unless explicitly normalized, and monicization means leading value
+one, not necessarily literal leading representative one.
+
+Keep structural equality for array/context identity. Scalar and polynomial
+semantic identities are checked by zero differences. No family implementation
+or semantic-quotient construction becomes an import of hex-poly. In particular,
+selected-root zero testing, storage retention and context refinement stay with
+the extension owner.
 
 ## External comparators
 

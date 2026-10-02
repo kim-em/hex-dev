@@ -1,0 +1,384 @@
+{
+  "family": "full-reference",
+  "function": "Hex.SignDetBench.runSmallFull",
+  "parameter": 5,
+  "cpu": 31,
+  "load": [
+    4.07666015625,
+    4.19580078125,
+    7.34228515625
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "raw": "/home/kim/.local/share/hex-bench/sign-det-full-50af81103",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex-real-formula-lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex-real-formula-lean-bench-samply",
+        "config",
+        "--get",
+        "remote.origin.url"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/home/kim/.local/share/hex-bench/sign-det-full-50af81103/timed-%p.jsonl",
+        "/tmp/issue-10377-phase4-full/.lake/build/bin/hexsigndet_bench",
+        "profile",
+        "Hex.SignDetBench.runSmallFull",
+        "--param",
+        "5",
+        "--target-inner-nanos",
+        "5000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/samply.json.gz",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/samply.json.gz",
+        "--perf-script",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/perf-samples.txt",
+        "--spawn-anchor",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/spawn-anchor.json",
+        "--output",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/tmp/hex-real-formula-lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/normalized.json.gz",
+        "--sidecar",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/timed-2893696.jsonl",
+        "--spawn-anchor",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/spawn-anchor.json",
+        "--out",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/filtered.json.gz",
+        "--diagnostics",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/elf_symbols.py",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/filtered.json.gz",
+        "--output",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/summarize_profile.py",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/filtered.json.gz",
+        "--symbols",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/symbols.json",
+        "--diagnostics",
+        "/home/kim/.local/share/hex-bench/sign-det-full-50af81103/diagnostics.json",
+        "--thread",
+        "hexsigndet_benc",
+        "--top",
+        "20",
+        "--output",
+        "/tmp/issue-10377-profile-50af81103/full-reference.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "4f7b45614d45ab966df26e8d31582690ef41060a8874dbc74f8cd32cd04fcf87",
+  "commit": "50af811030d4753fade03d854fcdb5a8b481d641",
+  "dirty": false,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "profiler_remote": "https://github.com/kim-em/lean-bench-samply.git",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.1.5",
+  "timed_duration_ns": 4787028838,
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 2893696,
+    "bench_thread_name": "hexsigndet_benc",
+    "bench_thread_tid": "2893699",
+    "regions_total": 3,
+    "total_timed_ms": 4787.028838,
+    "expected_samples_bench_thread": 4782.2,
+    "retained_samples_bench_thread": 4780,
+    "rejected_samples_bench_thread": 1594,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790451900844637165,
+    "spawn_anchor_mono_ns": 1423011046301779,
+    "sidecar_mono_anchor_ns": 1423012754642910,
+    "samply_meta_start_time_ms": 1790451900872.7002,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.5275270938873291,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.5275270938873291,
+      "raw_max_residual_ms": 0.8437461853027344,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 3,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 4780,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.5275270938873291,
+          "boundary_residual_raw_max_ms": 0.8437461853027344,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0010460251046025102,
+          "leaf_function_support_size": 576,
+          "comparison_samples": 4780,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.0020920502092050207,
+          "sampling_noise_allowance": 0.013472543462760238,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.0012410318794446322,
+          "leaf_function_support_size": 573,
+          "comparison_samples": 4774,
+          "exchanged_samples": 6,
+          "exchanged_fraction": 0.0012568077084206116,
+          "sampling_noise_allowance": 0.010421656862150588,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 4780,
+          "top_leaf_functions": [
+            {
+              "function": 155,
+              "name": "0xaef3c",
+              "samples": 306
+            },
+            {
+              "function": 164,
+              "name": "0xae923",
+              "samples": 256
+            },
+            {
+              "function": 118,
+              "name": "0xae90c",
+              "samples": 162
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 4780,
+          "top_leaf_functions": [
+            {
+              "function": 155,
+              "name": "0xaef3c",
+              "samples": 307
+            },
+            {
+              "function": 164,
+              "name": "0xae923",
+              "samples": 256
+            },
+            {
+              "function": 118,
+              "name": "0xae90c",
+              "samples": 161
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 4774,
+          "top_leaf_functions": [
+            {
+              "function": 155,
+              "name": "0xaef3c",
+              "samples": 307
+            },
+            {
+              "function": 164,
+              "name": "0xae923",
+              "samples": 256
+            },
+            {
+              "function": 118,
+              "name": "0xae90c",
+              "samples": 161
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "a0757fc3fd3c09b78f36add4ac6876d30c0a34d03646f4fb1bbe5aac91b71794",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "773fb1f2e2e076dd506d133fd9f11106c30eb440541d879fe11125a6e75495ce",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "5.stdout": "4dd633ce6dacab59e6b9d42eba3b7e4ae44f9daacce2ec4277cf200279ecbf9f",
+    "5.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "3d3e9e845e7ac4616fc0896021ee4e17cdeae1015577ad3b412a221ad5869ca7",
+    "perf.data": "deb75100d482781469bb1ee7938d48bffed4a32203d3aacc42b566a2eeea3c2d",
+    "timed-2893696.jsonl": "9e89d85637af7cdc41b30205a263a240b43314e08d58c1f5ac57e4fc8ec7fa8b",
+    "6.stdout": "ba490efbbbb2d1f54b8eee0a085c07537e362602018fa5bdf2594cd4d820db9d",
+    "6.stderr": "d1d34b01f2aac354e167a0f4905238979d42f6dda0b130f8d6f1b1da03bb9b1c",
+    "samply.json.gz": "c7e3097575805cf213b0b890391ce419abf84b22344a1dd7f210b95101e57a1e",
+    "7.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "7.stderr": "408749bae6a05564937893e6350c5abafcefc4232827ec0f02baf03b463543e8",
+    "8.stdout": "a13266e8fb0240c62e1823bdc71dd4fd37cfbde67425a259fba58c20a6d559b4",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "a13266e8fb0240c62e1823bdc71dd4fd37cfbde67425a259fba58c20a6d559b4",
+    "normalized.json.gz": "72a611d5519d17d61ab0580eccec94036d4ffa53804f232365f9fd8deb681e38",
+    "9.stdout": "649377c4cfccd40fd5dccb3e638b9cf6a4d2538ec59018e0e23937e7b037c94a",
+    "9.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "8df07a03293b1280db39ae291f572bc6b4fa05f10c4b7a1af4da2c7672690810",
+    "diagnostics.json": "f081f4eaa5b2c4863fa576ed82e32adfb5e3883462b0da0bc53dc6fa0c45224f",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "f1a702a1987d32814239a08b55eb83131a9d54503870bbd52dc44a2af294dd4d",
+    "symbols.json": "f1a9ee0f54a4b7b2208db7a4f1a8e10ce3ae677e83381ea1868652af54e42dd5",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "12.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "12.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

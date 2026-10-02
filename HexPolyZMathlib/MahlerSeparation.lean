@@ -245,7 +245,7 @@ theorem norm_det_vandermonde_le {N : ℕ} (hN : 2 ≤ N) (c : ℂ) (α : Fin N �
     rw [← Finset.mul_prod_erase univ _ (Finset.mem_univ i₁)]
     refine mul_le_mul hRi1 ?_ (Finset.prod_nonneg (fun j _ => Real.sqrt_nonneg _))
       (mul_nonneg (mul_nonneg (pow_nonneg (hB0 i₁) _) (norm_nonneg _)) (Real.sqrt_nonneg _))
-    exact Finset.prod_le_prod (fun j _ => Real.sqrt_nonneg _)
+    exact Finset.prod_le_prod₀ (fun j _ => Real.sqrt_nonneg _)
       (fun j hj => hRj j (Finset.mem_erase.mp hj).1)
   have hprodrw : ∏ j ∈ univ.erase i₁, (Real.sqrt N * B j ^ (N - 1))
       = Real.sqrt N ^ (N - 1) * (∏ j ∈ univ.erase i₁, B j) ^ (N - 1) := by

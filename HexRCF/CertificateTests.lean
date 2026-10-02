@@ -292,4 +292,12 @@ example : Sentence.toProp (.existsReal quadEq) :=
 example : Sentence.toProp (.forallIoc negHalf half quadLt) :=
   check_sound _ boundedQuad (by decide)
 
+/-- info: 'Hex.RCF.CellFold.Region.forall_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms CellFold.Region.forall_spec
+
+/-- info: 'Hex.RCF.CellFold.Region.exists_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms CellFold.Region.exists_spec
+
 end Hex.RCF.CertificateTests

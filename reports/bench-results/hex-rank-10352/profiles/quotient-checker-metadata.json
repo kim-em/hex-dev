@@ -1,0 +1,128 @@
+{
+  "revision": "a2f2303e1b8e343fe7dfe83520acfaef15957181",
+  "cpu": 4,
+  "load": [
+    43.294921875,
+    51.296875,
+    54.44775390625
+  ],
+  "binary": "/tmp/hexrank-scale-10352/.lake/build/bin/hexrank_bench",
+  "binary_sha256": "ae6a2d19b6b5f06c1a8f5b09987dca08ba89362a6bf369d723dfabde2a37ebee",
+  "profiler_revision": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.1.5",
+  "commands": [
+    [
+      "perf",
+      "record",
+      "--clockid",
+      "mono",
+      "-e",
+      "cycles:u",
+      "-F",
+      "999",
+      "--call-graph",
+      "dwarf",
+      "-o",
+      "/tmp/hexrank-checker-profile/quotient-checker/perf.data",
+      "--",
+      "/tmp/hexrank-scale-10352/.lake/build/bin/hexrank_bench",
+      "_child",
+      "--bench",
+      "Hex.RankBench.Quotient.checkFull",
+      "--param",
+      "1024",
+      "--target-nanos",
+      "3000000000",
+      "--cache-mode",
+      "warm"
+    ],
+    [
+      "samply",
+      "import",
+      "--save-only",
+      "--no-open",
+      "--unstable-presymbolicate",
+      "-o",
+      "/tmp/hexrank-checker-profile/quotient-checker/samply.json.gz",
+      "/tmp/hexrank-checker-profile/quotient-checker/perf.data"
+    ],
+    [
+      "perf",
+      "script",
+      "--ns",
+      "-F",
+      "pid,tid,time,event",
+      "-i",
+      "/tmp/hexrank-checker-profile/quotient-checker/perf.data"
+    ],
+    [
+      "/run/current-system/sw/bin/python3",
+      "/tmp/hexrank-scale-10352/scripts/profile/normalize_perf.py",
+      "--profile",
+      "/tmp/hexrank-checker-profile/quotient-checker/samply.json.gz",
+      "--perf-script",
+      "/tmp/hexrank-checker-profile/quotient-checker/perf-samples.txt",
+      "--spawn-anchor",
+      "/tmp/hexrank-checker-profile/quotient-checker/spawn-anchor.json",
+      "--output",
+      "/tmp/hexrank-checker-profile/quotient-checker/normalized.json.gz"
+    ],
+    [
+      "/run/current-system/sw/bin/python3",
+      "/tmp/hex10170-lean-bench-samply/scripts/filter_samply.py",
+      "--samply-json",
+      "/tmp/hexrank-checker-profile/quotient-checker/normalized.json.gz",
+      "--sidecar",
+      "/tmp/hexrank-checker-profile/quotient-checker/timed.jsonl",
+      "--spawn-anchor",
+      "/tmp/hexrank-checker-profile/quotient-checker/spawn-anchor.json",
+      "--out",
+      "/tmp/hexrank-checker-profile/quotient-checker/filtered.json.gz",
+      "--diagnostics",
+      "/tmp/hexrank-checker-profile/quotient-checker/diagnostics.json",
+      "--label-filter",
+      "kernel"
+    ],
+    [
+      "/run/current-system/sw/bin/python3",
+      "/tmp/hexrank-scale-10352/scripts/profile/elf_symbols.py",
+      "/tmp/hexrank-checker-profile/quotient-checker/filtered.json.gz",
+      "--output",
+      "/tmp/hexrank-checker-profile/quotient-checker/symbols.json"
+    ],
+    [
+      "/run/current-system/sw/bin/python3",
+      "/tmp/hexrank-scale-10352/scripts/profile/summarize_profile.py",
+      "/tmp/hexrank-checker-profile/quotient-checker/filtered.json.gz",
+      "--symbols",
+      "/tmp/hexrank-checker-profile/quotient-checker/symbols.json",
+      "--diagnostics",
+      "/tmp/hexrank-checker-profile/quotient-checker/diagnostics.json",
+      "--thread",
+      "hexrank_bench",
+      "--top",
+      "25",
+      "--output",
+      "/tmp/hexrank-checker-profile/quotient-checker/summary.json"
+    ]
+  ],
+  "environment_overrides": [
+    {
+      "LEAN_BENCH_PROFILE_KERNEL": "1",
+      "LEAN_BENCH_TIMED_REGIONS_SIDECAR": "/tmp/hexrank-checker-profile/quotient-checker/timed.jsonl"
+    },
+    {},
+    {},
+    {},
+    {},
+    {},
+    {}
+  ],
+  "failures": [],
+  "load_after": [
+    27.03955078125,
+    40.34814453125,
+    49.6953125
+  ]
+}

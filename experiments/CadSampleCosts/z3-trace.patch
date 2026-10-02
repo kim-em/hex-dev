@@ -1,0 +1,42 @@
+diff --git a/src/nlsat/nlsat_explain.cpp b/src/nlsat/nlsat_explain.cpp
+index 83c5f31..310e833 100644
+--- a/src/nlsat/nlsat_explain.cpp
++++ b/src/nlsat/nlsat_explain.cpp
+@@ -610,10 +610,12 @@ namespace nlsat {
+                     if (!is_const(f)) {
+                         TRACE(nlsat_explain, tout << "adding factor:\n"; display(tout, f); tout << "\n";);
+                         m_todo.insert(f);
++                        TRACE(nlsat_explain, tout << "CAD_PROJ " << m_pm.total_degree(f) << " "; display(tout, f); tout << "\n";);
+                     }
+                 }
+             }
+             else {
+                 m_todo.insert(p);
++                TRACE(nlsat_explain, tout << "CAD_PROJ " << m_pm.total_degree(p) << " "; display(tout, p); tout << "\n";);
+             }
+         }
+@@ -1748,10 +1750,12 @@ namespace nlsat {
+                   display(tout, num, ls) << "\n";
+                   m_solver.display_assignment(tout);
+                   );
++            TRACE(nlsat_explain, tout << "CAD_BEGIN " << num << "\n";);
+             m_result = &result;
+             process(num, ls);
+             reset_already_added();
+             m_result = nullptr;
+             TRACE(nlsat_explain, display(tout << "[explain] result\n", result) << "\n";);
++            TRACE(nlsat_explain, tout << "CAD_END " << result.size() << "\n"; display(tout, result); tout << "\n";);
+             CASSERT("nlsat", check_already_added());
+         }
+diff --git a/src/nlsat/nlsat_solver.cpp b/src/nlsat/nlsat_solver.cpp
+index 97cac90..c8aa297 100644
+--- a/src/nlsat/nlsat_solver.cpp
++++ b/src/nlsat/nlsat_solver.cpp
+@@ -1135,6 +1135,7 @@ namespace nlsat {
+             unsigned cid = m_cid_gen.mk();
+             void * mem = m_allocator.allocate(clause::get_obj_size(num_lits));
+             clause * cls = new (mem) clause(cid, num_lits, lits, learned, a);
++            TRACE(nlsat_explain, if (learned) { tout << "CAD_LEARNED " << cid << " " << num_lits << "\n"; display(tout, *cls); tout << "\n"; });
+             for (unsigned i = 0; i < num_lits; i++)
+                 inc_ref(lits[i]);
+             inc_ref(a);

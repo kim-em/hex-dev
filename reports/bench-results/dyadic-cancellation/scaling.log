@@ -1,0 +1,29 @@
+Hex.RealRootsBench.runCancellation    expected complexity: m    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=96ef6f0-dirty, 2026-09-22T03:16:41Z, host=chungus2
+    param  per-call    repeats  C
+   32_768  930.952 µs  ×2^6     C=27.514 [trial 1/4]
+   65_536    1.836 ms  ×2^5     C=27.707 [trial 1/4]
+  131_072    3.617 ms  ×2^4     C=27.502 [trial 1/4]
+  262_144    7.283 ms  ×2^3     C=27.609 [trial 1/4]
+   32_768  906.063 µs  ×2^6     C=27.514 [trial 2/4]
+   65_536    1.802 ms  ×2^5     C=27.707 [trial 2/4]
+  131_072    3.592 ms  ×2^4     C=27.502 [trial 2/4]
+  262_144    7.192 ms  ×2^3     C=27.609 [trial 2/4]
+   32_768  897.085 µs  ×2^6     C=27.514 [trial 3/4]
+   65_536    1.759 ms  ×2^5     C=27.707 [trial 3/4]
+  131_072    3.533 ms  ×2^4     C=27.502 [trial 3/4]
+  262_144    7.044 ms  ×2^3     C=27.609 [trial 3/4]
+   32_768  891.200 µs  ×2^6     C=27.514 [trial 4/4]
+   65_536    1.829 ms  ×2^5     C=27.707 [trial 4/4]
+  131_072    3.645 ms  ×2^4     C=27.502 [trial 4/4]
+  262_144    7.522 ms  ×2^3     C=27.609 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=27.502, cMax=27.707, β=+0.000)
+  per-spawn floor (harness self-measurement): 24.764 ms
+  peak RSS: 68_060 kB..72_204 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+      param  trials  median      min         max         spread
+     32_768  4/4     901.574 µs  891.200 µs  930.952 µs  4.409%
+     65_536  4/4       1.816 ms    1.759 ms    1.836 ms  4.234%
+    131_072  4/4       3.605 ms    3.533 ms    3.645 ms  3.107%
+    262_144  4/4       7.238 ms    7.044 ms    7.522 ms  6.595%
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/dyadic-cancellation/scaling.json

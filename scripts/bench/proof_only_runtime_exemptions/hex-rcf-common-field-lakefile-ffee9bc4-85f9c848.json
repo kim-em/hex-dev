@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "ffee9bc46edf5856435dd50093a3daa0f91b55db",
+  "current_blob": "85f9c848fc73549acc36ba8485891ab665c7ec5e",
+  "reason": "The HexRCF.RealCoefficientCommonField addition only registers a conformance module. The intervening AINTLIB requirement and ECPP targets are outside the measured factorization service import graph. All Lake declarations used to build hexbz_factor_service and its factorization libraries are unchanged."
+}

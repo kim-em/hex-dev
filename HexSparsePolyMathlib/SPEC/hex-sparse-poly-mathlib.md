@@ -1,12 +1,5 @@
 # hex-sparse-poly-mathlib (depends on hex-sparse-poly + hex-poly-mathlib + Mathlib)
 
-## Correspondence-only classification
-
-This library is a `correspondence-only-layer`.
-
-Computational conformance owners: `HexSparsePoly`, `HexPoly`
-Computational performance owners: `HexSparsePoly`, `HexPoly`
-
 The Mathlib correspondence layer for the canonical, Mathlib-free sparse
 univariate polynomials in
 [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md). It
@@ -84,12 +77,3 @@ are checked by the `HexSparsePoly` and `HexPoly` conformance streams and
 their external oracles. This correspondence layer has no independent
 runtime contract or conformance target; building its public umbrella checks
 the theorem-level transport surface.
-
-## External comparators
-
-`correspondence-only-layer`: this library is a correspondence-only
-mathlib layer with zero bench targets, so there is no surface of its
-own to compare. The computational performance owners whose bench
-targets carry the evidence for the operations it transports are
-`hex-sparse-poly` (the sparse operations) and `hex-poly` (the dense
-representation `denseEquiv` lands in).

@@ -1,0 +1,94 @@
+{
+  "runtime_source": "Lean 4.34.0 include/lean/lean.h: LEAN_MAX_SMALL_INT and lean_int_mul",
+  "small_int_range_on_this_64_bit_host": [
+    -2147483648,
+    2147483647
+  ],
+  "identity_product_scope": "Scalar products and quotient-times-polynomial terms visible in the retained replay identities; excludes initial F*P-prime, additions, Horner intermediates and producer intermediates. Not a peak-intermediate bound.",
+  "fixtures": [
+    {
+      "family": "head-degree",
+      "parameter": 8,
+      "max_stored_bits": 13,
+      "stored_outside_small_int": 0,
+      "max_identity_product_bits": 17
+    },
+    {
+      "family": "head-degree",
+      "parameter": 10,
+      "max_stored_bits": 19,
+      "stored_outside_small_int": 0,
+      "max_identity_product_bits": 27
+    },
+    {
+      "family": "head-degree",
+      "parameter": 12,
+      "max_stored_bits": 21,
+      "stored_outside_small_int": 0,
+      "max_identity_product_bits": 31
+    },
+    {
+      "family": "head-degree",
+      "parameter": 16,
+      "max_stored_bits": 29,
+      "stored_outside_small_int": 0,
+      "max_identity_product_bits": 42
+    },
+    {
+      "family": "head-degree",
+      "parameter": 20,
+      "max_stored_bits": 37,
+      "stored_outside_small_int": 24,
+      "max_identity_product_bits": 57
+    },
+    {
+      "family": "query-degree",
+      "parameter": 16,
+      "max_stored_bits": 10,
+      "stored_outside_small_int": 0,
+      "max_identity_product_bits": 10
+    },
+    {
+      "family": "query-degree",
+      "parameter": 24,
+      "max_stored_bits": 14,
+      "stored_outside_small_int": 0,
+      "max_identity_product_bits": 14
+    },
+    {
+      "family": "query-degree",
+      "parameter": 32,
+      "max_stored_bits": 18,
+      "stored_outside_small_int": 0,
+      "max_identity_product_bits": 18
+    },
+    {
+      "family": "query-degree",
+      "parameter": 48,
+      "max_stored_bits": 26,
+      "stored_outside_small_int": 0,
+      "max_identity_product_bits": 26
+    },
+    {
+      "family": "query-degree",
+      "parameter": 64,
+      "max_stored_bits": 34,
+      "stored_outside_small_int": 3,
+      "max_identity_product_bits": 34
+    },
+    {
+      "family": "query-degree",
+      "parameter": 96,
+      "max_stored_bits": 50,
+      "stored_outside_small_int": 19,
+      "max_identity_product_bits": 50
+    }
+  ],
+  "fibonacci_pseudo_division_multiplications": {
+    "source": "HexPoly/PseudoDiv.lean, powers/active/quotient/remainder loops",
+    "per_nonconstant_step": "3*m + 7 for dividend degree m+1 and divisor degree m",
+    "final_constant_step": 6,
+    "whole_gcd": "3*n*(n+1)/2 + 7*n + 6",
+    "scope": "Calls to scalar Mul in pseudoDivMod only; excludes coefficient constructors, normalization, allocation, equality, hashing and arithmetic inside F7 operations. Coefficients remain in F7."
+  }
+}

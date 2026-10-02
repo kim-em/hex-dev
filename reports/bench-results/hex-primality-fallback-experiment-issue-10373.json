@@ -1,0 +1,510 @@
+{
+  "host": "chungus2",
+  "cpu": 3,
+  "toolchain": "leanprover/lean4:v4.34.0\n",
+  "commit": "e9206227fc9a67e64c03575ace96b754d9725679",
+  "sources": {
+    "bench/HexPrimality/FieldProbe.lean": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\n\nimport HexPrimality\nimport HexIntFactor.Construction\nimport Lean.Data.Json\n\n/-! Offline standard-field investigation. Explicit budgets let the runner compare\npolicy candidates without changing the production tactic. ECM is diagnostic only;\nthis executable is never invoked by certificate construction. -/\n\nnamespace Hex.PrimalityFieldProbe\nopen Hex.Nat\n\n\n/-- Native construction timing, excluding parsing, process startup, and\ncertificate formatting. The public construction route includes its self-check. -/\nprivate def runConstruction (n maxBits maxFactors rhoSteps : Nat)\n    (trace : Bool) (provider : FactorSearch := Construction.factorSearch) : IO UInt32 := do\n  let input \u2190 IO.mkRef n\n  let n \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let factor : FactorSearch := fun allocation m r =>\n    let result := provider allocation m r\n    if trace then\n      dbg_trace \"factor {m}: {repr result.raw}; attempts {result.attempts}; allowance {allocation.attemptLimit}\"\n      result\n    else result\n  let result \u2190 IO.mkRef (Construction.run n (Hex.Rand.ofSeed n)\n    { constructionBudget with\n      maxBits := maxBits\n      maxFactors := maxFactors\n      factor := { constructionBudget.factor with\n        primeBudget := { constructionBudget.factor.primeBudget with rhoSteps := rhoSteps } } } factor)\n  let result \u2190 result.get\n  let stop \u2190 IO.monoNanosNow\n  let fields := [(\"nanos\", Lean.toJson (stop - start)),\n    (\"bits\", Lean.toJson (n.log2 + 1)), (\"over_bit_limit\", Lean.toJson (decide (n.log2 + 1 > maxBits)))]\n  let fields \u2190 match result with\n    | .error f => pure (fields ++ [(\"status\", Lean.toJson (reprStr f.stop)),\n        (\"attempts\", Lean.toJson f.attempts)])\n    | .ok s => do\n        let cert \u2190 IO.mkRef s.cert.raw\n        let cert \u2190 cert.get\n        let checkStart \u2190 IO.monoNanosNow\n        let checked \u2190 IO.mkRef (checkPrime cert)\n        let checked \u2190 checked.get\n        let checkStop \u2190 IO.monoNanosNow\n        unless checked do throw (IO.userError \"invalid certificate\")\n        pure (fields ++ [(\"status\", Lean.toJson \"ok\"),\n          (\"attempts\", Lean.toJson s.attempts),\n          (\"check_nanos\", Lean.toJson (checkStop - checkStart)),\n          (\"certificate\", Lean.toJson (reprStr cert))])\n  IO.println (Lean.Json.mkObj fields).compress\n  return 0\n\n/-- Prototype of one complete retry, without changing the production dispatcher. -/\nprivate def retry (n : Nat) : Except PrimeCertFailure (Internal.PrimeCertSuccess n) :=\n  match Construction.run n (Hex.Rand.ofSeed n) with\n  | .ok success => .ok success\n  | .error first =>\n    if first.stop != .exhausted || first.attempts \u2265 constructionBudget.maxAttempts then\n      .error first\n    else\n      let b := { constructionBudget with maxAttempts := constructionBudget.maxAttempts - first.attempts }\n      match Construction.run n first.rand b ecmFactorSearch with\n      | .ok s => .ok { s with attempts := first.attempts + s.attempts, events := first.events ++ s.events }\n      | .error f => .error { f with attempts := first.attempts + f.attempts, events := first.events ++ f.events }\n\nprivate def measure (n : Nat) (arm : String) : IO UInt32 := do\n  let input \u2190 IO.mkRef n\n  let n \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let hb \u2190 IO.getNumHeartbeats\n  let result \u2190 IO.mkRef (if arm == \"auto\" then retry n else\n    Construction.run n (Hex.Rand.ofSeed n) constructionBudget\n      (if arm == \"explicit\" then ecmFactorSearch else Construction.factorSearch))\n  let result \u2190 result.get\n  let used \u2190 IO.getNumHeartbeats\n  let stop \u2190 IO.monoNanosNow\n  let (attempts, rand, events, status, cert) := match result with\n    | .error f => (f.attempts, f.rand, f.events, reprStr f.stop, \"\")\n    | .ok s => (s.attempts, s.rand, s.events, \"ok\", reprStr s.cert.raw)\n  IO.println (Lean.Json.mkObj [\n    (\"arm\", Lean.toJson arm), (\"attempts\", Lean.toJson attempts),\n    (\"seed_out\", Lean.toJson rand.state.toNat), (\"events\", Lean.toJson (reprStr events)),\n    (\"status\", Lean.toJson status), (\"certificate\", Lean.toJson cert),\n    (\"heartbeats_raw\", Lean.toJson (used - hb)), (\"nanos\", Lean.toJson (stop - start))]).compress\n  return 0\n\n/-- Complete-retry experiment, with the original shared allowance and random state. -/\nprivate def fallback (n : Nat) : IO UInt32 := do\n  let mut total := 0\n  let mut rand := Hex.Rand.ofSeed n\n  let mut events : List FactorEvent := []\n  for (name, provider) in [(\"core\", Construction.factorSearch), (\"ecm\", ecmFactorSearch)] do\n    let allocation := { constructionBudget with maxAttempts := 1024 - total }\n    let factor : FactorSearch := fun b m r =>\n      let result := provider b m r\n      dbg_trace \"factor {name} {m}: {repr result.raw}; attempts {result.attempts}; allowance {b.attemptLimit}; seed {r.state} -> {result.rand.state}; events {repr result.events}\"\n      result\n    let start \u2190 IO.monoNanosNow\n    let hb \u2190 IO.getNumHeartbeats\n    let input \u2190 IO.mkRef (n, rand, allocation)\n    let (n, r, b) \u2190 input.get\n    let result \u2190 IO.mkRef (Construction.run n r b factor)\n    let result \u2190 result.get\n    let used \u2190 IO.getNumHeartbeats\n    let stop \u2190 IO.monoNanosNow\n    let (attempts, next, es, status, cert) := match result with\n      | .error f => (f.attempts, f.rand, f.events, reprStr f.stop, \"\")\n      | .ok s => (s.attempts, s.rand, s.events, \"ok\", reprStr s.cert.raw)\n    total := total + attempts\n    events := events ++ es\n    IO.println (Lean.Json.mkObj [\n      (\"provider\", Lean.toJson name), (\"allowance\", Lean.toJson b.maxAttempts),\n      (\"attempts\", Lean.toJson attempts), (\"total\", Lean.toJson total),\n      (\"seed_in\", Lean.toJson r.state.toNat), (\"seed_out\", Lean.toJson next.state.toNat),\n      (\"events\", Lean.toJson (reprStr es)), (\"all_events\", Lean.toJson (reprStr events)),\n      (\"status\", Lean.toJson status), (\"certificate\", Lean.toJson cert),\n      (\"heartbeats_raw\", Lean.toJson (used - hb)), (\"nanos\", Lean.toJson (stop - start))]).compress\n    if status == \"ok\" || status == \"Hex.Nat.PrimeCertStop.composite\" || total \u2265 1024 then return 0\n    rand := next\n  return 0\n\ndef run (args : List String) : IO UInt32 := do\n  if let [\"measure-fallback\", arm, nArg] := args then\n    let some n := nArg.toNat? | return 2\n    return \u2190 measure n arm\n  if let [\"fallback\", nArg] := args then\n    let some n := nArg.toNat? | return 2\n    return \u2190 fallback n\n  if args == [\"verify-ecm2\"] then\n    for n in [4, 15, 1009, 1022117, 1000036000099, 2^127 - 1] do\n      for sigma in [5:14] do\n        for b in [0, 1, 16, 64, 256] do\n          unless (Ecm.Internal.start n sigma b).1 == ecmStage1 n sigma b do\n            throw (IO.userError \"stage-1 mismatch\")\n    unless Ecm.Internal.flush 1081 0 #[0, 23] == (.factor 23, [1081, 23]) do\n      throw (IO.userError \"whole-leaf recovery\")\n    unless Ecm.Internal.flush 1081 0 #[0] == (.whole, [1081]) do\n      throw (IO.userError \"unrecoverable whole\")\n    for (n, b\u2081, b\u2082, expected) in [\n        (1022117, 16, 16, EcmResult.noFactor),\n        (1022117, 16, 1024, .factor 1013),\n        (1009, 16, 1024, .whole),\n        (1000036000099, 64, 8192, .factor 1000033)] do\n      let some saved := (Ecm.Internal.start n 6 b\u2081).2 | throw (IO.userError \"missing state\")\n      let result := Ecm.Internal.stage2 saved b\u2081 b\u2082 true\n      unless result.result == expected && !result.oracleMismatch do\n        throw (IO.userError s!\"continuation fixture {n}: {repr result}\")\n    -- A prime modulus with a large surviving order reaches every requested prime.\n    let some saved := (Ecm.Internal.start (2^127 - 1) 6 64).2 | throw (IO.userError \"missing prime state\")\n    for endpoint in [67, 199, 211, 227, 229, 233, 419, 421, 431, 1021, 8191] do\n      let result := Ecm.Internal.stage2 saved 64 endpoint true\n      let primes := (primesBelow (endpoint + 1)).filter (64 < \u00b7)\n      unless result.result == .noFactor && !result.oracleMismatch &&\n          result.candidates == primes.length && result.lastPrime == endpoint &&\n          result.batches == (primes.length + 31) / 32 do\n        throw (IO.userError s!\"interval coverage {endpoint}: {repr result}\")\n    unless Ecm.search 1022117 6 16 1024 0 == (.noFactor, 0) &&\n        Ecm.search 1022117 6 16 1024 1 == (.noFactor, 1) &&\n        Ecm.search 1022117 6 16 1024 2 == (.factor 1013, 2) do\n      throw (IO.userError \"attempt allowance\")\n    unless (Ecm.Internal.start (2^127 - 1) 6 32768).1 ==\n        ecmStage1 (2^127 - 1) 6 32768 do\n      throw (IO.userError \"shipped stage-1 bound\")\n    unless (Ecm.Internal.start 15 6 524288).1 == ecmStage1 15 6 524288 &&\n        (Ecm.Internal.start 15 6 524289).1 == .noFactor &&\n        Ecm.validBounds 524288 4194304 && !Ecm.validBounds 524289 4194304 &&\n        !Ecm.validBounds 524288 4194305 &&\n        Ecm.search 15 6 524289 4194304 2 == (.noFactor, 0) &&\n        Ecm.search 15 6 524288 4194305 2 == (.noFactor, 0) do\n      throw (IO.userError \"bound caps\")\n    for n in [0, 1, 2, 1022117] do\n      for allowance in [0, 1, 2, 3, 8, 32] do\n        let a := { constructionBudget.factor with attemptLimit := some allowance }\n        let result := ecmFactorSearch 16 1024 8 false a n (Hex.Rand.ofSeed 1)\n        unless result.attempts \u2264 allowance &&\n            result.raw.factors.foldl (fun acc (q,e) => acc*q^e) result.raw.residual == n do\n          throw (IO.userError \"provider boundary\")\n    let enabled := { constructionBudget.factor with\n      pMinusOneStage2 := true, smoothBounds := [2], smoothBases := [2]\n      primeBudget := \u27e80, 0\u27e9, primeFuel := 0, attemptLimit := some 32 }\n    let core := Construction.factorSearch enabled 1000036000099 (Hex.Rand.ofSeed 1)\n    let combined := ecmFactorSearch 64 8192 8 false enabled 1000036000099 (Hex.Rand.ofSeed 1)\n    unless !core.events.isEmpty && combined.events.take core.events.length == core.events &&\n        combined.raw.factors.foldl (fun acc (q,e) => acc*q^e) combined.raw.residual == 1000036000099 do\n      throw (IO.userError \"core event preservation\")\n    IO.println \"ECM continuation checks passed\"\n    return 0\n  if let [\"ecm2\", nArg, sigmaArg, b1Arg, b2Arg] := args then\n    let some [n, sigma, b\u2081, b\u2082] := [nArg, sigmaArg, b1Arg, b2Arg].mapM String.toNat? | return 2\n    unless Ecm.validBounds b\u2081 b\u2082 do return 2\n    let input \u2190 IO.mkRef (n, sigma, b\u2081, b\u2082)\n    let (n, sigma, b\u2081, b\u2082) \u2190 input.get\n    let begin \u2190 IO.monoNanosNow\n    let saved \u2190 IO.mkRef (Ecm.Internal.start n sigma b\u2081)\n    let (first, saved) \u2190 saved.get\n    let middle \u2190 IO.monoNanosNow\n    let second \u2190 IO.mkRef (saved.map fun s => Ecm.Internal.stage2 s b\u2081 b\u2082)\n    let second \u2190 second.get\n    let endTime \u2190 IO.monoNanosNow\n    IO.println (Lean.Json.mkObj [\n      (\"stage1_ns\", Lean.toJson (middle - begin)),\n      (\"stage2_ns\", Lean.toJson (endTime - middle)),\n      (\"stage1\", Lean.toJson (reprStr first)),\n      (\"stage2\", Lean.toJson (reprStr second)),\n      (\"candidates\", Lean.toJson (second.map (\u00b7.candidates) |>.getD 0)),\n      (\"advances\", Lean.toJson (second.map (\u00b7.advances) |>.getD 0)),\n      (\"batches\", Lean.toJson (second.map (\u00b7.batches) |>.getD 0)),\n      (\"result\", Lean.toJson (reprStr (second.map (\u00b7.result) |>.getD first)))]).compress\n    return 0\n  if let [mode, nArg, b1Arg, b2Arg, curvesArg] := args then\n    if mode == \"construction2\" || mode == \"trace2\" then\n      let some [n, b\u2081, b\u2082, curves] := [nArg, b1Arg, b2Arg, curvesArg].mapM String.toNat? | return 2\n      unless Ecm.validBounds b\u2081 b\u2082 && curves \u2264 64 do return 2\n      return \u2190 runConstruction n 521 32 32768 (mode == \"trace2\")\n        (ecmFactorSearch b\u2081 b\u2082 curves (mode == \"trace2\"))\n  if let \"validate\" :: nArg :: factorArgs := args then\n    let some n := nArg.toNat? | return 2\n    let some factors := factorArgs.mapM String.toNat? | return 2\n    let valid := factors.prod == n && factors.all (fun d => 1 < d && d < n && n % d == 0)\n    IO.println (Lean.Json.mkObj [(\"valid_factorization\", Lean.toJson valid)]).compress\n    return if valid then 0 else 1\n\n  if let [\"ecm\", nArg, boundArg, curvesArg] := args then\n    let some n := nArg.toNat? | return 2\n    let some bound := boundArg.toNat? | return 2\n    let some curves := curvesArg.toNat? | return 2\n    for sigma in [6:6+curves] do\n      let input \u2190 IO.mkRef (n, sigma, bound)\n      let (n, sigma, bound) \u2190 input.get\n      let start \u2190 IO.monoNanosNow\n      let result \u2190 IO.mkRef (Hex.Nat.Internal.ecmTrace n sigma bound)\n      let result \u2190 result.get\n      let stop \u2190 IO.monoNanosNow\n      IO.println s!\"{sigma}: {repr result}; nanos {stop-start}\"\n      if let .factor _ := result.result then return 0\n    return 0\n  if let [\"trace\", nArg, bits, factors, steps] := args then\n    let some n := nArg.toNat? | return 2\n    let some bits := bits.toNat? | return 2\n    let some factors := factors.toNat? | return 2\n    let some steps := steps.toNat? | return 2\n    return \u2190 runConstruction n bits factors steps true\n  if let [\"construction\", nArg, bits, factors, steps] := args then\n    let some n := nArg.toNat? | return 2\n    let some bits := bits.toNat? | return 2\n    let some factors := factors.toNat? | return 2\n    let some steps := steps.toNat? | return 2\n    return \u2190 runConstruction n bits factors steps false\n  IO.eprintln \"usage: hexprimality_field_probe (construction|trace) N BITS FACTORS RHO_STEPS; or ecm N BOUND CURVES\"\n  return 2\n\nend Hex.PrimalityFieldProbe\n\npublic def main (args : List String) : IO UInt32 := Hex.PrimalityFieldProbe.run args\n",
+    "bench/HexPrimality/ProofProbe/Curve25519/Fallback.lean": "module\npublic import HexPrimality.Elab\npublic import HexIntFactor.Construction\npublic meta import HexIntFactor.Construction\n\npublic section\nnamespace Hex.FallbackExperiment\nopen Lean Meta Elab Hex.PrimalityTactic Hex.Nat\n\n/-- Experimental dispatcher, preceding any production registration changes. -/\nmeta def construct (n : Nat) (arm : String) : Except PrimeCertFailure (Internal.PrimeCertSuccess n) :=\n  let first := Construction.run n (Hex.Rand.ofSeed n) constructionBudget\n    (if arm == \"explicit\" then ecmFactorSearch else Construction.factorSearch)\n  if arm != \"auto\" then first else\n    match first with\n    | .ok success => .ok success\n    | .error first =>\n      if first.stop != .exhausted || first.attempts \u2265 constructionBudget.maxAttempts then\n        .error first\n      else\n        let b := { constructionBudget with maxAttempts := constructionBudget.maxAttempts - first.attempts }\n        match Construction.run n first.rand b ecmFactorSearch with\n        | .ok s => .ok { s with attempts := first.attempts + s.attempts, events := first.events ++ s.events }\n        | .error f => .error { f with attempts := first.attempts + f.attempts, events := first.events ++ f.events }\n\nsyntax \"prototype_primality\" str : tactic\nelab_rules : tactic\n  | `(tactic| prototype_primality $arm:str) => do\n    let goal \u2190 Tactic.getMainGoal\n    goal.withContext do\n      let start \u2190 IO.monoNanosNow\n      let hb \u2190 IO.getNumHeartbeats\n      try\n        let tgt \u2190 instantiateMVars (\u2190 goal.getType)\n        let nE := tgt.appArg!\n        checkClosed \"prototype\" nE\n        let n? \u2190 (evalNat nE).run\n        let n? \u2190 match n? with\n          | some n => pure (some n)\n          | none => (evalNat (\u2190 whnf nE)).run\n        let some n := n? | throwError \"normalization failed\"\n        unless \u2190 isDefEq nE (mkNatLit n) do throwError \"not transparent\"\n        let result := construct n arm.getString\n        let .ok success := result | throwError \"EXHAUSTED\"\n        let cert := success.cert.raw\n        let proof := mkApp3 (mkConst ``Hex.Nat.prime_of_checkPrimeAt) nE (reifyPrimeCert cert) reflTrue\n        let literal \u2190 certificateSyntax cert\n        let _ \u2190 Term.elabTerm literal (some (mkConst ``Hex.Nat.PrimeCert))\n        goal.assign proof\n        Tactic.replaceMainGoal []\n        logInfo m!\"ATTEMPTS {success.attempts}\"\n      finally\n        let used \u2190 IO.getNumHeartbeats\n        let stop \u2190 IO.monoNanosNow\n        logInfo m!\"TACTIC_NS {stop - start} HEARTBEATS_RAW {used - hb}\"\nend Hex.FallbackExperiment\n",
+    "HexPrimality/Construction.lean": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\n\npublic import HexPrimality.Search\n\npublic section\n\nnamespace Hex.Nat\n\n/-- Finite, opt-in certificate construction resources. ECM is disabled on this\nMathlib-free core route (zero curves and no ECM bounds). -/\nstructure ConstructionBudget where\n  maxBits : Nat := 521\n  maxDepth : Nat := 32\n  maxAttempts : Nat := 1024\n  factor : FactorSearchBudget := {\n    primeBudget := \u27e82, 32768\u27e9\n    primeFuel := 32\n    factorFuel := 1024\n    smoothBounds := [64, 512, 4096, 32768, 262144, 524288]\n    smoothBases := [2, 3] }\n  witnessBases : List Nat := [2, 3, 5, 7, 11, 13, 17]\n  randomWitnesses : Nat := 32\n  maxFactors : Nat := 32\n  maxSubsets : Nat := 4096\n  maxSieveBound : Nat := 64\nderiving Repr, DecidableEq\n\n/-- The reproducible construction profile used by `primality?`. -/\ndef constructionBudget : ConstructionBudget := {}\n\nnamespace Construction\n\n/-- The least positive sieve bound satisfying the cube-root size inequality, or zero.\nThis runs only during construction; the checker validates the chosen literal directly. -/\nprivate def sieveBound (twoF r s : Nat) : Nat :=\n  let b := twoF + r\n  if b * b + 8 \u2264 8 * s then 0\n  else Id.run do\n    let sq := Nat.sqrt (b * b + 8 - 8 * s)\n    let cand := (b - sq) / 2\n    for m in [max 1 (cand - 3) : cand + 4] do\n      if 2 * s + m * m < b * m + 2 then return m\n    return 0\n\nprivate def insert (q e : Nat) : List (Nat \u00d7 Nat) \u2192 List (Nat \u00d7 Nat)\n  | [] => [(q, e)]\n  | (p, k) :: rest =>\n      if p = q then (p, k + e) :: rest else (p, k) :: insert q e rest\n\nprivate def trial (n : Nat) : PartialFactors := Id.run do\n  let mut m := n\n  let mut factors := []\n  for q in primeTable do\n    if m % q = 0 then\n      let (e, rest) := Internal.trialExtractTrace q m\n      factors := (q, e) :: factors\n      m := rest\n  return \u27e8factors, m\u27e9\n\nprivate structure SmoothSplit where\n  factor : Option Nat\n  attempts : Nat\n  events : List FactorEvent\n\nprivate def splitSmooth (allocation : FactorSearchBudget) (n limit : Nat) (r : Hex.Rand) :\n    SmoothSplit := Id.run do\n  let mut attempts := 0\n  let mut events := []\n  for bound in allocation.smoothBounds do\n    for base in allocation.smoothBases do\n      if attempts \u2265 limit then return \u27e8none, attempts, events\u27e9\n      let first := PMinusOne.start n base bound\n      attempts := attempts + 1\n      if allocation.pMinusOneStage2 then\n        events := events ++ [.pMinusOne first.event]\n      if let .factor d := first.result then\n        return \u27e8some d, attempts, events\u27e9\n      if allocation.pMinusOneStage2 then\n        if let some x := first.residue then\n          let b\u2081 := smoothBound bound\n          let b\u2082 := 8 * b\u2081\n          let skip := if b\u2081 > 4096 then \"policy-cap\"\n            else if b\u2082 \u2264 b\u2081 then \"empty-interval\"\n            else if attempts \u2265 limit then \"budget\" else \"\"\n          if skip != \"\" then\n            events := events ++ [.pMinusOne {\n              subject := n\n              requestedB1 := bound\n              effectiveB1 := b\u2081\n              requestedB2 := some b\u2082\n              effectiveB2 := some (PMinusOne.stage2Bound b\u2082)\n              reason := skip }]\n          else\n            let next := PMinusOne.stage2Counted n x bound b\u2082 r\n            attempts := attempts + next.attempts\n            events := events ++ next.events.map FactorEvent.pMinusOne\n            if let .factor d := next.result then\n              return \u27e8some d, attempts, events\u27e9\n  return \u27e8none, attempts, events\u27e9\n\nprivate def factorGo (allocation : FactorSearchBudget) (limit : Nat) :\n    Nat \u2192 List Nat \u2192 List (Nat \u00d7 Nat) \u2192 Nat \u2192 Hex.Rand \u2192 Nat \u2192\n      List FactorEvent \u2192 FactorSearchResult\n  | 0, stack, acc, residual, r, attempts, events =>\n      \u27e8\u27e8acc, stack.foldl (\u00b7 * \u00b7) residual\u27e9, r, attempts, events\u27e9\n  | _ + 1, [], acc, residual, r, attempts, events => \u27e8\u27e8acc, residual\u27e9, r, attempts, events\u27e9\n  | fuel + 1, m :: stack, acc, residual, r, attempts, events =>\n      if attempts \u2265 limit then\n        \u27e8\u27e8acc, (m :: stack).foldl (\u00b7 * \u00b7) residual\u27e9, r, attempts, events\u27e9\n      else if m \u2264 1 then factorGo allocation limit fuel stack acc residual r attempts events\n      else if isProbablePrime m then\n        factorGo allocation limit fuel stack (insert m 1 acc) residual r attempts events\n      else\n        let smooth := splitSmooth allocation m (limit - attempts) r\n        let work := smooth.attempts\n        let events := events ++ smooth.events\n        match smooth.factor with\n        | some d => factorGo allocation limit fuel (d :: m / d :: stack) acc residual r\n            (attempts + work) events\n        | none =>\n            match Internal.rhoFactorCountedWith? m r\n                (min allocation.primeBudget.rhoRestarts (limit - attempts - work))\n                allocation.primeBudget.rhoSteps with\n            | .ok success =>\n                factorGo allocation limit fuel (success.factor :: m / success.factor :: stack)\n                  acc residual success.rand (attempts + work + success.attempts) events\n            | .error f => factorGo allocation limit fuel stack acc (residual * m) f.rand\n                (attempts + work + f.attempts) events\n\n/-- Table division followed by the explicitly budgeted smooth/rho worklist.\nEvery unresolved component is retained in the residual. -/\ndef factorSearch : FactorSearch := fun allocation n r =>\n  if n = 0 then \u27e8\u27e8[], 0\u27e9, r, 0, []\u27e9 else\n    let initial := trial n\n    let calls := allocation.smoothBounds.length * allocation.smoothBases.length\n    let continuations := if allocation.pMinusOneStage2 then\n      (allocation.smoothBounds.filter (fun b => 0 < smoothBound b && smoothBound b \u2264 4096)).length *\n        allocation.smoothBases.length else 0\n    let limit := allocation.attemptLimit.getD\n      (allocation.factorFuel * (calls + continuations + allocation.primeBudget.rhoRestarts))\n    factorGo allocation limit allocation.factorFuel [initial.residual] initial.factors 1 r 0 []\n\nprivate def product (n : Nat) (factors : List (Nat \u00d7 Nat)) : Option Nat := do\n  let mut acc := 1\n  for (q, e) in factors do\n    if q < 2 || e == 0 || n \u2264 q then failure\n    acc \u2190 boundedPowMul (n - 1) q acc e\n  if (n - 1) % acc != 0 then failure\n  return acc\n\nprivate def cubeData (n F : Nat) : Nat \u00d7 Nat \u00d7 Nat :=\n  let R := (n - 1) / F\n  let r := R % (2 * F)\n  let s := R / (2 * F)\n  (r, s, (r * r - 8 * s).sqrt)\n\n/-- Cheap size and discriminant screening before any recursive certification.\nThe public checker validates these computations again on the final literal. -/\nprivate def sufficient (budget : ConstructionBudget) (n F : Nat) : Bool :=\n  if n < F * F then true else\n    let (r, s, w) := cubeData n F\n    let m := sieveBound (2 * F) r s\n    F % 2 == 0 && (n - 1) / F % 2 == 1 && 1 \u2264 r &&\n      1 \u2264 m && m \u2264 min budget.maxSieveBound pocklingtonSieveCap && checkDivisors n F (m - 1) &&\n      (s == 0 || r * r < 8 * s ||\n        (w * w < r * r - 8 * s && r * r - 8 * s < (w + 1) * (w + 1)))\n\n/-- Estimate recursive replay work using the table-factored predecessor.\nTable leaves cost no construction nodes; a child already covered by its table\nfactors costs one. More expensive children receive a bit-size penalty. -/\nprivate def childCost (budget : ConstructionBudget) (q : Nat) : Nat :=\n  if isTablePrime q then 0 else\n    let factors := trial (q - 1)\n    let F := (q - 1) / factors.residual\n    if sufficient budget q F then 1 else 2 + q.log2 / 32\n\nprivate def subsets (budget : ConstructionBudget) (n : Nat)\n    (factors : List (Nat \u00d7 Nat)) : List (List (Nat \u00d7 Nat)) := Id.run do\n  if factors.length > budget.maxFactors then return []\n  let factors := factors.mergeSort (fun x y => x.1 \u2264 y.1)\n  if !decide ((factors.map Prod.fst).Pairwise (\u00b7 < \u00b7)) then return []\n  if (product n factors).isNone then return []\n  let costs := factors.map fun (q, _) => childCost budget q\n  let mut choices : List (Nat \u00d7 List (Nat \u00d7 Nat)) := []\n  let count := 2 ^ factors.length\n  for i in [:min budget.maxSubsets count] do\n    let mask := if count \u2264 budget.maxSubsets then i\n      else if i == 0 then count - 1 else i - 1\n    let selected := factors.zipIdx |>.filterMap fun (entry, i) =>\n      if mask.testBit i then some entry else none\n    if let some F := product n selected then\n      if sufficient budget n F then\n        let (r, s, _) := cubeData n F\n        let divisions := if n < F * F then 0 else sieveBound (2 * F) r s - 1\n        let cost := (costs.zipIdx).foldl (fun acc (cost, i) =>\n          if mask.testBit i then acc + (16 * cost + 1) * (n.log2 + 1) else acc) divisions\n        choices := (cost, selected) :: choices\n  return (choices.mergeSort fun x y => x.1 \u2264 y.1).map Prod.snd\n\nprivate def witness (budget : ConstructionBudget) (n q : Nat) (r : Hex.Rand) :\n    Except PrimeCertFailure (Nat \u00d7 Nat \u00d7 Hex.Rand) := Id.run do\n  let mut attempts := 0\n  for a in budget.witnessBases do\n    if attempts \u2265 budget.maxAttempts then return .error \u27e8.exhausted, attempts, r, []\u27e9\n    attempts := attempts + 1\n    if checkWitness n q a then return .ok (a, attempts, r)\n  match Internal.witnessSearchTrace n q r\n      (min budget.randomWitnesses (budget.maxAttempts - attempts)) with\n  | .ok (a, work, r') => return .ok (a, attempts + work, r')\n  | .error f => return .error { f with attempts := attempts + f.attempts }\n\nprivate def node (n F : Nat) (entries : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : PrimeCert :=\n  if n < F * F then .pock n entries else\n    let (r, s, w) := cubeData n F\n    let m := sieveBound (2 * F) r s\n    if m == 1 then .pock3 n r s w entries else .pock3Sieve n r s w m entries\n\nprivate structure Built (\u03b1 : Type) where\n  value : \u03b1\n  attempts : Nat\n  rand : Hex.Rand\n  events : List FactorEvent\n\nmutual\n\nprivate def generate (budget : ConstructionBudget) (factor : FactorSearch)\n    (fuel n : Nat) (r : Hex.Rand) : Except PrimeCertFailure (Built PrimeCert) :=\n  if n.log2 + 1 > budget.maxBits then .error \u27e8.exhausted, 0, r, []\u27e9\n  else if isTablePrime n then .ok \u27e8.small n, 0, r, []\u27e9\n  else if !isProbablePrime n then .error \u27e8.composite, 0, r, []\u27e9\n  else match fuel with\n  | 0 => .error \u27e8.exhausted, 0, r, []\u27e9\n  | fuel + 1 =>\n      let cheap := subsets budget n (trial (n - 1)).factors\n      match choose budget factor fuel n cheap [] 0 r [] with\n      | .ok result => .ok result\n      | .error first =>\n        let remaining := { budget with maxAttempts := budget.maxAttempts - first.attempts }\n        let r := first.rand\n        let result : Except PrimeCertFailure (Built PrimeCert) := Id.run do\n          let allocation := { budget.factor with\n            primeFuel := fuel\n            attemptLimit := some remaining.maxAttempts }\n          let result := factor allocation (n - 1) r\n          let events := first.events ++ result.events\n          return if result.attempts > remaining.maxAttempts ||\n              result.raw.factors.length > budget.maxFactors then\n            .error \u27e8.exhausted, result.attempts, result.rand, events\u27e9\n          else match product n result.raw.factors with\n          | none => .error \u27e8.exhausted, result.attempts, result.rand, events\u27e9\n          | some F =>\n              if result.raw.residual == 0 || result.raw.residual > n - 1 ||\n                  F * result.raw.residual != n - 1 then\n                .error \u27e8.exhausted, result.attempts, result.rand, events\u27e9\n              else\n                let choices := (subsets remaining n result.raw.factors).filter\n                  (fun fs => !cheap.contains fs)\n                choose remaining factor fuel n choices [] result.attempts result.rand events\n        match result with\n        | .ok result => .ok { result with attempts := first.attempts + result.attempts }\n        | .error failure => .error { failure with attempts := first.attempts + failure.attempts }\ntermination_by (fuel, 0, 0)\n\nprivate def choose (budget : ConstructionBudget) (factor : FactorSearch)\n    (fuel n : Nat) : List (List (Nat \u00d7 Nat)) \u2192 List PrimeCert \u2192 Nat \u2192 Hex.Rand \u2192\n      List FactorEvent \u2192 Except PrimeCertFailure (Built PrimeCert)\n  | [], _, work, r, events => .error \u27e8.exhausted, work, r, events\u27e9\n  | selected :: rest, cache, work, r, events =>\n      if work \u2265 budget.maxAttempts then .error \u27e8.exhausted, work, r, events\u27e9 else\n      let (result, cache) := assemble budget factor fuel n selected [] cache work r events\n      match result with\n      | .error f => choose budget factor fuel n rest cache f.attempts f.rand f.events\n      | .ok built =>\n          match certProduct (n - 1) built.value with\n          | none => choose budget factor fuel n rest cache built.attempts built.rand built.events\n          | some F =>\n              let cert := node n F built.value\n              if checkPrime cert then .ok \u27e8cert, built.attempts, built.rand, built.events\u27e9\n              else choose budget factor fuel n rest cache built.attempts built.rand built.events\ntermination_by choices => (fuel, choices.length + 1, 0)\n\nprivate def assemble (budget : ConstructionBudget) (factor : FactorSearch)\n    (fuel n : Nat) : List (Nat \u00d7 Nat) \u2192 List (Nat \u00d7 Nat \u00d7 PrimeCert) \u2192\n      List PrimeCert \u2192 Nat \u2192 Hex.Rand \u2192 List FactorEvent \u2192\n      (Except PrimeCertFailure (Built (List (Nat \u00d7 Nat \u00d7 PrimeCert)))) \u00d7 List PrimeCert\n  | [], acc, cache, work, r, events => (.ok \u27e8acc.reverse, work, r, events\u27e9, cache)\n  | (q, e) :: rest, acc, cache, work, r, events =>\n      if work \u2265 budget.maxAttempts then (.error \u27e8.exhausted, work, r, events\u27e9, cache) else\n      let child : Except PrimeCertFailure (Built PrimeCert) :=\n        match cache.find? (fun c => c.subject == q) with\n        | some c => .ok \u27e8c, 0, r, []\u27e9\n        | none => generate { budget with maxAttempts := budget.maxAttempts - work }\n            factor fuel q r\n      match child with\n      | .error f =>\n          (.error \u27e8.exhausted, work + f.attempts, f.rand, events ++ f.events\u27e9, cache)\n      | .ok child =>\n          let cache := if cache.any (fun c => c.subject == q) then cache else child.value :: cache\n          let events := events ++ child.events\n          match witness { budget with maxAttempts := budget.maxAttempts - work - child.attempts }\n              n q child.rand with\n          | .error f =>\n              (.error \u27e8.exhausted, work + child.attempts + f.attempts, f.rand,\n                events ++ f.events\u27e9, cache)\n          | .ok (a, witnessWork, r) =>\n              assemble budget factor fuel n rest ((a, e - 1, child.value) :: acc) cache\n                (work + child.attempts + witnessWork) r events\ntermination_by entries => (fuel, 0, entries.length + 1)\n\nend\n\n/-- Construct and self-check the exact certificate to be reified. Factor data,\nsubset estimates and witnesses are untrusted; every success passes `checkPrime`.\nA malformed producer can only prevent certificate construction. -/\ndef run (n : Nat) (r : Hex.Rand) (budget : ConstructionBudget := constructionBudget)\n    (factor : FactorSearch := factorSearch) :\n    Except PrimeCertFailure (Internal.PrimeCertSuccess n) :=\n  match generate budget factor budget.maxDepth n r with\n  | .error f => .error f\n  | .ok result =>\n      let cert := result.value\n      if hs : cert.subject = n then\n        if hc : checkPrime cert = true then\n          .ok \u27e8\u27e8cert, hs, hc\u27e9, result.attempts, result.rand, result.events\u27e9\n        else .error \u27e8.exhausted, result.attempts, result.rand, result.events\u27e9\n      else .error \u27e8.exhausted, result.attempts, result.rand, result.events\u27e9\n\nend Construction\nend Hex.Nat\n",
+    "HexIntFactor/Construction.lean": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\n\npublic import HexIntFactor.EcmStage2\npublic import HexPrimality.Construction\n\npublic section\n\n/-! Explicit bounded ECM factor provider for certificate construction.\nIt is not registered in the ordinary factorization or primality portfolio. -/\n\nnamespace Hex.Nat\n\nprivate def insert (q e : Nat) : List (Nat \u00d7 Nat) \u2192 List (Nat \u00d7 Nat)\n  | [] => [(q, e)]\n  | (p, k) :: rest =>\n      if p = q then (p, k + e) :: rest else (p, k) :: insert q e rest\n\n/-- Core partial factoring followed by a bounded two-stage ECM schedule.\nEach residual uses consecutive Suyama parameters from 6, with at most 64 curves.\nThe callback honors the remaining total attempt limit and never accepts an\nexternally asserted prime. The constructor recursively certifies candidates. -/\ndef ecmFactorSearch (b\u2081 : Nat := 32768) (b\u2082 : Nat := 524288)\n    (curves : Nat := 64) (trace : Bool := false) : FactorSearch := fun allocation n r => Id.run do\n  if n == 0 then return \u27e8\u27e8[], 0\u27e9, r, 0, []\u27e9\n  let limit := allocation.attemptLimit.getD 1024\n  let allocation := { allocation with attemptLimit := some limit }\n  let initial := Construction.factorSearch allocation n r\n  -- Do not factor a residual already unnecessary for the square-root criterion.\n  if initial.raw.residual > 0 && (n / initial.raw.residual)^2 > n + 1 then\n    return initial\n  let mut work := initial.attempts\n  let mut rand := initial.rand\n  let mut events := initial.events\n  let mut factors := initial.raw.factors\n  let mut residual := 1\n  let mut stack := [initial.raw.residual]\n  for _ in [:allocation.factorFuel] do\n    let m :: rest := stack | break\n    stack := rest\n    if m \u2264 1 then continue\n    let mut divisor := 0\n    for curve in [:min curves 64] do\n      if work \u2265 limit then break\n      let (result, used) := Ecm.search m (6 + curve) b\u2081 b\u2082 (limit - work)\n      work := work + used\n      if trace then\n        dbg_trace \"ecm {m}: sigma {6+curve}; bounds {b\u2081}/{b\u2082}; {repr result}; attempts {used}\"\n      if let .factor d := result then\n        if 1 < d && d < m && m % d == 0 then\n          divisor := d\n          break\n    if divisor == 0 then residual := residual * m\n    else\n      for part in [divisor, m / divisor] do\n        let found := Construction.factorSearch { allocation with attemptLimit := some (limit - work) } part rand\n        work := work + found.attempts\n        rand := found.rand\n        events := events ++ found.events\n        for (p, e) in found.raw.factors do\n          factors := insert p e factors\n        stack := found.raw.residual :: stack\n  return \u27e8\u27e8factors, stack.foldl (\u00b7 * \u00b7) residual\u27e9, rand, work, events\u27e9\n\nend Hex.Nat\n",
+    "HexIntFactor/EcmStage2.lean": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\n\npublic import HexIntFactor.Ecm\nimport all HexIntFactor.Ecm\n\npublic section\n\n/-! Bounded Montgomery ECM continuation. Search is untrusted: only a dynamically\nvalidated proper divisor crosses the public boundary. See the HexIntFactor SPEC\nand reports/hex-primality-ecm-stage2.md for the interval and work contracts. -/\n\nnamespace Hex.Nat.Ecm\n\nnamespace Internal\n\nstructure State where\n  n : Nat\n  num : Nat\n  den : Nat\n  point : EcmPoint\n\n-- Setup and stage 1 match the natural-number production backend exactly.\ndef start (n sigma b\u2081 : Nat) : EcmResult \u00d7 Option State := Id.run do\n  if n < 4 || sigma < 6 || b\u2081 > 524288 then return (.noFactor, none)\n  let u := (sigma * sigma + n - 5) % n\n  let v := 4 * sigma % n\n  let u3 := u * u % n * u % n\n  let v3 := v * v % n * v % n\n  let vu := (v + n - u) % n\n  let num := vu * vu % n * vu % n * ((3 * u + v) % n) % n\n  let den := 4 * u3 % n * v % n\n  let setup := classifyGcd n (Nat.gcd den n)\n  if setup != .noFactor then return (setup, none)\n  let den := 4 * den % n\n  let point := stageMultiply n b\u2081 num den (primesBelow (b\u2081 + 1)) \u27e8u3, v3\u27e9\n  let result := classifyGcd n (Nat.gcd point.z n)\n  return (result, if result == .noFactor then some \u27e8n, num, den, point\u27e9 else none)\n\nstructure Trace where\n  result : EcmResult := .noFactor\n  candidates : Nat := 0\n  advances : Nat := 0\n  batches : Nat := 0\n  recovery : List Nat := []\n  lastPrime : Nat := 0\n  oracleMismatch : Bool := false\n  deriving Repr\n\n-- A whole leaf does not mask a later proper leaf.\ndef flush (n product : Nat) (terms : Array Nat) : EcmResult \u00d7 List Nat := Id.run do\n  let result := classifyGcd n (Nat.gcd product n)\n  if result != .whole then return (result, [])\n  let mut recovery := []\n  for t in terms do\n    let g := Nat.gcd t n\n    recovery := recovery ++ [g]\n    if let .factor d := classifyGcd n g then return (.factor d, recovery)\n  return (.whole, recovery)\n\n/- Every prime in `(b\u2081,b\u2082]` is mapped to q = 210*i+j. Cross differences also\nadmit the opposite sign, but all exits still validate a proper divisor. For\nsmall q (i=0), use `[q]Q.z` directly to avoid the point at infinity. -/\ndef stage2 (s : State) (b\u2081 b\u2082 : Nat) (checkGiants : Bool := false) : Trace := Id.run do\n  if s.n < 4 || b\u2081 > 524288 || b\u2082 > 4194304 || b\u2082 \u2264 b\u2081 then return {}\n  let primes := (primesBelow (b\u2082 + 1)).filter (b\u2081 < \u00b7)\n  if primes.isEmpty then return {}\n  let mul := scalarMul s.n s.num s.den s.point\n  let babies := (List.range 210).toArray.map mul\n  let step := mul 210\n  let mut previous : EcmPoint := \u27e81, 0\u27e9\n  let mut giant := step\n  let mut index := 1\n  let mut terms := #[]\n  let mut product := 1\n  let mut trace : Trace := {}\n  for q in primes do\n    let i := q / 210\n    let j := q % 210\n    while index < i do\n      let next := if index == 1 then xDouble s.n s.num s.den giant\n        else xAdd s.n giant step previous\n      previous := giant\n      giant := next\n      index := index + 1\n      trace := { trace with advances := trace.advances + 1 }\n    if checkGiants && i > 0 then\n      let direct := mul (210 * i)\n      if (direct.x * giant.z) % s.n != (giant.x * direct.z) % s.n then\n        trace := { trace with oracleMismatch := true }\n    let t := if i == 0 then (mul q).z else\n      let baby := babies[j]' (by simp [babies, j]; omega)\n      (giant.x * baby.z % s.n + s.n - baby.x * giant.z % s.n) % s.n\n    product := product * t % s.n\n    terms := terms.push t\n    trace := { trace with candidates := trace.candidates + 1, lastPrime := q }\n    if terms.size == 32 then\n      let (result, recovery) := flush s.n product terms\n      trace := { trace with batches := trace.batches + 1, result, recovery }\n      if result != .noFactor then return trace\n      terms := #[]\n      product := 1\n  if !terms.isEmpty then\n    let (result, recovery) := flush s.n product terms\n    trace := { trace with batches := trace.batches + 1, result, recovery }\n  return trace\n\nend Internal\n\n-- Requests are rejected rather than silently changed. Stage one has its existing cap.\ndef validBounds (b\u2081 b\u2082 : Nat) : Bool := b\u2081 \u2264 524288 && b\u2082 \u2264 4194304\n\nprivate def searchCore (n sigma b\u2081 b\u2082 allowance : Nat) : EcmResult \u00d7 Nat :=\n  if allowance == 0 || !validBounds b\u2081 b\u2082 then (.noFactor, 0) else\n  let (result, saved) := Internal.start n sigma b\u2081\n  match saved with\n  | some s => if b\u2082 > b\u2081 && allowance > 1 then ((Internal.stage2 s b\u2081 b\u2082).result, 2)\n      else (result, 1)\n  | none => (result, 1)\n\n/-- A deterministic curve attempt with at most two semantic charges. Invalid\nbounds or zero allowance decline without work; one remaining attempt permits\nonly stage 1. No random state is consumed. -/\ndef search (n sigma b\u2081 b\u2082 allowance : Nat) : EcmResult \u00d7 Nat :=\n  let (result, work) := searchCore n sigma b\u2081 b\u2082 allowance\n  (match result with\n   | .factor d => classifyGcd n d\n   | other => other, work)\n\n/-- A factor from the counted continuation is always a proper divisor. -/\ntheorem search_spec {n sigma b\u2081 b\u2082 allowance d : Nat}\n    (h : (search n sigma b\u2081 b\u2082 allowance).1 = .factor d) :\n    1 < d \u2227 d < n \u2227 d \u2223 n := by\n  generalize he : searchCore n sigma b\u2081 b\u2082 allowance = out\n  obtain \u27e8result, work\u27e9 := out\n  simp only [search, he] at h\n  cases result with\n  | factor value => exact classifyGcd_spec h\n  | noFactor => cases h\n  | whole => cases h\n\nend Hex.Nat.Ecm\n",
+    "scripts/bench/primality_fallback_sweep.py": "#!/usr/bin/env python3\n\"\"\"Four fixed adjacent AB/BA blocks for the complete-construction retry prototype.\"\"\"\nimport argparse\nimport hashlib\nimport json\nimport os\nfrom pathlib import Path\nimport platform\nimport re\nimport subprocess\nimport sys\nimport time\n\nROOT = Path(__file__).resolve().parents[2]\nsys.path.insert(0, str(ROOT))\nfrom scripts.bench.idle_core import pick\nfrom scripts.bench.primality_field_sweep import FAILURE, proof_source\n\nMODULE = 'HexPrimality.ProofProbe.Curve25519.FallbackSample'\nSOURCE = ROOT / 'bench' / (MODULE.replace('.', '/') + '.lean')\nFIELDS = [('secp256k1', 2**256-2**32-977, '2 ^ 256 - 2 ^ 32 - 977'),\n          ('P-384', 2**384-2**128-2**96+2**32-1, '2 ^ 384 - 2 ^ 128 - 2 ^ 96 + 2 ^ 32 - 1'),\n          ('Curve448', 2**448-2**224-1, '2 ^ 448 - 2 ^ 224 - 1')]\nCASES = FIELDS + [('P-521', 2**521-1, '2 ^ 521 - 1'),\n                  ('Curve25519', 2**255-19, '2 ^ 255 - 19'),\n                  ('507-bit', int(FAILURE['n']), FAILURE['n']), ('7', 7, '7'), ('15', 15, '15')]\n\ndef source(n, arm, options='set_option maxHeartbeats 4000000\\n'):\n    return ('module\\nimport HexPrimality.ProofProbe.Curve25519.Fallback\\n' + options +\n            f'example : Hex.Nat.Prime ({n}) := by prototype_primality \"{arm}\"\\n')\n\ndef main():\n    parser = argparse.ArgumentParser(description=__doc__)\n    parser.add_argument('--output', type=Path, required=True)\n    args = parser.parse_args()\n    if args.output.exists() or SOURCE.exists():\n        parser.error('output and temporary module must be absent')\n    subprocess.run(['lake', 'build', 'hexprimality_field_probe',\n                    'HexPrimality.ProofProbe.Curve25519.Fallback'], cwd=ROOT, check=True)\n    cpu = pick()\n    paths = ['bench/HexPrimality/FieldProbe.lean',\n             'bench/HexPrimality/ProofProbe/Curve25519/Fallback.lean',\n             'HexPrimality/Construction.lean', 'HexIntFactor/Construction.lean',\n             'HexIntFactor/EcmStage2.lean', 'scripts/bench/primality_fallback_sweep.py']\n    record = dict(host=platform.node(), cpu=cpu, toolchain=(ROOT/'lean-toolchain').read_text(),\n                  commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),\n                  sources={p:(ROOT/p).read_text() for p in paths},\n                  source_sha256={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in paths},\n                  executable_sha256=hashlib.sha256((ROOT/'.lake/build/bin/hexprimality_field_probe').read_bytes()).hexdigest(),\n                  protocol='four fixed trial-major blocks; adjacent AB/BA arms; retain every completed sample',\n                  heartbeat_unit='raw IO.getNumHeartbeats delta; 1000 raw allocations per user heartbeat',\n                  samples=[], completion='running')\n    def save():\n        args.output.write_text(json.dumps(record,indent=2)+'\\n')\n    def run(cmd, **fields):\n        row=dict(command=cmd,load_before=os.getloadavg(),**fields)\n        start=time.monotonic_ns()\n        p=subprocess.run(['taskset','-c',str(cpu),*cmd],cwd=ROOT,capture_output=True,text=True,\n                         env=dict(os.environ,LEAN_NUM_THREADS='1'))\n        row.update(stdout=p.stdout,stderr=p.stderr,returncode=p.returncode,\n                   elapsed_ns=time.monotonic_ns()-start,load_after=os.getloadavg())\n        record['samples'].append(row)\n        save()\n        print(fields, 'exit', p.returncode, flush=True)\n        return row\n    def build(text, **fields):\n        SOURCE.write_text(text)\n        artifact=ROOT/'.lake/build/lib/lean'/Path(MODULE.replace('.','/')+'.olean')\n        artifact.unlink(missing_ok=True)\n        return run(['lake','build',MODULE],source=text,**fields)\n    try:\n        # Reduced options are separate observations, never a search for a minimum.\n        for name,n,power in FIELDS:\n            for form,goal in [('numeral',str(n)),('power',power)]:\n                for opts,label in [('', 'defaults'),('set_option maxHeartbeats 4000000\\n','heartbeats-only')]:\n                    build(source(goal,'auto',opts),phase='options',case=name,form=form,options=label)\n        for block in range(4):\n            for pair,cases in [(('explicit','auto'),FIELDS),(('core','auto'),CASES)]:\n                order=pair if block%2==0 else pair[::-1]\n                for name,n,_ in cases:\n                    certs={}\n                    for arm in order:\n                        row=run(['.lake/build/bin/hexprimality_field_probe','measure-fallback',arm,str(n)],\n                                phase='native',block=block,pair=pair,arm=arm,case=name)\n                        if row['returncode']:\n                            raise RuntimeError('native probe failed; result retained')\n                        result=json.loads(row['stdout'])\n                        row['result']=result\n                        if result['status']=='ok': certs[arm]=result['certificate']\n                        save()\n                    if len(certs)==2 and len(set(certs.values()))!=1:\n                        raise RuntimeError('successful certificate changed')\n                    for arm in order:\n                        build(source(str(n),arm),phase='fresh-elaboration',block=block,pair=pair,arm=arm,case=name)\n                    for arm in order:\n                        if arm not in certs: continue\n                        text=proof_source(str(n),certs[arm])\n                        # Counter deltas observe each stage without changing any baseline.\n                        text=text.replace('let start \u2190 IO.monoNanosNow','let hb \u2190 IO.getNumHeartbeats\\n  let start \u2190 IO.monoNanosNow')\n                        text=text.replace('let stop \u2190 IO.monoNanosNow','let stop \u2190 IO.monoNanosNow\\n  let used \u2190 IO.getNumHeartbeats\\n  logInfo m!\"PHASE_HEARTBEATS_RAW {used - hb}\"')\n                        row=build(text,phase='render-replay',block=block,pair=pair,arm=arm,case=name)\n                        if row['returncode']: raise RuntimeError('replay failed; result retained')\n        record['completion']='complete'\n    except BaseException as exc:\n        record['completion']=str(exc)\n        raise\n    finally:\n        SOURCE.unlink(missing_ok=True)\n        save()\n\nif __name__=='__main__': main()\n"
+  },
+  "source_sha256": {
+    "bench/HexPrimality/FieldProbe.lean": "4a35bbf0f34e566d63994392409e8021e5137462cb1e72cf507d95479133065d",
+    "bench/HexPrimality/ProofProbe/Curve25519/Fallback.lean": "56c6b1b02f55d1a2a561a6e5263eba5fc6dfed0935e851bd63b5dd29737609f6",
+    "HexPrimality/Construction.lean": "89734514c01806cfa4ce7aca85f5dcea560e8826bee56c40d10311a029780ee4",
+    "HexIntFactor/Construction.lean": "167308ef5275f86547373438983e54d6e564380964af3d13149f4248d8123d99",
+    "HexIntFactor/EcmStage2.lean": "88551eb552dbf80d7dbce135f1f08d375cc84c20fdd2ba7f99d454ef14e9a596",
+    "scripts/bench/primality_fallback_sweep.py": "8f2fd9579a7c0bd265f85a4193ae3e324644482983161da6a2ba0eaa69db1c2c"
+  },
+  "executable_sha256": "fc7b612ffb909ef59ad7213c1d9ad1510b7e71f50e7bda8d665cb4db47141e81",
+  "protocol": "four fixed trial-major blocks; adjacent AB/BA arms; retain every completed sample",
+  "heartbeat_unit": "raw IO.getNumHeartbeats delta; 1000 raw allocations per user heartbeat",
+  "samples": [
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        4.70849609375,
+        4.421875,
+        3.91796875
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nexample : Hex.Nat.Prime (115792089237316195423570985008687907853269984665640564039457584007908834671663) := by prototype_primality \"auto\"\n",
+      "phase": "options",
+      "case": "secp256k1",
+      "form": "numeral",
+      "options": "defaults",
+      "stdout": "\u2716 [80/80] Building HexPrimality.ProofProbe.Curve25519.FallbackSample (45s)\ntrace: .> LEAN_PATH=/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/subverso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/MD4Lean/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/illuminate/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Cli/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/batteries/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Qq/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/aesop/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/importGraph/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/plausible/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/verso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/NautyFFI/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/lean-bench/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/mathlib/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean /home/kim/.elan/toolchains/leanprover--lean4---v4.34.0/bin/lean /home/kim/worktrees/hex-dev/hex-dev-issue-10373/bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean -o /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.olean -i /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.ilean -c /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.c --setup /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.setup.json --json\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:111: TACTIC_NS 45301454707 HEARTBEATS_RAW 365279830\nerror: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:111: (deterministic) timeout at `transform`, maximum number of heartbeats (200000) has been reached\n\nNote: Use `set_option maxHeartbeats <num>` to set the limit.\n\nHint: Additional diagnostic information may be available using the `set_option diagnostics true` command.\nSome required targets logged failures:\n- HexPrimality.ProofProbe.Curve25519.FallbackSample\n",
+      "stderr": "error: build failed\n",
+      "returncode": 1,
+      "elapsed_ns": 46346366186,
+      "load_after": [
+        5.19775390625,
+        4.6171875,
+        4.01318359375
+      ]
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        5.19775390625,
+        4.6171875,
+        4.01318359375
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nset_option maxHeartbeats 4000000\nexample : Hex.Nat.Prime (115792089237316195423570985008687907853269984665640564039457584007908834671663) := by prototype_primality \"auto\"\n",
+      "phase": "options",
+      "case": "secp256k1",
+      "form": "numeral",
+      "options": "heartbeats-only",
+      "stdout": "\u2139 [80/80] Built HexPrimality.ProofProbe.Curve25519.FallbackSample (46s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:111: ATTEMPTS 417\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:111: TACTIC_NS 46258139377 HEARTBEATS_RAW 365345983\nBuild completed successfully (80 jobs).\n",
+      "stderr": "",
+      "returncode": 0,
+      "elapsed_ns": 47328921370,
+      "load_after": [
+        5.44970703125,
+        4.7666015625,
+        4.09375
+      ]
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        5.44970703125,
+        4.7666015625,
+        4.09375
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nexample : Hex.Nat.Prime (2 ^ 256 - 2 ^ 32 - 977) := by prototype_primality \"auto\"\n",
+      "phase": "options",
+      "case": "secp256k1",
+      "form": "power",
+      "options": "defaults",
+      "stdout": "\u2716 [80/80] Building HexPrimality.ProofProbe.Curve25519.FallbackSample (45s)\ntrace: .> LEAN_PATH=/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/subverso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/MD4Lean/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/illuminate/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Cli/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/batteries/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Qq/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/aesop/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/importGraph/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/plausible/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/verso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/NautyFFI/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/lean-bench/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/mathlib/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean /home/kim/.elan/toolchains/leanprover--lean4---v4.34.0/bin/lean /home/kim/worktrees/hex-dev/hex-dev-issue-10373/bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean -o /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.olean -i /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.ilean -c /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.c --setup /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.setup.json --json\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:55: TACTIC_NS 45527379509 HEARTBEATS_RAW 365280051\nerror: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:55: (deterministic) timeout at `transform`, maximum number of heartbeats (200000) has been reached\n\nNote: Use `set_option maxHeartbeats <num>` to set the limit.\n\nHint: Additional diagnostic information may be available using the `set_option diagnostics true` command.\nSome required targets logged failures:\n- HexPrimality.ProofProbe.Curve25519.FallbackSample\n",
+      "stderr": "error: build failed\n",
+      "returncode": 1,
+      "elapsed_ns": 46648306975,
+      "load_after": [
+        6.4189453125,
+        5.09326171875,
+        4.23828125
+      ]
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        6.4189453125,
+        5.09326171875,
+        4.23828125
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nset_option maxHeartbeats 4000000\nexample : Hex.Nat.Prime (2 ^ 256 - 2 ^ 32 - 977) := by prototype_primality \"auto\"\n",
+      "phase": "options",
+      "case": "secp256k1",
+      "form": "power",
+      "options": "heartbeats-only",
+      "stdout": "\u2139 [80/80] Built HexPrimality.ProofProbe.Curve25519.FallbackSample (46s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:55: ATTEMPTS 417\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:55: TACTIC_NS 45617487181 HEARTBEATS_RAW 365346928\nBuild completed successfully (80 jobs).\n",
+      "stderr": "",
+      "returncode": 0,
+      "elapsed_ns": 46724484201,
+      "load_after": [
+        6.82177734375,
+        5.4033203125,
+        4.38623046875
+      ]
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        6.82177734375,
+        5.4033203125,
+        4.38623046875
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nexample : Hex.Nat.Prime (39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112319) := by prototype_primality \"auto\"\n",
+      "phase": "options",
+      "case": "P-384",
+      "form": "numeral",
+      "options": "defaults",
+      "stdout": "\u2716 [80/80] Building HexPrimality.ProofProbe.Curve25519.FallbackSample (63s)\ntrace: .> LEAN_PATH=/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/subverso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/MD4Lean/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/illuminate/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Cli/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/batteries/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Qq/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/aesop/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/importGraph/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/plausible/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/verso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/NautyFFI/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/lean-bench/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/mathlib/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean /home/kim/.elan/toolchains/leanprover--lean4---v4.34.0/bin/lean /home/kim/worktrees/hex-dev/hex-dev-issue-10373/bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean -o /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.olean -i /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.ilean -c /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.c --setup /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.setup.json --json\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:149: TACTIC_NS 62686533696 HEARTBEATS_RAW 443094114\nerror: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:149: (deterministic) timeout at `transform`, maximum number of heartbeats (200000) has been reached\n\nNote: Use `set_option maxHeartbeats <num>` to set the limit.\n\nHint: Additional diagnostic information may be available using the `set_option diagnostics true` command.\nSome required targets logged failures:\n- HexPrimality.ProofProbe.Curve25519.FallbackSample\n",
+      "stderr": "error: build failed\n",
+      "returncode": 1,
+      "elapsed_ns": 63740604664,
+      "load_after": [
+        6.5556640625,
+        5.61181640625,
+        4.529296875
+      ]
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        6.5556640625,
+        5.61181640625,
+        4.529296875
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nset_option maxHeartbeats 4000000\nexample : Hex.Nat.Prime (39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112319) := by prototype_primality \"auto\"\n",
+      "phase": "options",
+      "case": "P-384",
+      "form": "numeral",
+      "options": "heartbeats-only",
+      "stdout": "\u2139 [80/80] Built HexPrimality.ProofProbe.Curve25519.FallbackSample (63s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:149: ATTEMPTS 304\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:149: TACTIC_NS 62848923740 HEARTBEATS_RAW 443201758\nBuild completed successfully (80 jobs).\n",
+      "stderr": "",
+      "returncode": 0,
+      "elapsed_ns": 63947483938,
+      "load_after": [
+        6.5048828125,
+        5.75048828125,
+        4.6455078125
+      ]
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        6.5048828125,
+        5.75048828125,
+        4.6455078125
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nexample : Hex.Nat.Prime (2 ^ 384 - 2 ^ 128 - 2 ^ 96 + 2 ^ 32 - 1) := by prototype_primality \"auto\"\n",
+      "phase": "options",
+      "case": "P-384",
+      "form": "power",
+      "options": "defaults",
+      "stdout": "\u2716 [80/80] Building HexPrimality.ProofProbe.Curve25519.FallbackSample (63s)\ntrace: .> LEAN_PATH=/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/subverso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/MD4Lean/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/illuminate/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Cli/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/batteries/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Qq/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/aesop/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/importGraph/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/plausible/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/verso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/NautyFFI/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/lean-bench/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/mathlib/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean /home/kim/.elan/toolchains/leanprover--lean4---v4.34.0/bin/lean /home/kim/worktrees/hex-dev/hex-dev-issue-10373/bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean -o /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.olean -i /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.ilean -c /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.c --setup /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.setup.json --json\nwarning: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:72: exponent 384 exceeds the threshold 256, exponentiation operation was not evaluated, use `set_option exponentiation.threshold <num>` to set a new threshold\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:72: TACTIC_NS 63190259654 HEARTBEATS_RAW 443137202\nerror: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:72: (deterministic) timeout at `transform`, maximum number of heartbeats (200000) has been reached\n\nNote: Use `set_option maxHeartbeats <num>` to set the limit.\n\nHint: Additional diagnostic information may be available using the `set_option diagnostics true` command.\nSome required targets logged failures:\n- HexPrimality.ProofProbe.Curve25519.FallbackSample\n",
+      "stderr": "error: build failed\n",
+      "returncode": 1,
+      "elapsed_ns": 64241573580,
+      "load_after": [
+        7.681640625,
+        6.27734375,
+        4.90576171875
+      ]
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        7.681640625,
+        6.27734375,
+        4.90576171875
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nset_option maxHeartbeats 4000000\nexample : Hex.Nat.Prime (2 ^ 384 - 2 ^ 128 - 2 ^ 96 + 2 ^ 32 - 1) := by prototype_primality \"auto\"\n",
+      "phase": "options",
+      "case": "P-384",
+      "form": "power",
+      "options": "heartbeats-only",
+      "stdout": "\u26a0 [80/80] Built HexPrimality.ProofProbe.Curve25519.FallbackSample (63s)\nwarning: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:72: exponent 384 exceeds the threshold 256, exponentiation operation was not evaluated, use `set_option exponentiation.threshold <num>` to set a new threshold\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:72: ATTEMPTS 304\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:72: TACTIC_NS 62829194156 HEARTBEATS_RAW 443245599\nBuild completed successfully (80 jobs).\n",
+      "stderr": "",
+      "returncode": 0,
+      "elapsed_ns": 64180600091,
+      "load_after": [
+        7.046875,
+        6.34716796875,
+        5.0244140625
+      ]
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        7.046875,
+        6.34716796875,
+        5.0244140625
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nexample : Hex.Nat.Prime (726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439) := by prototype_primality \"auto\"\n",
+      "phase": "options",
+      "case": "Curve448",
+      "form": "numeral",
+      "options": "defaults",
+      "stdout": "\u2716 [80/80] Building HexPrimality.ProofProbe.Curve25519.FallbackSample (42s)\ntrace: .> LEAN_PATH=/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/subverso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/MD4Lean/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/illuminate/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Cli/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/batteries/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Qq/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/aesop/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/importGraph/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/plausible/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/verso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/NautyFFI/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/lean-bench/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/mathlib/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean /home/kim/.elan/toolchains/leanprover--lean4---v4.34.0/bin/lean /home/kim/worktrees/hex-dev/hex-dev-issue-10373/bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean -o /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.olean -i /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.ilean -c /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.c --setup /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.setup.json --json\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:168: TACTIC_NS 42446126972 HEARTBEATS_RAW 289215024\nerror: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:168: (deterministic) timeout at `transform`, maximum number of heartbeats (200000) has been reached\n\nNote: Use `set_option maxHeartbeats <num>` to set the limit.\n\nHint: Additional diagnostic information may be available using the `set_option diagnostics true` command.\nSome required targets logged failures:\n- HexPrimality.ProofProbe.Curve25519.FallbackSample\n",
+      "stderr": "error: build failed\n",
+      "returncode": 1,
+      "elapsed_ns": 43597646324,
+      "load_after": [
+        6.73681640625,
+        6.3740234375,
+        5.09912109375
+      ]
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        6.73681640625,
+        6.3740234375,
+        5.09912109375
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nset_option maxHeartbeats 4000000\nexample : Hex.Nat.Prime (726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439) := by prototype_primality \"auto\"\n",
+      "phase": "options",
+      "case": "Curve448",
+      "form": "numeral",
+      "options": "heartbeats-only",
+      "stdout": "\u2139 [80/80] Built HexPrimality.ProofProbe.Curve25519.FallbackSample (43s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:168: ATTEMPTS 326\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:168: TACTIC_NS 42776037696 HEARTBEATS_RAW 289360040\nBuild completed successfully (80 jobs).\n",
+      "stderr": "",
+      "returncode": 0,
+      "elapsed_ns": 43841116214,
+      "load_after": [
+        9.1455078125,
+        7.00732421875,
+        5.37158203125
+      ]
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        9.1455078125,
+        7.00732421875,
+        5.37158203125
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nexample : Hex.Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := by prototype_primality \"auto\"\n",
+      "phase": "options",
+      "case": "Curve448",
+      "form": "power",
+      "options": "defaults",
+      "stdout": "\u2716 [80/80] Building HexPrimality.ProofProbe.Curve25519.FallbackSample (43s)\ntrace: .> LEAN_PATH=/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/subverso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/MD4Lean/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/illuminate/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Cli/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/batteries/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Qq/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/aesop/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/importGraph/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/plausible/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/verso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/NautyFFI/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/lean-bench/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/mathlib/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean /home/kim/.elan/toolchains/leanprover--lean4---v4.34.0/bin/lean /home/kim/worktrees/hex-dev/hex-dev-issue-10373/bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean -o /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.olean -i /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.ilean -c /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.c --setup /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.setup.json --json\nwarning: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:54: exponent 448 exceeds the threshold 256, exponentiation operation was not evaluated, use `set_option exponentiation.threshold <num>` to set a new threshold\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:54: TACTIC_NS 42724648830 HEARTBEATS_RAW 289276687\nerror: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:3:54: (deterministic) timeout at `transform`, maximum number of heartbeats (200000) has been reached\n\nNote: Use `set_option maxHeartbeats <num>` to set the limit.\n\nHint: Additional diagnostic information may be available using the `set_option diagnostics true` command.\nSome required targets logged failures:\n- HexPrimality.ProofProbe.Curve25519.FallbackSample\n",
+      "stderr": "error: build failed\n",
+      "returncode": 1,
+      "elapsed_ns": 43840792692,
+      "load_after": [
+        8.7197265625,
+        7.17724609375,
+        5.49951171875
+      ]
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        8.7197265625,
+        7.17724609375,
+        5.49951171875
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nset_option maxHeartbeats 4000000\nexample : Hex.Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := by prototype_primality \"auto\"\n",
+      "phase": "options",
+      "case": "Curve448",
+      "form": "power",
+      "options": "heartbeats-only",
+      "stdout": "\u26a0 [80/80] Built HexPrimality.ProofProbe.Curve25519.FallbackSample (42s)\nwarning: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:54: exponent 448 exceeds the threshold 256, exponentiation operation was not evaluated, use `set_option exponentiation.threshold <num>` to set a new threshold\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:54: ATTEMPTS 326\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:54: TACTIC_NS 42291689881 HEARTBEATS_RAW 289422496\nBuild completed successfully (80 jobs).\n",
+      "stderr": "",
+      "returncode": 0,
+      "elapsed_ns": 43448025423,
+      "load_after": [
+        8.150390625,
+        7.23193359375,
+        5.59912109375
+      ]
+    },
+    {
+      "command": [
+        ".lake/build/bin/hexprimality_field_probe",
+        "measure-fallback",
+        "explicit",
+        "115792089237316195423570985008687907853269984665640564039457584007908834671663"
+      ],
+      "load_before": [
+        8.150390625,
+        7.23193359375,
+        5.59912109375
+      ],
+      "phase": "native",
+      "block": 0,
+      "pair": [
+        "explicit",
+        "auto"
+      ],
+      "arm": "explicit",
+      "case": "secp256k1",
+      "stdout": "{\"arm\":\"explicit\",\"attempts\":145,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  115792089237316195423570985008687907853269984665640564039457584007908834671663\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock\\n      205115282021455665897114700593932402728804164701536103180137503955397371\\n      [(2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          255515944373312847190720520512484175977\\n          185873736969223\\n          6447496504\\n          185873736969222\\n          [(3, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 4423),\\n           (2, 0, Hex.Nat.PrimeCert.small 41201),\\n           (2, 0, Hex.Nat.PrimeCert.small 96557)])])]\",\"events\":\"[]\",\"heartbeats_raw\":225250274,\"nanos\":15142229556,\"seed_out\":16390740441490242943,\"status\":\"ok\"}\n",
+      "stderr": "",
+      "returncode": 0,
+      "elapsed_ns": 15166764330,
+      "load_after": [
+        8.25146484375,
+        7.3017578125,
+        5.64892578125
+      ],
+      "result": {
+        "arm": "explicit",
+        "attempts": 145,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  115792089237316195423570985008687907853269984665640564039457584007908834671663\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock\n      205115282021455665897114700593932402728804164701536103180137503955397371\n      [(2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          255515944373312847190720520512484175977\n          185873736969223\n          6447496504\n          185873736969222\n          [(3, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 4423),\n           (2, 0, Hex.Nat.PrimeCert.small 41201),\n           (2, 0, Hex.Nat.PrimeCert.small 96557)])])]",
+        "events": "[]",
+        "heartbeats_raw": 225250274,
+        "nanos": 15142229556,
+        "seed_out": 16390740441490242943,
+        "status": "ok"
+      }
+    },
+    {
+      "command": [
+        ".lake/build/bin/hexprimality_field_probe",
+        "measure-fallback",
+        "auto",
+        "115792089237316195423570985008687907853269984665640564039457584007908834671663"
+      ],
+      "load_before": [
+        8.25146484375,
+        7.3017578125,
+        5.64892578125
+      ],
+      "phase": "native",
+      "block": 0,
+      "pair": [
+        "explicit",
+        "auto"
+      ],
+      "arm": "auto",
+      "case": "secp256k1",
+      "stdout": "{\"arm\":\"auto\",\"attempts\":417,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  115792089237316195423570985008687907853269984665640564039457584007908834671663\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock\\n      205115282021455665897114700593932402728804164701536103180137503955397371\\n      [(2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          255515944373312847190720520512484175977\\n          185873736969223\\n          6447496504\\n          185873736969222\\n          [(3, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 4423),\\n           (2, 0, Hex.Nat.PrimeCert.small 41201),\\n           (2, 0, Hex.Nat.PrimeCert.small 96557)])])]\",\"events\":\"[]\",\"heartbeats_raw\":362573035,\"nanos\":26130057856,\"seed_out\":1941426468410348159,\"status\":\"ok\"}\n",
+      "stderr": "",
+      "returncode": 0,
+      "elapsed_ns": 26154780638,
+      "load_after": [
+        7.65966796875,
+        7.24365234375,
+        5.6748046875
+      ],
+      "result": {
+        "arm": "auto",
+        "attempts": 417,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  115792089237316195423570985008687907853269984665640564039457584007908834671663\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock\n      205115282021455665897114700593932402728804164701536103180137503955397371\n      [(2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          255515944373312847190720520512484175977\n          185873736969223\n          6447496504\n          185873736969222\n          [(3, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 4423),\n           (2, 0, Hex.Nat.PrimeCert.small 41201),\n           (2, 0, Hex.Nat.PrimeCert.small 96557)])])]",
+        "events": "[]",
+        "heartbeats_raw": 362573035,
+        "nanos": 26130057856,
+        "seed_out": 1941426468410348159,
+        "status": "ok"
+      }
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        7.65966796875,
+        7.24365234375,
+        5.6748046875
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nset_option maxHeartbeats 4000000\nexample : Hex.Nat.Prime (115792089237316195423570985008687907853269984665640564039457584007908834671663) := by prototype_primality \"explicit\"\n",
+      "phase": "fresh-elaboration",
+      "block": 0,
+      "pair": [
+        "explicit",
+        "auto"
+      ],
+      "arm": "explicit",
+      "case": "secp256k1",
+      "stdout": "\u2139 [80/80] Built HexPrimality.ProofProbe.Curve25519.FallbackSample (31s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:111: ATTEMPTS 145\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:111: TACTIC_NS 30920866423 HEARTBEATS_RAW 226001629\nBuild completed successfully (80 jobs).\n",
+      "stderr": "",
+      "returncode": 0,
+      "elapsed_ns": 32018525591,
+      "load_after": [
+        7.20751953125,
+        7.16943359375,
+        5.7099609375
+      ]
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        7.20751953125,
+        7.16943359375,
+        5.7099609375
+      ],
+      "source": "module\nimport HexPrimality.ProofProbe.Curve25519.Fallback\nset_option maxHeartbeats 4000000\nexample : Hex.Nat.Prime (115792089237316195423570985008687907853269984665640564039457584007908834671663) := by prototype_primality \"auto\"\n",
+      "phase": "fresh-elaboration",
+      "block": 0,
+      "pair": [
+        "explicit",
+        "auto"
+      ],
+      "arm": "auto",
+      "case": "secp256k1",
+      "stdout": "\u2139 [80/80] Built HexPrimality.ProofProbe.Curve25519.FallbackSample (46s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:111: ATTEMPTS 417\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:4:111: TACTIC_NS 46055656391 HEARTBEATS_RAW 365345983\nBuild completed successfully (80 jobs).\n",
+      "stderr": "",
+      "returncode": 0,
+      "elapsed_ns": 47138366473,
+      "load_after": [
+        7.5419921875,
+        7.25732421875,
+        5.810546875
+      ]
+    },
+    {
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.FallbackSample"
+      ],
+      "load_before": [
+        7.5419921875,
+        7.25732421875,
+        5.810546875
+      ],
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\n\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  115792089237316195423570985008687907853269984665640564039457584007908834671663\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock\n      205115282021455665897114700593932402728804164701536103180137503955397371\n      [(2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          255515944373312847190720520512484175977\n          185873736969223\n          6447496504\n          185873736969222\n          [(3, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 4423),\n           (2, 0, Hex.Nat.PrimeCert.small 41201),\n           (2, 0, Hex.Nat.PrimeCert.small 96557)])])]\n\nopen Lean Elab Hex.PrimalityTactic in\nrun_cmd Lean.Elab.Command.liftTermElabM do\n  let input \u2190 IO.mkRef certificate\n  let cert \u2190 input.get\n  let hb \u2190 IO.getNumHeartbeats\n  let start \u2190 IO.monoNanosNow\n  let stx \u2190 certificateSyntax cert\n  let _ \u2190 Lean.Elab.Term.elabTerm stx (some (Lean.mkConst ``Hex.Nat.PrimeCert))\n  let stop \u2190 IO.monoNanosNow\n  let used \u2190 IO.getNumHeartbeats\n  logInfo m!\"PHASE_HEARTBEATS_RAW {used - hb}\"\n  logInfo m!\"RENDER_ELAB_NS {stop - start}\"\n\ntheorem result : Hex.Nat.Prime 115792089237316195423570985008687907853269984665640564039457584007908834671663 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 115792089237316195423570985008687907853269984665640564039457584007908834671663 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  -- Change only a Hex witness base: subjects, products, and ordering remain\n  -- intact, so this control must reach the witness arithmetic.\n  let corruptWitness := value.replace fun e => Id.run do\n    unless e.isAppOfArity `Hex.Nat.PrimeCert.pock 2 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3Sieve 6 do return none\n    let args := e.getAppArgs\n    let fs := args.back!\n    unless fs.isAppOfArity ``List.cons 3 do return none\n    let fsArgs := fs.getAppArgs\n    let entry := fsArgs[1]!\n    unless entry.isAppOfArity ``Prod.mk 4 do return none\n    let entryArgs := entry.getAppArgs\n    let entry := Lean.mkAppN entry.getAppFn (entryArgs.set! 2 (Lean.mkRawNatLit 0))\n    let fs := Lean.mkAppN fs.getAppFn (fsArgs.set! 1 entry)\n    return some (Lean.mkAppN e.getAppFn (args.set! (args.size - 1) fs))\n  let needsWitness := value.getUsedConstants.any fun name =>\n    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3 ||\n      name == `Hex.Nat.PrimeCert.pock3Sieve\n  if needsWitness && corruptWitness == value then\n    throwError \"witness corruption did not change the proof\"\n  if corruptWitness != value then\n    let bad := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corruptWitness\n    match Lean.Kernel.check env {} bad with\n    | .error _ => pure ()\n    | .ok _ => throwError \"kernel accepted the zero witness base\"\n    Lean.logInfo \"DIRECT_WITNESS_CONTROL rejected\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let hb \u2190 IO.getNumHeartbeats\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  let used \u2190 IO.getNumHeartbeats\n  logInfo m!\"PHASE_HEARTBEATS_RAW {used - hb}\"\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "phase": "render-replay",
+      "block": 0,
+      "pair": [
+        "explicit",
+        "auto"
+      ],
+      "arm": "explicit",
+      "case": "secp256k1",
+      "stdout": "\u2716 [76/76] Building HexPrimality.ProofProbe.Curve25519.FallbackSample (583ms)\ntrace: .> LEAN_PATH=/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/subverso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/MD4Lean/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/illuminate/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Cli/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/batteries/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/Qq/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/aesop/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/importGraph/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/plausible/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/verso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/NautyFFI/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/lean-bench/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10362/.lake/packages/mathlib/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean /home/kim/.elan/toolchains/leanprover--lean4---v4.34.0/bin/lean /home/kim/worktrees/hex-dev/hex-dev-issue-10373/bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean -o /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.olean -i /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/FallbackSample.ilean -c /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.c --setup /home/kim/worktrees/hex-dev/hex-dev-issue-10373/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/FallbackSample.setup.json --json\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:25:0: PHASE_HEARTBEATS_RAW 88647\ninfo: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:25:0: RENDER_ELAB_NS 2993397\nerror: bench/HexPrimality/ProofProbe/Curve25519/FallbackSample.lean:115:2: Unknown identifier `logInfo`\nSome required targets logged failures:\n- HexPrimality.ProofProbe.Curve25519.FallbackSample\n",
+      "stderr": "error: build failed\n",
+      "returncode": 1,
+      "elapsed_ns": 1224908356,
+      "load_after": [
+        7.5419921875,
+        7.25732421875,
+        5.810546875
+      ]
+    }
+  ],
+  "completion": "replay failed; result retained"
+}

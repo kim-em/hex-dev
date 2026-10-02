@@ -48,6 +48,20 @@ structure RankCert (R : Type u) (n m : Nat) where
   /-- The numerator of `B⁻¹`; `adjugate B` for the producer. -/
   adj : Matrix R rank rank
 
+/-- Compare literal fields after deciding the natural rank, so the decision
+procedure reduces without transporting data through a propositional cast. -/
+instance [DecidableEq R] : DecidableEq (RankCert R n m) := by
+  intro a b
+  cases a with
+  | mk ar ai aj ad aa =>
+    cases b with
+    | mk br bi bj bd ba =>
+      by_cases h : ar = br
+      · subst br
+        exact decidable_of_iff (ai = bi ∧ aj = bj ∧ ad = bd ∧ aa = ba)
+          (by simp [RankCert.mk.injEq, heq_eq_eq])
+      · exact isFalse fun he => h (by cases he; rfl)
+
 /-- The scalar multiple `c • M` in `ofFn` form. The `SMul` instance on
 matrices maps over the buffer through core's `Vector.map`, whose body is not
 exposed across a module boundary, so a `decide +kernel` through it sticks in

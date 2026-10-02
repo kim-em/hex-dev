@@ -1,0 +1,2 @@
+import HexPolyDetMathlib.ProofProbe.StructuralRationalOneMathlib
+#print axioms HexPolyDetMathlib.ProofProbe.StructuralRationalOneMathlib.result

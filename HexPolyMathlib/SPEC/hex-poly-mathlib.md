@@ -9,6 +9,33 @@ def equiv [CommRing R] [DecidableEq R] : DensePoly R ≃+* Polynomial R
 
 Also proves GCD/ExtGCD correspondence with Mathlib's `Polynomial.gcd`.
 
+## Noninjective representation interpretation
+
+For an executable representation `E` with ordinary operations and structural
+`DecidableEq`, fix a lawful semantic field `K` and `eval : E → K`. Require
+preservation of zero, one, natural casts and each operation used, together
+with `eval e = 0 ↔ e = 0`. No injectivity or ring/field laws on `E` are assumed.
+Keep the canonical core/Mathlib dictionaries on `K` fixed as in the existing
+correspondence. The required map `interpret : DensePoly E → Polynomial K`
+sends coefficient `i` to `eval (p.coeff i)`.
+
+Prove preservation of zero and degree, arithmetic, derivative, Horner
+application, and division/remainder for the actual executable algorithms.
+The division statement identifies both interpreted outputs with Mathlib's
+quotient and remainder, including zero divisors. Gcd corresponds after
+normalization by a nonzero leading scalar; interpret the actual xgcd output
+and its Bézout identity, rescaling witnesses together when making it monic.
+For pseudo-division/gcd preserve the recorded scales and fraction-field
+meaning, not an unscaled identity over an arbitrary domain.
+
+Compose operation-only transfer lemmas from hex-poly with the existing
+lawful-target correspondence. Selected-root evaluation and its zero-reflection
+proof belong to hex-real-closure-mathlib, which instantiates this interface;
+this library must not import the real-closure family. Distinct nonzero
+representatives may have equal interpretation, so structural equality cannot
+be used as a semantic equality decision. Scalar/polynomial semantic identities
+use zero differences; literal context bindings retain exact equality.
+
 ## External comparators
 
 No external comparator is required.

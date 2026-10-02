@@ -1,0 +1,9 @@
+module
+
+public import HexRealFormula.Syntax
+public import HexRealFormula.Kernel
+public import HexRealFormula.Prenex
+
+public section
+
+/-! Shared polynomial formulas for real arithmetic. -/

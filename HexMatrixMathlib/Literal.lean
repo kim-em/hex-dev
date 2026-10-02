@@ -241,13 +241,26 @@ def matchFn? (n m : Nat) (A : Expr) : MetaM (Option (Array (Array Expr))) := do
       return (mkApp2 A iE jE).headBeta
   return some rows
 
-/-- Match a `Matrix.ofArray xs h` literal whose array is a `#[…]` literal of
-`n * m` entries. -/
+/-- Find an array literal through the same bounded definition unfolding used for
+matrix literals. -/
+private partial def arrayEntries? (xs : Expr) (budget : Nat) : MetaM (Option (List Expr)) := do
+  if let some (_, es) := xs.listLit? then return some es
+  if let some es := (do
+      let_expr List.toArray _ l := xs | none
+      let (_, es) ← l.listLit?
+      some es) then return some es
+  if budget == 0 then return none
+  if xs.isFVar then
+    if let some value := (← getFVarLocalDecl xs).value? then
+      return ← arrayEntries? value (budget - 1)
+  match ← unfoldDefinition? xs with
+  | some xs' => arrayEntries? xs' (budget - 1)
+  | none => return none
+
+/-- Match a `Matrix.ofArray xs h` literal whose array reduces to `n * m` entries. -/
 def matchOfArray? (n m : Nat) (A : Expr) : MetaM (Option (Array (Array Expr))) := do
   let_expr Matrix.ofArray _ _ _ xs _ := A | return none
-  let some (_, es) := xs.listLit? <|> (do
-      let_expr List.toArray _ l := xs | none
-      l.listLit?) | return none
+  let some es ← arrayEntries? xs unfoldBudget | return none
   unless es.length == n * m do return none
   let es := es.toArray
   return some ((List.range n).toArray.map fun i => (List.range m).toArray.map fun j => es[i * m + j]!)
@@ -281,7 +294,7 @@ def evalEntry (e : Expr) : MetaM Rat := do
   catch _ =>
     let ctx ← Simp.mkContext (config := { decide := true })
       (simpTheorems := #[← getSimpTheorems]) (congrTheorems := ← getSimpCongrTheorems)
-    let r ← Mathlib.Meta.NormNum.deriveSimp ctx true e
+    let r ← Mathlib.Meta.NormNum.deriveSimp ctx #[] true e
     Mathlib.Tactic.Echelon.evalRatEntry true r.expr
 
 /-- Evaluate every entry to a rational. -/

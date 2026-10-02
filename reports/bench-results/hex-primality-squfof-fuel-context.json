@@ -1,0 +1,20 @@
+{
+  "cpu": 37,
+  "host": "chungus2",
+  "load": [
+    2.830078125,
+    3.83056640625,
+    7.39794921875
+  ],
+  "time": 1790499418.469993,
+  "command": [
+    ".lake/build/bin/hexprimality_bench",
+    "run",
+    "Hex.PrimalityBench.runSqufofFuel",
+    "--export-file",
+    "reports/bench-results/hex-primality-squfof-fuel.json"
+  ],
+  "exit": 0,
+  "stdout": "Hex.PrimalityBench.runSqufofFuel    expected complexity: n    [warm cache]\n  env: lean=4.34.1, os=linux, arch=x86_64, commit=54fb61e-dirty, 2026-09-27T08:56:57Z, host=chungus2\n  param  per-call    repeats  C\n    512   82.501 \u00b5s  \u00d72^10    C=161.135 \u2020\n  1_024  166.298 \u00b5s  \u00d72^9     C=162.401\n  2_048  324.313 \u00b5s  \u00d72^8     C=158.356\n  4_096  640.027 \u00b5s  \u00d72^7     C=156.257\n  8_192    1.296 ms  \u00d72^6     C=158.259\n  verdict: consistent with declared complexity (cMin=156.257, cMax=162.401, \u03b2=-0.013)\n  per-spawn floor (harness self-measurement): 23.924 ms\n  peak RSS: 68_688 kB..69_064 kB (across 5 ok row(s))\nexported to reports/bench-results/hex-primality-squfof-fuel.json\n",
+  "stderr": ""
+}

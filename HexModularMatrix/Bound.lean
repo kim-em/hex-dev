@@ -167,6 +167,17 @@ def hadamardBound (A : Matrix Int n n) : Nat :=
       (DetBound.prod fun i : Fin n => HexArith.Nat.ceilSqrt
         (DetBound.sum fun j : Fin n => A[(i, j)].natAbs ^ 2))
 
+/-- Multiplication avoids general exponentiation for the fixed square. -/
+def hadamardFast (A : Matrix Int n n) : Nat :=
+  min (DetBound.prod fun j : Fin n => HexArith.Nat.ceilSqrt
+        (DetBound.sum fun i : Fin n => let a := A[(i, j)].natAbs; a * a))
+      (DetBound.prod fun i : Fin n => HexArith.Nat.ceilSqrt
+        (DetBound.sum fun j : Fin n => let a := A[(i, j)].natAbs; a * a))
+
+@[csimp] theorem hadamardBound_eq_fast : @hadamardBound = @hadamardFast := by
+  funext n A
+  simp only [hadamardBound, hadamardFast, Nat.pow_two]
+
 /-- Taking both row and column Hadamard bounds is never worse than the
 row-norm bound. -/
 theorem hadamardBound_le_rowNormBound (A : Matrix Int n n) :

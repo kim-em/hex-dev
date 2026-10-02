@@ -194,8 +194,7 @@ evaluate native LLL code.
 The library owns an executable runtime: the `factor_poly` /
 `irreducibility` elaborators (with their `factor_poly!` /
 `irreducibility!` kernel-decide fallbacks) and the reified certificate
-checks their emitted terms replay. It is therefore not a
-correspondence-only bridge:
+checks their emitted terms replay.
 `conformance/HexBerlekampZassenhausMathlib/Conformance.lean` is the
 `core` conformance profile, built by the `HexConformance` library on
 every CI run. It exercises the tactic entry points on committed

@@ -1,0 +1,1002 @@
+reading file "/tmp/issue-10377-joint-allocation-394c3c548/heaptrack.zst" - please wait, this might take some time...
+Debuggee command was: /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.Joint.runComparison --param 31 --target-nanos 100000000 --cache-mode cold
+finished reading file, now analyzing data:
+
+MOST CALLS TO ALLOCATION FUNCTIONS
+601103840 calls to allocation functions with 16.60K peak consumption from
+__gmp_default_allocate
+  in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+11036 calls with 0B peak consumption from:
+    __gmpz_init_set_ui
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::mpz::mpz(unsigned long)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_nat_gcd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Rat_mul
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__1_spec__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignedRemainderChain_build___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__9___at___00Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46_spec__86
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg___lam__1___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Array_ofFn_go___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_build___at___00Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1_spec__6
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDetBench_Joint_runComparison
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex___private_HexSignDet_Bench_0__Hex_SignDetBench_initFn___lam__1_00___x40_HexSignDet_Bench_619195342____hygCtx___hyg_37____boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00LeanBench_kernelLoop_spec__0___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode___lam__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    std::__1::__function::__func<>::operator()[abi:nqe230100]()
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::lthread::imp::_main(void*)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    start_thread
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+    __clone3
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+11036 calls with 0B peak consumption from:
+    __gmpz_init_set_ui
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::mpz::mpz(unsigned long)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_nat_gcd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Rat_add
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__1_spec__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignedRemainderChain_build___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__9___at___00Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46_spec__86
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg___lam__1___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Array_ofFn_go___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_build___at___00Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1_spec__6
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDetBench_Joint_runComparison
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex___private_HexSignDet_Bench_0__Hex_SignDetBench_initFn___lam__1_00___x40_HexSignDet_Bench_619195342____hygCtx___hyg_37____boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00LeanBench_kernelLoop_spec__0___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode___lam__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    std::__1::__function::__func<>::operator()[abi:nqe230100]()
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::lthread::imp::_main(void*)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    start_thread
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+    __clone3
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+11036 calls with 0B peak consumption from:
+    __gmpz_init_set_ui
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::mpz::mpz(unsigned long)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_nat_gcd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Rat_add
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__1_spec__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignedRemainderChain_build___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__9___at___00Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46_spec__86
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg___lam__1___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Array_ofFn_go___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_build___at___00Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1_spec__6
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDetBench_Joint_runComparison
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex___private_HexSignDet_Bench_0__Hex_SignDetBench_initFn___lam__1_00___x40_HexSignDet_Bench_619195342____hygCtx___hyg_37____boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00LeanBench_kernelLoop_spec__0___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode___lam__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    std::__1::__function::__func<>::operator()[abi:nqe230100]()
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::lthread::imp::_main(void*)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    start_thread
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+    __clone3
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+11036 calls with 0B peak consumption from:
+    __gmpz_init_set_ui
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::mpz::mpz(unsigned long)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_nat_gcd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Rat_add
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__1_spec__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignedRemainderChain_build___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__9___at___00Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46_spec__86
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg___lam__1___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Array_ofFn_go___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_build___at___00Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1_spec__6
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDetBench_Joint_runComparison
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex___private_HexSignDet_Bench_0__Hex_SignDetBench_initFn___lam__1_00___x40_HexSignDet_Bench_619195342____hygCtx___hyg_37____boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00LeanBench_kernelLoop_spec__0___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode___lam__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    std::__1::__function::__func<>::operator()[abi:nqe230100]()
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::lthread::imp::_main(void*)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    start_thread
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+    __clone3
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+11036 calls with 0B peak consumption from:
+    __gmpz_realloc
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    __gmpz_gcd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_nat_gcd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Rat_add
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__1_spec__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignedRemainderChain_build___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__9___at___00Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46_spec__86
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg___lam__1___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Array_ofFn_go___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_build___at___00Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1_spec__6
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDetBench_Joint_runComparison
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex___private_HexSignDet_Bench_0__Hex_SignDetBench_initFn___lam__1_00___x40_HexSignDet_Bench_619195342____hygCtx___hyg_37____boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00LeanBench_kernelLoop_spec__0___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode___lam__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    std::__1::__function::__func<>::operator()[abi:nqe230100]()
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::lthread::imp::_main(void*)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    start_thread
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+    __clone3
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+  and 601048660 from 2894383 other places
+
+171016102 calls to allocation functions with 48B peak consumption from
+__gmp_default_reallocate
+  in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+11036 calls with 0B peak consumption from:
+    __gmpz_realloc
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    __gmpz_add
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::mpz::mpz(unsigned long)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_nat_gcd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Rat_mul
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__1_spec__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignedRemainderChain_check___at___00Hex_TarskiCertificate_checkDomain___at___00Hex_TarskiCertificate_Domain_replay_x3f___at___00Hex_SignDet_Dag_replay_x3f___at___00Hex_SignDet_Dag_check___at___00Hex_SignDetBench_input_spec__6_spec__16_spec__33_spec__53_spec__76
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_TarskiCertificate_checkQuery___at___00Hex_TarskiCertificate_check___at___00Hex_TarskiCertificate_checkCached___at___00Hex_Sturm_checkCached___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__57_spec__76_spec__101_spec__115___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_TarskiCertificate_checkBody___at___00Hex_TarskiCertificate_checkCached___at___00Hex_Sturm_checkCached___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__57_spec__76_spec__102
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_TarskiCertificate_checkCached___at___00Hex_Sturm_checkCached___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__57_spec__76
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_Sturm_checkCached___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__57
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_all___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__40
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_build___at___00Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1_spec__6
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDetBench_Joint_runComparison
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex___private_HexSignDet_Bench_0__Hex_SignDetBench_initFn___lam__1_00___x40_HexSignDet_Bench_619195342____hygCtx___hyg_37____boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00LeanBench_kernelLoop_spec__0___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_kernelLoop___redArg___lam__1___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode___lam__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    std::__1::__function::__func<>::operator()[abi:nqe230100]()
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::lthread::imp::_main(void*)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    start_thread
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+    __clone3
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+11036 calls with 0B peak consumption from:
+    __gmpz_realloc
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    __gmpz_add
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::mpz::mpz(unsigned long)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_nat_gcd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Rat_add
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__1_spec__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignedRemainderChain_build___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__9___at___00Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46_spec__86
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg___lam__1___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Array_ofFn_go___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_build___at___00Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1_spec__6
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDetBench_Joint_input
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex___private_HexSignDet_Bench_0__Hex_SignDetBench_initFn___lam__0_00___x40_HexSignDet_Bench_619195342____hygCtx___hyg_37_
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode___lam__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    std::__1::__function::__func<>::operator()[abi:nqe230100]()
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::lthread::imp::_main(void*)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    start_thread
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+    __clone3
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+11036 calls with 0B peak consumption from:
+    __gmpz_realloc
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    __gmpz_add
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::mpz::mpz(unsigned long)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_nat_gcd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Rat_add
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__1_spec__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignedRemainderChain_build___at___00Hex_Sturm_prepare___at___00Hex_SignDetBench_input_spec__3_spec__9___at___00Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46_spec__86
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_Sturm_certifyPrepared___at___00Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33_spec__46___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg___lam__1___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Array_ofFn_go___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildNode___at___00Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22_spec__33___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildTreeFrom___at___00Hex_SignDet_buildTree___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__12_spec__22___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_build___at___00Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1_spec__6
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDetBench_Joint_input
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex___private_HexSignDet_Bench_0__Hex_SignDetBench_initFn___lam__0_00___x40_HexSignDet_Bench_619195342____hygCtx___hyg_37_
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode___lam__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    std::__1::__function::__func<>::operator()[abi:nqe230100]()
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::lthread::imp::_main(void*)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    start_thread
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+    __clone3
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+11036 calls with 0B peak consumption from:
+    __gmpz_realloc
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    __gmpz_add
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::mpz::mpz(unsigned long)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_nat_gcd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Rat_add
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__1_spec__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignedRemainderChain_check___at___00Hex_TarskiCertificate_checkDomain___at___00Hex_TarskiCertificate_Domain_replay_x3f___at___00Hex_SignDet_Dag_replay_x3f___at___00Hex_SignDet_Dag_check___at___00Hex_SignDetBench_input_spec__6_spec__16_spec__33_spec__53_spec__76
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_TarskiCertificate_checkQuery___at___00Hex_TarskiCertificate_check___at___00Hex_TarskiCertificate_checkCached___at___00Hex_Sturm_checkCached___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__57_spec__76_spec__101_spec__115___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_TarskiCertificate_checkBody___at___00Hex_TarskiCertificate_checkCached___at___00Hex_Sturm_checkCached___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__57_spec__76_spec__102
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_TarskiCertificate_checkCached___at___00Hex_Sturm_checkCached___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__57_spec__76
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_Sturm_checkCached___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__57
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_all___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__40
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_build___at___00Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1_spec__6
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDetBench_Joint_input
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex___private_HexSignDet_Bench_0__Hex_SignDetBench_initFn___lam__0_00___x40_HexSignDet_Bench_619195342____hygCtx___hyg_37_
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode___lam__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    std::__1::__function::__func<>::operator()[abi:nqe230100]()
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::lthread::imp::_main(void*)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    start_thread
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+    __clone3
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+11036 calls with 0B peak consumption from:
+    __gmpz_realloc
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    __gmpz_add
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::mpz::mpz(unsigned long)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_nat_gcd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    l_Rat_add
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_foldl___at___00List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0_spec__1_spec__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_DensePoly_mulImpl___at___00Hex_SignDetBench_input_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignedRemainderChain_check___at___00Hex_TarskiCertificate_checkDomain___at___00Hex_TarskiCertificate_Domain_replay_x3f___at___00Hex_SignDet_Dag_replay_x3f___at___00Hex_SignDet_Dag_check___at___00Hex_SignDetBench_input_spec__6_spec__16_spec__33_spec__53_spec__76
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_TarskiCertificate_checkQuery___at___00Hex_TarskiCertificate_check___at___00Hex_TarskiCertificate_checkCached___at___00Hex_Sturm_checkCached___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__57_spec__76_spec__101_spec__115___redArg
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_TarskiCertificate_checkBody___at___00Hex_TarskiCertificate_checkCached___at___00Hex_Sturm_checkCached___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__57_spec__76_spec__102
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_TarskiCertificate_checkCached___at___00Hex_Sturm_checkCached___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__57_spec__76
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_Sturm_checkCached___at___00Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39_spec__57
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_checkMoment___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__39
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_List_all___at___00Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24_spec__40
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Node_check___at___00Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13_spec__24
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Replay_check___at___00Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4_spec__13
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_buildPrepared___at___00Hex_SignDetBench_input_spec__4
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_build___at___00Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1_spec__6
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildReencoding___at___00Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0_spec__1
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDet_Descriptor_buildComparison___at___00Hex_SignDetBench_Joint_runComparison_spec__0
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex_Hex_SignDetBench_Joint_input
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_Hex___private_HexSignDet_Bench_0__Hex_SignDetBench_initFn___lam__0_00___x40_HexSignDet_Bench_619195342____hygCtx___hyg_37_
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode___lam__2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_runChildMode
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lp_lean_x2dbench_LeanBench_Cli_runChildCmd___boxed
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean_apply_2
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    std::__1::__function::__func<>::operator()[abi:nqe230100]()
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    lean::lthread::imp::_main(void*)
+      in /home/kim/worktrees/hex-dev/hex-dev-issue-10377-height/.lake/build/bin/hexsigndet_bench
+    start_thread
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+    __clone3
+      in /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+  and 170960922 from 1088254 other places
+
+
+total runtime: 563.61s.
+calls to allocation functions: 1039653778 (1844649/s)
+temporary memory allocations: 258293219 (458287/s)
+peak heap memory consumption: 196.34K
+peak RSS (including heaptrack overhead): 1.37G
+total memory leaked: 24.90K

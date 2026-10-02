@@ -1,0 +1,32 @@
+{
+  "cpu": 33,
+  "samples": [
+    {
+      "status": "error",
+      "seconds": 0.9667587529984303,
+      "returncode": 1,
+      "load_before": [
+        33.7265625,
+        20.51171875,
+        27.189453125
+      ],
+      "load_after": [
+        33.7265625,
+        20.51171875,
+        27.189453125
+      ],
+      "stdout": "\u2716 [70/70] Building HexPrimality.ProofProbe.Curve25519.KernelDiagnostic (303ms)\ntrace: .> LEAN_PATH=/home/kim/hex-dev/.lake/packages/subverso/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/MD4Lean/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/illuminate/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/Cli/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/batteries/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/Qq/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/aesop/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/importGraph/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/plausible/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/verso/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/NautyFFI/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/lean-bench/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/mathlib/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10268/.lake/build/lib/lean /home/kim/.elan/toolchains/leanprover--lean4---v4.34.0-rc2/bin/lean /home/kim/worktrees/hex-dev/hex-dev-issue-10268/bench/HexPrimality/ProofProbe/Curve25519/KernelDiagnostic.lean -o /home/kim/worktrees/hex-dev/hex-dev-issue-10268/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/KernelDiagnostic.olean -i /home/kim/worktrees/hex-dev/hex-dev-issue-10268/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/KernelDiagnostic.ilean -c /home/kim/worktrees/hex-dev/hex-dev-issue-10268/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/KernelDiagnostic.c --setup /home/kim/worktrees/hex-dev/hex-dev-issue-10268/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/KernelDiagnostic.setup.json --json\nerror: bench/HexPrimality/ProofProbe/Curve25519/KernelDiagnostic.lean:6:14: code generator does not support recursor `Bool.rec` yet, consider using 'match ... with' and/or structural recursion\nerror: bench/HexPrimality/ProofProbe/Curve25519/KernelDiagnostic.lean:15:14: code generator does not support recursor `Bool.rec` yet, consider using 'match ... with' and/or structural recursion\nSome required targets logged failures:\n- HexPrimality.ProofProbe.Curve25519.KernelDiagnostic\n",
+      "stderr": "error: build failed\n",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.KernelDiagnostic:olean"
+      ],
+      "block": 0,
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\n\n@[expose] def powBits (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ acc _ => acc)\n    (fun _ r bit acc base =>\n      (e.testBit bit).rec\n        (r (bit.add 1) acc ((base.mul base).mod n))\n        (r (bit.add 1) ((acc.mul base).mod n) ((base.mul base).mod n)))\n    (HexArith.bitLength e) 0 (1 % n) (a % n)\n\n@[expose] def powDiv (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ _ _ => 0)\n    (fun _ r base exp acc =>\n      (exp.beq 0).rec\n        (((exp.mod 2).beq 0).rec\n          (r ((base.mul base).mod n) (exp.div 2) ((acc.mul base).mod n))\n          (r ((base.mul base).mod n) (exp.div 2) acc))\n        (acc.mod n))\n    e.succ (a % n) e 1\n"
+    }
+  ],
+  "protocol": "two reversed blocks; all completed samples retained",
+  "interpretation": "Compilation diagnostic only: Bool.rec diagnostics initially lacked noncomputable annotations. No successful timing sample; retained for provenance and excluded from every performance claim."
+}

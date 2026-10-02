@@ -210,7 +210,6 @@ private theorem expSumUpper (value : Certificate) (valid : Valid value) :
           PntBKLNWExp.upperBaseValue 13 ^ value.argument := by
         congr 2
         norm_num [Nat.card_Icc, tailCardinality]
-        omega
   linarith
 
 private theorem sourceExpLeSucc (value : Certificate) (valid : Valid value) :

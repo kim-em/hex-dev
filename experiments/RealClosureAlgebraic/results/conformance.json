@@ -1,0 +1,8 @@
+{
+  "passed": {
+    "scalar": 48,
+    "poly": 17,
+    "cost": 6
+  },
+  "oracle": "python-flint + exact quadratic-pair arithmetic"
+}

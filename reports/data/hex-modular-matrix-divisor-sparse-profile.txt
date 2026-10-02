@@ -1,0 +1,43 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 729  of event 'cpu/cycles/P'
+# Event count (approx.): 11249424020
+#
+# Overhead  Command          Shared Object           Symbol
+# ........  ...............  ......................  ...........................................................................................................................................
+#
+    12.37%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_apply_1
+     5.31%  hexmodularmatri  hexmodularmatrix_bench  [.] l___private_Init_Data_Array_Basic_0__Array_ofFn_go___redArg
+     4.35%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_getRow___redArg___lam__0
+     4.02%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Nat_isPrimeTrialAux
+     3.96%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_Word_dot___redArg
+     3.93%  hexmodularmatri  libc.so.6               [.] malloc
+     3.77%  hexmodularmatri  libc.so.6               [.] cfree@GLIBC_2.2.5
+     3.54%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_hex_zmod64_mul
+     3.17%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_getRow___redArg___lam__0___boxed
+     2.93%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_apply_2
+     2.90%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_nat_pow
+     2.62%  hexmodularmatri  hexmodularmatrix_bench  [.] lean::mpz::mpz(unsigned long)
+     2.18%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_ZMod64_addImpl___redArg
+     1.59%  hexmodularmatri  hexmodularmatrix_bench  [.] __gmpz_realloc
+     1.58%  hexmodularmatri  hexmodularmatrix_bench  [.] __gmpz_mul_2exp
+     1.55%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_dec_ref_cold
+     1.39%  hexmodularmatri  hexmodularmatrix_bench  [.] __gmpz_add
+     1.39%  hexmodularmatri  libc.so.6               [.] realloc
+     1.39%  hexmodularmatri  hexmodularmatrix_bench  [.] lean::mpz::pow(unsigned int) const
+     1.35%  hexmodularmatri  hexmodularmatrix_bench  [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)
+     1.21%  hexmodularmatri  hexmodularmatrix_bench  [.] __gmpz_clear
+     1.19%  hexmodularmatri  hexmodularmatrix_bench  [.] __gmp_default_allocate
+     1.18%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_Word_addFast___redArg___lam__1___boxed
+     1.18%  hexmodularmatri  hexmodularmatrix_bench  [.] __gmpz_mul
+     1.17%  hexmodularmatri  hexmodularmatrix_bench  [.] mi_malloc_small
+     1.15%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_hadamardBound___lam__0___boxed
+     1.00%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Fin_foldl_loop___at___00Hex_Matrix_DetBound_sum___at___00Hex_Matrix_rowNormBound_spec__0_spec__0
+
+
+#
+# (Tip: To compute metrics for samples use perf record -e '{cycles,instructions}' ... ; perf script -F +metric)
+#

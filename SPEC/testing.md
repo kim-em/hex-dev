@@ -143,9 +143,9 @@ Each library has up to three conformance-tree modules:
 - `conformance/HexFoo/Conformance.lean` (module `HexFoo.Conformance`) —
   the `core` profile, specified above. Every Mathlib-free library at
   `done_through ≥ 2` has one. A Mathlib-importing library has one when it owns
-  an executable runtime contract; a layer explicitly classified by
-  `correspondence_only: true` must not (see §Banned anti-patterns and
-  [PLAN/Phase3.md §Correspondence-only mathlib layers](../PLAN/Phase3.md)).
+  an executable runtime contract; one whose API is theorems about operations
+  owned elsewhere must not (see §Banned anti-patterns and
+  [PLAN/Phase3.md §Mathlib libraries](../PLAN/Phase3.md)).
 - `conformance/HexFoo/CrossCheck.lean` (module `HexFoo.CrossCheck`) —
   the heavier cross-check sweeps: representation-correspondence
   campaigns, fast-vs-fast agreement over deterministic input streams,
@@ -338,16 +338,16 @@ MUST NOT appear in any `Conformance.lean`:
   theorem is `sorry`, delete the example. The example becomes
   meaningful only when the theorem it relies on has a real proof.
 
-- **Conformance files in correspondence-only `Hex*Mathlib` bridges.** A bridge
-  with `correspondence_only: true` is proof-only and has no executable runtime
-  to conform to, so no conformance source or target owned by that bridge should
-  exist. Any `#guard` or
+- **Conformance files in proof-only `Hex*Mathlib` libraries.** A Mathlib
+  library whose API is theorems about operations owned elsewhere has no
+  executable runtime to conform to, so no conformance source or target owned
+  by it should exist. Any `#guard` or
   `#eval` exercising the Mathlib-free executable belongs in the computational
   sibling (for example, checks on `Hex.Berlekamp.rabinTest` live in
   `HexBerlekamp/Conformance.lean`, never in
   `HexBerlekampMathlib/Conformance.lean`). A Mathlib-importing library that
-  itself owns an executable reifier, certificate checker, or tactic is not a
-  correspondence-only bridge and may have a dedicated conformance target when
+  itself owns an executable reifier, certificate checker, or tactic may have a
+  dedicated conformance target when
   its library SPEC defines that runtime contract and CI reachability.
 
 ## `#eval` vs `#eval!`
@@ -446,12 +446,11 @@ subsection. Default oracle assignments:
   (Lean ≡ PARI ≡ Lübeck). No random generation.
 
 The `-mathlib` libraries are not the primary target of external
-conformance testing. A layer explicitly classified by
-`correspondence_only: true` has no `core` profile at all: its coverage is the
-coverage of the
-computational owners it transports from, and a conformance module of
-its own is banned (see §Banned anti-patterns and
-[PLAN/Phase3.md §Correspondence-only mathlib layers](../PLAN/Phase3.md)).
+conformance testing. One whose API is theorems about operations owned
+elsewhere has no `core` profile at all: its coverage is the coverage of the
+Mathlib-free libraries implementing those operations, and a conformance module
+of its own is banned (see §Banned anti-patterns and
+[PLAN/Phase3.md §Mathlib libraries](../PLAN/Phase3.md)).
 A Mathlib-importing library that owns a runtime of its own, an
 executable reifier, certificate checker, or tactic, does have a `core`
 profile, exercising that runtime against the contract its library SPEC

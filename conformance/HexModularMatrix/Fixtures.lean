@@ -67,4 +67,42 @@ def cases : List Case :=
    ⟨"unimodular-determinant/positive", 6, unimodular 6 64⟩,
    ⟨"unimodular-determinant/negative", 6, (unimodular 6 64).rowSwap 0 1⟩]
 
+/-- Product of the first two primes in the producer's actual supply. -/
+def badRankScale : Int :=
+  (ZMod64.primesBelow (2 ^ 31 - 1) 2).foldl (fun a q => a * (q.m : Int)) 1
+
+/-- A rank-`r` product with identity leading blocks and large remaining entries.
+The bad-prime variant multiplies by the first two supply primes, forcing two
+underestimates before the first rank-preserving prime. -/
+def rankMatrix (n m r bits : Nat) (badPrimes : Bool := false) : Matrix Int n m :=
+  let big : Int := (2 ^ bits : Nat)
+  let L : Matrix Int n r := Matrix.ofFn fun i j =>
+    if i.val < r then (if i.val = j.val then 1 else 0)
+    else big + (i.val + 3 * j.val : Nat)
+  let R : Matrix Int r m := Matrix.ofFn fun i j =>
+    if j.val < r then (if i.val = j.val then 1 else 0)
+    else big + (2 * i.val + j.val : Nat)
+  Matrix.scale (if badPrimes then badRankScale else 1) (L * R)
+
+/-- Rectangular fixture with independently specified rank. -/
+structure RankCase where
+  name : String
+  n : Nat
+  m : Nat
+  matrix : Matrix Int n m
+  rank : Nat
+
+def rankCases : List RankCase :=
+  [⟨"rank/empty-rows", 0, 3, rankMatrix 0 3 0 0, 0⟩,
+   ⟨"rank/empty-cols", 3, 0, rankMatrix 3 0 0 0, 0⟩,
+   ⟨"rank/empty", 0, 0, rankMatrix 0 0 0 0, 0⟩,
+   ⟨"rank/zero", 3, 4, rankMatrix 3 4 0 0, 0⟩,
+   ⟨"rank/one", 4, 6, rankMatrix 4 6 1 8, 1⟩,
+   ⟨"rank/full-row", 3, 5, rankMatrix 3 5 3 8, 3⟩,
+   ⟨"rank/full-col", 5, 3, rankMatrix 5 3 3 8, 3⟩,
+   ⟨"rank/near-full", 5, 6, rankMatrix 5 6 4 64, 4⟩,
+   ⟨"rank/noninitial", 2, 3, Matrix.ofFn (fun i j =>
+      if j.val = 0 then 0 else (i.val + 1 : Nat) * (j.val + 1 : Nat)), 1⟩,
+   ⟨"rank-deficient-large-coefficient", 4, 6, rankMatrix 4 6 2 256 true, 2⟩]
+
 end Hex.ModularMatrixFixtures

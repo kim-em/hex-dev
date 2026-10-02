@@ -1,0 +1,6 @@
+{"checked_head_certificates": 5, "checked_query_certificates": 6}
+{"head_degree": 128, "tail_stored_bits": 336015, "tail_trailing_zero_iterations": 180960, "tail_division_bit_volume": 13331767}
+{"head_degree": 256, "tail_stored_bits": 2734361, "tail_trailing_zero_iterations": 1430976, "tail_division_bit_volume": 216024695}
+{"head_degree": 512, "tail_stored_bits": 22090273, "tail_trailing_zero_iterations": 11348864, "tail_division_bit_volume": 3477325117}
+{"head_degree": 1024, "tail_stored_bits": 177710745, "tail_trailing_zero_iterations": 90265344, "tail_division_bit_volume": 55798834691}
+{"head_degree": 2048, "tail_stored_bits": 1426150547, "tail_trailing_zero_iterations": 719498752, "tail_division_bit_volume": 894038477175}

@@ -52,23 +52,26 @@ names the generating number rather than an isolating square. The price is
 that the presentation-ring instances no longer arrive by unfolding, so they
 are re-exported here. Each is the `PolyQuot` instance unchanged. -/
 
-instance : DecidableEq (QAdjoin a) := inferInstanceAs (DecidableEq (PolyQuot a.p a.x))
-instance : Zero (QAdjoin a) := inferInstanceAs (Zero (PolyQuot a.p a.x))
-instance : One (QAdjoin a) := inferInstanceAs (One (PolyQuot a.p a.x))
-instance : Add (QAdjoin a) := inferInstanceAs (Add (PolyQuot a.p a.x))
-instance : Sub (QAdjoin a) := inferInstanceAs (Sub (PolyQuot a.p a.x))
-instance : Neg (QAdjoin a) := inferInstanceAs (Neg (PolyQuot a.p a.x))
-instance : Mul (QAdjoin a) := inferInstanceAs (Mul (PolyQuot a.p a.x))
-instance : SMul Rat (QAdjoin a) := inferInstanceAs (SMul Rat (PolyQuot a.p a.x))
-instance : Coe (DensePoly Rat) (QAdjoin a) := inferInstanceAs (Coe _ (PolyQuot a.p a.x))
-instance : NatCast (QAdjoin a) := inferInstanceAs (NatCast (PolyQuot a.p a.x))
-instance : IntCast (QAdjoin a) := inferInstanceAs (IntCast (PolyQuot a.p a.x))
-instance (priority := 90) (n : Nat) : OfNat (QAdjoin a) (n + 2) :=
+/-! Keep these instance bodies available to kernel replay of literal field
+coordinates constructed in later modules. -/
+
+@[expose] instance : DecidableEq (QAdjoin a) := inferInstanceAs (DecidableEq (PolyQuot a.p a.x))
+@[expose] instance : Zero (QAdjoin a) := inferInstanceAs (Zero (PolyQuot a.p a.x))
+@[expose] instance : One (QAdjoin a) := inferInstanceAs (One (PolyQuot a.p a.x))
+@[expose] instance : Add (QAdjoin a) := inferInstanceAs (Add (PolyQuot a.p a.x))
+@[expose] instance : Sub (QAdjoin a) := inferInstanceAs (Sub (PolyQuot a.p a.x))
+@[expose] instance : Neg (QAdjoin a) := inferInstanceAs (Neg (PolyQuot a.p a.x))
+@[expose] instance : Mul (QAdjoin a) := inferInstanceAs (Mul (PolyQuot a.p a.x))
+@[expose] instance : SMul Rat (QAdjoin a) := inferInstanceAs (SMul Rat (PolyQuot a.p a.x))
+@[expose] instance : Coe (DensePoly Rat) (QAdjoin a) := inferInstanceAs (Coe _ (PolyQuot a.p a.x))
+@[expose] instance : NatCast (QAdjoin a) := inferInstanceAs (NatCast (PolyQuot a.p a.x))
+@[expose] instance : IntCast (QAdjoin a) := inferInstanceAs (IntCast (PolyQuot a.p a.x))
+@[expose] instance (priority := 90) (n : Nat) : OfNat (QAdjoin a) (n + 2) :=
   inferInstanceAs (OfNat (PolyQuot a.p a.x) (n + 2))
-instance : Inv (QAdjoin a) := inferInstanceAs (Inv (PolyQuot a.p a.x))
-instance : Div (QAdjoin a) := inferInstanceAs (Div (PolyQuot a.p a.x))
-instance : Pow (QAdjoin a) Nat := inferInstanceAs (Pow (PolyQuot a.p a.x) Nat)
-instance : Pow (QAdjoin a) Int := inferInstanceAs (Pow (PolyQuot a.p a.x) Int)
+@[expose] instance : Inv (QAdjoin a) := inferInstanceAs (Inv (PolyQuot a.p a.x))
+@[expose] instance : Div (QAdjoin a) := inferInstanceAs (Div (PolyQuot a.p a.x))
+@[expose] instance : Pow (QAdjoin a) Nat := inferInstanceAs (Pow (PolyQuot a.p a.x) Nat)
+@[expose] instance : Pow (QAdjoin a) Int := inferInstanceAs (Pow (PolyQuot a.p a.x) Int)
 
 /-- The element of `ℚ(a)` with coordinates `f` in the power basis of `a`.
 Unlike `PolyQuot.ofSquare` this needs no square and no side conditions: the

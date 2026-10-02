@@ -425,14 +425,12 @@ this layer states no equation between the certificate and a determinant.
 
 ## Polynomial determinant certificate
 
-The symbolic `det` arm specified in
-[hex-poly-det-mathlib](../../SPEC/Libraries/hex-poly-det-mathlib.md)
-uses the same certificate as [§The kernel certificate](#the-kernel-certificate),
-generalised over a coefficient type and instantiated by
-[hex-poly-det](../../SPEC/Libraries/hex-poly-det.md) at
-`MvPoly k C Hex.Mono.grevlex`. This is a specified extension; `HexBareiss/Kernel.lean` currently provides the integer
-`DetWitness`, `detWitness` and list checkers. Canonical polynomial list
-arithmetic in hex-mv-poly is a prerequisite for the polynomial kernel route.
+The native polynomial witness API generalises
+[§The kernel certificate](#the-kernel-certificate) over coefficient operations.
+[hex-poly-det](../../SPEC/Libraries/hex-poly-det.md) instantiates it at
+`MvPoly k C Hex.Mono.grevlex` using canonical polynomial lists and exact quotient
+operations. This is separate from the symbolic determinant tactic, which uses
+proved Bird evaluation and does not require a polynomial witness.
 
 **Placement.** Keep the dependency boundary of
 [§Placement in the dependency graph](#placement-in-the-dependency-graph).
@@ -456,6 +454,37 @@ elimination on `[P | I]`, applying each swap and each update
 The producer retains the transform and re-checks its output before returning
 it. Pivot search, polynomial normalisation and exact division are executable
 work, never kernel replay.
+
+`detWitnessBudgeted` in `HexBareiss/Kernel.lean` runs the same elimination
+with a caller-supplied size measure `R → Nat` and a two-field budget
+`DetWitness.Budget { maxIntermediate, maxCertificate : Nat }`. Before each
+column's step, the shared core selects the pivot once and accounts for the row
+swap when computing
+`∑ (size pivot * size x + size factor * size y)` over the entries updated
+in both blocks. A column with no pivot has no update cost. For polynomial
+support this counts the term products of the two multiplications and bounds
+the support of each exact division's dividend. Admit the round only when
+this count fits the remaining intermediate budget. After the round, charge
+the total measure of both current blocks and decline if it exceeds
+`maxIntermediate`; this block support is the meaning of an intermediate.
+The next round uses the budget remaining after that block charge, rather
+than accumulating charges for discarded blocks. This is an admission and
+retained-support policy, not a bound on the number of exact-division steps
+or on temporary supports inside an admitted arithmetic operation.
+
+Before running the final self-check, charge the witness's total measure
+(the transform and value, or the singular vector) against `maxCertificate`.
+Budget exhaustion returns structured data containing the budget name, count
+reached and limit; malformed matrices and rejected self-checks remain
+distinct failures in `DetWitness.Error`. Its exhaustion constructor is
+`exhausted (budget : DetWitness.Limit) (count limit : Nat)`, where `Limit`
+distinguishes `intermediate` and `certificate`. A decline carries no witness.
+`detWitnessBudgeted_check` proves that every `.ok` return passed the supplied
+checker, just as `detWitnessWith_check` does for the unlimited API.
+The unlimited `detWitnessWith` uses the same elimination core, computes no
+size measures, and retains its existing API and checker contract. No polynomial
+arithmetic or polynomial dependency is added to hex-bareiss. Consumers in
+hex-poly-det supply the support measure for integer and residue polynomials.
 
 For a nonsingular polynomial matrix the witness contains the row swaps, the
 `i + 1` leading polynomial entries of each lower triangular transform row,
@@ -500,15 +529,13 @@ recursive on lists of `Nat`/`Int`, per
 [matrix-tactics §Kernel discipline](../../SPEC/matrix-tactics.md#kernel-discipline).
 In particular converting reference polynomials to lists is producer work;
 the kernel receives quoted lists and does not traverse `MvPoly` trees or
-monomial vectors. The companion identifies the quoted polynomial matrix
-with the denoted row list definitionally. Rationals use the companion's proved
-coefficient denominator-clearing pass to supply integer polynomial rows and
-positive scales; the kernel checks the resulting integer lists, including
-cross-multiplied target equality. No rational polynomial list arithmetic is
-assumed. As specified in the companion, positive characteristic
-requires the residue provider and its canonical list operations.
+monomial vectors. A kernel-facing consumer must prove interpretation of its
+quoted rows and coefficient operations. Integer and natural-residue encodings
+use the canonical list operations supplied by hex-mv-poly. Any rational scaling
+consumer must prove its scaling factors and equality separately; it is not a
+required symbolic tactic route.
 
-The proposed `checkDetPolyList_sound`, concluding `Hex.Matrix.det P = d`
+The theorem `checkDetPolyList_sound`, concluding `Hex.Matrix.det P = d`
 through denotation, triangular determinant lemmas and cancellation over the
 polynomial domain, lives exclusively in hex-poly-det-mathlib
 ([SPEC](../../SPEC/Libraries/hex-poly-det-mathlib.md)). The reference

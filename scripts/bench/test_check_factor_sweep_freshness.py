@@ -75,8 +75,13 @@ class LakefileAffectsRuntime(unittest.TestCase):
             'lean_lib HexPoly where\n  srcDir := "."\n\n', '')
         self.assertTrue(guard.lakefile_texts_differ(BASE, after))
 
-    def test_adding_a_dependency_is_a_runtime_change(self):
+    def test_adding_a_dependency_is_not_a_runtime_change(self):
         after = BASE + '\nrequire "leanprover" / "hex" @ git "main"\n'
+        self.assertFalse(guard.lakefile_texts_differ(BASE, after))
+
+    def test_editing_a_dependency_is_a_runtime_change(self):
+        after = BASE.replace('@ git "main"', '@ git "stable"', 1)
+        self.assertNotEqual(after, BASE)
         self.assertTrue(guard.lakefile_texts_differ(BASE, after))
 
     def test_no_change_is_not_a_runtime_change(self):

@@ -1,13 +1,5 @@
 # hex-hermite-mathlib (depends on hex-hermite + hex-row-reduce-mathlib + Mathlib)
 
-## Correspondence-only classification
-
-The existing API is a `correspondence-only-layer`; implementing the `hermite`
-frontend below adds companion conformance and fresh-module proof evidence.
-
-Computational conformance owner: `HexHermite`
-Computational performance owner: `HexHermite`
-
 The Mathlib correspondence layer for the executable, Mathlib-free integer
 Hermite normal form in
 [hex-hermite](../../HexHermite/SPEC/hex-hermite.md). It identifies the row
@@ -133,7 +125,7 @@ may instead re-export a new certificate module). No library name changes.
 
 For the named families below, shipping requires complete clean-tree evidence
 under the `absolute_only` mode of
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
 Preregister six rounds and a per-candidate absolute build budget of 60 seconds
 on the measurement host for every stated rung. Every candidate sample must
 meet it; report the median and kernel-only time as well. A timeout, incomplete
@@ -307,7 +299,7 @@ recorded separately. Measure basis construction and membership separately.
 There is no Mathlib tactic comparator. Record absolute fresh-module times
 and medians, baseline deltas and a kernel-only profile per family, using
 six adjacent baseline/probe pairs with alternating orientation per
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
 Record certificate entry counts/serialized bytes, maximum integer height,
 emitted artifact sizes, axiom sets and source/toolchain/host provenance;
 retain all completed samples and timeouts. Preregister operational caps.

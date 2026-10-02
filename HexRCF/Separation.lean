@@ -59,7 +59,7 @@ theorem classify_sound {f : ZPoly} {replay : SturmReplay}
     (hcmp : classify? f replay cert.intervals[i] endpoint = some cmp) :
     ∃! root : ℝ, (toPolyℝ f).IsRoot root ∧
       Literal.InInterval cert.intervals[i] root ∧
-      cmp.Holds root (Dyadic.toReal endpoint) := by
+      cmp.Holds root (HexRealRootsMathlib.Dyadic.toReal endpoint) := by
   classical
   obtain ⟨root, hroot, huniq⟩ :=
     IsolationCert.existsUnique_root hreplay hcert i
@@ -81,8 +81,8 @@ theorem classify_sound {f : ZPoly} {replay : SturmReplay}
         exact lt_of_le_of_lt hroot.2.2 (toReal_lt_toReal hright)
       next hright =>
         let initial := DyadicInterval.mk cert.intervals[i].lower endpoint
-          (Dyadic.not_lt.mp hleft)
-        have hend : endpoint ≤ cert.intervals[i].upper := Dyadic.not_le.mp hright
+          (Dyadic.not_le.mp hleft)
+        have hend : endpoint ≤ cert.intervals[i].upper := Dyadic.not_lt.mp hright
         change (if replay.count initial = 0 then some RootCmp.gt
           else if replay.count initial = 1 then
             if Hex.dyadicSign (f.evalDyadic endpoint) = 0 then some RootCmp.eq
@@ -125,18 +125,18 @@ theorem classify_sound {f : ZPoly} {replay : SturmReplay}
                 le_trans hymem.2.2 (toReal_le_toReal hend)⟩
             have hyr : y = root :=
               huniq y ⟨(Polynomial.mem_roots'.mp hymem.1).2, hyI⟩
-            have hrootEnd : root ≤ Dyadic.toReal endpoint := by
+            have hrootEnd : root ≤ HexRealRootsMathlib.Dyadic.toReal endpoint := by
               rw [← hyr]
               exact hymem.2.2
             split at hcmp
             next heval =>
               have heq : RootCmp.eq = cmp := Option.some.inj hcmp
               subst cmp
-              have hendRoot : (toPolyℝ f).IsRoot (Dyadic.toReal endpoint) :=
+              have hendRoot : (toPolyℝ f).IsRoot (HexRealRootsMathlib.Dyadic.toReal endpoint) :=
                 (evalSign_zero_iff f endpoint).mp heval
               have hendI : Literal.InInterval cert.intervals[i]
-                  (Dyadic.toReal endpoint) := by
-                exact ⟨toReal_lt_toReal (Dyadic.not_lt.mp hleft),
+                  (HexRealRootsMathlib.Dyadic.toReal endpoint) := by
+                exact ⟨toReal_lt_toReal (Dyadic.not_le.mp hleft),
                   toReal_le_toReal hend⟩
               exact (huniq _ ⟨hendRoot, hendI⟩).symm
             next heval =>
@@ -167,8 +167,8 @@ theorem classify_exists {f : ZPoly} {replay : SturmReplay}
   · exact ⟨RootCmp.lt, rfl⟩
   next hleft hright =>
     let initial := DyadicInterval.mk cert.intervals[i].lower endpoint
-      (Dyadic.not_lt.mp hleft)
-    have hend : endpoint ≤ cert.intervals[i].upper := Dyadic.not_le.mp hright
+      (Dyadic.not_le.mp hleft)
+    have hend : endpoint ≤ cert.intervals[i].upper := Dyadic.not_lt.mp hright
     have hsub : Literal.rootsIn (toPolyℝ f) initial ≤
         Literal.rootsIn (toPolyℝ f) cert.intervals[i] := by
       simp only [Literal.rootsIn]
@@ -217,7 +217,7 @@ theorem checkCmp_sound {f : ZPoly} {replay : SturmReplay}
     (hclaim : checkCmp f replay cert.intervals[i] endpoint claim = true) :
     ∃! root : ℝ, (toPolyℝ f).IsRoot root ∧
       Literal.InInterval cert.intervals[i] root ∧
-      claim.Holds root (Dyadic.toReal endpoint) := by
+      claim.Holds root (HexRealRootsMathlib.Dyadic.toReal endpoint) := by
   apply classify_sound hreplay hcert i endpoint
   exact of_decide_eq_true hclaim
 

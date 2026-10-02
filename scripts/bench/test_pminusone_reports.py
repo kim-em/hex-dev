@@ -1,0 +1,151 @@
+"""Regression guards for policy-measurement provenance and completeness."""
+import importlib.util
+import json
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+
+spec = importlib.util.spec_from_file_location(
+    'pminusone_policy_report', Path(__file__).with_name('pminusone_policy_report.py'))
+report = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(report)
+
+class ProvenanceTests(unittest.TestCase):
+    def collection(self, directory, name, source='source', executable='exe', resume=None):
+        metadata={'type':'metadata','mode':'factor','source_sha256':{'Factor.lean':source},
+                  'executable_sha256':{'factor':executable}}
+        rows=[metadata]
+        if resume is not None:
+            rows.append({'type':'resume','metadata':resume})
+        rows.append({'type':'complete'})
+        path=Path(directory)/name
+        path.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+        return path
+
+    def test_missing_samples_cannot_pass(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=self.collection(directory,'empty.jsonl')
+            result=report.summarize([path])
+            self.assertFalse(result['complete'])
+            self.assertEqual(result['gate'],'incomplete')
+
+    def test_mixed_source_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            before=self.collection(directory,'before.jsonl',source='four-slots')
+            after=self.collection(directory,'after.jsonl',source='reserved-slot')
+            with self.assertRaisesRegex(AssertionError,'mixed source'):
+                report.summarize([before,after])
+
+    def test_mixed_executable_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            before=self.collection(directory,'before.jsonl',executable='stale')
+            after=self.collection(directory,'after.jsonl')
+            with self.assertRaisesRegex(AssertionError,'mixed source or executable'):
+                report.summarize([before,after])
+
+    def test_missing_budget_cannot_mix_with_declared_budget(self):
+        with tempfile.TemporaryDirectory() as directory:
+            before = self.collection(directory, 'missing.jsonl')
+            after = self.collection(directory, 'declared.jsonl')
+            rows = [json.loads(line) for line in after.read_text().splitlines()]
+            rows[0]['construction_budget'] = {'maxFactors': 32}
+            after.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+            with self.assertRaisesRegex(AssertionError, 'mixed construction budgets'):
+                report.summarize([before, after])
+
+    def test_mixed_resume_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=self.collection(directory,'resumed.jsonl',resume={
+                'source_sha256':{'Factor.lean':'different'},
+                'executable_sha256':{'factor':'exe'}})
+            with self.assertRaisesRegex(AssertionError,'mixed resume'):
+                report.summarize([path])
+
+proof_spec = importlib.util.spec_from_file_location(
+    'pminusone_proof_report', Path(__file__).with_name('pminusone_proof_report.py'))
+proof = importlib.util.module_from_spec(proof_spec)
+proof_spec.loader.exec_module(proof)
+
+class ProofProvenanceTests(unittest.TestCase):
+    def collection(self, directory, name='table-2', commit='head', digest='source'):
+        samples = []
+        for i in range(1, 9):
+            sample = {'round': i, 'build_order': ['reference', 'candidate'] if i % 2
+                      else ['candidate', 'reference'], 'import_baseline_wall_nanos': 100}
+            for role, enabled in [('reference', False), ('candidate', True)]:
+                row = {'case': name, 'enabled': enabled,
+                       'result': {'checked': True, 'attempts': 0, 'events': []}}
+                sample[role] = {'wall_nanos': 110, 'compiler_output': 'info: Probe.lean:12:0: ' + json.dumps(row)}
+                sample[role + '_workload_wall_nanos'] = 10
+            samples.append(sample)
+        record = {'measurement_state': 'complete',
+                  'config': {'samples': 8, 'import_baseline_control': 'imports'},
+                  'environment': {'git_commit': commit},
+                  'source_sha256': {'Support.lean': digest, 'HexPrimality/Construction.lean': digest,
+                                    'HexPrimality/Search.lean': digest,
+                                    'bench/HexPrimality/PMinusOneMeasure.lean': digest},
+                  'validity': {'release_quality': True},
+                  'results': {'imports': {'samples': [
+                      {'round': i, 'reference': {'wall_nanos': 100},
+                       'candidate': {'wall_nanos': 100}} for i in range(1, 9)]}, name: {
+                      'samples': samples, 'workload_ratio_resolution': 'baseline-limited',
+                      'import_baseline_robust_envelope_nanos': 100}}}
+        path = Path(directory) / (name + '.json')
+        path.write_text(json.dumps(record))
+        return path
+
+    def test_missing_inputs_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.collection(directory)
+            with self.assertRaisesRegex(AssertionError, 'incomplete input corpus'):
+                proof.summarize([path])
+
+    def test_mixed_commits_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            paths = [self.collection(directory), self.collection(directory, 'table-3', commit='other')]
+            with self.assertRaisesRegex(AssertionError, 'mixed source commits'):
+                proof.summarize(paths)
+
+    def test_mixed_shared_sources_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            paths = [self.collection(directory), self.collection(directory, 'table-3', digest='other')]
+            with self.assertRaisesRegex(AssertionError, 'mixed source hashes'):
+                proof.summarize(paths)
+
+    def budget(self, digest='source'):
+        return {'budget': {'maxBits': 521, 'maxFactors': 32, 'maxAttempts': 1024,
+                           'definition': 'production budget'},
+                'source_sha256': {name: digest for name in ('HexPrimality/Construction.lean',
+                    'HexPrimality/Search.lean', 'bench/HexPrimality/PMinusOneMeasure.lean')}}
+
+    def test_unresolved_costs_have_no_ratio(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(proof, 'EXPECTED', {'table-2'}):
+            result = proof.summarize([self.collection(directory)], self.budget())
+            self.assertTrue(result['retains_all_checked_successes'])
+            self.assertFalse(result['families'][0]['baseline_resolved'])
+            self.assertIsNone(result['families'][0]['ratio'])
+            self.assertNotIn('gate', result)
+
+    def test_budget_source_mismatch_rejected(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(proof, 'EXPECTED', {'table-2'}):
+            with self.assertRaisesRegex(AssertionError, 'budget source mismatch'):
+                proof.summarize([self.collection(directory)], self.budget('different'))
+
+    def test_baseline_mismatch_rejected(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(proof, 'EXPECTED', {'table-2'}):
+            path = self.collection(directory)
+            data = json.loads(path.read_text())
+            data['results']['imports']['samples'][0]['reference']['wall_nanos'] = 120
+            path.write_text(json.dumps(data))
+            with self.assertRaisesRegex(AssertionError, 'baseline mismatch'):
+                proof.summarize([path], self.budget())
+
+    def test_family_cost_sums_each_round(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(proof, 'EXPECTED', {'table-2', 'table-3'}):
+            paths = [self.collection(directory), self.collection(directory, 'table-3')]
+            result = proof.summarize(paths, self.budget())
+            self.assertEqual(result['families'][0]['disabled_round_workload_s'], [20 / 1e9] * 8)
+
+if __name__ == '__main__':
+    unittest.main()

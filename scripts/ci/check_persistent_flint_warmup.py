@@ -49,7 +49,7 @@ _DRIVER_CALL_RE = re.compile(
     r"(?:\bHex\.BenchOracle\.Flint\."
     r"(?:runOp|runLine|sendRequest|sendRequestLine)\b"
     r"|\brequestNtlLineWithRetry\b"
-    r"|\bcarrierLine\b)"
+    r"|\bcarrierLine\b|\brankRequest\b)"
 )
 _WARM_TRUE_RE = re.compile(r"\bwarmupFirstIter\s*:=\s*true\b")
 _WARM_FALSE_RE = re.compile(r"\bwarmupFirstIter\s*:=\s*false\b")

@@ -1,0 +1,34 @@
+Hex.SturmBench.runReplay    expected complexity: n ^ 2    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=b511f3d-dirty, 2026-09-21T13:05:45Z, host=chungus2
+  param  per-call    repeats  C
+      8   12.620 µs  ×2^13    C= 197.794 [trial 1/4] †
+     16   55.307 µs  ×2^10    C= 216.145 [trial 1/4]
+     32  385.145 µs  ×2^8     C= 377.035 [trial 1/4]
+     64    5.155 ms  ×2^4     C=1260.485 [trial 1/4]
+    128   60.018 ms  ×2^0     C=3669.661 [trial 1/4]
+      8   12.697 µs  ×2^13    C= 197.794 [trial 2/4] †
+      8   12.512 µs  ×2^13    C= 197.794 [trial 3/4] †
+      8   12.765 µs  ×2^13    C= 197.794 [trial 4/4] †
+     16   55.326 µs  ×2^10    C= 216.145 [trial 2/4]
+     16   55.885 µs  ×2^10    C= 216.145 [trial 3/4]
+     16   55.339 µs  ×2^10    C= 216.145 [trial 4/4]
+     32  387.021 µs  ×2^8     C= 377.035 [trial 2/4]
+     32  379.394 µs  ×2^8     C= 377.035 [trial 3/4]
+     32  389.992 µs  ×2^8     C= 377.035 [trial 4/4]
+     64    5.174 ms  ×2^4     C=1260.485 [trial 2/4]
+     64    5.171 ms  ×2^4     C=1260.485 [trial 3/4]
+     64    5.133 ms  ×2^4     C=1260.485 [trial 4/4]
+    128   59.416 ms  ×2^0     C=3669.661 [trial 2/4]
+    128   60.229 ms  ×2^0     C=3669.661 [trial 3/4]
+    128   60.334 ms  ×2^0     C=3669.661 [trial 4/4]
+  verdict: inconclusive (cMin=216.145, cMax=3669.661, β=+1.400, looks slower than declared by ~n^1.400)
+  per-spawn floor (harness self-measurement): 21.293 ms
+  peak RSS: 67_880 kB..68_656 kB (across 20 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+        8  4/4      12.658 µs   12.512 µs   12.765 µs  1.995%
+       16  4/4      55.333 µs   55.307 µs   55.885 µs  1.043%
+       32  4/4     386.083 µs  379.394 µs  389.992 µs  2.745%
+       64  4/4       5.163 ms    5.133 ms    5.174 ms  0.798%
+      128  4/4      60.124 ms   59.416 ms   60.334 ms  1.528%
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-axes/replay-wide.json

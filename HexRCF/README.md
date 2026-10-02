@@ -48,6 +48,31 @@ over `ℝ`.
   but never proves a negation. Builder failure is a separate error channel
   and is never reported as `false`.
 
+Optional coefficient solvers can register a monomorphic meta declaration of
+type `Hex.RCF.Handler` with `@[rcf_handler]`. The base tries registered names
+in `Lean.Name.lt` order only when rational reification encounters unsupported
+closed coefficient syntax, including local symbols with explicit equalities
+to closed real expressions. A handler explicitly declines, reports a terminal
+failure, or returns a proof checked against the original goal. Rational solver
+failures never dispatch to another handler. This interface does not itself
+provide real algebraic or named-constant coefficient support.
+
+Handlers run with the debug kernel bypass disabled. Before accepting a result,
+the base shares repeated expression nodes, checks its type against the original
+goal without assigning the goal's metavariables, and audits axiom dependencies.
+It closes the candidate over its local variables as a fresh auxiliary theorem,
+substituting let-bound locals without evaluating certificate checks in the
+elaborator. Lean's ordinary kernel checks it synchronously with the configured
+limits and cancellation token. The base requires a theorem, audits it and uses
+it in the final proof. Malformed terms, unresolved proofs, different goals,
+admitted dependencies and unsafe declarations are rejected.
+
+Elaboration and kernel checking have separate heartbeat counters. Synchronous
+kernel checks share their counter within an elaboration task; each call applies
+the configured limit without resetting that counter. The check can wait for
+earlier background declaration checks. These guarantees assume an ordinarily
+checked environment and handlers using normal declaration APIs.
+
 # Verification
 
 Every `true` verdict is kernel-checked. The headline theorem
@@ -66,3 +91,13 @@ Development happens in the
 [`hex-dev`](https://github.com/kim-em/hex-dev) monorepo, not in this published
 mirror. Contributions are welcome as pull requests to the `SPEC/` directory:
 describe the behavior you want and leave the implementation to the maintainer.
+
+In the `hex-dev` development monorepo, the `HexRCF.RealCoefficients` import exposes
+`Hex.RCF.RealCoefficients.Reify.prepare`. It constructs a shared source schema,
+a fixed closed-coefficient valuation and a kernel-checked equivalence to the
+original goal, retaining all source divisor obligations. Within `hex-dev`, Lake builds it through
+the default `HexRCFRealCoefficients` target; this target is not published to the
+split repository. It registers no solver: coefficient
+authentication, nonzero-guard checking, specialization and real-coefficient replay
+remain separate integration gates. See the
+[SPEC](SPEC/hex-rcf.md#planned-real-coefficient-extension).

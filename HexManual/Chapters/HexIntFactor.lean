@@ -35,6 +35,11 @@ and on `HexArith` and `HexBasic` for bounded arithmetic and explicit random
 state. The companion `HexIntFactorMathlib` proves correspondence with
 Mathlib's factorization, divisor, squarefree, and `ZMod` order APIs.
 
+The bounded ECM provider {name}`Hex.Nat.ecmFactorSearch` constructs primality
+certificates for the secp256k1, P-384 and Curve448 field primes. See
+{ref "tutorial-field-primes"}[the field-prime tutorial] for the three proofs
+and instructions for saving the generated certificates.
+
 # Complete certificates
 %%%
 tag := "hex-int-factor-certificates"
@@ -149,6 +154,24 @@ claim to make a partial search total.
 
 {docstring Hex.Nat.defaultFuel}
 
+After `import HexIntFactor`, plain `primality?` first uses HexPrimality's
+construction route, then retries with {name}`Hex.Nat.ecmConstructionFactor`
+only on exhaustion with attempts left. This provider uses
+{name}`Hex.Nat.ecmFactorSearch`, which tries core factoring before bounded
+ECM stages 1 and 2. Explicit `factor :=` syntax selects a provider directly:
+
+{docstring Hex.Nat.ecmFactorSearch}
+
+Its defaults are `b₁ = 32768`, `b₂ = 524288`, and `curves = 64`.
+ECM attempts with stage bounds above 524288 and 4194304 respectively decline
+without work, and the curve count is capped at 64. Set `trace := true` to display curve
+outcomes. The tactic's `maxAttempts` allowance is shared across factor search,
+recursive certificates and witnesses. A stage-1 attempt and a stage-2
+continuation each consume one attempt. For example,
+`primality? (factor := Hex.Nat.ecmFactorSearch (curves := 16))`
+uses fewer curves, which may exhaust on inputs supported by the default
+64-curve provider.
+
 The {name}`Hex.Nat.FactorStop` cases distinguish zero, ordinary exhaustion,
 and rejection of a producer's output by a checker. A
 {name}`Hex.Nat.FactorFailure` retains exact attempt accounting, the advanced
@@ -173,6 +196,73 @@ Specialized entry points expose the split routes for callers that need route
 control or diagnostics. `factorPower?` adds a checked cyclotomic pre-split for
 numbers of the form `b ^ n − 1` or `b ^ n + 1`; failed subproblems may fall
 back to generic search, while checker rejection is propagated.
+
+# Opt-in SQUFOF
+%%%
+tag := "hex-int-factor-squfof"
+%%%
+
+Both {name}`Hex.Nat.factor?` and {name}`Hex.Nat.factorPartial?` accept
+`squfof := .first limits` to try deterministic bounded SQUFOF before rho.
+Structural reductions and composite filtering run first. The policy applies
+to recursive cofactors and nested certificate search. On bounded SQUFOF
+failure, the existing rho, p−1, and ECM routes remain available.
+`squfof := .rescue limits` instead runs SQUFOF after those routes fail.
+The default is `.off`.
+
+This 56-bit example has factors differing by about 19%. The result is a
+complete checked factorization, ready for consumers such as
+{name}`Hex.Nat.totient`:
+
+```lean (name := squfofComplete)
+open Hex Hex.Nat
+
+set_option maxRecDepth 100000 in
+#eval (factor? 40249308338448479
+  (Rand.ofSeed 40249308338448479)
+  (squfof := .first
+    { multipliers := 2, steps := 65536 })).map
+    fun (F, _) =>
+      (F.raw.factors.map (fun (e : PrimePower) =>
+        (e.prime, e.exponent)), totient F)
+```
+```leanOutput squfofComplete
+Except.ok ([(184185251, 1), (218526229, 1)], 40249307935737000)
+```
+
+The close 64-bit pair is a deliberately favorable case and needs only a
+small recurrence cap:
+
+```lean (name := squfofComplete64)
+open Hex Hex.Nat
+
+set_option maxRecDepth 100000 in
+#eval (factor? 16212959431627901207
+  (Rand.ofSeed 16212959431627901207)
+  (squfof := .first
+    { multipliers := 1, steps := 128 })).map
+    fun (F, _) => F.raw.factors.map
+      (fun (e : PrimePower) => (e.prime, e.exponent))
+```
+```leanOutput squfofComplete64
+Except.ok [(4026531853, 1), (4026532019, 1)]
+```
+
+On the shared measurement host, eight adjacent paired trials measured
+median complete-factorization times of 8.71 ms with the default portfolio
+and 1.40 ms with this policy. For the close 64-bit pair in
+{ref "hex-primality-squfof"}[the splitting example], the complete times were
+20.69 ms and 2.25 ms using one multiplier with 128 steps. These measurements
+include prime-certificate construction and checked acceptance; they describe
+these selected examples rather than a general speed guarantee.
+
+Small factors just above the trial table can favor rho strongly, even when
+the product is large. Input bit length does not reveal factor balance, so
+SQUFOF is explicitly selected rather than enabled automatically. Limits
+bound multiplier attempts, combined recurrence steps per multiplier, and
+queue capacity. A zero multiplier or step limit does no SQUFOF work. The
+counted API retains route diagnostics and charges every started multiplier,
+while SQUFOF itself leaves the random state unchanged.
 
 # Orders, primitive roots, and Carmichael exponents
 %%%
@@ -215,7 +305,7 @@ order.
 tag := "hex-int-factor-mathlib"
 %%%
 
-`HexIntFactorMathlib` is correspondence-only: it neither searches for factors
+`HexIntFactorMathlib` neither searches for factors
 nor replays certificates. It identifies values already computed and checked
 by `HexIntFactor` with Mathlib's canonical definitions.
 

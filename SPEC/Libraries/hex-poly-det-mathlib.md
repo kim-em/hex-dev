@@ -1,543 +1,384 @@
 # hex-poly-det-mathlib
 
-The symbolic arm of the `det` tactic: a second handler attached to the
-`det` syntax kind that [hex-bareiss-mathlib](../../HexBareissMathlib/SPEC/hex-bareiss-mathlib.md)
-owns, accepting a Mathlib matrix whose entries are ring expressions,
-certifying the determinant of the reified polynomial matrix through
-[hex-poly-det](hex-poly-det.md), and closing `A.det = e` against the
-user's expression. It is the Mathlib companion of hex-poly-det and the
-determinant analogue of
-[hex-generic-rank-mathlib](hex-generic-rank-mathlib.md). It lives here and
-not in hex-bareiss-mathlib because that library is a published mirror
-whose import closure may not reach hex-reflect, hex-reflect-mathlib or
-hex-mv-gcd (`scripts/release/check_released_manifest.py`,
-`published_import_closure_violations`); the generic witness and checker
-stay in hex-bareiss, and the numeric `det` stays in hex-bareiss-mathlib.
+Proof-producing evaluation of symbolic determinants of Mathlib matrix literals.
+Use one cached, division-free Bird recurrence over the user's commutative ring,
+with compact scalar equality proofs. Compute a determinant expression and prove
+it correct without requiring the caller to supply its value. Equality goals add
+a comparison with the requested expression to the same evaluation session.
 
-Dependencies: `HexPolyDet`, `HexBareissMathlib`, `HexReflect`,
-`HexReflectMathlib`, `HexMvPolyMathlib`, `HexMatrixMathlib`, plus Mathlib;
-not `correspondence_only`, since it implements a handler and owns proof
-probes.
+The library extends the determinant syntax owned by hex-bareiss-mathlib. Closed
+integer and rational inputs retain that library's numeric certificate backend.
+Native polynomial values and checked polynomial witnesses remain the separate
+[hex-poly-det](hex-poly-det.md) operations. They are not prerequisites of the
+symbolic proof evaluator. There is no matrix-family strategy dispatcher and no
+implicit invocation of Mathlib's `norm_det` or `eval_det`.
 
-## Input and dispatch
+## Public interface
 
-- **Any commutative ring as the target.** Determinant transport is
-  `RingHom.map_det`, which needs no injectivity, so the user's carrier `F`
-  is any `CommRing`; `CharZero` is unnecessary for this transport. With integer coefficients the arm is sound
-  over every commutative ring and complete over rings without additive
-  torsion; in characteristic `p` a true goal can be declined when `d` and
-  the target agree only modulo `p`, which the residue provider and the
-  residue list form remove (for primes below `2^31`, the provider's
-  range). The certificate fragment is: a square literal over any
-  commutative ring whose entries and target are ring expressions in the
-  same atoms, with fixed natural exponents, within the reflection budgets.
-  `norm_det` followed by `ring` also closes targets that mention atoms
-  absent from the matrix (`x + y - y`) and identities with variable
-  exponents (`2 * 2 ^ m`), which this arm declines; those inputs are
-  preserved only through the fallback, which is scope kept, not scope
-  won.
-- **Closed forms first.** For `n ≤ 3` the handler does not reify: for
-  `!![…]` and `Matrix.of ![…]` literals it rewrites with Mathlib's
-  `Matrix.det_fin_two_of` / `Matrix.det_fin_three` (and `det_fin_one_of`,
-  `det_fin_zero`); for `fun i j => …` and `Matrix.ofArray` inputs and
-  unfolded definitions it uses the general `det_fin_two` / `det_fin_one`
-  and reduces the entry accesses explicitly; then it closes with `ring`.
-  The small-size `det%` returns the closed-form value with that proof,
-  since this route has no batch and no polynomial `d`. This is where the
-  certificate route pays reification and packing costs it cannot amortise
-  and where the first pilot lost to `norm_det`; the probes measure the
-  closed-form route on the `2 × 2` and `3 × 3` rungs against `norm_det`
-  rather than assuming it wins.
-- **Opt-in until measured.** The symbolic handler is not placed in the
-  default `Hex.norm_det` fallback chain. It ships as the `det` handler and
-  `det%` term form for symbolic input, and enters the simp-set chain only
-  for the size regime where the sweep below shows a win, if one exists.
+Importing `HexPolyDetMathlib` enables the symbolic handlers. The syntax owner
+remains hex-bareiss-mathlib; extensions attach to its syntax kinds instead of
+redeclaring keywords. Preserve the existing numeric forms.
 
-## Prerequisites and input classification
-
-The shared prerequisites are the same as
-[hex-generic-rank-mathlib §Prerequisite changes](hex-generic-rank-mathlib.md#prerequisite-changes-in-other-libraries):
-canonical list arithmetic in hex-mv-poly and its denotation theorem in
-hex-mv-poly-mathlib block the kernel route (the list form has landed);
-the numeric handlers' `throwUnsupportedSyntax` refactor has landed
-(https://github.com/kim-em/hex-dev/issues/10230); and the residue coefficient
-provider in hex-reflect-mathlib blocks positive characteristic. The
-polynomial producer generalisation belongs to hex-bareiss, its determinant
-soundness to this companion. These are implementation obligations, not
-claims that the proposed declarations already exist.
-
-Two frontend adaptations are also required: a proved pass clearing closed
-rational coefficients, and batch quotation using the canonical list
-layer's denotation constructor. Neither is provided by the current ring
-reifier. They belong to the symbolic frontend and its reflection bridge;
-they do not extend hex-reflect's fixed ring language with symbolic division.
-This library imports `HexReflect`, `HexReflectMathlib`, `HexMvPolyMathlib`
-and, through `HexPolyDet`, `HexMvGcd`; hex-bareiss and hex-bareiss-mathlib
-import no polynomial provider. The `det` syntax kind remains owned by
-`HexBareissMathlib/Tactic.lean`; this library's handler attaches to it
-without redeclaring the syntax, and answers `throwUnsupportedSyntax` for
-input outside its fragment.
-
-Input classification is shared with
-[the symbolic `rank` arm](hex-generic-rank-mathlib.md#input-classification).
-Handler order is registration order in reverse, so a handler registered by
-this library runs *before* hex-bareiss-mathlib's numeric handler and its
-diagnostic fallback. The symbolic handler therefore begins by classifying
-the numeric fragment itself and throws `throwUnsupportedSyntax` for it, so
-numeric inputs reach the numeric handler with no symbolic work, exactly as
-`HexGenericRankMathlib/Tactic.lean` does for `rank`; it is registered with
-`@[tactic HexMatrixMathlib.Det.detTac, no_fallback]`. The term form has its
-own registration on `HexMatrixMathlib.Det.detTerm` with the same numeric
-guard, since the numeric `det%` elaborator raises an ordinary error on its
-`notApplicable` rather than delegating; the two elaborators never both
-run on one input. For a square literal of dimension at most three the
-symbolic handler takes the closed-form route above and never reifies. Otherwise it reads the square matrix through the
-shared literal layer, including definitions
-unfolded within budget. It canonicalises and reifies all entries with
-`reifyRing?`, with top-level variables enabled, in one hex-reflect batch.
-For symbolic `fun` and `Matrix.ofArray` inputs, literal recognition is
-shared but proof identification uses finite extensionality and the batch's
-entry interpretation proofs, with structural unfolding of the literal's
-indexing. It must not use the numeric `entriesEq`/`decide` route, which
-requires reducible `DecidableEq F`. No equality decision on symbolic values
-is needed; these entrywise identification proofs are measured separately.
-The batch seals its environment at `k` atoms, converts with the
-characteristic-aware conversion when `Sym.Arith` supplies the characteristic
-and the plain conversion otherwise, and uses `cmp := Hex.Mono.grevlex`.
-It yields
-
-```text
-P : Hex.Matrix (Hex.MvPoly k C cmp) n n
-v : Fin k → F
-ι : C →+* F
-```
-
-and an interpretation proof `eval₂ ι v P[i, j] = A i j` for every entry.
-Here `F` is the user's carrier and `C` the coefficient provider's carrier.
-Routing is by the converted polynomials: any nonconstant entry selects the
-symbolic arm; if all entries convert to constants after cancellation, the
-same arm handles the resulting constant matrix, even with `k > 0`.
-
-Atoms are independent indeterminates. Expressions outside the fixed ring
-language, including `x / y`, opaque constants, `Real.exp t` and symbolic
-powers, become atoms. No hypotheses or algebraic relations between atoms
-are used: `hx : x = 0` does not change the polynomial for `x`. Atomisation
-can prove polynomial identities involving these terms, but cannot prove
-relations between them. The budgets are hex-reflect's (atoms, terms,
-coefficient bits and proof nodes), plus matrix dimension and certificate
-size; exhaustion returns `declined` naming the exhausted budget.
-
-In equality mode the user's expression `e` is reified in the same batch,
-using the matrix's atoms. Record the atoms allocated by the entries;
-reifying `e` must not allocate additional atoms. Seal once after both have
-been reified and convert both with that sealed environment. An expression
-which cannot be reified as a ring expression in those atoms declines with
-`det: symbolic determinant declined: target is not a ring expression in the matrix atoms`.
-This includes an opaque term appearing only in `e`.
-
-## Kernel certificate and soundness
-
-The compiled producer returns transform rows and a value `d : MvPoly k C cmp`,
-or a polynomial left kernel vector with value zero. Its meaning is always
-`Hex.Matrix.det P = d`, including when the determinant is identically zero;
-a matrix which becomes singular only at some atom valuations still has a
-nonzero polynomial determinant. All witness entries lie in the polynomial
-ring, never in a chosen specialisation or in the fraction field.
-
-The kernel checks `checkDetPolyList` on the row lists of canonical polynomial
-term lists and the witness in the same representation. Coefficients are
-encoded by `Int` for the integer arm and canonical `Nat` residues for the
-residue arm; exponent vectors are lists of `Nat`. Shape, canonicality,
-nonzero diagonals, vanishing products and the determinant value identity
-are checked as specified on the executable side. In particular the final
-value check uses `l₀ = 1`, `lᵢ₊₁ = uᵢ` and `d = sign σ * uₙ₋₁`
-(`d = 1` when `n = 0`), without expanding the product of pivot polynomials.
-Polynomial equality uses the list layer's `beq_iff` contract, not evaluation at sample points.
-
-The proposed `checkDetPolyList_sound` in this library identifies a passing
-check with `Hex.Matrix.det P = d`, where `P` and `d` denote the supplied
-lists and `Hex.Matrix.det` is the Leibniz reference. It uses the list
-arithmetic denotation theorem, `HexMatrixMathlib.det_eq`, row permutation
-signs and the triangular determinant lemmas, just as `det_eq_of_checkList`
-does. Require `[CommRing C] [IsDomain C] [DecidableEq C]` on the
-coefficient carrier, in addition to the producer's lawful GCD/order context.
-Transport through `HexMvPolyMathlib.equiv` to `MvPolynomial (Fin k) C`,
-whose existing domain instance supplies cancellation and the singular-vector
-argument; no existing `IsDomain (MvPoly …)` instance is assumed. The
-transform's diagonal product is nonzero there. Its cancellation is a
-propositional argument using the checked adjacent-diagonal equalities, not
-an expansion of the product by the kernel. The singular branch uses
-`Matrix.exists_vecMul_eq_zero_iff` over that domain to prove determinant zero.
-Neither argument requires the vector or diagonal product to stay nonzero after
-specialisation.
-
-The batch must quote `P` with each entry *defined to be* the canonical
-list layer's denotation applied to its quoted entry list. Thus the batch's
-`P` and the checker's denoted row matrix contain the same constructor
-applications, giving definitional identification without evaluating them.
-This is a quotation contract, not a claim that independently constructed
-`MvPoly` trees are definitionally equal. Today's `HexReflect/Session.lean`
-quotes `ofIntTerms`; the list prerequisite must supply the bridge from
-conversion terms to canonical exponent lists and adapt that quotation and
-its entry interpretation proofs. A compiled `MvPoly` matrix is still built
-for the producer, but its tree representation is never quoted as a second
-matrix for the kernel to compare. The denotation lemmas justify list
-arithmetic without reducing reference polynomial operations or rebuilding
-trees; conversion, quotation and identification costs are recorded in the
-proof probes. Every definition on the arithmetic path is `@[expose]`, uses
-structural recursion on lists of `Nat`/`Int`, and obeys
-[matrix-tactics §Kernel discipline](../matrix-tactics.md#kernel-discipline).
-In particular the kernel never evaluates `bareissWith`, `detWitness`, a
-reference checker, or `Hex.Matrix.det` on `Hex.Matrix (MvPoly …)`. The
-reference determinant occurs in soundness statements only; neither `Array`,
-`Vector`, `Fin`, `Finset`, matrix indexing nor well-founded polynomial
-arithmetic is reduced to check a certificate. The packed checkers of
-[hex-bareiss §Packed evaluation](../../HexBareiss/SPEC/hex-bareiss.md#packed-evaluation)
-are sound through `checkDetList_of_packed` and `checkDetRat_of_packed`:
-`triangularCheckPacked_eq` and `zeroDotsPacked_eq` identify the packed
-walk with the plain one under the entry bounds, by `dotIntPacked_eq` of
-[hex-matrix-mathlib §Kronecker-packed dot products](../../HexMatrixMathlib/SPEC/hex-matrix-mathlib.md#kronecker-packed-dot-products),
-and the columns of the arranged matrix inherit the bounds of the rows
-(`mem_applySwaps`, `columns_bound`); `det_eq_of_checkListPacked'` and
-`det_eq_of_checkRatPacked'` are the plain theorems after the implication.
-One auxiliary lemma is
-checked synchronously through the literal layer's `addClosedProof`; there
-is no elaborator `Kernel.whnf` pre-check, no elaborator type check of the
-proof before the kernel's, and no `native_decide`.
-
-## Transport and result reconstruction
-
-Write `E := HexMatrixMathlib.matrixEquiv` (to avoid confusing the matrix
-equivalence with the user's expression `e`) and
-`φ := HexMvPolyMathlib.eval₂MathlibHom ι v`. The entry proofs and
-`eval₂MathlibHom_apply` give `A = (E P).map φ`. Determinant correspondence
-and `RingHom.map_det` then give
-
-```text
-A.det = φ (Hex.Matrix.det P) = φ d.
-```
-
-If `q` is the polynomial reified from `e`, its batch proof gives `φ q = e`.
-The tactic checks equality of the canonical term lists of `d` and `q` in
-the kernel, uses `beq_iff` and denotation to obtain `d = q`, and composes
-these equalities. It proves agreement with the user's expression, without
-printing a polynomial and asking `ring` to prove it equal. A mismatch is a
-`declined` outcome displaying `φ d` and explaining that the target is not
-a polynomial identity in the sealed atoms; it is not evidence that the
-specialised target is false. For example, `!![x].det = 0` under `hx : x = 0`
-requires substitution before this arm can close it.
-
-The accepted goals are `A.det = e` and `e = A.det`, the latter by symmetry.
-With no target expression, `det% A` returns the existing
-`HexMatrixMathlib.Certified Matrix.det A`, with `value := φ d` and
-`proof : A.det = value`; the value is the denoted computed polynomial in
-`F`, not a polynomial object or an unproved pretty-printed expression.
-These results are unconditional. Even if a pivot polynomial vanishes at
-`v`, determinant transport is valid: unlike symbolic rank, this arm has no
-nonvanishing condition to discharge or leave as a goal. The empty matrix
-returns one.
-
-## Carriers and composition
-
-The integer arm uses the integer provider (`C := Int`,
-`ι := Int.castRingHom F`) for any `[CommRing F]`: `RingHom.map_det` needs
-no injectivity, and there is no assumption that evaluation of polynomials
-at the atoms is injective. Soundness is unconditional. Completeness holds
-whenever `ι` is injective on the coefficients that occur; in positive
-characteristic a polynomial identity that holds only modulo `p` is not
-found by the integer arm and the residue arm below is the complete one.
-
-Rational coefficients use row scaling as `checkDetRat` does. Before ring
-reification, a proved coefficient-normalisation pass over `ℚ` recognises
-closed rational scalars and clears their denominators in each row. It
-returns positive integer scales `sᵢ` and integer polynomial expressions
-for `B`, with entry proofs `eval₂ ι v B[i, j] = sᵢ * A i j`. The pass
-shares the atom environment with matrix and target reification and treats
-division by symbolic terms as atoms; it does not rewrite `x / y` into
-polynomial division. Current `reifyRing?` atomises division, including
-`1 / 2`, so this pass is an explicit additional implementation obligation.
-Until it exists, denominator-clearing requests decline with
-`det: symbolic determinant declined: rational coefficient normalisation unavailable`;
-ordinary polynomial identities in atomised division terms remain sound.
-
-Certify the integer polynomial matrix `B` by `checkDetPolyList`. If
-`D := ∏ sᵢ` and `dB` is its certified determinant, the entry proofs and
-row-scaling theorem give `D * A.det = φ dB`. This arm requires `[Field F] [CharZero F]` on
-the target, unlike the integer arm: cross-multiplication needs the scales
-`t * D` to be cancellable and the term form needs division, and `CharZero`
-alone does not give cancellation in a commutative ring (in `ℤ × ZMod 2`
-the element `2` kills `(0, 1)`). Positivity and `CharZero` then prove
-`(D : F) ≠ 0`. Apply the same proved pass to
-the target to obtain a positive integer `t` and integer polynomial `qZ`
-with `φ qZ = t * e`. Kernel list equality checks
-`t * dB = D * qZ`, again with nonzero integer scales interpreted in `ℚ`.
-The term form returns `φ dB / D`. All computational checks use integer
-lists; the entry/scalar normalisation proofs establish the scaling equations,
-so no rational polynomial list representation is assumed. Nonzero closed
-scalar denominators are proved by the normalisation pass, never left as
-user side goals.
-
-Positive characteristic uses the residue provider
-(https://github.com/kim-em/hex-dev/issues/10255, merged) with the residue
-list form of https://github.com/kim-em/hex-dev/issues/10257, the Mathlib
-ring/domain bridge and the lawful exact quotient at `MvPoly`. For `ZMod64 p`, this includes both
-`ZMod64.Bounds p` and `ZMod64.PrimeModulus p`; a composite modulus does not
-satisfy the domain contract. Characteristic-aware conversion reduces
-coefficients, not exponents or polynomial functions: `X³ - X` over
-`ZMod 3` is not the zero polynomial. Until the residue list form exists this arm's kernel tests are documented
-non-tests and the integer arm handles such carriers soundly but
-incompletely, as described above.
-
-hex-bareiss-mathlib's simproc `Hex.norm_det` (renamed from `hex_norm_det`;
-tactic and simproc names carry no `hex_` prefix, the namespace does the
-work) tries the numeric certificate, then the unmodified Mathlib
-`norm_det` fallback in the same simp set. This library provides a second
-simproc, `Hex.normPolyDet`, that tries the symbolic certificate and falls
-back to `norm_det`; it is opt-in and not added to the default chain until
-the sweep below shows the regime in which it wins, at which point the
-chain dispatches on that regime. A symbolic success rewrites to `φ d`; a
-decline leaves the original expression available to Mathlib. Check budgets
-before invoking the producer, and preserve the attempt's outcome/batch
-within the invocation: a tactic decline must not re-enter the same symbolic
-attempt through the simproc. No input `norm_det` accepts today regresses. Unsupported goals return `notApplicable`;
-capability or budget declines retain
-`det: symbolic determinant declined: <reason>`, including carrier or entry
-coordinate where relevant, for reporting if the composed tactic fails.
-A malformed or rejected producer certificate is `failure`, never a weaker
-result disguised as success. The axiom audit permits only `propext`,
-`Classical.choice` and `Quot.sound`, as for the numeric arm.
-
-## Proof probes and shipping bar
-
-Add symbolic probes under `bench/HexPolyDetMathlib/ProofProbe`, with the
-executable producer measurements owned by hex-poly-det. Sweep dimensions
-`2, 4, 8`, atom counts `1, 2, 4`, total entry degrees `1, 2, 4` and entry
-supports `1, 4, 16`, recording the actual canonical degree and support.
-Use all feasible combinations: a requested support larger than the number
-of monomials of the given degree bound and arity is marked infeasible,
-not silently generated with smaller support. Include dense, structured,
-pivot-swap and identically singular matrices, rational coefficient variants,
-and valuations at which a nonzero polynomial determinant becomes zero.
-
-The closed-algebraic family uses `ℚ(√2)` blocks, including
-`!![α, 1; 2, α]`. The shared polynomial target is `α² - 2`; both arms
-must be measured on that target with `α` treated as an atom. The target
-zero using `α² = 2` is a separate scope probe: independent-atom reification
-cannot use that relation, in Hex as in `norm_det`. Record the decline;
-do not claim an algebraic-number scope win without a separate certified
-coefficient provider that can prove the relation. Strictly larger scope
-must instead be demonstrated on accepted surfaces such as the shared
-literal layer's `fun i j => …`/`Matrix.ofArray` forms and `det%`.
-
-Compare against the unmodified pinned `norm_det` from
-`Mathlib/Tactic/NormDet.lean` on identical targets, with the same residual
-ring normalisation if the Mathlib arm needs it, in fresh modules against
-matched import-only baselines. Use `scripts/bench/fresh_module_sweep.py`:
-six samples, adjacent pairs, alternating `AB`/`BA`, retaining all completed
-runs on the shared host. Record batch reification, producer, list conversion,
-kernel check, entrywise identification and total elaboration separately,
-plus proof node count, `.olean` size, realised minor support/degree and
-coefficient bits. Record
-one kernel-only profile per family and median ratios in this SPEC before
-shipping; these are planned measurements, not inferred timing results.
-Preregister per-case cleanup timeouts and proof-build ceilings in the runner
-manifest; a timeout is reported as such and never removed from the ladder.
-Measure the full composed invocation on declines too, including work before
-fallback, so no decline can hide a regression against bare `norm_det`.
-
-Bird's `O(n⁴)` ring-normalised certificate chain is expected to lose as
-matrix dimension grows while minor support remains modest: the fraction-free
-list check uses about `n³ / 3` polynomial products (or `n²` for a singular
-vector), and never replays pivot search or division. With many variables,
-higher degrees or dense support, expanded minors and intermediate products
-can swell enough to reverse that advantage; small matrices can also be
-dominated by reification and list conversion. Report those losses and
-budget declines rather than extrapolating scalar operation counts to time.
-
-The shipping rule is the opt-in exception recorded in
-[matrix-tactics §The bar against Mathlib](../matrix-tactics.md#the-bar-against-mathlib):
-this arm does not clear the strict bar, since its certificate fragment
-is not strictly larger than `norm_det`'s and a shared family may lose. The handler and term
-form ship regardless, as opt-in; the simproc enters the default chain only
-for families where the fresh-module median is smaller than `norm_det`'s,
-and the table records every family either way. Fallback preserves scope
-but does not establish a runtime win; a win on selected rungs enables the
-chain on those rungs only.
-
-## Declaration inventory
-
-Existing declarations used by this design:
-
-| declarations | source |
+| Form | Contract |
 |---|---|
-| `Hex.Matrix.DetWitness`, `checkDetList`, `checkDetRat`, `detWitness` | `HexBareiss/Kernel.lean` (integer witness and producer today) |
-| `HexMatrixMathlib.det_eq_of_checkList`, `det_eq_of_checkRat` | `HexBareissMathlib/Kernel.lean` |
-| `Hex.norm_det`, `det` and `det%` syntax | `HexBareissMathlib/Tactic.lean` |
-| `HexMatrixMathlib.Certified` | `HexMatrixMathlib/Literal.lean` |
-| `HexMvPolyMathlib.eval₂MathlibHom`, `eval₂MathlibHom_apply` | `HexMvPolyMathlib/Aeval.lean` |
-| `HexMatrixMathlib.det_eq` | `HexDeterminantMathlib/CoreTransport.lean` |
-| `RingHom.map_det` | Mathlib `LinearAlgebra/Matrix/Determinant/Basic.lean` |
-| `Matrix.det_of_isLowerTriangular`, `det_of_isUpperTriangular` | Mathlib `LinearAlgebra/Matrix/Block.lean` |
+| `det` | Close `A.det = e` or `e = A.det`; compute the determinant, compare with `e`, and compose the equality, using symmetry when necessary. |
+| `det A with d hd` | Compute without an expected answer; introduce a local definition `d : R` containing the computed value and `hd : A.det = d`, then leave the surrounding goal available. Both names are explicit. |
+| `det% A` | Elaborate to `HexMatrixMathlib.Certified Matrix.det A`, with `value : R` and `proof : A.det = value`. No expected determinant value is needed. |
+| `simp only [Hex.normPolyDet]` | Explicitly rewrite supported determinant occurrences to their computed values, including nested occurrences and hypotheses selected with `at`. |
+| `Hex.norm_det` | Keep hex-bareiss-mathlib's numeric certificate simproc. |
 
-The domain proof additionally uses `HexMvPolyMathlib.equiv` and
-`instCommRingMvPoly` (`HexMvPolyMathlib/Equiv.lean`) and
-`Matrix.exists_vecMul_eq_zero_iff` (Mathlib
-`LinearAlgebra/Matrix/ToLinearEquiv.lean`). Batch quotation is in
-`HexReflect/Session.lean`, sealing in `HexReflect/State.lean`, and
-`convertTerms?`/`ofIntTerms` in `HexReflect/Convert.lean`.
+For example, the result may be used without predicting its expression:
 
-`checkDetPolyList`, `checkDetPolyList_sound`, the polynomial generalisation
-of `detWitness`, and the canonical list layer's `beq_iff`/denotation API
-are implemented. The checker stays Mathlib-free in hex-bareiss,
-its `MvPoly` instantiation in hex-poly-det, and its determinant soundness
-in this library.
-
-## File organisation
-
-```
-HexPolyDetMathlib/
-  Sound.lean        -- checkDetPolyList_sound at MvPoly, transport, rational scaling
-  Tactic.lean       -- the handler on hex-bareiss-mathlib's `det` syntax kind, det% for symbolic input, Hex.normPolyDet
-  Tests.lean
-HexPolyDetMathlib.lean
+```lean
+let r := det% A
+have h : A.det = r.value := r.proof
 ```
 
-`libraries.yml` gains
+The result-introducing tactic offers the same operation without manually
+projecting the record:
 
-```yaml
-  HexPolyDetMathlib:
-    deps: [HexPolyDet, HexBareissMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib]
-    mathlib: true
-    proof_probes: [bench/HexPolyDetMathlib/ProofProbe]
-    done_through: 3
-    status: active
+```lean
+det A with d hd
+-- d is a local definition; hd : A.det = d
 ```
 
-## Implementation and verification
+Both tactic forms accept `optConfig` before the matrix argument, if any. Term
+and simproc forms use default configuration. The programmatic evaluator accepts
+an explicit configuration and returns the same value/proof contract. Neither
+result-producing form calls the equality tactic with an invented right-hand
+side or computes the determinant twice. Introduced names follow Lean's ordinary
+local-name hygiene. Numeric notation retains the syntax owner's integer default;
+explicit annotations and expected record types must not be overridden.
 
-The executable instantiation is `HexPolyDet/Basic.lean`; the companion separates
-`Sound.lean`, `Scaling.lean`, `Normalize.lean`, `Frontend.lean`, `Small.lean`, and
-`Tactic.lean`. Integer polynomial certificates transport to any `CommRing`.
-The proved denominator-normalisation frontend currently operates on `Rat`;
-divisions over other carriers remain eligible atoms. The reduced-Nat residue
-adapter remains a documented non-test pending #10257; `Decode` supplies its
-validity, arithmetic, equality and domain-transport contract.
+Bare `det` is a closing tactic. If comparison declines, restore the original
+goal and metavariable state. It does not leave an unexplained residual equality.
+The result-introducing form does not solve or otherwise change the ambient goal.
+A simproc returns no rewrite on a recoverable capability/work-budget decline,
+with a trace reason; malformed proofs and internal errors are failures and
+propagate.
 
-Producer-side grevlex terms are converted to canonical list order by merge sort.
-Generated value expressions use balanced sums, and entry identification uses
-direct list denotation, avoiding a round trip through the Hex matrix data.
-The term form does not replay a reflexive comparison of its own value list.
+## Programmatic interface and syntax ownership
 
-Limits are 16 rows, 65,536 certificate terms, 100,000 intermediate terms and
-source nodes, 4,096 coefficient bits, exponent 64, and 1,000,000 proof nodes.
-The manifest preregisters 45-second cleanup/proof ceilings and six samples per
-arm. The main 2/4/8 ladder contains 48 feasible dense combinations and 33
-infeasible combinations; separate 3×3 cases measure the closed-form route.
-Dense rows are scaled copies of seeded integer rows, so entries within one row
-share a polynomial. This correlation is part of the measured input family.
+In `HexMatrixMathlib.Det`, expose `compute (cfg : Config) (A : Expr) :
+MetaM (Outcome Result)`, where the new `Result` contains `value : Expr` and
+`proof : Expr` proving `Matrix.det A = value`. Expose
+`certified (A : Expr) (cfg : Config := {}) : MetaM (Outcome Expr)`
+as the record adapter, preserving existing calls with just `A`. The numeric
+internal `Proof`, whose additional fields include the checker and row list,
+remains separate; the common `Result` has only `value` and `proof`. Keep internal
+atom-indexed certificates private to the evaluation session. These expression-level APIs are Meta APIs,
+not new trusted operations. The numeric owner provides the dispatcher and numeric
+implementation; the companion registers the symbolic implementation through one
+extension hook. There is one programmatic operation, not two competing functions
+selected by import order.
 
-`HexPolyDetMathlib.Tests` includes certificate-only tests beyond the small route,
-nonconstant exact division, rational scaling, singularity, local let bindings,
-composite-characteristic targets, and term forms. Its axiom audits include
-integer, rational, singular and term-form proofs. Heavy fresh-module probes
-belong to the manual sweep; merge-gating CI builds the bounded regression tests.
-The symbolic simproc remains opt-in until the recorded sweep establishes a
-smaller median for a size regime; no default integration is claimed here.
+Declare the argument-taking tactic as `&"det" optConfig colGt term:max
+" with " ident ident : tactic`, on its own named syntax kind in the existing
+syntax owner. This preserves the bare tactic and avoids consuming the next
+indented tactic as a matrix argument. Register a final diagnostic for this kind
+as for the equality form. Trace routes, limits and declines through the existing
+`HexMatrix.certificate` class. Document every `Config` field's units and route;
+non-default symbolic limits are accepted without a warning on numeric input and
+have no effect there, while `packing` has no effect on symbolic input.
 
-All Hex sweep modules emit the route taken (closed formula, polynomial
-certificate, or fallback), including the reason for a budget decline. The
-conservative preflight bound declines some high-degree, four-variable 8×8
-cases before elimination; their complete composed calls remain in the ladder.
-The sweep reports faster cases separately from the opt-in release decision.
-Its 70 cases include 4×4 function and array literals and a certificate whose
-nonzero polynomial determinant vanishes at a stated atom valuation.
+## Inputs and mathematical scope
 
-Rational addition, subtraction and row clearing use least common multiples
-of their positive scales. Products and powers multiply scales as required.
-Compiled comparison against integer-list replay catches characteristic-aware
-conversion differences before quoting an entry proof, preserving the decline
-and Mathlib fallback while residue replay is unavailable.
+Accept square `Matrix (Fin n) (Fin n) R` literals with a known dimension and a
+`CommRing R` instance. Reuse the shared literal recognizer for `!![...]`,
+`Matrix.of ![...]`, `fun i j => ...`, and `Matrix.ofArray xs h`, including
+its bounded unfolding through definitions. Support local variables and
+parameters, empty and singleton matrices. Symbolic identification must not use
+`decide (entriesEq ...)` or require `DecidableEq R`: identify the literal with
+its row-major entries using the `List.ofFn` definitional transport used by
+Mathlib's determinant normalizer, or finite extensionality composed with proved
+entry equalities when unfolding/simplification requires it. This applies to all
+four input syntaxes. Unresolved matrix/type metavariables are not guessed.
 
-## Recorded measurement outcome
+Scalar arithmetic uses the supported Mathlib ring normalization operations:
+constants, addition, subtraction, negation, multiplication and natural powers.
+Other expressions may be opaque atoms. Targets may introduce additional atoms;
+identities such as `d + y - y` must not be rejected merely because `y` is absent
+from the matrix. Preserve the ring normalizer's supported natural-exponent
+identities rather than imposing the old fixed-exponent reflection grammar.
+Unrecognized operation instances are not replaced by familiar ones syntactically.
 
-The handler and term form ship through the opt-in exception. The symbolic
-simproc remains outside the default chain. The complete 840-sample schedule
-and 14 profiles, including every failure and timeout, are retained in
-[the report](../../reports/hex-poly-det-mathlib-performance.md) and its linked
-raw data. N-prefixed rows below are the correlated row-scaled family
-(except N2K4D1S1); these ratios do not describe independent dense entries.
-Times are fresh-module, baseline-subtracted medians in milliseconds. All six
-samples are required; ratios use positive medians only.
+Generic commutative rings and rational coefficients use proved scalar operations.
+Characteristic-specific coefficient identities must also be preserved. When a
+positive literal characteristic is recognized for the carrier (including `ZMod`
+and polynomial carriers) or supplied by a local `CharP R p` instance with `p`
+reducing to a positive numeral, use proved coefficient reduction modulo that
+characteristic. Reuse Mathlib's
+`ReduceModChar` machinery or its lemmas as a scalar operation, without restoring
+a residue determinant strategy. Reduce coefficients when finalizing a public
+value and on both sides of equality comparison, then combine like terms with
+the scalar normalizer. A known characteristic zero performs no modular pass;
+an unknown characteristic retains characteristic-independent normalization.
+For example, retain `a*b = a*b + 3*a*b` over `ZMod 3` and a determinant whose
+integer normal form is `-2*x^3` but whose value is zero over `ZMod 2`. Test
+composite characteristic and an explicit generic `CharP R p` instance too.
+Do not claim completeness for arbitrary finite-ring identities. Field-specific
+transformations require the corresponding instances. Symbolic division is total, including zero
+denominators: never cancel a factor with its inverse without a proof. No domain,
+characteristic-zero or nonzero-pivot assumption is imposed on generic matrices.
 
-| Case | Mathlib ms | Hex ms | M/H | Completed M/H | Hex route |
-|---|---:|---:|---:|---:|---|
-| N2K1D1S1 | 41.33 | 89.80 | 0.460 | 6/6 | closed-form |
-| N2K1D2S1 | 3.04 | 110.29 | 0.028 | 6/6 | closed-form |
-| N2K1D4S1 | 74.68 | 102.87 | 0.726 | 6/6 | closed-form |
-| N2K1D4S4 | 187.01 | 256.81 | 0.728 | 6/6 | closed-form |
-| N2K2D1S1 | 90.42 | 103.44 | 0.874 | 6/6 | closed-form |
-| N2K2D2S1 | 92.18 | 106.16 | 0.868 | 6/6 | closed-form |
-| N2K2D2S4 | 112.02 | 188.86 | 0.593 | 6/6 | closed-form |
-| N2K2D4S1 | 89.59 | 100.17 | 0.894 | 6/6 | closed-form |
-| N2K2D4S4 | 198.88 | 286.75 | 0.694 | 6/6 | closed-form |
-| N2K4D1S1 | 44.69 | 65.44 | 0.683 | 6/6 | unobserved |
-| N2K4D1S4 | 101.81 | 157.70 | 0.646 | 6/6 | closed-form |
-| N2K4D2S1 | 74.55 | 98.74 | 0.755 | 6/6 | closed-form |
-| N2K4D2S4 | 190.64 | 197.10 | 0.967 | 6/6 | closed-form |
-| N2K4D4S1 | 92.16 | 104.74 | 0.880 | 6/6 | closed-form |
-| N2K4D4S4 | 188.84 | 197.71 | 0.955 | 6/6 | closed-form |
-| N2K4D4S16 | 2788.30 | 1895.34 | 1.471 | 6/6 | closed-form |
-| N4K1D1S1 | 101.54 | 297.30 | 0.342 | 6/6 | certificate |
-| N4K1D2S1 | 279.68 | 412.29 | 0.678 | 6/6 | certificate |
-| N4K1D4S1 | 240.79 | 406.35 | 0.593 | 6/6 | certificate |
-| N4K1D4S4 | 1191.72 | 2005.28 | 0.594 | 6/6 | certificate |
-| N4K2D1S1 | 103.55 | 293.17 | 0.353 | 6/6 | certificate |
-| N4K2D2S1 | 291.93 | 481.72 | 0.606 | 6/6 | certificate |
-| N4K2D2S4 | 1121.42 | 2293.34 | 0.489 | 6/6 | certificate |
-| N4K2D4S1 | 293.59 | 426.24 | 0.689 | 6/6 | certificate |
-| N4K2D4S4 | 2100.48 | 4077.43 | 0.515 | 6/6 | certificate |
-| N4K4D1S1 | 150.07 | 288.65 | 0.520 | 6/6 | certificate |
-| N4K4D1S4 | 692.92 | 1800.87 | 0.385 | 6/6 | certificate |
-| N4K4D2S1 | 288.94 | 486.34 | 0.594 | 6/6 | certificate |
-| N4K4D2S4 | 2098.92 | 4668.53 | 0.450 | 6/6 | certificate |
-| N4K4D4S1 | 287.76 | 495.23 | 0.581 | 6/6 | certificate |
-| N4K4D4S4 | 2256.02 | 4804.17 | 0.470 | 6/6 | certificate |
-| N4K4D4S16 | — | — | — | 0/0 | unobserved |
-| N8K1D1S1 | 690.61 | 999.66 | 0.691 | 6/6 | certificate |
-| N8K1D2S1 | 2693.22 | 3196.05 | 0.843 | 6/6 | certificate |
-| N8K1D4S1 | 2699.85 | 3146.19 | 0.858 | 6/6 | certificate |
-| N8K1D4S4 | 36220.70 | — | — | 6/4 | fallback |
-| N8K2D1S1 | 1074.74 | 1007.27 | 1.067 | 6/6 | certificate |
-| N8K2D2S1 | 3049.37 | 3190.55 | 0.956 | 6/6 | certificate |
-| N8K2D2S4 | — | — | — | 0/0 | unobserved |
-| N8K2D4S1 | 2993.95 | 3207.48 | 0.933 | 6/6 | certificate |
-| N8K2D4S4 | — | — | — | 0/0 | unobserved |
-| N8K4D1S1 | 2066.74 | 1097.77 | 1.883 | 6/6 | certificate |
-| N8K4D1S4 | — | — | — | 0/0 | unobserved |
-| N8K4D2S1 | 4090.38 | 4253.46 | 0.962 | 6/6 | fallback |
-| N8K4D2S4 | — | — | — | 0/0 | unobserved |
-| N8K4D4S1 | 4010.25 | 4254.07 | 0.943 | 6/6 | fallback |
-| N8K4D4S4 | — | — | — | 0/0 | unobserved |
-| N8K4D4S16 | — | — | — | 0/0 | unobserved |
-| N3K1D1S1 | 86.70 | 194.35 | 0.446 | 6/6 | closed-form |
-| N3K2D2S4 | 392.63 | 595.00 | 0.660 | 6/6 | closed-form |
-| N3K4D4S16 | — | — | — | 0/0 | unobserved |
-| Rational2 | 175.98 | 207.96 | 0.846 | 6/6 | closed-form |
-| Singular2 | 65.41 | 84.25 | 0.776 | 6/6 | closed-form |
-| Algebraic2 | 2.02 | 83.58 | 0.024 | 6/6 | closed-form |
-| Rational3 | 400.42 | 504.31 | 0.794 | 6/6 | closed-form |
-| Singular3 | -0.62 | 191.08 | — | 6/6 | closed-form |
-| Algebraic3 | 1.46 | 106.08 | 0.014 | 6/6 | closed-form |
-| Rational4 | 2191.95 | 2395.61 | 0.915 | 6/6 | certificate |
-| Singular4 | 103.02 | 259.09 | 0.398 | 6/6 | certificate |
-| Algebraic4 | 104.85 | 293.94 | 0.357 | 6/6 | certificate |
-| Rational8 | — | — | — | 0/0 | unobserved |
-| Singular8 | 985.34 | 909.28 | 1.084 | 6/6 | certificate |
-| Algebraic8 | 214.23 | 651.98 | 0.329 | 6/6 | certificate |
-| Swaps | 90.46 | 195.88 | 0.462 | 6/6 | certificate |
-| Tridiagonal | 91.97 | 197.33 | 0.466 | 6/6 | certificate |
-| Function4 | — | 199.96 | — | 0/6 | certificate |
-| Array4 | — | 190.34 | — | 0/6 | certificate |
-| AlgebraicScope | 97.61 | 105.21 | 0.928 | 6/6 | unobserved |
-| Valuation | 38.42 | 86.67 | 0.443 | 6/6 | closed-form |
-| Valuation4 | 47.03 | 197.61 | 0.238 | 6/6 | certificate |
+This is not a complete field simplifier or a hypothesis solver. Expressions may
+remain opaque; identities requiring relations between atoms or local hypotheses
+may decline. Unequal symbolic normal forms mean the comparison did not close,
+not that the mathematical proposition has been proved false. A genuinely closed
+numeric mismatch may report the computed value and the unequal supplied value.
+
+## Evaluation and proof construction
+
+Use Mathlib's universally proved Bird determinant recurrence. Cache original
+entry certificates, intermediate entry certificates and diagonal sums. Preserve
+zero pruning based on proved normalized zeros. Dimension-zero and singleton
+behavior are recurrence boundary cases, not alternative determinant strategies.
+
+Each scalar result contains its subject, normalized expression and a proof of
+their equality. Addition, multiplication and negation use direct applications of
+small congruence lemmas rather than chains of equality manipulation. Reuse
+existing Mathlib lemmas when their instances fit; keep any necessary adapters
+small and test their elaboration and kernel costs. Combined recurrence equations
+may reduce repeated unfolding without changing the algorithm or bypassing cache
+insertion. Do not copy an entire arithmetic library to change these constructors.
+The pinned scalar evaluator has no division-policy hook. A narrowly scoped,
+licensed adaptation of its traversal is permitted for coefficient/quotient
+policy while reusing Mathlib's arithmetic and proof operations. Preserve author
+headers, record the upstream revision, and maintain one policy-driven adapter,
+not separate historical evaluator copies. On every Mathlib pin change, run the
+scalar, characteristic, rollback and determinant regression tests. An upstream
+hook is desirable but not a prerequisite for the Hex implementation.
+
+The determinant computation is independent of any supplied target. Its internal
+certificate and scalar context can then be consumed in either of two ways:
+
+- Result production cleans internal coefficient notation into an ordinary Lean
+  expression and returns that expression with `A.det = value`.
+- Equality proving first attempts cheap conversion at reducible transparency,
+  then normalizes and compares the target in the same atom context. It avoids
+  constructing and cleaning an intermediate public result unnecessarily.
+
+Do not perform unrestricted definitional equality through concrete ring
+implementations. Do not rerun the determinant during target comparison. Apply
+matrix identification and the universal correctness theorem by bounded proof
+assembly; avoid Meta unification that repeatedly unfolds large literal matrices.
+All input-dependent checking, including auxiliary declarations, belongs to the
+complete-call cost. Inline the direct algebraic proof into its surrounding
+declaration; do not seal every intermediate result in an auxiliary theorem or redundantly precheck
+it in Meta. The kernel validates the complete declaration. Consequently an
+invalid generated proof can be reported at declaration checking rather than
+inside the tactic invocation; there is no promise of synchronous tactic-time
+kernel rejection for this path. Such rejection remains a hard failure.
+
+A public value is the evaluator's normal form, not necessarily a factorization,
+a common-denominator rational function, or a fully expanded polynomial. Numeric
+results are ordinary normalized integer/rational values. The symbolic value
+must be readable Lean syntax without internal raw coefficient constructors.
+Do not promise a stable printed monomial order. Fully expanded output and native
+value-only execution are separate operations, not implicit work in `det%`.
+
+## Scalar policy and quotient relations
+
+Use one explicit scalar policy with narrow internal operations, not positional
+Boolean switches selecting historical experiments. Normalize numeric denominators
+as coefficients. Retain symbolic quotients as compact atoms until selected
+multiplicative relations warrant expansion.
+
+Factor signatures record multiplicative factors, inverse factors and natural
+exponents. They ignore scalar coefficients and select possible collisions only;
+they are never evidence of equality. Expand selected products using existing
+proved scalar normalization and arithmetic. A false collision may waste work but
+cannot establish a false equation. Missed collisions may cause a later comparison
+to decline. The parser is conservative for unsupported syntax.
+
+Cache factor signatures and expansion proofs. Store sum-tail indices in
+persistent trie maps/sets so adjacent tails share branches instead of copying
+bucket arrays. Skip collision search when each compact atom has a private factor,
+a sufficient injectivity test. Invalidate that verdict when the atom table grows.
+Normalize entries before inserting them into the recurrence cache, so newly
+proved zeros permit ordinary zero pruning.
+
+Use joint signature comparison to align determinant and target representations,
+with separate selections for each side. Preserve an unmodified sum tail when
+its selections are exhausted. Bound speculative expansion and restore both Meta
+and atom state after a refusal. Relation hooks must run outside speculative
+regions; cached certificates require a stable atom-table prefix. Keep all such
+caches scoped to one evaluation session and test the rollback boundary.
+
+If compact comparison fails, permit one stronger scalar comparison. Re-normalize
+both expressions in a fresh atom context; only expressions and equality proofs
+cross that boundary, never old atom indices. This is scalar normalization, not
+a determinant fallback, and consumes the same remaining call budget.
+
+## Configuration, outcomes and checking
+
+The syntax owner provides `HexMatrixMathlib.Det.Config` extending
+`HexMatrixMathlib.KernelConfig`. Preserve `packing := true` and `det -packing`
+for the numeric backend. Packing has no effect on direct symbolic proofs; route
+traces make that distinction visible. Add `maxHeartbeats := 2000000` and
+`maxRelationWork := 1000000`. Relation work counts distinct indexed sum tails;
+it does not claim to bound all scalar arithmetic. The heartbeat ceiling covers
+the symbolic evaluation session, including result cleanup or target comparison.
+Use Lean's public heartbeat units (one unit is 1,000 internal heartbeats).
+This is an additional ceiling, never an increase to the caller's remaining
+allowance: with Lean's smaller ambient default, the ambient limit binds first.
+Zero configuration limits are rejected intentionally; unlike the ambient Lean
+option, zero does not disable these local safeguards.
+
+Recoverable work-budget exhaustion is a structured decline. Runtime heartbeat
+or recursion-depth exceptions, whether ambient or from the local ceiling,
+propagate unchanged; neither the simproc nor speculative normalization swallows
+them as algebraic refusal or turns them into no-progress success. Trace the
+selected ceiling before entering the session so a runtime message has context.
+Goal restoration applies to ordinary comparison/capability declines; resource
+exceptions retain Lean's normal transactional behavior. Use normal trace classes
+rather than global options for diagnostics; term/simproc calls use the same defaults.
+
+Select numeric determinant computation whenever the matrix is a recognized
+closed integer/rational input. For result forms, delegate to that evaluator
+before symbolic work. For equality goals, whole-tactic delegation is allowed
+only when the numeric closing handler accepts the complete goal. Otherwise the
+companion obtains the numeric certified value and uses the shared scalar target
+comparison; it does not compute that numeric determinant with Bird or leave a
+simp-only residual goal. In particular, `(!![1,2;3,4] : Matrix _ _ Int).det =
+x - x - 2` must close with the companion imported. Preserve
+`notApplicable`, `declined`, `success` and internal failure distinctions:
+
+- An unrecognized matrix, operation, unresolved input or missing commutative-ring
+  structure is not applicable and may delegate to another Hex handler.
+- An accepted input whose scalar comparison cannot close or whose recoverable
+  work budget is exhausted is a decline.
+  Name the stage, exhausted budget and count/limit when available; do not try a
+  different determinant algorithm afterward.
+- Success returns a value and an equality proof, or closes the supplied equality.
+- An invariant violation detected in Meta, or an emitted proof rejected when
+  its declaration is checked, is a failure, never a decline hidden by another
+  handler. Preserve `no_fallback` behavior for tactic handlers.
+
+Trace the selected numeric-certificate or symbolic-Bird route and any decline.
+Diagnostic relation counters include target alignment and are emitted after
+comparison. Expensive profiling/node inspection is separate from ordinary calls.
+
+Accepted proofs depend on `propext`, `Classical.choice` and `Quot.sound` only.
+No `sorry`, added axiom, `native_decide` or native execution substitutes for proof
+checking. Computational libraries stay Mathlib-free; this companion may reuse
+Mathlib's evaluator and proof theorems.
+
+## Implementation boundary and deletion
+
+The symbolic frontend depends on the shared literal layer, the numeric syntax
+owner and Mathlib's Bird/ring machinery. It must not require polynomial witness
+production, packed determinant selection, reflection quotation or residue
+certificate preparation to prove a symbolic determinant.
+
+Remove the symbolic triangular/zero recognizer, small closed formulas, sparse
+cofactor strategy, row-factor and rational-factor dispatch, and the old
+polynomial-certificate fallback. Remove their determinant-specific quotation,
+selection, reconstruction, options and tests whose only purpose is the retired
+implementation. Transfer mathematical regression cases to the general evaluator.
+
+Retain native `polyDet`, polynomial witness/check APIs and their required
+soundness theory, the numeric certificate backend, and shared Kronecker product
+checks. Remove determinant-specific packed/tree wrappers and residue frontend
+transport with no independent consumers; preserve the plain `opsMod` checker
+soundness theorem in `Residue.lean` separately from that transport; do not delete
+reusable algebra or a shared checker just because one tactic stops using it.
+Separate retained computational soundness imports from the symbolic tactic's
+imports. The full companion retains `HexReflect`/`HexReflectMathlib` while its
+plain integer/residue soundness imports require them; that is not a symbolic
+frontend dependency. Required registry dependencies after cleanup are
+`HexPolyDet: [HexBareiss, HexMvGcd, HexDeterminant, HexMatrix, HexBasic]` and
+`HexPolyDetMathlib: [HexPolyDet, HexBareissMathlib, HexReflect,
+HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib]`, with their transitive
+closure. Drop both determinant libraries' direct Kronecker dependencies.
+The symbolic tactic module imports the numeric owner, literal layer and Mathlib
+proof machinery, not the retained native soundness module. Update umbrellas,
+library dependency registrations, probes and documentation to match the resulting source.
+
+Production must not import `experiments/Determinant`. Retire superseded
+experimental proof backends from active builds once their tests are migrated.
+Preserve recorded source snapshots and revision-based reproduction of historical
+measurements. Native-value experiments are outside this symbolic replacement.
+
+### Cleanup inventory
+
+| Surface | Disposition |
+|---|---|
+| `HexPolyDetMathlib/Tactic.lean`, `Frontend.lean` | Replace with the shared evaluation/session interface and public handlers; remove legacy dispatch and witness assembly. |
+| `Small.lean`, `Structural.lean`, `RowFactor.lean`, `RatFactor.lean`, `Certificate.lean`, legacy `Normalize.lean` | Remove their determinant strategies; migrate mathematical regression cases. |
+| `Packed.lean`, `Tree.lean`, legacy `Scaling.lean` | Remove determinant-only encodings and transport; preserve independently used lemmas in their owning modules if any. |
+| `Sound.lean`, `Residue.lean` | Retain native producer/plain-check soundness, including `opsMod` soundness; remove frontend identification, target reconstruction and unused reflection transport separately. |
+| `HexPolyDet/Basic.lean` | Retain native values, witnesses, budgets, canonical conversion and plain checker operations. |
+| `HexPolyDet/Packed.lean`, `Select.lean`, `PackedTests.lean`; `bench/HexPolyDet/PackedBench.lean` | Remove obsolete determinant packed APIs/tests/driver and the `hex_poly_det_packed` Lake target. |
+| `scripts/bench/det_packed_*`, `det_residue_sweep.py`, `det_structural_sweep.py` | Retire route-specific runners, generated manifests and selection tests; keep historical reports and raw data. |
+| `det_symbolic_*`, `det_ring_solver_*`, `test_det_declines.py`, `det_bench_limits.py` and its tests | Consolidate into the general symbolic proof/result runner and diagnostics; preserve serial admission and timeout guards. |
+| `det_tactic_*` runners | Retain independent numeric certificate measurements and scope controls. |
+| `bench/HexPolyDetMathlib/ProofProbe`, including `RingSolver*` | Replace retired route-specific probes with the focused general evaluator corpus; preserve source snapshots of measured old probes in reports/revisions. |
+| `.github/workflows/ci.yml`, Lake targets and `libraries.yml` | Update the existing job's detector tests/probe invocations, library entries, umbrella imports and retired executable targets; add no jobs/workflows. |
+| `scripts/bench/proof_only_runtime_exemptions/issue-10236-*` | Retain provenance for the preserved generic Bareiss checker; update descriptions/references only where consumers changed, rather than deleting generic-certificate evidence. |
+| `DeterminantExperiment` and historical proof tactic variants | Remove superseded active proof targets/imports after tests migrate; keep native-value experiments and revision-based evidence reproduction. |
+
+## Native polynomial witness soundness
+
+Retain `Hex.PolyDet.check_of_ok`, `produce_check` and the plain polynomial
+checker soundness needed by the native witness APIs, with their actual
+coefficient-domain and representation assumptions. A passing plain check proves
+the denoted polynomial matrix's determinant equals the denoted witness value.
+Triangular witnesses use nonzero transform diagonals; singular witnesses use a
+nonzero kernel vector. The producer theorems establish successful-check behavior,
+not that production always succeeds within a budget. These theorems are separate
+from the symbolic evaluator and do not require the retired packed selection or
+matrix-family strategies.
+
+## Verification and shipping
+
+Test all public forms, both equality orientations, the four literal syntaxes,
+local parameters, inferred/annotated carriers, empty/singleton inputs, concrete
+integers/rationals, generic rings, characteristic two and composite characteristic.
+Include additional target atoms, supported variable exponents, zero denominators,
+nested quotient spelling, false targets, unsupported operations, metavariable
+preservation and exact budget diagnostics. Test target-driven atom-table growth,
+cache insertion/reuse, entry-zero pruning and speculative rollback. Audit accepted
+theorems' axioms and assert the selected route without invoking Mathlib tactics.
+
+For result forms, compute before constructing any independent reference answer;
+then check the value and its equality proof. Include nonzero symbolic outputs
+and numeric outputs, and consumption via projections and the introduced locals.
+A supplied-target success does not establish result-producing coverage.
+
+Run `lake build`, the relevant kernel/conformance targets,
+`scripts/check_dag.py`, `scripts/check_phase4.py`, and
+`scripts/release/check_released_manifest.py`. Extend existing CI scripts rather
+than adding jobs. Runtime benchmarks remain Mathlib-free; proof probes are manual
+fresh-module comparisons, not native value benchmarks.
+
+Use six adjacent pairs in alternating AB/BA order with import-only baselines
+and retained samples on one automatically leased CPU. Compare equality proving
+with the unmodified pinned `norm_det` followed by `ring`; compare result
+production with Mathlib determinant normalization without providing either arm
+an answer. Include output cleanup and every kernel/auxiliary check. Keep tracing,
+axiom inspection and profiling outside ordinary samples.
+
+The focused equality corpus contains the original quadratic 4×4 issue fixture,
+rank-one 10×10, independent quotients with a dependent row at 6×6, product
+denominators at 5×5, identity plus rank one at 5×5, two-term and degree-eight
+quotient numerators at 4×4, a dense generic-ring 4×4 and a small composite-
+characteristic control. Add numeric-backend regression controls. For result
+production start with nonzero numeric and symbolic 2×2/3×3 outputs, then the
+quadratic 4×4 and identity-plus-rank-one 4×4 cases. These are coverage directions,
+not new dispatch predicates.
+
+Run smaller cases first, serially, with a 60-second process ceiling and a
+30-minute aggregate measurement ceiling including failures and diagnostics.
+Stop larger comparable cases after a timeout; retain partial batches and do not
+count them as six-pair results. Permit at most one unchanged rerun of an
+inconclusive case within that same allowance. No broad grid or unrelated-library
+performance run is required. Profile only an unexpected result or the required
+representative attribution; do not reset the allowance to finish a sweep.
+
+Publish observed gains, ties, losses, declines and unmeasured cases with their
+source revisions. Explicit `det`, result tactics and terms, and opt-in
+`Hex.normPolyDet` may ship with documented losses. Do not put this evaluator in
+a default simp chain or introduce matrix-family selection to conceal those
+losses. Universal superiority and further Bird/Bareiss/Berkowitz experiments
+are not conditions of this explicit-interface release.

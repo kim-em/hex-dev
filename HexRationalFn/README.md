@@ -25,6 +25,9 @@ as the coefficient field for polynomial Euclidean algorithms.
 `inv?` and `div?` reject zero, while field inversion and division are total.
 `eval?` rejects canonical poles. Normalization removes removable singularities
 and does not preserve an original expression's excluded inputs.
+`mapCoeffs` transports a canonical fraction through a coefficient-field
+embedding. It is executable and maps the stored pair without recomputing gcd.
+`liftConstants` applies this to the next rational-function coefficient field.
 `derivative` is formal differentiation in any characteristic; `split` returns
 a polynomial part and a proper fraction, and `toPoly?` tests polynomial membership.
 

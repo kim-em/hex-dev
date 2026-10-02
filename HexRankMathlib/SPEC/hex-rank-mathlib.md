@@ -22,11 +22,6 @@ fresh-module probes under `bench/HexRankMathlib/ProofProbe` against the
 unmodified pinned `eval_rank` ([The `rank` tactic](#the-rank-tactic)).
 Build-only examples live in `HexRankMathlib/Tests.lean`.
 
-Computational conformance owner: `HexRank`.
-
-Computational performance owner: `HexRank` for the producer; this library
-for the tactic.
-
 Throughout, `e` is `HexMatrixMathlib.matrixEquiv`, `A : Hex.Matrix R n m`,
 `c : Hex.Matrix.RankCert R n m`, and `B`, `C`, `P`, `U`, `d`, `r` are as
 in [hex-rank §The certificate](../../HexRank/SPEC/hex-rank.md#the-certificate).

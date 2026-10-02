@@ -1,0 +1,14 @@
+{
+  "kind": "diagnostic kernel profile",
+  "commit": "dfc5a2266fda50de82dec94cf07cb6b98a98b07a",
+  "module_sha256": "5e5abe9c2fce01232f0e1873f3c302f40720f095a6abc0dea768807325ad29f6",
+  "module": "HexKroneckerMathlib.ProofProbe.GridK3D8TightProfile",
+  "budget": {
+    "maxDenseDigits": 65536,
+    "maxPackedBits": 10934
+  },
+  "kernel_type_checking_ms": 37.4,
+  "cpu_pinned": false,
+  "paired_comparison": false,
+  "shipping_sample": false
+}

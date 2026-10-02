@@ -1,0 +1,488 @@
+{
+  "method": "exclusive period-weighted samples restricted to child PID and timed kernel regions",
+  "total_samples": 16704,
+  "kernel_samples": 8254,
+  "kernel_event_period": 18080793352,
+  "symbols": [
+    {
+      "symbol": "__gmpn_divrem_1_x86_64",
+      "period": 2103455870,
+      "percent": 11.633648087501244
+    },
+    {
+      "symbol": "cfree@GLIBC_2.2.5",
+      "period": 1730475742,
+      "percent": 9.570795419818147
+    },
+    {
+      "symbol": "malloc",
+      "period": 1388327517,
+      "percent": 7.678465706519624
+    },
+    {
+      "symbol": "__gmpz_init_set",
+      "period": 1068658568,
+      "percent": 5.9104628165101545
+    },
+    {
+      "symbol": "lean_nat_big_sub",
+      "period": 717011697,
+      "percent": 3.9655986495785487
+    },
+    {
+      "symbol": "__gmpz_realloc",
+      "period": 685114277,
+      "percent": 3.7891826075442445
+    },
+    {
+      "symbol": "__gmpz_tdiv_qr",
+      "period": 661777457,
+      "percent": 3.660112939274303
+    },
+    {
+      "symbol": "l_Int_trailingZeros_aux___redArg",
+      "period": 579338928,
+      "percent": 3.204167630929296
+    },
+    {
+      "symbol": "__gmpn_copyi_x86_64",
+      "period": 528976317,
+      "percent": 2.9256255889982143
+    },
+    {
+      "symbol": "__gmpz_tdiv_r",
+      "period": 481507684,
+      "percent": 2.6630893602173615
+    },
+    {
+      "symbol": "_int_free_chunk",
+      "period": 442432730,
+      "percent": 2.4469763100912854
+    },
+    {
+      "symbol": "__gmpz_clear",
+      "period": 435707562,
+      "percent": 2.4097812165515644
+    },
+    {
+      "symbol": "lean::mpz::~mpz()",
+      "period": 420498175,
+      "percent": 2.3256621919938416
+    },
+    {
+      "symbol": "lean::mpz_to_int(lean::mpz const&)",
+      "period": 412161719,
+      "percent": 2.2795554983454798
+    },
+    {
+      "symbol": "realloc",
+      "period": 399791067,
+      "percent": 2.2111367527784793
+    },
+    {
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+      "period": 396766487,
+      "percent": 2.194408615129224
+    },
+    {
+      "symbol": "__gmpz_init_set_ui",
+      "period": 384830652,
+      "percent": 2.128394725320126
+    },
+    {
+      "symbol": "__gmpn_tdiv_qr",
+      "period": 372318741,
+      "percent": 2.0591947142563636
+    },
+    {
+      "symbol": "__gmpz_sub",
+      "period": 341313144,
+      "percent": 1.8877111051227504
+    },
+    {
+      "symbol": "_int_malloc",
+      "period": 329495796,
+      "percent": 1.8223525350094936
+    },
+    {
+      "symbol": "__gmp_default_allocate",
+      "period": 304374737,
+      "percent": 1.6834147212148283
+    },
+    {
+      "symbol": "lean_dec_ref_cold",
+      "period": 301628492,
+      "percent": 1.6682259795123175
+    },
+    {
+      "symbol": "__gmpz_init_set_si",
+      "period": 299084354,
+      "percent": 1.6541550372119977
+    },
+    {
+      "symbol": "lean::mpz::mpz(unsigned long)",
+      "period": 287510705,
+      "percent": 1.5901443006548002
+    },
+    {
+      "symbol": "__gmpz_add",
+      "period": 278848817,
+      "percent": 1.5422377302329782
+    },
+    {
+      "symbol": "__gmpn_invert_limb",
+      "period": 254193742,
+      "percent": 1.405877148481886
+    },
+    {
+      "symbol": "lean_int_big_ediv",
+      "period": 212736794,
+      "percent": 1.176589930864224
+    },
+    {
+      "symbol": "__gmpz_cmp_si",
+      "period": 190776028,
+      "percent": 1.0551308467827678
+    },
+    {
+      "symbol": "lean::mpz::ediv(lean::mpz const&, lean::mpz const&)",
+      "period": 168913901,
+      "percent": 0.9342173084529815
+    },
+    {
+      "symbol": "free@plt",
+      "period": 165998733,
+      "percent": 0.9180942991178985
+    },
+    {
+      "symbol": "lean_int_big_emod",
+      "period": 160365934,
+      "percent": 0.8869408044103396
+    },
+    {
+      "symbol": "__gmp_default_free",
+      "period": 157568900,
+      "percent": 0.8714711624231388
+    },
+    {
+      "symbol": "__gmp_default_reallocate",
+      "period": 146844858,
+      "percent": 0.812159373436768
+    },
+    {
+      "symbol": "_int_realloc",
+      "period": 116467852,
+      "percent": 0.644152331883805
+    },
+    {
+      "symbol": "mi_free",
+      "period": 111646782,
+      "percent": 0.6174882917272556
+    },
+    {
+      "symbol": "lean::mpz::emod(lean::mpz const&, lean::mpz const&)",
+      "period": 91408909,
+      "percent": 0.5055580649611752
+    },
+    {
+      "symbol": "mi_malloc_small",
+      "period": 89983184,
+      "percent": 0.49767276384499215
+    },
+    {
+      "symbol": "__gmpz_mul_2exp",
+      "period": 87692304,
+      "percent": 0.48500252335608907
+    },
+    {
+      "symbol": "__gmpz_init",
+      "period": 69981993,
+      "percent": 0.3870515614972114
+    },
+    {
+      "symbol": "lean::mpz::mpz(unsigned int)",
+      "period": 68208898,
+      "percent": 0.37724505043610324
+    },
+    {
+      "symbol": "lean::cmp(lean::mpz const&, int)",
+      "period": 49869219,
+      "percent": 0.275813223618773
+    },
+    {
+      "symbol": "malloc@plt",
+      "period": 43159103,
+      "percent": 0.23870137863848753
+    },
+    {
+      "symbol": "__gmpn_sub_n_x86_64",
+      "period": 37159928,
+      "percent": 0.20552155691713367
+    },
+    {
+      "symbol": "lean::mpz::operator-=(lean::mpz const&)",
+      "period": 36778956,
+      "percent": 0.20341450335713124
+    },
+    {
+      "symbol": "lean_inc_heartbeat",
+      "period": 33046546,
+      "percent": 0.18277154855234584
+    },
+    {
+      "symbol": "__libc_malloc2",
+      "period": 32548325,
+      "percent": 0.18001602234118605
+    },
+    {
+      "symbol": "lean::mpz::mpz(int)",
+      "period": 32502003,
+      "percent": 0.17975982783081143
+    },
+    {
+      "symbol": "__gmpz_get_si",
+      "period": 30825430,
+      "percent": 0.1704871539643489
+    },
+    {
+      "symbol": "lean::mpz::is_size_t() const",
+      "period": 26084076,
+      "percent": 0.1442640015412527
+    },
+    {
+      "symbol": "__gmpn_addmul_1_x86_64",
+      "period": 23817004,
+      "percent": 0.1317254366903402
+    },
+    {
+      "symbol": "lean_nat_big_eq",
+      "period": 19734089,
+      "percent": 0.10914393309968957
+    },
+    {
+      "symbol": "lean_int_big_mul",
+      "period": 17178137,
+      "percent": 0.095007650746143
+    },
+    {
+      "symbol": "lean::mpz::mpz(lean::mpz const&)",
+      "period": 15152872,
+      "percent": 0.08380645530868738
+    },
+    {
+      "symbol": "__memmove_avx512_unaligned_erms",
+      "period": 13242293,
+      "percent": 0.0732395572594452
+    },
+    {
+      "symbol": "lean::mpz::mpz()",
+      "period": 13205609,
+      "percent": 0.07303666793215834
+    },
+    {
+      "symbol": "l_Dyadic_add",
+      "period": 11017731,
+      "percent": 0.06093610377324111
+    },
+    {
+      "symbol": "__gmpn_mul_2",
+      "period": 10979814,
+      "percent": 0.06072639505492425
+    },
+    {
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_SignedRemainderChain_build___at___00Hex_TarskiCertificate_certify___at___00Hex_TarskiCertificate_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__10_spec__13",
+      "period": 10930193,
+      "percent": 0.06045195466376458
+    },
+    {
+      "symbol": "l_Int_shiftRight",
+      "period": 10913769,
+      "percent": 0.06036111794172338
+    },
+    {
+      "symbol": "realloc@plt",
+      "period": 10890382,
+      "percent": 0.060231770741383785
+    },
+    {
+      "symbol": "lp_Hex_Hex_DensePoly_trimTrailingZerosGo___at___00Hex_DensePoly_trimTrailingZerosImpl___at___00Hex_DensePoly_ofCoeffs___at___00Hex_DensePoly_C___at___00Hex_TarskiCertificate_certify___at___00Hex_TarskiCertificate_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__2_spec__6_spec__7_spec__13",
+      "period": 8685389,
+      "percent": 0.04803654812546856
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_DensePoly_scaleImpl___at___00Hex_SignedRemainderChain_check___at___00Hex_TarskiCertificate_check___at___00Hex_IntTarskiCertificate_check_spec__0_spec__2_spec__3_spec__4",
+      "period": 8641560,
+      "percent": 0.04779414172688455
+    },
+    {
+      "symbol": "lean_int_big_add",
+      "period": 8522951,
+      "percent": 0.04713814728189036
+    },
+    {
+      "symbol": "__gmpn_mul_basecase_fat",
+      "period": 8459721,
+      "percent": 0.04678843917578557
+    },
+    {
+      "symbol": "lean_int_big_neg",
+      "period": 6624030,
+      "percent": 0.036635726491875895
+    },
+    {
+      "symbol": "memcpy@@GLIBC_2.14@plt",
+      "period": 6596309,
+      "percent": 0.03648240910441218
+    },
+    {
+      "symbol": "lean_array_push",
+      "period": 6571131,
+      "percent": 0.03634315636527717
+    },
+    {
+      "symbol": "lean_int_big_lt",
+      "period": 6521509,
+      "percent": 0.03606871044338674
+    },
+    {
+      "symbol": "[unknown]",
+      "period": 6497883,
+      "percent": 0.03593804139839494
+    },
+    {
+      "symbol": "lean_apply_1",
+      "period": 6459212,
+      "percent": 0.035724162509083245
+    },
+    {
+      "symbol": "__gmpn_add_n_x86_64",
+      "period": 6405832,
+      "percent": 0.03542893210098782
+    },
+    {
+      "symbol": "lean_big_int_to_nat",
+      "period": 4410390,
+      "percent": 0.024392679647058442
+    },
+    {
+      "symbol": "l_Dyadic_mul",
+      "period": 4402641,
+      "percent": 0.02434982201438082
+    },
+    {
+      "symbol": "__gmpn_mul_1_x86_64",
+      "period": 4398600,
+      "percent": 0.024327472331370077
+    },
+    {
+      "symbol": "_int_free_create_chunk",
+      "period": 4394367,
+      "percent": 0.024304060748052955
+    },
+    {
+      "symbol": "__gmpz_mul_si",
+      "period": 4380272,
+      "percent": 0.02422610509795732
+    },
+    {
+      "symbol": "lean::mpz::operator*=(int)",
+      "period": 4362031,
+      "percent": 0.024125219038120888
+    },
+    {
+      "symbol": "l___private_Init_Data_Array_Basic_0__Array_ofFn_go___redArg",
+      "period": 4290040,
+      "percent": 0.023727056199806956
+    },
+    {
+      "symbol": "lean_nat_big_shiftr",
+      "period": 4272983,
+      "percent": 0.023632718525193174
+    },
+    {
+      "symbol": "lp_Hex_Hex_DensePoly_subImpl___at___00Hex_SignedRemainderChain_subIsZero___at___00Hex_SignedRemainderChain_check___at___00Hex_TarskiCertificate_check___at___00Hex_IntTarskiCertificate_check_spec__0_spec__2_spec__5_spec__7___lam__0",
+      "period": 4251069,
+      "percent": 0.023511518091266552
+    },
+    {
+      "symbol": "lean::mpz::get_int() const",
+      "period": 4243985,
+      "percent": 0.02347233839454591
+    },
+    {
+      "symbol": "__gmpz_mul",
+      "period": 4096014,
+      "percent": 0.02265395063290694
+    },
+    {
+      "symbol": "__gmpn_rshift_x86_64",
+      "period": 2208948,
+      "percent": 0.012217096656080404
+    },
+    {
+      "symbol": "l_Int_instDecidableEq___boxed",
+      "period": 2208229,
+      "percent": 0.012213120060662259
+    },
+    {
+      "symbol": "lean_copy_expand_array",
+      "period": 2207386,
+      "percent": 0.012208457654629579
+    },
+    {
+      "symbol": "__gmpn_sub_n",
+      "period": 2207340,
+      "percent": 0.01220820324101451
+    },
+    {
+      "symbol": "lean::mpz::mpz(lean::mpz&&)",
+      "period": 2203817,
+      "percent": 0.012188718476538673
+    },
+    {
+      "symbol": "lean_free_object",
+      "period": 2202543,
+      "percent": 0.012181672325547411
+    },
+    {
+      "symbol": "lean_nat_shiftl",
+      "period": 2190268,
+      "percent": 0.012113782605439292
+    },
+    {
+      "symbol": "l_Int_shiftLeft",
+      "period": 2189076,
+      "percent": 0.012107189974370545
+    },
+    {
+      "symbol": "__gmpz_tdiv_q_2exp",
+      "period": 2188731,
+      "percent": 0.012105281872257527
+    },
+    {
+      "symbol": "unlink_chunk.isra.0",
+      "period": 2163414,
+      "percent": 0.011965260361546552
+    },
+    {
+      "symbol": "__gmpn_addmul_2_fat",
+      "period": 2147429,
+      "percent": 0.011876851630310032
+    },
+    {
+      "symbol": "lp_Hex_Hex_DensePoly_subImpl___at___00Hex_SignedRemainderChain_subIsZero___at___00Hex_SignedRemainderChain_check___at___00Hex_TarskiCertificate_check___at___00Hex_IntTarskiCertificate_check_spec__0_spec__2_spec__5_spec__7___lam__0___boxed",
+      "period": 2088381,
+      "percent": 0.011550273040253483
+    },
+    {
+      "symbol": "__gmpz_add_ui",
+      "period": 1941103,
+      "percent": 0.01073571807503284
+    },
+    {
+      "symbol": "_int_free_merge_chunk",
+      "period": 1927242,
+      "percent": 0.0106590566159356
+    }
+  ]
+}

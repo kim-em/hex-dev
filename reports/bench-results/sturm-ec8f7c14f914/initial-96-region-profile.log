@@ -1,0 +1,18 @@
+lean-bench profile: perf record --clockid mono -F 1999 -g --call-graph dwarf -o /tmp/issue-10375-initial-96-regions.perf -- /home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench _child --bench Hex.SturmBench.runInitialHigh --param 96 --target-nanos 500000000 --cache-mode warm
+WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,
+check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.
+
+Samples in kernel functions may not be resolved if a suitable vmlinux
+file is not found in the buildid cache or in the vmlinux path.
+
+Samples in kernel modules won't be resolved at all.
+
+If some relocation was applied (e.g. kexec) symbols may be misresolved
+even with a suitable vmlinux or kallsyms file.
+
+Couldn't record kernel reference relocation symbol
+Symbol resolution may be skewed if relocation was used (e.g. kexec).
+Check /proc/kallsyms permission or run as root.
+{"schema_version":1,"kind":"parametric","function":"Hex.SturmBench.runInitialHigh","param":96,"inner_repeats":32768,"total_nanos":439689081,"per_call_nanos":13418.245880,"cache_mode":"warm","result_hash":"0x3057647b3dbba4aa","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":75132,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexsturm_bench","git_commit":"ec8f7c14f91432f97ac130595bce7600e41c1562","git_dirty":true,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.34.0","lean_version":"4.34.0","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-09-21T07:46:37Z","timestamp_unix_ms":1789976797779},"profile_kernel":true}
+[ perf record: Woken up 472 times to write data ]
+[ perf record: Captured and wrote 8.250 MB /tmp/issue-10375-initial-96-regions.perf (1022 samples) ]

@@ -1,6 +1,12 @@
-# Symbolic determinants
+# Certified determinants
 
-Import this unpublished companion to enable symbolic `det` and `det%`:
+Import `HexPolyDetMathlib` to enable the general symbolic determinant evaluator.
+The public `det` syntax and numeric certificate backend belong to
+`HexBareissMathlib`; this companion attaches a symbolic handler. Symbolic
+literals are evaluated with Mathlib's division-free Bird recurrence, with
+cached and checked scalar equalities. The evaluator works over commutative
+rings, including rings of positive characteristic. It never calls Mathlib's
+`norm_det` or `eval_det` as a fallback.
 
 ```lean
 import HexPolyDetMathlib
@@ -8,18 +14,30 @@ import HexPolyDetMathlib
 example {R : Type} [CommRing R] (x : R) :
     Matrix.det !![x, 1; 1, x] = x ^ 2 - 1 := by det
 
-example (x : Int) :
-    Matrix.det !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x] =
-      x ^ 4 - 3 * x ^ 2 + 1 := by det
+example {R : Type} [CommRing R] (x : R) : True := by
+  det (!![x, 1; 1, x] : Matrix (Fin 2) (Fin 2) R) with d hd
+  -- d is the computed determinant; hd : Matrix.det … = d
+  trivial
 
-example (x : Int) : Matrix.det !![x, 1; 1, x] = (det% !![x, 1; 1, x]).value :=
+example {R : Type} [CommRing R] (x : R) :
+    Matrix.det !![x, 1; 1, x] = (det% !![x, 1; 1, x]).value :=
   (det% !![x, 1; 1, x]).proof
 ```
 
-Dimensions up to three use closed determinant formulas followed by `ring`. Larger symbolic literals use a checked polynomial certificate; rational inputs first undergo proved denominator clearing. Both orientations are supported. The target may be any commutative ring; it need not be a domain or have characteristic zero.
+`det% A` returns `HexMatrixMathlib.Certified Matrix.det A` without a proposed
+answer. `simp only [Hex.normPolyDet]` rewrites supported occurrences on demand.
+`Hex.norm_det` remains the numeric-only certificate simproc. Both tactic forms
+accept `(maxHeartbeats := …)` and `(maxRelationWork := …)`; the numeric `det`
+form also retains `-packing`. The symbolic limits default to 2,000,000 public
+heartbeat units and 1,000,000 distinct relation sum tails. The caller's
+smaller heartbeat allowance still applies. A zero local limit declines.
 
-`Hex.normPolyDet` is an opt-in simproc. The published `Hex.norm_det` retains the numeric certificate and Mathlib fallback, and does not import this companion. On a symbolic decline, `det` tries Mathlib directly without repeating the symbolic work. Consequently success through the composed tactic can also come from a closed formula or fallback.
+The result is a readable arithmetic expression, sometimes with compact
+symbolic quotients. A supplied equality is proved separately from the
+computed result; failure to establish a symbolic equality is a decline. The
+`HexMatrix.certificate` trace reports resource limits, comparisons and
+recoverable declines. The opt-in simproc leaves a declined occurrence intact.
 
-The polynomial certificate treats atoms independently: it does not use a hypothesis `x = 0` or an algebraic relation such as `α ^ 2 = 2`. A target that adds atoms or requires such a relation may decline. The integer coefficient route is sound but incomplete in positive characteristic until the reduced-residue list bridge #10257 is available. Denominator clearing currently recognizes rational expressions over `Rat`; division in another carrier can still be treated as an atom.
-
-The fresh-module runner is `scripts/bench/det_symbolic_sweep.py`. It retains all six trials and timeouts, compares identical targets against unmodified `norm_det`, and includes separate 3×3 closed-form probes. The symbolic simproc remains outside the default chain pending measurements establishing an eligible size regime.
+The retained `Sound` and `Residue` modules prove the plain native polynomial
+witness and check APIs, including modular checker soundness. They are not
+imported by the symbolic tactic module.

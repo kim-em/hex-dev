@@ -1,0 +1,33 @@
+{
+  "cpu": 61,
+  "host": "chungus2",
+  "start": "2026-09-21T22:34:57.601158+00:00",
+  "load_start": [
+    4.61669921875,
+    4.54931640625,
+    4.33740234375
+  ],
+  "git_head": "0c4c946da64ff8513e0c0468d03eb8081114132f",
+  "git_status": "",
+  "binary_sha256": "02c4f8475b064569d242ef341f92ef4bcb6da8b2fe9991667d092893cb4f58f7",
+  "source_sha256": "a9ca523bde5f3a80d1087867f7b7e76b98243c105a63c2f6d06bf915fa7ec503",
+  "commands": [
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runReplay",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-replay-deferred/replay-bits.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "derivation_sha256": "f64cc3163f02ba7103510d1f808f679ed2e4ca8e225840297ed8fa04672f5f1b",
+  "end": "2026-09-21T22:36:08.235942+00:00",
+  "load_end": [
+    6.0,
+    4.9892578125,
+    4.50830078125
+  ]
+}

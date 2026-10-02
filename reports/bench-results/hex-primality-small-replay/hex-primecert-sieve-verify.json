@@ -1,0 +1,58 @@
+[
+  {
+    "case": "Curve25519",
+    "source": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\npublic import PrimeCert\npublic import PrimeCert.SieveBase\npublic meta import PrimeCert.Meta.SieveLookup\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 255 - 19) := prime_cert%\n  [small {2; 3; 223; 353},\n   sieve {4153; 57467},\n   pock3 (31757755568855353, 5, 3, 2 ^ 3 * 223 * 4153),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 3, 2 * 353 * 57467 * 31757755568855353),\n   pock (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 74058212732561358302231226437062788676166966415465897661863160754340907)]\n",
+    "returncode": 0,
+    "stdout": "\u2714 [1963/1969] Built PrimeCert.Sieve (202ms)\n\u2714 [1964/1969] Built PrimeCert.Meta.SieveCache (995ms)\n\u2714 [1965/1969] Built PrimeCert.SieveCorrect (2.8s)\n\u2714 [1966/1969] Built PrimeCert.Meta.Sieve (866ms)\n\u2714 [1967/1969] Built PrimeCert.SieveBase (705ms)\n\u2714 [1968/1969] Built PrimeCert.Meta.SieveLookup (699ms)\n\u26a0 [1969/1969] Built PrimeCert.Comparator.CompactVerify (851ms)\nwarning: PrimeCert/Comparator/CompactVerify.lean:18:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/CompactVerify.lean:19:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1969 jobs).\n",
+    "stderr": ""
+  },
+  {
+    "case": "Curve448",
+    "source": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\npublic import PrimeCert\npublic import PrimeCert.SieveBase\npublic meta import PrimeCert.Meta.SieveLookup\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := prime_cert%\n  [small {2; 3; 7; 151; 223; 641},\n   sieve {2531},\n   pock3 (3402277943, 5, 3, 2 * 7 * 151),\n   pock (1469495262398780123809, 3, 223 * 3402277943),\n   pock3 (167773885276849215533569, 17, 7, 2 ^ 9 * 7 ^ 2 * 2531),\n   pock3 (726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439, 7, 3, 2 * 641 * 1469495262398780123809 * 167773885276849215533569)]\n",
+    "returncode": 0,
+    "stdout": "\u26a0 [1969/1969] Built PrimeCert.Comparator.CompactVerify (750ms)\nwarning: PrimeCert/Comparator/CompactVerify.lean:20:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1969 jobs).\n",
+    "stderr": ""
+  },
+  {
+    "case": "family-123",
+    "source": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\npublic import PrimeCert\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\nnamespace PrimeCert.Comparator.Bit123\ntheorem result : Nat.Prime 9304595970494411110326649421962412033 := prime_cert%\n  [small {2},\n   pock (9304595970494411110326649421962412033, 3, 2 ^ 120)]\nend PrimeCert.Comparator.Bit123\n",
+    "returncode": 0,
+    "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.CompactVerify (651ms)\nBuild completed successfully (1962 jobs).\n",
+    "stderr": ""
+  },
+  {
+    "case": "family-256",
+    "source": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\npublic import PrimeCert\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\nnamespace PrimeCert.Comparator.Bit256\ntheorem result : Nat.Prime\n    93628759656736142393278101159368737990730026663232799828780155818898507169793 := prime_cert%\n  [small {2},\n   pock (93628759656736142393278101159368737990730026663232799828780155818898507169793, 5, 2 ^ 248)]\nend PrimeCert.Comparator.Bit256\n",
+    "returncode": 0,
+    "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.CompactVerify (646ms)\nBuild completed successfully (1962 jobs).\n",
+    "stderr": ""
+  },
+  {
+    "case": "family-31",
+    "source": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\npublic import PrimeCert\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\nnamespace PrimeCert.Comparator.Bit31\ntheorem result : Nat.Prime 2147483647 := prime_cert%\n  [small {151; 331},\n   pock (2147483647, 3, 151 * 331)]\nend PrimeCert.Comparator.Bit31\n",
+    "returncode": 0,
+    "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.CompactVerify (641ms)\nBuild completed successfully (1962 jobs).\n",
+    "stderr": ""
+  },
+  {
+    "case": "family-511",
+    "source": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\npublic import PrimeCert\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\nnamespace PrimeCert.Comparator.Bit511\ntheorem result : Nat.Prime\n    6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 := prime_cert%\n  [small {2},\n   pock (6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033, 3, 2 ^ 504)]\nend PrimeCert.Comparator.Bit511\n",
+    "returncode": 0,
+    "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.CompactVerify (641ms)\nwarning: PrimeCert/Comparator/CompactVerify.lean:14:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/CompactVerify.lean:16:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+    "stderr": ""
+  },
+  {
+    "case": "family-512",
+    "source": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\npublic import PrimeCert\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\nnamespace PrimeCert.Comparator.Bit512\ntheorem result : Nat.Prime\n    9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 := prime_cert%\n  [small {7; 199},\n   pock (100297, 2, 7 * 199),\n   pock (9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177, 2, 100297 ^ 22)]\nend PrimeCert.Comparator.Bit512\n",
+    "returncode": 0,
+    "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.CompactVerify (644ms)\nwarning: PrimeCert/Comparator/CompactVerify.lean:14:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/CompactVerify.lean:17:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+    "stderr": ""
+  },
+  {
+    "case": "family-61",
+    "source": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\npublic import PrimeCert\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\nnamespace PrimeCert.Comparator.Bit61\ntheorem result : Nat.Prime 1945555039024054273 := prime_cert%\n  [small {2},\n   pock (1945555039024054273, 5, 2 ^ 56)]\nend PrimeCert.Comparator.Bit61\n",
+    "returncode": 0,
+    "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.CompactVerify (633ms)\nBuild completed successfully (1962 jobs).\n",
+    "stderr": ""
+  }
+]

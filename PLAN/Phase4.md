@@ -8,8 +8,8 @@ Phase 4 makes algorithmic complexity a first-class deliverable. By
 the end of Phase 4 every advertised compiled operation in the library's API
 has the strongest applicable benchmark mode from
 [`SPEC/benchmarking.md` §Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim)
-and a passing result in that mode; every advertised proof/tactic operation has
-the fresh-module evidence defined below. An *inconclusive* compiled verdict is not
+and a passing result in that mode; every advertised tactic or proof generator
+has example files that CI builds, as defined below. An *inconclusive* compiled verdict is not
 a Phase 4 exit unless it is the current harness wording for a documented,
 passing one-sided upper-bound result. A failing result triggers a rollback per
 [Conventions.md §Rollback is a normal action](Conventions.md#rollback-is-a-normal-action)
@@ -24,19 +24,24 @@ opening Phase 4 issues.
 
 Phase 4 classifies each advertised operation by what is actually being
 measured. A library may have one track or both; its SPEC must assign every
-advertised operation to exactly one row.
+advertised compiled operation, tactic or proof generator to exactly one row.
+
+Ordinary theorem applications and instance-law proofs use correctness tests,
+not dedicated timing probes. The proof track below measures tactic execution,
+proof generation, certificate checking and the kernel computations they perform.
+Profiling the elaboration or kernel checking of other proofs is appropriate when investigating an
+observed build-cost problem.
 
 | Surface | Required evidence | Generic requirements replaced |
 | --- | --- | --- |
 | Mathlib-free compiled computation | An ordinary LeanBench executable, registrations with controlled one-parameter ladders and adjacent independent cost derivations, `list`/`verify`, scientific verdicts, comparator coverage, and timed-region sampling profiles. | None. |
-| Elaboration, proof-search tactics, emitted proof terms, or kernel checking | Externally timed fresh-module builds below an explicit `libraries.yml` `proof_probes` root, with matched import baselines, rotated raw samples, compiler/proof artefacts, and the trust/provenance record in `SPEC/benchmarking.md`. | No LeanBench registration or executable, no `list`/`verify` entry for that surface, no complexity verdict, and no timed-region sampling profile. |
+| Tactic execution, proof generation, and their certificate and kernel checking | A few example files below an explicit `libraries.yml` `proof_probes` root, each running the tactic or proof generator on a representative input, built by CI on every PR. | No LeanBench registration or executable, no `list`/`verify` entry for that surface, no complexity verdict, no profile, and no headline report. |
 
 A `mathlib: true` library with a separable compiled core is a **mixed**
 library, not a proof-only exception. Its compiled core obeys every ordinary
 LeanBench requirement, while its tactic/proof surface uses the second row.
-Fixed tactic-build budgets are acceptance cases, never substitutes for the
-compiled track's asymptotic ladders. The headline report keeps the two tracks
-separate and does not combine their times into a synthetic verdict.
+Proof-track example files are never substitutes for the compiled track's
+asymptotic ladders, and the headline report covers the compiled track only.
 
 ## Deliverables
 
@@ -50,9 +55,8 @@ For each library `HexFoo` advancing through Phase 4:
    expression in each `setup_benchmark` is the independently derived expected
    family scaling for a two-sided registration or the cited published bound
    for a one-sided registration, never a model read from observed timings.
-   Proof-track operations instead have
-   named fresh-module probes and matched baselines under an explicit manifest
-   `proof_probes` directory; those probes are not registrations.
+   Proof-track operations instead have example files under an explicit
+   manifest `proof_probes` directory; those files are not registrations.
 
 2. **`lakefile.lean` exe entry** for a library with compiled-track targets:
 
@@ -69,9 +73,8 @@ For each library `HexFoo` advancing through Phase 4:
    `lake exe hexfoo_bench list && lake exe hexfoo_bench verify`.
    `verify` is the bitrot gate; it does not assert timing values.
    It may use reduced smoke settings, but may not weaken the
-   scientific settings used for real runs. Build-only proof probes extend the
-   existing build job with structural/reduced build checks; they never become
-   executable roots.
+   scientific settings used for real runs. Proof-probe files are built by the
+   existing build job; they never become executable roots.
 
 4. **`compare` registrations** for any pair of alternative algorithms
    the library SPEC calls out (e.g. Barrett vs Montgomery, linear vs
@@ -100,18 +103,16 @@ For each library `HexFoo` advancing through Phase 4:
    entry in `libraries.yml`, recorded in
    `reports/<lib>-performance.md §Profile`. Categorise leaf cost
    across {own code, GMP, allocation, Lean runtime}; rank inclusive
-   cost; explain the dominant entries. Proof-track probes carry the external
-   build evidence required by `SPEC/benchmarking.md` instead of a timed-region
-   sampling profile.
+   cost; explain the dominant entries. The proof track has no profile
+   requirement.
 
 7. **Headline report** at `reports/<lib>-performance.md` per
    [SPEC/benchmarking.md §Headline reports](../SPEC/benchmarking.md#headline-reports).
    Five subsections: Bench targets, Verdicts, Comparator ratios,
    Profile, Concerns. Every numeric claim cites the bench case
    name, command line, seed/parameter, JSONL path, profile
-   location, and comparator source. Mixed libraries split every subsection by
-   compiled versus proof/tactic evidence and state each proof-track replacement
-   explicitly.
+   location, and comparator source. A library with no compiled track has no
+   headline report.
 
 The PR description records, in one paragraph, any case where the benchmark
 claim differs from the per-library SPEC's worst-case contract (for example,
@@ -151,10 +152,11 @@ required.
 
 For library `hex-foo`, Phase 4 is done when:
 
-- every operation listed in the library's SPEC API surface is assigned to a
-  track, every compiled-track operation has a `setup_benchmark` or
+- every compiled operation, tactic or proof generator listed in the library's
+  SPEC API surface is assigned to a track, every compiled-track operation has a `setup_benchmark` or
   `setup_fixed_benchmark` registration in the `HexFoo.Bench` exe, and every
-  proof-track operation has the specified externally timed fresh-module probe;
+  proof-track operation has example files in the library's `proof_probes`
+  root that CI builds;
 - the headline report names the strongest applicable mode from
   `SPEC/benchmarking.md`'s ordered rule for every performance-evidence
   registration; fixed registrations used only as hash, comparator, or protocol
@@ -188,11 +190,10 @@ For library `hex-foo`, Phase 4 is done when:
   [SPEC/benchmarking.md §"Comparator naming"](../SPEC/benchmarking.md#comparator-naming):
   every required comparator is named with its class (optionally
   scoped per bench target), or the absence is declared with exactly
-  one of the six enumerated reasons (`implementation-is-extern`,
-  `structural-layer`, `input-source-only`, `mathlib-bridge`,
-  `no-comparable-surface-in-named-comparator`,
-  `correspondence-only-layer`). Missing declarations
-  block Phase-4 completion;
+  one of the enumerated reasons (`implementation-is-extern`,
+  `structural-layer`, `input-source-only`,
+  `no-comparable-surface-in-named-comparator`). This applies to the
+  compiled track only;
 - the [Attribution rule](../SPEC/benchmarking.md#the-attribution-rule)
   is satisfied: every dominant profiled cost maps to a registered
   bench target, or the per-library SPEC documents why the cost
@@ -200,82 +201,35 @@ For library `hex-foo`, Phase 4 is done when:
 - a profile run per
   [SPEC/profiling.md §Coverage requirement](../SPEC/profiling.md#coverage-requirement)
   is recorded in `reports/<lib>-performance.md §Profile` for every compiled
-  input family; proof-track surfaces instead record the required fresh-build
-  samples and provenance;
-- the headline report at `reports/<lib>-performance.md` exists with
-  the five mandated subsections and full artefact traceability;
+  input family;
+- when the library has a compiled track, the headline report at
+  `reports/<lib>-performance.md` exists with the five mandated subsections and
+  full artefact traceability;
 - the headline report's §Concerns subsection is empty. A passing mode-2 or
   mode-3 registration is not itself a Concern merely because it makes a weaker
-  claim than mode 1; its report must contain the ordered-rule rationale. A
-  library cannot **remain** at `done_through: 4` while any Concern is
-  unresolved; the orchestrator rolls back if this state is detected.
-  The only resolution available to the orchestrator is to act on
-  the HO issue tied to the Concern until the underlying problem is
-  fixed and the Concern entry is removed from the report.
-- the compiled-track CI smoke step (`list` + `verify`) and every declared
-  proof-probe structural/build smoke check run on every PR where their track
-  exists.
+  claim than mode 1; its report must contain the ordered-rule rationale;
+- the compiled-track CI step (`list` + `verify`) and the build of every
+  declared proof-probe root run on every PR where their track exists.
 
 If any of these fail, the right action is rollback per
 [Conventions.md](Conventions.md), not a SPEC-text edit weakening
 the criterion.
 
-### Correspondence-only mathlib layers
+### Mathlib libraries
 
-The criteria above presuppose that the library advertises at least one
-operation in one of the two evidence tracks. A **correspondence-only
-mathlib layer** advertises zero: it is a library explicitly classified by
-`mathlib: true` and `correspondence_only: true` whose API is correspondence
-statements alone, with no compiled operation and no proof or tactic operation
-of its own.
+A `mathlib: true` library has no compiled track:
 [SPEC/benchmarking.md §Mathlib-free benches](../SPEC/benchmarking.md#mathlib-free-benches)
-forbids it a `HexFooMathlib/Bench.lean`, a `HexFooMathlib/Bench/`
-directory, and a `lean_exe *mathlib*_bench` entry, so it has no
-compiled track, and owning no proof surface it has no proof track
-either. For such a library Phase 4 is done when:
+forbids it a benchmark executable. If it owns a tactic, elaborator, or proof
+generator, it declares a `proof_probes` root and takes the proof track.
+Otherwise Phase 4 has no deliverables for it: it needs no headline report, no
+comparator declaration, and no classification in its SPEC or `libraries.yml`.
 
-- the library's SPEC declares the external-comparator absence with the
-  `correspondence-only-layer` reason from
-  [SPEC/benchmarking.md §"Comparator naming"](../SPEC/benchmarking.md#comparator-naming),
-  naming the computational conformance and performance owners whose targets
-  carry the evidence for the operations this layer transports;
-- `libraries.yml[L]` declares `correspondence_only: true` and no `phase4`
-  block, and no headline report
-  at `reports/<lib>-performance.md` is required, per
-  [SPEC/benchmarking.md §Headline reports](../SPEC/benchmarking.md#headline-reports).
-  A report committed before the layer was classified may stay as a
-  historical artefact.
+### Criteria changes apply going forward
 
-The deliverables, the compiled-track exit criteria, and the
-empty-Concerns criterion do not apply; there is no track for them to
-attach to.
-
-The exemption is narrow, and every other `mathlib: true` library takes
-ordinary track assignment per [§Evidence tracks](#evidence-tracks) in
-whichever shape its SPEC declares: compiled-only, proof-only (an
-elaboration or tactic surface evidenced by fresh-module probes, as with
-HexRealRootsMathlib's `isolate_roots` term elaborator), or mixed. A
-library declaring a `libraries.yml` `proof_probes` root is normally
-outside the exemption, since those probes measure a proof surface it
-owns; so is a library owning an executable reifier, certificate
-checker, or tactic.
-
-### Audit reset
-
-As of the merge of the PR introducing the new exit criteria above
-(profile coverage, headline report, gating-comparator wiring,
-Attribution rule, empty-Concerns), every library currently at
-`done_through ≥ 4` is re-evaluated under those criteria. The
-re-evaluation is tracked in a single audit issue with a checkbox per
-library; actual gaps are recorded in the affected SPEC's issue. Libraries
-already passing all new criteria stay at `done_through: 4`
-unchanged.
-
-The ordered complexity-mode rule is likewise an audit reset. Its merge queues
-one umbrella audit of every library at `done_through ≥ 4`; existing passing
-two-sided registrations need no relabelling until their report is revised, but
-an inconclusive result or non-empty Concern is not grandfathered. The audit
-records remediation work in each affected SPEC's issue where the rule exposes an
-actual gap, and applies the normal rollback rule there.
+A change to these criteria applies to libraries claiming Phase 4 after it
+merges. It does not re-audit libraries already at `done_through ≥ 4` or roll
+them back. A library moves backward only when someone finds a defect in the
+library itself, per
+[Conventions.md §Rollback is a normal action](Conventions.md#rollback-is-a-normal-action).
 
 Record completion by bumping `libraries.yml[L].done_through` to `4`.

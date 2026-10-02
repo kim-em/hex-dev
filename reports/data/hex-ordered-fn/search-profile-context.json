@@ -1,0 +1,63 @@
+{
+  "cpu": 19,
+  "host": "chungus2",
+  "load_before": [
+    5.943359375,
+    6.07470703125,
+    5.865234375
+  ],
+  "executable_source_commit": "71590d87470f3770fdf52e4cb757d07499a502b3",
+  "worktree_commit": "4229c31ac56f2c782545ff1dd47481fdfd4554fe",
+  "executable_sha256": "ac3a5a1d1a4265e7ffb7e46e43e5e8186d360b6d7ed3b6efe09d33c60a76e2c3",
+  "command": [
+    "perf",
+    "record",
+    "--clockid",
+    "mono",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "--call-graph",
+    "dwarf",
+    "-o",
+    "/tmp/issue-10376-search-profile/perf.data",
+    "--",
+    "env",
+    "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10376-search-profile/timed-%p.jsonl",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10376/.lake/build/bin/hexorderedfn_bench",
+    "profile",
+    "Hex.OrderedFnBench.approximation",
+    "--param",
+    "8192",
+    "--target-inner-nanos",
+    "5000000000",
+    "--profiler",
+    "env"
+  ],
+  "returncode": 0,
+  "load_after": [
+    5.9482421875,
+    6.0732421875,
+    5.8662109375
+  ],
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.1.5",
+  "filter_repository": "https://github.com/kim-em/lean-bench-samply",
+  "filter_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "raw_directory": "/tmp/issue-10376-search-profile",
+  "anchor_captured_after_run": true,
+  "processing_commands": [
+    "samply import perf.data --save-only -o samply.json.gz",
+    "perf script --ns -i perf.data -F pid,time > perf-samples.txt",
+    "python3 scripts/profile/normalize_perf.py --profile samply.json.gz --perf-script perf-samples.txt --output normalized.json.gz --spawn-anchor spawn-anchor.json",
+    "python3 filter_samply.py --samply-json normalized.json.gz --sidecar timed-3389229.jsonl --spawn-anchor spawn-anchor.json --out filtered.json.gz --diagnostics diagnostics.json --label-filter kernel",
+    "python3 scripts/profile/elf_symbols.py filtered.json.gz --output symbols.json",
+    "python3 scripts/profile/summarize_profile.py filtered.json.gz --symbols symbols.json --diagnostics diagnostics.json --thread hexorderedfn_be --top 20 --output summary.json"
+  ],
+  "source_sha256": {
+    "scripts/profile/normalize_perf.py": "fbe80a6081d4c952ccbf0e0c7d34096b7aab8b4ca3baa1850c3015cf2e6ca8c2",
+    "scripts/profile/elf_symbols.py": "5b1293b476d7e3df82ad8f93212000a5efc11603d49d50d43821c5013d111207",
+    "scripts/profile/summarize_profile.py": "ba36b14948d7986bb8c349f2655323b24d33cc05ad0349d492e9929e00ab24fe"
+  }
+}

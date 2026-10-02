@@ -1,0 +1,13 @@
+{"bound":null,"coefficients":[],"kind":"rational","name":"zero"}
+{"bound":"2","coefficients":["3/2"],"kind":"rational","name":"constant"}
+{"bound":"4","coefficients":["-2","0","1"],"kind":"rational","name":"sqrt two"}
+{"bound":"4","coefficients":["2","0","-1"],"kind":"rational","name":"negative leading coefficient"}
+{"bound":"4","coefficients":["-3","0","2"],"kind":"rational","name":"nonmonic"}
+{"bound":"2","coefficients":["3/7","-2/3","5/4"],"kind":"rational","name":"fractional coefficients"}
+{"bound":"8","coefficients":["-3","1"],"kind":"rational","name":"strict threshold"}
+{"bound":"16","coefficients":["-14","1"],"kind":"rational","name":"last candidate"}
+{"bound":null,"coefficients":["-15","1"],"kind":"rational","name":"failure at last candidate"}
+{"bound":null,"coefficients":["-1000","2"],"kind":"rational","name":"root beyond all candidates"}
+{"bound":null,"coefficients":[{"den":["0","1"],"num":["-1"]},{"den":["1"],"num":["1"]}],"depth":1,"kind":"infinitesimal","name":"inverse infinitesimal"}
+{"bound":{"den":["1"],"num":["2"]},"coefficients":[{"den":["1"],"num":["0","0","2"]},{"den":["1"],"num":["0","-3"]},{"den":["1"],"num":["1"]}],"depth":1,"kind":"infinitesimal","name":"close roots"}
+{"bound":null,"coefficients":[{"den":[{"den":["1"],"num":[]},{"den":["1"],"num":["1"]}],"num":[{"den":["1"],"num":["-1"]}]},{"den":[{"den":["1"],"num":["1"]}],"num":[{"den":["1"],"num":["1"]}]}],"depth":2,"kind":"infinitesimal","name":"inverse second infinitesimal"}

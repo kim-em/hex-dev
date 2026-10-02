@@ -8,6 +8,8 @@ module
 
 public import HexRowReduceMathlib.RankSpanNullspace
 public import HexRowReduceMathlib.InverseSolve
+public import HexRowReduceMathlib.Kernel
+public import HexRowReduceMathlib.Tactic
 
 public section
 

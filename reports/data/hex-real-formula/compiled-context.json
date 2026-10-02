@@ -1,0 +1,27 @@
+{
+  "command": [
+    ".lake/build/bin/hexrealformula_bench",
+    "run",
+    "--filter",
+    "Hex.RealFormula.Bench",
+    "--export-file",
+    "reports/data/hex-real-formula/compiled.jsonl"
+  ],
+  "cpu": 23,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "load": [
+    14.359375,
+    15.92333984375,
+    20.56103515625
+  ],
+  "commit": "72a5c75ffecdec60d53375c458abcdc59823b571",
+  "dirty": true,
+  "source_sha256": {
+    "bench/HexRealFormula/Bench.lean": "a7529dc966c1495ee87507cb002aa93f14fdb75d1684c9cabf9e94495baaaab3",
+    "HexRealFormula.lean": "f67daa43e2400dbb268cd596fe402998b3d930ad39439435a42f0f807449bd41",
+    "HexRealFormula/Syntax.lean": "04060697a076bc7c07efcc2d99f776ebea3e0e78af7f5d5c54f84635c93d0927",
+    "HexRealFormula/Kernel.lean": "9801eb3fb14fc4bc4feccf508e7afade6093350cf8c5b3e150a3d1e3f54df9ae",
+    "HexRealFormula/Prenex.lean": "f519398a4de28ae7b39351002be904646c448c2dd066bdef0110bb34e16c4009"
+  }
+}

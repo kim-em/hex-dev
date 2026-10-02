@@ -93,6 +93,237 @@ every input explicitly:
 functions. For `deg p ≤ 0` they return the empty chain, `1`, `0`,
 and `depthSlack` respectively, and no theorem reads those values.
 
+## Rational Sturm evaluation
+
+The point-comparison consumer also needs exact rational endpoints:
+
+```lean
+def sturmVarAtRat (chain : Array ZPoly) (x : Rat) : Nat
+def ZPoly.sturmCountRat (p : ZPoly) (lower upper : Rat) : Int
+```
+
+For `x=u/v`, `v>0`, compute the sign of each entry `s` by homogeneous
+integer Horner evaluation of `v^deg(s) * s(u/v)`, then count nonzero sign
+variations. Positive denominator powers preserve signs, including exact zero.
+`sturmCountRat` is the variation difference of the derivative chain at its
+two rational endpoints. It is total; the root-count theorem requires nonzero
+squarefree `p` and `lower < upper`, with the same half-open convention as the
+dyadic count. A root at `upper` is included and one at `lower` is excluded.
+
+Require companion `sturmVarAtRat_eq` identifying the result with real
+polynomial evaluation, `sturmVarAtRat_dyadic` for agreement at `x.toRat`, and
+`sturmCountRat_eq` for the root count in `(lower,upper]`. Point comparison
+builds one shared chain and uses its two variation evaluations directly;
+it need not rebuild a chain for each endpoint. Each evaluation takes one
+finite Horner walk per chain entry, with at most `deg p + 1` entries for a
+derivative chain. Computing denominator powers is bounded exponentiation in
+the entry degrees. This adds no refinement, isolation or factorization.
+Test non-dyadic rational endpoints, exact roots, and agreement with the
+dyadic counts. These primitives belong here, not in the number-field layer.
+
+## Tarski queries
+
+The query and replay declarations are implemented in `SignedRemainderChain.lean` and
+`Tarski.lean`, with array-loop replay invariants in `TarskiProofs.lean`.
+The ordered-domain kernel is shared with the
+[ordered-field frontend](../../SPEC/Libraries/hex-sturm.md). The companion
+proves algebraic correspondence, produced-certificate acceptance and exact
+semantic domain equivalence. The root-sum theorem is proved in the development
+`HexQuerySemantics` adapters. Publication of that semantic layer and the
+remaining Phase-4 evidence are still required.
+
+Preserve the following public integer/dyadic frontend for the
+[fixed-field sign consumer](../../HexNumberField/SPEC/hex-number-field.md#fixed-field-sign):
+
+```lean
+def ZPoly.tarskiQuery (p f : ZPoly) (I : DyadicInterval) : Option Int
+```
+
+For nonzero squarefree `p` with neither endpoint a root of `p`, return
+
+```text
+some (∑ α : real roots of p in (I.lower,I.upper), sign (f(α))).
+```
+
+The open and half-open sums coincide under the endpoint guard. A nonzero
+constant `p` returns `some 0`; `p=0`, nonsquarefree positive-degree `p`, or
+an endpoint root returns `none`, not a misleading root count. Check `p` and
+endpoints before the `f=0` shortcut, which then returns `some 0`. Arbitrary
+`f`, including common factors with `p`, is supported. The fixed-field wrapper
+constructs a root-free interval directly from its refined complex square;
+an arbitrary `RealRootIsolation` alone need not have root-free endpoints.
+Its count-one witness does not remove this guard. Ordinary point comparison
+continues to use the half-open derivative Sturm count and therefore handles
+a rational point exactly equal to a root without calling this query on a
+root endpoint.
+
+Compute the Sturm–Tarski variation drop for `(p, f*p')` with exact integer
+arithmetic. First reduce `f*p'` modulo `p` over `ℚ`, using positive-scaled
+pseudo-division to keep integer coefficients. A positive scaling of the
+remainder is sufficient. This reduces the degree of the second entry below
+`deg p`; retaining an arbitrary unreduced `f*p'` would violate the descending
+chain invariant. A zero remainder gives the singleton chain `[p]` and query
+zero. Otherwise use negative pseudo-remainders with positive multipliers,
+divide out only positive content, and stop at the last nonzero remainder.
+The last entry may be a nonconstant gcd. Preserve signs: independently making
+every chain entry positive-leading would change the query.
+
+Evaluate the chain at both dyadic endpoints, skip zero entries in each sign
+list, and subtract variations in `Int`. Negative answers are valid; this is
+a signed sum rather than a nonnegative root count. There is no isolation,
+refinement, factorization or floating-point operation inside `tarskiQuery`.
+After the initial reduction there are at most `deg p + 1` nonzero entries,
+and at most `deg p` Euclidean remainder steps including termination. The
+initial pseudo-division takes
+zero leading-term cancellations if `f*p'=0` or `deg(f*p') < deg p`, and
+at most `deg(f*p') - deg p + 1` otherwise; each subsequent division has
+the same conditional degree-difference bound. Polynomial products and exact Horner
+folds have their array-length bounds. With classical dense arithmetic a
+conservative bound is `O((deg f + 1)*deg p + (deg p)^3)` integer-ring
+operations, excluding the separately bounded squarefreeness check; this is
+not a unit-cost bit bound on growing coefficients. Phase 4 measures their
+bit lengths as well as degrees.
+
+The integer implementation and the operation-only generic interface use the
+same owned primitive. The integer backend removes positive content; the
+identity normalizer is available for exact field and representation backends.
+Squarefree guards on representation coefficients test a semantically nonzero
+constant gcd, or a Bézout identity by zero differences. Monicization does not
+make structural equality to `1` a valid semantic guard. The explicit total
+sign and natural-cast interface is the shared execution contract. Literal
+context/operand checks remain exact binding checks, separate from these
+semantic polynomial equations.
+
+
+### Shared ordered-domain kernel
+
+Generalize the signed-remainder/query-replay primitive here, below the family,
+over an ordinary executable ordered commutative domain `D`. Use existing
+`DensePoly D`, total ring operations, decidable equality/order and
+[ordered-domain pseudo-division](../../HexPoly/SPEC/hex-poly.md#ordered-domain-pseudo-division).
+The domain need not be a field: integers are an actual instance. The same
+operation-only kernel accepts canonical-zero representation coefficients under
+the [execution contract](../../SPEC/real-closure-execution.md); the companion
+proves their interpretation in the ordered domain. No field instance is
+asserted on raw representatives. Bounded sign attempts cannot supply its
+total sign. Replay identities use semantic zero differences.
+
+This owner provides `Endpoint E := negInf | finite E | posInf`, the chain
+producer, zero-skipping variation fold and literal replay. `EndpointSigns` supplies total finite comparison and exact evaluation signs, with
+correctness proved once. It may interpret endpoints in an ordered extension
+of `D`: `E=Dyadic` need not be an integer when `D=Int`. This is an endpoint
+interface, not an evidence-returning coefficient-arithmetic framework.
+Infinity signs use leading coefficient and degree parity.
+
+`SignedRemainderChain.map` and `TarskiCertificate.map` transport supplied literal
+evidence through zero-reflecting coefficient maps. Preservation of scalar
+operations, natural casts, coefficient signs, endpoint comparison and evaluation
+signs proves checker acceptance after transport. The context and value are
+retained exactly; polynomial and endpoint bindings are mapped explicitly.
+This does not require injectivity, field instances on stored representatives,
+or rerunning the producer.
+
+The producer uses the positive-scaled initial reduction, three-term
+recurrence and terminal zero identity specified below, including singleton
+and constant branches. The head is the input `p`. Removing positive content
+from a head or later entry records the corresponding positive scale.
+Primitive and signed subresultant backends obey the same recurrence and
+prove equality of query values; negative subresultant factors require sign
+correction of entries and identities, not merely absolute values.
+
+Every later nonzero degree strictly decreases. Computation terminates by
+these degree bounds, with no caller threshold. Finite scans and replay
+terminate by input size. No coefficient operation accepts or returns a
+resource budget, and there is no second raw-array degree or gcd API.
+The query value is the `Int` variation drop.
+
+The frontend supplies the mathematical domain: nonzero `p`, squarefree over
+the fraction field of `D`, strictly ordered endpoints and no finite endpoint
+roots. Check guards before zero-query or constant shortcuts. Integer `4*X`
+is admissible; content does not create repeated roots. The public integer
+frontend retains `Option Int`, with `none` exactly on invalid mathematical
+input. A false certificate check means the proposed evidence is incorrect,
+not that the query lacks a value.
+
+The shared `Hex.TarskiCertificate.check` verifies the literal identities,
+degrees, signs and guard witnesses. `HexRealRootsMathlib.Tarski.check_rootSum` is owned by
+[hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#representation-and-replay-bridge).
+For ordinary exact coefficients these checks use total equality/order.
+For expensive extension comparisons, the tactic proof interface may instead
+supply kernel proofs or finite verified sign certificates for the precise
+coefficient claims; it does not regenerate the chain, isolate roots or
+restart coefficient refinement. Arithmetic correctness theorems justify
+operations without a certificate attached to every addition or product.
+
+`ZPoly.tarskiQuery` instantiates this kernel with exact integer arithmetic,
+positive content normalization and exact dyadic Horner signs. The generic
+field frontend invokes the same initial reduction and recurrence. Prove
+backend equality and certificate translation for the optimized integer
+operations. Positive denominator clearing of rational `p,f` separately
+preserves the entire `Option` and transports replay as specified in
+hex-sturm. No upstream module imports hex-sturm for these generic helpers.
+
+Keep existing derivative `sturmChain`, half-open `sturmCount`, RCF replay
+and `Polynomial ℝ` proofs intact. The shared abstract soundness theorem and
+integer specialization are owned by hex-real-roots-mathlib; field frontend
+correspondence is owned by hex-sturm-mathlib. These proved semantic modules
+currently live under `adapters/` in the development-only `HexQuerySemantics`
+target, outside the published libraries. Publishing the layer requires the
+companion managed paths and Tau Ceti release pins specified by the companion
+SPEC. BKR matrices remain downstream.
+
+### Literal query certificates
+
+Provide a Mathlib-free `IntTarskiCertificate` and Boolean `check p f I value` alongside
+the driver, with companion theorem `IntTarskiCertificate.check_sound`. Reuse the
+positive three-term recurrence design of
+[RCF Sturm replay](../../HexRCF/SturmCheck.lean), not its derivative-specific
+acceptance predicate. The certificate contains:
+
+- A literal chain with head `p`, positive scaling data for the initial
+  reduction `u*(f*p') = A*p + v*s₁` (`u,v>0`), and `deg s₁ < deg p`.
+  For a singleton chain check the same identity with zero remainder.
+- Positive-scaled identities `l*sᵢ = Q*sᵢ₊₁ - r*sᵢ₊₂` for each triple,
+  nonzero entries and strictly descending degrees. The final division has
+  zero remainder, checked by `l*sᵢ = Q*sᵢ₊₁` with `l>0`; do not demand a
+  constant last entry. The quotient is literal certificate data.
+- The nonzero/squarefree input check (or a separately checked derivative-chain
+  certificate), non-root endpoint tests, and exact endpoint evaluation/sign
+  data whose recomputed variation difference equals the claimed integer.
+
+The checker walks bounded literal arrays and checks multiplication identities;
+it does not search for chains or roots in the kernel. Bound accepted chain
+length by `deg p + 1`; degree checks reject oversized chains. Singleton,
+constant-head and zero-query cases have explicit branches with the same domain
+guards. Reject wrong initial products, negative scales, missing terminal
+identities, and incorrect endpoint signs.
+
+The current RCF `SturmReplay.check` enforces `p' = derivScale*s₁`, strict degree
+descent and a terminal nonzero constant. Common-root packages replay the gcd's
+own derivative chain. Consequently it does not check a general Tarski query.
+Its soundness theorem yields `Sturm.IsSturmChain`, whose root-flank orientation
+and constant-tail conditions cannot describe negative or zero contributions.
+The signed-remainder/Cauchy-index theorem is proved in the development adapters of
+[hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#sturm-tarski-correspondence),
+including arbitrary common gcd and zero remainder; it is not a corollary
+of the root-count theorem. Keep the current RCF checker intact;
+shared recurrence helpers can move downward without creating an import cycle.
+
+Require `tarskiQuery_eq` for the displayed signed sum and `tarskiQuery_isSome`
+for exactly the guarded domain. When `I` contains one root `α`, derive
+`tarskiQuery_sign`, equating the query to `sign (f(α))`. In the number-field
+companion this composes into `signTarski_eq` against `realCompare`; the
+root library itself never imports algebraic-number semantics. The theorem
+and the literal checker are required delivery, while a user-facing comparison
+elaborator is deferred under the consumer's certificate policy.
+
+Conformance covers queries `-1,0,1`, several roots with cancelling signs,
+`f=0`, `f` divisible by `p`, a proper common factor, degree `f ≥ deg p`,
+constant/zero/nonsquarefree `p`, and endpoint-root rejection. Generate expected
+signed sums from python-flint's exact selected roots and signs. Benchmark chain
+construction separately from endpoint evaluation under the
+[consumer's comparison evidence contract](../../SPEC/Libraries/hex-real-algebraic.md#comparison-conformance-and-phase-4-evidence).
+
 ## Sturm counts
 
 ```lean
@@ -348,11 +579,11 @@ same semantics, one chain construction total.
 ## Kernel-replay exposure
 
 The `isolate_roots` term elaborator (companion SPEC) replays Sturm
-certificates in the kernel. The replayed closure — thirteen
+certificates in the kernel. The replayed closure — fourteen
 definitions: `sturmChain`, `sturmChainAux`, `spem`, `spemAux`,
 `spemStep`, `signVar`, `sturmVarAt`, `sturmVarNegInf`,
 `sturmVarPosInf`, `ZPoly.sturmCount`, `ZPoly.rootCount`, `ZPoly.evalDyadic`,
-`dyadicSign` — carries `@[expose]` so downstream `module` consumers
+`ZPoly.hornerDyadic`, `dyadicSign` — carries `@[expose]` so downstream `module` consumers
 can `decide` against it without `import all`, and the three private
 helpers (`spemStep`, `spemAux`, `sturmChainAux`) become public (an
 exposed definition may not reference a `private` one). The whole closure is structural-fuel recursion; nothing in it
@@ -415,7 +646,7 @@ layer compares roots with `sameRoot` directly.
 The threading pattern for representatives is the same as in
 hex-roots: refine once, pass the refined value forward, never
 re-refine from a stored coarse representative. See
-[hex-roots.md](hex-roots.md) §"The threading pattern".
+[hex-roots.md](../../HexRoots/SPEC/hex-roots.md) §"The threading pattern".
 
 ## Design choices not taken
 

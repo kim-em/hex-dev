@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public meta import HexPrimality.Search
-public import HexPrimality.Search
+public meta import HexPrimality.Construction
+public import HexPrimality.Construction
 public import Lean
 
 public section
@@ -42,7 +42,7 @@ namespace Hex.PrimalityTactic
 open Lean Meta Elab
 
 /-- ABI version of the downstream factor-search registration boundary. -/
-meta def searchExtensionVersion : Nat := 1
+meta def searchExtensionVersion : Nat := 3
 
 /-- One downstream partial-factor producer available to elaboration-time
 certificate search. The version is checked before the function is used. -/
@@ -95,6 +95,64 @@ meta def searchExtensions : MetaM (List SearchExtension) := do
       found := found ++ [ext]
   return found
 
+/-- ABI version of construction providers supporting a shared total allowance. -/
+meta def constructionExtensionVersion : Nat := 1
+
+/-- A downstream bounded construction provider, separate from ordinary search. -/
+meta structure ConstructionExtension where
+  /-- Version of the bounded-construction registration ABI. -/
+  version : Nat
+  /-- An ordinary definition at `Hex.Nat.FactorSearch`. -/
+  factorName : Name
+
+/-- Fixed discovery order. Each retry repeats the complete construction with
+the remaining allowance. Changes require a HexPrimality release. -/
+meta def constructionExtensionNames : List Name :=
+  [`HexIntFactor.PrimalityTactic.constructionExtension]
+
+private meta unsafe def evalConstructionExtensionUnsafe (n : Name) :
+    MetaM ConstructionExtension :=
+  evalConst ConstructionExtension n
+
+@[implemented_by evalConstructionExtensionUnsafe]
+private meta opaque evalConstructionExtension (n : Name) : MetaM ConstructionExtension
+
+/-- Validate a present registration before evaluating its factor provider.
+Absence is allowed; malformed registrations are errors, not silent skips. -/
+meta def constructionExtension? (n : Name) : MetaM (Option ConstructionExtension) := do
+  let env ← getEnv
+  let some info := env.find? n | return none
+  unless info.type.isConstOf ``ConstructionExtension do
+    throwError "primality?: construction extension {n} has unexpected type{indentExpr info.type}"
+  let ext ← evalConstructionExtension n
+  unless ext.version == constructionExtensionVersion do
+    throwError "primality?: construction extension {n} uses ABI version \
+      {ext.version}; expected {constructionExtensionVersion}"
+  let some factor := env.find? ext.factorName
+    | throwError "primality?: construction extension {n} names missing factor declaration {ext.factorName}"
+  unless ← isDefEq factor.type (mkConst ``Hex.Nat.FactorSearch) do
+    throwError "primality?: factor declaration {ext.factorName} from construction extension \
+      {n} has unexpected type{indentExpr factor.type}"
+  return some ext
+
+/-- Retry registered providers lazily after exhaustion. Each receives the remaining
+shared allowance and the last random state; the core success is returned untouched. -/
+meta def construct (n : Nat) (budget : Hex.Nat.ConstructionBudget) :
+    MetaM (Except Hex.Nat.Construction.Failure (Hex.Nat.Internal.PrimeCertSuccess n) ×
+      List (Name × Nat)) := do
+  let mut result := Hex.Nat.Construction.runTraced n (Hex.Rand.ofSeed n) budget
+  let mut allocations := []
+  for name in constructionExtensionNames do
+    match result with
+    | .ok _ => break
+    | .error f =>
+      unless Hex.Nat.Construction.retryable n budget f do break
+      let some ext ← constructionExtension? name | continue
+      let factor ← evalFactorSearchCore ext.factorName
+      allocations := allocations ++ [(ext.factorName, budget.maxAttempts - f.attempts)]
+      result := Hex.Nat.Construction.retry n budget f factor
+  return (result, allocations)
+
 /-- `Eq.refl true` as a raw proof slot: the kernel verifies the reified
 Bool equation by reduction alone. -/
 meta def reflTrue : Expr :=
@@ -123,6 +181,9 @@ meta def reifyPrimeCert : Hex.Nat.PrimeCert → Expr
   | .pock3 n r s w factors =>
       mkApp5 (mkConst ``Hex.Nat.PrimeCert.pock3) (mkNatLit n) (mkNatLit r)
         (mkNatLit s) (mkNatLit w) (reifyFactors factors)
+  | .pock3Sieve n r s w m factors =>
+      mkApp6 (mkConst ``Hex.Nat.PrimeCert.pock3Sieve) (mkNatLit n) (mkNatLit r)
+        (mkNatLit s) (mkNatLit w) (mkNatLit m) (reifyFactors factors)
 
 /-- Reify a factor list. -/
 meta def reifyFactors : List (Nat × Nat × Hex.Nat.PrimeCert) → Expr
@@ -165,7 +226,7 @@ meta def primalityRhoStepBudget : Nat := 1 <<< 15
 
 /-- The explicit rho allocation shared by every elaboration-time route. -/
 meta def primalitySearchBudget : Hex.Nat.PrimeCertBudget :=
-  ⟨primalityRhoRestartBudget, primalityRhoStepBudget⟩
+  ⟨primalityRhoRestartBudget, primalityRhoStepBudget, .off⟩
 
 /-- The fuel selected by every elaboration-time certificate route. -/
 meta def primalityFuel (n : Nat) : Nat :=
@@ -332,5 +393,164 @@ syntax (name := primalityTac)
           let (_, g) ← (← g.assert h.getId ty proof).intro1P
           return [g]
     | _ => Elab.throwUnsupportedSyntax
+
+/-- Render a literal using the same expression reifier as ordinary proof
+emission. Full names and fixed pretty-printing options make the suggestion
+independent of namespace openings and display settings. -/
+meta def certificateSyntax (cert : Hex.Nat.PrimeCert) : MetaM Term :=
+  withOptions (fun _ =>
+    Lean.Std.Format.format.width.set (pp.fullNames.set {} true) 100) do
+    PrettyPrinter.delab (reifyPrimeCert cert)
+
+/-- The complete finite construction resource description used in diagnostics. -/
+meta def constructionDescription (b : Hex.Nat.ConstructionBudget)
+    (provider : Option String := none) : String :=
+  let factoring := match provider with
+    | some name => s!"explicit factor provider {name} (its per-attempt bounds apply)"
+    | none => s!"p-minus-one bounds {b.factor.smoothBounds} at bases \
+        {b.factor.smoothBases}, {if b.factor.pMinusOneStage2 then "stage 2 at eight times bounds up to 4096, " else ""}{b.factor.primeBudget.rhoRestarts} rho restarts with \
+        {b.factor.primeBudget.rhoSteps} steps, ECM bounds [] and 0 curves"
+  s!"maximum {b.maxBits} bits, recursive depth {b.maxDepth}, total attempts {b.maxAttempts}, factor fuel \
+    {b.factor.factorFuel}, {factoring}, witness \
+    bases {b.witnessBases} then {b.randomWitnesses} random candidates, \
+    at most {b.maxFactors} factors and {b.maxSubsets} subsets, sieve bound at most {b.maxSieveBound}"
+
+private meta unsafe def evalCertificateUnsafe (e : Expr) : MetaM Hex.Nat.PrimeCert :=
+  evalExpr Hex.Nat.PrimeCert (mkConst ``Hex.Nat.PrimeCert) e
+
+@[implemented_by evalCertificateUnsafe]
+private meta opaque evalCertificate (e : Expr) : MetaM Hex.Nat.PrimeCert
+
+/-- Evaluate an explicitly supplied, closed producer as untrusted code. Only its
+literal result reaches the proof; neither the producer nor its imports are
+needed to replay the suggestion. -/
+meta def suppliedCertificate (stx : Term) (n : Nat) : Term.TermElabM Hex.Nat.PrimeCert := do
+  let e ← Term.withoutErrToSorry do
+    Term.elabTermEnsuringType stx (mkConst ``Hex.Nat.PrimeCert)
+  Term.synthesizeSyntheticMVarsNoPostponing
+  let e ← instantiateMVars e
+  checkClosed "primality? using" e
+  if e.hasSorry then
+    throwError "primality? using: the supplied expression contains an unfinished proof"
+  let cert ← evalCertificate e
+  unless cert.subject == n do
+    throwError "primality? using: certificate subject is {cert.subject}; expected {n}"
+  unless Hex.Nat.checkPrime cert do
+    throwError "primality? using: certificate for {n} failed checkPrime"
+  return cert
+
+private meta unsafe def evalProducerUnsafe (e : Expr) : MetaM Hex.Nat.FactorSearch :=
+  evalExpr Hex.Nat.FactorSearch (mkConst ``Hex.Nat.FactorSearch) e
+
+@[implemented_by evalProducerUnsafe]
+private meta opaque evalProducer (e : Expr) : MetaM Hex.Nat.FactorSearch
+
+private meta def suppliedFactor (stx : Term) : Term.TermElabM Hex.Nat.FactorSearch := do
+  let e ← Term.withoutErrToSorry do
+    Term.elabTermEnsuringType stx (mkConst ``Hex.Nat.FactorSearch)
+  Term.synthesizeSyntheticMVarsNoPostponing
+  let e ← instantiateMVars e
+  checkClosed "primality? factor" e
+  if e.hasSorry then
+    throwError "primality? factor: the supplied expression contains an unfinished proof"
+  evalProducer e
+
+/-- Explicitly select an untrusted factor provider for bounded construction. -/
+syntax (name := primalitySuggestFactorTac) "primality?"
+  " (" &"factor" " := " term ")" (" (" &"maxAttempts" " := " num ")")? : tactic
+
+/-- Construct a reusable certificate with an optional total attempt limit. -/
+syntax (name := primalitySuggestTac) "primality?"
+  (" (" &"maxAttempts" " := " num ")")?
+  (" (" &"pMinusOneStage2" " := " ident ")")? : tactic
+
+/-- Check and render an explicitly selected closed certificate producer. -/
+syntax (name := primalitySuggestUsingTac) "primality?" " using " term : tactic
+
+set_option hygiene false in
+/-- Shared goal handler for core and companion `primality?` registrations. -/
+meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Unit := do
+  let goal ← Tactic.getMainGoal
+  goal.withContext do
+    let tgt ← instantiateMVars (← goal.getType)
+    unless tgt.getAppFn.isConstOf predicate && tgt.getAppNumArgs == 1 do
+      Elab.throwUnsupportedSyntax
+    let nE := tgt.appArg!
+    checkClosed "primality?" nE
+    let n? ← (evalNat nE).run
+    -- Imported arithmetic instances may hide the operations from `evalNat`.
+    -- Normalize only that fallback; keep the original expression in the proof.
+    let n? ← match n? with
+      | some n => pure (some n)
+      | none => (evalNat (← whnf nE)).run
+    let some n := n?
+      | throwError "primality?: the goal{indentExpr tgt}\n\
+          is not about a natural-number numeral"
+    unless ← isDefEq nE (mkNatLit n) do
+      throwError "primality?: the input must be definitionally transparent"
+    let mut budget := Hex.Nat.constructionBudget
+    match stx with
+    | `(tactic| primality? $[(maxAttempts := $limit:num)]?
+        $[(pMinusOneStage2 := $flag:ident)]?) =>
+      if let some limit := limit then
+        budget := { budget with maxAttempts := limit.getNat }
+      if let some flag := flag then
+        unless flag.getId == `true || flag.getId == `false do
+          throwErrorAt flag "expected true or false"
+        budget := { budget with factor := { budget.factor with
+          pMinusOneStage2 := flag.getId == `true } }
+    | `(tactic| primality? (factor := $_:term) $[(maxAttempts := $limit:num)]?) =>
+      if let some limit := limit then
+        budget := { budget with maxAttempts := limit.getNat }
+    | `(tactic| primality? using $_:term) => pure ()
+    | _ => Elab.throwUnsupportedSyntax
+    if n.log2 + 1 > budget.maxBits then
+      throwError "primality?: input has {n.log2 + 1} bits; construction limit is {budget.maxBits} bits"
+    let cert ← match stx with
+      | `(tactic| primality? using $source:term) => suppliedCertificate source n
+      | _ => do
+        let factor ← match stx with
+          | `(tactic| primality? (factor := $source:term)) => suppliedFactor source
+          | `(tactic| primality? (factor := $source:term) (maxAttempts := $_:num)) =>
+              suppliedFactor source
+          | _ => pure Hex.Nat.Construction.factorSearch
+        let provider := match stx with
+          | `(tactic| primality? (factor := $source:term)) => some source.raw.prettyPrint.pretty
+          | `(tactic| primality? (factor := $source:term) (maxAttempts := $_:num)) =>
+              some source.raw.prettyPrint.pretty
+          | _ => none
+        let description := constructionDescription budget provider
+        let (result, allocations) ← if provider.isSome then
+          pure (Hex.Nat.Construction.runTraced n (Hex.Rand.ofSeed n) budget factor, [])
+        else construct n budget
+        let description := if allocations.isEmpty then description else
+          s!"core allocation: {description}"
+        let retries := if allocations.isEmpty then "" else
+          s!"; construction retries {allocations.map fun (name, allowance) => s!"{name} allocated {allowance} attempts"} (their per-attempt bounds apply)"
+        match result with
+        | .error f =>
+            if f.stop == .composite then
+              throwError "primality?: {n} is not prime"
+            throwError "primality?: certificate construction for {n} exhausted after \
+              {f.attempts} attempts (seed {n}; {description}{retries}); unresolved obligation {f.obligation.getD n}"
+        | .ok success =>
+            let cert := success.cert.raw
+            unless cert.subject == n && Hex.Nat.checkPrime cert do
+              throwError "primality?: the constructed certificate failed its check"
+            pure cert
+    let proof := mkApp3 (mkConst head) nE (reifyPrimeCert cert) reflTrue
+    let literal ← certificateSyntax cert
+    let name := mkIdent ((← unresolveNameGlobalAvoidingLocals? head
+      (fullNames := true)).getD head)
+    let replacement ← `(tactic| exact $name (c := $literal) (by decide +kernel))
+    goal.assign proof
+    Tactic.replaceMainGoal []
+    withOptions (fun _ =>
+        Lean.Std.Format.format.width.set (pp.fullNames.set {} true) 100) do
+      Meta.Tactic.TryThis.addSuggestion stx replacement
+
+/-- Core certificate-literal suggestion handler. -/
+@[tactic primalitySuggestTac, tactic primalitySuggestUsingTac, tactic primalitySuggestFactorTac] meta def evalPrimalitySuggest : Tactic.Tactic :=
+  suggestPrime ``Hex.Nat.Prime ``Hex.Nat.prime_of_checkPrimeAt
 
 end Hex.PrimalityTactic

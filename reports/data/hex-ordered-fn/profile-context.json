@@ -1,0 +1,50 @@
+{
+  "command": [
+    "perf",
+    "record",
+    "--clockid",
+    "mono",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "--call-graph",
+    "dwarf",
+    "-o",
+    "/tmp/issue-10376-profile/perf.data",
+    "--",
+    "env",
+    "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10376-profile/timed-%p.jsonl",
+    ".lake/build/bin/hexorderedfn_bench",
+    "profile",
+    "Hex.OrderedFnBench.comparison",
+    "--param",
+    "16384",
+    "--target-inner-nanos",
+    "5000000000",
+    "--profiler",
+    "env"
+  ],
+  "cpu": 28,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "load": [
+    5.7958984375,
+    13.240234375,
+    35.15283203125
+  ],
+  "commit": "65a4556b7792bd69c597dadc18805f255cf919c6",
+  "returncode": 0,
+  "executable_sha256": "78e527abcd9b07c5d623039aba9cb4eb47054a803362ffcdfd856b8b945edcce",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.1.5",
+  "filter_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "filter_repository": "https://github.com/kim-em/lean-bench-samply",
+  "raw_directory": "/tmp/issue-10376-profile",
+  "source_sha256": {
+    "bench/HexOrderedFn/Bench.lean": "8cfc298a33d099a6eb80f9ada9e30c2bf4421017bd690e4018c6dd0cf360639d",
+    "scripts/profile/normalize_perf.py": "fbe80a6081d4c952ccbf0e0c7d34096b7aab8b4ca3baa1850c3015cf2e6ca8c2",
+    "scripts/profile/elf_symbols.py": "5b1293b476d7e3df82ad8f93212000a5efc11603d49d50d43821c5013d111207",
+    "scripts/profile/summarize_profile.py": "ba36b14948d7986bb8c349f2655323b24d33cc05ad0349d492e9929e00ab24fe"
+  }
+}

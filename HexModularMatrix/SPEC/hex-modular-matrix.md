@@ -27,9 +27,9 @@ bounds, `detBounded?`, `detModular?`) in `Hex.Matrix`, because the plain
 hex-rank's. "Public names and dispatch integration" below records the
 split.
 
-The implemented milestone-2 dispatcher is `detWith A fuel`. The final
-seeded interface below is the contract for the later divisor milestone;
-the ordinary bounded route has no unused seed or divisor flag.
+The dispatcher is `detWith A fuel (seed := defaultSeed) (useDivisor := false)`.
+The default arguments preserve the ordinary bounded route; `useDivisor = true`
+attempts the seeded Dixon divisor before the existing fallbacks.
 
 ## Why this library exists
 
@@ -218,8 +218,12 @@ At zero fuel no modular or divisor attempt succeeds. Seed affects the
 divisor search only. The methods share the algorithm bodies described below.
 
 `det A` projects the value of `detWith A defaultFuel defaultSeed false`.
-`detViaDivisor A seed` projects `detWith A defaultFuel seed true`. The
-default fuel and seed are recorded implementation parameters. `HexDet`
+`detViaDivisor A seed` uses Bareiss for `n < divisorCrossover = 192`, and
+projects `detWith A defaultFuel seed true` otherwise. The structured comparison
+first favours the divisor at dimension 192; explicit `detWith ... true` remains
+available to force that route at any dimension. This measured dimension rule is
+not a claim that all matrix families have the same crossover. The default fuel
+and seed are recorded implementation parameters. `HexDet`
 calls `detWith` with its own recorded parameters, converts this route to its
 public route type, and never guesses which fallback ran. Zero-fuel tests
 therefore exercise the production branches. The lower library never imports
@@ -518,13 +522,14 @@ theorem detViaDivisorWith_eq [LawfulDetBound]
 This is the algorithm body behind `Hex.ModularMatrix.detWith` at
 `useDivisor = true`, and `detViaDivisorWith_eq` is the value equation of
 its `divisor` route that "Public names and dispatch integration" asks
-for; `Hex.ModularMatrix.detViaDivisor A seed` is that dispatcher's
-projection and is not a second definition.
+for. `Hex.ModularMatrix.detViaDivisor A seed` uses that dispatcher at or
+above the measured crossover and Bareiss below it.
 
 **The right-hand side.** `b` is drawn from `Hex.Rand`
 (`HexBasic/Rand.lean`), the splitmix64 generator the tree already has,
 under the discipline its module docstring sets: `detViaDivisorWith`
-takes the state as an explicit argument and returns the advanced state,
+takes the state as an explicit argument and returns the advanced state when
+a right-hand side was drawn (otherwise it returns the original state),
 with no monad and no global generator; the dispatcher starts it from
 `Rand.ofSeed seed`, so a run is reproducible from its seed; and the draw
 affects how many moduli the run needs and never what it returns. Each entry is one `Rand.next` word
@@ -623,18 +628,19 @@ default value. At zero fuel the moduli loop inspects nothing and the
 divisor attempt fails, which is the behaviour the dispatcher's zero-fuel
 tests rely on.
 
-This is the entry point a caller should use, and it is what closes the
-measured gap: on typical input `d` is within a few bits of the
-determinant, so the Chinese remaindering runs over a handful of moduli
-instead of hundreds, and the cost becomes the single `O(n³)` inverse plus
-the lifting.
+The reduced denominator can leave only a handful of cofactor images,
+but the inverse and lifting costs still matter. The measured structured
+family benefits above the crossover. Dense and unimodular families must
+be assessed from their own tables; a large divisor alone does not establish
+a speed advantage over Bareiss or FLINT.
 
 ## Rank
 
 ```lean
 /-- The rank of `A` reduced modulo the prime `p`. -/
-def rankModP (A : Matrix (ZMod64 p) n m) [ZMod64.PrimeModulus p] : Nat :=
-  (rowReduce A).rank
+def rankModP (A : Matrix (ZMod64 p) n m)
+    [ZMod64.Bounds p] [ZMod64.PrimeModulus p] : Nat :=
+  (rankProfileWith Hex.exactDiv A).rank
 
 /-- Search for a checked integer rank certificate within the budget. -/
 def rankCert? (A : Matrix Int n m) (fuel : Nat) :
@@ -692,6 +698,8 @@ Call its `decompAt? B p` at the already successful prime, then
 inverse of `B`. Do not call `solve?` independently `r` times or pass the
 rectangular block `C` to a square solver. Obtain `d = det B` from
 `detModular? B fuel`, falling back to `Hex.Matrix.bareiss B` on `none`.
+The implementation shares the already generated prime supply with this
+subcall through `detCrtWith?`, preserving the same image budget and fallback.
 This deterministic subcall does not use the random determinant-divisor
 route. Obtain `adjugate B` by `solveMatWith D (d • identity r)`:
 if it returns `(Y, q)`, require exact division of every entry of `Y` by
@@ -737,7 +745,7 @@ The certificate shape itself is complete: a caller needing a witness
 without modular-search failure can use
 `Hex.Matrix.rankCertWith HexArith.Int.exactDiv A` from hex-rank.
 
-`rankModular` uses a fixed default budget and returns `c.rank` on
+`rankModular` uses the fixed default budget `rankFuel = 8` and returns `c.rank` on
 `some c`; on `none` it returns `Hex.Matrix.rank A`, hex-rank's total
 fraction-free integer algorithm. “Unchecked” means the caller receives
 only a `Nat`, not a certificate; it never means returning the last modular
@@ -790,24 +798,33 @@ wrongly marked:
 3. After `k` steps, `x ≡ Σ xᵢ pⁱ (mod p^k)`, so the solution is known
    modulo `p^k`. This is `Decomp.lift`.
 4. Reconstruct with `ratReconVec?` (`HexModular/Recon.lean`) at bounds
-   `P = max_i hadamardBound (A with column i replaced by b)` and
-   `Q = hadamardBound A`. **The number of steps is set by
-   `p^k > 2 P Q`**, from Cramer's rule: the `i`-th numerator is the
-   determinant of `A` with column `i` replaced by `b`, and the common
-   denominator divides `det A`. The maximum over `i` is not decoration.
-   For `A = [[1, N], [0, 1]]` and `b = (0, 1)` the solution is `(-N, 1)`,
-   while replacing the second column alone gives a bound of `1`, so a
-   `P` read off one replaced column is wrong by a factor of `N`. The
-   maximum is `numeratorBound A b`, and it costs `O(n²)` rather than
-   `O(n³)`: `hadamardBound` is a product of one factor per column, so
-   for `n > 0` and no zero column the maximum over replaced columns is
-   `⌈‖b‖⌉ · hadamardBound A / c_min` with `c_min` the smallest column
-   factor, and at `n = 0` it is `0`. That is cheap beside the lift,
-   which is why the decomposition caches nothing about the bounds. `k`
-   is the least power with `p^k > 2 P Q`, found by repeated
-   multiplication, which terminates because `1 < p`; there is no
-   lifting fuel, because the digit count is determined before the loop
-   starts.
+   `P = numeratorBound A b` and `Q = hadamardBound A`. **The number of
+   steps is set by `p^k > 2 P Q`**, from Cramer's rule: the `i`-th
+   numerator is the determinant of `A` with column `i` replaced by `b`,
+   and the common denominator divides `det A`. Completeness
+   (`solveWith_isSome`) needs only that `P` bounds every such numerator
+   and `Q` bounds `|det A|`, so `P` is an upper bound, not the exact
+   maximum of the replaced-column Hadamard bounds. It must cover every
+   replaced column: for `A = [[1, N], [0, 1]]` and `b = (0, 1)` the
+   solution is `(-N, 1)`, while replacing the second column alone gives
+   a bound of `1`, wrong by a factor of `N`. `numeratorBound A b` is the
+   column-form bound with the smallest column factor replaced by
+   `⌈‖b‖⌉`: with `c_j = ⌈‖column j of A‖⌉` and `c_min` the smallest of
+   them, for `n > 0` and no zero column it is
+   `⌈‖b‖⌉ · (∏_j c_j) / c_min`, and at `n = 0` it is `0`. By the column
+   Hadamard inequality this bounds the determinant of `A` with any one
+   column replaced by `b`, and it costs `O(n²)`. It is computed from the
+   column product itself, never from `hadamardBound A`, which is the
+   smaller of the row and column products: for `A = [[2, 3], [0, 1]]`
+   and `b = (0, 1)`, `hadamardBound A = 4` (the row product) would give
+   `P = 2`, but the reduced solution is `(-3, 2) / 2` and
+   `ratReconVec?` returns `none` at that `P`. The column bound may exceed
+   the exact maximum of the mixed bounds and cost one more digit; that is
+   cheap beside the lift, which is why the decomposition caches nothing
+   about the bounds. `k` is the least power with `p^k > 2 P Q`, found by
+   repeated multiplication, which terminates because `1 < p`; there is
+   no lifting fuel, because the digit count is determined before the
+   loop starts.
 5. Divide `y` and `d` through by their common gcd, then check
    `A y = d b` over `ℤ` and return `none` if it fails.
 
@@ -931,19 +948,23 @@ structure Decomp (n : Nat) where
   /-- `det A mod p`, as a symmetric representative. -/
   detImage : Int
   detImage_congr : (Matrix.det A - detImage) % (p : Int) = 0
-  detImage_lt : 2 * detImage.natAbs < p
+  /-- The symmetric representative's range, `Modular.symMod_le`; at
+  `p = 2` this admits `detImage = 1`, so the identity matrix has a
+  decomposition at every accepted modulus. -/
+  detImage_le : 2 * detImage.natAbs ≤ p
   detImage_ne_zero : detImage ≠ 0
 
-/-- `max_i hadamardBound (A with column i replaced by b)`, the numerator
-bound Cramer's rule gives a solution of `A x = b`. -/
+/-- The column Hadamard product of `A` with its smallest column factor
+replaced by `⌈‖b‖⌉`: a bound on every numerator Cramer's rule gives a
+solution of `A x = b`. -/
 def numeratorBound (A : Matrix Int n n) (b : Vector Int n) : Nat
 
 /-- The default prime budget: one more than the number of primes above
 `2^30` that can divide a determinant within the Hadamard bound. -/
 def solveFuel (A : Matrix Int n n) : Nat := (hadamardBound A).log2 / 30 + 1
 
-/-- The decomposition at one modulus, or `none` if `A` is not invertible
-there. -/
+/-- The decomposition at one modulus, or `none` if unit-pivot elimination
+fails. At a prime, nonsingularity guarantees success. -/
 def decompAt? (A : Matrix Int n n) (p : Nat) [ZMod64.Bounds p] (hp : 1 < p) :
     Option (Decomp n)
 
@@ -995,9 +1016,9 @@ theorem solveMat?_unique (h : solveMat? A C fuel = some (X, d))
 ```
 
 **The laws are fields, not comments.** `inv_mul` is what `lift_spec`
-uses; `detImage_congr`, `detImage_lt` and `detImage_ne_zero` together
-are what `det_ne_zero` uses (a nonzero integer of absolute value below
-`p / 2` is nonzero modulo `p`, and `det A` is congruent to it; the
+uses; `detImage_congr`, `detImage_le` and `detImage_ne_zero` together
+are what `det_ne_zero` uses (a nonzero integer of absolute value at most
+`p / 2` is strictly smaller than `p` and hence nonzero modulo `p`, and `det A` is congruent to it; the
 range law is needed, since `detImage ≠ 0` alone does not exclude
 `detImage = p`); and `one_lt` is what makes the digit-count search
 terminate; so every theorem above holds for every value of the type,
@@ -1237,9 +1258,10 @@ equal). Both are the vector forms of arguments hex-modular already makes
 for `crt_unique`, and they live in `HexModular/Loop.lean` and
 `HexModular/Crt.lean` beside `crtLoop_trace` and `crt_unique`.
 
-**`zmod64FieldOfPrime` should move to hex-mod-arith.** Set out in
-[hex-modular](../../HexModular/SPEC/hex-modular.md). Without it, `rankModP` forces a dependency
-on hex-poly-fp for one instance about a `ZMod64` type.
+**`zmod64FieldOfPrime` is in hex-mod-arith.** `HexModArith/Field.lean`
+supplies scalar division, integer powers, and the prime-modulus field
+instance. `rankModP` and the modular profile producer import this API without
+a dependency on hex-poly-fp.
 
 **Entrywise conversion is in hex-matrix.** `Matrix.mapEntries` in
 `HexMatrix/Basic.lean` maps the flat buffer and has a `getElem`
@@ -1443,26 +1465,26 @@ as they stand:
   `4x`. On the report's host that is `313 ms` against Bareiss's
   `1.252 s`, which is `2.2x` FLINT's `145 ms`. The crossover rung below
   which Bareiss wins is **measured rather than predicted**, then written
-  into the dispatch and into this SPEC. An earlier draft required "faster
+  into the dispatch and into this SPEC. The measured crossover is dimension
+  192; `detViaDivisor` uses Bareiss below it, while `detWith ... true` forces
+  the divisor route for comparison. An earlier draft required "faster
   at every rung `n ≥ 64`", which guesses the crossover in the same
   document that says it will not guess it.
 - **Against FLINT `fmpz_mat.det`**, on the same fixture and using the
-  same warmed, overhead-adjusted ratio the report defines,
-  `detViaDivisor` should be within `5x` at every eligible rung. At
-  `n = 512` the Bareiss threshold already implies `2.2x`, so the `5x`
-  target binds only at the small rungs, where the modular route pays its
-  fixed costs against a FLINT time of tens of microseconds. `5x` is a
-  plausible constant factor between Lean and tuned C over GMP once the
-  algorithms agree, and it is a target rather than a proved-reachable
-  number: it becomes the required threshold after the first
-  implementation measures it, and until then a miss is a finding to
-  investigate rather than a merge-blocking failure.
+  same warmed, overhead-adjusted ratio the report defines, the public
+  `detViaDivisor` dispatcher must be within `5x` at every eligible rung.
+  A rung is eligible when both the public wrapper and FLINT have five
+  successful repeats and the FLINT median exceeds the empty-protocol
+  median. The public wrapper uses Bareiss below 192 and the divisor route
+  above it; the report also measures the forced divisor at every rung so
+  that this dispatch cannot conceal its fixed costs. The forced small
+  divisor cases miss `5x`, dominated by trial-division prime supply, and
+  remain visible as diagnostic measurements. They are not the route the
+  public wrapper selects at those dimensions.
 
-Stating it that way is deliberate. A required check whose number nobody
-has measured is either vacuous or an accident waiting to block a correct
-implementation, and this SPEC has no prototype behind the FLINT figure.
-Absolute times are host-specific observations. The thresholds are
-ratios within one run.
+The first-implementation measurements establish the crossover and separate
+forced-route cost from the public entry point. Absolute times describe the
+recorded shared host; these thresholds are ratios within the same run.
 
 FLINT's `fmpz_mat.rank` and `fmpq_mat.solve` are `informational`: FLINT's
 solve uses a tuned multi-modular and Dixon hybrid with a different
@@ -1522,8 +1544,8 @@ hex-determinant-mathlib's `det_eq` in
 with `Matrix.det`). `det_eq` is then two cases: the `modular` route is
 `detModular?_eq` under the instance plus that `det_eq`, and the
 `bareiss` route is `HexMatrixMathlib.bareiss_eq_det` from
-hex-bareiss-mathlib. `detWith_eq`, over every route including `divisor`,
-is proved the same way once milestone 4 lands.
+hex-bareiss-mathlib. `detWith_eq` also covers the `divisor` route through
+`detViaDivisorWith_eq` under the same bound instance.
 
 `rank_eq` is exactly `HexRankMathlib.checkRank_sound` at `R = Int`,
 with no new proof of either rank bound. Applying it to `rankCert?_check h`
@@ -1640,11 +1662,21 @@ operation.
 HexModularMatrix/
   Image.lean        -- detMod?, detMod?_eq, detMod?_reduce
   Bound.lean        -- rowNormBound and its proof, hadamardBound, LawfulDetBound
-  Det.lean          -- detBounded?, detModular?, their theorems, and the Hex.ModularMatrix wrappers
-  Dixon.lean        -- Decomp, decompAt?, decomp?, numeratorBound, solveFuel,
-                    --   Decomp.lift, solveWith, solveMatWith, solve?,
-                    --   solveMat?, solveWitness?
-  Divisor.lean      -- dvd_det_of_mulVec, detViaDivisorWith, detViaDivisorWith_eq
+  Reconstruction.lean -- detBounded?, detModular? and their theorems
+  Det.lean          -- total Hex.ModularMatrix wrappers and route tracing
+  Decomp.lean       -- Decomp, decompAt?, decomp?, solveFuel
+  Search.lean       -- prime-search completeness
+  Lift.lean         -- Decomp.lift and exact residual updates
+  Numerator.lean    -- numeratorBound and its Cramer bound
+  Normalise.lean    -- common-denominator reduction
+  Solve.lean        -- solveWith, solve?, solveWitness? and soundness
+  SolveMat.lean     -- solveMatWith, solveMat? and soundness
+  Complete.lean     -- solveWith/solveMatWith completeness
+  Algebra.lean      -- Cramer identities, uniqueness, dvd_det_of_mulVec
+  Row.lean         -- specialised modular row arithmetic
+  Product.lean     -- cached modular products and sparse integer products
+  FlatImage.lean   -- determinant-only forward elimination
+  Divisor.lean     -- detViaDivisorWith and detViaDivisorWith_eq
   Rank.lean         -- rankModP, rankCert?, rankCert?_check, rankModular (imports HexRank)
   Kernel.lean       -- Kernel, kernel?, annihilation and free-block facts
 HexModularMatrix.lean
@@ -1725,6 +1757,6 @@ draws its right-hand side from.
   result does not supply the selected minor and adjugate required by
   `Hex.Matrix.RankCert Int`; callers needing rank evidence use `rankCert?`
   (or hex-rank's total producer) separately.
-- **The crossover with Bareiss.** The benchmark will show a size below
-  which the fraction-free path is faster, and the dispatch should use it.
-  This SPEC does not guess the number.
+- **Family-specific crossover rules.** The structured comparison gives dimension
+  192, used by `detViaDivisor`; dense and unimodular matrices have different
+  costs. More input-sensitive dispatch requires measurements for those regions.

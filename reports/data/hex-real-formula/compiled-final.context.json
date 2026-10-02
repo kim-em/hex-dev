@@ -1,0 +1,32 @@
+{
+  "command": [
+    ".lake/build/bin/hexrealformula_bench",
+    "run",
+    "--filter",
+    "Hex.RealFormula.Bench",
+    "--export-file",
+    "reports/data/hex-real-formula/compiled-final.jsonl"
+  ],
+  "cpu": 2,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "load": [
+    59.5,
+    65.89404296875,
+    51.50732421875
+  ],
+  "commit": "72a5c75ffecdec60d53375c458abcdc59823b571",
+  "dirty": true,
+  "source_sha256": {
+    "bench/HexRealFormula/Bench.lean": "1e3e5b991f366cea56cbb9704857630bd573ce434dc4994cadbd3a3fc2d780ff",
+    "HexRealFormula.lean": "11cae1e36e3c7297e57e8710e1aee6a78b230d30b427821e767b5adbbe98f0ad",
+    "HexRealFormula/Kernel.lean": "d48a926e86b6c18e7bd8bdbd9dc9fb5597d6294d18d5263365cc0529ef9fb421",
+    "HexRealFormula/Prenex.lean": "23bab8134bc652fe19a5c007d81fb35f3ee0bc62043f8f31e087ac776a4904d3",
+    "HexRealFormula/Syntax.lean": "b012b20db1e448359bf0ebe39a8d1e08dae4902d03dfee878ba3807013daa2ae",
+    "HexMvPoly/Mono.lean": "2c90e92f4ac8765034b0452099a0ead9c415ba8ae67a71493d1e45fe50d877ad",
+    "HexMvPoly/Kernel.lean": "1b39e327e55829cdaa6c84b102d19910cf2811196055cf3cf66e24b52561e923",
+    "scripts/bench/real_formula_sweep.py": "2c104a350fa36968a0f8f26f65cc80ef7ac7f56d9fd69be59cc5840d39a14fd5",
+    "lean-toolchain": "8733782dc070a99b312039cda424f601b80f3be6f6f512627da5ba25adc27632",
+    "lake-manifest.json": "c02687afbc599908c20739609e4e1c250582dff45405467b28b372cc2113bd8d"
+  }
+}

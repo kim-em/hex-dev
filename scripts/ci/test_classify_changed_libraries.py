@@ -59,6 +59,11 @@ class ClassifyChangedLibrariesTests(unittest.TestCase):
         result = self.classify("HexPoly/Basic.lean")
         self.assertEqual(result.libraries, ("HexPoly",))
 
+    def test_ordered_fn_selects_infinitesimal_fixtures(self) -> None:
+        result = self.classify("HexOrderedFn/Infinitesimal.lean")
+        self.assertFalse(result.all_libraries)
+        self.assertEqual(set(result.libraries), {"HexOrderedFn", "HexSignDet", "HexRealClosure"})
+
     def test_documentation_does_not_widen_mixed_change(self) -> None:
         result = self.classify("HexRoots/Basic.lean", "SPEC/testing.md")
         self.assertEqual(result.libraries, ("HexRoots",))

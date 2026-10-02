@@ -1,0 +1,33 @@
+{
+  "commit": "f6da5442ea8faa0fd2bf48e1840f0864a0170d9e",
+  "cpu": 1,
+  "affinity": [
+    1
+  ],
+  "hostname": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "load_start": [
+    3.7666015625,
+    9.79638671875,
+    13.20751953125
+  ],
+  "binary_sha256": "2a7a2f5e3a689ea92e7c3402228f82b264bb82c04d8fca01b4c46e68083a6235",
+  "source_sha256": "9bbb42629e488e4e06489e56725ba3c449e3126dd5c6238eaff4550246f287b4",
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexpoly_bench",
+    "run",
+    "Hex.PolyBench.runPseudoDiv",
+    "Hex.PolyBench.runPseudoGcd",
+    "--export-file",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/poly-pseudo-f6da5442ea8f/complexity.json"
+  ],
+  "oracle": "python-flint 0.9.0 / FLINT 3.6.0 nmod_poly: all eleven exact fixtures passed",
+  "start_utc": "2026-09-21T08:07:45Z",
+  "exit_code": 0,
+  "load_end": [
+    3.86572265625,
+    9.71630859375,
+    13.1630859375
+  ],
+  "end_utc": "2026-09-21T08:07:51Z"
+}

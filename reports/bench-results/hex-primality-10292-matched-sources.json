@@ -1,0 +1,177 @@
+{
+  "cases": [
+    {
+      "name": "family-31",
+      "n": "2147483647",
+      "bits": 31,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit31\n\ntheorem result : Nat.Prime 2147483647 := prime_cert%\n  [small {2; 3; 7; 11; 31; 151; 331},\n   pock (2147483647, 7, 2 * 3 ^ 2 * 7 * 11 * 31 * 151 * 331)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit31\n"
+    },
+    {
+      "name": "family-61",
+      "n": "1945555039024054273",
+      "bits": 61,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit61\n\ntheorem result : Nat.Prime 1945555039024054273 := prime_cert%\n  [small {2; 3},\n   pock (1945555039024054273, 5, 2 ^ 56 * 3 ^ 3)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit61\n"
+    },
+    {
+      "name": "family-123",
+      "n": "9304595970494411110326649421962412033",
+      "bits": 123,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit123\n\ntheorem result : Nat.Prime 9304595970494411110326649421962412033 := prime_cert%\n  [small {2; 7},\n   pock (9304595970494411110326649421962412033, 3, 2 ^ 120 * 7)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit123\n"
+    },
+    {
+      "name": "family-256",
+      "n": "93628759656736142393278101159368737990730026663232799828780155818898507169793",
+      "bits": 256,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit256\n\ntheorem result : Nat.Prime\n    93628759656736142393278101159368737990730026663232799828780155818898507169793 :=\n  prime_cert%\n    [small {2; 3; 23},\n     pock\n       (93628759656736142393278101159368737990730026663232799828780155818898507169793,\n        5, 2 ^ 248 * 3 ^ 2 * 23)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit256\n"
+    },
+    {
+      "name": "family-511",
+      "n": "6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033",
+      "bits": 511,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit511\n\ntheorem result : Nat.Prime\n    6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 :=\n  prime_cert%\n    [small {2; 127},\n     pock\n       (6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033,\n        3, 2 ^ 504 * 127)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit511\n"
+    },
+    {
+      "name": "family-512",
+      "n": "9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177",
+      "bits": 512,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit512\n\ntheorem result : Nat.Prime\n    9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 :=\n  prime_cert%\n    [small {2; 3; 7; 199},\n     pock (100297, 13, 2 ^ 3 * 3 ^ 2 * 7 * 199),\n     pock\n       (9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,\n        3, 2 ^ 146 * 100297 ^ 22)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit512\n"
+    },
+    {
+      "name": "Curve25519",
+      "n": "57896044618658097711785492504343953926634992332820282019728792003956564819949",
+      "bits": 255,
+      "primecert": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 255 - 19) := prime_cert%\n  [small {3; 5; 7; 43},\n   pock3 (1923133, 2, 5, 2 ^ 2 * 3 * 43),\n   pock3 (430751, 17, 7, 2 * 5 ^ 3),\n   pock3 (31757755568855353, 5, 5, 2 ^ 3 * 430751),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 5, 2 * 3 * 1923133 * 31757755568855353),\n   pock3 (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 0, 2 ^ 2 * 74058212732561358302231226437062788676166966415465897661863160754340907)]\n"
+    },
+    {
+      "name": "Curve448",
+      "n": "726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439",
+      "bits": 448,
+      "primecert": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := prime_cert%\n  [small {3; 5; 7; 29; 67; 271; 641},\n   pock3 (411743, 5, 3, 2 * 29),\n   pock3 (1469495262398780123809, 17, 5, 2 ^ 5 * 411743),\n   pock3 (97859369123353, 5, 7, 2 ^ 3 * 67 * 271),\n   pock3 (167773885276849215533569, 17, 0, 2 ^ 9 * 97859369123353),\n   pock3 (726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439, 7, 3, 2 * 641 * 1469495262398780123809 * 167773885276849215533569)]\n"
+    }
+  ],
+  "rows": [
+    {
+      "case": "family-31",
+      "system": "hex",
+      "status": "prepared",
+      "source": "/- Offline matched certificate; Lean must check this untrusted output. -/\n\nmodule\npublic import HexPrimality.Cert\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 100000\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)]\ntheorem result : Hex.Nat.Prime 2147483647 := Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n"
+    },
+    {
+      "case": "family-61",
+      "system": "hex",
+      "status": "prepared",
+      "source": "/- Offline matched certificate; Lean must check this untrusted output. -/\n\nmodule\npublic import HexPrimality.Cert\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 100000\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 1945555039024054273 := Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n"
+    },
+    {
+      "case": "family-123",
+      "system": "hex",
+      "status": "prepared",
+      "source": "/- Offline matched certificate; Lean must check this untrusted output. -/\n\nmodule\npublic import HexPrimality.Cert\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 100000\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 9304595970494411110326649421962412033 := Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n"
+    },
+    {
+      "case": "family-256",
+      "system": "hex",
+      "status": "prepared",
+      "source": "/- Offline matched certificate; Lean must check this untrusted output. -/\n\nmodule\npublic import HexPrimality.Cert\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 100000\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 93628759656736142393278101159368737990730026663232799828780155818898507169793 [(5, 247, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 93628759656736142393278101159368737990730026663232799828780155818898507169793 := Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n"
+    },
+    {
+      "case": "family-511",
+      "system": "hex",
+      "status": "prepared",
+      "source": "/- Offline matched certificate; Lean must check this untrusted output. -/\n\nmodule\npublic import HexPrimality.Cert\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 100000\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 [(3, 503, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 := Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n"
+    },
+    {
+      "case": "family-512",
+      "system": "hex",
+      "status": "prepared",
+      "source": "/- Offline matched certificate; Lean must check this untrusted output. -/\n\nmodule\npublic import HexPrimality.Cert\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 100000\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]\ntheorem result : Hex.Nat.Prime 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 := Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n"
+    },
+    {
+      "case": "Curve25519",
+      "system": "hex",
+      "status": "prepared",
+      "source": "/- Offline matched certificate; Lean must check this untrusted output. -/\n\nmodule\npublic import HexPrimality.Cert\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 100000\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949 [(2, 0, Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907 2028478494862525422475607 22304740449229861598212 2028478494862525422475606 [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353), (2, 0, Hex.Nat.PrimeCert.small 57467), (2, 0, Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944 [(5, 2, Hex.Nat.PrimeCert.small 2), (5, 0, Hex.Nat.PrimeCert.small 223), (5, 0, Hex.Nat.PrimeCert.small 4153)])])]\ntheorem result : Hex.Nat.Prime 57896044618658097711785492504343953926634992332820282019728792003956564819949 := Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n"
+    },
+    {
+      "case": "Curve448",
+      "system": "hex",
+      "status": "prepared",
+      "source": "/- Offline matched certificate; Lean must check this untrusted output. -/\n\nmodule\npublic import HexPrimality.Cert\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 100000\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock3 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439 523890102151522916311113076301980070234414163719 3637867751654793328228610486390601899590 523890102151522916311113076301980070234414163718 [(7, 0, Hex.Nat.PrimeCert.small 2), (7, 0, Hex.Nat.PrimeCert.small 641), (7, 0, Hex.Nat.PrimeCert.pock 1469495262398780123809 [(3, 0, Hex.Nat.PrimeCert.small 223), (3, 0, Hex.Nat.PrimeCert.pock3 3402277943 2763 380 2762 [(5, 0, Hex.Nat.PrimeCert.small 2), (5, 0, Hex.Nat.PrimeCert.small 7), (5, 0, Hex.Nat.PrimeCert.small 151)])]), (7, 0, Hex.Nat.PrimeCert.pock3 167773885276849215533569 22486179 20805492 22486175 [(17, 8, Hex.Nat.PrimeCert.small 2), (17, 1, Hex.Nat.PrimeCert.small 7), (17, 0, Hex.Nat.PrimeCert.small 2531)])]\ntheorem result : Hex.Nat.Prime 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439 := Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n"
+    }
+  ],
+  "preparation": "Untrusted source generation; every proof must be validated by the kernel benchmark",
+  "counts": {
+    "family-31": {
+      "nodes": 1,
+      "leaves": 2,
+      "entries": 2,
+      "powers": 3,
+      "repeated_bases": 1,
+      "divisor_tests": 0,
+      "repeated_subjects": 0
+    },
+    "family-61": {
+      "nodes": 1,
+      "leaves": 1,
+      "entries": 1,
+      "powers": 2,
+      "repeated_bases": 0,
+      "divisor_tests": 0,
+      "repeated_subjects": 0
+    },
+    "family-123": {
+      "nodes": 1,
+      "leaves": 1,
+      "entries": 1,
+      "powers": 2,
+      "repeated_bases": 0,
+      "divisor_tests": 0,
+      "repeated_subjects": 0
+    },
+    "family-256": {
+      "nodes": 1,
+      "leaves": 1,
+      "entries": 1,
+      "powers": 2,
+      "repeated_bases": 0,
+      "divisor_tests": 0,
+      "repeated_subjects": 0
+    },
+    "family-511": {
+      "nodes": 1,
+      "leaves": 1,
+      "entries": 1,
+      "powers": 2,
+      "repeated_bases": 0,
+      "divisor_tests": 0,
+      "repeated_subjects": 0
+    },
+    "family-512": {
+      "nodes": 2,
+      "leaves": 2,
+      "entries": 3,
+      "powers": 5,
+      "repeated_bases": 1,
+      "divisor_tests": 0,
+      "repeated_subjects": 0
+    },
+    "Curve25519": {
+      "nodes": 3,
+      "leaves": 6,
+      "entries": 8,
+      "powers": 11,
+      "repeated_bases": 5,
+      "divisor_tests": 0,
+      "repeated_subjects": 1
+    },
+    "Curve448": {
+      "nodes": 4,
+      "leaves": 9,
+      "entries": 12,
+      "powers": 16,
+      "repeated_bases": 8,
+      "divisor_tests": 0,
+      "repeated_subjects": 3
+    }
+  }
+}

@@ -1,13 +1,10 @@
 # hex-row-reduce-mathlib (depends on hex-row-reduce + hex-matrix-mathlib + Mathlib)
 
-## Correspondence-only classification
+## Ownership
 
-The existing API is a `correspondence-only-layer`. The inverse and solve
-frontends specified below add companion conformance and fresh-module proof
-evidence when implemented; compiled algorithms remain in HexRowReduce.
-
-Computational conformance owner: `HexRowReduce`
-Computational performance owner: `HexRowReduce`
+The companion owns correspondence proofs, the inverse and solve frontends,
+their conformance, and fresh-module proof evidence. Compiled algorithms and
+list certificate checkers remain in HexRowReduce.
 
 Mathlib correspondence for `hex-row-reduce`: connects our computable RREF / rank / span /
 nullspace machinery to Mathlib's noncomputable linear-algebra definitions, via
@@ -236,12 +233,16 @@ subsections specify additions owned by the Mathlib-free algorithm library;
 they do not move that code into this companion. When implementing those
 additions, cross-link the algorithm's kernel-certificate SPEC to this contract.
 Keep existing phase evidence as evidence for the existing correspondence only.
-Before activating the frontend, remove `correspondence_only: true` if present,
-add `proof_probes: [bench/HexRowReduceMathlib/ProofProbe]`, and reopen the
+Before activating the frontend, add `proof_probes: [bench/HexRowReduceMathlib/ProofProbe]`, and reopen the
 library's conformance/performance obligations: cap `done_through` at `2` until
 the new build-only proof tests pass, then at `3` until complete proof evidence
 passes. Do not add an empty reservation while retaining a completed Phase 4.
-This SPEC-only change does not alter the manifest or attest implementation.
+
+The implementation is `Kernel.lean` and `Tactic.lean`, with build-only tests
+in `Tests.lean`. The seeded generator and six-round absolute sweep are
+`scripts/bench/row_reduce_tactic_probes.py` and
+`scripts/bench/row_reduce_tactic_sweep.py`; `--normalization` measures the
+informational matched entrywise proofs separately.
 
 Proof tests live in `HexRowReduceMathlib/Tests.lean`, built with the ordinary
 library; malformed list certificates also belong in the algorithm library's
@@ -252,7 +253,7 @@ in `HexRowReduceMathlib/Kernel.lean`. No library name changes.
 
 For the named families below, shipping requires complete clean-tree evidence
 under the `absolute_only` mode of
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
 Preregister six rounds and a per-candidate absolute build budget of 60 seconds
 on the measurement host for every stated rung. Every candidate sample must
 meet it; report the median and kernel-only time as well. A timeout, incomplete
@@ -305,7 +306,7 @@ with `min_poly` and `solve`, not separate local reifiers.
 
 ### Kernel certificate and soundness
 
-The planned `inverse?` returns a matrix, not an independent certificate or
+The executable `inverse?` returns a matrix, not an independent certificate or
 a singularity witness. Its `inverse?_spec` requires the producer equation
 `inverse? A = some B`; the tactic must not discharge that by replaying RREF.
 Require a new list `InverseWitness` and `checkInverseList`. In the invertible
@@ -409,7 +410,7 @@ whether it closes each rung rather than presuming a complete competitor.
 Record six complete fresh-module samples paired with
 import-only baselines, adjacent and alternating orientation, absolute
 wall times/medians, baseline deltas and one kernel-only profile per family
-per [SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+per [SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
 Include certificate entry counts/serialized bytes, largest numerator and
 denominator heights, emitted artifact sizes, axiom sets and full
 source/toolchain/host provenance. Retain completed samples and timeouts;
@@ -417,9 +418,8 @@ preregister operational caps. Compiled benchmarks stay in HexRowReduce.
 
 ## The `solve` tactic
 
-This is a required extension conditional on the complete solve algorithm and
-correspondence above, not an assertion that `solve?` and its theorems already
-exist. Follow [the matrix tactic protocol](../../SPEC/matrix-tactics.md) and
+This frontend uses the complete solve algorithm and correspondence above.
+Follow [the matrix tactic protocol](../../SPEC/matrix-tactics.md) and
 [the `rank` template](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#the-rank-tactic).
 It shares HexRowReduce's field certificate primitives with `inverse`.
 
@@ -462,8 +462,8 @@ inherit a frontend merely from their executable field instance.
 
 ### Kernel certificate and soundness
 
-The planned `solve` returns either `SolveData A` or a separating row;
-`solve?` forgets the separator. The planned success/failure theorems have
+The executable `solve` returns either `SolveData A` or a separating row;
+`solve?` forgets the separator. The success/failure theorems have
 producer-equation hypotheses, so their invocation is not a kernel checker.
 Require list `SolveWitness`/`checkSolveList` in HexRowReduce with separate
 checks for a particular residual, complete affine data, and inconsistency.
@@ -585,7 +585,7 @@ include an informational matched entrywise `simp [Matrix.mulVec]`/`norm_num`
 proof on small rungs where it closes the same goal. This normalization
 baseline does not compute a solution or certify the complete affine space;
 record absolute numbers for all surfaces.
-Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence),
+Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files),
 use six adjacent import-baseline/probe pairs, alternating orientation, retain
 all raw build times/medians and deltas, and record one kernel-only profile
 per family. Record certificate entry counts/serialized bytes, scalar heights,

@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""Two diagnostic adjacent pairs per comparator, including every prototype lemma."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import sys
+import time
+
+from full import generate
+from arithmetic import ROOT
+from scripts.bench import fresh_module_sweep as sweep
+from scripts.bench.det_symbolic_sweep import cpu_lease
+from scripts.bench.det_bench_limits import supervise
+
+
+def instrument(code):
+    lines = code.splitlines()
+    out, body, header = [], False, False
+    for line in lines:
+        if line and not line.startswith(' '):
+            body = False
+            if line.startswith('theorem '):
+                header = True
+        if body:
+            out.append('  ' + line)
+        else:
+            out.append(line)
+            if header and line.endswith(' := by'):
+                out.append('  timed_proof')
+                body, header = True, False
+    return '\n'.join(out) + '\n'
+
+
+def source(fixture, arm, mode="full"):
+    full = generate(fixture).replace('import Determinant.Arithmetic',
+        'import Determinant.Arithmetic\nimport Mathlib.Tactic.NormDet')
+    if mode == 'arithmetic':
+        full = full[:full.index('theorem witness')] + '#print axioms products\nend Determinant.Full\n'
+    elif arm not in ('Cached', 'Sealed', 'Transport'):
+        header = full[:full.index('theorem products')]
+        theorem = full[full.index('theorem result'):].split(' := by\n')[0]
+        tactic = 'det' if arm == 'Hex' else 'simp only [norm_det]; ring'
+        full = header + theorem + f' := by\n  {tactic}\n#print axioms result\nend Determinant.Full\n'
+    if arm == 'Transport':
+        full = full.replace('import HexPolyDetMathlib.Tree', 'import Determinant.Transport')
+        full = full.replace('ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply, φ]',
+            "simp only [mapRows, mapEmpty, compCons, compEmpty, Function.comp_apply, φ, "
+            "map_add, map_mul, map_neg, map_pow, map_ofNat, map_one, map_zero, "
+            "MvPolynomial.eval₂Hom_X', Matrix.cons_val_zero, Matrix.cons_val_one]")
+    if arm == 'Sealed':
+        full = full.replace('cached_ring', 'sealed_ring')
+    return instrument(full).replace('set_option profiler false',
+        'set_option profiler true\nset_option profiler.threshold 1')
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('fixture', type=Path)
+    parser.add_argument('output', type=Path)
+    parser.add_argument('--mode', choices=['full', 'arithmetic', 'sealed-full', 'transport'], default='full')
+    args = parser.parse_args()
+    fixture_path, output = args.fixture, args.output
+    output.mkdir(parents=True, exist_ok=False)
+    fixture = json.loads(fixture_path.read_text())
+    (output / 'fixture.json').write_text(json.dumps(fixture))
+    files = [Path(__file__), ROOT / 'experiments/Determinant/full.py',
+        ROOT / 'experiments/Determinant/Arithmetic.lean']
+    (output / 'sources.json').write_text(json.dumps({str(p.relative_to(ROOT)):
+        hashlib.sha256(p.read_bytes()).hexdigest() for p in files}, indent=2))
+    for p in files:
+        (output / (p.name + '.txt')).write_bytes(p.read_bytes())
+
+    def run(deadline):
+        cpu, lease = cpu_lease()
+        os.sched_setaffinity(0, {cpu})
+        os.environ['LEAN_NUM_THREADS'] = '1'
+        topology = sweep.cpu_topology(cpu)
+        monitored = sweep.parse_cpu_list(topology.get('thread_siblings_list')) or [cpu]
+        records, environment = [], sweep.environment()
+        def observe(module, result):
+            with (output / 'observations.jsonl').open('a') as f:
+                f.write(json.dumps(dict(module=module, result=result)) + '\n')
+        try:
+            comparisons = [('Mathlib', 'Cached'), ('Hex', 'Cached')] if args.mode == 'full' else ([('Cached', 'Transport')] if args.mode == 'transport' else [('Cached', 'Sealed')])
+            for arms in comparisons:
+                for pair in range(2):
+                    for arm in (arms if pair == 0 else arms[::-1]):
+                        module = 'Determinant.FullSample' + arm
+                        path = ROOT / 'experiments' / Path(*module.split('.')).with_suffix('.lean')
+                        assert not path.exists()
+                        code = source(fixture, arm, args.mode)
+                        path.write_text(code)
+                        (output / (path.name + '.txt')).write_text(code)
+                        try:
+                            result = sweep.build_sample(module, min(60, deadline-time.monotonic()-2),
+                                cpu, monitored, observe, True)
+                        finally:
+                            path.unlink(missing_ok=True)
+                        text = result['compiler_output']
+                        calls = [int(n)/1e6 for n in re.findall(r'CALL_NS (\d+)', text)]
+                        theorem_lines = [i for i, line in enumerate(code.splitlines(), 1)
+                                         if line.startswith('theorem ')]
+                        assert len(calls) == len(theorem_lines), calls
+                        checks = []
+                        for line in theorem_lines:
+                            found = re.findall(rf'info: [^\n]+:{line}:8: type checking took ([0-9.e+]+)(ms|s)', text)
+                            assert len(found) <= 1, found
+                            checks.append(float(found[0][0]) * (1000 if found[0][1] == 's' else 1)
+                                          if found else None)
+                        axiom_line = re.search(r"'Determinant.Full.(?:result|products)' depends on axioms: \[(.*?)\]", text)
+                        assert axiom_line, text
+                        assert set(axiom_line[1].split(', ')) <= {'propext', 'Classical.choice', 'Quot.sound'}
+                        lower = sum(calls) + sum(c or 0 for c in checks)
+                        upper = lower + checks.count(None)
+                        records.append(dict(comparison=arms, pair=pair, arm=arm, calls_ms=calls,
+                            checks_ms=checks, proof_lower_ms=lower, proof_upper_ms=upper, result=result))
+                        (output / 'results.json').write_text(json.dumps(dict(cpu=cpu,
+                            topology=topology, environment=environment, samples=records), indent=2))
+                        print(arms, pair, arm, round(lower, 2), round(upper, 2),
+                              'calls', [round(x, 2) for x in calls], 'checks', checks, flush=True)
+        finally:
+            lease.close()
+    return supervise(run, 240, output / 'status.json')
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

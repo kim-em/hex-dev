@@ -1,0 +1,2 @@
+import HexPolyDetMathlib.ProofProbe.KernelQuietDenseQuadratic4Mathlib
+#print axioms HexPolyDetMathlib.ProofProbe.KernelQuietDenseQuadratic4Mathlib.result

@@ -1,0 +1,66 @@
+# Polynomial absolute budgets
+
+All 60 cases use mode 3. The [policy](polynomial-budget-policy.json) was fixed before the matched stage measurements. Budgets are twice the summed SymPy reference medians, in milliseconds, independent of the child timeout. [Analysis](analysis.json) names every reference and raw block.
+
+| Case | Native ms | Absolute budget ms | Hash agreement | Verdict |
+| --- | ---: | ---: | --- | --- |
+| [`runRatPolyRank4`](polynomial/runRatPolyRank4.json) | 0.176 | 8.170 | yes | pass |
+| [`runRatPolyCert4`](polynomial/runRatPolyCert4.json) | 0.984 | 39.951 | yes | pass |
+| [`runRatPolyCheck4`](polynomial/runRatPolyCheck4.json) | 0.449 | 4.366 | yes | pass |
+| [`runRatPolySecond4`](polynomial/runRatPolySecond4.json) | 0.450 | 31.780 | yes | pass |
+| [`runRatPolyCertify4`](polynomial/runRatPolyCertify4.json) | 1.065 | 44.317 | yes | pass |
+| [`runRatPolyRank8`](polynomial/runRatPolyRank8.json) | 4.729 | 170.196 | yes | pass |
+| [`runRatPolyCert8`](polynomial/runRatPolyCert8.json) | 20.503 | 740.208 | yes | pass |
+| [`runRatPolyCheck8`](polynomial/runRatPolyCheck8.json) | 5.918 | 52.993 | yes | pass |
+| [`runRatPolySecond8`](polynomial/runRatPolySecond8.json) | 15.823 | 570.012 | yes | pass |
+| [`runRatPolyCertify8`](polynomial/runRatPolyCertify8.json) | 26.673 | 793.201 | yes | pass |
+| [`runRatPolyRank12`](polynomial/runRatPolyRank12.json) | 39.594 | 823.391 | yes | pass |
+| [`runRatPolyCert12`](polynomial/runRatPolyCert12.json) | 194.484 | 4761.430 | yes | pass |
+| [`runRatPolyCheck12`](polynomial/runRatPolyCheck12.json) | 54.738 | 310.113 | yes | pass |
+| [`runRatPolySecond12`](polynomial/runRatPolySecond12.json) | 158.154 | 3938.039 | yes | pass |
+| [`runRatPolyCertify12`](polynomial/runRatPolyCertify12.json) | 252.413 | 5071.543 | yes | pass |
+| [`runRatPolyDeficientRank4`](polynomial/runRatPolyDeficientRank4.json) | 0.162 | 8.520 | yes | pass |
+| [`runRatPolyDeficientCert4`](polynomial/runRatPolyDeficientCert4.json) | 0.199 | 12.194 | yes | pass |
+| [`runRatPolyDeficientCheck4`](polynomial/runRatPolyDeficientCheck4.json) | 0.250 | 2.584 | yes | pass |
+| [`runRatPolyDeficientSecond4`](polynomial/runRatPolyDeficientSecond4.json) | 0.036 | 3.674 | yes | pass |
+| [`runRatPolyDeficientCertify4`](polynomial/runRatPolyDeficientCertify4.json) | 0.448 | 14.778 | yes | pass |
+| [`runRatPolyDeficientRank8`](polynomial/runRatPolyDeficientRank8.json) | 5.724 | 127.696 | yes | pass |
+| [`runRatPolyDeficientCert8`](polynomial/runRatPolyDeficientCert8.json) | 7.431 | 189.734 | yes | pass |
+| [`runRatPolyDeficientCheck8`](polynomial/runRatPolyDeficientCheck8.json) | 3.356 | 29.582 | yes | pass |
+| [`runRatPolyDeficientSecond8`](polynomial/runRatPolyDeficientSecond8.json) | 1.588 | 62.037 | yes | pass |
+| [`runRatPolyDeficientCertify8`](polynomial/runRatPolyDeficientCertify8.json) | 10.719 | 219.316 | yes | pass |
+| [`runRatPolyDeficientRank12`](polynomial/runRatPolyDeficientRank12.json) | 52.511 | 723.187 | yes | pass |
+| [`runRatPolyDeficientCert12`](polynomial/runRatPolyDeficientCert12.json) | 69.759 | 1107.577 | yes | pass |
+| [`runRatPolyDeficientCheck12`](polynomial/runRatPolyDeficientCheck12.json) | 24.278 | 148.283 | yes | pass |
+| [`runRatPolyDeficientSecond12`](polynomial/runRatPolyDeficientSecond12.json) | 16.394 | 384.390 | yes | pass |
+| [`runRatPolyDeficientCertify12`](polynomial/runRatPolyDeficientCertify12.json) | 94.020 | 1255.860 | yes | pass |
+| [`runMvRank4`](polynomial/runMvRank4.json) | 0.498 | 12.627 | yes | pass |
+| [`runMvCert4`](polynomial/runMvCert4.json) | 1.829 | 51.081 | yes | pass |
+| [`runMvCheck4`](polynomial/runMvCheck4.json) | 0.661 | 2.294 | yes | pass |
+| [`runMvSecond4`](polynomial/runMvSecond4.json) | 1.325 | 38.454 | yes | pass |
+| [`runMvCertify4`](polynomial/runMvCertify4.json) | 2.381 | 53.375 | yes | pass |
+| [`runMvRank8`](polynomial/runMvRank8.json) | 51.403 | 326.879 | yes | pass |
+| [`runMvCert8`](polynomial/runMvCert8.json) | 268.537 | 2616.635 | yes | pass |
+| [`runMvCheck8`](polynomial/runMvCheck8.json) | 28.921 | 40.408 | yes | pass |
+| [`runMvSecond8`](polynomial/runMvSecond8.json) | 218.223 | 2289.756 | yes | pass |
+| [`runMvCertify8`](polynomial/runMvCertify8.json) | 287.149 | 2657.043 | yes | pass |
+| [`runMvRank12`](polynomial/runMvRank12.json) | 914.390 | 4819.874 | yes | pass |
+| [`runMvCert12`](polynomial/runMvCert12.json) | 5201.951 | 44408.831 | yes | pass |
+| [`runMvCheck12`](polynomial/runMvCheck12.json) | 318.138 | 325.527 | yes | pass |
+| [`runMvSecond12`](polynomial/runMvSecond12.json) | 4303.023 | 39588.957 | yes | pass |
+| [`runMvCertify12`](polynomial/runMvCertify12.json) | 5286.794 | 44734.358 | yes | pass |
+| [`runMvDeficientRank4`](polynomial/runMvDeficientRank4.json) | 0.381 | 8.205 | yes | pass |
+| [`runMvDeficientCert4`](polynomial/runMvDeficientCert4.json) | 0.429 | 11.086 | yes | pass |
+| [`runMvDeficientCheck4`](polynomial/runMvDeficientCheck4.json) | 0.294 | 0.976 | yes | pass |
+| [`runMvDeficientSecond4`](polynomial/runMvDeficientSecond4.json) | 0.047 | 2.881 | yes | pass |
+| [`runMvDeficientCertify4`](polynomial/runMvDeficientCertify4.json) | 0.687 | 12.061 | yes | pass |
+| [`runMvDeficientRank8`](polynomial/runMvDeficientRank8.json) | 70.554 | 284.134 | yes | pass |
+| [`runMvDeficientCert8`](polynomial/runMvDeficientCert8.json) | 86.973 | 462.890 | yes | pass |
+| [`runMvDeficientCheck8`](polynomial/runMvDeficientCheck8.json) | 20.983 | 28.454 | yes | pass |
+| [`runMvDeficientSecond8`](polynomial/runMvDeficientSecond8.json) | 16.180 | 178.755 | yes | pass |
+| [`runMvDeficientCertify8`](polynomial/runMvDeficientCertify8.json) | 102.308 | 491.343 | yes | pass |
+| [`runMvDeficientRank12`](polynomial/runMvDeficientRank12.json) | 1370.156 | 3409.085 | yes | pass |
+| [`runMvDeficientCert12`](polynomial/runMvDeficientCert12.json) | 1790.989 | 7152.952 | yes | pass |
+| [`runMvDeficientCheck12`](polynomial/runMvDeficientCheck12.json) | 202.928 | 229.560 | yes | pass |
+| [`runMvDeficientSecond12`](polynomial/runMvDeficientSecond12.json) | 415.900 | 3743.867 | yes | pass |
+| [`runMvDeficientCertify12`](polynomial/runMvDeficientCertify12.json) | 1903.842 | 7382.512 | yes | pass |

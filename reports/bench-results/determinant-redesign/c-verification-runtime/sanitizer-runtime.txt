@@ -1,0 +1,1 @@
+/nix/store/jhv3lgw16sr33bw1pj2imbs5v505kvka-clang-wrapper-22.1.8/resource-root/lib/linux/libclang_rt.ubsan_standalone-x86_64.so

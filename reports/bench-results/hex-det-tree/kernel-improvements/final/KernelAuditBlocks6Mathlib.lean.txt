@@ -1,0 +1,2 @@
+import HexPolyDetMathlib.ProofProbe.KernelQuietBlocks6Mathlib
+#print axioms HexPolyDetMathlib.ProofProbe.KernelQuietBlocks6Mathlib.result

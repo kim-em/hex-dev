@@ -10,13 +10,6 @@ owns the `Nat.Prime` correspondence, transports, tactic registration, and
 opt-in `norm_num` policy. This SPEC remains the sole normative owner of the
 Mathlib-free search, certificate, checker, and core elaboration algorithms.
 
-This SPEC expands the "Better primality" entry in
-[future-work](../../SPEC/future-work.md). That entry's diagnosis is right -- the
-mechanism is in place and what it lacks is scale -- and two of its
-recommendations do not survive contact with the repositories they name.
-Both are corrected below, with the evidence, under "What PrimeCert
-actually is".
-
 ## What the tree has today
 
 `Hex.Nat.Prime` (`HexArith/Nat/Prime.lean:86`) is the Mathlib-free
@@ -39,44 +32,42 @@ instance, which would have risked instance-selection churn.)
 `HexArith.powMod` (`HexArith/Montgomery/Context.lean:1002`) is modular
 exponentiation by repeated squaring, dispatching to Montgomery
 arithmetic for odd word-sized moduli (`powModWordOdd`) and to
-`HexArith.powModNat` otherwise. That, `Nat.gcd`, and `Nat.sqrt` are
+`HexArith.powModBits` otherwise. That, `Nat.gcd`, and `Nat.sqrt` are
 every arithmetic primitive the checkers below need. Extended GCD is
 search infrastructure rather than a checker primitive: `HexArith.extGcd`
 (`HexArith/ExtGcd.lean:41`) is the pure `Nat` routine and
 `HexArith.Int.extGcd` (`:396`) reaches GMP's `mpz_gcdext` through an
 `@[extern]`. The namespace is `HexArith`, not `Hex`.
 
-`hex-berlekamp-zassenhaus` carries 94 candidate primes in
+`primeTable` contains every prime below its exclusive bound `100000`, in
+ascending order, with soundness and completeness theorems. The `primality`
+tactic constructs and checks Pocklington certificates for literals beyond
+that table. `hex-berlekamp-zassenhaus` carries 94 candidate primes in
 `hotPathCandidates`, as two proof-carrying windows of `primeTable`, covering
 every prime in `[3, 500]` in ascending order. It proves both directions:
 `mem_hotPathCandidates_prime` (every entry is prime and in range) and
 `exists_mem_hotPathCandidates_of_prime` (every prime in range is an
 entry), directly from the corresponding `primeTable` membership theorems.
 
-So the shape of what is wanted already exists in miniature: a stored
-segment, verified complete over its range, consulted by a caller that
-needs "some prime with property `P`". What is missing is a segment
-larger than 500 and a way to prove a single prime larger than trial
-division reaches.
-
 ## What PrimeCert actually is
 
-[future-work](../../SPEC/future-work.md) says PrimeCert is "kernel-only (no
-`native_decide`, so compatible with the project proof policy)" and
-that "depending on it beats reimplementing Pocklington". The first is
-true. The second is not available in the form stated, and a third claim
-in that entry -- that initial-segment sieves "remain open" -- is
-overtaken by what the repository contains.
+PrimeCert is relevant prior art because it constructs kernel-checkable
+Pocklington certificates and includes a kernel-reducible sieve. Its public
+package cannot supply the Mathlib-free dependency needed here, while its
+executable design and checker results provide useful comparison points.
 
 Checked against a clone of https://github.com/b-mehta/PrimeCert
 (Bhavik Mehta and Kenny Lau) at commit `924f63d9`. Every claim below is
-about that revision, and a later one may differ. The repository's
-`LICENSE` is **MIT**; individual file headers say "Released under
-Apache 2.0 license as described in the file LICENSE", which disagrees
-with it. Anyone reusing code from there should resolve that with the
-authors first, and nothing in this SPEC depends on the answer, since
-what is proposed below is a reimplementation from the published idea
-rather than a copy.
+about that revision, and a later one may differ. The implementation claims
+below have not been rechecked against the later comparator revision. The repository's
+`LICENSE` is **MIT**; individual file headers carry an Apache 2.0 notice.
+The primality checker is a separate implementation of the published ideas.
+The modular-power accumulator in HexArith adapts `powModK` from the later
+PrimeCert revision `7d3a2de`;
+`HexArith/Montgomery/Context.lean` preserves both the file's Apache notice
+and the complete root MIT permission notice from the pinned comparator
+revision `7d3a2de`. This attribution does not introduce a PrimeCert or Mathlib
+dependency.
 
 - **It requires Mathlib.** `lakefile.toml` pins
   `leanprover-community/mathlib` at a revision, and the substantive
@@ -104,9 +95,9 @@ rather than a copy.
   running 32 doubling rounds, covering `M < 2^{32}` and so `n` up to
   roughly `1.3 · 10^{10}`. `PrimeCertTest/SieveVerify1e8.lean` exercises
   it at `10^8`.
-- **Its toolchain is `leanprover/lean4:v4.33.0`**; hex-dev currently
-  uses `v4.33.0-rc1` with Mathlib pinned to the matching release
-  candidate. Stable and release-candidate Lean packages are not
+- **The measured checkout uses `leanprover/lean4:v4.33.0`**; hex-dev
+  uses `v4.34.0` with Mathlib pinned to a compatible commit.
+  Packages built with different Lean toolchains are not
   interchangeable, so a companion dependency still requires aligned
   pins. The exact gap must be rechecked at implementation time.
 
@@ -118,13 +109,12 @@ on.
    is Mathlib-free and the boundary is not negotiable. The good news is
    that the proof is elementary and the tree already has its
    ingredients; the lemma list is under "The Pocklington certificate".
-2. **The sieve question is not open.** A kernel-reducible sieve in the
-   shape PrimeCert uses is known to work at `10^8`. The future-work
-   entry's suggestion -- bootstrap the primes below `10^4` from the
-   primes below `10^2` by kernel-reducible trial division -- is a
-   strictly weaker technique aimed at the same target, and it should
-   not be built. What should be built is the bitset sieve, with its
-   correctness proved against `Hex.Nat.Prime`.
+2. **Use the bitset sieve rather than bootstrapped trial division.** A
+   kernel-reducible sieve in the shape PrimeCert uses is known to work at
+   `10^8`. Bootstrapping the primes below `10^4` from the primes below `10^2`
+   by kernel-reducible trial division is a strictly weaker technique aimed at
+   the same target. The bitset sieve should instead be proved correct against
+   `Hex.Nat.Prime`.
 3. **Collaboration beats both duplication and dependency.** The
    Mathlib-free executable sieve is 116 lines of `Nat` bit arithmetic
    and its design is the contribution; reimplementing it here from the
@@ -145,12 +135,12 @@ cube-root variant; a stored initial segment and the sieve that
 generates and verifies it; a `primality` tactic; and the
 `hex-primality-mathlib` correspondence with `Nat.Prime`.
 
-Not in scope: elliptic curve primality proving (ECPP), which is where
-the next order of magnitude lives and is a separate project with a
-separate certificate; deterministic Miller-Rabin as a *proof* (see
-below); primality of numbers of special form (Lucas-Lehmer, Proth,
+Not in scope: elliptic curve primality proving (ECPP), whose separate
+certificate verifier and Mathlib soundness obligations are specified in
+[hex-ecpp](../../SPEC/Libraries/hex-ecpp.md); deterministic Miller-Rabin as a
+*proof* (see below); primality of numbers of special form (Lucas-Lehmer, Proth,
 Pepin), which are cheap to add later and have no consumer here; and
-integer factorization, which is [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md) and
+integer factorization, which is [hex-int-factor](../../HexIntFactor/SPEC/hex-int-factor.md) and
 depends on this library.
 
 **Deterministic Miller-Rabin is out of scope as a proof technique, and
@@ -323,10 +313,11 @@ inductive PrimeCert where
   and does not kernel-reduce, so the checker verifies `w` with two
   multiplications instead of computing a root. -/
   | pock3 (n r s w : Nat) (factors : List (Nat × Nat × PrimeCert))
+  | pock3Sieve (n r s w m : Nat) (factors : List (Nat × Nat × PrimeCert))
 
 /-- The number a certificate is about. -/
 def PrimeCert.subject : PrimeCert → Nat
-  | .small n | .pock n _ | .pock3 n _ _ _ => n
+  | .small n | .pock n _ | .pock3 n _ _ _ _ | .pock3Sieve n _ _ _ _ _ => n
 
 def checkPrime (c : PrimeCert) : Bool
 
@@ -356,9 +347,14 @@ arithmetic rejections before recursive certificate replay:
    in strictly ascending order. This canonical order implies pairwise
    distinctness and is checked with one lower-bound comparison per entry
    (the first against `1`, then each later subject against its predecessor).
-3. `F = ∏ q^(e+1)` divides `n - 1`; each power is accumulated by a
-   bounded loop that tests each nonzero step by division, and the whole
-   product aborts before constructing a running value above `n - 1`.
+3. `F = ∏ q^(e+1)` divides `n - 1`. Powers use bounded multiplication,
+   with a checked shift for powers of two. The kernel square-root checker
+   combines exponent-one factors with one multiplication and a bound check,
+   using zero to record overflow. The positive-subject precondition comes
+   from step 2; zero cannot pass the subsequent square-root check. Each such
+   multiplication has at most the sum of its operands’ bit lengths, and
+   an oversized exponent is rejected without constructing its full power.
+   The compiled checker retains its division-before-multiplication loop.
 4. `n < F * F`.
 5. For each `(a, e, child)`, with `q = child.subject`:
    `HexArith.powModNat a (n-1) n = 1 % n` and
@@ -392,8 +388,9 @@ cube-root variant, not to this one.
 Step 2 is at most `k` subject comparisons. Step 3 performs at most
 `O(k log n)` bounded ordinary multiplications even on rejected input:
 because step 2 established `q ≥ 2`, each entry either finishes or exceeds
-the `n - 1` bound within `O(log n)` iterations. Step 5 is two modular
-exponentiations, one division, and one `Nat.gcd` per factor. Thus one level
+the `n - 1` bound within `O(log n)` iterations. Step 5 uses one modular
+exponentiation, one division, and one `Nat.gcd` per factor, plus a Fermat
+exponentiation per group of adjacent equal witness bases. Thus one level
 costs `O(k log n)` modular multiplications, `O(k log n)` bounded ordinary
 multiplications, and `O(k)` subject comparisons, divisions, and gcds. The
 factor list comes from untrusted certificate data; search sorts its candidate
@@ -484,10 +481,17 @@ Grégoire, Théry and Werner, "A Computational Approach to Pocklington
 Certificates in Type Theory",
 https://www-sop.inria.fr/members/Benjamin.Gregoire/Publi/pock.pdf, and
 in PrimeCert's `Pocklington3.lean`. PrimeCert states the stronger form
-with an extra parameter `m`, a check excluding divisors `lF + 1` for
-`1 ≤ l < m`, and the corresponding relaxed bound. A future
-companion-side dependency may instantiate it at `m = 1`; this checker
-does not claim that stronger parameterised interface.
+with an extra parameter `m`. The `pock3Sieve n r s w m factors` constructor
+implements that stronger form, proved by the Mathlib-free `pocklington3Sieve`:
+it additionally checks `1 ≤ m ≤ pocklingtonSieveCap` (currently 64), excludes
+divisors `lF + 1` for `1 ≤ l < m`,
+and replaces condition 5 by `2s + m² < (2F + r)m + 2`. It retains all other
+arithmetic, child-primality, ordering and witness checks. The cap and size bound
+are checked before the sieve; even a rejected untrusted literal performs at
+most 63 divisor tests. Construction uses the smaller of `maxSieveBound` and
+this checker cap. The original `pock3`
+constructor and literal proofs retain their sieve-free behavior. Neither form
+requires an odd prime in the factor product; a power of two alone is valid.
 
 ### What an accepted certificate proves, and what it does not
 
@@ -503,9 +507,8 @@ and none is claimed:
 - *search completeness*: `primeCert?` finds one. False, and the
   `PrimeCertStop.exhausted` result in its type says so.
 - *the certificate carries no second witness obligation*. This one does
-  hold, and it is what makes this item cheap relative to most of
-  [future-work](../../SPEC/future-work.md): primality is the whole conclusion,
-  with no minimality, maximality, or completeness clause left over.
+  hold: primality is the whole conclusion, with no minimality, maximality, or
+  completeness clause left over.
 
 The certificate is also small -- `O(k)` numbers of at most `log n` bits
 per level, recursively -- and the search that finds it, which needs a
@@ -636,11 +639,17 @@ structure FactorSearchResult where
   raw      : PartialFactors
   rand     : Rand
   attempts : Nat
+  events   : List FactorEvent := []
 
 structure FactorSearchBudget where
   primeBudget : PrimeCertBudget
   primeFuel   : Nat
   factorFuel  : Nat
+  smoothBounds : List Nat := []
+  smoothBases : List Nat := []
+  attemptLimit : Option Nat := none
+  pMinusOneStage2 : Bool := false
+  squfof : Squfof.Policy := .off
 
 abbrev FactorSearch :=
   FactorSearchBudget → Nat → Rand → FactorSearchResult
@@ -651,6 +660,7 @@ private structure PartialSearch where
   raw      : PartialFactors
   rand     : Rand
   attempts : Nat
+  events   : List FactorEvent
 
 private def partialFactor (budget : PrimeCertBudget) (n : Nat)
     (r : Rand) (fuel : Nat) : PartialSearch
@@ -678,34 +688,857 @@ assembly, and their dispatch. The routes by which its advances flow
 back into this library's search are fixed below.
 
 **The multiplicative order is the new development**, and it is the
-thing to build first because [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md) needs
+thing to build first because [hex-int-factor](../../HexIntFactor/SPEC/hex-int-factor.md) needs
 it too, for its primitive-root API. It belongs here, in
 `HexPrimality/Order.lean`, and hex-int-factor consumes it.
 
+### Bounded SQUFOF splitting
+
+#### Scope and placement
+
+SQUFOF (Shanks’ square forms factorization) supplies an additional bounded,
+deterministic proper-factor search for inputs below `2^64`. It is useful to
+investigate for balanced machine-sized semiprimes; neither an improvement over
+Brent rho nor a complete factorization guarantee follows from its algorithm name.
+
+The executable and its validation theorem live in
+`HexPrimality/Squfof.lean`, exported by `HexPrimality.lean`. HexIntFactor uses
+this shared primitive directly. This follows the existing upstream placement
+of the reusable rho and Pollard `p − 1` primitives and introduces no import of
+HexIntFactor into HexPrimality. Computation and the proper-divisor theorem are
+Mathlib-free. Existing factorization checkers remain the certification boundary;
+there is no new certificate format or Mathlib correspondence theorem to prove.
+
+The initial implementation comprises the explicit route, its tests, and native
+performance evidence. Production dispatch remains unchanged. Promoting the
+route requires the evidence and explicit budget propagation described below;
+it is not an implicit consequence of adding an exported splitter.
+
+Out of scope: SQUFOF2, class-group APIs, completeness or success-probability
+proofs, parallel multiplier races, new externs, inputs at or above `2^64`, and
+word-arithmetic implementations whose intermediates can wrap.
+
+#### Public contract
+
+Names below are in `Hex.Nat.Squfof`:
+
+```lean
+structure Limits where
+  multipliers : Nat := 16
+  steps : Nat := 65536
+  queueCapacity : Nat := 128
+deriving Repr, DecidableEq
+
+inductive Outcome where
+  | factor (divisor : Nat)
+  | noFactor
+  | exhausted
+  | unsupported
+deriving Repr, DecidableEq
+
+structure Result where
+  outcome : Outcome
+  attempts : Nat
+  steps : Nat
+  peakQueue : Nat
+deriving Repr, DecidableEq
+
+def factor (n : Nat) (limits : Limits := {}) : Result
+
+theorem factor_spec {n : Nat} {limits : Limits} {d : Nat}
+    (h : (factor n limits).outcome = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n
+
+theorem factor_attempts (n : Nat) (limits : Limits) :
+    (factor n limits).attempts ≤ min limits.multipliers 16
+
+theorem factor_steps (n : Nat) (limits : Limits) :
+    (factor n limits).steps ≤ (factor n limits).attempts * limits.steps
+
+theorem factor_queue (n : Nat) (limits : Limits) :
+    (factor n limits).peakQueue ≤ limits.queueCapacity
+```
+
+`steps` in Limits is a **per-multiplier combined forward-and-reverse budget**.
+`steps` in Result is the sum actually consumed. One step is one quotient
+computation `(S + P) / Q`, including the terminal reverse symmetry test and a
+forward step stopped by queue exhaustion. Initialization, integer roots, gcds,
+and final divisor validation are not recurrence steps. `attempts` counts each
+multiplier whose initialization starts, including initialization-only exits;
+prechecks consume zero multiplier attempts. A multiplier returning a gcd
+factor or skipped because `gcd(k,n)=n` still counts as one attempt. `peakQueue` is the maximum number
+of live queue entries at any time, not total insertions.
+
+Input handling has a fixed order:
+
+1. `n < 4` returns `noFactor` with zero counters.
+2. `2^64 ≤ n` returns `unsupported` with zero counters.
+3. Even `n` returns the validated factor 2; square `n` returns its validated
+   integer square root. These prechecks have zero counters, including with
+   zero multiplier or step budget.
+4. Zero multiplier or step budget otherwise returns `exhausted` with zero
+   counters.
+5. Otherwise traverse the allowed multiplier prefix below.
+
+The primitive has no `Rand` parameter and consumes no random words. A caller
+must retain its exact incoming generator state through this route. Outcomes
+other than `factor` assert nothing about primality or the existence of a factor.
+All success paths, including prechecks and multiplier gcds, pass through a
+single gate checking `1 < d`, `d < n`, and `n % d = 0`. Prove `factor_spec`
+from that gate, without a quadratic-form correctness theorem. Do not require
+returned divisors to be prime.
+
+#### Multiplier schedule and arithmetic
+
+Try this fixed order, truncated to `min limits.multipliers 16`:
+
+```
+1, 3, 5, 7, 11, 15, 21, 33, 35, 55, 77, 105, 165, 231, 385, 1155
+```
+
+This ascending schedule tries small radicands first and is the reference
+policy for the explicit API, not an asserted optimum. The fixed 65536-step
+slice intentionally permits a bounded failure followed by another multiplier;
+it does not claim to cover the average forward-plus-reverse work at 64 bits.
+Native evidence must compare this policy with 131072- and 262144-step slices
+and with the reversed schedule before recommending production defaults.
+Benchmark-only policy drivers must call the same per-multiplier kernel,
+not a second implementation of the recurrence.
+The paper's queue-completeness argument assumes squarefree inputs and bounds
+on multiplier size. These hypotheses are not required by this API: outside
+them, searches can miss useful forms or reach trivial reverse candidates;
+the final gate still establishes every reported proper divisor.
+
+For each `k`, first compute `gcd(k,n)`: return a proper divisor through the
+gate, and skip this multiplier if the gcd equals `n`. Otherwise the gcd is 1.
+Set `M = k*n`, `D = 2*M` when `M % 4 = 1`, and `D = M` otherwise. Here `D`
+is the continued-fraction radicand; the forms in this version have discriminant
+`4*D`. If `D` is square, validate `gcd(sqrt(D), n)` and otherwise skip the
+multiplier. These square/zero-denominator checks are defensive: for the
+admitted odd `n,k`, `D` is 2 or 3 modulo 4 and cannot be a square. Never divide
+by an initial zero denominator.
+
+Use exact Lean `Nat`/`Int` arithmetic throughout. The input bound does **not**
+put `k*n`, `2*k*n`, or every intermediate product inside UInt64. In particular,
+compute signed differences before converting back to Nat; truncated Nat
+subtraction is not an implementation of the recurrence. A checked branchwise
+Nat implementation is acceptable only when it implements the same signed
+expression exactly. Any unexpected negative result, nonpositive denominator,
+or inexact division abandons this multiplier without a factor. Such cases must
+be exposed by internal test diagnostics, rather than disguised as a valid trace.
+
+#### Forward and reverse recurrences
+
+Use the continued-fraction variant of SQUFOF. Let `S = floor(sqrt(D))` and
+initialize `(Qprev, P, Q) = (1, S, D-S*S)`. This is **form F1**. Set the
+queue threshold to `L = floor((4*D)^(1/4))`, computed exactly as
+`Nat.sqrt (Nat.sqrt (4*D))`. The queue starts empty.
+
+Every forward transition does the following in this order:
+
+1. Consume one step. Compute `b = floor((S+P)/Q)` and `Pnext = b*Q-P`.
+2. From the **old** `Q,P`, set `g = Q / gcd(Q,2*k)`. If `g ≤ L`, enqueue
+   `(g, P % g)`. If the queue is already at capacity, terminate this
+   multiplier as exhausted before inserting; do not silently drop an entry.
+3. Compute `Qnext = Qprev + b*(P-Pnext)` using signed arithmetic, and replace
+   `(Qprev,P,Q)` by `(Q,Pnext,Qnext)` simultaneously.
+4. Test the new `Q` for being square only after forward transitions
+   **1, 3, 5, ...**, which reach **F2, F4, F6, ...**. A transition count
+   beginning at 1 must not test after transitions 2, 4, 6, ... .
+5. If `Q=r*r`, search the queue from its front for the first pair `(r,t)`
+   with `P % r = t`. With a match and `r>1`, remove entries through that
+   match and continue. A match with `r=1` ends this multiplier without a
+   factor (the principal cycle has repeated). With no match, enter reverse
+   search. Nonsquares continue forward.
+
+An array plus a head index or a bounded ring buffer may represent the FIFO;
+retired entries must not accumulate without bound. Queue capacity refers to
+live entries. Search order and removal of the complete prefix are observable
+algorithm behavior, not optional optimizations. Residues avoid interpreting
+`P-t` as truncated natural subtraction.
+
+For a selected square form, save the forward state, queue, and forward
+transition index, then initialize reverse search with
+
+```
+Qprev := r
+P := P + r * floor((S-P)/r)
+Q := (D-P*P)/Qprev
+```
+
+The floor is signed floor division; validate positive denominators and exact
+last division. Then repeatedly consume one step and compute
+`b = floor((S+P)/Q)` and `Pnext = b*Q-P`. If `Pnext=P`, extract
+`d = gcd(Q,n)` from the **current Q**, pass it through the proper-factor gate,
+and return on success. If the gate rejects it, restore the saved forward
+state, queue, and forward index, then continue at the next forward transition,
+retaining all spent reverse steps in the shared budget. If `Pnext ≠ P`,
+perform the same simultaneous recurrence update and continue reversing. The reverse phase draws from the
+same remaining budget; entering it does not reset or duplicate fuel.
+
+On exhaustion, advance to the next admitted multiplier with its fresh
+per-multiplier budget. On a repeated cycle, do likewise.
+Return the first validated factor. If none succeeds, return `exhausted` if any
+multiplier exhausted its step or queue budget, or if the requested prefix
+omitted remaining scheduled multipliers; return `noFactor` otherwise. Internal
+arithmetic-guard failures abandon only the current multiplier and remain
+visible in diagnostic tests; the final outcome follows the same aggregate
+rule. This finite search makes no completeness promise.
+
+The recurrence has diagnostic invariants `D = P*P + Qprev*Q`, `0 ≤ P ≤ S`,
+and `0 < Qprev,Q`. In particular, reverse initialization has `S-P ≥ 0`;
+signed arithmetic still makes the operation explicit and guards malformed
+internal states. These are
+test assertions for both directions, not extra proof preconditions at the
+public boundary. The result theorem must hold for every Nat input and Limits,
+including primes, powers, zero limits, and unsupported inputs.
+
+#### Validation
+
+Use the existing HexPrimality conformance and benchmark subprojects and
+extend their existing CI commands if needed. Do not add CI jobs or workflows.
+
+Required coverage:
+
+- Zero, one, two, three; even inputs; odd squares and higher prime powers;
+  prime inputs; composites with repeated and distinct factors.
+- Zero step/multiplier limits, queue capacity zero, partial multiplier prefixes,
+  forward exhaustion, reverse exhaustion, and queue exhaustion. Assert exact
+  attempts/steps, the upper bounds, and deterministic replay.
+- Numbers sharing a proper factor with a multiplier; multiplier-only ambiguous
+  factors that must not escape the final gcd and proper-divisor gate.
+- Inputs immediately below, equal to, and above `2^64`; large `k*n` crossing
+  UInt64. Unsupported inputs must not be silently reduced modulo `2^64`.
+- Independent oracle validation of every emitted divisor by integer division;
+  failures are permitted. For primes the only forbidden result is `factor`.
+  Use a committed diverse semiprime corpus for required completion, so a
+  consistently failing implementation cannot pass merely by returning no factor.
+- A transition-level regression for `n=22117019`, `k=1`: the initial state is
+  `(1,4702,8215)`; after 17 forward transitions it is `(6314,1737,3025)`;
+  reverse initialization is `(55,4652,8653)`; the eighth reverse quotient
+  computation detects symmetry at `P=4451,Q=4451`, and the factor is `4451`.
+  The total is 25 steps. This anchors indexing and extraction independently
+  of the implementation’s own generated fixtures.
+- Internal per-multiplier queue regressions: for `n=247,k=385`, transition 3
+  reaches `(230,305,9)` with queue `[(3,2),(23,17)]` and removes the first
+  entry. Transition 9 reaches `(451,242,81)` with queue `[(23,17),(9,8)]`
+  and removes both entries through the matching `(9,8)`. Success follows
+  after 13 forward and eight reverse steps, yielding factor 13.
+- Internal reverse-rejection regression: `n=5,k=7` reaches reverse symmetry
+  at `Q=10`, whose gcd with n is the whole input. Reject it and resume
+  forward; this multiplier terminates on the repeated cycle after four
+  total steps, without returning a factor.
+- An unsuccessful `k=1` followed by useful multiplier progress:
+  `n=633003781` has initial state `(1,35581,1)` for `k=1`, inserts `(1,0)`,
+  and repeats after one transition. With `k=3`, it returns 8821 in 277 steps
+  (181 forward, 96 reverse), including a queue hit at forward transition 125.
+  Test the chosen schedule rather than require every multiplier to succeed.
+
+The external checker should verify divisor arithmetic independently and not
+copy the continued-fraction recurrence. Trace checks supplement it for the
+algorithm and accounting details that a proper-divisor oracle cannot detect.
+Prove the four public theorems without `sorry`, `axiom`, or `native_decide`.
+
+#### Explicit portfolio policy
+
+`Squfof.Policy` has constructors `off`, `first limits`, and `rescue limits`.
+Every default allocation uses `off`. Opt-in placement makes no claim about
+factor balance or a general speed advantage and does not promote a default.
+`first` runs at the producer's rho boundary; `rescue` runs after all of that
+producer's existing splitters have failed. The complete factorizer therefore
+runs rescue after rho, p−1, and ECM; the core partial producer runs it after
+its p−1 phase and rho. The ECM construction provider defers rescue until its
+own ECM curves fail.
+
+`PrimeCertBudget.squfof : Squfof.Policy := .off` authorizes the composite
+worklist entries inside nested certificate search. The independent
+`FactorSearchBudget.squfof : Squfof.Policy := .off` authorizes the producer's
+own entries. Certificate search propagates its selected policy to the
+partial-factor allocation. Other producer calls must set their own field
+explicitly; a nested budget alone grants no extra producer work. The
+HexIntFactor callback forwards both allocations separately. Its existing
+unsupported-global-limit policy still declines without work.
+
+Trial division, structural reductions where present, and probable-prime or
+certificate filtering precede the SQUFOF boundary. It runs at each composite
+cofactor, not merely on the original input. Unsupported input, queue or step
+exhaustion, and no-factor outcomes fall through to the existing routes, with
+proper-factor successes entering the same recursive worklist and checker.
+A prime-certificate failure caused only by exhaustion does not authorize a
+SQUFOF attempt on that subject.
+
+SQUFOF has its own limits: zero rho allocation enables no new route unless
+SQUFOF is explicitly selected. Zero multiplier or step allocation does no
+SQUFOF work, including preliminary factor shortcuts. Worklist fuel remains
+unchanged. A total-limit-aware producer clips the multiplier allowance to
+remaining attempts, without changing the per-multiplier recurrence cap or
+queue bound. In this shared pool, first-placement attempts reduce the
+allowance left for later routes. When no total limit is supplied, the core
+construction producer derives one from the worklist fuel times the sum of
+per-entry caps; adding the SQUFOF cap leaves rho and smooth per-entry caps
+unchanged. Each actually started multiplier is one attempt, including
+successful ones; skipped unsupported calls and disabled limits use zero. A selected phase with
+a zero allowance records `exhausted` with zero attempts and steps.
+The counted event records subject, placement, effective limits, outcome,
+actual attempts, recurrence steps, queue peak, and returned divisor.
+Deterministic SQUFOF work leaves `Rand` unchanged; subsequent randomized
+routes use exactly the state of the preceding work.
+
+#### Native evidence and production promotion
+
+Measure compiled Lean, not a Python translation. Separate raw splitting from
+prime certification, certificate replay, complete factorization, and primality
+certificate search. Use Mathlib-free bench imports and the shared-host policy
+in `SPEC/benchmarking.md`: fixed schedules, recorded host context, adjacent
+AB/BA comparison arms, retention of every completed run, and at most one
+unchanged rerun of an inconclusive result.
+
+The input corpus must include balanced 32-, 40-, 48-, 56-, and 64-bit
+semiprimes with varied factor gaps, plus unbalanced composites, primes,
+squares/powers, smooth `p-1` cases, and production table-complete controls.
+Avoid a ladder made solely of nearly equal factors: it can make SQUFOF’s
+first square form atypically easy. The raw splitter corpus and public portfolio
+corpus are separate because structural reductions can finish an input before
+a splitting route runs. Include the existing retained balanced-factor corpus
+for continuity with `reports/hex-int-factor-performance.md`.
+
+Record input, limits, multiplier attempts, recurrence steps, queue peak,
+completion/failure outcome, exact divisor, and runtime. Report failed capped
+runs as failed capped runs, never omit them or compare only successful inputs.
+Compare against the existing Brent-rho primitive on the same inputs with a
+fixed seed list and fully stated budgets; SQUFOF itself has no seed variability.
+A comparison against PARI full factorization must be labelled as unequal
+work, not as an isolated SQUFOF speed ratio.
+
+With fixed queue capacity and bounded operand sizes, a forced-work ladder has
+linear cost in recurrence transitions plus initialization per multiplier.
+For variable queue capacity, searches cost up to that capacity per tested
+square form; report queue work rather than claiming unconditional constant
+cost. The familiar heuristic `N^(1/4)` describes average search work under
+assumptions about forms, not a worst-case bound or a termination proof. Apply
+the ordered evidence modes of `SPEC/benchmarking.md` honestly to irregular
+completion data; a fuel cap is not an empirical complexity model. Include one
+representative profile attributing the dominant raw-splitter cost. A combined
+cap can expire immediately before or during reverse search; the per-phase
+trace must show this rather than count an uncompleted reverse as success.
+Use reduced fixtures/limits for CI `Bench verify` so the existing per-library
+30-second soft budget and repository hard cap remain respected.
+
+Before any default integration, preregister the proposed position, cutoff,
+limits, and an acceptance rule in the comparison protocol, then measure the
+entire changed portfolio against the current one. Retain defaults if the
+rule is not met. A proposed integration must explicitly address all of:
+
+- The complete-factor dispatcher and every recursively popped cofactor.
+- HexPrimality’s `partialFactor` and certificate-search path, or an explicit
+  decision that only the downstream factorizer enables the route.
+- `PrimeCertBudget`, `FactorSearchBudget`, registered factor hooks, tactic
+  profiles, and callers that deliberately disable work. SQUFOF needs its own
+  allocation; zero rho steps must not authorize an unbudgeted new route.
+- Exact attempts accounting, preserved Rand state, retained partial snapshots,
+  and continued reachability of rho, p−1, and ECM after bounded failure.
+
+The explicit primitive can ship with useful evidence while this promotion
+remains disabled. The implementation directive does not grant authority to
+change default search policy without the measured comparison and a SPEC
+update pinning the selected dispatch and resource contract.
+
+The current explicit-route corpus, compiled raw comparisons, forced-work
+benchmark, and representative cost profile are recorded in
+[`reports/hex-primality-squfof.md`](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-squfof.md).
+
+#### Algorithm reference
+
+The continued-fraction recurrence, queue test, and multiplier treatment are
+specified by Gower and Wagstaff, [Square Form Factorization](https://homes.cerias.purdue.edu/~ssw/squfof.pdf),
+§§3.3 and 5.2; the numerical trace is in §3.4. The explicit transition
+indices, bounded reverse phase, proper-divisor validation, resource accounting,
+and implementation domain above are this library’s executable contract.
+
+### Pollard p-minus-one stage 2
+
+This is the implementation contract for the continuation in
+`HexPrimality/PMinusOne.lean`. The existing stage-1 API remains compatible;
+the continuation, counted trace, and search-policy extensions below are new
+work. They are Mathlib-free, untrusted search, shared with HexIntFactor.
+They do not change certificate formats or the checker trust boundary.
+For background on stage-2 continuation see Montgomery and Kruppa,
+[Improved Stage 2 to P ± 1 Factoring Algorithms](https://antsmath.org/ANTSVIII/files/kruppa.pdf).
+The bounded prime-by-prime baby/giant schedule here does not implement
+their polynomial multipoint extension.
+
+#### Bounds and stage boundary
+
+For natural-number requests `B₁, B₂`, set
+`b₁ = smoothBound B₁ = min B₁ 524288` and
+`b₂ = stage2Bound B₂ = min B₂ 4194304`. The separate
+`Hex.Nat.PMinusOne.stage2BoundCap = 4194304` (with `stage2Bound` in the
+same namespace) is independent of `smoothBoundCap`, the ordinary
+9999 policy cap, and the size of `primeTable`. It is a work ceiling, not a
+claim of usefulness at that ceiling. Never raise either requested bound.
+When `b₂ ≤ b₁`, the interval is empty; do not swap bounds or increase `b₂`.
+Bounds 0 and 1 are accepted, with empty stage-1 exponent product `M = 1`.
+
+The standalone call accepts all `Nat` inputs. As in stage 1, `n < 4`,
+`a ≤ 1`, or `n ≤ a` gives `noFactor` before arithmetic. For `n ≥ 4` and
+`1 < a < n`, compute `gcd(a,n)` first: a proper divisor returns `factor`
+immediately. Otherwise `gcd(a,n) = 1`, and stage 1 computes
+
+```
+M = ∏ {ℓ prime | ℓ ≤ b₁} ℓ^(max {e | ℓ^e ≤ b₁})
+x = a^M mod n
+g₁ = gcd((x + n - 1) % n, n).
+```
+
+Execute the existing successive prime-power exponentiations, not an explicit
+construction of `M`. A stage-1 `factor` or `whole` is terminal for this call;
+stage 2 is entered only after `g₁ = 1` and a nonempty interval. Preserve `x`
+at this boundary: no consumer may recompute `a^M` to start stage 2. Stage-1
+`whole` cannot be repaired by further exponentiation of that residue.
+
+Use the following new API in namespace `Hex.Nat.PMinusOne` (the existing
+`Hex.Nat.pMinusOneStage1` names and their counted contracts stay available).
+The excerpt assumes `Event` and its nested batch record, whose data schema
+is specified below, are declared first:
+
+```lean
+structure Stage1 where
+  result : PMinusOneResult
+  residue : Option Nat
+  event : Event
+
+def start (n a B₁ : Nat) : Stage1
+def stage2 (n x B₁ B₂ : Nat) : PMinusOneResult
+def search (n a B₁ B₂ : Nat) : PMinusOneResult
+
+structure Run where
+  result : PMinusOneResult
+  attempts : Nat
+  rand : Rand
+  events : List Event
+
+def stage2Counted (n x B₁ B₂ : Nat) (r : Rand) : Run
+def searchCounted (n a B₁ B₂ : Nat) (r : Rand) : Run
+
+theorem stage2_spec (h : stage2 n x B₁ B₂ = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n
+theorem search_spec (h : search n a B₁ B₂ = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n
+```
+
+`start.result = pMinusOneStage1 n a B₁` exactly. Its residue is `some x`
+exactly on valid input with both setup gcd and `g₁` equal to 1; in that case
+prove `x < n`, `x = a^M % n`, and `gcd(x,n) = gcd((x+n-1)%n,n) = 1`.
+Invalid-input `noFactor` has no residue. Its event records the branch and
+work performed by this execution, without re-running setup to reconstruct
+that diagnostic. `search` runs `start` once and, if
+there is a residue and `b₂ > b₁`, runs `stage2`; otherwise it returns the
+stage-1 result. An interval containing no primes returns `noFactor`.
+
+The public raw-residue `stage2` is total and does not trust provenance:
+`n < 4` returns `noFactor`; otherwise normalize `x % n`, then check
+`gcd(x,n)` and `gcd((x+n-1)%n,n)`, in that order. Return a proper factor
+from either check, or `whole` on gcd `n`, before enumerating candidates.
+Only two gcds equal to 1 enter the interval algorithm. Thus an arbitrary
+residue cannot invalidate `stage2_spec`; only the success lemma referring
+to the original base requires `x = a^M % n`. The continuation receives no
+base and performs no stage-1 exponentiation. Internal reuse of already
+established gcd checks is permitted only with an equality to this public
+result and an accurate trace of the work actually executed.
+
+Every factor exit, including setup and recovery, dynamically tests
+`1 < d ∧ d < n ∧ n % d = 0`. Prove the same proper-divisor theorem for
+both counted projections, and projection equalities to the uncounted calls.
+Prove equality of results when replacing both bounds by `(b₁,b₂)`; traces
+retain requested as well as effective bounds, so do not assert equality of
+whole traces under capping. Prove idempotence of each bound function.
+
+One executed `stage2Counted` costs exactly one semantic attempt on every
+outcome, including invalid or empty input. Batches and recovery add no
+attempt units. `searchCounted` costs one for stage 1 plus one if it invokes
+the continuation; an invalid standalone call still costs one, matching the
+existing counted convention. A caller that already charged `start` must
+charge only `stage2Counted`, not call `searchCounted` again. Each returned
+`rand` equals its input, on success and failure alike.
+
+#### Enumeration, layout, and gcd schedule
+
+Enumerate `Q = (primesBelow (b₂ + 1)).filter (b₁ < ·)` when `b₂ > b₁`.
+Prove `q ∈ Q ↔ Hex.Nat.Prime q ∧ b₁ < q ∧ q ≤ b₂`, strict ascending
+order, and no duplicates, using `mem_primesBelow`,
+`primesBelow_pairwise_lt`, and `primesBelow_nodup`. Neither primality of
+enumerated candidates nor completeness may rely on an unverified committed
+table. An empty interval skips sieve construction entirely. A nonempty
+interval with `Q = []` skips residue-table construction.
+
+Choose step `D = 210`. Use all remainders `0 ≤ j < D`, not a wheel that
+silently omits primes 2, 3, 5, or 7. Build `u[0] = 1 % n` and
+`u[j+1] = (u[j]*x) % n` through `j+1 = D`; retain babies `u[0..D-1]`
+and step `h = u[D]`. For each prime use the unique index map
+`i = q / D`, `j = q % D`, so `q = iD+j`. Initialize
+`i₀ = Q.head / D`, `v = h^i₀ % n` by one binary exponentiation. In
+ascending prime order, advance `v = v*h % n` once per increment of `i`,
+including intervening blocks with no prime. Within one block reuse `v`.
+The candidate term is
+
+```
+t(q) = ((v*u[j]) % n + n - 1) % n
+v*u[j] ≡ x^(iD+j) = x^q (mod n).
+```
+
+This identity is exact for every enumerated prime. There is no inversion,
+sign pairing, rounding of interval endpoints, or test at composite indices.
+It needs no fresh exponentiation per prime. A prime equal to `b₂` is tested;
+a prime equal to `b₁` is excluded. Primes dividing `D` use the same map.
+
+Accumulate `P = (P*t(q)) % n`, initially `1 % n`, and retain the terms
+with their primes in a buffer of at most `K = 32` entries. Flush after
+exactly 32 candidates or at the final nonempty partial batch. Giant-block
+boundaries and prime gaps do not flush. Do not take an extra gcd after a
+final full batch, and do not take one for an empty batch.
+
+At each flush compute `g = gcd(P,n)`:
+
+- `g = 1`: discard that buffer, reset `P = 1 % n`, continue.
+- `1 < g < n`: validate and return `factor g` immediately.
+- `g = n`: scan the retained terms in ascending prime order, computing
+  `gcd(t(q),n)` individually. Skip both 1 and `n`; return the first proper
+  divisor after validation. In particular, a leaf with gcd `n` does not stop
+  recovery before later leaves. If no leaf gives a proper divisor, return
+  `whole` and stop this continuation. Never turn `whole` into a successful
+  split, and do not continue into later batches after unsuccessful recovery.
+
+No replayed exponentiation or product tree is needed for recovery. `noFactor`
+means the interval ended with every batch gcd equal to 1 (or a documented
+invalid/empty input); it makes no primality claim.
+
+`Event` records stage-1 and continuation calls in execution order. A call
+event contains the subject, base (stage 1 only), requested and effective
+bounds, terminal outcome, and a reason for an invalid/empty early return.
+A continuation event also contains the number of candidates evaluated,
+giant advances, modular multiplications, and actual setup gcd count. Nested
+batch records contain first/last prime, length, batch gcd, and the ordered
+recovery gcds actually taken. Stage-1 events distinguish setup-factor,
+stage-factor, stage-whole, and ready-residue outcomes. Within an enabled policy, skipping an eligible continuation
+for budget or policy-cap reasons emits a zero-attempt diagnostic with the
+reason and intended bounds. A disabled policy emits no new events; its
+existing trace remains unchanged. Attempt totals come from counted results, not trace length;
+diagnostics and nested batch records are not attempts. Traces are untrusted
+data, never checker evidence. Define the nested batch record and `Event`
+before `Run`; both are ordinary data types deriving `Repr, DecidableEq`,
+as do `Stage1` and `Run`. The event fields and early-return reasons above
+are the required data schema, not proof fields.
+
+#### Conditional success
+
+Let `p` be prime, `p ∣ n`, `gcd(a,n) = 1`, and `x = a^M % n`, for valid
+standalone input. For each `q ∈ Q`, prove
+
+```
+p ∣ t(q) ↔ ord_p(a) ∣ M*q.
+```
+
+After stage-1 gcd 1, `ord_p(a) ∤ M`. This is a mathematical opportunity,
+not a guarantee of a proper divisor: other components of `n` may divide
+the same term or different terms in its batch. For a batch `C` actually
+reached, define `P_C = (∏ q∈C t(q)) % n`. If such a `q` is in `C`, then
+`p ∣ gcd(P_C,n)` and that gcd is greater than 1. If additionally
+`gcd(P_C,n) < n`, the algorithm returns a proper factor at that flush.
+If `gcd(P_C,n) = n`, recovery returns a proper factor exactly when some
+leaf has `1 < gcd(t(q),n) < n`; otherwise it reports `whole`.
+
+One sufficient, checkable proper-factor hypothesis is `n = p*r` for
+distinct primes and `r ∤ t(s)` for every `s ∈ C`, while `p ∣ t(q)` for
+some `q ∈ C`: then the batch gcd is `p`. These statements require that
+the batch is reached; an earlier unrecoverable whole batch can terminate
+the search. They are not equivalences with smoothness of `p-1`.
+Even for stage 1, the sufficient condition is `p-1 ∣ M`, not merely that
+all prime divisors of `p-1` are small: their powers must fit `M` too.
+
+#### Work, storage, and arithmetic choice
+
+Let `L = |Q|`, `G = floor(Q.last/D) - floor(Q.head/D)` for `L > 0`,
+and `ell(k)` be binary bit length, with `ell(0) = 0`. A full continuation
+uses at most
+
+```
+D + 2*ell(floor(Q.head/D)) + G + 2*L modular multiplications,
+2 + ceil(L/32) + 32 gcds,
+D + 32 + 10 working residues modulo n (excluding the optional trace).
+```
+
+The terms pay for babies/step, the initial giant, giant advances, and
+candidate evaluation plus accumulation. The two gcds are raw-residue
+preflight; at most one whole batch is recovered. For `L = 0`, no modular
+multiplications or batch gcds occur. Proper-divisor validation adds at most
+one division/remainder test on a factor exit. Every multiplication includes
+reduction modulo `n`; operands have at most `bitLength(n)` bits and the
+unreduced product at most twice that. A residue subtraction adds an addition
+and a remainder per candidate. Stage 1 separately costs at most
+`2*Σ_{ℓ≤b₁, prime} ell(ℓ^floor(log_ℓ b₁))` modular multiplications and
+two gcds including setup. Initial base/residue normalization is separate.
+
+Enumeration is additional work: `primesBelow (b₂+1)` has the sieve cost
+specified under Complexity plus linear readback/filter work. It stores an
+`O(b₂)`-bit sieve and up to `π(b₂)` prime indices (each at most `b₂`),
+including any retained filtered list. This is not constant-memory search.
+The bound 4194304 caps enumeration, `L`, `G`, and trace size independently
+of the modulus; arbitrary-size input arithmetic still depends on `n`.
+Full traces add `O(L)` small indices and up to `ceil(L/32)+32` gcd values
+of at most `bitLength(n)` bits. Benchmarks report trace-enabled overhead
+separately; counters may replace retained batch detail only in an explicitly
+selected trace-disabled mode with identical results and accounting.
+
+The stage-2 reference implementation uses direct `Nat` multiplication
+and remainder on every modulus size (GMP-backed for large naturals).
+Stage 1 retains its existing word-Montgomery `powMod` dispatch. The 64-bit
+track therefore compares their actual implementations, not the abstract
+cost of equal modular operations. Label that backend difference in the
+report; no claim that all-`Nat` is optimal on words follows from this choice.
+A word-`MontCtx` stage-2 variant may be compared in adjacent paired runs
+with setup and conversions included and the same residue/gcd semantics. Existing `MontCtx` is word-sized and must not be called an
+arbitrary-precision modular context. A prepared big-integer context is not
+assumed to exist. Before default enablement, apply the benchmark decision
+below to direct `Nat`: if it passes the route-usefulness gate, retain it;
+if it fails, leave defaults disabled. A prepared-context implementation may
+then be evaluated, but must specify its representation, reduction equality,
+one setup per modulus, entry/exit conversions, and storage first. Select it
+only if the same paired benchmark passes with context setup and conversions
+included in total time. No backend crossover or performance result is claimed
+by this specification; those require implementation measurements.
+
+#### Acceptance fixtures and measurements
+
+These exact fixtures all use `a = 2`, `b₁ = 5`, `M = 60`, setup gcd 1,
+and stage-1 gcd 1. For `b₂ = 13`, `Q = [7,11,13]`; the partial batch
+is flushed at the endpoint. Orders are modulo the displayed prime factors.
+
+| `n` | orders | `x` | `b₂` | terms in prime order | batch product mod `n` | result |
+|---|---|---|---|---|---|---|
+| `1081 = 23*47` | `11,23` | 216 | 13 | `486,299,11` | 736 | `factor 23` |
+| `1081 = 23*47` | `11,23` | 216 | 7 | `486` | 486 | `noFactor` |
+| `2047 = 23*89` | `11,11` | 32 | 13 | `3,0,1023` | 0 | `whole`; leaf gcds `1,2047,1` |
+| `1219 = 23*53` | `11,52` | 998 | 13 | `969,989,954` | 0 | recovery returns 23; leaf gcds `1,23,53` (last not executed) |
+
+Also require setup `search 1081 23 5 13 = factor 23`, stage-1 factor
+`search 161 2 5 13 = factor 7`, and stage-1 whole
+`search 15 2 5 13 = whole`, all without continuation. Conformance covers
+invalid bases/moduli, raw nonunit residues, empty/reversed intervals, bounds
+0 and 1, the primes dividing 210, prime endpoints, multiple giant blocks
+and gaps, lengths 31/32/33/64, cap equality, exact attempt totals,
+deterministic state, and budget skips. CI checks cap arithmetic and the
+proved result equalities (also using early-exit inputs), not a full scan at
+4194304; endpoint-scale performance runs belong to the manual benchmark
+suite. Test the recovery helper separately
+on a synthetic buffer with a whole leaf before a proper leaf (for example
+terms `[0,23]` modulo 1081); this is not claimed to arise from the prime
+sequence of a valid continuation.
+Cross-check candidate terms against independent modular powers; this slow
+oracle is for tests, not the executable route. Check the fixture orders by
+minimality, not just by a single power returning 1.
+
+The route benchmark family fixes `b₁ = 64`, base 2, and the following
+extra primes and factors, with `b₂ = q` and a second track `b₂ = 2*q`:
+
+| `q` | prime `p = k*q+1` | `k` |
+|---|---|---|
+| 67 | 4175126843 | 62315326 |
+| 127 | 1245980999 | 9810874 |
+| 257 | 2889804119 | 11244374 |
+| 509 | 4034518259 | 7926362 |
+| 1021 | 1984454399 | 1943638 |
+| 2039 | 3821489723 | 1874198 |
+| 4093 | 1266840803 | 309514 |
+| 8191 | 2407646159 | 293938 |
+| 16381 | 3346015823 | 204262 |
+| 32749 | 3530931683 | 107818 |
+
+Each row has `k ∣ M = lcm(1..64)`, `2^M mod p ≠ 1`, and
+`2^(M*q) mod p = 1`, so `ord_p(2)/gcd(ord_p(2),M) = q`.
+Choose and commit distinct prime cofactors `r`
+giving total sizes 64, 128, 256, and 512 bits, with stage-1 gcd 1 and
+`ord_r(2) ∤ M*s` for every interval prime `s`; publish factor/order
+witnesses and reject unsuitable fixtures during preparation, outside timing.
+These factors exceed the trial-division table. Integration measurements
+must additionally show from events that the continuation actually executes;
+successes entirely due to preceding rho are not stage-2 usefulness evidence.
+The same prepared family with `b₂ = q-1`, for `q ≥ 127`, provides
+full-scan misses. The empty interval at `q = 67, b₂ = 66` is a separate
+early-exit control and carries no scaling evidence; add fixed whole/recovery
+controls from the table above.
+
+Ordinary factorization runs rho before p−1, so the small-factor table alone
+cannot justify its dispatch. Its integration arm instead uses the following
+larger factors at total sizes 128, 256, and 512 bits, with the same cofactor
+conditions and the actual policy bounds `(64,4096)`: rows with `q ≤ 4093`
+are opportunities, and the last three rows are full-scan miss controls.
+Construction and
+primitive measurements retain the smaller table. All five fixed seeds
+`[0,1,2,3,4]` participate, including trials where rho succeeds first; only
+trials whose events show stage 2 executing can establish its usefulness.
+Do not infer route participation from factor size alone. If no trial reaches
+it, the integration evidence is inconclusive and defaults remain disabled.
+
+| `q` | prime `p = k*q+1` | `k` | primality witness `w` |
+|---|---|---|---|
+| 67 | 640593315381498719 | 9561094259425354 | 14 |
+| 127 | 989082332266914563 | 7788049860369406 | 5 |
+| 257 | 109241628152434139 | 425064700982234 | 2 |
+| 509 | 152168461520334179 | 298955720079242 | 2 |
+| 1021 | 525357598587673739 | 514552006452178 | 2 |
+| 2039 | 73929628837078823 | 36257787561098 | 5 |
+| 4093 | 100085828142782543 | 24452926494694 | 5 |
+| 8191 | 277827051595988963 | 33918575460382 | 2 |
+| 16381 | 369205211213026103 | 22538624700142 | 5 |
+| 32749 | 738117420304950359 | 22538624700142 | 7 |
+
+Here again `k ∣ M`, `2^M mod p ≠ 1`, and `2^(M*q) mod p = 1`.
+The additional witness satisfies `w^(p-1) mod p = 1` and
+`gcd(w^((p-1)/ℓ)-1,p) = 1` for every prime `ℓ ∣ p-1`. The complete
+factorization of `p-1` is obtained by trial-dividing `k` by the primes at
+most 64 and adjoining `q`; the full-order criterion therefore verifies
+primality without a probable-prime assumption. Retain these witnesses in
+the committed implementation fixtures. The ordinary-policy miss controls
+must run the actual `(64,4096)` allocation, not the varying standalone bounds.
+
+Register separate measurements for (1) setup: normalization, base gcd,
+enumeration for both stages, and any modular-context construction;
+(2) stage-1 exponentiation and final gcd
+on prepared primes/context; (3) stage-2 babies, giants, products, and gcds
+from a saved stage-1 residue and prepared interval; (4) total standalone
+stage 1 plus continuation, including all setup. Also measure continuation
+including its interval enumeration to expose the actual adapter cost.
+Do not bill stage-1 exponentiation twice or omit setup from total time.
+Record executed bounds, outcome, attempts, operation counts, peak storage,
+trace mode, and all timings. Use the full-scan miss track for the
+`D + 2*ell(i₀) + G + 2*L` modular-operation upper-bound model at fixed
+modulus size, retaining the fixed baby-table cost. Use the nonempty rungs
+`q ≥ 2039` for the scaling fit; smaller rungs measure setup amortization.
+For the reference binary-power schedule, also record the exact power cost
+(the bit/popcount count, zero at `i₀ = 0`) so the expected timing model
+tracks executed operations rather than fitting an asymptotic bound alone;
+measure enumeration separately under the sieve model. Compare varying
+modulus sizes as fixed operand-size tracks, not as unit-cost arithmetic.
+
+Use native Mathlib-free bench drivers and also the interpreted construction
+path for `primality?`. Follow the shared-host policy and fixed trial-major
+schedule in [benchmarking](../../SPEC/benchmarking.md). Compare enabled
+and disabled policies in eight adjacent blocks alternating AB/BA, retaining
+all samples and allowing at most one unchanged inconclusive rerun. A consumer
+passes the usefulness gate if the enabled policy either completes a checked
+factorization/certificate that the disabled policy exhausts on, or has median
+total time at most 0.90 of disabled on the successful extra-prime family;
+on the full-scan misses and existing balanced/smooth/table regression
+families its median total time must be at most 1.10 of disabled. Compare at
+equal seeds and existing rho/ECM work caps, equal factor-worklist fuel and
+base stage-1/ECM caps for ordinary factorization (with the enabled policy
+charging its one additional continuation explicitly), and equal global
+`maxAttempts` for construction. Report success counts separately from timing,
+and never time an exhaustion as a successful result. Across all required families, the enabled policy
+must retain every checked success of the disabled policy. Ordinary
+factorization and construction pass independently; #10291's four inputs are
+an additional fixed corpus, not evidence of an extra-prime base order or a promised success family.
+
+Construction comparisons use the current production `constructionBudget`,
+changing only `pMinusOneStage2` between arms and recording the actual limits.
+Interpreted construction uses the shared fresh-module runner with warm imports
+and a same-round import-only baseline. Execute each distinct input once per
+arm in eight paired rounds, with a separate module and baseline for each
+input. Sum baseline-subtracted input costs within each round, then report
+the median family cost over the eight rounds, separating checked successes
+from exhaustion. Report the summed baseline-variation envelope alongside
+these descriptive costs; baseline resolution does not establish that a policy
+difference exceeds shared-host variation. Retain every input, checked outcome and route trace.
+This is construction-search phase attribution, not an asymptotic proof-search
+claim or kernel-replay timing. Tiny regression families whose workload cannot
+be resolved above baseline variation receive an inconclusive timing verdict,
+not a fabricated ratio. No in-process clocks appear in the probe import
+closure. Native per-input timings remain the compiled performance gate.
+
+The internal comparator is the identical bounded policy with continuation
+disabled. An external p−1 comparator is optional and **informational**, never a
+Phase-4 gate; if added, pin its version, base, both stage bounds, and one
+persistent subprocess protocol, and record
+protocol overhead under the repository comparator rules. A default-bound
+`factor` subprocess is not a stage-2 comparison. These registrations extend
+the existing bench/conformance targets and single CI job, never a new job
+or matrix. The implementation evidence is retained in
+[the stage-2 report](../../reports/hex-primality-stage2.md), and the required
+`p-minus-one-stage2` and `p-minus-one-stage2-policy` Phase-4 families are
+registered in `libraries.yml`. The ordinary factorization policy did not meet
+its usefulness threshold and remains opt-in. Construction passed its native
+128-bit opportunity gate but produced no additional checked certificates over
+the disabled policy, so its default also remains off.
+
+#### Certificate-search allocation
+
+Add `pMinusOneStage2 : Bool := false` to `FactorSearchBudget`.
+`ConstructionBudget` carries it through its existing `factor` field;
+do not add a second flag with competing precedence. The tactic option
+`primality? (pMinusOneStage2 := true)` sets that nested field for explicit
+bounded experiments. The ordinary `primality`/`primeCert?`
+core keeps its one base-2/bound-64 stage-1 call and no continuation.
+For construction, after each configured stage-1 call returning a residue,
+the enabled policy tries at most one continuation with
+`b₂ = 8*b₁` only when `b₁ ≤ 4096`, before advancing to the next
+base/bound pair. This construction policy caps stage 2 at 32768, independently
+of the primitive ceiling; the default two-base ladder can execute at most
+six continuations per worklist entry. Skip larger stage-1 bounds, `b₂ ≤ b₁`,
+or a depleted total attempt allocation. No batch is charged as a separate
+attempt: the interval cap supplies the per-attempt work bound. `factor`
+splits as usual;
+`noFactor` and `whole` both advance to the next pair, then bounded rho,
+then retain an unresolved residual. There is no retry inside a continuation.
+Charge each continuation immediately against the same global `maxAttempts`
+as stage 1, rho, recursive construction, and witness candidates. Zero
+remaining attempts performs no stage arithmetic, sieve, or random draw.
+
+The factor-result boundary gains `events : List FactorEvent`, retained
+in construction diagnostics on both success and exhaustion. Define this
+Mathlib-free upstream diagnostic type with a `pMinusOne` case containing
+the shared `PMinusOne.Event`, and a `route` case containing a route name
+and a list of string key/value fields. The latter carries downstream
+diagnostics without an upstream dependency on downstream types. The
+HexIntFactor adapter serializes every ECM event as route `ecm`, with fields
+`subject`, `sigma`, requested/effective bound, `outcome` (`noFactor`,
+`factor`, or `whole`), `factor` when present, and `attempts = 1`. Preserve
+event order and p−1 skip reasons; do not drop ECM events. These fields
+are diagnostics only. Counted results remain the accounting source.
+`SearchExtension` uses ABI version 3. Reject incompatible registrations before
+execution. A producer unable to honor a requested policy or total attempt limit
+declines without work, retaining the input residual and state. The ordinary
+HexIntFactor adapter declines total-limit construction allocations.
+Pollard stage-2 construction enablement defaults to false and requires the
+independent per-consumer usefulness evidence specified above. Ordinary
+factorization measurements do not establish construction usefulness. Only
+dynamically validated proper divisors enter assembly, and the certificate
+checker remains the final authority.
+
 ### Taking up downstream factoring advances
 
-hex-int-factor's stronger factorization reaches, or is intended to reach, this
-library's search without inverting the proof dependency through two current
-routes and one deferred extension:
+HexIntFactor supplies stronger factorization to this library's search without
+inverting the proof dependency through these interfaces:
 
-1. **Certificate hand-off** (works today). `PrimeCert` is plain data
+1. **Certificate hand-off.** `PrimeCert` is plain data
    and `checkPrime` accepts a certificate from any producer, so a
    caller that factors `n - 1` better than `partialFactor` assembles
    the node itself and lets the checker decide. hex-int-factor needs
    exactly this to prove its own certificate's factors prime.
-2. **Shared stage-1 primitives sit here.** `rhoFactor?` and Pollard
-   `p − 1` stage 1 live beside each other, under the same dynamically
+2. **Shared factor-search primitives sit here.** `rhoFactor?` and Pollard
+   `p − 1` stages 1 and 2 live beside each other, under the same dynamically
    validated proper-factor contract and counted/resumable boundary. Both
    libraries consume stage 1, and the fixed base-2/bound-64 call widens
    `partialFactor`'s reach cheaply. Its public smoothness request is capped by
-   `smoothBound B = min B 9999`, preserving the measured search budget while
-   remaining inside the complete committed table; `pMinusOneStage1_bound`
+   `smoothBound B = min B 524288`, independently of the committed table;
+   ordinary certificate search still requests bound 64; `pMinusOneStage1_bound`
    identifies every larger request with that capped call. ECM stays downstream;
    curve arithmetic is a real dependency, not a shared primitive.
+   The stage-2 contract above defines the separate interval ceiling, residue
+   reuse, counted continuation, and benchmark-gated construction policy.
 3. **The optional search hook.** `primeCertWith?` and its counted internal
    form parameterize certificate construction by `FactorSearch`; `primeCert?`
    still selects `defaultFactorSearch` and stays on the original route.
-   `Hex.PrimalityTactic.SearchExtension` is ABI version 1. A downstream
+   `Hex.PrimalityTactic.SearchExtension` uses ABI version 3. A downstream
    registration names an ordinary compiled `FactorSearch` declaration; the
    elaborator checks the registration type, ABI version, declaration presence,
    and factor-declaration type before evaluation. Names are tried in the fixed
@@ -731,7 +1564,13 @@ checked against one mathematical sieve run through bounded kernel-replayed
 batches; it is not recomputed from the sieve at use time. -/
 def primeTable : Array Nat
 
-/-- Membership, by binary search. -/
+/-- Final verified sieve bitset, indexed by `numOfIndex`. -/
+def primeBits : Nat
+
+/-- Compiled binary-search implementation. -/
+def tableSearch (n : Nat) : Bool
+
+/-- Kernel bit lookup, with an equal compiled binary-search implementation. -/
 def isTablePrime (n : Nat) : Bool
 
 theorem primeTable_sorted : primeTable.toList.Pairwise (· < ·)
@@ -740,6 +1579,23 @@ theorem mem_primeTable_of_prime {n : Nat} (hp : Hex.Nat.Prime n)
     (hlt : n < primeTableBound) : n ∈ primeTable
 theorem isTablePrime_iff {n : Nat} : isTablePrime n = true ↔ n ∈ primeTable
 ```
+
+Kernel reduction of `isTablePrime` reads the corresponding bit of the
+committed, verified final sieve state, including the exceptional primes 2
+and 3 and a check that the input is represented at that index. This avoids
+forcing the array's list representation when checking small certificate
+leaves. An equality proved for all inputs supplies a
+`@[csimp]` replacement with the existing binary search at runtime. The
+committed prime table and sieve bound remain unchanged; exposing the final
+state requires no new generated table or primality assumption.
+
+The adjacent old/new replay evidence is
+`reports/bench-results/hex-primality-table-replay-issue-10268.json`, reproduced
+by `scripts/bench/primality_table_replay.py --output /tmp/table-replay.json`.
+One old lookup costs about as much as the complete multi-leaf check in these
+samples, consistent with shared array reduction within one kernel replay;
+the evidence does not multiply that cost by the number of leaves. The new
+lookup alone is indistinguishable from fresh-build overhead at this scale.
 
 `primeTable_sorted` gives distinctness and is what the binary search
 needs; `isTablePrime_iff` is what lets a caller conclude anything from
@@ -775,16 +1631,40 @@ doubling round also truncates to the width and skips shifts that alone
 exceed it: an untruncated round at the 32-round budget would materialise
 numbers of `step · 2^31` bits.)
 
-The four hypotheses are all load-bearing. `hmask` is the range promised
-by the fixed 32 doubling rounds; without it the marking masks no longer
-cover the represented bitset. Without `hrange` the statement is false: above
-the represented range every bit is clear while `numOfIndex t` may well
-be prime. Without `ht` it is false at `t = 0`, where `numOfIndex 0 = 1`.
-And `hsqrt` is what makes the marking loop complete.
+The mask depth is `max 32 (width.log2 + 1)`, so the masks cover the
+requested width without a fixed enumeration ceiling. The round count remains
+32 at the required 524288 endpoint; the generalization supplies an unrestricted
+correctness theorem, rather than accelerating this endpoint. `sieve_prime_iff`
+requires only `hsqrt`, `ht`, and `hrange`; `sieve_testBit_iff` retains the
+original signature for existing callers. The first 32 rounds remain the
+minimum, preserving table replay at its existing bound.
 
-Indexing the residues coprime to `6` excludes `2` and `3` by
-construction, so the table's construction adds them explicitly and
-`primeTable`'s two theorems, not the sieve's, are what a caller uses.
+`primesBelow bound` runs that sieve with `bound.sqrt + 1`, reads it back,
+and adds the exceptional primes `2` and `3` when they are below the bound.
+Its public contract is:
+
+```lean
+n ∈ primesBelow bound ↔ n < bound ∧ Hex.Nat.Prime n
+```
+
+`primesBelow_pairwise_lt` and `primesBelow_nodup` give strict ascending order
+and uniqueness. This compiled runtime API is independent of `primeTable`.
+Pollard p-minus-one and ECM enumerate `primesBelow (effectiveBound + 1)`,
+so every prime up to the effective bound participates in stage one. The
+primitive cap is 524288; ordinary search retains its existing 9999 ladder
+cap. Generated lists are never embedded as proof evidence. `primesIn`
+keeps its current implementation pending comparative segment measurements.
+
+Compiled `bitsToList` readback processes 64 candidate bits per extracted
+word. The structural one-bit scan remains its specification, with a
+`@[csimp]` equality proved for every bitset, starting index, and count. This
+reduces large-integer shifts from one per candidate to one per 64 candidates;
+it preserves the exact list and its order. Pollard p-minus-one and ECM retain
+the same coverage and deterministic attempt schedules. The sieve itself is
+unchanged by this readback optimization. The interpreted `#eval` comparison
+in `reports/bench-results/hex-primality-readback-issue-10268.json`, reproduced
+by `scripts/bench/primality_readback.py --output /tmp/readback.json`, measures
+the regime used by `primality?`; it is not a native-executable benchmark.
 
 The table is a consequence of one sieve run, but not one monolithic
 reduction. A Mathlib-free elaborator computes the bitset with a compiled
@@ -824,9 +1704,8 @@ order and tie-breaking policy. The dependency is recorded explicitly in both
 **Statements of the form "every prime in `[1, x]` satisfies `P`"** are
 what the sieve unlocks and what the table alone does not: the table
 gives a list, and the completeness direction plus a `decide +kernel`
-fold over it gives the universally quantified statement. That is the
-case [future-work](../../SPEC/future-work.md) calls open, and it is open only
-in the sense that nobody has run it.
+fold over it gives the universally quantified statement. No production caller
+currently performs such a fold.
 
 ## The API
 
@@ -856,6 +1735,7 @@ def defaultPrimeFuel (n : Nat) : Nat
 structure PrimeCertBudget where
   rhoRestarts : Nat
   rhoSteps    : Nat
+  squfof      : Squfof.Policy := .off
 
 def defaultPrimeCertBudget : PrimeCertBudget
 
@@ -1069,8 +1949,9 @@ certificate-construction depth. Partial factorization is bounded separately by
 `2 * n.log2 + 8` worklist
 steps at each certificate node and the rho restart/cycle allocation above. The
 fixed witness budget remains 32 candidates per factor entry; the registered
-HexIntFactor producer additionally admits at most eight p−1/ECM attempts within
-each supplied worklist step. The exact attempt counter includes p−1 calls, rho
+HexIntFactor producer additionally admits at most eight stage-1/ECM attempts
+and one enabled stage-2 continuation within each supplied worklist step,
+always bounded by its fuel. The exact attempt counter includes p−1 calls, rho
 restarts, ECM curves, and witness candidates and can therefore exceed the
 recursive fuel used at a node. Inputs above 512 bits are rejected before
 Miller--Rabin or certificate search. Search exhaustion reports the seed,
@@ -1132,8 +2013,9 @@ only in the
 ## Kernel exposure
 
 The replay closure is `checkPrime` and what it calls: a kernel-facing
-modular exponentiation, `Nat.gcd`, `Nat.mod`, and the table's binary
-search. `Nat.sqrt` is deliberately absent: it is well-founded recursion
+modular exponentiation, `Nat.gcd`, `Nat.mod`, and the table's verified
+sieve-bit lookup (binary search remains its compiled implementation).
+`Nat.sqrt` is deliberately absent: it is well-founded recursion
 and does not kernel-reduce, which is why the square bound is checked as
 `n < F * F` and the cube-root discriminant through the stored witness.
 
@@ -1143,9 +2025,13 @@ branches on whether the modulus fits a `UInt64` and whether it is odd,
 taking a Montgomery path in the good case, so the kernel is sent down
 the `Nat` route instead:
 
-- `HexArith.powModNat`, its worker `powModNatGo`, and `bitLength` are
-  all `@[expose]`, so kernel reduction no longer stalls at the module
-  boundary;
+- `HexArith.powModNat` and its raw `Nat.rec`/`Bool.rec` workers are
+  exposed. Fixed windows of six bits through `2^64`, four bits through
+  `2^512`, three bits through `2^1024`, and two bits through `2^2048`
+  reduce kernel work. Larger moduli use
+  narrower windows for small reduced bases or binary square-and-multiply.
+  The exact algorithm and intermediate-size
+  bounds belong to the hex-arith SPEC;
 - `powModNat_eq` is exported (with `0 < p`), alongside
   `powModNat_modulus_zero`;
 - `powModNat` guards `p = 0` to `0`, matching `powMod`, which is what
@@ -1153,6 +2039,27 @@ the `Nat` route instead:
   `powModNat` is the kernel-facing specification and `powMod` the
   runtime twin (principle 11's pattern; the earlier state had
   `powModNat a n 0 = a ^ n`, a full unreduced power).
+
+`boundedPowMul` uses a checked shift for base `2`: for positive exponent `e`,
+it compares `acc` with `bound >>> e` before returning `acc <<< e`. Other bases
+use raw recursors. The kernel definition is proved equal to the compiled
+structural loop at every input, including zero exponents, zero accumulators,
+and oversized exponents. It retains the same early overflow rejection and
+accepted results. Table lookup and the arithmetic checks use primitive Nat
+comparisons. Subject ordering uses a direct list fold, and `checkPrime` uses
+the certificate’s structural recursor instead of generated course-of-values
+recursion. `checkWitnesses` shares a Fermat result only after that base passes;
+a changed base starts a new group. Each public checker is a `noncomputable` kernel specification with a proved
+`@[csimp]` rewrite to its compiled counterpart for every input. Compiled table lookup still uses
+binary search. The internal `pockProduct` sentinel is proved equivalent to
+`certProduct` for positive subjects; callers establish that precondition
+before using it, and the final arithmetic check rejects the zero sentinel.
+Both cube-root arithmetic arms use this bounded product and primitive order comparisons,
+just as the square-root arm does. Their unconditional equality theorems retain
+the original compiled arithmetic, including rejection on zero subjects,
+overflowing exponents, invalid ordering, invalid interval witnesses, and sieve
+bounds outside the cap. Optimizing replay must also check complete `primality?`
+and native construction for regressions; a smaller kernel timer alone is insufficient.
 
 `checkPrime` is therefore written against `powModNat`. The bench
 family "kernel replay" below is what confirms the choice was the
@@ -1176,10 +2083,12 @@ hex-arith's kernel-reducible `isPrimeTrial`.
 `n` the input, `b = log₂ n` its bit length, `k` the number of factor
 entries at one certificate node, and `K` the total number of factor entries
 in the part of a certificate tree replayed before acceptance or rejection.
+For stage 2, `i₀ = floor(Q.head/210)` and `ell` is binary bit length
+(`ell(0) = 0`); the empty interval skips all residue-table work.
 
 | operation | cost | note |
 |---|---|---|
-| `isTablePrime` | `O(log |primeTable|)` | binary search |
+| `isTablePrime` | compiled: `O(log |primeTable|)` comparisons; kernel: a constant number of Nat operations on the input and fixed 33,333-bit state | binary search at runtime, verified bit lookup in the kernel |
 | `isPrimeTrial` | `O(√n)` remainder tests | hex-arith, unchanged |
 | `millerRabin` one base | `O(b)` modular multiplications | |
 | `isProbablePrime` | `O(13 b)` | fixed base list |
@@ -1189,7 +2098,9 @@ in the part of a certificate tree replayed before acceptance or rejection.
 | `checkPrime`, full tree | `O(Σᵥ kᵥ bᵥ)` modular and bounded ordinary multiplications; `O(K)` subject comparisons, divisions, and gcds | `kᵥ`, `bᵥ` are the entry count and subject bit bound at each visited node; arithmetic preflight bounds each replayed child's subject below its parent, so the sum is `O(K b)` for root bit length `b` |
 | `primeCert?` | dominated by `partialFactor` | bounded by recursive fuel, one base-2/bound-64 p−1 call per nontrivial partial search, per-node worklist fuel, and `defaultPrimeCertBudget` rho restarts/cycle steps |
 | `primeCertWith? factor` | dominated by `factor` plus the same certificate assembly | one producer invocation per non-table certificate node with explicit recursive, worklist, and rho allocations; the producer must honor the allocation and supplies its remaining cost model |
-| sieve to `N` | `O(√N + π(√N) · 32)` loop/doubling rounds | each marking round is a bit operation on an `N/3`-bit `Nat` |
+| Pollard p−1 stage 2 | at most `210 + 2*ell(i₀) + G + 2*L` modular multiplications; `2 + ceil(L/32) + 32` gcds | `L` interval primes, `G` giant advances; residue, sieve, index, and trace storage are specified in the stage-2 contract; enumeration is additional |
+| `Squfof.factor` | at most `A*F` recurrence steps and `O(A*F*C)` queue comparisons, plus bounded-size arithmetic and per-attempt initialization | `A ≤ 16` multiplier attempts, `F` per-multiplier steps, `C` queue capacity; operands bounded by the `<2^64` input domain and fixed multiplier list; no worst-case `N^(1/4)` claim |
+| sieve to `N` | `O(√N · max(32, log N))` loop/doubling rounds | each marking round is a bit operation on an `N/3`-bit `Nat` |
 
 These are operation counts, not bit complexity; subject comparisons,
 divisions, gcds, and both kinds of multiplication operate on big integers,
@@ -1209,14 +2120,21 @@ bits, so every marking step is a GMP `shiftLeft`, `lor`, and `land` on
 a large integer rather than an array write. **Whether a compiled
 `ByteArray` sieve would beat it is a benchmark hypothesis, not a
 theorem** -- compiled `Nat` bit operations are big-integer operations
-too. The two are nonetheless different products and the SPEC keeps them
-apart: the bitset sieve exists to verify the committed table in the kernel,
-while `primesIn` is the unrestricted trial-division range/filter route whose
-result is converted to an `Array`. The "segment generation" bench family
-below measures `primesIn`; the bitset sieve is priced by the "table
-verification" family's module-elaboration cost.
+too. The bitset sieve supplies both kernel table verification and compiled
+`primesBelow` enumeration. The latter adds `O(N)` index tests and list
+construction to read back an initial segment. `primesIn` remains the
+unrestricted trial-division range/filter route whose result is converted to an
+`Array`; changing it requires a separate comparative measurement. The existing
+segment family measures `primesIn`, while the runtime enumeration has a fixed
+524289-bound target alongside table-verification and sieve-family evidence.
 
 ## Conformance
+
+The stage-2 implementation must cover the exact residues, base orders,
+setup/stage-1 exits, interval and batch boundaries, recovery, cap equalities,
+and budget/state cases in
+[its acceptance contract](#pollard-p-minus-one-stage-2). These are search
+tests and proper-divisor theorems, not new certificate-checker assumptions.
 
 Per [SPEC/testing.md](../../SPEC/testing.md). A driver at
 `conformance/HexPrimality/EmitFixtures.lean` exposed as
@@ -1295,6 +2213,13 @@ ceremony rather than independent evidence.
 
 ## Benchmarking
 
+Pollard p−1 stage 2 adds the separate setup, stage-1, stage-2, total, and
+adapter-continuation measurements defined in
+[its acceptance contract](#pollard-p-minus-one-stage-2), including the
+extra-prime order family and full-scan misses. Native measurements determine
+the arithmetic choice; construction additionally measures the interpreted
+path. Default enablement requires the consumer-specific usefulness gate.
+
 Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexPrimality/Bench.lean`. Both native and kernel suites, because
 the kernel side is the point of the library.
@@ -1366,6 +2291,10 @@ acceptance, not a second compiled timing of the executable checker or search.
 | input elaboration, production-search attribution, and emitted certificate literal | matched fresh modules | 31, 61, 123, 256, 511, and 512 bits |
 | `prime_of_checkPrimeAt` theorem instantiation and kernel replay | matched fresh modules | the same exact emitted certificates and allowed axiom set |
 | Mathlib-free `primality` elaboration | matched fresh modules | the same size family, including the accepted 512-bit ceiling |
+| `Construction.run` | fixed compiled `runConstruction` | Curve25519, mode 3 |
+| `primesBelow` through the construction bound | fixed compiled `runRuntimePrimes` | bound 524289, mode 3 |
+| emitted Curve25519 checker | fixed compiled `runCurveChecker` and adjacent fresh replay modules | pinned three-node literal and five-node reference |
+| `primality?` input, search, literal, rendering, replay, and end-to-end costs | adjacent fresh modules | Curve25519 |
 
 All six proof sizes use an import-only baseline, separate input, search,
 literal, replay, and full-tactic modules. The external runner rotates the
@@ -1394,21 +2323,432 @@ search, and replay plus the sole Pocklington-3 constructor use mode 3 fixed
 budgets: their structurally distinct single boundary inputs do not admit an
 honest one-parameter family.
 
-**Comparators.** PARI `isprime` via cypari2 is **informational**: PARI
-uses BPSW plus APRCL and a Pocklington-style certificate only on
-request, so it is answering a different question by a different
-method, and a required ratio would compare a checker against a prover.
-PARI is the oracle and python-flint the second opinion; neither is a
-performance comparator. The right benchmarked
-comparison for the kernel side is **PrimeCert itself**, and it is
-`informational` for a reason worth stating: it is the closest prior art
-and the one number a reader will want.  The comparison uses the same six
-certificate witnesses in a pinned separate checkout, rotates tool and arm
-order, and reports absolute fresh replay times because the toolchain pins
-differ (Hex uses Lean 4.34.0-rc2; PrimeCert uses Lean 4.33.0).  It is retained
-as scheduled-host information rather than a CI gate; see
-`reports/hex-primality-performance.md` and the committed raw comparator
-record named there.
+**Comparators.** PARI `isprime` via cypari2 and FLINT `fmpz_is_prime`
+via python-flint are **informational native comparators**. They return proven
+primality decisions but do not produce Lean proof terms; the Hex construction
+route produces and self-checks reusable certificate data. Their different
+outputs and algorithms preclude a required speed ratio. PARI remains the
+conformance oracle and FLINT its independent cross-check.
+
+The native Hex comparator is the lake-built `hexprimality_policy_probe
+construction N` executable. Input parsing, startup, and certificate formatting
+are outside its timer. `#eval` search probes execute through Lean's interpreter
+under the current library configuration and are labeled as tactic-search
+observations, separately from native-executable timings. Full `primality?`
+builds include that search regime, proof emission, and kernel checking.
+
+The kernel comparator is **PrimeCert**, also informational. Fresh-module
+measurements retain imports, literal elaboration, and kernel checking, with
+adjacent baseline modules exposing overhead. The six existing bit-family
+witnesses have supplied certificates in both systems. The construction cactus
+adds Curve25519 and Curve448: Hex uses only certificates found by its declared
+construction profile, while PrimeCert receives its committed certificates.
+Missing certificates and timeouts remain unsolved, including when native
+search returns exhaustion quickly. Native plots additionally contain
+secp256k1 and NIST P-256, P-384, and P-521. These fixed, structured corpora do
+not estimate a success rate on random primes.
+
+The comparison rotates system and baseline/replay arm order and reports
+absolute fresh replay times because the measured toolchain pins differ (Hex
+used Lean 4.34.0-rc2; PrimeCert used Lean 4.33.0). All completed samples and explicit
+process timeouts are retained. Source hashes, exact inputs, versions, host
+context, and reproduction commands accompany the plots in the construction
+report. Measurements remain shared-host information rather than a CI gate;
+the earlier six-witness comparison remains in
+`reports/hex-primality-performance.md`.
+
+For kernel-only comparisons, `scripts/bench/primality_kernel_direct.py` times
+`Lean.Kernel.check` after imports and elaboration. It recursively expands all
+local proof dependencies, including auxiliary theorems emitted by
+`decide +kernel`, and checks the complete body against its declared goal.
+Imported library proofs remain dependencies. A negative control must be
+rejected. The retained `hex-primality-direct-kernel-checked-issue-10268.json` uses
+adjacent reversed systems and records every sample, source, and toolchain.
+Its matched-input plot shows growth hidden by fresh-build overhead; cactus
+rank is not a bit-length axis. Comparisons must identify the PrimeCert revision:
+its fixed-window modular exponentiation changes the replay comparison materially.
+The current [component attribution](../../reports/hex-primality-replay-attribution.md)
+separates supplied-proof kernel replay, fresh-module elaboration, certificate
+search/rendering, complete `Nat.Prime` tactics, and native construction. Match
+factor subsets and witness bases before attributing an implementation difference;
+common-base certificates can require fewer powers than individually selected bases.
+All completed samples remain evidence, with adjacent alternating before/after
+arms. Results describe the recorded shared host, not portable performance promises.
+
+The fixed construction targets and the adjacent-arm Curve25519 phase and
+replay measurements are recorded in
+[the construction report](../../reports/hex-primality-construction.md).
+
+## Reusable certificate construction
+
+`primality?` is an explicit goal tactic using `Construction.run`, independently
+of ordinary `primality` and its interactive budget. It supports the core
+`Hex.Nat.Prime` predicate; the companion registers the same syntax for
+`Nat.Prime` and emits its checker bridge. Closed transparent expressions such
+as `2 ^ 255 - 19` remain the theorem's original subject.
+
+The default `ConstructionBudget` has maximum input size 521 bits, recursion
+depth 32, 1024 total semantic attempts across the entire construction,
+1024 factor-worklist entries per node, Pollard p-minus-one bounds
+`[64, 512, 4096, 32768, 262144, 524288]` at bases `[2, 3]`, two rho restarts
+of 32768 steps, and no ECM bounds or curves. Witness search tries
+`[2, 3, 5, 7, 11, 13, 17]` before at most 32 random candidates. It admits at
+most 32 distinct factor candidates and examines at most 4096 subset masks.
+`maxSieveBound = 64` permits at most 63 divisor exclusions per candidate.
+The least admissible bound is computed with an integer square root during
+construction and checked directly during replay.
+`primality? (maxAttempts := 29)` overrides the total attempt limit; the
+unadorned tactic uses 1024. The remaining allocation is passed to each factor
+producer, recursive child, and witness search, so failed subset choices cannot
+reset it. Inputs over the bit limit have a separate size diagnostic.
+The 521-bit and 32-factor limits admit P-521 using the existing factoring
+portfolio: its predecessor yields 25 candidates in 94 factor attempts, and
+construction succeeds in 170 total attempts. Enumeration remains capped at
+4096 subsets; when truncated, it includes the full factor mask. These limits
+are a measured policy, not a completeness claim: 521 is the largest input
+width covered by the accepted construction measurements. The 522-bit boundary remains
+rejected. Writing P-521 as `2 ^ 521 - 1` needs local
+`maxRecDepth = 1024` and `exponentiation.threshold = 521` for Lean to normalize
+the original goal; the numeral and certificate replay use default limits.
+The fixed mode-3 targets `runP521Construction` and `runP521Checker`, exact
+suggestion guard, per-target traces, and paired phase measurements are described
+in [the standard-field report](../../reports/hex-primality-fields.md).
+
+All limits are explicit; exhaustion reports the full profile and exact attempt
+count. Table division, primality screening, and subset enumeration are bounded
+work but are not semantic attempts. Each node can enumerate subsets twice
+(cheap table factors, then the provider result). Each pass examines at most
+`maxSubsets` masks, with at most `maxFactors` bounded product multiplications
+and at most `maxSieveBound - 1` divisor checks per mask, plus at most
+`maxFactors` child-cost estimates before enumeration. The estimates use table
+division and one sufficiency check each; they do not recurse. These finite
+costs remain outside `maxAttempts`. The standard-field report includes a
+507-bit exhausted case with 18 factors to measure the truncated scans.
+Every stage-one call, enabled stage-two continuation, rho restart, and
+witness candidate is counted, including work discarded by unsuccessful subset
+choices. Deterministic work leaves `Rand` unchanged. Construction uses no
+external factorizer and no total trial-division fallback.
+
+The factor callback receives smooth bounds and bases through
+`FactorSearchBudget`, along with worklist fuel, the nested prime allocation,
+and `attemptLimit : Option Nat`. A producer that cannot honor a requested total
+limit must decline without work; the registered HexIntFactor adapter does so.
+Its ordinary calls have `attemptLimit = none`.
+The ordinary callback and registered HexIntFactor adapter retain their
+established schedules. The construction callback tries its declared smooth
+ladder before rho at each composite worklist entry and retains unsplit parts
+as the residual. The stage-2 contract adds an initially disabled continuation
+policy and execution trace; it does not silently change these existing
+defaults or their recorded attempt totals.
+
+Construction first tries subsets of the cheap table-division factors. Only if
+those certificates fail does it call the configured factor provider.
+The first successful cheap certificate is used: search favors construction
+latency over comparing it with certificates requiring further factoring.
+The fallback receives the remaining attempt budget and advanced random state.
+Previously tried subsets are skipped during that fallback. Before recursive certification, construction
+validates canonical factor data and bounded products. It enumerates subsets
+satisfying square-root or
+cube-root arithmetic criteria and orders them by estimated recursive replay
+cost. Each entry costs `(16 * childCost + 1) * (n.log2 + 1)`, and the
+`m - 1` divisor exclusions each add one unit. This is a search heuristic,
+not a measured cost guarantee. Table leaves cost zero construction nodes; children
+whose table-factored predecessors already satisfy a criterion cost one;
+remaining children receive a bit-size penalty. Estimates select search order
+only. When a subset cap truncates enumeration, the full factor mask remains
+among the candidates. Successful children are cached within a node's subset
+loop; reusing one consumes no additional attempts or random draws. Failed
+searches are not cached because their random state and remaining budget can
+change. Each chosen subset is recursively certified and the exact assembled
+certificate passes public `checkPrime` before emission. Invalid producer data
+cannot establish a primality verdict.
+
+The Curve25519 fixture uses three non-leaf nodes and eight factor entries,
+including two cube-root nodes. Its search starts from `Rand.ofSeed n`, takes
+29 semantic attempts and consumes no random draws. The Pollard boundary is
+checked on `(74058212732561358302231226437062788676166966415465897661863160754340907
+- 1) / (2 * 3 * 353 * 57467 * 253947789517)`: base two gives no factor at
+262144 and returns 31757755568855353 at 524288.
+
+Suggestions use Lean's core `TryThis` facility and share `reifyPrimeCert` with
+ordinary proof emission. The replacement contains the complete certificate
+literal and `prime_of_checkPrimeAt` (or its companion bridge), discharged by
+`decide +kernel`. Applying it removes search from future builds while retaining
+kernel replay. Exact `#guard_msgs` tests pin the complete Curve25519 output, a
+P-521 output, a small renderer example, and construction exhaustion. Standalone literal replay
+imports the checker-owning module only.
+
+### Explicit factor providers
+
+`primality? (factor := expression)` evaluates a closed expression at
+`FactorSearch` and passes it to the existing `Construction.run` boundary at
+every recursive node. An optional `(maxAttempts := n)` selects the total
+allowance. The expression must contain no free variables, metavariables, or
+unfinished proofs. Default budgets, subset selection, recursive certification,
+final checking, literal rendering, and kernel replay remain unchanged.
+The Mathlib companion delegates this form to the same handler.
+
+Like an explicit certificate producer, arbitrary supplied Lean computation is
+untrusted and may itself be expensive or fail to terminate. A conforming factor
+provider must honor `attemptLimit`; an over-reported attempt count or malformed
+factor product is rejected by construction. No provider data establishes
+primality without the ordinary checker. Exhaustion identifies the explicit
+provider and the core allocation without claiming the core's zero-ECM profile
+for third-party work.
+
+After importing `HexIntFactor.Construction`, the explicit expression
+`Hex.Nat.ecmFactorSearch` selects its bounded 64-curve two-stage ECM provider.
+That downstream module owns the curve bounds, arithmetic, worklist, cost model,
+and proper-divisor theorem, specified in HexIntFactor §3a. This dependency never
+points back upstream. The provider must support complete recursive certificate
+construction for secp256k1, P-384 and Curve448. P-521 is a regression target
+whose certificate and attempt total must agree with the HexPrimality route.
+Measurements belong in [the field report](../../reports/hex-primality-ecm-stage2.md).
+
+### Automatic construction fallback and caller resources
+
+The standard import is `HexIntFactor`, with `HexPrimalityMathlib` added for
+`Nat.Prime`. With these imports, plain `primality?` must discover and recursively
+certify secp256k1, P-384 and Curve448 without a `factor :=` argument.
+User-supplied Lean resource options may still be necessary. Importing only
+HexPrimality selects its own factoring methods. No upstream library imports
+HexIntFactor or Mathlib.
+
+Run `Construction.run` with `Construction.factorSearch` first, using
+`constructionBudget` and `Rand.ofSeed n`. Apply explicit budget options before
+search. Return its first success unchanged, including its certificate and
+attempt count. Only an exhausted construction with a nonzero remaining attempt
+allowance may try registered construction providers. A composite verdict,
+invalid input, explicit `factor :=` override, or `using` certificate does not
+activate automatic fallback. Importing a provider must not add its search cost
+to already successful construction. Ordinary `primality`, ordinary integer
+factorization, and Pollard continuation use their separately specified policies.
+
+Construction registration uses a separate ABI from ordinary `SearchExtension`
+version 3. In namespace `Hex.PrimalityTactic`, define
+`ConstructionExtension` with fields `version : Nat` and `factorName : Name`,
+`constructionExtensionVersion = 1`, and the fixed discovery list
+`constructionExtensionNames` containing only
+`HexIntFactor.PrimalityTactic.constructionExtension`. Adding or reordering registrations requires a HexPrimality release.
+`HexIntFactor.Primality` must export that version-1 declaration naming an
+ordinary definition `Hex.Nat.ecmConstructionFactor : FactorSearch` equal to
+the default `Hex.Nat.ecmFactorSearch` closure. The definition's name, rather than a meta
+closure, crosses the boundary. Native execution is governed separately by
+[the producer compilation policy](../../SPEC/design-principles.md#lakefile).
+
+The ordinary `intFactorSearch` adapter declines total-limit allocations and
+must not implement this registration. Absent construction registrations are
+skipped. When fallback examines a present registration, it must validate its
+type and ABI version, the provider's presence and its `FactorSearch` type.
+Any mismatch aborts the tactic with a diagnostic naming the offending
+declaration. The registered schedule is specified in HexIntFactor §3a. It
+must not supply target-specific factors or certificates. Explicit provider
+syntax bypasses automatic selection.
+
+Retry the complete construction at most once per registered provider, passing
+the previous failure's advanced `Rand` and subtracting all previous attempts
+from the original allowance. Failed attempts, repeated factoring, recursive
+certification and witnesses all count. Keep events in execution order and
+report the combined attempt total and actual provider allocations. The default
+allowance is 1024 attempts, with the 521-bit limit, depth 32 and per-provider
+work bounds specified above. A named input does not authorize a larger
+allocation. Search exhaustion identifies the unresolved obligation rather
+than silently increasing bounds. A retry starts at the root and does not
+reuse a failed child independently of its random state and remaining budget.
+
+Semantic search bounds and Lean's heartbeat limit are independent limits.
+Production tactics and providers must not raise or disable `maxHeartbeats`,
+reset its counter or initial baseline, or exclude search allocations from
+accounting. They must not move work to a fresh process or task to evade the
+caller's allowance. Compiled execution and allocation reduction are legitimate
+optimizations, with ordinary Lean accounting left intact. A user may explicitly
+set a larger finite `maxHeartbeats`. Document that requirement whenever the
+default fails, and distinguish the failure from semantic-attempt exhaustion.
+The same limits apply to fallback as to the first route.
+
+An exponent-threshold warning reports refusal of an arithmetic evaluator's
+power-reduction shortcut. It is distinct from the tactic's final input
+normalization result. Do not silently raise `exponentiation.threshold` or suppress its warning to
+make examples appear to use defaults. The toolchain's threshold and the
+semantic search budget are independent. Test numeral and power-expression
+goals separately. Keep necessary options local in documentation and remove
+options demonstrated to be unnecessary. A tested allowance must not be
+presented as the minimum unless the evidence establishes that claim.
+
+### Experiments and acceptance for automatic construction
+
+Validate the HexPrimality route followed by ECM with the remaining allowance
+and advanced random state. Test the complete recursive paths for the three
+fields, P-521, Curve25519, the 507-bit exhausted fixture from the standard-field
+report, and the small and composite conformance inputs. Record success or
+first unresolved obligation, attempts, events, certificate and actual seed
+transitions. A root split alone is not success.
+
+Compare explicit ECM with automatic fallback on the same goals to measure
+retry cost. Compare construction without registration with registered fallback
+on supported and exhausted inputs. Use four fixed trial-major blocks with
+adjacent arms in alternating AB/BA order, following
+[the shared-host protocol](../../SPEC/benchmarking.md#shared-host-measurement-policy).
+Retain every completed sample, including failures. Keep native search,
+fresh-module tactic elaboration, literal rendering/elaboration and ordinary
+kernel replay separate. Use the same user-visible Lean options in both arms.
+Record heartbeat usage as observational counter deltas, without changing
+counters, baselines or limits. Do not infer usage by repeatedly varying limits. A default-limit failure is a
+result, not a discarded timing. Probe reduced option sets separately from
+timing comparisons, and do not claim a minimum without measuring it.
+
+Acceptance includes exact `#guard_msgs` suggestions for all three automatic
+field constructions, fixed native construction/checker benchmarks, ordinary
+checker replay, and Mathlib companion goal coverage. Inputs certified by the
+first route, especially P-521, keep their certificates and attempt totals.
+Test absent and malformed registrations, explicit override precedence, zero
+and nearly exhausted shared allowances, composite inputs, recursive failures,
+and rejection of invalid factor data. No default success may depend on
+external factorization or a change to the sound checker. The manual must show
+the standard import and plain tactic, with honest local resource settings.
+Keep expensive automatic field guards in the filtered
+`HexIntFactorFieldConformance` target. Every exhaustion guard must state its
+import configuration, so a HexPrimality-only failure does not stand in for
+failure with registered ECM. Include bounded unsuccessful fallback in cost
+evidence without adding expensive searches to the unfiltered conformance suite.
+Link complete retained measurements and state any unsupported inputs.
+The [automatic construction report](../../reports/hex-primality-fallback.md)
+records the complete retained comparisons, caller-resource probes and the
+remaining unsupported 507-bit fixture.
+
+## Certificate language and extension policy
+
+Keep `PrimeCert`, `checkPrime`, and `prime_of_checkPrimeAt` as the standalone
+data boundary. The source language is Lean: closed certificate expressions,
+ordinary named definitions, local `let` bindings, and explicitly invoked
+producer functions or macros. `primality? using expression` evaluates such an
+expression at type `PrimeCert`, validates its subject and `checkPrime`, and
+renders the existing fully qualified constructor literal. It also works through
+the companion's `Nat.Prime` handler. The construction policy and output of
+plain `primality?` and its `maxAttempts` form are unaffected by the `using`
+form. The `using` form does not run that search and cannot be combined with
+`maxAttempts`.
+
+This chooses an explicit producer interface over a second global method
+registry. A producer can be supplied from another module without changing Hex;
+Lean's existing macro registration supplies optional domain syntax. The
+separate-module `CertificateProducer` conformance fixture demonstrates a
+Fermat-number candidate producer and a positive-exponent syntax prototype.
+Neither changes which data the checker accepts. The syntax prototype is an
+example for downstream authors, not an additional supported Hex grammar.
+
+### Comparison with PrimeCert
+
+The language comparison is pinned to PrimeCert commit
+[`0803c2f6bd289c09704c7d352bb8fcf770cbb9b2`](https://github.com/b-mehta/PrimeCert/tree/0803c2f6bd289c09704c7d352bb8fcf770cbb9b2),
+on Lean 4.33.0. This comparison is distinct from the earlier algorithm survey
+and performance pins above. Relevant sources are `Meta/PrimeCert.lean`,
+`Meta/Pocklington.lean`, `Meta/Pocklington3.lean`, `Meta/SieveLookup.lean`,
+`Pocklington.lean`, and `Pocklington3.lean`. Executable examples and the exact
+comparison sources live under `scripts/bench/certificate_language/`.
+
+`@[prime_cert key]` registers a syntax category and a metaprogram producing a
+primality proof. A `PrimeDict` maps natural numbers to proof expressions, and
+later steps can reuse those expressions. The final term is a composition of
+method-specific theorems, not an interpreter invocation on a common data type.
+Registration adds ergonomic composition **and** permits new mathematical
+criteria when their proofs are supplied. The metaprogram's quoted result type
+is not itself a trust guarantee: Lean's kernel must check the emitted term
+against the requested theorem. A bad expression cannot prove primality, but
+can fail late with a kernel application-type error. The retained malformed
+Pocklington example exhibits that diagnostic.
+
+| PrimeCert feature | Hex correspondence and limit |
+|---|---|
+| `small`, `sieve` | `small` uses Hex's proved table below 100000. PrimeCert's imported sieve cache reaches 1000000 and `run_sieve` can extend it. A larger sieve leaf is not the same Hex certificate; use a Pocklington subtree instead. |
+| `pock` | `pock` stores each positive exponent minus one and a witness base per factor. PrimeCert's group uses one base and permits repeated factors and zero powers; Hex requires sorted, distinct subjects and positive powers. Normalize the factorization before constructing Hex data. |
+| `pock3` | `pock3` and `pock3Sieve` use the same cofactor decomposition and divisor exclusions. Convert a successful nonresidue non-square witness to `w = floor(sqrt(r² - 8s))` during construction; the Hex checker checks the interval, not the square-root algorithm. |
+| Divisor bounds | Hex deliberately caps `m` at 64 before its exclusion loop. PrimeCert's theorem has no corresponding cap. The prototype at 9223372036904058881 accepts `m = 65` there and rejects that data here, although `m = 4` already suffices for this number. |
+| Pure power of two in the cube-root path | Hex accepts the 197 certificate with `F = 4`. The pinned PrimeCert `pock3` grammar requires a factor tail; its underlying `pocklington3_certK` accepts the same case with an empty odd-factor list. |
+| Named intermediate primes | Lean definitions/lets name Hex data; PrimeCert's dictionary names facts by subject. Reification expands Hex data to a tree, while PrimeCert can reuse proof expressions. |
+| New proved criterion | PrimeCert can register a theorem-producing method. Such a proof cannot be placed in the current proof-free Hex data. A new producer must translate it into existing data, or use a separately identified theorem API outside the data checker. |
+
+These are correspondences between particular proof methods and witnesses, not
+a proof that the certificate languages or their searches are complete. The
+representative Curve25519 factorization translates in both directions; repeated
+powers and intermediate names do not require new checker constructors. The
+counterexamples above disprove a blanket claim of interchangeable syntax or
+accepted witnesses. They do not show that either system cannot prove the
+*primality statement* by another certificate. No existing arbitrary-method
+PrimeCert proof is claimed to have a general efficient Hex translation.
+
+Hex additionally provides inspectable, serializable proof-free data, explicit
+canonical-order rejection, bounded products and divisor exclusions, per-factor
+bases, native finite construction with resumable budgets, and a Mathlib-free
+checker with a thin correspondence bridge. PrimeCert's registry does not by
+itself supply those data contracts. Its proof-carrying `PrimePow` structure is
+not a replacement for them.
+
+### Alternatives and sharing
+
+1. **Surface syntax over `PrimeCert`: selected through ordinary Lean.**
+   The positive-exponent macro and named Curve25519 prototype reduce source
+   repetition. `using` flattens them into portable data; no custom parser or
+   elaborator becomes a replay dependency.
+2. **Explicit certificate producers.** Select certificate producers through
+   ordinary Lean expressions, without an implicit producer registry.
+   `SearchExtension` and `ConstructionExtension` register bounded factor
+   providers for their separate search roles. Neither is a registry of
+   certificate producers for the `using` form.
+3. **A versioned step interpreter or DAG: deferred.** None of these examples
+   needs a new criterion or shows unacceptable tree expansion. A DAG could
+   matter for many parents sharing a large child: naming a value saves source
+   but does not memoize `checkPrime`. Hex already offers `prime_of_pocklington`
+   with separately proved child primes for proof-library sharing, outside the
+   standalone raw-data route. A new interpreter would need checked reference
+   bounds, acyclicity/order, subject consistency, and its own soundness proof.
+   The current evidence does not justify that additional checker surface.
+4. **Adopt PrimeCert directly: not selected.** Its theorem-producing language
+   needs Mathlib/Qq and a different toolchain pin, returns proofs rather than
+   standalone certificates, and moves acceptance to each method's theorem
+   application. This can be useful in a Mathlib proof library, but cannot
+   replace the required core data boundary. A companion-only producer remains
+   possible if it emits current Hex data and its toolchain dependencies align.
+
+### Trust, resources, and compatibility
+
+The `using` term must elaborate at `PrimeCert` with no free variables or
+unresolved metavariables. Imported compiled definitions need not expose their
+bodies to the kernel: only their resulting constructor data is reified.
+Compilation, evaluation, macros, producer code, and the preliminary compiled
+check are all untrusted. The emitted proof applies `prime_of_checkPrimeAt` to
+the *literal* and an equality slot; kernel reduction checks both the requested
+subject and `checkPrime`. The companion only transports that result. It is
+not possible for a registered producer to add an unchecked opcode, proof slot,
+or alternative success predicate to the checker.
+
+The 521-bit construction goal policy applies before producer evaluation. Arbitrary
+user-selected computation is not covered by `ConstructionBudget`: a supplied
+producer may be expensive or fail to terminate, just as other explicitly run
+Lean metaprograms may. This interface guarantees validation of its result,
+not bounded construction for third-party code. Checker rejection rules are
+unchanged; neither malformed data nor duplicate/unsorted factors are silently
+repaired. No end-to-end constant resource bound is asserted for arbitrary
+certificate trees.
+
+Current constructor names, fields, exponent encoding, acceptance, and literal
+rendering are unchanged. Existing generated certificates require **no
+migration**. Producer names and private macro grammars belong to their owning
+modules; applying the suggestion removes those dependencies. If a future
+criterion needs new data, introduce an explicitly versioned representation and
+proved checker, retaining the old checker API or providing a mechanical,
+acceptance-preserving conversion. Do not reinterpret old fields or accept
+unknown step tags through extension registration.
+
+The conformance suite pins exact suggestions for ordinary and supplied
+Curve25519, repeated factors, the divisor sieve, and the Mathlib bridge. It
+checks the renderer's output by elaborating it back to data and rendering it
+again. Checker-only replay modules import neither producers nor tactic code.
+Malformed subjects, composite children, duplicate factors, enormous exponents,
+out-of-range sieve bounds, and open producer expressions remain rejected.
+Source-size, native construction, fresh elaboration, and direct kernel replay
+measurements are recorded in the
+[certificate-language report](../../reports/hex-primality-language.md).
 
 ## The Mathlib layer
 
@@ -1446,7 +2786,7 @@ boundary because the core consumers live below the companion.
    `millerRabin` with its full branch list;
    `not_prime_of_millerRabin_false`; `isProbablePrime`. The order
    development is the prerequisite for milestone 3 and for
-   [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md).
+   [hex-int-factor](../../HexIntFactor/SPEC/hex-int-factor.md).
 
 3. **Pocklington.** `PrimeCert` as one inductive, `checkPrime`,
    `prime_of_checkPrime` with `prime_pow_dvd_orderOf` and
@@ -1465,54 +2805,48 @@ boundary because the core consumers live below the companion.
    [owned companion SPEC](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md).
    Begins after milestone 1.
 
+6. **Shared Pollard p−1 continuation.** The saved-residue boundary, complete
+   interval enumeration, 210-step layout, whole-batch recovery, proper-divisor
+   and conditional success theorems, counted trace, and capped APIs above.
+   The fixed conformance cases and per-consumer evidence are retained in the
+   stage-2 report. Default enablement remains independently benchmark-gated.
+
+7. **Automatic construction fallback.** The version-1 construction registration,
+   deterministic retries under one shared attempt allocation, honest caller
+   resources, complete recursive field-prime conformance and phase-separated
+   measurements specified under reusable certificate construction.
+
 ## File organisation
 
 ```
 HexPrimality/
   Sieve.lean        -- the kernel-reducible bitset sieve and its correctness
   SieveElab.lean    -- batched compiled generation and kernel replay
-  Table.lean        -- primeTable, isTablePrime, primesIn, both directions
+  Table.lean        -- primeTable, primeBits, tableSearch, isTablePrime, primesIn
   Order.lean        -- multiplicative order mod n, orderDvd, ord_dvd_pred
   MillerRabin.lean  -- millerRabin, isProbablePrime, the compositeness theorem
+  PMinusOne.lean    -- shared stages 1 and 2, residue boundary, counted trace
   Cert.lean         -- PrimeCert, CheckedPrimeCert, checkPrime, soundness
   Cert3.lean        -- the cube-root variant
   Search.lean       -- p−1/rho partialFactor, primeCert?, isPrime?, nextPrime?
-  Elab.lean         -- the primality tactic
+  Construction.lean -- opt-in finite construction and subset selection
+  Elab.lean         -- primality and primality?
 HexPrimality.lean
 ```
 
 The companion's source, conformance, probe, and SPEC layout is owned by its
 [file-organization section](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md#file-organization).
 
-`libraries.yml` gains:
-
-```yaml
-  HexPrimality:
-    deps: [HexArith, HexBasic]
-    mathlib: false
-    done_through: 0
-    status: active
-  HexPrimalityMathlib:
-    deps: [HexPrimality]
-    mathlib: true
-    done_through: 0
-    status: active
-```
-
-`HexBasic` is required for `Hex.Rand`; array and bit-manipulation shims
-may add further uses, but the dependency does not depend on them.
+The authoritative dependency and phase registrations are in
+[`libraries.yml`](../../libraries.yml). `HexBasic` is required for `Hex.Rand`;
+array and bit-manipulation shims may add further uses, but the dependency does
+not depend on them.
 
 ## Open questions
 
-- **Whether ECPP belongs on the roadmap at all.** It is the next order
-  of magnitude and it is a large project with an elliptic-curve
-  prerequisite this tree does not have.
-  [future-work](../../SPEC/future-work.md) notes that Bhavik Mehta has elliptic
-  curve computations in flight, which is the strongest argument for
-  waiting rather than starting.
 - **Whether `rhoFactor?` should eventually move to hex-arith.** It is
   here because its only two consumers are this library's certificate
-  search and [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md), and moving it down
+  search and [hex-int-factor](../../HexIntFactor/SPEC/hex-int-factor.md), and moving it down
   would put Pollard rho in the arithmetic root for no present gain.
   Pollard `p − 1` stage 1 has joined it here for the same two consumers
   (see "Taking up downstream factoring advances"), which sharpens the

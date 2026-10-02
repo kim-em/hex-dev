@@ -1,0 +1,28 @@
+{
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10376/.lake/build/bin/hexorderedfn_bench",
+    "run",
+    "--filter",
+    "Hex.OrderedFnBench.subtraction",
+    "--export-file",
+    "/tmp/issue-10376-subtraction-4s/runtime.json"
+  ],
+  "cpu": 21,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "load_before": [
+    58.978515625,
+    123.06689453125,
+    96.6533203125
+  ],
+  "lean_num_threads": "4",
+  "commit": "ce8c134c60f0673eff3baf9d5043da4ab6c10ede",
+  "executable_sha256": "4de2c4804054c31407b4791073a56160ea89ee9735fc6781e66f9b361d2a27c0",
+  "returncode": 0,
+  "load_after": [
+    37.28125,
+    108.46533203125,
+    92.96826171875
+  ],
+  "executable_sha256_after": "4de2c4804054c31407b4791073a56160ea89ee9735fc6781e66f9b361d2a27c0"
+}

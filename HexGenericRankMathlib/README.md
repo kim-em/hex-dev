@@ -13,12 +13,12 @@ The programmatic provider retains the sealed atom environment for `rank_locus`.
 
 The kernel checks canonical polynomial lists using the shared HexMvPoly
 arithmetic. It never evaluates the certificate producer or a Hex.Matrix
-identity. The finite-field fallback checks integer representatives modulo the
-characteristic, using the same integer list arithmetic. The dedicated canonical
-Nat residue encoding is pending #10257; the positive-characteristic output-1
-probe is reserved for that representation and remains a documented non-test
-per #10223, although the integer fallback can already prove its goal. No coefficient
-provider is installed by this library.
+identity. Positive characteristic uses canonical Nat residues and HexMvPoly's
+modular operations, interpreted through the shared residue coefficient provider.
+Thus `X ^ 3 - X` has generic rank 1 over `MvPolynomial (Fin 1) (ZMod 3)`,
+while a field-element goal still requires `x ^ 3 - x ≠ 0`. Literal
+`Polynomial.X` goals also support unconditional generic rank. This library
+installs no coefficient provider.
 
 See [the SPEC](SPEC/hex-generic-rank-mathlib.md), [tests](Tests.lean), and
 [proof measurements](../reports/hex-generic-rank-mathlib-performance.md).

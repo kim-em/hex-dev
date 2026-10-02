@@ -1,44 +1,33 @@
-# hex-poly-det (determinants of polynomial matrices, depends on hex-bareiss and hex-mv-gcd)
+# hex-poly-det
 
-The determinant of a matrix with multivariate polynomial entries, certified
-by [hex-bareiss](../../HexBareiss/SPEC/hex-bareiss.md)'s polynomial
-determinant certificate instantiated at the carrier `MvPoly k C cmp` with
-hex-mv-gcd's exact quotient. This is the determinant analogue of
-[hex-generic-rank](hex-generic-rank.md) and exists for the same reason:
-`HexBareiss` cannot depend on `HexMvGcd`, and `HexBareissMathlib` is a
-published mirror whose import closure may not reach the unpublished
-hex-reflect and hex-mv-gcd, so the instantiation and the symbolic `det`
-arm live in an unpublished pair above both. The companion
-[hex-poly-det-mathlib](hex-poly-det-mathlib.md) owns the symbolic `det`
-handler, its soundness and its proof probes.
+Native determinants and checked witnesses for multivariate polynomial matrices.
+`polyDet` evaluates the row-pivoted Bareiss algorithm using hex-mv-gcd's exact
+quotient operation. It returns a polynomial value without constructing a proof
+or requiring a supplied answer. `polyDetWitness` and `polyDetWitness?` separately
+produce checked triangular or singular witnesses using hex-bareiss's generic
+certificate API.
 
-The library adds no algorithm: the witness,
-producer and checker are hex-bareiss's generic ones
-([hex-bareiss §Polynomial determinant certificate](../../HexBareiss/SPEC/hex-bareiss.md#polynomial-determinant-certificate)),
-the exact quotient is hex-mv-gcd's, and the list arithmetic is
-hex-mv-poly's.
+The library remains Mathlib-free. Its required dependencies are `HexBareiss`,
+`HexMvGcd`, `HexMvPoly`, `HexDeterminant`, `HexMatrix` and `HexBasic`, with the
+usual transitive coefficient-arithmetic dependencies. Soundness and successful-
+producer-check theorems live in the Mathlib companion. Native computation and
+symbolic proof construction are separate operations: the symbolic `det` handler
+uses the contract in [hex-poly-det-mathlib](hex-poly-det-mathlib.md), not a mandatory
+polynomial witness from this library.
 
-## Scope and dependencies
+## Scope
 
-In scope: `polyDetWitness` and `polyDet` over `MvPoly k C cmp` for a
-coefficient domain `C` with `LawfulGcdOps C`; the checked `polyDetWitness?`
-that returns the witness only when `checkDetPolyList` accepts it in
-compiled code; the list-form instantiation of the checker with
-hex-mv-poly's canonical arithmetic; conformance fixtures with a SymPy
-oracle; and lean-bench families. This library supplies executable
-instantiation and checking only. The theorem that a passing check means
-`Hex.Matrix.det P = d` (`checkDetPolyList_sound`) and producer correctness
-(the producer's witness passes) are both the companion's, as for
-hex-generic-rank; hex-bareiss's own SPEC excludes that proof surface from
-the Mathlib-free layer.
+Retain the native value, witness, checked witness and budgeted producer APIs, plus
+canonical list conversion and plain checker instantiation. Coefficient domains
+supply the existing gcd/exact-division laws; no new assumptions are imposed by
+the symbolic tactic. Dense univariate determinant values continue to use the
+existing Bareiss carrier interface.
 
-Out of scope: reification (hex-reflect), any statement about a specialised
-matrix (the companion), and univariate `F[x]` matrices, whose determinant
-the `DensePoly` carriers of hex-bareiss's carrier table already cover.
-
-Dependencies: `HexBareiss`, `HexMvGcd` (hence `HexMvPoly`, `HexResultant`),
-`HexDeterminant`, `HexMatrix`, `HexBasic`; `libraries.yml` records the
-planned entry and `scripts/check_dag.py` checks it.
+Determinant-specific packed/tree/residue selection is not a required API.
+Remove those wrappers when they have no independent consumers, together with
+their crossover tables and obsolete tests. Keep shared Kronecker mixed-product
+checks in their owning library. Native witness validation continues through the
+plain checker; removing an optional kernel encoding does not remove its checks.
 
 ## The instantiation
 
@@ -56,16 +45,30 @@ def polyDetWitness (P : Matrix (MvPoly k C cmp) n n) : Except String (DetWitness
 
 def polyDet (P : Matrix (MvPoly k C cmp) n n) : MvPoly k C cmp
 def polyDetWitness? (P : Matrix (MvPoly k C cmp) n n) : Option (DetWitness (MvPoly k C cmp))
+
+def produce (budget : DetWitness.Budget) (n : Nat)
+    (check : List (List (MvPoly k C cmp)) → DetWitness (MvPoly k C cmp) → Bool)
+    (rows : List (List (MvPoly k C cmp))) :
+    Except DetWitness.Error (DetWitness (MvPoly k C cmp))
 ```
 
 `Hex.Matrix.detWitnessWith` is generic over entry arithmetic, with the
 integer API retained as a specialisation. The witness type is `DetWitness R`;
 its matrix dimension and row shapes are checked by the list checker.
-`polyDetWitness?` returns the witness only when the list-form check accepts
-it in compiled code; its kernel encodings are integer and residue
-coefficients, so its initial carriers are `Int` and `ZMod64 p`, and `Rat`
-enters only through the companion's row-scaling arm, which checks integer
-lists.
+`polyDetWitness?` returns a witness only when the compiled plain check accepts
+it. The check is instantiated with the coefficient carrier's operations. Any
+kernel-facing consumer must additionally supply the relevant soundness theorem
+and representation laws; native witness production alone is not a Lean proof.
+
+`Hex.PolyDet.produce` in `Basic.lean` instantiates `Hex.Matrix.detWitnessBudgeted` with
+`MvPoly` support cardinality as its size measure, for both integer and
+residue coefficient domains. Its intermediate budget governs round admission
+by term-product counts and the total support of the retained blocks after
+each round, as specified in hex-bareiss. Its certificate budget is checked
+before the compiled self-check. Structured declines preserve the exhausted
+budget name, count reached and limit to the caller. The caller supplies the
+compiled checker for its serialization. The unlimited `polyDetWitness` API and
+its error type stay intact.
 
 The exact quotient and its law are `Hex.MvPoly.instDiv` and
 `Hex.MvPoly.instExactDivLaws` from `HexMvGcd/Divide.lean`, under
@@ -79,9 +82,9 @@ identically zero. No specialisation chooses or certifies the branch.
 
 The kernel form is `checkDetPolyList` instantiated with hex-mv-poly's
 canonical term-list operations: coefficients `Int` for the integer
-carrier, canonical `Nat` residues for the residue carrier once
-[the residue list form](https://github.com/kim-em/hex-dev/issues/10257)
-exists, exponent vectors as `List Nat`. Its soundness is the companion's.
+carrier, canonical `Nat` residues for the residue carrier through
+`Hex.PolyDet.opsMod`, and exponent vectors as `List Nat`. Every modular
+operation comes from `HexMvPoly.KernelResidue`. Its soundness is the companion's.
 
 ## Coefficient carriers
 
@@ -99,49 +102,26 @@ determinant; emission follows hex-bareiss's `MvPoly` encoding to
 
 ## Complexity and benchmarking
 
-The producer is fraction-free elimination, `n³/3` polynomial products and
-exact divisions whose cost is the realised support of the intermediate
-minors, bounded as in
-[hex-bareiss §Symbolic coefficient growth](../../HexBareiss/SPEC/hex-bareiss.md#symbolic-coefficient-growth);
-expression swell is not controlled here. The checker is `n³/3` polynomial
-products (or `n²` for the singular vector) at the witness's realised
-support.
+Bareiss performs cubic many polynomial arithmetic operations, whose cost depends
+on realized intermediate support and coefficient growth. `polyDet` need not
+construct the additional witness transform. The witness and its compiled plain
+check have their own costs and budget outcomes; a witness decline is not a
+successful certified result. Worst-case minor counts are diagnostic, not a
+substitute for actual producer budgeting.
 
-The `symbolic` family (dimensions `2, 4, 8`, atoms `1, 2, 4`, degrees
-`1, 2, 4`, supports `1, 4, 16`, with infeasible support requests marked as
-such) is registered in `bench/HexPolyDet/Bench.lean` (Mathlib-free), with
-producer and compiled checker separate and the checker preparation holding
-a precomputed witness; support and degree ladders are not one cubic model,
-so each registration states its mode per
-[benchmarking §Choosing the complexity claim](../benchmarking.md#choosing-the-complexity-claim).
-The report is `reports/hex-poly-det-performance.md`. There is no timed
-external comparator for multivariate polynomial determinants (SymPy is the
-conformance oracle, a Python process); the absence is declared as
-**no-comparable-surface-in-named-comparator**.
+Retain Mathlib-free native value/witness benchmarks and conformance fixtures
+against the independent SymPy oracle. Include dense, structured, singular,
+empty, coefficient-carrier and budget-boundary cases. Do not replace native
+measurements with symbolic tactic timings. The companion owns manual proof
+probes, result-producing interface checks and comparisons with Mathlib.
 
-## File organisation
+## Consumers and source organization
 
-```
-HexPolyDet/
-  Basic.lean        -- polyDetWitness, polyDet, polyDetWitness?, the instance section
-HexPolyDet.lean
-```
-
-`libraries.yml` gains
-
-```yaml
-  HexPolyDet:
-    deps: [HexBareiss, HexMvGcd, HexDeterminant, HexMatrix, HexBasic]
-    mathlib: false
-    done_through: 3
-    status: active
-```
-
-## Consumers
-
-[hex-poly-det-mathlib](hex-poly-det-mathlib.md), the symbolic `det`
-handler. A later polynomial-matrix library (Popov forms, approximant
-bases) would import this rather than re-instantiate the certificate.
+`Basic.lean` owns native evaluation, witness production and checker instantiation.
+The companion retains their soundness theorems separately from its general
+symbolic evaluator. Preserve APIs consumed by polynomial-matrix clients; update
+imports and library registrations when retiring determinant-only encodings.
+Keep conformance and oracle integration in the existing scripts and jobs.
 
 ## Executable API
 
@@ -155,3 +135,6 @@ result. The companion proves `PolyDet.check_of_ok`: every successful
 `polyDetWitness` return passes the checker. Errors remain possible; the theorem
 does not assert that every input produces a successful result. `PolyDet.toList` performs compiled merge sorting into canonical order;
 the kernel sees and validates only its output.
+The companion's `produce_check` applies `detWitnessBudgeted_check` to
+establish the same successful-check contract for `produce`; neither contract
+claims that every input succeeds within a resource budget.

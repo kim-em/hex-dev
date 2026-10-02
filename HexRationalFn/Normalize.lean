@@ -27,9 +27,11 @@ theorem inv_ne_zero {a : K} (ha : a ≠ 0) : a⁻¹ ≠ 0 := by
   exact Lean.Grind.Field.zero_ne_one h
 
 /-- Schoolbook base-case length for the default Karatsuba plan. -/
+@[expose]
 def defaultCutoff : Nat := 8
 
 /-- The generic multiplication plan used by rational-function arithmetic. -/
+@[expose]
 def defaultPlan : MulPlan K := karatsubaPlan defaultCutoff
 
 /-- Exact division with a lawful multiplication plan and a divisibility witness. -/

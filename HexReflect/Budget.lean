@@ -87,7 +87,7 @@ def zero : Budget :=
     coefficientBits := 0, proofNodes := 0 }
 
 /-- The default limits for an interactive request. -/
-def default : Budget :=
+@[expose] def default : Budget :=
   { sourceNodes := 100000, atoms := 4096, reflectedNodes := 100000, exponent := 64,
     terms := 100000, coefficientBits := 4096, proofNodes := 1000000 }
 

@@ -4,9 +4,9 @@
 # Replaces the per-oracle matrix that previously fanned out into 11
 # ubuntu jobs. All oracle dependencies (FLINT, PARI, SymPy, Conway
 # tables) are installed once at the top of the workflow; this script
-# loops over every (lib, emit, oracle, fixture) tuple, cross-checks
-# the committed fixture against fresh emission, and pipes the
-# emission into the oracle for verification.
+# loops over every (lib, emit, oracle, fixture) tuple. Fixture emitters
+# are compared with their committed output before the oracle runs;
+# the compiled-input SQUFOF oracle checks its committed corpus directly.
 #
 # Single source of truth for "which library needs which oracle"
 # lives below. Adding a new oracle-backed library means appending
@@ -55,10 +55,17 @@ ORACLES=(
   "HexMinPoly|hexminpoly_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexMinPoly/minpoly.jsonl"
   "HexGramSchmidt|hexgramschmidt_emit_fixtures|scripts/oracle/gs_flint.py|conformance-fixtures/HexGramSchmidt/gram_schmidt.jsonl"
   "HexRealRoots|hexrealroots_emit_fixtures|scripts/oracle/realroots_flint.py|conformance-fixtures/HexRealRoots/realroots.jsonl"
+  "HexSignDet|hexsigndet_emit_fixtures|scripts/oracle/sign_det_flint.py|conformance-fixtures/HexSignDet/sign_det.jsonl"
   "HexRCF|hexrcf_emit_fixtures|scripts/oracle/rcf_flint.py|conformance-fixtures/HexRCF/rcf.jsonl"
   "HexRoots|hexroots_emit_fixtures|scripts/oracle/roots_flint.py|conformance-fixtures/HexRoots/roots.jsonl"
   "HexRealAlgebraic|hexrealalgebraic_emit_fixtures|scripts/oracle/real_algebraic_flint.py|conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl"
+  # Pinned Z3 RCF, exact nested-infinitesimal roots
+  "HexSignDet|hexsigndet_emit_infinitesimal|scripts/oracle/sign_det_z3.py|conformance-fixtures/HexSignDet/infinitesimal.jsonl"
+  "HexSignDet|hexsigndet_emit_nested_fields|scripts/oracle/sign_det_nested_z3.py|conformance-fixtures/HexSignDet/nested-fields.jsonl"
+  "HexOrderedFn|hexorderedfn_emit_fixtures|scripts/oracle/ordered_fn_z3.py|conformance-fixtures/HexOrderedFn/infinitesimal.jsonl"
+  "HexOrderedFn|hexorderedfn_emit_real_fixtures|scripts/oracle/ordered_fn_real.py|conformance-fixtures/HexOrderedFn/real.jsonl"
   # SymPy backed
+  "HexKronecker|hexkronecker_emit_fixtures|scripts/oracle/kronecker_sympy.py|conformance-fixtures/HexKronecker/identities.jsonl"
   "HexPolyDet|hexpolydet_emit_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexPolyDet/det.jsonl"
   "HexBareiss|hexbareiss_emit_carrier_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexBareiss/carriers.jsonl"
   "HexDeterminant|hexdeterminant_emit_carrier_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexDeterminant/carriers.jsonl"
@@ -80,9 +87,16 @@ ORACLES=(
   # PARI backed
   "HexHensel|hexhensel_emit_fixtures|scripts/oracle/hensel_pari.py|conformance-fixtures/HexHensel/hensel.jsonl"
   "HexPrimality|hexprimality_emit_fixtures|scripts/oracle/primality_pari.py|conformance-fixtures/HexPrimality/primality.jsonl"
+  "HexPrimality|hexprimality_squfof_measure|scripts/oracle/primality_squfof.py|conformance-fixtures/HexPrimality/squfof-corpus.jsonl"
+  "HexECPP|hexecpp_emit_fixtures|scripts/oracle/ecpp_pari.py|conformance-fixtures/HexECPP/ecpp.jsonl"
   "HexIntFactor|hexintfactor_emit_fixtures|scripts/oracle/intfactor_pari.py|conformance-fixtures/HexIntFactor/intfactor.jsonl"
   "HexNumberField|hexnumberfield_emit_fixtures|scripts/oracle/number_field_flint_pari.py|conformance-fixtures/HexNumberField/number_field.jsonl"
   "HexNumberFieldTower|hexnumberfieldtower_emit_fixtures|scripts/oracle/number_field_tower_pari.py|conformance-fixtures/HexNumberFieldTower/number_field_tower.jsonl"
+  # Exact Python integer/Fraction formula evaluation
+  "HexRealFormula|hexrealformula_emit_fixtures|scripts/oracle/real_formula.py|conformance-fixtures/HexRealFormula/formula.jsonl"
+  "HexRealClosure|hexrealclosure_bounds_conformance|scripts/oracle/real_closure_bounds.py|conformance-fixtures/HexRealClosure/bounds.jsonl"
+  "HexRealClosure|hexrealclosure_deflation_conformance|scripts/oracle/real_closure_deflation.py|conformance-fixtures/HexRealClosure/deflation.jsonl"
+  "HexRealClosure|hexrealclosure_isolation_conformance|scripts/oracle/real_closure_isolation.py|conformance-fixtures/HexRealClosure/isolation.jsonl"
   # Exact Python integer/Fraction Cartesian enumeration
   "HexLatticeEnum|hexlatticeenum_emit_fixtures|scripts/oracle/lattice_enum.py|conformance-fixtures/HexLatticeEnum/latticeenum.jsonl"
   # Conway tables backed
@@ -124,6 +138,7 @@ import flint
 import cypari2
 import conway_polynomials
 import sympy
+import z3
 PY
   then
     echo "FAIL: required oracle dependencies are unavailable" >&2
@@ -170,6 +185,17 @@ run_tuple() {
   echo ">>> $lib :: emit=$emit oracle=$oracle"
   echo "=========================================================="
 
+  # This compiled-input oracle runs the committed corpus through the measured
+  # native executable; its input fixture is checked by independent division.
+  if [ "$oracle" = "scripts/oracle/primality_squfof.py" ]; then
+    if ! python3 "$oracle" --exe ".lake/build/bin/$emit" --corpus "$fixture"; then
+      echo "FAIL: $lib :: SQUFOF divisor oracle reported a divergence"
+      return 1
+    fi
+    echo "OK: $lib"
+    return 0
+  fi
+
   if ! ".lake/build/bin/$emit" >"$fresh"; then
     echo "FAIL: $lib :: $emit exited non-zero"
     return 1
@@ -196,6 +222,61 @@ run_tuple() {
   if [ "$oracle" = "scripts/oracle/matrix_carriers.py" ]; then
     if ! python3 -m unittest scripts.oracle.test_matrix_carriers; then
       echo "FAIL: $lib :: carrier oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/sign_det_flint.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_sign_det_flint; then
+      echo "FAIL: $lib :: oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/sign_det_z3.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_sign_det_z3; then
+      echo "FAIL: $lib :: infinitesimal oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/sign_det_nested_z3.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_sign_det_nested_z3; then
+      echo "FAIL: $lib :: nested-field oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/real_closure_bounds.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_real_closure_bounds; then
+      echo "FAIL: $lib :: finite-bound oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/real_closure_isolation.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_real_closure_isolation; then
+      echo "FAIL: $lib :: isolation completion oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/real_closure_deflation.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_real_closure_deflation; then
+      echo "FAIL: $lib :: exact-deflation oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/ordered_fn_z3.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_ordered_fn_z3; then
+      echo "FAIL: $lib :: ordered-function oracle rejection checks failed"
+      return 1
+    fi
+  fi
+  if [ "$oracle" = "scripts/oracle/ordered_fn_real.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_ordered_fn_real; then
+      echo "FAIL: $lib :: ordered-function oracle rejection checks failed"
       return 1
     fi
   fi

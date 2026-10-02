@@ -37,6 +37,37 @@ def p : ZPoly := DensePoly.ofCoeffs #[-2, 0, 0, 0, 1]
   certifying every emitted interval with Sturm.
 - `Hex.ZPoly.rootCount` computes the exact total real-root count.
 - `Hex.ZPoly.sturmCount` computes the exact count in one half-open interval.
+- `Hex.ZPoly.tarskiQuery` computes the signed variation drop for `(p, f*p')`
+  on an open dyadic interval, with nonzero, squarefree and endpoint guards.
+- `Hex.IntTarskiCertificate.certify` retains the literal signed-remainder certificate;
+  `check` checks its identities, signs, degree bounds and input bindings.
+
+The query uses the shared `SignedRemainderChain` kernel, also available with generic
+endpoint sign operations and noncanonical coefficient representations. Produced-chain
+and certificate acceptance and exact semantic domain equivalence are proved in
+the companion. The Sturm–Tarski root-sum theorem is proved in the monorepo’s
+development adapters, outside the published package. Its publication and the
+remaining query performance evidence are specified in the SPEC.
+
+`TarskiCertificate.Domain.replay?` validates supplied endpoint and squarefree
+chain evidence once. `checkHit` reuses that evidence after exact context,
+head, interval and witness bindings; it rejects cache misses. `checkCached` is
+the complete checker and falls back to full replay on a literal mismatch.
+`checkCached_eq` proves identical Boolean results to the
+full checker for every certificate and cache, including invalid certificates.
+These are finite replay guarantees, independent of the root-sum theorem.
+
+`HexRealRoots.SignOperands` exposes conservative finite coefficient-sign
+inventories for chain and Tarski replay. `SignedRemainderChain.signOperands`
+and `TarskiCertificate.signOperands` retain every result dependency, including
+unused supplied scales and an extra zero operand. Their `check_sign_congr`
+theorems preserve exact Boolean results under agreement on the listed signs,
+including rejection of malformed certificates. The Tarski theorem uses
+`EndpointSigns.ofSign`, with endpoints in the coefficient domain; finite
+endpoints contribute differences/evaluations and infinite endpoints contribute
+leading coefficients. `Endpoint` also exposes the corresponding sign, order
+and nonvanishing congruences. These are finite replay facts, independent of
+root-sum semantics or a sign-cache law outside its keys.
 
 `ZPoly.isolateRealRoots?` rejects the zero polynomial and, at the core level, expects a
 squarefree positive-degree input. Nonzero constants produce an empty result.

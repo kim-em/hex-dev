@@ -86,6 +86,18 @@ formal derivative theorem explicitly as the quotient rule for the embedded
 polynomial derivatives, together with additivity and the Leibniz rule. This
 does not assume an analytic topology or differentiability structure on `K`.
 
+## Coefficient-field embeddings
+
+For a field embedding `f : K →+* L`, `coeffMap f` instantiates the Mathlib-free
+canonical-pair map with the actual field laws. `mapHom f` packages that same
+executable function as `RationalFn K →+* RationalFn L`.
+`toRatFunc_coeffMap` and `toRatFunc_mapHom` identify both with Mathlib's
+coefficient map on `RatFunc`; `coeffMap_eq_mapHom` identifies the executable
+function and bundled homomorphism. Prove injectivity and preservation of
+constants, the indeterminate, addition and multiplication, as well as identity
+and composition of successive coefficient embeddings. The mapped pair is
+already canonical, so coefficient transport does not recompute a gcd.
+
 ## Partial evaluation
 
 Mathlib's
@@ -115,10 +127,6 @@ Place conversion and equivalence in
 identities needed independently of Mathlib belong in the computational
 library or `HexPoly`, according to their subject.
 
-Computational conformance owner: `HexRationalFn`.
-
-Computational performance owner: `HexRationalFn`.
-
 Runtime examples and oracle comparisons belong to
 `conformance/HexRationalFn/Conformance.lean`. Build-only examples in
 `HexRationalFnMathlib/Tests.lean` prove the transported operations and
@@ -129,9 +137,8 @@ the headline theorem, and inspect its theorem dependencies for `sorryAx`.
 The manual's Mathlib examples state their goals in Mathlib types and introduce
 executable values only inside proofs.
 
-This is a `correspondence_only: true` library. It has no executable benchmark
-targets and its comparator absence class is **correspondence-only-layer**.
-The owner's normalization, arithmetic, certificate and evaluation targets
+This library has no executable benchmark targets. `HexRationalFn`'s
+normalization, arithmetic, certificate and evaluation targets
 supply the runtime evidence.
 Build-time conformance examples do not advertise a tactic-performance API.
 Expression reification and user tactics are separate future work.

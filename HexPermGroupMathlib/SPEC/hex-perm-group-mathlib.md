@@ -18,14 +18,20 @@ graph-independent `Perm.toEquiv` and `Perm.ofEquiv` conversions from
 `HexGraphIsoMathlib` when migrating that consumer. This library must not
 depend on graph isomorphism or a classification database.
 
-At activation set `correspondence_only: true`. The comparator absence class
-is **correspondence-only-layer**. Build-only examples in
+The library also provides the kernel replay theorems and the `perm_group`
+tactic specified in
+[hex-perm-group, Kernel replay in Mathlib](../../HexPermGroup/SPEC/hex-perm-group.md#kernel-replay-in-mathlib),
+and the examples of
+[User-facing examples](../../HexPermGroup/SPEC/hex-perm-group.md#user-facing-examples).
+Because it owns a tactic, its Phase 4 deliverable is the proof track: example
+files running the kernel replay theorems and `perm_group` in
+`bench/HexPermGroupMathlib/ProofProbe`, declared as its `libraries.yml`
+`proof_probes` root and built by CI on every PR.
+
+Build-only examples in
 `HexPermGroupMathlib/Tests.lean` exercise membership, exact order, stabilizers,
 nonnormal-subgroup cosets, a nonfaithful induced action, minimal blocks,
 normal and derived subgroups, rank/unrank and product embeddings.
-Runtime conformance and benchmarking belong
-to the computational owner below.
-
-Computational conformance owner: `HexPermGroup`.
-
-Computational performance owner: `HexPermGroup`.
+Runtime conformance and compiled benchmarking belong
+to `HexPermGroup`. Kernel replay of `Kernel.check` is exercised by this
+library's proof probes.

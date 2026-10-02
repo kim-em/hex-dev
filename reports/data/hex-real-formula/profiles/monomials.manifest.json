@@ -1,0 +1,369 @@
+{
+  "family": "monomials",
+  "function": "Hex.RealFormula.Bench.decodeTerms",
+  "parameter": 8192,
+  "cpu": 18,
+  "load": [
+    43.34326171875,
+    50.12109375,
+    49.11962890625
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "raw": "/tmp/rf-perf-final-monomials",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex-real-formula-lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/rf-perf-final-monomials/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/rf-perf-final-monomials/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-hex-real-formula/.lake/build/bin/hexrealformula_bench",
+        "profile",
+        "Hex.RealFormula.Bench.decodeTerms",
+        "--param",
+        "8192",
+        "--target-inner-nanos",
+        "1000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/rf-perf-final-monomials/samply.json.gz",
+        "/tmp/rf-perf-final-monomials/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/rf-perf-final-monomials/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/rf-perf-final-monomials/samply.json.gz",
+        "--perf-script",
+        "/tmp/rf-perf-final-monomials/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/rf-perf-final-monomials/spawn-anchor.json",
+        "--output",
+        "/tmp/rf-perf-final-monomials/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/tmp/hex-real-formula-lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/rf-perf-final-monomials/normalized.json.gz",
+        "--sidecar",
+        "/tmp/rf-perf-final-monomials/timed-2003538.jsonl",
+        "--spawn-anchor",
+        "/tmp/rf-perf-final-monomials/spawn-anchor.json",
+        "--out",
+        "/tmp/rf-perf-final-monomials/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/rf-perf-final-monomials/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/rf-perf-final-monomials/filtered.json.gz",
+        "--output",
+        "/tmp/rf-perf-final-monomials/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/rf-perf-final-monomials/filtered.json.gz",
+        "--symbols",
+        "/tmp/rf-perf-final-monomials/symbols.json",
+        "--diagnostics",
+        "/tmp/rf-perf-final-monomials/diagnostics.json",
+        "--thread",
+        "hexrealformula_",
+        "--top",
+        "20",
+        "--output",
+        "reports/data/hex-real-formula/profiles/monomials.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "a5e0391054a405a58495d6cc1a982df504b2435cbf44d7c6b1c087a23ff57ecc",
+  "commit": "72a5c75ffecdec60d53375c458abcdc59823b571",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.1.5",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 2003538,
+    "bench_thread_name": "hexrealformula_",
+    "bench_thread_tid": "2003549",
+    "regions_total": 1,
+    "total_timed_ms": 518.016741,
+    "expected_samples_bench_thread": 517.5,
+    "retained_samples_bench_thread": 325,
+    "rejected_samples_bench_thread": 5,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1789901583070850803,
+    "spawn_anchor_mono_ns": 872693272515056,
+    "sidecar_mono_anchor_ns": 872693515988703,
+    "samply_meta_start_time_ms": 1789901583116.7039,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.51180100440979,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.51180100440979,
+      "raw_max_residual_ms": 1.8051199913024902,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 1,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 325,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.51180100440979,
+          "boundary_residual_raw_max_ms": 1.8051199913024902,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.006153846153846145,
+          "leaf_function_support_size": 82,
+          "comparison_samples": 323,
+          "exchanged_samples": 2,
+          "exchanged_fraction": 0.006191950464396285,
+          "sampling_noise_allowance": 0.033642297726826316,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.013275820752456244,
+          "leaf_function_support_size": 83,
+          "comparison_samples": 321,
+          "exchanged_samples": 6,
+          "exchanged_fraction": 0.018691588785046728,
+          "sampling_noise_allowance": 0.058989659207699066,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 323,
+          "top_leaf_functions": [
+            {
+              "function": 25,
+              "name": "0xba8aa0",
+              "samples": 35
+            },
+            {
+              "function": 35,
+              "name": "0x4b09adf",
+              "samples": 27
+            },
+            {
+              "function": 38,
+              "name": "0xba8a90",
+              "samples": 24
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 325,
+          "top_leaf_functions": [
+            {
+              "function": 25,
+              "name": "0xba8aa0",
+              "samples": 35
+            },
+            {
+              "function": 35,
+              "name": "0x4b09adf",
+              "samples": 27
+            },
+            {
+              "function": 38,
+              "name": "0xba8a90",
+              "samples": 24
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 321,
+          "top_leaf_functions": [
+            {
+              "function": 25,
+              "name": "0xba8aa0",
+              "samples": 34
+            },
+            {
+              "function": 35,
+              "name": "0x4b09adf",
+              "samples": 27
+            },
+            {
+              "function": 38,
+              "name": "0xba8a90",
+              "samples": 24
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "07ea3c4c027576e76bdcb385e47031a16ecec65058ac0ed535d0fc619865bef4",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "18e44bf59c638caf9db0a3996ee144d7f261d1f1ccbff41ce60e390ff9a90b4b",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "4dd633ce6dacab59e6b9d42eba3b7e4ae44f9daacce2ec4277cf200279ecbf9f",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "3df7a2fc48826befbc59ed1bbc76593f81f14e4e3b43f467ef83a8df6efe3053",
+    "perf.data": "92a7f9479ad7b7e89e56c641379a5c456b1b4902a8fc6d9251c4a726051790ad",
+    "timed-2003538.jsonl": "26af7099d539c0eb60c4d340edd0f9ced91fe07c2ac615c48e91c60c3a29dcdf",
+    "5.stdout": "ae4ab5c94173d96815ec52e7f7a5ae41b2b76aae53b1838e51f6137402a17e2a",
+    "5.stderr": "7e02c8eee16e5286edaf781f7d1b71fcc63304320fff21261cb2c4df4f9a541d",
+    "samply.json.gz": "46c1a47290d5095cf6ff264204f51c5d6067c489b259de7cafe614ae1a883add",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "408749bae6a05564937893e6350c5abafcefc4232827ec0f02baf03b463543e8",
+    "7.stdout": "90947d813c3e47ba8878c91f8165a924de91f51a0e74d9194776072622ead166",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "90947d813c3e47ba8878c91f8165a924de91f51a0e74d9194776072622ead166",
+    "normalized.json.gz": "81b8573a5ff3423739dc4c023950929c8e504d0d405796bff928e22acc9500ff",
+    "8.stdout": "f5e87635d6f8e758f7314509e2ea1090bedf1bafb406eb5c3c1f5081fedae042",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "d9837e0f375c14f708a05dcdea24b3443b81d27efd2a9fe567411e47e99f6be9",
+    "diagnostics.json": "463137d43c3ae551faa8ebd8cd9179dbf19180d4222c83e8a5aac9a3f6ad5afb",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "daf6f0ace20037da9b71ffa10c9b97dc98f32039d8119f538c1cc3c2b35e0dee",
+    "symbols.json": "3d43f005aa35c79ac07c2eee8e777df4e793701d48e5519e2b15a34e0d83bdcc",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

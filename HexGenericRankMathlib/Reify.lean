@@ -90,25 +90,6 @@ theorem interpret_matrix (ι : C →+* F) (v : Fin k → F)
     A = (symbolic (PolyLists.matrix (k := k) n m L)).map (MvPolynomial.eval₂Hom ι v) := by
   rw [map_matrix, hL, hA]
 
-/-- Evaluate one displayed term directly in the source atoms. -/
-theorem interpret_cons (ι : C →+* F) (v : Fin k → F)
-    (t : List Nat × C) (ts : PolyLists.Poly C) :
-    HexMvPolyMathlib.eval₂MathlibHom ι v (PolyLists.denote (t :: ts)) =
-      ι t.2 * (∏ i : Fin k, v i ^ t.1.getD i.val 0) +
-        HexMvPolyMathlib.eval₂MathlibHom ι v (PolyLists.denote ts) := by
-  rw [PolyLists.denote, MvPoly.Kernel.denote, map_add]
-  congr 1
-  rw [eval₂_comp]
-  change MvPolynomial.eval₂ ι v
-    (HexMvPolyMathlib.equiv (MvPoly.monomial (MvPoly.Kernel.mono k t.1) t.2)) = _
-  rw [HexMvPolyMathlib.equiv_apply, HexMvPolyMathlib.toMvPolynomial_monomial,
-    MvPolynomial.eval₂_monomial, Finsupp.prod_pow]
-  simp only [HexMvPolyMathlib.monoEquiv_apply, MvPoly.Kernel.get_mono]
-
-/-- Evaluation of the empty term list. -/
-theorem interpret_nil (ι : C →+* F) (v : Fin k → F) :
-    HexMvPolyMathlib.eval₂MathlibHom ι v (PolyLists.denote []) = 0 := map_zero _
-
 /-- The term-form result distinguishes the polynomial matrix from its
 specialisation. Its rank proof is explicitly about the polynomial matrix.
 Coefficient instances are stored fields so projections need no global

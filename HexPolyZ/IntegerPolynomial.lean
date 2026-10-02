@@ -621,6 +621,25 @@ private theorem toRatPoly_ratPolyPrimitivePartCleared (f : DensePoly Rat) :
   exact ratCoeffToIntWithDen_cast (ratCommonDen f.toArray.toList) (f.coeff n)
     (ratCommonDen_dvd_coeff f n)
 
+/-- Clear rational denominators with a strictly positive integer multiplier.
+Unlike primitive-part normalization, this preserves the sign of the polynomial. -/
+def clearDenominators (f : DensePoly Rat) : Nat × ZPoly :=
+  (ratCommonDen f.toArray.toList, ratPolyPrimitivePartCleared f)
+
+/-- Clearing the unit polynomial preserves the unit and uses multiplier one. -/
+theorem clearDenominators_one : clearDenominators (1 : DensePoly Rat) = (1, (1 : ZPoly)) := by
+  rfl
+
+/-- The clearing multiplier is positive, including for the zero polynomial. -/
+theorem clearDenominators_pos (f : DensePoly Rat) : 0 < (clearDenominators f).1 :=
+  ratCommonDen_pos f.toArray.toList
+
+/-- The returned integer polynomial is exactly the input times the positive
+clearing multiplier, with no primitive-part or leading-sign adjustment. -/
+theorem toRatPoly_clearDenominators (f : DensePoly Rat) :
+    toRatPoly (clearDenominators f).2 = DensePoly.scale ((clearDenominators f).1 : Rat) f :=
+  toRatPoly_ratPolyPrimitivePartCleared f
+
 private theorem rat_scale_div_of_scale_eq {c d : Rat} (hd : d ≠ 0)
     {p q : DensePoly Rat}
     (h : DensePoly.scale c p = DensePoly.scale d q) :

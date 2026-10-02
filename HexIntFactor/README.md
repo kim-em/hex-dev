@@ -40,7 +40,16 @@ def twelve : CheckedFactorization 12 :=
 
 - `factor?` searches for a complete checked factorization with explicit
   randomness and a finite fuel budget. `factorPartial?` retains a checked
-  residual when complete search exhausts its budget.
+  residual when complete search exhausts its budget. Both accept
+  `(pMinusOneStage2 := true)` to enable
+  the continuation from bound 64 to 4096; the option defaults to `false`.
+  It uses one extra counted attempt when fuel permits, preserving the four
+  stage-1 calls (through bound 9999) and the ECM allocation.
+- Both factorization APIs also accept `(squfof := .first limits)` to try
+  explicitly bounded SQUFOF before rho, or `.rescue limits` after the existing
+  splitters fail. The default is `.off`. The policy applies recursively and
+  carries its own attempt, step, and queue limits. See the
+  [complete-factorization examples and native timings](https://github.com/kim-em/hex-dev/blob/main/reports/hex-int-factor-squfof.md).
 - `checkFactorization` and `checkPartial` replay untrusted factorization data.
   Prime entries carry `hex-primality` certificates, and bounded products reject
   oversized powers before constructing them.
@@ -50,7 +59,19 @@ def twelve : CheckedFactorization 12 :=
   factorization of the proposed order. `carmichael` computes the Carmichael
   exponent from a complete factorization.
 - `rhoSplit?`, `pMinusOneFactor`, and `ecmStage1` expose the individual split
-  routes. `factorPower?` adds a cyclotomic pre-split for `b ^ n ± 1`.
+  routes. `pMinusOneStage2Counted` continues a saved residue, and
+  `pMinusOneSearchCounted` includes stage 1. Counted factor search retains
+  ordered p−1 and ECM diagnostics on success and exhaustion.
+  `factorPower?` adds a cyclotomic pre-split for `b ^ n ± 1`.
+
+# Certificate construction
+
+For bounded construction of secp256k1, P-384 and Curve448 certificates, import
+`HexIntFactor.Construction` and `HexPrimality.Elab`, then use
+`primality? (factor := Hex.Nat.ecmFactorSearch)` with a local
+`set_option maxHeartbeats 4000000`. This explicit ECM route keeps the default
+primality and factorization portfolios unchanged. Apply its emitted literal
+certificate to avoid repeating search.
 
 # Verification
 

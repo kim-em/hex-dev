@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexModArith.Prime
+public import HexModArith.Field
 public import HexPoly.Euclid
 public import Init.Data.List.Lemmas
 public import Init.Data.List.Perm
@@ -23,24 +23,6 @@ namespace Hex
 namespace ZMod64
 
 variable {p : Nat} [Bounds p]
-
-instance : Zero (ZMod64 p) where
-  zero := ZMod64.zero
-
-instance : One (ZMod64 p) where
-  one := ZMod64.one
-
-instance : Add (ZMod64 p) where
-  add := ZMod64.add
-
-instance : Sub (ZMod64 p) where
-  sub := ZMod64.sub
-
-instance : Mul (ZMod64 p) where
-  mul := ZMod64.mul
-
-instance : Div (ZMod64 p) where
-  div a b := ZMod64.mul a (ZMod64.inv b)
 
 instance : DensePoly.AddZeroLaw (ZMod64 p) where
   add_zero_zero := by
