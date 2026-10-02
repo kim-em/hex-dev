@@ -843,7 +843,9 @@ from literal one does not enable monic storage.
 `Element.restore p sign proof nonzero` retains an exact nonzero stored
 representative using a proof of `Context.signPoly p = sign`. It performs no
 sign query or normalization. `restore?_eq` proves equality with the existing
-independent executable check; canonical zero remains separate. The companion's
+independent executable check; canonical zero remains separate. `ofPoly_restore`
+and `ofPoly_zero` identify the actual packing result from a proved sign of its
+retained remainder. The companion's
 `Context.signPoly_checked` obtains that proof from supplied, accepted
 `SelectedSigns` evidence for the actual reduced query in this exact context.
 The ordinary-kernel example uses a degree-two stored representative whose

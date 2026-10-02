@@ -292,6 +292,27 @@ theorem stored_ofPoly (p : DensePoly E) :
       else some ⟨context.reduce p, context.signPoly (context.reduce p), rfl, h⟩ :=
   stored_ofPoly_proof p
 
+private theorem ofPoly_restore_proof (p : DensePoly E) (claimed : Int)
+    (checked : context.signPoly (context.reduce p) = claimed) (nonzero : claimed ≠ 0) :
+    ofPoly p = restore (context.reduce p) claimed checked nonzero := by
+  apply ext
+  simp [stored_ofPoly, restore, checked, nonzero]
+
+/-- A proved sign of the actual retained remainder identifies packing with
+proof-directed restoration. Kernel checking can reuse that scalar fact. -/
+theorem ofPoly_restore (p : DensePoly E) (claimed : Int)
+    (checked : context.signPoly (context.reduce p) = claimed) (nonzero : claimed ≠ 0) :
+    ofPoly p = restore (context.reduce p) claimed checked nonzero :=
+  ofPoly_restore_proof p claimed checked nonzero
+
+/-- A proved zero sign of the actual retained remainder identifies the
+canonical zero branch of packing. -/
+theorem ofPoly_zero (p : DensePoly E)
+    (checked : context.signPoly (context.reduce p) = 0) :
+    ofPoly (context := context) p = 0 := by
+  apply ext
+  simp [stored_ofPoly, checked, stored_zero]
+
 @[expose] def polynomial (a : Element context) : DensePoly E :=
   match a.stored with
   | none => 0
