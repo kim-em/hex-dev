@@ -92,6 +92,49 @@ class AllocationValidationTests(unittest.TestCase):
             capture.check_events(check["counters"], json.loads(raw),
                                  Path(meta["compile_commands"][i][-1]))
 
+    def test_retained_joint_capture(self):
+        import gzip
+        import hashlib
+        import json
+        from pathlib import Path
+        root = Path(__file__).resolve().parents[2] / "reports/data/sign-det-allocations/joint-25b179f5c"
+        meta = json.loads((root / "metadata.json").read_text())
+        self.assertEqual(meta["state"], "complete")
+        self.assertEqual(meta["git_status"], "")
+        self.assertTrue(meta["source_unchanged"])
+        self.assertEqual(meta["source_sha256"], meta["source_sha256_after"])
+        self.assertEqual(meta["binary_sha256"], meta["binary_sha256_after"])
+        for name, expected in meta["collector_sha256"].items():
+            self.assertEqual(capture.digest(root / "collector-sources" / name), expected)
+        rows = [json.loads(line) for line in (root / "samples.jsonl").read_text().splitlines()]
+        self.assertEqual(rows, meta["samples"])
+        schedule = [(trial, n, f) for trial in range(1, meta["trials"] + 1)
+                    for n in meta["parameters"] for f in meta["functions"]]
+        self.assertEqual([(r["trial"], r["parameter"], r["function"]) for r in rows], schedule)
+        self.assertEqual(len(rows), 36)
+        observations = {}
+        for i, row in enumerate(rows):
+            self.assertEqual(row["state"], "complete")
+            stem = f"{i:03d}"
+            log = root / (stem + ".log")
+            native = root / (stem + ".native.log")
+            self.assertEqual(capture.digest(log), row["log_sha256"])
+            self.assertEqual(capture.digest(native), row["native_log_sha256"])
+            original = capture.benchmark_row(native.read_text(), row["function"], row["parameter"])
+            instrumented = capture.benchmark_row(log.read_text(), row["function"], row["parameter"])
+            self.assertEqual(original["result_hash"], row["result_hash"])
+            self.assertEqual(instrumented["result_hash"], row["result_hash"])
+            raw = gzip.decompress((root / (stem + ".dhat.json.gz")).read_bytes())
+            self.assertEqual(hashlib.sha256(raw).hexdigest(), row["dhat_sha256"])
+            wrapper = next(arg.removeprefix("env LD_PRELOAD=").split()[0]
+                           for arg in row["command"] if arg.startswith("env LD_PRELOAD="))
+            capture.check_events(row["counters"], json.loads(raw), wrapper)
+            self.assertEqual(capture.counters(log.read_text()), row["counters"])
+            key = row["function"], row["parameter"]
+            if key in observations:
+                self.assertEqual(row["counters"], observations[key])
+            observations[key] = row["counters"]
+
     def test_repeated_callbacks_reject(self):
         import json
         counts = dict(self.counts, callbacks=2)
