@@ -1,0 +1,41 @@
+These review findings are resolved. Nothing blocks R1 to R3, and I found only wording nits. Bash was partly denied, so I checked the JSON with Read/Grep rather than scripts. I did not check live CI or issue 10600.
+
+## R1: closed
+
+- **The profile matches HEAD.** It targets `Hex.ECPPBench.runSizedReplay` at 4096 bits. Its recorded hashes for `Bench.lean`, `Affine.lean`, `Replay.lean`, `Search.lean`, `Import.lean` and `scripts/profile/ecpp.py` all equal HEAD's.
+- **The diagnostics pass.** 8,416 retained samples; calibration residual 0.96 ms against a 5 ms limit; shift sensitivity variation about 0.0006.
+- **Replay does no Euclid.** `addWithInverse` (`HexECPP/Affine.lean:52-60`) only checks `d * u % n == 1` on the supplied inverse, then does a fixed number of products and reductions. `checkedAdd?` adds one canonical and one on-curve check.
+- **Both replay registrations run the same callback.** `runModulusReplay` is literally `runSizedReplay input` (`Bench.lean:382`). Its `q = 2^47 - 1` gives 94 additions, so bit-extraction copying is negligible there. The 4096-bit diagonal profile is therefore representative of the modulus ladder's per-addition work, if anything conservatively.
+- **The leaf split supports the citation.** GMP is 93.11% (`addmul_1` 33.23%, `submul_1` 22.81%, `sbpi1_div_qr` 8.41%) and allocation is 5.80%. The allocation argument (boundedly many k-bit objects per addition, O(k) each) is sound.
+
+Two caveats, neither blocking:
+1. **Not purely basecase GMP.** At 64 limbs GMP is partly in faster algorithms: `__gmpn_toom22_mul` and `__gmpn_dcpi1_div_qr` both appear. These are asymptotically below the cited quadratic basecase bounds, so the upper bound still holds, and the `Bench.lean` comment says so ("faster regimes improve that bound"). But `hex-ecpp-performance.md:273-275` names only basecase multiplication. One clause naming toom22 and divide-and-conquer division would answer the obvious reader question.
+2. **Stack unwinding was truncated.** `start_thread` is only 33.27% inclusive and `runSizedReplay` only 34.4%, so about two thirds of stacks did not unwind through GMP's assembly. This doesn't affect the leaf categories the report cites. The timed-region filter on the benchmark thread is what attributes samples to the callback. But no inclusive figure from this profile should ever be cited as coverage, and the report correctly doesn't.
+
+## R3: closed
+
+The capped run proves the ordering, by this argument:
+- **Identical prefix.** `charge` (`Search.lean:146-165`) behaves identically under `maxPoints := 8` and the default until a 9th point is charged. Every other budget field is equal, so `beforeChild` and `firstChild` run identically up to that point.
+- **The parent retry comes first.** With `pointRetries = 8`, the first twist that draws points must use all 8 and record `⟨hard, .pointRetries⟩`. The only other exit is returning a proposal, which leads to a child call.
+- **No child before it.** Under `maxDepth := 1`, any child call increments `backtracks` and records a `.depth` diagnostic. A later retry cannot overwrite that (`Search.lean:138-142`). So `backtracks == 0` plus the guard that the diagnostic is still the parent's retry together rule out any child before the parent retry.
+- **So the replacement branch runs.** In `firstChild`, the stored diagnostic at the first child failure is therefore the parent's retry. Later retries on the same subject can't displace it. The final `.depth` child diagnostic can only come from the `n < e.subject` branch.
+- **Robust to how the capped run ends.** It holds whether `beforeChild` stops on the points cap or the candidates cap.
+- **Build record matches.** `retry-prefix-verification.json`'s `source_sha256` equals HEAD's `NativeConformance.lean`, and the log shows a real rebuild ("Built", not "Replayed").
+
+Nit: the original three-line `firstChild` comment (lines 130-132) now sits above `beforeChild`, separated from the definition it describes.
+
+## R2: resolved
+
+`hex-ecpp-performance.md:331-337` now states that the earlier run already showed linear scaling, and why the corrected model applies. That is what `SPEC/benchmarking.md:1317-1323` asks for. Two wording nits:
+- "That declaration missed the dominant … work": the k² declaration was a valid but loose upper bound; "overestimated" or "was not tight" is more accurate.
+- "follows the source operand limits and profile": no profile exists at a 65-bit modulus with 32 to 512 scalar bits. The only width profile is the diagonal 512-bit proposal. The source-level argument is sufficient on its own, so drop "and profile".
+
+## Proposal Euclid versus inverse-free replay: correctly scoped where it matters
+
+Lines 62-64 and 280 now separate the two correctly. One remaining imprecision: lines 53-54 still give "operand-dependent Euclidean iterations, quotient sizes" as the reason for mode 2 across all four modulus-width registrations. For replay, only GMP's changing algorithm regimes (plus bit-extraction copying on the diagonal) apply. This is non-blocking.
+
+## Provenance and other items
+
+- **Recorded sources are parent commits.** Both new records say `source: 929c1d4f1`, the parent of the commit that added the profiling case and `beforeChild`. The recorded file hashes match the post-change tree, so the evidence is reconstructible. Still, "929c1d4f1 plus the recorded working-tree changes" would be more accurate.
+- **R6 nits are fixed.** The section now lists all five families, the `873bdbc33` HEAD move is explained, and the split contract text is updated.
+- **R4 and R5 are disposed of.** R4 is tracked as #10600 and R5 was optional companion work, so neither blocks.

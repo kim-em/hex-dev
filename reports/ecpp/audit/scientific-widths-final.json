@@ -1,0 +1,153 @@
+{
+  "cpu": 95,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "source": "e893b9f15c45f5cb1366ab6bd14858ce92568a8e",
+  "source_hashes": {
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56",
+    "bench/HexECPP/Bench.lean": "3a2b9cba504e230d337166641f792cb45b37a4c9504918b9dcdf5fea10fe32c9",
+    "scripts/bench/ecpp_audit.py": "b558eeb167169230e4b62dbb100d2f6000e942db9b4f5de87cb7139ffa12b278",
+    "HexECPP/Affine.lean": "e1a749485731b258030c61ecdb769b697f6b1877434ec589a27a920c164e5c6b",
+    "HexECPP/CM.lean": "05a06a0dafb457e5831f0b6bba2abd2c9c9c2f5a8319772673e0140f858a8de3",
+    "HexECPP/Cert.lean": "1d3261fbe6c581e630811277c83ef36e44bcdce87b042ff4eac4e60409d73100",
+    "HexECPP/Data.lean": "98690924d6648202e8e2f43d118934eb0e4fb3899a3127aa02bf4ef605d5bd81",
+    "HexECPP/Import.lean": "acd09355df7cbed5c4271cfc780b8ed90ff1ca88ac8c22abed4f4f5dc8d6406d",
+    "HexECPP/Replay.lean": "365360db2a51992dfdd0c48e6e37a8bbc61e13bc57faa448abffd851c26856dc",
+    "HexECPP/Search.lean": "23cf4558d66c0db63ced586e22069fd4fe7a3e2a6eee9ab0990a9d67fddc0bb7"
+  },
+  "executable_sha256": "81ff76c727efc27cd51f8f6e1ebc4e0649578f278e94524385b09b55538253a6",
+  "lean": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "host_before": {
+    "loadavg": [
+      3.09326171875,
+      6.2568359375,
+      6.849609375
+    ]
+  },
+  "commands": [
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/bin/hexecpp_bench",
+        "run",
+        "Hex.ECPPBench.runSizedProposal",
+        "--export-file",
+        "reports/ecpp/audit/scientific-widths-final.artifacts/runSizedProposal.json"
+      ],
+      "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10585",
+      "returncode": 0,
+      "stdout": "Hex.ECPPBench.runSizedProposal    expected complexity: k * k * k    [warm cache]\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=e893b9f-dirty, 2026-10-02T13:47:59Z, host=chungus2\n  param  per-call    repeats  C\n     64  467.375 \u00b5s  \u00d72^13    C=1.792 [trial 1/3] \u2020\n    128    2.874 ms  \u00d72^10    C=1.370 [trial 1/3]\n    256   14.667 ms  \u00d72^8     C=0.874 [trial 1/3]\n    512   67.493 ms  \u00d72^6     C=0.500 [trial 1/3]\n  1_024  304.734 ms  \u00d72^4     C=0.278 [trial 1/3]\n  2_048    1.359 s   \u00d72^2     C=0.158 [trial 1/3]\n  4_096    6.523 s   \u00d72^0     C=0.095 [trial 1/3]\n     64  469.885 \u00b5s  \u00d72^13    C=1.792 [trial 2/3] \u2020\n     64  470.118 \u00b5s  \u00d72^13    C=1.792 [trial 3/3] \u2020\n    128    2.897 ms  \u00d72^10    C=1.370 [trial 2/3]\n    128    2.843 ms  \u00d72^10    C=1.370 [trial 3/3]\n    256   14.799 ms  \u00d72^8     C=0.874 [trial 2/3]\n    256   14.614 ms  \u00d72^8     C=0.874 [trial 3/3]\n    512   67.047 ms  \u00d72^6     C=0.500 [trial 2/3]\n    512   66.460 ms  \u00d72^6     C=0.500 [trial 3/3]\n  1_024  298.324 ms  \u00d72^4     C=0.278 [trial 2/3]\n  1_024  298.733 ms  \u00d72^4     C=0.278 [trial 3/3]\n  2_048    1.358 s   \u00d72^1     C=0.158 [trial 2/3]\n  2_048    1.347 s   \u00d72^2     C=0.158 [trial 3/3]\n  4_096    6.514 s   \u00d72^0     C=0.095 [trial 2/3]\n  4_096    6.783 s   \u00d72^0     C=0.095 [trial 3/3]\n  verdict: inconclusive (cMin=0.095, cMax=1.370, \u03b2=-0.786, looks faster than declared by ~n^0.786)\n  per-spawn floor (harness self-measurement): 26.289 ms\n  peak RSS: 66_788 kB..120_532 kB (across 21 ok row(s))\n  trial summaries (3 trials per param; spread = (max-min)/median):\n    param  trials  median      min         max         spread\n       64  3/3     469.885 \u00b5s  467.375 \u00b5s  470.118 \u00b5s  0.584%\n      128  3/3       2.874 ms    2.843 ms    2.897 ms  1.889%\n      256  3/3      14.667 ms   14.614 ms   14.799 ms  1.266%\n      512  3/3      67.047 ms   66.460 ms   67.493 ms  1.542%\n    1_024  3/3     298.733 ms  298.324 ms  304.734 ms  2.146%\n    2_048  3/3       1.358 s     1.347 s     1.359 s   0.847%\n    4_096  3/3       6.523 s     6.514 s     6.783 s   4.117%\nexported to reports/ecpp/audit/scientific-widths-final.artifacts/runSizedProposal.json\n",
+      "stderr": "",
+      "loadavg": [
+        10.1728515625,
+        7.6083984375,
+        7.2451171875
+      ]
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/bin/hexecpp_bench",
+        "run",
+        "Hex.ECPPBench.runScalarReplay",
+        "--export-file",
+        "reports/ecpp/audit/scientific-widths-final.artifacts/runScalarReplay.json"
+      ],
+      "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10585",
+      "returncode": 0,
+      "stdout": "Hex.ECPPBench.runScalarReplay    expected complexity: k * k    [warm cache]\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=e893b9f-dirty, 2026-10-02T13:50:17Z, host=chungus2\n  param  per-call    repeats  C\n     32  128.308 \u00b5s  \u00d72^14    C=122.124 [trial 1/3] \u2020\n     64  263.665 \u00b5s  \u00d72^13    C= 63.966 [trial 1/3]\n    128  532.079 \u00b5s  \u00d72^12    C= 32.476 [trial 1/3]\n    256    1.056 ms  \u00d72^11    C= 16.412 [trial 1/3]\n    512    2.127 ms  \u00d72^10    C=  8.210 [trial 1/3]\n  1_024    4.331 ms  \u00d72^8     C=  4.130 [trial 1/3]\n  2_048    8.757 ms  \u00d72^7     C=  2.088 [trial 1/3]\n  4_096   17.876 ms  \u00d72^6     C=  1.048 [trial 1/3]\n     32  124.684 \u00b5s  \u00d72^14    C=122.124 [trial 2/3] \u2020\n     32  125.055 \u00b5s  \u00d72^14    C=122.124 [trial 3/3] \u2020\n     64  262.002 \u00b5s  \u00d72^13    C= 63.966 [trial 2/3]\n     64  260.547 \u00b5s  \u00d72^13    C= 63.966 [trial 3/3]\n    128  525.199 \u00b5s  \u00d72^12    C= 32.476 [trial 2/3]\n    128  544.592 \u00b5s  \u00d72^11    C= 32.476 [trial 3/3]\n    256    1.076 ms  \u00d72^11    C= 16.412 [trial 2/3]\n    256    1.080 ms  \u00d72^11    C= 16.412 [trial 3/3]\n    512    2.152 ms  \u00d72^10    C=  8.210 [trial 2/3]\n    512    2.155 ms  \u00d72^9     C=  8.210 [trial 3/3]\n  1_024    4.324 ms  \u00d72^8     C=  4.130 [trial 2/3]\n  1_024    4.381 ms  \u00d72^8     C=  4.130 [trial 3/3]\n  2_048    8.553 ms  \u00d72^7     C=  2.088 [trial 2/3]\n  2_048    8.910 ms  \u00d72^7     C=  2.088 [trial 3/3]\n  4_096   17.533 ms  \u00d72^6     C=  1.048 [trial 2/3]\n  4_096   17.587 ms  \u00d72^6     C=  1.048 [trial 3/3]\n  verdict: inconclusive (cMin=1.048, cMax=63.966, \u03b2=-0.989, looks faster than declared by ~n^0.989)\n  per-spawn floor (harness self-measurement): 26.357 ms\n  peak RSS: 69_556 kB..78_112 kB (across 24 ok row(s))\n  trial summaries (3 trials per param; spread = (max-min)/median):\n    param  trials  median      min         max         spread\n       32  3/3     125.055 \u00b5s  124.684 \u00b5s  128.308 \u00b5s  2.897%\n       64  3/3     262.002 \u00b5s  260.547 \u00b5s  263.665 \u00b5s  1.190%\n      128  3/3     532.079 \u00b5s  525.199 \u00b5s  544.592 \u00b5s  3.645%\n      256  3/3       1.076 ms    1.056 ms    1.080 ms  2.176%\n      512  3/3       2.152 ms    2.127 ms    2.155 ms  1.293%\n    1_024  3/3       4.331 ms    4.324 ms    4.381 ms  1.319%\n    2_048  3/3       8.757 ms    8.553 ms    8.910 ms  4.073%\n    4_096  3/3      17.587 ms   17.533 ms   17.876 ms  1.951%\nexported to reports/ecpp/audit/scientific-widths-final.artifacts/runScalarReplay.json\n",
+      "stderr": "",
+      "loadavg": [
+        9.3115234375,
+        7.779296875,
+        7.3232421875
+      ]
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/bin/hexecpp_bench",
+        "run",
+        "Hex.ECPPBench.runScalarProposal",
+        "--export-file",
+        "reports/ecpp/audit/scientific-widths-final.artifacts/runScalarProposal.json"
+      ],
+      "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10585",
+      "returncode": 0,
+      "stdout": "Hex.ECPPBench.runScalarProposal    expected complexity: k * k    [warm cache]\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=e893b9f-dirty, 2026-10-02T13:50:58Z, host=chungus2\n  param  per-call    repeats  C\n     32  252.772 \u00b5s  \u00d72^13    C=246.453 [trial 1/3] \u2020\n     64  521.812 \u00b5s  \u00d72^12    C=129.278 [trial 1/3]\n    128    1.064 ms  \u00d72^11    C= 64.938 [trial 1/3]\n    256    2.172 ms  \u00d72^9     C= 33.121 [trial 1/3]\n    512    4.378 ms  \u00d72^8     C= 16.693 [trial 1/3]\n  1_024    8.762 ms  \u00d72^7     C=  8.356 [trial 1/3]\n  2_048   17.774 ms  \u00d72^6     C=  4.276 [trial 1/3]\n  4_096   35.723 ms  \u00d72^5     C=  2.141 [trial 1/3]\n     32  252.368 \u00b5s  \u00d72^13    C=246.453 [trial 2/3] \u2020\n     32  250.779 \u00b5s  \u00d72^13    C=246.453 [trial 3/3] \u2020\n     64  532.670 \u00b5s  \u00d72^12    C=129.278 [trial 2/3]\n     64  529.523 \u00b5s  \u00d72^12    C=129.278 [trial 3/3]\n    128    1.062 ms  \u00d72^11    C= 64.938 [trial 2/3]\n    128    1.066 ms  \u00d72^11    C= 64.938 [trial 3/3]\n    256    2.167 ms  \u00d72^9     C= 33.121 [trial 2/3]\n    256    2.171 ms  \u00d72^9     C= 33.121 [trial 3/3]\n    512    4.376 ms  \u00d72^8     C= 16.693 [trial 2/3]\n    512    4.364 ms  \u00d72^8     C= 16.693 [trial 3/3]\n  1_024    8.746 ms  \u00d72^7     C=  8.356 [trial 2/3]\n  1_024    8.802 ms  \u00d72^7     C=  8.356 [trial 3/3]\n  2_048   18.146 ms  \u00d72^6     C=  4.276 [trial 2/3]\n  2_048   17.935 ms  \u00d72^6     C=  4.276 [trial 3/3]\n  4_096   36.339 ms  \u00d72^5     C=  2.141 [trial 2/3]\n  4_096   35.921 ms  \u00d72^5     C=  2.141 [trial 3/3]\n  verdict: inconclusive (cMin=2.141, cMax=129.278, \u03b2=-0.985, looks faster than declared by ~n^0.985)\n  per-spawn floor (harness self-measurement): 27.793 ms\n  peak RSS: 69_888 kB..77_888 kB (across 24 ok row(s))\n  trial summaries (3 trials per param; spread = (max-min)/median):\n    param  trials  median      min         max         spread\n       32  3/3     252.368 \u00b5s  250.779 \u00b5s  252.772 \u00b5s  0.790%\n       64  3/3     529.523 \u00b5s  521.812 \u00b5s  532.670 \u00b5s  2.050%\n      128  3/3       1.064 ms    1.062 ms    1.066 ms  0.374%\n      256  3/3       2.171 ms    2.167 ms    2.172 ms  0.237%\n      512  3/3       4.376 ms    4.364 ms    4.378 ms  0.315%\n    1_024  3/3       8.762 ms    8.746 ms    8.802 ms  0.647%\n    2_048  3/3      17.935 ms   17.774 ms   18.146 ms  2.074%\n    4_096  3/3      35.921 ms   35.723 ms   36.339 ms  1.716%\nexported to reports/ecpp/audit/scientific-widths-final.artifacts/runScalarProposal.json\n",
+      "stderr": "",
+      "loadavg": [
+        10.0400390625,
+        8.1533203125,
+        7.46826171875
+      ]
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/bin/hexecpp_bench",
+        "run",
+        "Hex.ECPPBench.runModulusReplay",
+        "--export-file",
+        "reports/ecpp/audit/scientific-widths-final.artifacts/runModulusReplay.json"
+      ],
+      "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10585",
+      "returncode": 0,
+      "stdout": "Hex.ECPPBench.runModulusReplay    expected complexity: k * k    [warm cache]\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=e893b9f-dirty, 2026-10-02T13:51:36Z, host=chungus2\n  param  per-call    repeats  C\n     64  175.775 \u00b5s  \u00d72^13    C=43.503 [trial 1/3] \u2020\n    128  232.349 \u00b5s  \u00d72^13    C=12.532 [trial 1/3]\n    256  253.674 \u00b5s  \u00d72^13    C= 3.414 [trial 1/3]\n    512  319.173 \u00b5s  \u00d72^12    C= 1.122 [trial 1/3]\n  1_024  553.055 \u00b5s  \u00d72^11    C= 0.474 [trial 1/3]\n  2_048    1.143 ms  \u00d72^10    C= 0.263 [trial 1/3]\n  4_096    2.975 ms  \u00d72^9     C= 0.177 [trial 1/3]\n     64  179.434 \u00b5s  \u00d72^13    C=43.503 [trial 2/3] \u2020\n     64  178.189 \u00b5s  \u00d72^13    C=43.503 [trial 3/3] \u2020\n    128  205.319 \u00b5s  \u00d72^13    C=12.532 [trial 2/3]\n    128  203.718 \u00b5s  \u00d72^13    C=12.532 [trial 3/3]\n    256  220.450 \u00b5s  \u00d72^13    C= 3.414 [trial 2/3]\n    256  223.767 \u00b5s  \u00d72^13    C= 3.414 [trial 3/3]\n    512  284.605 \u00b5s  \u00d72^12    C= 1.122 [trial 2/3]\n    512  294.246 \u00b5s  \u00d72^12    C= 1.122 [trial 3/3]\n  1_024  496.642 \u00b5s  \u00d72^12    C= 0.474 [trial 2/3]\n  1_024  493.116 \u00b5s  \u00d72^12    C= 0.474 [trial 3/3]\n  2_048    1.100 ms  \u00d72^10    C= 0.263 [trial 2/3]\n  2_048    1.101 ms  \u00d72^10    C= 0.263 [trial 3/3]\n  4_096    3.083 ms  \u00d72^9     C= 0.177 [trial 2/3]\n  4_096    2.912 ms  \u00d72^9     C= 0.177 [trial 3/3]\n  verdict: inconclusive (cMin=0.177, cMax=12.532, \u03b2=-1.230, looks faster than declared by ~n^1.230)\n  per-spawn floor (harness self-measurement): 28.649 ms\n  peak RSS: 63_708 kB..73_424 kB (across 21 ok row(s))\n  trial summaries (3 trials per param; spread = (max-min)/median):\n    param  trials  median      min         max         spread \n       64  3/3     178.189 \u00b5s  175.775 \u00b5s  179.434 \u00b5s  2.053% \n      128  3/3     205.319 \u00b5s  203.718 \u00b5s  232.349 \u00b5s  13.945%\n      256  3/3     223.767 \u00b5s  220.450 \u00b5s  253.674 \u00b5s  14.848%\n      512  3/3     294.246 \u00b5s  284.605 \u00b5s  319.173 \u00b5s  11.748%\n    1_024  3/3     496.642 \u00b5s  493.116 \u00b5s  553.055 \u00b5s  12.069%\n    2_048  3/3       1.101 ms    1.100 ms    1.143 ms  3.939% \n    4_096  3/3       2.975 ms    2.912 ms    3.083 ms  5.745% \nexported to reports/ecpp/audit/scientific-widths-final.artifacts/runModulusReplay.json\n",
+      "stderr": "",
+      "loadavg": [
+        16.4677734375,
+        10.08251953125,
+        8.14697265625
+      ]
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/bin/hexecpp_bench",
+        "run",
+        "Hex.ECPPBench.runModulusProposal",
+        "--export-file",
+        "reports/ecpp/audit/scientific-widths-final.artifacts/runModulusProposal.json"
+      ],
+      "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10585",
+      "returncode": 0,
+      "stdout": "Hex.ECPPBench.runModulusProposal    expected complexity: k * k    [warm cache]\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=873bdbc-dirty, 2026-10-02T13:52:10Z, host=chungus2\n  param  per-call    repeats  C\n     64  350.790 \u00b5s  \u00d72^12    C=85.642 [trial 1/3] \u2020\n    128    1.068 ms  \u00d72^10    C=64.354 [trial 1/3]\n    256    2.716 ms  \u00d72^9     C=40.043 [trial 1/3]\n    512    6.052 ms  \u00d72^8     C=22.243 [trial 1/3]\n  1_024   12.982 ms  \u00d72^7     C=12.140 [trial 1/3]\n  2_048   28.795 ms  \u00d72^6     C= 6.773 [trial 1/3]\n  4_096   70.887 ms  \u00d72^4     C= 4.205 [trial 1/3]\n     64  345.478 \u00b5s  \u00d72^12    C=85.642 [trial 2/3] \u2020\n     64  351.324 \u00b5s  \u00d72^12    C=85.642 [trial 3/3] \u2020\n    128    1.054 ms  \u00d72^11    C=64.354 [trial 2/3]\n    128    1.044 ms  \u00d72^11    C=64.354 [trial 3/3]\n    256    2.624 ms  \u00d72^9     C=40.043 [trial 2/3]\n    256    2.601 ms  \u00d72^9     C=40.043 [trial 3/3]\n    512    5.831 ms  \u00d72^8     C=22.243 [trial 2/3]\n    512    5.794 ms  \u00d72^8     C=22.243 [trial 3/3]\n  1_024   12.684 ms  \u00d72^7     C=12.140 [trial 2/3]\n  1_024   12.730 ms  \u00d72^7     C=12.140 [trial 3/3]\n  2_048   28.409 ms  \u00d72^6     C= 6.773 [trial 2/3]\n  2_048   28.185 ms  \u00d72^6     C= 6.773 [trial 3/3]\n  4_096   69.922 ms  \u00d72^4     C= 4.205 [trial 2/3]\n  4_096   70.543 ms  \u00d72^4     C= 4.205 [trial 3/3]\n  verdict: inconclusive (cMin=4.205, cMax=64.354, \u03b2=-0.807, looks faster than declared by ~n^0.807)\n  per-spawn floor (harness self-measurement): 27.896 ms\n  peak RSS: 69_560 kB..72_972 kB (across 21 ok row(s))\n  trial summaries (3 trials per param; spread = (max-min)/median):\n    param  trials  median      min         max         spread\n       64  3/3     350.790 \u00b5s  345.478 \u00b5s  351.324 \u00b5s  1.666%\n      128  3/3       1.054 ms    1.044 ms    1.068 ms  2.284%\n      256  3/3       2.624 ms    2.601 ms    2.716 ms  4.389%\n      512  3/3       5.831 ms    5.794 ms    6.052 ms  4.426%\n    1_024  3/3      12.730 ms   12.684 ms   12.982 ms  2.336%\n    2_048  3/3      28.409 ms   28.185 ms   28.795 ms  2.147%\n    4_096  3/3      70.543 ms   69.922 ms   70.887 ms  1.368%\nexported to reports/ecpp/audit/scientific-widths-final.artifacts/runModulusProposal.json\n",
+      "stderr": "",
+      "loadavg": [
+        16.50537109375,
+        10.73681640625,
+        8.4287109375
+      ]
+    }
+  ],
+  "budgets_seconds": {
+    "runCheck65": 0.00032,
+    "runCheck256": 0.012,
+    "runCheck512": 0.045,
+    "runConvert65": 0.0016,
+    "runConvert256": 0.17,
+    "runConvert512": 1.05,
+    "runNative128": 0.125,
+    "runNative256": 1.45,
+    "runNativeHard": 3.3,
+    "runNativeCheck": 0.01,
+    "runNativeConvert": 0.14,
+    "runParse512": 0.0016,
+    "runNativeExhaust": 0.075,
+    "runCM128": 0.00023,
+    "runCM256": 0.0002,
+    "runCountedConvert65": 0.0021
+  },
+  "samples": [],
+  "host_after": {
+    "loadavg": [
+      16.50537109375,
+      10.73681640625,
+      8.4287109375
+    ]
+  },
+  "artifact_sha256": {
+    "runSizedProposal.json": "81f14cb9b8e960f8cb61387b50255b9b48898b92bc2116e6a016a46d09e0924f",
+    "runScalarReplay.json": "72107db00472d719157e2a9a3bd8827dd89b94f651eb31f38e928cf390632fa8",
+    "runScalarProposal.json": "519174ee14c8d7db832f2371d8e9f1f22bc885c93fc3a325e4c784457ea64099",
+    "runModulusReplay.json": "4190e79bb6263c4f49761f84c5cd3c9c4a225b61610ed75faa5720a9657ab3b2",
+    "runModulusProposal.json": "e918e16228f4a755d3a4f853958cac122bbf11ecf59764035c8b022fae85065d"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "cpu": 33,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "source": "bf0d6051d6d723acdf242a2ee7e2e5c25288865c",
+  "source_hashes": {
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56",
+    "bench/HexECPP/Bench.lean": "24d9ee1c01e64fe88bf3e4678f32f32006d003c1f25072d9986ec3875307b894",
+    "scripts/bench/ecpp_audit.py": "f4feee46f9f142c8e1eaf01a68a6fcb1af0d6a1ed85d97401d4e2fe40586f5ae",
+    "HexECPP/Affine.lean": "e1a749485731b258030c61ecdb769b697f6b1877434ec589a27a920c164e5c6b",
+    "HexECPP/CM.lean": "05a06a0dafb457e5831f0b6bba2abd2c9c9c2f5a8319772673e0140f858a8de3",
+    "HexECPP/Cert.lean": "1d3261fbe6c581e630811277c83ef36e44bcdce87b042ff4eac4e60409d73100",
+    "HexECPP/Data.lean": "98690924d6648202e8e2f43d118934eb0e4fb3899a3127aa02bf4ef605d5bd81",
+    "HexECPP/Import.lean": "1f8ef51119d1ce20085c50093edc68bc34450d542d1062ebe35af2b72736d132",
+    "HexECPP/Replay.lean": "365360db2a51992dfdd0c48e6e37a8bbc61e13bc57faa448abffd851c26856dc",
+    "HexECPP/Search.lean": "d3e52d16f3625bcd007260ff1efcc79edbfe8dd17cc0377a57929a78529fb21f"
+  },
+  "executable_sha256": "cdefab0c218d687e4cc9887a26965a79f8ad1514c7cae956ed599014b1e05550",
+  "lean": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "host_before": {
+    "loadavg": [
+      3.4892578125,
+      25.3701171875,
+      44.0888671875
+    ]
+  },
+  "commands": [
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/bin/hexecpp_bench",
+        "run",
+        "Hex.ECPPBench.runReplay",
+        "--export-file",
+        "reports/ecpp/audit/scientific-final.artifacts/runReplay.json"
+      ],
+      "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10585",
+      "returncode": 2,
+      "stdout": "Hex.ECPPBench.runReplay    expected complexity: k    [warm cache]\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=bf0d605-dirty, 2026-10-02T06:54:17Z, host=chungus2\n  param  per-call    repeats  C\n     64   10.460 \u00b5s  \u00d72^14    C=\u2014 [<floor] [trial 1/3]\n    128   23.595 \u00b5s  \u00d72^13    C=\u2014 [<floor] [trial 1/3]\n    256   49.118 \u00b5s  \u00d72^12    C=\u2014 [<floor] [trial 1/3]\n    512  101.472 \u00b5s  \u00d72^11    C=\u2014 [<floor] [trial 1/3]\n  1_024  211.045 \u00b5s  \u00d72^10    C=\u2014 [<floor] [trial 1/3]\n  2_048  440.988 \u00b5s  \u00d72^9     C=\u2014 [<floor] [trial 1/3]\n  4_096  917.678 \u00b5s  \u00d72^8     C=\u2014 [<floor] [trial 1/3]\n     64   10.332 \u00b5s  \u00d72^14    C=\u2014 [<floor] [trial 2/3]\n     64   10.417 \u00b5s  \u00d72^14    C=\u2014 [<floor] [trial 3/3]\n    128   24.481 \u00b5s  \u00d72^13    C=\u2014 [<floor] [trial 2/3]\n    128   23.475 \u00b5s  \u00d72^13    C=\u2014 [<floor] [trial 3/3]\n    256   49.600 \u00b5s  \u00d72^12    C=\u2014 [<floor] [trial 2/3]\n    256   51.300 \u00b5s  \u00d72^12    C=\u2014 [<floor] [trial 3/3]\n    512  101.978 \u00b5s  \u00d72^11    C=\u2014 [<floor] [trial 2/3]\n    512  105.326 \u00b5s  \u00d72^11    C=\u2014 [<floor] [trial 3/3]\n  1_024  208.100 \u00b5s  \u00d72^10    C=\u2014 [<floor] [trial 2/3]\n  1_024  206.702 \u00b5s  \u00d72^10    C=\u2014 [<floor] [trial 3/3]\n  2_048  430.981 \u00b5s  \u00d72^9     C=\u2014 [<floor] [trial 2/3]\n  2_048  433.838 \u00b5s  \u00d72^9     C=\u2014 [<floor] [trial 3/3]\n  4_096  901.943 \u00b5s  \u00d72^8     C=\u2014 [<floor] [trial 2/3]\n  4_096  904.309 \u00b5s  \u00d72^8     C=\u2014 [<floor] [trial 3/3]\n  verdict: inconclusive (cMin=\u2014, cMax=\u2014, \u03b2=\u2014)\n  per-spawn floor (harness self-measurement): 25.675 ms\n  peak RSS: 67_432 kB..71_060 kB (across 21 ok row(s))\n  \u203c every measurement was below 10.000\u00d7 the per-spawn floor (per-spawn floor \u2248 25.675 ms); the function is too fast for child-process measurement at the configured params. Try the following: raise `--param-ceiling`, wrap the function in a hot inner loop, or use `setup_fixed_benchmark` for a single-shot reading.\n  \u203c only 0 verdict-eligible row(s) survived warmup-trim + signal-floor filter; the verdict is below resolution. Lower `--warmup-fraction`, raise `--param-ceiling`, or use `where { paramSchedule := .custom #[...] }` to pin a tractable rung set.\nexported to reports/ecpp/audit/scientific-final.artifacts/runReplay.json\n",
+      "stderr": "run: 1 benchmark(s) produced zero verdict-eligible rows: Hex.ECPPBench.runReplay\n",
+      "loadavg": [
+        3.44970703125,
+        24.99853515625,
+        43.8681640625
+      ]
+    }
+  ],
+  "budgets_seconds": {
+    "runCheck65": 0.00032,
+    "runCheck256": 0.012,
+    "runCheck512": 0.045,
+    "runConvert65": 0.0016,
+    "runConvert256": 0.17,
+    "runConvert512": 1.05,
+    "runNative128": 0.125,
+    "runNative256": 1.45,
+    "runNativeHard": 3.3,
+    "runNativeCheck": 0.01,
+    "runNativeConvert": 0.14
+  },
+  "samples": []
+}

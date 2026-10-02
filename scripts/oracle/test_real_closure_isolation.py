@@ -201,6 +201,79 @@ class IsolationTests(unittest.TestCase):
         self.rejects(lambda rows: rows[17]["output"]["entries"].reverse(),
                      "nested assembled roots are not strictly increasing")
 
+    def test_collection_missing_source(self):
+        self.rejects(lambda rows: rows[19]["inputs"].pop(), "lost a source")
+
+    def test_collection_changed_mapped_root(self):
+        self.rejects(lambda rows: rows[19]["inputs"][0].update(
+            mapped=rows[19]["inputs"][2]["mapped"]), "changed selected root")
+
+    def test_collection_false_cached_sign(self):
+        self.rejects(lambda rows: rows[19]["inputs"][0]["mapped"].__setitem__(1, -1),
+                     "cached sign differs")
+
+    def test_collection_foreign_predecessor(self):
+        self.rejects(lambda rows: rows[19]["context"][2][1].__setitem__(0, [99]),
+                     "malformed native root frame")
+
+    def test_collection_changed_root_equation(self):
+        self.rejects(lambda rows: rows[19]["context"][2][1].__setitem__(1, []),
+                     "wrong native root equation")
+
+    def test_collection_changed_old_inverse(self):
+        self.rejects(lambda rows: rows[19]["inputs"][0].update(
+            mappedInverse=rows[19]["inputs"][1]["mappedInverse"]), "inverse changed")
+
+    def test_collection_changed_sum(self):
+        self.rejects(lambda rows: rows[19].update(sum=rows[19]["inputs"][0]["mapped"]),
+                     "mixed-context arithmetic differs")
+
+    def test_collection_changed_coefficient(self):
+        self.rejects(lambda rows: rows[19].update(two=rows[19]["three"]), "coefficients changed")
+
+    def test_collection_noncanonical_rational(self):
+        self.rejects(lambda rows: rows[19]["context"][2][0][1].__setitem__(0, [0, -4, 2]),
+                     "noncanonical native rational")
+
+    def test_collection_trailing_zero(self):
+        self.rejects(lambda rows: rows[19]["inputs"][0]["mapped"][0].append([]),
+                     "stored trailing zero")
+
+    def test_collection_foreign_base(self):
+        self.rejects(lambda rows: rows[19]["context"].__setitem__(0, [["pi", 1]]),
+                     "wrong native context stages")
+
+    def test_collection_changed_interval(self):
+        self.rejects(lambda rows: rows[19]["context"][2][1].__setitem__(3, [1, [[[0, 3, 1]], 1]]),
+                     "native root interval changed")
+
+    def test_collection_false_thom_word(self):
+        def corrupt(rows):
+            rows[19]["context"][2][0][4] = [1, 2]
+            rows[19]["context"][2][0][5] = [-1, 1]
+        self.rejects(corrupt, "does not select one root")
+
+    def test_collection_invalid_thom_slots(self):
+        self.rejects(lambda rows: rows[19]["context"][2][0].__setitem__(4, [1]),
+                     "malformed native root signs")
+
+    def test_collection_changed_source_context(self):
+        self.rejects(lambda rows: rows[19]["inputs"][2].update(
+            context=rows[19]["inputs"][0]["context"]), "wrong native root equation")
+
+    def test_collection_changed_input_order(self):
+        def swap(rows):
+            rows[19]["inputs"][0], rows[19]["inputs"][2] = rows[19]["inputs"][2], rows[19]["inputs"][0]
+        self.rejects(swap)
+
+    def test_collection_false_zero_sign(self):
+        self.rejects(lambda rows: rows[19]["inputs"][0]["mapped"].__setitem__(1, 0),
+                     "malformed native nonzero")
+
+    def test_collection_boolean_predecessor(self):
+        self.rejects(lambda rows: rows[19]["context"][2][0].__setitem__(0, [False]),
+                     "malformed native root frame")
+
 
 if __name__ == "__main__":
     unittest.main()

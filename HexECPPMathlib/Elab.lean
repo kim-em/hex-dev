@@ -28,10 +28,10 @@ returned raw certificate to `ecpp using` for kernel replay. -/
 meta def convertSupplied (source : String) : MetaM (Except ImportError Cert) := do
   let parsed ← match parsePari defaultImportBudget source with
     | .ok input => pure input
-    | .error kind => return .error ⟨0, kind⟩
+    | .error kind => return .error { row := 0, kind := kind }
   let endpoint := parsed.endpoint
   unless Hex.PrimalityTactic.withinPrimalityBudget endpoint do
-    return .error ⟨parsed.rows.length, .exhausted⟩
+    return .error { row := parsed.rows.length, kind := .exhausted }
   let fuel := min (Hex.PrimalityTactic.primalityFuel endpoint)
     defaultImportBudget.maxEndpointFuel
   return (convertCounted defaultImportBudget Hex.PrimalityTactic.primalitySearchBudget

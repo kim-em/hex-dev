@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact Z3 oracle for capped bisection and root assembly over nested values.
+"""Exact Z3 oracle for capped isolation, root assembly and native collection.
 
 Checks the actual inputs, scalar-preserving deflation, retained cell counts,
 selected roots, completeness and absence of duplicates. Proof graphs and
@@ -7,6 +7,7 @@ producer totality are not replayed by this oracle.
 """
 from __future__ import annotations
 import json
+import math
 from pathlib import Path
 import sys
 
@@ -21,7 +22,7 @@ CASES = ["zero", "constant", "repeated", "nonmonic linear", "quadratic",
          "assembly zero", "assembly constant", "assembly pure power",
          "assembly repeated factors", "assembly root-free factor", "assembly simple zero",
          "nested algebraic coefficients", "nested algebraic multiplicities",
-         "assembly nonzero cut point"]
+         "assembly nonzero cut point", "native common root contexts"]
 RATIONAL_HEADS = [[], [5], [1, -2, 1], [-3, 2], [-2, 0, 1],
                   [0, 6, 0, -3], [-2, 0, 0, 1], [6, 0, -5, 0, 1]]
 
@@ -314,6 +315,98 @@ def verify_nested(row, assembly_row):
             "nested assembled roots are not strictly increasing")
 
 
+def native_value(rcf, raw, roots):
+    require(isinstance(raw, list), "malformed native stored value")
+    if not roots:
+        require(len(raw) == 3 and raw[0] == 0 and type(raw[0]) is int and
+                type(raw[1]) is int and type(raw[2]) is int and raw[2] > 0 and
+                math.gcd(raw[1], raw[2]) == 1, "noncanonical native rational")
+        return rcf.coeff(raw[1:], 0)
+    if raw == []:
+        return rcf.zero
+    require(len(raw) == 2 and isinstance(raw[0], list) and raw[0] and
+            type(raw[1]) is int and raw[1] in (-1, 1), "malformed native nonzero")
+    coefficients = [native_value(rcf, c, roots[:-1]) for c in raw[0]]
+    require(coefficients[-1] != 0, "native stored trailing zero")
+    interpreted = rcf.eval(coefficients, roots[-1])
+    require(sign(interpreted) == raw[1], "native cached sign differs")
+    return interpreted
+
+
+def verify_collection(row):
+    """Interpret native stored coefficients, roots and cached signs in Z3.
+
+    This checks selected-root and arithmetic semantics independently. The
+    embedded Lean replay graphs are retained data, not replayed by this oracle.
+    """
+    require(set(row) == {"case", "mode", "context", "inputs", "sum", "inverse",
+                         "zero", "two", "three"} and row["mode"] == "collection",
+            "malformed native collection row")
+    rcf = RCF({"id": 10377, "levels": ["epsilon1"],
+               "order": "each-new-level-smaller-than-positive-base-elements"})
+
+    def value(raw, roots):
+        return native_value(rcf, raw, roots)
+
+    def context(raw, expected_heads):
+        require(isinstance(raw, list) and len(raw) == 3 and raw[0] == [] and
+                type(raw[1]) is int and raw[1] == 0 and isinstance(raw[2], list) and
+                len(raw[2]) == len(expected_heads), "wrong native context stages")
+        roots = []
+        for frame, expected in zip(raw[2], expected_heads):
+            require(isinstance(frame, list) and len(frame) == 7 and frame[0] == [0] and
+                    type(frame[0][0]) is int and
+                    isinstance(frame[1], list) and isinstance(frame[6], list),
+                    "malformed native root frame")
+            head = [value(c, roots) for c in frame[1]]
+            require(head == [n * rcf.one for n in expected], "wrong native root equation")
+            require(isinstance(frame[2], list) and len(frame[2]) == 2 and
+                    type(frame[2][0]) is int and frame[2][0] == 1 and
+                    isinstance(frame[3], list) and len(frame[3]) == 2 and
+                    type(frame[3][0]) is int and frame[3][0] == 1,
+                    "wrong native root interval")
+            lower, upper = value(frame[2][1], roots), value(frame[3][1], roots)
+            require(lower == rcf.one and upper == 2 * rcf.one, "native root interval changed")
+            slots, signs = frame[4], frame[5]
+            require(isinstance(slots, list) and all(type(i) is int for i in slots) and
+                    slots in ([], list(range(1, len(head)))) and isinstance(signs, list) and
+                    len(signs) == len(slots) and
+                    all(type(s) is int and s in (-1, 0, 1) for s in signs),
+                    "malformed native root signs")
+            derivatives = [] if not slots else rcf.derivatives(head)
+            candidates = [root for root in rcf.api.MkRoots(head, rcf.context)
+                          if lower < root < upper and
+                          [sign(rcf.eval(q, root)) for q in derivatives] == signs]
+            require(len(candidates) == 1, "native frame does not select one root")
+            roots.append(candidates[0])
+        return roots
+
+    heads = [[-2, 0, 1], [-9, 0, 3]]
+    shared = context(row["context"], heads)
+    require(isinstance(row["inputs"], list) and len(row["inputs"]) == 3,
+            "native collection lost a source")
+    mapped = []
+    for entry, expected_heads, expected in zip(row["inputs"],
+                                              [heads[:1], [], heads[1:]],
+                                              [shared[0], rcf.zero, shared[1]]):
+        require(set(entry) == {"context", "value", "mapped", "oldInverse", "mappedInverse"},
+                "malformed native root inclusion")
+        original = context(entry["context"], expected_heads)
+        before, after = value(entry["value"], original), value(entry["mapped"], shared)
+        require(before == after == expected, "native inclusion changed selected root")
+        old_inverse = value(entry["oldInverse"], original)
+        mapped_inverse = value(entry["mappedInverse"], shared)
+        require(old_inverse == mapped_inverse and mapped_inverse * (after - rcf.one) == rcf.one,
+                "native whole-context inverse changed")
+        mapped.append(after)
+    total, inverse = value(row["sum"], shared), value(row["inverse"], shared)
+    require(total == mapped[0] + mapped[2] and total * inverse == rcf.one,
+            "native mixed-context arithmetic differs")
+    require(total**4 - 10 * total**2 + 1 == 0, "native sum equation differs")
+    require(value(row["zero"], shared) == 0 and value(row["two"], shared) == 2 * rcf.one and
+            value(row["three"], shared) == 3 * rcf.one, "native coefficients changed")
+
+
 def verify(rows):
     check_version()
     require([r.get("case") for r in rows] == CASES, "missing, repeated or reordered cases")
@@ -429,12 +522,13 @@ def verify(rows):
         verify_assembly(row, index)
     verify_nested(rows[16], rows[17])
     verify_assembly(rows[18], 18)
+    verify_collection(rows[19])
 
 
 def main():
     rows = [json.loads(line) for line in sys.stdin if line.strip()]
     verify(rows)
-    print(f"verified {len(rows)} capped isolation and root-assembly fixtures with exact Z3 RCF")
+    print(f"verified {len(rows)} isolation, assembly and native-collection fixtures with exact Z3 RCF")
 
 
 if __name__ == "__main__":

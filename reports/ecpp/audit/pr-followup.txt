@@ -1,0 +1,78 @@
+I found no correctness, soundness or SPEC blocker to merging, and nothing blocks the phase 5, 6 or 7 attestations. One gap (R1) remains against the letter of the phase 4 attestation. It is cheap to close, needs no code change, and I expect it to pass.
+
+**The branch moved while I was reviewing.** The artifacts that were untracked when you asked are now committed in `fcc0f6257`, `cf1566f53`, `dbbb7e2d2` and `929c1d4f1`. `libraries.yml` is already back at `HexECPP: done_through: 7`, not 3. I reviewed up to `929c1d4f1`. `reports/ecpp/audit/review-structural-checks.json`, which records passing structural checks at that commit, is still untracked. I made no changes.
+
+## Phase 4 attestation gap
+
+**R1. Medium: the two variable-modulus replay ladders have no profile behind their mode-2 citation.**
+- **Where:** `runSizedReplay` and `runModulusReplay` (`bench/HexECPP/Bench.lean`), and `reports/hex-ecpp-performance.md:52-64`.
+- **The rule:** both ladders are mode 2, citing GMP's quadratic basecase multiply/divide bounds. `SPEC/benchmarking.md:103-105` and the `PLAN/Phase4.md` exit criteria require that "the cited result covers the phase that the profile shows dominating".
+- **The gap:**
+  - The only width profile is `runSizedProposal` at 512 bits, where `HexArith.extGcd` takes 90.43% of inclusive samples.
+  - The replay callbacks never run Euclid. `Replay.lean` only consumes the supplied inverses through `checkedAdd?`.
+  - The only replay profile in the tree is `runReplay` at modulus 7, which measures bit-copying, not modular arithmetic.
+  - Every `profiles-*.json` record targets `runSizedProposal`, `runReplay`, `runParse`, `runConvert512` or `runNativeHard`, so the replay citation is unverified.
+- **The report overclaims:** line 61 ("The profile attributes the dominant phase to this very Euclidean recurrence") sits in a paragraph that covers all four mode-2 registrations, including the two replay ones.
+- **Fix:**
+  1. Capture one profile of `runSizedReplay` (for example at 512 or 4096 bits) by adding it as a second `scalar-modulus-widths` case in `scripts/profile/ecpp.py`.
+  2. Cite it in the mode-2 paragraph, scoping the Euclid sentence to the proposal registrations.
+  3. If allocation rather than GMP dominates, say so and explain why the derived k³ bound still covers it.
+
+## Lower-severity findings (none blocking)
+
+**R2. Low (transparency): the linear model for the fixed-modulus ladders was declared after a run had already shown linear scaling.**
+- In `scientific-widths-final`, `runScalarReplay` and `runScalarProposal` ran under `k * k` over 32..4096 at 13:50 and returned slopes of −0.989 and −0.985, which is observed linear.
+- `27fc4539f` (13:54) then declared `bits` over 32..512.
+- I don't consider this verdict-fitting:
+  - The source argument is sound: at most 8 limbs copied per bit at 512 bits, Euclid on fixed 65-bit operands, and at most two operations per bit.
+  - The old samples are retained.
+  - A new run collected the passing evidence.
+  - Narrowing the range did not help the result pass.
+- **Gap:** the report (lines 310-313) and the commit message don't say the earlier run already showed linear scaling, or why `k * k` was wrong (bounded-width Euclid dominates copying at every width in range).
+- **Fix:** state both, as `SPEC/benchmarking.md:1317-1323` asks for a corrected declaration.
+
+**R3. Low: the new recursive-child test doesn't prove the retry happened before the child failed.**
+- **Where:** `conformance/HexECPP/NativeConformance.lean:130-143`.
+- **Why it matters:** the `firstChild` guards would pass in either order:
+  - If the child fails first, `unresolved` takes the child, and the later retry doesn't replace it.
+  - The replacement branch (`Search.lean:139-142`) only runs if the retry comes first, and nothing asserts that ordering.
+- **Fix:** add a run capped just before the child (for example via `maxPoints`) and assert `unresolved == some ⟨hard, .pointRetries⟩`.
+- **Wording nit:** `hex-ecpp-audit.md:175-176` says "first order … the second reaches a smaller child". With `maxCandidates := 2` only one CM order runs, so this should say twists, and should match the test comment.
+
+**R4. Low (outside this PR, worth an issue): HexArith's GMP extended-GCD path is never compiled.**
+- Your counterexample is genuine:
+  - `mpz_gcdext.c` only takes the `mpz_gcdext` path under `#ifdef LEAN_USE_GMP`.
+  - The toolchain headers only test that macro and never define it, and the C flags in the `lakefile.lean` `hexArithOTarget` don't pass `-DLEAN_USE_GMP`.
+  - The `nm` output in `inverse-backend.json` shows `lean_int_big_*` references and no `mpz_gcdext`.
+- Restoring the Nat inverse is right. `Import.lean` is byte-identical to `2aca3251`, and its hash matches every final record.
+- The `HexArith/ExtGcd.lean:37` docstring ("GMP-backed `HexArith.Int.extGcd`") and the extern contract in `hex-arith.md` describe a path this build never compiles. File a HexArith issue: either enable the macro (if the runtime exports the mpz interop symbols) or correct the docs.
+
+**R5. Low (optional): the companion drops parser locations.**
+- The named-field fix in `HexECPPMathlib/Elab.lean:31,34` is correct: `ImportError` gained defaulted `offset` and `detail` fields, which the positional constructors couldn't fill.
+- `convertSupplied` still goes through the kind-only `parsePari`, so the companion's text errors report row 0 with no offset or detail.
+- A public located parser would fix it, but this is not required while `HexECPPMathlib` is at phase 0.
+
+**R6. Nits.**
+- `hex-ecpp-performance.md:25-26` says "five structured families" but lists four; `scalar-modulus-widths` is missing.
+- The `scientific-widths-final.json` header says source `e893b9f15`, but the `runModulusProposal` export records `873bdbc33`: HEAD moved mid-collection. The change was comment-only, so the evidence is unaffected, but the record should say so.
+- `check_ecpp_split.py` skips the sync's validators and test-target rewrite and replaces `rewrite_requires` with local paths. `release-dry-run.json` covers the full sequence, so this is acceptable, but the split record's contract text could say so.
+
+## Verified as requested
+
+- **F1 coverage repair:**
+  - The schedules now cover the realistic widths: diagonal 64..4096, modulus 64..4096 at a 47-bit scalar, and scalar 32..512 at the prime 2^64+13.
+  - Every sample hash is `0xb`, which is `hash true`.
+  - The linear ladders (`scientific-caller-final`: slopes 0.0120 and 0.0116, no advisories) are what actually detect the regression F1 worried about, since O(L²) modular operations would add +1 to the slope.
+  - The diagonal mode-2 ladders cannot detect it on their own (observed about k^1.77, so +1 still sits under k³). That is fine as long as R1 is closed.
+- **Mode 2 for the proposal ladders:** the classical-Euclid O(k²)-per-inverse bound matches `HexArith.extGcd`'s Nat recursion and the 90.43% profile. Reporting them as "within declared upper bound (observed faster)" follows the lean-bench #70 rule; residual slopes run from −0.79 to −1.23.
+- **Reused evidence:**
+  - `Replay.lean` and `Affine.lean` hashes in `scientific-gmp.json` (`df2d457b4`) equal HEAD's.
+  - The `runSizedReplay` registration (model, schedule and limits) is unchanged.
+  - Inverses mod a prime are unique, so the prepared inputs are identical.
+  - `evidence-reuse.json` correctly shows that only docstrings changed in the core since `2aca3251`.
+- **Memo precondition:** documented on `search` and on the module doc. `produce` still re-checks through `finish_ok`.
+- **Split:** `split-final.json` clones the real mirror skeletons (HEADs recorded) and applies the actual sync transformations. Its core hashes match HEAD, and no later commit touches published content.
+- **Prior findings F3, F7 and F8:** the conversion-overhead explanation is corrected, §Concerns is empty, and the nits are fixed.
+- **Phases 5 to 7:** lint-final (0 errors in 261 declarations), the full conformance, companion and manual build, 6,457 oracle cases, and the uncommitted structural record (trust surface, `check_phase4`, `check_phase7`, manifest) all pass.
+
+Not checked: the PR description (Bash and `gh` were denied for most of the session), live CI, and the Brent–Zimmermann section numbers, which I cited from memory rather than the PDF. The PR description still needs the one paragraph `PLAN/Phase4.md` requires on how the bounded-width linear and mode-2 cubic claims differ from the SPEC's O(L) modular-operation contract.

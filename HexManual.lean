@@ -10,6 +10,7 @@ import VersoManual
 import HexManual.Chapters.HexBasic
 import HexManual.Chapters.HexArith
 import HexManual.Chapters.HexPrimality
+import HexManual.Chapters.HexECPP
 import HexManual.Chapters.HexPoly
 import HexManual.Chapters.HexMvPoly
 import HexManual.Chapters.HexModArith
@@ -97,6 +98,7 @@ contracts and, for mature libraries, supply their proofs.
 {include 0 HexManual.Chapters.HexArith}
 
 {include 0 HexManual.Chapters.HexPrimality}
+{include 0 HexManual.Chapters.HexECPP}
 
 {include 0 HexManual.Chapters.HexPoly}
 

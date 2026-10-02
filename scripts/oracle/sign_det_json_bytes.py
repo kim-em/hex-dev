@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import random
 import resource
@@ -130,7 +131,8 @@ def check(fixture, executable):
 
     completed = subprocess.run([str(executable)], input=transport, text=True,
                                capture_output=True, encoding="utf-8", check=True,
-                               preexec_fn=stack_limit)
+                               preexec_fn=stack_limit,
+                               env=dict(os.environ, LEAN_MAIN_USE_THREAD="0", LEAN_STACK_SIZE_KB="8192"))
     lines = completed.stdout.splitlines()
     if len(lines) != len(records):
         raise ValueError("wrong result count: " + str(len(lines)))

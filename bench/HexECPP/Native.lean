@@ -24,11 +24,13 @@ private def stats (s : SearchStats) : Lean.Json := Lean.Json.mkObj [
   ("candidates", toJson s.candidates), ("roots", toJson s.roots),
   ("nonresidues", toJson s.nonresidues), ("points", toJson s.points),
   ("factorWork", toJson s.factorWork), ("scalarWork", toJson s.scalarWork),
-  ("backtracks", toJson s.backtracks)]
+  ("backtracks", toJson s.backtracks),
+  ("lastRetry", Lean.toJson (s.lastRetry.map (fun e => (e.subject, reprStr e.resource)))),
+  ("unresolved", Lean.toJson (s.unresolved.map (fun e => (e.subject, reprStr e.resource))))]
 where toJson := Lean.toJson
 
-@[noinline] private def searchIO (n seed : Nat) : IO SearchResult :=
-  pure (produce n seed)
+@[noinline] private def searchIO (n seed : Nat) (budget : SearchBudget) : IO SearchResult :=
+  pure (produce n seed budget)
 
 @[noinline] private def convertIO (source : String) (leaf : Hex.Nat.PrimeCert) :
     IO (Except ImportError Cert) := pure (convertText defaultImportBudget source leaf)
@@ -36,14 +38,20 @@ where toJson := Lean.toJson
 @[noinline] private def checkIO (n : Nat) (c : Cert) : IO Bool := pure (checkAt n c)
 
 def main (args : List String) : IO UInt32 := do
-  let [n, seed] := args | throw <| IO.userError "usage: hexecpp_native SUBJECT SEED"
+  let (n, seed, budget) ← match args with
+    | [n, seed] => pure (n, seed, ({} : SearchBudget))
+    | [n, seed, depth, candidates] =>
+        let some depth := depth.toNat? | throw <| IO.userError "invalid depth"
+        let some candidates := candidates.toNat? | throw <| IO.userError "invalid candidates"
+        pure (n, seed, { maxDepth := depth, maxCandidates := candidates })
+    | _ => throw <| IO.userError "usage: hexecpp_native SUBJECT SEED [DEPTH CANDIDATES]"
   let some n := n.toNat? | throw <| IO.userError "invalid subject"
   let some seed := seed.toNat? | throw <| IO.userError "invalid seed"
   let start ← IO.monoNanosNow
-  let result ← searchIO n seed
+  let result ← searchIO n seed budget
   let elapsed := (← IO.monoNanosNow) - start
   let common := [("subject", Lean.toJson n), ("seed", Lean.toJson seed),
-    ("search_ns", Lean.toJson elapsed), ("stats", stats result.state.stats),
+    ("search_ns", Lean.toJson elapsed), ("budget", Lean.toJson (reprStr budget)), ("stats", stats result.state.stats),
     ("rand", Lean.toJson result.state.rand.state.toNat)]
   let fields ← match result.result with
     | .error e => pure [("verdict", Lean.toJson "exhausted"),

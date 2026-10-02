@@ -1,0 +1,53 @@
+{
+  "command": "hexecpp_native SUBJECT 0 1 CANDIDATES",
+  "cases": [
+    {
+      "budget": "{ maxBits := 256,\n  maxDepth := 1,\n  maxCandidates := 1,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+      "rand": 15362738631823041016,
+      "resource": "Hex.ECPP.Resource.candidates",
+      "search_ns": 4734212,
+      "seed": 0,
+      "stats": {
+        "backtracks": 0,
+        "candidates": 1,
+        "factorWork": 64,
+        "lastRetry": null,
+        "nonresidues": 4,
+        "points": 0,
+        "roots": 1,
+        "scalarWork": 0,
+        "unresolved": null
+      },
+      "subject": 69199437377629051939477864552334532767081794053034238723740032946332041487367,
+      "unresolved": 69199437377629051939477864552334532767081794053034238723740032946332041487367,
+      "verdict": "exhausted"
+    },
+    {
+      "budget": "{ maxBits := 256,\n  maxDepth := 1,\n  maxCandidates := 2,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+      "rand": 15305450054213529032,
+      "resource": "Hex.ECPP.Resource.candidates",
+      "search_ns": 332641926,
+      "seed": 0,
+      "stats": {
+        "backtracks": 1,
+        "candidates": 2,
+        "factorWork": 68,
+        "lastRetry": [
+          69199437377629051939477864552334532767081794053034238723740032946332041487367,
+          "Hex.ECPP.Resource.pointRetries"
+        ],
+        "nonresidues": 4,
+        "points": 36,
+        "roots": 37,
+        "scalarWork": 11226,
+        "unresolved": [
+          178675562761925921179366069834658003327589850303254334422424305778901047,
+          "Hex.ECPP.Resource.depth"
+        ]
+      },
+      "subject": 69199437377629051939477864552334532767081794053034238723740032946332041487367,
+      "unresolved": 69199437377629051939477864552334532767081794053034238723740032946332041487367,
+      "verdict": "exhausted"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "path": "HexArith/Montgomery/Context.lean",
+  "baseline_blob": "8359a1647fec141464e5a36536c69e2152126c32",
+  "current_blob": "683a342b15d0721430cfa289b6ea3d2007b060dc",
+  "reason": "Only promotes the existing bit-length bound from private theorem to public theorem and adds its docstring. The theorem statement and proof are identical; no executable definition, extern binding, native target or measured factorization branch changes."
+}

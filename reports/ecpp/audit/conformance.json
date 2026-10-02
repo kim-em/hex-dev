@@ -1,0 +1,52 @@
+{
+  "source": "2aca3251099eab227c9a69d74370a3673720b659",
+  "lean": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "source_hashes": {
+    "HexECPP/Affine.lean": "e1a749485731b258030c61ecdb769b697f6b1877434ec589a27a920c164e5c6b",
+    "HexECPP/CM.lean": "05a06a0dafb457e5831f0b6bba2abd2c9c9c2f5a8319772673e0140f858a8de3",
+    "HexECPP/Cert.lean": "1d3261fbe6c581e630811277c83ef36e44bcdce87b042ff4eac4e60409d73100",
+    "HexECPP/Data.lean": "98690924d6648202e8e2f43d118934eb0e4fb3899a3127aa02bf4ef605d5bd81",
+    "HexECPP/Import.lean": "acd09355df7cbed5c4271cfc780b8ed90ff1ca88ac8c22abed4f4f5dc8d6406d",
+    "HexECPP/Replay.lean": "365360db2a51992dfdd0c48e6e37a8bbc61e13bc57faa448abffd851c26856dc",
+    "HexECPP/Search.lean": "af40c52c431df4d3338ed059612963be8d70f31d675a72a744a105596e55a2c6",
+    "conformance/HexECPP/Conformance.lean": "a6fc03a3effecef1f548dc724781a57bddd833cde58f3834a498146822863c19",
+    "conformance/HexECPP/EmitFixtures.lean": "a6d6943bce82af56364977e166fc276176fb62854d475c4a6ce6d1b1b174ddf7",
+    "conformance/HexECPP/Fixture17.lean": "3060faae3600cca5be2f91e58478ec04581667e55bb4366398b33de2ff886d82",
+    "conformance/HexECPP/Fixture256.lean": "52c8ede43f083c640728719b285b8ce1ef1a498f76443da1cc1d8be8f4c2745a",
+    "conformance/HexECPP/Fixture512.lean": "348f62594f9e7cd85628cb6ef78dbbb0961101674002ff682a0c90e3dafe54ce",
+    "conformance/HexECPP/Fixture65.lean": "0bce68110bce015ffaa543092af3130d0b0ef027d3d26eb30d9bcb83deec1114",
+    "conformance/HexECPP/ImportConformance.lean": "858c2cebcff145b757c5386eab6037d151fd30327f9bd8ede5f1291bcb1ea488",
+    "conformance/HexECPP/NativeConformance.lean": "729dbd3c205f867e6d6f5fadcc5025eac3754ed26df2009bcf02954c091db185",
+    "conformance/HexECPP/PariFixtures.lean": "9afdd4cb04ab9d55d55a230c94bfe023a46f09cf18a5af4b5c5291b24a93ba2b",
+    "conformance/HexECPP/PolicyProbe.lean": "898b207ba4bc72d62f874fc2a44b086fe034cf20f3a9b5ee0e43585b85aa20cc"
+  },
+  "commands": [
+    {
+      "command": [
+        ".lake/build/bin/hexecpp_bench",
+        "list"
+      ],
+      "returncode": 0,
+      "stdout": "registered benchmarks:\n  Hex.ECPPBench.runPreflight    expected complexity: r\n  Hex.ECPPBench.runProposal    expected complexity: k * k\n  Hex.ECPPBench.runReplay    expected complexity: k * k\n  Hex.ECPPBench.runParse    expected complexity: r\n  runConvert512    [fixed] repeats=3\n  runNativeCheck    [fixed] repeats=5\n  runParse512    [fixed] repeats=3\n  runConvert65    [fixed] repeats=3\n  runSize512    [fixed] repeats=3\n  runCheck512    [fixed] repeats=3\n  runNative256    [fixed] repeats=5\n  runCheck256    [fixed] repeats=3\n  runNative128    [fixed] repeats=5\n  runCheck65    [fixed] repeats=3\n  runConvert256    [fixed] repeats=3\n  runNativeConvert    [fixed] repeats=5\n  runNativeHard    [fixed] repeats=5\n  runSize65    [fixed] repeats=3\n  runSize256    [fixed] repeats=3\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        ".lake/build/bin/hexecpp_bench",
+        "verify"
+      ],
+      "returncode": 0,
+      "stdout": "verifying 19 benchmark(s)...\n  [ok ] Hex.ECPPBench.runPreflight\n  [ok ] Hex.ECPPBench.runProposal\n  [ok ] Hex.ECPPBench.runReplay\n  [ok ] Hex.ECPPBench.runParse\n  [ok ] runConvert512  [fixed]\n  [ok ] runNativeCheck  [fixed]\n  [ok ] runParse512  [fixed]\n  [ok ] runConvert65  [fixed]\n  [ok ] runSize512  [fixed]\n  [ok ] runCheck512  [fixed]\n  [ok ] runNative256  [fixed]\n  [ok ] runCheck256  [fixed]\n  [ok ] runNative128  [fixed]\n  [ok ] runCheck65  [fixed]\n  [ok ] runConvert256  [fixed]\n  [ok ] runNativeConvert  [fixed]\n  [ok ] runNativeHard  [fixed]\n  [ok ] runSize65  [fixed]\n  [ok ] runSize256  [fixed]\nall 19 benchmark(s) passed\n",
+      "stderr": ""
+    },
+    {
+      "command": "hexecpp_emit_fixtures | HEX_PARI_GP=/nix/store/8jmg390qca8sv8k077r4h77yqrzmsfy9-pari-2.17.3/bin/gp python3 scripts/oracle/ecpp_pari.py",
+      "returncode": 0,
+      "stdout": "HexECPP: 6457 independent cases passed\n",
+      "stderr": ""
+    }
+  ],
+  "fixture_sha256": "acd67034d8293ba56c863975b0343244210ba75d9d1ae44b487d860a7061814d",
+  "oracle_sha256": "31fd26f16a81b502f7476f40e157803234dbb2a0962ed8e6c1182831e5b0d2f8",
+  "gp_version": "2.17.3"
+}

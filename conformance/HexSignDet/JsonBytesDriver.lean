@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexSignDet.Codec.Value
+import HexSignDet.JsonBytes
+import HexSignDet.Codec.Bytes
 import Lean.Data.Json
 
 /-! Line-oriented conformance transport. Each request is a JSON array of byte
@@ -44,7 +46,7 @@ private def run (request : String) : Except String Json := do
 
 end Hex.SignDet.JsonBytesDriver
 
-def main : IO Unit := do
+private def runLines : IO Unit := do
   let input ← IO.getStdin
   let output ← IO.getStdout
   repeat
@@ -53,3 +55,23 @@ def main : IO Unit := do
     match Hex.SignDet.JsonBytesDriver.run line with
     | .ok result => output.putStrLn result.compress
     | .error message => throw (IO.userError message)
+
+/-- File mode avoids an unrelated JSON transport when checking large native inputs. -/
+def main (args : List String) : IO Unit := do
+  match args with
+  | ["--stack-canary"] => IO.println (← Hex.SignDet.JsonBytes.stackCanary 1000000)
+  | [] => runLines
+  | ["--check-file", source] =>
+    let bytes ← IO.FS.readBinFile source
+    match Hex.SignDet.Codec.checkBytes {} bytes with
+    | .error message => throw (IO.userError message)
+    | .ok () => pure ()
+  | ["--file", source, target] =>
+    let bytes ← IO.FS.readBinFile source
+    match Hex.SignDet.Codec.checkBytes {} bytes with
+    | .error message => throw (IO.userError message)
+    | .ok () => pure ()
+    let some value := Hex.SignDet.Codec.Json.readBytes bytes
+      | throw (IO.userError "JSON input rejected")
+    IO.FS.writeBinFile target value.writeBytes
+  | _ => throw (IO.userError "expected no arguments, --stack-canary, --check-file SOURCE, or --file SOURCE TARGET")

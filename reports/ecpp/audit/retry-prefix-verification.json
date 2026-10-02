@@ -1,0 +1,12 @@
+{
+  "source": "929c1d4f1e34d1525bbc1785cd1a2a7ae20361ad",
+  "command": [
+    "lake",
+    "build",
+    "HexECPP.NativeConformance"
+  ],
+  "source_sha256": "7d86606ad9746b9c94f8e68811a754242556742cb564d825186e1887ff3b07ab",
+  "returncode": 0,
+  "stdout": "\u2139 [112/165] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [165/165] Built HexECPP.NativeConformance (2.1s)\nBuild completed successfully (165 jobs).\n",
+  "contract": "An eight-point cap before any recursive child leaves the parent pointRetries diagnostic and zero backtracks. A two-candidate cap with full point allocation reaches a smaller depth-exhausted child; it supersedes that earlier parent diagnostic."
+}

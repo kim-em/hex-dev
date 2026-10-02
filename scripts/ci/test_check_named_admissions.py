@@ -161,6 +161,11 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/TowerRoots.lean",
                 "HexRealClosure/TowerRootsTests.lean",
                 "adapters/HexRealClosureMathlib/TowerRoots.lean",
+                "HexRealClosure/RootTransport.lean",
+                "HexRealClosure/RootCollection.lean",
+                "HexRealClosure/RootCollectionTests.lean",
+                "adapters/HexRealClosureMathlib/RootTransport.lean",
+                "adapters/HexRealClosureMathlib/RootCollection.lean",
                 "adapters/HexRealClosureMathlib/TowerCoverage.lean",
                 "adapters/HexRealClosureMathlib/TowerNaturality.lean",
                 "adapters/HexRealClosureMathlib/RootFactors.lean")]
