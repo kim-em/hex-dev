@@ -36,8 +36,8 @@ integer and rational query-degree registrations use multiword coefficients.
 
 Input preparation and metadata collection are outside timed bodies. Output
 hashes include actual coefficients and certificate scalars, not just dimensions.
-These tracks do not supply the missing root-sum theorem or extension-depth
-proof evidence required for complete Phase 4.
+Root-sum correctness is supplied by the development semantic adapters.
+These tracks do not supply downstream extension-depth performance evidence.
 -/
 
 /-! Untimed observations of the actual generic kernel instantiated with integer

@@ -1564,7 +1564,7 @@ libraries:
   HexSturm:
     deps: [HexPoly, HexRealRoots]
     mathlib: false
-    done_through: 0
+    done_through: 1
     status: active
     phase4:
       input_families:
@@ -1596,7 +1596,7 @@ libraries:
   HexSturmMathlib:
     deps: [HexSturm, HexPolyMathlib, HexRealRootsMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 1
     status: active
   HexRCF:
     # The existing shared-formula dependency and pins are retained for compatibility.
