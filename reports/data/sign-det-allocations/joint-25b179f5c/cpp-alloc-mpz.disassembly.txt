@@ -1,0 +1,27 @@
+
+.lake/build/bin/hexsigndet_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000004a505b0 <lean::alloc_mpz(lean::mpz const&)>:
+ 4a505b0:	push   %rbp
+ 4a505b1:	push   %r14
+ 4a505b3:	push   %rbx
+ 4a505b4:	mov    %rdi,%rbx
+ 4a505b7:	mov    $0x18,%edi
+ 4a505bc:	call   4ab7860 <lean_alloc_small_object_core>
+ 4a505c1:	mov    %rax,%r14
+ 4a505c4:	movzwl 0x4(%rax),%ebp
+ 4a505c8:	lea    0x8(%rax),%rdi
+ 4a505cc:	mov    %rbx,%rsi
+ 4a505cf:	call   49ff7b0 <lean::mpz::mpz(lean::mpz const&)>
+ 4a505d4:	movl   $0x1,(%r14)
+ 4a505db:	or     $0xfa000000,%ebp
+ 4a505e1:	mov    %ebp,0x4(%r14)
+ 4a505e5:	mov    %r14,%rax
+ 4a505e8:	pop    %rbx
+ 4a505e9:	pop    %r14
+ 4a505eb:	pop    %rbp
+ 4a505ec:	ret
+ 4a505ed:	nopl   (%rax)

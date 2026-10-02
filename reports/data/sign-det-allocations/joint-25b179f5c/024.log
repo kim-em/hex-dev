@@ -1,0 +1,16 @@
+lean-bench profile: env LD_PRELOAD=/home/kim/.local/state/hex/issue-10377-profiles/allocation-joint-scaling-25b179f5c/wrapper-0.so /nix/store/mf7rzpknxwg0q1wf0nm8gfzikapg00h1-valgrind-3.27.1/bin/valgrind --tool=dhat --mode=ad-hoc --dhat-out-file=/home/kim/.local/state/hex/issue-10377-profiles/allocation-joint-scaling-25b179f5c/024.dhat.json -- /home/kim/worktrees/hex-dev/hex-dev-issue-10377-allocation/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.Joint.runCompletion --param 3 --target-nanos 100000000 --cache-mode cold
+==1410351== DHAT, a dynamic heap analysis tool
+==1410351== Copyright (C) 2010-2024, and GNU GPL'd, by Mozilla Foundation et al.
+==1410351== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==1410351== Command: /home/kim/worktrees/hex-dev/hex-dev-issue-10377-allocation/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.Joint.runCompletion --param 3 --target-nanos 100000000 --cache-mode cold
+==1410351== 
+SIGN_DET_ALLOCATIONS {"callbacks":1,"overflow":0,"lean_requests":23374,"lean_bytes":654840,"mimalloc_requests":1330,"mimalloc_bytes":69200,"gmp_requests":77784,"gmp_bytes":785216}
+{"schema_version":1,"kind":"parametric","function":"Hex.SignDetBench.Joint.runCompletion","param":3,"inner_repeats":1,"total_nanos":327721053,"per_call_nanos":327721053.000000,"cache_mode":"cold","result_hash":"0xb727e7185913444b","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":294052,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexsigndet_bench","git_commit":"25b179f5c8f2143cd77753cd8c802d364aefd958","git_dirty":false,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.35.0-rc3","lean_version":"4.35.0-rc3","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-10-02T05:24:37Z","timestamp_unix_ms":1790918677909},"profile_kernel":true}
+==1410351== 
+==1410351== Total:     1,509,256 units in 102,488 events
+==1410351== 
+==1410351== To view the resulting profile, open
+==1410351==   file:///nix/store/mf7rzpknxwg0q1wf0nm8gfzikapg00h1-valgrind-3.27.1/libexec/valgrind/dh_view.html
+==1410351== in a web browser, click on "Load...", and then select the file
+==1410351==   /home/kim/.local/state/hex/issue-10377-profiles/allocation-joint-scaling-25b179f5c/024.dhat.json
+==1410351== The text at the bottom explains the abbreviations used in the output.

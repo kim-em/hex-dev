@@ -1,0 +1,16 @@
+lean-bench profile: env LD_PRELOAD=/home/kim/.local/state/hex/issue-10377-profiles/allocation-joint-production-25b179f5c/wrapper-1.so /nix/store/mf7rzpknxwg0q1wf0nm8gfzikapg00h1-valgrind-3.27.1/bin/valgrind --tool=dhat --mode=ad-hoc --dhat-out-file=/home/kim/.local/state/hex/issue-10377-profiles/allocation-joint-production-25b179f5c/011.dhat.json -- /home/kim/worktrees/hex-dev/hex-dev-issue-10377-allocation/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.Joint.runDirect --param 15 --target-nanos 100000000 --cache-mode cold
+==2356801== DHAT, a dynamic heap analysis tool
+==2356801== Copyright (C) 2010-2024, and GNU GPL'd, by Mozilla Foundation et al.
+==2356801== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==2356801== Command: /home/kim/worktrees/hex-dev/hex-dev-issue-10377-allocation/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.Joint.runDirect --param 15 --target-nanos 100000000 --cache-mode cold
+==2356801== 
+SIGN_DET_ALLOCATIONS {"callbacks":1,"overflow":0,"lean_requests":3624607,"lean_bytes":91489984,"mimalloc_requests":34900,"mimalloc_bytes":4780880,"gmp_requests":32271807,"gmp_bytes":318135480}
+{"schema_version":1,"kind":"parametric","function":"Hex.SignDetBench.Joint.runDirect","param":15,"inner_repeats":1,"total_nanos":22020320724,"per_call_nanos":22020320724.000000,"cache_mode":"cold","result_hash":"0x25955381dd190f98","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":291084,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexsigndet_bench","git_commit":"25b179f5c8f2143cd77753cd8c802d364aefd958","git_dirty":false,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.35.0-rc3","lean_version":"4.35.0-rc3","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-10-02T06:00:18Z","timestamp_unix_ms":1790920818198},"profile_kernel":true}
+==2356801== 
+==2356801== Total:     414,406,344 units in 35,931,314 events
+==2356801== 
+==2356801== To view the resulting profile, open
+==2356801==   file:///nix/store/mf7rzpknxwg0q1wf0nm8gfzikapg00h1-valgrind-3.27.1/libexec/valgrind/dh_view.html
+==2356801== in a web browser, click on "Load...", and then select the file
+==2356801==   /home/kim/.local/state/hex/issue-10377-profiles/allocation-joint-production-25b179f5c/011.dhat.json
+==2356801== The text at the bottom explains the abbreviations used in the output.

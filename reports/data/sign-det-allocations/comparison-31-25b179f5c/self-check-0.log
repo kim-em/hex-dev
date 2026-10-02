@@ -1,0 +1,14 @@
+==1968159== DHAT, a dynamic heap analysis tool
+==1968159== Copyright (C) 2010-2024, and GNU GPL'd, by Mozilla Foundation et al.
+==1968159== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==1968159== Command: /home/kim/.local/state/hex/issue-10377-profiles/allocation-comparison-31-25b179f5c/self-check-0
+==1968159== 
+SIGN_DET_ALLOCATIONS {"callbacks":1,"overflow":0,"lean_requests":2,"lean_bytes":64,"mimalloc_requests":2,"mimalloc_bytes":56,"gmp_requests":2,"gmp_bytes":160}
+==1968159== 
+==1968159== Total:     280 units in 6 events
+==1968159== 
+==1968159== To view the resulting profile, open
+==1968159==   file:///nix/store/mf7rzpknxwg0q1wf0nm8gfzikapg00h1-valgrind-3.27.1/libexec/valgrind/dh_view.html
+==1968159== in a web browser, click on "Load...", and then select the file
+==1968159==   /home/kim/.local/state/hex/issue-10377-profiles/allocation-comparison-31-25b179f5c/self-check-0.dhat.json
+==1968159== The text at the bottom explains the abbreviations used in the output.
