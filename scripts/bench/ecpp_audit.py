@@ -23,6 +23,7 @@ FAMILIES = ["Hex.ECPPBench.runReplay", "Hex.ECPPBench.runProposal",
 BUDGETS = {"runCheck65": .00032, "runCheck256": .012, "runCheck512": .045,
            "runConvert65": .0016, "runConvert256": .17, "runConvert512": 1.05,
            "runNative128": .125, "runNative256": 1.45,
+           "runNativeHard": 3.3,
            "runNativeCheck": .010, "runNativeConvert": .14}
 
 
@@ -71,12 +72,15 @@ def main() -> None:
             report["baseline_executable_sha256"] = sha(baseline)
             report["baseline_source"] = subprocess.check_output(
                 ["git", "rev-parse", "HEAD"], cwd=baseline.parents[3], text=True).strip()
+            available = run([str(baseline), "list"], cwd=baseline.parents[3])
+            shared = [name for name in BUDGETS if f"  {name} " in available]
+            report["new_targets_without_prior_registration"] = [n for n in BUDGETS if n not in shared]
             # Trial-major, adjacent arms, alternating AB/BA across trials.
             for trial in range(args.trials):
                 arms = [("A", baseline), ("B", BENCH)]
                 if trial % 2:
                     arms.reverse()
-                for name in BUDGETS:
+                for name in shared:
                     for arm, exe in arms:
                         output = run([str(exe), "_child", "--bench", name, "--fixed",
                                       "--repeat-index", str(trial), "--min-total-nanos", "10000000"],
@@ -85,7 +89,7 @@ def main() -> None:
                         report["samples"].append(dict(trial=trial, arm=arm, target=name, data=data))
                         save()
             ratios = {}
-            for name in BUDGETS:
+            for name in shared:
                 pairs = []
                 for trial in range(args.trials):
                     values = {}

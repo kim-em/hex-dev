@@ -1070,6 +1070,20 @@ libraries:
     mathlib: false
     done_through: 0
     status: active
+    phase4:
+      comparators:
+        - tool: "PARI/GP primecertisvalid"
+          class: informational
+          rationale: "Same accepted subjects, different certificate formats and terminal contracts: Hex replays an explicit PrimeCert, while PARI admits its own integer leaf convention. Verification ratios give external context; the full Pocklington/ECM construction campaign compares bounded production capability separately."
+      input_families:
+        - name: transcript-length
+          description: Dense child scalars with fixed residues modulo seven vary the actual replay and inverse-transcript length; independently derived linear scalar work.
+        - name: row-vectors
+          description: Fixed-width PARI row tokens vary byte and row counts for bounded parsing and parsed-input preflight; independently derived linear traversal work.
+        - name: supplied-certificates
+          description: Complete accepted 65-, 256- and 512-bit supplied chains measure checking and conversion under distinct operation-specific fixed budgets.
+        - name: native-production
+          description: Frozen 128- and 256-bit native subjects, including the longest validation chain, separate production, frozen conversion and checking; retained whole-corpus verdicts include exhaustion.
   HexIntFactor:
     deps: [HexPrimality, HexArith, HexBasic]
     mathlib: false

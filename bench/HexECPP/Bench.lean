@@ -16,6 +16,17 @@ import LeanBench
 Mathlib-free compiled ECPP measurements. Conversion, checking, and raw
 certificate size have separate registrations; kernel replay is measured in
 fresh bridge proof modules.
+
+The complete accepted-certificate and native endpoint registrations use
+mode 3. Subject-bit ladders vary witness counts, recursive leaves and search
+branches independently; the frozen corpus has both success and exhaustion
+at each size. Those ladders therefore do not have a tight scalar wall-time
+model, and a published bound on scalar replay does not cover factor search
+or terminal construction. Asymptotic detection for these complete endpoints
+is replaced by operation-specific regression budgets in `ecpp_audit.py`,
+derived before measurement from twice the retained endpoint medians. Parser
+and scalar primitives instead use the independently derived ladders below.
+`runParse512` and `runSize*` remain observation/hash anchors without budgets.
 -/
 
 open Hex.ECPP
@@ -107,6 +118,7 @@ private def terminal : Cert → Hex.Nat.PrimeCert
 
 initialize native128Ref : IO.Ref Nat ← IO.mkRef 177080666831933235355717939809840315427
 initialize native256Ref : IO.Ref Nat ← IO.mkRef 69199437377629051939477864552334532767081794053034238723740032946332041487367
+initialize nativeHardRef : IO.Ref Nat ← IO.mkRef 96590133568377947488922651108406533027621815589740576200326951544495709460191
 initialize nativeCertRef : IO.Ref Cert ← IO.mkRef ((produce 69199437377629051939477864552334532767081794053034238723740032946332041487367 0).result.toOption.getD (.base (.small 2)))
 
 @[noinline] def runNative128 (_ : Unit) : IO Nat := do
@@ -116,6 +128,13 @@ initialize nativeCertRef : IO.Ref Cert ← IO.mkRef ((produce 691994373776290519
 @[noinline] def runNative256 (_ : Unit) : IO Nat := do
   let n ← native256Ref.get
   return if (produce n 0).result.toOption.any (checkAt n) then 1 else 0
+
+/-- Frozen validation-256-7, seed seven: the longest retained native chain.
+Its 3.3-second per-call ceiling is twice the retained 1.638-second observation
+rounded upward, not the harness timeout. -/
+@[noinline] def runNativeHard (_ : Unit) : IO Nat := do
+  let n ← nativeHardRef.get
+  return if (produce n 7).result.toOption.any (checkAt n) then 1 else 0
 
 @[noinline] def runNativeCheck (_ : Unit) : IO Nat := do
   return if check (← nativeCertRef.get) then 1 else 0
@@ -127,6 +146,7 @@ initialize nativeCertRef : IO.Ref Cert ← IO.mkRef ((produce 691994373776290519
 
 setup_fixed_benchmark runNative128 where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
 setup_fixed_benchmark runNative256 where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
+setup_fixed_benchmark runNativeHard where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
 setup_fixed_benchmark runNativeCheck where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
 setup_fixed_benchmark runNativeConvert where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
 
