@@ -80,6 +80,9 @@ set_option maxHeartbeats 5000000 in
 theorem cancelled_independent_divisor : ∀ x : ℝ,
     x ^ 2 + Real.sqrt 2 + 0 / Real.sqrt 3 > 0 := by rcf
 
+theorem single_rational_divisor : ∀ x : ℝ,
+    x / 2 + Real.sqrt 2 > x / 2 := by rcf
+
 theorem mixed_divisors : ∀ x : ℝ,
     x / 2 + 0 / Real.sqrt 2 = x / 2 := by rcf
 
@@ -305,3 +308,7 @@ end Hex.RCF.AlgebraicDivision
 /-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.mixed_divisors' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.AlgebraicDivision.mixed_divisors
+
+/-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.single_rational_divisor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.AlgebraicDivision.single_rational_divisor

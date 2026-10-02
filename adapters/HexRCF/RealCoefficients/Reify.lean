@@ -208,25 +208,28 @@ private def preflight (registered : Array Expr) (source : Expr) : FrontendM (Arr
     return .continue) (skipInstances := true)).run #[]
   return divisors
 
-/-- Replace variable-dependent division by multiplication with a closed
-reciprocal. The `1 / b` spelling leaves rational reciprocals in the shared
-reifier's supported grammar; algebraic reciprocals are abstracted below. -/
-private def normalize (source : Expr) : MetaM Expr :=
-  Prod.fst <$> Meta.transformWithCache source {} (pre := fun e => do
-    if isClosed e && (← isReal e) then return .done e
-    if e.isAppOfArity ``HDiv.hDiv 6 && (← isReal e) then
-      let args := e.getAppArgs
-      let a : Q(ℝ) := args[4]!
-      let b : Q(ℝ) := args[5]!
-      return .continue (some q($a * ((1 : ℝ) / $b)))
-    return .continue) (skipInstances := true)
-
 private partial def hasNamedSource (registered : Array Expr) (e : Expr) : MetaM Bool := do
   if (← registered.anyM (Registration.sameSubject e)) ||
       e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 ||
       e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 ||
       e.isConstOf ``Real.pi || e.isAppOfArity ``Real.exp 1 then return true
   e.getAppArgs.anyM (hasNamedSource registered)
+
+/-- Replace variable-dependent division by multiplication with a closed
+reciprocal. Rational reciprocals use the shared reifier's `1 / b`
+grammar. Named reciprocals retain inverse syntax so repeated coefficients
+are abstracted once. Original guards were collected before this conversion. -/
+private def normalize (registered : Array Expr) (source : Expr) : MetaM Expr :=
+  Prod.fst <$> Meta.transformWithCache source {} (pre := fun e => do
+    if isClosed e && (← isReal e) then return .done e
+    if e.isAppOfArity ``HDiv.hDiv 6 && (← isReal e) then
+      let args := e.getAppArgs
+      let a : Q(ℝ) := args[4]!
+      let b : Q(ℝ) := args[5]!
+      if ← hasNamedSource registered b then
+        return .continue (some q($a * $b⁻¹))
+      return .continue (some q($a * ((1 : ℝ) / $b)))
+    return .continue) (skipInstances := true)
 
 private def isNamedCoefficient (registered : Array Expr) (e : Expr) : MetaM Bool := do
   if e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 ||
@@ -289,7 +292,7 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
   let cap := (← get).budget.remaining.sourceNodes
   Hex.RealFormula.Reify.charge .sourceNodes (Hex.Reflect.sourceNodeCount source (cap + 1))
   let divisors ← preflight registered source
-  let normalized ← normalize source
+  let normalized ← normalize registered source
   let coefficients ← collect registered normalized
   let state ← get
   let outcome ← liftM <| withParameters coefficients 0 #[] fun parameters =>
