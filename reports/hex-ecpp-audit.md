@@ -17,7 +17,7 @@ proof step.
 | Cert | `checkStep`, `check`, `checkAt`; constructor equations, canonical/fact projections and subject-binding lemmas | Canonical fields, coprimality to six, discriminant unit, child range, exact size bound, successful scalar replay and checked terminal certificates. `checkAt_eq_true_iff` separates subject binding and arithmetic acceptance. |
 | Import | Budget/diagnostic/row structures, `residue`, `inverse?`, normalization, inverse/affine/scalar proposals, row preflight, conversion, parsing and counted conversion | Text bytes/digits/nesting are bounded before JSON allocation; all seven supplied row integer magnitudes, endpoint and row count precede endpoint search. Signed normalization belongs only to conversion. Every resulting complete certificate is checked once at the public boundary. `convert_ok` exposes that guarantee. |
 | CM | `jacobi`, `symbol`, `rootValid`, `sqrt?`, `Invariant`, `portfolio`, `normValid`, `norm?`, `traces`, `curves`; bounded private Tonelli–Shanks and Cornacchia loops | Fixed class-number-one proposals; returned roots/norms satisfy their integer equations. Ordinary quadratic, exceptional quartic and sextic twists remain complete within the bounded portfolio. No general class polynomial generator is advertised. |
-| Search | Resource/budget/state/result types, fixed leaf/order packages, `charge`, `primeBits`, `certBits`, `replayWork`, `search`, `produce`, `frozenRows`; private proposal/backtracking helpers | Deterministic bounded production through 256 bits. Shared reservations persist across all failed candidates and recursive backtracking. Local point failures permit later twists/orders. Recursive-child diagnostics survive ancestor exhaustion. Size traversal reports failure explicitly. Memoized successes support stateful reuse. `produce_ok` characterizes subject-bound checker acceptance. |
+| Search | Resource/budget/state/result types, fixed leaf/order packages, `charge`, `primeBits`, `certBits`, `replayWork`, `search`, `produce`, `frozenRows`; private proposal/backtracking helpers | Deterministic bounded production through 256 bits. Shared reservations persist across all failed candidates and recursive backtracking. Local point failures permit later twists/orders. Recursive-child diagnostics survive ancestor exhaustion. Size traversal reports failure explicitly. Memoized successes support stateful reuse; the worker requires validated memo entries and sufficient remaining depth. `produce_ok` characterizes subject-bound checker acceptance. |
 
 The parser's public kind-only API remains `parsePari`; conversion uses the
 located parser so diagnostics retain vector indices. `convertRow` checks
@@ -137,7 +137,7 @@ examples. The README has the required released-package sections and its
 verbatim quickstart builds in a fresh Lake client. The fresh coordinated
 split stages exact monorepo prerequisites, carries the public Lake settings
 and links native arithmetic without any Mathlib directory or dependency.
-`audit/split.json` retains all source fingerprints and build output;
+`audit/split-final.json` retains actual unmanaged mirror skeleton HEADs, staged source fingerprints and build output;
 `scripts/release/check_ecpp_split.py` reproduces that validation. The companion
 correspondence section is reserved for #10586 and coordinated on that issue.
 
@@ -148,3 +148,44 @@ and no force override. The initial repository contains only its unmanaged
 Lake skeleton; no published managed source was edited. A real coordinated
 sync must publish current prerequisites first and have the new repository
 selected in an approved publishing token, as required by `PLAN/Releases.md`.
+
+## PR review reconciliation
+
+The requested independent Opus implementation review is retained verbatim in
+`audit/pr-review.txt`. Its missing realistic scalar/modulus coverage required
+withdrawing the Phase 4 attestation until the additional families passed.
+The new registrations vary both widths together, scalar width at a 65-bit
+modulus, and modulus width at a 47-bit scalar. Independently generated prime
+moduli and full-width coordinates exercise actual Euclidean inverse work;
+the report records each upper-bound declaration and its scientific verdict.
+
+The proposed signed-integer inverse attachment was evaluated and rejected on
+the pinned build. `audit/inverse-backend.json` retains the compiled object's
+symbols: the attachment uses its portable signed-integer C fallback, rather
+than calling GMP GCDEXT. `audit/regression-gmp.json` retains the adjacent
+comparison's slower conversion and production. The original natural-number
+Euclidean inverse is restored exactly; the previous passing timings and
+regression comparison therefore remain applicable. Experiment profiles and
+completed scientific runs are retained separately from final attestations.
+The original converter's small-input overhead comes from the final complete
+checker replay. Local-step diagnostics plus the final public-boundary check
+are intentional linear passes; all fixed operation budgets pass.
+
+The recursive-child priority regression now executes a real native search.
+The first order exhausts its point retries; the second reaches a smaller
+child whose depth allocation fails. A two-candidate cap records one backtrack
+and 36 point attempts, preserving the child's diagnostic over the parent's
+retry without planting any initial diagnostic. `audit/real-child-diagnostic.json`
+retains the executable probe. Complete parent portfolio exhaustion also keeps
+the child obligation. Stateful worker documentation now explicitly requires
+validated memo entries and remaining depth; fresh `produce` validates its
+final result independently of this worker precondition.
+
+Additional cheap arithmetic preflight is optional: the required input
+allocation checks already precede endpoint construction. Arithmetic failures
+remain located conversion diagnostics under finite endpoint budgets. The
+manual formatting fixes and a fresh split against actual repository skeletons
+complete the review's minor documentation and packaging findings. The full
+CI build additionally exposed two old positional diagnostic constructors in
+the companion elaborator; named fields preserve their existing kinds while
+initializing the new optional location fields.

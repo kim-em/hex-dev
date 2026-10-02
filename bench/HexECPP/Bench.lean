@@ -382,18 +382,22 @@ setup_benchmark runSizedProposal k => k * k * k
 @[noinline] def runModulusReplay (input : SizedCase) : Bool := runSizedReplay input
 @[noinline] def runModulusProposal (input : SizedCase) : Bool := runSizedProposal input
 
+-- Quadratic upper bound: scalar bit copies plus bounded-width affine work.
 setup_benchmark runScalarReplay k => k * k with prep := scalarWidthInput where {
   paramFloor := 32, paramCeiling := 4096, outerTrials := 3
   targetInnerNanos := 2000000000, maxSecondsPerCall := 120.0
 }
+-- Quadratic upper bound: the same scalar copies and bounded-width Euclid work.
 setup_benchmark runScalarProposal k => k * k with prep := scalarWidthInput where {
   paramFloor := 32, paramCeiling := 4096, outerTrials := 3
   targetInnerNanos := 2000000000, maxSecondsPerCall := 120.0
 }
+-- Quadratic upper bound: a fixed 47-bit scalar performs boundedly many ring operations.
 setup_benchmark runModulusReplay k => k * k with prep := modulusWidthInput where {
   paramFloor := 64, paramCeiling := 4096, outerTrials := 3
   targetInnerNanos := 2000000000, maxSecondsPerCall := 120.0
 }
+-- Quadratic upper bound: boundedly many classical extended Euclid calls.
 setup_benchmark runModulusProposal k => k * k with prep := modulusWidthInput where {
   paramFloor := 64, paramCeiling := 4096, outerTrials := 3
   targetInnerNanos := 2000000000, maxSecondsPerCall := 120.0
