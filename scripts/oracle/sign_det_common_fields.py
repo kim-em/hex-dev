@@ -25,6 +25,7 @@ from scripts.oracle.sign_det_flint import rational
 DEFAULT_FIXTURE = ROOT / "conformance-fixtures/HexSignDet/common-fields.jsonl"
 CASES = {
     "common/independent-quadratics": ([[-2, 0, 1], [-3, 0, 1]], 4),
+    "common/reversed-quadratics": ([[-3, 0, 1], [-2, 0, 1]], 4),
     "common/independent-cubics": ([[-2, 0, 0, 1], [-4, 0, 0, 1]], 3),
 }
 
@@ -90,7 +91,6 @@ def check_record(record):
         a, b = [coordinate(c) for c in data["coordinates"]]
         require(all(compare(x, y) == 0 for x, y in zip((a, b), original)),
                 "common-field coordinates change selected values")
-        require(compare(a, b) < 0, "selected input order changed")
 
         def polynomial(raw):
             require(isinstance(raw, list), "polynomial must be a coordinate list")
@@ -115,7 +115,8 @@ def check_record(record):
         require(all(m == 1 for _, m in roots), "non-squarefree root domain")
         roots.sort(key=cmp_to_key(lambda x, y: compare(x[0], y[0])))
         roots = [r for r, _ in roots]
-        require(len(roots) == 2 and compare(roots[0], a) == 0 and compare(roots[1], b) == 0,
+        input_roots = sorted((a, b), key=cmp_to_key(compare))
+        require(len(roots) == 2 and all(compare(r, s) == 0 for r, s in zip(roots, input_roots)),
                 "wrong independent root set")
         words = [[sign(evaluate(query, r)) for query in queries] for r in roots]
         expected_table = [{"signs": list(word), "count": count}
@@ -125,12 +126,16 @@ def check_record(record):
         check_table(out.get("table"), expected_table, 3)
         require(type(out.get("absentCount")) is int and out["absentCount"] == 0,
                 "incorrect omitted count")
-        derivatives = []
-        current = head
-        while len(current) > 1:
-            current = [q.binary("mul", q.number(i), current[i])
-                       for i in range(1, len(current))]
-            derivatives.append(current)
+        def derivatives_of(poly):
+            derivatives = []
+            current = poly
+            while len(current) > 1:
+                current = [q.binary("mul", q.number(i), current[i])
+                           for i in range(1, len(current))]
+                derivatives.append(current)
+            return derivatives
+
+        derivatives = derivatives_of(head)
         actual_roots = out.get("roots")
         require(isinstance(actual_roots, list) and len(actual_roots) == len(roots),
                 "missing or duplicated roots")
@@ -144,18 +149,57 @@ def check_record(record):
             require(sign_vector(actual.get("selected"), len(word)) and actual["selected"] == word,
                     "wrong selected-root signs")
             require(actual.get("replay") is True, "unchecked root")
-        expected_order = "lt" if compare(a, b) < 0 else "gt" if compare(a, b) > 0 else "eq"
+        def descriptor(raw):
+            require(isinstance(raw, dict) and raw.get("context") == 7 and
+                    raw.get("lower") == "-inf" and raw.get("upper") == "+inf",
+                    "wrong selected-root context or interval")
+            poly = polynomial(raw["head"])
+            derivatives = derivatives_of(poly)
+            indices, signs = raw.get("indices"), raw.get("signs")
+            require(isinstance(indices, list) and all(type(i) is int and
+                    1 <= i <= len(derivatives) for i in indices) and
+                    indices == sorted(set(indices)) and sign_vector(signs, len(indices)),
+                    "malformed selected-root derivative word")
+            hits = [r for r, multiplicity in q.roots(poly) if multiplicity == 1 and
+                    all(sign(evaluate(derivatives[i - 1], r)) == s
+                        for i, s in zip(indices, signs))]
+            require(len(hits) == 1, "descriptor does not select one root")
+            return poly, hits[0]
+
+        left_poly, left = descriptor(out.get("leftDescriptor"))
+        right_poly, right = descriptor(out.get("rightDescriptor"))
+        require(equal_poly(left_poly, head) and equal_poly(right_poly, qb),
+                "wrong comparison defining polynomials")
+        require(compare(left, a) == 0 and compare(right, b) == 0,
+                "comparison selected wrong original roots")
+        expected_order = "lt" if compare(left, right) < 0 else "gt" if compare(left, right) > 0 else "eq"
         reverse = {"lt": "gt", "gt": "lt", "eq": "eq"}[expected_order]
         require(out.get("order") == expected_order and out.get("totalOrder") == expected_order and
                 out.get("reverseOrder") == reverse, "wrong common-field comparison")
         common_roots = q.roots(polynomial(out["commonHead"]))
         common_roots.sort(key=cmp_to_key(lambda x, y: compare(x[0], y[0])))
-        require(len(common_roots) == len(roots) and all(m == 1 and compare(r, s) == 0
-                for (r, m), s in zip(common_roots, roots)), "wrong common root union")
-        require(sign_vector(out.get("reencodedSigns"), 1) and out["reencodedSigns"] == [1] and
+        expected_union = sorted((left, right), key=cmp_to_key(compare))
+        require(len(common_roots) == len(expected_union) and all(m == 1 and compare(r, s) == 0
+                for (r, m), s in zip(common_roots, expected_union)), "wrong common root union")
+        reencoding_head = polynomial(out["reencodingHead"])
+        require(equal_poly(reencoding_head, qa), "wrong re-encoding polynomial")
+        reencoded_roots = q.roots(reencoding_head)
+        require(len(reencoded_roots) == 1 and reencoded_roots[0][1] == 1 and
+                compare(reencoded_roots[0][0], left) == 0,
+                "re-encoding polynomial does not select the source root")
+        reencoded_signs = [sign(evaluate(d, left)) for d in derivatives_of(reencoding_head)]
+        left_word = [sign(evaluate(query, left)) for query in queries]
+        require(sign_vector(out.get("reencodedSigns"), len(reencoded_signs)) and
+                out["reencodedSigns"] == reencoded_signs and
                 sign_vector(out.get("reencodedSelected"), 3) and
-                out["reencodedSelected"] == words[0] and out.get("equalOrder") == "eq",
+                out["reencodedSelected"] == left_word and out.get("equalOrder") == "eq",
                 "reencoding changes selected root")
+        square_poly, square_root = descriptor(out.get("equalDescriptor"))
+        require(equal_poly(square_poly, [q.unary("neg", q.binary("mul", a, a)), zero, one])
+                and compare(square_root, left) == 0 and
+                out.get("crossExpressionOrder") == "eq" and
+                out.get("crossExpressionReverse") == "eq",
+                "cross-expression comparison changes selected root")
         for field in ("commonReplay", "leftReplay", "rightReplay", "reencodingReplay"):
             require(out.get(field) is True, f"unchecked {field}")
         for field in ("copiedReplay", "staleReplay", "repeatedAccepted"):
@@ -170,7 +214,8 @@ def check(source, failure_dir, profile, seed):
             require(case not in seen, "duplicate fixture case")
             seen.add(case)
             check_record(record)
-        except (OracleMismatch, ArithmeticError, KeyError, TypeError, ValueError) as exc:
+        except (OracleMismatch, Unavailable, ArithmeticError, AttributeError,
+                IndexError, KeyError, TypeError, ValueError) as exc:
             failures += 1
             write_failure(failure_dir, library="HexSignDet", profile=profile, seed=seed,
                           case_id=case, kind="common-field", input_record=record,

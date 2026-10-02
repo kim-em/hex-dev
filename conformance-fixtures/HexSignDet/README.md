@@ -83,16 +83,20 @@ The infinitesimal sign callbacks are test providers. General coefficient
 interpretation, nested semantic replay and root-sum/Thom correspondence proofs
 remain required. None of these fixtures supplies Phase-4 performance evidence.
 
-`common-fields.jsonl` contains two actual common-number-field cases: independent
-√2/√3 inputs producing a degree-four generator and independently constructed
-∛2/∛4 inputs represented in a degree-three field. Each record includes the
+`common-fields.jsonl` contains three actual common-number-field cases: independent
+√2/√3 inputs in either order producing degree-four generators and independently
+constructed ∛2/∛4 inputs represented in a degree-three field. Each record includes the
 selected generator interval, both independently selected input intervals,
 QAdjoin coordinates, the checked table, complete root list, selected signs,
-comparison in both directions, re-encoding and rejected stale evidence.
+literal comparison descriptors, comparison in both directions, cross-expression
+equality between `x − a` and `x² − a²`, re-encoding
+and rejected stale evidence.
 `scripts/oracle/sign_det_common_fields.py` reconstructs all selected algebraic
 values and checks the coordinates, roots, signs and orders with FLINT `qqbar`
-using exact algebraic arithmetic. It checks the coefficient and context
-bindings and rejects incomplete fixture streams. The oracle never consumes
+using exact algebraic arithmetic. It checks the emitted descriptor contexts,
+selected embeddings, coefficient coordinates and polynomial identities, and
+rejects incomplete fixture streams. Replay-acceptance fields are results of
+Lean's checker; the oracle checks their expected Boolean values. It never consumes
 Lean's BKR moments, support choices or Thom ordering rule.
 
 ```sh

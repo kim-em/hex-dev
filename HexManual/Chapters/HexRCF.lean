@@ -1408,15 +1408,18 @@ Both linear derivative words are `[+]`; their equality does not identify
 the roots because the defining polynomials differ.
 
 ```lean
-private def independentSign {generator : Hex.AlgebraicNumber}
+private def independentSign
+    {generator : Hex.AlgebraicNumber}
     (a : Hex.QAdjoin generator) : Int :=
-  match Hex.RealAlgebraicNumber.ofAlgebraic? a.toAlgebraicNumber with
+  match Hex.RealAlgebraicNumber.ofAlgebraic?
+      a.toAlgebraicNumber with
   | some value => value.sign
-  | none => Hex.panicWith 0 "nonreal common-field coefficient"
+  | none =>
+      Hex.panicWith 0 "nonreal common-field coefficient"
 
 private def independentSignsPass : Bool := Id.run do
   let common := Hex.QAdjoin.common independentInputs
-  if hr : common.generator.isReal = true then
+  if common.generator.isReal then
     let sign := independentSign
     let some a := common.entries[0]? | return false
     let some b := common.entries[1]? | return false
@@ -1427,8 +1430,9 @@ private def independentSignsPass : Bool := Id.run do
     let head := qa * qb
     let some table := determine sign 7 head .negInf .posInf
       [qa, qb, DensePoly.C (a - b)] | return false
-    let .ok (some roots) := Descriptor.buildRoots sign 7 head
-      .negInf .posInf | return false
+    let builtRoots :=
+      Descriptor.buildRoots sign 7 head .negInf .posInf
+    let .ok (some roots) := builtRoots | return false
     let some left := Descriptor.validate sign 7
       ⟨7, qa, .negInf, .posInf, [1], [1]⟩ | return false
     let some right := Descriptor.validate sign 7
@@ -1445,10 +1449,10 @@ private def independentSignsPass : Bool := Id.run do
 ```
 
 Here the common generator has degree four. Coefficient arithmetic uses actual
-`QAdjoin` coordinates, and coefficient signs use the selected real algebraic
-embedding. `Hex.SignDetMathlib.CommonFieldConformance.value_eq` proves
-that this conversion equals {name}`Hex.RCF.RealCoefficients.Coefficients.ofField`
-for every coordinate of a real-generated field.
+`QAdjoin` coordinates. The coefficient sign function converts each coordinate
+to its selected real algebraic value. The companion checks the same conversion
+formula against the proved real embedding for any real-generated field, then
+specializes table, selected-root sign and comparison correctness to that field.
 The value-preservation theorem {name}`Hex.QAdjoin.common_get` connects the
 coordinates to the independently selected original algebraic numbers.
 The table, selected-sign, and comparison correctness theorems apply to that

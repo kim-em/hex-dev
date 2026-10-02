@@ -12,6 +12,8 @@ def main : IO Unit := do
   for (name, inputs) in [
       ("independent-quadratics", #[ZPoly.rootNear #p[-2, 0, 1] 1.4,
         ZPoly.rootNear #p[-3, 0, 1] 1.7]),
+      ("reversed-quadratics", #[ZPoly.rootNear #p[-3, 0, 1] 1.7,
+        ZPoly.rootNear #p[-2, 0, 1] 1.4]),
       ("independent-cubics", #[ZPoly.rootNear #p[-2, 0, 0, 1] 1.3,
         ZPoly.rootNear #p[-4, 0, 0, 1] 1.6])] do
     Hex.Conformance.Emit.emitResult "HexSignDet" ("common/" ++ name) "common-field"

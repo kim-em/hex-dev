@@ -38,6 +38,18 @@ class CommonFieldOracle(unittest.TestCase):
                 with self.subTest(case=case, mutation=mutation), self.assertRaises(OracleMismatch):
                     oracle.check_record(record)
 
+    def test_conjugate_embeddings_are_rejected(self):
+        case = "common/independent-quadratics"
+        for target, message in (("generator", "common-field coordinates change selected values"),
+                                ("first-input", "wrong original embeddings")):
+            record = self.record(case)
+            raw = (record["value"]["generator"] if target == "generator" else
+                   record["value"]["inputs"][0])
+            lower, upper = raw["lower"], raw["upper"]
+            raw["lower"], raw["upper"] = [-upper[0], upper[1]], [-lower[0], lower[1]]
+            with self.subTest(target=target), self.assertRaisesRegex(OracleMismatch, message):
+                oracle.check_record(record)
+
     def test_actual_polynomial_and_query_bindings(self):
         for case in oracle.CASES:
             for target in ("head", "queries"):
@@ -65,9 +77,38 @@ class CommonFieldOracle(unittest.TestCase):
                 with self.subTest(case=case, mutation=mutation), self.assertRaises(OracleMismatch):
                     oracle.check_record(record)
 
+    def test_root_order_encoding_and_common_head(self):
+        for case in oracle.CASES:
+            for mutation in ("swap-roots", "derivative-sign", "common-head",
+                             "reencoded-sign", "reencoded-selected", "descriptor-sign",
+                             "descriptor-context", "reencoding-head", "equal-descriptor"):
+                record = self.record(case)
+                result = record["value"]["result"]
+                if mutation == "swap-roots":
+                    result["roots"].reverse()
+                elif mutation == "derivative-sign":
+                    result["roots"][0]["signs"][0] *= -1
+                elif mutation == "common-head":
+                    result["commonHead"][0][0][0] += 1
+                elif mutation == "reencoded-sign":
+                    result["reencodedSigns"][0] *= -1
+                elif mutation == "reencoded-selected":
+                    result["reencodedSelected"][0] = 1
+                elif mutation == "descriptor-sign":
+                    result["leftDescriptor"]["signs"][0] *= -1
+                elif mutation == "descriptor-context":
+                    result["rightDescriptor"]["context"] += 1
+                elif mutation == "equal-descriptor":
+                    result["equalDescriptor"]["signs"][0] *= -1
+                else:
+                    result["reencodingHead"][0][0][0] += 1
+                with self.subTest(case=case, mutation=mutation), self.assertRaises(OracleMismatch):
+                    oracle.check_record(record)
+
     def test_both_total_orders_and_stale_replay(self):
         for case in oracle.CASES:
             for key in ("order", "totalOrder", "reverseOrder", "equalOrder",
+                        "crossExpressionOrder", "crossExpressionReverse",
                         "commonReplay", "leftReplay", "rightReplay", "reencodingReplay",
                         "copiedReplay", "staleReplay", "repeatedAccepted"):
                 record = self.record(case)

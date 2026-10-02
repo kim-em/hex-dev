@@ -6,6 +6,8 @@ Authors: Kim Morrison
 module
 
 public import HexSignDetMathlib.ComparisonProducer
+public import HexSignDetMathlib.TableProducer
+public import HexSignDetMathlib.SelectedProducer
 public import HexSignDet.RootList
 public import HexSignDet.CommonField
 public meta import HexSignDet.CommonField
@@ -23,6 +25,7 @@ in their actual common number field. Computational conformance owner:
 namespace Hex.SignDetMathlib.CommonFieldConformance
 
 open Hex Hex.SignDet Hex.RCF.RealCoefficients
+open HexPolyMathlib.Interpret HexRealRootsMathlib
 
 def inputs : Array AlgebraicNumber := #[
   ZPoly.rootNear #p[-2, 0, 1] 1.4,
@@ -56,7 +59,7 @@ theorem sign_spec (generator : RealAlgebraicNumber)
     have hz := ne_of_gt hp
     simp [hn, hz, sign_eq_one_iff.mpr hp]
 
-private theorem real (generator : RealAlgebraicNumber) :
+theorem real (generator : RealAlgebraicNumber) :
     generator.toAlgebraic.rep.root.im = 0 :=
   (AlgebraicNumber.isReal_iff generator.toAlgebraic).mp generator.property
 
@@ -81,6 +84,58 @@ noncomputable def selected (generator : RealAlgebraicNumber)
     (Field.value_mul generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
     (Field.value_natCast generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
     (sign_spec generator)
+
+/-- Complete table counts for the actual selected embedding of a common
+number field, including words not present in the sparse table. -/
+theorem table_correct (generator : RealAlgebraicNumber)
+    (p : DensePoly (QAdjoin generator.toAlgebraic))
+    (lo hi : Endpoint (QAdjoin generator.toAlgebraic))
+    (qs : List (DensePoly (QAdjoin generator.toAlgebraic)))
+    (table : SignTable qs.length)
+    (h : determine (fieldSign generator) 7 p lo hi qs = some table) :
+    HexSturmMathlib.Domain (Field.value generator.toAlgebraic.rep)
+      (Field.value_eq_zero generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+      p lo hi ∧ ∀ word,
+      table.count word =
+        ((Tarski.rootsIn
+          (interpret (Field.value generator.toAlgebraic.rep)
+            (Field.value_eq_zero generator.toAlgebraic.rep
+              generator.toAlgebraic.rep_mk (real generator)) p)
+          (lo.map (Field.value generator.toAlgebraic.rep))
+          (hi.map (Field.value generator.toAlgebraic.rep))).filter
+          (fun x => signsAt (Field.value generator.toAlgebraic.rep)
+            (Field.value_eq_zero generator.toAlgebraic.rep
+              generator.toAlgebraic.rep_mk (real generator)) qs x = word)).card := by
+  exact determine_correct (Field.value generator.toAlgebraic.rep)
+    (Field.value_eq_zero generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+    (Field.value_one generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+    (Field.value_add generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+    (Field.value_sub generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+    (Field.value_mul generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+    (Field.value_natCast generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+    (value_neg generator)
+    (Field.value_inv generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+    (fieldSign generator) (sign_spec generator) 7 p lo hi qs true table h
+
+/-- The public one-query operation at a selected common-field root equals its
+real evaluation sign under that field's selected embedding. -/
+theorem signAt_correct (generator : RealAlgebraicNumber)
+    (d : Descriptor (QAdjoin generator.toAlgebraic) Nat (fieldSign generator) 7)
+    (q : DensePoly (QAdjoin generator.toAlgebraic)) :
+    d.signAt q = (SignType.sign
+      ((interpret (Field.value generator.toAlgebraic.rep)
+        (Field.value_eq_zero generator.toAlgebraic.rep
+          generator.toAlgebraic.rep_mk (real generator)) q).eval
+        (selected generator d)) : Int) := by
+  simpa only [selected] using d.signAt_correct (Field.value generator.toAlgebraic.rep)
+    (Field.value_eq_zero generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+    (Field.value_one generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+    (Field.value_add generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+    (Field.value_sub generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+    (Field.value_mul generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+    (Field.value_natCast generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator))
+    (sign_spec generator) (value_neg generator)
+    (Field.value_inv generator.toAlgebraic.rep generator.toAlgebraic.rep_mk (real generator)) q
 
 /-- Specialize the total comparison theorem to the actual coordinate field
 of any selected real generator, including a generator returned by `common`.
@@ -133,7 +188,13 @@ def passes : Bool := Id.run do
     let some right := Descriptor.validate sign 7 rawB | return false
     if left.compare right != .lt || right.compare left != .gt then return false
     let .ok (some same) := left.buildReencoding qa .negInf .posInf | return false
+    let square := x * x - DensePoly.C (a * a)
+    let some squareRoot := Descriptor.validate sign 7
+      (⟨7, square, .negInf, .posInf, [1], [1]⟩ :
+        RawDescriptor (QAdjoin common.generator) Nat) | return false
     return left.compare same.target == .eq &&
+      same.target.compare squareRoot == .eq &&
+      squareRoot.compare same.target == .eq &&
       same.target.signAt qa == 0 && same.target.signAt qb == -1 &&
       left.checkReencoding same.target qa .negInf .posInf same.evidence &&
       !same.target.raw.check sign 7 left.evidence &&
@@ -144,9 +205,24 @@ set_option maxRecDepth 4096 in
 set_option maxHeartbeats 2000000 in
 #guard passes
 
+/-- A nonreal common generator is rejected before coefficient signs are used. -/
+private def rejectsNonreal : Bool :=
+  ((Hex.SignDet.CommonField.fixture #[AlgebraicNumber.I, inputs[0]!]).getObjValAs?
+    String "error") == .ok "nonreal generator"
+
+#guard rejectsNonreal
+
 /-- info: 'Hex.SignDetMathlib.CommonFieldConformance.sign_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms sign_spec
+
+/-- info: 'Hex.SignDetMathlib.CommonFieldConformance.table_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms table_correct
+
+/-- info: 'Hex.SignDetMathlib.CommonFieldConformance.signAt_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms signAt_correct
 
 /-- info: 'Hex.SignDetMathlib.CommonFieldConformance.comparison' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
