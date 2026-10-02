@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRCF.RealCoefficients.Finite
+public import HexRCF.RealCoefficients
 public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 public meta import Lean.Elab.Command
@@ -61,6 +61,10 @@ example : ∀ x : ℝ, x ^ 2 + supplied⁻¹ > 0 := by rcf
 example (a : ℝ) (h : a = supplied) : ∀ x : ℝ, x ^ 2 + a > 0 := by rcf
 example (a : ℝ) (h : supplied = a) : ∀ x : ℝ, x ^ 2 + a > 0 := by rcf
 
+example (h : (1 : ℝ) < 0) : ∀ x : ℝ, x ^ 2 + supplied < 0 := by
+  fail_if_success rcf
+  exact (not_lt_of_ge (by norm_num) h).elim
+
 example : ∀ x : ℝ, x ^ 2 + uncertain > 0 := by
   fail_if_success rcf
   intro x
@@ -89,10 +93,13 @@ attribute [rcf_constant] uncertainRegistration suppliedRegistration
 
 private meta def refuses (action : MetaM α) : MetaM Unit := do
   let before ← getMCtx
+  let declarations := (← (← getEnv).getLocalConstantInfos).map (·.name)
   let failed ← tryCatchRuntimeEx (action *> pure false) (fun _ => pure true)
   unless failed do throwError "expected finite evidence rejection"
   unless (← getMCtx).mvarCounter == before.mvarCounter do
     throwError "failed finite API leaked metavariables"
+  unless (← (← getEnv).getLocalConstantInfos).map (·.name) == declarations do
+    throwError "failed finite API leaked auxiliary declarations"
 
 run_elab do
   unless (← Registration.names) == #[``suppliedRegistration, ``uncertainRegistration] do
@@ -100,6 +107,8 @@ run_elab do
   let target := q(∀ x : ℝ, x ^ 2 + 1 / supplied > 0)
   let before ← getMCtx
   let prepared ← Finite.prepare target
+  unless prepared.registry.map Prod.fst == #[``suppliedRegistration] do
+    throwError "preparation bound an unused provider"
   unless (← getMCtx).mvarCounter == before.mvarCounter do
     throwError "successful preparation changed caller metavariables"
   unless prepared.source.divisors.size == 1 do throwError "lost original divisor"
@@ -120,6 +129,12 @@ run_elab do
   corrupt { observation with bounds := Bounds.singleton 0 }
   corrupt { observation with identity := q(True.intro) }
   corrupt { observation with containment := q(True.intro) }
+  refuses (Finite.check leaf.source { leafCertificate with prepared :=
+    { leaf with coefficients := #[{ evidence with observations := #[] }] } })
+  let other ← Finite.prepare q(∀ x : ℝ, x ^ 2 + uncertain + 10 > 0)
+  let some otherEvidence := other.coefficients[0]? | throwError "missing other enclosure"
+  refuses (Finite.check leaf.source { leafCertificate with prepared :=
+    { leaf with coefficients := #[{ evidence with observations := otherEvidence.observations }] } })
   refuses (Finite.check prepared.source
     { certificate with prepared := { prepared with guards := #[] } })
   refuses (Finite.check prepared.source
@@ -164,6 +179,22 @@ def cancelledRegistration : Registration (Real.sin (0 / (supplied - supplied))) 
   containment δ _ := by
     simp [Contains, cancelledBounds]
 
+def binderRegistration : Registration (Real.sin (sSup {t : ℝ | 1 / t < 1})) where
+  version := 1
+  approximation := cancelledBounds
+  containment δ _ := by
+    simpa [Contains, cancelledBounds] using
+      And.intro (Real.neg_one_le_sin _) (Real.sin_le_one _)
+
+def squareRegistration : Registration (Real.sqrt 2) where
+  version := 1
+  approximation := suppliedBounds
+  containment δ _ := by
+    simp only [Contains, suppliedBounds]
+    constructor
+    · norm_num [Real.le_sqrt]
+    · norm_num [Real.sqrt_le_iff]
+
 -- Test attributes against a saved environment, so imports of this module do
 -- not acquire a duplicate registration or altered global state.
 run_elab do
@@ -185,9 +216,39 @@ run_elab do
       x ^ 2 + (Real.sin (0 / (supplied - supplied))) ^ 0 > 0))
     refuses (Finite.prepare q(∀ x : ℝ, x ∈ Set.Ioc (1 : ℝ) 0 →
       x ^ 2 + Real.sin (0 / (supplied - supplied)) > 0))
+    attr.add ``binderRegistration stx .global
+    let .error (.unsupported _ message) ← Reify.prepare
+        q(∀ x : ℝ, x ^ 2 + Real.sin (sSup {t : ℝ | 1 / t < 1}) > 0) {}
+        #[q(Real.sin (sSup {t : ℝ | 1 / t < 1}))] |
+      throwError "binder-dependent divisor was not rejected structurally"
+    unless message == "division inside a registered subject must have a closed divisor" do
+      throwError "binder-dependent divisor has the wrong diagnostic"
+    let complexSubject : Q(ℝ) := q(Real.sin (‖Complex.I / (0 : ℂ)‖))
+    let .error (.unsupported _ message) ← Reify.prepare
+        q(∀ x : ℝ, x ^ 2 + $complexSubject > 0) {} #[complexSubject] |
+      throwError "other-carrier division was not rejected structurally"
+    unless message == "division inside a registered subject must be real or rational" do
+      throwError "other-carrier division has the wrong diagnostic"
     attr.add ``duplicateRegistration stx .global
     let failed ← tryCatchRuntimeEx (Registration.entries *> pure false) (fun _ => pure true)
     unless failed do throwError "duplicate subject was admitted"
+    refuses (Finite.prepare q(∀ x : ℝ, x ^ 2 + supplied > 0))
+    -- An unrelated duplicate is not part of the source's provider context.
+    let prepared ← Finite.prepare q(∀ x : ℝ, x ^ 2 + uncertain + 10 > 0)
+    let _ ← Finite.check prepared.source (← Finite.build prepared)
+    attr.add ``squareRegistration stx .global
+    let names ← Hex.RCF.handlerNames
+    let some exactIndex := names.idxOf? ``RealCoefficients.Tactic.handle |
+      throwError "missing exact algebraic handler"
+    let some suppliedIndex := names.idxOf? ``RealCoefficients.Tactic.supplied |
+      throwError "missing supplied-bound handler"
+    unless exactIndex < suppliedIndex do throwError "finite handler precedes exact algebraic handler"
+    let goal ← mkFreshExprMVar q(∀ x : ℝ, x ^ 2 - 2 * Real.sqrt 2 * x + 2 ≥ 0)
+    let action : Elab.TermElabM (List MVarId) := Elab.Term.withSynthesize do
+      Elab.Tactic.run goal.mvarId! <| Elab.Tactic.withoutRecover
+        (Elab.Tactic.evalTactic (← `(tactic| rcf)) *> Elab.Tactic.pruneSolvedGoals)
+    unless (← action.run' {} {}).isEmpty do throwError "exact algebraic regression failed"
+    Hex.RCF.checkAxioms `registeredAlgebraicRegression (← instantiateMVars goal)
   finally saved.restore
 
 end Hex.RCF.RegisteredConstants

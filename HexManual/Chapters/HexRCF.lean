@@ -1348,12 +1348,19 @@ The optional import also accepts a caller's registered closed real subject.
 A {name}`Hex.RCF.RealCoefficients.Registration` contains an executable
 approximation and a separate containment theorem for that exact subject.
 The `rcf_constant` attribute registers its declaration. Subjects match by
-reducible definitional equality; duplicate matches are rejected. A registered
-whole expression is tried before its arithmetic constituents.
+reducible definitional equality; duplicate matches among used subjects are
+rejected. Unused providers are not evaluated or included in the certificate.
+A registered whole expression is tried before its arithmetic constituents.
 In a Lean module, mark the registration and its computational definitions
 `@[expose]` so their frozen-result equalities reduce in the ordinary kernel.
 A consuming module also needs `meta import` of the caller's registration
 module to execute its approximation.
+The callback must be total and executable, and its returned literal must be
+reducible by the ordinary kernel. Registration checks its declaration's type;
+it does not execute or establish those computational properties at import time.
+Divisors inside a registered expression must themselves be closed reals or
+rationals. Divisions depending on an internal binder, or over another carrier,
+are unsupported; their variables are never exported as closed source guards.
 
 This example uses the existing theorem that a sine lies in `[-1,1]`. The
 caller supplies that fixed bound; the tactic does not construct an analytic
@@ -1414,17 +1421,24 @@ example : ∀ x : ℝ,
 For direct proof construction, {name}`Hex.RCF.RealCoefficients.Finite.prepare`
 returns the shared source formula/equivalence, fixed coefficient order, frozen
 bounds and checked original guards. {name}`Hex.RCF.RealCoefficients.Finite.build`
-proposes a proof of that schema using the frozen facts, and
+constructs a proof of the source using the frozen facts and checked alias
+hypotheses, then transports it to the shared schema. Unrelated caller
+hypotheses are excluded from this proof search.
 {name}`Hex.RCF.RealCoefficients.Finite.check` checks it and transports it back to
-the original goal. The certificate binds the source, registry/provider versions,
+the original goal. The certificate binds the source, used registry/provider versions,
 precision request, coefficient subjects and guards. Checking validates ordinary
 proofs and frozen callback identities; it does not repeat approximation or root
 search. Source coefficients and guards retain the same selected real values.
 
 This finite path uses nonlinear proof reconstruction from the supplied bounds,
-with conjunctions and a proposed ordinary real existential witness. It may fail
+with conjunctions and a proposed ordinary real existential witness. The current
+witness is the first collected coefficient, or zero when there are none; it
+does not search for witnesses. The precision request stays at `1/16`, without
+refinement. It may fail
 on a true statement, and such a failure is an unresolved proof attempt, not a
-false verdict. Lean's execution limits can also interrupt it. Failures restore
+false verdict. False and unresolved goals can both fail proof reconstruction;
+this path does not distinguish them by a decision verdict.
+Lean's execution limits can also interrupt it. Failures restore
 caller state and stop handler dispatch. The existing algebraic cell solver
 continues to handle its documented inputs. Registrations alone do not complete
 the general coefficient-field decision procedure.

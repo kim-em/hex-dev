@@ -2,8 +2,10 @@
 """Fresh-module cost of four rcf proofs from caller-supplied coarse bounds.
 
 Four adjacent AB/BA rounds compare matched imports with actual tactic proofs.
-This answers the fixed integration cost question, not a complexity claim or
-evidence of convergence of the constant providers.
+Question: do coarse caller enclosures suffice for the four specified π/e
+quotations without root/cell construction, and what aggregate fresh-module
+cost do those quotations add over the same imports? The callbacks are fixed
+constant functions; this measures neither callback scaling nor convergence.
 """
 from pathlib import Path
 import sys

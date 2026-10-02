@@ -367,7 +367,10 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
 
 @[rcf_handler] meta def handle : Handler := fun target => do
   if (sourceAtoms target #[]).size < 2 then return .declined
-  let .ok source ← Reify.prepare target | return .declined
+  let source ← match ← Reify.prepare target with
+    | .ok source => pure source
+    | .error (.unsupported _ _) => return .declined
+    | .error error => return .failed (Hex.RealFormula.Reify.Error.toMessageData error)
   if source.coefficients.size < 2 then return .declined
   let mut plans : Array SourcePlan := #[]
   for coefficient in source.coefficients do

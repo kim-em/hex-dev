@@ -92,7 +92,7 @@ private def ordinary (proof : Expr) (expected : Expr) : MetaM Expr := do
   if proof.hasMVar then throwError "rcf: unresolved finite evidence"
   unless ← withNewMCtxDepth (isDefEq (← inferType proof) expected) do
     throwError "rcf: finite evidence proves the wrong proposition"
-  Hex.RCF.checkAxioms ``Finite proof
+  Hex.RCF.checkAxioms `Hex.RCF.RealCoefficients.Finite proof
   if (← getEnv).hasUnsafe proof then throwError "rcf: unsafe finite evidence"
   withOptions (fun opts => debug.skipKernelTC.set (Elab.async.set opts false) false) do
     mkAuxTheorem expected proof (zetaDelta := true) (cache := false)
@@ -144,11 +144,11 @@ private partial def enclose (entries : Array (Name × Expr)) (request : Rat)
       let bounds ← evalBounds computation
       let literal ← boundsExpr bounds
       let identity ← mkDecideProof (← mkAppM ``Eq #[computation, literal])
+      let identity ← ordinary identity (← mkAppM ``Eq #[computation, literal])
       let containment ← mkAppM ``Registration.containment #[registration, δ, positive]
       let transported ← mkAppM ``Eq.mp
         #[← mkAppM ``congrArg #[← withLocalDeclD `bounds (mkConst ``Bounds) fun b => do
           mkLambdaFVars #[b] (← mkAppM ``Contains #[b, source]), identity], containment]
-      let identity ← ordinary identity (← mkAppM ``Eq #[computation, literal])
       let containment ← ordinary transported (← mkAppM ``Contains #[literal, source])
       let version ← evalNat (← mkAppM ``Registration.version #[registration])
       return ← checked source bounds containment
@@ -213,7 +213,7 @@ private partial def enclose (entries : Array (Name × Expr)) (request : Rat)
     let some exponent ← getNatValue? args[5]! |
       throwError "rcf: supplied bounds support natural coefficient powers"
     let base ← enclose entries request args[4]!
-    let mut result ← rational q((1 : ℝ))
+    let mut result := { (← rational q((1 : ℝ))) with observations := base.observations }
     for _ in [:exponent] do
       let x : Q(ℝ) := base.source
       let y : Q(ℝ) := result.source
@@ -235,12 +235,13 @@ An exact zero is invalid; a nonseparating bound is unresolved. -/
 private def prepareCore (target : Expr) (request : Rat := 1 / 16)
     (source? : Option Reify.Source := none) : MetaM Prepared := do
   unless 0 < request do throwError "rcf: bound request must be positive"
-  let entries ← Registration.entries
+  let candidates ← Registration.candidates
   let source ← match source? with
     | some source => pure source
-    | none => match ← Reify.prepare target {} (entries.map Prod.snd) with
+    | none => match ← Reify.prepare target {} (candidates.map Prod.snd) with
       | .ok source => pure source
       | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
+  let entries ← Registration.used candidates (source.coefficients ++ source.divisors)
   let mut guards := #[]
   let mut guardBounds := #[]
   for divisor in source.divisors do
@@ -275,7 +276,7 @@ private partial def prove (target : Expr) (witness : Expr) : MetaM Expr := do
     goal.mvarId!.assign (← mkAppM ``And.intro #[← prove args[0]! witness, ← prove args[1]! witness])
   else if target.isAppOfArity ``Exists 2 then
     let body := target.getAppArgs[1]!
-    let proof ← prove (← whnf (mkApp body witness)) witness
+    let proof ← prove (mkApp body witness).headBeta witness
     goal.mvarId!.assign (← mkAppOptM ``Exists.intro
       #[some (← inferType witness), some body, some witness, some proof])
   else
@@ -288,19 +289,27 @@ private partial def prove (target : Expr) (witness : Expr) : MetaM Expr := do
 search is bounded by Lean's execution limits and may fail without a verdict.
 It neither calls root search nor assumes an ordered field of registered values. -/
 private def buildCore (prepared : Prepared) : MetaM Certificate := do
-  let facts ← prepared.coefficients.flatMapM fun e => do
-    return #[← mkAppM ``And.left #[e.proof], ← mkAppM ``And.right #[e.proof]]
-  let rec withFacts (i : Nat) (parameters : Array Expr) : MetaM Expr := do
-    if h : i < facts.size then
-      withLocalDeclD (Name.mkSimple s!"bound{i}") (← inferType facts[i]) fun p =>
-        withFacts (i + 1) (parameters.push p)
-    else
-      let witness := prepared.coefficients[0]?.map (·.source) |>.getD q((0 : ℝ))
-      let proof ← prove prepared.source.original witness
-      return mkAppN (← mkLambdaFVars parameters proof) facts
-  termination_by facts.size - i
-  let originalProof ← withFacts 0 #[]
-  return ⟨prepared, ← mkAppM ``Iff.mpr #[prepared.source.proof, originalProof]⟩
+  -- Preserve only source variables and the hypotheses used by its checked
+  -- alias equivalence. Unrelated caller hypotheses cannot settle the search.
+  let roots := #[prepared.source.original, prepared.source.proof,
+    prepared.source.formula, prepared.source.valuation]
+  let used ← (roots.foldl (fun used e => Lean.collectFVars used e) {}).addDependencies
+  let vars := (← getLCtx).getFVarIds.map mkFVar
+  let (lctx, instances, _) ← removeUnused vars used
+  withLCtx lctx instances do
+    let facts ← prepared.coefficients.flatMapM fun e => do
+      return #[← mkAppM ``And.left #[e.proof], ← mkAppM ``And.right #[e.proof]]
+    let rec withFacts (i : Nat) (parameters : Array Expr) : MetaM Expr := do
+      if h : i < facts.size then
+        withLocalDeclD (Name.mkSimple s!"bound{i}") (← inferType facts[i]) fun p =>
+          withFacts (i + 1) (parameters.push p)
+      else
+        let witness := prepared.coefficients[0]?.map (·.source) |>.getD q((0 : ℝ))
+        let proof ← prove prepared.source.original witness
+        return mkAppN (← mkLambdaFVars parameters proof) facts
+    termination_by facts.size - i
+    let originalProof ← withFacts 0 #[]
+    return ⟨prepared, ← mkAppM ``Iff.mpr #[prepared.source.proof, originalProof]⟩
 
 /-- Construct a finite proof transactionally from checked preparation data. -/
 def build (prepared : Prepared) : MetaM Certificate := transaction (buildCore prepared)
@@ -310,6 +319,10 @@ private def checkEnclosure (entries : Array (Name × Expr)) (request : Rat)
   let literal ← boundsExpr evidence.bounds
   unless ← withNewMCtxDepth (isDefEq evidence.literal literal) do
     throwError "rcf: enclosure has a different bounds literal"
+  let expected ← Registration.used entries #[evidence.source]
+  let observed := evidence.observations.map (·.declaration) |>.qsort Name.lt |>.eraseReps
+  unless expected.map Prod.fst == observed do
+    throwError "rcf: enclosure omits or transplants provider observations"
   for observation in evidence.observations do
     unless observation.request == request do
       throwError "rcf: enclosure has a different provider precision request"
@@ -341,7 +354,8 @@ private def checkCore (source : Reify.Source) (certificate : Certificate)
       source.valuation == prepared.source.valuation && source.coefficients == prepared.source.coefficients &&
       source.divisors == prepared.source.divisors do
     throwError "rcf: finite certificate has a different source binding"
-  let entries ← Registration.entries
+  let entries ← Registration.used (← Registration.candidates)
+    (source.coefficients ++ source.divisors)
   unless entries.map Prod.fst == prepared.registry.map Prod.fst do
     throwError "rcf: finite certificate has a stale registry"
   for (name, version) in prepared.registry do
@@ -369,8 +383,8 @@ Approximation search is not repeated. Failure restores all caller state. -/
 def check (source : Reify.Source) (certificate : Certificate)
     (request : Rat := 1 / 16) : MetaM Expr := transaction (checkCore source certificate request)
 
-@[rcf_handler] def handle : Hex.RCF.Handler := fun target => do
-  let entries ← Registration.entries
+def handle : Hex.RCF.Handler := fun target => do
+  let entries ← Registration.candidates
   let source ← match ← Reify.prepare target {} (entries.map Prod.snd) with
     | .ok source => pure source
     | .error (.unsupported _ _) => return .declined
@@ -396,3 +410,11 @@ def check (source : Reify.Source) (certificate : Certificate)
   return .proved (← check prepared.source certificate)
 
 end Hex.RCF.RealCoefficients.Finite
+
+namespace Hex.RCF.RealCoefficients.Tactic
+
+/-- Lexical registry order places this after the existing exact `handle`.
+Registering an algebraic alias must not replace its exact cell solver. -/
+@[rcf_handler] def supplied : Hex.RCF.Handler := Finite.handle
+
+end Hex.RCF.RealCoefficients.Tactic

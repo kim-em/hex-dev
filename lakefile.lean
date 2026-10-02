@@ -1126,7 +1126,8 @@ lean_lib HexRCFProofProbe where
     `HexRCF.ProofProbe.Quadratic.Reify, `HexRCF.ProofProbe.Quadratic.Input,
     `HexRCF.ProofProbe.Quadratic.Search, `HexRCF.ProofProbe.Quadratic.Literal,
     `HexRCF.ProofProbe.Quadratic.Replay, `HexRCF.ProofProbe.Quadratic.Tactic,
-    `HexRCF.ProofProbe.Registered.Support, `HexRCF.ProofProbe.Registered.Baseline,
+    `HexRCF.ProofProbe.Registered.Unused, `HexRCF.ProofProbe.Registered.Support,
+    `HexRCF.ProofProbe.Registered.Baseline,
     `HexRCF.ProofProbe.Registered.Tactic]
 
 lean_lib HexRCFProofProbeScientific where

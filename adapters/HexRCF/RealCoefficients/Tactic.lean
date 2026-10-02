@@ -225,7 +225,10 @@ private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
   else throwError "rcf: selected square failed its root witness"
 
 @[rcf_handler] meta def handle : Handler := fun target => do
-  let .ok source ← Reify.prepare target | return .declined
+  let source ← match ← Reify.prepare target with
+    | .ok source => pure source
+    | .error (.unsupported _ _) => return .declined
+    | .error error => return .failed (Hex.RealFormula.Reify.Error.toMessageData error)
   if let some (args, fieldValue?) ← selectedArgs? source then
     return .proved (← proveSelected source args fieldValue?)
   -- Named cases also cover definitions whose bodies are hidden by an import.

@@ -28,6 +28,13 @@ structure Registration (subject : ℝ) where
   /-- Ordinary proof for this exact subject, procedure and positive request. -/
   containment : ∀ δ, 0 < δ → Contains (approximation δ) subject
 
+/-- The delivered ordered-function interface for exact rational coefficients.
+Requested width, when supplied, remains a separate `ApproximationWidth` law. -/
+theorem Registration.correct {subject : ℝ} (registration : Registration subject) :
+    ApproximationCorrect (Rat.castHom ℝ) subject
+      (.ofConstant registration.approximation) :=
+  ApproximationCorrect.ofConstant _ _ registration.containment
+
 end Hex.RCF.RealCoefficients
 
 public meta section
@@ -75,15 +82,38 @@ metavariables. Every duplicate match is rejected, even if the bounds agree. -/
 def sameSubject (left right : Expr) : MetaM Bool := do
   withNewMCtxDepth <| withTransparency .reducible <| isDefEq left right
 
-/-- Validate all subjects before any approximation, including duplicate matches. -/
+/-- Read checked candidate signatures without executing unrelated providers. -/
+def candidates : MetaM (Array (Name × Expr)) := do
+  (← names).mapM fun name => return (name, ← subject name)
+
+private def validate (entries : Array (Name × Expr)) : MetaM Unit := do
+  for i in [:entries.size] do
+    for j in [:i] do
+      if ← sameSubject entries[i]!.2 entries[j]!.2 then
+        throwError "rcf: duplicate constant registrations {entries[j]!.1} and {entries[i]!.1}"
+
+/-- Full registry validation, useful for explicit diagnostics. Tactic consumers
+use `used` instead so an unrelated duplicate cannot take over another goal. -/
 def entries : MetaM (Array (Name × Expr)) := do
-  let mut result : Array (Name × Expr) := #[]
-  for name in ← names do
-    let value ← subject name
-    for (previous, other) in result do
-      if ← sameSubject value other then
-        throwError "rcf: duplicate constant registrations {previous} and {name}"
-    result := result.push (name, value)
+  let entries ← candidates
+  validate entries
+  return entries
+
+/-- Providers occurring in the supplied sources, in registry order. Whole-subject
+matching precedes descent. Reject duplicate matches only in this used subset. -/
+def used (entries : Array (Name × Expr)) (sources : Array Expr) :
+    MetaM (Array (Name × Expr)) := do
+  let mut names : Array Name := #[]
+  for source in sources do
+    let (_, found) ← (Meta.transformWithCache (m := StateRefT (Array Name) MetaM)
+      source {} (pre := fun e => do
+        let matching ← entries.filterM fun (_, subject) => Registration.sameSubject e subject
+        if matching.isEmpty then return .continue
+        modify fun names => names ++ matching.map Prod.fst
+        return .done e) (skipInstances := true)).run names
+    names := found
+  let result := entries.filter fun entry => names.contains entry.1
+  validate result
   return result
 
 end Hex.RCF.RealCoefficients.Registration

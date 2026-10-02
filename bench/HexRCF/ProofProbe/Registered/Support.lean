@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients
+public import HexRCF.ProofProbe.Registered.Unused
 public import Mathlib.Analysis.Real.Pi.Bounds
 public import Mathlib.Analysis.Complex.ExponentialBounds
 

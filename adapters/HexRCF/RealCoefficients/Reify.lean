@@ -92,10 +92,13 @@ private partial def scalar (registered : Array Expr) (source : Expr) : ScanM Uni
       let divisor := if op == ``HDiv.hDiv && args.size == 6 then some args[5]!
         else if op == ``Inv.inv && args.size == 3 then some args[2]! else none
       if let some d := divisor then
+        unless isClosed d do
+          reject part "division inside a registered subject must have a closed divisor"
         if ← isReal d then modify (·.push d)
         else if (← inferType d).isConstOf ``Rat then
           let d : Q(ℚ) := d
           modify (·.push q(($d : ℝ)))
+        else reject part "division inside a registered subject must be real or rational"
       return .continue) (skipInstances := true)
     return ()
   if e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 then return ()
