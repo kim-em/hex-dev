@@ -54,7 +54,7 @@ theorem count_checked (sign : E → Int) (point : Dyadic → E) (context : Ctx)
 /-- Certify a proposed isolation using one prepared query for the constant
 polynomial one. The same recorded chains are evaluated at each interval's
 endpoints; the final checker rejects missing roots, overlaps and bad endpoints. -/
-def build [Neg E] [Inv E] (sign : E → Int) (point : Dyadic → E) (context : Ctx)
+@[expose] def build [Neg E] [Inv E] (sign : E → Int) (point : Dyadic → E) (context : Ctx)
     (head : DensePoly E) (isolations : IsolationCert) : Option (IsolationReplay E Ctx) :=
   match Sturm.prepare sign head .negInf .posInf with
   | none => none
@@ -92,6 +92,25 @@ theorem build_checked [Neg E] [Inv E] (sign : E → Int) (point : Dyadic → E) 
     split at h
     · cases Option.some.inj h
       exact ⟨rfl, ‹_›⟩
+    · contradiction
+
+/-- The actual producer retains the canonical shared squarefree chain.
+This binding supports subsequent atom queries without another gcd. -/
+theorem build_squarefree [Neg E] [Inv E]
+    (sign : E → Int) (point : Dyadic → E)
+    (context : Ctx) (head : DensePoly E) (isolations : IsolationCert)
+    (cert : IsolationReplay E Ctx)
+    (produced : IsolationReplay.build sign point context head isolations = some cert) :
+    cert.total.squarefree = SignedRemainderChain.build sign (Sturm.normalize sign) head 1 := by
+  unfold IsolationReplay.build at produced
+  split at produced
+  · contradiction
+  · next domain prepared =>
+    dsimp only at produced
+    split at produced
+    · cases Option.some.inj produced
+      obtain ⟨binding, headEq, _, _⟩ := Sturm.prepare_eq_some _ _ _ _ domain prepared
+      simpa only [Sturm.certifyPrepared, TarskiCertificate.fromChains, binding, headEq] using domain.produced
     · contradiction
 
 end IsolationReplay

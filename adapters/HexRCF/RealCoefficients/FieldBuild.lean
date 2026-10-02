@@ -38,9 +38,7 @@ dyadic interval proposals. -/
     (head : DensePoly (PolyQuot p root)) (precision : Nat) :
     Option IsolationCert := do
   let coefficients ← head.toArray.mapM (canonical? rep hrep)
-  let roots ← (RealAlgebraicPoly.ofArray coefficients).roots.finite?
-  let intervals ← roots.mapM fun r => rootInterval r.root precision
-  return ⟨intervals⟩
+  solverIntervals (RealAlgebraicPoly.ofArray coefficients) precision
 
 /-- A search-only sign oracle. An unsuccessful canonical conversion makes the
 proposal fail its subsequent exact replay checks. -/
@@ -48,7 +46,9 @@ proposal fail its subsequent exact replay checks. -/
     (hrep : SimpleRoot.mk rep = root) (a : PolyQuot p root) : Int :=
   (canonical? rep hrep a).map RealAlgebraicNumber.sign |>.getD 0
 
-private def buildProposed {Ctx : Type u} [DecidableEq Ctx]
+/-- Check an optional search proposal over its original field coordinates.
+A missing or rejected proposal remains a failed attempt. -/
+@[expose] def buildProposed {Ctx : Type u} [DecidableEq Ctx]
     (sign : PolyQuot p root → Int) (context : Ctx)
     (head : DensePoly (PolyQuot p root)) (proposal : Option IsolationCert) :
     Option (IsolationReplay (PolyQuot p root) Ctx) :=
@@ -71,7 +71,7 @@ private theorem buildProposed_checked {Ctx : Type u} [DecidableEq Ctx]
 /-- First search with prepared field root counts. If that bounded search or
 its exact replay fails, use the existing canonical root solver for proposals.
 Both paths return only evidence accepted over the original field coordinates. -/
-def isolateAt [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+@[expose] def isolateAt [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
     (context : Ctx) (head : DensePoly (PolyQuot p root))
     (precision : Nat) : Option (IsolationReplay (PolyQuot p root) Ctx) :=

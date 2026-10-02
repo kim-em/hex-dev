@@ -22,7 +22,8 @@ namespace Hex.RCF.RealCoefficients
 
 open HexRealRootsMathlib HexPolyMathlib.Interpret
 
-private theorem algebraic_sign (a : RealAlgebraicNumber) :
+/-- The canonical sign operation agrees with the selected real interpretation. -/
+theorem algebraic_sign (a : RealAlgebraicNumber) :
     a.sign = (SignType.sign a.toReal : Int) := by
   rw [RealAlgebraicNumber.sign_eq]
   rcases lt_trichotomy a.toReal 0 with h | h | h
@@ -184,7 +185,7 @@ theorem proposeIsolations_isSome [RealAlgebraicNumber.Laws]
           some (roots.map interval) := by
         rw [hinterval]
         exact Array.mapM_pure
-      simp [proposeIsolations, hroots, RealRootSet.finite?, hmap]
+      simp [proposeIsolations, solverIntervals, hroots, RealRootSet.finite?, hmap]
 
 /-- Zero has a universal root set, so no finite proposal is returned. -/
 theorem proposeIsolations_zero [RealAlgebraicNumber.Laws] (precision : Nat) :
@@ -194,7 +195,7 @@ theorem proposeIsolations_zero [RealAlgebraicNumber.Laws] (precision : Nat) :
     apply (RealAlgebraicPoly.roots_all_iff _).mpr
     rw [solver_polynomial]
     exact interpret_zero RealAlgebraicNumber.toReal algebraic_zero
-  simp [proposeIsolations, hroots, RealRootSet.finite?]
+  simp [proposeIsolations, solverIntervals, hroots, RealRootSet.finite?]
 
 /-- The producer's only finite-proposal obstruction is the universal root set. -/
 theorem proposeIsolations_isSome_iff [RealAlgebraicNumber.Laws]

@@ -22,18 +22,24 @@ The extra unit also gives exact rational roots nonzero-width intervals. -/
   let upper := ball.re + ball.radius + margin
   if h : lower < upper then some ⟨lower, upper, h⟩ else none
 
+/-- Search-only interval proposals from the owner's canonical polynomial
+root producer. Coverage and separation are authenticated by subsequent replay. -/
+@[expose] def solverIntervals (solver : RealAlgebraicPoly) (precision : Nat) :
+    Option IsolationCert := do
+  let roots ← solver.roots.finite?
+  let intervals ← roots.mapM fun r => rootInterval r.root precision
+  return ⟨intervals⟩
+
 /-- Use the existing algebraic root solver to propose ordinary real cells.
 This is a search result: callers must check coverage, counts and separation. -/
 @[expose] def proposeIsolations [RealAlgebraicNumber.Laws]
-    (head : DensePoly RealAlgebraicNumber) (precision : Nat) : Option IsolationCert := do
-  let roots ← (RealAlgebraicPoly.ofArray head.toArray).roots.finite?
-  let intervals ← roots.mapM fun r => rootInterval r.root precision
-  return ⟨intervals⟩
+    (head : DensePoly RealAlgebraicNumber) (precision : Nat) : Option IsolationCert :=
+  solverIntervals (RealAlgebraicPoly.ofArray head.toArray) precision
 
 /-- Certify the existing solver's proposals at one requested precision.
 A failed attempt does not assert that no roots exist; the caller may refine
 precision. Replay checks recorded chains and never invokes this search. -/
-def isolateAt [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+@[expose] def isolateAt [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (context : Ctx) (head : DensePoly RealAlgebraicNumber) (precision : Nat) :
     Option (IsolationReplay RealAlgebraicNumber Ctx) :=
   match proposeIsolations head precision with
