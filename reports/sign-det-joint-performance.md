@@ -390,16 +390,19 @@ operand rational-normalisation traffic. `lean_nat_gcd` appears in 99.1% of the
 substring-filtered allocation stacks; the inclusive CPU profile separately attributes
 83.24% of its samples to that function.
 
-This supplies a GMP allocation observation. Lean object allocation/live heap, allocation
-scaling, complete operation-specific byte counters, representative profiles for wider
-families, disposition of all six inconclusive verdicts, wider matrices and nested
+This supplies a GMP allocation observation. The operation-scoped collection
+below adds intercepted Lean, direct mimalloc and GMP request counts for joint
+table production, completion, comparison and replay across three degrees.
+Coverage of additional allocation paths, live heap,
+wider allocation families, representative profiles for those families,
+disposition of all six inconclusive verdicts, wider matrices and nested
 coefficient evidence remain completion requirements.
 
 ## Operation-scoped allocation
 
-The [joint allocation collection](sign-det-joint-allocations.md) retains 36
-single-callback observations over completion, comparison and both replay modes
-at degrees 3, 7 and 15. It separates intercepted Lean, direct mimalloc and GMP
+The [joint allocation collection](sign-det-joint-allocations.md) retains 54
+single-callback observations over table production, completion, comparison and
+both replay modes at degrees 3, 7 and 15, plus one degree-31 comparison check. It separates intercepted Lean, direct mimalloc and GMP
 entry-point requests and checks native result agreement. These cumulative
 requested-byte observations have their own coverage limits; they do not supply
 peak live memory or resolve the running-time verdicts above.

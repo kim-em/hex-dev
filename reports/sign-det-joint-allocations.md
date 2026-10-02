@@ -27,7 +27,12 @@ recorded, without sample filtering or an idleness test.
 
 All 36 scheduled captures completed. Each contains one callback invocation,
 passes event-origin and per-bucket attribution checks, and returns the same
-nonempty result hash as its ordinary native invocation. All three repetitions
+result hash as its ordinary native invocation. Replay must return `true` (hash
+`0xb`); a consistently false result is rejected by the retained-record check.
+Completion and comparison hashes also match the independently validated
+[ordinary benchmark answers](data/sign-det-joint-timing/394c3c548/metadata.json)
+for each degree. Agreement with a native invocation alone would not establish
+that the operation succeeded or answered correctly. All three repetitions
 at each operation/degree give identical request counts and byte totals. The
 raw DHAT event files are stored losslessly with deterministic gzip compression,
 alongside logs, metadata, counters and exact collector sources. The regression
@@ -57,9 +62,40 @@ effect or establish an asymptotic allocation law. Completion and comparison
 also construct and check different numbers of tables, as specified in the
 running-time report. The sums describe these complete current callbacks.
 
-The direct-call audit finds only the wrapped `mi_malloc` and `mi_new_n`
-allocation paths, plus freeing and allocator setup calls, outside mimalloc
-internals. This is not proof of coverage of indirect/inlined alternatives,
+The [table-production records](data/sign-det-allocations/joint-production-25b179f5c/metadata.json)
+add 18 captures: reduced and direct joint table production at the same three
+degrees, in three fixed trial-major rounds on CPU 46 of the same host. They use
+the identical executable, generated callback and collector sources. Their
+answers match the independently validated ordinary production records, and all
+three repetitions agree exactly. Requested bytes per production callback:
+
+| Degree | Operation | `lean_alloc_*` | Direct mimalloc | GMP | Sum |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 3 | Reduced production | 2,892,224 | 307,360 | 4,875,552 | 8,075,136 |
+| 3 | Direct production | 2,929,288 | 317,056 | 5,572,448 | 8,818,792 |
+| 7 | Reduced production | 12,797,392 | 1,197,120 | 33,464,032 | 47,458,544 |
+| 7 | Direct production | 14,744,040 | 1,249,008 | 41,929,696 | 57,922,744 |
+| 15 | Reduced production | 68,578,368 | 4,555,792 | 232,166,688 | 305,300,848 |
+| 15 | Direct production | 91,489,984 | 4,780,880 | 318,135,480 | 414,406,344 |
+
+A separate [degree-31 comparison capture](data/sign-det-allocations/comparison-31-25b179f5c/metadata.json)
+on CPU 59 intercepts 386,473,472 GMP requests, requesting 3,784,472,776 bytes.
+Lean entry points contribute 1,012,179,032 bytes and direct mimalloc entry points
+37,090,608 bytes, giving 4,833,742,416 intercepted bytes. The answer matches the
+ordinary degree-31 benchmark. This single observation is a cross-tool check,
+not a scaling estimate. The earlier heaptrack capture attributed a lower bound
+of 385,922,080 GMP requests to that callback; the present count exceeds that
+bound. The two source revisions have identical `bench/HexSignDet/Joint.lean`,
+but may differ in other implementation modules. Consistency of these counts
+does not prove complete interception or identical allocation behavior between
+revisions. Each supplementary collection retains its own three controlled
+ABI fixtures, logs, metadata and losslessly compressed raw events.
+
+The direct-call audit records direct calls to symbols whose names start with
+`mi_`, from callers whose names do not start with `mi_` or `_mi_`. It records
+`mi_malloc` and `mi_new_n`, plus freeing and allocator setup calls. It does
+not inspect calls to `_mi_*`, libc allocation functions or `operator new`.
+It does not prove coverage of indirect/inlined alternatives,
 arbitrary foreign allocators or allocations in spawned threads. These are
 pure single-threaded benchmark callbacks; no general-purpose allocation API
 or total-process/live-heap claim follows. DHAT records the same requests as
@@ -78,10 +114,32 @@ python3 scripts/bench/sign_det_allocations.py \
   --output /path/to/new-capture-directory
 ```
 
-The original capture directory is retained at
-`/home/kim/.local/state/hex/issue-10377-profiles/allocation-joint-scaling-25b179f5c`.
-No completed observation is discarded. This collection supplies allocation
-observations for joint completion, comparison and replay. Maximal support,
-independent coefficient-height and nested-field families, live memory, and the
-remaining Phase-4 obligations require their own evidence. It does not resolve
+The original capture directories are retained under
+`/home/kim/.local/state/hex/issue-10377-profiles/` as
+`allocation-joint-scaling-25b179f5c`, `allocation-joint-production-25b179f5c`
+and `allocation-comparison-31-25b179f5c`. To reproduce the supplementary
+schedules, use the same command with `runReduced runDirect` and degrees
+`3 7 15` in three trials, or `runComparison` with degree `31` in one trial.
+The [source reconstruction](data/sign-det-allocations/joint-25b179f5c/source-reconstruction.json)
+retains a patch against reachable main ancestor `e9711a9f7a405d7d00b0a5a974af7f41eda990cd`;
+the regression suite reconstructs every measured source and checks its recorded
+hash without depending on the continued existence of the branch commit.
+A separate [post-capture inspection](data/sign-det-allocations/joint-25b179f5c/post-capture-build-identity.json)
+records the executable and owned build-cache realpaths, device/inode identity
+and unchanged executable hash. It is a later observation, not a retroactive
+start-of-run check. The project build directory belongs to this isolated
+worktree; package caches can be shared. Before/after binary hashes bind the
+captured executable itself. Retained disassembly confirms that both
+`lean::alloc_mpz` and `lean_alloc_mpz` call the wrapped
+`lean_alloc_small_object_core` in this binary. This resolves that specific
+possible bypass, without certifying every inlined or indirect path.
+
+The generated joint benchmark C source is also retained losslessly; its hash
+matches the generated source identified by every capture.
+
+No completed observation is discarded. All 55 scheduled observations completed.
+This collection supplies allocation observations for joint table production,
+completion, comparison and replay. Maximal support, independent
+coefficient-height and nested-field families, live memory and the remaining
+Phase-4 obligations require their own evidence. It does not resolve
 the running-time report's inconclusive verdicts or complete #10377.
