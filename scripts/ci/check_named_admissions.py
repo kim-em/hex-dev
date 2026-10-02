@@ -199,6 +199,8 @@ def check() -> None:
              "HexRealClosureMathlib.IsolationRoots", "HexRealClosureMathlib.RootOrder",
              "HexRealClosureMathlib.RootFactors", "HexRealClosure.CompleteRoots",
              "HexRealClosureMathlib.IsolationTotal", "HexRealClosureMathlib.RootTotal",
+             "HexRealClosure.TowerRoots", "HexRealClosure.TowerRootsTests",
+             "HexRealClosureMathlib.TowerRoots",
              "HexRealClosureMathlib.Specialize",
              "HexRealClosureMathlib.SpecializePolynomial",
              "HexRealClosureMathlib.SpecializeRegular", "HexRealClosureMathlib.SpecializeQuery", "HexRealClosureMathlib.SpecializeTarski",
