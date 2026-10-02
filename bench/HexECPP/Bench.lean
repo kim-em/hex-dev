@@ -204,8 +204,8 @@ def scalarInput (bits : Nat) : Nat × List Nat :=
 -- linear declaration omitted these copies; retained runs are not evidence
 -- for this corrected model. These sizes expose the bignum regime.
 setup_benchmark runReplay k => k * k with prep := scalarInput where {
-  paramFloor := 32768, paramCeiling := 1048576, outerTrials := 3
-  targetInnerNanos := 5000000000, maxSecondsPerCall := 40.0
+  paramFloor := 262144, paramCeiling := 4194304, outerTrials := 3
+  targetInnerNanos := 5000000000, maxSecondsPerCall := 240.0
 }
 
 -- Derivation: the identical bit extraction has Theta(k^2 / wordBits)
@@ -213,8 +213,8 @@ setup_benchmark runReplay k => k * k with prep := scalarInput where {
 -- comparison contribute only Theta(k). This is a compiled-time claim,
 -- not a replacement for the SPEC's modular-operation bound.
 setup_benchmark runProposal k => k * k with prep := scalarInput where {
-  paramFloor := 32768, paramCeiling := 1048576, outerTrials := 3
-  targetInnerNanos := 5000000000, maxSecondsPerCall := 40.0
+  paramFloor := 262144, paramCeiling := 4194304, outerTrials := 3
+  targetInnerNanos := 5000000000, maxSecondsPerCall := 240.0
 }
 
 def rowBudget (rows : Nat) : ImportBudget :=

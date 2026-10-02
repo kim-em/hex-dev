@@ -36,6 +36,8 @@ def main() -> None:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--baseline", type=Path, help="compiled reference bench for AB/BA")
     parser.add_argument("--trials", type=int, default=5)
+    parser.add_argument("--family", action="append", choices=FAMILIES)
+    parser.add_argument("--skip-endpoints", action="store_true")
     args = parser.parse_args()
     if args.output.exists():
         parser.error("output exists; preserve completed runs")
@@ -103,20 +105,21 @@ def main() -> None:
                 ratios[name] = dict(paired_ratios=pairs, median=statistics.median(pairs))
             report["regression_ratios"] = ratios
         else:
-            for name in FAMILIES:
+            for name in args.family or FAMILIES:
                 destination = directory / (name.rsplit(".", 1)[-1] + ".json")
                 run([str(BENCH), "run", name, "--export-file", str(destination)])
-            destination = directory / "endpoints.json"
-            run([str(BENCH), "run", *BUDGETS, "--repeats", str(args.trials),
-                 "--export-file", str(destination)])
-            results = json.loads(destination.read_text())["results"]
-            report["fixed_verdicts"] = {
-                r["function"]: dict(median_seconds=r["median_nanos"] / 1e9,
-                                    budget_seconds=BUDGETS[r["function"]],
-                                    within_budget=r["median_nanos"] / 1e9 <= BUDGETS[r["function"]],
-                                    hashes_agree=r["hashes_agree"],
-                                    expected_hash_check=r["expected_hash_check"])
-                for r in results}
+            if not args.skip_endpoints:
+                destination = directory / "endpoints.json"
+                run([str(BENCH), "run", *BUDGETS, "--repeats", str(args.trials),
+                     "--export-file", str(destination)])
+                results = json.loads(destination.read_text())["results"]
+                report["fixed_verdicts"] = {
+                    r["function"]: dict(median_seconds=r["median_nanos"] / 1e9,
+                                        budget_seconds=BUDGETS[r["function"]],
+                                        within_budget=r["median_nanos"] / 1e9 <= BUDGETS[r["function"]],
+                                        hashes_agree=r["hashes_agree"],
+                                        expected_hash_check=r["expected_hash_check"])
+                    for r in results}
         report["host_after"] = dict(loadavg=list(os.getloadavg()))
         report["artifact_sha256"] = {p.name: sha(p) for p in directory.iterdir() if p.is_file()}
         save()
