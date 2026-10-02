@@ -14,7 +14,7 @@ namespace Hex.RealClosure.Tower
 variable {registry : BaseContext.Registry}
 
 /-- A finite derivation of native conversion from identity, a new base
-infinitesimal, a checked root refinement, and rebuilt later levels.
+infinitesimal, a root inclusion, a checked root refinement, and rebuilt later levels.
 This is erased provenance, not a semantic arithmetic law record. -/
 inductive Transport : (source target : Context registry) → (source.Value → target.Value) → Prop
   | identity (context : Context registry) : Transport context context id
@@ -22,6 +22,10 @@ inductive Transport : (source target : Context registry) → (source.Value → t
       (context : BaseContext.Context registry K sign) :
       Transport (Context.base context) (Context.base context.infinitesimal)
         BaseContext.Element.embed
+  | inclusion (parent : Context registry)
+      (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature)
+      (extension : Extension parent descriptor) (built : extension = parent.adjoin descriptor) :
+      Transport parent extension.context extension.embed
   | refine (parent : Context registry)
       {source : SignDet.Descriptor parent.Value Signature parent.sign parent.signature}
       {head : DensePoly parent.Value} {lower upper : Endpoint parent.Value}
@@ -53,6 +57,29 @@ structure Conversion (source : Context registry) : Type 1 where
 /-- Start conversion without changing the context. -/
 def Conversion.identity (source : Context registry) : Conversion source :=
   ⟨source, id, .identity source⟩
+
+/-- Include a predecessor in one actual cached root extension. This records
+the native coefficient embedding for subsequent common-context transport. -/
+def Conversion.includeRoot (parent : Context registry)
+    (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature)
+    (extension : Extension parent descriptor) (built : extension = parent.adjoin descriptor) :
+    Conversion parent :=
+  ⟨extension.context, extension.embed, .inclusion parent descriptor extension built⟩
+
+private theorem Conversion.includeRoot_spec_proof (parent : Context registry)
+    (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature)
+    (extension : Extension parent descriptor) (built : extension = parent.adjoin descriptor) :
+    (Conversion.includeRoot parent descriptor extension built).context = extension.context ∧
+      HEq (Conversion.includeRoot parent descriptor extension built).value extension.embed :=
+  ⟨rfl, HEq.rfl⟩
+
+/-- Root inclusion retains the cached child and its actual embedding closure. -/
+theorem Conversion.includeRoot_spec (parent : Context registry)
+    (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature)
+    (extension : Extension parent descriptor) (built : extension = parent.adjoin descriptor) :
+    (Conversion.includeRoot parent descriptor extension built).context = extension.context ∧
+      HEq (Conversion.includeRoot parent descriptor extension built).value extension.embed :=
+  Conversion.includeRoot_spec_proof parent descriptor extension built
 
 /-- Enlarge a completed base by one positive infinitesimal. Existing base
 values enter through the native constant-rational-function embedding. -/

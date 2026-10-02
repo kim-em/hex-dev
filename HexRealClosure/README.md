@@ -675,16 +675,76 @@ are preserved.
 The compiled isolation fixture exercises the complete checked producer on repeated
 factors and over a selected algebraic coefficient. Its independent exact Z3 RCF
 oracle checks coverage, multiplicities and strict order; mutation tests reject
-permuted outputs, and preserves explicit error rows for any internal failure.
+reversed outputs. The emitter preserves explicit error rows for any internal
+failure, which the oracle rejects.
 The native tests exercise the total wrapper's zero case and check the ordered labels
 `[3, 2, 3, 5]` for `-3 X² (X²-2)³ (X-3)⁵`.
-The native tower wrapper and trivial-base agreement are separate requirements
-of the full `RootSet` interface.
+Trivial-base agreement is a separate requirement of the full `RootSet` interface.
 `runRoots` times the actual total operation, including global ordering, on this
 repeated-factor input; `runAssembly` retains the intermediate timing anchor.
 The current global insertion sort uses at most quadratically many comparisons,
 with common-polynomial re-encoding for descriptor pairs. These fixed anchors
 make no scaling claim and do not complete the required Phase-4 evaluation.
+
+### Native complete roots
+
+`Tower.Context.roots p` materializes the complete producer's output as a native
+`Tower.RootSet ctx`. Zero retains `all`; finite entries preserve the original
+order and multiplicities. Each `entry.root` carries a `context`, its native
+`value`, and an explicit `embed` from the input context. A coefficient point
+retains the input context. A selected descriptor caches the actual extension
+returned by `ctx.adjoin`, including its generator and predecessor embedding.
+The old contexts and values remain valid.
+
+`root.conversion` packages the coefficient inclusion as a native `Conversion`,
+retaining the cached child and composing with later transports.
+`Root.conversionModel` proves preservation in the same ambient field.
+`conversion_spec` identifies its coefficient map with `embed`,
+`conversionModel_target` identifies its child interpretation with `model`, and
+`convertedValue` supplies the selected value with the ownership expected by
+later conversions. `convertedValue_value` proves its interpretation.
+
+`root.embedPoly p` enters every coefficient into the root's context, and
+`root.signAt p` evaluates there using ordinary native arithmetic.
+`root.compare other` is a total comparison through the compatible selections
+over the shared input context; `compare?` exposes its internal diagnostics.
+Comparing values owned by different child contexts does not identify their
+raw types.
+
+The companion interprets every actual root context in the same ambient ordered
+real closed field as the input. `Root.embed_value`, `embedPoly_value`,
+`signAt_value`, and `compare_correct` prove coefficient preservation, polynomial
+signs and comparison. `Context.roots_all`, `roots_spec` and `roots_sorted` prove
+the native output's zero case, exact coverage and multiplicities, and strict
+order. No semantic model is an argument to the executable root construction.
+`Context.roots?` retains the generic producer's internal diagnostics;
+`roots?_success` proves it succeeds and agrees with ordinary roots.
+The default native tests execute root finding, polynomial signs and inversion
+in these actual child contexts on the repeated-factor rational case and on
+`(Y²-α)²(Y-1)` over the selected `α=√2` of `(X²-2)(X-3)`.
+
+Materialization eagerly constructs every selected child, including its literal
+descriptor encoding and prepared query domain. `runNativeRoots` measures this
+complete operation on the same repeated-factor input as `runRoots`, with input
+construction outside the timed call. These are fixed functional anchors; the
+required tower scaling evaluation remains separate.
+
+These entries can own distinct extensions over their common coefficient
+context. The operation that gathers all requested entries into one common
+native context remains part of the live-context transport requirement.
+
+`TowerCoverage.lean` connects the native producer to the relative algebraic
+union. `Model.nativePoly` lifts coefficients from the input's mathematical
+field to stored representatives for the semantic existence proof.
+`Model.algebraic_root` then invokes the complete native producer and identifies
+an actual returned root value with any element algebraic over that field.
+`Model.roots_iff_union` proves that these native root presentations describe
+exactly the algebraic union. Conversely, `Root.values_algebraic` places every
+value of an actual root context in that union, and `Root.unionModel` interprets
+the entire context there with its arithmetic and sign laws. The existing
+`Union.realClosed` supplies real-closedness of this same field. The coefficient
+lift is noncomputable proof infrastructure; executable callers supply their
+native polynomial, and root production uses the ordinary total API.
 
 ### Arithmetic over general selected-root predecessors
 
@@ -774,8 +834,9 @@ level's selected-value interpretation supplies every coefficient premise. A
 successful finite assembly therefore covers exactly the ambient roots of the
 interpreted input with original multiplicities and no duplicate values; `all`
 is equivalent to semantic zero. The generic complete-root success and strict-order
-theorems also apply to this interpretation; native materialization of the roots
-and their extension embeddings is a separate interface requirement.
+theorems can also be instantiated with this interpretation. The native tower
+wrapper above supplies the complete root operation and its extension embeddings
+for context-indexed values.
 
 `AlgebraicValue.lean` defines the image subfield `Value ctx`, with lawful field
 and order instances inherited from the ambient field. `Element.toValue`
@@ -1063,6 +1124,7 @@ performance result is claimed here.
 ### Recursive conversion through later root levels
 
 `Conversion.identity` retains the original context and values.
+`Conversion.includeRoot` retains the actual cached root child and coefficient inclusion.
 `Conversion.refine` starts at a checked final-root refinement.
 `Conversion.adjoin?` rebuilds a later descriptor with converted coefficients,
 endpoints and fresh context-bound evidence. It stores the new extension's
@@ -1595,6 +1657,10 @@ and agrees with the prescribed base map at every suffix depth. An arbitrary
 old model must supply its agreement with the chosen base map and algebraicity
 of its values; applying the restriction in `Context.enlarge` remains open.
 
-Presenting every algebraic generator by a native selected-root descriptor and
-identifying all compatible native presentations with this semantic union remain
-required tower integration work.
+For any supplied native input model, `Model.roots_iff_union` identifies the
+actual complete-root presentations with the relative algebraic union of its
+entire value field. `Root.unionModel` interprets every value of each returned
+root context there, preserving its native operations and signs. Identifying
+arbitrary old models with the models rebuilt by `Context.enlarge`, and gathering
+all requested live contexts into one compatible native context, remain tower
+integration requirements.

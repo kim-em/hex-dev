@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexRealClosure.Element
 import HexRealClosure.AlgebraicContext
 import HexRealClosure.CompleteRoots
+import HexRealClosure.TowerRoots
 import LeanBench
 
 namespace Hex.RealClosure.Bench
@@ -291,6 +292,42 @@ def runRoots : Unit → IO UInt64 := fun _ => do
   | .all => throw (IO.userError "complete roots benchmark: unexpected all-roots result")
 
 setup_fixed_benchmark runRoots where {
+  repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
+}
+
+private def nativeRegistry : BaseContext.Registry := fun _ => none
+private def nativeBase := Tower.Context.base (BaseContext.rational nativeRegistry)
+
+private def nativeRepeated : DensePoly nativeBase.Value :=
+  let two : nativeBase.Value := 1 + 1
+  let three : nativeBase.Value := two + 1
+  let x : DensePoly nativeBase.Value := DensePoly.ofCoeffs #[0, 1]
+  let quadratic := x * x - DensePoly.C two
+  let linear := x - DensePoly.C three
+  DensePoly.scale (-three) (x * x * quadratic * quadratic * quadratic *
+    linear * linear * linear * linear * linear)
+
+initialize nativeRepeatedRef : IO.Ref (Option (DensePoly nativeBase.Value)) ←
+  IO.mkRef (some nativeRepeated)
+
+/-- The same repeated-factor input as `runRoots`, including eager construction
+of every selected native child, its descriptor encoding and prepared domain.
+Input construction is outside the timed region. This is a functional anchor. -/
+def runNativeRoots : Unit → IO UInt64 := fun _ => do
+  let some p ← nativeRepeatedRef.get
+    | throw (IO.userError "native roots benchmark: missing input")
+  match nativeBase.roots? p with
+  | .ok (.finite entries) =>
+    if entries.map (·.multiplicity) == [3, 2, 3, 5] &&
+        entries.all (fun entry =>
+          entry.root.context.signature.base = nativeBase.signature.base &&
+            entry.root.context.signature.roots.length ≤ 1) then
+      return 1
+    else
+      throw (IO.userError "native roots benchmark: incorrect labels or child context")
+  | _ => throw (IO.userError "native roots benchmark: producer failed")
+
+setup_fixed_benchmark runNativeRoots where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 

@@ -223,6 +223,13 @@ noncomputable def identity (original : Hex.RealClosure.Tower.Model source K) :
     rfl
 
 omit [DecidableEq K] in
+/-- Identity retains the original interpretation. -/
+theorem identity_target (original : Hex.RealClosure.Tower.Model source K) :
+    HEq (identity original).target original := by
+  unfold identity
+  exact original.cast_heq (Conversion.identity_spec source).1.symm
+
+omit [DecidableEq K] in
 /-- An enlarged base model compatible with the native constant embedding
 interprets the checked base conversion. -/
 noncomputable def infinitesimal {B : Type} [Lean.Grind.Field B] [DecidableEq B]
@@ -305,6 +312,32 @@ theorem comp_target {next : Conversion conversion.context}
   exact following.target.cast_heq (conversion.comp_spec next).1.symm
 
 variable [IsStrictOrderedRing K] [IsRealClosed K]
+
+/-- The actual cached root extension interprets its recorded coefficient
+inclusion in the same ordered real closed field as the predecessor. -/
+noncomputable def includeRoot (original : Hex.RealClosure.Tower.Model source K)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (extension : Extension source descriptor) (built : extension = source.adjoin descriptor) :
+    Model (Conversion.includeRoot source descriptor extension built) original := by
+  cases built
+  have spec := Conversion.includeRoot_spec source descriptor (source.adjoin descriptor) rfl
+  exact
+    { target := spec.1.symm ▸ original.adjoin descriptor
+      value := by
+        intro x
+        rw [cast_value _ _ _ _ spec.2]
+        exact original.adjoin_embed descriptor x }
+
+/-- Root inclusion uses the same interpretation as the actual native child. -/
+theorem includeRoot_target (original : Hex.RealClosure.Tower.Model source K)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (extension : Extension source descriptor) (built : extension = source.adjoin descriptor) :
+    HEq (includeRoot original descriptor extension built).target
+      (original.adjoin descriptor) := by
+  cases built
+  unfold includeRoot
+  exact (original.adjoin descriptor).cast_heq
+    (Conversion.includeRoot_spec source descriptor (source.adjoin descriptor) rfl).1.symm
 
 /-- Start a semantic conversion at the actual checked refinement. The witness
 supplies the target model and preservation for every source-owned value. -/
