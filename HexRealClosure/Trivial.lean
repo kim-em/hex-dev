@@ -36,7 +36,7 @@ conversion; point roots retain their rational value. -/
 /-- The generic rational route after conversion to the existing canonical
 real-algebraic carrier, for the agreement theorem and differential tests.
 The companion proves exact backend agreement. This route runs generic isolation
-and repeats canonical root enumeration for each selected head; use the existing
+and repeats canonical root enumeration for each selected descriptor; use the existing
 backend directly when this conversion is unnecessary. -/
 @[expose] def roots (context : Nat) (p : DensePoly Rat) : RealRootSet :=
   output (Roots.roots Sturm.orderSign context p)
