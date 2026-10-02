@@ -61,6 +61,19 @@ count one, and preserves the complete raw descriptor. Ordinary-kernel probes
 cover the full derivative graph, repeated references to one child, selected-root
 extraction and truncated/cyclic graphs.
 
+`Dag.selectedSigns?` checks a supplied graph for the descriptor's derivative
+queries followed by the caller's ordered query list. It accepts exactly the
+claimed sign vector when the checked table has one extending row of count one.
+It reuses the checked graph's evidence without repeating tree replay or calling
+a sign producer. `Dag.selectedSigns_evidence` preserves the exact claimed signs
+and literal replay; `Dag.selectedSigns_checked` connects them to the existing
+selected-root checker. The companion's `Dag.selectedSigns_values` proves
+agreement with mathematical evaluation at the descriptor's selected root.
+`Dag.selectedSigns_sign_congr` transfers this result between sign functions
+that agree on every stored graph operand, provided both descriptors have the
+same raw root identity. Source-descriptor validation has its own coefficient
+sign dependencies, which consumers must also discharge.
+
 `Dag.encode` converts supplied trees using bottom-up hash consing. It preserves
 first-occurrence order and shares entries only after exact equality of every
 node field and both child indices. Hash collisions, different witnesses and

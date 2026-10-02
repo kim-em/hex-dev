@@ -14,6 +14,14 @@ from the requested head and indices and requiring count one. The theorem
 `Dag.decodeDescriptor_raw` proves exact preservation of every requested raw
 descriptor field. Wrong derivative slots, signs or contexts are rejected.
 
+`Dag.decodeSigns` consumes these bytes for a validated selected-root descriptor,
+an ordered query list and a claimed sign vector. It uses `Dag.selectedSigns?`
+to check the table's unique extending row after graph replay. The theorem
+`Dag.decodeSigns_evidence` preserves the claimed signs and identifies the actual
+decoded graph and its selected-sign evidence. Correctness therefore applies to
+arbitrary accepted bytes; it does not require a printer/parser roundtrip.
+No selected-sign producer runs during decoding.
+
 `ValueCodec` supplies encoders and decoders for coefficient values and the
 full immutable context. The provided codecs cover canonical `Rat` and `Nat`.
 A composite context must encode all its components, including refinement and
