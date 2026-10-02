@@ -15,7 +15,7 @@ owns curve semantics, the Hasse bound, and the unconditional primality implicati
 ```toml
 [[require]]
 name = "hex-ecpp"
-git = "https://github.com/leanprover/hex-ecpp"
+git = "https://github.com/leanprover/hex-ecpp.git"
 rev = "main"
 ```
 

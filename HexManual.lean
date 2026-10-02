@@ -10,6 +10,7 @@ import VersoManual
 import HexManual.Chapters.HexBasic
 import HexManual.Chapters.HexArith
 import HexManual.Chapters.HexPrimality
+import HexManual.Chapters.HexECPP
 import HexManual.Chapters.HexPoly
 import HexManual.Chapters.HexMvPoly
 import HexManual.Chapters.HexModArith
@@ -38,7 +39,6 @@ import HexManual.Chapters.HexResultant
 import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
 -- Unreleased libraries (dependency order).
-import HexManual.Chapters.HexECPP
 import HexManual.Chapters.HexRealAlgebraic
 import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexReflect
@@ -98,6 +98,7 @@ contracts and, for mature libraries, supply their proofs.
 {include 0 HexManual.Chapters.HexArith}
 
 {include 0 HexManual.Chapters.HexPrimality}
+{include 0 HexManual.Chapters.HexECPP}
 
 {include 0 HexManual.Chapters.HexPoly}
 
@@ -190,7 +191,6 @@ These libraries are still incubating in the
 split out for release yet, so their APIs may still change. They are grouped
 here to keep the reference chapters above focused on the released libraries.
 
-{include 2 HexManual.Chapters.HexECPP}
 
 {include 2 HexManual.Chapters.HexRealAlgebraic}
 
