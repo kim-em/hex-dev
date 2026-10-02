@@ -17,7 +17,9 @@ hashes. The existing CI job builds and verifies this executable. The retained
 44 Sturm and 67 real-algebraic cases, completing in 37 seconds against the
 600-second local script default; CI sets a 360-second cap. The real executable
 took 32 seconds and exceeded the 30-second per-library soft threshold.
-Tightening its verify path remains tracked under #10577. This is verification evidence, not a scientific budget.
+[Required CI](https://github.com/kim-em/hex-dev/actions/runs/36972953823)
+records 60 seconds for this executable and 336 seconds total under the shared
+360-second cap. Tightening its verify path remains tracked under #10577. This is verification evidence, not a scientific budget.
 
 | Shipped surface | Registrations | Evidence status |
 | --- | --- | --- |

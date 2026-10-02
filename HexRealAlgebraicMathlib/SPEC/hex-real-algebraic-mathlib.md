@@ -51,3 +51,6 @@ and fixed-field correspondence. This companion transports those equations
 through the real subtype and retains its existing `compare_eq`, order laws,
 and executable dictionaries. The new array obligations have conformance and
 performance evidence in `HexRealAlgebraic`; no proof-generation API is added.
+
+The library records Phase 3 in `libraries.yml`; the readiness audit gives the
+conformance/correctness evidence and remaining Phase-4 requirements.
