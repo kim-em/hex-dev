@@ -126,3 +126,18 @@ private def memoReplay : Bool :=
 -- Complete portfolio exhaustion retains the distinct local retry diagnostic.
 #guard let result := Hex.ECPP.produce hard 0 { pointRetries := 0 }
   result.state.stats.lastRetry.any (fun e => e.resource == .pointRetries)
+
+-- The first real CM order rejects a twist before its first recursive child
+-- fails at depth zero. Capping at two candidates stops before the next order.
+-- The fresh state has no planted diagnosis; the child supersedes that retry.
+private def firstChild := produce hard 0 { maxDepth := 1, maxCandidates := 2 }
+#guard firstChild.state.stats.backtracks == 1
+#guard firstChild.state.stats.points > 8
+#guard firstChild.state.stats.lastRetry.any fun e =>
+  e.subject == hard && e.resource == .pointRetries
+#guard firstChild.state.stats.unresolved.any fun e =>
+  e.subject < hard && e.resource == .depth
+-- Completing the parent's portfolio retains that unresolved child.
+#guard match (produce hard 0 { maxDepth := 1 }).result with
+  | .error e => e.subject < hard && e.resource == .depth
+  | .ok _ => false
