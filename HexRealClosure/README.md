@@ -1640,6 +1640,10 @@ and agrees with the prescribed base map at every suffix depth. An arbitrary
 old model must supply its agreement with the chosen base map and algebraicity
 of its values; applying the restriction in `Context.enlarge` remains open.
 
-Presenting every algebraic generator by a native selected-root descriptor and
-identifying all compatible native presentations with this semantic union remain
-required tower integration work.
+For any supplied native input model, `Model.roots_iff_union` identifies the
+actual complete-root presentations with the relative algebraic union of its
+entire value field. `Root.unionModel` interprets every value of each returned
+root context there, preserving its native operations and signs. Identifying
+arbitrary old models with the models rebuilt by `Context.enlarge`, and gathering
+all requested live contexts into one compatible native context, remain tower
+integration requirements.
