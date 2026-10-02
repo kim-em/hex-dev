@@ -80,20 +80,19 @@ one sign may therefore make `2^d` rational sign calls; a zero numerator
 short-circuits. Arithmetic adds further predecessor work. There is no additive
 bound in depth or shared coefficient-sign evidence in these probes.
 
-The ordinary CI target `HexSignDetMathlibProofProbe` includes acceptance,
-arithmetic rejection, stale-context rejection and chain-cause proofs at depths
-one and two, plus the fraction probes and repeated normalization-certificate
-checks. The explicit manual target
-`HexSignDetMathlibNestedProofProbe` contains the more memory-intensive
-depth-three proofs, including stale-context rejection and the chain-cause
-proof. The full default `lake build` does not include that manual target. Run
-`lake build HexSignDetMathlibNestedProofProbe` after changing the nested inputs
-or their arithmetic dependencies; allow roughly 18 GiB resident memory for
-the observed depth-three acceptance module.
+The declared CI target `HexSignDetMathlibProofProbe` uses a representative
+one-level set for nested acceptance, arithmetic and stale-context rejection,
+fraction acceptance/product rejection, an arithmetic rejection cause and
+normalization-certificate checking. All one- and two-level correctness fixtures
+under `HexSignDetMathlib.Diagnostics` are also built by the existing CI job,
+outside the declared proof-example root. Only depth-three nested fixtures use
+the separate manual target `HexSignDetMathlibDepthThree`; the acceptance module
+retains its observed roughly 18 GiB resident-memory requirement.
 
 ## Measurement protocol
 
-`scripts/bench/sign_det_nested_kernel.py` uses the shared fresh-module harness.
+The archived `scripts/bench/sign_det_nested_kernel.py` uses the shared
+fresh-module harness in the retained measurement source snapshot.
 It compares each proof module with a module having the same imports and no
 proof body. Imports are warm; only that module's generated outputs are removed
 before each measured build. Six trial-major rounds rotate the twenty pairs and
@@ -101,7 +100,7 @@ alternate adjacent `AB`/`BA` order. The automatically selected CPU is leased,
 not required to be idle. Raw wall times, child CPU times, peak RSS, compiler
 output, axiom inventories, source hashes and host context are retained.
 
-For example, from a clean checkout with warm dependencies:
+Collection command at the recorded source revision, with warm dependencies:
 
 ```sh
 python3 scripts/bench/sign_det_nested_kernel.py --samples 6 --timeout 300 \
