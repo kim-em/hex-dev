@@ -166,12 +166,9 @@ private meta def candidate (target : Expr) : MetaM Bool := do
   let atoms := sourceAtoms target #[]
   if atoms.size ≥ 2 then return true
   let some atom := atoms[0]? | return false
-  unless atom.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return false
-  let argument := atom.appArg!
-  let anchor ← match ← fieldArgs? argument with
-    | some (_, anchor, _) => pure anchor
-    | none => pure argument
-  return (← normalizedArgs? anchor).isSome || (← directConversion argument)
+  if atom.isAppOfArity ``Real.sqrt 1 then
+    return (← naturalSquareRoot? atom).isSome
+  return atom.isAppOfArity ``RealAlgebraicNumber.toReal 1
 
 /-- Classify the entire source before executing any algebraic construction.
 Unknown siblings must cause a decline before a recognized sibling can fail. -/
@@ -568,13 +565,15 @@ private meta partial def gather (source : Expr) (leaves : Array Expr) :
   if source.coefficients.size == 1 && source.divisors.isEmpty then
     let coefficient := source.coefficients[0]!
     if ← eligible coefficient then
-      unless coefficient.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return .declined
-      let argument := coefficient.appArg!
-      let anchor ← match ← fieldArgs? argument with
-        | some (_, anchor, _) => pure anchor
-        | none => pure argument
-      if (← normalizedArgs? anchor).isNone && !(← directConversion argument) then
-        return .declined
+      if coefficient.isAppOfArity ``Real.sqrt 1 then
+        if (← naturalSquareRoot? coefficient) == some 2 then return .declined
+      else
+        let argument := coefficient.appArg!
+        let anchor ← match ← fieldArgs? argument with
+          | some (_, anchor, _) => pure anchor
+          | none => pure argument
+        if (← normalizedArgs? anchor).isNone && !(← directConversion argument) then
+          return .declined
   let mut leaves := #[]
   for scalar in source.coefficients ++ source.divisors do
     let some next ← gather scalar leaves | return .declined

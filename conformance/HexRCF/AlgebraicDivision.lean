@@ -25,6 +25,11 @@ theorem square_divisor : ∀ x : ℝ, x / Real.sqrt 4 = x / 2 := by rcf
 theorem mixed_square_alias : ∀ x : ℝ,
     x ^ 2 + Real.sqrt 4 - Real.sqrt 2 > 0 := by rcf
 
+theorem lone_square_root : ∀ x : ℝ, x ^ 2 + Real.sqrt 3 > 0 := by rcf
+
+theorem compound_selected : ∀ x : ℝ,
+    x ^ 2 + (CubeTwo.realAlgebraic.toReal ^ 2 - 1) > 0 := by rcf
+
 theorem quotient_positive : ∀ x : ℝ,
     x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0 := by rcf
 
@@ -211,3 +216,11 @@ end Hex.RCF.AlgebraicDivision
 /-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.mixed_square_alias' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.AlgebraicDivision.mixed_square_alias
+
+/-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.lone_square_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.AlgebraicDivision.lone_square_root
+
+/-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.compound_selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.AlgebraicDivision.compound_selected

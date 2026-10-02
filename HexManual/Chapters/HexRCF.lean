@@ -540,8 +540,8 @@ The two-square-root examples below combine `Real.sqrt 2` and `Real.sqrt 3`
 in one common field and check that each field coordinate names the intended
 positive root. This path accepts natural literal radicands when at least two
 distinct square roots occur in the goal. A lone `Real.sqrt 2` uses the earlier
-single-coefficient path; other lone square roots currently require the
-closed-division path described above. The
+single-coefficient path; other positive natural square roots use the common-field
+frontend, including perfect-square radicands. The
 two-root examples use a larger heartbeat limit for the quartic common field.
 The next examples mix Mathlib's `Real.sqrt 2` with a Hex root selected from
 `X² − 3`. They also use the ordinary `QAdjoin` element `1 + √3`, converted
