@@ -16,6 +16,9 @@ import HexSignDetMathlib.TableProducer
 import HexSignDetMathlib.ReencodingProducer
 import HexSignDetMathlib.ReencodingRefinement
 import HexSignDetMathlib.ThomReencoding
+import HexSignDetMathlib.ThomRoots
+import HexRationalFn
+import HexOrderedFn.Infinitesimal
 import HexSignDetMathlib.Convert
 
 import HexSignDetMathlib.QueryHandle
@@ -1242,11 +1245,36 @@ success on every valid domain containing at most one root, including linear
 heads and isolating intervals, without a Thom-order assumption.
 {name}`Hex.SignDet.Descriptor.buildRoots_none_iff` characterizes invalid domains
 exactly without using the root-sum theorem. The success and coverage results use
-the shared proved root-sum theorem. A general proof that
-enumeration succeeds on every valid domain and returns roots in mathematical
-order remains required. The applicable full-word comparator is proved correct by
-{name}`Hex.SignDet.Descriptor.fullOrder_root`. This example checks the
-actual output; it does not discharge those general proof obligations.
+the shared proved root-sum theorem. Import `HexSignDetMathlib.ThomRoots` for
+{name}`Hex.SignDet.Descriptor.buildRoots_success`, which proves actual success
+on every valid domain. {name}`Hex.SignDet.Descriptor.buildRoots_roots` proves
+that the returned list contains every root exactly once, in strictly increasing
+mathematical order. These generic theorems include finite/infinite bounds,
+noninjective coefficient storage and non-Archimedean fields.
+
+Infinitesimal coefficients can arise inside the decision procedure. Here ε is
+positive and smaller than every positive rational. The roots 0 and ε have no
+rational separator. Root enumeration uses their derivative signs to order them,
+and the selected-root API distinguishes their polynomial signs exactly.
+
+```lean
+private def infinitesimalRootsPasses : Bool :=
+  let epsilon : Hex.RationalFn Rat := Hex.RationalFn.X
+  let sign := Hex.OrderedFn.Infinitesimal.sign Sturm.orderSign
+  let x : DensePoly (Hex.RationalFn Rat) :=
+    DensePoly.ofCoeffs #[0, 1]
+  match Descriptor.buildRoots sign 7
+      (x * (x - DensePoly.C epsilon))
+      (.finite (-1)) (.finite 1) with
+  | .ok (some roots) =>
+    roots.map (fun d => d.raw.signs) == [[-1, 1], [1, 1]] &&
+      roots.map (fun d => d.signAt x) == [0, 1] &&
+      roots.map (fun d => d.signAt (x - DensePoly.C epsilon))
+        == [-1, 0]
+  | _ => false
+
+#guard infinitesimalRootsPasses
+```
 
 Two roots can be compared even if their defining polynomials differ. The
 comparison constructs a checked common squarefree polynomial and expresses
@@ -1334,8 +1362,8 @@ proved root-sum theorem `HexRealRootsMathlib.Tarski.check_rootSum`.
 The full-word comparison uses Tau Ceti’s delivered Thom identity and order
 theorems through the companion. {name}`Hex.SignDet.Comparison.order_root`
 proves that all three orders returned by an accepted comparison agree with the
-original selected roots. Universal root-list and common-product comparison
-production remain separate proof requirements. The
+original selected roots. Universal root-list production and mathematical
+sorting are proved; common-product comparison production remains required. The
 separate common-field conversion preserves the selected algebraic values by
 the proved `QAdjoin.common_get` theorem.
 

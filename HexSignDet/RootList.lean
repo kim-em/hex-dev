@@ -29,6 +29,20 @@ def Thom.insert {sign : E → Int} {context : Ctx}
       | .error err => .error err
     | _ => .error .system
 
+/-- Insertion succeeds whenever the inserted root strictly compares with
+every existing descriptor. This follows the executable insertion branches. -/
+theorem Thom.insert_success {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) (ds : List (Descriptor E Ctx sign context))
+    (hstrict : ∀ e ∈ ds, d.fullOrder e = some .lt ∨ d.fullOrder e = some .gt) :
+    ∃ out, insert d ds = .ok out := by
+  induction ds with
+  | nil => exact ⟨[d], rfl⟩
+  | cons e es ih =>
+    rcases hstrict e (by simp) with hlt | hgt
+    · exact ⟨d :: e :: es, by simp [insert, hlt]⟩
+    · obtain ⟨rest, hr⟩ := ih (fun e he => hstrict e (List.mem_cons_of_mem _ he))
+      exact ⟨e :: rest, by simp [insert, hgt, hr]⟩
+
 /-- Successful ordering preserves every descriptor and introduces none. -/
 theorem Thom.insert_perm {sign : E → Int} {context : Ctx}
     (d : Descriptor E Ctx sign context) {ds out : List (Descriptor E Ctx sign context)}
@@ -53,7 +67,7 @@ theorem Thom.insert_perm {sign : E → Int} {context : Ctx}
           exact (List.Perm.cons e (ih hi)).trans (List.Perm.swap _ _ _)
 
 /-- Finite insertion preserves strict sortedness by the proved comparator
-laws. Correspondence with the ordering of real roots remains separate. -/
+laws. The companion's `buildRoots_ordered` identifies the mathematical order. -/
 theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
     (d : Descriptor E Ctx sign context) {ds out : List (Descriptor E Ctx sign context)}
     (hs : ds.Pairwise (fun a b => a.fullOrder b = some .lt))
@@ -140,6 +154,30 @@ def Descriptor.rootsFromTable {sign : E → Int} {context : Ctx}
         (fun row hr => hrows row (List.mem_cons_of_mem _ hr))
       Thom.insert (ofFullRow raw t hp hctx hc row (hrows row (by simp)) hone) rest
     else .error .system
+
+/-- Empty shared-table extraction returns the empty descriptor list. -/
+theorem Descriptor.rootsFromTable_nil {sign : E → Int} {context : Ctx}
+    (raw : RawDescriptor E Ctx) (t : Replay E Ctx)
+    (hp : 0 < raw.head.natDegree) (hctx : raw.context = context)
+    (hc : t.check sign context raw.head raw.lower raw.upper (raw.full []).queries = true)
+    (hrows : ∀ row ∈ ([] : List (List Int × Nat)), row ∈ (t.table hc).rows.toList) :
+    rootsFromTable raw t hp hctx hc [] hrows = .ok [] := by
+  simp only [rootsFromTable]
+
+/-- A count-one row follows the actual recursive extraction and insertion. -/
+theorem Descriptor.rootsFromTable_cons {sign : E → Int} {context : Ctx}
+    (raw : RawDescriptor E Ctx) (t : Replay E Ctx)
+    (hp : 0 < raw.head.natDegree) (hctx : raw.context = context)
+    (hc : t.check sign context raw.head raw.lower raw.upper (raw.full []).queries = true)
+    (row : List Int × Nat) (rows : List (List Int × Nat))
+    (hrows : ∀ r ∈ row :: rows, r ∈ (t.table hc).rows.toList) (hone : row.2 = 1) :
+    rootsFromTable raw t hp hctx hc (row :: rows) hrows =
+      (rootsFromTable raw t hp hctx hc rows
+        (fun r hr => hrows r (List.mem_cons_of_mem _ hr))).bind
+        (fun rest => Thom.insert
+          (ofFullRow raw t hp hctx hc row (hrows row (by simp)) hone) rest) := by
+  simp only [rootsFromTable, hone, ↓reduceDIte]
+  rfl
 
 /-- Convert a full table to count-one descriptors in Thom order. This helper
 checks each raw descriptor against the same complete replay, so an invented
@@ -234,7 +272,7 @@ theorem Descriptor.rootsFrom_raw (sign : E → Int) (context : Ctx)
           · exact ih hr e he
 
 /-- Successful enumeration is strictly sorted by the actual finite comparator.
-Correspondence with real-root order is a separate companion gate. -/
+The companion identifies this order with the mathematical root order. -/
 theorem Descriptor.rootsFrom_sorted (sign : E → Int) (context : Ctx)
     (raw : RawDescriptor E Ctx) (t : Replay E Ctx) {rows : List (List Int × Nat)}
     {out : List (Descriptor E Ctx sign context)}
@@ -284,9 +322,10 @@ theorem Descriptor.rootsFromTable_sorted {sign : E → Int} {context : Ctx}
 variable [Neg E] [Inv E]
 
 /-- Enumerate all full encodings and order them by Thom's rule. Only invalid
-root domains return `none`; unproved producer/Thom invariants stay separate
-internal diagnostics. Constants admit no well-formed full encoding; their
-branch retains the literal per-descriptor checking path. -/
+root domains return `none`; arbitrary coefficient operations retain internal
+diagnostics. The companion proves actual success under lawful interpretations.
+Constants admit no well-formed full encoding; their branch retains the literal
+per-descriptor checking path. -/
 def Descriptor.buildRoots (sign : E → Int) (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E) : Except BuildError (Option (List (Descriptor E Ctx sign context))) :=
   match hd : Sturm.prepare sign p a b with
@@ -324,6 +363,29 @@ theorem Descriptor.buildRoots_none {sign : E → Int} {context : Ctx}
     split at h
     · cases h
     · split at h <;> cases h
+
+/-- A successful extraction from the actual prepared full table is returned
+by the public producer. This exposes its assembly without another algorithm. -/
+theorem Descriptor.buildRoots_ofTable {sign : E → Int} {context : Ctx}
+    (p : DensePoly E) (a b : Endpoint E) (domain : Sturm.PreparedDomain E)
+    (hd : Sturm.prepare sign p a b = some domain)
+    (t : {t : Replay E Ctx // t.check domain.sign context domain.head
+      domain.lower domain.upper
+        ((⟨context, p, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries = true})
+    (ht : buildPrepared context domain
+      ((⟨context, p, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries = .ok t)
+    (hp : 0 < p.natDegree) (out : List (Descriptor E Ctx sign context))
+    (hr : rootsFrom sign context ⟨context, p, a, b, [], []⟩ t.val
+      t.val.node.system.tableRows.toList = .ok out) :
+    buildRoots sign context p a b = .ok (some out) := by
+  unfold buildRoots
+  split
+  · rename_i hn
+    simp only [hd, reduceCtorEq] at hn
+  · rename_i other hother
+    have he : other = domain := Option.some.inj (hother.symm.trans hd)
+    subst other
+    simp only [ht, hp, ↓reduceDIte, rootsFromTable_eq, Replay.table_rows, hr]
 
 /-- An actual empty full table makes enumeration succeed with no descriptors,
 in both degree branches. No ordering or count-one guard is needed. -/
@@ -430,7 +492,8 @@ theorem Descriptor.buildRoots_perm {sign : E → Int} {context : Ctx} {p : Dense
   exact ⟨domain, hd, t, ht, rootsFrom_perm sign context _ _ hs⟩
 
 /-- The public entry point is strictly sorted by its actual finite comparator,
-without caller-supplied order laws. Real-root order needs Thom semantics. -/
+without caller-supplied order laws. The companion's `buildRoots_ordered`
+identifies this order with the mathematical root order. -/
 theorem Descriptor.buildRoots_sorted {sign : E → Int} {context : Ctx}
     {p : DensePoly E} {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
     (h : buildRoots sign context p a b = .ok (some out)) :

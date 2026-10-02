@@ -611,10 +611,11 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
     `HexSignDetMathlib.CompletionProducer, `HexSignDetMathlib.Convert,
+    `HexSignDetMathlib.DagSelectedSigns,
     `HexSignDetMathlib.QueryHandle, `HexSignDetMathlib.TableProducer,
     `HexSignDetMathlib.ReencodingProducer, `HexSignDetMathlib.RootList,
     `HexSignDetMathlib.ReencodingRefinement, `HexSignDetMathlib.Thom,
-    `HexSignDetMathlib.ThomReencoding,
+    `HexSignDetMathlib.ThomReencoding, `HexSignDetMathlib.ThomRoots,
     `HexRealClosureMathlib.Specialize, `HexRealClosureMathlib.SpecializeTests,
     `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
     `HexRealClosureMathlib.TransportArithmetic, `HexRealClosureMathlib.TransportQuery, `HexRealClosureMathlib.TransportTests,
@@ -1164,7 +1165,8 @@ lean_lib HexConformance where
       `HexSignDetMathlib.QueryHandleConformance,
       `HexSignDetMathlib.TableConformance, `HexSignDetMathlib.ReencodingConformance,
       `HexSignDetMathlib.RootListConformance, `HexSignDetMathlib.RefinementConformance,
-      `HexSignDetMathlib.ThomConformance,
+      `HexSignDetMathlib.ThomConformance, `HexSignDetMathlib.ThomRootsConformance,
+      `HexSignDetMathlib.GraphSignsConformance,
       `HexSignDetMathlib.ConvertConformance].map Glob.one
 
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests].map Glob.one
@@ -1307,6 +1309,7 @@ lean_lib HexReleaseTests where
     `HexRealRootsMathlib.RealRootCountTests,
     `HexRealRootsMathlib.TarskiTests,
     `HexRootsMathlib.Examples,
+    `HexPrimality.Examples.Curve25519,
     `HexMvPoly.KernelTests,
     `HexMvPoly.KernelResidueTests,
     `HexMvPolyMathlib.KernelResidueTests,

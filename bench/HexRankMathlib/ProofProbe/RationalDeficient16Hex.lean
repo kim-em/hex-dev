@@ -24,4 +24,9 @@ theorem result : Matrix.rank (R := ℚ) !![(21 : ℚ) / 2, (15 : ℚ) / 2, (36 :
   (3 : ℚ) / 16, (3 : ℚ) / 16, (-22 : ℚ) / 16, (-15 : ℚ) / 16, (8 : ℚ) / 16, (-3 : ℚ) / 16, (-8 : ℚ) / 16, (0 : ℚ) / 16, (1 : ℚ) / 16, (-7 : ℚ) / 16, (-9 : ℚ) / 16, (2 : ℚ) / 16, (6 : ℚ) / 16, (3 : ℚ) / 16, (-3 : ℚ) / 16, (-1 : ℚ) / 16;
   (8 : ℚ) / 17, (25 : ℚ) / 17, (-3 : ℚ) / 17, (9 : ℚ) / 17, (-29 : ℚ) / 17, (11 : ℚ) / 17, (22 : ℚ) / 17, (-1 : ℚ) / 17, (0 : ℚ) / 17, (9 : ℚ) / 17, (8 : ℚ) / 17, (6 : ℚ) / 17, (6 : ℚ) / 17, (7 : ℚ) / 17, (-2 : ℚ) / 17, (-1 : ℚ) / 17] = 14 := by rank
 
+/-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms result
+
+-- Preserve the axiom inventory consumed by the optional diagnostic sweeps.
 #print axioms result

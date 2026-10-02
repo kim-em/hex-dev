@@ -14,6 +14,14 @@ from the requested head and indices and requiring count one. The theorem
 `Dag.decodeDescriptor_raw` proves exact preservation of every requested raw
 descriptor field. Wrong derivative slots, signs or contexts are rejected.
 
+`Dag.decodeSigns` consumes these bytes for a validated selected-root descriptor,
+an ordered query list and a claimed sign vector. It uses `Dag.selectedSigns?`
+to check the table's unique extending row after graph replay. The theorem
+`Dag.decodeSigns_evidence` preserves the claimed signs and identifies the actual
+decoded graph and its selected-sign evidence. Correctness therefore applies to
+arbitrary accepted bytes; it does not require a printer/parser roundtrip.
+No selected-sign producer runs during decoding.
+
 `ValueCodec` supplies encoders and decoders for coefficient values and the
 full immutable context. The provided codecs cover canonical `Rat` and `Nat`.
 A composite context must encode all its components, including refinement and
@@ -109,10 +117,11 @@ arbitrary-field root/sign semantics. JSON byte-parser roundtrip proofs,
 nested evidence transport, serialization cost measurements and the other
 Phase-4 obligations remain open.
 
-`Dag.decodeBytes_sign_congr` and `Dag.decodeDescriptor_sign_congr` preserve
+`Dag.decodeBytes_sign_congr`, `Dag.decodeDescriptor_sign_congr` and
+`Dag.decodeSigns_sign_congr` preserve
 exact errors and successful literal data when two sign functions agree on all
 operands of the actual decoded graph. This conditional agreement theorem needs
 no byte-roundtrip premise and does not discharge that separate obligation.
-Callers holding a decoded graph can use its `replay?` or `descriptor?` interface
-with `Dag.replay_sign_congr` or `Dag.descriptor_sign_congr`, reusing that graph
+Callers holding a decoded graph can use its `replay?`, `descriptor?` or `selectedSigns?` interface
+with the corresponding finite sign-congruence theorem, reusing that graph
 without parsing the same input again.

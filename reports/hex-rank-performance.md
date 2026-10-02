@@ -3,8 +3,31 @@
 HexRank remains at `done_through: 3`. Integer and polynomial-ring evidence is
 complete below; the native quotient checker still has an unresolved scaling
 result. [#10352](https://github.com/kim-em/hex-dev/issues/10352) owns that
-remaining obligation. Tactic/kernel proof evidence remains in the separate
-[carrier report](hex-rank-carriers-performance.md).
+remaining obligation. The companion's tactic/kernel proof track uses its
+CI-built `bench/HexRankMathlib/ProofProbe` examples under current Phase-4
+policy; the separate [carrier report](hex-rank-carriers-performance.md)
+retains diagnostic timings.
+
+The [current-source audit](bench-results/hex-rank-10352/current-audit.json)
+compares merged evidence revision `01ad7e599` with main `a29afca7a`.
+The measured rank algorithms and fixtures are unchanged; the new certificate
+equality instance is outside their timed paths. Upstream determinant-budget
+and kernel-witness additions are also outside those paths. Existing scientific
+results retain their Lean 4.34.0 provenance; they are not claimed as new
+measurements on the current 4.35.0-rc3 compiler. The retained comparisons,
+frozen polynomial budgets, tables and figures regenerate identically from
+the committed records; these checks do not compare runtime behavior to current
+source.
+
+HexRankMathlib's ten existing Hex tactic result probes guard their ordinary
+kernel axiom sets. Integer full/deficient/low-rank, rational and quadratic
+full/deficient, and number-field examples build through the existing
+`HexRankMathlibProofProbe` CI target. `lake build HexRankMathlib HexRankTests
+HexRankMathlibProofProbe HexRank.Conformance` passes on the audited main
+compiler. `rankCertWith_check`, `checkRank_sound`, and `rankWith_eq` remain
+present and covered by the bridge build. HexRankMathlib remains at Phase 3 because
+its HexRank dependency remains at Phase 3. Its other direct prerequisites are
+at Phase 7; all HexRank prerequisites meet Phase 4.
 
 ## Bench targets
 
@@ -38,7 +61,7 @@ job and preserves its existing bench list/verify route.
 | `rankWitness`, `rankWitnessWith` | `Witness.*`, including the modular inverse and self-check. The fixed-modulus entry point is the constituent attempt inside the retrying producer. |
 | `PolyWitness.produce` | `Quotient.produce{Full,Deficient}`; its actual private rational preparation and modular completion are separated as `prepare*` and `finish*`. No substitute rank algorithm is used. |
 | Native `checkRankPoly` | `Quotient.check*`, with witness construction excluded from timing. |
-| Kernel replay through `checkRankList`, `checkRankListPacked`, `checkRankPoly`; tactic elaboration and proof construction | Proof track in HexRankMathlib, owned by the existing fresh-module probes and carrier report. Native checker timing does not replace kernel-proof evidence. |
+| Kernel replay through `checkRankList`, `checkRankListPacked`, `checkRankPoly`; tactic elaboration and proof construction | Proof track in HexRankMathlib, covered by the existing CI-built proof-probe examples; carrier-report timings are diagnostic. Native checker timing does not replace kernel-proof evidence. |
 | Soundness, completeness and correspondence | Mathematical API; `rankCertWith_check`, `checkRank_sound`, and `rankWith_eq` remain present and build. |
 
 `Produce.lean` imports `ReduceImpl` before public producers compile. Generated
@@ -184,6 +207,19 @@ seconds on independently selected CPUs, spanning multiple NUMA nodes. Their
 host activity is retained context; it neither invalidates a completed sample
 nor licenses a replacement checker pass. The standalone declared gate remains
 inconclusive.
+
+The isolated tail-accumulator experiment's [source patch and availability
+record](bench-results/hex-rank-10352/tail-experiment/) preserve the exact three-file diff of unreferenced local commit
+`114730329e94c58b7f005c5b6c5eb2dc5d327e41`; availability of that git object is
+not guaranteed. Its temporary raw outputs are
+unavailable. The [coordinator's recorded observation](https://github.com/kim-em/hex-dev/issues/10352#issuecomment-5752610168)
+reports twelve adjacent AB/BA arms with median paired after/before about
+1.009, and seven ladders with `checkFull` and `produceFull` inconclusive.
+Those figures cannot now be independently reanalyzed and are not a new
+performance result. The experiment establishes no speedup and is not part
+of the library. The uncommitted borrowed-row follow-up was reported only
+as build-checked; its lost source and absent measurements establish no
+improvement. The original checker's unchanged-rerun allowance is exhausted.
 
 Exact scientific commands are recorded in every run's `metadata.json` and
 `commands.jsonl`; these commands reproduce the schedules with a built executable:

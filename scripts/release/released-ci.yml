@@ -172,7 +172,7 @@ workflows:
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library
-            run: lake build HexPrimality
+            run: lake build HexPrimality HexPrimalityTests
           - name: Assert Mathlib-free
             run: |
               if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
@@ -1636,7 +1636,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexMatrixMathlib 2>&1 | tee build.log
+              lake build HexMatrixMathlib HexMatrixMathlibTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -1682,7 +1682,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexRowReduceMathlib 2>&1 | tee build.log
+              lake build HexRowReduceMathlib HexRowReduceMathlibTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -1774,7 +1774,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexBareissMathlib 2>&1 | tee build.log
+              lake build HexBareissMathlib HexBareissMathlibTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs

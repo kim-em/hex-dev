@@ -122,6 +122,7 @@ repos:
   - repo: leanprover/hex-primality
     component: Certified primality
     lib: HexPrimality
+    test_modules: [HexPrimality.Examples.Curve25519]
     umbrella: true
     spec: hex-primality
     pins: [hex-basic, hex-arith]

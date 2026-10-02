@@ -34,6 +34,7 @@ public import HexSignDet.Compare
 
 public import HexSignDet.Dag
 public import HexSignDet.DagSigns
+public import HexSignDet.DagSelectedSigns
 public import HexSignDet.DagEncode
 public import HexSignDet.DagReplay
 public import HexSignDet.DagExpand
