@@ -4,6 +4,11 @@ The computational library and its Mathlib companion share the
 [ordered real algebraic number specification](../../SPEC/Libraries/hex-real-algebraic.md).
 All arithmetic, comparison, root finding, rounding, approximation, rational
 recognition, and checked construction belong to this Mathlib-free library.
+The [readiness audit](../../reports/real-closure-prerequisites.md) records the
+implemented surface and its companion proofs. `libraries.yml` records phase
+attestation; the [performance report](../../reports/hex-real-algebraic-performance.md)
+lists the remaining Phase-4 requirements. The forward comparison-strategy
+extension is excluded from the implemented surface, as the shared SPEC states.
 
 ## Shared comparison and complex norm operations
 

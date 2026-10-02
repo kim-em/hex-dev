@@ -13,6 +13,10 @@ Conformance fixtures and any performance measurements belong to
 `HexRealAlgebraic`. This companion has no separate oracle, benchmark, checker,
 reifier, or proof-generation interface. Its regression modules check theorems,
 axiom dependencies, and dictionary coherence during compilation.
+`lake build HexRealAlgebraicMathlibTests` builds those ordinary-kernel guards
+from `HexRealAlgebraicMathlib/Tests.lean`. Phase eligibility follows the core's
+direct dependencies and attestation in `libraries.yml`; it does not require
+a separate timing report for this theorem-only companion.
 
 ## Array and comparison correspondence
 
