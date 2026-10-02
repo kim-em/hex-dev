@@ -22,13 +22,14 @@ trailing commas and trailing tokens are rejected. Negative zero is accepted
 and prints as zero. Recursion fuel comes from finite input character and token
 counts; printing and parsing are ordinary executable operations.
 
-The independent Python oracle sends 318 byte strings to the compiled parser.
+The independent Python oracle sends 320 byte strings to the compiled parser.
 Its corpus includes 256 deterministic generated values, large integers,
 Unicode/control strings, duplicate object fields, nesting, malformed syntax,
 unpaired surrogates and invalid UTF-8. Python's standard parser determines the
-expected values, with explicit rejection of noninteger numbers and nonscalar
-Unicode strings. Seven adversarial tests check the oracle's rejection of
-incorrect answers and invalid expectations. Ordinary-kernel checking of the
+expected typed values while retaining object fields and duplicates, with
+explicit rejection of noninteger numbers and nonscalar
+Unicode strings. Nine oracle tests include rejection of incorrect answers, Boolean/integer
+confusion, changed field order, collapsed duplicates and invalid expectations. Ordinary-kernel checking of the
 universal theorem is separate from these executable conformance checks.
 
 Reproduce with:
@@ -47,3 +48,13 @@ a codec can distinguish two representations of the same JSON number even
 though a JSON printer normalizes them. The existing `FastCheck.NumberForm`
 counterexample remains applicable. No certificate-byte completeness claim
 follows merely from the backend theorem.
+
+Integration must also address large-input robustness. String-prefix parsing
+currently scans the remaining character list for fuel at each string token,
+which can give quadratic work on arrays of many short strings. Non-tail
+recursion in strings, lexing and array tails also requires a native stack
+check on large inputs. The existing certificate byte/depth/digit pre-scan must
+remain in front of any replacement parser; the backend theorem alone does
+not establish resource bounds or suitability at those maximum limits.
+The low-level decimal word readers accept leading zeros; JSON token parsing
+separately rejects them.

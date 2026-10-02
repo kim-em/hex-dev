@@ -105,3 +105,16 @@ lake build hexsigndet_emit_common_fields
 python3 scripts/oracle/sign_det_common_fields.py --check
 python3 -m unittest scripts.oracle.test_sign_det_common_fields
 ```
+
+`json-bytes.jsonl` contains integer-only JSON byte inputs for the total
+`Codec.Json` backend. The compiled `hexsigndet_json_bytes` driver parses the
+enclosed bytes; Python's standard JSON parser independently checks acceptance
+and the printed values, preserving type tags, object field order and duplicate
+fields. Malformed UTF-8, lone surrogates, noninteger numbers and invalid syntax
+are negative cases. These are backend checks, not graph-codec byte laws.
+
+```sh
+lake build hexsigndet_json_bytes
+python3 scripts/oracle/sign_det_json_bytes.py
+python3 -m unittest scripts.oracle.test_sign_det_json_bytes
+```

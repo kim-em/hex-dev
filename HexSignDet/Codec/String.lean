@@ -12,7 +12,7 @@ import all Init.Data.Repr
 
 public section
 
-namespace Hex.SignDet.Codec.String
+namespace Hex.SignDet.Codec.Str
 
 /-- Decode one hexadecimal digit, including either JSON letter case. -/
 @[expose] def hex (c : Char) : Option Nat :=
@@ -154,21 +154,21 @@ private theorem writeBody_length (cs : List Char) : cs.length ≤ (writeBody cs)
     omega
 
 /-- Write a complete quoted JSON string. -/
-@[expose] def write (text : _root_.String) : _root_.String :=
-  _root_.String.ofList ('"' :: writeBody text.toList ++ ['"'])
+@[expose] def write (text : String) : String :=
+  String.ofList ('"' :: writeBody text.toList ++ ['"'])
 
 /-- Read a quoted prefix, retaining all following characters. The parser fuel
 comes from the actual input length, so it cannot exhaust on a printed string. -/
-@[expose] def readPrefix (input : List Char) : Option (_root_.String × List Char) :=
+@[expose] def readPrefix (input : List Char) : Option (String × List Char) :=
   match input with
   | '"' :: rest => (readBody input.length rest).map fun (cs, suffix) =>
-      (_root_.String.ofList cs, suffix)
+      (String.ofList cs, suffix)
   | _ => none
 
-theorem readPrefix_write (text : _root_.String) (suffix : List Char) :
+theorem readPrefix_write (text : String) (suffix : List Char) :
     readPrefix ((write text).toList ++ suffix) = some (text, suffix) := by
   have hn := writeBody_length text.toList
-  simp only [write, _root_.String.toList_ofList, List.cons_append, List.append_assoc,
+  simp only [write, String.toList_ofList, List.cons_append, List.append_assoc,
     List.nil_append, readPrefix]
   have hf : text.toList.length < ('"' :: (writeBody text.toList ++ '"' :: suffix)).length := by
     simp only [List.length_cons, List.length_append]
@@ -176,25 +176,25 @@ theorem readPrefix_write (text : _root_.String) (suffix : List Char) :
   rw [readBody_write text.toList suffix _ hf]
   simp
 
-@[expose] def writeBytes (text : _root_.String) : ByteArray := (write text).toUTF8
+@[expose] def writeBytes (text : String) : ByteArray := (write text).toUTF8
 
 /-- Validate UTF-8 and require that the quoted string consumes all bytes. -/
-@[expose] def readBytes (input : ByteArray) : Option _root_.String := do
-  let text ← _root_.String.fromUTF8? input
+@[expose] def readBytes (input : ByteArray) : Option String := do
+  let text ← String.fromUTF8? input
   let (value, suffix) ← readPrefix text.toList
   if suffix.isEmpty then return value else none
 
 /-- The actual byte printer and total parser agree for every Unicode string,
 including control characters, quotes and backslashes. -/
-theorem readBytes_write (text : _root_.String) : readBytes (writeBytes text) = some text := by
+theorem readBytes_write (text : String) : readBytes (writeBytes text) = some text := by
   have hp := readPrefix_write text []
   simp only [List.append_nil] at hp
   unfold readBytes writeBytes
   rw [Decimal.fromUTF8_toUTF8]
   simp [hp, bind, Option.bind]
 
-/-- info: 'Hex.SignDet.Codec.String.readBytes_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Codec.Str.readBytes_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms readBytes_write
 
-end Hex.SignDet.Codec.String
+end Hex.SignDet.Codec.Str

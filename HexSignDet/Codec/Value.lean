@@ -17,7 +17,7 @@ inductive Value where
   | null
   | bool (value : Bool)
   | number (value : Int)
-  | string (value : _root_.String)
+  | string (value : String)
   | array (values : Values)
   | object (fields : Fields)
   deriving DecidableEq, Repr
@@ -27,7 +27,7 @@ inductive Values where
   deriving DecidableEq, Repr
 inductive Fields where
   | nil
-  | cons (key : _root_.String) (value : Value) (rest : Fields)
+  | cons (key : String) (value : Value) (rest : Fields)
   deriving DecidableEq, Repr
 end
 

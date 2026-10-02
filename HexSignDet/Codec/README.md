@@ -48,7 +48,10 @@ graph, provided the value codecs are lawful, all nodes satisfy the structural
 bounds, all node/query subjects match the caller, all references point earlier,
 and the root index is in range. The proof follows the actual decoder's left
 fold and includes unreachable entries. Arbitrary user codecs need not be lawful,
-and no JSON byte-parser roundtrip theorem is claimed.
+and no graph-level JSON byte-parser roundtrip theorem is claimed.
+The standalone total backend in `Codec.Value` proves `Codec.Json.readBytes_write`
+for every finite integer-only JSON value. It is not yet connected to these
+coefficient codecs or graph operations.
 
 The structured codec law does not imply a byte roundtrip, even when the printer
 emits only valid integer tokens. For example, the internal JSON number with
@@ -113,7 +116,7 @@ the separate ordinary-kernel graph probes and axiom audits remain in place.
 
 This format encodes same-level BKR graphs and coefficient values. It does not
 yet encode lower-level coefficient-sign proof dependencies or establish
-arbitrary-field root/sign semantics. JSON byte-parser roundtrip proofs,
+arbitrary-field root/sign semantics. Graph-level JSON byte-parser roundtrip proofs,
 nested evidence transport, serialization cost measurements and the other
 Phase-4 obligations remain open.
 

@@ -16,7 +16,7 @@ inductive Token where
   | leftArray | rightArray | leftObject | rightObject | comma | colon | null
   | bool (value : Bool)
   | number (value : Int)
-  | string (value : _root_.String)
+  | string (value : String)
   deriving DecidableEq, Repr
 
 namespace Token
@@ -32,7 +32,7 @@ namespace Token
   | .bool true => "true".toList
   | .bool false => "false".toList
   | .number n => n.repr.toList
-  | .string s => (String.write s).toList
+  | .string s => (Str.write s).toList
 
 /-- Leading zeros are rejected by comparing the complete digit word with the
 canonical decimal spelling of its parsed value. -/
@@ -55,7 +55,7 @@ canonical decimal spelling of its parsed value. -/
   | 't' :: 'r' :: 'u' :: 'e' :: rest => some (.bool true, rest)
   | 'f' :: 'a' :: 'l' :: 's' :: 'e' :: rest => some (.bool false, rest)
   | '-' :: rest => (readNumber rest).map fun (n, suffix) => (.number (-(n : Int)), suffix)
-  | '"' :: _ => (String.readPrefix input).map fun (s, suffix) => (.string s, suffix)
+  | '"' :: _ => (Str.readPrefix input).map fun (s, suffix) => (.string s, suffix)
   | _ => none
 
 /-- A space after each emitted token prevents digit/keyword concatenation and
@@ -111,10 +111,10 @@ theorem read_emit (token : Token) (suffix : List Char) :
       rw [readNumber_repr]
       rfl
   | string s =>
-    have hp := String.readPrefix_write s (' ' :: suffix)
-    simp only [String.write, _root_.String.toList_ofList, List.cons_append,
+    have hp := Str.readPrefix_write s (' ' :: suffix)
+    simp only [Str.write, String.toList_ofList, List.cons_append,
       List.append_assoc, List.nil_append] at hp
-    simp [emit, write, String.write, read]
+    simp [emit, write, Str.write, read]
     exact hp
 
 private theorem digit_not_space (c : Char) (h : c.isDigit = true) :
@@ -147,8 +147,8 @@ theorem dropSpace_emit (token : Token) (suffix : List Char) :
       have hr : (Int.ofNat n).repr = n.repr := by simp [Int.repr_eq_ite]
       simp only [emit, write, hr, List.append_assoc]
       exact repr_dropSpace n _
-    | negSucc n => simp [emit, write, Int.repr_eq_ite, _root_.String.toList_append]
-  | string s => simp [emit, write, String.write]
+    | negSucc n => simp [emit, write, Int.repr_eq_ite, String.toList_append]
+  | string s => simp [emit, write, Str.write]
 
 /-- A finite lexer for untrusted certificate text. The caller chooses fuel;
 byte decoding uses the actual number of input characters plus one. -/
@@ -204,11 +204,11 @@ private theorem writeTokens_length (tokens : List Token) :
 
 /-- Validate UTF-8 and lex integer-only JSON certificate bytes. -/
 @[expose] def readBytes (input : ByteArray) : Option (List Token) := do
-  let text ← _root_.String.fromUTF8? input
+  let text ← String.fromUTF8? input
   lex (text.toList.length + 1) text.toList
 
 @[expose] def writeBytes (tokens : List Token) : ByteArray :=
-  (_root_.String.ofList (writeTokens tokens)).toUTF8
+  (String.ofList (writeTokens tokens)).toUTF8
 
 /-- The actual byte lexer recovers every emitted token, including signed
 integer literals and arbitrary Unicode strings. -/
@@ -216,7 +216,7 @@ theorem readBytes_write (tokens : List Token) :
     readBytes (writeBytes tokens) = some tokens := by
   unfold readBytes writeBytes
   rw [Decimal.fromUTF8_toUTF8]
-  simp only [bind, Option.bind, _root_.String.toList_ofList]
+  simp only [bind, Option.bind, String.toList_ofList]
   exact lex_writeTokens tokens _ (by have hn := writeTokens_length tokens; omega)
 
 /-- info: 'Hex.SignDet.Codec.Token.readBytes_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/

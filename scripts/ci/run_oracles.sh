@@ -189,9 +189,12 @@ run_tuple() {
 
   # The byte-parser oracle supplies untrusted inputs to the compiled driver.
   if [ "$oracle" = "scripts/oracle/sign_det_json_bytes.py" ]; then
-    python3 -m unittest scripts.oracle.test_sign_det_json_bytes || return 1
-    python3 "$oracle" --check "$fixture" --exe ".lake/build/bin/$emit"
-    return $?
+    if ! python3 -m unittest scripts.oracle.test_sign_det_json_bytes ||
+        ! python3 "$oracle" --check "$fixture" --exe ".lake/build/bin/$emit"; then
+      echo "FAIL: $lib :: integer-only JSON byte conformance"
+      return 1
+    fi
+    return 0
   fi
 
   # This compiled-input oracle runs the committed corpus through the measured

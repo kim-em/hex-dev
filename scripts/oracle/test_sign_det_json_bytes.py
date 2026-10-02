@@ -26,9 +26,22 @@ class JsonByteOracleTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "invalid positive"):
             check_answer({"bytes": list(b"\xff"), "accept": True}, ["error"])
 
-    def test_duplicate_fields_semantics(self):
-        check_answer({"bytes": list(b'{"x":1,"x":2}'), "accept": True},
-                     ["ok", '{"x":1,"x":2}'])
+    def test_duplicate_fields_preserved(self):
+        record = {"bytes": list(b'{"x":1,"x":2}'), "accept": True}
+        check_answer(record, ["ok", '{"x":1,"x":2}'])
+        for wrong in ['{"x":2}', '{"x":2,"x":1}']:
+            with self.assertRaisesRegex(ValueError, "changed"):
+                check_answer(record, ["ok", wrong])
+
+    def test_boolean_integer_confusion_rejects(self):
+        for original, wrong in [(b"true", "1"), (b"false", "0"), (b"1", "true")]:
+            with self.assertRaisesRegex(ValueError, "changed"):
+                check_answer({"bytes": list(original), "accept": True}, ["ok", wrong])
+
+    def test_field_order_preserved(self):
+        with self.assertRaisesRegex(ValueError, "changed"):
+            check_answer({"bytes": list(b'{"a":1,"b":2}'), "accept": True},
+                         ["ok", '{"b":2,"a":1}'])
 
     def test_corpus_expectations(self):
         for record in corpus():
