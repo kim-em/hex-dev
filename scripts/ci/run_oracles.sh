@@ -55,7 +55,9 @@ ORACLES=(
   "HexMinPoly|hexminpoly_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexMinPoly/minpoly.jsonl"
   "HexGramSchmidt|hexgramschmidt_emit_fixtures|scripts/oracle/gs_flint.py|conformance-fixtures/HexGramSchmidt/gram_schmidt.jsonl"
   "HexRealRoots|hexrealroots_emit_fixtures|scripts/oracle/realroots_flint.py|conformance-fixtures/HexRealRoots/realroots.jsonl"
+  "HexSignDet|hexsigndet_json_bytes|scripts/oracle/sign_det_json_bytes.py|conformance-fixtures/HexSignDet/json-bytes.jsonl"
   "HexSignDet|hexsigndet_emit_fixtures|scripts/oracle/sign_det_flint.py|conformance-fixtures/HexSignDet/sign_det.jsonl"
+  "HexSignDet|hexsigndet_emit_common_fields|scripts/oracle/sign_det_common_fields.py|conformance-fixtures/HexSignDet/common-fields.jsonl"
   "HexRCF|hexrcf_emit_fixtures|scripts/oracle/rcf_flint.py|conformance-fixtures/HexRCF/rcf.jsonl"
   "HexRoots|hexroots_emit_fixtures|scripts/oracle/roots_flint.py|conformance-fixtures/HexRoots/roots.jsonl"
   "HexRealAlgebraic|hexrealalgebraic_emit_fixtures|scripts/oracle/real_algebraic_flint.py|conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl"
@@ -185,6 +187,17 @@ run_tuple() {
   echo ">>> $lib :: emit=$emit oracle=$oracle"
   echo "=========================================================="
 
+  # The byte-parser oracle supplies untrusted inputs to the compiled driver.
+  if [ "$oracle" = "scripts/oracle/sign_det_json_bytes.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_sign_det_json_bytes ||
+        ! python3 "$oracle" --check "$fixture" --exe ".lake/build/bin/$emit"; then
+      echo "FAIL: $lib :: integer-only JSON byte conformance"
+      return 1
+    fi
+    echo "OK: $lib :: integer-only JSON byte conformance"
+    return 0
+  fi
+
   # This compiled-input oracle runs the committed corpus through the measured
   # native executable; its input fixture is checked by independent division.
   if [ "$oracle" = "scripts/oracle/primality_squfof.py" ]; then
@@ -229,6 +242,13 @@ run_tuple() {
   if [ "$oracle" = "scripts/oracle/sign_det_flint.py" ]; then
     if ! python3 -m unittest scripts.oracle.test_sign_det_flint; then
       echo "FAIL: $lib :: oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/sign_det_common_fields.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_sign_det_common_fields; then
+      echo "FAIL: $lib :: common-field oracle rejection checks failed"
       return 1
     fi
   fi

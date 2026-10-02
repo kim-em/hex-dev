@@ -483,11 +483,10 @@ Root cuts
 still prepare both quotient domains and recompute every pending domain and
 count, including count-zero cells. No timing improvement is claimed.
 
-The frontier feeds descriptor completion and factor assembly below. The
-complete ordered `RootSet` still needs general descriptor comparison laws and
-producer totality. Automatic dependency transport, compatible real-closed
-union semantics and simultaneous ordinary-real realization remain separate
-requirements of the full tower.
+The frontier feeds descriptor completion and the complete generic root producer
+below. Native root entries with extension contexts and coefficient embeddings,
+automatic dependency transport, native compatible real-closed union coverage
+and simultaneous ordinary-real realization remain requirements of the full tower.
 
 ### Bound selection and whole-line dispatch
 
@@ -563,9 +562,10 @@ disjoint retained cells and the shared enumeration's coverage theorem. The
 proofs apply to raw coefficients through a zero-reflecting interpretation in
 an ordered real closed field, and use only the standard three axioms.
 
-This intermediate output does not claim globally sorted root values or full
-producer success. It is for nonzero squarefree input; the factor assembly below
-restores Yun multiplicities and handles the zero-polynomial case.
+`complete?_success` proves actual producer success for every nonzero squarefree
+input, including singleton retained cells and whole-line enumeration. This
+intermediate output is not globally sorted; the complete root operation below
+orders entries, restores Yun multiplicities and handles the zero-polynomial case.
 Unresolved and whole-line enumeration currently prepare the retained domains
 again; the requested upstream prepared-root enumeration API remains a subsequent
 integration. `cell_enumeration_present` and `Whole.enumeration_present` prove
@@ -599,16 +599,14 @@ points, the shared selected-sign query for mixed pairs, and the checked
 common-product comparison for descriptor pairs. Comparison failures propagate;
 invalid sign codes and encountered equal roots are internal errors. Finite insertion
 sorting preserves the actual input roots and their mathematical values.
-The companion proves point comparisons and successful selected-root/point
-comparisons in the ambient ordered real closed field, using the upstream
-producer-success proof for unconditional mixed comparisons. Equality returned
-by any successful comparison is equivalent to equality of the root values.
-The sort relies on
-completion’s distinctness proof; it does not certify arbitrary input lists
-as distinct without the missing general comparison-order laws. General strict order for
-descriptor pairs still requires the upstream Thom theorem, so this intermediate
-sort does not establish the complete ordered `RootSet` contract. Factor assembly
-restores multiplicities separately.
+The companion's `Root.compare_correct` proves that every comparison succeeds
+and agrees with mathematical order in a common ordered real closed field,
+including descriptor pairs on different defining polynomials. It consumes the
+upstream selected-sign and common-polynomial comparison producer theorems.
+`Root.sort_success` proves successful strict sorting for lists of distinct
+mathematical values. `Root.sortBy` carries an arbitrary payload with each root;
+its success, permutation and strict-order proofs preserve that payload exactly.
+The complete root operation uses this sorter to retain multiplicities.
 `hexrealclosure_root_order_tests` also belongs to the default
 `HexRealClosureTests` build. It exercises distinct roots on one head and on
 different heads, exact mixed output, actual completion with both points and
@@ -656,8 +654,37 @@ coefficient type needs no field instance.
 output represents exactly the original polynomial's roots with their original
 positive multiplicities. `assemble_nodup` proves each mathematical value occurs
 once. `assemble_all` proves the separate all-roots result occurs exactly for
-semantic zero. Global ordering and producer totality remain separate
-obligations before a complete `RootSet`.
+semantic zero.
+
+`Roots.roots sign context p` is the ordinary complete root operation over the
+supplied coefficient carrier. It returns `all` for zero or a strictly increasing
+finite list of roots with their original positive multiplicities. It runs the
+actual assembly and globally sorts the retained entries. `Roots.roots?` exposes
+the internal diagnostic result. An invariant failure in the total wrapper
+prints a panic and falls back to `all`, so it cannot resemble a root-free
+answer for a nonzero polynomial. The companion's `assemble_success` and
+`roots_success` exclude these diagnostics under the coefficient interpretation
+laws, including successful completion of every retained cell and actual Yun
+factor. No producer output is assumed. `roots_all`, `roots_spec` and
+`roots_sorted` prove the total operation's zero case, exact coverage and labels,
+and strict mathematical order over arbitrary ordered real closed fields. These
+laws allow raw coefficient representations without a field instance or an
+injective interpretation, provided zero is reflected and operations and signs
+are preserved.
+
+The compiled isolation fixture exercises the complete checked producer on repeated
+factors and over a selected algebraic coefficient. Its independent exact Z3 RCF
+oracle checks coverage, multiplicities and strict order; mutation tests reject
+permuted outputs, and preserves explicit error rows for any internal failure.
+The native tests exercise the total wrapper's zero case and check the ordered labels
+`[3, 2, 3, 5]` for `-3 X² (X²-2)³ (X-3)⁵`.
+The native tower wrapper and trivial-base agreement are separate requirements
+of the full `RootSet` interface.
+`runRoots` times the actual total operation, including global ordering, on this
+repeated-factor input; `runAssembly` retains the intermediate timing anchor.
+The current global insertion sort uses at most quadratically many comparisons,
+with common-polynomial re-encoding for descriptor pairs. These fixed anchors
+make no scaling claim and do not complete the required Phase-4 evaluation.
 
 ### Arithmetic over general selected-root predecessors
 
@@ -746,7 +773,9 @@ field that preserves arithmetic, negation, inverse, division and sign, the
 level's selected-value interpretation supplies every coefficient premise. A
 successful finite assembly therefore covers exactly the ambient roots of the
 interpreted input with original multiplicities and no duplicate values; `all`
-is equivalent to semantic zero. Producer success and ordering remain separate obligations.
+is equivalent to semantic zero. The generic complete-root success and strict-order
+theorems also apply to this interpretation; native materialization of the roots
+and their extension embeddings is a separate interface requirement.
 
 `AlgebraicValue.lean` defines the image subfield `Value ctx`, with lawful field
 and order instances inherited from the ambient field. `Element.toValue`
@@ -1179,10 +1208,11 @@ General `Context.enlarge` still requires:
    `Ambient.mappedNativeHom` interprets `B(ε)` in the enlarged ambient field,
    preserving coefficients, `X` and signs. The semantic `mappedHom` also
    preserves order for an ordered coefficient-field embedding.
-3. Proving selected-root mapping through ordered field embeddings and
-   identifying the lifted old tower with the descriptor-based re-extension.
-   `Context.enlarge?_aligned` already identifies the executable re-extension
-   target with its supplied enlarged base model.
+3. Proving agreement of mapped towers with descriptor-based re-extension at
+   every root level. `Descriptor.root_map` and `Descriptor.root_comp` in
+   `HexSignDetMathlib.Embedding` supply selected-root correspondence through
+   ordered field embeddings. `Context.enlarge?_aligned` identifies the
+   executable re-extension target with its supplied enlarged base model.
 4. Applying the local algebraic bound to the computational `B(ε)` levels and
    proving their staged order agrees with the enlarged ambient interpretation.
 5. Gathering a dependency-closed collection of live contexts and assembling

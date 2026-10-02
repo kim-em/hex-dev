@@ -58,6 +58,14 @@ The rightmost factor acts first. This is the convention of the existing
 cosets, transporters and Mathlib correspondence. Oracle adapters must translate
 other action conventions explicitly.
 
+`Perm.comp` and `Perm.inv` are defined for kernel reduction, through
+`Hex.Vector.ofFn'` and a fold over `List.finRange`. `HexPermGroup.Perm.Fast`
+registers array implementations of them with `@[csimp]`, each proved equal to
+the definition it replaces, so compiled code makes one array pass per
+operation while the kernel and all proofs use the original definitions. It is
+imported by the first modules above `HexPermGroup.Perm`, so that the group
+operations and instances in `Cycles` and everything built on `Word` use it.
+
 Provide checked construction from raw image arrays, identity, composition,
 inverse, natural powers, point application, support, canonical disjoint cycle
 decomposition and permutation order. A raw array must have exactly `n`
@@ -418,13 +426,18 @@ their literals exceed the compiler's recursion limits at larger degrees.
 
 ### Producer
 
-`Kernel.certify (S : Array (Perm n)) : Kernel.Certificate` is computed from the
-complete chain of `Group.ofGenerators S`: it drops singleton levels, packs the
-data, computes inverse transversals, and records Schreier-tree parents and
-next-level indices. Prove `Kernel.check_certify`: `Kernel.check n
-(S.toList.map pack) (certify S) = true`. Its generators at each level are the
-chain's symmetric working arrays, and each retained next-level generator is a
-Schreier generator of the level, so items 2 and 6 hold by construction.
+`Kernel.certify (S : Array (Perm n)) : Except String Kernel.Certificate` is
+computed from the complete chain of `Group.ofGenerators S`: it drops singleton
+levels, packs the data, computes inverse transversals, and records
+Schreier-tree parents and next-level indices. Its generators at each level are
+the chain's symmetric working arrays, and each retained next-level generator is
+a Schreier generator of the level, so items 2 and 6 hold by construction. It
+reports an error, rather than a certificate, if a parent edge or a next-level
+index cannot be found. The producer is untrusted: soundness rests on
+`Kernel.check` alone. No theorem states that the producer always succeeds and
+is accepted, since its proof would have to follow the internal order of
+`Group.ofGenerators` and its normalization. Conformance tests instead that
+`Kernel.check` accepts `Kernel.certify S` on every input of its corpus.
 
 The soundness theorems are stated and proved in `HexPermGroupMathlib`: see
 [Kernel replay in Mathlib](#kernel-replay-in-mathlib).
