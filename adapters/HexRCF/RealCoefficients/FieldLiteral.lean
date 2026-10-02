@@ -58,7 +58,8 @@ private def denseExpr {E : Type} [Zero E] [DecidableEq E]
   let ty ← inferType (← elem (0 : E))
   mkAppM ``DensePoly.ofCoeffs #[arrayLit ty coeffs]
 
-private def fieldExpr {p : ZPoly} {root : SimpleRoot p}
+/-- Quote a reduced field coordinate as literal rational coefficients. -/
+meta def fieldExpr {p : ZPoly} {root : SimpleRoot p}
     (pExpr rootExpr : Expr) (value : PolyQuot p root) : MetaM Expr := do
   let coeffs ← denseExpr ratExpr value.coeffs
   mkAppM ``PolyQuot.reduce #[pExpr, rootExpr, coeffs]
@@ -181,7 +182,8 @@ private def radicalExpr {E : Type} [Zero E] [DecidableEq E]
       ← denseExpr elem cert.quotient, ← denseExpr elem cert.cofactor,
       mkNatLit cert.exponent]
 
-private def signTableExpr {p : ZPoly} {root : SimpleRoot p}
+/-- Quote a frozen sign table; callers must replay its literal context checks. -/
+meta def signTableExpr {p : ZPoly} {root : SimpleRoot p}
     (pExpr rootExpr : Expr) (table : LiteralSign.Table (PolyQuot p root)) : MetaM Expr := do
   let ty ← inferType (← fieldExpr pExpr rootExpr (0 : PolyQuot p root))
   let entryTy ← mkAppM ``LiteralSign.Entry #[ty]

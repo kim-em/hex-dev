@@ -115,7 +115,7 @@ theorem squarefree : HasOnlySimpleRoots polynomial := by
   exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable polynomial hne).mpr
     (ZPoly.CheckedIrreducible.separable polynomial)
 
-def realAlgebraic : RealAlgebraicNumber :=
+@[expose] def realAlgebraic : RealAlgebraicNumber :=
   Selected.real polynomial square (by decide) (by decide)
     (by rfl) (by decide) (by decide) checked squarefree (by decide)
 
