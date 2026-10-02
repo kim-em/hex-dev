@@ -21,7 +21,10 @@ theorem checked :
     singletonRaw.check Sturm.orderSign 7 (.leaf singletonNode) = true ∧
     (singletonRaw.full [1, 1]).check Sturm.orderSign 7 fullReplay = true ∧
     singletonRaw.completes (singletonRaw.full [1, 1]) = true ∧
-    singletonRaw.completes {singletonRaw.full [1, 1] with context := 8} = false := by
+    singletonRaw.completes {singletonRaw.full [1, 1] with context := 8} = false ∧
+    (singletonRaw.full [-1, 1]).check Sturm.orderSign 7 fullReplay = false ∧
+    derivativeRaw.completes (derivativeRaw.full [1, 1]) = true ∧
+    derivativeRaw.completes (derivativeRaw.full [1, -1]) = false := by
   simp only [RawDescriptor.check, fullReplay, Replay.check, Node.check_eq,
     checkMoment_eq, queryPoly, Sturm.check, TarskiCertificate.check_eq,
     SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]

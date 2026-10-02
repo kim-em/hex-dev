@@ -11,21 +11,21 @@ public meta import HexSignDet.Replay
 
 public section
 
-namespace Hex.SignDetMathlib.Diagnostics.DepthThree.N3.Accept
+namespace Hex.SignDetMathlib.DepthThree.N3.RejectArithmetic
 open Hex.SignDet Hex.SignDetMathlib.Diagnostics
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 4000000 in
-/-- Ordinary-kernel replay of supplied values and complete literal query chains. -/
-theorem checked : Nested.check 3 = true := by
+/-- A positive forged initial scale fails the actual polynomial identity check. -/
+theorem checked : Nested.check 3 false true = false := by
   simp only [Nested.check, Dag.check, Dag.replay_eq, Dag.step_eq,
     Replay.check, Node.check_eq, checkMoment_eq, queryPoly, Sturm.check,
     TarskiCertificate.check_eq, SignedRemainderChain.check,
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
-/-- info: 'Hex.SignDetMathlib.Diagnostics.DepthThree.N3.Accept.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.DepthThree.N3.RejectArithmetic.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms checked
 
-end Hex.SignDetMathlib.Diagnostics.DepthThree.N3.Accept
+end Hex.SignDetMathlib.DepthThree.N3.RejectArithmetic

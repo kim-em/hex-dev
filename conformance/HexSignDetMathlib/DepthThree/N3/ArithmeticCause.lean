@@ -11,7 +11,7 @@ public meta import HexSignDet.Replay
 
 public section
 
-namespace Hex.SignDetMathlib.Diagnostics.DepthThree.N3.ArithmeticCause
+namespace Hex.SignDetMathlib.DepthThree.N3.ArithmeticCause
 open Hex.SignDet Hex.SignDetMathlib.Diagnostics
 
 set_option maxRecDepth 65536 in
@@ -22,8 +22,8 @@ theorem checked : Nested.scaleFailure 3 = true := by
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
-/-- info: 'Hex.SignDetMathlib.Diagnostics.DepthThree.N3.ArithmeticCause.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDetMathlib.DepthThree.N3.ArithmeticCause.checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms checked
 
-end Hex.SignDetMathlib.Diagnostics.DepthThree.N3.ArithmeticCause
+end Hex.SignDetMathlib.DepthThree.N3.ArithmeticCause

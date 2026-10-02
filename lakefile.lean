@@ -1107,19 +1107,12 @@ lean_lib HexSignDetMathlibProofProbe where
 -- Correctness diagnostics remain CI-built outside the benchmark root.
 lean_lib HexSignDetMathlibDiagnostics where
   srcDir := "conformance"
-  globs := #[`HexSignDetMathlib.Diagnostics.Inputs,
-    `HexSignDetMathlib.Diagnostics.Semantics,
-    `HexSignDetMathlib.Diagnostics.Linear].map Glob.one
-    ++ #[.submodules `HexSignDetMathlib.Diagnostics.D1,
-      .submodules `HexSignDetMathlib.Diagnostics.D3,
-      .submodules `HexSignDetMathlib.Diagnostics.D5,
-      .submodules `HexSignDetMathlib.Diagnostics.D7,
-      .submodules `HexSignDetMathlib.Diagnostics.Nested]
+  globs := #[.submodules `HexSignDetMathlib.Diagnostics]
 
 -- Depth-three kernel reductions retain their separate manual target.
 lean_lib HexSignDetMathlibDepthThree where
   srcDir := "conformance"
-  globs := #[.submodules `HexSignDetMathlib.Diagnostics.DepthThree]
+  globs := #[.submodules `HexSignDetMathlib.DepthThree]
 
 lean_lib HexRealFormulaProofProbe where
   srcDir := "bench"

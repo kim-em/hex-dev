@@ -16,7 +16,8 @@ sizes stay fixed, and there is no coefficient extension. This family does
 not cover increasing support, joint Thom queries, nested fields or descriptor
 comparisons.
 
-Each semantic module and its import-only baseline have identical imports.
+In the archived measurement snapshots, each semantic module and its import-only
+baseline had identical imports.
 The archived runner `scripts/bench/sign_det_semantics.py` warms those imports
 in the retained measurement source snapshot,
 then removes only the measured module's artifacts before rebuilding its
@@ -27,7 +28,7 @@ incremental log before validation, including failed arms. A complete run
 retains compiler output, source and dependency identities, artifact sizes,
 wall time, process resource observations and axiom inventories.
 
-The paired difference includes theorem elaboration, ordinary kernel checking,
+The archived paired difference includes theorem elaboration, ordinary kernel checking,
 serialization, two axiom traversals (guarded and diagnostic), and variable
 Lake/process overhead. It is
 not a measurement of kernel checking alone. Acceptance and the foundation
