@@ -11,8 +11,10 @@ recorded below. [The derivations](sturm-bit-cost-models.md) distinguish the
 former repeated-normalization cost from the implemented recurrence products.
 
 All earlier declarations, failures and samples are retained. These observations
-cover effective query/checker paths. They do not complete the companions'
-Phase 4, the general signed-root-sum theorem or downstream extension evidence.
+cover effective query/checker paths. They do not attest complete frontend Phase-4 coverage or downstream extension
+evidence. The general signed-root-sum theorem is proved in the development
+`HexQuerySemantics` target; theorem-only companions have no dedicated Phase-4
+performance deliverable under the current policy.
 
 ## Original protocol and provenance
 
@@ -447,8 +449,10 @@ the measured code.
 
 The separate fresh-module proof track checks literal acceptance, rejection of a
 false terminal identity, stale-context rejection and interpretation of the
-accepted domain. It cannot establish query root-sum semantics before the actual
-IVT/Rolle and signed-remainder/Cauchy-index foundation is delivered.
+accepted domain. The delivered IVT/Rolle and signed-remainder foundation now establishes
+query root-sum semantics through `HexQuerySemantics`; its ordinary-kernel
+semantic replay tests and axiom guards are correctness checks, separate from
+compiled arithmetic performance.
 
 The independent size sweeps and operation/normalization diagnostics above are
 available. The query-degree findings have corrected quadratic characterizations.
@@ -604,5 +608,53 @@ sets are retained in the JSON. Both cases have `no-comparable-control`:
 these are fresh whole-build observations, not a resolved incremental kernel
 cost or a speedup claim. This rational literal track checks the current
 companion import closure; it does not itself measure dyadic evaluation or
-supply the deferred general semantic theorem. The new dyadic ordinary-kernel
+measure the subsequently delivered general semantic theorem. The new dyadic ordinary-kernel
 examples and equality axiom audit are covered by conformance above.
+
+## Bench targets
+
+Current performance-evidence expressions are copied from
+`bench/HexSturm/Bench.lean`:
+
+| Targets | Expression |
+| --- | --- |
+| `runInteger`, `runRational`, `runDomain`, `runChain`, `runEndpoints`, `runSigns` | `n ^ 2` |
+| `runInitial`, `runClearing` | `n` |
+| `runReplay` | `n ^ 4` |
+| `runIntegerHigh`, `runRationalHigh`, `runInitialHigh`, `runReplayHigh` | `m ^ 2` |
+
+## Verdicts
+
+The bounded head-degree registrations other than replay use mode 1 and retain
+passing observations in Original results. The corrected query-degree
+registrations use mode 1; the large-ladder results and rational result above
+supersede the original cost declarations without discarding failed samples.
+`runReplay` uses mode 2: its published bound, applicability and representative
+profile are detailed under Deferred-normalization validation. Its harness
+`inconclusive` result is a passing one-sided upper bound, observed faster.
+These are passes for those registrations, not attestation of unregistered
+prepared-query, cached-checker or certificate-transport operations.
+
+## Comparator ratios
+
+The adjacent backend comparison above retains the rational/integer pairs and
+hash agreement. Correctness agreement is gating; it has no wall-time speed
+ratio goal. Pinned python-flint and Z3 are informational where a matching query
+surface exists; exact selected-root-sum conformance is independent evidence.
+Their scheduled timing integrations and any unavailable query surface must be
+reported explicitly before completing the coverage audit.
+
+## Profile
+
+The retained operation-region profiles above cover head-degree replay and
+query-degree initial reduction, including GMP and allocation costs. The
+head-degree deferred-replay profile applies to the current integer checker.
+The source, command and binary fingerprints are recorded with each artifact.
+A frontend-only preparation/replay or transport cost cannot be inferred from
+these integer-backend profiles; it needs its own coverage assessment.
+
+## Concerns
+
+- [#10577](https://github.com/kim-em/hex-dev/issues/10577): complete the
+  frontend operation registration, comparison and profile coverage audit;
+  existing stage passes alone do not establish Phase 4 for HexSturm.

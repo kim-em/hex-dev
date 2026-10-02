@@ -23,5 +23,6 @@ public import HexRealAlgebraicMathlib.IntegerRoots
 public import HexRealAlgebraicMathlib.Repr
 public import HexRealAlgebraicMathlib.Complex
 public import HexRealAlgebraicMathlib.Norm
+public import HexRealAlgebraicMathlib.Audit
 
 /-! Verified ordered-field structure and real-closedness for canonical real algebraic numbers. -/

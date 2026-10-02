@@ -39,8 +39,10 @@ The development-only `HexQuerySemantics` target proves root-sum/replay semantics
 root counts, nonnegativity and degree bounds, and singleton-root signs through
 the shared hex-real-roots-mathlib foundation. The theorem for arbitrary
 accepted certificates has no producer-success hypothesis. All these results
-use only Lean's standard logical axioms. The remaining Phase-4 evidence below
-is required before phase completion.
+use only Lean's standard logical axioms. Scaffolding is attested at Phase 1;
+independent review and dependency-ordered conformance/Phase-4 attestation
+remain required. This theorem-only layer has no dedicated Phase-4 timing
+deliverable under the current policy.
 
 These proved semantic modules currently live under `adapters/`, outside the
 `HexSturmMathlib` library target. This companion is not yet released. Publishing them with their pinned Tau Ceti

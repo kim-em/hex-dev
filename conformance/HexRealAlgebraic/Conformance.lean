@@ -94,3 +94,31 @@ open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
     (ZPoly.realAlgebraicRoots #p[-1, 1]) == #[1] &&
     (ZPoly.realAlgebraicRoots #p[]).isEmpty &&
     (RealAlgebraicPoly.ofArray #[1, 0, 0]).roots.toArray.isEmpty
+
+-- Rational inputs retain the linear canonical representation even after field
+-- arithmetic; the real wrapper must not require a real-closure extension.
+#guard
+  (#[(-7 : Rat) / 3, 0, 1 / (2 ^ (100 : Nat) : Rat)]).all fun q =>
+    let a := ofRat q
+    a.toAlgebraic.p.natDegree == 1 && a.toRat? == some q &&
+      (a + 1).toRat? == some (q + 1) &&
+      (a * a).toRat? == some (q * q) &&
+      (a - a).toRat? == some 0
+
+#guard
+  let roots := (RealAlgebraicPoly.ofArray #[1, -2, 1]).roots
+  roots.finite?.isSome && roots.toArray.size == 1 &&
+    roots.contains 1 && !(roots.contains 0) && !(roots.contains (-1))
+
+#guard
+  (RealAlgebraicPoly.ofArray #[]).roots.finite?.isNone &&
+    ((RealAlgebraicPoly.ofArray #[7]).roots.finite?.map Array.isEmpty) == some true &&
+    (RealAlgebraicPoly.ofAlgebraic?
+      (AlgebraicPoly.ofArray #[])).isSome
+
+#guard
+  let a := AlgebraicNumber.ofRat (-3 / 2)
+  let z := AlgebraicNumber.ofRat 0
+  a.normSq == ofRat (9 / 4) && a.abs == ofRat (3 / 2) &&
+    z.normSq == 0 && z.abs == 0 &&
+    AlgebraicNumber.I.normSq == 1 && AlgebraicNumber.I.abs == 1

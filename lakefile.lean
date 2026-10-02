@@ -1795,6 +1795,10 @@ lean_lib HexSignDetBenchSupport where
     .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint,
     .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height]
 
+lean_exe hexrealalgebraic_bench where
+  srcDir := "bench"
+  root := `HexRealAlgebraic.Bench
+
 lean_exe hexsturm_bench where
   srcDir := "bench"
   root := `HexSturm.Bench

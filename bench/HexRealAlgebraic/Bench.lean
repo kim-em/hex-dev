@@ -1,0 +1,249 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexRealAlgebraic
+import LeanBench
+
+/-! Compiled coverage of the shipped real subtype, independent of real closure.
+Canonical inputs are supplied through IO references, preventing closed-expression
+constant folding. Construction of arithmetic operands is outside timed bodies;
+construction-inclusive root solving has its own registrations. The forward
+comparison-strategy extension is excluded from these registrations.
+
+These fixed cases are coverage and baseline observations. A fixed observation
+alone is not Phase-4 performance evidence: the report must justify its selected
+mode and an operation-specific budget, or retain the operation as a Concern.
+-/
+
+namespace Hex.RealAlgebraicBench
+open RealAlgebraicNumber
+
+private def real (a : AlgebraicNumber) : RealAlgebraicNumber :=
+  (ofAlgebraic? a).getD (Hex.panicWith 0 "benchmark input is nonreal")
+
+initialize rationalRef : IO.Ref Rat ← IO.mkRef (-3 / 2)
+initialize pairRef : IO.Ref (RealAlgebraicNumber × RealAlgebraicNumber) ←
+  IO.mkRef (real (ZPoly.rootNear #p[-2, 0, 1] (3 / 2)),
+    real (ZPoly.rootNear #p[-3, 0, 1] (7 / 4)))
+initialize integerPolyRef : IO.Ref (Array Int) ← IO.mkRef #[1, 0, -10, 0, 1]
+
+private def checksum (a : RealAlgebraicNumber) : UInt64 :=
+  hash (a.toAlgebraic.p.toArray, a.toAlgebraic.rep.1.square.re.toRat,
+    a.toAlgebraic.rep.1.square.im.toRat, a.toAlgebraic.rep.1.square.prec)
+
+private def optionChecksum (a : Option RealAlgebraicNumber) : UInt64 :=
+  (a.map checksum).getD 0
+
+private def rootsChecksum : RealRootSet → UInt64
+  | .all => 1
+  | .finite entries => hash (entries.map fun r => (checksum r.root, r.multiplicity))
+
+private def observations : LeanBench.FixedBenchmarkConfig := {
+  repeats := 4
+  maxSecondsPerCall := 30
+  killGraceMs := 0
+  warmupFirstIter := true
+}
+
+def runConstructors : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return hash (optionChecksum (ofAlgebraic? a.toAlgebraic),
+    checksum (ofAlgebraic a.toAlgebraic a.property), optionChecksum (ofRoot? a.toAlgebraic.toRoot),
+    (ofAlgebraic? AlgebraicNumber.I).isNone)
+
+def runCasts : Unit → IO UInt64 := fun _ => do
+  let q ← rationalRef.get
+  return hash (checksum (ofRat q), checksum (q.num : RealAlgebraicNumber),
+    checksum (q.den : RealAlgebraicNumber))
+
+def runEquality : Unit → IO UInt64 := fun _ => do
+  let (a, b) ← pairRef.get
+  return hash (a == a, a == b)
+
+def runAdd : Unit → IO UInt64 := fun _ => do
+  let (a, b) ← pairRef.get
+  return checksum (a + b)
+
+def runSub : Unit → IO UInt64 := fun _ => do
+  let (a, b) ← pairRef.get
+  return checksum (a - b)
+
+def runMul : Unit → IO UInt64 := fun _ => do
+  let (a, b) ← pairRef.get
+  return checksum (a * b)
+
+def runNeg : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return checksum (-a)
+
+def runInv : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return checksum a⁻¹
+
+def runDiv : Unit → IO UInt64 := fun _ => do
+  let (a, b) ← pairRef.get
+  return checksum (a / b)
+
+def runNatPow : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return checksum (a ^ (7 : Nat))
+
+def runIntPow : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return checksum (a ^ (-7 : Int))
+
+def runScalars : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  let q ← rationalRef.get
+  return hash (checksum (q • a), checksum (q.num • a), checksum (q.den • a))
+
+def runCompare : Unit → IO UInt64 := fun _ => do
+  let (a, b) ← pairRef.get
+  return hash (match RealAlgebraicNumber.compare a b with | .lt => (0 : Nat) | .eq => 1 | .gt => 2)
+
+def runCompareExact : Unit → IO UInt64 := fun _ => do
+  let (a, b) ← pairRef.get
+  return hash (match a.toAlgebraic.realCompareExact b.toAlgebraic with | .lt => (0 : Nat) | .eq => 1 | .gt => 2)
+
+def runOrder : Unit → IO UInt64 := fun _ => do
+  let (a, b) ← pairRef.get
+  return hash (decide (a < b), decide (a ≤ b), checksum (RealAlgebraicNumber.min a b), checksum (RealAlgebraicNumber.max a b))
+
+def runSign : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return hash a.sign
+
+def runAbs : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return checksum a.abs
+
+def runConj : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return checksum a.conj
+
+def runRational : Unit → IO UInt64 := fun _ => do
+  let q ← rationalRef.get
+  let a := ofRat q
+  return hash (a.toRat?, a.floor, a.ceil, checksum (a + 1), checksum (a * a))
+
+def runRounding : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return hash (a.floor, a.ceil, a.toRat?)
+
+def runApprox : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  let b := a.approxBall 100
+  return hash ((a.approx 100).toRat, b.re.toRat, b.im.toRat, b.radius.toRat)
+
+def runSqrt : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return optionChecksum a.sqrt?
+
+def runSqrtTotal : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return if h : 0 ≤ a then checksum (a.sqrt h)
+    else Hex.panicWith 0 "positive square-root fixture"
+
+def runPolyConstructors : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  let f := RealAlgebraicPoly.ofArray #[a, 0, 1, 0]
+  return hash (f.toAlgebraic.coeffs.size, (RealAlgebraicPoly.ofAlgebraic? f.toAlgebraic).isSome)
+
+def runRoots : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return rootsChecksum (RealAlgebraicPoly.ofArray #[-a, 0, 1]).roots
+
+def runRepeatedRoots : Unit → IO UInt64 := fun _ => do
+  let q ← rationalRef.get
+  let a := ofRat q
+  return rootsChecksum (RealAlgebraicPoly.ofArray #[a*a, -(2*a), 1]).roots
+
+def runIntegerRoots : Unit → IO UInt64 := fun _ => do
+  let p : ZPoly := DensePoly.ofCoeffs (← integerPolyRef.get)
+  return hash (p.realAlgebraicRoots.map checksum)
+
+def runRootSet : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  let roots := RealAlgebraicPoly.realRoots (.finite #[])
+  return hash (roots.contains a, roots.finite?.isSome, roots.toArray.size)
+
+def runRepr : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return hash (repr a).pretty
+
+def runNorm : Unit → IO UInt64 := fun _ => do
+  let (a, _) ← pairRef.get
+  return checksum a.toAlgebraic.normSq
+
+def runComplexAbs : Unit → IO UInt64 := fun _ => do
+  let q ← rationalRef.get
+  return checksum (AlgebraicNumber.ofPoint q 1).abs
+
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runConstructors where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runCasts where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runEquality where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runAdd where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runSub where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runMul where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runNeg where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runInv where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runDiv where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runNatPow where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runIntPow where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runScalars where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runCompare where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runCompareExact where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runOrder where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runSign where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runAbs where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runConj where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runRational where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runRounding where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runApprox where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runSqrt where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runSqrtTotal where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runPolyConstructors where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runRoots where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runRepeatedRoots where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runIntegerRoots where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runRootSet where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runRepr where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runNorm where observations
+-- Fixed API coverage; mode and budget eligibility are audited in the report.
+setup_fixed_benchmark runComplexAbs where observations
+
+end Hex.RealAlgebraicBench
+
+unsafe def main (args : List String) : IO UInt32 := LeanBench.Cli.dispatch args
