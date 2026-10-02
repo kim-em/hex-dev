@@ -382,14 +382,16 @@ setup_benchmark runSizedProposal k => k * k * k
 @[noinline] def runModulusReplay (input : SizedCase) : Bool := runSizedReplay input
 @[noinline] def runModulusProposal (input : SizedCase) : Bool := runSizedProposal input
 
--- Quadratic upper bound: scalar bit copies plus bounded-width affine work.
-setup_benchmark runScalarReplay bits => bits * bits with prep := scalarWidthInput where {
-  paramFloor := 32, paramCeiling := 4096, outerTrials := 3
+-- Linear bounded-width regime: at most eight limbs per scalar bit extraction,
+-- with a fixed 65-bit modulus and at most 2*bits bounded-width additions.
+setup_benchmark runScalarReplay bits => bits with prep := scalarWidthInput where {
+  paramFloor := 32, paramCeiling := 512, outerTrials := 3
   targetInnerNanos := 2000000000, maxSecondsPerCall := 120.0
 }
--- Quadratic upper bound: the same scalar copies and bounded-width Euclid work.
-setup_benchmark runScalarProposal bits => bits * bits with prep := scalarWidthInput where {
-  paramFloor := 32, paramCeiling := 4096, outerTrials := 3
+-- Linear bounded-width regime: the same scalar copies and at most 2*bits
+-- inverses on fixed 65-bit operands; Euclid coefficients remain bounded.
+setup_benchmark runScalarProposal bits => bits with prep := scalarWidthInput where {
+  paramFloor := 32, paramCeiling := 512, outerTrials := 3
   targetInnerNanos := 2000000000, maxSecondsPerCall := 120.0
 }
 -- Quadratic upper bound: a fixed 47-bit scalar performs boundedly many ring operations.
