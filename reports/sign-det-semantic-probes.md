@@ -17,7 +17,8 @@ not cover increasing support, joint Thom queries, nested fields or descriptor
 comparisons.
 
 Each semantic module and its import-only baseline have identical imports.
-The external runner `scripts/bench/sign_det_semantics.py` warms those imports,
+The archived runner `scripts/bench/sign_det_semantics.py` warms those imports
+in the retained measurement source snapshot,
 then removes only the measured module's artifacts before rebuilding its
 `olean` through Lake. Four rotated rounds alternate adjacent AB/BA order on
 one automatically leased CPU. Host activity is recorded as context; samples
@@ -37,7 +38,9 @@ to contain only `propext`, `Classical.choice` and `Quot.sound`.
 
 These are diagnostic observations, with no complexity verdict or absolute
 performance budget. They do not establish all Phase-4 requirements. The
-ordinary CI proof-probe target builds the examples; timing runs are external.
+current CI target retains a representative depth-one example and the other
+correctness cases remain optional diagnostics; timing records use the archived
+source snapshots.
 
 ## Graph-bound observations
 
@@ -68,7 +71,7 @@ coverage. This collection measures changed theorem statements and inventory
 selection; it is not an unchanged rerun of the original collection. The
 two sources are not a controlled before/after comparison: they change both
 the theorem and the runner and use different CPUs. Both recorded sources
-use schema v1; the current runner uses v2 to identify namespace-based
+use schema v1; the archived final runner uses v2 to identify namespace-based
 axiom selection explicitly in pair summaries.
 
 - [Complete graph-bound measurement](bench-results/hex-sign-det-semantics-0acfbaf3f-chungus2.json).
@@ -105,14 +108,14 @@ semantic theorem's inventory. The original theorem asserted the existence
 of a checked tree with correct root counts; it did not state the equation
 binding that tree to the supplied graph. These records therefore describe
 that earlier theorem and runner, not the strengthened graph-bound probes.
-The current runner selects only inventories from each measured namespace,
+The archived final runner selects only inventories from each measured namespace,
 checks every inventory there, and expects none for import-only baselines. The observed paired
 differences do not establish asymptotic behavior or a speedup. The imported
 acceptance proofs already bind the full certificates, so these applications
 need not unfold those certificates again as query count grows. No rerun or
 null control was used.
 
-Run the diagnostic with:
+Collection command at the archived source revision:
 
 ```sh
 python3 scripts/bench/sign_det_semantics.py --output /tmp/bkr-semantic-probes.json

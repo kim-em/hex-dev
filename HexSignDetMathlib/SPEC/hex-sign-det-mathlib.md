@@ -468,12 +468,11 @@ Phase 4 follows [the repository evidence tracks](../../PLAN/Phase4.md#evidence-t
 Use a small representative set in declared `proof_probes` roots for
 matrix/replay checking,
 completion, sign-at-root, cross-polynomial re-encoding and nested evidence,
-including rejection cases and axiom audits. Every declared proof-example root must be built by CI. Reconcile the current
-`ProofProbe` and manual-only `NestedProofProbe` targets with that requirement
-before phase attestation: retain representative CI examples and move any
-optional large diagnostic fixtures outside the declared benchmark roots.
-Ordinary theorem applications and law proofs do not require dedicated timing
-sweeps.
+including rejection cases and axiom audits. Every declared proof-example root
+must be built by CI. `ProofProbe` contains the representative CI examples;
+optional larger correctness fixtures live in `Diagnostics`, outside the declared
+proof-example root. Ordinary theorem applications and law proofs do not require
+dedicated timing sweeps.
 
 Runtime production, Tarski queries, coefficient signs, matrix solving and gcd
 work remain measured by Mathlib-free benches owned by the computational
