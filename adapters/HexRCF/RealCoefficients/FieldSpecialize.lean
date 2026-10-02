@@ -172,4 +172,14 @@ theorem literal_degree (rep : RefinedIsolation p)
   rw [literalPolynomial_eq]
   exact degree (realHom rep hrep hr) (Field.value_eq_zero rep hrep hr) values q
 
+/-- The literal compiler's leading coefficient has the same real embedding. -/
+theorem literal_leading (rep : RefinedIsolation p)
+    (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0)
+    (values : Fin n → PolyQuot p root) (q : RealFormula.Poly (n + 1)) :
+    ((HexPolyMathlib.toPolynomial (literalPolynomial values q)).map
+      (realHom rep hrep hr)).leadingCoeff =
+      Field.value rep (literalPolynomial values q).leadingCoeff := by
+  rw [literalPolynomial_eq]
+  exact leading (realHom rep hrep hr) (Field.value_eq_zero rep hrep hr) values q
+
 end Hex.RCF.RealCoefficients.FieldSpecialize

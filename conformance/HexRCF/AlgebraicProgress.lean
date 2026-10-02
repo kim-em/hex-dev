@@ -27,25 +27,25 @@ theorem zero_section (precision : Nat) : ∃ interval,
   obtain ⟨interval, produced, hlo, hhi, _⟩ := rootInterval_spec 0 precision
   exact ⟨interval, produced, by simpa using hlo, by simpa using hhi⟩
 
-/-- The actual producer succeeds at every precision for any nonzero head. -/
-theorem proposals [RealAlgebraicNumber.Laws]
+/-- The canonical proposal API succeeds at every precision for every nonzero head. -/
+theorem proposals
     (head : DensePoly RealAlgebraicNumber) (hne : head ≠ 0) (precision : Nat) :
     (proposeIsolations head precision).isSome = true :=
   proposeIsolations_isSome head hne precision
 
 /-- The zero polynomial has universal roots, rather than a finite empty result. -/
-theorem zero_proposals [RealAlgebraicNumber.Laws] (precision : Nat) :
+theorem zero_proposals (precision : Nat) :
     proposeIsolations (0 : DensePoly RealAlgebraicNumber) precision = none :=
   proposeIsolations_zero precision
 
-/-- Atom cancellation cannot prevent the actual carrier from proposing cells. -/
-theorem carrier_total [RealAlgebraicNumber.Laws]
+/-- Atom cancellation cannot prevent the canonical carrier from proposing cells. -/
+theorem carrier_total
     (values : Fin n → RealAlgebraicNumber) (formula : RealFormula.QF (n + 1))
     (precision : Nat) :
     (proposeIsolations (Specialize.product values formula) precision).isSome = true :=
   carrier_proposals values formula precision
 
-/-- A cofinal schedule yields strictly shrinking ordinary real enclosures. -/
+/-- A schedule tending to infinity yields arbitrarily narrow real enclosures. -/
 theorem enclosure_progress (root : RealAlgebraicNumber)
     (schedule : Nat → Nat) (h : Filter.Tendsto schedule Filter.atTop Filter.atTop)
     (epsilon : ℝ) (hepsilon : 0 < epsilon) :
@@ -74,6 +74,32 @@ theorem cancelled_degree :
     ((HexPolyMathlib.toPolynomial cancelled).map (Rat.castHom ℝ)).natDegree =
       cancelled.natDegree :=
   FieldSpecialize.degree (Rat.castHom ℝ) (fun _ => Rat.cast_eq_zero) coordinate source
+
+
+private abbrev fieldRoot := SimpleRoot.ofSquare SquareTwo.polynomial SquareTwo.square
+  (by decide) (by decide)
+private instance : SquareTwo.polynomial.CheckedIrreducible := SquareTwo.checked
+private def fieldValues : Fin 2 → PolyQuot SquareTwo.polynomial fieldRoot :=
+  fun _ => PolyQuot.ofRat 3
+private def literalCancelled := FieldSpecialize.literalPolynomial fieldValues source
+
+-- Exercise the executable literal compiler used by FieldBuild, with the
+-- native fixed-field dictionary rather than the generic Rat correspondence.
+#guard literalCancelled.natDegree = 1
+#guard literalCancelled.coeff 1 = (1 : PolyQuot SquareTwo.polynomial fieldRoot)
+#guard literalCancelled.coeff 3 = (0 : PolyQuot SquareTwo.polynomial fieldRoot)
+#guard (FieldSpecialize.literalPolynomial fieldValues (0 : RealFormula.Poly 3)).isZero
+#guard (FieldSpecialize.literalPolynomial fieldValues (1 : RealFormula.Poly 3)).natDegree = 0
+
+private def oppositeValues : Fin 2 → PolyQuot SquareTwo.polynomial fieldRoot :=
+  fun i => if i.val = 0 then
+    -SquareTwo.coordinate SquareTwo.square (by decide) (by decide)
+  else SquareTwo.coordinate SquareTwo.square (by decide) (by decide)
+private def cubicSource : RealFormula.Poly 3 :=
+  MvPoly.X 0 * MvPoly.X 2 ^ 3 + MvPoly.X 1 * MvPoly.X 2 ^ 3 + MvPoly.X 2 ^ 2
+private def cubicFormula : RealFormula.QF 3 := .atom ⟨cubicSource, .le⟩
+#guard (FieldSpecialize.literalPolynomial oppositeValues cubicSource).natDegree = 2
+#guard (FieldCarrier.product oppositeValues cubicFormula).natDegree = 2
 
 private def negative : RealAlgebraicNumber :=
   Selected.real SquareTwo.polynomial
@@ -144,3 +170,31 @@ end Hex.RCF.AlgebraicProgress
 /-- info: '_private.HexRCF.AlgebraicProgress.0.Hex.RCF.AlgebraicProgress.carrier_total' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.AlgebraicProgress.carrier_total
+
+/-- info: 'Hex.RCF.RealCoefficients.Specialize.leading' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.Specialize.leading
+
+/-- info: 'Hex.RCF.RealCoefficients.FieldSpecialize.leading' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.FieldSpecialize.leading
+
+/-- info: 'Hex.RCF.RealCoefficients.FieldSpecialize.literal_leading' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.FieldSpecialize.literal_leading
+
+/-- info: 'Hex.RCF.RealCoefficients.solver_polynomial' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.solver_polynomial
+
+/-- info: 'Hex.RCF.RealCoefficients.proposeIsolations_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.proposeIsolations_isSome
+
+/-- info: 'Hex.RCF.RealCoefficients.proposeIsolations_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.proposeIsolations_zero
+
+/-- info: 'Hex.RCF.RealCoefficients.carrier_proposals' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.RealCoefficients.carrier_proposals

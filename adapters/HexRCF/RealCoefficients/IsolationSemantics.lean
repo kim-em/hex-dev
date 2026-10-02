@@ -66,7 +66,7 @@ theorem isolateAt_roots [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq C
     context head (isolateAt_checked context head precision cert h)
 
 /-- Every requested precision produces a strict enclosure, with a width bound
-that shrinks along a cofinal precision schedule. -/
+that shrinks along every precision schedule tending to infinity. -/
 theorem rootInterval_spec (root : RealAlgebraicNumber) (precision : Nat) :
     ∃ interval, rootInterval root precision = some interval ∧
       HexRealRootsMathlib.Dyadic.toReal interval.lower < root.toReal ∧
@@ -133,7 +133,7 @@ private theorem precision_small (epsilon : ℝ) (h : 0 < epsilon) :
   rw [hi]
   exact hN n hn
 
-/-- Precision progress is preserved under every explicitly cofinal schedule.
+/-- Precision progress is preserved under every schedule tending to infinity.
 This proves enclosure production, not root separation or a decision theorem. -/
 theorem rootInterval_progress (root : RealAlgebraicNumber)
     (schedule : Nat → Nat)
@@ -207,7 +207,7 @@ theorem proposeIsolations_isSome_iff [RealAlgebraicNumber.Laws]
     contradiction
   · exact fun h => proposeIsolations_isSome head h precision
 
-/-- The actual specialized carrier always has finite interval proposals,
+/-- The canonical specialized carrier always has finite interval proposals,
 including formulas whose atoms specialize to zero or constants. -/
 theorem carrier_proposals [RealAlgebraicNumber.Laws]
     (values : Fin n → RealAlgebraicNumber) (formula : RealFormula.QF (n + 1))
