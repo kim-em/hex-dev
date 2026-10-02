@@ -70,4 +70,23 @@ theorem polynomial_eval (values : Fin n → RealAlgebraicNumber)
   funext i
   exact evaluate_coordinate values x i
 
+/-- The interpreted degree is the degree after coefficient specialization,
+including cancellation of leading terms and the zero polynomial. -/
+theorem degree (values : Fin n → RealAlgebraicNumber)
+    (p : RealFormula.Poly (n + 1)) :
+    ((HexPolyMathlib.toPolynomial (polynomial values p)).map
+      RealAlgebraicNumber.toRealHom).natDegree = (polynomial values p).natDegree := by
+  rw [Polynomial.natDegree_map_eq_of_injective
+    RealAlgebraicNumber.toReal_injective, HexPolyMathlib.natDegree_toPolynomial]
+
+/-- The leading coefficient is interpreted at the same fixed real embedding. -/
+theorem leading (values : Fin n → RealAlgebraicNumber)
+    (p : RealFormula.Poly (n + 1)) :
+    ((HexPolyMathlib.toPolynomial (polynomial values p)).map
+      RealAlgebraicNumber.toRealHom).leadingCoeff =
+      (polynomial values p).leadingCoeff.toReal := by
+  rw [Polynomial.leadingCoeff_map_of_injective
+    RealAlgebraicNumber.toReal_injective, HexPolyMathlib.leadingCoeff_toPolynomial]
+  rfl
+
 end Hex.RCF.RealCoefficients.Specialize

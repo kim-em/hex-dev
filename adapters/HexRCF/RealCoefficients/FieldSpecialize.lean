@@ -65,6 +65,30 @@ theorem polynomial_eval (f : D →+* ℝ) (values : Fin n → D)
   funext i
   exact evaluate_coordinate f values x i
 
+omit [DecidableEq D] in
+private theorem injective (f : D →+* ℝ) (hz : ∀ a, f a = 0 ↔ a = 0) :
+    Function.Injective f := by
+  intro a b hab
+  apply sub_eq_zero.mp
+  apply (hz (a - b)).mp
+  simp [hab]
+
+/-- Semantic degree after fixed coefficient specialization, including cancellation. -/
+theorem degree (f : D →+* ℝ) (hz : ∀ a, f a = 0 ↔ a = 0)
+    (values : Fin n → D) (p : Hex.RealFormula.Poly (n + 1)) :
+    ((HexPolyMathlib.toPolynomial (polynomial values p)).map f).natDegree =
+      (polynomial values p).natDegree := by
+  rw [Polynomial.natDegree_map_eq_of_injective (injective f hz),
+    HexPolyMathlib.natDegree_toPolynomial]
+
+/-- The interpreted leading coefficient belongs to the same fixed real embedding. -/
+theorem leading (f : D →+* ℝ) (hz : ∀ a, f a = 0 ↔ a = 0)
+    (values : Fin n → D) (p : Hex.RealFormula.Poly (n + 1)) :
+    ((HexPolyMathlib.toPolynomial (polynomial values p)).map f).leadingCoeff =
+      f (polynomial values p).leadingCoeff := by
+  rw [Polynomial.leadingCoeff_map_of_injective (injective f hz),
+    HexPolyMathlib.leadingCoeff_toPolynomial]
+
 variable {p : ZPoly} {root : SimpleRoot p} [ZPoly.CheckedIrreducible p]
 
 /-- Compile substitution using only the fixed field's ordinary total
@@ -138,5 +162,14 @@ theorem literalPolynomial_real (rep : RefinedIsolation p)
       q.eval (append (fun j => Field.value rep (values j)) x) := by
   rw [literalPolynomial_eq]
   exact polynomial_real rep hrep hr values q x
+
+/-- The actual literal compiler retains degree at the chosen real embedding. -/
+theorem literal_degree (rep : RefinedIsolation p)
+    (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0)
+    (values : Fin n → PolyQuot p root) (q : RealFormula.Poly (n + 1)) :
+    ((HexPolyMathlib.toPolynomial (literalPolynomial values q)).map
+      (realHom rep hrep hr)).natDegree = (literalPolynomial values q).natDegree := by
+  rw [literalPolynomial_eq]
+  exact degree (realHom rep hrep hr) (Field.value_eq_zero rep hrep hr) values q
 
 end Hex.RCF.RealCoefficients.FieldSpecialize
