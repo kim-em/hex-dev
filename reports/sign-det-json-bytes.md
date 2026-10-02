@@ -57,7 +57,9 @@ recursive definitions. Native recursion follows array/object nesting rather
 than width or string length. The universal byte theorem checks these actual
 loops in the ordinary kernel.
 
-The independent 324-case corpus runs with an 8 MiB stack. It includes 3,000
+The native subprocess environment disables Lean's separate main thread and
+sets `LEAN_STACK_SIZE_KB=8192` alongside the 8 MiB OS stack limit. The independent
+324-case corpus runs with that enforced stack limit. It includes 3,000
 empty strings, a 25,000-element array, a 12,000-character string and a
 4,096-digit integer. A separate file-mode capacity check avoids the line
 transport and retains the existing lexical byte/depth/digit checks:
@@ -94,3 +96,11 @@ character-list storage alone can require hundreds of megabytes near the byte
 ceiling. Combined high depth and width and complete memory attribution remain
 integration checks. The low-level decimal word readers accept leading
 zeros; JSON token parsing separately rejects them.
+
+Stack setup matters for Lean native executables: the v4.35.0-rc3 runtime runs
+`main` on a separate thread by default, with a 1 GiB thread stack on 64-bit
+hosts. An OS `RLIMIT_STACK` alone does not constrain that explicit thread
+stack. Capacity observations made with the earlier OS-only setup are retained
+as value/capacity checks, but do not establish an 8 MiB stack bound. The corrected
+oracle environment sets `LEAN_MAIN_USE_THREAD=0` and `LEAN_STACK_SIZE_KB=8192`
+before launching the executable.

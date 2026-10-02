@@ -8,6 +8,7 @@ coverage of all inputs below the ceiling.
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 import resource
 import subprocess
@@ -43,7 +44,8 @@ def stack_limit():
 
 def run_guard(executable, source):
     return subprocess.run([str(executable), "--check-file", str(source)],
-                          capture_output=True, preexec_fn=stack_limit)
+                          capture_output=True, preexec_fn=stack_limit,
+                          env=dict(os.environ, LEAN_MAIN_USE_THREAD="0", LEAN_STACK_SIZE_KB="8192"))
 
 
 def rejection_cases():
@@ -65,7 +67,8 @@ def main():
             source.write_bytes(raw)
             target.unlink(missing_ok=True)
             completed = subprocess.run([str(args.exe), "--file", str(source), str(target)],
-                                       capture_output=True, preexec_fn=stack_limit)
+                                       capture_output=True, preexec_fn=stack_limit,
+                          env=dict(os.environ, LEAN_MAIN_USE_THREAD="0", LEAN_STACK_SIZE_KB="8192"))
             if completed.returncode != 0:
                 raise RuntimeError(f"{name}: exit {completed.returncode}: "
                                    + completed.stderr.decode("utf-8", errors="replace"))
@@ -88,7 +91,8 @@ def main():
             source.write_bytes(raw)
             target.unlink(missing_ok=True)
             completed = subprocess.run([str(args.exe), "--file", str(source), str(target)],
-                                       capture_output=True, preexec_fn=stack_limit)
+                                       capture_output=True, preexec_fn=stack_limit,
+                          env=dict(os.environ, LEAN_MAIN_USE_THREAD="0", LEAN_STACK_SIZE_KB="8192"))
             if (completed.returncode == 0 or message not in completed.stderr.decode("utf-8", errors="replace")
                     or target.exists()):
                 raise ValueError(name + ": missing lexical rejection")
