@@ -165,6 +165,46 @@ theorem Dag.decodeBytes_sign_congr (value : ValueCodec E) (ctx : ValueCodec Ctx)
         simp only [pure, Except.map]
         exact congrArg Except.ok (by simpa [ht, ht'] using he)
 
+/-- Byte decoding preserves errors, exact claimed signs and literal evidence
+under finite sign agreement on every entry of the actual decoded graph. Both
+validated descriptors must have the same raw selected-root identity. -/
+theorem Dag.decodeSigns_sign_congr (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (sign sign' : E → Int) (context : Ctx)
+    (d : Descriptor E Ctx sign context) (d' : Descriptor E Ctx sign' context)
+    (hraw : d'.raw = d.raw) (qs : List (DensePoly E)) (values : Vector Int qs.length)
+    (input : ByteArray) (limits : Codec.Limits)
+    (h : ∀ dag, Codec.decodeGraph value ctx context d.raw.head d.raw.lower d.raw.upper
+      input limits = .ok dag →
+      ∀ x ∈ dag.signOperands d.raw.head d.raw.lower d.raw.upper, sign x = sign' x) :
+    (Dag.decodeSigns value ctx d qs values input limits).map
+        (fun s => (s.values, s.evidence)) =
+      (Dag.decodeSigns value ctx d' qs values input limits).map
+        (fun s => (s.values, s.evidence)) := by
+  unfold Dag.decodeSigns
+  cases hd : Codec.decodeGraph value ctx context d.raw.head d.raw.lower d.raw.upper
+      input limits with
+  | error err =>
+    have hd' : Codec.decodeGraph value ctx context d'.raw.head d'.raw.lower d'.raw.upper
+        input limits = .error err := by rw [hraw]; exact hd
+    simp only [hd', bind, Except.bind, Except.map]
+  | ok dag =>
+    have hd' : Codec.decodeGraph value ctx context d'.raw.head d'.raw.lower d'.raw.upper
+        input limits = .ok dag := by rw [hraw]; exact hd
+    have he := dag.selectedSigns_sign_congr sign sign' context d d' hraw qs values (h dag hd)
+    simp only [hd', bind, Except.bind]
+    cases ht : dag.selectedSigns? d qs values with
+    | none =>
+      have ht' : dag.selectedSigns? d' qs values = none := by
+        simpa only [ht, Option.map_none, Option.map_eq_none_iff] using he.symm
+      simp only [ht', Except.map]
+      rfl
+    | some s =>
+      cases ht' : dag.selectedSigns? d' qs values with
+      | none => simp [ht, ht'] at he
+      | some s' =>
+        simp only [pure, Except.map]
+        exact congrArg Except.ok (by simpa [ht, ht'] using he)
+
 /-- Descriptor byte replay preserves exact errors, raw root identity and
 literal evidence under finite agreement on every decoded entry. -/
 theorem Dag.decodeDescriptor_sign_congr (value : ValueCodec E) (ctx : ValueCodec Ctx)

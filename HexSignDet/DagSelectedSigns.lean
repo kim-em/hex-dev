@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.DagSigns
+public import HexSignDet.DagReplay
 public import HexSignDet.SelectedSigns
 
 public section
@@ -76,6 +77,33 @@ theorem selectedSigns_checked {sign : E → Int} {context : Ctx}
     d.checkSigns qs values s.evidence = true := by
   obtain ⟨_, _, hv, _⟩ := selectedSigns_evidence h
   simpa only [hv] using s.accepted
+
+/-- Once graph replay succeeds, selected-sign extraction agrees with the
+existing tree checker on acceptance and rejection of the exact claimed vector. -/
+theorem selectedSigns_replay {sign : E → Int} {context : Ctx}
+    {d : Descriptor E Ctx sign context} {qs : List (DensePoly E)}
+    (values : Vector Int qs.length) {dag : Dag E Ctx}
+    {t : {t : Replay E Ctx //
+      t.check sign context d.raw.head d.raw.lower d.raw.upper (d.raw.queries ++ qs) = true}}
+    (h : dag.replay? sign context d.raw.head d.raw.lower d.raw.upper
+      (d.raw.queries ++ qs) = some t) :
+    (dag.selectedSigns? d qs values).isSome = d.checkSigns qs values t.val := by
+  obtain ⟨hw, hctx, _, _⟩ := RawDescriptor.check_eq d.accepted
+  unfold selectedSigns?
+  simp only [h, bind, Option.bind, Descriptor.checkSigns, RawDescriptor.checkSigns,
+    hw, hctx, decide_true, Bool.true_and, t.property]
+  split <;> simp_all [pure]
+
+/-- Every checked selected-sign tree, encoded with sharing, is accepted again
+with the exact same sign vector and literal evidence. -/
+theorem selectedSigns_encode [Hashable E] [Hashable Ctx]
+    {sign : E → Int} {context : Ctx} {d : Descriptor E Ctx sign context}
+    {qs : List (DensePoly E)} (s : SelectedSigns d qs) :
+    ((encode s.evidence).selectedSigns? d qs s.values).map (fun result => result.evidence) =
+      some s.evidence := by
+  obtain ⟨hc, hr⟩ := s.check_eq
+  rw [s.evidence.table_rows hc] at hr
+  simp [selectedSigns?, replay_encode hc, hr, bind, Option.bind, pure, SelectedSigns.ofTable]
 
 /-- Agreement on every stored graph node preserves rejection and the literal
 selected-query signs and evidence. The caller descriptors must name the same

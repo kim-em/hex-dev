@@ -35,6 +35,30 @@ open Hex Hex.SignDet Hex.SignDet.Conformance Hex.SignDet.CrossCheck
 theorem source_raw : source.raw = singletonRaw := by
   simp only [source, Descriptor.ofTable_raw]
 
+@[expose] def partialRaw : RawDescriptor Rat Nat :=
+  {singletonRaw with indices := [1], signs := [1]}
+
+set_option maxRecDepth 32768 in
+theorem partial_checked : partialRaw.check Sturm.orderSign 7 (.leaf firstNode) = true := by
+  simp only [RawDescriptor.check, Replay.check, Node.check_eq, checkMoment_eq, queryPoly,
+    Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+/-- The first derivative sign selects the positive root. -/
+@[expose] def prefixed : Descriptor Rat Nat Sturm.orderSign 7 := by
+  have h := RawDescriptor.check_eq partial_checked
+  have hc : (Replay.leaf firstNode).check Sturm.orderSign 7 partialRaw.head
+      partialRaw.lower partialRaw.upper partialRaw.queries = true := by
+    obtain ⟨hc, _⟩ := h.2.2
+    exact hc
+  exact Descriptor.ofTable partialRaw (.leaf firstNode) h.1 h.2.1 hc (by
+    obtain ⟨_, hone⟩ := h.2.2
+    exact hone)
+
+theorem prefixed_raw : prefixed.raw = partialRaw := by
+  simp only [prefixed, Descriptor.ofTable_raw]
+
 @[expose] def emptyGraph : Dag Rat Nat := ⟨#[⟨singletonNode, none⟩], 0⟩
 
 @[expose] def invalidNode : Node Rat Nat :=
@@ -76,7 +100,43 @@ theorem rejected_kernel :
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
-/-- Exact encoders share equal subtrees and recover every input tree. -/
+@[expose] def equivalentPrefix : Dag Rat Nat :=
+  let replacement : Dag.Entry Rat Nat :=
+    ⟨{fullNode with queries := [Sturm.Fixtures.x, DensePoly.C 2]}, some (0, 1)⟩
+  {full with entries := full.entries.set! 2 replacement}
+
+set_option maxRecDepth 32768 in
+/-- Nonempty descriptor prefixes must be present literally. A graph for only
+the added query, or a sign-equivalent replacement derivative, is insufficient. -/
+theorem prefix_kernel :
+    (full.selectedSigns? prefixed [DensePoly.C 2] #v[1]).isSome = true ∧
+    ((⟨#[⟨derivativeNode, none⟩], 0⟩ : Dag Rat Nat).selectedSigns?
+      prefixed [DensePoly.C 2] #v[1]).isSome = false ∧
+    (equivalentPrefix.selectedSigns? prefixed [DensePoly.C 2] #v[1]).isSome = false := by
+  simp only [Dag.selectedSigns?, prefixed_raw,
+    Dag.replay_eq, Dag.step_eq, full, equivalentPrefix, Replay.check, Node.check_eq, checkMoment_eq, queryPoly,
+    Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+/-- Both signs of X occur in the whole-line table for X²−1. The first derivative
+prefix selects +1; claiming the negative root's row must reject. -/
+def wholeLinePass : Bool :=
+  match Descriptor.validate Sturm.orderSign 7
+      {partialRaw with lower := .negInf, upper := .posInf} with
+  | none => false
+  | some d =>
+    match d.buildSigns [Sturm.Fixtures.x] with
+    | .error _ => false
+    | .ok s =>
+      let graph := Dag.encode s.evidence
+      (graph.selectedSigns? d [Sturm.Fixtures.x] #v[1]).isSome &&
+        (graph.selectedSigns? d [Sturm.Fixtures.x] #v[-1]).isNone &&
+        s.evidence.node.system.tableRows.toList.any (fun row => row.1 == [-1, -1])
+
+#guard wholeLinePass
+
+/-- Compare literal trees through their injective shared encoding. -/
 private def sameEvidence (left right : Replay Rat Nat) : Bool :=
   let l := Dag.encode left
   let r := Dag.encode right
@@ -98,8 +158,45 @@ def bytesPass : Bool :=
 
 #guard bytesPass
 
+@[expose] def keys : List Rat :=
+  full.signOperands source.raw.head source.raw.lower source.raw.upper ++
+    source.evidence.signOperands source.raw.head source.raw.lower source.raw.upper
+
+/-- Source validation is also transferred using its own finite dependencies. -/
+@[expose] def cachedSource : Descriptor Rat Nat (cachedSign keys) 7 := by
+  have he := source.evidence.check_sign_congr (cachedSign keys) Sturm.orderSign 7
+    source.raw.head source.raw.lower source.raw.upper source.raw.queries
+    (fun x hx => cachedSign_agrees keys x (by simp only [keys, List.mem_append]; exact Or.inr hx))
+  have hc : source.raw.check (cachedSign keys) 7 source.evidence = true := by
+    simpa only [RawDescriptor.check, he] using source.accepted
+  have h := RawDescriptor.check_eq hc
+  have ht : source.evidence.check (cachedSign keys) 7 source.raw.head
+      source.raw.lower source.raw.upper source.raw.queries = true := by
+    obtain ⟨ht, _⟩ := h.2.2
+    exact ht
+  exact Descriptor.ofTable source.raw source.evidence h.1 h.2.1 ht (by
+    obtain ⟨_, hone⟩ := h.2.2
+    exact hone)
+
+theorem cachedSource_raw : cachedSource.raw = source.raw := by
+  simp only [cachedSource, Descriptor.ofTable_raw]
+
+/-- Finite agreement transfers selected-query acceptance in the ordinary kernel
+without assuming a lawful sign function outside the source and graph keys. -/
+theorem cached_kernel :
+    (full.selectedSigns? cachedSource fullNode.queries #v[1, 1]).isSome = true := by
+  have he := full.selectedSigns_sign_congr (cachedSign keys) Sturm.orderSign 7
+    cachedSource source cachedSource_raw.symm fullNode.queries #v[1, 1]
+    (fun x hx => cachedSign_agrees keys x (by
+      simp only [keys, List.mem_append]
+      exact Or.inl (by simpa only [cachedSource_raw] using hx)))
+  have hs := congrArg Option.isSome he
+  simp only [Option.isSome_map] at hs
+  rw [hs]
+  exact graph_kernel.2.1
+
 /-- A finite sign cache validates the source descriptor separately, then checks
-all selected-query graph entries. Its arbitrary fallback is never required. -/
+all selected-query graph entries. Outside-key behavior is not assumed lawful. -/
 def cachedPass : Bool :=
   let keys := full.signOperands singletonRaw.head singletonRaw.lower singletonRaw.upper ++
     (Replay.leaf singletonNode).signOperands singletonRaw.head
@@ -135,6 +232,24 @@ def producedPass (qs : List (DensePoly Rat)) (expected : List Int) : Bool :=
 /-- info: 'Hex.SignDetMathlib.GraphSignsConformance.rejected_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms rejected_kernel
+/-- info: 'Hex.SignDetMathlib.GraphSignsConformance.prefix_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms prefix_kernel
+/-- info: 'Hex.SignDetMathlib.GraphSignsConformance.cached_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms cached_kernel
+/-- info: 'Hex.SignDet.Dag.selectedSigns_checked' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Dag.selectedSigns_checked
+/-- info: 'Hex.SignDet.Dag.selectedSigns_replay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Dag.selectedSigns_replay
+/-- info: 'Hex.SignDet.Dag.selectedSigns_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Dag.selectedSigns_encode
+/-- info: 'Hex.SignDet.Dag.decodeSigns_sign_congr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Dag.decodeSigns_sign_congr
 /-- info: 'Hex.SignDet.Dag.selectedSigns_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Dag.selectedSigns_evidence

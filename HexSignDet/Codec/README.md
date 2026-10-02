@@ -117,10 +117,11 @@ arbitrary-field root/sign semantics. JSON byte-parser roundtrip proofs,
 nested evidence transport, serialization cost measurements and the other
 Phase-4 obligations remain open.
 
-`Dag.decodeBytes_sign_congr` and `Dag.decodeDescriptor_sign_congr` preserve
+`Dag.decodeBytes_sign_congr`, `Dag.decodeDescriptor_sign_congr` and
+`Dag.decodeSigns_sign_congr` preserve
 exact errors and successful literal data when two sign functions agree on all
 operands of the actual decoded graph. This conditional agreement theorem needs
 no byte-roundtrip premise and does not discharge that separate obligation.
-Callers holding a decoded graph can use its `replay?` or `descriptor?` interface
-with `Dag.replay_sign_congr` or `Dag.descriptor_sign_congr`, reusing that graph
+Callers holding a decoded graph can use its `replay?`, `descriptor?` or `selectedSigns?` interface
+with the corresponding finite sign-congruence theorem, reusing that graph
 without parsing the same input again.

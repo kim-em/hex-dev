@@ -436,6 +436,11 @@ therefore a structurally valid false unreachable witness still rejects the
 whole checked graph. `Dag.descriptor?` checks raw shape and context before
 replay and agrees exactly with the tree descriptor interface on any accepted
 supplied graph's actual replay result.
+`Dag.selectedSigns?` binds the root query list to the descriptor's formal
+derivatives followed by the caller's ordered queries. It checks the exact
+claimed vector against the unique extending row of count one and agrees with
+`Descriptor.checkSigns` on an accepted graph's actual replay. Encoding checked
+selected-sign evidence must be accepted with the same literal signs and tree.
 
 `Dag.encode` uses exact equality for sharing; hashes only narrow lookup.
 Expansion recovers every encoded tree literally, and graph checking preserves
