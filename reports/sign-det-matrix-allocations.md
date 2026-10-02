@@ -60,8 +60,12 @@ The [retained dimension-callback attempt](data/sign-det-allocations/matrix-dimen
 has state `failed`. Its first native and instrumented answers agree, but the
 wrapper records no callback or allocation events, so the collector rejects the
 capture rather than reporting zero allocation. The generated C contains those
-forwarding definitions; they are absent from the linked executable's symbol
-inventory. The successful schedule selects the actual `runSolve` and `runCheck`
+forwarding definitions. A
+[post-capture inspection](data/sign-det-allocations/matrix-dimension-failed-25b179f5c/post-capture-inspection.json)
+of the executable with the same recorded hash retains its callback symbol
+inventory: the dimension forwarding functions are absent, while `runSolve`
+and `runCheck` are present. This later observation does not replace the
+original capture metadata. The successful schedule selects the actual `runSolve` and `runCheck`
 callbacks and expresses the same dimensions using their query-count parameter.
 The failed attempt remains retained, including its logs and raw empty event
 file; it supplies no allocation observation. No unchanged measurement is
@@ -70,12 +74,13 @@ rerun or completed observation discarded.
 Both collections retain the three controlled ABI checks and collector sources.
 Raw DHAT files and generated matrix C are stored losslessly with deterministic
 gzip compression. The regression suite verifies the fixed successful schedule,
-raw hashes and attribution, native and ordinary answers, repeat agreement,
+raw hashes and attribution, allocator inventories, native and ordinary answers, repeat agreement,
 report totals, generated callback ABI and failed-capture rejection. The source
 and executable hashes equal the
 [joint collection](data/sign-det-allocations/joint-25b179f5c/metadata.json);
 its retained source reconstruction applies to these same measured sources.
-The before/after hashes remain equal for both matrix schedules.
+The before/after hashes remain equal for both matrix schedules. The later
+inspection also binds the failed capture's native log and raw event file hashes.
 
 Reproduce the successful schedule on the measured source with installed
 Valgrind and its headers:
@@ -98,4 +103,5 @@ a successful computation. The original directories remain under
 This collection supplies allocation observations for the complete finite sign
 matrix solve and checker. Independent coefficient-height and nested-field
 families, live memory and the remaining Phase-4 requirements still need their
-own evidence. It does not complete #10377 or the separate rank obligation #10352.
+own evidence. Dimension 729 from the ordinary timing family is outside this
+allocation schedule. It does not complete #10377 or the separate rank obligation #10352.

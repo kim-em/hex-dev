@@ -40,6 +40,13 @@ class AllocationValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "expected wrapper"):
             capture.check_events(self.counts, dhat, "/capture/wrapper.so")
 
+    def test_zero_allocation_capture_rejects(self):
+        counts = {key: 0 for key in self.counts}
+        counts["callbacks"] = 1
+        dhat = {"mode": "ad-hoc", "ftbl": ["[root]"], "pps": []}
+        with self.assertRaisesRegex(ValueError, "no allocation events"):
+            capture.check_events(counts, dhat, "/capture/wrapper.so")
+
     def test_missing_hash_does_not_prove_result_equivalence(self):
         row = '{"schema_version":1,"function":"f","param":3,"status":"ok",' \
               '"inner_repeats":1,"cache_mode":"cold","result_hash":null}'
@@ -55,6 +62,13 @@ class AllocationValidationTests(unittest.TestCase):
         import hashlib
         import json
         from pathlib import Path
+        inventory = root / "allocator-symbols.txt"
+        self.assertEqual(capture.digest(inventory), meta["allocator_inventory"]["sha256"])
+        self.assertEqual(inventory.read_text().splitlines(),
+                         meta["allocator_inventory"]["defined_symbols"])
+        calls = root / "direct-mimalloc-calls.json"
+        self.assertEqual(capture.digest(calls), meta["direct_allocator_calls"]["sha256"])
+        self.assertEqual(json.loads(calls.read_text()), meta["direct_allocator_calls"]["targets"])
         expected = {"callbacks": 1, "overflow": 0, "lean_requests": 2, "lean_bytes": 64,
                     "mimalloc_requests": 2, "mimalloc_bytes": 56, "gmp_requests": 2, "gmp_bytes": 160}
         self.assertEqual(len(meta["self_checks"]), 3)
@@ -395,6 +409,7 @@ class AllocationValidationTests(unittest.TestCase):
 
     def test_retained_missing_callback_capture(self):
         import gzip
+        import hashlib
         import json
         from pathlib import Path
         root = Path(__file__).resolve().parents[2] / \
@@ -406,6 +421,18 @@ class AllocationValidationTests(unittest.TestCase):
         self.assertTrue(meta["source_unchanged"])
         self.assertEqual(meta["source_sha256"], meta["source_sha256_after"])
         self.assertEqual(meta["binary_sha256"], meta["binary_sha256_after"])
+        joint = json.loads((root.parent / "joint-25b179f5c/metadata.json").read_text())
+        for key in ["revision", "binary_sha256", "source_sha256"]:
+            self.assertEqual(meta[key], joint[key])
+        inspection = json.loads((root / "post-capture-inspection.json").read_text())
+        self.assertIn("post-capture", inspection["scope"])
+        self.assertEqual(inspection["binary_sha256"], meta["binary_sha256"])
+        symbols = root / "callback-symbols.txt"
+        self.assertEqual(capture.digest(symbols), inspection["callback_symbols_sha256"])
+        names = {line.split()[-1] for line in symbols.read_text().splitlines()}
+        prefix = "lp_Hex_Hex_SignDetBench_MaximalMatrix_"
+        self.assertTrue({prefix + name for name in ["runSolve", "runCheck"]} <= names)
+        self.assertFalse({prefix + name for name in ["runSolveDimension", "runCheckDimension"]} & names)
         self.check_self_checks(root, meta)
         self.check_callback_source(meta, "MaximalMatrix",
                                    "matrix-25b179f5c/generated-maximal-matrix.c.gz")
@@ -419,6 +446,8 @@ class AllocationValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "one nonoverflowing callback"):
             capture.counters(log.read_text())
         raw = gzip.decompress((root / "000.dhat.json.gz").read_bytes())
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), inspection["dhat_sha256"])
+        self.assertEqual(capture.digest(root / "000.native.log"), inspection["native_log_sha256"])
         self.assertEqual(json.loads(raw)["pps"], [])
         original = capture.benchmark_row((root / "000.native.log").read_text(),
                                          row["function"], row["parameter"])
