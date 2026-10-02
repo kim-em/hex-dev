@@ -227,6 +227,14 @@ representations. Both carriers may be noninjective, and finite/infinite bounds
 are included. No general Thom injectivity, Archimedean assumption or field
 instance on representation coefficients is required. These results use
 the proved shared Sturm–Tarski theorem.
+`Descriptor.root_map` in `HexSignDetMathlib.Embedding` proves that interpreting
+the same validated descriptor through an ordered embedding of real closed
+fields selects the image of its original root. The two coefficient
+interpretations must agree through that embedding. `Descriptor.root_comp`
+specializes this result to their composition and derives the target arithmetic
+and sign laws. These results include partial encodings, noninjective stored
+coefficients and finite or infinite endpoints. They change the semantic field;
+changes to stored coefficients or literal contexts still use checked conversion.
 `Comparison.eq_iff_root_eq` proves that a successful common-product comparison
 returns equality exactly when the original selected real roots coincide. It
 uses the common full derivative word and count-one descriptors.

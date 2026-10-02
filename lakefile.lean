@@ -609,7 +609,7 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
     `HexSignDetMathlib.CompletionProducer, `HexSignDetMathlib.Convert,
-    `HexSignDetMathlib.DagSelectedSigns,
+    `HexSignDetMathlib.DagSelectedSigns, `HexSignDetMathlib.Embedding,
     `HexSignDetMathlib.QueryHandle, `HexSignDetMathlib.TableProducer,
     `HexSignDetMathlib.ReencodingProducer, `HexSignDetMathlib.RootList,
     `HexSignDetMathlib.ReencodingRefinement, `HexSignDetMathlib.Thom,
