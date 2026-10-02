@@ -9,6 +9,7 @@ public import HexRCF.RealCoefficients
 public import HexBerlekamp.IrreducibilityElab
 public meta import HexBerlekampZassenhaus.FactorTactic
 public meta import HexRCF.RealCoefficients
+public meta import Lean.Elab.Command
 
 namespace Hex.RCF.AlgebraicDivision
 open RealCoefficients
@@ -24,6 +25,8 @@ theorem square_divisor : ∀ x : ℝ, x / Real.sqrt 4 = x / 2 := by rcf
 
 theorem mixed_square_alias : ∀ x : ℝ,
     x ^ 2 + Real.sqrt 4 - Real.sqrt 2 > 0 := by rcf
+
+theorem explicit_rpow : ∀ x : ℝ, x ^ 2 + Real.rpow 2 (1 / 3) > 0 := by rcf
 
 theorem lone_square_root : ∀ x : ℝ, x ^ 2 + Real.sqrt 3 > 0 := by rcf
 
@@ -164,6 +167,17 @@ example : ∀ x : ℝ, x ≤ 0 → 0 < x → 0 / (alpha.toReal - alpha.toReal) =
 example (a : ℝ) (h : a = Real.sqrt 2 - Real.sqrt 2) :
     ∀ x : ℝ, x ^ 2 + 0 / a ≥ 0 := by rcf
 
+open Lean Meta Qq in
+run_elab do
+  let saved ← saveState
+  try
+    for target in #[q(∃ x : ℝ, Real.sqrt 2 < x ∧ x < (3 : ℝ) / 2),
+        q(∃ x : ℝ, negativeRoot.toReal < x ∧ x < (3 : ℝ) / 2)] do
+      match ← CommonTactic.handle target with
+      | .declined => pure ()
+      | _ => throwError "rational guard changed single-coefficient handler priority"
+  finally saved.restore
+
 end Hex.RCF.AlgebraicDivision
 
 /-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.quotient_identity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -265,3 +279,7 @@ end Hex.RCF.AlgebraicDivision
 /-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.selected_cubic_reciprocal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.AlgebraicDivision.selected_cubic_reciprocal
+
+/-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.explicit_rpow' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.AlgebraicDivision.explicit_rpow

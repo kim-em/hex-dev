@@ -104,13 +104,6 @@ private meta def fieldArgs? (e : Expr) : MetaM (Option (Bool × Expr × Expr)) :
   -- proof, while its algebraic value and selected generator remain unchanged.
   return some (false, generator.appArg!, convertedArgs[1]!)
 
-private meta def directConversion (argument : Expr) : MetaM Bool := do
-  let some head ← unfoldHead? argument (fun e =>
-      e.isAppOfArity ``Selected.real 10 || e.isAppOfArity ``Selected.field 11 ||
-      e.isAppOfArity ``Coefficients.ofField 2 ||
-      e.isAppOfArity ``RealAlgebraicNumber.ofAlgebraic 2) | return false
-  return head.isAppOfArity ``RealAlgebraicNumber.ofAlgebraic 2
-
 private meta def coefficientProof (value expression : Expr) : MetaM Expr := do
   let goal ← mkAppM ``Eq #[value, expression]
   let candidate ← mkFreshExprMVar goal
@@ -169,6 +162,20 @@ private meta def candidate (target : Expr) : MetaM Bool := do
   if atom.isAppOfArity ``Real.sqrt 1 then
     return (← naturalSquareRoot? atom).isSome
   return atom.isAppOfArity ``RealAlgebraicNumber.toReal 1
+
+private meta def rationalGuards (divisors : Array Expr) : MetaM Bool := do
+  for divisor in divisors do
+    if !(sourceAtoms divisor #[]).isEmpty then return false
+    let value : Q(ℝ) := divisor
+    let result ← (do
+      let saved ← saveState
+      try
+        let ⟨_, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat value (_inst := q(inferInstance))
+        return true
+      catch _ => return false
+      finally saved.restore : MetaM Bool)
+    if !result then return false
+  return true
 
 /-- Classify the entire source before executing any algebraic construction.
 Unknown siblings must cause a decline before a recognized sibling can fail. -/
@@ -492,9 +499,10 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
           let hne ← mkAppM ``Field.coordinate_ne_zero #[compiled.expression, hcoeff]
           let proof := mkApp (← mkLambdaFVars #[inst] (mkApp reflect hne)) irred
           Hex.RCF.checkAxioms `Hex.RCF.RealCoefficients.CommonTactic.handle proof
-          let _ ← withOptions (fun opts =>
-              debug.skipKernelTC.set (Elab.async.set opts false) false) do
-            mkAuxTheorem (← inferType proof) proof (zetaDelta := true) (cache := false)
+          let _ ← withoutModifyingEnv do
+            withOptions (fun opts =>
+                debug.skipKernelTC.set (Elab.async.set opts false) false) do
+              mkAuxTheorem (← inferType proof) proof (zetaDelta := true) (cache := false)
         let mut compiled : Array (FieldCompile.Result p
             (SimpleRoot.ofSquare p s hw hp)) := #[]
         for coefficient in source.coefficients do
@@ -562,8 +570,9 @@ private meta partial def gather (source : Expr) (leaves : Array Expr) :
     | .ok source => pure source
     | .error (.unsupported _ _) => return .declined
     | .error error => return .failed (Hex.RealFormula.Reify.Error.toMessageData error)
-  if source.coefficients.size == 1 && source.divisors.isEmpty &&
-      (← Tactic.handlesCoefficient source.coefficients[0]!) then return .declined
+  if source.coefficients.size == 1 &&
+      (← Tactic.handlesCoefficient source.coefficients[0]!) &&
+      (← rationalGuards source.divisors) then return .declined
   let mut leaves := #[]
   for scalar in source.coefficients ++ source.divisors do
     let some next ← gather scalar leaves | return .declined

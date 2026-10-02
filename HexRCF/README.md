@@ -117,8 +117,7 @@ Closed arithmetic, natural powers and division for these inputs and positive
 natural square-root aliases compile into checked common-field coordinates.
 Every original divisor is checked before target cell search. Quotient replay
 checks a frozen multiplication identity without repeating inverse search.
-It binds the
-original isolation square to the literal selected-root replay, preserving the
+It binds the original isolation square to the literal selected-root replay, preserving the
 chosen embedding. Elaboration executes canonicalization; the kernel reduces
 the original polynomial and square identities, rather than canonicalization.
 These identities must reduce across imports. A transported isolation certificate
