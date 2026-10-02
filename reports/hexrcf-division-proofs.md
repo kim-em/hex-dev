@@ -25,6 +25,9 @@ and `Quot.sound` in its transitive axiom inventory.
 | Public olean bytes | 51,248 | 51,256 |
 | Private olean bytes | 603,000 | 603,000 |
 
+Fresh-module build times include Lake startup and replay of dependencies,
+as well as the target module's proof construction.
+
 The median paired direct-minus-wrapped margin is +0.013 s, with individual
 margins from −0.045 s to +0.071 s. These four observations do not resolve a
 cost difference. They show that both source forms produce ordinary proofs

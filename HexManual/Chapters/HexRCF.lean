@@ -539,10 +539,13 @@ wrapper. Both forms preserve the selected embedding.
 The two-square-root examples below combine `Real.sqrt 2` and `Real.sqrt 3`
 in one common field and check that each field coordinate names the intended
 positive root. This path accepts natural literal radicands when at least two
-distinct square roots occur in the goal. A lone `Real.sqrt 2` without division uses the earlier
-single-coefficient path; other positive natural square roots use the common-field
-frontend, including perfect-square radicands. The
+distinct square roots occur in the goal. A lone `Real.sqrt 2` whose original
+divisors are all rational uses the earlier single-coefficient path; other
+positive natural square roots use the common-field frontend, including
+perfect-square radicands. Algebraic divisors contribute generators even when
+their quotients cancel, so they can increase the common-field degree. The
 two-root examples use a larger heartbeat limit for the quartic common field.
+The retained measurements below do not measure that degree increase.
 The next examples mix Mathlib's `Real.sqrt 2` with a Hex root selected from
 `X² − 3`. They also use the ordinary `QAdjoin` element `1 + √3`, converted
 back to a real algebraic number. `rcf` checks each proposed common-field
@@ -848,8 +851,9 @@ rounds give median build times 10.441 and 10.443 seconds respectively, with
 median peak RSS 3.29 GiB in both arms. The median paired direct-minus-wrapped
 margin is +0.013 seconds; margins range from −0.045 to +0.071 seconds and do
 not resolve a cost difference. Both private olean files contain 603,000 bytes.
-This measures proof construction for one identity whose specialized equality
-atom is zero, without an import-only arm or a root-search scaling claim.
+These are fresh-module `lake build` wall times, including Lake startup and
+replay, for one identity whose specialized equality atom is zero. There is
+no import-only arm or root-search scaling claim.
 The [report and retained samples](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-division-proofs.md)
 record all eight arms and host activity, and retain the separate `b0c583792`
 snapshot. Each measurement is tied to its recorded source; later routing and

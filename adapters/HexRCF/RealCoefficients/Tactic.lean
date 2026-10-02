@@ -229,7 +229,8 @@ private meta def shiftedCoefficient (argument : Expr) : MetaM Bool := do
   return false
 
 /-- Inputs handled by the existing single-coefficient frontend. The common-field
-frontend uses the same predicate to preserve this handler's priority. Closed
+frontend uses the same predicate, together with rational original divisors,
+to preserve this handler's priority. Closed
 field computations are classified by their constructors, without reducing the
 canonical-number conversion merely to compare with a named fixture. -/
 meta def handlesCoefficient (coefficient : Expr) : MetaM Bool := do

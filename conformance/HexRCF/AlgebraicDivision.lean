@@ -73,6 +73,16 @@ private abbrev negativeRoot : RealAlgebraicNumber :=
     (by decide) (by decide) (by rfl) (by decide) (by decide)
     SquareTwo.checked SquareTwo.squarefree (by decide)
 
+theorem negative_rational_endpoint : ∃ x : ℝ,
+    negativeRoot.toReal < x ∧ x < (3 : ℝ) / 2 := by rcf
+
+set_option maxHeartbeats 5000000 in
+theorem cancelled_independent_divisor : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt 2 + 0 / Real.sqrt 3 > 0 := by rcf
+
+theorem mixed_divisors : ∀ x : ℝ,
+    x / 2 + 0 / Real.sqrt 2 = x / 2 := by rcf
+
 theorem negative_quotient : ∀ x : ℝ,
     x ^ 2 - 1 / negativeRoot.toReal > 0 := by rcf
 
@@ -283,3 +293,15 @@ end Hex.RCF.AlgebraicDivision
 /-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.explicit_rpow' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.AlgebraicDivision.explicit_rpow
+
+/-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.negative_rational_endpoint' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.AlgebraicDivision.negative_rational_endpoint
+
+/-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.cancelled_independent_divisor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.AlgebraicDivision.cancelled_independent_divisor
+
+/-- info: '_private.HexRCF.AlgebraicDivision.0.Hex.RCF.AlgebraicDivision.mixed_divisors' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.AlgebraicDivision.mixed_divisors

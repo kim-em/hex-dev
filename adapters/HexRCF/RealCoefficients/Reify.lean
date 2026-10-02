@@ -208,6 +208,9 @@ private def preflight (registered : Array Expr) (source : Expr) : FrontendM (Arr
     return .continue) (skipInstances := true)).run #[]
   return divisors
 
+/-- Replace variable-dependent division by multiplication with a closed
+reciprocal. The `1 / b` spelling leaves rational reciprocals in the shared
+reifier's supported grammar; algebraic reciprocals are abstracted below. -/
 private def normalize (source : Expr) : MetaM Expr :=
   Prod.fst <$> Meta.transformWithCache source {} (pre := fun e => do
     if isClosed e && (← isReal e) then return .done e
@@ -215,7 +218,7 @@ private def normalize (source : Expr) : MetaM Expr :=
       let args := e.getAppArgs
       let a : Q(ℝ) := args[4]!
       let b : Q(ℝ) := args[5]!
-      return .continue (some q($a * $b⁻¹))
+      return .continue (some q($a * ((1 : ℝ) / $b)))
     return .continue) (skipInstances := true)
 
 private partial def hasNamedSource (registered : Array Expr) (e : Expr) : MetaM Bool := do
@@ -311,7 +314,7 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
       let specialized := mkApp result.proof valuation
       let normalizedProofType ← mkAppM ``Iff #[mkApp result.source valuation, source]
       let goal ← mkFreshExprMVar normalizedProofType
-      let goals ← Lean.Elab.runTactic' goal.mvarId! (← `(tactic| (dsimp [Hex.RealFormula.append]; simp only [div_eq_mul_inv])))
+      let goals ← Lean.Elab.runTactic' goal.mvarId! (← `(tactic| (dsimp [Hex.RealFormula.append]; simp only [div_eq_mul_inv, one_mul])))
       unless goals.isEmpty do
         throwThe Hex.RealFormula.Reify.Error (.internal "failed to reconstruct the original source")
       let sourceProof ← mkAppM ``Iff.trans #[specialized, ← instantiateMVars goal]

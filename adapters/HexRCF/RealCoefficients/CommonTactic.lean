@@ -163,6 +163,8 @@ private meta def candidate (target : Expr) : MetaM Bool := do
     return (← naturalSquareRoot? atom).isSome
   return atom.isAppOfArity ``RealAlgebraicNumber.toReal 1
 
+/-- Preserve single-coefficient priority only when every original divisor
+is rational. Rational normalization restores its temporary metavariable state. -/
 private meta def rationalGuards (divisors : Array Expr) : MetaM Bool := do
   for divisor in divisors do
     if !(sourceAtoms divisor #[]).isEmpty then return false
