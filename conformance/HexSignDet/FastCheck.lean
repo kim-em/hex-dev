@@ -13,6 +13,7 @@ public meta import Lean.Data.Json.Printer
 public import HexSignDet.Codec.EvidenceLaws
 public import HexSignDet.Codec.NodeLaws
 public import HexSignDet.Codec.GraphLaws
+import all HexSignDet.Codec
 import all HexSignDet.Codec.Node
 public import HexPoly.InterpretTests
 public meta import HexPoly.InterpretTests
@@ -322,6 +323,29 @@ theorem graph_roundtrip :
     all_goals simp only [Codec.bindings]
     all_goals decide +kernel
   · decide +kernel
+
+/-- Actual byte parsing preserves the shared graph and its unreachable false
+node before any arithmetic replay runs. This has no resource/success premise. -/
+theorem graph_json_bytes :
+    Codec.Json.readBytes (literalGraph.encodeBytes ValueCodec.rat ValueCodec.nat) =
+      some (Codec.graph ValueCodec.rat ValueCodec.nat literalGraph) :=
+  Codec.encoded_graph _ _ _
+
+/-- Guarded byte decoding preserves this entire false graph; replay remains
+responsible for rejection. The premise is only the lexical resource policy. -/
+theorem graph_bytes (limits : Codec.Limits)
+    (bound : Codec.checkBytes limits (literalGraph.encodeBytes ValueCodec.rat ValueCodec.nat) = .ok ()) :
+    Codec.decodeGraph ValueCodec.rat ValueCodec.nat 7 singletonRaw.head
+      singletonRaw.lower singletonRaw.upper
+      (literalGraph.encodeBytes ValueCodec.rat ValueCodec.nat) limits = .ok literalGraph := by
+  unfold Codec.decodeGraph Dag.encodeBytes at *
+  rw [Codec.parse_write _ _ bound]
+  simp only [bind, Except.bind]
+  exact graph_roundtrip
+
+/-- info: 'Hex.SignDet.FastCheck.graph_bytes' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms graph_bytes
 
 #guard roundtrip literalGraph && !checked sharedParent.queries (encoded literalGraph)
 

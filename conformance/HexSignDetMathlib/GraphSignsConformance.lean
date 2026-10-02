@@ -161,7 +161,7 @@ def bytesPass : Bool :=
       (Dag.decodeSigns ValueCodec.rat ValueCodec.nat source fullNode.queries
         #v[0, 1] bytes).toOption.isNone &&
       (Dag.decodeSigns ValueCodec.rat ValueCodec.nat source fullNode.queries #v[1, 1]
-        (bytes.extract 0 (bytes.size - 1))).toOption.isNone
+        (bytes.extract 0 (bytes.size / 2))).toOption.isNone
   | _, _ => false
 
 #guard bytesPass

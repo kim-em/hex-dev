@@ -109,12 +109,12 @@ theorem read_graph (value : ValueCodec E) (ctx : ValueCodec Ctx)
   simp [readGraph, graph, tuple, array, Json.getArr_arr, bind, Except.bind, pure, Except.pure,
     Nat.not_le.mpr root, he]
 
-/-- Printing and guarded parsing preserve every JSON field literally. The
-only premise is the public lexical resource policy, not parser success. -/
-theorem parse_write (value : Json) (limits : Limits)
-    (bound : checkBytes limits value.writeBytes = .ok ()) :
-    parse limits value.writeBytes = .ok value := by
-  simp [parse, bound, Json.readBytes_write, bind, Except.bind, pure, Except.pure]
+omit [DecidableEq Ctx] in
+/-- The actual byte encoding preserves all supplied JSON fields, without
+any structural, arithmetic or parser-success hypothesis. -/
+theorem encoded_graph (value : ValueCodec E) (ctx : ValueCodec Ctx) (d : Dag E Ctx) :
+    Json.readBytes (d.encodeBytes value ctx) = some (graph value ctx d) :=
+  Json.readBytes_write _
 
 /-- The actual graph byte encoder and decoder preserve the entire supplied
 graph, including false arithmetic evidence and unreachable entries. -/

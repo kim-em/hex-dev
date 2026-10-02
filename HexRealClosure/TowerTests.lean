@@ -17,6 +17,11 @@ open SignDet.Codec (Json)
 private def registry : BaseContext.Registry := fun _ => none
 private def rejected (result : Except String α) : Bool := result.toOption.isNone
 
+private def bytesRoundtrip [DecidableEq α] (codec : ValueCodec α) (value : α) : Bool :=
+  match codec.decodeBytes (codec.encodeBytes value) with
+  | .ok actual => decide (actual = value)
+  | .error _ => false
+
 private def samePayload (a b : Serialized) : Bool :=
   decide (a.binding = b.binding) &&
     match Literal.ofJson a.value, Literal.ofJson b.value with
@@ -119,11 +124,16 @@ private def sample : Option (Array Bool) :=
     decide ((Signature.codec.decode (Signature.codec.encode third.context.signature)).toOption =
       some third.context.signature),
     decide (((contextCodec base.signature).decode
-      ((contextCodec base.signature).encode third.context.signature)).toOption = some third.context.signature)]
+      ((contextCodec base.signature).encode third.context.signature)).toOption = some third.context.signature),
+    bytesRoundtrip Signature.codec third.context.signature,
+    bytesRoundtrip (contextCodec base.signature) third.context.signature,
+    bytesRoundtrip first.context.codec semanticOne,
+    bytesRoundtrip third.context.codec c]
 
 /--
 info: some #[true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-  true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true]
+  true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+  true, true, true, true]
 -/
 #guard_msgs in
 #eval sample
