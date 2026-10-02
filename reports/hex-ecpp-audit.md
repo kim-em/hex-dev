@@ -140,3 +140,11 @@ and links native arithmetic without any Mathlib directory or dependency.
 `audit/split.json` retains all source fingerprints and build output;
 `scripts/release/check_ecpp_split.py` reproduces that validation. The companion
 correspondence section is reserved for #10586 and coordinated on that issue.
+
+The managed mirror workflow, closure pins and aggregate/manual integration
+pass the release manifest checks. `audit/release-dry-run.json` retains the
+successful guarded GitHub workflow and local preview, using the live baseline
+and no force override. The initial repository contains only its unmanaged
+Lake skeleton; no published managed source was edited. A real coordinated
+sync must publish current prerequisites first and have the new repository
+selected in an approved publishing token, as required by `PLAN/Releases.md`.
