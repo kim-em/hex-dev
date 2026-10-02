@@ -1,0 +1,15 @@
+{
+  "source_directory": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-checkDeficient",
+  "source_patch_sha256": "48fe195476a3aaf6d387e53c1d3946ed900c9c7072a01cde3514cb4913989b5c",
+  "completed_commands": [
+    "checkDeficient"
+  ],
+  "sha256": {
+    "metadata.json": "b4d2512cf19ed04bd29d7e05a8732ca28784179603ed42091a6c836f25aa459c",
+    "completion.json": "4e9cae3abcd0de095ed99a22167719e05b743927d8665fd30ea81fa65765d9cd",
+    "checkDeficient.json": "80a4ea1a004589d5ce1b2ef8c4e9ca22e9ae357abcea8973c47daadcd90273c8",
+    "checkDeficient.txt.gz": "a583b796950eba8552f58651de5fc41ba6f1ea48652406dfc0c0327113a2841a",
+    "source.patch.gz": "fd715f13f77426b5395f9471bf14c37e0eb6d757fb49356b8ab6b4328fbc5853",
+    "commands.jsonl": "47bb4c87668362d0e8946979d6832cf85b81a4c75af789960929ba482bf488bb"
+  }
+}

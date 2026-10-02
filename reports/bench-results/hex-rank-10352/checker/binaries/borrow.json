@@ -1,0 +1,13 @@
+{
+  "revision": "1a9f17f84ea9389255d38df58c6663d210cd2f6e",
+  "binary_sha256": "fead3a3426e008586315d41ddc661f430ee81d8981fb0fb768490efb24e1e2fd",
+  "source_sha256": {
+    "HexRank/Polynomial.lean": "3a6a6499ce0e89e1918cb9460e25b1b9dfa8f0b44ff9219edcb687e70feb4088",
+    "HexRank/PolyProduce.lean": "df0bc7c380cfa303f88de4d36570510db443d6e191c760efa3935bbf088224d5",
+    "bench/HexRank/Bench/Quotient.lean": "8f26e70e81dffb9b5941000e395b27343bf0718c2bbf18a247a1dabed94a6801",
+    "bench/HexRank/Bench.lean": "26228d15443ec6fff455fc38566c1b99115f6f276f1bad1f0f3ce57dbe8c179c",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56"
+  },
+  "runtime_patch": "diff --git a/HexRank/Polynomial.lean b/HexRank/Polynomial.lean\nindex 50c1d03ea..3e7156570 100644\n--- a/HexRank/Polynomial.lean\n+++ b/HexRank/Polynomial.lean\n@@ -73,6 +73,40 @@ integer equality. Recursion is structural on the first list. -/\n   | a :: as, b :: bs => add (mul a b) (dot as bs)\n   | _, _ => []\n \n+private theorem add_assoc (a b c : List Int) : add (add a b) c = add a (add b c) := by\n+  induction a generalizing b c with\n+  | nil => simp [add]\n+  | cons a as ih =>\n+    cases b with\n+    | nil => simp [add]\n+    | cons b bs =>\n+      cases c with\n+      | nil => simp [add]\n+      | cons c cs => simp [add, ih, Int.add_assoc]\n+\n+-- Rows are read-only. Borrow their spines so each dot avoids reference-count\n+-- writes along both rows; the polynomial accumulator remains owned.\n+private def dotAcc (a b : @& List (List Int)) (acc : List Int) : List Int :=\n+  match a, b with\n+  | a :: as, b :: bs => dotAcc as bs (add acc (mul a b))\n+  | _, _ => acc\n+\n+private theorem dotAcc_eq (a b : List (List Int)) (acc : List Int) :\n+    dotAcc a b acc = add acc (dot a b) := by\n+  induction a generalizing b acc with\n+  | nil => cases acc <;> simp [dotAcc, dot, add]\n+  | cons a as ih =>\n+    cases b with\n+    | nil => cases acc <;> simp [dotAcc, dot, add]\n+    | cons b bs => simp [dotAcc, dot, ih, add_assoc]\n+\n+/-- Native dot product with a tail-recursive accumulator. -/\n+def dotImpl (a b : @& List (List Int)) : List Int := dotAcc a b []\n+\n+@[csimp] theorem dot_eq_impl : @dot = @dotImpl := by\n+  funext a b\n+  simp [dotImpl, dotAcc_eq, add]\n+\n /-- List access with a supplied zero value. -/\n @[expose] def nth {\u03b1 : Type} (zero : \u03b1) : List \u03b1 \u2192 Nat \u2192 \u03b1\n   | [], _ => zero\n"
+}

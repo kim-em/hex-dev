@@ -31,6 +31,7 @@ def main():
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--profiler-root', type=Path, required=True)
     parser.add_argument('--bench', type=Path, default=ROOT / '.lake/build/bin/hexrank_bench')
+    parser.add_argument('--source-record', type=Path, help='Source record for a frozen executable, with revision and binary_sha256.')
     parser.add_argument('--quotient', action='store_true', help='Profile the separate native quotient producer at dimension 32.')
     parser.add_argument('--worst-gap', action='store_true', help='Profile the eligible rational dense comparison at dimension 128.')
     parser.add_argument('--case', help='One Hex.RankBench-relative case, for an unexpected result.')
@@ -53,6 +54,13 @@ def main():
             'samply_version': subprocess.check_output(['samply', '--version'], text=True).strip(),
             'perf_version': subprocess.check_output(['perf', '--version'], text=True).strip(),
             'commands': [], 'environment_overrides': [], 'failures': []}
+    if args.source_record:
+        source = json.loads(args.source_record.read_text())
+        if source['binary_sha256'] != meta['binary_sha256']:
+            parser.error('frozen executable differs from its source record')
+        meta['runner_revision'] = meta['revision']
+        meta['revision'] = source['revision']
+        meta['binary_provenance'] = source
     def run(command, env=None):
         meta['commands'].append(command)
         meta['environment_overrides'].append({key: env[key] for key in

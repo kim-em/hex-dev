@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the compiled public producers use the proved array reduction.
+"""Check rank computation uses its proved array compiler replacements.
 
 Run after lake build hexrank_bench. A source import check would miss changes in
 compiler replacement visibility, which originally let the reference reducer
@@ -13,3 +13,13 @@ calls = re.findall(r'=\s*\w+_rowReduceWith(Impl)?(?:___\w+)?\(', source)
 if len(calls) < 3 or any(call != 'Impl' for call in calls):
     raise SystemExit('public rank producers no longer consistently call rowReduceWithImpl')
 print(f'check_rank_compiler: {len(calls)} array-reduction calls, no reference calls')
+
+source = Path('.lake/build/ir/HexRank/Polynomial.c').read_text()
+definition = re.search(r'^LEAN_EXPORT uint8_t \w+_checkRankPoly\([^;\n]+\)\{', source, re.M)
+if definition is None:
+    raise SystemExit('cannot find compiled checkRankPoly definition')
+body = source[definition.end():].split('\nLEAN_EXPORT ', 1)[0]
+calls = re.findall(r'=\s*\w+_lowerCheck(Impl)?\(', body)
+if calls != ['Impl']:
+    raise SystemExit('compiled quotient checker no longer uses lowerCheckImpl')
+print('check_rank_compiler: quotient checker compacts rows inside its timed call')

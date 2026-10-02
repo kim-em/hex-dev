@@ -1,0 +1,15 @@
+{
+  "source_directory": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/borrow-checkFull",
+  "source_patch_sha256": "9a2de919e674870cee4f4b5297d0105e5a5f54c94547dc5e85821b5c798ee299",
+  "completed_commands": [
+    "checkFull"
+  ],
+  "sha256": {
+    "metadata.json": "0e94c9f88a585d21a930720192c4ec8d6989065409f6d2ff832c3e941fe3c8a7",
+    "completion.json": "75036bd49ea10322e6c22aa5b3b89f945f5d622bedb1cd402b33c7cf86be3291",
+    "checkFull.json": "3883e8c4c41b18a9d03401ef8e0221bf42c493ab0338a0ae9484b19a33691ee1",
+    "checkFull.txt.gz": "dddc0998d54061d1fa8581944c5b7e707578ad19a50cce535913a4575409430d",
+    "source.patch.gz": "fd67402a645df90ffb011a7d84bc3d3c5d84709f75e366bde24b381dc0722c92",
+    "commands.jsonl": "54eb8b270ce550b3ec40804d3b2621bcb57a396dc42d7e3ed9587a75aac87c1b"
+  }
+}

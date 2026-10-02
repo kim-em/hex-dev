@@ -1,0 +1,15 @@
+{
+  "source_directory": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/selection-pivotColsDeficient",
+  "source_patch_sha256": "ade43426a997fb9513b8ac3a120938fa77d4caad8f0f5c72ea79eaeeee25205f",
+  "completed_commands": [
+    "pivotColsDeficient"
+  ],
+  "sha256": {
+    "metadata.json": "47cdb2328b476c3fcad244d885a4c03078e2928a2e42e06f27ab4fd5ea5ac69d",
+    "completion.json": "a836fa028973177cb5567a1a67109db14428e1bf59dc279c1d857ef373af2b54",
+    "pivotColsDeficient.json": "ca037532a94d7bf7fc06428c6adaa47e98e12692bca418038afdcf08215f6de5",
+    "pivotColsDeficient.txt.gz": "8437183a71dbf0e4d831ce11f874ff7825131e9e72600ce682c3d93c8a9d77c3",
+    "source.patch.gz": "247338e4dabe5373ab43b95f8a8e1865831d64af9af7dd67d7fcac91b950c3d9",
+    "commands.jsonl": "f3c0515fb81397f875d5433fde4cba1ed12d888e032cdcc2975d34cc9e08cd8c"
+  }
+}
