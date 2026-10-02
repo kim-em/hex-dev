@@ -430,9 +430,18 @@ class AllocationValidationTests(unittest.TestCase):
         symbols = root / "callback-symbols.txt"
         self.assertEqual(capture.digest(symbols), inspection["callback_symbols_sha256"])
         names = {line.split()[-1] for line in symbols.read_text().splitlines()}
-        prefix = "lp_Hex_Hex_SignDetBench_MaximalMatrix_"
-        self.assertTrue({prefix + name for name in ["runSolve", "runCheck"]} <= names)
-        self.assertFalse({prefix + name for name in ["runSolveDimension", "runCheckDimension"]} & names)
+        full = gzip.decompress((root / "defined-symbols.txt.gz").read_bytes())
+        self.assertEqual(hashlib.sha256(full).hexdigest(), inspection["defined_symbols_sha256"])
+        self.assertEqual(inspection["command"][:2], ["nm", "--defined-only"])
+        token = inspection["filter_contains"]
+        self.assertEqual(symbols.read_text().splitlines(),
+                         [line for line in full.decode().splitlines() if token in line])
+        successful = json.loads((root.parent / "matrix-25b179f5c/metadata.json").read_text())
+        present = {c["symbol"] for c in successful["callbacks"].values()}
+        absent = {c["symbol"] for c in meta["callbacks"].values()}
+        self.assertTrue(all(token in name for name in present | absent))
+        self.assertTrue(present <= names)
+        self.assertFalse(absent & names)
         self.check_self_checks(root, meta)
         self.check_callback_source(meta, "MaximalMatrix",
                                    "matrix-25b179f5c/generated-maximal-matrix.c.gz")

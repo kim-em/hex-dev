@@ -126,7 +126,7 @@ At size 729, median process peak RSS is 119.785 MiB for solve and 119.406 MiB
 for check. These observations include input preparation and process startup;
 they are not allocation counts or isolated callback memory. All allocation
 counters in these lean-bench records remain absent; the separate
-[allocation collection](sign-det-matrix-allocations.md) measures requested
+[allocation collection](sign-det-matrix-allocations.md) measures intercepted request
 bytes at sizes 3 through 243. Smaller sizes use repeated inner calls; solve uses
 one call per sample at sizes 81 and above, while check uses one at sizes 243
 and 729. The [table data](data/sign-det-maximal-matrices/ff35bd9da-dimensions/table.json)

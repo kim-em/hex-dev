@@ -59,11 +59,13 @@ ordinary report's inconclusive running-time verdicts.
 The [retained dimension-callback attempt](data/sign-det-allocations/matrix-dimension-failed-25b179f5c/metadata.json)
 has state `failed`. Its first native and instrumented answers agree, but the
 wrapper records no callback or allocation events, so the collector rejects the
-capture rather than reporting zero allocation. The generated C contains those
+capture through its one-callback counter check. A separate adversarial test
+checks rejection when a callback is recorded but all request counts are zero;
+truly zero-allocation callbacks are outside this capture method. The generated C contains those
 forwarding definitions. A
 [post-capture inspection](data/sign-det-allocations/matrix-dimension-failed-25b179f5c/post-capture-inspection.json)
 of the executable with the same recorded hash retains its callback symbol
-inventory: the dimension forwarding functions are absent, while `runSolve`
+inventory, its full unfiltered output, exact command and tool version: the dimension forwarding functions are absent, while `runSolve`
 and `runCheck` are present. This later observation does not replace the
 original capture metadata. The successful schedule selects the actual `runSolve` and `runCheck`
 callbacks and expresses the same dimensions using their query-count parameter.
@@ -80,7 +82,8 @@ and executable hashes equal the
 [joint collection](data/sign-det-allocations/joint-25b179f5c/metadata.json);
 its retained source reconstruction applies to these same measured sources.
 The before/after hashes remain equal for both matrix schedules. The later
-inspection also binds the failed capture's native log and raw event file hashes.
+inspection also records hashes of the retained failed native log and raw event
+file; those two hashes were not recorded at capture.
 
 Reproduce the successful schedule on the measured source with installed
 Valgrind and its headers:

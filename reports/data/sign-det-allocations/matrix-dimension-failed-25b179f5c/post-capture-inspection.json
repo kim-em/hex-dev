@@ -1,7 +1,15 @@
 {
-  "scope": "post-capture inspection of the unchanged measured executable and retained failed-capture files",
+  "scope": "post-capture inspection of the unchanged measured executable; retained failed native-log and raw-event hashes were not recorded at capture",
   "binary_sha256": "3beb9e7ca54d5748da0a157e6eea416b2b0307f264d380651f2f066f4858bb28",
   "callback_symbols_sha256": "a476528a183c88a1677ebb35d51f708300fee7b0084dc7f0e0f7cd5316862241",
   "native_log_sha256": "da4b499bd0d8f10e3dced906909a3d3d37eeb6e3e5f28436fe2945a461e895eb",
-  "dhat_sha256": "14acee9d283a678d5d9eb14c4765188ad11b1c210385d9540ff7b67229f70a8e"
+  "dhat_sha256": "14acee9d283a678d5d9eb14c4765188ad11b1c210385d9540ff7b67229f70a8e",
+  "command": [
+    "nm",
+    "--defined-only",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-allocation/.lake/build/bin/hexsigndet_bench"
+  ],
+  "nm_version": "GNU nm (GNU Binutils) 2.46\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n",
+  "defined_symbols_sha256": "246cb764076d762f13c459fd3744268005ddbcd104f8f7fc5e051e28d1128aac",
+  "filter_contains": "lp_Hex_Hex_SignDetBench_MaximalMatrix_"
 }
