@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.RootFactors
+public import HexRealClosure.CompleteRoots
 
 public section
 
@@ -41,9 +41,13 @@ private def run : IO Unit := do
   let linear := x - 3
   let p := DensePoly.scale (-3) (x * x * quadratic * quadratic * quadratic *
     linear * linear * linear * linear * linear)
-  let .ok (.finite entries) := Roots.assemble Sturm.orderSign (10378 : Nat) p
-    | throw (IO.userError "repeated-factor root assembly failed")
+  let .finite entries := Roots.roots Sturm.orderSign (10378 : Nat) p
+    | throw (IO.userError "repeated-factor complete roots failed")
   require (entries.length == 4) "wrong root count after Yun and zero extraction"
+  require (entries.map (·.multiplicity) == [3, 2, 3, 5]) "sorted multiplicities were detached"
+  for (left, right) in entries.zip entries.tail do
+    require ((left.root.compare right.root).toOption == some .lt)
+      "complete roots are not strictly increasing across factors"
   let mut counts := #[0, 0, 0, 0]
   for entry in entries do
     match entry.root.compare (.point 0), entry.root.compare (.point 3) with

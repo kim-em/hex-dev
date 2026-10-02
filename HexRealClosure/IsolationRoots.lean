@@ -115,6 +115,19 @@ def complete? (sign : E → Int) (context : Ctx) (p : DensePoly E) :
     | .error error => .error error
     | .ok roots => .ok (some ⟨search, roots, h⟩)
 
+/-- Successful dispatch and completion give the actual checked wrapper result. -/
+theorem complete?_of_search {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    (search : Search sign p) (searched : search? sign p = some search)
+    (roots : Output sign context) (completed : search.route.complete context = .ok roots) :
+    ∃ result, complete? sign context p = .ok (some result) := by
+  unfold complete?
+  simp only [searched]
+  split
+  · rename_i error failed
+    rw [completed] at failed
+    cases failed
+  · exact ⟨_, rfl⟩
+
 /-- An absent completed domain came from a failed search. -/
 theorem complete?_none_search {sign : E → Int} {context : Ctx}
     {p : DensePoly E} (absent : complete? sign context p = .ok none) :

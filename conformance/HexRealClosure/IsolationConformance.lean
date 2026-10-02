@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.RootFactors
+public import HexRealClosure.CompleteRoots
 public import HexRealClosure.AlgebraicContext
 public import HexSignDet.Codec
 public import HexOrderedFn.Infinitesimal
@@ -59,10 +59,9 @@ private def emitAssembly {E : Type} [Zero E] [DecidableEq E] [One E] [Add E]
     [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E] [Div E]
     (name : String) (sign : E → Int) (encode : E → Json) (p : DensePoly E)
     (context : Nat := 10378) (base : Option Json := none) : IO Unit := do
-  let output := match Roots.assemble sign context p with
-    | .error error => Json.mkObj [("error", .str (reprStr error))]
-    | .ok .all => Json.mkObj [("kind", .str "all")]
-    | .ok (.finite entries) => Json.mkObj [("kind", .str "finite"),
+  let output := match Roots.roots sign context p with
+    | .all => Json.mkObj [("kind", .str "all")]
+    | .finite entries => Json.mkObj [("kind", .str "finite"),
         ("entries", .arr (entries.toArray.map fun entry =>
           let root := match entry.root with
             | .point value => Json.mkObj [("kind", .str "point"), ("value", encode value)]
