@@ -426,13 +426,18 @@ their literals exceed the compiler's recursion limits at larger degrees.
 
 ### Producer
 
-`Kernel.certify (S : Array (Perm n)) : Kernel.Certificate` is computed from the
-complete chain of `Group.ofGenerators S`: it drops singleton levels, packs the
-data, computes inverse transversals, and records Schreier-tree parents and
-next-level indices. Prove `Kernel.check_certify`: `Kernel.check n
-(S.toList.map pack) (certify S) = true`. Its generators at each level are the
-chain's symmetric working arrays, and each retained next-level generator is a
-Schreier generator of the level, so items 2 and 6 hold by construction.
+`Kernel.certify (S : Array (Perm n)) : Except String Kernel.Certificate` is
+computed from the complete chain of `Group.ofGenerators S`: it drops singleton
+levels, packs the data, computes inverse transversals, and records
+Schreier-tree parents and next-level indices. Its generators at each level are
+the chain's symmetric working arrays, and each retained next-level generator is
+a Schreier generator of the level, so items 2 and 6 hold by construction. It
+reports an error, rather than a certificate, if a parent edge or a next-level
+index cannot be found. The producer is untrusted: soundness rests on
+`Kernel.check` alone. No theorem states that the producer always succeeds and
+is accepted, since its proof would have to follow the internal order of
+`Group.ofGenerators` and its normalization. Conformance tests instead that
+`Kernel.check` accepts `Kernel.certify S` on every input of its corpus.
 
 The soundness theorems are stated and proved in `HexPermGroupMathlib`: see
 [Kernel replay in Mathlib](#kernel-replay-in-mathlib).
