@@ -36,7 +36,10 @@ accepted certificates over an ordered real closed field. `query_sound` and
 `queryPrepared_sound` apply it to the ordinary and prepared producers;
 `query_count`, `query_sign` and `query_bound` give counts, singleton signs and
 degree bounds. `query_nonneg` justifies the exact natural-number conversion in
-`Sturm.rootCount`, whose success domain is unchanged.
+`Sturm.rootCount`, whose success domain is unchanged. `rootCount_sturm`
+also bridges successful finite-dyadic natural counts to the existing half-open
+integer Sturm count after positive denominator clearing; it does not change
+that API's upper-endpoint-root behavior.
 `countPrepared_sound` relates the actual prepared count to the number of
 distinct roots in its current open interval through the proved shared theorem.
 `countPrepared_nonneg` proves nonnegativity under the same coefficient laws

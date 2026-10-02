@@ -1139,7 +1139,8 @@ lean_lib HexConformance where
 
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks,
       `HexRealAlgebraic.FieldSignConformance, `HexNumberField.ComplexChecks,
-      `HexRealAlgebraic.ReprChecks, `HexRealAlgebraicMathlib.FieldSignConformance].map Glob.one
+      `HexRealAlgebraic.ReprChecks, `HexRealAlgebraicMathlib.FieldSignConformance,
+      `HexRealAlgebraicMathlib.Audit].map Glob.one
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
@@ -1814,6 +1815,10 @@ lean_lib HexSignDetBenchSupport where
 lean_exe hexrealalgebraic_bench where
   srcDir := "bench"
   root := `HexRealAlgebraic.Bench
+
+lean_lib HexSturmBenchSupport where
+  srcDir := "bench"
+  globs := #[.one `HexSturm.Frontend]
 
 lean_exe hexsturm_bench where
   srcDir := "bench"

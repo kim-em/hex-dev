@@ -60,6 +60,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexGF2BenchSupport",
     "HexRankBenchSupport",
     "HexSignDetBenchSupport",
+    "HexSturmBenchSupport",
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
     "HexPrimalityElabProbe",

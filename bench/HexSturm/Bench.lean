@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexSturm
+import HexSturm.Frontend
 import LeanBench
 import Lean.Data.Json
 

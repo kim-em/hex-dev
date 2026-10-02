@@ -241,8 +241,8 @@ sqrt? : RealAlgebraicNumber → Option RealAlgebraicNumber
 sqrt (a : RealAlgebraicNumber) (h : 0 ≤ a) : RealAlgebraicNumber
 ```
 
-`sqrt? a` returns `none` exactly when `a < 0`. Otherwise solve `X² - a` with
-the real-root API and select its unique nonnegative root. At zero it returns
+`sqrt? a` returns `none` exactly when `a < 0`. Otherwise delegate to the underlying algebraic principal square root,
+the unique nonnegative real root of `X² - a`. At zero it returns
 zero. The proof-taking total form uses the same computation; classify its
 fallback as unreachable by `sqrt?_isSome` under `0 ≤ a`. Also name and prove
 the internal root-selection success lemma `sqrtRoot?_isSome` under that

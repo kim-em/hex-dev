@@ -7,10 +7,10 @@ or distribution attestation.
 
 | Library | Implemented/proved coverage | Phase requirements still to discharge | Evidence |
 | --- | --- | --- | --- |
-| HexSturm | Shared ordered-domain kernel; guarded queries and exact-domain natural counts; prepared domains, retargeting, counts, cached replay and literal certificate transport | Independent Phase-2 token, Phase-3 attestation; complete Phase-4 frontend operation registrations, comparison and profile coverage | `HexSturm/Basic.lean`, `Transport.lean`, `conformance/HexSturm/Conformance.lean`, [performance report](hex-sturm-performance.md) |
-| HexSturmMathlib | Domain equivalence, prepared bindings, producer acceptance, representation congruence and rational/integer whole-Option agreement; root-sum semantics, count equality and bounds in development adapters | Independent Phase-2 token and dependency-ordered Phase-3/4 attestation; no dedicated performance deliverable for this theorem-only layer | `Domain`, `Compare`, `Rational`, `DenominatorClearing`, `IntCast`; `adapters/HexSturmMathlib/Soundness.lean`; ordinary-kernel `Replay` tests |
-| HexRealAlgebraic | Real subtype, independent rational fast path, canonical arithmetic/order, rounding, square roots, integer and algebraic-coefficient real roots, complex norms | Independent Phase-2 token, Phase-3 attestation; new compiled target observations need justified performance modes, budgets, comparator and profile evidence | `conformance/HexRealAlgebraic`, pinned FLINT/qqbar oracle and fixtures; `bench/HexRealAlgebraic/Bench.lean` |
-| HexRealAlgebraicMathlib | Arithmetic/order and closure, law/dictionary coherence, rational recognition, rounding, approximation, Repr round trip, roots completeness/multiplicity/strict order and real closedness | Independent Phase-2 token and dependency-ordered Phase-3/4 attestation; no dedicated performance deliverable for this theorem-only layer | `HexRealAlgebraicMathlib/Instances.lean`, `Roots.lean`, `RealClosed.lean`, new `Audit.lean` |
+| HexSturm | Shared ordered-domain kernel; guarded queries and exact-domain natural counts; prepared domains, retargeting, counts, cached replay and literal certificate transport | Phase-3 attestation; prepared nonconstant-query, infinite-endpoint and literal-transport performance coverage | `HexSturm/Basic.lean`, `Transport.lean`, `conformance/HexSturm/Conformance.lean`, [performance report](hex-sturm-performance.md) |
+| HexSturmMathlib | Domain equivalence, prepared bindings, producer acceptance, representation congruence and rational/integer whole-Option agreement; root-sum semantics, count equality and bounds in development adapters | Dependency-ordered Phase-3/4 attestation; no dedicated performance deliverable for this theorem-only layer | `Domain`, `Compare`, `Rational`, `DenominatorClearing`, `IntCast`; `adapters/HexSturmMathlib/Soundness.lean`; ordinary-kernel `Replay` tests |
+| HexRealAlgebraic | Real subtype, rational recognition and toRat?-first rounding, canonical arithmetic/order, rounding, square roots, integer and algebraic-coefficient real roots, complex norms | Phase-3 attestation; fixed-operation observations need justified performance modes and budgets | `conformance/HexRealAlgebraic`, pinned FLINT/qqbar oracle and fixtures; `bench/HexRealAlgebraic/Bench.lean` |
+| HexRealAlgebraicMathlib | Arithmetic/order and closure, law/dictionary coherence, rational recognition, rounding, approximation, Repr round trip, roots completeness/multiplicity/strict order and real closedness | Dependency-ordered Phase-3/4 attestation; no dedicated performance deliverable for this theorem-only layer | `HexRealAlgebraicMathlib/Instances.lean`, `Roots.lean`, `RealClosed.lean`, new `conformance/HexRealAlgebraicMathlib/Audit.lean` |
 
 ## Semantic availability
 
@@ -27,7 +27,7 @@ in `HexNumberFieldMathlib/Nearest.lean`; the subtype's `compare_eq` consumes
 them. `RealAlgebraicPoly.contains_roots_iff`, `roots_all_iff`,
 `roots_multiplicity` and `roots_sorted` prove the required real-polynomial
 contracts, including zero's universal root set. The new ordinary-kernel axiom
-guards check these obligations separately from the field-law witness.
+guards check the dependencies of these named correspondence theorems.
 
 RealAlgebraicNumber operations remain independent of HexSturm, HexSignDet and
 HexRealClosure. Rational recognition uses the canonical linear polynomial;
@@ -64,8 +64,8 @@ Local Lake builds pass for all four libraries and `HexQuerySemantics`.
 The expanded real-algebraic conformance module and `HexRealAlgebraicMathlib.Audit`
 compile. The axiom guards admit exactly `propext`, `Classical.choice`, and
 `Quot.sound`; no new axiom, admission or native_decide is introduced.
-The new Mathlib-free benchmark target compiles and all 31 smoke cases pass.
+The new Mathlib-free benchmark target compiles and all shipped-API verification cases pass.
 [Retained fixed-case baseline observations](bench-results/real-algebraic-readiness-baseline/results.json)
 are not performance attestation: their 30-second operational caps are not
-justified regression budgets. Independent review, oracle verification and CI
-remain required before further phase advancement.
+justified regression budgets. Independent review tokens are present; compiled conformance and the pinned
+83-case exact oracle pass. Full required CI gates further phase advancement.

@@ -12,28 +12,9 @@ public import HexRealAlgebraicMathlib.Rounding
 public import HexRealAlgebraicMathlib.Norm
 public section
 
-/-! Ordinary-kernel trust checks for the implemented real-algebraic surface.
-These guards cover comparison and polynomial roots independently of the field
-law witness, as well as the rational fast path and the total wrapper fallbacks.
-No theorem-application timing is a computational performance attestation. -/
-
-open Hex
-
-example (a b : RealAlgebraicNumber) :
-    RealAlgebraicNumber.compare a b = a.toAlgebraic.realCompareExact b.toAlgebraic := by
-  exact (RealAlgebraicNumber.compare_eq a b).trans
-    (AlgebraicNumber.realCompareExact_eq _ _ a.property b.property).symm
-
-example (q : Rat) : (RealAlgebraicNumber.ofRat q).toRat? = some q :=
-  (RealAlgebraicNumber.toRat?_eq_some _ _).mpr rfl
-
-/-- info: 'Hex.AlgebraicNumber.realCompare_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.AlgebraicNumber.realCompare_eq
-
-/-- info: 'Hex.AlgebraicNumber.realCompareExact_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.AlgebraicNumber.realCompareExact_eq
+/-! Ordinary-kernel axiom guards for the implemented comparison, root,
+recognition, rounding, approximation and square-root correspondence theorems.
+These are correctness checks; they do not measure executable performance. -/
 
 /-- info: 'Hex.RealAlgebraicNumber.compare_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
@@ -99,10 +80,3 @@ example (q : Rat) : (RealAlgebraicNumber.ofRat q).toRat? = some q :=
 #guard_msgs in
 #print axioms Hex.RealAlgebraicNumber.repr_roundtrip
 
-/-- info: 'Hex.RealAlgebraicNumber.instLaws' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.RealAlgebraicNumber.instLaws
-
-/-- info: 'Hex.RealAlgebraicNumber.instIsRealClosed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Hex.RealAlgebraicNumber.instIsRealClosed

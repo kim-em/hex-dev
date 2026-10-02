@@ -1,0 +1,370 @@
+{
+  "family": "close-comparison",
+  "function": "Hex.RealAlgebraicBench.runCloseCompare",
+  "parameter": 0,
+  "cpu": 37,
+  "load": [
+    15.2490234375,
+    13.5029296875,
+    12.87109375
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/close-comparison",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/close-comparison/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/close-comparison/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "profile",
+        "Hex.RealAlgebraicBench.runCloseCompare",
+        "--param",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/close-comparison/samply.json.gz",
+        "/tmp/issue-10577-perf/close-comparison/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/close-comparison/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/close-comparison/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/close-comparison/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/close-comparison/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/close-comparison/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/close-comparison/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/close-comparison/timed-1875909.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/close-comparison/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/close-comparison/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/close-comparison/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/close-comparison/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/close-comparison/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/close-comparison/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/close-comparison/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/close-comparison/diagnostics.json",
+        "--thread",
+        "hexrealalgebrai",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/close-comparison.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "80b5e8d338c1eac3ee85a277fc973c3490e4dfd9cc31f2030b81707ed3ac201d",
+  "commit": "4f44b806075ae95ad1b3f05c55e6c1ad5bd3f423",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1875909,
+    "bench_thread_name": "hexrealalgebrai",
+    "bench_thread_tid": "1875912",
+    "regions_total": 66047,
+    "total_timed_ms": 1355.062862,
+    "expected_samples_bench_thread": 1353.7,
+    "retained_samples_bench_thread": 1346,
+    "rejected_samples_bench_thread": 60,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790908139418434261,
+    "spawn_anchor_mono_ns": 318131179043633,
+    "sidecar_mono_anchor_ns": 318131372597731,
+    "samply_meta_start_time_ms": 1790908139455.8718,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.11105698347091675,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.11105698347091675,
+      "raw_max_residual_ms": 0.20948302745819092,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 66047,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 1346,
+          "regions_without_samples": 64701,
+          "boundary_residual_trimmed_max_ms": 0.11105698347091675,
+          "boundary_residual_raw_max_ms": 0.20948302745819092,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.031223510874876584,
+          "leaf_function_support_size": 568,
+          "comparison_samples": 1341,
+          "exchanged_samples": 83,
+          "exchanged_fraction": 0.061894108873974646,
+          "sampling_noise_allowance": 0.13738859568043849,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.13738859568043849,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.025078556085800733,
+          "leaf_function_support_size": 565,
+          "comparison_samples": 1346,
+          "exchanged_samples": 63,
+          "exchanged_fraction": 0.046805349182763745,
+          "sampling_noise_allowance": 0.1189366459133625,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1189366459133625,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 1341,
+          "top_leaf_functions": [
+            {
+              "function": 68,
+              "name": "0x4b57091",
+              "samples": 57
+            },
+            {
+              "function": 326,
+              "name": "0x4aeda41",
+              "samples": 43
+            },
+            {
+              "function": 98,
+              "name": "0xae923",
+              "samples": 40
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 1346,
+          "top_leaf_functions": [
+            {
+              "function": 68,
+              "name": "0x4b57091",
+              "samples": 59
+            },
+            {
+              "function": 326,
+              "name": "0x4aeda41",
+              "samples": 45
+            },
+            {
+              "function": 98,
+              "name": "0xae923",
+              "samples": 41
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 1351,
+          "top_leaf_functions": [
+            {
+              "function": 68,
+              "name": "0x4b57091",
+              "samples": 58
+            },
+            {
+              "function": 326,
+              "name": "0x4aeda41",
+              "samples": 45
+            },
+            {
+              "function": 98,
+              "name": "0xae923",
+              "samples": 40
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "5e3c47b09e005a4ef054d69862c487f90993f0272921226a4e61065557b61532",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "95b593069f5b8c480eb9ff793bfe6e11d31adee62a38aca389a8c54fc7fb35fe",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "33a8ef804654ec64cfe13956c578d0a391bd217b5482eee10fd5d10ba740acbc",
+    "perf.data": "fb91f36dc19e3e88d1c8e83f66ab671e7ddfb792e05642d66ae8f9d5c6ca320d",
+    "timed-1875909.jsonl": "8e53152d973fb1c9d46dbd9cb3e9b10131bffb8f9b7cc24e98d59f9c0b931b4b",
+    "5.stdout": "ae642a5f9bcc7e28a24930fc3640d547594972d082cc756d19fd0872339ce48c",
+    "5.stderr": "a47e86e9b5ddc8ba1fa058a73c0bf5ce54e030cf50daa17f5c8be71525d79fe7",
+    "samply.json.gz": "e8821f1c48822b7a6cb7e984956334032ae07746df47fad172899b44e6143c21",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "aaa955f5b16d00b35588549029b48f37378d5917bf7e0f5b3c5421fd95ebd9f6",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "aaa955f5b16d00b35588549029b48f37378d5917bf7e0f5b3c5421fd95ebd9f6",
+    "normalized.json.gz": "7dc6bd26fdbb510c7881fc02d7c9a436babd864be1f168c3a02a26acef554b56",
+    "8.stdout": "25197d0169916c19f51580877e1290edf6736e1818e04e7e12c9a0763172dace",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "2ff2ebc7704bed8952f4cbbbc4697a8d6d1438dbd96336d4798bcfa95027d9ad",
+    "diagnostics.json": "6e45457439e89c8209960a7a4777a0cd5c792d063096c8502d5e7e82cade0cee",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "872a736a8c958b2aef73a55af9c43bbeddab7abb2c87abc19fbd68ff7ccfd356",
+    "symbols.json": "19795eaa8973451eb220f49e419565cc08741dec8341bbc288475b31f6ed9caf",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
