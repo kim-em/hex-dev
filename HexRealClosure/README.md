@@ -1239,8 +1239,11 @@ closed ordered field, `Context.enlarge?_suffix_model` interprets every converted
 value against the canonical extension `old.extend suffix` of the supplied base
 model at arbitrary finite depth. `Context.enlarge?_suffix` proves conversion
 success when the staged base has
-a sign-compatible ordered-field map. Identifying that canonical interpretation
-with a caller's arbitrary old model remains separate. Computing suffix
+a sign-compatible ordered-field map. `Model.adjoin_unique` identifies any
+compatible child model with the actual descriptor-based interpretation;
+`extend_unique` propagates this identification through an entire finite suffix.
+`Context.enlarge?_preserves` consequently preserves an arbitrary old model
+from agreement on the initial base alone. Computing suffix
 contexts during extraction can reconstruct old frames; no depth-scaling cost
 is claimed for this constructor.
 
@@ -1259,14 +1262,16 @@ General `Context.enlarge` still requires:
    `Tower.Model.baseRestrict` constructs the restriction and proves value and
    base-map agreement. `Context.origin` supplies the suffix presentation of
    each packed context up to equality with that context; identifying an
-   arbitrary old model with the canonical extension still remains.
+   arbitrary old model now follows from `Model.extend_unique` after restricting
+   it to the base through `Model.pullback`. `Model.baseHom` extracts that
+   restriction's actual coefficient homomorphism.
    Packaging the union with `Ambient.ofUnion` also requires an order-preserving
    base map and a real-closed old ambient; its current API places both fields
    in the same universe.
 2. Constructing a coefficient map for the restricted old tower model and
    proving its `Tower.Model.liftInfinitesimal` interpretation agrees on base
    values with the base model supplied by `infinitesimalMapped`. Their later
-   root extensions still need identification through item 3.
+   root extensions are identified by `Model.extend_unique` and `map_extend`.
    `Ambient.mappedNativeHom` interprets `B(ε)` in the enlarged ambient field,
    preserving coefficients, `X` and signs. The semantic `mappedHom` also
    preserves order for an ordered coefficient-field embedding.
@@ -1277,8 +1282,14 @@ General `Context.enlarge` still requires:
    executable re-extension target with its supplied enlarged base model.
    `Model.map_adjoin` and `map_extend` prove that the actual stored child
    values and every validated finite suffix commute with that ordered ambient
-   embedding. Identifying an arbitrary old model with this canonical
-   descriptor-based interpretation remains required.
+   embedding. `Context.enlarge?_mapped` preserves an arbitrary compatible old
+   model through the ordered embedding. `enlarge?_ambient` extracts its initial
+   base interpretation and constructs the actual new-base model in an ordered
+   algebraic ambient over `R(ε)`, without a caller-supplied agreement at later
+   roots or a compatible new-base model. Its reference base model supplies
+   existence for the restriction proof, and the old model determines the
+   resulting coefficient homomorphism. The algebraic restriction and staged
+   order still need packaging with the final dependency-closed API.
 4. Applying the local algebraic bound to the computational `B(ε)` levels and
    proving their staged order agrees with the enlarged ambient interpretation.
 5. Gathering a dependency-closed collection of live contexts and assembling

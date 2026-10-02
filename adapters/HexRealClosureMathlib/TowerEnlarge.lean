@@ -7,6 +7,7 @@ module
 
 public import HexRealClosure.TowerEnlarge
 public import HexRealClosureMathlib.TowerTransport
+public import HexRealClosureMathlib.TowerNaturality
 
 public section
 
@@ -48,6 +49,88 @@ theorem Context.enlarge?_suffix_model
       suffix.context.enlarge? = some result ∧
         Nonempty (Conversion.Model result (old.extend suffix)) := by
   exact Context.enlarge?_model base suffix rfl old model
+
+/-- Checked enlargement preserves an arbitrary lawful old tower model.
+Only agreement on the initial base is supplied; agreement at every root
+level follows from the actual native operations and descriptor constraints. -/
+theorem Context.enlarge?_preserves
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    {K : Type u} [Field K] [LinearOrder K] [DecidableEq K]
+    [IsStrictOrderedRing K] [IsRealClosed K]
+    (initial : Tower.Model (Context.base base) K)
+    (old : Tower.Model suffix.context K)
+    (compatible : ∀ a, old.value (suffix.embed a) = initial.value a)
+    (model : Conversion.Model (Conversion.infinitesimal base) initial) :
+    ∃ result : Conversion suffix.context, suffix.context.enlarge? = some result ∧
+      Nonempty (Conversion.Model result old) := by
+  have identified := initial.extend_unique suffix old compatible
+  rw [identified]
+  exact Context.enlarge?_suffix_model base suffix initial model
+
+/-- An ordered ambient embedding of any compatible old tower model is
+preserved by the actual checked enlargement in the larger real closed field. -/
+theorem Context.enlarge?_mapped
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    {R : Type u} {K : Type v}
+    [Field R] [LinearOrder R] [DecidableEq R] [IsStrictOrderedRing R] [IsRealClosed R]
+    [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K]
+    (initial : Tower.Model (Context.base base) R) (old : Tower.Model suffix.context R)
+    (compatible : ∀ a, old.value (suffix.embed a) = initial.value a)
+    (embedding : R →+* K) (ordered : StrictMono embedding)
+    (model : Conversion.Model (Conversion.infinitesimal base) (initial.map embedding ordered)) :
+    ∃ result : Conversion suffix.context, suffix.context.enlarge? = some result ∧
+      Nonempty (Conversion.Model result (old.map embedding ordered)) := by
+  apply Context.enlarge?_preserves base suffix (initial.map embedding ordered)
+    (old.map embedding ordered) _ model
+  intro a
+  change embedding (old.value (suffix.embed a)) = embedding (initial.value a)
+  rw [compatible]
+
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- An arbitrary old model extends through checked enlargement in an actual
+ordered algebraic ambient over its infinitesimal rational-function field.
+The source base interpretation is extracted from the old model; no agreement
+at later roots or compatible new-base model is supplied by the caller. -/
+theorem Context.enlarge?_ambient
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    {R : Type u} [Field R] [LinearOrder R] [DecidableEq R]
+    [IsStrictOrderedRing R] [IsRealClosed R]
+    (reference : Tower.Model (Context.base base) R)
+    (old : Tower.Model suffix.context R)
+    (ambient : Ambient (Hex.RationalFn R)) :
+    ∃ result : Conversion suffix.context, suffix.context.enlarge? = some result ∧
+      Nonempty (Conversion.Model result (old.liftInfinitesimal ambient)) := by
+  letI : DecidableEq ambient.Carrier := Classical.decEq _
+  let initial := reference.pullback (reference.extend suffix) old suffix.embed
+    (reference.extend_embed suffix)
+  let f := initial.baseHom base
+  have hsign : ∀ a, sign a = (SignType.sign (f a) : Int) := by
+    intro a
+    exact initial.sign (⟨a⟩ : BaseContext.Element base)
+  let model := Conversion.Model.infinitesimalMapped base f hsign ambient
+  have same : Tower.Model.base base ((Ambient.coefficientHom ambient).comp f)
+      (Conversion.Model.mapped_base_sign f hsign ambient) =
+        initial.map (Ambient.coefficientHom ambient)
+          (Ambient.coefficientHom_strictMono ambient) := by
+    apply Tower.Model.value_ext
+    intro a
+    change BaseContext.Element base at a
+    rw [Tower.Model.base_value base ((Ambient.coefficientHom ambient).comp f)
+      (Conversion.Model.mapped_base_sign f hsign ambient) a]
+    change Ambient.coefficientHom ambient (f a.stored) =
+      Ambient.coefficientHom ambient (initial.value a)
+    exact congrArg (Ambient.coefficientHom ambient) (Tower.Model.baseHom_value base initial a)
+  have converted : Conversion.Model (Conversion.infinitesimal base)
+      (initial.map (Ambient.coefficientHom ambient)
+        (Ambient.coefficientHom_strictMono ambient)) := same ▸ model
+  exact Context.enlarge?_mapped base suffix initial old (fun _ => rfl)
+    (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient) converted
 
 /-- The checked result uses the supplied enlarged base interpretation and
 the actual rebuilt descriptors at every later root. -/
@@ -139,3 +222,15 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.enlarge?_suffix' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Context.enlarge?_suffix
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_preserves' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_preserves
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_mapped' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_mapped
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_ambient' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_ambient
