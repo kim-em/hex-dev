@@ -1,0 +1,15 @@
+{
+  "source_directory": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/selection-pivotColsFull",
+  "source_patch_sha256": "ade43426a997fb9513b8ac3a120938fa77d4caad8f0f5c72ea79eaeeee25205f",
+  "completed_commands": [
+    "pivotColsFull"
+  ],
+  "sha256": {
+    "metadata.json": "d7eddc666c1830a7ae15a793764baaefaaa25573cd6d034a64c49eac1b0afa05",
+    "completion.json": "bf0d59314506d1fa185c065820b700cd7a4f5779877926d03c516c1ede17a6cf",
+    "pivotColsFull.json": "1adf04825e5a1579e2477c6646526a0b7896ab2e63481da68994b8dbb22aea18",
+    "pivotColsFull.txt.gz": "c26f9f690999a10ac357783e8aaefe24d36cd0f180b186205c7cad8eca3356c9",
+    "source.patch.gz": "247338e4dabe5373ab43b95f8a8e1865831d64af9af7dd67d7fcac91b950c3d9",
+    "commands.jsonl": "8a1a8b5e07a2b7d928ec2e337d986922f5c149572d7c272a7aeb81bd4776bad3"
+  }
+}

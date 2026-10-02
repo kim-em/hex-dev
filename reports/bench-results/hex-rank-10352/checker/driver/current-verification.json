@@ -1,0 +1,39 @@
+{
+  "revision": "1b2f7fc5b3587ace31d7e11b08a4d8f0875ac8a5",
+  "binary_sha256": "1a504e00c3624585e910030661daebfa31cf88bf4a452accaa20a5baf0dbdd59",
+  "source_sha256": {
+    "HexRank/Polynomial.lean": "c10fef9fc109ad93d613f54cebd19d26e30af5605a4627901609e4bc636c31da",
+    "HexRank/PolyProduce.lean": "df0bc7c380cfa303f88de4d36570510db443d6e191c760efa3935bbf088224d5",
+    "bench/HexRank/Bench/Quotient.lean": "ec913bf4c49c494eceb9889d73f8fd21f568134d1d97dd1068bea2ba282fc46b",
+    "bench/HexRank/Bench.lean": "26228d15443ec6fff455fc38566c1b99115f6f276f1bad1f0f3ce57dbe8c179c",
+    "lakefile.lean": "a6e7d2d2b039b39c1812f91ccc16e9df5ac963e98fd9ce75458ba7928c391898",
+    "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "commands": [
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.lake/build/bin/hexrank_bench",
+        "list"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.028064636047929525,
+      "output": "current-list.txt"
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.lake/build/bin/hexrank_bench",
+        "verify"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.100716263987124,
+      "output": "current-verify.txt"
+    }
+  ],
+  "native_smoke_cases": 98,
+  "registrations": 447,
+  "sha256": {
+    "current-list.txt": "a841fa7dc64f157a6c2073e07a3a52fed71d98eaaedb842e62af52a6e292bde4",
+    "current-verify.txt": "fc11b2213b5b00e7a51b7f01ac6225ff9480ca5f86e088a22aa093bfeccacef0"
+  }
+}

@@ -209,6 +209,129 @@ setup_benchmark checkDeficient n => n * n * n
     maxSecondsPerCall := 600.0
   }
 
+/-- Fixed-degree sparse rows with two nonzero entries and a bounded dot product. -/
+def prepDot (n : Nat) : List (List Int) :=
+  [[0, 1], [1]] ++ List.replicate (max 2 n - 2) []
+
+def dot (row : List (List Int)) : Bool :=
+  if PolyWitness.dot row row == [1, 0, 1] then true
+  else panic! "polynomial dot product disagrees with its exact fixture"
+
+/- Mode 1, linear: the two nonzero products and all accumulator coefficients have
+fixed degree and bounded size. Both list traversals inspect Θ(n) entries;
+each step does bounded coefficient work, including the zero entries.
+Thus time is Θ(n), independently of measurements. This isolates the dominant
+native primitive observed inside the quotient checker. -/
+setup_benchmark dot n => n
+  with prep := prepDot
+  where {
+    paramFloor := 1024
+    paramCeiling := 16384
+    paramSchedule := .custom #[1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288, 16384]
+    targetInnerNanos := 2000000000
+    outerTrials := 6
+    maxSecondsPerCall := 60.0
+  }
+
+def prepDotArray (n : Nat) : Array (List Int) := (prepDot n).toArray
+
+def dotArray (row : Array (List Int)) : Bool :=
+  if PolyWitness.dotArray row row == [1, 0, 1] then true
+  else panic! "array polynomial dot product disagrees with its exact fixture"
+
+/- Mode 1: the same bounded-degree and bounded-coefficient fixture as `dot`.
+The array loop visits every entry once with constant-time indexed access and
+bounded coefficient work. Thus its independently derived time is Θ(n).
+The native lower-triangle checker converts each certificate row once, inside
+checking, then reuses this primitive; conversion is O(n²) on the block family
+and leaves the checker's existing Θ(n³) model unchanged. -/
+setup_benchmark dotArray n => n
+  with prep := prepDotArray
+  where {
+    paramFloor := 1024
+    paramCeiling := 16384
+    paramSchedule := .custom #[1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288, 16384]
+    targetInnerNanos := 2000000000
+    outerTrials := 6
+    maxSecondsPerCall := 60.0
+  }
+
+/-- Validate the two structural outputs against prefix selection and ordinary
+list transposition before measuring either public selection helper. -/
+def prepSelect (deficient : Bool) (n : Nat) : Input :=
+  let input := prep deficient n
+  let w := input.witness
+  let pivotRows := input.rows.take w.rank
+  let transposed := pivotRows.foldr (fun row cols => List.zipWith List.cons row cols)
+    (List.replicate input.dim [])
+  if w.rows == List.range w.rank && w.cols == List.range w.rank &&
+      PolyWitness.block input.rows w.rows w.cols == pivotRows.map (·.take w.rank) &&
+      PolyWitness.pivotCols input.dim input.rows w.rows == transposed then input
+  else panic! "quotient selection disagrees with the canonical block fixture"
+
+def prepSelectFull := prepSelect false
+def prepSelectDeficient := prepSelect true
+
+def blockFull (input : Input) : List (List (List Int)) :=
+  PolyWitness.block input.rows input.witness.rows input.witness.cols
+
+/- Mode 1: r² selected entries each perform linked-list lookups of mean
+length Θ(n), with r=n. Allocation is O(n²); total work is Θ(n³). -/
+setup_benchmark blockFull n => n * n * n
+  with prep := prepSelectFull
+  where {
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
+    targetInnerNanos := 2000000000
+    outerTrials := 6
+    maxSecondsPerCall := 600.0
+  }
+
+def blockDeficient := blockFull
+/- Mode 1: r=n/2, so r² entries with mean Θ(n) list lookups still give
+Θ(n³) work, with O(n²) output allocation and bounded polynomial entries. -/
+setup_benchmark blockDeficient n => n * n * n
+  with prep := prepSelectDeficient
+  where {
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
+    targetInnerNanos := 2000000000
+    outerTrials := 6
+    maxSecondsPerCall := 600.0
+  }
+
+def pivotColsFull (input : Input) : List (List (List Int)) :=
+  PolyWitness.pivotCols input.dim input.rows input.witness.rows
+
+/- Mode 1: n*r entries with r=n each scan an input row index and a column
+index, both of mean Θ(n) length. Output allocation O(n²) is lower order. -/
+setup_benchmark pivotColsFull n => n * n * n
+  with prep := prepSelectFull
+  where {
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
+    targetInnerNanos := 2000000000
+    outerTrials := 6
+    maxSecondsPerCall := 600.0
+  }
+
+def pivotColsDeficient := pivotColsFull
+/- Mode 1, cubic: n*r entries with r=n/2, each with mean Θ(n) list lookup cost,
+give Θ(n³) work. The fixture keeps degrees and coefficients bounded. -/
+setup_benchmark pivotColsDeficient n => n * n * n
+  with prep := prepSelectDeficient
+  where {
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
+    targetInnerNanos := 2000000000
+    outerTrials := 6
+    maxSecondsPerCall := 600.0
+  }
+
 end Quotient
 
 end Hex.RankBench

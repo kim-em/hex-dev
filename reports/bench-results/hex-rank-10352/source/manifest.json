@@ -60,6 +60,27 @@
       "patch": "5e9bc6ab8.patch.gz",
       "sha256": "5962f87af7e3bfe206b6c10bde8ae3f12de17291964d636f74e6b96b69aa0253",
       "uncompressed_sha256": "870dbba495a6a1b70c6d2f247cfb64df2b648d47a635d8c3675c1d0d8d520552"
+    },
+    {
+      "revision": "a29afca7a5824d544c8ddf8b59b8952ff8eb1592",
+      "published_base": "a29afca7a5824d544c8ddf8b59b8952ff8eb1592",
+      "patch": "a29afca7a.patch.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "revision": "1a9f17f84ea9389255d38df58c6663d210cd2f6e",
+      "published_base": "a29afca7a5824d544c8ddf8b59b8952ff8eb1592",
+      "patch": "1a9f17f84.patch.gz",
+      "sha256": "d5ca5d53a9cff6d044833d04c79f353608f0eb182ed975909a20f977d1515fbe",
+      "uncompressed_sha256": "a6ea2b74ee8775baf342ffcd6d16e9490512f446d5fbd2124e47676152cff6de"
+    },
+    {
+      "revision": "322d567bc657c472fce27acf9dfcb8a6ca54c1eb",
+      "published_base": "a29afca7a5824d544c8ddf8b59b8952ff8eb1592",
+      "patch": "322d567bc.patch.gz",
+      "sha256": "4e3659e24b2f2dd9333b7934b33c4e22aed12d0339266528828e78f950af6462",
+      "uncompressed_sha256": "4c6edbca8a63c343f141ff9be8ff68f1a826d3d1040d4f8187c9d17ffa636de5"
     }
   ],
   "note": "The base is merged on main. Use scripts/bench/rank_reconstruct.py to apply one snapshot and, optionally, a run-specific dirty patch restricted to this source scope. Reports and CI configuration are not needed to reproduce the executable. The two extra 01eeb439a/5e9bc6ab8 snapshots cover the untimed coefficient-input capture base and its capture hook."

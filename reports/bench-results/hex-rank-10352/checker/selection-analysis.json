@@ -1,0 +1,305 @@
+{
+  "scientific": [
+    {
+      "case": "Hex.RankBench.Quotient.blockFull",
+      "raw": "reports/bench-results/hex-rank-10352/checker/selection-blockFull/blockFull.json",
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.010516,
+      "samples": 42,
+      "sizes": [
+        128,
+        192,
+        256,
+        384,
+        512,
+        768,
+        1024
+      ],
+      "largest_rung_median_seconds": 1.0048484825,
+      "trial_summaries": [
+        {
+          "relative_spread": 0.160739,
+          "param": 128,
+          "ok_count": 6,
+          "min_per_call_nanos": 2030810.379883,
+          "median_per_call_nanos": 2034663,
+          "max_per_call_nanos": 2357859.158203
+        },
+        {
+          "relative_spread": 0.181593,
+          "param": 192,
+          "ok_count": 6,
+          "min_per_call_nanos": 6814664.46875,
+          "median_per_call_nanos": 6824221.21875,
+          "max_per_call_nanos": 8053893.195312
+        },
+        {
+          "relative_spread": 0.251479,
+          "param": 256,
+          "ok_count": 6,
+          "min_per_call_nanos": 16018563.921875,
+          "median_per_call_nanos": 16087378.84375,
+          "max_per_call_nanos": 20064205.890625
+        },
+        {
+          "relative_spread": 0.278387,
+          "param": 384,
+          "ok_count": 6,
+          "min_per_call_nanos": 53852132.8125,
+          "median_per_call_nanos": 54109734.984375,
+          "max_per_call_nanos": 68915593.5
+        },
+        {
+          "relative_spread": 0.023031,
+          "param": 512,
+          "ok_count": 6,
+          "min_per_call_nanos": 127095154.875,
+          "median_per_call_nanos": 127724855.15625,
+          "max_per_call_nanos": 130036825
+        },
+        {
+          "relative_spread": 0.006341,
+          "param": 768,
+          "ok_count": 6,
+          "min_per_call_nanos": 435172337.5,
+          "median_per_call_nanos": 437567224.625,
+          "max_per_call_nanos": 437946798.75
+        },
+        {
+          "relative_spread": 0.062002,
+          "param": 1024,
+          "ok_count": 6,
+          "min_per_call_nanos": 1001477281,
+          "median_per_call_nanos": 1004848482.5,
+          "max_per_call_nanos": 1063780135
+        }
+      ]
+    },
+    {
+      "case": "Hex.RankBench.Quotient.blockDeficient",
+      "raw": "reports/bench-results/hex-rank-10352/checker/selection-blockDeficient/blockDeficient.json",
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.007326,
+      "samples": 42,
+      "sizes": [
+        128,
+        192,
+        256,
+        384,
+        512,
+        768,
+        1024
+      ],
+      "largest_rung_median_seconds": 0.13056011234375,
+      "trial_summaries": [
+        {
+          "relative_spread": 0.081464,
+          "param": 128,
+          "ok_count": 6,
+          "min_per_call_nanos": 264277.994263,
+          "median_per_call_nanos": 270906.779785,
+          "max_per_call_nanos": 286347.174316
+        },
+        {
+          "relative_spread": 0.263504,
+          "param": 192,
+          "ok_count": 6,
+          "min_per_call_nanos": 859137.220215,
+          "median_per_call_nanos": 866203.727783,
+          "max_per_call_nanos": 1087385.309082
+        },
+        {
+          "relative_spread": 0.194642,
+          "param": 256,
+          "ok_count": 6,
+          "min_per_call_nanos": 2004688.678711,
+          "median_per_call_nanos": 2043107.692871,
+          "max_per_call_nanos": 2402364.202148
+        },
+        {
+          "relative_spread": 0.104709,
+          "param": 384,
+          "ok_count": 6,
+          "min_per_call_nanos": 6834033.714844,
+          "median_per_call_nanos": 6912095.507813,
+          "max_per_call_nanos": 7557789.582031
+        },
+        {
+          "relative_spread": 0.191296,
+          "param": 512,
+          "ok_count": 6,
+          "min_per_call_nanos": 15927682.96875,
+          "median_per_call_nanos": 16190524.976562,
+          "max_per_call_nanos": 19024872.953125
+        },
+        {
+          "relative_spread": 0.218058,
+          "param": 768,
+          "ok_count": 6,
+          "min_per_call_nanos": 54049957.28125,
+          "median_per_call_nanos": 54379110.28125,
+          "max_per_call_nanos": 65907783.84375
+        },
+        {
+          "relative_spread": 0.093083,
+          "param": 1024,
+          "ok_count": 6,
+          "min_per_call_nanos": 128260464.4375,
+          "median_per_call_nanos": 130560112.34375,
+          "max_per_call_nanos": 140413453.625
+        }
+      ]
+    },
+    {
+      "case": "Hex.RankBench.Quotient.pivotColsFull",
+      "raw": "reports/bench-results/hex-rank-10352/checker/selection-pivotColsFull/pivotColsFull.json",
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.005707,
+      "samples": 42,
+      "sizes": [
+        128,
+        192,
+        256,
+        384,
+        512,
+        768,
+        1024
+      ],
+      "largest_rung_median_seconds": 1.0518567635,
+      "trial_summaries": [
+        {
+          "relative_spread": 0.395378,
+          "param": 128,
+          "ok_count": 6,
+          "min_per_call_nanos": 2117108.19043,
+          "median_per_call_nanos": 2132349.959472,
+          "max_per_call_nanos": 2960191.576172
+        },
+        {
+          "relative_spread": 0.374569,
+          "param": 192,
+          "ok_count": 6,
+          "min_per_call_nanos": 7034187.144531,
+          "median_per_call_nanos": 7072405.724609,
+          "max_per_call_nanos": 9683288.328125
+        },
+        {
+          "relative_spread": 0.354389,
+          "param": 256,
+          "ok_count": 6,
+          "min_per_call_nanos": 16427424.429688,
+          "median_per_call_nanos": 16809757.542969,
+          "max_per_call_nanos": 22384612.765625
+        },
+        {
+          "relative_spread": 0.170531,
+          "param": 384,
+          "ok_count": 6,
+          "min_per_call_nanos": 54629601.9375,
+          "median_per_call_nanos": 55656318.078125,
+          "max_per_call_nanos": 64120704
+        },
+        {
+          "relative_spread": 0.042985,
+          "param": 512,
+          "ok_count": 6,
+          "min_per_call_nanos": 131663534.625,
+          "median_per_call_nanos": 133871487.875,
+          "max_per_call_nanos": 137418002.1875
+        },
+        {
+          "relative_spread": 0.016256,
+          "param": 768,
+          "ok_count": 6,
+          "min_per_call_nanos": 453965309.75,
+          "median_per_call_nanos": 456186622.75,
+          "max_per_call_nanos": 461381048
+        },
+        {
+          "relative_spread": 0.585094,
+          "param": 1024,
+          "ok_count": 6,
+          "min_per_call_nanos": 1036102686,
+          "median_per_call_nanos": 1051856763.5,
+          "max_per_call_nanos": 1651538023
+        }
+      ]
+    },
+    {
+      "case": "Hex.RankBench.Quotient.pivotColsDeficient",
+      "raw": "reports/bench-results/hex-rank-10352/checker/selection-pivotColsDeficient/pivotColsDeficient.json",
+      "verdict": "consistent_with_declared_complexity",
+      "slope": 0.013704,
+      "samples": 42,
+      "sizes": [
+        128,
+        192,
+        256,
+        384,
+        512,
+        768,
+        1024
+      ],
+      "largest_rung_median_seconds": 0.41907803987500003,
+      "trial_summaries": [
+        {
+          "relative_spread": 0.520242,
+          "param": 128,
+          "ok_count": 6,
+          "min_per_call_nanos": 808736.460449,
+          "median_per_call_nanos": 856671.846191,
+          "max_per_call_nanos": 1254413.14209
+        },
+        {
+          "relative_spread": 0.228348,
+          "param": 192,
+          "ok_count": 6,
+          "min_per_call_nanos": 2664423.951172,
+          "median_per_call_nanos": 2685626.171875,
+          "max_per_call_nanos": 3277681.654297
+        },
+        {
+          "relative_spread": 0.418367,
+          "param": 256,
+          "ok_count": 6,
+          "min_per_call_nanos": 6230786.484375,
+          "median_per_call_nanos": 6236218.806641,
+          "max_per_call_nanos": 8839813.03125
+        },
+        {
+          "relative_spread": 0.124431,
+          "param": 384,
+          "ok_count": 6,
+          "min_per_call_nanos": 20810313.546875,
+          "median_per_call_nanos": 21072791,
+          "max_per_call_nanos": 23432417.9375
+        },
+        {
+          "relative_spread": 0.110424,
+          "param": 512,
+          "ok_count": 6,
+          "min_per_call_nanos": 49313817.5625,
+          "median_per_call_nanos": 50974670.21875,
+          "max_per_call_nanos": 54942641.1875
+        },
+        {
+          "relative_spread": 0.136921,
+          "param": 768,
+          "ok_count": 6,
+          "min_per_call_nanos": 167693826,
+          "median_per_call_nanos": 168839535.1875,
+          "max_per_call_nanos": 190811469.375
+        },
+        {
+          "relative_spread": 0.274835,
+          "param": 1024,
+          "ok_count": 6,
+          "min_per_call_nanos": 399240949.75,
+          "median_per_call_nanos": 419078039.875,
+          "max_per_call_nanos": 514418311.25
+        }
+      ]
+    }
+  ],
+  "all_scientific_consistent": true
+}

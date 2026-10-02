@@ -1,0 +1,326 @@
+{
+  "revision": "322d567bc657c472fce27acf9dfcb8a6ca54c1eb",
+  "command": [
+    "scripts/bench/rank_checker_pairs.py",
+    "implementation",
+    "--before",
+    ".cache/issue-10352/bin/before",
+    "--after",
+    ".cache/issue-10352/bin/compact",
+    "--out",
+    ".cache/issue-10352/array-pairs"
+  ],
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352",
+  "schedule": [
+    [
+      "0-before",
+      [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/before",
+        "run",
+        "Hex.RankBench.Quotient.checkFull",
+        "--param-floor",
+        "1024",
+        "--param-ceiling",
+        "1024",
+        "--param-schedule",
+        "doubling",
+        "--outer-trials",
+        "1",
+        "--warmup-fraction",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-pairs/0-before.json"
+      ]
+    ],
+    [
+      "0-after",
+      [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/compact",
+        "run",
+        "Hex.RankBench.Quotient.checkFull",
+        "--param-floor",
+        "1024",
+        "--param-ceiling",
+        "1024",
+        "--param-schedule",
+        "doubling",
+        "--outer-trials",
+        "1",
+        "--warmup-fraction",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-pairs/0-after.json"
+      ]
+    ],
+    [
+      "1-after",
+      [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/compact",
+        "run",
+        "Hex.RankBench.Quotient.checkFull",
+        "--param-floor",
+        "1024",
+        "--param-ceiling",
+        "1024",
+        "--param-schedule",
+        "doubling",
+        "--outer-trials",
+        "1",
+        "--warmup-fraction",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-pairs/1-after.json"
+      ]
+    ],
+    [
+      "1-before",
+      [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/before",
+        "run",
+        "Hex.RankBench.Quotient.checkFull",
+        "--param-floor",
+        "1024",
+        "--param-ceiling",
+        "1024",
+        "--param-schedule",
+        "doubling",
+        "--outer-trials",
+        "1",
+        "--warmup-fraction",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-pairs/1-before.json"
+      ]
+    ],
+    [
+      "2-before",
+      [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/before",
+        "run",
+        "Hex.RankBench.Quotient.checkFull",
+        "--param-floor",
+        "1024",
+        "--param-ceiling",
+        "1024",
+        "--param-schedule",
+        "doubling",
+        "--outer-trials",
+        "1",
+        "--warmup-fraction",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-pairs/2-before.json"
+      ]
+    ],
+    [
+      "2-after",
+      [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/compact",
+        "run",
+        "Hex.RankBench.Quotient.checkFull",
+        "--param-floor",
+        "1024",
+        "--param-ceiling",
+        "1024",
+        "--param-schedule",
+        "doubling",
+        "--outer-trials",
+        "1",
+        "--warmup-fraction",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-pairs/2-after.json"
+      ]
+    ],
+    [
+      "3-after",
+      [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/compact",
+        "run",
+        "Hex.RankBench.Quotient.checkFull",
+        "--param-floor",
+        "1024",
+        "--param-ceiling",
+        "1024",
+        "--param-schedule",
+        "doubling",
+        "--outer-trials",
+        "1",
+        "--warmup-fraction",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-pairs/3-after.json"
+      ]
+    ],
+    [
+      "3-before",
+      [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/before",
+        "run",
+        "Hex.RankBench.Quotient.checkFull",
+        "--param-floor",
+        "1024",
+        "--param-ceiling",
+        "1024",
+        "--param-schedule",
+        "doubling",
+        "--outer-trials",
+        "1",
+        "--warmup-fraction",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-pairs/3-before.json"
+      ]
+    ],
+    [
+      "4-before",
+      [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/before",
+        "run",
+        "Hex.RankBench.Quotient.checkFull",
+        "--param-floor",
+        "1024",
+        "--param-ceiling",
+        "1024",
+        "--param-schedule",
+        "doubling",
+        "--outer-trials",
+        "1",
+        "--warmup-fraction",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-pairs/4-before.json"
+      ]
+    ],
+    [
+      "4-after",
+      [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/compact",
+        "run",
+        "Hex.RankBench.Quotient.checkFull",
+        "--param-floor",
+        "1024",
+        "--param-ceiling",
+        "1024",
+        "--param-schedule",
+        "doubling",
+        "--outer-trials",
+        "1",
+        "--warmup-fraction",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-pairs/4-after.json"
+      ]
+    ],
+    [
+      "5-after",
+      [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/compact",
+        "run",
+        "Hex.RankBench.Quotient.checkFull",
+        "--param-floor",
+        "1024",
+        "--param-ceiling",
+        "1024",
+        "--param-schedule",
+        "doubling",
+        "--outer-trials",
+        "1",
+        "--warmup-fraction",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-pairs/5-after.json"
+      ]
+    ],
+    [
+      "5-before",
+      [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/before",
+        "run",
+        "Hex.RankBench.Quotient.checkFull",
+        "--param-floor",
+        "1024",
+        "--param-ceiling",
+        "1024",
+        "--param-schedule",
+        "doubling",
+        "--outer-trials",
+        "1",
+        "--warmup-fraction",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-pairs/5-before.json"
+      ]
+    ]
+  ],
+  "binary_sha256": {
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/before": "f52a9e8f8ab3a932e7a4324af228c9543cc404b3146fa64b31507fd01d00fd46",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/compact": "2c4e5ddde5bf1fc1e211a5c10602713c3b8d387b35c6740c99d63a968c65d8dc"
+  },
+  "binary_provenance": {
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/before": {
+      "revision": "a29afca7a5824d544c8ddf8b59b8952ff8eb1592",
+      "binary_sha256": "f52a9e8f8ab3a932e7a4324af228c9543cc404b3146fa64b31507fd01d00fd46",
+      "source_sha256": {
+        "HexRank/Polynomial.lean": "2ce7c7a04dfdecc9e32529f51a24e1c382a35a5021e4a1f0d540b06a78ee4b6a",
+        "HexRank/PolyProduce.lean": "df0bc7c380cfa303f88de4d36570510db443d6e191c760efa3935bbf088224d5",
+        "bench/HexRank/Bench/Quotient.lean": "f14eacded73c8a82ce2d19b8acf089458d5cd271a259da0936ae0ee2edd51478",
+        "bench/HexRank/Bench.lean": "26228d15443ec6fff455fc38566c1b99115f6f276f1bad1f0f3ce57dbe8c179c",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56"
+      },
+      "runtime_patch": ""
+    },
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/bin/compact": {
+      "revision": "322d567bc657c472fce27acf9dfcb8a6ca54c1eb",
+      "binary_sha256": "2c4e5ddde5bf1fc1e211a5c10602713c3b8d387b35c6740c99d63a968c65d8dc",
+      "source_sha256": {
+        "HexRank/Polynomial.lean": "c10fef9fc109ad93d613f54cebd19d26e30af5605a4627901609e4bc636c31da",
+        "HexRank/PolyProduce.lean": "df0bc7c380cfa303f88de4d36570510db443d6e191c760efa3935bbf088224d5",
+        "bench/HexRank/Bench/Quotient.lean": "8b02bd6d9bd663813d3ece441a65923a28cbea0fc892cb4171a574ff68c063a0",
+        "bench/HexRank/Bench.lean": "26228d15443ec6fff455fc38566c1b99115f6f276f1bad1f0f3ce57dbe8c179c",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56"
+      },
+      "runtime_patch": "diff --git a/HexRank/Polynomial.lean b/HexRank/Polynomial.lean\nindex 50c1d03ea..eca72ae52 100644\n--- a/HexRank/Polynomial.lean\n+++ b/HexRank/Polynomial.lean\n@@ -73,6 +73,82 @@ integer equality. Recursion is structural on the first list. -/\n   | a :: as, b :: bs => add (mul a b) (dot as bs)\n   | _, _ => []\n \n+private theorem add_assoc (a b c : List Int) : add (add a b) c = add a (add b c) := by\n+  induction a generalizing b c with\n+  | nil => simp [add]\n+  | cons a as ih =>\n+    cases b with\n+    | nil => simp [add]\n+    | cons b bs =>\n+      cases c with\n+      | nil => simp [add]\n+      | cons c cs => simp [add, ih, Int.add_assoc]\n+\n+-- Rows are read-only. Borrow their spines so each dot avoids reference-count\n+-- writes along both rows; the polynomial accumulator remains owned.\n+private def dotAcc (a b : @& List (List Int)) (acc : List Int) : List Int :=\n+  match a, b with\n+  | a :: as, b :: bs => dotAcc as bs (add acc (mul a b))\n+  | _, _ => acc\n+\n+private theorem dotAcc_eq (a b : List (List Int)) (acc : List Int) :\n+    dotAcc a b acc = add acc (dot a b) := by\n+  induction a generalizing b acc with\n+  | nil => cases acc <;> simp [dotAcc, dot, add]\n+  | cons a as ih =>\n+    cases b with\n+    | nil => cases acc <;> simp [dotAcc, dot, add]\n+    | cons b bs => simp [dotAcc, dot, ih, add_assoc]\n+\n+/-- Native dot product with a tail-recursive accumulator. -/\n+def dotImpl (a b : @& List (List Int)) : List Int := dotAcc a b []\n+\n+@[csimp] theorem dot_eq_impl : @dot = @dotImpl := by\n+  funext a b\n+  simp [dotImpl, dotAcc_eq, add]\n+\n+private def dotArrayAcc (a b : @& Array (List Int)) : Nat \u2192 Nat \u2192 List Int \u2192 List Int\n+  | 0, _, acc => acc\n+  | fuel + 1, i, acc =>\n+    dotArrayAcc a b fuel (i + 1) (add acc (mul (a[i]?.getD []) (b[i]?.getD [])))\n+\n+/-- Native dot product over compact rows, truncated at the shorter row. -/\n+def dotArray (a b : @& Array (List Int)) : List Int :=\n+  dotArrayAcc a b (min a.size b.size) 0 []\n+\n+private theorem dotArrayAcc_eq (a b : Array (List Int)) (fuel i : Nat) (acc : List Int) :\n+    dotArrayAcc a b fuel i acc =\n+      ((List.range' i fuel).map fun j => mul (a[j]?.getD []) (b[j]?.getD [])).foldl add acc := by\n+  induction fuel generalizing i acc with\n+  | zero => simp [dotArrayAcc]\n+  | succ fuel ih => simp [dotArrayAcc, List.range'_succ, ih]\n+\n+private theorem products_eq (a b : List (List Int)) :\n+    ((List.range (min a.length b.length)).map fun i =>\n+      mul (a[i]?.getD []) (b[i]?.getD [])) = List.zipWith mul a b := by\n+  apply List.ext_getElem\n+  \u00b7 simp\n+  \u00b7 intro i hi hj\n+    have ha : i < a.length := by simpa using (Nat.lt_of_lt_of_le (by simpa using hi) (Nat.min_le_left _ _))\n+    have hb : i < b.length := by simpa using (Nat.lt_of_lt_of_le (by simpa using hi) (Nat.min_le_right _ _))\n+    simp [ha, hb]\n+\n+private theorem fold_products (a b : List (List Int)) (acc : List Int) :\n+    (List.zipWith mul a b).foldl add acc = add acc (dot a b) := by\n+  induction a generalizing b acc with\n+  | nil => cases acc <;> simp [dot, add]\n+  | cons a as ih =>\n+    cases b with\n+    | nil => cases acc <;> simp [dot, add]\n+    | cons b bs => simp [dot, ih, add_assoc]\n+\n+theorem dotArray_toArray (a b : List (List Int)) :\n+    dotArray a.toArray b.toArray = dot a b := by\n+  simp only [dotArray, dotArrayAcc_eq, List.size_toArray, List.getElem?_toArray,\n+    \u2190 List.range_eq_range']\n+  rw [products_eq, fold_products]\n+  simp [add]\n+\n /-- List access with a supplied zero value. -/\n @[expose] def nth {\u03b1 : Type} (zero : \u03b1) : List \u03b1 \u2192 Nat \u2192 \u03b1\n   | [], _ => zero\n@@ -99,6 +175,56 @@ integer equality. Recursion is structural on the first list. -/\n       checkDot M f [1] a b q && zeroDots M f a bs qs && lowerCheck M f as bs rest\n   | _, _, _ => false\n \n+private def checkDotArray (M : Nat) (f v : List Int)\n+    (a b : @& Array (List Int)) (q : List Int) : Bool :=\n+  eqMod M (dotArray a b) (add v (mul f q))\n+\n+private def zeroDotsArray (M : Nat) (f : List Int) (a : Array (List Int)) :\n+    List (Array (List Int)) \u2192 List (List Int) \u2192 Bool\n+  | [], [] => true\n+  | b :: bs, q :: qs => checkDotArray M f [] a b q && zeroDotsArray M f a bs qs\n+  | _, _ => false\n+\n+private theorem zeroDots_toArray (M : Nat) (f : List Int) (a : List (List Int))\n+    (bs : List (List (List Int))) (qs : List (List Int)) :\n+    zeroDotsArray M f a.toArray (bs.map List.toArray) qs = zeroDots M f a bs qs := by\n+  induction bs generalizing qs with\n+  | nil => cases qs <;> simp [zeroDotsArray, zeroDots]\n+  | cons b bs ih =>\n+    cases qs <;> simp [zeroDotsArray, zeroDots, checkDotArray, checkDot, dotArray_toArray, ih]\n+\n+private def lowerArray (M : Nat) (f : List Int) :\n+    List (Array (List Int)) \u2192 List (Array (List Int)) \u2192 List (List (List Int)) \u2192 Bool\n+  | [], [], [] => true\n+  | a :: as, b :: bs, (q :: qs) :: rest =>\n+      checkDotArray M f [1] a b q && zeroDotsArray M f a bs qs && lowerArray M f as bs rest\n+  | _, _, _ => false\n+\n+private theorem lowerArray_toArray (M : Nat) (f : List Int)\n+    (A B Q : List (List (List Int))) :\n+    lowerArray M f (A.map List.toArray) (B.map List.toArray) Q = lowerCheck M f A B Q := by\n+  induction A generalizing B Q with\n+  | nil => cases B <;> cases Q <;> simp [lowerArray, lowerCheck]\n+  | cons a as ih =>\n+    cases B with\n+    | nil => cases Q <;> simp [lowerArray, lowerCheck]\n+    | cons b bs =>\n+      cases Q with\n+      | nil => simp [lowerArray, lowerCheck]\n+      | cons q qs =>\n+        cases q <;> simp [lowerArray, lowerCheck, checkDotArray, checkDot,\n+          dotArray_toArray, zeroDots_toArray, ih]\n+\n+/-- Compact both sets of rows once, before their repeated native dot products.\n+Conversion is part of checking, not certificate preparation. The reference\n+list checker remains the definition used by the kernel. -/\n+def lowerCheckImpl (M : Nat) (f : List Int) (A B Q : List (List (List Int))) : Bool :=\n+  lowerArray M f (A.map List.toArray) (B.map List.toArray) Q\n+\n+@[csimp] theorem lowerCheck_eq_impl : @lowerCheck = @lowerCheckImpl := by\n+  funext M f A B Q\n+  exact (lowerArray_toArray M f A B Q).symm\n+\n /-- Verify one exact row relation using the transpose of the pivot rows. -/\n @[expose] def rowCheck (f : List Int) (d : Int) (z : List (List Int)) :\n     List (List Int) \u2192 List (List (List Int)) \u2192 List (List Int) \u2192 Bool\n"
+    }
+  },
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "hostname": "chungus2",
+  "cpu_description": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 57 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  96\nOn-line CPU(s) list:                     0-95\nVendor ID:                               AuthenticAMD\nModel name:                              AMD EPYC 9455 48-Core Processor\nCPU family:                              26\nModel:                                   2\nThread(s) per core:                      2\nCore(s) per socket:                      48\nSocket(s):                               1\nStepping:                                1\nMicrocode version:                       0xb002175\nFrequency boost:                         enabled\nCPU(s) scaling MHz:                      52%\nCPU max MHz:                             4411.2300\nCPU min MHz:                             1500.0000\nBogoMIPS:                                6290.25\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx_vnni avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd amd_ppin cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect movdiri movdir64b overflow_recov succor smca fsrm avx512_vp2intersect flush_l1d sev sev_es debug_swap amd_lbr_pmc_freeze\nVirtualization:                          AMD-V\nL1d cache:                               2.3 MiB (48 instances)\nL1i cache:                               1.5 MiB (48 instances)\nL2 cache:                                48 MiB (48 instances)\nL3 cache:                                256 MiB (8 instances)\nNUMA node(s):                            4\nNUMA node0 CPU(s):                       0-11,48-59\nNUMA node1 CPU(s):                       12-23,60-71\nNUMA node2 CPU(s):                       24-35,72-83\nNUMA node3 CPU(s):                       36-47,84-95\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Mitigation; Reduced Speculation\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; STIBP always-on; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "cpu": 4,
+  "affinity": [
+    4
+  ],
+  "load_at_start": [
+    11.26025390625,
+    10.53662109375,
+    12.1025390625
+  ],
+  "toolchain": "leanprover/lean4:v4.35.0-rc3",
+  "harness_revision": "8a37daf1074c3bdbd0da479b55538bad4a0022db"
+}

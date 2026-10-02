@@ -1,0 +1,15 @@
+{
+  "source_directory": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-dotArray",
+  "source_patch_sha256": "48fe195476a3aaf6d387e53c1d3946ed900c9c7072a01cde3514cb4913989b5c",
+  "completed_commands": [
+    "dotArray"
+  ],
+  "sha256": {
+    "metadata.json": "00459ce37a4946268d1b0fce76dea6c6c659f0a2405dad81612a6dde28fb8038",
+    "completion.json": "6bdc9f3fb1bf48257247fce21856c0c2384db117b20e728073ce6418339780b5",
+    "dotArray.json": "eb73003ca5cefb2fb03739b15a70e16c64f1055f57a879c97025f3f3bf52a0df",
+    "dotArray.txt.gz": "460471ec117d97ffea00e6ec6d1b18f5643b0fa08da78827e30ccd6fe2616691",
+    "source.patch.gz": "fd715f13f77426b5395f9471bf14c37e0eb6d757fb49356b8ab6b4328fbc5853",
+    "commands.jsonl": "83d23f02fa25588729ac9f816c92bf6fb166b87178e8128e6340c61160ecede7"
+  }
+}

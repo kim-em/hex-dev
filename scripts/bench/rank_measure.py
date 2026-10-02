@@ -31,9 +31,11 @@ PREFIX = 'Hex.RankBench.'
 def commands(phase, families):
     if phase == 'quotient':
         for rank in ('Full', 'Deficient'):
-            for op in ('produce', 'prepare', 'finish', 'check'):
+            for op in ('produce', 'prepare', 'finish', 'check', 'block', 'pivotCols'):
                 case = PREFIX + 'Quotient.' + op + rank
                 yield op + rank, ['run', case]
+        yield 'dot', ['run', PREFIX + 'Quotient.dot']
+        yield 'dotArray', ['run', PREFIX + 'Quotient.dotArray']
     elif phase == 'poly-references':
         for block in range(6):
             for carrier in ('RatPoly', 'Mv'):
@@ -85,8 +87,10 @@ def commands(phase, families):
 def expected_hash(function, param):
     """Independent output contract for the scalar integer schedules."""
     name = function.removeprefix(PREFIX).lower()
-    if name.startswith('quotient.prepare'):
-        return None  # Full prepared-data hash: checked for agreement at each rung.
+    if name in ('quotient.dot', 'quotient.dotarray'):
+        return '0xb'
+    if name.startswith(('quotient.prepare', 'quotient.block', 'quotient.pivotcols')):
+        return None  # Structured output: prep validates it, then hashes must agree at each rung.
     if name.startswith('quotient.'):
         return '0xb' if '.check' in name else hex(param // 2 if 'deficient' in name else param)
     if name.startswith('runcheckrank'):
@@ -170,7 +174,7 @@ def main():
         schedule = [(label, command) for label, command in schedule if args.case in command]
         if not schedule:
             parser.error('case is not in the selected phase/family schedule')
-    sources = ('bench/HexRank/Bench/Quotient.lean', 'HexRank/PolyProduce.lean', 'bench/HexRank/Bench.lean', 'HexRank/Produce.lean',
+    sources = ('bench/HexRank/Bench/Quotient.lean', 'HexRank/PolyProduce.lean', 'HexRank/Polynomial.lean', 'bench/HexRank/Bench.lean', 'HexRank/Produce.lean',
                'scripts/oracle/rank_bench.py', 'scripts/oracle/rank_carriers.py',
                'scripts/bench/rank_measure.py', 'lakefile.lean', 'lake-manifest.json', 'lean-toolchain')
     metadata = {'revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),

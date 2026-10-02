@@ -1,0 +1,15 @@
+{
+  "source_directory": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/array-produceFull",
+  "source_patch_sha256": "48fe195476a3aaf6d387e53c1d3946ed900c9c7072a01cde3514cb4913989b5c",
+  "completed_commands": [
+    "produceFull"
+  ],
+  "sha256": {
+    "metadata.json": "cfb9786b935899b994b84d785dceac9d1c911fa50608497c8e085cbb472d046a",
+    "completion.json": "a836fa028973177cb5567a1a67109db14428e1bf59dc279c1d857ef373af2b54",
+    "produceFull.json": "8b814d254f38c45925ae6a5b90962369f3fab499bab13ef58bbae122df6c23ff",
+    "produceFull.txt.gz": "8117f18e71332f13da72997a426b05994c313c3f9f877ef5c4772868f43b53e3",
+    "source.patch.gz": "fd715f13f77426b5395f9471bf14c37e0eb6d757fb49356b8ab6b4328fbc5853",
+    "commands.jsonl": "aa23fbea8a4e91e5c215c17609a18366971c5a4faa9abcdce5a036ee70a1765d"
+  }
+}

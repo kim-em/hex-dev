@@ -1,0 +1,15 @@
+{
+  "source_directory": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/borrow-finishFull",
+  "source_patch_sha256": "9a2de919e674870cee4f4b5297d0105e5a5f54c94547dc5e85821b5c798ee299",
+  "completed_commands": [
+    "finishFull"
+  ],
+  "sha256": {
+    "metadata.json": "65df7ab21bac6fcc98a9186216fcec04b393c0c28fb670765f0a2784691f0aa5",
+    "completion.json": "8d04e05fd8928192a8e0bf9a8ca1adf45ec4e7b1eb7458d563a8abf637bc1ff2",
+    "finishFull.json": "ee7b70bec27d85b897c5f2204927e245457a5f57c0f15aea2df4919d9fa6bfb8",
+    "finishFull.txt.gz": "356d8a61e3f2b5e46b936fa0a8a64abb72aa569b47b575aede69699b8460e653",
+    "source.patch.gz": "fd67402a645df90ffb011a7d84bc3d3c5d84709f75e366bde24b381dc0722c92",
+    "commands.jsonl": "3ea9032fe49a9d5d7e0e90dbb5a7ee0389e23aa4f49a98000c25d8592e801541"
+  }
+}

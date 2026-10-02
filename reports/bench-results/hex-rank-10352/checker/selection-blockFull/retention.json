@@ -1,0 +1,15 @@
+{
+  "source_directory": "/home/kim/worktrees/hex-dev/hex-dev-issue-10352/.cache/issue-10352/selection-blockFull",
+  "source_patch_sha256": "ade43426a997fb9513b8ac3a120938fa77d4caad8f0f5c72ea79eaeeee25205f",
+  "completed_commands": [
+    "blockFull"
+  ],
+  "sha256": {
+    "metadata.json": "fcc7ee02a5ccb13797ee9ece20598cd91ab92c2b1effc408e1de664ffa07e877",
+    "completion.json": "8f99c92bbab3cd7bdb6692f05b596075ffea6bcba757897402ce26f9c459ce20",
+    "blockFull.json": "3f7164fd924a7b3abad3b7762c959fa4542d3891d6c19ab9223fe728b6050d00",
+    "blockFull.txt.gz": "829c074aba9eaa233e3cce319124443b8322b406c0d73a35226541f2e4681eb7",
+    "source.patch.gz": "247338e4dabe5373ab43b95f8a8e1865831d64af9af7dd67d7fcac91b950c3d9",
+    "commands.jsonl": "f132151f53b67799de8e9bce18cb1ea9d20cbbf216162ea8a78434f4bd6ed81a"
+  }
+}

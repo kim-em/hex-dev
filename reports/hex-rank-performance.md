@@ -1,18 +1,18 @@
 # HexRank performance
 
-HexRank remains at `done_through: 3`. Integer and polynomial-ring evidence is
-complete below; the native quotient checker still has an unresolved scaling
-result. [#10352](https://github.com/kim-em/hex-dev/issues/10352) owns that
-remaining obligation. The companion's tactic/kernel proof track uses its
+HexRank and HexRankMathlib satisfy Phase 4 (`done_through: 4`). The compiled
+track has complete operation, comparator and attribution evidence below; the
+proved array replacement resolves the native quotient checker's scaling gate.
+The companion's tactic/kernel proof track uses its
 CI-built `bench/HexRankMathlib/ProofProbe` examples under current Phase-4
 policy; the separate [carrier report](hex-rank-carriers-performance.md)
 retains diagnostic timings.
 
 The [current-source audit](bench-results/hex-rank-10352/current-audit.json)
 compares merged evidence revision `01ad7e599` with main `a29afca7a`.
-The measured rank algorithms and fixtures are unchanged; the new certificate
+At that audit baseline, the measured rank algorithms and fixtures were unchanged; the new certificate
 equality instance is outside their timed paths. Upstream determinant-budget
-and kernel-witness additions are also outside those paths. Existing scientific
+and kernel-witness additions are also outside those paths. Earlier scientific
 results retain their Lean 4.34.0 provenance; they are not claimed as new
 measurements on the current 4.35.0-rc3 compiler. The retained comparisons,
 frozen polynomial budgets, tables and figures regenerate identically from
@@ -25,9 +25,12 @@ full/deficient, and number-field examples build through the existing
 `HexRankMathlibProofProbe` CI target. `lake build HexRankMathlib HexRankTests
 HexRankMathlibProofProbe HexRank.Conformance` passes on the audited main
 compiler. `rankCertWith_check`, `checkRank_sound`, and `rankWith_eq` remain
-present and covered by the bridge build. HexRankMathlib remains at Phase 3 because
-its HexRank dependency remains at Phase 3. Its other direct prerequisites are
-at Phase 7; all HexRank prerequisites meet Phase 4.
+present and covered by the bridge build. HexRankMathlib takes the proof track,
+with HexRank now meeting its Phase-4 dependency gate. Its other direct prerequisites
+are at Phase 7; all HexRank prerequisites meet Phase 4. The audit/proof guards
+landed in #10579 (`0eb8168d2`); the later main changes up to that revision add
+downstream SignDet/real-closure source and Lake targets, outside the measured
+rank paths. Compiler and dependency pins remain those of the array measurements.
 
 ## Bench targets
 
@@ -41,14 +44,15 @@ python3 scripts/ci/check_benches_mathlib_free.py
 python3 scripts/ci/check_rank_compiler.py
 ```
 
-The Mathlib-free driver has 441 registrations: 48 integer parametric targets,
-60 native polynomial fixed cases, eight quotient-witness parametric targets,
+The Mathlib-free driver has 447 registrations: 48 integer parametric targets,
+60 native polynomial fixed cases, fourteen quotient-witness/primitive parametric targets,
 288 paired scalar anchors, 12 polynomial rank references, 24 polynomial stage
-references, and one protocol control. The existing CI smoke route checks 92
+references, and one protocol control. The existing CI smoke route checks 98
 native cases at the smallest smoke input; the quotient smoke dimension is four,
-not its scientific floor 128. External anchors are scheduled-only. The
+not its scientific floor 128. External anchors are scheduled-only. The original
 [driver artifacts](bench-results/hex-rank-10352/driver/) retain the list and
-both native and external verification outputs. The [recorded verification](bench-results/hex-rank-10352/driver/verification.json) pins the binary/source hashes and all commands; the 92-case native smoke took 1.437 s on its automatically selected CPU. This is an operational observation, not a scientific performance budget. CI adds tests inside its existing
+both native and external verification outputs. The [recorded verification](bench-results/hex-rank-10352/driver/verification.json) pins the binary/source hashes and all commands; the 92-case native smoke took 1.437 s on its automatically selected CPU. The current 447-case list and successful 98-case smoke are retained with the
+[checker artifacts](bench-results/hex-rank-10352/checker/driver/). Smoke times are operational observations, not scientific performance budgets. CI adds tests inside its existing
 job and preserves its existing bench list/verify route.
 
 | Public surface | Evidence track and measured path |
@@ -60,7 +64,8 @@ job and preserves its existing bench list/verify route.
 | `certifyRankWith`, `certifyRank` | Complete producer plus checker: `Certify.*` and polynomial `*Certify*`. |
 | `rankWitness`, `rankWitnessWith` | `Witness.*`, including the modular inverse and self-check. The fixed-modulus entry point is the constituent attempt inside the retrying producer. |
 | `PolyWitness.produce` | `Quotient.produce{Full,Deficient}`; its actual private rational preparation and modular completion are separated as `prepare*` and `finish*`. No substitute rank algorithm is used. |
-| Native `checkRankPoly` | `Quotient.check*`, with witness construction excluded from timing. |
+| Native `checkRankPoly` | `Quotient.check*`, with witness construction excluded from timing. Row compaction occurs inside checking. |
+| Quotient checker attribution | `Quotient.dot`, `dotArray`, `block{Full,Deficient}`, and `pivotCols{Full,Deficient}` isolate bounded-coefficient row products and selected matrix construction. |
 | Kernel replay through `checkRankList`, `checkRankListPacked`, `checkRankPoly`; tactic elaboration and proof construction | Proof track in HexRankMathlib, covered by the existing CI-built proof-probe examples; carrier-report timings are diagnostic. Native checker timing does not replace kernel-proof evidence. |
 | Soundness, completeness and correspondence | Mathematical API; `rankCertWith_check`, `checkRank_sound`, and `rankWith_eq` remain present and build. |
 
@@ -188,7 +193,7 @@ fixed-degree inversion overhead dominates before the cubic scans. The unchanged
 model/fixture was extended to `128,192,256,384,512,768,1024`, 2-second batch
 target, six trial-major trials, 600-second operational cap including prep.
 Seven of eight [large-ladder verdicts](bench-results/hex-rank-10352/quotient-verdicts.md)
-are consistent. The full checker is inconclusive slower, β=+0.550; its sole
+were consistent on the original implementation. The full checker was inconclusive slower, β=+0.550; its sole
 [unchanged rerun](bench-results/hex-rank-10352/quotient-check-rerun/checkFull.json)
 is also inconclusive slower, β=+0.283. Both retain all 42 completed rows. No model downgrade or Phase-4 pass is
 inferred from that result.
@@ -197,16 +202,15 @@ inferred from that result.
 witness, after Θ(n²) modular construction. Yet at 1024 its median is 6.740 s,
 against standalone checker medians 21.293 s (original) and 10.199 s (rerun).
 The rerun spans 6.931–22.323 s; the deficient finish/check medians agree within
-about 3% across the ladder. This is evidence of an unresolved measurement/context
-interaction, not evidence establishing a super-cubic algorithmic path.
+about 3% across the ladder. This motivated the direct context and implementation comparisons below; it
+does not establish a super-cubic algorithmic path.
 The containing operation's β=+0.062 is relevant evidence, but not a per-call
 wall-clock upper bound on a separately scheduled checker: newly constructed
 and cached witnesses can differ in memory layout/ownership, and the host
 conditions differ. The eight original quotient schedules started within nine
 seconds on independently selected CPUs, spanning multiple NUMA nodes. Their
 host activity is retained context; it neither invalidates a completed sample
-nor licenses a replacement checker pass. The standalone declared gate remains
-inconclusive.
+nor licenses a replacement checker pass. Those original standalone verdicts remain inconclusive in the retained data.
 
 The isolated tail-accumulator experiment's [source patch and availability
 record](bench-results/hex-rank-10352/tail-experiment/) preserve the exact three-file diff of unreferenced local commit
@@ -219,7 +223,130 @@ Those figures cannot now be independently reanalyzed and are not a new
 performance result. The experiment establishes no speedup and is not part
 of the library. The uncommitted borrowed-row follow-up was reported only
 as build-checked; its lost source and absent measurements establish no
-improvement. The original checker's unchanged-rerun allowance is exhausted.
+improvement. The original checker's unchanged-rerun allowance is exhausted. The new
+experiments below change the implementation and do not reuse that allowance.
+
+
+The [checker investigation](bench-results/hex-rank-10352/checker/) retains all
+current-compiler measurements. Six adjacent alternating AB/BA pairs at 1024
+reproduce the original context gap: median paired `finishFull/checkFull`
+**0.4023**. A first proved replacement makes `dot` tail recursive and borrows
+both row spines, eliminating their repeated reference-count writes. Its six
+implementation pairs give median after/before **0.6778**, including one slower
+arm. Nevertheless, its independent full checker ladder remains **inconclusive**,
+β=+0.463279. The other five affected stage ladders and isolated linear `dot`
+pass; [borrow-analysis.json](bench-results/hex-rank-10352/checker/borrow-analysis.json)
+keeps that mixed outcome. No containing operation or constant-factor comparison
+supplies the missing checker verdict.
+
+The final replacement converts the two lower-triangle row collections to arrays
+once per `lowerCheck` call, then reuses their contiguous row storage for all
+dot products. Conversion is included in the timed checker and takes O(n²)
+on this family; the repeated bounded-coefficient dots still take Θ(n³).
+`dot_eq_impl` and `lowerCheck_eq_impl` prove equality with the unchanged reference
+definitions for all inputs, including malformed shapes and unequal row lengths.
+The compiler uses these replacements; the kernel retains the reference definitions.
+`dotArray_toArray` supplies the row-product correspondence. This is a representation
+change within the existing checker, not a new rank algorithm.
+
+All six original-versus-final checker pairs are faster, with median paired
+after/before **0.4279**. The corresponding final `finishFull/checkFull` pairs
+have median **0.9888**, range **0.9679–1.0160**: the large context gap has
+disappeared in these observations. These adjacent arms share one automatically
+selected CPU per schedule. They diagnose constants only; their single-rung
+`inconclusive` outputs are not complexity verdicts. No sample is discarded.
+The multi-rung full and deficient checker verdicts are independently consistent,
+β=−0.042703 and −0.084103. The current-compiler arrays use Lean 4.35.0-rc3,
+Linux 6.12.111, chungus2's AMD EPYC 9455 and the same lean-bench revision as
+above; exact CPU, host load, source and executable hashes accompany each run.
+
+All six affected producer/completion/checker ladders and the isolated array dot
+pass their declared mode-1 models. The [validated array analysis](bench-results/hex-rank-10352/checker/array-analysis.json)
+links all seven unmodified exports (42 points per cubic ladder, 54 for the dot):
+
+| Target (`Quotient.` prefix) | Model | β | Largest-rung median |
+| --- | --- | ---: | ---: |
+| `checkFull` | cubic, n=1024 | -0.042703 | 3.358 s |
+| `finishFull` | cubic, n=1024 | -0.061237 | 3.42415 s |
+| `produceFull` | cubic, n=1024 | +0.015688 | 117.421 s |
+| `checkDeficient` | cubic, n=1024 | -0.084103 | 1.71985 s |
+| `finishDeficient` | cubic, n=1024 | -0.088418 | 1.71623 s |
+| `produceDeficient` | cubic, n=1024 | -0.061964 | 37.2662 s |
+| `dotArray` | linear, n=16384 | -0.008361 | 5.59099e-05 s |
+
+At n=1024, standalone checker/complete-producer median ratios are **0.02860**
+(full) and **0.04615** (deficient). These are separately scheduled operation
+medians; the adjacent finish/check comparison above isolates the context gap.
+The unchanged rational-preparation paths retain their original passing
+`prepareFull`/`prepareDeficient` results (β=+0.075067/−0.055824). Their bodies
+use rational-polynomial arithmetic, outside the changed integer-list dot/checker
+implementations; all six paths that consume the changed checker are remeasured.
+
+The row-product targets have independent mode-1 linear models on
+`1024,1536,2048,3072,4096,6144,8192,12288,16384`. Each row begins with
+`[x,1]` and then contains zero polynomial entries, so the product is always
+`x²+1`, with bounded degrees and coefficients. Both loops visit every entry.
+The two selection helpers have independent mode-1 cubic models on the same
+128–1024 ladder as the checker: Θ(n²) selected entries incur mean Θ(n)
+linked-list access, while output allocation is O(n²). Their preparation checks
+the pivot indices, prefix minor and transpose against structural constructions.
+These benchmarks expose the profile's list-access cost without changing the
+selector implementations. Their cubic attribution bounds describe the existing
+linked-list helpers; they do not assert an intrinsic cubic cost for selection.
+Every schedule uses six fixed trial-major trials,
+a 2-second batch target and the unchanged harness tolerance.
+
+All four selector targets pass; their [validated analysis](bench-results/hex-rank-10352/checker/selection-analysis.json)
+retains all 168 samples and links the four exports:
+
+| Selector (`Quotient.` prefix) | β | n=1024 median |
+| --- | ---: | ---: |
+| `blockFull` | -0.010516 | 1.00485 s |
+| `blockDeficient` | -0.007326 | 0.13056 s |
+| `pivotColsFull` | -0.005707 | 1.05186 s |
+| `pivotColsDeficient` | +0.013704 | 0.419078 s |
+
+No new implementation or selector schedule needed an unchanged rerun. The
+original checker, its one allowed rerun, the tail-only experiment's availability
+record and the borrowed-only inconclusive result remain explicit historical
+evidence; none is relabelled as a pass. The final implementation's new passing
+verdicts combine with the unchanged `dotImpl`/`dotAcc` primitive's passing
+`borrow-dot` evidence and the original Lean 4.34.0 `prepare*` evidence described
+above to cover all applicable targets. The borrowed dot's executable body is
+unchanged by the array replacement.
+
+The final 447-case list and 98-case smoke are also captured at the committed
+source in [current-verification.json](bench-results/hex-rank-10352/checker/driver/current-verification.json),
+with source/executable hashes and exact commands. The frozen array driver
+predates the four selector registrations; the selection driver differs from the
+final bench source only by adding the words “linear” and “cubic” to two model
+comments. The final executable is byte-identical to the verified selection
+binary. Both original and current-source smoke captures are retained.
+
+The frozen executables are recorded in [binaries/](bench-results/hex-rank-10352/checker/binaries/):
+`before` reconstructs main `a29afca7a`, `borrow` reconstructs `1a9f17f84`, and
+`array`/`selection` reconstruct `322d567bc` plus their run-specific dirty patches.
+Their source snapshots use published base `a29afca7a` (recorded per snapshot),
+rather than the older base used below. Reconstructing a selector run also
+checks its additional registrations. Each reconstruction verifies all recorded
+source hashes. A child's working-directory git revision can change while a
+frozen executable runs; the frozen binary hash and source record determine
+what was measured. For example:
+
+```sh
+python3 scripts/bench/rank_reconstruct.py --snapshot 322d567bc --run reports/bench-results/hex-rank-10352/checker/array-checkFull --destination /tmp/rank-array
+# In the reconstructed worktree: lake build hexrank_bench
+python3 scripts/bench/rank_measure.py quotient --case Hex.RankBench.Quotient.checkFull --bench /tmp/rank-array/.lake/build/bin/hexrank_bench --python .venv-rank/bin/python --out /tmp/rank-array-check
+python3 scripts/bench/rank_checker_pairs.py context --before FROZEN_BINARY --out /tmp/rank-context
+python3 scripts/bench/rank_checker_pairs.py implementation --before BASELINE_BINARY --after ARRAY_BINARY --out /tmp/rank-pairs
+```
+
+The pair runner requires the corresponding `.source.json` sidecar from
+`binaries/` and checks its executable hash. Rebuilt binaries need newly recorded
+sidecars; historical hashes identify the original captures, not reproducible-build
+promises. Each retained journal contains the exact invocation, all twelve arms,
+source records and unmodified outputs. The analysis helper validates binary/source
+identity, trial-major order, output contracts and all declared scientific settings.
 
 Exact scientific commands are recorded in every run's `metadata.json` and
 `commands.jsonl`; these commands reproduce the schedules with a built executable:
@@ -271,6 +398,9 @@ is rejected for host activity. Earlier cap/prep diagnostics remain as diagnostic
 not replacement scientific evidence.
 
 ## Comparator ratios
+
+The manifest names three informational comparators: **FLINT fmpz_mat.rank via python-flint**,
+**FLINT fmpq_mat.rank via python-flint**, and **SymPy DomainMatrix.rank over the exact polynomial domain**.
 
 The persistent service `scripts/oracle/rank_bench.py` receives the actual
 Lean-generated matrix and, for stage references, certificate. Preparation,
@@ -379,8 +509,11 @@ Captures use `perf record --clockid mono -e cycles:u -F 999 --call-graph dwarf`,
 then samply import, the repository's complete timestamp-sequence normalization,
 and filtering to `kernel` regions from `LEAN_BENCH_PROFILE_KERNEL=1`. Preparation,
 hashing and post-call disposal are excluded. Bounded ELF symbolization and the
-shared summary tool provide the leaf and inclusive tables. Raw profiles remain
-at `/tmp/hexrank-perf-profiles-10352`; only analytical summaries are committed.
+shared summary tool provide the leaf and inclusive tables. Only analytical
+summaries are committed, as the profiling policy specifies. The historical
+`/tmp/hexrank-*` capture paths below record their original locations; those
+scratch directories are no longer present on this host. Their committed
+summaries, commands and calibration records remain available.
 The initial direct-samply captures contained zero samples; their commands,
 failure diagnostics and raw locations are retained under
 [profiles/samply-record](bench-results/hex-rank-10352/profiles/samply-record/).
@@ -445,6 +578,28 @@ share cannot be compared directly to the incompletely unwound 44.20%
 `checkRankPoly` share. These costs occur in the isolated checker target, not
 witness preparation. Raw capture: `/tmp/hexrank-checker-profile`.
 
-## Concerns
 
-- [#10352](https://github.com/kim-em/hex-dev/issues/10352): resolve the full-rank quotient checker's inconclusive 128–1024 result, including its discrepancy with the containing `finishFull` target. The original measurement (β=+0.550), sole unchanged rerun (β=+0.283), and dot/list-access profile are retained. The data do not establish an algorithmic super-cubic path or a wall-time upper bound from separately scheduled `finishFull`. The cubic model is unchanged; no inconclusive evidence is promoted to a pass.
+A diagnostic profile of the borrowed checker at 1024 explains why removing
+reference-count writes alone did not resolve scaling. The [capture summaries](bench-results/hex-rank-10352/checker/borrow-profile/)
+retain 22305 timed samples over 22357.394 ms, calibration residual 0.732 ms,
+sensitivity passed and 99.99% classification. Leaf `dotAcc` accounts for 88.16%,
+`nth` for 9.80%, `mul` for 0.85%, `add` for 0.68%, allocation for 0.25%, and
+Lean runtime for 0.08%; own code is 99.66%. Inclusive lower-triangle checking
+is 90.09% and `dotAcc` 89.74%. The hottest instruction follows a second-row
+list-node header load. Pointer traversal and layout are plausible causes;
+this is not a hardware cache-miss measurement. The array representation removes
+that linked-list traversal from repeated lower-triangle dots.
+
+The list and array dot registrations attribute the dominant arithmetic traversal;
+`block*` and `pivotCols*` attribute the remaining selected-entry accesses.
+The latter preserve their cubic list implementation. Allocation and runtime costs
+belong to these measured operations; no inseparable new primitive is asserted.
+The diagnostic capture uses `lean-bench-samply` revision
+`9356baa2f5757ee40320a897bd284914d5bb9f5e`, `cycles:u` at 999 Hz with DWARF
+unwinding. Its exact commands, timed-region records, calibration, hot-loop assembly
+and hashes are retained. Exact commands are in `metadata.json`; the verbose
+capture log and raw perf data remain in `.cache/issue-10352/borrow-profile/borrowed-checker` on the measurement
+host. This profile investigates the observed anomaly; the four manifest-family
+profiles above remain the required family coverage.
+
+## Concerns
