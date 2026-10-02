@@ -25,5 +25,13 @@
     7.68896484375,
     11.9931640625
   ],
-  "exitCode": 0
+  "exitCode": 0,
+  "measuredBaseCommit": "321764a1f22825453e304693ca9a7fa357c359f9",
+  "retainedExport": "native-roots-anchor.json",
+  "retainedExportSha256": "9ee8e886cfccfded2ae772a493e6bf3fb2909cbde9632612c53a67cbf2119695",
+  "retainedCopy": "The retained export is a byte-for-byte copy of the export-file named in command.",
+  "sourceHashCheckedAt": "a6d0d94287df55f94f04b721438b281be546caf8",
+  "sourceAvailability": "The measured source revision is outside main's ancestry. benchmarkSourceMatchCommit is in upstream main and the file benchSourcePath has hash benchSourceSha256 there. This identifies a matching driver; sourceCommit and executableSha256 identify the measured build.",
+  "benchmarkSourceMatchCommit": "a6d0d94287df55f94f04b721438b281be546caf8",
+  "benchSourcePath": "bench/HexRealClosure/Bench.lean"
 }
