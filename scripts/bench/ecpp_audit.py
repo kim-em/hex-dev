@@ -19,13 +19,15 @@ FAMILIES = ["Hex.ECPPBench.runReplay", "Hex.ECPPBench.runProposal",
             "Hex.ECPPBench.runParse", "Hex.ECPPBench.runPreflight"]
 # Operation-specific ceilings: twice the retained endpoint medians, rounded
 # upward. Existing reports/ecpp/{compiled,native/compiled-updated}.json supply
-# the baselines; these are per-call regression budgets, not subprocess caps.
+# the baselines; bootstrap-operations.json supplies the previously unregistered
+# CM/counting operations. These are per-call regression budgets, not subprocess caps.
 BUDGETS = {"runCheck65": .00032, "runCheck256": .012, "runCheck512": .045,
            "runConvert65": .0016, "runConvert256": .17, "runConvert512": 1.05,
            "runNative128": .125, "runNative256": 1.45,
            "runNativeHard": 3.3,
            "runNativeCheck": .010, "runNativeConvert": .14,
-           "runParse512": .0016, "runNativeExhaust": .075}
+           "runParse512": .0016, "runNativeExhaust": .075,
+           "runCM128": .00023, "runCM256": .00020, "runCountedConvert65": .0021}
 
 
 def sha(path: Path) -> str:

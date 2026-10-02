@@ -1,0 +1,21 @@
+{
+  "command": [
+    ".lake/build/bin/hexecpp_bench",
+    "run",
+    "runCM128",
+    "runCM256",
+    "runCountedConvert65",
+    "--repeats",
+    "5",
+    "--export-file",
+    "reports/ecpp/audit/bootstrap-operations.json"
+  ],
+  "cpu": 29,
+  "host": "chungus2",
+  "source": "89d6487fa9bb46ba7c77ebf65a0c1883f9dfac4d",
+  "lean": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "stdout": "runCM128    [fixed] repeats=5\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=89d6487-dirty, 2026-10-02T08:31:05Z, host=chungus2\n  repeat 0  110.634 \u00b5s  (\u00d72^4, total 1.770 ms)\n  repeat 1  114.841 \u00b5s  (\u00d72^4, total 1.837 ms)\n  repeat 2  112.076 \u00b5s  (\u00d72^4, total 1.793 ms)\n  repeat 3  110.517 \u00b5s  (\u00d72^4, total 1.768 ms)\n  repeat 4  112.189 \u00b5s  (\u00d72^4, total 1.795 ms)\n  median: 112.076 \u00b5s    min: 110.517 \u00b5s    max: 114.841 \u00b5s\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 70_504 kB..71_100 kB (across 5 ok repeat(s))\n\nrunCM256    [fixed] repeats=5\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=89d6487-dirty, 2026-10-02T08:31:05Z, host=chungus2\n  repeat 0  97.572 \u00b5s  (\u00d72^4, total 1.561 ms)\n  repeat 1  98.461 \u00b5s  (\u00d72^4, total 1.575 ms)\n  repeat 2  97.621 \u00b5s  (\u00d72^4, total 1.562 ms)\n  repeat 3  95.882 \u00b5s  (\u00d72^4, total 1.534 ms)\n  repeat 4  97.261 \u00b5s  (\u00d72^4, total 1.556 ms)\n  median: 97.572 \u00b5s    min: 95.882 \u00b5s    max: 98.461 \u00b5s\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 70_040 kB..70_924 kB (across 5 ok repeat(s))\n\nrunCountedConvert65    [fixed] repeats=5\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=89d6487-dirty, 2026-10-02T08:31:05Z, host=chungus2\n  repeat 0    1.028 ms\n  repeat 1    1.018 ms\n  repeat 2    1.030 ms\n  repeat 3    1.032 ms\n  repeat 4  951.266 \u00b5s  (\u00d72^1, total 1.903 ms)\n  median: 1.028 ms    min: 951.266 \u00b5s    max: 1.032 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 70_120 kB..71_124 kB (across 5 ok repeat(s))\n\nexported to reports/ecpp/audit/bootstrap-operations.json\n",
+  "stderr": "",
+  "returncode": 0,
+  "executable_sha256": "a6904cdaecd05e0ab2e3d2615d3a9e6767cc96717dd2cbc08f2882461e7bf7e9"
+}
