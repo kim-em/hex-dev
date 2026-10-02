@@ -67,7 +67,10 @@ private def hard : Nat := 177080666831933235355717939809840315427
 #guard exhausted hard { maxScalarWork := 0 } .scalarWork
 #guard exhausted hard { maxDepth := 1 } .depth
 #guard exhausted hard { nonresidueRetries := 0 } .nonresidueRetries
-#guard exhausted hard { pointRetries := 0 } .pointRetries
+#guard exhausted hard { pointRetries := 0 } .portfolio
+-- No local point allowance still traverses later orders and twists.
+#guard (produce hard 0 { pointRetries := 0 }).state.stats.candidates > 9
+#guard exhausted hard { pointRetries := 0, maxCandidates := 9 } .candidates
 #guard exhausted 9 {} .screening
 
 #guard ([0, 1, 4, 9, 25, 35, 49, 121, 100003 * 100003].all fun n =>
@@ -90,3 +93,32 @@ private def rejected := produce hard 17 { pointRetries := 1 }
 #guard match rejected.result with
   | .error e => e.resource == .portfolio
   | .ok _ => false
+
+-- A child's local nonresidue failure supersedes the parent's local retry and
+-- survives a later ancestor failure. All calls share the same state.
+private def childRetry : Option SearchError :=
+  let b : SearchBudget := { nonresidueRetries := 0 }
+  let action : SearchM (Option Cert) := do
+    let _ ← search b b.maxDepth hard
+    search b 0 (hard + 2)
+  let (_, state) := action.run.run {
+    rand := Hex.Rand.ofSeed 0,
+    stats := { unresolved := some ⟨hard + 2, .pointRetries⟩ } }
+  state.stats.unresolved
+#guard childRetry.any fun e => e.subject == hard && e.resource == .nonresidueRetries
+
+-- The exposed stateful search can reuse a success without any new work.
+private def memoReplay : Bool :=
+  let action : SearchM Bool := do
+    let first ← search {} 32 17
+    let before ← get
+    let second ← search {} 32 17
+    let after ← get
+    pure (first.any (checkAt 17) && second.any (checkAt 17) &&
+      before.stats.factorWork == after.stats.factorWork && before.rand == after.rand)
+  let (result, _) := action.run.run { rand := Hex.Rand.ofSeed 0 }
+  result.toOption.getD false
+#guard memoReplay
+#guard primeBits 0 (.small 2) == none
+#guard primeBits 1 (.small 2) == some 3
+#guard primeBits 1 (.pock 13 [(2, 0, .small 2)]) == none

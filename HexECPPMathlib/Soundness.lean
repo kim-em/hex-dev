@@ -73,7 +73,7 @@ theorem replay_zero {p n a b q : ℕ} [Fact p.Prime] (hp : p ∣ n) (hn : 0 < n)
     0 (by rfl) h
   change (2 ^ HexArith.bitLength q) • (0 : (shortCurve p a b).toAffine.Point) +
     (q % 2 ^ HexArith.bitLength q) • V = 0 at hrep
-  simpa [Nat.mod_eq_of_lt (lt_two_pow_bitLength q)] using hrep
+  simpa [Nat.mod_eq_of_lt (HexArith.lt_two_pow_bitLength q)] using hrep
 
 set_option linter.style.haveILetI false in
 /-- A checked ECPP step is prime once its structurally smaller child subject

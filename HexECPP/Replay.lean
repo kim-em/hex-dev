@@ -80,12 +80,14 @@ theorem replayBits_facts {n a b q : Nat} (Q : Point) :
                   exact replayBits_facts Q bits T S ws₂ rest
                     hTf.2.1 hTf.2.2 hrec
 
+/-- A successful scalar replay returns canonical coordinates satisfying the curve equation. -/
 theorem replay_facts {n a b q : Nat} {Q S : Point} {ws rest : List Nat}
     (h : replay n a b q Q ws = some (S, rest)) :
     S.canonical n = true ∧ S.onCurve n a b = true := by
   exact replayBits_facts Q (HexArith.bitLength q) .infinity S ws rest
     (by rfl) (by rfl) h
 
+/-- Scalar acceptance means infinity with no unused inverse witnesses. -/
 theorem replayDone_eq_true_iff {n a b q : Nat} {Q : Point}
     {inverses : List Nat} :
     replayDone n a b q Q inverses = true ↔
@@ -97,16 +99,11 @@ theorem replayDone_eq_true_iff {n a b q : Nat} {Q : Point}
     rcases pair with ⟨P, ws⟩
     cases P <;> cases ws <;> simp
 
+/-- The next binary digit extends the truncated scalar by its positional value. -/
 theorem bit_mod_succ (q k : Nat) :
     q % 2 ^ (k + 1) =
       q % 2 ^ k + (q.testBit k).toNat * 2 ^ k := by
   rw [Nat.mod_pow_succ, Nat.toNat_testBit, Nat.mul_comm]
-
-theorem lt_two_pow_bitLength (q : Nat) : q < 2 ^ HexArith.bitLength q := by
-  unfold HexArith.bitLength
-  by_cases hq : q = 0
-  · simp [hq]
-  · simpa [hq] using Nat.lt_log2_self (n := q)
 
 /-- The exact strict integer ECPP size bound. -/
 @[expose]
@@ -118,16 +115,25 @@ def sizeBound (n q : Nat) : Bool :=
     16 * n * q < c * c
   else false
 
+/-- Acceptance implies positivity of the difference before natural subtraction. -/
 theorem sizeBound_first {n q : Nat} (h : sizeBound n q = true) :
     n < (q - 1) * (q - 1) := by
   by_cases hh : n < (q - 1) * (q - 1)
   · exact hh
   · simp [sizeBound, hh] at h
 
+/-- Acceptance implies the second strict integer ECPP inequality. -/
 theorem sizeBound_second {n q : Nat} (h : sizeBound n q = true) :
     16 * n * q <
       (((q - 1) * (q - 1) - n) * ((q - 1) * (q - 1) - n)) := by
   have hh := sizeBound_first h
   simpa [sizeBound, hh] using h
+
+/-- Both strict inequalities, including the guard before subtraction, exactly
+characterize arithmetic size acceptance. -/
+theorem sizeBound_eq_true_iff {n q : Nat} :
+    sizeBound n q = true ↔ n < (q - 1) * (q - 1) ∧
+      16 * n * q < ((q - 1) * (q - 1) - n) ^ 2 := by
+  by_cases h : n < (q - 1) * (q - 1) <;> simp [sizeBound, h, Nat.pow_two]
 
 end Hex.ECPP

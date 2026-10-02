@@ -42,6 +42,21 @@ def check : Cert → Bool
 def checkAt (n : Nat) (cert : Cert) : Bool :=
   cert.subject == n && check cert
 
+/-- A terminal node uses the existing Hex primality checker. -/
+@[simp] theorem check_base (cert : Hex.Nat.PrimeCert) :
+    check (.base cert) = Hex.Nat.checkPrime cert := rfl
+
+/-- Recursive acceptance checks the child and binds the scalar to its subject. -/
+theorem check_step (n a b x y d : Nat) (ws : List Nat) (child : Cert) :
+    check (.step n a b x y d ws child) =
+      (check child && checkStep n a b x y d ws child.subject) := rfl
+
+/-- Characterize subject-bound acceptance without unfolding the checker. -/
+@[simp] theorem checkAt_eq_true_iff {n : Nat} {cert : Cert} :
+    checkAt n cert = true ↔ cert.subject = n ∧ check cert = true := by
+  simp [checkAt]
+
+/-- Accepted step data uses canonical curve, point and discriminant residues. -/
 theorem checkStep_canonical {n a b x y discrInv q : Nat}
     {inverses : List Nat}
     (h : checkStep n a b x y discrInv inverses q = true) :
@@ -50,6 +65,7 @@ theorem checkStep_canonical {n a b x y discrInv q : Nat}
     decide_eq_true_iff, beq_iff_eq] at h
   grind
 
+/-- Recover the exact arithmetic conditions and complete scalar transcript from step acceptance. -/
 theorem checkStep_facts {n a b x y discrInv q : Nat} {inverses : List Nat}
     (h : checkStep n a b x y discrInv inverses q = true) :
     3 < n ∧ (n % 6 = 1 ∨ n % 6 = 5) ∧ 2 ≤ q ∧ q < n ∧
@@ -62,11 +78,13 @@ theorem checkStep_facts {n a b x y discrInv q : Nat} {inverses : List Nat}
   have hreplay := replayDone_eq_true_iff.mp h.2
   grind
 
+/-- Accepted subject-bound checking identifies the certificate subject. -/
 theorem checkAt_subject {n : Nat} {cert : Cert}
     (h : checkAt n cert = true) : cert.subject = n := by
   simp only [checkAt, Bool.and_eq_true, beq_iff_eq] at h
   exact h.1
 
+/-- Subject-bound acceptance implies raw checker acceptance. -/
 theorem checkAt_check {n : Nat} {cert : Cert}
     (h : checkAt n cert = true) : check cert = true := by
   simp only [checkAt, Bool.and_eq_true] at h

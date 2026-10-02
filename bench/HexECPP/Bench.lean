@@ -130,5 +130,86 @@ setup_fixed_benchmark runNative256 where { repeats := 5, expectedHash := some (h
 setup_fixed_benchmark runNativeCheck where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
 setup_fixed_benchmark runNativeConvert where { repeats := 5, expectedHash := some (hash (1 : Nat)) }
 
+/-!
+# Controlled ECPP input families
+
+Scalar length varies with a fixed small modulus and a nonidentity point of
+order thirteen. Parsing varies the number of fixed-width rows, independently
+of primality and certificate generation. Setup remains outside timed regions.
+-/
+
+namespace Hex.ECPPBench
+open Hex.ECPP
+
+private instance : Hashable ImportBudget := ⟨fun b => hash (reprStr b)⟩
+private instance : Hashable PariCertificate := ⟨fun c => hash (reprStr c)⟩
+
+def scalarInput (bits : Nat) : Nat × List Nat :=
+  let q := 13 * (2 ^ (max 1 bits) - 1)
+  let b := { defaultImportBudget with
+    maxScalarBits := bits + 4, maxInverseOps := 2 * (bits + 4) }
+  let ws := match proposeScalar b 7 0 q (.affine 1 2) with
+    | .ok (_, ws) => ws
+    | .error _ => []
+  (q, ws)
+
+@[noinline] def runReplay (input : Nat × List Nat) : Bool :=
+  replayDone 7 0 3 input.1 (.affine 1 2) input.2
+
+@[noinline] def runProposal (input : Nat × List Nat) : Bool :=
+  (proposeScalar { defaultImportBudget with
+    maxScalarBits := HexArith.bitLength input.1,
+    maxInverseOps := 2 * HexArith.bitLength input.1 }
+    7 0 input.1 (.affine 1 2)).toOption.any fun (p, ws) =>
+      p == .infinity && ws == input.2
+
+-- Derivation: dense scalars 13*(2^k-1) have k+O(1) bits and a periodic
+-- fixed-width residue schedule. Each bit runs at most two word-size affine
+-- additions. Both checked replay and transcript generation therefore take
+-- Theta(k) time; this isolates the SPEC's O(L) ring-operation bound.
+setup_benchmark runReplay k => k with prep := scalarInput where {
+  paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+}
+
+-- Derivation: the same bit schedule performs Theta(k) extended-GCD calls on
+-- fixed operands modulo seven; reversing and comparing the witnesses adds
+-- Theta(k) work. Arbitrary subject-bit growth is deliberately held constant.
+setup_benchmark runProposal k => k with prep := scalarInput where {
+  paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+}
+
+def rowBudget (rows : Nat) : ImportBudget :=
+  { defaultImportBudget with maxInputBytes := 64 * rows + 64, maxRows := rows }
+
+def textInput (rows : Nat) : ImportBudget × String :=
+  (rowBudget rows, "[" ++ String.intercalate ","
+    (List.replicate (max 1 rows) "[7,-5,1,0,[1,2]]") ++ "]")
+
+@[noinline] def runParse (input : ImportBudget × String) : Nat :=
+  match parsePari input.1 input.2 with
+  | .ok c => c.rows.length
+  | .error _ => 0
+
+def parsedInput (rows : Nat) : ImportBudget × PariCertificate :=
+  (rowBudget rows, ⟨List.replicate rows ⟨7, -5, 1, 0, ⟨1, 2, 1⟩⟩, 13⟩)
+
+@[noinline] def runPreflight (input : ImportBudget × PariCertificate) : Bool :=
+  (preflight input.1 input.2).isOk
+
+-- Derivation: r fixed-width row tokens contain Theta(r) bytes and integers.
+-- Digit scanning, JSON parsing, decoding and the terminal-row lookup each
+-- traverse them once. Bounded integer arithmetic has constant cost here.
+setup_benchmark runParse r => r with prep := textInput where {
+  paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+}
+
+-- Derivation: list length, seven fixed-width bit checks per row and original
+-- index traversal each cost Theta(r); no endpoint construction is timed.
+setup_benchmark runPreflight r => r with prep := parsedInput where {
+  paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+}
+
+end Hex.ECPPBench
+
 def main (args : List String) : IO UInt32 :=
   LeanBench.Cli.dispatch args

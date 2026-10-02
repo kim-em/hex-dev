@@ -26,25 +26,38 @@ of compositeness. Only raw subject-bound checked certificates are returned.
 
 namespace Hex.ECPP
 
+/-- Shared allocations and local failure causes in native production. -/
 inductive Resource where
   | inputBits | depth | candidates | roots | nonresidues | points
   | factorWork | scalarWork | outputBits | memo | portfolio
   | screening | nonresidueRetries | pointRetries
 deriving Repr, BEq, DecidableEq
 
+/-- Finite shared search allocations, with separate local retry ceilings. -/
 structure SearchBudget where
+  /-- Maximum subject bit length. -/
   maxBits : Nat := 256
+  /-- Maximum recursive certificate depth. -/
   maxDepth : Nat := 32
+  /-- Shared discriminant and order candidate allowance. -/
   maxCandidates : Nat := 2048
+  /-- Shared modular-root call allowance. -/
   maxRoots : Nat := 8192
+  /-- Shared nonresidue-draw allowance. -/
   maxNonresidues : Nat := 4096
+  /-- Shared point-draw allowance. -/
   maxPoints : Nat := 4096
+  /-- Shared reserved factor-attempt packages. -/
   maxFactorWork : Nat := 32768
+  /-- Shared maximum scalar additions, including checker replays. -/
   maxScalarWork : Nat := 1000000
+  /-- Maximum literal bits per retained certificate. -/
   maxOutputBits : Nat := 2000000
+  /-- Maximum retained successful certificates. -/
   maxMemo : Nat := 128
   /-- Local retries are also charged to the shared allocations. -/
   pointRetries : Nat := 8
+  /-- Local nonresidue draws, also charged to the shared allowance. -/
   nonresidueRetries : Nat := 64
 deriving Repr
 
@@ -71,17 +84,27 @@ def orderBudget : Hex.Nat.FactorSearchBudget := {
   smoothBounds := [64, 512]
   smoothBases := [2] }
 
+/-- An unresolved subject and the allocation or search stage that failed. -/
 structure SearchError where
+  /-- Subject whose proof remains unresolved. -/
   subject : Nat
+  /-- Allocation or search stage responsible for failure. -/
   resource : Resource
 deriving Repr
 
+/-- Cumulative charged work and backtracking diagnostics. -/
 structure SearchStats where
+  /-- Charged discriminant and order candidates. -/
   candidates : Nat := 0
+  /-- Charged modular-root calls. -/
   roots : Nat := 0
+  /-- Charged nonresidue draws. -/
   nonresidues : Nat := 0
+  /-- Charged point draws. -/
   points : Nat := 0
+  /-- Reserved factor-work units, never refunded. -/
   factorWork : Nat := 0
+  /-- Reserved scalar additions, never refunded. -/
   scalarWork : Nat := 0
   /-- Checked proposals rejected when their recursive child could not be built. -/
   backtracks : Nat := 0
@@ -89,8 +112,11 @@ structure SearchStats where
   unresolved : Option SearchError := none
 deriving Repr
 
+/-- The advanced random stream, cumulative counters and checked success memo. -/
 structure SearchState where
+  /-- Advanced deterministic random stream. -/
   rand : Hex.Rand
+  /-- Cumulative counters and the first unresolved branch. -/
   stats : SearchStats := {}
   /-- Only successes are cached; a failed branch may depend on remaining depth. -/
   memo : List Cert := []
@@ -98,13 +124,16 @@ deriving Repr
 
 abbrev SearchM := ExceptT SearchError (StateM SearchState)
 
+/-- Abort on a shared allocation failure without rolling back state. -/
 private def fail (n : Nat) (resource : Resource) : SearchM α := throw ⟨n, resource⟩
 
+/-- Preserve the first unresolved branch, promoting child or portfolio failure over local retries. -/
 private def unresolved (n : Nat) (resource : Resource) : SearchM Unit :=
   modify fun s => { s with stats := { s.stats with
     unresolved := match s.stats.unresolved with
       | some e => if (e.resource == .pointRetries || e.resource == .nonresidueRetries) &&
-          (resource == .depth || resource == .screening || resource == .portfolio) then
+          (n < e.subject || (n == e.subject &&
+            (resource == .depth || resource == .screening || resource == .portfolio))) then
             some ⟨n, resource⟩ else some e
       | none => some ⟨n, resource⟩ } }
 
@@ -181,34 +210,50 @@ private def factors (budget : SearchBudget) (n m : Nat) : SearchM (List Nat) := 
   return (qs.filter fun q => 2 ≤ q && q < n && m % q == 0 && sizeBound n q &&
     Hex.Nat.isProbablePrime q).mergeSort (· ≤ ·)
 
-/-- Bit size of literal data, counting constructors as one bit as well.
-This includes the entire embedded terminal certificate. -/
-def primeBits : Nat → Hex.Nat.PrimeCert → Nat
-  | 0, _ => 2000001
-  | _ + 1, .small n => 1 + HexArith.bitLength n
-  | fuel + 1, .pock n fs => 1 + HexArith.bitLength n +
-      (fs.map fun (a, e, c) => HexArith.bitLength a + HexArith.bitLength e + primeBits fuel c).sum
-  | fuel + 1, .pock3 n s r t fs => 1 + ([n, s, r, t].map HexArith.bitLength).sum +
-      (fs.map fun (a, e, c) => HexArith.bitLength a + HexArith.bitLength e + primeBits fuel c).sum
-  | fuel + 1, .pock3Sieve n s r t k fs => 1 + ([n, s, r, t, k].map HexArith.bitLength).sum +
-      (fs.map fun (a, e, c) => HexArith.bitLength a + HexArith.bitLength e + primeBits fuel c).sum
+/-- Count terminal literal bits under an explicit traversal fuel.
+Exhaustion is explicit and cannot bypass a caller's larger output allocation. -/
+def primeBits : Nat → Hex.Nat.PrimeCert → Option Nat
+  | 0, _ => none
+  | _ + 1, .small n => some (1 + HexArith.bitLength n)
+  | fuel + 1, .pock n fs => do
+      let bits ← fs.mapM fun (a, e, c) => do
+        let child ← primeBits fuel c
+        pure (HexArith.bitLength a + HexArith.bitLength e + child)
+      pure (1 + HexArith.bitLength n + bits.sum)
+  | fuel + 1, .pock3 n s r t fs => do
+      let bits ← fs.mapM fun (a, e, c) => do
+        let child ← primeBits fuel c
+        pure (HexArith.bitLength a + HexArith.bitLength e + child)
+      pure (1 + ([n, s, r, t].map HexArith.bitLength).sum + bits.sum)
+  | fuel + 1, .pock3Sieve n s r t k fs => do
+      let bits ← fs.mapM fun (a, e, c) => do
+        let child ← primeBits fuel c
+        pure (HexArith.bitLength a + HexArith.bitLength e + child)
+      pure (1 + ([n, s, r, t, k].map HexArith.bitLength).sum + bits.sum)
 
-def certBits : Cert → Nat
-  | .base c => 1 + primeBits (leafBudget.maxDepth + 1) c
-  | .step n a b x y d ws child => 1 + ([n, a, b, x, y, d].map HexArith.bitLength).sum +
-      (ws.map fun w => 1 + HexArith.bitLength w).sum + certBits child
+/-- Count raw chain bits, including a terminal within the fixed leaf-depth
+profile. Reject deeper supplied terminals instead of undercounting them. -/
+def certBits : Cert → Option Nat
+  | .base c => (primeBits (leafBudget.maxDepth + 1) c).map (1 + ·)
+  | .step n a b x y d ws child => do
+      let bits ← certBits child
+      pure (1 + ([n, a, b, x, y, d].map HexArith.bitLength).sum +
+        (ws.map fun w => 1 + HexArith.bitLength w).sum + bits)
 
 /-- Maximum scalar additions performed by a complete checker replay. -/
 def replayWork : Cert → Nat
   | .base _ => 0
   | .step _ _ _ _ _ _ _ child => 2 * HexArith.bitLength child.subject + replayWork child
 
+/-- Retain a checked success only within output-size and memo-entry allocations. -/
 private def remember (budget : SearchBudget) (n : Nat) (c : Cert) : SearchM Cert := do
-  if certBits c > budget.maxOutputBits then fail n .outputBits
+  let some bits := certBits c | fail n .outputBits
+  if bits > budget.maxOutputBits then fail n .outputBits
   if (← get).memo.length >= budget.maxMemo then fail n .memo
   modify fun s => { s with memo := c :: s.memo }
   return c
 
+/-- An affine child-order point with checked discriminant and inverse witnesses. -/
 private structure Proposal where
   a : Nat
   b : Nat
@@ -217,10 +262,10 @@ private structure Proposal where
   discrInv : Nat
   inverses : List Nat
 
+/-- Try bounded point draws on one twist, leaving later twists available after local failure. -/
 private def point (budget : SearchBudget) (n q cofactor z a b : Nat) :
     SearchM (Option Proposal) := do
   let some discrInv := inverse? n (4 * a * a * a + 27 * b * b) | return none
-  if budget.pointRetries == 0 then fail n .pointRetries
   for _ in [:budget.pointRetries] do
     charge budget n .points
     let x ← draw n
@@ -233,6 +278,7 @@ private def point (budget : SearchBudget) (n q cofactor z a b : Nat) :
       return some ⟨a, b, qx, qy, discrInv, ws⟩
   -- Failed draws on a twist are rejected candidates. The caller still tries
   -- other twists and orders, so they do not diagnose overall exhaustion.
+  unresolved n .pointRetries
   return none
 
 /-- Structurally bounded recursion; failure of a child resumes the parent's
@@ -269,18 +315,46 @@ def search (budget : SearchBudget) : Nat → Nat → SearchM (Option Cert)
               if let some child ← search budget depth q then
                 let c := Cert.step n a b proposal.x proposal.y proposal.discrInv
                   proposal.inverses child
-                charge budget n .scalarWork (replayWork c)
-                if checkAt n c then return some (← remember budget n c)
+                -- The proposal checks this step and recursion supplies its
+                -- child. Replay the complete chain once at `produce`.
+                return some (← remember budget n c)
               modify fun s => { s with stats := { s.stats with backtracks := s.stats.backtracks + 1 } }
               -- Different points on this curve have the same child obligation.
               break
       unresolved n .portfolio
       return none
 
+/-- Success or unresolved diagnosis together with the final shared search state. -/
 structure SearchResult where
+  /-- Complete checked certificate or unresolved diagnostic. -/
   result : Except SearchError Cert
+  /-- Final random stream, counters and successful memo. -/
   state : SearchState
 deriving Repr
+
+/-- Check complete raw data once at the production boundary. -/
+private def finish (n : Nat) (result : Except SearchError (Option Cert))
+    (state : SearchState) : Except SearchError Cert :=
+  match result with
+  | .error e => .error e
+  | .ok (some c) => if checkAt n c then .ok c else .error ⟨n, .portfolio⟩
+  | .ok none => .error (state.stats.unresolved.getD ⟨n, .portfolio⟩)
+
+/-- Final production validation cannot return unchecked or substituted data. -/
+private theorem finish_ok {n : Nat} {result : Except SearchError (Option Cert)}
+    {state : SearchState} {c : Cert} (h : finish n result state = .ok c) :
+    checkAt n c = true := by
+  cases result with
+  | error e => simp [finish] at h
+  | ok option =>
+    cases option with
+    | none => simp [finish] at h
+    | some candidate =>
+      simp only [finish] at h
+      split at h
+      · cases h
+        assumption
+      · simp at h
 
 /-- Native production accepts only the subject, seed and resource allocation.
 Every success is complete raw certificate data accepted by `checkAt`. -/
@@ -291,12 +365,15 @@ def produce (n seed : Nat) (budget : SearchBudget := {}) : SearchResult :=
       charge budget n .scalarWork (replayWork c)
     return result
   let (result, state) := computation.run.run { rand := Hex.Rand.ofSeed seed }
-  let result := match result with
-    | .error e => .error e
-    | .ok (some c) => if checkAt n c then .ok c else .error ⟨n, .portfolio⟩
-    | .ok none => .error (state.stats.unresolved.getD ⟨n, .portfolio⟩)
-  ⟨result, state⟩
+  ⟨finish n result state, state⟩
 
+/-- Every successful production result is accepted at the requested subject,
+independently of seed, allocation and arithmetic proposals. -/
+theorem produce_ok {n seed : Nat} {budget : SearchBudget} {c : Cert}
+    (h : (produce n seed budget).result = .ok c) : checkAt n c = true := by
+  exact finish_ok h
+
+/-- Encode ECPP points with cofactor one; terminal data is supplied separately. -/
 private def rows : Cert → List String
   | .base _ => []
   | .step n a _ x y _ _ child =>
