@@ -35,6 +35,46 @@ example (suffix : Suffix base) (old : Tower.Model suffix.context Rat) :
   Context.enlarge?_ambient (BaseContext.rational registry) suffix rfl rational old
     (Ambient.infinitesimal Rat)
 
+/-- The exact constructed target agrees on its new-base coefficients even
+when the original context is identified only by a supplied equality. -/
+example {context : Context registry} (suffix : Suffix base)
+    (target_eq : suffix.context = context) (old : Tower.Model context Rat) :
+    let ambient := Ambient.infinitesimal Rat
+    let initial := suffix.restrict rational (target_eq.symm ▸ old)
+    let input := Conversion.Model.infinitesimalMapped (BaseContext.rational registry)
+      (initial.baseHom (BaseContext.rational registry))
+      (Tower.Model.baseHom_sign (BaseContext.rational registry) initial) ambient
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal (BaseContext.rational registry)) suffix,
+      context.enlarge? = some (rebuilt.result.cast target_eq) ∧
+        ∃ model : Conversion.Model (rebuilt.result.cast target_eq) (old.liftInfinitesimal ambient),
+          ∀ a, model.target.value
+            (_root_.cast (congrArg Context.Value
+              (rebuilt.context_eq.trans (rebuilt.result.cast_spec target_eq).1.symm))
+              (rebuilt.suffix.embed a)) = input.target.value a := by
+  let ambient := Ambient.infinitesimal Rat
+  let initial := suffix.restrict rational (target_eq.symm ▸ old)
+  let input := Conversion.Model.infinitesimalMapped (BaseContext.rational registry)
+    (initial.baseHom (BaseContext.rational registry))
+    (Tower.Model.baseHom_sign (BaseContext.rational registry) initial) ambient
+  obtain ⟨rebuilt, _, enlarged, model, aligned⟩ := Context.enlarge?_constructed
+    (BaseContext.rational registry) suffix target_eq rational old ambient
+  refine ⟨rebuilt, enlarged, model, ?_⟩
+  intro a
+  rw [Tower.Model.value_cast
+    (rebuilt.context_eq.trans (rebuilt.result.cast_spec target_eq).1.symm)
+    (input.target.extend rebuilt.suffix) model.target aligned,
+    Tower.Model.extend_embed]
+
+/-- A prescribed sign-compatible base map supplies the independent reference
+from the proved ordered real-closure existence theorem. -/
+example (suffix : Suffix base) (old : Tower.Model suffix.context Rat) :
+    let ambient := Ambient.infinitesimal Rat
+    ∃ result : Conversion suffix.context, suffix.context.enlarge? = some result ∧
+      Nonempty (Conversion.Model result (old.liftInfinitesimal ambient)) :=
+  Context.enlarge?_hom (BaseContext.rational registry) suffix rfl (Rat.castHom Rat)
+    (fun a => by simpa using Hex.OrderedFn.Infinitesimal.orderSign_eq a)
+    old (Ambient.infinitesimal Rat)
+
 /-- Every validated rational-root suffix restricts to the relative algebraic union. -/
 noncomputable example (suffix : Suffix base) :
     Tower.Model suffix.context (Union.Carrier Rat ℝ) :=

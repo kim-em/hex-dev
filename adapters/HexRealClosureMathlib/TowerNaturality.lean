@@ -27,6 +27,16 @@ theorem value_ext (left right : Model context K)
   cases funext agree
   rfl
 
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- Aligned models interpret context-cast values equally. -/
+theorem value_cast {source target : Context registry} (same : source = target)
+    (original : Model source K) (other : Model target K) (aligned : HEq other original)
+    (a : source.Value) :
+    other.value (_root_.cast (congrArg Context.Value same) a) = original.value a := by
+  cases same
+  cases eq_of_heq aligned
+  rfl
+
 omit [IsStrictOrderedRing K] [IsRealClosed K] in
 /-- Native polynomial evaluation in a child depends only on its predecessor
 interpretation and the interpreted generator. -/
@@ -132,7 +142,7 @@ One compatible reference interpretation in an independent field proves the
 executable inclusion laws; the resulting source model uses the supplied
 target's actual values. -/
 @[expose] noncomputable def comap {source target : Context registry}
-    (original : Model source L) (reference : Model target L) (other : Model target K)
+    (other : Model target K) (original : Model source L) (reference : Model target L)
     (includeValue : source.Value → target.Value)
     (preserved : ∀ a, reference.value (includeValue a) = original.value a) :
     Model source K where
@@ -191,17 +201,26 @@ omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
 /-- Restrict an arbitrary model of a finite root suffix to its initial
 predecessor. The independent reference supplies existence for the native
 inclusion laws; the resulting values come entirely from the old model. -/
-@[expose] noncomputable def restrict {source : Context registry}
-    (reference : Model source L) (suffix : Suffix source)
+@[expose] noncomputable def _root_.Hex.RealClosure.Tower.Suffix.restrict
+    {source : Context registry} (suffix : Suffix source) (reference : Model source L)
     (old : Model suffix.context K) : Model source K :=
-  reference.comap (reference.extend suffix) old suffix.embed (reference.extend_embed suffix)
+  old.comap reference (reference.extend suffix) suffix.embed (reference.extend_embed suffix)
 
 omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
 /-- Restriction reads the old model through the actual native suffix inclusion. -/
-@[simp] theorem restrict_value {source : Context registry}
-    (reference : Model source L) (suffix : Suffix source)
+@[simp] theorem _root_.Hex.RealClosure.Tower.Suffix.restrict_value {source : Context registry}
+    (suffix : Suffix source) (reference : Model source L)
     (old : Model suffix.context K) (a : source.Value) :
-    (reference.restrict suffix old).value a = old.value (suffix.embed a) := rfl
+    (suffix.restrict reference old).value a = old.value (suffix.embed a) := rfl
+
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- The restriction's interpretation is independent of the reference witness. -/
+theorem _root_.Hex.RealClosure.Tower.Suffix.restrict_eq {source : Context registry}
+    (suffix : Suffix source) (left right : Model source L) (old : Model suffix.context K) :
+    suffix.restrict left old = suffix.restrict right old := by
+  apply value_ext
+  intro a
+  rfl
 
 /-- Agreement on the initial predecessor determines every arbitrary model
 of a validated finite root suffix, at all depths. -/
@@ -212,8 +231,8 @@ theorem extend_unique {source : Context registry} (original : Model source K)
   induction suffix with
   | nil => exact value_ext _ _ compatible
   | @root parent descriptor rest ih =>
-    let middle := (original.adjoin descriptor).comap
-      ((original.adjoin descriptor).extend rest) other rest.embed
+    let middle := other.comap (original.adjoin descriptor)
+      ((original.adjoin descriptor).extend rest) rest.embed
       ((original.adjoin descriptor).extend_embed rest)
     have parent_compatible : ∀ a,
         middle.value ((parent.adjoin descriptor).embed a) = original.value a := compatible
@@ -252,7 +271,7 @@ theorem map_extend {source : Context registry} (model : Model source K)
       rw [model.extend_embed]; rfl)
   exact congrArg (fun interpreted : Model suffix.context L => interpreted.value a) same.symm
 
-omit [IsStrictOrderedRing K] [IsRealClosed K] in
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
 /-- The interpretation of a native base supplies its actual coefficient
 field homomorphism, without an additional agreement hypothesis. -/
 @[expose] noncomputable def baseHom {B : Type} [Lean.Grind.Field B] [DecidableEq B]
@@ -283,6 +302,18 @@ theorem baseHom_sign {B : Type} [Lean.Grind.Field B] [DecidableEq B]
     sign a = (SignType.sign (model.baseHom base a) : Int) :=
   model.sign (⟨a⟩ : BaseContext.Element base)
 
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- Rebuilding a base interpretation from its extracted homomorphism preserves
+the entire native model. -/
+theorem base_baseHom {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    (model : Model (Context.base base) K) :
+    Model.base base (model.baseHom base) (baseHom_sign base model) = model := by
+  apply value_ext
+  intro a
+  rw [base_value base (model.baseHom base) (baseHom_sign base model) a]
+  exact baseHom_value base model a
+
 end Hex.RealClosure.Tower.Model
 
 /-- info: 'Hex.RealClosure.Tower.Model.map_adjoin' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -300,3 +331,11 @@ end Hex.RealClosure.Tower.Model
 /-- info: 'Hex.RealClosure.Tower.Model.extend_unique' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Model.extend_unique
+
+/-- info: 'Hex.RealClosure.Tower.Suffix.restrict_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Suffix.restrict_eq
+
+/-- info: 'Hex.RealClosure.Tower.Model.base_baseHom' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Model.base_baseHom

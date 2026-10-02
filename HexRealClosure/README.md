@@ -1256,7 +1256,7 @@ with the supplied enlarged base model on embedded base values; the theorem
 expresses the target alignment up to the context casts.
 `Context.enlarge?_interpreted` supplies that same descriptor and target-model
 alignment for an arbitrary old model from its initial-base agreement and
-compatible new-base conversion. `Model.restrict` names the actual restriction
+compatible new-base conversion. `Suffix.restrict` names the actual restriction
 of an arbitrary old suffix model through the native inclusion.
 `Context.enlarge?_constructed` exposes the exact rebuilt suffix and its target
 interpretation through `infinitesimalMapped`, using that restriction.
@@ -1272,9 +1272,15 @@ packaging and dependency closure. The interpretation ingredients are:
    base-map agreement. `Context.origin` supplies the suffix presentation of
    each packed context up to equality with that context; identifying an
    arbitrary old model follows from `Model.extend_unique` after restricting
-   it to the base through `Model.comap`, using a compatible reference
-   interpretation of the inclusion in an independent real closed field. `Model.baseHom` extracts that
-   restriction's actual coefficient homomorphism.
+   it to the base through `Suffix.restrict`, using a reference interpretation
+   in an independent real closed field. `Suffix.restrict_eq` proves independence
+   from that reference. `Model.baseHom` extracts the actual coefficient
+   homomorphism, and `Model.base_baseHom` reconstructs its entire base model.
+   `Model.suffix_algebraic` proves every value of an arbitrary old model in a
+   real closed field is algebraic over this extracted map. A sign-compatible
+   base map remains an explicit semantic premise: raw base contexts do not
+   carry ordered-field laws for their sign function. `enlarge?_hom` constructs
+   the reference from such a map through `Ambient.ofField`.
    Packaging the union with `Ambient.ofUnion` also requires an order-preserving
    base map and a real-closed old ambient; its current API places both fields
    in the same universe.
@@ -1294,17 +1300,21 @@ packaging and dependency closure. The interpretation ingredients are:
    `Model.map_adjoin` and `map_extend` prove that the actual stored child
    values and every validated finite suffix commute with that ordered ambient
    embedding. `Context.enlarge?_mapped` preserves an arbitrary compatible old
-   model through the ordered embedding. `enlarge?_ambient` extracts its initial
+   model through the ordered embedding when supplied a compatible new-base
+   conversion. `enlarge?_ambient` extracts its initial
    base interpretation and constructs the actual new-base model in an ordered
    algebraic ambient over `R(ε)`, without a caller-supplied agreement at later
-   roots or a compatible new-base model. Its reference base model in an arbitrary
-   independent real closed field supplies existence for the restriction proof.
+   roots or a compatible new-base model. It requires a reference base model
+   in an independent real closed field for the restriction proof;
+   `enlarge?_hom` supplies this reference from a sign-compatible base map.
    The old model can live in any ordered field and determines the resulting
    coefficient homomorphism. The algebraic restriction and staged
    order still need packaging with the final dependency-closed API.
-4. **Remaining:** applying the local algebraic bound to the computational `B(ε)` levels and
+4. **Remaining:** applying the local algebraic bound to the computational
+   `B(ε)` levels and
    proving their staged order agrees with the enlarged ambient interpretation.
-5. **Remaining:** gathering a dependency-closed collection of live contexts and assembling
+5. **Remaining:** gathering a dependency-closed collection of live contexts
+   and assembling
    the total checked constructor with its value and order preservation
    statements. `Context.origin` extracts the exact base and validated root
    suffix of one stored context; the cross-context dependency traversal remains.

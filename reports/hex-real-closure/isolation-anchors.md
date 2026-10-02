@@ -125,16 +125,13 @@ was **10.667 ms**, with an observed range of **10.478–10.764 ms**; every call
 returned the expected hash `0x1`. Peak child-process RSS was 69,268–70,036 kB.
 The [export](native-roots-anchor.json), [log](native-roots-anchor.log), and
 [context](native-roots-anchor-context.json) retain every sample, the exact
-command, CPU affinity, host load, source revision and source/executable hashes. The export is a byte-for-byte copy of the path
+command, CPU affinity, host load, source revision and source/executable hashes.
+The export is a byte-for-byte copy of the path
 named in the recorded command; its SHA-256 is recorded in the context.
-The measurement preceded the rebase: `1fdfd2886` used base `321764a1f`,
-and its patch is unchanged at `849923d67` over merged base `afdb1f7f0`.
-The range comparison verifies all six native-root patches were unchanged;
-the benchmark source SHA-256 at `6c6c47716` matches the measured source.
-The pre-rebase source revisions are outside main's ancestry and may be
-unavailable through old branch history; the rebased revision and retained
-source hash identify the patch-equivalent benchmark source.
-The executable hash identifies the measured pre-rebase build.
+The context records the full equivalent source revision and matching benchmark
+hash; the measured revision is outside main's ancestry and its availability
+through branch history is not guaranteed. The executable hash identifies the
+measured build.
 
 This fixed anchor measures the complete native operation on one rational input.
 It establishes neither a scaling bound nor an overhead ratio against the
