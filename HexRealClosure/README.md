@@ -1314,9 +1314,9 @@ compatible child model with the actual descriptor-based interpretation;
 `Context.enlarge?_preserves` consequently preserves an arbitrary old model
 in a real closed field from agreement on the initial base and a compatible
 new-base conversion,
-without further agreement premises at the root levels. Computing suffix
-contexts during extraction can reconstruct old frames; no depth-scaling cost
-is claimed for this constructor.
+without further agreement premises at the root levels. Extraction performs
+quadratically many old-descriptor adjoins, each preparing its Sturm domain
+and encoding/parsing its frame, as described under `Context.origin` below.
 
 `Context.enlarge?_aligned` accepts a proved equality between a stored context
 and the suffix target, then identifies the returned target model with the
@@ -1399,7 +1399,8 @@ and staged-order results with dependency closure. The interpretation ingredients
    existing prefix: at depth n, this makes n(n+1)/2 old-descriptor adjoins,
    each encoding/parsing its frame and preparing its Sturm domain again.
    Recursive source indices in `rebuild?` add one further old-descriptor
-   adjoin per level. These costs remain in the producer as a whole. `infinitesimalMapped_parameter` and `Rebuilt.parameter_value`
+   adjoin per level. These costs remain in the producer as a whole.
+   `infinitesimalMapped_parameter` and `Rebuilt.parameter_value`
    identify that stored value with the same ambient indeterminate used by
    the sign-preserving new-base interpretation. `enlargeWithParameter?_model`
    carries an arbitrary old ordered-field model, the exact target alignment
@@ -1447,9 +1448,9 @@ chain and returns its staged base, the ordered validated root suffix, and an
 equality with the original context. The suffix retains the stored descriptors,
 but extraction itself rebuilds old prefixes while appending them, with
 quadratically many old-descriptor adjoins; each prepares a Sturm domain and
-encodes/parses its frame. The equality proof checks each frame against the
-original context. No
-signature or serialized payload is trusted as a root.
+encodes/parses its frame. The erased equality proof shows that each stored
+frame equals the frame returned by total adjoin. No signature or serialized
+payload is trusted as a root.
 Executable guards count the extracted levels in the base and a one-root
 context and rebuild the extracted one-root suffix. The existing four-root
 transport fixture includes a deeper count check and runs outside routine CI.
