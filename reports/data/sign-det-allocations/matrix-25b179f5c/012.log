@@ -1,0 +1,16 @@
+lean-bench profile: env LD_PRELOAD=/home/kim/.local/state/hex/issue-10377-profiles/allocation-matrix-queries-25b179f5c/wrapper-0.so /nix/store/mf7rzpknxwg0q1wf0nm8gfzikapg00h1-valgrind-3.27.1/bin/valgrind --tool=dhat --mode=ad-hoc --dhat-out-file=/home/kim/.local/state/hex/issue-10377-profiles/allocation-matrix-queries-25b179f5c/012.dhat.json -- /home/kim/worktrees/hex-dev/hex-dev-issue-10377-allocation/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.MaximalMatrix.runSolve --param 2 --target-nanos 100000000 --cache-mode cold
+==59579== DHAT, a dynamic heap analysis tool
+==59579== Copyright (C) 2010-2024, and GNU GPL'd, by Mozilla Foundation et al.
+==59579== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==59579== Command: /home/kim/worktrees/hex-dev/hex-dev-issue-10377-allocation/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.MaximalMatrix.runSolve --param 2 --target-nanos 100000000 --cache-mode cold
+==59579== 
+SIGN_DET_ALLOCATIONS {"callbacks":1,"overflow":0,"lean_requests":2856,"lean_bytes":91880,"mimalloc_requests":7,"mimalloc_bytes":2160,"gmp_requests":25421,"gmp_bytes":256632}
+{"schema_version":1,"kind":"parametric","function":"Hex.SignDetBench.MaximalMatrix.runSolve","param":2,"inner_repeats":1,"total_nanos":270341840,"per_call_nanos":270341840.000000,"cache_mode":"cold","result_hash":"0x95d639bb23cc087d","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":292412,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexsigndet_bench","git_commit":"25b179f5c8f2143cd77753cd8c802d364aefd958","git_dirty":false,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.35.0-rc3","lean_version":"4.35.0-rc3","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-10-02T15:32:43Z","timestamp_unix_ms":1790955163694},"profile_kernel":true}
+==59579== 
+==59579== Total:     350,672 units in 28,284 events
+==59579== 
+==59579== To view the resulting profile, open
+==59579==   file:///nix/store/mf7rzpknxwg0q1wf0nm8gfzikapg00h1-valgrind-3.27.1/libexec/valgrind/dh_view.html
+==59579== in a web browser, click on "Load...", and then select the file
+==59579==   /home/kim/.local/state/hex/issue-10377-profiles/allocation-matrix-queries-25b179f5c/012.dhat.json
+==59579== The text at the bottom explains the abbreviations used in the output.

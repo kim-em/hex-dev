@@ -71,20 +71,21 @@ class AllocationValidationTests(unittest.TestCase):
             capture.check_events(check["counters"], json.loads(raw),
                                  Path(meta["compile_commands"][i][-1]))
 
-    def check_callback_source(self, meta):
+    def check_callback_source(self, meta, module="Joint",
+                              generated_path="joint-25b179f5c/generated-joint.c.gz"):
         import gzip
         import hashlib
         import tempfile
         from pathlib import Path
         from unittest.mock import patch
         base = Path(__file__).resolve().parents[2] / "reports/data/sign-det-allocations"
-        generated = gzip.decompress((base / "joint-25b179f5c/generated-joint.c.gz").read_bytes())
+        generated = gzip.decompress((base / generated_path).read_bytes())
         self.assertEqual({hashlib.sha256(generated).hexdigest()},
                          {c["generated_c_sha256"] for c in meta["callbacks"].values()})
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary) / ".lake/build/ir/HexSignDet"
             directory.mkdir(parents=True)
-            source = directory / "Joint.c"
+            source = directory / (module + ".c")
             source.write_bytes(generated)
             with patch.object(capture, "ROOT", Path(temporary)):
                 for function, recorded in meta["callbacks"].items():
@@ -211,7 +212,8 @@ class AllocationValidationTests(unittest.TestCase):
         self.assertEqual(set(table), set(observations))
         self.assertEqual(len(table), len(observations))
 
-    def check_supplement(self, directory, functions, parameters, trials, cpu):
+    def check_supplement(self, directory, functions, parameters, trials, cpu,
+                         module="Joint", generated_path="joint-25b179f5c/generated-joint.c.gz"):
         import gzip
         import hashlib
         import json
@@ -236,7 +238,7 @@ class AllocationValidationTests(unittest.TestCase):
         for name, expected in meta["collector_sha256"].items():
             self.assertEqual(capture.digest(root / "collector-sources" / name), expected)
         self.check_self_checks(root, meta)
-        self.check_callback_source(meta)
+        self.check_callback_source(meta, module, generated_path)
         rows = [json.loads(line) for line in (root / "samples.jsonl").read_text().splitlines()]
         self.assertEqual(rows, meta["samples"])
         schedule = [(trial, n, f) for trial in range(1, trials + 1)
@@ -349,6 +351,82 @@ class AllocationValidationTests(unittest.TestCase):
         for name, expected in post["disassembly"].items():
             self.assertEqual(capture.digest(root / name), expected)
             self.assertIn("<lean_alloc_small_object_core>", (root / name).read_text())
+
+    def test_retained_matrix_capture(self):
+        import json
+        from pathlib import Path
+        functions = ["Hex.SignDetBench.MaximalMatrix.runSolve",
+                     "Hex.SignDetBench.MaximalMatrix.runCheck"]
+        _, rows = self.check_supplement("matrix-25b179f5c", functions, [1, 2, 3, 4, 5],
+            3, 90, "MaximalMatrix", "matrix-25b179f5c/generated-maximal-matrix.c.gz")
+        self.assertEqual(len(rows), 30)
+        repo = Path(__file__).resolve().parents[2]
+        timing = repo / "reports/data/sign-det-maximal-matrices/ff35bd9da-dimensions"
+        expected = {}
+        for function in functions:
+            name = function.rsplit(".", 1)[1] + "Dimension"
+            prior = json.loads((timing / (name + ".json")).read_text())
+            for result in prior["results"]:
+                for point in result["points"]:
+                    if point["status"] == "ok":
+                        key = function, point["param"]
+                        if key in expected:
+                            self.assertEqual(expected[key], point["result_hash"])
+                        expected[key] = point["result_hash"]
+        observed = {}
+        for row in rows:
+            key = row["function"], 3 ** row["parameter"]
+            self.assertEqual(row["result_hash"], expected[key])
+            if row["function"] == functions[1]:
+                self.assertEqual(row["result_hash"], "0xb")
+            observed[key] = row["counters"]
+        names = {"Solve": functions[0], "Check": functions[1]}
+        table = []
+        for line in (repo / "reports/sign-det-matrix-allocations.md").read_text().splitlines():
+            cells = [c.strip() for c in line.split("|")]
+            if len(cells) == 8 and cells[1].isdigit() and cells[2] in names:
+                key = names[cells[2]], int(cells[1])
+                actual = [observed[key][kind + "_bytes"] for kind in capture.KINDS]
+                self.assertEqual([int(c.replace(",", "")) for c in cells[3:7]],
+                                 actual + [sum(actual)])
+                table.append(key)
+        self.assertEqual(set(table), set(observed))
+        self.assertEqual(len(table), len(observed))
+
+    def test_retained_missing_callback_capture(self):
+        import gzip
+        import json
+        from pathlib import Path
+        root = Path(__file__).resolve().parents[2] / \
+            "reports/data/sign-det-allocations/matrix-dimension-failed-25b179f5c"
+        meta = json.loads((root / "metadata.json").read_text())
+        self.assertEqual(meta["state"], "failed")
+        self.assertIn("one nonoverflowing callback", meta["error"])
+        self.assertEqual(meta["git_status"], "")
+        self.assertTrue(meta["source_unchanged"])
+        self.assertEqual(meta["source_sha256"], meta["source_sha256_after"])
+        self.assertEqual(meta["binary_sha256"], meta["binary_sha256_after"])
+        self.check_self_checks(root, meta)
+        self.check_callback_source(meta, "MaximalMatrix",
+                                   "matrix-25b179f5c/generated-maximal-matrix.c.gz")
+        self.assertFalse((root / "samples.jsonl").exists())
+        rows = meta["samples"]
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        self.assertNotIn("counters", row)
+        log = root / "000.log"
+        self.assertEqual(capture.digest(log), row["log_sha256"])
+        with self.assertRaisesRegex(ValueError, "one nonoverflowing callback"):
+            capture.counters(log.read_text())
+        raw = gzip.decompress((root / "000.dhat.json.gz").read_bytes())
+        self.assertEqual(json.loads(raw)["pps"], [])
+        original = capture.benchmark_row((root / "000.native.log").read_text(),
+                                         row["function"], row["parameter"])
+        instrumented = capture.benchmark_row(log.read_text(), row["function"], row["parameter"])
+        self.assertEqual(original["result_hash"], instrumented["result_hash"])
+        self.assertEqual(original["result_hash"], "0x81ae748a480d04a3")
+        for name, expected in meta["collector_sha256"].items():
+            self.assertEqual(capture.digest(root / "collector-sources" / name), expected)
 
     def test_repeated_callbacks_reject(self):
         import json
