@@ -111,8 +111,13 @@ and is not yet published to the split repository. See the
 
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
-`QAdjoin` coordinates converted through `Coefficients.ofField`. It binds the
-original isolation square to the literal selected-root replay, preserving the
+`QAdjoin` coordinates converted through `Coefficients.ofField` or directly through
+`QAdjoin.toAlgebraicNumber` and a reality proof over a reconstructed real generator.
+Closed arithmetic, natural powers and division for these inputs and positive
+natural square-root aliases compile into checked common-field coordinates.
+Every original divisor is checked before target cell search. Quotient replay
+checks a frozen multiplication identity without repeating inverse search.
+It binds the original isolation square to the literal selected-root replay, preserving the
 chosen embedding. Elaboration executes canonicalization; the kernel reduces
 the original polynomial and square identities, rather than canonicalization.
 These identities must reduce across imports. A transported isolation certificate

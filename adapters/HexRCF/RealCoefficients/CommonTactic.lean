@@ -10,13 +10,28 @@ public meta import HexRCF.RealCoefficients.SquareRoot
 public meta import HexRCF.RealCoefficients.CommonPresentation
 public meta import HexBerlekampZassenhaus.QuadraticNormRecover
 
+public meta import HexRCF.RealCoefficients.FieldCompile
+
 public meta section
 
-/-! Checked common-field proposals for independent radical coefficients. -/
+/-! Authenticate algebraic source leaves, then replay closed arithmetic and
+original guards in their checked common field before goal certificate search. -/
 
 namespace Hex.RCF.RealCoefficients.CommonTactic
 
 open Hex Lean Meta Qq
+
+private meta def kernelDecide (goal : Expr) : MetaM Expr := do
+  let candidate ← mkFreshExprMVar goal
+  let remaining ← Lean.Elab.runTactic' candidate.mvarId!
+    (← `(tactic|
+      (simp only [CommonPresentation.checkPresentation, Field.checkSignTable,
+        LiteralSign.Table.check, Sturm.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
+        ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
+       repeat' apply And.intro; all_goals decide +kernel)))
+  unless remaining.isEmpty do
+    throwError "rcf: literal source replay did not close"
+  return ← instantiateMVars candidate
 
 private meta def naturalSquareRoot? (source : Expr) : MetaM (Option Nat) := do
   unless source.isAppOfArity ``Real.sqrt 1 do return none
@@ -71,13 +86,23 @@ private meta def selectedArgs? (e : Expr) : MetaM (Option (Array Expr)) := do
 private meta def fieldArgs? (e : Expr) : MetaM (Option (Bool × Expr × Expr)) := do
   let some field ← unfoldHead? e (fun x =>
       x.isAppOfArity ``Selected.field 11 ||
-        x.isAppOfArity ``Coefficients.ofField 2) | return none
+        x.isAppOfArity ``Coefficients.ofField 2 ||
+        x.isAppOfArity ``RealAlgebraicNumber.ofAlgebraic 2) | return none
   if field.isAppOfArity ``Selected.field 11 then
     let args := field.getAppArgs
     let generator ← mkAppM ``Selected.real (args.extract 0 10)
     return some (true, generator, args[10]!)
   let args := field.getAppArgs
-  return some (false, args[0]!, args[1]!)
+  if field.isAppOfArity ``Coefficients.ofField 2 then
+    return some (false, args[0]!, args[1]!)
+  let some converted ← unfoldHead? args[0]!
+      (·.isAppOfArity ``QAdjoin.toAlgebraicNumber 2) | return none
+  let convertedArgs := converted.getAppArgs
+  let some generator ← unfoldHead? convertedArgs[0]!
+      (·.isAppOfArity ``RealAlgebraicNumber.toAlgebraic 1) | return none
+  -- Proof irrelevance identifies the caller's reality proof with `ofField`'s
+  -- proof, while its algebraic value and selected generator remain unchanged.
+  return some (false, generator.appArg!, convertedArgs[1]!)
 
 private meta def coefficientProof (value expression : Expr) : MetaM Expr := do
   let goal ← mkAppM ``Eq #[value, expression]
@@ -111,18 +136,48 @@ private partial def sourceAtoms (e : Expr) (seen : Array Expr) : Array Expr :=
     | .mdata _ body | .proj _ _ body => sourceAtoms body seen
     | _ => seen
 
+private partial def algebraicDivision (e : Expr) : Bool :=
+  let args := e.getAppArgs
+  let inverse := if e.isAppOfArity ``Inv.inv 3 then
+      args[0]!.isConstOf ``Real && !(sourceAtoms args[2]! #[]).isEmpty
+    else false
+  let division := if e.isAppOfArity ``HDiv.hDiv 6 then
+      args[0]!.isConstOf ``Real && !(sourceAtoms args[5]! #[]).isEmpty
+    else false
+  inverse || division || match e with
+    | .app fn arg => algebraicDivision fn || algebraicDivision arg
+    | .forallE _ type body _ | .lam _ type body _ =>
+        algebraicDivision type || algebraicDivision body
+    | .letE _ type value body _ =>
+        algebraicDivision type || algebraicDivision value || algebraicDivision body
+    | .mdata _ body | .proj _ _ body => algebraicDivision body
+    | _ => false
+
 private meta def candidate (target : Expr) : MetaM Bool := do
   -- Local aliases are resolved by the shared frontend, with their proofs.
-  if target.hasFVar then return true
+  if target.hasFVar || algebraicDivision target then return true
   let atoms := sourceAtoms target #[]
   if atoms.size ≥ 2 then return true
   let some atom := atoms[0]? | return false
-  unless atom.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return false
-  let argument := atom.appArg!
-  let anchor ← match ← fieldArgs? argument with
-    | some (_, anchor, _) => pure anchor
-    | none => pure argument
-  return (← normalizedArgs? anchor).isSome
+  if atom.isAppOfArity ``Real.sqrt 1 then
+    return (← naturalSquareRoot? atom).isSome
+  return atom.isAppOfArity ``RealAlgebraicNumber.toReal 1
+
+/-- Preserve single-coefficient priority only when every original divisor
+is rational. Rational normalization restores its temporary metavariable state. -/
+private meta def rationalGuards (divisors : Array Expr) : MetaM Bool := do
+  for divisor in divisors do
+    if !(sourceAtoms divisor #[]).isEmpty then return false
+    let value : Q(ℝ) := divisor
+    let result ← (do
+      let saved ← saveState
+      try
+        let ⟨_, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat value (_inst := q(inferInstance))
+        return true
+      catch _ => return false
+      finally saved.restore : MetaM Bool)
+    if !result then return false
+  return true
 
 /-- Classify the entire source before executing any algebraic construction.
 Unknown siblings must cause a decline before a recognized sibling can fail. -/
@@ -176,10 +231,22 @@ private meta def sourcePlan? (source : Expr) : MetaM (Option SourcePlan) := do
   let identity : DensePoly Rat := DensePoly.ofList [0, 1]
   if let some degree ← naturalSquareRoot? source then
     let (_, _, anchorValue) ← FieldRuntime.coefficient source
+    let sourceP := SquareRoot.polynomial degree
+    let sourceSquare := if anchorValue.toAlgebraic.p == sourceP then
+        anchorValue.toAlgebraic.rep.1.square
+      else
+        -- A perfect-square radicand has a linear minimal polynomial. Its
+        -- source alias is still authenticated with `X² - n`, independently
+        -- of the canonical generator's defining polynomial.
+        let precision := mahlerPrec sourceP + 4
+        let ball := anchorValue.approxBall precision
+        { re := ball.re, im := 0, prec := precision }
+    unless Decidable.decide (atomWitness sourceP sourceSquare) &&
+        Decidable.decide ((mahlerPrec sourceP : Int) ≤ sourceSquare.prec) do
+      throwError "rcf: square-root source has no checked selected-root witness"
     let fieldExpr ← FieldLiteral.ratPolyExpr identity
     let sourceProof ← mkAppM ``CommonPresentation.generator_eval #[source]
-    return some ⟨source, anchorValue,
-      anchorValue.toAlgebraic.p, anchorValue.toAlgebraic.rep.1.square,
+    return some ⟨source, anchorValue, sourceP, sourceSquare,
       identity, fieldExpr, sourceProof,
       .radical degree⟩
   unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return none
@@ -225,10 +292,15 @@ private def oneQuantifier {n : Nat} (formula : RealFormula.Prenex n) :
   | .quant q (.matrix qf) => some (q, qf)
   | _ => none
 
-private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : MetaM Expr := do
+private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans : Array SourcePlan) : MetaM Expr := do
   let anchors := plans.map (·.anchorValue)
-  let common := QAdjoin.common (anchors.map RealAlgebraicNumber.toAlgebraic)
-  unless common.entries.size == anchors.size do
+  -- Several source coordinates may use the same selected generator. Search
+  -- once for each generator, then restore the original source order. Every
+  -- resulting coordinate still passes the polynomial and enclosure checks.
+  let distinct := anchors.foldl (fun seen anchor =>
+    if seen.contains anchor then seen else seen.push anchor) #[]
+  let common := QAdjoin.common (distinct.map RealAlgebraicNumber.toAlgebraic)
+  unless common.entries.size == distinct.size do
     throwError "rcf: common-field presentation failed"
   unless common.generator.isReal do
     throwError "rcf: common-field generator is not real"
@@ -243,7 +315,11 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
         (q((mahlerPrec $pExpr : Int) ≤ ($sExpr).prec) : Q(Prop))
       let rootExpr ← mkAppM ``SimpleRoot.ofSquare #[pExpr, sExpr, hwExpr, hpExpr]
       let mut coordinates : Array (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := #[]
-      for entry in common.entries do
+      for anchor in anchors do
+        let some index := distinct.idxOf? anchor |
+          throwError "rcf: source generator is missing from the common field"
+        let some entry := common.entries[index]? |
+          throwError "rcf: common-field coordinate count differs from its generators"
         coordinates := coordinates.push (PolyQuot.ofSquare p s entry.coeffs hw hp)
       let n := coordinates.size
       let anchorCoordinates : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp) :=
@@ -313,12 +389,6 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
         let some square := sourceSquares[i.val]? |
           throwError "rcf: source square count differs from the coordinates"
         extras := extras ++ [CommonPresentation.discSlack square (anchorCoordinates i)]
-      let formula ← FieldRuntime.evalFormula n source.formula
-      let some (quantifier, qf) := oneQuantifier formula |
-        throwError "rcf: expected one real quantifier over a matrix"
-      let formulaWhnf ← whnf source.formula
-      let matrixExpr ← whnf formulaWhnf.getAppArgs.back!
-      let qfExpr := matrixExpr.getAppArgs.back!
       let hdegree ← mkDecideProof (q(0 < ($pExpr).natDegree) : Q(Prop))
       let irred ← match QuadraticNormCertificate.certify? p with
         | some cert => do
@@ -348,39 +418,17 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
           (sourcePolys[i.val]?).getD (DensePoly.ofList [])
         let sourceSquareRuntime : Fin n → DyadicSquare := fun i =>
           (sourceSquares[i.val]?).getD s
-        let validate (data : FieldBuild.Result p s hw hp Unit (n + 1)) : MetaM Unit := do
-          unless CommonPresentation.checkPresentation hw hp data.signs
-              sourcePolyRuntime sourceSquareRuntime anchorCoordinates do
-            let equations := (List.finRange n).map fun i =>
-              CommonPresentation.checkEquation (sourcePolyRuntime i)
-                (anchorCoordinates i)
-            let margins := (List.finRange n).map fun i =>
-              data.signs.lookup? (CommonPresentation.discSlack
-                (sourceSquareRuntime i) (anchorCoordinates i))
-            throwError "rcf: common-field proposal rejected: equations {repr equations}, margins {repr margins}"
-        let (fixedProof, certificate, data, verdictProof) ←
-          FieldLiteral.proveWithCertificate
-          pExpr rootExpr valuesExpr qfExpr values qf quantifier 8 extras validate
-        let signTable ← mkAppM ``FieldBuild.Result.signs #[certificate]
-        let signProofName := match quantifier with
-          | .forallReal => ``FieldBuild.Result.checkForall_signTable
-          | .existsReal => ``FieldBuild.Result.checkExists_signTable
-        let signProof ← mkAppM signProofName
-          #[certificate, valuesExpr, qfExpr, mkConst ``Unit.unit, verdictProof]
+        let some table := FieldBuild.buildTable p s hw hp extras |
+          throwError "rcf: common-field source sign search failed"
+        unless CommonPresentation.checkPresentation hw hp table
+            sourcePolyRuntime sourceSquareRuntime anchorCoordinates do
+          throwError "rcf: common-field source presentation rejected"
+        let signTable ← FieldLiteral.signTableExpr pExpr rootExpr table
         let checked ← mkAppM ``CommonPresentation.checkPresentation
           #[hwExpr, hpExpr, signTable, sourcePolyFn, sourceSquareFn, anchorExpr]
         let checkedGoal ← mkAppM ``Eq #[checked, mkConst ``Bool.true]
-        let checkedProof ← withLocalDeclD `htable (← inferType signProof) fun htable => do
-          let checkedMVar ← mkFreshExprMVar checkedGoal
-          let remaining ← Lean.Elab.runTactic' checkedMVar.mvarId!
-            (← `(tactic|
-              (simp only [CommonPresentation.checkPresentation, Bool.and_eq_true];
-               constructor <;> first | assumption | decide +kernel)))
-          unless remaining.isEmpty do
-            throwError "rcf: common-field coordinate replay left {remaining.length} goals"
-          let abstract ← mkLambdaFVars #[htable] (← instantiateMVars checkedMVar)
-          return mkApp abstract signProof
-        let sourceValues := source.valuation
+        let checkedProof ← kernelDecide checkedGoal
+        let sourceValues ← FieldLiteral.finiteExpr (mkConst ``Real) leafSources leafSources[0]!
         let finType := mkApp (mkConst ``Fin) (mkNatLit n)
         let anchorReals := plans.map (·.anchorReal)
         let anchorValues ← FieldLiteral.finiteExpr (mkConst ``Real)
@@ -426,6 +474,63 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
           #[hwExpr, hpExpr, signTable, sourcePolyFn, sourceSquareFn, anchorExpr,
             sourcePFn, hwProof, hpProof, hpolyProof, anchorValues,
             hselectedProof, fieldFn, sourceValues, hvalueProof, checkedProof]
+        let leaf (e : Expr) : MetaM (Option (FieldCompile.Result p
+            (SimpleRoot.ofSquare p s hw hp))) := do
+          let some index := leafSources.idxOf? e | return none
+          if hindex : index < n then
+            let indexExpr ← mkAppM ``Fin.mk #[mkNatLit index,
+              ← mkDecideProof (← mkAppM ``LT.lt #[mkNatLit index, mkNatLit n])]
+            let proof ← mkAppM ``congrFun #[eqVal, indexExpr]
+            return some ⟨values ⟨index, hindex⟩, mkApp valuesExpr indexExpr, proof⟩
+          else throwError "rcf: source leaf index exceeds common coordinates"
+        let repExpr ← mkAppM ``Field.literalRep #[pExpr, sExpr, hwExpr, hpExpr]
+        let hrepExpr ← mkAppM ``Field.literalRep_mk #[pExpr, sExpr, hwExpr, hpExpr]
+        let hrealExpr ← mkDecideProof (q(($sExpr).meetsRealAxis = true) : Q(Prop))
+        let hrExpr ← mkAppM ``Field.literalRep_real
+          #[pExpr, sExpr, hwExpr, hpExpr, hrealExpr]
+        for divisor in source.divisors do
+          let compiled ← FieldCompile.compile pExpr rootExpr repExpr hrepExpr hrExpr leaf divisor
+          if compiled.value = 0 then
+            throwError "rcf: original closed divisor is zero"
+          let reflect ← mkAppM ``Field.value_ne_zero
+            #[repExpr, hrepExpr, hrExpr, compiled.expression, divisor, compiled.proof]
+          let coeffs ← mkAppM ``PolyQuot.coeffs #[compiled.expression]
+          let zeroPoly ← FieldLiteral.ratPolyExpr (0 : DensePoly Rat)
+          let goal ← mkAppM ``Ne #[coeffs, zeroPoly]
+          let hcoeff ← mkDecideProof goal
+          let hne ← mkAppM ``Field.coordinate_ne_zero #[compiled.expression, hcoeff]
+          let proof := mkApp (← mkLambdaFVars #[inst] (mkApp reflect hne)) irred
+          Hex.RCF.checkAxioms `Hex.RCF.RealCoefficients.CommonTactic.handle proof
+          let _ ← withoutModifyingEnv do
+            withOptions (fun opts =>
+                debug.skipKernelTC.set (Elab.async.set opts false) false) do
+              mkAuxTheorem (← inferType proof) proof (zetaDelta := true) (cache := false)
+        let mut compiled : Array (FieldCompile.Result p
+            (SimpleRoot.ofSquare p s hw hp)) := #[]
+        for coefficient in source.coefficients do
+          compiled := compiled.push (← FieldCompile.compile pExpr rootExpr repExpr hrepExpr hrExpr
+            leaf coefficient)
+        let m := compiled.size
+        let targetValues : Fin m → PolyQuot p (SimpleRoot.ofSquare p s hw hp) :=
+          fun i => compiled[i.val].value
+        let targetEntries := compiled.map (·.expression)
+        let fieldType ← mkAppM ``PolyQuot #[pExpr, rootExpr]
+        let zeroExpr := mkApp3 (mkConst ``PolyQuot.ofRat) pExpr rootExpr q((0 : Rat))
+        let targetExpr ← FieldLiteral.finiteExpr fieldType targetEntries zeroExpr
+        let formula ← FieldRuntime.evalFormula m source.formula
+        let some (quantifier, qf) := oneQuantifier formula |
+          throwError "rcf: expected one real quantifier over a matrix"
+        let formulaWhnf ← whnf source.formula
+        let matrixExpr ← whnf formulaWhnf.getAppArgs.back!
+        let qfExpr := matrixExpr.getAppArgs.back!
+        let (fixedProof, _, _, _) ← FieldLiteral.proveWithCertificate
+          pExpr rootExpr targetExpr qfExpr targetValues qf quantifier 8
+        let targetFin := mkApp (mkConst ``Fin) (mkNatLit m)
+        let targetEqGoal ← withLocalDeclD `i targetFin fun i => do
+          let interpreted ← mkAppM ``Field.value #[repExpr, mkApp targetExpr i]
+          mkForallFVars #[i] (← mkEq interpreted (mkApp source.valuation i))
+        let pointwise ← FieldLiteral.proveFinCases targetEqGoal (compiled.map (·.proof))
+        let eqVal ← mkAppM ``funext #[pointwise]
         let congr ← withLocalDeclD `ρ (← inferType source.valuation) fun ρ => do
           let body ← mkAppM ``Hex.RealFormula.Prenex.toProp #[source.formula, ρ]
           mkAppM ``congrArg #[← mkLambdaFVars #[ρ] body, eqVal]
@@ -437,6 +542,29 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
     else throwError "rcf: common square has insufficient precision"
   else throwError "rcf: common square failed its root witness"
 
+private meta partial def gather (source : Expr) (leaves : Array Expr) :
+    MetaM (Option (Array Expr)) := do
+  if ← eligible source then
+    return some (if leaves.contains source then leaves else leaves.push source)
+  let e := source.consumeMData
+  let args := e.getAppArgs
+  let op := e.getAppFn.constName?
+  if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].any (op == some ·) &&
+      args.size == 6 then
+    let some left ← gather args[4]! leaves | return none
+    return ← gather args[5]! left
+  if [``Neg.neg, ``Inv.inv].any (op == some ·) && args.size == 3 then
+    return ← gather args[2]! leaves
+  if e.isAppOfArity ``HPow.hPow 6 then
+    if (← inferType args[5]!).isConstOf ``Nat then
+      return ← gather args[4]! leaves
+  let rational ← observing? do
+    let q : Q(ℝ) := e
+    let _ ← Mathlib.Meta.NormNum.deriveRat q (_inst := q(inferInstance))
+    pure ()
+  if rational.isSome then return some leaves
+  return none
+
 @[rcf_handler] meta def handle : Handler := fun target => do
   unless ← candidate target do return .declined
   if ← Registration.deferExact target then return .declined
@@ -444,26 +572,19 @@ private meta def prove (source : Reify.Source) (plans : Array SourcePlan) : Meta
     | .ok source => pure source
     | .error (.unsupported _ _) => return .declined
     | .error error => return .failed (Hex.RealFormula.Reify.Error.toMessageData error)
-  if source.coefficients.isEmpty then return .declined
-  if source.coefficients.size == 1 then
-    -- Eligibility is determined before executable coefficient construction or
-    -- replay. Existing single-generator inputs retain their earlier handler.
-    let coefficient := source.coefficients[0]!
-    unless coefficient.isAppOfArity ``RealAlgebraicNumber.toReal 1 do
-      return .declined
-    let argument := coefficient.appArg!
-    let anchor ← match ← fieldArgs? argument with
-      | some (_, anchor, _) => pure anchor
-      | none => pure argument
-    if (← normalizedArgs? anchor).isNone then return .declined
-  unless ← source.coefficients.allM eligible do return .declined
-  Tactic.checkGuards source
+  if source.coefficients.size == 1 &&
+      (← Tactic.handlesCoefficient source.coefficients[0]!) &&
+      (← rationalGuards source.divisors) then return .declined
+  let mut leaves := #[]
+  for scalar in source.coefficients ++ source.divisors do
+    let some next ← gather scalar leaves | return .declined
+    leaves := next
+  if leaves.isEmpty then return .declined
   let mut plans : Array SourcePlan := #[]
-  for coefficient in source.coefficients do
-    let some plan ← sourcePlan? coefficient |
-      throwError "rcf: internal: eligible source has no coefficient plan"
+  for scalar in leaves do
+    let some plan ← sourcePlan? scalar |
+      throwError "rcf: internal: eligible leaf has no plan"
     plans := plans.push plan
-  let proof ← prove source plans
-  return .proved proof
+  return .proved (← prove source leaves plans)
 
 end Hex.RCF.RealCoefficients.CommonTactic

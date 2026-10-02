@@ -483,9 +483,12 @@ coordinate in a chosen number field, write a `Selected.field` expression with
 the field element and its checked chosen root, as shown below. In these
 examples, the power in `(2 : ℝ) ^ (1 / 3 : ℝ)` defines a closed coefficient;
 the quantified variable still occurs in an ordinary polynomial. Products with
-rational constants are supported, but expressions that divide by one of these
-named algebraic coefficients currently decline; express an inverse as a
-checked field coordinate when it is needed.
+rational constants are supported. Closed division is also supported for the
+selected and reconstructed Hex inputs and positive natural square-root
+aliases. The adapter checks every original divisor before solving the target,
+including divisors erased by cancellation, zero multiplication or an empty
+domain. The higher-root `Real.rpow` alias retains its earlier polynomial path;
+closed division involving that alias is not yet supported.
 
 These examples use the selected real root of `X³ − 2`. The adapter records an
 isolating square and verifies its root witness. It reconstructs Hex's
@@ -523,12 +526,26 @@ of the selected root of `X³ − X − 1` and uses its proved real conversion.
 The constructor data must be executable and visible to the frontend; an
 arbitrary opaque algebraic value has no implicit reconstruction rule.
 
+For these reconstructed inputs, closed arithmetic is compiled into the common
+field after authenticating its source values. A quotient is recorded as a
+rational coordinate polynomial and checked by its multiplication identity;
+kernel replay does not repeat inverse search. Several coordinates in one
+selected field share one generator search. The cubic example below verifies
+`x / α = (α² − 1) * x` at the selected positive root of `X³ − X − 1`.
+The same example also uses the ordinary `QAdjoin.toAlgebraicNumber`
+conversion followed by a reality proof, without the `Coefficients.ofField`
+wrapper. Both forms preserve the selected embedding.
+
 The two-square-root examples below combine `Real.sqrt 2` and `Real.sqrt 3`
 in one common field and check that each field coordinate names the intended
 positive root. This path accepts natural literal radicands when at least two
-distinct square roots occur in the goal. A lone `Real.sqrt 2` uses the earlier
-single-coefficient path; other lone square roots are not yet supported. The
+distinct square roots occur in the goal. A lone `Real.sqrt 2` whose original
+divisors are all rational uses the earlier single-coefficient path; other
+positive natural square roots use the common-field frontend, including
+perfect-square radicands. Algebraic divisors contribute generators even when
+their quotients cancel, so they can increase the common-field degree. The
 two-root examples use a larger heartbeat limit for the quartic common field.
+The retained measurements below do not measure that degree increase.
 The next examples mix Mathlib's `Real.sqrt 2` with a Hex root selected from
 `X² − 3`. They also use the ordinary `QAdjoin` element `1 + √3`, converted
 back to a real algebraic number. `rcf` checks each proposed common-field
@@ -644,6 +661,47 @@ private abbrev plasticCoefficient :
 
 example : ∀ x : ℝ,
     x ^ 2 + plasticCoefficient.toReal > 0 := by
+  rcf
+
+example : ∀ x : ℝ,
+    x / normalizedPlastic.toReal =
+      plasticCoefficient.toReal * x := by
+  rcf
+
+private abbrev convertedPlastic :
+    Hex.RealAlgebraicNumber :=
+  Hex.RealAlgebraicNumber.ofAlgebraic
+    plasticCoordinate.toAlgebraicNumber (by
+    rw [Hex.AlgebraicNumber.isReal_iff, Hex.QAdjoin.toAlgebraicNumber,
+      Hex.PolyQuot.toAlgebraicNumber_toComplex]
+    exact Hex.QAdjoin.value_real plasticCoordinate
+      normalizedPlastic.property)
+
+example : ∀ x : ℝ,
+    x / normalizedPlastic.toReal = convertedPlastic.toReal * x := by
+  rcf
+
+example : ∀ x : ℝ,
+    x / Real.sqrt 2 = (Real.sqrt 2 / 2) * x := by
+  rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt 4 - Real.sqrt 2 > 0 := by
+  rcf
+
+example : ∀ x : ℝ,
+    x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0 := by
+  rcf
+
+example : ∃ x : ℝ,
+    x ^ 2 = 1 / (Real.sqrt 2 + 1) ∧ 0 < x ∧ x < 1 := by
+  rcf
+
+/-- error: rcf: original closed divisor is zero -/
+#guard_msgs in
+example : ∀ x : ℝ,
+    x ^ 2 + 0 / (normalizedPlastic.toReal -
+      normalizedPlastic.toReal) ≥ 0 := by
   rcf
 
 example : ∃ x : ℝ,
@@ -766,9 +824,12 @@ example : True := by
 The existential statements have no witness supplied by the user. For the
 selected cubic coefficient, `rcf` isolates a root of `x² − selectedCubic`
 over its fixed real number field and checks both inequalities at that same
-root in the interval example. The two
-`fail_if_success` examples show that a false algebraic statement produces no
-proof and that nonpolynomial syntax in the quantified variable is rejected.
+root in the interval example. The `fail_if_success` examples show that a false
+algebraic statement produces no proof, nonpolynomial syntax in the quantified
+variable is rejected, and a cancelled zero divisor remains an invalid input.
+`CubeTwo.realAlgebraic` exposes its checked selected-root construction, so
+its lone examples use the selected-root frontend. Earlier cubic measurements
+record their stated source revision and do not measure this routing change.
 The adapter's source reifier preserves explicit coefficient aliases and
 original divisor obligations before normalization. Closed values built with
 `Selected.real` may be named using `def` in the same file. Across modules, use
@@ -781,6 +842,24 @@ The algebraic examples use the proved generic accepted-query soundness theorem
 and chosen-root identifications use only Lean's standard logical axioms.
 See {ref "hex-number-field"}[HexNumberField] and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
+
+A fresh-module comparison of the cubic reciprocal uses identical imports and
+shared source setup for `Coefficients.ofField` and direct
+`QAdjoin.toAlgebraicNumber` conversion. At source `b10ded789`, Lean
+`v4.35.0-rc3` on shared `chungus2` CPU 18, four adjacent alternating AB/BA
+rounds give median build times 10.441 and 10.443 seconds respectively, with
+median peak RSS 3.29 GiB in both arms. The median paired direct-minus-wrapped
+margin is +0.013 seconds; margins range from −0.045 to +0.071 seconds and do
+not resolve a cost difference. Both private olean files contain 603,000 bytes.
+These are fresh-module `lake build` wall times, including Lake startup and
+replay, for one identity whose specialized equality atom is zero. There is
+no import-only arm or root-search scaling claim.
+The [report and retained samples](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-division-proofs.md)
+record all eight arms and host activity, and retain the separate `b0c583792`
+snapshot. Each measurement is tied to its recorded source; later routing and
+environment cleanup are outside those measurements. They do not isolate the
+cost of checking separate source and target sign tables or establish general
+extension performance or total algebraic search.
 
 # Simultaneous signs and repeated roots over a cubic field
 %%%
