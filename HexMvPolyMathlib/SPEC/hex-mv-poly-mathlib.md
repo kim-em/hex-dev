@@ -99,7 +99,7 @@ reduce through the Mathlib-free core.
 Every conversion theorem is proved from coefficient extensionality. The
 bridge conformance target checks representative round trips and operation
 correspondence against Mathlib's `MvPolynomial`. The monorepo also maintains
-kernel-reduction proof probes for the downstream certificate patterns; those
+kernel-reduction examples for the downstream certificate patterns; those
 are development benchmarks rather than part of the released package.
 
 ## External comparators

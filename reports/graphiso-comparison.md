@@ -96,7 +96,7 @@ measured separately on 38 native inputs in seven families, through 128 vertices.
 [raw outcomes](bench-results/hexgraphiso-sparse-release-supplement.runs.jsonl)
 preserve those costs separately. Replay prepares its candidate outside the
 timer. These native timings are distinct from
-[imported kernel proof measurements](bench-results/hexgraphiso-sparse-replay-unlimited.jsonl).
+[CI-built proof examples](../SPEC/proof-examples.md).
 
 Native path construction also passes the lean-bench linear scaling check
 through 65,536 vertices. Its

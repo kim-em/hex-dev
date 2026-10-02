@@ -5,11 +5,13 @@ Authors: Kim Morrison
 -/
 
 import HexPolyDetMathlib
-import Mathlib.Tactic.NormDet
-import Mathlib.Tactic.Ring
 
 open Matrix
 
 def HexPolyDetMathlib.ProofProbe.ResultNumeric2Hex.certificate : {d : Int // Matrix.det (!![(1 : Int), 2; 3, 4] : Matrix (Fin 2) (Fin 2) Int) = d} := by
   let c := det% (!![(1 : Int), 2; 3, 4] : Matrix (Fin 2) (Fin 2) Int)
   exact ⟨c.value, c.proof⟩
+
+/-- info: 'HexPolyDetMathlib.ProofProbe.ResultNumeric2Hex.certificate' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexPolyDetMathlib.ProofProbe.ResultNumeric2Hex.certificate

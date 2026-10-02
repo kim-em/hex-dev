@@ -5,10 +5,16 @@ import fcntl
 import os
 
 
-def cpu_lease():
+def cpu_lease(requested=None):
     cpus = sorted(os.sched_getaffinity(0))
-    offset = os.getpid() % len(cpus)
-    for cpu in cpus[offset:] + cpus[:offset]:
+    if requested is not None:
+        if requested not in cpus:
+            raise RuntimeError("requested CPU is outside the process affinity")
+        cpus = [requested]
+    else:
+        offset = os.getpid() % len(cpus)
+        cpus = cpus[offset:] + cpus[:offset]
+    for cpu in cpus:
         lease = open(f'/tmp/hex-bench-cpu-{cpu}.lock', 'a')
         try:
             fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)

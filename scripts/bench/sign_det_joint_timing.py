@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.bench.sign_det_compare import archive_sources
 from scripts.bench.sign_det_joint import COST_FIELDS, DEGREES, validate as validate_inputs
 from scripts.bench.sign_det_sparse import source_hashes
-from scripts.bench.structural_tactic_sweep import acquire_cpu
+from scripts.bench.cpu_lease import cpu_lease as acquire_cpu
 
 TRIALS = 6
 PREFIX = "Hex.SignDetBench.Joint."

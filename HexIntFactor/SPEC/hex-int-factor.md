@@ -1642,12 +1642,13 @@ missing portfolio.
 No advance claim is made on anything the quadratic sieve would reach,
 because nothing here reaches it.
 
-The proof-track replay is measured outside lean-bench with rotated paired
-fresh-module builds. A baseline imports the shared replay input; ten candidate
-modules add one `decide +kernel` theorem each for `k = 1..10`, with the final
-case containing a 61-bit Pocklington-certified factor. Compiled profiles cover
-one representative of every `libraries.yml` Phase-4 input family; proof-track
-fresh builds do not create an additional compiled-profile family.
+Representative example files under `bench/HexIntFactor/ProofProbe` exercise
+small and ten-node factor-certificate replay and primality exhaustion. CI builds
+them through `HexIntFactorKernelProbe` on every PR. These examples and the
+ordinary library/conformance tests establish correctness; this proof surface has
+no paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
 ## The Mathlib layer
 

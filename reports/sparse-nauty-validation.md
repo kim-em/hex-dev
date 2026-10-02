@@ -42,29 +42,11 @@ diagnostics. CI selects both graph-isomorphism oracle streams under the
 
 ## Imported kernel replay
 
-Every case below closes through public sparse `graph_iso` in four fresh module
-builds, alternating its order with an adjacent import-only baseline. All proofs
-use exactly `propext`, `Classical.choice` and `Quot.sound`.
-
-| Case | Median kernel checking | Median build minus import baseline | Maximum process RSS |
-|---|---:|---:|---:|
-| Random 12, positive | 0.390 s | 0.404 s | 2,034 MiB |
-| Random 12, negative | 2.730 s | 2.800 s | 2,696 MiB |
-| Ordered colours 10, positive | 0.118 s | 0.188 s | 1,943 MiB |
-| Ordered colours 10, negative | 1.730 s | 1.804 s | 2,407 MiB |
-| CFI 40, negative | 66.800 s | 66.887 s | 19,568 MiB |
-
-The CFI probe uses search-node and certificate-record limits of 100,000,000,
-`maxHeartbeats = 40000000`, and `maxRecDepth = 4000000`. The ordinary sparse
-checker proves it directly. Neither port has a replay operation counter or an
-estimated replay-cost preflight. No custom memory or worker limits are imposed.
-Peak RSS is an observation, not an API limit.
-
-The [raw replay archive](bench-results/hexgraphiso-sparse-replay-unlimited.jsonl)
-retains all 40 module builds, 20 paired differences, profiler output, axiom
-lists, artifact sizes, host activity and source hashes. Its source hashes agree
-before and after measurement. The archive explicitly records that the working
-tree is uncommitted; these are measurements of the hashed working sources.
+CI builds positive and negative random-pair and ordered-colour sparse proofs
+through `HexGraphIsoSparseProofProbe`. The larger CFI negative proof is retained
+under `conformance/HexGraphIso/Diagnostics` and builds manually through
+`HexGraphIsoCfiDiagnostics`. These examples use ordinary `graph_iso` replay;
+no paired timing report is required for this correctness surface.
 
 ## Preservation of native performance
 

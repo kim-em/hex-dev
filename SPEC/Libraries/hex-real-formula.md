@@ -213,10 +213,14 @@ merge terms and requires normalization; rational arithmetic costs are not
 unit cost. NNF is linear in the tree input, while frontend biconditional
 expansion and prenex conversion are output-sensitive and may duplicate
 subformulas. Report expanded tree size separately from shared DAG size.
-The companion's reifier and generated proofs use fresh module `lake build`
-probes with matched import baselines per [Phase 4](../../PLAN/Phase4.md), not
-Mathlib-importing LeanBench executables. Applications of the normalization and
-RCF correspondence theorems belong to ordinary correctness tests, not timing probes.
+Representative example files under `bench/HexRealFormulaMathlib/ProofProbe`
+exercise parameterized reification and quantifier alternation. CI builds them
+through `HexRealFormulaProofProbe` on every PR. These examples and the ordinary
+library/conformance tests establish correctness; this proof surface has no
+paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
+
 
 The manual introduces a parameterized polynomial inequality, shows its
 coordinate map and rational denominator clearing, then uses the same formula

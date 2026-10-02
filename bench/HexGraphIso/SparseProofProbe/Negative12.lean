@@ -11,4 +11,6 @@ open Hex.GraphIso Hex.GraphIso.SparseProofProbe in
 theorem Hex.GraphIso.SparseProofProbe.negative12 :
     ¬ Sparse.Isomorphic random12 random12b := by graph_iso
 
+/-- info: 'Hex.GraphIso.SparseProofProbe.negative12' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Hex.GraphIso.SparseProofProbe.negative12

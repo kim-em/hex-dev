@@ -3,7 +3,7 @@
 ## Classification
 
 The correspondence API and `smith` frontend share this companion. The
-frontend has its own conformance and fresh-module proof-performance track.
+frontend has its own conformance and CI-built proof-example track.
 
 `hex-smith-mathlib` is the Mathlib correspondence layer for the executable
 integer Smith normal form in `hex-smith`. It imports Mathlib; `hex-smith`
@@ -71,43 +71,19 @@ no Mathlib-importing benchmark executable.
 
 ## Frontend implementation and validation
 
-The frontend is implemented in `HexSmithMathlib/Tactic.lean`, with list
-certificates owned by `HexSmith/Kernel.lean`. The soundness theorems accept
-arbitrary checked witnesses. Existing correspondence evidence applies only
-to that API; frontend conformance and performance have separate obligations.
-`libraries.yml` registers `bench/HexSmithMathlib/ProofProbe` and caps
-`done_through` at `3` until complete proof evidence passes (an already lower
-phase remains lower). The ordinary build includes the frontend tests through
-`HexStructuralTacticTests`.
+The frontend lives in `HexSmithMathlib/Tactic.lean`; list certificates belong to
+`HexSmith/Kernel.lean`, and the companion's soundness theorems accept arbitrary
+checked witnesses. Proof tests live in `HexSmithMathlib/Tests.lean`; malformed
+certificate regressions also belong in the Mathlib-free conformance driver.
 
-`scripts/bench/structural_tactic_probes.py` generates the complete named ladders
-with seed 10238, plus one 16×16 `Matrix.ofArray` fixture exercising the
-entrywise identification route for this owner. A regression compares every
-committed probe source with the generator. `scripts/bench/structural_tactic_sweep.py` runs six adjacent
-import-baseline/candidate pairs per fixture, rotating pairs and alternating
-arm order on one automatically leased CPU. An external append-only journal
-retains each completed arm and partial timeout output. Certificate sizes,
-entry heights, axiom audits and cumulative kernel profiles are included in
-the measured modules. Comparator status is
-**no-comparable-surface-in-named-comparator**.
+Representative example files under `bench/HexSmithMathlib/ProofProbe` exercise
+chain, deficient, rectangular and empty quotient presentations. CI builds them
+through `HexStructuralTacticProofProbe` on every PR. These examples and the
+ordinary library/conformance tests establish correctness; this proof surface has
+no paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
-Proof tests live in `HexSmithMathlib/Tests.lean`, built with the ordinary
-library; malformed list certificates also belong in the algorithm library's
-Mathlib-free conformance driver. Proof probes are fresh modules, not runtime
-oracle drivers or Mathlib-importing benchmark executables. Each frontend uses
-`HexSmithMathlib/Tactic.lean`; result records and list soundness belong
-in `HexSmithMathlib/Kernel.lean`. No library name changes.
-
-For the named families below, shipping requires complete clean-tree evidence
-under the `absolute_only` mode of
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
-Preregister six rounds and a per-candidate absolute build budget of 60 seconds
-on the measurement host for every stated rung. Every candidate sample must
-meet it; report the median and kernel-only time as well. A timeout, incomplete
-pair, budget failure or provenance mismatch blocks the frontend's performance
-sign-off. This is an operational shipping gate, not an asymptotic or portable
-wall-time claim. Retain slow completed samples; do not trim the ladder to get
-a passing verdict. Any budget revision requires an explicit SPEC amendment.
 
 ## The `smith` tactic
 
@@ -262,17 +238,4 @@ a noncanonical but valid transform certificate to ensure soundness does not
 assume producer equality. Audit axioms against `propext`, `Classical.choice`,
 `Quot.sound` only.
 
-Proof probes live in `bench/HexSmithMathlib/ProofProbe`. Named families:
-`chain-conjugate` (unimodular transforms of positive divisibility chains),
-`rectangular-presentation` (`n × 2n` and `2n × n`), `rank-deficient`
-(rank `n / 2`), and `large-coefficients`; dimensions `2, 4, 8, 16`, input
-heights `8, 32`, and `64, 256` bits for the last family. Include factors
-`1` and nontrivial free summands. With no Mathlib tactic comparator, record
-absolute fresh-module times/medians, baseline deltas and one kernel-only
-profile per family, not a speedup ratio. Use six samples paired adjacently
-with import-only baselines, alternating orientation, per
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
-Record certificate entry counts, serialized bytes, maximum integer height,
-emitted artifact sizes, axiom sets and complete source/toolchain/host
-provenance; retain every completed sample and report timeouts. Preregister
-operational caps. Ordinary compiled performance remains HexSmith's concern.
+The CI example coverage is specified in [Frontend implementation and validation](#frontend-implementation-and-validation).

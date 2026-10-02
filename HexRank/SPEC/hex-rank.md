@@ -842,21 +842,7 @@ block, plus
 rows (`scaleRow` and the combination), against `checkRank`'s
 `n · rank · m + rank² · m + rank³ + n · m` products of minor-sized
 integers, and against the `n³ / 3` minor-by-entry products of Mathlib's
-`Echelon.Decomposition` check. Two six-sample shared-host sweeps of the
-fresh-module proof probes under `bench/HexRankMathlib/ProofProbe`, before
-and after adopting the triangular transform, reported signed `rank`
-overheads over the paired import baseline of `95 → 100 ms` at dense `n = 8`,
-`365 → 393 ms` at dense `n = 16`, `2440 → 2120 ms` at dense `n = 32`,
-`403 → 397 ms` at rank-deficient `n = 16`, and `695 → 703 ms` at low-rank
-`n = 32`. The dense `n = 32` samples separated completely; the other cases
-overlapped and were essentially flat. After the change, the paired
-`eval_rank` overheads were `298`, `1843` and `13906 ms` on the three dense
-cases, `1804 ms` on the rank-deficient case, and `14907 ms` on the low-rank
-case. Both sweeps used the fixed trial-major
-schedule with alternating `AB`/`BA` order, passed their fresh-module budgets
-and were release-quality measurements. The reduction of pivot-block entries
-to residues and the list traversal are independent of the triangular
-transform and remain separate profiling targets.
+`Echelon.Decomposition` check. The companion builds representative kernel replay examples in CI.
 
 **Soundness** is the companion's `rank_eq_of_checkList`
 ([hex-rank-mathlib §Kernel certificate](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#kernel-certificate)),
@@ -1409,7 +1395,7 @@ bench/HexRank/Bench.lean
    report.
 6. **The kernel certificate and the tactic.** `RankWitness`,
    `checkRankList`, `rankWitness`, the companion's `rank_eq_of_checkList`
-   and `rank` tactic, and the fresh-module probes against `eval_rank`.
+   and `rank` tactic, and the CI-built rank examples.
 
 ## Open questions
 

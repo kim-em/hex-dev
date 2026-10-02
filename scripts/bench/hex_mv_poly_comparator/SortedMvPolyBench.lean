@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvPolyMathlib.ProofProbe.Support
+import HexMvPoly.Sorted
+import HexMvPolyCorpus
 import LeanBench
 
 /-!
@@ -12,14 +13,14 @@ External native driver for the canonical sorted-list `MvSparsePoly` proxy.
 
 The pinned Mathlib revision does not contain the still-open upstream
 `MvSparsePoly` PR series. This driver measures the same local, balanced-merge
-adapter used by the kernel representation sweep.
+adapter alongside the reference native representation.
 -/
 
 namespace MvSparsePolyProxy.MvPolyBench
 
 open Hex
 open Hex.MvPolyBench.Corpus
-open HexMvPolyMathlib.ProofProbe
+open Hex.MvPolyBench
 
 abbrev LexP4 (R : Type) := Sorted.Poly 4 R Mono.lex
 abbrev GrlexP4 (R : Type) := Sorted.Poly 4 R Mono.grlex

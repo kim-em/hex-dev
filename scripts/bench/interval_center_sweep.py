@@ -41,15 +41,10 @@ REPLAY_MODULES = {
     "checked": "HexInterval.ReplayCenterChecked",
     "whnf_baseline": "HexInterval.WhnfCenterBaseline",
     "whnf_checked": "HexInterval.WhnfCenterChecked",
-    "semantic_baseline": "HexIntervalMathlib.CenterBaseline",
-    "semantic_reflected": "HexIntervalMathlib.CenterReflected",
-    "semantic_direct": "HexIntervalMathlib.CenterDirect",
 }
 
 AXIOM_REPORT_MODULES = {
     "HexInterval.ReplayCenterChecked",
-    "HexIntervalMathlib.CenterReflected",
-    "HexIntervalMathlib.CenterDirect",
 }
 
 MODULE_SOURCES = {
@@ -61,19 +56,12 @@ MODULE_SOURCES = {
         ROOT / "bench" / "HexInterval" / "WhnfCenterBaseline.lean",
     "HexInterval.WhnfCenterChecked":
         ROOT / "bench" / "HexInterval" / "WhnfCenterChecked.lean",
-    "HexIntervalMathlib.CenterBaseline":
-        ROOT / "bench" / "HexIntervalMathlib" / "CenterBaseline.lean",
-    "HexIntervalMathlib.CenterReflected":
-        ROOT / "bench" / "HexIntervalMathlib" / "CenterReflected.lean",
-    "HexIntervalMathlib.CenterDirect":
-        ROOT / "bench" / "HexIntervalMathlib" / "CenterDirect.lean",
 }
 
 PROVENANCE_SOURCES = [
     ROOT / "HexInterval.lean",
     ROOT / "HexInterval" / "Basic.lean",
     ROOT / "HexInterval" / "Experiment" / "Center.lean",
-    ROOT / "HexIntervalMathlib" / "Experiment" / "Center.lean",
     ROOT / "bench" / "HexBench" / "IntervalCenterSpike.lean",
     ROOT / "lakefile.lean",
     ROOT / "lake-manifest.json",
@@ -91,7 +79,7 @@ def parse_args() -> argparse.Namespace:
         "--output",
         type=Path,
         default=ROOT / "reports" / "bench-results" /
-        "hex-interval-d2-center.json",
+        "hex-interval-d2-center-core.json",
     )
     return parser.parse_args()
 
@@ -339,35 +327,6 @@ def replay_summary(
     }
 
 
-def semantic_summary(
-    rows: dict[str, list[dict[str, object]]]
-) -> dict[str, object]:
-    """Compare both semantic proofs to the same import-matched baseline."""
-    baseline = rows["semantic_baseline"]
-    result: dict[str, object] = {
-        "baseline": {
-            "module": REPLAY_MODULES["semantic_baseline"],
-            "samples": baseline,
-            "median_wall_nanos": median(baseline, "wall_nanos"),
-            "median_peak_rss_kb": median(baseline, "peak_rss_kb"),
-        }
-    }
-    for variant in ("reflected", "direct"):
-        key = "semantic_" + variant
-        candidate = rows[key]
-        margins = signed_margins(candidate, baseline)
-        result[variant] = {
-            "module": REPLAY_MODULES[key],
-            "samples": candidate,
-            "median_wall_nanos": median(candidate, "wall_nanos"),
-            "signed_import_baseline_wall_margin_nanos": margins,
-            "median_signed_import_baseline_wall_margin_nanos":
-                int(statistics.median(margins)),
-            "median_peak_rss_kb": median(candidate, "peak_rss_kb"),
-        }
-    return result
-
-
 def main() -> int:
     args = parse_args()
     if args.samples < 1:
@@ -379,13 +338,9 @@ def main() -> int:
 
     build = [
         "lake", "build", "HexIntervalExperiment",
-        "HexIntervalMathlibExperiment",
         "hex_interval_center_spike",
         "+HexInterval.ReplayCenterBaseline:olean",
         "+HexInterval.WhnfCenterBaseline:olean",
-        "+HexIntervalMathlib.CenterBaseline:olean",
-        "+HexIntervalMathlib.CenterReflected:olean",
-        "+HexIntervalMathlib.CenterDirect:olean",
     ]
     proc = subprocess.run(build, cwd=ROOT, capture_output=True, text=True)
     require_success(proc, build)
@@ -412,11 +367,6 @@ def main() -> int:
 
     replay_keys = ["baseline", "checked", "whnf_baseline", "whnf_checked"]
     replay_rows = replay_samples(replay_keys, args.samples)
-    semantic_keys = [
-        "semantic_baseline", "semantic_reflected", "semantic_direct",
-    ]
-    semantic_rows = replay_samples(semantic_keys, args.samples)
-
     for module in REPLAY_MODULES.values():
         build_module(module, "c.o")
 
@@ -424,7 +374,7 @@ def main() -> int:
         raise SystemExit("measurement inputs changed during the sweep")
 
     report = {
-        "schema": "hex-interval-d2-center-v3",
+        "schema": "hex-interval-d2-center-v4",
         "environment": environment(),
         "config": {
             "samples": args.samples,
@@ -435,7 +385,6 @@ def main() -> int:
         },
         "compiled": compiled,
         "replay": replay_summary(replay_rows),
-        "semantic": semantic_summary(semantic_rows),
         "artifacts": {
             key: artifact_sizes(module) for key, module in REPLAY_MODULES.items()
         },

@@ -7,7 +7,6 @@ import HexRankMathlib.ProofProbe.NumberFieldSupport
 
 open RankProbe
 open scoped Hex.PolyQuot.QAdjoinField
-set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 
 theorem result : Matrix.rank (R := K) !![α, 1, 0, 0, 0, 0, 0, 0;
@@ -21,7 +20,4 @@ theorem result : Matrix.rank (R := K) !![α, 1, 0, 0, 0, 0, 0, 0;
 
 /-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms result
-
--- Preserve the axiom inventory consumed by the optional diagnostic sweeps.
 #print axioms result

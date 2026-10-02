@@ -175,6 +175,8 @@ set_option maxHeartbeats 1000000 in
 theorem irreducible4 : Irreducible (X ^ 4 - 2 : Polynomial ℤ) :=
   irreducibility (X ^ 4 - 2 : Polynomial ℤ)
 
+/-- info: 'HexBerlekampZassenhausMathlib.ProofProbe.irreducible4' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms irreducible4
 
 end HexBerlekampZassenhausMathlib.ProofProbe

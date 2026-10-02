@@ -11,4 +11,6 @@ open Hex.GraphIso Hex.GraphIso.SparseProofProbe in
 theorem Hex.GraphIso.SparseProofProbe.coloured10Neg :
     ¬ Sparse.Isomorphic edgeMarkA nonedgeMark := by graph_iso
 
+/-- info: 'Hex.GraphIso.SparseProofProbe.coloured10Neg' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Hex.GraphIso.SparseProofProbe.coloured10Neg

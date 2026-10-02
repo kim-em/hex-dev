@@ -418,19 +418,13 @@ all the minors", and the `minorWork` budget bounds exactly this quantity.
 
 `HexDeterminantalIdealMathlib/Tests.lean` gains the five examples above in
 every goal form, the empty and `r = 0` shapes, and the `ℤ` case of
-`gens_vanish_iff_rank_lt_of_domain` on `!![x, 2 * x]`. Proof probes under
-`bench/HexDeterminantalIdealMathlib/ProofProbe` record, as fresh-module
-evidence with matched baselines, batch reification, compiled enumeration,
-kernel time of `detIdealGensList`, and total elaboration, on the
-`symbolic` family of [hex-generic-rank §Benchmarking](../../HexGenericRank/SPEC/hex-generic-rank.md#benchmarking)
-restricted to `r ≤ 3`. There is no Mathlib comparator (no Lean tactic
-states a rank locus), declared as
-**no-comparable-surface-in-named-comparator**; the report is
-`reports/hex-determinantal-ideal-mathlib-performance.md` with absolute
-numbers and preregistered ceilings. The library therefore gains
-`proof_probes` in `libraries.yml`, and its
-dependencies gain `HexRankMathlib`, `HexReflect`, `HexReflectMathlib` and
-`HexMatrixMathlib`.
+`gens_vanish_iff_rank_lt_of_domain` on `!![x, 2 * x]`. Representative example files under
+`bench/HexDeterminantalIdealMathlib/ProofProbe` exercise full and deficient rank
+loci. CI builds them through `HexDeterminantalIdealMathlibProofProbe` on every
+PR. These examples and the ordinary library/conformance tests establish
+correctness; this proof surface has no paired timing decision, timing ladder,
+absolute build-time gate, profile or headline-report requirement. The
+computational owner's LeanBench obligations remain separate.
 
 ### What this tactic does not do
 
