@@ -21,7 +21,8 @@ benchmark. Its proof-side surface, the `rank` tactic and its certificate
 construction and kernel replay, uses representative example files under the
 manifest's `bench/HexRankMathlib/ProofProbe` root. CI builds them through
 `HexRankMathlibProofProbe`: integer full/deficient/low-rank literals, rational
-and quadratic full/deficient literals, and an optional number-field literal.
+and quadratic full/deficient literals, and a number-field literal through the
+optional `NumberFieldTactic` import.
 The result declarations print their axiom dependencies; accepted proofs use
 only `propext`, `Classical.choice` and `Quot.sound`. Ordinary correspondence
 theorems and decidability instances use build-only correctness examples in

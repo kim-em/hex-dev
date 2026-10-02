@@ -1,22 +1,34 @@
 {
   "base": "01ad7e59944bb637b306ab0ef166f8f640019b8d",
-  "audited_revision": "a29afca7a",
+  "audited_revision": "a29afca7a5824d544c8ddf8b59b8952ff8eb1592",
   "runtime_audit": {
     "HexRank/Cert.lean": "Adds DecidableEq RankCert, absent from timed operations.",
-    "HexRank/Polynomial.lean": "Unchanged reference checker and helpers before the isolated borrowed-row experiment.",
+    "HexRank/Polynomial.lean": "Unchanged.",
     "HexRank/PolyProduce.lean": "Unchanged.",
     "HexRank/ReduceImpl.lean": "Unchanged.",
     "HexRank/Produce.lean": "Unchanged.",
     "bench/HexRank": "Unchanged registrations, fixtures and schedules.",
-    "HexBareiss/Kernel.lean": "DetWitness budgeted producer added; HexRank uses its own producer and does not call this path.",
+    "HexBareiss/Kernel.lean": "Adds the budgeted producer and rewrites unlimited detWitnessWith through the new produce/validate implementation, including a changed step signature. HexRank calls no detWitness function; these changed paths are not timed.",
     "HexMvPoly/Kernel.lean": "Kernel witness arithmetic; polynomial-ring benchmarks use MvPoly ring operations, not this list checker.",
     "HexPoly/Instances.lean": "natPow weakens typeclass hypotheses without changing the arithmetic body.",
     "HexPoly/Lcm.lean": "monicize weakens typeclass hypotheses without changing the arithmetic body.",
-    "HexMatrix/Scaled.lean": "Adds expose attributes for kernel reduction; absent from the timed rank paths."
+    "HexMatrix/Scaled.lean": "Adds expose attributes for kernel reduction; absent from the timed rank paths.",
+    "HexBasic/Kernel.lean": "New kernel-oriented primitive namespace; none is called by the measured rank paths.",
+    "HexPoly/Monic.lean": "Generalizes a theorem typeclass context; no runtime definition changes.",
+    "HexPoly/Interpret.lean": "New evaluation semantics and correspondence proofs, outside the measured paths.",
+    "HexPoly/PseudoDiv.lean": "Moves pseudo-division from HexResultant.Basic into HexPoly; the rank benchmarks do not call pseudo-division.",
+    "HexPoly/PseudoGcd.lean": "New pseudo-gcd API, outside the measured paths.",
+    "HexPoly/PseudoInterpret.lean": "New pseudo-division semantics and proofs, outside the measured paths.",
+    "HexMvPoly/KernelMap.lean": "Removes an unused simp argument in a theorem proof; no runtime change.",
+    "HexBasic.lean": "Imports the new kernel primitives; no benchmark operation calls them.",
+    "HexPoly.lean": "Imports interpretation and pseudo-division modules; the measured exact-division paths remain unchanged.",
+    "HexResultant/Basic.lean": "Re-exports pseudo-division from its new HexPoly location; no rank call path changes.",
+    "HexResultant/PseudoDivMod.lean": "Re-exports moved pseudo-division proof support; no rank call path changes.",
+    "HexPolyZ/IntegerPolynomial.lean": "Adds clearDenominators and laws; existing definitions and the rank call paths are unchanged."
   },
   "toolchain_before": "leanprover/lean4:v4.34.0",
   "toolchain_current": "leanprover/lean4:v4.35.0-rc3",
-  "evidence_scope": "Retained results describe their pinned compiler and dependency versions. No timings are asserted to have been rerun on current main. New checker comparisons use two frozen binaries built with the same current toolchain.",
+  "evidence_scope": "Retained results describe their pinned compiler and dependency versions. No timings are asserted to have been rerun on current main.",
   "dependency_phases": {
     "HexRank": {
       "HexBareiss": 7,
@@ -40,5 +52,81 @@
     "checked_hex_results": 10,
     "policy": "CI-built representative tactics and certificate replay; timings diagnostic, not a required verdict.",
     "phase_blocker": "HexRank remains at 3."
-  }
+  },
+  "changed_import_closure_sources": [
+    "HexBasic.lean",
+    "HexBasic/Kernel.lean",
+    "HexPoly.lean",
+    "HexPoly/Instances.lean",
+    "HexPoly/Interpret.lean",
+    "HexPoly/Lcm.lean",
+    "HexPoly/Monic.lean",
+    "HexPoly/PseudoDiv.lean",
+    "HexPoly/PseudoGcd.lean",
+    "HexPoly/PseudoInterpret.lean",
+    "HexPolyZ/IntegerPolynomial.lean",
+    "HexRank/Cert.lean",
+    "HexResultant/Basic.lean",
+    "HexResultant/PseudoDivMod.lean"
+  ],
+  "changed_package_revisions": {
+    "AINTLIB": {
+      "before": null,
+      "audited": "3808ce862c09ad5b4de0c76f10ba00946ed2eff3"
+    },
+    "Cli": {
+      "before": "e92c9f15fdfacc8536f31cfb3b7ad26c3c8cd204",
+      "audited": "843844fa601dd56767b1eb22b7ada5b64d5e567a"
+    },
+    "LeanSearchClient": {
+      "before": "ddf04cf3949fa556442341e87d47f9f6e6074707",
+      "audited": "29ff470276c725ae01505d55b17148c18fc7dfd3"
+    },
+    "Qq": {
+      "before": "6a489d9af5d0c47e5b259e2e8bcdfc1811b5a259",
+      "audited": "37b0ba0b26109cf9f9c541f0f9557e50cfa1a3b9"
+    },
+    "TauCeti": {
+      "before": null,
+      "audited": "0dbbe255a4f418084b30a3ffe6763d824a6b4250"
+    },
+    "aesop": {
+      "before": "355695d523e41d0554926416cba2a2b3544fbbc9",
+      "audited": "a90fbf7b02ff06a0deebf74088dff9e5fe02c9ea"
+    },
+    "batteries": {
+      "before": "f2effa3d803fda822b1f97b806c47cf2adfbcbc2",
+      "audited": "33131f4fb10067cb3009bf4db615d9680c1ccd6b"
+    },
+    "illuminate": {
+      "before": "a1a61c9678da010e958ed24cdfa6f635b85f172a",
+      "audited": "af451aaa73d8f8025189f228642b6e4fe047ce4f"
+    },
+    "importGraph": {
+      "before": "e928b72544873815af278d38681b31c0293588e3",
+      "audited": "a6d31147557d4b044a3ce226768572919acc1def"
+    },
+    "mathlib": {
+      "before": "1cf325a0cf67aca2b04d76b5380ff6a9e410aefa",
+      "audited": "d870b9068518a0870842d15a0cd42637ec30b587"
+    },
+    "plausible": {
+      "before": "118aa17ee84656b8bd727fef7c458ee8c833385c",
+      "audited": "fb13df72ecefd8ddbf9291021d7f33a8673eb57b"
+    },
+    "proofwidgets": {
+      "before": "106ff4fafc74ef4ac99d81dbf3ab399118f497a5",
+      "audited": "c643bbb3c24f8a25f9c14e3a6b1ceb13d01f3de1"
+    },
+    "subverso": {
+      "before": "9b90b7f938d6169246325df002351014f49945ef",
+      "audited": "d047cb484b2f3598187450935dbcc84d078cb581"
+    },
+    "verso": {
+      "before": "cad4b633e75ea769b851f12f9ca3b4f0dfcc625f",
+      "audited": "8fc7a297f14d5adc1a551b5b4ecf283c08bd691f"
+    }
+  },
+  "dependency_scope": "Package and compiler changes are recorded as environment changes, not claimed runtime-neutral exemptions for new measurements. The retained evidence remains historical evidence at its exact pins.",
+  "closure_method": "git diff --name-only base audited_revision intersected with recursive repository-local import closure of HexRank and both bench/HexRank source modules. Public/meta-only proof imports have no timed code. Additional upstream kernel modules considered separately are listed in runtime_audit."
 }

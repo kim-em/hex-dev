@@ -15,16 +15,17 @@ equality instance is outside their timed paths. Upstream determinant-budget
 and kernel-witness additions are also outside those paths. Existing scientific
 results retain their Lean 4.34.0 provenance; they are not claimed as new
 measurements on the current 4.35.0-rc3 compiler. The retained comparisons,
-frozen polynomial budgets, tables and figures pass their deterministic
-freshness checks.
+frozen polynomial budgets, tables and figures regenerate identically from
+the committed records; these checks do not compare runtime behavior to current
+source.
 
-HexRankMathlib's ten existing Hex tactic result probes now guard their ordinary
+HexRankMathlib's ten existing Hex tactic result probes guard their ordinary
 kernel axiom sets. Integer full/deficient/low-rank, rational and quadratic
 full/deficient, and number-field examples build through the existing
 `HexRankMathlibProofProbe` CI target. `lake build HexRankMathlib HexRankTests
 HexRankMathlibProofProbe HexRank.Conformance` passes on the audited main
 compiler. `rankCertWith_check`, `checkRank_sound`, and `rankWith_eq` remain
-present; no proof debt is introduced. HexRankMathlib remains at Phase 3 because
+present and covered by the bridge build. HexRankMathlib remains at Phase 3 because
 its HexRank dependency remains at Phase 3. Its other direct prerequisites are
 at Phase 7; all HexRank prerequisites meet Phase 4.
 
@@ -208,8 +209,9 @@ nor licenses a replacement checker pass. The standalone declared gate remains
 inconclusive.
 
 The isolated tail-accumulator experiment's [source patch and availability
-record](bench-results/hex-rank-10352/tail-experiment/) preserve commit
-`114730329e94c58b7f005c5b6c5eb2dc5d327e41`. Its temporary raw outputs are
+record](bench-results/hex-rank-10352/tail-experiment/) preserve the exact three-file diff of unreferenced local commit
+`114730329e94c58b7f005c5b6c5eb2dc5d327e41`; availability of that git object is
+not guaranteed. Its temporary raw outputs are
 unavailable. The [coordinator's recorded observation](https://github.com/kim-em/hex-dev/issues/10352#issuecomment-5752610168)
 reports twelve adjacent AB/BA arms with median paired after/before about
 1.009, and seven ladders with `checkFull` and `produceFull` inconclusive.

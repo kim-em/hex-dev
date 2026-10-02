@@ -14,3 +14,6 @@ theorem result : Matrix.rank (R := ℤ) !![1, -5, 3, -8, -7, 8, -6, 2, 9, -8, 7,
 /-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms result
+
+-- Preserve the axiom inventory consumed by the optional diagnostic sweeps.
+#print axioms result
