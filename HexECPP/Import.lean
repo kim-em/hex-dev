@@ -110,7 +110,7 @@ def residue (n : Nat) (z : Int) : Nat := (z % (n : Int)).toNat
 /-- Conversion may search for inverses, unlike the proof checker. Each
 proposal is still verified before it enters the raw certificate. -/
 def inverse? (n d : Nat) : Option Nat :=
-  let (g, s, _) := HexArith.Int.extGcd (d : Int) (n : Int)
+  let (g, s, _) := HexArith.extGcd d n
   if g != 1 then none
   else
     let u := residue n s

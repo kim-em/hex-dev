@@ -30,34 +30,33 @@ def main():
     args.directory.mkdir(parents=True)
     entries = {e["lib"]: e for e in yaml.safe_load(sync.MANIFEST.read_text())["repos"]
                if e.get("lib") in LIBRARIES}
-    entries.setdefault("HexECPP", dict(repo="leanprover/hex-ecpp", lib="HexECPP",
-                                      umbrella=True, spec="hex-ecpp", lakefile="toml"))
+    skeleton_heads = {}
     for lib, deps in LIBRARIES.items():
         dest = args.directory / lib
-        dest.mkdir()
-        shutil.copy(ROOT / "lean-toolchain", dest)
-        if lib == "HexArith":
-            source = (ROOT / "lakefile.lean").read_text()
-            blocks = "\n\n".join(source[a:b].rstrip() for a, b in
-                                   (sync.lake_declaration(source, n) for n in
-                                    ["hexArithOTarget", "hexarithffi"]))
-            (dest / "lakefile.lean").write_text(
-                'import Lake\nopen System Lake DSL\npackage «hex-arith» where\n'
-                '  leanOptions := #[⟨`doc.verso, true⟩, ⟨`doc.verso.suggestions, false⟩]\n\n'
-                + blocks + '\n\n@[default_target]\nlean_lib HexArith where\n'
-                '  precompileModules := true\n  moreLinkArgs := #["-lgmp"]\n'
-                '  moreLinkObjs := #[hexarithffi]\n')
-        else:
-            text = (f'name = "{entries[lib]["repo"].split("/")[-1]}"\n'
-                    f'defaultTargets = ["{lib}"]\n\n'
-                    'leanOptions = [{ name = "doc.verso", value = true },\n'
-                    '  { name = "doc.verso.suggestions", value = false }]\n')
-            for dep in deps:
-                text += f'\n[[require]]\nname = "{dep}"\npath = "../{dep}"\n'
-            text += f'\n[[lean_lib]]\nname = "{lib}"\n'
-            (dest / "lakefile.toml").write_text(text)
+        subprocess.run(["git", "clone", "--depth", "1",
+                        f"https://github.com/{entries[lib]['repo']}.git", str(dest)], check=True)
+        skeleton_heads[lib] = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=dest, text=True).strip()
+        # Apply the actual publication transformations to real unmanaged skeletons.
         sync.apply_paths(entries[lib], dest)
         sync.rewrite_lib_settings(entries[lib], dest)
+        sync.rewrite_lake_declarations(entries[lib], dest)
+        sync.rewrite_doc_verso(dest)
+        sync.rewrite_toolchains(dest)
+        lakefile = dest / f"lakefile.{entries[lib]['lakefile']}"
+        if deps:
+            text = lakefile.read_text()
+            pattern = r'(?ms)^\[\[require\]\]\s*\n(?P<body>.*?)(?=^\[|\Z)'
+            def local_requirement(match):
+                name = re.search(r'^name\s*=\s*"([^"\n]+)"', match['body'], re.M)[1]
+                if name not in deps:
+                    raise RuntimeError(f"unexpected dependency {name} in {lib}")
+                return f'[[require]]\nname = "{name}"\npath = "../{name}"\n\n'
+            text, count = re.subn(pattern, local_requirement, text)
+            if count != len(deps):
+                raise RuntimeError(f"missing direct requirement in {lib}")
+            lakefile.write_text(text)
+        (dest / "lake-manifest.json").unlink(missing_ok=True)
     client = args.directory / "Client"
     client.mkdir()
     shutil.copy(ROOT / "lean-toolchain", client)
@@ -71,15 +70,16 @@ def main():
     result = subprocess.run(command, cwd=client, capture_output=True, text=True)
     sources = {str(p.relative_to(args.directory)): hashlib.sha256(p.read_bytes()).hexdigest()
                for p in args.directory.rglob("*") if p.is_file() and
-               ".lake" not in p.relative_to(args.directory).parts}
+               ".lake" not in p.relative_to(args.directory).parts and
+               ".git" not in p.relative_to(args.directory).parts}
     forbidden = [str(p) for p in args.directory.rglob("*")
                  if p.is_dir() and p.name.lower() == "mathlib"]
     record = dict(source=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT,
                                                  text=True).strip(),
                   command=command, cwd=str(client), returncode=result.returncode,
                   stdout=result.stdout, stderr=result.stderr, source_hashes=sources,
-                  mathlib_directories=forbidden,
-                  contract="Coordinated next-release sources, local paths for exact staged "
+                  mathlib_directories=forbidden, skeleton_heads=skeleton_heads,
+                  contract="Actual published unmanaged skeletons and sync transformations, coordinated next-release sources, local paths for exact staged "
                            "prerequisites; a fresh client uses the README verbatim. Lake "
                            "generates all lockfiles. No development project cache is reused.")
     args.output.write_text(json.dumps(record, indent=2) + "\n")

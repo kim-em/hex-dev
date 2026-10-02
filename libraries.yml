@@ -1079,7 +1079,7 @@ libraries:
         - name: transcript-length
           description: Dense child scalars with fixed residues modulo seven vary the actual replay and inverse-transcript length; linear modular-operation counts and independently derived quadratic compiled suffix-copy work.
         - name: scalar-modulus-widths
-          description: Independently generated 64- to 4096-bit prime moduli and dense scalars include actual downstream widths with full-width point coordinates, replay and checked GMP inverse proposal.
+          description: Independently generated prime moduli and dense scalars cover downstream widths and vary both together, scalar width at a fixed 65-bit modulus, and modulus width at a fixed 47-bit scalar; full-width coordinates, replay and classical Euclidean inverse proposal.
         - name: row-vectors
           description: Fixed-width PARI row tokens vary byte and row counts for bounded parsing and parsed-input preflight; independently derived linear traversal work.
         - name: supplied-certificates

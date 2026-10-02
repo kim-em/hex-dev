@@ -17,7 +17,9 @@ ROOT = Path(__file__).resolve().parents[2]
 BENCH = ROOT / ".lake/build/bin/hexecpp_bench"
 FAMILIES = ["Hex.ECPPBench.runReplay", "Hex.ECPPBench.runProposal",
             "Hex.ECPPBench.runParse", "Hex.ECPPBench.runPreflight",
-            "Hex.ECPPBench.runSizedReplay", "Hex.ECPPBench.runSizedProposal"]
+            "Hex.ECPPBench.runSizedReplay", "Hex.ECPPBench.runSizedProposal",
+            "Hex.ECPPBench.runScalarReplay", "Hex.ECPPBench.runScalarProposal",
+            "Hex.ECPPBench.runModulusReplay", "Hex.ECPPBench.runModulusProposal"]
 # Operation-specific ceilings: twice the retained endpoint medians, rounded
 # upward. Existing reports/ecpp/{compiled,native/compiled-updated}.json supply
 # the baselines; bootstrap-operations.json supplies the previously unregistered

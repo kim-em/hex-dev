@@ -316,8 +316,7 @@ private instance : Hashable SizedCase := ⟨fun input => hash (reprStr input)⟩
 
 /-- Use independently generated primes and full-width nontrivial coordinates.
 Dense scalar and modulus widths grow together; setup is outside measurement. -/
-def sizedInput (bits : Nat) : SizedCase := Id.run do
-  let n := (sizedPrimes.find? (fun row => row.1 == bits)).getD (sizedPrimes.head!) |>.2
+private def sizedCase (n bits : Nat) : SizedCase := Id.run do
   let x := n / 3 + 1
   let y := n / 7 + 1
   let b := modSub n (y * y % n) ((x * x * x + 5 * x) % n)
@@ -326,6 +325,18 @@ def sizedInput (bits : Nat) : SizedCase := Id.run do
   let budget := { defaultImportBudget with maxScalarBits := bits, maxInverseOps := 2 * bits }
   let result := (proposeScalar budget n 5 q point).toOption.getD (.infinity, [])
   return ⟨n, b, q, point, result.1, result.2⟩
+
+/-- Grow scalar and modulus widths together, including downstream sizes. -/
+def sizedInput (bits : Nat) : SizedCase :=
+  sizedCase ((sizedPrimes.find? (fun row => row.1 == bits)).getD (sizedPrimes.head!) |>.2) bits
+
+/-- Vary scalar width independently at a supplied-certificate modulus. -/
+def scalarWidthInput (bits : Nat) : SizedCase :=
+  sizedCase 18446744073709551629 bits
+
+/-- Vary modulus width independently at the 65-bit vector's 47-bit cofactor. -/
+def modulusWidthInput (bits : Nat) : SizedCase :=
+  sizedCase ((sizedPrimes.find? (fun row => row.1 == bits)).getD (sizedPrimes.head!) |>.2) 47
 
 @[noinline] def runSizedReplay (input : SizedCase) : Bool :=
   onCurve input.n 5 input.b (input.n / 3 + 1) (input.n / 7 + 1) &&
@@ -349,13 +360,43 @@ setup_benchmark runSizedReplay k => k * k * k with prep := sizedInput where {
   targetInnerNanos := 5000000000, maxSecondsPerCall := 120.0
 }
 
--- Mode 2. GMP GCDEXT documents O(M(k)*log k), with M(k) <= O(k^2).
--- At most 2*k inverse proposals give O(k^3*log k); ring work and bit copies
--- are below that bound. Source: gmplib.org/manual/Extended-GCD.
-setup_benchmark runSizedProposal k => k * k * k * (Nat.log2 k + 1)
+-- Mode 2. Classical extended Euclid costs O(k^2): quotient bit lengths
+-- sum to O(k), and each division/coefficient update costs at most its quotient
+-- width times k. At most 2*k inverse proposals give O(k^3). The compiled
+-- Nat recurrence uses these operations, rather than a direct GMP GCDEXT call.
+-- Source: Brent/Zimmermann, Modern Computer Arithmetic, sections 1.6/1.6.2/2.5,
+-- https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
+setup_benchmark runSizedProposal k => k * k * k
   with prep := sizedInput where {
   paramFloor := 64, paramCeiling := 4096, outerTrials := 3
   targetInnerNanos := 5000000000, maxSecondsPerCall := 120.0
+}
+
+-- Independent axes. With fixed modulus, k scalar bits cost O(k^2) in
+-- prescribed bit extraction and O(k) bounded-width affine/inverse work.
+-- With fixed scalar, only a constant number of additions and inverses occur;
+-- quadratic basecase arithmetic/classical Euclid bounds k-bit moduli.
+-- These registrations measure wrappers around the identical timed callbacks.
+@[noinline] def runScalarReplay (input : SizedCase) : Bool := runSizedReplay input
+@[noinline] def runScalarProposal (input : SizedCase) : Bool := runSizedProposal input
+@[noinline] def runModulusReplay (input : SizedCase) : Bool := runSizedReplay input
+@[noinline] def runModulusProposal (input : SizedCase) : Bool := runSizedProposal input
+
+setup_benchmark runScalarReplay k => k * k with prep := scalarWidthInput where {
+  paramFloor := 32, paramCeiling := 4096, outerTrials := 3
+  targetInnerNanos := 2000000000, maxSecondsPerCall := 120.0
+}
+setup_benchmark runScalarProposal k => k * k with prep := scalarWidthInput where {
+  paramFloor := 32, paramCeiling := 4096, outerTrials := 3
+  targetInnerNanos := 2000000000, maxSecondsPerCall := 120.0
+}
+setup_benchmark runModulusReplay k => k * k with prep := modulusWidthInput where {
+  paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+  targetInnerNanos := 2000000000, maxSecondsPerCall := 120.0
+}
+setup_benchmark runModulusProposal k => k * k with prep := modulusWidthInput where {
+  paramFloor := 64, paramCeiling := 4096, outerTrials := 3
+  targetInnerNanos := 2000000000, maxSecondsPerCall := 120.0
 }
 
 end Hex.ECPPBench
