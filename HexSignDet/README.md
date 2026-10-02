@@ -241,8 +241,10 @@ conditions even when totals agree. Another 27 fixtures compare descriptor
 validation, completion, selected-query signs and full encodings in numerical
 root order against FLINT. Ten comparisons and five re-encodings additionally
 check common-head squarefreeness/divisibility and numerical root identity. See the [fixture provenance](../conformance-fixtures/HexSignDet/README.md).
-The numeric context labels exercise literal binding over the fixed rational
-base only; full tower/refinement context fixtures remain required.
+The numeric context labels in those fixtures exercise literal binding over the
+fixed rational base. Separate common-field fixtures use actual algebraic
+coefficients and selected embeddings; nested certificate evidence and full
+tower/refinement context fixtures remain required.
 
 `SignTable` has a private constructor and stores distinct well-formed sign rows
 with strictly positive natural counts. `SignTable.ofSystem` extracts positive
