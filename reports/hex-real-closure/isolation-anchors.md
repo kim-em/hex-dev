@@ -87,6 +87,7 @@ for names, output in [
     (["Hex.RealClosure.Bench.runYun", "Hex.RealClosure.Bench.runIsolation",
       "Hex.RealClosure.Bench.runAssembly"], "/tmp/hex-real-closure-rational-rerun.json"),
     (["Hex.RealClosure.Bench.runNested"], "/tmp/hex-real-closure-nested-rerun.json"),
+    (["Hex.RealClosure.Bench.runNativeRoots"], "/tmp/hex-real-closure-native-roots-rerun.json"),
 ]:
     cpu, lease = cpu_lease()
     try:
@@ -125,6 +126,12 @@ returned the expected hash `0x1`. Peak child-process RSS was 69,268–70,036 kB.
 The [export](native-roots-anchor.json), [log](native-roots-anchor.log), and
 [context](native-roots-anchor-context.json) retain every sample, the exact
 command, CPU affinity, host load, source revision and source/executable hashes.
+The export is a byte-for-byte copy of the path
+named in the recorded command; its SHA-256 is recorded in the context.
+The context records a revision on main with the matching benchmark-driver
+hash; the measured revision is outside main's ancestry and its availability
+through branch history is not guaranteed. The executable hash identifies the
+measured build.
 
 This fixed anchor measures the complete native operation on one rational input.
 It establishes neither a scaling bound nor an overhead ratio against the

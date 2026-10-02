@@ -18,7 +18,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.bench.sign_det_sparse import source_hashes
-from scripts.bench.structural_tactic_sweep import acquire_cpu
+from scripts.bench.cpu_lease import cpu_lease as acquire_cpu
 
 ALLOCATORS = {
     "lean_alloc_small_object_core": "lean", "lean_alloc_object": "lean",

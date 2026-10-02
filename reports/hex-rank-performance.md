@@ -4,9 +4,8 @@ HexRank and HexRankMathlib satisfy Phase 4 (`done_through: 4`). The compiled
 track has complete operation, comparator and attribution evidence below; the
 proved array replacement resolves the native quotient checker's scaling gate.
 The companion's tactic/kernel proof track uses its
-CI-built `bench/HexRankMathlib/ProofProbe` examples under current Phase-4
-policy; the separate [carrier report](hex-rank-carriers-performance.md)
-retains diagnostic timings.
+CI-built `bench/HexRankMathlib/ProofProbe` examples under the
+[current proof-example contract](../SPEC/proof-examples.md).
 
 The [current-source audit](bench-results/hex-rank-10352/current-audit.json)
 compares merged evidence revision `01ad7e599` with main `a29afca7a`.

@@ -7,10 +7,6 @@ Authors: Kim Morrison
 import HexGenericRankMathlib
 import Mathlib.Algebra.Field.ZMod
 
-set_option maxHeartbeats 0
-set_option profiler true
-set_option profiler.threshold 1000000
-set_option trace.Hex.genericRank true
 
 open Matrix
 
@@ -19,4 +15,6 @@ theorem result (x : ℚ) (h : True → x ≠ 0) : (!![x]).rank = 1 := by
   guard_target = x ≠ 0
   exact h trivial
 
+/-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms result

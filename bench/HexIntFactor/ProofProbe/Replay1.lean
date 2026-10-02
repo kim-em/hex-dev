@@ -9,5 +9,7 @@ namespace Hex.IntFactor.ProofProbe
 theorem replay1 : Hex.Nat.checkFactorization (replayCase 1) = true := by
   decide +kernel
 
+/-- info: 'Hex.IntFactor.ProofProbe.replay1' depends on axioms: [propext] -/
+#guard_msgs in
 #print axioms replay1
 end Hex.IntFactor.ProofProbe

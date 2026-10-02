@@ -5,10 +5,12 @@ Authors: Kim Morrison
 -/
 
 import HexPolyDetMathlib
-import Mathlib.Tactic.NormDet
-import Mathlib.Tactic.Ring
 
 open Matrix
 
 theorem HexPolyDetMathlib.ProofProbe.Numeric2Hex.result : Matrix.det (!![(1 : Int), 2; 3, 4] : Matrix (Fin 2) (Fin 2) Int) = -2 := by
   det
+
+/-- info: 'HexPolyDetMathlib.ProofProbe.Numeric2Hex.result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexPolyDetMathlib.ProofProbe.Numeric2Hex.result

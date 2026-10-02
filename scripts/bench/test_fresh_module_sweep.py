@@ -22,17 +22,17 @@ from scripts.bench import fresh_module_sweep as sweep
 
 EXPECTED_AXIOMS = ("propext", "Classical.choice", "Quot.sound")
 PAIR = sweep.ProbePair(
-    name="center-direct",
-    reference=sweep.ProbeModule("HexIntervalMathlib.CenterBaseline"),
+    name="dense8-det",
+    reference=sweep.ProbeModule("HexBareissMathlib.ProofProbe.Baseline"),
     candidate=sweep.ProbeModule(
-        "HexIntervalMathlib.CenterDirect", EXPECTED_AXIOMS
+        "HexBareissMathlib.ProofProbe.Dense8Hex", EXPECTED_AXIOMS
     ),
     metadata={"family": "test"},
 )
 SPEC = sweep.SweepSpec(
     description="generic harness test",
     pairs=(PAIR,),
-    probe_target="HexIntervalMathlibProofProbe",
+    probe_target="HexBareissMathlibProofProbe",
     schema="test",
     measurement="test",
     output_stem="test",
@@ -64,11 +64,11 @@ class ProvenanceTests(unittest.TestCase):
     def test_transitive_local_sources_are_included(self) -> None:
         sources = set(sweep.provenance_sources(SPEC, CALLER))
         self.assertIn(
-            sweep.ROOT / "HexIntervalMathlib" / "Experiment" / "Center.lean",
+            sweep.ROOT / "HexBareissMathlib" / "Kernel.lean",
             sources,
         )
         self.assertIn(
-            sweep.ROOT / "HexInterval" / "Experiment" / "Center.lean",
+            sweep.ROOT / "HexBareiss" / "Kernel.lean",
             sources,
         )
 
@@ -1267,7 +1267,7 @@ class PairingTests(unittest.TestCase):
         quality, issues = sweep.validity_summary(
             SPEC,
             args,
-            {"center-direct": {"resolution": "no-comparable-control"}},
+            {"dense8-det": {"resolution": "no-comparable-control"}},
             [],
         )
         self.assertTrue(quality)
@@ -1470,8 +1470,8 @@ class HarnessValidationTests(unittest.TestCase):
         self.assertEqual(
             set(command[2:]),
             {
-                "+HexIntervalMathlib.CenterBaseline:deps",
-                "+HexIntervalMathlib.CenterDirect:deps",
+                "+HexBareissMathlib.ProofProbe.Baseline:deps",
+                "+HexBareissMathlib.ProofProbe.Dense8Hex:deps",
             },
         )
 

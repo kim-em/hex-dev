@@ -270,62 +270,13 @@ five overhead-dominated rows.
 
 ## Kernel replay
 
-The fresh-module artifact is
-`reports/bench-results/hex-int-factor-kernel-replay-7d0ee1e2-chungus2-cpu8.json`
-(SHA-256
-`bb36b862702dfba3cd370f82acd4bb9cdf1d020b1668a1163079f8f35230c547`).
-It records clean source commit `7d0ee1e2a479d08a9eeaf617531a3b113aa43e55`,
-host `chungus2`, CPU 8 with SMT sibling 56, six rotated paired samples, and
-expected axiom inventory `[propext]`. `release_quality` is true: there are no
-violations, preflight failures, or exhausted pairs. Contaminated pair attempts
-were discarded and retried.
-
-Each candidate is a fresh module containing an actual `decide +kernel`
-`checkFactorization` replay; its paired reference imports the same support but
-does not replay the certificate. The last case includes a 61-bit factor.
-
-The two preregistered null controls expose fresh-build noise before the
-substantive replay rows. Signed deltas are candidate minus reference; ranges
-and the robust spread ratio are retained rather than summarized away.
-
-| Null control | Six signed deltas (ms) | median (ms) | min--max (ms) | absolute range (ms) | max absolute (ms) | robust spread / build magnitude |
-|---|---|---:|---:|---:|---:|---:|
-| fresh-build | -1358.286, -1.162, -1.844, -200.425, 31.959, 1.598 | -1.503 | -1358.286--31.959 | 1390.244 | 1358.286 | 0.1361 |
-| replay-10-shaped | 761.383, 0.186, 6.991, 402.610, -2.910, 6.162 | 6.576 | -2.910--761.383 | 764.293 | 761.383 | 0.1575 |
-
-| factors | largest factor bits | reference build (ms) | replay build (ms) | paired delta (ms) | 5000 ms budget |
-|---:|---:|---:|---:|---:|:---:|
-| 1 | 5 | 1114.165 | 1911.862 | 795.350 | passed |
-| 2 | 5 | 1117.675 | 1915.716 | 797.513 | passed |
-| 3 | 5 | 1110.550 | 1925.647 | 809.464 | passed |
-| 4 | 5 | 1113.632 | 1914.667 | 799.800 | passed |
-| 5 | 5 | 1111.804 | 1918.667 | 800.257 | passed |
-| 6 | 5 | 1117.847 | 1912.373 | 796.981 | passed |
-| 7 | 5 | 1112.407 | 1910.479 | 797.950 | passed |
-| 8 | 5 | 1113.485 | 1916.493 | 801.543 | passed |
-| 9 | 5 | 1113.388 | 1912.860 | 800.571 | passed |
-| 10 | 61 | 1114.870 | 1919.637 | 807.732 | passed |
-
-All six rotated signed deltas for each substantive row are:
-
-| factors | signed deltas (ms) |
-|---:|---|
-| 1 | 1796.499, 796.619, 699.286, 794.081, 792.063, 797.364 |
-| 2 | 1427.998, 704.752, 792.132, 706.371, 808.260, 802.894 |
-| 3 | 2693.454, 811.615, 800.828, 701.422, 826.142, 807.314 |
-| 4 | 1387.050, 801.348, 798.252, 801.959, 786.509, 790.237 |
-| 5 | 702.254, 798.798, 812.009, 705.364, 828.306, 801.717 |
-| 6 | 1291.868, 808.339, 800.209, 652.894, 781.484, 793.753 |
-| 7 | 809.771, 688.771, 803.642, 702.523, 796.764, 799.136 |
-| 8 | 805.734, 800.290, 707.559, 746.200, 808.842, 802.797 |
-| 9 | 802.246, 810.787, 696.899, 762.798, 799.992, 801.150 |
-| 10 | 804.019, 906.271, 811.445, 2809.758, 797.925, 792.900 |
-
-The candidate medians are flat across `k = 1..10`; the 61-bit final witness
-does not introduce a visible replay cliff at this resolution. Individual raw
-samples contain large positive excursions mirrored by the null controls, so
-the claim is deliberately limited to the rotated-pair medians and 5000 ms
-budget rather than a fine-grained slope.
+Representative example files under `bench/HexIntFactor/ProofProbe` exercise
+small and ten-node factor-certificate replay and primality exhaustion. CI builds
+them through `HexIntFactorKernelProbe` on every PR. These examples and the
+ordinary library/conformance tests establish correctness; this proof surface has
+no paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
 ## Five-family profile attribution
 
@@ -373,11 +324,6 @@ nix shell nixpkgs#pari nixpkgs#ecm --command \
 nix shell nixpkgs#pari nixpkgs#ecm --command \
   python3 scripts/bench/intfactor_phase4.py --report \
     reports/bench-results/hex-int-factor-phase4-f80afaec-chungus2-cpu7.json
-
-python3 scripts/bench/intfactor_kernel_replay.py \
-  --samples 6 --shared-host --expected-host chungus2 --cpu 8 \
-  --max-pair-retries 32 --timeout 30 --warm-timeout 300 \
-  --output reports/bench-results/hex-int-factor-kernel-replay-7d0ee1e2-chungus2-cpu8.json
 
 LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply-9634 \
   scripts/profile/run_profile.sh .lake/build/bin/hexintfactor_bench \

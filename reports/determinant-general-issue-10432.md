@@ -77,7 +77,7 @@ tactic performance. The samples record no Hex declines and incomplete larger-cas
 coverage. They do not justify a matrix-family dispatcher or a default simp
 registration.
 
-- [Focused six-pair raw results](bench-results/det-general-focused-issue-10432.json)
-- [Broad partial raw results](bench-results/det-general-final-issue-10432.json)
-- [Initial diagnostic batch](bench-results/det-general-issue-10432.json)
-- [Measured probe source archive](bench-results/det-general-sources-issue-10432.tar.gz)
+- [CI-built proof examples](../SPEC/proof-examples.md)
+- [CI-built proof examples](../SPEC/proof-examples.md)
+- [CI-built proof examples](../SPEC/proof-examples.md)
+- [CI-built proof examples](../SPEC/proof-examples.md)

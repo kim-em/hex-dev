@@ -375,6 +375,8 @@ requirement for the proof track: there is no timing sweep, sample record,
 provenance record, or headline report. When a build-cost problem needs
 investigating, `scripts/bench/fresh_module_sweep.py` times fresh builds of
 matched probe modules; its output is diagnostic, not a phase deliverable.
+[Proof examples and paired measurements](proof-examples.md) records which
+declared roots have an independent SPEC decision justifying a larger suite.
 
 ## Within-Lean comparisons
 

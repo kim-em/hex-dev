@@ -712,8 +712,8 @@ def main() -> int:
         print(
             "\nFix: keep executable computational benches Mathlib-free. "
             "A proof-elaboration probe may instead be a build-only module "
-            "under an explicit libraries.yml proof_probes path, with timing "
-            "performed by an external harness. Only a mathlib: true owner "
+            "under an explicit libraries.yml proof_probes path. Paired timing "
+            "requires a SPEC decision it can affect. Only a mathlib: true owner "
             "may import Mathlib there.",
             file=sys.stderr,
         )

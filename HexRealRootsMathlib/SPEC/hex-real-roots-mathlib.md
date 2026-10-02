@@ -420,40 +420,11 @@ degree ~6. The bit target is read off the requested width's bit
 lengths, so a very fine width costs what isolating to it costs and
 nothing extra.
 
-**Phase-4 proof evidence.** `isolate_roots` is an elaboration/proof surface,
-not a LeanBench executable. Build-only modules below
-`bench/HexRealRootsMathlib/ProofProbe/` measure natural-width Wilkinson
-products at degrees 6, 8, and 10 and width-`2^(-20)` products at degrees 2, 4,
-and 6. Each case is adjacent to the same import-only baseline, and degree 6
-also has a direct natural-to-refined pair. Baseline and natural-degree-10
-same-module controls are first in manifest `config.order`; execution order
-rotates by round. The external runner uses six balanced rounds, exact
-generated-artifact invalidation, ordinary kernel checking, exact axiom
-validation, and complete source provenance.
-`HexRealRootsMathlibReplayProbe` supplies the reduced CI coverage;
-`HexRealRootsMathlibReplayProbeScientific` owns the larger release arms and
-remains outside routine CI.
-
-A canonical shared-host invocation selects a CPU for placement and records it:
-
-```bash
-cpu=$(python3 scripts/bench/idle_core.py)
-taskset -c "$cpu" python3 scripts/bench/real_roots_mathlib_sweep.py --samples 6 \
-  --timeout 180 --warm-timeout 600 \
-  --shared-host --cpu "$cpu"
-```
-
-The six balanced rounds retain every adjacent pair. Scheduler and SMT activity
-remain in the artifact as context and never trigger retries or removal.
-
-The runner follows the shared-host contract in `SPEC/benchmarking.md`: matched
-arms remain adjacent with alternating orientation, every completed pair is
-retained, and host/core activity is descriptive context. Executable
-isolation arithmetic belongs to the existing Mathlib-free `HexRealRoots`
-benchmark. The bridge declarations have no separable compiled runtime kernel.
-For the proof-emitting elaborator there is
-`no-comparable-surface-in-named-comparator`: no external tool emits and
-kernel-checks the same Lean proof term.
+**Proof examples.** CI builds natural and refined isolation and real-closed
+replay examples under `bench/HexRealRootsMathlib/ProofProbe` through
+`HexRealRootsMathlibReplayProbe`. The larger elaborator regression corpus stays
+in the ordinary library tests. Isolation arithmetic belongs to the Mathlib-free
+`HexRealRoots` benchmark; this bridge has no paired timing decision.
 
 A Mathlib-free variant (same meta core, emitting a
 `RealRootIsolations` value whose conclusions are the executable

@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.TowerEnlarge
-public import HexRealClosureMathlib.TowerTransport
+public import HexRealClosureMathlib.TowerNaturality
 
 public section
 
@@ -82,6 +82,180 @@ theorem Context.enlarge?_aligned
   exact ⟨rebuilt, hrebuilt, henlarge,
     ⟨witness, halign⟩⟩
 
+/-- Preservation of an arbitrary old model retains the exact rebuilt
+descriptors and the supplied enlarged base interpretation at every root. -/
+theorem Context.enlarge?_interpreted {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base)) (target_eq : suffix.context = context)
+    {K : Type u} [Field K] [LinearOrder K] [DecidableEq K]
+    [IsStrictOrderedRing K] [IsRealClosed K]
+    (initial : Tower.Model (Context.base base) K) (old : Tower.Model context K)
+    (compatible : ∀ a, old.value
+      (_root_.cast (congrArg Context.Value target_eq) (suffix.embed a)) = initial.value a)
+    (model : Conversion.Model (Conversion.infinitesimal base) initial) :
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal base) suffix,
+      (Conversion.infinitesimal base).rebuild? suffix = some rebuilt ∧
+        context.enlarge? = some (rebuilt.result.cast target_eq) ∧
+        ∃ witness : Conversion.Model (rebuilt.result.cast target_eq) old,
+          HEq witness.target (model.target.extend rebuilt.suffix) := by
+  have identified : old = target_eq ▸ initial.extend suffix := by
+    cases target_eq
+    exact initial.extend_unique suffix old compatible
+  rw [identified]
+  exact Context.enlarge?_aligned base suffix target_eq initial model
+
+/-- Checked enlargement preserves an arbitrary lawful old tower model.
+Given a compatible new-base conversion, only agreement on the initial
+base is supplied for the old root levels; their agreement follows from the
+actual native operations and descriptor constraints. -/
+theorem Context.enlarge?_preserves {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    (target_eq : suffix.context = context)
+    {K : Type u} [Field K] [LinearOrder K] [DecidableEq K]
+    [IsStrictOrderedRing K] [IsRealClosed K]
+    (initial : Tower.Model (Context.base base) K)
+    (old : Tower.Model context K)
+    (compatible : ∀ a, old.value
+      (_root_.cast (congrArg Context.Value target_eq) (suffix.embed a)) = initial.value a)
+    (model : Conversion.Model (Conversion.infinitesimal base) initial) :
+    ∃ result : Conversion context, context.enlarge? = some result ∧
+      Nonempty (Conversion.Model result old) := by
+  obtain ⟨rebuilt, _, enlarged, preserved, _⟩ :=
+    Context.enlarge?_interpreted base suffix target_eq initial old compatible model
+  exact ⟨rebuilt.result.cast target_eq, enlarged, ⟨preserved⟩⟩
+
+/-- An ordered ambient embedding of any compatible old tower model is
+preserved by the actual checked enlargement in the larger real closed field. -/
+theorem Context.enlarge?_mapped {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    (target_eq : suffix.context = context)
+    {R : Type u} {K : Type v}
+    [Field R] [LinearOrder R]
+    [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K]
+    (initial : Tower.Model (Context.base base) R) (old : Tower.Model context R)
+    (compatible : ∀ a, old.value
+      (_root_.cast (congrArg Context.Value target_eq) (suffix.embed a)) = initial.value a)
+    (embedding : R →+* K) (ordered : StrictMono embedding)
+    (model : Conversion.Model (Conversion.infinitesimal base) (initial.map embedding ordered)) :
+    ∃ result : Conversion context, context.enlarge? = some result ∧
+      Nonempty (Conversion.Model result (old.map embedding ordered)) := by
+  cases target_eq
+  apply Context.enlarge?_preserves base suffix rfl (initial.map embedding ordered)
+    (old.map embedding ordered) _ model
+  intro a
+  change embedding (old.value (suffix.embed a)) = embedding (initial.value a)
+  exact congrArg embedding (compatible a)
+
+private theorem cast_source_target {source : Context registry} {conversion : Conversion source}
+    {K : Type u} [Field K] [LinearOrder K] {left right : Tower.Model source K}
+    (same : left = right) (model : Conversion.Model conversion left) :
+    HEq (same ▸ model).target model.target := by
+  cases same
+  rfl
+
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- Ambient enlargement retains the actual rebuilt descriptors and their
+interpretation through the constructed native new-base model. The independent
+reference supplies only existence of the initial native inclusion laws. -/
+theorem Context.enlarge?_constructed {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base)) (target_eq : suffix.context = context)
+    {R : Type u} [Field R] [LinearOrder R] [DecidableEq R] [IsStrictOrderedRing R]
+    {S : Type w} [Field S] [LinearOrder S] [DecidableEq S]
+    [IsStrictOrderedRing S] [IsRealClosed S]
+    (witness : Tower.Model (Context.base base) S) (old : Tower.Model context R)
+    (ambient : Ambient (Hex.RationalFn R)) :
+    let initial := suffix.restrict witness (target_eq.symm ▸ old)
+    let input := Conversion.Model.infinitesimalMapped base (initial.baseHom base)
+      (Tower.Model.baseHom_sign base initial) ambient
+    ∃ rebuilt : Rebuilt (Conversion.infinitesimal base) suffix,
+      (Conversion.infinitesimal base).rebuild? suffix = some rebuilt ∧
+        context.enlarge? = some (rebuilt.result.cast target_eq) ∧
+        ∃ model : Conversion.Model (rebuilt.result.cast target_eq)
+            (old.liftInfinitesimal ambient),
+          HEq model.target (input.target.extend rebuilt.suffix) := by
+  cases target_eq
+  let initial := suffix.restrict witness old
+  let f := initial.baseHom base
+  let input := Conversion.Model.infinitesimalMapped base f
+    (Tower.Model.baseHom_sign base initial) ambient
+  have same : Tower.Model.base base ((Ambient.coefficientHom ambient).comp f)
+      (Conversion.Model.mapped_base_sign f (Tower.Model.baseHom_sign base initial) ambient) =
+        initial.map (Ambient.coefficientHom ambient)
+          (Ambient.coefficientHom_strictMono ambient) := by
+    apply Tower.Model.value_ext
+    intro a
+    change BaseContext.Element base at a
+    rw [Tower.Model.base_value base ((Ambient.coefficientHom ambient).comp f)
+      (Conversion.Model.mapped_base_sign f (Tower.Model.baseHom_sign base initial) ambient) a]
+    exact congrArg (Ambient.coefficientHom ambient) (Tower.Model.baseHom_value base initial a)
+  let converted : Conversion.Model (Conversion.infinitesimal base)
+      (initial.map (Ambient.coefficientHom ambient)
+        (Ambient.coefficientHom_strictMono ambient)) := same ▸ input
+  have compatible : ∀ a, (old.liftInfinitesimal ambient).value (suffix.embed a) =
+      (initial.map (Ambient.coefficientHom ambient)
+        (Ambient.coefficientHom_strictMono ambient)).value a := fun _ => rfl
+  obtain ⟨rebuilt, produced, enlarged, model, aligned⟩ := Context.enlarge?_interpreted
+    base suffix rfl _ (old.liftInfinitesimal ambient) compatible converted
+  have target : converted.target = input.target := eq_of_heq (cast_source_target same input)
+  refine ⟨rebuilt, produced, enlarged, model, ?_⟩
+  simpa only [target] using aligned
+
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- An arbitrary old model extends through checked enlargement in an actual
+ordered algebraic ambient over its infinitesimal rational-function field.
+A reference base model in any independent ordered real closed field supplies
+existence for the native inclusion laws. The source base interpretation is
+extracted from the old model, which may live in any ordered field; no agreement
+at later roots or compatible new-base model is supplied by the caller. -/
+theorem Context.enlarge?_ambient {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base))
+    (target_eq : suffix.context = context)
+    {R : Type u} [Field R] [LinearOrder R] [DecidableEq R]
+    [IsStrictOrderedRing R]
+    {S : Type w} [Field S] [LinearOrder S] [DecidableEq S]
+    [IsStrictOrderedRing S] [IsRealClosed S]
+    (witness : Tower.Model (Context.base base) S)
+    (old : Tower.Model context R)
+    (ambient : Ambient (Hex.RationalFn R)) :
+    ∃ result : Conversion context, context.enlarge? = some result ∧
+      Nonempty (Conversion.Model result (old.liftInfinitesimal ambient)) := by
+  obtain ⟨rebuilt, _, enlarged, model, _⟩ :=
+    Context.enlarge?_constructed base suffix target_eq witness old ambient
+  exact ⟨rebuilt.result.cast target_eq, enlarged, ⟨model⟩⟩
+
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- A sign-compatible base map into an ordered field supplies the reference
+interpretation through its proved ordered real closure. No reference model in
+a real closed field needs to be chosen by the caller. -/
+theorem Context.enlarge?_hom {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base base)) (target_eq : suffix.context = context)
+    {R : Type u} [Field R] [LinearOrder R] [DecidableEq R] [IsStrictOrderedRing R]
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* R)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+    (old : Tower.Model context R) (ambient : Ambient (Hex.RationalFn R)) :
+    ∃ result : Conversion context, context.enlarge? = some result ∧
+      Nonempty (Conversion.Model result (old.liftInfinitesimal ambient)) := by
+  let reference := Ambient.ofField R
+  letI : Field B := HexPolyMathlib.fieldOfGrind
+  let embedding := reference.inclusion.comp f
+  have compatible : ∀ a, sign a = (SignType.sign (embedding a) : Int) := by
+    intro a
+    rw [RingHom.comp_apply, reference.inclusion_sign]
+    exact hsign a
+  exact Context.enlarge?_ambient base suffix target_eq
+    (Tower.Model.base base embedding compatible) old ambient
+
 /-- A sign-compatible interpretation of the extracted staged base makes
 checked enlargement succeed for its stored root suffix. -/
 theorem Context.enlarge?_exists {context : Context registry}
@@ -139,3 +313,27 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.enlarge?_suffix' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Context.enlarge?_suffix
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_preserves' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_preserves
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_mapped' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_mapped
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_ambient' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_ambient
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_interpreted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_interpreted
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_constructed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_constructed
+
+/-- info: 'Hex.RealClosure.Tower.Context.enlarge?_hom' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Tower.Context.enlarge?_hom

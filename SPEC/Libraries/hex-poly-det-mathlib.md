@@ -313,7 +313,7 @@ measurements. Native-value experiments are outside this symbolic replacement.
 | `scripts/bench/det_packed_*`, `det_residue_sweep.py`, `det_structural_sweep.py` | Retire route-specific runners, generated manifests and selection tests; keep historical reports and raw data. |
 | `det_symbolic_*`, `det_ring_solver_*`, `test_det_declines.py`, `det_bench_limits.py` and its tests | Consolidate into the general symbolic proof/result runner and diagnostics; preserve serial admission and timeout guards. |
 | `det_tactic_*` runners | Retain independent numeric certificate measurements and scope controls. |
-| `bench/HexPolyDetMathlib/ProofProbe`, including `RingSolver*` | Replace retired route-specific probes with the focused general evaluator corpus; preserve source snapshots of measured old probes in reports/revisions. |
+| `bench/HexPolyDetMathlib/ProofProbe` | CI builds representative equality and result-producing examples; no timing sweep is required for these explicit interfaces. |
 | `.github/workflows/ci.yml`, Lake targets and `libraries.yml` | Update the existing job's detector tests/probe invocations, library entries, umbrella imports and retired executable targets; add no jobs/workflows. |
 | `scripts/bench/proof_only_runtime_exemptions/issue-10236-*` | Retain provenance for the preserved generic Bareiss checker; update descriptions/references only where consumers changed, rather than deleting generic-certificate evidence. |
 | `DeterminantExperiment` and historical proof tactic variants | Remove superseded active proof targets/imports after tests migrate; keep native-value experiments and revision-based evidence reproduction. |
@@ -349,36 +349,20 @@ A supplied-target success does not establish result-producing coverage.
 Run `lake build`, the relevant kernel/conformance targets,
 `scripts/check_dag.py`, `scripts/check_phase4.py`, and
 `scripts/release/check_released_manifest.py`. Extend existing CI scripts rather
-than adding jobs. Runtime benchmarks remain Mathlib-free; proof probes are manual
-fresh-module comparisons, not native value benchmarks.
+than adding jobs. Representative example files under `bench/HexPolyDetMathlib/ProofProbe` exercise
+numeric, symbolic and quotient equalities plus numeric and symbolic result
+production. CI builds them through `HexPolyDetMathlibProofProbe` on every PR.
+These examples and the ordinary library/conformance tests establish correctness;
+this proof surface has no paired timing decision, timing ladder, absolute
+build-time gate, profile or headline-report requirement. The computational
+owner's LeanBench obligations remain separate.
 
-Use six adjacent pairs in alternating AB/BA order with import-only baselines
-and retained samples on one automatically leased CPU. Compare equality proving
-with the unmodified pinned `norm_det` followed by `ring`; compare result
-production with Mathlib determinant normalization without providing either arm
-an answer. Include output cleanup and every kernel/auxiliary check. Keep tracing,
-axiom inspection and profiling outside ordinary samples.
+The two original issue regressions (quadratic 4×4 and rank-one 10×10) also
+build in CI. Larger independent-quotient, product-denominator, identity-plus-
+rank-one, two-term, degree-eight, generic-ring and nonzero result fixtures stay
+under `conformance/HexPolyDetMathlib/Diagnostics`, built manually with
+`lake build HexPolyDetMathlibDiagnostics`. They check the focused correctness
+corpus independently of timing.
 
-The focused equality corpus contains the original quadratic 4×4 issue fixture,
-rank-one 10×10, independent quotients with a dependent row at 6×6, product
-denominators at 5×5, identity plus rank one at 5×5, two-term and degree-eight
-quotient numerators at 4×4, a dense generic-ring 4×4 and a small composite-
-characteristic control. Add numeric-backend regression controls. For result
-production start with nonzero numeric and symbolic 2×2/3×3 outputs, then the
-quadratic 4×4 and identity-plus-rank-one 4×4 cases. These are coverage directions,
-not new dispatch predicates.
-
-Run smaller cases first, serially, with a 60-second process ceiling and a
-30-minute aggregate measurement ceiling including failures and diagnostics.
-Stop larger comparable cases after a timeout; retain partial batches and do not
-count them as six-pair results. Permit at most one unchanged rerun of an
-inconclusive case within that same allowance. No broad grid or unrelated-library
-performance run is required. Profile only an unexpected result or the required
-representative attribution; do not reset the allowance to finish a sweep.
-
-Publish observed gains, ties, losses, declines and unmeasured cases with their
-source revisions. Explicit `det`, result tactics and terms, and opt-in
-`Hex.normPolyDet` may ship with documented losses. Do not put this evaluator in
-a default simp chain or introduce matrix-family selection to conceal those
-losses. Universal superiority and further Bird/Bareiss/Berkowitz experiments
-are not conditions of this explicit-interface release.
+The explicit equality, result and term interfaces remain opt-in.
+`Hex.normPolyDet` is not a default simp-chain entry.

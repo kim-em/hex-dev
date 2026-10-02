@@ -26,6 +26,5 @@ theorem oddRoot (p : Polynomial ℝ) (hp : Odd p.natDegree) : ∃ x, p.IsRoot x 
 #guard_msgs in
 #print axioms oddRoot
 
-#print axioms realClosed
 
 end HexRealRootsMathlib.ProofProbe

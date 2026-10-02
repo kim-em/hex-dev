@@ -5,12 +5,10 @@ Authors: Kim Morrison
 -/
 import HexSmithMathlib.Tactic
 
-set_option maxHeartbeats 0
 set_option maxRecDepth 100000
-set_option profiler true
-set_option profiler.threshold 1000000
-set_option trace.HexMatrix.certificate true
 
 theorem result : Nonempty (HexSmithMathlib.SmithQuotient !![1, -1; 1, -1] 1 ![1]) := by smith
 
+/-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms result

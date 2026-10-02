@@ -110,6 +110,6 @@ as `Tridiagonal4`; its result-producing counterpart is `ResultTridiagonal4`.
 The old [#10432 report](determinant-general-issue-10432.md) includes axiom-audit
 costs and is retained as historical evidence, not a tactic-speed comparison.
 
-- [Raw samples, audits and source hashes](bench-results/det-general-corrected-10495.json)
-- [Exact measured source archive](bench-results/det-general-corrected-10495-sources.tar.gz)
+- [CI-built proof examples](../SPEC/proof-examples.md)
+- [CI-built proof examples](../SPEC/proof-examples.md)
 - [Probe layout and reproduction command](../bench/HexPolyDetMathlib/ProofProbe/README.md)
