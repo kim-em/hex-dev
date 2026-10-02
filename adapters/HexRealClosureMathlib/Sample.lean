@@ -503,6 +503,37 @@ theorem Partition.sections_correct {polynomials : List parent.Poly}
   · exact (Cell.contains_correct model.input.target _ _).mpr rfl
   · exact (family.coverage original model _).mp (List.mem_map.mpr ⟨value, member, rfl⟩)
 
+/-- Every adjacent sector in the complete cell partition is accepted by the
+boundary request API, including both rays and the root-free whole line. -/
+theorem Partition.sectorBetween?_success {polynomials : List parent.Poly}
+    (family : Partition parent polynomials) (original : Model parent K)
+    (model : Collection.Model family.collection original)
+    (lower upper : Endpoint family.collection.input.context.Value)
+    (adjacent : Cell.sector lower upper ∈ family.cells) :
+    ∃ sample, family.sectorBetween? lower upper = some sample := by
+  have present : ∃ point ∈ Sample.sectors family.collection.input.context family.values,
+      point.2 = Cell.sector lower upper := by
+    rcases List.mem_append.mp adjacent with atRoot | sector
+    · obtain ⟨root, _, impossible⟩ := List.mem_map.mp atRoot
+      cases impossible
+    · exact List.mem_map.mp sector
+  obtain ⟨point, member, cell⟩ := present
+  have accepted : requested family.collection.input.context lower upper point = true := by
+    simp only [requested, cell]
+    have same : ∀ bound : Endpoint family.collection.input.context.Value,
+        sameEndpoint family.collection.input.context bound bound = true := by
+      intro bound
+      cases bound <;> simp [sameEndpoint, model.input.target.equal_spec]
+    simp [same]
+  cases found : (Sample.sectors family.collection.input.context family.values).find?
+      (requested family.collection.input.context lower upper) with
+  | none =>
+    have rejected := List.find?_eq_none.mp found point member
+    exact False.elim (rejected accepted)
+  | some chosen =>
+    exact ⟨Tower.Sample.mk family.collection.input chosen.1 chosen.2, by
+      simp [Partition.sectorBetween?, found]⟩
+
 /-- A checked boundary request denotes exactly the requested open sector,
 under the same actual model as the complete family. -/
 theorem Partition.sectorBetween?_correct {polynomials : List parent.Poly}
@@ -609,3 +640,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Sample.Partition.sector_signs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Sample.Partition.sector_signs
+
+/-- info: 'Hex.RealClosure.Tower.Sample.Partition.sectorBetween?_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Sample.Partition.sectorBetween?_success

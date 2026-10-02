@@ -41,8 +41,13 @@ private def run : IO Unit := do
   let upper := boundedFamily.collection.input.value 1
   require (boundedFamily.sectorBetween? (.finite lower) (.finite upper)).isNone
     "non-adjacent boundaries accepted"
-  require (boundedFamily.sectorBetween? (.finite upper) (.finite lower)).isNone
+  require (boundedFamily.sectorBetween? (.finite upper) (.finite middle)).isNone
     "reversed sector boundaries accepted"
+  let missing := boundedFamily.collection.input.value (1 / (1 + 1))
+  require (boundedFamily.sectorBetween? (.finite middle) (.finite missing)).isNone
+    "a finite non-boundary endpoint was accepted"
+  require (boundedFamily.sectorBetween? .negInf .posInf).isNone
+    "a whole-line request ignored finite boundaries"
   let some boundedSample := boundedFamily.sectorBetween? (.finite middle) (.finite upper)
     | throw (IO.userError "adjacent sector boundaries rejected")
   require (boundedSample.cell.contains boundedSample.value && boundedSample.signs cubicQs == [-1])
@@ -75,6 +80,10 @@ private def run : IO Unit := do
     "wrong infinitesimal sector signs"
   for s in closeFamily.sections ++ closeFamily.sectors do
     require (s.cell.contains s.value) "infinitesimal sample is outside its cell"
+  require (closeFamily.sectorBetween?
+      (.finite (closeFamily.collection.input.value epsilon))
+      (.finite (closeFamily.collection.input.value (epsilon + epsilon)))).isSome
+    "infinitesimally close boundary request rejected"
   let some closeDescriptor := SignDet.Descriptor.validate inf.sign inf.signature
       { context := inf.signature, head := y * y - DensePoly.C (1 + epsilon),
         lower := .finite 1, upper := .finite (1 + 1), indices := [], signs := [] }
@@ -89,6 +98,10 @@ private def run : IO Unit := do
     "wrong signs between a selected root and an infinitesimally close value"
   for s in parentFamily.sections ++ parentFamily.sectors do
     require (s.cell.contains s.value) "selected-parent sample is outside its cell"
+  require (parentFamily.sectorBetween?
+      (.finite (parentFamily.collection.input.value 1))
+      (.finite (parentFamily.collection.input.value parent.generator))).isSome
+    "selected-parent boundary request rejected"
   IO.println "native section and sector samples passed"
 
 #eval run

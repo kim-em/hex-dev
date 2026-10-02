@@ -1578,6 +1578,8 @@ separating rational. `Partition.sector?` rejects an index outside this complete
 list. `Partition.sectorBetween?` checks requested finite or infinite boundaries
 against adjacent cells of that same complete family. It rejects non-adjacent,
 reversed and missing boundaries; the partition supplies the root-free evidence.
+The companion proves that every actual adjacent cell is accepted, including
+both rays and the root-free whole line.
 
 The companion `HexRealClosureMathlib.Sample` proves exact boundary coverage,
 strict ordering, exact cell coverage and uniqueness, coefficient-preserving
@@ -1601,7 +1603,9 @@ root before boundary deduplication. This can increase tower depth and
 intermediate extension degrees; duplicate descriptors are not shared. Boundary
 insertion processes the roots in reverse order, making an already ascending
 input linear in comparisons; the worst case remains quadratic. Each comparison
-also carries the sign-determination cost of the common tower.
+also carries the sign-determination cost of the common tower. Each boundary
+request currently constructs all sector midpoints before searching; requesting
+every sector therefore repeats quadratically many midpoint calculations.
 
 The API produces field values in their native contexts. Joint specialization
 of nested selected roots and successive infinitesimals to one ordinary real

@@ -44,10 +44,17 @@ example (descriptor : SignDet.Descriptor parent.Value Signature parent.sign pare
     ∃ _realization : Conversion.Model (Tower.Sample.section parent descriptor).input original,
       (Tower.Sample.section parent descriptor).cell.contains
         (Tower.Sample.section parent descriptor).value = true := by
-  rw [Tower.Sample.section_eq]
   obtain ⟨realization, checked, _, _⟩ :=
-    ofRoot_correct (Root.ofSelection parent (.selected descriptor)) original
+    section_correct descriptor original
   exact ⟨realization, checked⟩
+
+/-- Every actual adjacent cell can be requested using ordinary imports. -/
+example {polynomials : List parent.Poly} (family : Partition parent polynomials)
+    (original : Model parent K) (model : Collection.Model family.collection original)
+    (lower upper : Endpoint family.collection.input.context.Value)
+    (adjacent : Cell.sector lower upper ∈ family.cells) :
+    ∃ sample, family.sectorBetween? lower upper = some sample :=
+  family.sectorBetween?_success original model lower upper adjacent
 
 /-- A boundary request provides its computed sign vector at every point of
 the requested interval, using only the public checked result and ordinary imports. -/
