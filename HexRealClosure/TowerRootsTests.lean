@@ -19,8 +19,8 @@ private def require (test : Bool) (message : String) : IO Unit :=
 
 private def check {parent : Context registry} (p : DensePoly parent.Value)
     (labels : List Nat) : IO Unit := do
-  let .finite entries := parent.roots p
-    | throw (IO.userError "native nonzero roots returned all")
+  let .ok (.finite entries) := parent.roots? p
+    | throw (IO.userError "native checked roots failed or returned all")
   require (entries.map (·.multiplicity) == labels) "native root labels changed"
   for entry in entries do
     let root := entry.root
@@ -31,6 +31,19 @@ private def check {parent : Context registry} (p : DensePoly parent.Value)
     let composed := conversion.comp (Conversion.identity conversion.context)
     require (composed.context.sign (composed.value 1 - 1) == 0)
       "composed native root inclusion changed one"
+    let z : DensePoly conversion.context.Value := DensePoly.ofCoeffs #[0, 1]
+    let some descriptor := SignDet.Descriptor.validate conversion.context.sign
+        conversion.context.signature
+        { context := conversion.context.signature, head := z - DensePoly.C (conversion.value 1),
+          lower := .negInf, upper := .posInf, indices := [], signs := [] }
+      | throw (IO.userError "later root inclusion validation failed")
+    let child := conversion.context.adjoin descriptor
+    let next := Conversion.includeRoot conversion.context descriptor child rfl
+    let transported := conversion.comp next
+    require (transported.context.sign (transported.value 1 - 1) == 0)
+      "later native root inclusion changed coefficients"
+    require (next.context.sign (next.value root.convertedValue) == root.context.sign root.value)
+      "later native root inclusion changed the selected value"
     if root.context.sign root.value != 0 then
       require (root.context.sign (root.value * root.value⁻¹ - 1) == 0)
         "native selected root arithmetic failed"
@@ -42,6 +55,9 @@ private def check {parent : Context registry} (p : DensePoly parent.Value)
         "selected root lost its predecessor binding"
   for (left, right) in entries.zip entries.tail do
     require (left.root.compare right.root == .lt) "native roots are not increasing"
+    require (right.root.compare left.root == .gt) "native reverse comparison failed"
+  for entry in entries do
+    require (entry.root.compare entry.root == .eq) "native diagonal comparison failed"
 
 private def run : IO Unit := do
   let base := Context.base (BaseContext.rational registry)

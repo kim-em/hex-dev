@@ -699,6 +699,10 @@ The old contexts and values remain valid.
 `root.conversion` packages the coefficient inclusion as a native `Conversion`,
 retaining the cached child and composing with later transports.
 `Root.conversionModel` proves preservation in the same ambient field.
+`conversion_spec` identifies its coefficient map with `embed`,
+`conversionModel_target` identifies its child interpretation with `model`, and
+`convertedValue` supplies the selected value with the ownership expected by
+later conversions. `convertedValue_value` proves its interpretation.
 
 `root.embedPoly p` enters every coefficient into the root's context, and
 `root.signAt p` evaluates there using ordinary native arithmetic.
@@ -713,9 +717,17 @@ real closed field as the input. `Root.embed_value`, `embedPoly_value`,
 signs and comparison. `Context.roots_all`, `roots_spec` and `roots_sorted` prove
 the native output's zero case, exact coverage and multiplicities, and strict
 order. No semantic model is an argument to the executable root construction.
+`Context.roots?` retains the generic producer's internal diagnostics;
+`roots?_success` proves it succeeds and agrees with ordinary roots.
 The default native tests execute root finding, polynomial signs and inversion
 in these actual child contexts on the repeated-factor rational case and on
 `(Y²-α)²(Y-1)` over the selected `α=√2` of `(X²-2)(X-3)`.
+
+Materialization eagerly constructs every selected child, including its literal
+descriptor encoding and prepared query domain. `runNativeRoots` measures this
+complete operation on the same repeated-factor input as `runRoots`, with input
+construction outside the timed call. These are fixed functional anchors; the
+required tower scaling evaluation remains separate.
 
 These entries can own distinct extensions over their common coefficient
 context. The operation that gathers all requested entries into one common
@@ -1112,6 +1124,7 @@ performance result is claimed here.
 ### Recursive conversion through later root levels
 
 `Conversion.identity` retains the original context and values.
+`Conversion.includeRoot` retains the actual cached root child and coefficient inclusion.
 `Conversion.refine` starts at a checked final-root refinement.
 `Conversion.adjoin?` rebuilds a later descriptor with converted coefficients,
 endpoints and fresh context-bound evidence. It stores the new extension's

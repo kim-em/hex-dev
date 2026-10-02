@@ -17,7 +17,7 @@ variable {registry : BaseContext.Registry} {context : Context registry} {K : Typ
 variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K]
 
 /-- Every actual value in a native root context is algebraic over the input's
-whole mathematical field, including points, reducible definitions and nonmonic heads. -/
+whole mathematical field, including points, reducible defining polynomials and nonmonic heads. -/
 theorem Root.values_algebraic (root : Root context) (model : Model context K)
     (a : root.context.Value) : IsAlgebraic model.field ((root.model model).value a) := by
   cases root with

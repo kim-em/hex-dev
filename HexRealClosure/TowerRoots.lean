@@ -68,12 +68,20 @@ It retains the actual cached extension and composes with other transports. -/
   | .selected descriptor extension built =>
     Conversion.includeRoot parent descriptor extension built
 
-theorem Root.conversion_context {parent : Context registry} (root : Root parent) :
-    root.conversion.context = root.context := by
+theorem Root.conversion_spec {parent : Context registry} (root : Root parent) :
+    root.conversion.context = root.context ∧ HEq root.conversion.value root.embed := by
   cases root with
-  | point value => exact (Conversion.identity_spec parent).1
+  | point value => exact Conversion.identity_spec parent
   | selected descriptor extension built =>
-    exact (Conversion.includeRoot_spec parent descriptor extension built).1
+    exact Conversion.includeRoot_spec parent descriptor extension built
+
+theorem Root.conversion_context {parent : Context registry} (root : Root parent) :
+    root.conversion.context = root.context := root.conversion_spec.1
+
+/-- The root's own value with the ownership expected by subsequent conversions. -/
+@[expose] def Root.convertedValue {parent : Context registry} (root : Root parent) :
+    root.conversion.context.Value :=
+  _root_.cast (congrArg Context.Value root.conversion_context.symm) root.value
 
 /-- Embed every coefficient into the context owning this root. -/
 @[expose] def Root.embedPoly {parent : Context registry} (root : Root parent)
@@ -111,8 +119,9 @@ structure RootEntry (parent : Context registry) where
     (entry : Roots.Entry parent.sign parent.signature) : RootEntry parent :=
   ⟨Root.ofSelection parent entry.root, entry.multiplicity, entry.positive⟩
 
-/-- Complete native roots, retaining the universal set of roots for zero.
-Finite entries are strictly increasing under their common ambient interpretation. -/
+/-- Native root results, retaining the universal set of roots for zero.
+Finite entries returned by `Context.roots` are strictly increasing under
+their common ambient interpretation. -/
 inductive RootSet (parent : Context registry) : Type 1 where
   | all
   | finite (entries : List (RootEntry parent))
@@ -128,6 +137,12 @@ context, native root value and explicit embedding of the input coefficients. -/
 @[expose] def Context.roots (parent : Context registry) (p : DensePoly parent.Value) :
     RootSet parent :=
   RootSet.ofOutput parent (Roots.roots parent.sign parent.signature p)
+
+/-- Diagnostic complete roots, retaining internal producer errors for checked
+readers and conformance emitters before native materialization. -/
+@[expose] def Context.roots? (parent : Context registry) (p : DensePoly parent.Value) :
+    Except SignDet.BuildError (RootSet parent) :=
+  (Roots.roots? parent.sign parent.signature p).map (RootSet.ofOutput parent)
 
 /-- A finite native result is the materialization of the actual generic output. -/
 theorem Context.roots_finite {parent : Context registry} (p : DensePoly parent.Value)

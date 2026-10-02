@@ -60,6 +60,30 @@ noncomputable def Root.conversionModel (root : Root parent) (model : Model paren
   | selected descriptor extension built =>
     exact Conversion.Model.includeRoot model descriptor extension built
 
+/-- The coefficient conversion and the root arithmetic use the same child model. -/
+theorem Root.conversionModel_target (root : Root parent) (model : Model parent K) :
+    HEq (root.conversionModel model).target (root.model model) := by
+  cases root with
+  | point value => exact Conversion.Model.identity_target model
+  | selected descriptor extension built =>
+    cases built
+    exact Conversion.Model.includeRoot_target model descriptor _ rfl
+
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+private theorem cast_model_value {source target : Context registry}
+    (h : source = target) (original : Model source K) (converted : Model target K)
+    (same : HEq converted original) (a : source.Value) :
+    converted.value (_root_.cast (congrArg Context.Value h) a) = original.value a := by
+  cases h
+  cases eq_of_heq same
+  rfl
+
+/-- The root carried by its coefficient conversion denotes the same selected value. -/
+theorem Root.convertedValue_value (root : Root parent) (model : Model parent K) :
+    (root.conversionModel model).target.value root.convertedValue = root.denote model := by
+  exact cast_model_value root.conversion_context.symm (root.model model)
+    (root.conversionModel model).target (root.conversionModel_target model) root.value
+
 /-- Embedding a polynomial preserves its actual coefficient interpretation. -/
 theorem Root.embedPoly_value (root : Root parent) (model : Model parent K)
     (p : DensePoly parent.Value) :
@@ -120,6 +144,14 @@ theorem Context.roots_all (model : Model parent K) (p : DensePoly parent.Value) 
   | all => simpa [produced, Context.roots, RootSet.ofOutput] using generic
   | finite entries => simpa [produced, Context.roots, RootSet.ofOutput] using generic
 
+/-- The diagnostic native producer succeeds and agrees with ordinary roots. -/
+theorem Context.roots?_success (model : Model parent K) (p : DensePoly parent.Value) :
+    parent.roots? p = .ok (parent.roots p) := by
+  obtain ⟨output, built, returned⟩ := Roots.roots_success model.value model.zero_iff
+    model.one model.add model.sub model.mul model.nat model.sign model.neg model.inv model.div
+    parent.signature p
+  simp only [Context.roots?, Context.roots, built, returned, Except.map]
+
 /-- Native finite entries have exact coverage and original multiplicities,
 interpreting their actual stored values in the common ambient model. -/
 theorem Context.roots_spec (model : Model parent K) (p : DensePoly parent.Value)
@@ -172,6 +204,14 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Root.conversionModel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Root.conversionModel
+
+/-- info: 'Hex.RealClosure.Tower.Root.convertedValue_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Root.convertedValue_value
+
+/-- info: 'Hex.RealClosure.Tower.Context.roots?_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.roots?_success
 
 /-- info: 'Hex.RealClosure.Tower.Root.signAt_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
