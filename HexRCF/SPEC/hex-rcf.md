@@ -1094,7 +1094,8 @@ No implicit quantification over coefficients is introduced.
 `Real.pi` and `Real.exp 1` are supported registration subjects, not automatically
 available numerical providers. Their use requires a caller registration that
 binds an approximation procedure and kernel evidence to that exact real. A
-missing registration declines with an actionable diagnostic. The generic
+missing registration is reported with an actionable input diagnostic; it is
+not a false verdict or a failed approximation search. The generic
 interface can likewise bind another closed computable real expression;
 its source identity and enclosure proofs are explicit. The caller supplies
 convergence/progress laws only when claiming eventual success or total search;
@@ -1103,6 +1104,20 @@ closed subjects by a fixed normalization and definitional-equality policy,
 with duplicate matches rejected. Try a registered whole subject before
 recursively recognizing its grammar constituents; maximal closed-subterm
 abstraction does not change this deterministic policy.
+
+The existing exact algebraic handlers run before the supplied-bound handler.
+They check eligibility before reification: an opaque registered whole subject
+outside their scalar syntax or exponent envelope selects the supplied frontend.
+This selection never retries a solver after a budget, false or replay failure.
+Only providers used by the source coefficients and original guards participate
+in finite evidence: unrelated duplicate or opaque registrations do not affect
+another goal. Replay checks observation coverage for this used subset as well
+as each frozen identity, containment proof, subject, request and version.
+Registration validates the declaration type, not callback execution at import
+time. Finite callbacks must be total, executable and reducible to their frozen
+literals in ordinary kernel equality proofs. Inside a registered expression,
+source divisors must be closed reals or rationals; binder-dependent and
+other-carrier divisions are outside this frontend's supported syntax.
 
 Every inverse/division retains the original nonzero-divisor obligations,
 including divisions inside coefficients and divisions erased by cancellation

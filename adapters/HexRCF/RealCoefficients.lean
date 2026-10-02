@@ -6,6 +6,8 @@ Authors: Kim Morrison
 
 module
 
+public import HexRCF.RealCoefficients.Registration
+public meta import HexRCF.RealCoefficients.Finite
 public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.RealCoefficients.Interpret
 public import HexRCF.RealCoefficients.RootAliases

@@ -1412,6 +1412,144 @@ operation. Universal root-list production and mathematical sorting are also
 proved. The common-field conversion preserves the selected algebraic values by
 the proved `QAdjoin.common_get` theorem.
 
+# Caller-supplied finite bounds
+%%%
+tag := "hex-rcf-registered-bounds"
+%%%
+
+The optional import also accepts a caller's registered closed real subject.
+A {name}`Hex.RCF.RealCoefficients.Registration` contains an executable
+approximation and a separate containment theorem for that exact subject.
+The `rcf_constant` attribute registers its declaration. Subjects match by
+reducible definitional equality; duplicate matches among used subjects are
+rejected. Unused providers are not evaluated or included in the certificate.
+A registered whole expression is tried before its arithmetic constituents.
+In a Lean module, mark the registration and its computational definitions
+`@[expose]` so their frozen-result equalities reduce in the ordinary kernel.
+A consuming module also needs `meta import` of the caller's registration
+module to execute its approximation.
+The callback must be total and executable, and its returned literal must be
+reducible by the ordinary kernel. Registration checks its declaration's type;
+it does not execute or establish those computational properties at import time.
+Divisors inside a registered expression must themselves be closed reals or
+rationals. Divisions depending on an internal binder, or over another carrier,
+are unsupported; their variables are never exported as closed source guards.
+
+This example uses the existing theorem that a sine lies in `[-1,1]`. The
+caller supplies that fixed bound; the tactic does not construct an analytic
+approximation procedure. The bound suffices for a square plus `2 + sin 1`.
+
+```lean
+open Hex.OrderedFn.Oracle
+
+private def callerBounds (_ : Rat) : Bounds := ⟨-1, 1, by decide⟩
+
+private theorem callerContainment
+    (δ : Rat) (_ : 0 < δ) :
+    Contains (callerBounds δ) (Real.sin 1) := by
+  simpa [Contains, callerBounds] using
+    And.intro (Real.neg_one_le_sin 1) (Real.sin_le_one 1)
+
+@[rcf_constant] private def callerRegistration :
+    Registration (Real.sin 1) where
+  version := 1
+  approximation := callerBounds
+  containment := callerContainment
+
+example : ∀ x : ℝ, x ^ 2 + 2 + Real.sin 1 > 0 := by rcf
+example : ∃ x : ℝ,
+    x = Real.sin 1 ∧ -2 < x ∧ x < 2 := by rcf
+```
+
+The finite path requests width `1/16` once. The actual width here is `2`;
+containment does not assert that the request was met. A requested-width theorem
+has the separate type
+{name}`Hex.OrderedFn.Oracle.ApproximationWidth`, applied to
+{name}`Hex.OrderedFn.Oracle.Approximation.ofConstant` with `callerBounds`.
+Convergence and relative transcendence are separate hypotheses for total
+search. This fixed bound makes no such claim. Finite proofs from containment
+need neither hypothesis.
+
+All original divisors are checked before cancellation, coefficient abstraction
+or proof search. Thus even an erased division by `sin 1 - sin 1` is invalid.
+The supplied interval also cannot certify that `sin 1` is nonzero: a bound
+containing zero proves neither equality to zero nor a strict sign.
+
+```lean
+/-- error: rcf: original divisor is zero -/
+#guard_msgs in
+example : ∀ x : ℝ,
+    x ^ 2 + 2 + Real.sin 1 +
+      0 / (Real.sin 1 - Real.sin 1) > 0 := by
+  rcf
+
+/-- error: rcf: original divisor remains unresolved
+in supplied bounds -/
+#guard_msgs in
+example : ∀ x : ℝ,
+    x ^ 2 + 2 + Real.sin 1 + 0 / Real.sin 1 > 0 := by
+  rcf
+```
+
+For direct proof construction, {name}`Hex.RCF.RealCoefficients.Finite.prepare`
+returns the shared source formula/equivalence, fixed coefficient order, frozen
+bounds and checked original guards. {name}`Hex.RCF.RealCoefficients.Finite.build`
+constructs a proof of the source using the frozen facts and checked alias
+hypotheses, then transports it to the shared schema. Unrelated caller
+hypotheses are excluded from this proof search.
+{name}`Hex.RCF.RealCoefficients.Finite.check` checks it and transports it back to
+the original goal. The certificate binds the source, used registry/provider versions,
+precision request, coefficient subjects and guards. Checking validates ordinary
+proofs and frozen callback identities; it does not repeat approximation or root
+search. Source coefficients and guards retain the same selected real values.
+
+The existing algebraic handlers retain their documented inputs, including
+registered small algebraic composites. Before exact reification, a registered
+whole subject outside the exact scalar syntax or exponent envelope selects the
+supplied frontend. Once an eligible backend starts, budget and replay failures
+stop dispatch. Only providers used by source coefficients and original guards
+are evaluated and bound into finite evidence.
+
+This finite path uses nonlinear proof reconstruction from the supplied bounds,
+with conjunctions and a proposed ordinary real existential witness. The current
+witness is the first collected coefficient, or zero when there are none; it
+does not search for witnesses. The precision request stays at `1/16`, without
+refinement. It may fail
+on a true statement, and such a failure is an unresolved proof attempt, not a
+false verdict. False and unresolved goals can both fail proof reconstruction;
+this path does not distinguish them by a decision verdict.
+Lean's execution limits can also interrupt it. Failures restore
+caller state and stop handler dispatch. The existing algebraic cell solver
+continues to handle its documented inputs. Registrations alone do not complete
+the general coefficient-field decision procedure.
+
+The fresh-module probes in `bench/HexRCF/ProofProbe/Registered/` also prove
+`∀ x, x² > π-4`, `∀ x, x²+exp 1 > 2`,
+`∃ x, x=exp 1 ∧ 2<x ∧ x<3`, and the guarded
+`∀ x, x²+1/(4-π)>0`. Their callers supply coarse bounds
+`π ∈ [3,63/20]` and `exp 1 ∈ [27/10,14/5]`, with containment proved from
+Mathlib's existing numerical inequalities. These are test registrations;
+the optional library supplies no such providers. All four quoted theorem
+dependencies are exactly `propext`, `Classical.choice` and `Quot.sound`.
+
+For this fixed four-proof module, the command
+`python3 scripts/bench/hexrcf_registered_proofs.py` asks whether these
+coarse enclosures suffice for the four ordinary-kernel quotations without
+root/cell construction, and measures their aggregate cost over the same
+imports. It runs four adjacent
+matched-import pairs in alternating AB/BA order and retains every sample.
+At source revision `27d5465a3`, Lean `v4.35.0-rc3` on the shared `chungus2`
+host, pinned to CPU 83 with one Lean thread, fresh module builds took
+8.55–9.32 seconds (median 8.57); matched imports took 7.42–7.56 seconds
+(median 7.52). The median paired difference was 1.09 seconds. Median peak
+resident memory was 3.27 GiB for the proofs and 3.20 GiB for matched imports.
+These aggregate builds include elaboration, proof construction and ordinary
+kernel checks; they do not isolate individual tactic stages or establish
+scaling, convergence or completeness. The
+[raw results](https://github.com/kim-em/hex-dev/blob/main/reports/bench-results/hexrcf-registered-27d5465a3-chungus2.json)
+and [all arm records](https://github.com/kim-em/hex-dev/blob/main/reports/bench-results/hexrcf-registered-27d5465a3-chungus2.json.samples.jsonl)
+retain compiler output, proof dependencies, artifact sizes and host context.
+
 # Cross-references
 %%%
 tag := "hex-rcf-cross-references"
