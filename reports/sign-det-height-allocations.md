@@ -13,7 +13,10 @@ with normalization followed by checking at each height. It uses clean source
 `25b179f5c8f2143cd77753cd8c802d364aefd958` on shared host `chungus2`,
 automatically leased CPU 65. No completed sample is omitted and no rerun was
 used. The sources and executable match the earlier joint and matrix captures;
-their hashes are unchanged before and after measurement.
+their hashes are unchanged before and after measurement. The measured height
+operations are identical to the earlier `e3e380d81` timing source; its only
+height-module difference is in the untimed inspection code. Returned hashes
+match all retained successful timing results at these heights.
 
 The [allocation method](sign-det-allocation-method.md) counts successful
 requests at seven intercepted Lean, mimalloc and GMP entry points. Nested
@@ -22,14 +25,19 @@ rounded small-object requests; these are not live heap bytes or peak memory.
 The retained generated C binds the actual callbacks and supported return ABIs.
 All three controlled ABI fixtures pass. Every measured call returns the same
 fingerprint with and without instrumentation, invokes its wrapper once, and
-has matching per-entry-point counters and DHAT weighted events.
+has matching per-group counters and DHAT weighted events, each attributed to
+one of the seven wrapped entry points.
 
 A separate post-capture `inspect-height-phases` execution validates every
 input/reduction field and binds all 42 fingerprints to the height-tagged
 ordinary results. Its command, log, executable hash and source-unchanged check
 are retained in `height-inspection.json`; that inspection is explicitly later
-than the capture, rather than capture-time provenance. The fingerprints are
-finite checksums; the phase inspection supplies the literal formula checks.
+than the capture, rather than capture-time provenance. The retained inspection
+script records its revision, clean status, full source maps and executable hashes
+before and after validation. The initial thinner inspection record is also kept. The fingerprints are
+finite checksums; the inspector prints each row only after its `phaseValid`
+guard has checked the actual input and reduction. Descriptive JSON fields such
+as `coefficientBits` alone do not perform those checks.
 
 All three rounds have identical allocation counters at each height/operation:
 
@@ -53,9 +61,20 @@ All three rounds have identical allocation counters at each height/operation:
 The Lean and mimalloc request totals are constant over this ladder. GMP
 checking has 518 successful requests per call; normalization has 285 at
 8,192–65,536 bits, 288 at 131,072 bits and 294 at 262,144–524,288 bits.
-These observations include actual operand-dependent allocator behavior; they
-do not establish a universal allocation bound or explain the changed call
-counts. No timing or peak-memory conclusion is taken from instrumented runs.
+The additional normalization requests have retained DHAT stacks through
+`__gmp_tmp_reentrant_alloc`: zero below 131,072 bits, three at 131,072 bits,
+and nine at the two largest heights. Post-capture disassembly of the unchanged
+measured executable shows the gcd scratch paths choosing stack storage at or
+below 32,512 bytes (`0x7f00`) and heap requests above that threshold. Stack
+scratch is excluded from these counters. Moving scratch to the intercepted
+heap path accounts for these extra requests; the totals remain comparable as
+requested bytes at the same entry points, rather than all temporary storage.
+The disassembly commands, complete outputs and hashes are retained.
+
+Fingerprint magnitude copies are inside the measured bytes; their share is
+not separately estimated. These observations do not establish a universal
+allocation bound. No timing or peak-memory conclusion is taken from instrumented
+runs.
 
 These are additional allocation observations for the compiled Phase-4 track.
 Nested coefficient dependencies, harder coefficient-height families, other

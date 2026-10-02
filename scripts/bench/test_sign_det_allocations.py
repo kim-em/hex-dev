@@ -253,6 +253,18 @@ class AllocationValidationTests(unittest.TestCase):
             self.assertEqual(capture.digest(root / "collector-sources" / name), expected)
         self.check_self_checks(root, meta)
         self.check_callback_source(meta, module, generated_path)
+        self.assertEqual(len(meta["compile_commands"]), 3 + len(functions))
+        wrappers = {}
+        for i, function in enumerate(functions):
+            command = meta["compile_commands"][3 + i]
+            callback = meta["callbacks"][function]
+            self.assertIn("-DSIGN_DET_CALLBACK=" + callback["symbol"], command)
+            self.assertIn("-DSIGN_DET_RESULT=" + callback["result_type"], command)
+            self.assertEqual(sum(arg.startswith("-DSIGN_DET_CALLBACK=") for arg in command), 1)
+            self.assertEqual(sum(arg.startswith("-DSIGN_DET_RESULT=") for arg in command), 1)
+            self.assertEqual(command[-2], "-o")
+            self.assertTrue(command[-3].endswith("/scripts/bench/sign_det_allocations.c"))
+            wrappers[function] = command[-1]
         rows = [json.loads(line) for line in (root / "samples.jsonl").read_text().splitlines()]
         self.assertEqual(rows, meta["samples"])
         schedule = [(trial, n, f) for trial in range(1, trials + 1)
@@ -274,6 +286,7 @@ class AllocationValidationTests(unittest.TestCase):
             self.assertEqual(hashlib.sha256(raw).hexdigest(), row["dhat_sha256"])
             wrapper = next(arg.removeprefix("env LD_PRELOAD=").split()[0]
                            for arg in row["command"] if arg.startswith("env LD_PRELOAD="))
+            self.assertEqual(wrapper, wrappers[row["function"]])
             capture.check_events(row["counters"], json.loads(raw), wrapper)
             self.assertEqual(capture.counters(log.read_text()), row["counters"])
             key = row["function"], row["parameter"]
@@ -293,11 +306,19 @@ class AllocationValidationTests(unittest.TestCase):
         inspection = json.loads((root / "height-inspection.json").read_text())
         self.assertEqual(inspection["scope"], "post-capture input validation; hashes are not capture-time provenance")
         self.assertEqual(inspection["exit_code"], 0)
-        self.assertTrue(inspection["source_unchanged"])
-        self.assertEqual(inspection["binary_sha256"], meta["binary_sha256"])
+        self.assertEqual(inspection["revision"], meta["revision"])
+        self.assertEqual(inspection["git_status"], "")
+        self.assertLessEqual(inspection["started_utc"], inspection["finished_utc"])
+        self.assertEqual(inspection["source_sha256_before"], meta["source_sha256"])
+        self.assertEqual(inspection["source_sha256_after"], meta["source_sha256_after"])
+        self.assertEqual(inspection["binary_sha256_before"], meta["binary_sha256"])
+        self.assertEqual(inspection["binary_sha256_after"], meta["binary_sha256_after"])
+        self.assertEqual(capture.digest(root / "inspect-height.py"), inspection["script_sha256"])
         self.assertEqual(inspection["command"], [rows[0]["command"][0], "inspect-height-phases"])
         log = root / "height-inspection.log"
         self.assertEqual(capture.digest(log), inspection["log_sha256"])
+        # The inspector prints only after phaseValid checks the actual data.
+        # The descriptive height fields alone are not that input validation.
         inputs = [json.loads(line) for line in log.read_text().splitlines()]
         self.assertEqual([row["height"] for row in inputs], heights)
         for row in inputs:
@@ -314,6 +335,54 @@ class AllocationValidationTests(unittest.TestCase):
             self.assertEqual(row["result_hash"], hex(input_row[key]))
             observations[row["function"], row["parameter"]] = row["counters"]
         self.assertEqual(len(rows), 42)
+        import gzip
+        import hashlib
+        timing = root.parents[2] / "data/sign-det-height/e3e380d81"
+        timing_meta = json.loads((timing / "metadata.json").read_text())
+        timing_source = gzip.decompress((root / "timing-height.lean.gz").read_bytes())
+        measured_source = gzip.decompress((root / "measured-height.lean.gz").read_bytes())
+        self.assertEqual(hashlib.sha256(timing_source).hexdigest(),
+                         timing_meta["source_sha256"]["bench/HexSignDet/Height.lean"])
+        self.assertEqual(hashlib.sha256(measured_source).hexdigest(),
+                         meta["source_sha256"]["bench/HexSignDet/Height.lean"])
+        self.assertEqual(timing_source.replace(b"(hash (runReduce i))", b"(hash (reductionHash i.reduction))"),
+                         measured_source)
+        expected = {}
+        for operation in ("Height.runReduce", "Height.runCheck"):
+            results = json.loads((timing / (operation + ".json")).read_text())["results"]
+            for result in results:
+                for point in result["points"]:
+                    if point["status"] != "ok":
+                        continue
+                    key = result["function"], point["param"]
+                    if key in expected:
+                        self.assertEqual(expected[key], point["result_hash"])
+                    expected[key] = point["result_hash"]
+        self.assertEqual(set(expected), set(observations))
+        for row in rows:
+            self.assertEqual(row["result_hash"], expected[row["function"], row["parameter"]])
+        for i, function in enumerate(functions):
+            wrapper = gzip.decompress((root / f"wrapper-{i}.so.gz").read_bytes())
+            self.assertEqual(hashlib.sha256(wrapper).hexdigest(), meta["callbacks"][function]["wrapper_sha256"])
+        disassembly = json.loads((root / "gmp-disassembly.json").read_text())
+        self.assertEqual(disassembly["binary_sha256"], meta["binary_sha256"])
+        for item in disassembly["outputs"]:
+            output = root / item["file"]
+            self.assertEqual(capture.digest(output), item["sha256"])
+            self.assertEqual(item["command"][-1], rows[0]["command"][0])
+            self.assertEqual(item["command"][:-1],
+                             ["objdump", "-d", "--disassemble=" + output.stem])
+        for symbol in ("__gmpz_gcd", "__gmpn_gcd"):
+            self.assertIn("$0x7f00", (root / (symbol + ".asm")).read_text())
+        # Retained stacks identify the extra heap scratch requests on this binary.
+        for i, row in enumerate(rows):
+            if row["function"] != functions[0]:
+                continue
+            dhat = json.loads(gzip.decompress((root / f"{i:03d}.dhat.json.gz").read_bytes()))
+            count = sum(point["tbk"] for point in dhat["pps"] if any(
+                "__gmp_tmp_reentrant_alloc" in dhat["ftbl"][frame] for frame in point["fs"]))
+            self.assertEqual(count, 0 if row["parameter"] <= 65536 else
+                             3 if row["parameter"] == 131072 else 9)
         report = (root.parents[2] / "sign-det-height-allocations.md").read_text()
         operations = {"Normalization": functions[0], "Checking": functions[1]}
         table = []
