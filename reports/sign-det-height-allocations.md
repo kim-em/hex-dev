@@ -36,8 +36,8 @@ ordinary results. Its command, log, executable hash and source-unchanged check
 are retained in `height-inspection.json`; that inspection is explicitly later
 than the capture, rather than capture-time provenance.
 The retained inspection
-script records its revision, clean status, full source maps and executable hashes
-before and after validation. The initial thinner inspection record is also kept. The fingerprints are
+script records its revision and clean status, plus source maps and executable
+hashes before and after validation. The initial thinner inspection record is also kept. The fingerprints are
 finite checksums; the inspector prints each row only after its `phaseValid`
 guard has checked the actual input and reduction. Descriptive JSON fields such
 as `coefficientBits` alone do not perform those checks.

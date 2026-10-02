@@ -392,6 +392,8 @@ class AllocationValidationTests(unittest.TestCase):
             assembly = (root / (symbol + ".asm")).read_text()
             matches = list(re.finditer(r"cmp\s+\$0x7f00[^\n]*\n(?:[^\n]*\n){0,3}[^\n]*\bja\s+([0-9a-f]+)", assembly))
             self.assertTrue(matches)
+            self.assertEqual(len(matches), len(re.findall(
+                r"call\s+[0-9a-f]+\s+<__gmp_tmp_reentrant_alloc>", assembly)))
             lines = assembly.splitlines()
             for match in matches:
                 target = next(i for i, line in enumerate(lines) if line.lstrip().startswith(match[1] + ":"))
@@ -403,8 +405,11 @@ class AllocationValidationTests(unittest.TestCase):
             points = [point for point in dhat["pps"] if any(
                 "__gmp_tmp_reentrant_alloc" in dhat["ftbl"][frame] for frame in point["fs"])]
             for point in points:
-                self.assertTrue(any("__gmpz_gcd" in dhat["ftbl"][frame] or
-                                    "__gmpn_gcd" in dhat["ftbl"][frame] for frame in point["fs"]))
+                frames = [dhat["ftbl"][frame] for frame in point["fs"]]
+                temporary = next(j for j, frame in enumerate(frames) if "__gmp_tmp_reentrant_alloc" in frame)
+                self.assertLess(temporary + 1, len(frames))
+                self.assertTrue("__gmpz_gcd" in frames[temporary + 1] or
+                                "__gmpn_gcd" in frames[temporary + 1])
             count = sum(point["tbk"] for point in points)
             if row["function"] == functions[0]:
                 self.assertEqual(count, 0 if row["parameter"] <= 65536 else
