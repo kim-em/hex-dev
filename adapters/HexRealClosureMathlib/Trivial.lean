@@ -13,7 +13,7 @@ public import Mathlib.Data.List.Sort
 
 public section
 
-namespace Hex.RealClosure.Trivial
+namespace Hex.RealClosure.Trivial.Rational
 
 private theorem ratNeg (q : Rat) : ratCast (-q) = -ratCast q := by simp [ratCast]
 private theorem ratInv (q : Rat) : ratCast q⁻¹ = (ratCast q)⁻¹ := by simp [ratCast]
@@ -148,12 +148,12 @@ theorem roots_eq (context : Nat) (p : DensePoly Rat) :
       simp only [roots, generic, output, backend]
       rw [same, Array.toArray_toList]
 
-end Hex.RealClosure.Trivial
+end Hex.RealClosure.Trivial.Rational
 
-/-- info: 'Hex.RealClosure.Trivial.compare_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Trivial.Rational.compare_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.RealClosure.Trivial.compare_eq
+#print axioms Hex.RealClosure.Trivial.Rational.compare_eq
 
-/-- info: 'Hex.RealClosure.Trivial.roots_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Trivial.Rational.roots_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Hex.RealClosure.Trivial.roots_eq
+#print axioms Hex.RealClosure.Trivial.Rational.roots_eq

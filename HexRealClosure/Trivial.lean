@@ -10,7 +10,7 @@ public import HexRealClosure.Canonical
 
 public section
 
-namespace Hex.RealClosure.Trivial
+namespace Hex.RealClosure.Trivial.Rational
 
 /-- The existing real-algebraic backend's coefficient representation for a
 rational polynomial, including the zero polynomial. -/
@@ -43,4 +43,4 @@ comparison. The companion identifies the generic checked comparison with it. -/
 @[expose] def compare {context : Nat} (a b : Isolation.Root (Sturm.orderSign : Rat → Int) context) : Ordering :=
   RealAlgebraicNumber.compare (canonical a) (canonical b)
 
-end Hex.RealClosure.Trivial
+end Hex.RealClosure.Trivial.Rational
