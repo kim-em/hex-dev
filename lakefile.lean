@@ -609,6 +609,7 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.RootModel, `HexSignDetMathlib.RootProducer,
     `HexSignDetMathlib.SelectedRoot, `HexSignDetMathlib.SelectedProducer,
     `HexSignDetMathlib.CompletionProducer, `HexSignDetMathlib.Convert,
+    `HexSignDetMathlib.DagSelectedSigns,
     `HexSignDetMathlib.QueryHandle, `HexSignDetMathlib.TableProducer,
     `HexSignDetMathlib.ReencodingProducer, `HexSignDetMathlib.RootList,
     `HexSignDetMathlib.ReencodingRefinement, `HexSignDetMathlib.Thom,
@@ -1160,6 +1161,7 @@ lean_lib HexConformance where
       `HexSignDetMathlib.TableConformance, `HexSignDetMathlib.ReencodingConformance,
       `HexSignDetMathlib.RootListConformance, `HexSignDetMathlib.RefinementConformance,
       `HexSignDetMathlib.ThomConformance, `HexSignDetMathlib.ThomRootsConformance,
+      `HexSignDetMathlib.GraphSignsConformance,
       `HexSignDetMathlib.ConvertConformance].map Glob.one
 
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests].map Glob.one

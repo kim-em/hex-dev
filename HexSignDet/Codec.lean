@@ -8,6 +8,7 @@ module
 public import HexSignDet.Codec.Node
 public import HexSignDet.Codec.Bytes
 public import HexSignDet.DagSigns
+public import HexSignDet.DagSelectedSigns
 
 public section
 
@@ -100,6 +101,42 @@ def Dag.decodeDescriptor (value : ValueCodec E) (ctx : ValueCodec Ctx) (sign : E
   | none => throw "descriptor replay rejected"
   | some d => return d
 
+/-- Decode supplied graph bytes and independently check the exact claimed
+query signs at a validated selected root. The graph supplies all query,
+support and matrix evidence; no selected-sign producer is called. -/
+def Dag.decodeSigns (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    {sign : E → Int} {context : Ctx} (d : Descriptor E Ctx sign context)
+    (qs : List (DensePoly E)) (values : Vector Int qs.length) (input : ByteArray)
+    (limits : Codec.Limits := {}) : Except String (SelectedSigns d qs) := do
+  let dag ← Codec.decodeGraph value ctx context d.raw.head d.raw.lower d.raw.upper input limits
+  match dag.selectedSigns? d qs values with
+  | none => throw "selected-sign graph replay rejected"
+  | some s => return s
+
+/-- Successful byte replay preserves the caller's claimed signs and obtains its
+selected-root evidence from the actual decoded graph. This applies to arbitrary
+accepted bytes, without assuming a printer/parser roundtrip. -/
+theorem Dag.decodeSigns_evidence (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    {sign : E → Int} {context : Ctx} (d : Descriptor E Ctx sign context)
+    (qs : List (DensePoly E)) (values : Vector Int qs.length) (input : ByteArray)
+    (limits : Codec.Limits) {s : SelectedSigns d qs}
+    (h : decodeSigns value ctx d qs values input limits = .ok s) :
+    ∃ dag, Codec.decodeGraph value ctx context d.raw.head d.raw.lower d.raw.upper
+        input limits = .ok dag ∧ dag.selectedSigns? d qs values = some s ∧ s.values = values := by
+  unfold decodeSigns at h
+  cases hd : Codec.decodeGraph value ctx context d.raw.head d.raw.lower d.raw.upper
+      input limits with
+  | error e => simp [hd, bind, Except.bind] at h
+  | ok dag =>
+    simp only [hd, bind, Except.bind] at h
+    cases hr : dag.selectedSigns? d qs values with
+    | none => simp [hr] at h
+    | some result =>
+      simp only [hr, pure, Except.pure, Except.ok.injEq] at h
+      subst s
+      obtain ⟨_, _, hv, _⟩ := Dag.selectedSigns_evidence hr
+      exact ⟨dag, rfl, hr, hv⟩
+
 /-- Agreement on the actual decoded graph preserves exact parse/replay errors
 and the returned tree. This does not assert any parser/printer roundtrip. -/
 theorem Dag.decodeBytes_sign_congr (value : ValueCodec E) (ctx : ValueCodec Ctx)
@@ -125,6 +162,46 @@ theorem Dag.decodeBytes_sign_congr (value : ValueCodec E) (ctx : ValueCodec Ctx)
       cases ht' : dag.replay? sign' context p lo hi qs with
       | none => simp [ht, ht'] at he
       | some tree' =>
+        simp only [pure, Except.map]
+        exact congrArg Except.ok (by simpa [ht, ht'] using he)
+
+/-- Byte decoding preserves errors, exact claimed signs and literal evidence
+under finite sign agreement on every entry of the actual decoded graph. Both
+validated descriptors must have the same raw selected-root identity. -/
+theorem Dag.decodeSigns_sign_congr (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (sign sign' : E → Int) (context : Ctx)
+    (d : Descriptor E Ctx sign context) (d' : Descriptor E Ctx sign' context)
+    (hraw : d'.raw = d.raw) (qs : List (DensePoly E)) (values : Vector Int qs.length)
+    (input : ByteArray) (limits : Codec.Limits)
+    (h : ∀ dag, Codec.decodeGraph value ctx context d.raw.head d.raw.lower d.raw.upper
+      input limits = .ok dag →
+      ∀ x ∈ dag.signOperands d.raw.head d.raw.lower d.raw.upper, sign x = sign' x) :
+    (Dag.decodeSigns value ctx d qs values input limits).map
+        (fun s => (s.values, s.evidence)) =
+      (Dag.decodeSigns value ctx d' qs values input limits).map
+        (fun s => (s.values, s.evidence)) := by
+  unfold Dag.decodeSigns
+  cases hd : Codec.decodeGraph value ctx context d.raw.head d.raw.lower d.raw.upper
+      input limits with
+  | error err =>
+    have hd' : Codec.decodeGraph value ctx context d'.raw.head d'.raw.lower d'.raw.upper
+        input limits = .error err := by rw [hraw]; exact hd
+    simp only [hd', bind, Except.bind, Except.map]
+  | ok dag =>
+    have hd' : Codec.decodeGraph value ctx context d'.raw.head d'.raw.lower d'.raw.upper
+        input limits = .ok dag := by rw [hraw]; exact hd
+    have he := dag.selectedSigns_sign_congr sign sign' context d d' hraw qs values (h dag hd)
+    simp only [hd', bind, Except.bind]
+    cases ht : dag.selectedSigns? d qs values with
+    | none =>
+      have ht' : dag.selectedSigns? d' qs values = none := by
+        simpa only [ht, Option.map_none, Option.map_eq_none_iff] using he.symm
+      simp only [ht', Except.map]
+      rfl
+    | some s =>
+      cases ht' : dag.selectedSigns? d' qs values with
+      | none => simp [ht, ht'] at he
+      | some s' =>
         simp only [pure, Except.map]
         exact congrArg Except.ok (by simpa [ht, ht'] using he)
 

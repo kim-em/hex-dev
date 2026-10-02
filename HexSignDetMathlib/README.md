@@ -147,6 +147,14 @@ through `derivativesFrom_get`. `SelectedSigns.values_at_root` and
 `value_at_root` prove that every checked requested sign equals evaluation at
 that same selected root, including the public one-query accessor.
 
+`Dag.selectedSigns_values` applies this correspondence to an arbitrary supplied
+BKR graph and claimed sign vector. Accepted graph replay retains its literal
+query evidence; every claimed sign equals evaluation at the original descriptor's
+selected root. The executable graph and byte interfaces remain Mathlib-free.
+`GraphSignsConformance` checks literal acceptance and adversarial rejection in
+the ordinary kernel, audits proof dependencies and exercises byte decoding
+and existing producer evidence by evaluation.
+
 `TableProducer` proves success of `buildTablePrepared` and the ordinary total
 `determinePrepared` API under the same coefficient-interpretation laws. Its
 correctness theorem relates every lookup to the cardinality of the actual

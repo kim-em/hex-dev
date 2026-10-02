@@ -41,10 +41,11 @@ result. These proofs follow the actual memoized prefix fold without expanding
 and rechecking a recursive tree. A cache law for the selected root's reachable
 entries alone does not suffice, since graph replay checks all stored entries.
 `Dag.descriptor_sign_congr` preserves the raw descriptor and literal evidence.
-`Dag.decodeBytes_sign_congr` and `Dag.decodeDescriptor_sign_congr` preserve
+`Dag.decodeBytes_sign_congr`, `Dag.decodeDescriptor_sign_congr` and
+`Dag.decodeSigns_sign_congr` preserve
 exact errors and successful data under agreement on the actual decoded graph;
 they do not prove parser/printer byte roundtrips. Callers holding a decoded graph
-can use its `replay?` or `descriptor?` interface and the corresponding congruence
+can use its `replay?`, `descriptor?` or `selectedSigns?` interface and the corresponding congruence
 to reuse that graph without parsing the same bytes again.
 Inventories retain repeated occurrences, so consumers may deduplicate
 keys while proving membership covers the whole inventory.
@@ -60,6 +61,23 @@ entries, forward edges, cycles and missing roots are rejected as well.
 count one, and preserves the complete raw descriptor. Ordinary-kernel probes
 cover the full derivative graph, repeated references to one child, selected-root
 extraction and truncated/cyclic graphs.
+
+`Dag.selectedSigns?` checks a supplied graph for the descriptor's derivative
+queries followed by the caller's ordered query list. It accepts exactly the
+claimed sign vector when the checked table has one extending row of count one.
+It reuses the checked graph's evidence without repeating tree replay or calling
+a sign producer. `Dag.selectedSigns_evidence` preserves the exact claimed signs
+and literal replay; `Dag.selectedSigns_checked` connects them to the existing
+selected-root checker. `Dag.selectedSigns_replay` also preserves rejection of
+an incorrect claim on an accepted graph, and `Dag.selectedSigns_encode` accepts
+every encoded checked selected-sign tree with its exact original evidence.
+`Dag.selectedSigns_encode_eq` also preserves rejection for arbitrary encoded
+trees and claims. The companion's `Dag.selectedSigns_values` proves
+agreement with mathematical evaluation at the descriptor's selected root.
+`Dag.selectedSigns_sign_congr` transfers this result between sign functions
+that agree on every stored graph operand, provided both descriptors have the
+same raw root identity. Source-descriptor validation has its own coefficient
+sign dependencies, which consumers must also discharge.
 
 `Dag.encode` converts supplied trees using bottom-up hash consing. It preserves
 first-occurrence order and shares entries only after exact equality of every
