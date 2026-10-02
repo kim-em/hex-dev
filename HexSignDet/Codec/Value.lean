@@ -105,8 +105,9 @@ private theorem Fields.tokensLoop_eq (fields : Fields) (reversed : List Token) :
 end
 
 mutual
-/-- A token parser bounded by explicit fuel. Array/object tails reject trailing
-commas by requiring a value after every comma. -/
+/-- Finite reference parser for proofs. Array/object tails reject trailing
+commas by requiring a value after every comma. Native parsing uses `readLoop`;
+this reference retains one stack frame per element or field. -/
 @[expose] def read : Nat → List Token → Option (Value × List Token)
   | 0, _ => none
   | fuel + 1, input => match input with

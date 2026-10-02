@@ -63,8 +63,9 @@ combined; lone surrogates are rejected. Ordinary Unicode is read directly. -/
 
 @[expose] def writeBody (cs : List Char) : List Char := cs.flatMap writeChar
 
-/-- A finite parser for a quoted body. Fuel bounds decoded characters; no
-partial definition or assumed parser success is used by its roundtrip law. -/
+/-- Finite reference parser for proofs, with fuel bounding decoded characters.
+Native string parsing uses `readBodyLoop`; this reference retains one stack
+frame per character. -/
 @[expose] def readBody : Nat → List Char → Option (List Char × List Char)
   | 0, _ => none
   | fuel + 1, c :: rest =>
@@ -193,8 +194,8 @@ private theorem writeBody_length (cs : List Char) : cs.length ≤ (writeBody cs)
 @[expose] def write (text : String) : String :=
   String.ofList ('"' :: writeBody text.toList ++ ['"'])
 
-/-- Count through the next unescaped quotation mark only. This avoids
-rescanning the entire remaining JSON input for every string token. -/
+/-- Finite reference prefix count for proofs. Native string parsing uses
+`scanLoop`; this reference retains one stack frame per character. -/
 @[expose] def scanBody : List Char → Nat
   | [] => 0
   | c :: rest =>

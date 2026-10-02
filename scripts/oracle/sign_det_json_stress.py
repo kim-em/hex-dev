@@ -22,7 +22,9 @@ def cases(ci=False):
     if ci:
         yield "ci-string", b'"' + b"x" * (4 * 1024 * 1024) + b'"'
         yield "ci-array-width", b"[" + b"0," * 999999 + b"0]"
-        yield "ci-object-width", b"{" + b'"x":0,' * 99999 + b'"x":0}'
+        yield "ci-object-width", b"{" + b'"x":0,' * 999999 + b'"x":0}'
+        yield "ci-escaped-string", b'"' + b"\\n" * 500000 + b'"'
+        yield "ci-nesting-limit", b"[" * 128 + b"0" + b"]" * 128
         return
     yield "string-byte-ceiling", b'"' + b"x" * (16777216 - 2) + b'"'
     yield "escaped-string", b'"' + b"\\n" * 1000000 + b'"'

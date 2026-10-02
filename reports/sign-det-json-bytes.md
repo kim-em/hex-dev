@@ -66,13 +66,13 @@ transport and retains the existing lexical byte/depth/digit checks:
 python3 scripts/oracle/sign_det_json_stress.py
 ```
 
-With the same 8 MiB stack, the compiled parser/printer handles a 16 MiB ASCII
-string, a million escaped characters, a two-million-element array, 300,000
+With the same 8 MiB stack, the compiled parser/printer handles a quoted ASCII
+string occupying 16 MiB, a million escaped characters, a two-million-element array, 300,000
 object fields with duplicate keys, nesting depth 128 and a 4,096-digit integer.
 Python independently compares the input and output values of the parse/print
 composition; file mode does not inspect constructors independently. The
-324-case line-mode oracle separately does that inspection. The existing CI oracle runs smaller probes (a 4 MiB string, a million array
-elements and 100,000 object fields) plus byte/depth/digit rejection probes.
+324-case line-mode oracle separately does that inspection. The CI oracle runs smaller probes (a 4 MiB string, a million array
+elements, a million object fields, 500,000 escaped characters and depth 128) plus byte/depth/digit rejection probes.
 Each rejection checks its diagnostic and that no output file was produced.
 These are capacity
 observations, not timing/scaling evidence or exhaustive coverage of every
