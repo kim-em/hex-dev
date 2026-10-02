@@ -13,15 +13,17 @@ performance deliverable.
 `bench/HexRealAlgebraic/Bench.lean` registers 67 cases. `lake exe
 hexrealalgebraic_bench list` lists them; `verify` checks their runtime wiring and
 hashes. The existing CI job builds and verifies this executable. The retained
-[local smoke-gate log](bench-results/prerequisite-verify-budget.log) records
+[local verification log](bench-results/prerequisite-verify-budget.log) records
 44 Sturm and 67 real-algebraic cases, completing in 37 seconds against the
-600-second operational cap. This is verification evidence, not a scientific budget.
+600-second local script default; CI sets a 360-second cap. The real executable
+took 32 seconds and exceeded the 30-second per-library soft threshold.
+Tightening its verify path remains tracked under #10577. This is verification evidence, not a scientific budget.
 
 | Shipped surface | Registrations | Evidence status |
 | --- | --- | --- |
 | Checked/proved constructors, casts, rational recognition | `runConstructors`, `runCasts`, `runRational` | Fixed baseline anchors |
 | Arithmetic and scalar dictionaries | `runAdd`, `runSub`, `runMul`, `runDiv`, `runNeg`, `runInv`, `runNatPow`, `runIntPow`, `runScalars`; corresponding bare controls; `runHard*` | Canonical baseline and adjacent wrapper controls; mode/budget incomplete |
-| Equality, comparison, order, sign, abs, conjugation | `runEquality`, `runCompare`, `runCompareExact`, `runOrder`, `runSign`, `runAbs`, `runConj`, negative/near-zero branches, `runCloseCompare`, `runCloseExact` | Fixed branch/hash/comparison anchors; separation models incomplete |
+| Equality, comparison, order, sign, abs, conjugation | `runEquality`, `runCompare`, `runCompareExact`, `runOrder`, `runSign`, `runAbs`, `runConj`, `runCloseCompare`, `runCloseExact` | Fixed branch/hash/comparison anchors; separation models incomplete |
 | Floor, ceiling, approximation, representation | `runRounding`, `runApprox`, `runRepr` | Baseline anchors; ceiling has proved before/after improvement |
 | Square roots | `runSqrt`, `runSqrtTotal` | Baseline and branch checks; degree/height scaling incomplete |
 | Polynomial constructors and root-set projections/membership | `runPolyConstructors`, `runMembership`, `runRootSet` | Mode-1 family passes |
@@ -59,7 +61,9 @@ outside timed bodies. Every operation has four adjacent alternating AB/BA blocks
 against the corresponding bare canonical-number operation. All 64 arms complete,
 with identical hashes within every pair, and unchanged source/binary fingerprints.
 The retained calibration source used the default degree/separation settings
-and did not enable `expected_hash_check`. Current fixed cases have explicit
+and did not enable `expected_hash_check`. The observed full-result hashes
+match the current fixed expected hashes (for example `Add-0-Hard.log` and
+`runHardAdd` both give `0x7cc18faa80303c8`), supporting fixture identity. Current fixed cases have explicit
 hashes and fixed degree/separation inputs;
 environment variables cannot silently replace these scientific fixtures.
 
@@ -157,3 +161,7 @@ in the linked summaries.
 
 The duplicate negative-input guard in `sqrt?`/`sqrtRoot?` remains an owned
 Phase-4 review concern under #10577; it does not change the proved partial result.
+
+The 32-second per-library verification warning remains under #10577; the
+360-second CI cap is an operational safeguard. Hard addition/subtraction
+and their bare controls account for most of the warning.

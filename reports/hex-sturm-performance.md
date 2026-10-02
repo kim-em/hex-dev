@@ -1,10 +1,14 @@
 # Shared Sturm–Tarski computation measurements
 
+Current admission boundary: the historical head-degree `runReplay` mode-2
+interpretation also needs reconciliation with the dominant-phase policy. Its
+total-work upper bound and completed samples remain valid retained evidence;
+its current Phase-4 admission is suspended, as for the translated candidates.
+
 The corrected quadratic query-degree models pass for initial reduction,
 integer and rational queries, and replay. Head-degree replay now defers dyadic
 normalization to the end of each Horner evaluation, with proved equality to
-its former result. Its predeclared **mode-2 O(n⁴) upper bound passes (observed
-faster)** through degree 2048. This is explicitly weaker than two-sided
+its former result. Its predeclared **mode-2 O(n⁴) upper-bound observation is faster** through degree 2048. This is explicitly weaker than two-sided
 consistency: GMP multiplication crossovers prevent a justified tight monomial
 claim on this ladder. The earlier cubic and quartic two-sided failures remain
 recorded below. [The derivations](sturm-bit-cost-models.md) distinguish the
@@ -626,7 +630,7 @@ diagnostics; their existence does not attest every ordered-field frontend.
 | `runEmbedSparse` | Mode 1, `n` | Literal integer certificate for `X^n−2`, degree 2048–32768 |
 | `runInitialWide`, `runClearingWide` | Mode 1, `n²` | Chebyshev coefficient arrays, degree 16384–131072 |
 | `runCoefficientBits`, `runEndpointBits` | Mode 2, published `bits²` upper bound | Odd growing coefficients or dyadic mantissas, 2048–32768 bits |
-| `runFractionalBits` | Unadmitted mode-2 candidate; operation-specific profile missing | Odd dyadic mantissas, 2048–32768 bits |
+| `runFractionalBits` | Unadmitted mode-2 candidate; profile attribution under audit | Odd dyadic mantissas, 2048–32768 bits |
 | `runPreparedBits`, `runCountBits`, `runPreparedCountBits`, `runCertificateBits`, `runPreparedCertificateBits`, `runCountCertificateBits`, `runFieldReplayBits`, `runCachedReplayBits`, `runClearBits`, `runInfiniteBits` | Unadmitted mode-2 candidates; dominant phase not established | `T_8(X−z)`, odd growing integer `z`, endpoints `z±2` or infinity |
 
 [Cost derivations](sturm-bit-cost-models.md) precede the corresponding
@@ -652,7 +656,7 @@ LeanBench's trial-major schedule retains four trials at every rung.
 | `runEmbedSparse` | `n` | +0.005649 | two-sided pass |
 | `runCoefficientBits` | `bits ^ 2` | -0.352125 | within declared upper bound (observed faster) |
 | `runEndpointBits` | `bits ^ 2` | -0.586339 | within declared upper bound (observed faster) |
-| `runFractionalBits` | `bits ^ 2` | -0.580784 | unadmitted: own profile missing |
+| `runFractionalBits` | `bits ^ 2` | -0.580784 | unadmitted: own attribution under audit |
 | `runPreparedBits` | `bits ^ 2` | -0.849544 | unadmitted: dominant general-product phase unproved |
 | `runCountBits` | `bits ^ 2` | -0.869592 | unadmitted: dominant general-product phase unproved |
 | `runPreparedCountBits` | `bits ^ 2` | -0.655776 | unadmitted: dominant general-product phase unproved |
@@ -667,7 +671,8 @@ LeanBench's trial-major schedule retains four trials at every rung.
 The candidate harness wording is `inconclusive`, in the faster direction.
 Only the odd cubic and integral-endpoint families currently connect their
 preregistered published bounds to operation-specific general-product/gcd
-profiles. The fractional family lacks its own capture. The ten translated
+profiles. The fractional family now has its own passing capture; admission still needs
+its dominant-phase attribution audited. The ten translated
 families remain unadmitted: GMP leaf dominance alone does not identify a
 published bound for the dominant phase. All samples and original declarations
 remain retained; no fitted exponent or replacement pass is inferred.
@@ -713,6 +718,15 @@ and process startup are excluded by the kernel sidecar. All growing-operand
 captures pass the ≥100-sample, ≤5 ms calibration and ±5 ms sensitivity checks.
 Raw perf/samply data are retained locally, not committed.
 
+The fractional-endpoint capture at 32768 bits retains 1542 samples, a
+1.001 ms calibration residual and passing ±5 ms sensitivity. It has 98.31%
+GMP leaves; inclusive multiplication entries include `mul_n` (24.64%),
+Toom-3 (21.92%), Toom-2 (20.95%) and basecase (9.21%). These inclusive
+percentages overlap and must not be summed. Its saved implementation and
+registration match the earlier timing source, with only comment changes.
+Published-phase admission remains under audit; this capture does not attest
+the whole library.
+
 The odd cubic and odd endpoint captures at 32768 bits have 95.25% and 98.38%
 GMP leaves respectively. Their generic products/reduction work includes
 `addmul_1`, basecase/Toom multiplication and half-gcd steps. The ten translated
@@ -738,4 +752,4 @@ frontend profiles are separate evidence for prepared, cached and transport paths
 
 ## Concerns
 
-- [#10577](https://github.com/kim-em/hex-dev/issues/10577): reconcile all advertised frontend operations with registrations/comparators, resolve the retained coefficient-sign characterization, and finish dependency-ordered Phase-4 attestation. The candidate family passes above do not close this audit.
+- [#10577](https://github.com/kim-em/hex-dev/issues/10577): reconcile all advertised frontend operations with registrations/comparators, resolve the retained coefficient-sign characterization, and finish dependency-ordered Phase-4 attestation. The admitted family evidence and unadmitted candidates above do not close this audit.

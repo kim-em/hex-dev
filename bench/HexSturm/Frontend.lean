@@ -491,7 +491,7 @@ setup_benchmark runRetargetWide n => n ^ 2
     maxSecondsPerCall := 600
   }
 
-/- Cost-model derivation, mode 2: unlike the withdrawn power-of-two endpoint family, odd b-bit
+/- Cost-model derivation, mode-2 candidate pending attribution audit: unlike the withdrawn power-of-two endpoint family, odd b-bit
 mantissas make each nontrivial fixed-degree Horner product growing-by-growing.
 Both integral and fractional endpoints exercise GMP multiplication. -/
 setup_benchmark runFractionalBits bits => bits ^ 2

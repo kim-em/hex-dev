@@ -7,21 +7,25 @@ Authors: Kim Morrison
 import HexRealAlgebraic
 
 /-!
-Core profile: oracle none, mode always; this module and `ReprChecks` elaborate in CI.
-The emitter also runs `Checks.run`, including the larger Mignotte and degree-eight fixtures.
-CI profile: exact python-flint qqbar arithmetic and certified FLINT root balls,
-mode `if_available` (required under `HEX_REQUIRE_ORACLES=1`). Local profile requires
-those oracles and adds degree-twelve roots and deterministic randomized construction paths.
-
-Operations: checked and proof-taking construction, casts, arithmetic, powers and scalar
-multiplication, comparison and extrema, sign, abs, conjugation, square roots, polynomial
-roots and root-set membership/projection, integer roots, rounding, rational
-recognition, dyadic approximation, complex normSq/abs, real/imaginary projections,
-and Repr round trips.
-Properties: exact order, arithmetic identities, equal construction paths, positive-root
-selection, root multiplicities, and approximation enclosures.
-Edges: zero, division by zero, negative rationals, empty and constant polynomials,
-nonreal roots and coefficients, close roots, irrational coefficients, and repeated roots.
+Oracle: none (core); exact python-flint qqbar arithmetic and certified FLINT root balls
+(CI/local).
+Mode: always (core); `if_available` (CI), required under `HEX_REQUIRE_ORACLES=1`;
+required (local).
+Covered operations:
+- Checked/proof-taking construction, casts, field arithmetic, powers and scalars.
+- Comparison, extrema, sign, abs, conjugation and square roots.
+- Polynomial construction/conversion, roots and root-set membership/projection; integer roots.
+- Rounding, rational recognition, dyadic approximation and Repr round trips.
+- Complex normSq/abs and real/imaginary projections.
+Covered properties:
+- Exact order and arithmetic identities, equal construction paths and positive-root selection.
+- Root multiplicities and approximation enclosures.
+Covered edge cases:
+- Zero, division by zero, negative rationals, empty/constant polynomials and trailing zeros.
+- Nonreal roots/coefficients, close roots, irrational coefficients and repeated roots.
+This module and `ReprChecks` elaborate in CI. The emitter runs `Checks.run`,
+including Mignotte and degree-eight fixtures; local fixtures add degree twelve
+and deterministic randomized construction paths.
 -/
 
 open Hex
@@ -166,3 +170,24 @@ open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
         (AlgebraicPoly.ofArray (coeffs.map RealAlgebraicNumber.toAlgebraic)) with
       | none => false
       | some p => p.toAlgebraic.coeffs == (RealAlgebraicPoly.ofArray coeffs).toAlgebraic.coeffs
+
+-- Explicit cast operations, including zero and a nontrivial magnitude.
+#guard (#[0, 1, 17] : Array Nat).all fun n =>
+  (n : RealAlgebraicNumber).toRat? == some (n : Rat)
+#guard (#[(-17), 0, 23] : Array Int).all fun n =>
+  (n : RealAlgebraicNumber).toRat? == some (n : Rat)
+
+-- Checked conversion must preserve independently known coefficients and trim
+-- trailing zero entries, including an irrational coefficient.
+#guard
+  let r := (sqrt? 2).getD 0
+  r * r == 2 &&
+    (#[ (#[], #[]), (#[ofRat (-3 / 2), 0, 0], #[ofRat (-3 / 2)]),
+        (#[-r, 0, 1, 0, 0], #[-r, 0, 1])] :
+      Array (Array RealAlgebraicNumber × Array RealAlgebraicNumber)).all fun (coeffs, expected) =>
+    match RealAlgebraicPoly.ofAlgebraic?
+        (AlgebraicPoly.ofArray (coeffs.map RealAlgebraicNumber.toAlgebraic)) with
+    | none => false
+    | some poly =>
+      poly.toAlgebraic.coeffs.size == expected.size &&
+        poly.toAlgebraic.coeffs == expected.map RealAlgebraicNumber.toAlgebraic

@@ -407,7 +407,8 @@ otherwise the upper-bound claim is not admitted. These qualifications and
 schedules precede collection. The cap is not an absolute performance budget.
 
 Admission status: the odd cubic and integral-endpoint profiles show the
-required general products/gcds. The fractional family has no own profile.
+required general products/gcds. The fractional family has a passing own profile with substantial inclusive
+multiplication/Toom entries; dominant-phase admission remains under audit.
 The translated frontend captures predominantly show single-limb arithmetic
 and copies; general-product caller attribution is incomplete. They therefore
 do not establish the dominant published phase and are unadmitted candidates.

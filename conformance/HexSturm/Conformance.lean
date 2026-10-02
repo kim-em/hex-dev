@@ -16,17 +16,23 @@ public meta import HexPolyZ.IntegerPolynomial
 
 public section
 
-/-! Core profile: oracle none, mode always; elaborated by `HexConformance` in CI.
-Operations: preparation, endpoint retargeting, ordinary/prepared queries and
-counts, positive normalization, ordinary/prepared certification, cached/plain checking, and literal
-denominator clearing and integer embedding.
-Properties: analytic counts/sign sums for the known roots ±1, prepared-chain
-reuse, exact input/context bindings, and positive scaling agreement.
-Edges: constants, zero/repeated heads, common query roots, invalid/equal/reversed
-endpoints, every finite/infinite endpoint pair, noncanonical coefficients,
-corrupted identities, stale endpoint evidence, and foreign contexts.
-Computational conformance owner: `HexSturm`. Rational/integer comparisons are
-additional runtime differential checks, not an independent semantic oracle. -/
+/-!
+Oracle: none (runtime field/integer differentials supplement analytic expectations).
+Mode: always; elaborated by `HexConformance` in CI.
+Covered operations:
+- Preparation, positive normalization and endpoint retargeting.
+- Ordinary/prepared queries, counts and certification.
+- Cached/plain checking and literal step/chain/certificate denominator clearing and embedding.
+Covered properties:
+- Analytic counts and sign sums for ±1 and the eight Chebyshev roots.
+- Prepared-chain reuse, exact input/context binding and positive scaling agreement.
+Covered edge cases:
+- Constants, zero/repeated heads and common query roots.
+- Invalid/equal/reversed bounds and all finite/infinite endpoint pairs.
+- Noncanonical coefficients, corrupted identities, stale endpoints and foreign contexts.
+Computational conformance owner: `HexSturm`. Differential checks are not an
+independent semantic oracle.
+-/
 namespace Hex.Sturm.Conformance
 
 open DensePoly Hex.Sturm.Fixtures
@@ -82,6 +88,22 @@ open scoped Hex
   | some cert => check orderSign 7 p (x - 1) .negInf .posInf (-1) cert &&
     !check orderSign 8 p (x - 1) .negInf .posInf (-1) cert &&
     !check orderSign 7 p (x - 1) (.finite 0) .posInf (-1) cert
+
+/- T_8 has eight simple roots cos((2k−1)π/16), all strictly between ±1.
+This degree-eight irrational-root head exercises a multi-step chain. Symmetry
+makes the X sign sum zero; no root is zero, so the X² sign sum is eight. -/
+#guard
+  let head : DensePoly Rat := ofCoeffs #[1, 0, -32, 0, 160, 0, -256, 0, 128]
+  match prepare orderSign head (.finite (-2)) (.finite 2) with
+  | none => false
+  | some domain =>
+    countPrepared domain == 8 && domain.squarefree.steps.size > 1 &&
+    (#[ (1, 8), (x, 0), (x * x, 8)] : Array (DensePoly Rat × Int)).all
+      fun (f, expected) =>
+        queryPrepared domain f == expected &&
+          query orderSign head f .negInf .posInf == some expected &&
+          check orderSign (7 : Nat) head f (.finite (-2)) (.finite 2) expected
+            (certifyPrepared 7 domain f)
 
 /- Normalization retains the leading sign and reconstructs the original head.
 These exact cases include a negative leading coefficient and rational scale. -/
@@ -270,6 +292,26 @@ theorem stale_rejected : check orderSign 8 p 1 (.finite (-2)) (.finite 2) 2 lite
 #guard_msgs in
 #print axioms Hex.Sturm.prepare_isSome
 
+/- Three analytically specified identities a*A = q*B − c*C, including
+coprime denominators. Translate the literal step itself and reject an incorrect
+right scale in both domains; neither test invokes a chain producer. -/
+#guard (#[ (1, 1, 1), (6, 10, 15), (997, 991, 983)] : Array (Nat × Nat × Nat)).all
+  fun (a, b, c) =>
+    let A := scale (1 / (a : Rat)) p
+    let B := scale (1 / (b : Rat)) x
+    let C := DensePoly.C (1 / (c : Rat))
+    let step : RemainderStep Rat := ⟨a, scale (b : Rat) x, c⟩
+    let ca := ZPoly.clearDenominators A
+    let cb := ZPoly.clearDenominators B
+    let cc := ZPoly.clearDenominators C
+    let cleared := step.clearDenominators ca.1 cb.1 cc.1
+    let wrong := { step with rightScale := (c : Rat) + 1 }
+    SignedRemainderChain.checkStep orderSign A B C step &&
+      SignedRemainderChain.checkStep Int.sign ca.2 cb.2 cc.2 cleared &&
+      !SignedRemainderChain.checkStep orderSign A B C wrong &&
+      !SignedRemainderChain.checkStep Int.sign ca.2 cb.2 cc.2
+        (wrong.clearDenominators ca.1 cb.1 cc.1)
+
 /- Transport exercises singleton chains, proper common factors and constants.
 Each translated certificate is checked independently, including wrong bindings. -/
 #guard (#[0, p, x - 1, 1] : Array (DensePoly Rat)).all fun f =>
@@ -280,10 +322,13 @@ Each translated certificate is checked independently, including wrong bindings. 
   | some c =>
     let z := c.clearDenominators p f Hex.TarskiTests.interval
     let zp := (ZPoly.clearDenominators p).2
-    let zf := (ZPoly.clearDenominators f).2
+    let cf := ZPoly.clearDenominators f
+    let zf := cf.2
     let a := Endpoint.finite Hex.TarskiTests.interval.lower
     let b := Endpoint.finite Hex.TarskiTests.interval.upper
-    TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 zp zf a b c.value z &&
+    SignedRemainderChain.check Int.sign zp zf
+        (c.remainders.clearDenominators p cf.1) &&
+      TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 zp zf a b c.value z &&
       !TarskiCertificate.check Int.sign EndpointSigns.intDyadic 8 zp zf a b c.value z &&
       !TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 zp zf a b (c.value + 1) z &&
       !TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 zp zf b a c.value z &&

@@ -70,7 +70,8 @@ are not performance attestation: their 30-second operational caps are not
 justified regression budgets. Independent review tokens are present; compiled conformance and the pinned
 83-case core and 92-case local exact oracles pass with no skipped operations.
 The full local build (15408 jobs), conformance/adapters (14973 jobs), and
-67-case benchmark verification pass. Full required CI gates Phase-3 recording.
+67-case benchmark verification pass. Phase-3 recording requires the full conformance contract and operation-case
+audit as well as green required CI.
 The [real-algebraic performance report](hex-real-algebraic-performance.md) and
 the Sturm report distinguish valid family passes from failed hypotheses,
 controls and fixed observations without budgets. Phase 4 remains incomplete.

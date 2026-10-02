@@ -437,6 +437,18 @@
       "summary": "sturm-wide.summary.json",
       "confidence": "passed",
       "samples": 1944
+    },
+    {
+      "manifest": "growing-operands/sturm-odd-fractional.manifest.json",
+      "family": "sturm-odd-fractional",
+      "function": "Hex.SturmFrontendBench.runFractionalBits",
+      "parameter": 32768,
+      "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
+      "status": "profiled",
+      "raw_retained_locally": "/tmp/issue-10577-perf/sturm-odd-fractional",
+      "summary": "growing-operands/sturm-odd-fractional.summary.json",
+      "confidence": "passed",
+      "samples": 1542
     }
   ]
 }

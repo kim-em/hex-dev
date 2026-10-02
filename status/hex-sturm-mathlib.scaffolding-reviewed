@@ -17,3 +17,6 @@ declaration coverage and implementation shape. Performance findings remain
 tracked by #10577, with their evidence and required actions in
 status/reviews/issue-10577-opus-followup.md. No separate decomposition issues
 are created under this assignment.
+
+The ceiling and count rewrite is independently checked in
+status/reviews/issue-10577-opus-final.md and issue-10577-opus-confirmation.md.
